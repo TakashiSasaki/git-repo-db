@@ -1,8 +1,17 @@
 name: tests
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   offline:
     runs-on: ubuntu-24.04
+    env:
+      CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -11,20 +20,38 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.12.19'
-      - run: uv sync --locked --group dev
+      - run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev
       - name: Prepare locked wheels (online preparation)
-        run: uv run --no-sync python scripts/prepare_wheelhouse.py
+        run: python scripts/ci_profile.py run --name wheelhouse -- uv run --no-sync python scripts/prepare_wheelhouse.py
       - name: Prepare minimum SQLite lane (online preparation)
-        run: uv pip install --target artifacts/sqlite-min pysqlite3-binary==0.5.4
-      - run: uv run --no-sync ruff check src tests scripts
-      - run: uv run --no-sync ruff format --check src tests scripts
+        run: python scripts/ci_profile.py run --name sqlite-preparation -- uv run --no-sync python scripts/prepare_sqlite_minimum.py
+      - run: python scripts/ci_profile.py run --name lint -- uv run --no-sync ruff check src tests scripts
+      - run: python scripts/ci_profile.py run --name format -- uv run --no-sync ruff format --check src tests scripts
       - name: Required FTS success lane
         run: |
           uv run --no-sync python -c "import sqlite3; c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
-      - run: uv run --no-sync repo-catalog --format json doctor
-      - run: uv build --out-dir artifacts/dist
-      - run: uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
-      - run: uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging --strict-markers -m "not live and not benchmark"
+      - run: python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog --format json doctor
+      - run: python scripts/ci_profile.py run --name build -- uv build --out-dir artifacts/dist
+      - run: python scripts/ci_profile.py run --name export -- uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
+      - name: Collect every required test (same selection as before)
+        run: uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging --strict-markers -m "not live and not benchmark" --collect-only -q > artifacts/ci-profile/required-tests.txt
+      - name: Required tests, fixed four workers (offline)
+        run: python scripts/ci_profile.py run --name tests --mode xdist --workers 4 --reference docs/ci-performance-baseline.json --junit artifacts/ci-profile/tests.xml -- uv run --no-sync pytest tests/unit tests/integration tests/e2e --strict-markers -m "not live and not benchmark" -n 4 --junitxml artifacts/ci-profile/tests.xml --durations=20
+      - name: Packaging, isolated sequential lane (offline)
+        run: python scripts/ci_profile.py run --name packaging --junit artifacts/ci-profile/packaging.xml -- uv run --no-sync pytest tests/packaging --strict-markers -m "not live and not benchmark" --junitxml artifacts/ci-profile/packaging.xml
+      - name: Prove every required test passed exactly once
+        run: python scripts/ci_profile.py coverage --expected artifacts/ci-profile/required-tests.txt artifacts/ci-profile/tests.json artifacts/ci-profile/packaging.json
       - name: SQLite 3.46.1 independent schema constraints (offline)
-        run: uv run --no-sync python scripts/run_sqlite_minimum_tests.py
-      - run: uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
+        run: python scripts/ci_profile.py run --name sqlite-minimum --sqlite 3.46.1 --junit artifacts/ci-profile/sqlite-minimum.xml -- uv run --no-sync python scripts/run_sqlite_minimum_tests.py --junitxml artifacts/ci-profile/sqlite-minimum.xml
+      - run: python scripts/ci_profile.py run --name offline-recovery -- uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
+      - name: Retain timing evidence (no databases or caches)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-profile-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/ci-profile/*.json
+            artifacts/ci-profile/*.md
+            artifacts/ci-profile/*.xml
+            artifacts/ci-profile/required-tests.txt
+          retention-days: 30

@@ -341,10 +341,12 @@
         "active_cache_entries"
       ],
       "tests": [
-        "tests/integration/test_target_schema.py::test_old_cache_and_job_runtime_are_not_reactivated"
+        "tests/integration/test_target_schema.py::test_old_cache_and_job_runtime_are_not_reactivated",
+        "tests/integration/test_conversion_foundation.py::test_guarded_worker_denies_acquisition_and_source_mutation",
+        "tests/integration/test_conversion_foundation.py::test_source_change_blocks_resume"
       ],
-      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
-      "remaining": "source/cache write deny・Git lazy fetch禁止・原本availabilityはP2/P4"
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate; P2 guarded worker denies source/cache writes, all Git/process/network acquisition and checks cache/source fingerprints.",
+      "remaining": "Git raw/object availability、alternates/promisor closure、durable target cacheの再解析とadmissionはP4。元cacheのwrite/fetchは許可しない。"
     },
     {
       "id": "I28",
@@ -387,10 +389,13 @@
         "conversion_runs"
       ],
       "tests": [
-        "tests/integration/test_target_schema.py::test_fresh_complete_schema"
+        "tests/integration/test_target_schema.py::test_fresh_complete_schema",
+        "tests/integration/test_conversion_foundation.py::test_complete_exact_archive_and_replay",
+        "tests/integration/test_conversion_foundation.py::test_resume_rejects_version_or_output_mismatch",
+        "tests/integration/test_conversion_foundation.py::test_postcommit_crash_recognized_without_duplication"
       ],
-      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
-      "remaining": "DDL hash実byte照合・source不変証拠・validated gateはP2/P3/P4。現在通常runtimeは未対応"
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate; P2 verifies real DDL/contract/converter hashes, source fingerprints and atomic output proofs; fresh target remains building even after archive completion.",
+      "remaining": "domain変換/reanalysis/validated/activation gateはP3-P7。通常runtimeの新format対応は未実装。"
     },
     {
       "id": "I31",

@@ -5,7 +5,7 @@
 ## 現在の状態と作業範囲
 
 - `repo-catalog` は、Git構造・本文・GitHub PRと観測履歴をSQLiteへ保存し、取得元やcloneがなくても照会できるPython CLI。未リリースで、実行用DBはschema v2。
-- 現在のハードニング工程は **独立P1 DDL・変換契約・synthetic検証まで**。本番用スキーマの置換、実データ変換、切替は未実施であり、この工程の完了に含めない。後続の依頼で実装範囲が拡大されたら、その範囲で進める。
+- 現在のハードニング工程は **P1 DDL/契約とP2 offline conversion基盤のsynthetic検証まで**。本番用スキーマの置換、実データ変換、切替は未実施であり、この工程の完了に含めない。後続の依頼で実装範囲が拡大されたら、その範囲で進める。
 - 調査基準は `9a4110185d7e7abffc291f9cfd118ca71587f998`。過去の結果を再利用する前に、作業ブランチ・HEAD SHA・基準との差分を確認し、検証記録へ残す。過去の件数やテスト成功を現在の証明にしない。
 - 作業ブランチを使い、mainへ直接コミットしない。自動マージしない。既存のユーザー変更を上書きしない。
 
@@ -20,7 +20,7 @@
 5. [オフライン変換・検証・切替仕様](docs/schema-hardening/offline-conversion.md)
 6. [実装順序・終了条件・未確定判断](docs/schema-hardening/implementation-plan.md)
 
-[P1設計](docs/schema-hardening/p1-design.md)、[完全DDL](docs/schema-hardening/target-schema.sql)、[変換契約](docs/schema-hardening/conversion-contract.json)、[不変条件対応](docs/schema-hardening/invariant-contract.json)を新formatの正本とする。完全DDLは独立DB専用で通常migrationへ入れない。`proposal-core.sql`は中核断片の回帰検証用。converter/runtime接続はP2以降で未実装。
+[P1設計](docs/schema-hardening/p1-design.md)、[完全DDL](docs/schema-hardening/target-schema.sql)、[変換契約](docs/schema-hardening/conversion-contract.json)、[不変条件対応](docs/schema-hardening/invariant-contract.json)を新formatの正本とする。完全DDLは独立DB専用で通常migrationへ入れない。`proposal-core.sql`は中核断片の回帰検証用。P2のarchive/map/batch/resumeは実装済み。全domain recipeとruntime接続はP3以降で未実装。[P2基盤](docs/schema-hardening/p2-foundation.md)と[CI計測](docs/ci-performance.md)も読む。
 [P1ライフサイクル](docs/schema-hardening/p1-lifecycle.md)でseal、単調補完、検証入口、rollback/restartを確認する。complete listingは参照の有無によらず固定し、追記にはpartial markerが必要。本文はdigest照合後のeligible NULL→既知だけ、Git verifiedは原文検証後の0→1だけ許可する。source pair時刻はmin/max集約で、個々の観測ではない。
 
 変更対象に応じて以下を参照する。
@@ -49,7 +49,7 @@
 | `src/repo_catalog/adapters/filesystem/` | cache世代、lock、lease、容量予約・回収 |
 | `src/repo_catalog/resources/` | packageへ同梱するmigration、GraphQL、CLI JSON schema |
 | `tests/` | `unit` / `integration` / `e2e` / `packaging`、任意実行の `live`、合成fixtureの `support` |
-| `scripts/` | offline demo、schema診断・対応表生成・索引probe |
+| `scripts/` | offline demo、schema診断・契約生成、`conversion/`と`offline_convert.py`のP2専用基盤、CI計測 |
 | `docs/schema-hardening/` | 今回の設計と再現結果。実行用資源とは別 |
 | `artifacts/` | ignoredのstate・テスト結果・非公開診断・配布物。ソース管理へ含めない |
 
@@ -107,3 +107,11 @@ uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging \
 実データのDB・API応答、実token・鍵・認証header、私的リポジトリ内容・識別情報をcommitや公開レポートへ含めない。試験には合成fixtureとdummy credentialを使う。credentialをURL・引数・設定へ埋め込まない。ignored領域も公開してよいとは限らないため、commit/PRのdiffと対象ファイルを確認する。
 
 変更理由・確定した判断・検証したSHA/条件・未確定事項を関連設計書へ反映する。fixture検証、実DBのreadonly診断、実データ変換、切替は別の実績として報告し、次のエージェントが未実施工程を判別できる状態で引き継ぐ。
+
+### P2基盤とCI計測
+
+- `scripts/offline_convert.py` がguard付き専用入口。`engine.run`には導入済みworker policyが必要。原本/旧cache、通常sync/runtimeへ接続しない。synthetic以外を扱う場合は最新依頼の実施範囲を確認する。full domain recipes、API/Git再解析、first sync、切替はP3-P7。
+- sourceの実schema/migration/checksum/byte SHA/stat、target実DDL/contract/parser/converter hash、全committed output proofをresume前に確認する。違えば停止。targetは別DBで`building`、archive completeをvalidatedへ格上げしない。
+- Python file/SQLite auditのないbindingを使わない。最小SQLite laneはhash固定ソースからCPython stdlib bindingをonline準備し、offline試験で3.46.1とauditを確認する。source/cacheのsymlink・特殊file・remote FSは未対応で拒否する。
+- 標準CIはPRとmain push、PR/ref別concurrency。固定4 worker、packagingは逐次step。JUnitのnode IDを全required collectionと照合する。coverage低下・guard解除・skip/xfailで高速化しない。`pytest -n auto`にしない。
+- 性能判断には`scripts/ci_profile.py`のwall/JUnit/runtimeと複数回の中央値・範囲を使う。CI artifactはtiming JSON/Markdown/XML/required test IDsのみ。DB/cache/payloadは含めない。

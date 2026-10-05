@@ -8,7 +8,7 @@ schema proposalと再現の期待値はレビュー可能にし、未確定を�
 
 ## P1成果と次工程の実装順序
 
-P1は独立完全DDL、機械契約、制約テストを作成した。[p1-design.md](p1-design.md)に採用判断・未実装・CIの確認方法を記録する。通常runner・実DB・旧cacheは対象外。P2以降のconverter/persistenceは未実装。
+P1は独立完全DDL、機械契約、制約テストを作成した。[p1-design.md](p1-design.md)に採用判断・未実装・CIの確認方法を記録する。通常runner・実DB・旧cacheは対象外。[P2基盤](p2-foundation.md)でsealed input、exact archive、代表ID map、atomic batch/resume、guardとcapacityを実装した。全domain recipe/lookup/allocation/persistenceはP3へ残る。
 [P1仕上げ](p1-lifecycle.md)でcomplete markerの削除/置換経路を閉じ、本文補完・再発見・再検証・partial→complete・rollback/restartの正当系を完全DDLで実行する。変換契約のstaged writeと旧検証claimの保全をP2/P3へ渡す。synthetic admission例を新runtimeの完成と扱わない。
 
 ## 実装順序とgate
@@ -39,7 +39,7 @@ P1～P5のsynthetic試験を通ってもP6の実データ変換を成功済み�
 | effective coverage | 元assertionを保存し、矛盾・不足scopeを再評価 | raw不在の旧verified claimを新rehash済みとしない。すべてを一律unknownにして全API取得へ倒すことも避ける |
 | watermark回復 | 元scan/context証拠から保守的境界を採用、overlap | source timeの確かさ、旧dialect、clock/order不明を検証。証明不能scopeは限定refresh、移行中のfetchは禁止 |
 | cache独立性 | source read-only locator、必要ならreflink/independent copy | future runtimeがsourceへfetch/GCしないこと。追加空き・promisor/alternates・必要closureで選択 |
-| source sealing | source不変を前提にsealed offline copyを入力 | live WALをそのまま読むdiagnosticは拒否。source保全とcopy取得の運用を実DBに合わせて確定 |
+| source sealing | P2は停止済みsidecar-free sourceからbyte copy、前後SHA/stat/schema照合 | live WALをそのまま読むdiagnosticは拒否。source保全とcopy取得の運用を実DBに合わせて確定 |
 | index | scoped parent keys/child lookupを優先、derived searchはoffline rebuild | representative page_count/index_bytes/EXPLAIN/書込みコストが必要。FTSなしでも正しいquery |
 | archive配置 | target内typed archive + large exact body参照、必要なら同梱sealed sidecar | 全unknown bytesがportable保全されること。source参照だけでtargetの未解決dataが消える設計は採用しない |
 | cutover方法 | source外のactive pointerをatomic変更 | volume境界、config path、service起動方法を実運用で確定。source rename/overwriteしない |

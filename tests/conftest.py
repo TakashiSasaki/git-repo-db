@@ -12,6 +12,11 @@ def offline_test_environment(monkeypatch, request):
         yield
         return
     guard = Path(__file__).parent / "support/network_guard"
+    if hasattr(request.config, "workerinput"):
+        home = request.getfixturevalue("tmp_path_factory").getbasetemp() / "home"
+        home.mkdir(exist_ok=True)
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("PYTHONPATH", str(guard))
     monkeypatch.setenv("GIT_ALLOW_PROTOCOL", "file")
     monkeypatch.delenv("GH_TOKEN", raising=False)
