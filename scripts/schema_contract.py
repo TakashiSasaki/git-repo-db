@@ -75,6 +75,8 @@ def scalar(rule, value):
             value.encode("utf-8") if isinstance(value, str) else value
         ).digest()
     if rule == "oid_decode":
+        if value is None:
+            return None  # Preserve absence; target NOT NULL is validated separately.
         if (
             not isinstance(value, str)
             or len(value) not in (40, 64)

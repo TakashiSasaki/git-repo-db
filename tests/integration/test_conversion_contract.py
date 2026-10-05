@@ -103,6 +103,7 @@ def test_typed_archive_preserves_sqlite_storage_and_exact_bytes():
 
 
 def test_scalar_rules_do_not_silently_repair_invalid_oid():
+    assert scalar("oid_decode", None) is None
     assert scalar("oid_decode", "AB" * 20) == b"\xab" * 20
     assert scalar("byte_length", "日本語") == 9
     assert scalar("source_kind", "git-url") == "manual_git"
