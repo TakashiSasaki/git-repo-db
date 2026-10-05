@@ -1,0 +1,37 @@
+{
+  "fixture_only": true,
+  "limitations": [
+    "All rows share one synthetic parent",
+    "No estimate of target DB growth or trigger/write throughput",
+    "Full target indexes require representative measurement"
+  ],
+  "purpose": "FK child lookup plan and incremental space, not runtime throughput",
+  "results": [
+    {
+      "added_database_pages": 14,
+      "columns": "pr_id,id",
+      "page_size": 4096,
+      "plan_after": [
+        "SEARCH pr_observations USING COVERING INDEX probe_pr_observations (pr_id=?)"
+      ],
+      "plan_before": [
+        "SCAN pr_observations"
+      ],
+      "rows": 1000,
+      "table": "pr_observations"
+    },
+    {
+      "added_database_pages": 24,
+      "columns": "repo_id,pr_id,kind",
+      "page_size": 4096,
+      "plan_after": [
+        "SEARCH collections USING COVERING INDEX probe_collections (repo_id=?)"
+      ],
+      "plan_before": [
+        "SCAN collections"
+      ],
+      "rows": 1000,
+      "table": "collections"
+    }
+  ]
+}
