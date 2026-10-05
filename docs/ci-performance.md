@@ -100,3 +100,24 @@ fixed4を採用し、minimum laneの全225件を維持する。local中央値で
 追加修正後の全321件も3回成功し、元の318 IDsが全て残ることと新しい3 IDsを毎回照合した。normal + packagingの中央値39.824秒（38.176–40.266）、minimum228件は5.998秒（5.630–6.337）。`ci-performance-baseline.json`はこの319件normal laneの3 trial、Python/SQLite/CPU条件を使って更新した。過去225件の逐次/2/4比較と最終228件を同じcoverageの比較として扱わない。
 
 `a0f5b8b`のrun 37368121717 attempt 1/2は、[GitHub Actions runner割当遅延incident](https://stspg.io/c11dc9nb1zdq)と同じ時間帯にrunner未取得で終了した。annotationは`The job was not acquired by Runner of type hosted even after multiple attempts`、runner ID 0、step 0件で、test failure sampleではない。各待機約15分をrunner実行時間やpytest時間として計上しない。retry/skipでテスト失敗を隠す処理は追加していない。失敗/再実行/最終HEADをPR検証記録へ残す。
+
+## 最終実装のhosted計測
+
+hardlink修正を含むcode SHA `ff4de5ff64451cd12e7252f18a7f89e1ffd14d54` の[run 37372043596](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37372043596)は全成功。merge checkoutは`ce21544d439253f19887a3f1acf988f558cdd9d1`。Python 3.12.14 / native SQLite 3.45.1 / CPU・affinity 4で、minimum workerは全て3.46.1を確認した。P1からの全required testsを含む321 IDs照合、packaging、minimum228件、demo、timing artifactまで成功した。
+
+| 区間 | P1比較 | 最初のP2 | 最終実装 |
+|---|---:|---:|---:|
+| normal pytest（coverageは各段階で異なる） | 194.76秒 / 248件、packaging込み | 81.686秒 / 316件 | 64.545秒 / 319件 |
+| packaging | 上記に含む | 3.791秒 / 2件 | 2.877秒 / 2件 |
+| minimum SQLite | 4.16秒 / 161件 | 40.211秒 / 225件、逐次 | 15.039秒 / 228件、4 worker |
+| binding準備 | 旧wheel準備 | 17.190秒 | 14.882秒 |
+| offline demo | 約9秒 | 8.161秒 | 6.588秒 |
+| job実行 | 218秒 | 167秒 | 121秒 |
+| feedback（run作成→終了） | 223秒 | 205秒 | 172秒 |
+| queue | 約5秒 | 38秒 | 51秒 |
+
+各列は異なるrevisionのhosted sample 1件で、統計的中央値ではない。minimum並列化単独の効果には、同じ225件のlocal 3+3 trialsを使う。runner差/負荷によるnormal laneの揺れをminimum並列化の効果へ加算しない。
+
+実行critical pathは218→121秒（44.5%短縮）、このrevisionのfeedbackは223→172秒（22.9%短縮）だった。P1二重runの実測6.55 runner-minutesに対し、最終revisionは1 run / 2.02 runner-minutes。job数・setup数は増えず、packagingの逐次性とminimum互換性も保つ。4 test workersは逐次より同時process数/peak memoryを増やすが、CPU-seconds/peak memoryそのものは測定していない。失敗した旧revisionの割当待ちを含む開発全体が172秒で終わったという意味ではない。
+
+残るfile集約上位はGitHub sync 58.291秒、P2 foundation 55.492秒、repository identity 13.632秒、git sync 13.083秒。並列時の集約秒数はoverlapする。main lane64.545秒が依然最大で、実CLI/Gitと各P2 fresh workerの起動・DDL/proof検証が残る。ここから先の最適化は新しい測定に基づいて判断する。

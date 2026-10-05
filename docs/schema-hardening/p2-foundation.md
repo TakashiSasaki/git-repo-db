@@ -119,3 +119,7 @@ uv run --no-sync python scripts/offline_convert.py verify --work-dir artifacts/s
 - P7: validated gate後の運用切替/rollback。実DBの切替、自動mergeは今回行わない。
 
 P2 synthetic成功は実データmigrationの成功証明ではない。CI計測と結果は[CI性能](../ci-performance.md)へ記録する。
+
+## 確認した実装とgate
+
+code SHA `ff4de5ff64451cd12e7252f18a7f89e1ffd14d54`でRuff check/format、契約287列/74表、FTS、doctor、build/export、normal319件+offline packaging2件（全321 IDs）、SQLite3.46.1 lane228件、offline-recovery demoをローカルと[CI run 37372043596](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37372043596)で確認した。local native SQLiteは3.53.1、CI nativeは3.45.1で、converterとminimum laneは対応bindingを確認する。最終文書記録のcommitではconverter/DDL/契約コードを変えず、そのHEADのchecksも確認する。exact SHAと後続のCI結果はPR #1のvalidation記録に残す。

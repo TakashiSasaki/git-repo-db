@@ -594,6 +594,190 @@
       "packaging_tests": 2,
       "minimum_tests": 225,
       "runs_for_same_feature_sha": 1
+    },
+    {
+      "run_id": 37372043596,
+      "feature_sha": "ff4de5ff64451cd12e7252f18a7f89e1ffd14d54",
+      "result": "success",
+      "created_at": "2026-10-05T20:48:43Z",
+      "completed_at": "2026-10-05T20:51:35Z",
+      "feedback_seconds": 172,
+      "queue_seconds": 51,
+      "runner_seconds": 121,
+      "runtime": {
+        "python": "3.12.14",
+        "sqlite": "3.45.1",
+        "cpu_count": 4,
+        "affinity": 4,
+        "cpu_quota": null,
+        "commit_sha": "ce21544d439253f19887a3f1acf988f558cdd9d1",
+        "run_id": "37372043596",
+        "run_attempt": "1",
+        "feature_sha": "ff4de5ff64451cd12e7252f18a7f89e1ffd14d54",
+        "tracked_changes": false
+      },
+      "lanes": {
+        "tests": {
+          "seconds": 64.545,
+          "tests": 319,
+          "mode": "xdist",
+          "workers": 4,
+          "exit_code": 0
+        },
+        "sqlite-minimum": {
+          "seconds": 15.039,
+          "tests": 228,
+          "mode": "xdist",
+          "workers": 4,
+          "exit_code": 0
+        },
+        "wheelhouse": {
+          "seconds": 0.877,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "build": {
+          "seconds": 0.644,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "format": {
+          "seconds": 0.022,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "doctor": {
+          "seconds": 0.107,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "dependency-setup": {
+          "seconds": 0.981,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "lint": {
+          "seconds": 0.02,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "packaging": {
+          "seconds": 2.877,
+          "tests": 2,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "export": {
+          "seconds": 0.008,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "offline-recovery": {
+          "seconds": 6.588,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        },
+        "sqlite-preparation": {
+          "seconds": 14.882,
+          "tests": null,
+          "mode": "sequential",
+          "workers": 1,
+          "exit_code": 0
+        }
+      },
+      "slowest_files": [
+        {
+          "file": "tests/e2e/test_github_sync.py",
+          "seconds": 58.291,
+          "tests": 14,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/integration/test_conversion_foundation.py",
+          "seconds": 55.492000000000004,
+          "tests": 56,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/e2e/test_repository_identity.py",
+          "seconds": 13.632,
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/e2e/test_git_sync.py",
+          "seconds": 13.083,
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/e2e/test_queries.py",
+          "seconds": 10.174,
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/integration/test_git_objects.py",
+          "seconds": 9.672,
+          "tests": 5,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/e2e/test_recovery.py",
+          "seconds": 8.637,
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/e2e/test_offline.py",
+          "seconds": 8.506,
+          "tests": 2,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/integration/test_cache.py",
+          "seconds": 8.358,
+          "tests": 7,
+          "failures": 0,
+          "skipped": 0
+        },
+        {
+          "file": "tests/e2e/test_cli_more.py",
+          "seconds": 7.5729999999999995,
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0
+        }
+      ],
+      "normal_tests": 319,
+      "packaging_tests": 2,
+      "minimum_tests": 228,
+      "runs_for_same_feature_sha": 1
     }
   ],
   "local_minimum_sqlite": {
