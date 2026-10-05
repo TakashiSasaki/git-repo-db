@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      full:
+        description: Full acceptance (manual runs remain conservative)
+        type: boolean
+        default: true
+permissions:
+  contents: read
+  actions: read
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -14,37 +22,67 @@ jobs:
       CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Inspect one prior acceptance artifact (read-only, bounded)
+        env:
+          CI_READ_TOKEN: ${{ github.token }}
+        run: python scripts/ci_profile.py run --name evidence-lookup -- python scripts/ci_evidence.py
+      - name: Plan validation against effective merge inputs
+        id: plan
+        run: python scripts/ci_profile.py run --name planning -- python scripts/ci_plan.py --evidence artifacts/ci-profile/evidence.json
+      - name: Validate explicit prose/report inputs
+        run: python scripts/ci_profile.py run --name report-validation -- python scripts/ci_execute.py reports
       - uses: astral-sh/setup-uv@v6
+        if: steps.plan.outputs.dependencies == 'true'
         with:
           version: '0.12.19'
-      - run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev
+      - name: Prepare test dependencies (online preparation)
+        if: steps.plan.outputs.dependencies == 'true'
+        run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev
       - name: Prepare locked wheels (online preparation)
+        if: steps.plan.outputs.wheelhouse == 'true'
         run: python scripts/ci_profile.py run --name wheelhouse -- uv run --no-sync python scripts/prepare_wheelhouse.py
       - name: Prepare minimum SQLite lane (online preparation)
+        if: steps.plan.outputs['sqlite-binding'] == 'true'
         run: python scripts/ci_profile.py run --name sqlite-preparation -- uv run --no-sync python scripts/prepare_sqlite_minimum.py
-      - run: python scripts/ci_profile.py run --name lint -- uv run --no-sync ruff check src tests scripts
-      - run: python scripts/ci_profile.py run --name format -- uv run --no-sync ruff format --check src tests scripts
-      - name: Required FTS success lane
+      - name: Ruff lint and formatting
+        if: steps.plan.outputs.static == 'true'
         run: |
-          uv run --no-sync python -c "import sqlite3; c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
-      - run: python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog --format json doctor
-      - run: python scripts/ci_profile.py run --name build -- uv build --out-dir artifacts/dist
-      - run: python scripts/ci_profile.py run --name export -- uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
-      - name: Collect every required test (same selection as before)
-        run: uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging --strict-markers -m "not live and not benchmark" --collect-only -q > artifacts/ci-profile/required-tests.txt
-      - name: Required tests, fixed four workers (offline)
-        run: python scripts/ci_profile.py run --name tests --mode xdist --workers 4 --reference docs/ci-performance-baseline.json --junit artifacts/ci-profile/tests.xml -- uv run --no-sync pytest tests/unit tests/integration tests/e2e --strict-markers -m "not live and not benchmark" -n 4 --junitxml artifacts/ci-profile/tests.xml --durations=20
+          python scripts/ci_profile.py run --name lint -- uv run --no-sync ruff check src tests scripts
+          python scripts/ci_profile.py run --name format -- uv run --no-sync ruff format --check src tests scripts
+      - name: Required FTS success lane and doctor
+        if: steps.plan.outputs.smoke == 'true'
+        run: |
+          python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c "import sqlite3; c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
+          python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog --format json doctor
+      - name: Build and locked runtime export
+        if: steps.plan.outputs.build == 'true'
+        run: |
+          python scripts/ci_profile.py run --name build -- uv build --out-dir artifacts/dist
+          python scripts/ci_profile.py run --name export -- uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
+      - name: Collect complete required IDs before executing affected tests
+        if: steps.plan.outputs.normal == 'true' || steps.plan.outputs.packaging == 'true' || steps.plan.outputs.minimum == 'true'
+        run: python scripts/ci_execute.py collect
+      - name: Selected required tests (offline, fixed workers for larger sets)
+        if: steps.plan.outputs.normal == 'true'
+        run: python scripts/ci_execute.py run --lane tests
       - name: Packaging, isolated sequential lane (offline)
-        run: python scripts/ci_profile.py run --name packaging --junit artifacts/ci-profile/packaging.xml -- uv run --no-sync pytest tests/packaging --strict-markers -m "not live and not benchmark" --junitxml artifacts/ci-profile/packaging.xml
-      - name: Prove every required test passed exactly once
-        run: python scripts/ci_profile.py coverage --expected artifacts/ci-profile/required-tests.txt artifacts/ci-profile/tests.json artifacts/ci-profile/packaging.json
+        if: steps.plan.outputs.packaging == 'true'
+        run: python scripts/ci_execute.py run --lane packaging
       - name: SQLite 3.46.1 independent schema constraints (offline)
-        run: python scripts/ci_profile.py run --name sqlite-minimum --sqlite 3.46.1 --mode xdist --workers 4 --junit artifacts/ci-profile/sqlite-minimum.xml -- uv run --no-sync python scripts/run_sqlite_minimum_tests.py -n 4 --junitxml artifacts/ci-profile/sqlite-minimum.xml
-      - run: python scripts/ci_profile.py run --name offline-recovery -- uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
-      - name: Retain timing evidence (no databases or caches)
+        if: steps.plan.outputs.minimum == 'true'
+        run: python scripts/ci_execute.py run --lane sqlite-minimum
+      - name: Offline recovery demo
+        if: steps.plan.outputs.demo == 'true'
+        run: python scripts/ci_profile.py run --name offline-recovery -- uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
+      - name: Validate plan and all required outcomes
+        if: always()
+        run: python scripts/ci_execute.py gate
+      - name: Retain timing and selection evidence (no databases or caches)
         if: always()
         uses: actions/upload-artifact@v4
         with:

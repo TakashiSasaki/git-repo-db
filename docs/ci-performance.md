@@ -121,3 +121,13 @@ hardlink修正を含むcode SHA `ff4de5ff64451cd12e7252f18a7f89e1ffd14d54` の[r
 実行critical pathは218→121秒（44.5%短縮）、このrevisionのfeedbackは223→172秒（22.9%短縮）だった。P1二重runの実測6.55 runner-minutesに対し、最終revisionは1 run / 2.02 runner-minutes。job数・setup数は増えず、packagingの逐次性とminimum互換性も保つ。4 test workersは逐次より同時process数/peak memoryを増やすが、CPU-seconds/peak memoryそのものは測定していない。失敗した旧revisionの割当待ちを含む開発全体が172秒で終わったという意味ではない。
 
 残るfile集約上位はGitHub sync 58.291秒、P2 foundation 55.492秒、repository identity 13.632秒、git sync 13.083秒。並列時の集約秒数はoverlapする。main lane64.545秒が依然最大で、実CLI/Gitと各P2 fresh workerの起動・DDL/proof検証が残る。ここから先の最適化は新しい測定に基づいて判断する。
+
+## 変更に応じたCIの導入
+
+開始featureは`ceaf25de85d75be92838d0feedd7505dd616f180`、mainは`9a4110185d7e7abffc291f9cfd118ca71587f998`で、remoteに後続変更はなかった。run 37372942822 / job 111974353559のartifact 11371043206を再取得し、SHA-256 `6b464f844a600b8201062ca697dd55ac7fe305d05c374cbd9ef3fad062721a28`、raw JUnitとprofile、321 required IDsの一致を確認した。baselineのための全suite再実行はしない。
+
+そのrunはnormal319件/4 workers/81.239秒、packaging2件/3.711秒、minimum228件/18.435秒、minimum準備24.882秒、demo8.057秒。これは既存の1観測で将来の保証ではない。normal file aggregateの上位はGitHub sync78.664秒、P2 foundation56.926秒、repository identity18.254秒。parallel aggregateをwallやCPU消費へ読み替えない。
+
+[変更依存CI](change-aware-ci.md)で、verified full acceptanceのeffective lane inputsが一致するreport-only follow-upをreuseし、依存導入、SQLite build、wheelhouse/build/packaging、E2E/demoを条件付きにする。policy変更の最終substantive revisionはfull acceptanceで確認し、後続の測定report commitでlightweight pathを確認する。結果・run IDs・overheadは`ci-selection-results.json`へ記録する。
+
+job fan-out、workflow全体paths-ignore、binary binding cache、reuse-only artifactの連鎖は採用しない。単一jobと安価なstdlib plannerを保ち、minimumが選ばれた時は既存のcold preparationを行う。coverage/guardを弱めず、曖昧な証拠はfull。今回はfresh pytestの同一集合を高速化する比較ではなく、不必要な再実行を除く変更である。fresh/reused件数とjob/queue/command wallを分けて報告し、異なる集合から改善率を作らない。

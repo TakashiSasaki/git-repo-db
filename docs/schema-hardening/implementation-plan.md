@@ -54,3 +54,10 @@ P1～P5のsynthetic試験を通ってもP6の実データ変換を成功済み�
 - source checksum書換えやcountsだけでvalidated gateを通していないか。
 
 この区切りの終了は上記仕様と再現/診断のレビュー可能性で判定する。実移行の許可を既に得たものとして扱わない。
+
+## P3着手前の具体的な引継ぎ
+
+- 現P2は53表/287列の基準v2構造だけを認め、通常運用で生成されたFTSやANALYZE/internal構造があるDBも拒否する。代表実データの移行前に、approved derived構造をschemaの構造と生成来歴で識別する。table-name prefixだけでは認めない。元file bytesを保全し、archive/rebuild/exclusionの判断を明示する。未知のuser構造は引き続きfail closed。
+- P2 archiveはnormalized target全体ではない。P3がdomain rowを書換える前にphase handoffを定義する。現在のresumeはconverter/contract fingerprintsとcommitted output全値のexact一致を要求し、P3変更後にP2 proofを無条件流用できない。
+- 全normalized conversion、offline replay/reanalysis、新runtime、first sync、実データdry-run、cutoverはP3〜P7。`archive_complete`をvalidated/activeや実移行成功と扱わない。
+- [変更依存CI](../change-aware-ci.md)はこの引継ぎをruntimeへ実装するものではない。SQL/契約/P2実装の変更時はschema/P2/minimum依存を選び、証拠がない場合はfull acceptanceを行う。

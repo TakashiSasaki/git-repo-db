@@ -116,3 +116,10 @@ uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging \
 - Python file/SQLite auditのないbindingを使わない。最小SQLite laneはhash固定ソースからCPython stdlib bindingをonline準備し、offline試験で3.46.1とauditを確認する。固定4 workerの各interpreterもtest import前にbindingを有効にし、実versionを確認する。source/cacheのsymlink・特殊file・remote FSは未対応で拒否する。
 - 標準CIはPRとmain push、PR/ref別concurrency。固定4 worker、packagingは逐次step。JUnitのnode IDを全required collectionと照合する。coverage低下・guard解除・skip/xfailで高速化しない。`pytest -n auto`にしない。
 - 性能判断には`scripts/ci_profile.py`のwall/JUnit/runtimeと複数回の中央値・範囲を使う。CI artifactはtiming JSON/Markdown/XML/required test IDsのみ。DB/cache/payloadは含めない。
+
+### 変更に応じたCI
+
+- [変更依存CI](docs/change-aware-ci.md)、`scripts/ci_dependencies.json`、`ci_plan.py`/`ci_evidence.py`/`ci_execute.py`を読む。known prose/reportと実行SQL/契約/生成ビューを区別する。新しいimport/file read/subprocess境界ではdependency mapも見直す。
+- plannerはcleanなcommit済みeffective treeと累積PR diff、checksum/metadataを検証したfull acceptance manifestで判断する。latest commitのpathだけ、warm cache、任意runの成功を検証代わりにしない。不明・missing・mismatchはfull。main/manualはfull。
+- `tests / offline`とfinal gateを維持する。selected IDsは実行前collectionとexactly onceで照合し、既存321 required / 228 minimum IDsも下限として残す。fresh/reused/not_applicableと準備cache状態を分け、reuseした試験を今回実行したと報告しない。
+- 開発中はfocused planner/profiler testsから始める。workflow/policy変更は最終substantive commitでfull acceptanceを確認し、その後のreport-only commitでは安全なreuse pathを検証する。既存のverified成功をbaseline測定のためだけに全suite再実行しない。

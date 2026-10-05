@@ -30,3 +30,19 @@ def test_generated_views_match_machine_contract():
     assert recorded == render_rows(contract)
     recorded_target = json.loads((ROOT / "target-inventory.json").read_text())
     assert recorded_target["ddl_sha256"] == contract["ddl_sha256"]
+
+
+def test_generated_markdown_view_matches_generator(tmp_path, monkeypatch):
+    from scripts import schema_contract
+
+    for name in (
+        "target-schema.sql",
+        "current-schema.json",
+        "conversion-contract.json",
+    ):
+        (tmp_path / name).write_bytes((ROOT / name).read_bytes())
+    monkeypatch.setattr(schema_contract, "ROOT", tmp_path)
+    schema_contract.generate()
+    assert (tmp_path / "table-conversion.md").read_bytes() == (
+        ROOT / "table-conversion.md"
+    ).read_bytes()

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "policy_inputs": [
+    ".github/workflows/tests.yml",
+    "scripts/ci_plan.py",
+    "scripts/ci_evidence.py",
+    "scripts/ci_execute.py",
+    "scripts/ci_dependencies.json",
+    "scripts/ci_profile.py",
+    "scripts/ci_required_baseline.json"
+  ],
+  "common_inputs": [
+    "src/**",
+    "tests/conftest.py",
+    "tests/support/**",
+    "tests/__init__.py",
+    "pyproject.toml",
+    "uv.lock",
+    ".python-version",
+    "scripts/prepare_sqlite_minimum.py",
+    "scripts/sqlite_minimum.py",
+    "scripts/run_sqlite_minimum_tests.py",
+    ".gitignore",
+    "tests/**/conftest.py",
+    "tests/**/__init__.py"
+  ],
+  "schema_inputs": [
+    "docs/schema-hardening/*.sql",
+    "docs/schema-hardening/*.json",
+    "docs/schema-hardening/*.csv",
+    "docs/schema-hardening/table-conversion.md",
+    "scripts/schema_*.py",
+    "scripts/probe_listing_seal.py",
+    "scripts/conversion/**",
+    "scripts/offline_convert.py"
+  ],
+  "prose": [
+    "AGENTS.md",
+    "README.md",
+    "docs/architecture.md",
+    "docs/cli.md",
+    "docs/data-model.md",
+    "docs/operations.md",
+    "docs/repository-identity.md",
+    "docs/testing.md",
+    "docs/implementation-status.md",
+    "docs/ci-performance.md",
+    "docs/ci-performance-results.json",
+    "docs/change-aware-ci.md",
+    "docs/schema-hardening/README.md",
+    "docs/schema-hardening/invariants.md",
+    "docs/schema-hardening/schema-proposal.md",
+    "docs/schema-hardening/offline-conversion.md",
+    "docs/schema-hardening/implementation-plan.md",
+    "docs/schema-hardening/p1-design.md",
+    "docs/schema-hardening/p1-lifecycle.md",
+    "docs/schema-hardening/p2-foundation.md",
+    "docs/ci-selection-results.json"
+  ],
+  "groups": {
+    "schema": [
+      "tests/integration/test_target_schema.py",
+      "tests/integration/test_p1_storage_lifecycle.py",
+      "tests/integration/test_schema_proposal_core.py",
+      "tests/integration/test_conversion_contract.py",
+      "tests/integration/test_invariant_contract.py",
+      "tests/integration/test_schema_design_catalog.py",
+      "tests/integration/test_v2_schema_audit.py"
+    ],
+    "p2": [
+      "tests/integration/test_conversion_foundation.py",
+      "tests/unit/test_conversion_protocol.py"
+    ],
+    "ci": [
+      "tests/unit/test_ci_profile.py",
+      "tests/unit/test_ci_plan.py",
+      "tests/unit/test_ci_evidence.py",
+      "tests/integration/test_ci_execution.py"
+    ]
+  },
+  "minimum_schema": [
+    "tests/integration/test_target_schema.py",
+    "tests/integration/test_p1_storage_lifecycle.py",
+    "tests/integration/test_schema_proposal_core.py",
+    "tests/integration/test_conversion_contract.py"
+  ],
+  "notes": {
+    "common": "conftest imports CLI/Git helpers; support fixtures and migrations are shared. Unknown/shared changes widen to full.",
+    "schema": "schema_contract reads DDL/current-schema/contract; invariant test reads inventory/CSV and referenced test AST; design/audit imports are transitive P2 dependencies.",
+    "p2": "conversion imports schema_contract/schema_audit, hashes conversion modules, and reads source migrations. No legacy HTTP/Git E2E dependency.",
+    "demo": "demo imports test_cache.expire, test_github_sync.configure and tests.support CLI/Git/HTTP fixtures.",
+    "reports": "These explicit prose/reports are not application/schema fixture inputs. ci-performance-results JSON receives stdlib structure checks. baseline JSON is profiler input and is not prose.",
+    "packaging": "CLI/resources/build metadata/locked wheels and packaging helpers determine assertions. Report bytes may appear in sdist but are not consumed by installed CLI or packaging assertions. Generated schema views are not prose."
+  }
+}
