@@ -64,7 +64,7 @@ def test_remote_evidence_rejects_untrusted_incomplete_and_expired_metadata(
     elif mutation == "wrong-revision":
         run["head_sha"] = "f" * 40
     elif mutation == "wrong-base":
-        run["pull_requests"][0]["base"]["sha"] = "f" * 40
+        value["manifest"]["context"]["base_sha"] = "f" * 40
     elif mutation == "wrong-path":
         run["path"] = ".github/workflows/other.yml"
     elif mutation == "expired":
@@ -158,3 +158,16 @@ def test_old_artifact_without_new_gate_manifest_falls_back(evidence_case):
     value["artifact"]["digest"] = "sha256:" + hashlib.sha256(client.raw).hexdigest()
     with pytest.raises(ValueError, match="manifest"):
         retrieve(ctx, client)
+
+
+def test_live_pr_association_revisions_are_not_historical_run_revisions(evidence_case):
+    ctx, value = evidence_case
+    # Observed with ceaf run 37372942822 after the feature advanced to 42e5349:
+    # run.head_sha stayed ceaf; pull_requests[0].head.sha became the new HEAD.
+    value["run"]["pull_requests"][0]["head"]["sha"] = "f" * 40
+    value["run"]["pull_requests"][0]["base"]["sha"] = "e" * 40
+    verify_envelope(value, ctx)
+    # Immutable run identity still cannot be substituted.
+    value["run"]["head_sha"] = "f" * 40
+    with pytest.raises(ValueError, match="revision"):
+        verify_envelope(value, ctx)

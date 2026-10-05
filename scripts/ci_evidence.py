@@ -24,6 +24,12 @@ def verify_envelope(envelope, context):
     prior = manifest["context"]
     repository = context["repository"]
     if (
+        prior["base_sha"] != context["base_sha"]
+        or prior["repository"] != repository
+        or prior["pr"] != context["pr"]
+    ):
+        raise ValueError("Recorded historical base/repository/PR differs")
+    if (
         run["repository"]["full_name"] != repository
         or run["head_repository"]["full_name"] != repository
     ):
@@ -35,12 +41,10 @@ def verify_envelope(envelope, context):
         or run["path"] != WORKFLOW
     ):
         raise ValueError("Wrong/incomplete/failed workflow evidence")
-    if not any(
-        p["number"] == context["pr"]
-        and p["head"]["sha"] == prior["feature_sha"]
-        and p["base"]["sha"] == prior["base_sha"]
-        for p in run["pull_requests"]
-    ):
+    # Actions' pull_requests association is live metadata: its head/base SHAs
+    # change when the PR changes. Historical revisions come from run.head_sha
+    # and the checksum-verified manifest; the planner verifies Git merge parents.
+    if not any(p["number"] == context["pr"] for p in run["pull_requests"]):
         raise ValueError("Wrong or missing PR evidence")
     if (
         str(run["id"]) == str(context.get("run_id"))

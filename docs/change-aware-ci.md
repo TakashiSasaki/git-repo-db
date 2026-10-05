@@ -31,6 +31,7 @@ PRはmerge-base→feature HEADの累積diffを`git diff --name-status -z --find-
 - 同じrepository/PRの`pull_request` run。fork、異なるworkflow、failed/cancelled/queued/partialは不可。
 - `offline` jobと必須final gateがcompleted/success。run/attempt、feature/base、artifact所属、期限、download SHA-256、manifest bytesを確認する。
 - 同じbase、prior featureが現在featureのancestor。force-push/unknown historyはfull。base更新も保守的にfull。
+- Actionsの`pull_requests` linkのhead/base SHAはPR更新で変化するlive metadataなのでhistorical revisionに使わない。immutableな`run.head_sha`、manifest、実Git merge parentsを使う。
 - tested merge treeから各laneのmode/type/blob OIDを再計算し、policy、lock/依存、Python ABI/version、native SQLite、OS/arch、runner image/compiler、uv pinを照合する。
 - 全lane fresh/pass、complete collection、minimum coverage、selection digestが正しい。
 
