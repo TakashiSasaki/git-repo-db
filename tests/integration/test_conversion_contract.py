@@ -35,6 +35,9 @@ def test_contract_matches_constructed_target_and_all_source_columns():
         ("ddl_hash", "DDL hash"),
         ("undefined_validation", "validation"),
         ("bad_destination", "destination"),
+        ("sealed_initialization", "Listing initialization"),
+        ("staged_column", "staged write columns"),
+        ("staged_dependency", "staged write dependency"),
     ],
 )
 def test_invalid_conversion_contract_is_rejected(mutation, error):
@@ -69,6 +72,15 @@ def test_invalid_conversion_contract_is_rejected(mutation, error):
         c["source_columns"][0]["outputs"] = [
             {"production": "repositories", "column": "no-field"}
         ]
+    stage = next(p for p in c["productions"] if p["id"] == "code_listing_progress")[
+        "staged_write"
+    ]
+    if mutation == "sealed_initialization":
+        stage["initial_values"]["state"] = "complete"
+    if mutation == "staged_column":
+        stage["final_columns"].append("nonexistent")
+    if mutation == "staged_dependency":
+        stage["after_productions"] = ["undefined"]
     with pytest.raises(ValueError, match=error):
         validate(c)
 

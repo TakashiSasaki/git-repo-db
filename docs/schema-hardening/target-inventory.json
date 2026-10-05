@@ -1,5 +1,5 @@
 {
-  "ddl_sha256": "f5e6fdfe1a0c22e9f7b6f4618d6b93fbd02ee44ac96cb90f49e98fbf3ae67b7d",
+  "ddl_sha256": "fd39297f3b73abc190aa82a28164f2d496048d773cbbcc9039a54972046a5709",
   "tables": {
     "acquisition_progress": [
       {

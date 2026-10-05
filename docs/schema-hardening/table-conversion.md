@@ -2,7 +2,7 @@
 
 正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。converterは未実装。
 
-| v2 table | target producers | archive-only columns |
+| v2 table | target producers | columns without direct output (archive / recipe inputs) |
 |---|---|---|
 | acquisition_roots | acquisition_roots, root_origins | pr_number, observation_id |
 | api_responses | payloads, unresolved_payloads | none |
@@ -21,7 +21,7 @@
 | contents | contents | none |
 | coverage_components | coverage_claims, coverage_scopes | none |
 | document_versions | document_versions, text_bodies | none |
-| git_objects | git_objects | none |
+| git_objects | git_objects | verified |
 | index_generations | legacy_records / legacy_values | id, kind, state, table_name, target_max_id, created_at |
 | index_membership | legacy_records / legacy_values | generation_id, document_id, input_version |
 | inventory_runs | inventory_observations | none |

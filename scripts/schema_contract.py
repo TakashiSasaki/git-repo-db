@@ -241,6 +241,39 @@ def validate(contract=None, schema=None):
             coverage.add((p["target"], column))
     if coverage != {(t, x["name"]) for t, cols in target.items() for x in cols}:
         raise ValueError("Target table without producer")
+    for p in producers.values():
+        stage = p.get("staged_write")
+        if stage is None:
+            continue
+        columns = {x["name"]: x for x in target[p["target"]]}
+        initial = stage["initial_values"]
+        final = stage["final_columns"]
+        if set(initial) != set(final) or not set(final) <= set(columns):
+            raise ValueError("Invalid staged write columns")
+        for column, value in initial.items():
+            kind = columns[column]["type"]
+            if not isinstance(
+                value,
+                {"TEXT": str, "INTEGER": int, "REAL": (int, float), "BLOB": bytes}[
+                    kind
+                ],
+            ):
+                raise ValueError("Invalid staged write type")
+        for dependent in stage["after_productions"]:
+            if (
+                dependent not in producers
+                or p["id"] not in producers[dependent]["dependencies"]
+            ):
+                raise ValueError("Invalid staged write dependency")
+    listing_stage = producers["code_listing_progress"].get("staged_write")
+    if (
+        not listing_stage
+        or listing_stage["initial_values"]
+        != {"state": "partial", "terminal": 0, "page_count": 0, "context_proven": 0}
+        or set(listing_stage["after_productions"])
+        != {"code_commits", "code_file_changes"}
+    ):
+        raise ValueError("Listing initialization must precede items and sealing")
     for r in c["source_columns"]:
         for recipe in r.get("dependent_recipes", []):
             if recipe not in producers or r["table"] not in producers[recipe].get(
@@ -332,7 +365,7 @@ def generate():
         "",
         "正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。converterは未実装。",
         "",
-        "| v2 table | target producers | archive-only columns |",
+        "| v2 table | target producers | columns without direct output (archive / recipe inputs) |",
         "|---|---|---|",
     ]
     for table in sorted({r["table"] for r in contract["source_columns"]}):

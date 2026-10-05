@@ -1,6 +1,6 @@
 # Schema v2ハードニング調査・設計と独立P1 DDL
 
-**現在の成果物:** [P1設計とCI修復](p1-design.md)、[完全target DDL](target-schema.sql)、[機械可読変換契約](conversion-contract.json)、[I01〜I31対応](invariant-contract.json)。通常migration経路と実DBは変更していない。以下の調査・88件成功は前工程の記録。最新HEADの結果はPR checks/本文で確認する。
+**現在の成果物:** [P1設計とCI修復](p1-design.md)、[完了一覧・正当な補完経路の仕上げ](p1-lifecycle.md)、[完全target DDL](target-schema.sql)、[機械可読変換契約](conversion-contract.json)、[I01〜I31対応](invariant-contract.json)。通常migration経路と実DBは変更していない。以下の調査・88件成功は前工程の記録。最新HEADの結果はPR checks/本文で確認する。
 
 対象: `TakashiSasaki/git-repo-db`。調査日: 2026-10-05 UTC。
 作業ブランチ: `design/schema-v2-hardening`。

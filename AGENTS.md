@@ -21,6 +21,7 @@
 6. [実装順序・終了条件・未確定判断](docs/schema-hardening/implementation-plan.md)
 
 [P1設計](docs/schema-hardening/p1-design.md)、[完全DDL](docs/schema-hardening/target-schema.sql)、[変換契約](docs/schema-hardening/conversion-contract.json)、[不変条件対応](docs/schema-hardening/invariant-contract.json)を新formatの正本とする。完全DDLは独立DB専用で通常migrationへ入れない。`proposal-core.sql`は中核断片の回帰検証用。converter/runtime接続はP2以降で未実装。
+[P1ライフサイクル](docs/schema-hardening/p1-lifecycle.md)でseal、単調補完、検証入口、rollback/restartを確認する。complete listingは参照の有無によらず固定し、追記にはpartial markerが必要。本文はdigest照合後のeligible NULL→既知だけ、Git verifiedは原文検証後の0→1だけ許可する。source pair時刻はmin/max集約で、個々の観測ではない。
 
 変更対象に応じて以下を参照する。
 
@@ -97,6 +98,7 @@ uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging \
 - `scripts/schema_audit.py --fixture-schema` は一時stateへ現行migrationを実適用して構造を抽出する。`--database SEALED_COPY --hash-payloads` は読取り専用診断。WAL/SHM/journal sidecarがあれば拒否するため、削除して回避しない。診断の限界は設計READMEを読む。
 - `scripts/schema_design_catalog.py` はfixture inventoryと変換規則から `table-conversion.md`、`column-conversion.csv`、`source-access.json` を生成する。機械可読契約を修正し、`scripts/schema_contract.py --generate`で再生成してtarget/逆方向必須列/規則/依存/全旧列試験を通す。`current-schema.json` は実構築したfixture構造。`source-access.json` は字句検索であり完全なcall graphではない。
 - `scripts/schema_index_probe.py` は使い捨て合成DB専用。`index-probe.json` の結果を実データの速度・容量見積りとして扱わない。
+- `scripts/probe_listing_seal.py --schema DDL --sqlite-minimum` は全74表のsynthetic再現。`test_p1_storage_lifecycle.py` と `tests/support/p1_admission.py` は許可/拒否の実行例で、新runtimeやconverterではない。暗号学的admissionとproduction証跡はP3/P4/P5へ実装する。DDL変更時は契約hash/target-inventory/生成CSV・Markdown/invariant-contractと設計を同期し、`scripts/run_sqlite_minimum_tests.py` も通す。
 - `test_v2_hardening_reproductions.py` の3件は **現行不具合を確認するcharacterization test**。成功しても不具合修正済みではない。同一OIDの複数ref衝突、PR commit/file一覧の途中再開による観測分断、保存collection再利用時のwatermark前進を扱う。後続修正時は望ましい不変条件の試験へ更新する。
 - `test_v2_schema_audit.py` は診断のreadonly性・不正所属等、`test_schema_proposal_core.py` は独立DDLの制約、`test_schema_design_catalog.py` は全カラム対応を検証する。
 

@@ -3,7 +3,7 @@
   "format_id": "repo-catalog/catalog3-p1",
   "schema_version": 3,
   "sqlite_minimum": "3.46.1",
-  "ddl_sha256": "f5e6fdfe1a0c22e9f7b6f4618d6b93fbd02ee44ac96cb90f49e98fbf3ae67b7d",
+  "ddl_sha256": "fd39297f3b73abc190aa82a28164f2d496048d773cbbcc9039a54972046a5709",
   "source_schema_sha256": "8cacdc381210ec34baa88997b1e01d1f8182cb58ed1d2ffe8bb9984df8928f83",
   "rules": {
     "copy": {
@@ -601,35 +601,35 @@
       "phase": "P4",
       "recipe": "code_listing_progress",
       "output": "listing_id",
-      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive."
+      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive. Insert initialized partial progress before loading any items. After all admitted items/pages are saved, explicitly UPDATE final output columns; complete is permanently sealed even if no code observation refers to it. Never DELETE/recreate/REPLACE a complete marker. Unproven scope cannot append until admission explicitly establishes partial."
     },
     "P4.code_listing_progress.state": {
       "type": "TEXT",
       "phase": "P4",
       "recipe": "code_listing_progress",
       "output": "state",
-      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive."
+      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive. Insert initialized partial progress before loading any items. After all admitted items/pages are saved, explicitly UPDATE final output columns; complete is permanently sealed even if no code observation refers to it. Never DELETE/recreate/REPLACE a complete marker. Unproven scope cannot append until admission explicitly establishes partial."
     },
     "P4.code_listing_progress.terminal": {
       "type": "INTEGER",
       "phase": "P4",
       "recipe": "code_listing_progress",
       "output": "terminal",
-      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive."
+      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive. Insert initialized partial progress before loading any items. After all admitted items/pages are saved, explicitly UPDATE final output columns; complete is permanently sealed even if no code observation refers to it. Never DELETE/recreate/REPLACE a complete marker. Unproven scope cannot append until admission explicitly establishes partial."
     },
     "P4.code_listing_progress.page_count": {
       "type": "INTEGER",
       "phase": "P4",
       "recipe": "code_listing_progress",
       "output": "page_count",
-      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive."
+      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive. Insert initialized partial progress before loading any items. After all admitted items/pages are saved, explicitly UPDATE final output columns; complete is permanently sealed even if no code observation refers to it. Never DELETE/recreate/REPLACE a complete marker. Unproven scope cannot append until admission explicitly establishes partial."
     },
     "P4.code_listing_progress.context_proven": {
       "type": "INTEGER",
       "phase": "P4",
       "recipe": "code_listing_progress",
       "output": "context_proven",
-      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive."
+      "definition": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive. Insert initialized partial progress before loading any items. After all admitted items/pages are saved, explicitly UPDATE final output columns; complete is permanently sealed even if no code observation refers to it. Never DELETE/recreate/REPLACE a complete marker. Unproven scope cannot append until admission explicitly establishes partial."
     },
     "P4.reanalysis_runs.id": {
       "type": "TEXT",
@@ -853,6 +853,13 @@
       "type": "TEXT",
       "phase": "P4",
       "definition": "Rebuild offline from final durable target inputs; archive old stale/orphan derived rows; missing durable source gets diagnosis, never silently count as indexed."
+    },
+    "P3.git_objects.verified": {
+      "type": "INTEGER",
+      "phase": "P3",
+      "recipe": "git_objects",
+      "output": "verified",
+      "definition": "Target verified is a monotonic admitted OID/size result, initialized to 0 until local raw Git typed-header/bytes/size verification succeeds. Preserve the exact old verified claim in legacy_values; the old boolean alone is not a fresh rehash proof. Missing raw bytes remain partial with a diagnostic, no network/fetch. Record pipeline/provenance in reanalysis_runs and validation_results in P3/P4. Preserve all identity/format/type/size fields."
     }
   },
   "productions": [
@@ -2934,7 +2941,7 @@
         "input_tables": [
           "source_repositories"
         ],
-        "operation": "Apply explicit field expressions; preserve local IDs except tracked allocate_id/body/lookup rules. Invalid required fields archive and block/partial, never default silently. Pointer bootstrap/fixup follows deferred_fixups.",
+        "operation": "Apply explicit field expressions; preserve local IDs except tracked allocate_id/body/lookup rules. Invalid required fields archive and block/partial, never default silently. Pointer bootstrap/fixup follows deferred_fixups. Pair key is retained membership-ever-seen. first_seen/last_seen are known min/max aggregate times, not event history. Copy valid old bounds without changing their representation; diagnose/archive invalid or contradictory times. Fresh rediscovery extends bounds only from supplied timezone-aware observed_at, never conversion wall clock; preserve individual inventory/page facts separately.",
         "on_missing": "archive_and_diagnose",
         "on_invalid": "blocking_or_partial_per_source_contract"
       }
@@ -4113,9 +4120,27 @@
           "pr_commits",
           "pr_file_changes"
         ],
-        "operation": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive.",
+        "operation": "One row per stable listing. Scan saved page ordinals/cursor chain, terminal marker, API caps/GraphQL errors, item positions and head/base context. complete only if terminal and context_proven; otherwise partial/unknown. Original state remains in archive. Insert initialized partial progress before loading any items. After all admitted items/pages are saved, explicitly UPDATE final output columns; complete is permanently sealed even if no code observation refers to it. Never DELETE/recreate/REPLACE a complete marker. Unproven scope cannot append until admission explicitly establishes partial.",
         "on_missing": "archive_and_diagnose",
         "on_invalid": "blocking_or_partial_per_source_contract"
+      },
+      "staged_write": {
+        "initial_values": {
+          "state": "partial",
+          "terminal": 0,
+          "page_count": 0,
+          "context_proven": 0
+        },
+        "after_productions": [
+          "code_commits",
+          "code_file_changes"
+        ],
+        "final_columns": [
+          "state",
+          "terminal",
+          "page_count",
+          "context_proven"
+        ]
       }
     },
     {
@@ -4130,6 +4155,7 @@
       ],
       "cardinality": "many",
       "dependencies": [
+        "code_listing_progress",
         "code_listings",
         "fetch_occurrences",
         "legacy_values"
@@ -4204,6 +4230,7 @@
       ],
       "cardinality": "many",
       "dependencies": [
+        "code_listing_progress",
         "code_listings",
         "fetch_occurrences",
         "legacy_values"
@@ -4422,9 +4449,9 @@
           "type": "INTEGER"
         },
         "verified": {
-          "rule": "copy",
+          "rule": "caller",
           "inputs": [
-            "source.git_objects.verified"
+            "P3.git_objects.verified"
           ],
           "type": "INTEGER"
         }
@@ -4433,7 +4460,7 @@
         "input_tables": [
           "git_objects"
         ],
-        "operation": "Apply explicit field expressions; preserve local IDs except tracked allocate_id/body/lookup rules. Invalid required fields archive and block/partial, never default silently. Pointer bootstrap/fixup follows deferred_fixups.",
+        "operation": "Target verified is a monotonic admitted OID/size result, initialized to 0 until local raw Git typed-header/bytes/size verification succeeds. Preserve the exact old verified claim in legacy_values; the old boolean alone is not a fresh rehash proof. Missing raw bytes remain partial with a diagnostic, no network/fetch. Record pipeline/provenance in reanalysis_runs and validation_results in P3/P4. Preserve all identity/format/type/size fields.",
         "on_missing": "archive_and_diagnose",
         "on_invalid": "blocking_or_partial_per_source_contract"
       }
@@ -4702,7 +4729,7 @@
         "input_tables": [
           "contents"
         ],
-        "operation": "Apply explicit field expressions; preserve local IDs except tracked allocate_id/body/lookup rules. Invalid required fields archive and block/partial, never default silently. Pointer bootstrap/fixup follows deferred_fixups.",
+        "operation": "Apply explicit field expressions; preserve local IDs except tracked allocate_id/body/lookup rules. Invalid required fields archive and block/partial, never default silently. Pointer bootstrap/fixup follows deferred_fixups. Stored text must pass exact raw-content-v1 digest/length and UTF-8 eligibility admission; never overwrite known bytes. For a missing eligible text, persist claim and digests first, then a verified NULL-to-known UPDATE. Do not change created_at or text_state; missing anchors/raw bytes stay partial with a diagnostic.",
         "on_missing": "archive_and_diagnose",
         "on_invalid": "blocking_or_partial_per_source_contract"
       }
@@ -8345,7 +8372,8 @@
       "validation": [
         "exact_archive",
         "target_constraints",
-        "edge_proof"
+        "edge_proof",
+        "offline_verification"
       ],
       "failure": "partial",
       "dependent_recipes": []
@@ -8852,13 +8880,8 @@
     {
       "table": "git_objects",
       "column": "verified",
-      "outputs": [
-        {
-          "production": "git_objects",
-          "column": "verified"
-        }
-      ],
-      "relation": "identity",
+      "outputs": [],
+      "relation": "derived",
       "archive": {
         "table": "legacy_values",
         "value_column": "value_bytes",
@@ -8875,10 +8898,13 @@
       "validation": [
         "exact_archive",
         "target_constraints",
-        "edge_proof"
+        "edge_proof",
+        "offline_verification"
       ],
       "failure": "partial",
-      "dependent_recipes": []
+      "dependent_recipes": [
+        "git_objects"
+      ]
     },
     {
       "table": "index_generations",
@@ -14619,7 +14645,8 @@
   "validations": {
     "exact_archive": "typed key/value bytes + storage type + per-row hash, all old values including NULL and orphan",
     "target_constraints": "fresh target FK/CHECK/trigger validation, invalid values archived without coercion",
-    "edge_proof": "ID/owner/current/ordinal/payload relation comparison, not counts"
+    "edge_proof": "ID/owner/current/ordinal/payload relation comparison, not counts",
+    "offline_verification": "Application admission: supplied local raw bytes, Git typed-header/size/OID or all raw-content-v1 digest anchors. Missing/contradictory proof is diagnosed, never fetched or silently promoted. Production evidence persistence remains P3/P4."
   },
   "archive_key_encoding": {
     "source_key": "column-order PK tuple: each element storage-type tag + unsigned 8-byte big-endian length + archive_bytes",

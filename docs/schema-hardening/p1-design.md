@@ -6,7 +6,7 @@
 
 ## 採用する物理構造
 
-完全DDLの正本は [target-schema.sql](target-schema.sql)。独立空DBに構築できる74 STRICT tables、426 columns、159 indexes（自動索引を含む）、250 triggers。
+完全DDLの正本は [target-schema.sql](target-schema.sql)。独立空DBに構築できる74 STRICT tables、426 columns、159 indexes（自動索引を含む）、251 triggers。
 format_idは `repo-catalog/catalog3-p1`、versionは3。未リリースの独立設計formatであり、通常アプリが読める形式とは宣言しない。
 DDL hashは [conversion-contract.json](conversion-contract.json) の `ddl_sha256`（ファイルのUTF-8 bytesのSHA-256）を正本にする。新DB identityへ同じhashと新UUIDv4を記録し、source ledgerとは別に識別する。実構築した全column/type/nullability/default/PKは [target-inventory.json](target-inventory.json)、FK/UNIQUE/CHECK/trigger/indexの正本は完全SQL。
 SQLite下限は **3.46.1**。各接続はforeign_keys=ON、recursive_triggers=ON。今回のSQL試験はWALを利用せず、アプリのWAL runtime gateを緩めない。
@@ -39,11 +39,12 @@ snapshotのacquisition_idは、同じrepoの別acquisitionへの付け替えも�
 全FKにON UPDATE/DELETE RESTRICTを明示。全PKにidentity triggerを置き、取得/変換factはDELETEも禁止する。
 conflict INSERT・UPSERT・REPLACEはPK/UNIQUE衝突をBEFORE INSERTで拒否する。REPLACEの暗黙DELETEはrecursive_triggers=OFFでも回避させない。冪等converterは既存map/hashを照合してから未作成rowだけINSERTする。
 metadata/current pointer/progressはDDLで許した列だけ明示UPDATEする。新しい未公開factの構築順はNULL pointer→参照先作成→publish→pointer設定。transaction rollbackは許可する。
+P1仕上げではcomplete listing markerのDELETEを拒否し、追記にはpartial markerを必須にした。eligible本文のwrite-once補完、source pair時刻のmin/max集約、Git検証の0→1を許可する。[正当なライフサイクルと再現記録](p1-lifecycle.md)に可変性・暗号学的admission・rollback/restartを定義する。
 `proposal-core.sql`も同じidentity方針へ修正したが、完全DDLの代用にはしない。
 
 暗号学的OID/digest照合、UUIDv4発行、dense ordinal、全page chain/cap/partial評価、scopeの主体/権限一致、公開前保存義務、effective coverageの証明はSQLだけでは確定できない。[invariant-contract.json](invariant-contract.json)の各I01〜I31にDDL・実在する試験node・残るP2〜P5 gateを対応付けた。
 `context_proven`/terminal/complete等の値はadmissionが証拠を確認して設定する。SQLでflagを書けたことを完成証明とは呼ばない。
-250 triggersとchild FK indexesの費用を隠さない。空targetはこの環境で271 pages×4096 bytes。データ入りの書込み/索引/容量費用は未測定でP2〜P4のsynthetic実測へ引き継ぐ。実DB規模の見積りではない。
+251 triggersとchild FK indexesの費用を隠さない。仕上げ後の空targetはこの環境で272 pages×4096 bytes。データ入りの書込み/索引/容量費用は未測定でP2〜P4のsynthetic実測へ引き継ぐ。実DB規模の見積りではない。
 
 ## 機械検証する変換契約
 
@@ -68,7 +69,7 @@ locked syncはwheel URLからhttpxを取得・導入できるが、registry reso
 空cacheからwheel/sdist-wheel両方を実行して成功した。packagingのskip/xfail/削除はない。network guardとGit file限定も維持した。失敗時stderrはpytest.failで省略せず表示する。
 SQLite下限はonline準備でpysqlite3-binary==0.5.4を専用領域へ導入し、独立制約試験だけを3.46.1で実行する。通常アプリのSQLite依存は変更しない。
 
-ローカル検証では標準gate 190 passed、SQLite 3.46.1 lane 103 passed、空cache包装2 passed、offline-recovery demo complete。検証コマンドは下記。最終HEADの再実行とCI結果はこのPRの最新checks/本文で確認する。
+仕上げ前HEAD `62692a8` までのローカル検証は標準gate 190 passed、SQLite 3.46.1 lane 103 passed、空cache包装2 passed、offline-recovery demo complete。今回の仕上げは[p1-lifecycle.md](p1-lifecycle.md)を参照。検証コマンドは下記。最終HEADの再実行とCI結果はこのPRの最新checks/本文で確認する。
 
 ```bash
 uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging --strict-markers -m "not live and not benchmark"

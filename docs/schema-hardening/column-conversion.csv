@@ -86,7 +86,7 @@ content_locations,cache_id,content_locations.cache_id | legacy_values.value_byte
 content_locations,state,content_locations.state | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
 contents,id,contents.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
 contents,byte_length,contents.byte_length | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
-contents,raw_text,contents.raw_text | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+contents,raw_text,contents.raw_text | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof | offline_verification
 contents,text_state,contents.text_state | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
 contents,created_at,contents.created_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
 coverage_components,owner_id,coverage_scopes.id | coverage_claims.id | coverage_claims.scope_id | legacy_values.value_bytes,split,coverage_scopes | coverage_claims,allocate_id | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
@@ -102,7 +102,7 @@ git_objects,object_format,git_objects.object_format | legacy_values.value_bytes,
 git_objects,oid,git_objects.oid | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
 git_objects,type,git_objects.type | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
 git_objects,size,git_objects.size | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
-git_objects,verified,git_objects.verified | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+git_objects,verified,legacy_values.value_bytes,derived,git_objects,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof | offline_verification
 index_generations,id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
 index_generations,kind,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
 index_generations,state,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof

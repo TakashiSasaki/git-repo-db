@@ -19,6 +19,7 @@ raise SystemExit(
     pytest.main(
         [
             "tests/integration/test_target_schema.py",
+            "tests/integration/test_p1_storage_lifecycle.py",
             "tests/integration/test_schema_proposal_core.py",
             "tests/integration/test_conversion_contract.py",
             "-q",

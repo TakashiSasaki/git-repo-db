@@ -9,12 +9,13 @@ schema proposalと再現の期待値はレビュー可能にし、未確定を�
 ## P1成果と次工程の実装順序
 
 P1は独立完全DDL、機械契約、制約テストを作成した。[p1-design.md](p1-design.md)に採用判断・未実装・CIの確認方法を記録する。通常runner・実DB・旧cacheは対象外。P2以降のconverter/persistenceは未実装。
+[P1仕上げ](p1-lifecycle.md)でcomplete markerの削除/置換経路を閉じ、本文補完・再発見・再検証・partial→complete・rollback/restartの正当系を完全DDLで実行する。変換契約のstaged writeと旧検証claimの保全をP2/P3へ渡す。synthetic admission例を新runtimeの完成と扱わない。
 
 ## 実装順序とgate
 
 | 工程 | 実装 | 終了条件・試験 |
 |---|---|---|
-| P1 target DDL確定 | source mappingから全physical DDLを作る。format identity、scoped keys、publication/type triggers、JSON/state/numeric約束、archive/ledger、typed scopeを確定 | 全table/column mapping整合。INSERT/UPDATE/DELETE・NULL・deferred/bootstrap・rollback試験。不正owner/type/flagが直接SQLでも拒否される。old source formatはread-only入力専用 |
+| P1 target DDL確定 | source mappingから全physical DDLを作る。format identity、scoped keys、publication/type triggers、JSON/state/numeric約束、archive/ledger、typed scope、sealと単調補完を確定 | 全table/column mapping整合。INSERT/UPDATE/DELETE・NULL・deferred/bootstrap・rollback試験。不正owner/type/flagとcomplete marker削除/REPLACEを拒否。本文/検証/再発見/再開の正当系も実行。標準gate・3.46.1・packaging・後段demo成功。old source formatはread-only入力専用 |
 | P2 conversion foundation | sealed source識別、未知構造・typed row hash、new destination、ID map、batch transaction、pause/resume、space preflight、network deny、source/cache write deny | every old key/columnの対応とtyped archive、fault injectionでcommitted batchだけ再開。source/cache fingerprint不変。API client/fetch/GCを起動できない |
 | P3 lossless normalized conversion | repo/binding/endpoint、Git構造、raw content/digest、API payload/page、PR/doc/version/observation、progress分離 | IDs/bytes/edges/current pointer・A-B-A・orphan/invalid data保持、missing raw不正complete防止。全DB間比較は件数以外の証拠を含む |
 | P4 offline reanalysis | saved REST/GraphQL pages、pending/unresolved payload、stable code listings、root origins、必要local Git raw、manifest/search rebuild | 同一OID refs、page中断再開、head/base変化、cap/GraphQL partial/上書きpage、非canonical raw不在を検証。旧assertionsと派生結果が別に辿れる |

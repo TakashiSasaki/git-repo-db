@@ -20,9 +20,9 @@ def put(db, table, **values):
     )
 
 
-@pytest.fixture
-def target():
-    db = construct()
+def build_target(sql=None):
+    """Seed a synthetic fixture using the complete DDL, optionally a review blob."""
+    db = construct(sql)
     put(
         db,
         "service_instances",
@@ -220,6 +220,12 @@ def target():
         observed_at=TIME,
         parsed_at=TIME,
     )
+    return db
+
+
+@pytest.fixture
+def target():
+    db = build_target()
     yield db
     if db.in_transaction:
         db.rollback()
