@@ -112,6 +112,7 @@ uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging \
 
 - `scripts/offline_convert.py` がguard付き専用入口。`engine.run`には導入済みworker policyが必要。原本/旧cache、通常sync/runtimeへ接続しない。synthetic以外を扱う場合は最新依頼の実施範囲を確認する。full domain recipes、API/Git再解析、first sync、切替はP3-P7。
 - sourceの実schema/migration/checksum/byte SHA/stat、target実DDL/contract/parser/converter hash、全committed output proofをresume前に確認する。違えば停止。targetは別DBで`building`、archive completeをvalidatedへ格上げしない。
+- converterのwritable regular fileはlink count 1を要求する。workspace内のhardlinkでも原本/cacheとinodeを共有し得るため、作成と既存aliasへのmutationを拒否する。Symlinkの`resolve()`だけで保護したことにしない。
 - Python file/SQLite auditのないbindingを使わない。最小SQLite laneはhash固定ソースからCPython stdlib bindingをonline準備し、offline試験で3.46.1とauditを確認する。固定4 workerの各interpreterもtest import前にbindingを有効にし、実versionを確認する。source/cacheのsymlink・特殊file・remote FSは未対応で拒否する。
 - 標準CIはPRとmain push、PR/ref別concurrency。固定4 worker、packagingは逐次step。JUnitのnode IDを全required collectionと照合する。coverage低下・guard解除・skip/xfailで高速化しない。`pytest -n auto`にしない。
 - 性能判断には`scripts/ci_profile.py`のwall/JUnit/runtimeと複数回の中央値・範囲を使う。CI artifactはtiming JSON/Markdown/XML/required test IDsのみ。DB/cache/payloadは含めない。

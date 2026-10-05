@@ -145,6 +145,16 @@ def install(workspace, protected=()):
             for p in protected
         ):
             raise PermissionError("Converter denies source/outside-workspace write")
+        try:
+            identity = path.stat()
+        except FileNotFoundError:
+            pass
+        else:
+            # resolve() follows symlinks, but a pre-existing hardlink retains
+            # another path to the same source/cache inode. Writable converter
+            # files have no legitimate need for multiple links.
+            if stat.S_ISREG(identity.st_mode) and identity.st_nlink != 1:
+                raise PermissionError("Converter denies hardlinked file mutation")
 
     def audit(event, args):
         if event.startswith(("subprocess.", "os.exec", "os.spawn")) or event in {
@@ -176,7 +186,9 @@ def install(workspace, protected=()):
                 args[0],
                 args[-1] if event != "os.truncate" else None,
             )
-        elif event in {"os.rename", "os.link", "os.symlink"}:
+        elif event == "os.link":
+            raise PermissionError("Converter denies hardlink creation")
+        elif event in {"os.rename", "os.symlink"}:
             if event != "os.symlink":
                 check(args[0], args[2] if len(args) > 2 else None)
             check(args[1], args[2] if event == "os.symlink" else args[3])

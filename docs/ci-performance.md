@@ -95,4 +95,8 @@ feature `003f8e487773cf1d7b941786985759a978390d5c` の[run 37366302524](https://
 
 fixed4を採用し、minimum laneの全225件を維持する。local中央値では64.0%短縮、追加jobやsetup重複はない。worker binding bootstrapが唯一の追加isolation処理。CIのcold準備17秒は保証のため維持し、ネットワークguardやpackagingには変更を加えない。最小laneを省く構成、強制retry、別job分割は採用しない。
 
-最終configurationはnormal316件を4 worker、packaging2件を逐次、minimum225件を4 workerで同一jobに実行する。確定feature SHAの最終hosted測定は[PR #1のchecks](https://github.com/TakashiSasaki/git-repo-db/pull/1/checks)、step summary、`ci-profile-<run-id>-<attempt>` artifact、PRのvalidation記録を参照する。JSONには第一P2 runと同じconfigurationの複数local trialを保持する。単一hosted sampleによるhard thresholdは設けない。
+上記benchmarkの後、既存hardlink aliasによるsource/cache write回避を3件の回帰試験で塞いだ。最終configurationはnormal319件を4 worker、packaging2件を逐次、minimum228件を4 workerで同一jobに実行する。225件/318件の過去sampleを新件数へ書き換えない。確定feature SHAの最終hosted測定は[PR #1のchecks](https://github.com/TakashiSasaki/git-repo-db/pull/1/checks)、step summary、`ci-profile-<run-id>-<attempt>` artifact、PRのvalidation記録を参照する。JSONには第一P2 runと複数local trialを保持する。単一hosted sampleによるhard thresholdは設けない。
+
+追加修正後の全321件も3回成功し、元の318 IDsが全て残ることと新しい3 IDsを毎回照合した。normal + packagingの中央値39.824秒（38.176–40.266）、minimum228件は5.998秒（5.630–6.337）。`ci-performance-baseline.json`はこの319件normal laneの3 trial、Python/SQLite/CPU条件を使って更新した。過去225件の逐次/2/4比較と最終228件を同じcoverageの比較として扱わない。
+
+`a0f5b8b`のrun 37368121717 attempt 1/2は、[GitHub Actions runner割当遅延incident](https://stspg.io/c11dc9nb1zdq)と同じ時間帯にrunner未取得で終了した。annotationは`The job was not acquired by Runner of type hosted even after multiple attempts`、runner ID 0、step 0件で、test failure sampleではない。各待機約15分をrunner実行時間やpytest時間として計上しない。retry/skipでテスト失敗を隠す処理は追加していない。失敗/再実行/最終HEADをPR検証記録へ残す。

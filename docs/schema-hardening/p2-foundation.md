@@ -51,6 +51,8 @@ guardはDBを開く前に導入する。新規socket/connect/send/receive、exec
 
 Python file mutationはworkspace以外とsource/cache/sidecarを拒否する。audit eventにdir_fdが含まれないopen経路はseccompでFD相対openを拒否し、rename/chmod等のFD相対mutationも拒否する。SQLiteの第二の誤ったwrite connectionはauditで拒否する。接続audit eventのないbindingはfail closed。これは固定したtrusted converterコードの誤writeを防ぐ仕組みで、任意native plugin実行用のfilesystem sandboxではない。native extension loadingを禁止し、運用にpluginを追加しない。
 
+workspaceのwritable regular fileはlink count 1を要求し、hardlink作成も拒否する。`resolve()`だけでは既存hardlinkが原本/cacheと同じinodeを共有していることを検出できない。`a0f5b8b9bb49675010843a17d51ac10ad8c418e6`でsource/cache aliasへのPython writeと、停止済みWAL-format sourceを`target.sqlite3`にhardlinkした場合のheader変更をsyntheticで再現した（3 failed）。修正後は接続/書込み前に拒否し、原本bytes/statが変わらないことを検証する。target/workspaceのhardlinked filesは未対応で、解除のため原本へ操作しない。
+
 依存準備は別process/別工程。`prepare_wheelhouse.py`、`prepare_sqlite_minimum.py` はonline準備で、converter/validatorから参照・実行しない。
 
 ## exact archiveとidentity

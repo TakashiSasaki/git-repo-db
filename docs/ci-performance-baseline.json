@@ -1,6 +1,6 @@
 {
   "profile_version": 1,
-  "description": "Local pre-push full required normal lane; advisory only; different runner contexts are not compared",
+  "description": "Local current P2 required normal lane after hardlink guard fix; advisory only; different runner contexts are not compared",
   "runtime": {
     "python": "3.12.14",
     "sqlite": "3.53.1",
@@ -13,8 +13,8 @@
       "mode": "xdist",
       "workers": 4,
       "samples": 3,
-      "test_count": 316,
-      "median_seconds": 37.556143252004404
+      "test_count": 319,
+      "median_seconds": 37.244
     }
   }
 }

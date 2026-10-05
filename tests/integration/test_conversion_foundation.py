@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from scripts.conversion import archive, engine, mapping, source, target
-from scripts.conversion.common import DESIGN, ConversionError
+from scripts.conversion.common import DESIGN, ConversionError, stat_identity
 from scripts.schema_contract import tagged_key
 from tests.support.conversion_fixture import REPO_ID, make_source
 
@@ -87,6 +87,35 @@ def test_guarded_worker_denies_acquisition_and_source_mutation(sealed, probe):
     before = contents(database), source.cache_inventory([cache])
     assert worker(workspace, "--probe", probe) == {"denied": probe}
     assert before == (contents(database), source.cache_inventory([cache]))
+
+
+@pytest.mark.parametrize("kind", ["source", "cache"])
+def test_existing_hardlink_alias_cannot_bypass_input_write_guard(sealed, kind):
+    database, cache, workspace = sealed
+    original = database if kind == "source" else cache / "objects/evidence"
+    os.link(original, workspace / "input-alias")
+    before = contents(original), stat_identity(original)
+    probe = f"{kind}-hardlink-open"
+    assert worker(workspace, "--probe", probe) == {"denied": probe}
+    assert before == (contents(original), stat_identity(original))
+
+
+def test_source_hardlinked_as_destination_is_never_opened_writable(tmp_path):
+    database = tmp_path / "legacy.sqlite3"
+    cache = make_source(database)
+    with sqlite3.connect(database) as db:
+        assert db.execute("PRAGMA journal_mode=WAL").fetchone()[0] == "wal"
+        db.execute("UPDATE catalog_meta SET publication_seq=42")
+    db.close()
+    workspace = tmp_path / "conversion"
+    workspace.mkdir()
+    os.link(database, workspace / "target.sqlite3")
+    engine.seal_input(database, workspace, [cache])
+    before = contents(database), stat_identity(database)
+    worker(workspace, expected=2)
+    # journal_mode=DELETE on an accidentally writable connection would rewrite
+    # the stopped WAL-format source header before target identity validation.
+    assert before == (contents(database), stat_identity(database))
 
 
 def test_complete_exact_archive_and_replay(sealed):

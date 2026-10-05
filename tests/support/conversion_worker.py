@@ -51,6 +51,12 @@ def main():
             "source-sqlite": lambda: sqlite3.connect(original).execute(
                 "DELETE FROM catalog_meta"
             ),
+            "source-hardlink-open": lambda: (
+                args.workspace / "input-alias"
+            ).write_bytes(b"bad"),
+            "cache-hardlink-open": lambda: (args.workspace / "input-alias").write_bytes(
+                b"bad"
+            ),
             "source-ro": lambda: write_sql(args.workspace / "source.sqlite3"),
             "cache-open": lambda: (cache / "objects/evidence").write_bytes(b"bad"),
             "cache-unlink": lambda: (cache / "objects/evidence").unlink(),

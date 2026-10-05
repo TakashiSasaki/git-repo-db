@@ -676,5 +676,58 @@
         }
       }
     ]
+  },
+  "local_current": {
+    "tests": 321,
+    "normal_tests": 319,
+    "packaging_tests": 2,
+    "minimum_tests": 228,
+    "workers": 4,
+    "samples": 3,
+    "trials": [
+      {
+        "tests": 35.425,
+        "packaging": 2.751,
+        "sqlite-minimum": 5.998
+      },
+      {
+        "tests": 37.656,
+        "packaging": 2.61,
+        "sqlite-minimum": 5.63
+      },
+      {
+        "tests": 37.244,
+        "packaging": 2.58,
+        "sqlite-minimum": 6.337
+      }
+    ],
+    "combined_median_seconds": 39.824,
+    "combined_range_seconds": [
+      38.176,
+      40.266
+    ],
+    "minimum_median_seconds": 5.998,
+    "minimum_range_seconds": [
+      5.63,
+      6.337
+    ],
+    "coverage_ids_match_each_trial": true,
+    "all_previous_318_ids_preserved": true,
+    "failures": 0,
+    "note": "worktree after a0f5b8b; hardlink guard fix plus three new regressions; final committed HEAD additionally receives full gate"
+  },
+  "hosted_infrastructure_failures": {
+    "run_id": 37368121717,
+    "feature_sha": "a0f5b8b9bb49675010843a17d51ac10ad8c418e6",
+    "attempts": [
+      1,
+      2
+    ],
+    "runner_id": 0,
+    "executed_steps": 0,
+    "test_execution_seconds": null,
+    "annotation": "The job was not acquired by Runner of type hosted even after multiple attempts",
+    "incident_url": "https://stspg.io/c11dc9nb1zdq",
+    "note": "No test ran. Allocation waits are not runner or pytest execution samples."
   }
 }
