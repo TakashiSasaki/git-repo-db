@@ -34,7 +34,7 @@ Implement and test the following prerequisites; do not stop at another design-on
 P2 currently rejects even legitimate application-generated FTS/ANALYZE additions because it requires the baseline 53-table/287-column shape.
 
 - Inventory the complete source schema read-only. Classify strict v2 core, recognized application-derived structures, supported SQLite statistics/internal structures, and unsupported objects.
-- Keep core schema/migration checks strict **and** retain the complete physical source hash/exact schema inventory. Never replace full-source proof with a filtered hash or rewrite migration checksumsums.
+- Keep core schema/migration checks strict **and** retain the complete physical source hash/exact schema inventory. Never replace full-source proof with a filtered hash or rewrite migration checksums.
 - Recognize FTS by actual definitions/options/columns, supported runtime behavior, and its relation to application index-generation records. Prefixes such as `catalog_fts_` or `sqlite_` are not authorization. Do not execute arbitrary source DDL, load extensions, or issue write-form FTS checks/rebuilds against the source.
 - Explicitly handle supported valid/stale/incomplete derived states. Unknown user objects, suspicious lookalikes and unsupported layouts remain fail-closed with diagnostics; do not drop objects to make admission pass.
 - Give every accepted object a preservation disposition: normalized input, exact typed archive, sealed-byte preservation with explicit rebuild/exclusion, or blocking unsupported input. Preserve all original bytes/acquisition facts; do not require FTS index bytes to masquerade as content.
