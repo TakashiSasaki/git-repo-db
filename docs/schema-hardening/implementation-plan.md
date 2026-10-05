@@ -1,12 +1,16 @@
 # 段階的実装計画と未確定判断
 
-## 今回の区切り
+## 前工程の区切り
 
 調査基準SHA/branch確認、実v2構築・全制約抽出、runtimeと試験の読み書き照合、3事象の再現、readonly診断、不変条件、logical target/schema core、全table/column対応、offline変換・検証・切替仕様を作成する。
 source application、001/002 migration、schema version、収集済みDB/cacheを変更しない。target production DDL投入、実データconversion/cutover、自動mergeは範囲外。
 schema proposalと再現の期待値はレビュー可能にし、未確定を実装済みと書かない。
 
-## 次工程の実装順序とgate
+## P1成果と次工程の実装順序
+
+P1は独立完全DDL、機械契約、制約テストを作成した。[p1-design.md](p1-design.md)に採用判断・未実装・CIの確認方法を記録する。通常runner・実DB・旧cacheは対象外。P2以降のconverter/persistenceは未実装。
+
+## 実装順序とgate
 
 | 工程 | 実装 | 終了条件・試験 |
 |---|---|---|

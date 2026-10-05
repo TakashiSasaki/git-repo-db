@@ -12,6 +12,10 @@ jobs:
         with:
           version: '0.12.19'
       - run: uv sync --locked --group dev
+      - name: Prepare locked wheels (online preparation)
+        run: uv run --no-sync python scripts/prepare_wheelhouse.py
+      - name: Prepare minimum SQLite lane (online preparation)
+        run: uv pip install --target artifacts/sqlite-min pysqlite3-binary==0.5.4
       - run: uv run --no-sync ruff check src tests scripts
       - run: uv run --no-sync ruff format --check src tests scripts
       - name: Required FTS success lane
@@ -21,4 +25,6 @@ jobs:
       - run: uv build --out-dir artifacts/dist
       - run: uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
       - run: uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging --strict-markers -m "not live and not benchmark"
+      - name: SQLite 3.46.1 independent schema constraints (offline)
+        run: uv run --no-sync python scripts/run_sqlite_minimum_tests.py
       - run: uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery

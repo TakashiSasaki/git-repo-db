@@ -1,6 +1,6 @@
 # 検証方法
 
-依存準備は`uv sync --locked --group dev`です。取得とテスト実行を分離します。
+依存準備は`uv sync --locked --group dev`と`uv run --no-sync python scripts/prepare_wheelhouse.py`です。取得とテスト実行を分離します。
 標準試験は実アカウントや実tokenを不要にし、外部通信を遮断します。
 親pytestと子Pythonにはloopbackだけを許可するsocket guard、Gitにはfile-only transportを適用します。
 未知の合成API要求、API版やdummy認証headerの欠落はfixtureが拒否します。
@@ -23,9 +23,11 @@ API fixtureは全PR状態・文書種別、101 thread/101 replies、REST/GraphQL
 停止試験は明示的に有効化したhookの到達通知で位置を確定し、sleepで停止地点を推測しません。
 SQLITE_FULLは一時DBのmax_page_countで再現し、ホストのディスクを埋めません。
 
-package試験はwheelとsdist由来wheelをofflineで新規venvへ導入し、source外CWDから起動します。
+package試験はlock/SHA検証済みwheelhouseを`--offline --no-index --find-links`で使い、wheelとsdist由来wheelを新規venvへ導入してsource外CWDから起動します。既存uv cacheのregistry metadataがなくても実行できます。
 import元を確認し、console scriptとpython -mの両入口、migration/schema/GraphQL等の同梱資源を利用します。
 FTS対応CIでは再構築の成功、利用不能構成では明示操作のexit 4とscanの同値性を検証します。
 
 live/pilot/benchmarkは標準試験とは別です。実認証、対象、容量/要求予算が設定された後に明示実行します。
 実行結果・未実行項目・残件はimplementation-status.mdに記録します。
+
+独立target DDL/機械契約の下限laneはSQLite 3.46.1。online準備で`uv pip install --target artifacts/sqlite-min pysqlite3-binary==0.5.4`を行い、`uv run --no-sync python scripts/run_sqlite_minimum_tests.py`をoffline実行します。通常アプリのSQLiteやmigration runnerを差し替えません。

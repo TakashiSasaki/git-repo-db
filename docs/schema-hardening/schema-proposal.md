@@ -1,7 +1,7 @@
 # 新スキーマ案と変更理由
 
-**設計案。完全なproduction DDLやconverterは未実装。** `proposal-core.sql`はownership/pointer/root/listingの方式を検証する独立DDL断片で、applicationのmigration資源には入れない。
-target formatの仮称は`repo-catalog/catalog3-draft`、schema version仮称3。未確定DDLをrelease済みformatとして宣言しない。
+**論理案の記録。P1で採用した完全物理DDLと確定判断は [p1-design.md](p1-design.md)・[target-schema.sql](target-schema.sql) が正本。converterと通常runtime接続は未実装。** `proposal-core.sql`はownership/pointer/root/listingの方式を検証する独立DDL断片で、applicationのmigration資源には入れない。
+中核断片は`repo-catalog/catalog3-draft`。P1の独立formatは`repo-catalog/catalog3-p1`、version 3。release済みapplication formatとは宣言しない。
 
 ## 1. 全体の区分と正本
 
@@ -19,7 +19,7 @@ target formatの仮称は`repo-catalog/catalog3-draft`、schema version仮称3�
 | 派生索引 | search_documents、index_generations、index_membership、legacy_derived_records |
 
 既存53 tablesの287 columnsはcolumn-conversion.csvで全列対応を与える。表の新規分割はこの区分を実装するための論理モデルであり、名前/物理統合は全DDL作成時に確定する。
-既存columnで変更を指定していない属性（metadata、raw payload、timestamp、reason等）もtarget本体またはtyped legacy envelopeへ保持する。DDL断片で省略した属性を捨てる意味ではない。
+既存columnで変更を指定していない属性（metadata、raw payload、timestamp、reason等）もtarget本体またはlegacy_records/legacy_valuesへ保持する。DDL断片で省略した属性を捨てる意味ではない。
 
 ## 2. repo、binding、取得先
 
@@ -56,7 +56,7 @@ commitsのraw_headers/raw_message、tagのraw_payload、保存raw_text、残存G
 ## 4. observationとbody、旧current state
 
 document_versionsのlocal IDは維持し、本文実体はtext_bodiesへ切り出す。
-bodyはUTF-8 byte length+SHA-256を候補に、exact bytesで共有する。versionはdocumentに属するまま、observationは別rowを維持する。
+bodyはUTF-8 byte length+SHA-256を候補に、exact bytesで共有する。versionはdocumentに属するまま既存IDを維持し、同document/bodyでも別旧version IDを許す。observationは別rowを維持する。
 同bodyで別観測、A→B→A、別API requestで同payloadはそれぞれ別事実である。
 Git contentsとの全面統合は必須にしない。Gitのbinary/profile/raw digestと、JSONから抽出したPR Unicode本文の表現・由来を保つ。共通byte-storeへ統合するかは未確定。
 

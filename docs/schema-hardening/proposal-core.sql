@@ -111,7 +111,7 @@ CREATE TABLE document_versions(
     id INTEGER PRIMARY KEY,
     document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE RESTRICT,
     body_id INTEGER NOT NULL REFERENCES text_bodies(id) ON DELETE RESTRICT,
-    UNIQUE(document_id,body_id), UNIQUE(id,document_id)
+    UNIQUE(id,document_id)
 ) STRICT;
 CREATE TABLE document_observations(
     id INTEGER PRIMARY KEY, document_id TEXT NOT NULL, version_id INTEGER NOT NULL,
@@ -191,3 +191,66 @@ CREATE TABLE job_attempts(
 -- Required runtime facts, payload/page tables, provenance, coverage, cache,
 -- conversion ledger and FTS modules are specified in schema-proposal.md.
 -- This fragment verifies the proposed ownership/pointer/listing/root mechanisms.
+
+-- Identity is immutable even while constructing an unpublished fact.
+-- Publication is monotonic. REPLACE must not delete/reinsert facts implicitly.
+CREATE TRIGGER database_identity_identity_fixed BEFORE UPDATE ON database_identity WHEN NEW.singleton IS NOT OLD.singleton BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER service_instances_identity_fixed BEFORE UPDATE ON service_instances WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER service_instances_no_replace BEFORE INSERT ON service_instances WHEN EXISTS(SELECT 1 FROM service_instances WHERE (name=NEW.name) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER sources_identity_fixed BEFORE UPDATE ON sources WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER sources_no_replace BEFORE INSERT ON sources WHEN EXISTS(SELECT 1 FROM sources WHERE (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER repositories_identity_fixed BEFORE UPDATE ON repositories WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER repositories_no_replace BEFORE INSERT ON repositories WHEN EXISTS(SELECT 1 FROM repositories WHERE (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER repository_bindings_identity_fixed BEFORE UPDATE ON repository_bindings WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER repository_bindings_no_replace BEFORE INSERT ON repository_bindings WHEN EXISTS(SELECT 1 FROM repository_bindings WHERE (id=NEW.id AND repo_id=NEW.repo_id) OR (instance_id=NEW.instance_id AND provider_repo_id=NEW.provider_repo_id) OR (repo_id=NEW.repo_id AND instance_id=NEW.instance_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER repository_endpoints_identity_fixed BEFORE UPDATE ON repository_endpoints WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER repository_endpoints_no_replace BEFORE INSERT ON repository_endpoints WHEN EXISTS(SELECT 1 FROM repository_endpoints WHERE (id=NEW.id AND repo_id=NEW.repo_id) OR (repo_id=NEW.repo_id AND url=NEW.url) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER git_acquisitions_identity_fixed BEFORE UPDATE ON git_acquisitions WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER git_acquisitions_no_replace BEFORE INSERT ON git_acquisitions WHEN EXISTS(SELECT 1 FROM git_acquisitions WHERE (id=NEW.id AND repo_id=NEW.repo_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER git_acquisitions_no_delete BEFORE DELETE ON git_acquisitions BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER git_acquisitions_fact_fixed BEFORE UPDATE ON git_acquisitions BEGIN SELECT RAISE(ABORT,'Append new facts'); END;
+CREATE TRIGGER snapshots_identity_fixed BEFORE UPDATE ON snapshots WHEN NEW.id IS NOT OLD.id OR NEW.acquisition_id IS NOT OLD.acquisition_id OR NEW.repo_id IS NOT OLD.repo_id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER snapshots_no_replace BEFORE INSERT ON snapshots WHEN EXISTS(SELECT 1 FROM snapshots WHERE (id=NEW.id AND repo_id=NEW.repo_id) OR (acquisition_id=NEW.acquisition_id) OR (id=NEW.id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER snapshots_no_delete BEFORE DELETE ON snapshots BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER snapshot_publication_monotonic BEFORE UPDATE OF published ON snapshots WHEN OLD.published=1 AND NEW.published!=1 BEGIN SELECT RAISE(ABORT,'Publication is monotonic'); END;
+CREATE TRIGGER change_requests_identity_fixed BEFORE UPDATE ON change_requests WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER change_requests_no_replace BEFORE INSERT ON change_requests WHEN EXISTS(SELECT 1 FROM change_requests WHERE (id=NEW.id AND repo_id=NEW.repo_id) OR (binding_id=NEW.binding_id AND request_kind=NEW.request_kind AND number=NEW.number) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER change_request_observations_identity_fixed BEFORE UPDATE ON change_request_observations WHEN NEW.id IS NOT OLD.id OR NEW.change_request_id IS NOT OLD.change_request_id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER change_request_observations_no_replace BEFORE INSERT ON change_request_observations WHEN EXISTS(SELECT 1 FROM change_request_observations WHERE (id=NEW.id AND change_request_id=NEW.change_request_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER change_request_observations_no_delete BEFORE DELETE ON change_request_observations BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER change_request_observations_fact_fixed BEFORE UPDATE ON change_request_observations
+WHEN NEW.id IS NOT OLD.id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.observed_at IS NOT OLD.observed_at OR NEW.payload IS NOT OLD.payload OR (OLD.published=1 AND NEW.published!=1)
+BEGIN SELECT RAISE(ABORT,'Append new facts; publication is monotonic'); END;
+CREATE TRIGGER text_bodies_identity_fixed BEFORE UPDATE ON text_bodies WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER text_bodies_no_replace BEFORE INSERT ON text_bodies WHEN EXISTS(SELECT 1 FROM text_bodies WHERE (sha256=NEW.sha256 AND body=NEW.body) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER text_bodies_no_delete BEFORE DELETE ON text_bodies BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER documents_identity_fixed BEFORE UPDATE ON documents WHEN NEW.id IS NOT OLD.id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_id IS NOT OLD.provider_id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER documents_no_replace BEFORE INSERT ON documents WHEN EXISTS(SELECT 1 FROM documents WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_id=NEW.provider_id) OR (id=NEW.id AND change_request_id=NEW.change_request_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER document_versions_identity_fixed BEFORE UPDATE ON document_versions WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER document_versions_no_replace BEFORE INSERT ON document_versions WHEN EXISTS(SELECT 1 FROM document_versions WHERE id=NEW.id) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER document_versions_no_delete BEFORE DELETE ON document_versions BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER document_observations_identity_fixed BEFORE UPDATE ON document_observations WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER document_observations_no_replace BEFORE INSERT ON document_observations WHEN EXISTS(SELECT 1 FROM document_observations WHERE (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER document_observations_no_delete BEFORE DELETE ON document_observations BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER document_observations_fact_fixed BEFORE UPDATE ON document_observations BEGIN SELECT RAISE(ABORT,'Append new facts'); END;
+CREATE TRIGGER review_threads_identity_fixed BEFORE UPDATE ON review_threads WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER review_threads_no_replace BEFORE INSERT ON review_threads WHEN EXISTS(SELECT 1 FROM review_threads WHERE (id=NEW.id AND change_request_id=NEW.change_request_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER review_comments_identity_fixed BEFORE UPDATE ON review_comments WHEN NEW.document_id IS NOT OLD.document_id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER review_comments_no_replace BEFORE INSERT ON review_comments WHEN EXISTS(SELECT 1 FROM review_comments WHERE (document_id=NEW.document_id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER fetch_collections_identity_fixed BEFORE UPDATE ON fetch_collections WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER fetch_collections_no_replace BEFORE INSERT ON fetch_collections WHEN EXISTS(SELECT 1 FROM fetch_collections WHERE (id=NEW.id AND change_request_id=NEW.change_request_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER code_listings_identity_fixed BEFORE UPDATE ON code_listings WHEN NEW.id IS NOT OLD.id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.collection_id IS NOT OLD.collection_id OR NEW.kind IS NOT OLD.kind BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER code_listings_no_replace BEFORE INSERT ON code_listings WHEN EXISTS(SELECT 1 FROM code_listings WHERE (id=NEW.id AND change_request_id=NEW.change_request_id) OR (collection_id=NEW.collection_id AND kind=NEW.kind) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER code_listings_no_delete BEFORE DELETE ON code_listings BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER code_listings_fact_fixed BEFORE UPDATE ON code_listings BEGIN SELECT RAISE(ABORT,'Append new facts'); END;
+CREATE TRIGGER code_observations_identity_fixed BEFORE UPDATE ON code_observations WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER acquisition_roots_identity_fixed BEFORE UPDATE ON acquisition_roots WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER acquisition_roots_no_replace BEFORE INSERT ON acquisition_roots WHEN EXISTS(SELECT 1 FROM acquisition_roots WHERE (acquisition_id=NEW.acquisition_id AND object_format=NEW.object_format AND oid=NEW.oid AND role=NEW.role) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER acquisition_roots_no_delete BEFORE DELETE ON acquisition_roots BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER acquisition_roots_fact_fixed BEFORE UPDATE ON acquisition_roots BEGIN SELECT RAISE(ABORT,'Append new facts'); END;
+CREATE TRIGGER root_origins_identity_fixed BEFORE UPDATE ON root_origins WHEN NEW.id IS NOT OLD.id BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER root_origins_no_replace BEFORE INSERT ON root_origins WHEN EXISTS(SELECT 1 FROM root_origins WHERE (root_id=NEW.root_id AND origin_kind=NEW.origin_kind AND source_ordinal=NEW.source_ordinal) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;
+CREATE TRIGGER root_origins_no_delete BEFORE DELETE ON root_origins BEGIN SELECT RAISE(ABORT,'Preserve acquired facts'); END;
+CREATE TRIGGER root_origins_fact_fixed BEFORE UPDATE ON root_origins BEGIN SELECT RAISE(ABORT,'Append new facts'); END;
+CREATE TRIGGER job_attempts_identity_fixed BEFORE UPDATE ON job_attempts WHEN NEW.job_id IS NOT OLD.job_id OR NEW.attempt IS NOT OLD.attempt BEGIN SELECT RAISE(ABORT,'Immutable identity or ownership'); END;
+CREATE TRIGGER job_attempts_no_replace BEFORE INSERT ON job_attempts WHEN EXISTS(SELECT 1 FROM job_attempts WHERE (job_id=NEW.job_id AND attempt=NEW.attempt)) BEGIN SELECT RAISE(ABORT,'Use explicit update; REPLACE is prohibited'); END;

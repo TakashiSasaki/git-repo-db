@@ -19,7 +19,11 @@ def checked(args, *, cwd, env=None):
         env=env,
         timeout=120,
     )
-    assert p.returncode == 0, (args, p.stdout, p.stderr)
+    if p.returncode:
+        pytest.fail(
+            f"Command failed: {args}\nstdout:\n{p.stdout}\nstderr:\n{p.stderr}",
+            pytrace=False,
+        )
     return p.stdout
 
 
@@ -30,7 +34,17 @@ def distributions(tmp_path_factory):
         **os.environ,
         "UV_CACHE_DIR": os.environ.get("UV_CACHE_DIR", "/workspace/.cache/uv"),
     }
-    checked(["uv", "build", "--offline", "--out-dir", work / "dist"], cwd=ROOT, env=env)
+    wheelhouse = Path(
+        os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
+    ).resolve()
+    assert (wheelhouse / "manifest.json").is_file(), (
+        "Run scripts/prepare_wheelhouse.py before offline tests"
+    )
+    env["REPO_CATALOG_WHEELHOUSE"] = str(wheelhouse)
+    offline_sources = ["--offline", "--no-index", "--find-links", str(wheelhouse)]
+    checked(
+        ["uv", "build", *offline_sources, "--out-dir", work / "dist"], cwd=ROOT, env=env
+    )
     checked(
         [
             "uv",
@@ -53,7 +67,7 @@ def distributions(tmp_path_factory):
         archive.extractall(work / "sdist", filter="data")
     source = next((work / "sdist").iterdir())
     checked(
-        ["uv", "build", "--offline", "--wheel", "--out-dir", work / "sdist-wheel"],
+        ["uv", "build", *offline_sources, "--wheel", "--out-dir", work / "sdist-wheel"],
         cwd=source,
         env=env,
     )
@@ -80,6 +94,9 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
             "pip",
             "install",
             "--offline",
+            "--no-index",
+            "--find-links",
+            env["REPO_CATALOG_WHEELHOUSE"],
             "--python",
             venv / "bin/python",
             "--constraint",

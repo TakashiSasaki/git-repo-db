@@ -2,7 +2,7 @@
 
 調査基準SHAと構造はREADME/current-schema.json。F=FK/UNIQUE/CHECK、T=trigger、A=application admission/transaction、D=オフライン監査・診断。
 SQLite CHECKは別tableを参照できず、NULLで評価がunknownになる式は違反にならない。NULL許容を先に決め、必要なNOT NULLと組み合わせる。
-下表の「保証」は提案。実行可能な一部はproposal-core.sql、その他は次工程で全DDLを具体化・検証する。
+下表は調査基準からの設計対応。現在の全DDL・試験・残余gateは [invariant-contract.json](invariant-contract.json)、更新/削除方針は [p1-design.md](p1-design.md) が正本。statement時unpublishだけでは不十分なため、親identity/fact固定と単調公開を追加した。
 
 | ID / 不変条件 | v2の保証と根拠コード | 提案する保証方法 | 既存データへの影響・診断 |
 |---|---|---|---|

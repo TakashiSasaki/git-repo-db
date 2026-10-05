@@ -161,3 +161,44 @@ def test_body_dedup_does_not_dedup_observation_facts(proposed):
         db.execute(
             "INSERT INTO service_instances VALUES('bad','github','bad',NULL,NULL,'[]')"
         )
+
+
+@pytest.mark.parametrize("mode", ["transaction", "savepoint"])
+@pytest.mark.parametrize(
+    "table,key,temp",
+    [("snapshots", "snapshot-a", "temporary"), ("change_request_observations", 1, 999)],
+)
+def test_core_rejects_deferred_publication_attack(proposed, mode, table, key, temp):
+    db = proposed
+    db.execute("BEGIN")
+    if mode == "savepoint":
+        db.execute("SAVEPOINT attack")
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(f"UPDATE {table} SET id=? WHERE id=?", (temp, key))
+    if mode == "savepoint":
+        db.execute("ROLLBACK TO attack")
+        db.execute("RELEASE attack")
+    db.execute("COMMIT")
+    assert (
+        db.execute(f"SELECT published FROM {table} WHERE id=?", (key,)).fetchone()[0]
+        == 1
+    )
+
+
+def test_core_positive_publication_and_replace_guard(proposed):
+    db = proposed
+    db.execute("BEGIN")
+    db.execute("INSERT INTO change_request_observations VALUES(3,'pr-a',NULL,0,'{}')")
+    db.execute("UPDATE change_request_observations SET published=1 WHERE id=3")
+    db.execute("UPDATE change_requests SET current_observation_id=3 WHERE id='pr-a'")
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT OR REPLACE INTO change_request_observations VALUES(3,'pr-a',NULL,0,'{}')"
+        )
+    db.execute("ROLLBACK")
+    assert (
+        db.execute("SELECT id FROM change_request_observations WHERE id=3").fetchall()
+        == []
+    )
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute("UPDATE snapshots SET acquisition_id='run-b' WHERE id='snapshot-a'")

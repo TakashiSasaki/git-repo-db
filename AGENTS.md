@@ -5,7 +5,7 @@
 ## 現在の状態と作業範囲
 
 - `repo-catalog` は、Git構造・本文・GitHub PRと観測履歴をSQLiteへ保存し、取得元やcloneがなくても照会できるPython CLI。未リリースで、実行用DBはschema v2。
-- 現在のハードニング工程は **設計・調査・検証まで**。本番用スキーマの置換、実データ変換、切替は未実施であり、この工程の完了に含めない。後続の依頼で実装範囲が拡大されたら、その範囲で進める。
+- 現在のハードニング工程は **独立P1 DDL・変換契約・synthetic検証まで**。本番用スキーマの置換、実データ変換、切替は未実施であり、この工程の完了に含めない。後続の依頼で実装範囲が拡大されたら、その範囲で進める。
 - 調査基準は `9a4110185d7e7abffc291f9cfd118ca71587f998`。過去の結果を再利用する前に、作業ブランチ・HEAD SHA・基準との差分を確認し、検証記録へ残す。過去の件数やテスト成功を現在の証明にしない。
 - 作業ブランチを使い、mainへ直接コミットしない。自動マージしない。既存のユーザー変更を上書きしない。
 
@@ -20,7 +20,7 @@
 5. [オフライン変換・検証・切替仕様](docs/schema-hardening/offline-conversion.md)
 6. [実装順序・終了条件・未確定判断](docs/schema-hardening/implementation-plan.md)
 
-`docs/schema-hardening/proposal-core.sql` は独立したメモリ上DBで制約を検証する **設計用DDL断片**。完全な新DDLや実行用migrationとして扱わない。新format名・versionも仮称。
+[P1設計](docs/schema-hardening/p1-design.md)、[完全DDL](docs/schema-hardening/target-schema.sql)、[変換契約](docs/schema-hardening/conversion-contract.json)、[不変条件対応](docs/schema-hardening/invariant-contract.json)を新formatの正本とする。完全DDLは独立DB専用で通常migrationへ入れない。`proposal-core.sql`は中核断片の回帰検証用。converter/runtime接続はP2以降で未実装。
 
 変更対象に応じて以下を参照する。
 
@@ -77,6 +77,7 @@ Python 3.12+、Git 2.43+、uvを使用する。PythonにリンクされたSQLite
 
 ```bash
 uv sync --locked --group dev
+uv run --no-sync python scripts/prepare_wheelhouse.py
 uv run --no-sync repo-catalog --format json doctor
 uv run --no-sync ruff check src tests scripts
 uv run --no-sync ruff format --check src tests scripts
@@ -88,13 +89,13 @@ uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging \
 
 - 標準試験は合成loopback API、dummy credential、Git file transportを使う。`tests/conftest.py` と子Python用network guardを無効化して実APIへ逃がさない。
 - `live`/pilot/benchmarkは通常gateに含めない。実行範囲・認証・対象・容量・要求予算が依頼で定まっている場合に実行する。
-- 梱包試験は新規venvへoffline導入するため、依存とbuild backendのキャッシュ準備が必要。CIで不足が報告された実績がある。準備段階とoffline試験を区別し、キャッシュ不足をschemaテストの失敗や成功として扱わない。
+- 梱包試験は新規venvへoffline導入するため、lock/SHA検証済みwheelhouseをonline準備する。`--offline --no-index --find-links`で実行し、registry metadata cacheへ依存しない。準備段階とoffline試験を区別し、キャッシュ不足をschemaテストの失敗や成功として扱わない。
 - CLIのglobal optionはsubcommandより前に置く。変更系コマンドの検証には明示的な `--state-dir` と新規/空のfixture領域を使い、既定のユーザーstateや残存pilotを使わない。
 
 ### ハードニング専用ツールと試験
 
 - `scripts/schema_audit.py --fixture-schema` は一時stateへ現行migrationを実適用して構造を抽出する。`--database SEALED_COPY --hash-payloads` は読取り専用診断。WAL/SHM/journal sidecarがあれば拒否するため、削除して回避しない。診断の限界は設計READMEを読む。
-- `scripts/schema_design_catalog.py` はfixture inventoryと変換規則から `table-conversion.md`、`column-conversion.csv`、`source-access.json` を生成する。規則を修正して再生成し、対応漏れ試験を通す。`current-schema.json` は実構築したfixture構造。`source-access.json` は字句検索であり完全なcall graphではない。
+- `scripts/schema_design_catalog.py` はfixture inventoryと変換規則から `table-conversion.md`、`column-conversion.csv`、`source-access.json` を生成する。機械可読契約を修正し、`scripts/schema_contract.py --generate`で再生成してtarget/逆方向必須列/規則/依存/全旧列試験を通す。`current-schema.json` は実構築したfixture構造。`source-access.json` は字句検索であり完全なcall graphではない。
 - `scripts/schema_index_probe.py` は使い捨て合成DB専用。`index-probe.json` の結果を実データの速度・容量見積りとして扱わない。
 - `test_v2_hardening_reproductions.py` の3件は **現行不具合を確認するcharacterization test**。成功しても不具合修正済みではない。同一OIDの複数ref衝突、PR commit/file一覧の途中再開による観測分断、保存collection再利用時のwatermark前進を扱う。後続修正時は望ましい不変条件の試験へ更新する。
 - `test_v2_schema_audit.py` は診断のreadonly性・不正所属等、`test_schema_proposal_core.py` は独立DDLの制約、`test_schema_design_catalog.py` は全カラム対応を検証する。

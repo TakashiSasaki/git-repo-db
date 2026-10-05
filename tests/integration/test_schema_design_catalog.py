@@ -21,10 +21,7 @@ def test_every_v2_column_has_reviewable_conversion_correspondence():
     assert {(r["source_table"], r["source_column"]) for r in recorded} == expected
     assert recorded == rows(inventory)
     assert all(
-        r["target"]
-        and r["dedup_rule"]
-        and r["reparse_and_validation"]
-        and r["failure_policy"]
+        r["target"] and r["relation"] and r["transform_rules"] and r["failure_policy"]
         for r in recorded
     )
 
