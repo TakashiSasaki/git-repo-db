@@ -3,6 +3,25 @@
 仕様の基準は添付 `github-repository-catalog-plan-2026-10-05-2.md` 第19節。
 更新日: 2026-10-05 UTC。実データpilotの最終値は下記の記録を参照。
 
+## Schema v2（0.2.0）
+
+Repo IDをUUIDv4として、サービスinstance・native ID・複数Git取得URL・複数sourceを分離する変更を実装しました。
+既存migrationのchecksumを維持し、v1のRepo ID・Git object・本文・digest・snapshotを保持します。
+管理CLIにinstances、endpoints、repos bind、sourceの既存repo指定、syncのendpoint指定を追加しました。
+取得URLはrunで固定し、優先先を変更しても中断したrunの再開先は変わりません。
+旧runの取得URLは不明としてNULLで保持します。GitLab/Gitea等のGit-only登録に対応し、MR/PR API adapterは後続範囲です。
+現在のschemaは[データモデル](data-model.md)、操作例は[リポジトリ識別と取得先](repository-identity.md)を参照してください。
+
+追加検証はv1 migration・rollback・checksum改変拒否・旧backupの別state復元、マウント別名、native IDのinstance scope、複数API source、外部thread ID衝突、endpointのscopeとSIGKILL後の固定取得先を対象にしました。
+
+- 標準試験: 76 passed / 115.86秒、skipなし。最後のPR namespace非対応判定を追加後、GitHub/identityの関連18件も46.75秒でpassed。Ruff check/format、compileallも実行。
+- 実データ4件をbackup後にv2へ移行。Repo ID/current snapshot、78,523 Git object、22,193 content、66,579 digest、14,179 PR文書を維持。過去6,206 runの取得先はNULLのまま保持。
+- 全DB/FK/索引の整合性検査passed。v1 backupを旧コードで読み、新DBとの9種類のfirst-page item・coverageの一致を確認。外部通信を遮断し、実credentialと全cloneのない状態で検証。backupのSHA-256は変化なし。
+- `scripts/demo.py --work-dir artifacts/demo-run-005 --scenario offline-recovery`: complete。v2の収集、更新、clone回収、offline照会、再索引、backup/復元を検証。
+- 0.2.0のwheel/sdistを`artifacts/dist-v2/`へ生成。標準試験内で両distributionのclean installとpackage資源を検証。
+
+一次記録は`artifacts/schema-v2/final-tests.txt`、`api-identity-tests.txt`、`pilot-evidence.json`、`pilot-check.json`、`before.json`、`after.json`と`artifacts/demo-run-005/evidence.json`に保持しています。下記のM0〜M11はv1実装・pilotの検証記録です。
+
 | 工程 | 状態 | 検証した主要経路 |
 |---|---|---|
 | M0/M1 | 実装・標準検証済み | package、設定、CLI、公開JSON schema、STRICT/FK、DELETE/EXTRA、rollback、単一writer、容量予約 |

@@ -37,7 +37,7 @@ def test_constraints_migration_atomicity(state):
             s.execute("UPDATE catalog_meta SET schema_version=999")
             s.execute("THIS IS NOT SQL")
         assert s.one("SELECT name FROM sqlite_master WHERE name='rolled_back'") is None
-        assert s.one("SELECT schema_version FROM catalog_meta")[0] == 1
+        assert s.one("SELECT schema_version FROM catalog_meta")[0] == 2
     with Store(state, readonly=True) as s, pytest.raises(sqlite3.OperationalError):
         s.publish()
 

@@ -14,6 +14,7 @@ from pathlib import Path
 from repo_catalog import __version__
 from repo_catalog.adapters.filesystem.locks import FileLock
 from repo_catalog.adapters.sqlite.store import Store
+from repo_catalog.application import repository_identity as identity
 from repo_catalog.config import DEFAULTS, serialize, validate
 from repo_catalog.domain.models import CatalogError, Result
 
@@ -128,8 +129,25 @@ class MaintenanceService:
         url=None,
         clone_url_overrides=None,
         include_repositories=None,
+        repo=None,
+        instance=None,
+        provider_repo_id=None,
+        token_env_var=None,
     ):
+        if kind == "git-url":
+            kind = "local-git"
+        if kind not in ("github", "local-git"):
+            raise CatalogError("INVALID_ARGUMENT", "Unknown source kind")
+        if provider_repo_id is not None and not instance:
+            raise CatalogError(
+                "INVALID_ARGUMENT", "Provider repository ID requires an instance"
+            )
         if kind == "github":
+            if repo or provider_repo_id:
+                raise CatalogError(
+                    "INVALID_ARGUMENT",
+                    "Use repos bind to attach a GitHub provider ID before discovery",
+                )
             if not owner:
                 raise CatalogError("INVALID_ARGUMENT", "GitHub source requires --owner")
             import re
@@ -161,8 +179,18 @@ class MaintenanceService:
                 "clone_url_overrides": clone_url_overrides or {},
                 "include_repositories": include_repositories or [],
             }
+            if token_env_var:
+                if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", token_env_var):
+                    raise CatalogError(
+                        "INVALID_ARGUMENT", "Token environment variable name is invalid"
+                    )
+                settings["api_settings"] = {"token_env_var": token_env_var}
             name = owner
         else:
+            if token_env_var:
+                raise CatalogError(
+                    "INVALID_ARGUMENT", "API credentials require an API source"
+                )
             if include_repositories or clone_url_overrides:
                 raise CatalogError(
                     "INVALID_ARGUMENT", "GitHub options require a github source"
@@ -183,17 +211,87 @@ class MaintenanceService:
                     "INVALID_ARGUMENT",
                     "Use a credential helper, not credentials embedded in a URL",
                 )
-            settings = {"url": url}
+            settings = {"url": identity.git_url(url)}
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             ident = str(uuid.uuid4())
             with s.transaction():
+                instance_id = identity.instance(s, instance)["id"] if instance else None
+                if kind == "github":
+                    instance_id = instance_id or identity.default_github_instance(s)
+                    if identity.instance(s, instance_id)["kind"] != "github":
+                        raise CatalogError(
+                            "INVALID_ARGUMENT",
+                            "GitHub source requires a GitHub instance",
+                        )
+                if repo:
+                    from repo_catalog.application.collection_service import (
+                        single_repository,
+                    )
+
+                    settings["repo_id"] = single_repository(s, repo)["id"]
+                if provider_repo_id is not None:
+                    if not str(provider_repo_id).strip():
+                        raise CatalogError(
+                            "INVALID_ARGUMENT",
+                            "Provider repository ID must be nonempty",
+                        )
+                    settings["provider_repo_id"] = str(provider_repo_id)
                 s.execute(
-                    "INSERT INTO sources VALUES(?,?,?,?)",
-                    (ident, kind, name, json.dumps(settings)),
+                    "INSERT INTO sources(id,kind,name,settings,instance_id) VALUES(?,?,?,?,?)",
+                    (ident, kind, name, json.dumps(settings), instance_id),
                 )
                 s.publish()
             return Result(
                 {"source_id": ident, "kind": kind, "name": name}, catalog=s.revision()
+            )
+
+    def instance_add(self, kind, name, web_base_url=None, api_base_url=None):
+        with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
+            with s.transaction():
+                ident = identity.add_instance(s, kind, name, web_base_url, api_base_url)
+                s.publish()
+            return Result({"instance_id": ident}, catalog=s.revision())
+
+    def repository_bind(self, repo, instance, provider_repo_id=None):
+        from repo_catalog.application.collection_service import single_repository
+
+        with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
+            with s.transaction():
+                repo_id = single_repository(s, repo)["id"]
+                instance_id = identity.instance(s, instance)["id"]
+                identity.bind(s, repo_id, instance_id, provider_repo_id)
+                s.publish()
+            return Result(
+                {
+                    "repo_id": repo_id,
+                    "instance_id": instance_id,
+                    "provider_repo_id": provider_repo_id,
+                },
+                catalog=s.revision(),
+            )
+
+    def endpoint_add(self, repo, url, label=None, preferred=False):
+        from repo_catalog.application.collection_service import single_repository
+
+        with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
+            with s.transaction():
+                repo_id = single_repository(s, repo)["id"]
+                ident = identity.add_endpoint(s, repo_id, url, label, preferred)
+                s.publish()
+            return Result(
+                {"repo_id": repo_id, "endpoint_id": ident}, catalog=s.revision()
+            )
+
+    def endpoint_prefer(self, repo, endpoint_id):
+        from repo_catalog.application.collection_service import single_repository
+
+        with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
+            with s.transaction():
+                repo_id = single_repository(s, repo)["id"]
+                identity.prefer_endpoint(s, repo_id, endpoint_id)
+                s.publish()
+            return Result(
+                {"repo_id": repo_id, "endpoint_id": endpoint_id}, catalog=s.revision()
             )
 
     def gc(self, apply=False):
@@ -272,7 +370,9 @@ class MaintenanceService:
                     digest = hashlib.file_digest(stage.open("rb"), "sha256").hexdigest()
                     os.rename(stage, output)
                     manifest = {
-                        "schema_version": 1,
+                        "schema_version": s.one(
+                            "SELECT schema_version FROM catalog_meta"
+                        )[0],
                         "catalog": s.revision(),
                         "sha256": digest,
                         "configuration": s.config,
@@ -308,6 +408,18 @@ class MaintenanceService:
                 "SELECT * FROM preservation_obligations WHERE published=1 AND (roots_fixed!=1 OR structure_done!=1 OR digest_done!=1 OR text_done!=1)"
             )
         ]
+        checks["repository_endpoints"] = [
+            dict(r)
+            for r in s.all(
+                "SELECT r.id FROM repositories r LEFT JOIN repository_endpoints e ON e.repo_id=r.id AND e.is_preferred=1 WHERE e.id IS NULL OR r.url!=e.url"
+            )
+        ]
+        checks["source_memberships"] = [
+            dict(r)
+            for r in s.all(
+                "SELECT r.id FROM repositories r LEFT JOIN source_repositories m ON m.repo_id=r.id AND m.source_id=r.source_id WHERE m.repo_id IS NULL"
+            )
+        ]
         from repo_catalog.adapters.sqlite.index import fts_available
 
         checks["index"] = {"status": "unavailable", "generations": []}
@@ -337,6 +449,8 @@ class MaintenanceService:
             or checks["foreign_keys"]
             or checks["dangling_publications"]
             or checks["unfinished_published_runs"]
+            or checks["repository_endpoints"]
+            or checks["source_memberships"]
             or checks["index"]["status"] == "failed"
         ):
             raise CatalogError(
@@ -370,7 +484,7 @@ class MaintenanceService:
             for directory in ("cache", "work", "quarantine", "locks", "logs"):
                 (stage / directory).mkdir(mode=0o700)
             shutil.copyfile(source, stage / cfg["database"]["filename"])
-            with Store(stage) as s:
+            with Store(stage, migrate=True) as s:
                 self.check(s)
                 with s.transaction():
                     s.execute(

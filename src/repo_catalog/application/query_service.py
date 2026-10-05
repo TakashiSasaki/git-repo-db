@@ -211,8 +211,20 @@ class QueryService:
         return {r[0] for r in self.s.execute(sql, ids)}
 
     def prepare_coverage(self, command, o):
-        if not o.get("repo") and not o.get("repos"):
-            for source in self.s.all("SELECT * FROM sources WHERE kind='github'"):
+        if (
+            command
+            in (
+                "repos list",
+                "search code",
+                "search path",
+                "search hash",
+                "search commits",
+                "search pr",
+            )
+            and not o.get("repo")
+            and not o.get("repos")
+        ):
+            for source in self.s.all("SELECT * FROM sources"):
                 if o.get("source") and o["source"] != source["id"]:
                     continue
                 latest = self.s.one(
@@ -530,9 +542,53 @@ class QueryService:
 
     def iter_query(self, command, o):
         s = self.s
-        if command in ("repos list", "repos show"):
+        if command in ("instances list", "instances show"):
+            from repo_catalog.application.repository_identity import instance
+
+            rows = (
+                [instance(s, o["instance"])]
+                if command.endswith("show")
+                else s.all("SELECT * FROM service_instances ORDER BY id")
+            )
+            for row in rows:
+                yield (
+                    [row["id"]],
+                    {**dict(row), "metadata": json.loads(row["metadata"])},
+                )
+        elif command == "endpoints list":
+            repo = self.single_repo(o)
+            for row in s.all(
+                "SELECT * FROM repository_endpoints WHERE repo_id=? ORDER BY id",
+                (repo["id"],),
+            ):
+                yield (
+                    [row["id"]],
+                    {**dict(row), "metadata": json.loads(row["metadata"])},
+                )
+        elif command in ("repos list", "repos show"):
             for r in self.repos(o):
-                yield [r["id"]], {**dict(r), "metadata": json.loads(r["metadata"])}
+                item = {**dict(r), "metadata": json.loads(r["metadata"])}
+                if command == "repos show":
+                    item["nested_collections"] = {}
+                    for name, table in [
+                        ("endpoints", "repository_endpoints"),
+                        ("bindings", "repository_bindings"),
+                        ("sources", "source_repositories"),
+                    ]:
+                        total = s.one(
+                            f"SELECT count(*) FROM {table} WHERE repo_id=?", (r["id"],)
+                        )[0]
+                        rows = s.all(
+                            f"SELECT * FROM {table} WHERE repo_id=? ORDER BY 1 LIMIT 100",
+                            (r["id"],),
+                        )
+                        item[name] = [dict(row) for row in rows]
+                        item["nested_collections"][name] = {
+                            "returned": len(rows),
+                            "total": total,
+                            "has_more": total > len(rows),
+                        }
+                yield [r["id"]], item
         elif command in ("snapshots list", "snapshots show"):
             if command.endswith("show"):
                 row = s.one(

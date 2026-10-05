@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
+from repo_catalog import __version__
 from repo_catalog.domain.models import CatalogError, Waiting
 
 
@@ -76,7 +77,7 @@ class GitHubTransport:
         headers = {
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": self.cfg["rest_api_version"],
-            "User-Agent": "repo-catalog/0.1",
+            "User-Agent": "repo-catalog/" + __version__,
         }
         if secret:
             headers["Authorization"] = "Bearer " + secret

@@ -10,6 +10,7 @@ import uuid
 from repo_catalog.adapters.filesystem.capacity import Capacity
 from repo_catalog.adapters.filesystem.locks import FileLock
 from repo_catalog.adapters.git.runner import GitRunner, git_env, hook
+from repo_catalog.application.repository_identity import endpoint
 from repo_catalog.domain.models import CatalogError, now
 
 
@@ -17,13 +18,16 @@ class GitImporter:
     def __init__(self, store, token):
         self.s, self.token = store, token
 
-    def sync(self, repo, job, *, pr_roots=None, observation_id=None):
+    def sync(self, repo, job, *, pr_roots=None, observation_id=None, endpoint_id=None):
         s = self.s
         kind = "pr" if pr_roots else "git"
         request = json.dumps(pr_roots or {}, sort_keys=True)
         run = s.one(
             "SELECT * FROM collection_runs WHERE job_id=? AND repo_id=? AND kind=? AND request=? AND state!='published' ORDER BY generation DESC LIMIT 1",
             (job, repo["id"], kind, request),
+        )
+        selected = endpoint(
+            s, repo["id"], (run["endpoint_id"] if run else None) or endpoint_id
         )
         if not run:
             generation = s.one(
@@ -91,6 +95,15 @@ class GitImporter:
                     (attempt, run["id"]),
                 )
             run = s.one("SELECT * FROM collection_runs WHERE id=?", (run["id"],))
+        if not run["endpoint_url"] and not run["roots_manifest"]:
+            with s.transaction():
+                s.execute(
+                    "UPDATE collection_runs SET endpoint_id=?,endpoint_url=? WHERE id=?",
+                    (selected["id"], selected["url"], run["id"]),
+                )
+            run = s.one("SELECT * FROM collection_runs WHERE id=?", (run["id"],))
+        # A run retains its chosen URL across retries and preferred-URL changes.
+        repo = {**dict(repo), "url": run["endpoint_url"] or selected["url"]}
         cache = s.one("SELECT * FROM cache_entries WHERE id=?", (run["cache_id"],))
         path = (s.path / cache["path"]).resolve()
         if not path.is_relative_to(s.path / "cache") or cache["state"] != "available":
@@ -357,6 +370,8 @@ class GitImporter:
                     "run_id": run["id"],
                     "snapshot_id": run["id"] if kind == "git" else None,
                     "state": "complete",
+                    "endpoint_id": run["endpoint_id"],
+                    "endpoint_url": run["endpoint_url"],
                 }
             finally:
                 with s.transaction():

@@ -1,6 +1,19 @@
 # 複数リポジトリサービスへの拡張分析
 
-この文書は現行実装の読取りに基づく設計提案。下記の新しいテーブル・adapterは未実装であり、既存DBへのmigrationは実行していない。
+この文書の分析本文はschema v1の読取りに基づく設計提案です。
+その後、schema v2でinstance、binding、endpoint、sourceの多対多対応を実装しました。
+現在の仕様と操作例は[リポジトリ識別と取得先](repository-identity.md)を参照してください。
+
+| 分析で提案した範囲 | v2の到達点 |
+|---|---|
+| 内部Repo UUID、instance、native IDの分離 | 実装。既存Repo IDを維持するmigrationを追加 |
+| 複数Git URLとsourceへの対応 | 実装。マウント別名も明示登録でき、runの取得先を固定 |
+| instance/sourceごとのGitHub API設定・token参照 | 実装。loopback fixtureで別instance/複数sourceを検証 |
+| Git-only、対応API、API未実装の区別 | 実装。未実装サービスはPROVIDER_UNSUPPORTED/partial |
+| 外部thread IDの衝突回避 | 新規GitHub thread IDを親PRでscope化。保存済みv1 IDは維持 |
+| GitLab/Gitea inventory・MR/PR adapter、共通PR/MRモデル | 後続範囲 |
+
+以下の「現行」は分析時点のv1を指します。v2実装後の制約は上記リンクと[実装状況](implementation-status.md)に記載します。
 
 ## 結論と対応範囲
 

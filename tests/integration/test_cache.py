@@ -92,11 +92,16 @@ def test_capacity_wait(catalog):
 
 def test_failed_fetch_cleanup(catalog):
     state, fixture, repos = catalog
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
-        db.execute(
-            "UPDATE repositories SET url=? WHERE id=?",
-            ("file:///does-not-exist", repos["alpha"]),
-        )
+    run(
+        state,
+        "endpoints",
+        "add",
+        "--repo",
+        repos["alpha"],
+        "--url",
+        "file:///does-not-exist",
+        "--preferred",
+    )
     run(state, "sync", "git", "--repo", repos["alpha"], expected=3)
     expire(state)
     value = run(state, "cache", "gc", "--apply")

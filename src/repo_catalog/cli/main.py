@@ -34,10 +34,14 @@ def parser():
         dest="action", required=True, parser_class=Parser
     )
     source = sources.add_parser("add")
-    source.add_argument("kind", choices=("github", "local-git"))
+    source.add_argument("kind", choices=("github", "local-git", "git-url"))
     source.add_argument("--owner")
     source.add_argument("--name")
     source.add_argument("--url")
+    source.add_argument("--repo")
+    source.add_argument("--instance")
+    source.add_argument("--provider-repo-id")
+    source.add_argument("--token-env-var")
     source.add_argument(
         "--clone-url-override", action="append", default=[], metavar="REPO_ID=URL"
     )
@@ -48,8 +52,38 @@ def parser():
     sync.add_argument("kind", choices=("git", "pr", "all"))
     repo_selector(sync)
     sync.add_argument("--source")
+    sync.add_argument("--endpoint", dest="endpoint_id")
+    instances = commands.add_parser("instances").add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    new_instance = instances.add_parser("add")
+    new_instance.add_argument(
+        "kind",
+        choices=("github", "gitlab", "gitea", "forgejo", "gitolite", "git", "other"),
+    )
+    new_instance.add_argument("--name", required=True)
+    new_instance.add_argument("--web-base-url")
+    new_instance.add_argument("--api-base-url")
+    page_options(instances.add_parser("list"))
+    instance_show = instances.add_parser("show")
+    instance_show.add_argument("--instance", required=True)
+    page_options(instance_show)
+    endpoints = commands.add_parser("endpoints").add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    endpoint_add = endpoints.add_parser("add")
+    endpoint_add.add_argument("--repo", required=True)
+    endpoint_add.add_argument("--url", required=True)
+    endpoint_add.add_argument("--label")
+    endpoint_add.add_argument("--preferred", action="store_true")
+    endpoint_prefer = endpoints.add_parser("prefer")
+    endpoint_prefer.add_argument("--repo", required=True)
+    endpoint_prefer.add_argument("--endpoint", required=True)
+    endpoint_list = endpoints.add_parser("list")
+    endpoint_list.add_argument("--repo", required=True)
+    page_options(endpoint_list)
     for category, actions in {
-        "repos": ("list", "show"),
+        "repos": ("list", "show", "bind"),
         "snapshots": ("list", "show"),
         "refs": ("list",),
         "tree": ("list",),
@@ -63,6 +97,13 @@ def parser():
         for action in actions:
             child = group.add_parser(action)
             page_options(child)
+            if category == "repos" and action == "bind":
+                child.add_argument("--repo", required=True)
+                child.add_argument("--instance", required=True)
+                child.add_argument("--provider-repo-id")
+                continue
+            if category == "repos":
+                child.add_argument("--source")
             if category == "jobs":
                 if action != "list":
                     child.add_argument("job_id")
@@ -234,6 +275,22 @@ def dispatch(args, token):
             url=args.url,
             clone_url_overrides=overrides,
             include_repositories=args.include_repo,
+            repo=args.repo,
+            instance=args.instance,
+            provider_repo_id=args.provider_repo_id,
+            token_env_var=args.token_env_var,
+        )
+    if args.command == "instances" and args.action == "add":
+        return maintenance.instance_add(
+            args.kind, args.name, args.web_base_url, args.api_base_url
+        )
+    if args.command == "endpoints" and args.action == "add":
+        return maintenance.endpoint_add(args.repo, args.url, args.label, args.preferred)
+    if args.command == "endpoints" and args.action == "prefer":
+        return maintenance.endpoint_prefer(args.repo, args.endpoint)
+    if args.command == "repos" and args.action == "bind":
+        return maintenance.repository_bind(
+            args.repo, args.instance, args.provider_repo_id
         )
     from repo_catalog.application.collection_service import CollectionService
     from repo_catalog.application.contracts import CollectionRequest
@@ -243,7 +300,12 @@ def dispatch(args, token):
         return collection.discover(args.source)
     if args.command == "sync":
         return collection.sync(
-            CollectionRequest(args.kind, tuple(args.repos or ()), args.source)
+            CollectionRequest(
+                args.kind,
+                tuple(args.repos or ()),
+                args.source,
+                endpoint_id=args.endpoint_id,
+            )
         )
     if args.command == "jobs" and args.action == "resume":
         return collection.resume(args.job_id)

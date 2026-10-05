@@ -8,6 +8,7 @@ from pathlib import Path
 from repo_catalog.adapters.filesystem.locks import FileLock
 from repo_catalog.adapters.git.importer import GitImporter
 from repo_catalog.adapters.sqlite.store import Store
+from repo_catalog.application import repository_identity as identity
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import (
     CancellationToken,
@@ -21,7 +22,11 @@ from repo_catalog.domain.models import (
 def select_repositories(s, selectors=(), source=None):
     rows = s.all(
         "SELECT * FROM repositories"
-        + (" WHERE source_id=?" if source else "")
+        + (
+            " WHERE EXISTS(SELECT 1 FROM source_repositories m WHERE m.repo_id=repositories.id AND m.source_id=?)"
+            if source
+            else ""
+        )
         + " ORDER BY id",
         (source,) if source else (),
     )
@@ -34,9 +39,13 @@ def select_repositories(s, selectors=(), source=None):
     selected = []
     for selector in selectors:
         matches = [
-            r
+            dict(r)
             for r in rows
             if selector in (r["id"], r["name"], f"{r['provider_host']}/{r['name']}")
+            or s.one(
+                "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.id=b.instance_id WHERE b.repo_id=? AND ?=i.name||'/'||?",
+                (r["id"], selector, r["name"]),
+            )
         ]
         if not matches:
             raise CatalogError(
@@ -47,6 +56,13 @@ def select_repositories(s, selectors=(), source=None):
         if matches[0] not in selected:
             selected.append(matches[0])
     return sorted(selected, key=lambda r: r["id"])
+
+
+def single_repository(store, selector):
+    rows = select_repositories(store, (selector,))
+    if len(rows) != 1:
+        raise CatalogError("INVALID_ARGUMENT", "Select one repository")
+    return rows[0]
 
 
 class CollectionService:
@@ -92,30 +108,82 @@ class CollectionService:
                 else:
                     from repo_catalog.adapters.github.collector import GitHubCollector
 
-                    collector = GitHubCollector(s, self.token)
+                    collector = GitHubCollector(
+                        s, self.token, config=identity.github_config(s, src)
+                    )
                     repos = collector.inventory(src, job)
                     uncertainty = collector.inventory_uncertainty
                 if uncertainty:
                     coverage.add("inventory", uncertainty, source_id=src["id"])
                 with s.transaction():
                     for repo in repos:
-                        existing = s.one(
-                            "SELECT id FROM repositories WHERE provider_host=? AND provider_repo_id=?",
-                            (repo["host"], repo["provider_id"]),
+                        provider_id = (
+                            repo["provider_id"]
+                            if src["kind"] == "github"
+                            else settings.get("provider_repo_id")
                         )
+                        target = settings.get("repo_id")
+                        existing = (
+                            s.one("SELECT id FROM repositories WHERE id=?", (target,))
+                            if target
+                            else None
+                        )
+                        if target and not existing:
+                            raise CatalogError(
+                                "NOT_FOUND",
+                                "Explicit repository identity no longer exists",
+                            )
+                        if src["instance_id"] and provider_id:
+                            binding = s.one(
+                                "SELECT repo_id FROM repository_bindings WHERE instance_id=? AND provider_repo_id=?",
+                                (src["instance_id"], provider_id),
+                            )
+                            if binding:
+                                if existing and existing[0] != binding[0]:
+                                    raise CatalogError(
+                                        "IDENTITY_CONFLICT",
+                                        "Source and provider identity refer to different repositories",
+                                    )
+                                existing = s.one(
+                                    "SELECT id FROM repositories WHERE id=?",
+                                    (binding[0],),
+                                )
+                        if not existing and src["kind"] == "local-git":
+                            existing = s.one(
+                                "SELECT repo_id FROM source_repositories WHERE source_id=?",
+                                (src["id"],),
+                            )
                         ident = existing[0] if existing else str(uuid.uuid4())
-                        s.execute(
-                            "INSERT INTO repositories(id,source_id,provider_host,provider_repo_id,name,url,metadata) VALUES(?,?,?,?,?,?,?) ON CONFLICT(provider_host,provider_repo_id) DO UPDATE SET name=excluded.name,url=excluded.url,metadata=excluded.metadata",
-                            (
-                                ident,
-                                src["id"],
-                                repo["host"],
-                                repo["provider_id"],
-                                repo["name"],
-                                repo["url"],
-                                json.dumps(repo["metadata"]),
-                            ),
-                        )
+                        if not existing:
+                            host = repo["host"]
+                            if src["kind"] == "github" and src["instance_id"]:
+                                from urllib.parse import urlsplit
+
+                                value = identity.instance(s, src["instance_id"])
+                                host = urlsplit(
+                                    value["web_base_url"] or value["api_base_url"]
+                                ).hostname
+                            s.execute(
+                                "INSERT INTO repositories(id,source_id,provider_host,provider_repo_id,name,url,metadata) VALUES(?,?,?,?,?,?,?)",
+                                (
+                                    ident,
+                                    src["id"],
+                                    host,
+                                    repo["provider_id"],
+                                    repo["name"],
+                                    repo["url"],
+                                    json.dumps(repo["metadata"]),
+                                ),
+                            )
+                        elif src["kind"] == "github":
+                            s.execute(
+                                "UPDATE repositories SET name=?,metadata=? WHERE id=?",
+                                (repo["name"], json.dumps(repo["metadata"]), ident),
+                            )
+                        if src["instance_id"]:
+                            identity.bind(s, ident, src["instance_id"], provider_id)
+                        identity.link_source(s, src["id"], ident)
+                        identity.add_endpoint(s, ident, repo["url"])
                         s.execute(
                             "INSERT OR IGNORE INTO repository_names VALUES(?,?,?)",
                             (ident, repo["name"], now()),
@@ -149,6 +217,7 @@ class CollectionService:
                 "kind": request.kind,
                 "repositories": list(request.repositories),
                 "source": request.source,
+                "endpoint_id": request.endpoint_id,
             }
             job = JobService(s).create("sync", data)
             return self._sync(s, job, data)
@@ -180,7 +249,27 @@ class CollectionService:
             repos = select_repositories(
                 s, tuple(request["repositories"]), request.get("source")
             )
+            if request.get("endpoint_id") and len(repos) != 1:
+                raise CatalogError(
+                    "INVALID_ARGUMENT", "An explicit endpoint requires one repository"
+                )
             for repo in repos:
+                endpoint_id = request.get("endpoint_id")
+                if not endpoint_id and request.get("source"):
+                    source = s.one(
+                        "SELECT * FROM sources WHERE id=?", (request["source"],)
+                    )
+                    settings = json.loads(source["settings"])
+                    if source["kind"] == "local-git":
+                        source_endpoint = s.one(
+                            "SELECT id FROM repository_endpoints WHERE repo_id=? AND url=?",
+                            (repo["id"], identity.git_url(settings["url"])),
+                        )
+                        if not source_endpoint:
+                            raise CatalogError(
+                                "NOT_FOUND", "Source endpoint is not registered"
+                            )
+                        endpoint_id = source_endpoint[0]
                 for kind in (
                     ("git", "pr") if request["kind"] == "all" else (request["kind"],)
                 ):
@@ -198,16 +287,43 @@ class CollectionService:
                                     "state": "complete",
                                 }
                                 if done
-                                else GitImporter(s, self.token).sync(repo, job)
+                                else GitImporter(s, self.token).sync(
+                                    repo, job, endpoint_id=endpoint_id
+                                )
                             )
-                        elif repo["provider_host"] == "local":
-                            item = {"repo_id": repo["id"], "state": "not_applicable"}
                         else:
+                            src = identity.pr_source(
+                                s, repo["id"], request.get("source")
+                            )
+                            if not src:
+                                if identity.pr_applicable(s, repo["id"]):
+                                    raise CatalogError(
+                                        "PROVIDER_UNSUPPORTED",
+                                        "PR/MR API collection requires a supported API source",
+                                    )
+                                items.append(
+                                    {
+                                        "kind": kind,
+                                        "repo_id": repo["id"],
+                                        "state": "not_applicable",
+                                    }
+                                )
+                                continue
                             from repo_catalog.adapters.github.collector import (
                                 GitHubCollector,
                             )
 
-                            item = GitHubCollector(s, self.token).sync(repo, job)
+                            api_repo = {
+                                **dict(repo),
+                                "source_id": src["id"],
+                                "provider_repo_id": src["provider_repo_id"],
+                            }
+                            item = GitHubCollector(
+                                s,
+                                self.token,
+                                config=identity.github_config(s, src),
+                                endpoint_id=endpoint_id,
+                            ).sync(api_repo, job)
                         items.append({"kind": kind, **item})
                     except CatalogError as e:
                         if e.code == "CANCELLED":

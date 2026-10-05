@@ -65,6 +65,7 @@ def exit_code(result=None, error=None):
             "STALE_CURSOR",
             "JOB_RUNNING",
             "INDEX_UNAVAILABLE",
+            "IDENTITY_CONFLICT",
         ):
             return 4
         return 5

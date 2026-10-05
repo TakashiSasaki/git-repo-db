@@ -69,10 +69,16 @@ def test_document_queries_independent_of_git_availability(catalog):
     state, fixture, repos = catalog
     with GitHubFixture(fixture) as api:
         _, repo, env = configure(state, api, fixture)
-        with sqlite3.connect(state / "catalog.sqlite3") as db:
-            db.execute(
-                "UPDATE repositories SET url='file:///missing' WHERE id=?", (repo,)
-            )
+        run(
+            state,
+            "endpoints",
+            "add",
+            "--repo",
+            repo,
+            "--url",
+            "file:///missing",
+            "--preferred",
+        )
         run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
         result = run(
             state, "search", "pr", "--repo", repo, "--literal", "comment-marker"

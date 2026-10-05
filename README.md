@@ -1,6 +1,6 @@
 # repo-catalog
 
-GitとGitHubのPRをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
+任意のGit取得先とGitHubのPRをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PR文書と観測版を永続化します。
 初版はLinux/WSL2のローカルfilesystem、Python 3.12+、Git 2.43+を対象にしています。
 
@@ -32,6 +32,11 @@ GitHubは` sources add github --owner OWNER`で登録します。APIの認証は
 
 認証ユーザーの所有repoはprivate/fork/archivedを含め列挙し、PRは全状態を対象にします。少数対象のpilotは`--include-repo NAME`を繰り返して明示対象だけに限定できます。
 GitHub sourceの`--clone-url-override REPO_ID=URL`は、明示的なテスト設定や既存ローカル取得元への接続に使えます。
+
+DB schema v2はRepo IDをUUIDv4とし、サービスinstance、native ID、取得URL、sourceを分離します。
+SSHとHTTPS、ローカルとネットワークのマウントpathを同じRepo IDの取得先として明示登録できます。
+GitLab/Gitea/GitoliteなどのGitデータは` sources add git-url`で登録できます。GitLab/Giteaの自動列挙・MR/PR API adapterは後続範囲です。
+既存v1 DBはバックアップ後に`db migrate`を実行します。登録・移行例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
 
 ## 照会
 

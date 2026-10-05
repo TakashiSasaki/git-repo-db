@@ -15,6 +15,8 @@ def pr_state(payload):
 
 
 def pr_query(query, command, o):
+    from repo_catalog.application.repository_identity import pr_applicable
+
     s = query.s
     allowed = {r["id"] for r in query.repos(o)}
     if command not in ("pr list", "search pr", "pr thread"):
@@ -56,7 +58,7 @@ def pr_query(query, command, o):
         return
     literal = query.literal(o) if command == "search pr" else None
     for repo in query.repos(o):
-        if repo["provider_host"] == "local":
+        if not pr_applicable(s, repo["id"]):
             continue
         documents_only = command in ("search pr", "pr documents") and not any(
             o.get(key) is not None for key in ("commit", "path", "path_b64")

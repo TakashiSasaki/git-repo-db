@@ -14,9 +14,11 @@ from repo_catalog.domain.models import CatalogError, Waiting, now
 
 
 class GitHubCollector:
-    def __init__(self, store, token, transport=None):
+    def __init__(self, store, token, transport=None, *, config=None, endpoint_id=None):
         self.s, self.token = store, token
-        self.http = transport or GitHubTransport(store.config["github"], token)
+        self.cfg = config or store.config["github"]
+        self.endpoint_id = endpoint_id
+        self.http = transport or GitHubTransport(self.cfg, token)
         self.owned = transport is None
         self.inventory_uncertainty = None
 
@@ -73,7 +75,7 @@ class GitHubCollector:
             "repo": repo["provider_repo_id"],
             "source": repo["source_id"],
             "principal": getattr(self, "principal", None),
-            "version": self.s.config["github"]["rest_api_version"],
+            "version": self.cfg["rest_api_version"],
             "accept": "application/vnd.github+json",
             "url": url,
         }
@@ -168,7 +170,7 @@ class GitHubCollector:
                         {
                             "affiliation": "owner",
                             "visibility": "all",
-                            "per_page": self.s.config["github"]["rest_page_size"],
+                            "per_page": self.cfg["rest_page_size"],
                         }
                     )
                 )
@@ -182,7 +184,7 @@ class GitHubCollector:
                         + "/repos?"
                         + urlencode(
                             {
-                                "per_page": self.s.config["github"]["rest_page_size"],
+                                "per_page": self.cfg["rest_page_size"],
                                 "type": "all",
                             }
                         )
@@ -302,7 +304,7 @@ class GitHubCollector:
                         json.dumps(
                             {
                                 "repo_id": repo["id"],
-                                "api_version": s.config["github"]["rest_api_version"],
+                                "api_version": self.cfg["rest_api_version"],
                             }
                         ),
                         url,
@@ -350,9 +352,7 @@ class GitHubCollector:
                             json.dumps(
                                 {
                                     "url": url,
-                                    "api_version": s.config["github"][
-                                        "rest_api_version"
-                                    ],
+                                    "api_version": self.cfg["rest_api_version"],
                                     "parser_version": "v1",
                                 }
                             ),
@@ -558,7 +558,7 @@ class GitHubCollector:
         try:
             identity = self.http.request("GET", self.http.base + "/user").json()
             self.principal = str(identity.get("id") or identity.get("login"))
-            size = s.config["github"]["rest_page_size"]
+            size = self.cfg["rest_page_size"]
             attempt(
                 "pr-list",
                 lambda: self.collection(
@@ -783,7 +783,11 @@ class GitHubCollector:
                     fetched = attempt(
                         "pr-git",
                         lambda: GitImporter(s, self.token).sync(
-                            repo, job, pr_roots=roots, observation_id=current
+                            repo,
+                            job,
+                            pr_roots=roots,
+                            observation_id=current,
+                            endpoint_id=self.endpoint_id,
                         ),
                     )
                     if fetched:
@@ -903,11 +907,11 @@ class GitHubCollector:
 
     def incremental_comments(self, repo, job, kind, endpoint, parent_field):
         s = self.s
-        scope = f"watermark:{repo['id']}:{self.principal}:{kind}:{s.config['github']['rest_api_version']}"
+        scope = f"watermark:{repo['id']}:{repo['source_id']}:{self.principal}:{kind}:{self.cfg['rest_api_version']}:{endpoint}"
         previous = s.one("SELECT value FROM sync_checkpoints WHERE scope=?", (scope,))
         started = now()
         parameters = {
-            "per_page": s.config["github"]["rest_page_size"],
+            "per_page": self.cfg["rest_page_size"],
             "sort": "updated",
             "direction": "asc",
         }
@@ -997,6 +1001,15 @@ class GitHubCollector:
                     )
                     s.publish()
 
+    def thread_identity(self, pr_id, provider_id):
+        legacy = self.s.one(
+            "SELECT pr_id FROM review_threads WHERE id=?", (provider_id,)
+        )
+        # Keep v1 thread references; new external IDs are scoped to their PR.
+        if legacy and legacy[0] == pr_id:
+            return provider_id
+        return f"{pr_id}:thread:{provider_id}"
+
     def threads(self, repo, pr, job):
         s = self.s
         owner, name = repo["name"].split("/", 1)
@@ -1019,7 +1032,7 @@ class GitHubCollector:
                 "name": name,
                 "number": pr["number"],
                 "cursor": cursor,
-                "pageSize": s.config["github"]["graphql_page_size"],
+                "pageSize": self.cfg["graphql_page_size"],
             }
             response = self.http.request(
                 "POST", self.http.graphql, json={"query": query, "variables": variables}
@@ -1050,10 +1063,11 @@ class GitHubCollector:
                 for thread in nodes:
                     if not thread.get("id"):
                         raise CatalogError("API_SCHEMA", "Thread ID missing")
+                    thread_id = self.thread_identity(pr["id"], thread["id"])
                     s.execute(
                         "INSERT INTO review_threads VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,observed_at=excluded.observed_at",
                         (
-                            thread["id"],
+                            thread_id,
                             pr["id"],
                             json.dumps(
                                 {k: v for k, v in thread.items() if k != "comments"}
@@ -1063,12 +1077,13 @@ class GitHubCollector:
                     )
                     self.thread_comments(
                         pr,
-                        thread["id"],
+                        thread_id,
                         thread.get("comments") or {},
                         f"{job}:threads:{cursor}",
                     )
                 s.publish()
             for thread in nodes:
+                thread_id = self.thread_identity(pr["id"], thread["id"])
                 comments = thread.get("comments") or {}
                 info = comments.get("pageInfo") or {}
                 child_seen = set()
@@ -1092,7 +1107,7 @@ class GitHubCollector:
                     v = {
                         "thread": thread["id"],
                         "commentCursor": child,
-                        "pageSize": s.config["github"]["graphql_page_size"],
+                        "pageSize": self.cfg["graphql_page_size"],
                     }
                     child_query = (
                         files("repo_catalog")
@@ -1119,7 +1134,7 @@ class GitHubCollector:
                         self.graphql_response(repo, pr, job, child_response, v)
                         self.thread_comments(
                             pr,
-                            thread["id"],
+                            thread_id,
                             comments,
                             f"{job}:thread:{thread['id']}:{child}",
                         )
@@ -1194,7 +1209,7 @@ class GitHubCollector:
                 json.dumps(
                     {
                         "principal": self.principal,
-                        "api_version": s.config["github"]["rest_api_version"],
+                        "api_version": self.cfg["rest_api_version"],
                     }
                 ),
                 None,

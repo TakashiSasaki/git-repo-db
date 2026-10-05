@@ -10,7 +10,21 @@ from pathlib import Path
 from repo_catalog.config import load
 from repo_catalog.domain.models import CatalogError, now
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+
+
+def migrations():
+    resources = {}
+    for resource in files("repo_catalog").joinpath("resources/migrations").iterdir():
+        if not resource.name.endswith(".sql"):
+            continue
+        version = int(resource.name.split("_")[0])
+        if version in resources:
+            raise CatalogError("SCHEMA_ERROR", "Duplicate migration version")
+        resources[version] = resource
+    if sorted(resources) != list(range(1, SCHEMA_VERSION + 1)):
+        raise CatalogError("SCHEMA_ERROR", "Migration versions must be contiguous")
+    return resources
 
 
 def statements(sql):
@@ -62,17 +76,21 @@ class Store:
                     "DATABASE_ERROR", "Cannot apply configured journal mode"
                 )
             self.connection.execute("PRAGMA synchronous=EXTRA")
-        if initialize or migrate:
-            self.migrate()
-        elif (
-            self.one("SELECT schema_version FROM catalog_meta WHERE id=1")[0]
-            != SCHEMA_VERSION
-        ):
-            raise CatalogError(
-                "SCHEMA_ERROR",
-                "Explicit migration required; unknown schema cannot be written",
-            )
-        self.verify_migrations()
+        try:
+            if initialize or migrate:
+                self.migrate()
+            elif (
+                self.one("SELECT schema_version FROM catalog_meta WHERE id=1")[0]
+                != SCHEMA_VERSION
+            ):
+                raise CatalogError(
+                    "SCHEMA_ERROR",
+                    "Explicit migration required; unknown schema cannot be written",
+                )
+            self.verify_migrations()
+        except BaseException:
+            self.connection.close()
+            raise
 
     def close(self):
         self.connection.close()
@@ -125,39 +143,55 @@ class Store:
             raise CatalogError(
                 "SCHEMA_ERROR", "Database schema is newer than this package"
             )
-        for resource in sorted(
-            files("repo_catalog").joinpath("resources/migrations").iterdir(),
-            key=lambda p: p.name,
-        ):
-            version = int(resource.name.split("_")[0])
+        if existing:
+            self.verify_migrations()
+        for version, resource in sorted(migrations().items()):
             if version <= (current or 0):
                 continue
             sql = resource.read_text()
-            with self.transaction():
-                for statement in statements(sql):
-                    self.execute(statement)
-                if not existing:
+            rebuild = version == 2
+            if rebuild:
+                self.execute("PRAGMA foreign_keys=OFF")
+            try:
+                with self.transaction():
+                    for statement in statements(sql):
+                        self.execute(statement)
+                    if version == 2:
+                        from repo_catalog.application.repository_identity import (
+                            backfill_v2,
+                        )
+
+                        backfill_v2(self)
+                    if not self.one("SELECT 1 FROM catalog_meta WHERE id=1"):
+                        self.execute(
+                            "INSERT INTO catalog_meta VALUES(1,?,0,?)",
+                            (str(uuid.uuid4()), version),
+                        )
+                    else:
+                        self.execute(
+                            "UPDATE catalog_meta SET schema_version=? WHERE id=1",
+                            (version,),
+                        )
+                        if current:
+                            self.publish()
                     self.execute(
-                        "INSERT INTO catalog_meta VALUES(1,?,0,?)",
-                        (str(uuid.uuid4()), version),
+                        "INSERT INTO schema_migrations VALUES(?,?,?)",
+                        (version, hashlib.sha256(sql.encode()).hexdigest(), now()),
                     )
-                else:
-                    self.execute(
-                        "UPDATE catalog_meta SET schema_version=? WHERE id=1",
-                        (version,),
-                    )
-                self.execute(
-                    "INSERT INTO schema_migrations VALUES(?,?,?)",
-                    (version, hashlib.sha256(sql.encode()).hexdigest(), now()),
-                )
+                    if self.all("PRAGMA foreign_key_check"):
+                        raise CatalogError(
+                            "SCHEMA_ERROR", "Migration foreign key check failed"
+                        )
+            finally:
+                if rebuild:
+                    self.execute("PRAGMA foreign_keys=ON")
 
     def verify_migrations(self):
+        resources = migrations()
         for r in self.all("SELECT * FROM schema_migrations"):
-            resource = files("repo_catalog").joinpath(
-                f"resources/migrations/{r['version']:03d}_initial.sql"
-            )
+            resource = resources.get(r["version"])
             if (
-                not resource.is_file()
+                resource is None
                 or hashlib.sha256(resource.read_bytes()).hexdigest() != r["checksum"]
             ):
                 raise CatalogError("SCHEMA_ERROR", "Migration checksum mismatch")

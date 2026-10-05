@@ -36,6 +36,12 @@ restoreは新規/空stateだけに行い、元stateを上書き・削除しま�
 復元後の照会は保存データで動作します。収集の再開前に取得元、認証、予算を再確認してください。
 cache/lease/予約/旧running processを有効な復元状態とみなしません。
 
+v1からv2へ更新するときは旧版CLIでbackupを取得し、新版へ切り替えた後に`db migrate`、`db check --full`を実行します。
+通常の照会や収集はschemaを自動更新しません。migrationは既存Repo ID・Git object・本文・digestを維持し、Git/API通信を必要としません。
+既存DBの移行はpublication_seqを1進めるため、移行前のcursorは再開始します。新規DBの初期publication_seqは0です。
+v1 backupのrestoreは新規の復元先をv2へ移行し、入力backupを変更しません。新版から旧schemaへの逆migrationはありません。
+詳細は[リポジトリ識別と取得先](repository-identity.md)を参照してください。
+
 定期運用ではsync、jobs resume、cache gc --applyをcron/systemd等から呼べます。
 この開発では実ユーザーのスケジュールを登録しません。実運用の対象・周期・要求予算はpilot後に決めてください。
 LFS実体、添付実体、完全原本archive、全履歴本文・diff索引、意味検索、Web GUIは後続範囲です。
