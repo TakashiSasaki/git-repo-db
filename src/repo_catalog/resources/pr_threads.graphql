@@ -1,0 +1,19 @@
+query RepoCatalogThreads($owner: String!, $name: String!, $number: Int!, $cursor: String, $pageSize: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      id
+      mergeCommit { oid }
+      potentialMergeCommit { oid }
+      reviewThreads(first: $pageSize, after: $cursor) {
+        nodes {
+          id isResolved isOutdated
+          comments(first: $pageSize) {
+            nodes { id fullDatabaseId body url author { login } commit { oid } originalCommit { oid } path line originalLine diffHunk }
+            pageInfo { hasNextPage endCursor }
+          }
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+}

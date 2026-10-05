@@ -1,0 +1,24 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.19'
+      - run: uv sync --locked --group dev
+      - run: uv run --no-sync ruff check src tests scripts
+      - run: uv run --no-sync ruff format --check src tests scripts
+      - name: Required FTS success lane
+        run: |
+          uv run --no-sync python -c "import sqlite3; c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
+      - run: uv run --no-sync repo-catalog --format json doctor
+      - run: uv build --out-dir artifacts/dist
+      - run: uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
+      - run: uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging --strict-markers -m "not live and not benchmark"
+      - run: uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery

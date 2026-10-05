@@ -1,0 +1,11 @@
+query RepoCatalogThreadComments($thread: ID!, $commentCursor: String, $pageSize: Int!) {
+  node(id: $thread) {
+    ... on PullRequestReviewThread {
+      id
+      comments(first: $pageSize, after: $commentCursor) {
+        nodes { id fullDatabaseId body url author { login } commit { oid } originalCommit { oid } path line originalLine diffHunk }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+}

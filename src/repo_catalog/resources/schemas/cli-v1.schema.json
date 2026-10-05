@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "command",
+    "status",
+    "request",
+    "catalog",
+    "data",
+    "coverage",
+    "execution",
+    "warnings",
+    "error"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "command": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "partial",
+        "error",
+        "cancelled"
+      ]
+    },
+    "request": {
+      "type": "object"
+    },
+    "catalog": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "db_instance_id": {
+          "type": "string"
+        },
+        "publication_seq": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "db_instance_id",
+        "publication_seq"
+      ]
+    },
+    "data": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "coverage": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "complete_for_requested_scope": {
+          "type": "boolean"
+        },
+        "missing": {
+          "type": "array"
+        },
+        "excluded_by_policy": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "complete_for_requested_scope",
+        "missing",
+        "excluded_by_policy"
+      ]
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "completed",
+        "timed_out",
+        "backend"
+      ],
+      "properties": {
+        "completed": {
+          "type": "boolean"
+        },
+        "timed_out": {
+          "type": "boolean"
+        },
+        "backend": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "warnings": {
+      "type": "array"
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "details",
+        "retryable"
+      ]
+    }
+  },
+  "$defs": {
+    "path": {
+      "type": "object",
+      "required": [
+        "path_b64",
+        "path_utf8",
+        "path_display"
+      ],
+      "properties": {
+        "path_b64": {
+          "type": "string",
+          "contentEncoding": "base64"
+        },
+        "path_utf8": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "path_display": {
+          "type": "string"
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "limit",
+        "returned",
+        "has_more",
+        "next_cursor",
+        "total"
+      ],
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "returned": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "has_more": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "query": {
+      "type": "object",
+      "required": [
+        "items",
+        "page"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "path_b64"
+                  ]
+                },
+                "then": {
+                  "$ref": "#/$defs/path"
+                }
+              }
+            ]
+          }
+        },
+        "page": {
+          "$ref": "#/$defs/page"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "enum": [
+              "repos list",
+              "repos show",
+              "snapshots list",
+              "snapshots show",
+              "refs list",
+              "tree list",
+              "commits list",
+              "commits show",
+              "commits compare",
+              "search path",
+              "search code",
+              "search commits",
+              "search hash",
+              "search pr",
+              "pr list",
+              "pr show",
+              "pr documents",
+              "pr thread",
+              "pr timeline",
+              "content show",
+              "jobs list",
+              "jobs show",
+              "status",
+              "coverage",
+              "cache status"
+            ]
+          },
+          "error": {
+            "type": "null"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/query"
+          }
+        }
+      }
+    }
+  ]
+}

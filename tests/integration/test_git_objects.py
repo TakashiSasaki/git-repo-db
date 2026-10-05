@@ -1,0 +1,157 @@
+from tests.support.cli import add_local, pages, run
+from tests.support.git_fixture import FixtureRepo, git
+
+
+def test_repeat_reuses_durable_objects(catalog, monkeypatch):
+    import subprocess
+
+    from repo_catalog.application.collection_service import CollectionService
+    from repo_catalog.application.contracts import CollectionRequest
+
+    state, fixture, repos = catalog
+    run(state, "sync", "git")
+    popen = subprocess.Popen
+    requested = []
+
+    def inspect_batch(args, *positional, **kwargs):
+        if "cat-file" in args and "--batch" in args:
+            stream = kwargs["stdin"]
+            requested.append(stream.read().splitlines())
+            stream.seek(0)
+        return popen(args, *positional, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", inspect_batch)
+    result = CollectionService(state).sync(CollectionRequest("git"))
+    assert result.status == "complete"
+    assert requested and all(not batch for batch in requested)
+    fixture.advance()
+    requested.clear()
+    assert CollectionService(state).sync(CollectionRequest("git")).status == "complete"
+    assert any(requested)
+    assert all(fixture.alpha.commits["N"].encode() not in batch for batch in requested)
+
+
+def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
+    from repo_catalog.adapters.git.importer import GitImporter
+    from repo_catalog.adapters.git.runner import GitRunner
+    from repo_catalog.adapters.sqlite.store import Store
+    from repo_catalog.application.job_service import JobService
+    from repo_catalog.domain.models import CancellationToken
+
+    state, fixture, repos = catalog
+    run(state, "sync", "git")
+
+    def no_transfer(*args, **kwargs):
+        raise AssertionError("Already published direct OID must not fetch again")
+
+    monkeypatch.setattr(GitRunner, "transfer", no_transfer)
+    monkeypatch.setattr(GitImporter, "import_objects", no_transfer)
+    with Store(state) as store:
+        repo = store.one("SELECT * FROM repositories WHERE id=?", (repos["alpha"],))
+        job = JobService(store).create("sync", {})
+        root = {
+            "ref": fixture.alpha.commits["N"],
+            "expected": fixture.alpha.commits["N"],
+            "role": "base",
+            "number": 41,
+        }
+        result = GitImporter(store, CancellationToken()).sync(
+            repo, job, pr_roots=[root]
+        )
+        assert result["state"] == "complete"
+        acquired = store.one(
+            "SELECT role,oid,published FROM acquisition_roots WHERE run_id=?",
+            (result["run_id"],),
+        )
+        assert acquired["role"] == "base" and acquired["published"] == 1
+        assert acquired["oid"].hex() == fixture.alpha.commits["N"]
+
+
+def test_manifest_uses_bounded_write_batches(catalog):
+    import math
+
+    from repo_catalog.adapters.git.importer import GitImporter
+    from repo_catalog.adapters.sqlite.store import Store
+    from repo_catalog.domain.models import CancellationToken
+
+    state, fixture, repos = catalog
+    run(state, "sync", "git")
+    oid = fixture.alpha.trees["A"]
+    expected = len(git(fixture.alpha.path, "ls-tree", "-r", "-z", oid).split(b"\0")) - 1
+    statements = []
+    with Store(state) as store:
+        tree = store.object_id("sha1", bytes.fromhex(oid))
+        assert not store.one(
+            "SELECT complete FROM root_manifests WHERE tree_id=?", (tree,)
+        )[0]
+        store.config["collection"]["write_batch_rows"] = 2
+        store.connection.set_trace_callback(statements.append)
+        GitImporter(store, CancellationToken()).build_manifest(tree)
+        assert (
+            store.one(
+                "SELECT count(*) FROM root_manifest_entries WHERE tree_id=?", (tree,)
+            )[0]
+            == expected
+        )
+    assert statements.count("COMMIT") == math.ceil(expected / 2) + 1
+
+
+def test_tags_paths_links(catalog, tmp_path):
+    state, fixture, repos = catalog
+    extra = FixtureRepo(tmp_path / "tags.git")
+    files = {
+        b"link": ("120000", b"not-existing"),
+        b"exec": ("100755", b"run"),
+        b"submodule": ("160000", "ab" * 20),
+        b"lfs": b"version https://git-lfs.github.com/spec/v1\noid sha256:"
+        + b"ab" * 32
+        + b"\nsize 999\n",
+    }
+    extra.commit("root", files)
+    extra.ref("refs/heads/main", "root")
+    git(extra.path, "tag", "-a", "v1", extra.commits["root"], "-m", "tag")
+    blob = extra.blob(b"tag-only")
+    git(extra.path, "update-ref", "refs/tags/blob", blob)
+    git(extra.path, "update-ref", "refs/tags/tree", extra.trees["root"])
+    ident = add_local(state, "tags", extra.url)
+    run(state, "sync", "git", "--repo", ident)
+    refs = pages(state, "refs", "list", "--repo", ident)
+    assert (
+        len(refs) == 4
+        and next(r for r in refs if r["ref"] == "refs/tags/v1")["peeled_oid"]
+        == "sha1:" + extra.commits["root"]
+    )
+    entries = {
+        r["path_utf8"]: r
+        for r in pages(
+            state, "tree", "list", "--repo", ident, "--ref", "refs/heads/main"
+        )
+    }
+    assert (
+        entries["link"]["mode"] == "120000"
+        and entries["submodule"]["content_id"] is None
+    )
+    assert entries["exec"]["mode"] == "100755" and entries["lfs"]["content_id"]
+
+
+def test_incomplete_closure(catalog):
+    state, fixture, repos = catalog
+    run(state, "sync", "git")
+    before = run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
+        "current_snapshot"
+    ]
+    import sqlite3
+
+    with sqlite3.connect(state / "catalog.sqlite3") as db:
+        path = db.execute(
+            "SELECT path FROM cache_entries WHERE repo_id=? AND state='available'",
+            (repos["alpha"],),
+        ).fetchone()[0]
+    (state / path / "objects/pack/missing.promisor").touch()
+    run(state, "sync", "git", "--repo", repos["alpha"], expected=3)
+    assert (
+        run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
+            "current_snapshot"
+        ]
+        == before
+    )
