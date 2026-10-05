@@ -68,3 +68,31 @@ CI artifacts/step summaryを毎run残す。`--reference docs/ci-performance-base
 最新hosted値・最終local full suite値は結果JSONへ追記する。PR CIはmerge refのSHAとfeature SHAを両方保存し、最終feature commitのchecksを確認する。P2 validationは実データmigrationの証明ではない。
 
 pre-push全suiteはnormal316件+packaging2件を3回実行し、全318 IDsを各回照合した。normal+packagingの中央値は 40.889秒、範囲 [40.18, 41.18]秒。P1の248件比較とはcoverageが異なる。最終guard/capacity調整と確定SHAのgate/CIは別に確認する。
+
+## P2の最初のhosted結果と最小SQLite追加実験
+
+feature `003f8e487773cf1d7b941786985759a978390d5c` の[run 37366302524](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37366302524)は全成功。同じfeature SHAのrunはPR用の1件だけだった。Python 3.12.14、native SQLite 3.45.1、CPU/affinity 4で、次を測った。
+
+| 区間 | P1比較run | 最初のP2 run |
+|---|---:|---:|
+| 通常pytest | 194.76秒（packaging込み248件） | 81.69秒（316件） |
+| packaging | 上記に含む | 3.79秒（2件、逐次） |
+| 最小SQLite試験 | 4.16秒（161件） | 40.21秒（225件、逐次） |
+| SQLite binding準備 | 旧wheel準備 | 17.19秒（pinned source compile） |
+| offline demo | 約9秒 | 8.16秒 |
+| job開始→終了 | 218秒 | 167秒 |
+| run作成→終了 | 223秒 | 205秒（queue 38秒） |
+
+比較runは各1 sampleで、coverageとbinding準備も異なる。hosted中央値や並列化単独の効果として扱わない。normal pytestの短縮とrunner消費の減少は確認できたが、feedbackにはqueueが含まれる。二重runのP1実測合計393秒に対しP2は167秒だった。run数の半減とjob自体の短縮を分けて評価する。
+
+新たなボトルネックとなった225件の最小SQLite laneも、同じtest ID集合を保ち、逐次/2/4 workerを各3回測定した。各workerはtest import前にprepared CPython bindingを明示loadし、実際のSQLite versionが3.46.1であることをassertする。親processのversion表示だけでminimum保証としない。
+
+| 225件、SQLite 3.46.1 | local中央値 | 範囲 | samples / failures |
+|---|---:|---:|---:|
+| sequential | 17.372秒 | 17.177–18.033秒 | 3 / 0 |
+| fixed 2 | 10.000秒 | 9.551–10.209秒 | 3 / 0 |
+| fixed 4 | 6.248秒 | 5.829–6.814秒 | 3 / 0 |
+
+fixed4を採用し、minimum laneの全225件を維持する。local中央値では64.0%短縮、追加jobやsetup重複はない。worker binding bootstrapが唯一の追加isolation処理。CIのcold準備17秒は保証のため維持し、ネットワークguardやpackagingには変更を加えない。最小laneを省く構成、強制retry、別job分割は採用しない。
+
+最終configurationはnormal316件を4 worker、packaging2件を逐次、minimum225件を4 workerで同一jobに実行する。確定feature SHAの最終hosted測定は[PR #1のchecks](https://github.com/TakashiSasaki/git-repo-db/pull/1/checks)、step summary、`ci-profile-<run-id>-<attempt>` artifact、PRのvalidation記録を参照する。JSONには第一P2 runと同じconfigurationの複数local trialを保持する。単一hosted sampleによるhard thresholdは設けない。

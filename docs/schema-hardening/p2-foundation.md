@@ -106,7 +106,7 @@ uv run --no-sync python scripts/offline_convert.py verify --work-dir artifacts/s
 
 `test_conversion_foundation.py`は全source表/列のbytes比較、5型、scalar/composite key、malformed UTF-8、A→B→A/同本文別観測、invalid flag/state、missing FK、partial/complete collection、未関連payload、同OID複数refを使う。再開は六地点のfault、`os._exit`、actual SQLITE_FULL、source replacement、DDL/contract/parser/code/output mismatchを検証する。guardはPythonとraw libcのsocket/exec/FD相対openを実行して拒否を確認する。P1全不変条件試験と3件の旧v2characterizationも維持する。
 
-最小SQLite laneではCPython 3.12.14標準bindingと固定SQLite 3.46.1をhash確認済みソースから準備する。旧`pysqlite3-binary`は接続auditがなく、P2保護の試験を通せなかったため採用しない。組込み`_sqlite3`のあるPythonでもextensionを明示loadする。native SQLiteが下限未満のCIでは、converter subprocessは準備した3.46.1で試験し、そのversionも照合する。native laneのP1試験を消さない。
+最小SQLite laneではCPython 3.12.14標準bindingと固定SQLite 3.46.1をhash確認済みソースから準備する。旧`pysqlite3-binary`は接続auditがなく、P2保護の試験を通せなかったため採用しない。組込み`_sqlite3`のあるPythonでもextensionを明示loadする。固定4 workerもtest import前に同じbindingをloadし、実versionを確認する。native SQLiteが下限未満のCIでは、converter subprocessは準備した3.46.1で試験し、そのversionも照合する。native laneのP1試験を消さない。
 
 ## P3〜P7への引継ぎ
 

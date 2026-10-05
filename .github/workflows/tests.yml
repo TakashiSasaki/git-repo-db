@@ -42,7 +42,7 @@ jobs:
       - name: Prove every required test passed exactly once
         run: python scripts/ci_profile.py coverage --expected artifacts/ci-profile/required-tests.txt artifacts/ci-profile/tests.json artifacts/ci-profile/packaging.json
       - name: SQLite 3.46.1 independent schema constraints (offline)
-        run: python scripts/ci_profile.py run --name sqlite-minimum --sqlite 3.46.1 --junit artifacts/ci-profile/sqlite-minimum.xml -- uv run --no-sync python scripts/run_sqlite_minimum_tests.py --junitxml artifacts/ci-profile/sqlite-minimum.xml
+        run: python scripts/ci_profile.py run --name sqlite-minimum --sqlite 3.46.1 --mode xdist --workers 4 --junit artifacts/ci-profile/sqlite-minimum.xml -- uv run --no-sync python scripts/run_sqlite_minimum_tests.py -n 4 --junitxml artifacts/ci-profile/sqlite-minimum.xml
       - run: python scripts/ci_profile.py run --name offline-recovery -- uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
       - name: Retain timing evidence (no databases or caches)
         if: always()
