@@ -79,3 +79,7 @@ final gateにはworkflowと同じ`ci_profile run`で記録した準備/static/sm
 JUnit testcase aggregate秒とcommand wall秒を分ける。metadata lookup、planning、report validationもwall/profileを残し、selection内部時間、fresh/reused/minimum counts、準備cache statusをmanifestへ記録する。job runner時間とrun queue/feedbackはActions timestampsから別に算出する。比較記録は[CI性能](ci-performance.md)と`ci-selection-results.json`に置く。異なるfresh test集合や1 sampleから改善率を作らない。
 
 実DB/旧cache、converter runtime、P1 DDL/契約、通常migration経路は変更しない。P2 archive_completeはvalidated/activeではない。FTS/ANALYZE derived source認識、P2→P3 phase handoff、normalized conversion、offline replay、新runtime/first sync、実データdry-run/切替は[実装計画](schema-hardening/implementation-plan.md)のP3〜P7へ残す。
+
+## 確認記録
+
+remote開始SHA、verified baseline、local full/focusedと最終full acceptance（`0d3ca46`、run 37386072605）は[計測結果](ci-performance.md)と[`ci-selection-results.json`](ci-selection-results.json)に記録する。この文書/reportだけのfollow-upではコード/DDL/契約を変えず、対応HEADの実際のplan/outcome artifactでreuseを確認する。PR #1のhandoffにそのrun IDと実測を追記し、未実行laneをfresh passと記載しない。

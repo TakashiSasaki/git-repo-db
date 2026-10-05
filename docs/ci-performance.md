@@ -131,3 +131,13 @@ hardlink修正を含むcode SHA `ff4de5ff64451cd12e7252f18a7f89e1ffd14d54` の[r
 [変更依存CI](change-aware-ci.md)で、verified full acceptanceのeffective lane inputsが一致するreport-only follow-upをreuseし、依存導入、SQLite build、wheelhouse/build/packaging、E2E/demoを条件付きにする。policy変更の最終substantive revisionはfull acceptanceで確認し、後続の測定report commitでlightweight pathを確認する。結果・run IDs・overheadは`ci-selection-results.json`へ記録する。
 
 job fan-out、workflow全体paths-ignore、binary binding cache、reuse-only artifactの連鎖は採用しない。単一jobと安価なstdlib plannerを保ち、minimumが選ばれた時は既存のcold preparationを行う。coverage/guardを弱めず、曖昧な証拠はfull。今回はfresh pytestの同一集合を高速化する比較ではなく、不必要な再実行を除く変更である。fresh/reused件数とjob/queue/command wallを分けて報告し、異なる集合から改善率を作らない。
+
+### 最終orchestration revisionの確認
+
+code `0d3ca4693a03d5daa8210e2fd3a44dd1e613cd09`の[run 37386072605](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37386072605) / job 112019542087はsuccess。417 native+2 packaging=419 required IDsと228 minimum IDsをraw JUnit/profileで照合し、既存321/228の下限も維持した。native Py3.12.14 / SQLite3.45.1、minimum/guarded childは3.46.1。full runner130秒、queue3秒、feedback134秒。normal70.776秒、packaging2.489秒、minimum21.088秒、minimum準備12.752秒、demo6.023秒。各1 sampleで、baselineとは試験集合が異なるためpytestの改善率は算出しない。
+
+metadata lookup2.136秒、planning command0.091秒、report validation0.043秒。fan-out/job startupの追加はない。上位file aggregateはP2 foundation64.987秒、GitHub sync49.095秒で、並列wallとは別。Local fullは初期orchestration `42e5349`で418+228、metadata修正後はfocused106件を4 workersで確認した。最終codeの全gateは上記CIで実行した。
+
+初期run 37385109932も418+228でsuccessだったが、PR更新後のAPIを確認して、Actionsの`pull_requests[].head.sha`が最新PR headへ更新されることを実測した。修正ではそのlive fieldをhistorical revisionの根拠から外し、immutable run.head_shaとmanifest/Git merge parentsを使う。新policyのfull acceptanceを改めて実行した。二つのcode revisionは機能・修正のためで、benchmark sampleを増やすためのcommitではない。
+
+このreport revisionのCIをreuse probeにする。結果を先取りして成功とは書かない。実際のfresh/reused/not_applicable counts、準備の非実行、overhead/runner/queue/feedbackは、そのHEADのActions artifactとPR #1の最終記録で確認する。`ci-selection-results.json`はこのcommit時点で確定している測定値と比較上の限界を保持する。

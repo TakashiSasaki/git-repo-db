@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "scope": "conservative change-aware CI; no real-data migration",
+  "repository": "TakashiSasaki/git-repo-db",
+  "base_sha": "9a4110185d7e7abffc291f9cfd118ca71587f998",
+  "starting_sha": "ceaf25de85d75be92838d0feedd7505dd616f180",
+  "acceptance_code_sha": "0d3ca4693a03d5daa8210e2fd3a44dd1e613cd09",
+  "baseline": {
+    "run_id": 37372942822,
+    "job_id": 111974353559,
+    "feature_sha": "ceaf25de85d75be92838d0feedd7505dd616f180",
+    "conclusion": "success",
+    "test_counts": {
+      "tests": 319,
+      "packaging": 2,
+      "sqlite-minimum": 228
+    },
+    "wall_seconds": {
+      "tests": 81.239324046,
+      "packaging": 3.7109227340000075,
+      "sqlite-minimum": 18.435428780999985,
+      "sqlite-preparation": 24.882307326000003,
+      "offline-recovery": 8.056783467999992
+    },
+    "runner_seconds": 158.0,
+    "queue_seconds": 6.0,
+    "feedback_seconds": 165.0,
+    "exact_required_coverage": {
+      "required": 321,
+      "executed_once": 321
+    },
+    "slowest_files_aggregate_seconds": [
+      {
+        "file": "tests/e2e/test_github_sync.py",
+        "seconds": 78.664,
+        "tests": 14,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/integration/test_conversion_foundation.py",
+        "seconds": 56.926,
+        "tests": 56,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_repository_identity.py",
+        "seconds": 18.253999999999998,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_git_sync.py",
+        "seconds": 18.015,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_queries.py",
+        "seconds": 13.692,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      }
+    ],
+    "samples": 1
+  },
+  "initial_acceptance": {
+    "run_id": 37385109932,
+    "job_id": 112016355007,
+    "feature_sha": "42e53494b2b749fe0cf21a555cf8fe3a24fc20ac",
+    "conclusion": "success",
+    "test_counts": {
+      "tests": 416,
+      "packaging": 2,
+      "sqlite-minimum": 228
+    },
+    "wall_seconds": {
+      "tests": 61.18981315400001,
+      "packaging": 2.6346971719999885,
+      "sqlite-minimum": 16.507085590000003,
+      "sqlite-preparation": 10.963721574000004,
+      "offline-recovery": 5.932670798000004
+    },
+    "runner_seconds": 111.0,
+    "queue_seconds": 3.0,
+    "feedback_seconds": 115.0,
+    "exact_required_coverage": {
+      "required": 418,
+      "executed_once": 418
+    },
+    "slowest_files_aggregate_seconds": [
+      {
+        "file": "tests/integration/test_conversion_foundation.py",
+        "seconds": 47.78599999999999,
+        "tests": 56,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_github_sync.py",
+        "seconds": 41.354,
+        "tests": 14,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_repository_identity.py",
+        "seconds": 10.655000000000001,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_git_sync.py",
+        "seconds": 10.148,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_queries.py",
+        "seconds": 8.705,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      }
+    ],
+    "samples": 1
+  },
+  "final_orchestration_acceptance": {
+    "run_id": 37386072605,
+    "job_id": 112019542087,
+    "feature_sha": "0d3ca4693a03d5daa8210e2fd3a44dd1e613cd09",
+    "conclusion": "success",
+    "test_counts": {
+      "tests": 417,
+      "packaging": 2,
+      "sqlite-minimum": 228
+    },
+    "wall_seconds": {
+      "tests": 70.776382027,
+      "packaging": 2.48867684599999,
+      "sqlite-minimum": 21.088135322,
+      "sqlite-preparation": 12.752439994,
+      "offline-recovery": 6.022740965999986
+    },
+    "runner_seconds": 130.0,
+    "queue_seconds": 3.0,
+    "feedback_seconds": 134.0,
+    "exact_required_coverage": {
+      "required": 419,
+      "executed_once": 419
+    },
+    "slowest_files_aggregate_seconds": [
+      {
+        "file": "tests/integration/test_conversion_foundation.py",
+        "seconds": 64.98700000000001,
+        "tests": 56,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_github_sync.py",
+        "seconds": 49.095,
+        "tests": 14,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_repository_identity.py",
+        "seconds": 11.858,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/integration/test_cache.py",
+        "seconds": 11.841000000000001,
+        "tests": 7,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/e2e/test_git_sync.py",
+        "seconds": 10.991000000000001,
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      }
+    ],
+    "samples": 1
+  },
+  "evidence": {
+    "artifact_id": 11379100445,
+    "artifact_sha256": "cfdd05b159ff42df1be308ad053688219254efe8682969d81e5dc8f6ce63c3a5",
+    "tested_merge_sha": "153ed7317e7b083b1f10490e63cd9bbb3e62ff0d",
+    "runtime": {
+      "python": "3.12.14",
+      "abi": "cpython-312-x86_64-linux-gnu",
+      "sqlite": "3.45.1",
+      "os": [
+        "ubuntu",
+        "24.04"
+      ],
+      "arch": "x86_64",
+      "git": "git version 2.55.0",
+      "uv": "0.12.19",
+      "minimum_sqlite": "3.46.1",
+      "runner_image": [
+        "ubuntu24",
+        "20260927.320.1"
+      ],
+      "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+    },
+    "coverage": {
+      "required": 419,
+      "fresh": 419,
+      "reused": 0,
+      "minimum_fresh": 228,
+      "minimum_reused": 0
+    },
+    "policy_hash": "2d83d7c98f45da763c9b45d74da26874da406baae5c41ac66d19f8ff280883e3"
+  },
+  "local": {
+    "full_acceptance_sha": "42e53494b2b749fe0cf21a555cf8fe3a24fc20ac",
+    "coverage": {
+      "required": 418,
+      "fresh": 418,
+      "reused": 0,
+      "minimum_fresh": 228,
+      "minimum_reused": 0
+    },
+    "runtime": {
+      "python": "3.12.14",
+      "abi": "cpython-312-x86_64-linux-gnu",
+      "sqlite": "3.53.1",
+      "os": [
+        "debian",
+        "13"
+      ],
+      "arch": "x86_64",
+      "git": "git version 2.52.0",
+      "uv": "0.12.19",
+      "minimum_sqlite": "3.46.1",
+      "runner_image": [
+        null,
+        null
+      ],
+      "compiler": "cc (Debian 14.2.0-19) 14.2.0"
+    },
+    "wall_seconds": {
+      "tests": 51.25832474100753,
+      "packaging": 2.8269977449963335,
+      "sqlite-minimum": 6.993758356999024,
+      "lint": 0.017410221000318415,
+      "format": 0.01866634101315867,
+      "fts": 0.025861301997792907,
+      "doctor": 0.07307888900686521,
+      "build": 1.2007886840001447,
+      "export": 0.012177259995951317,
+      "offline-recovery": 6.564370734005934,
+      "dependency-setup": 0.012092566001228988,
+      "wheelhouse": 0.09820878000755329,
+      "sqlite-preparation": 14.627973410009872,
+      "evidence-lookup": 0.06171564100077376,
+      "planning": 0.06963871499465313,
+      "report-validation": 0.05117150500882417
+    },
+    "correction_focused_tests": 106,
+    "correction_focused_workers": 4
+  },
+  "report_only_followup": {
+    "status": "This report revision is the reuse probe; actual outcomes/timings are retained in its Actions selection manifest and PR #1, not preclaimed in this file.",
+    "expected_fresh_tests": 0,
+    "expected_reused_tests": 419,
+    "expected_reused_minimum_tests": 228,
+    "expected_preparation": "not_applicable"
+  },
+  "interpretation": [
+    "Each hosted sample is a single observation. These full runs have different test collections; no pytest improvement percentage is inferred.",
+    "The second substantive revision corrects live Actions PR-association metadata; it was not a benchmark-only commit.",
+    "Persistent binding caching and job fan-out were not adopted.",
+    "Final report-only execution/reuse counts and timings must come from its actual completed job."
+  ]
+}
