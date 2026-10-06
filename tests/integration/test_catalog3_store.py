@@ -14,13 +14,41 @@ def initialize(path):
     MaintenanceService(path).init("catalog-text-v1", 64 * 1024 * 1024, 0)
 
 
-def test_readonly_snapshot_tracks_active_wal_catalog_without_immutable(tmp_path):
+def test_readonly_snapshot_tracks_mutable_catalog_without_immutable(tmp_path):
+    state = tmp_path / "state"
+    initialize(state)
+    with Store(state) as writer, Store(state, readonly=True) as reader:
+        with reader.transaction(read=True):
+            assert reader.revision()["publication_seq"] == 0
+        with writer.transaction():
+            writer.publish()
+        with reader.transaction(read=True):
+            assert reader.revision()["publication_seq"] == 1
+        with writer.transaction():
+            writer.publish()
+        assert reader.revision()["publication_seq"] == 2
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            reader.publish()
+
+
+def test_optional_wal_is_guarded_or_reads_active_snapshot(tmp_path):
     state = tmp_path / "state"
     initialize(state)
     config = state / "catalog.toml"
     config.write_text(
         config.read_text().replace('journal_mode = "delete"', 'journal_mode = "wal"')
     )
+    version = sqlite3.sqlite_version_info
+    if not (version >= (3, 51, 3) or version in ((3, 44, 6), (3, 50, 7))):
+        database = state / "catalog.sqlite3"
+        before = database.read_bytes()
+        with pytest.raises(CatalogError) as rejected:
+            Store(state)
+        assert rejected.value.code == "UNSAFE_WAL_RUNTIME"
+        assert database.read_bytes() == before
+        with Store(state, readonly=True) as reader:
+            assert reader.revision()["publication_seq"] == 0
+        return
     with Store(state) as writer, Store(state, readonly=True) as reader:
         with reader.transaction(read=True):
             assert reader.one("SELECT publication_seq FROM database_identity")[0] == 0

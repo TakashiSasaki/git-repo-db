@@ -26,8 +26,6 @@ repo-catalog --state-dir /tmp/catalog3-fresh tree list --repo REPO_ID --ref refs
 repo-catalog --state-dir /tmp/catalog3-fresh search code --literal sentinel
 repo-catalog --state-dir /tmp/catalog3-fresh search commits --literal synthetic
 repo-catalog --state-dir /tmp/catalog3-fresh search pr --literal sentinel --document-versions observed
-repo-catalog --state-dir /tmp/catalog3-fresh pr show --repo REPO_ID --number 41
-repo-catalog --state-dir /tmp/catalog3-fresh jobs resume JOB_ID
 repo-catalog --state-dir /tmp/catalog3-fresh index rebuild --kind all
 repo-catalog --state-dir /tmp/catalog3-fresh cache gc
 repo-catalog --state-dir /tmp/catalog3-fresh db check --full
@@ -35,7 +33,7 @@ repo-catalog --state-dir /tmp/catalog3-fresh db backup --output /tmp/new-catalog
 repo-catalog --state-dir /tmp/catalog3-restored db restore --input /tmp/new-catalog3-backup.sqlite3
 ```
 
-GitHub source registration plus explicit `sync pr`/`sync all` retain reviews, threads/comments, events, payload/page history, commit/file listings and PR Git roots. Production acquisition is explicit; acceptance uses dummy credentials and loopback APIs.
+GitHub source registration plus explicit `sync pr`/`sync all` retain reviews, threads/comments, events, payload/page history, commit/file listings and PR Git roots. After acquiring a synthetic GitHub PR, `repo-catalog --state-dir /tmp/catalog3-fresh pr show --repo REPO_ID --number 41` shows its documents. A previously interrupted runtime job can be continued with `repo-catalog --state-dir /tmp/catalog3-fresh jobs resume JOB_ID`. Production acquisition is explicit; acceptance uses dummy credentials and loopback APIs.
 
 A checkout fixture builder supplies operational v2 FTS/statistics input. Installed applications need neither it nor checkout documents:
 
@@ -49,7 +47,7 @@ repo-catalog --state-dir /tmp/catalog3-imported import-v2 \
   --source-cache /tmp/catalog3-v2-fixture/cache
 repo-catalog --state-dir /tmp/catalog3-imported db finalize
 repo-catalog --state-dir /tmp/catalog3-imported repos list
-repo-catalog --state-dir /tmp/catalog3-imported search pr --literal 'saved early-page'
+repo-catalog --state-dir /tmp/catalog3-imported search pr --literal 'saved early-page' --document-versions observed
 # Configure a supported current/synthetic source before an explicit first sync:
 repo-catalog --state-dir /tmp/catalog3-imported sync pr --repo REPO_ID
 ```

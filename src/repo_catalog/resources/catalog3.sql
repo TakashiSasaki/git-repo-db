@@ -441,6 +441,9 @@ CREATE TRIGGER document_observations_no_replace BEFORE INSERT ON document_observ
 CREATE TRIGGER document_observations_retain BEFORE DELETE ON document_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX document_observations_fk_0 ON document_observations(version_id,document_id);
 CREATE INDEX document_observations_fk_1 ON document_observations(occurrence_id);
+-- Remote observation replay and external node identity are hot per-comment
+-- lookups. Keep them indexed as collections/history grow.
+CREATE INDEX document_observations_origin_lookup ON document_observations(document_id,origin_key);
 CREATE TRIGGER document_versions_immutable BEFORE UPDATE ON document_versions WHEN NEW.id IS NOT OLD.id OR NEW.document_id IS NOT OLD.document_id OR NEW.body_id IS NOT OLD.body_id OR NEW.legacy_body_sha256 IS NOT OLD.legacy_body_sha256 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER document_versions_no_replace BEFORE INSERT ON document_versions WHEN EXISTS(SELECT 1 FROM document_versions WHERE id=NEW.id) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER document_versions_retain BEFORE DELETE ON document_versions BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -448,6 +451,7 @@ CREATE INDEX document_versions_fk_0 ON document_versions(body_id);
 CREATE TRIGGER documents_immutable BEFORE UPDATE ON documents WHEN NEW.id IS NOT OLD.id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_id IS NOT OLD.provider_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER documents_no_replace BEFORE INSERT ON documents WHEN EXISTS(SELECT 1 FROM documents WHERE (id=NEW.id) OR (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_id=NEW.provider_id) OR (id=NEW.id AND change_request_id=NEW.change_request_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX documents_fk_0 ON documents(current_version_id,id);
+CREATE INDEX documents_node_lookup ON documents(change_request_id,kind,node_id);
 CREATE TRIGGER fetch_collections_immutable BEFORE UPDATE ON fetch_collections WHEN NEW.id IS NOT OLD.id OR NEW.repo_id IS NOT OLD.repo_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.source_id IS NOT OLD.source_id OR NEW.kind IS NOT OLD.kind OR NEW.scope_id IS NOT OLD.scope_id OR NEW.observed_at IS NOT OLD.observed_at BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER fetch_collections_no_replace BEFORE INSERT ON fetch_collections WHEN EXISTS(SELECT 1 FROM fetch_collections WHERE (id=NEW.id) OR (id=NEW.id AND change_request_id=NEW.change_request_id) OR (id=NEW.id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER fetch_collections_retain BEFORE DELETE ON fetch_collections BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;

@@ -237,7 +237,7 @@ class ApiFacts:
             )
         ident = found[0] if found else f"{pr}:{kind}:{provider}"
         origin = self.origin(collection, occurrence, position)
-        if self.s.one(
+        if found and self.s.one(
             "SELECT 1 FROM document_observations WHERE document_id=? AND origin_key=?",
             (ident, origin),
         ):
@@ -302,27 +302,24 @@ class ApiFacts:
                 (ident, body_id),
             ).lastrowid
         )
-        if not self.s.one(
-            "SELECT 1 FROM document_observations WHERE document_id=? AND origin_key=?",
-            (ident, origin),
-        ):
-            # Repository-wide streams retain exact page attribution in origin_key. Only
-            # a CR-owned occurrence can be used by the same-owner foreign-key guard.
-            owner_occurrence = (
-                occurrence if collection.get("change_request_id") == pr else None
-            )
-            self.s.execute(
-                "INSERT INTO document_observations(document_id,version_id,observed_at,parsed_at,origin_key,occurrence_id,metadata) VALUES(?,?,?,?,?,?,?)",
-                (
-                    ident,
-                    version_id,
-                    observed_at,
-                    now(),
-                    origin,
-                    owner_occurrence,
-                    canonical(metadata),
-                ),
-            )
+        # The replay guard above returned before any writes. This caller holds
+        # the SQLite writer transaction, so repeating that lookup after creating
+        # the version cannot reveal another writer's observation.
+        owner_occurrence = (
+            occurrence if collection.get("change_request_id") == pr else None
+        )
+        self.s.execute(
+            "INSERT INTO document_observations(document_id,version_id,observed_at,parsed_at,origin_key,occurrence_id,metadata) VALUES(?,?,?,?,?,?,?)",
+            (
+                ident,
+                version_id,
+                observed_at,
+                now(),
+                origin,
+                owner_occurrence,
+                canonical(metadata),
+            ),
+        )
         self.s.execute(
             "UPDATE documents SET current_version_id=? WHERE id=?", (version_id, ident)
         )
