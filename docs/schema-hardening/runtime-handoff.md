@@ -2,7 +2,13 @@
 
 The ordinary application now uses catalog3 for initialization, registration/discovery, Git and GitHub REST/GraphQL collection, restart, offline queries/search, doctor, index/cache maintenance and backup/restore. The one offline v2 salvage importer writes the same packaged `resources/catalog3.sql` and requires explicit `db finalize` before normal use.
 
-## Remaining real operational validation, 2026-10-06
+## Real operational validation completed, 2026-10-06
+
+**Ready for schema naming cleanup.** The [complete PR/API continuation](../validation/real-world/2026-10-06-museum-portal-api-continuation-64da722.md) and adjacent JSON record PASS for exact application commit `64da7222c96d5cd31b7f08a35d77552394c64e46`. Both repository-wide syncs for public `TakashiSasaki/museum-portal` completed, covering all 50 PRs, 121 reviews and 79 real review threads. The original temporary state was authenticated against its identity/counts and five durable query hashes, then continued in an exact disposable copy; original DB/cache fingerprints and earlier reports remain unchanged. Discovery and retained-v2 search were not repeated.
+
+The resumed first sync used 408 API sends in 364.75 seconds of command execution; the subsequent sync, including its time-limit interruption/resume, used 357 sends in 303.55 seconds. Added sends: 765; cumulative with the earlier 95: **860 / 1,000**. Second sync returned 50 detail 304s and made zero commit/file-list calls; all 50 PR head/base/state/update tuples were unchanged. Normal authorization, child-history refresh and Git-head validation still required requests. The initial 600-second window stopped safely; the user explicitly authorized more time, and completion/recovery used 220.69 seconds of a new bounded 600-second window. Overall elapsed time including stopped/user-response/preparation intervals was 1,052.88 seconds. One deadline-aborted request is counted; no provider rate-limit/authentication/permission or product failure occurred. A temporary measurement URL filter was corrected to allow verified same-repository numeric-ID pagination; product code was unchanged.
+
+Full DB checks passed before/after backup/restore, and seven normalized query/coverage digest pairs matched. PR/history/documents/events/search and thread queries were complete. Broad history code search returned a 1,000-row page and honestly reported 270 unsaved historical bodies plus five policy exclusions, as documented for `catalog-text-v1`; no required text at current acquired roots was missing. Final/backup/restored DB: 101,138,432 bytes; final cache: 1,961,272 bytes; restored cache: zero. Backup excludes the Git cache. No product code or naming cleanup was performed, and no broad application suite was rerun for this evidence-only change; report/JSON checks and whitespace checks passed. The continuation is committed locally without modifying remote GitHub state. Schema naming cleanup is the next stride; this is not a release-candidate declaration.
 
 Verified local commits `04f23c7082b1b9d0cd96df1062459b7b71049bb0` and `bdc6a6eb9044f316cd9ebea9e70dd484b49ff406`, their ancestry and the prior Git report, preserving the checkout. Published both to `design/schema-v2-hardening` / [PR #1](https://github.com/TakashiSasaki/git-repo-db/pull/1); the earlier Git-only PASS was not repeated.
 
@@ -10,7 +16,7 @@ The [first PR/API trial](../validation/real-world/2026-10-06-museum-portal-api-b
 
 [Retained real v2 discovery](../validation/real-world/2026-10-06-retained-v2-discovery-bdc6a6e.md) is **N/A**: default state is absent, and all six DBs in known application/catalog trial locations are identified catalog3 artifacts. Read-only classification left their digests unchanged; existing caches were untouched. No synthetic or newly collected source was represented as real v2.
 
-The user subsequently reported that more API capacity is available. A revised numeric request/time budget has been requested; a new fresh-state continuation is prepared but has not started. Keep the original failed attempt and give the continuation a distinct report. At this checkpoint: **Not ready — complete real PR/API validation remains pending the enlarged bounded trial.** Do not begin schema naming cleanup. No application test suite was rerun for these evidence-only changes; ordinary report checks and whitespace validation passed.
+The original 100-request attempt remains a distinct unchanged report. The subsequently authorized complete continuation above supersedes its budget blocker. Retained-real-v2 remains N/A, and the earlier Git-only PASS was reused. These close the requested operational validation scopes without synthesizing legacy data or changing the schema.
 
 ## Authorized public Git trial, 2026-10-06
 
