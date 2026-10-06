@@ -39,7 +39,9 @@ class TargetReader:
                         {"capability": capability},
                     )
             self.connection.execute("BEGIN")
-            rows = self.connection.execute("SELECT * FROM database_identity").fetchall()
+            rows = self.connection.execute(
+                "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+            ).fetchall()
             if len(rows) != 1:
                 raise CatalogError("SCHEMA_ERROR", "Invalid target database identity")
             self.identity = dict(rows[0])

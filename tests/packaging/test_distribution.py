@@ -166,7 +166,7 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     with sqlite3.connect(state / "catalog.sqlite3") as connection:
         assert connection.execute(
             "SELECT format_id,schema_version,lifecycle FROM database_identity"
-        ).fetchone() == ("repo-catalog/catalog3", 3, "validated")
+        ).fetchone() == ("repo-catalog/catalog3", 4, "validated")
         assert not connection.execute(
             "SELECT name FROM sqlite_schema WHERE name='schema_migrations'"
         ).fetchall()

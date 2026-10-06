@@ -26,12 +26,17 @@ SOURCE_TABLES = {
     "repository_preferences": "repositories",
 }
 KEYS = {
-    "repository_name_assertions": ("repo_id", "name"),
-    "source_repositories": ("source_id", "repo_id"),
+    "repository_name_assertions": ("repository_id", "name"),
+    "source_repositories": ("source_id", "repository_id"),
+    "service_instances": ("service_instance_id",),
+    "sources": ("source_id",),
+    "repositories": ("repository_id",),
+    "repository_bindings": ("repository_binding_id",),
+    "repository_endpoints": ("repository_endpoint_id",),
 }
 COLUMNS = {
     "service_instances": (
-        "id",
+        "service_instance_id",
         "kind",
         "name",
         "web_base_url",
@@ -39,33 +44,39 @@ COLUMNS = {
         "metadata",
         "created_at",
     ),
-    "sources": ("id", "instance_id", "discovery_kind", "name", "settings"),
-    "repositories": (
-        "id",
+    "sources": (
+        "source_id",
+        "service_instance_id",
+        "discovery_kind",
         "name",
-        "preferred_endpoint_id",
+        "settings",
+    ),
+    "repositories": (
+        "repository_id",
+        "name",
+        "preferred_repository_endpoint_id",
         "current_snapshot_id",
         "metadata",
     ),
     "repository_bindings": (
-        "id",
-        "repo_id",
-        "instance_id",
-        "provider_repo_id",
+        "repository_binding_id",
+        "repository_id",
+        "service_instance_id",
+        "provider_repository_id",
         "metadata",
         "created_at",
     ),
     "repository_endpoints": (
-        "id",
-        "repo_id",
+        "repository_endpoint_id",
+        "repository_id",
         "url",
         "transport",
         "label",
         "metadata",
         "created_at",
     ),
-    "repository_name_assertions": ("repo_id", "name", "observed_at"),
-    "source_repositories": ("source_id", "repo_id", "first_seen", "last_seen"),
+    "repository_name_assertions": ("repository_id", "name", "observed_at"),
+    "source_repositories": ("source_id", "repository_id", "first_seen", "last_seen"),
 }
 
 
@@ -178,18 +189,18 @@ class Context:
             raise Invalid("IDENTITY_UNSAFE_DEPENDENCY", table) from None
         return record
 
-    def record_id(self, record):
+    def legacy_record_id(self, record):
         saved = self.db.execute(
-            "SELECT id,row_sha256 FROM legacy_records WHERE source_id=? AND source_table=? AND source_key=?",
-            (self.run["source_id"], record.table, record.key),
+            "SELECT legacy_record_id,row_sha256 FROM legacy_records WHERE conversion_source_id=? AND source_table=? AND source_key=?",
+            (self.run["conversion_source_id"], record.table, record.key),
         ).fetchone()
         if saved is None or saved["row_sha256"] != record.row_sha256:
             raise ConversionError("ARCHIVE_SOURCE_MISMATCH")
-        return saved["id"]
+        return saved["legacy_record_id"]
 
     def binding_id(self, record):
-        record_id = self.record_id(record)
-        key = mapping.lookup(self.db, record_id, "repository_bindings")
+        legacy_record_id = self.legacy_record_id(record)
+        key = mapping.lookup(self.db, legacy_record_id, "repository_bindings")
         if key is None:
             if self.verifying:
                 raise ConversionError("IDENTITY_MAPPING_MISSING")
@@ -251,12 +262,29 @@ class Context:
                     raise Invalid("IDENTITY_INSTANCE_KIND_CONFLICT", "instance_id")
             elif kind == "github":
                 raise Invalid("IDENTITY_MISSING_INSTANCE", "instance_id")
+            settings = self.metadata(record, "settings")
+            # Raw settings remain in legacy_values; current source registration
+            # consumes only the catalog3 identity names in its target projection.
+            for old, new in (
+                ("repo_id", "repository_id"),
+                ("provider_repo_id", "provider_repository_id"),
+            ):
+                if (
+                    self.src.execute(
+                        "SELECT json_type(?,?)", (settings, "$." + old)
+                    ).fetchone()[0]
+                    is not None
+                ):
+                    settings = self.src.execute(
+                        "SELECT json_set(json_remove(?,?),?,json_extract(?,?))",
+                        (settings, "$." + old, "$." + new, settings, "$." + old),
+                    ).fetchone()[0]
             return [
                 ident,
                 instance,
                 {"local-git": "manual_git", "github": "github_inventory"}[kind],
                 t(record, "name"),
-                self.metadata(record, "settings"),
+                settings,
             ]
         if recipe == "repositories":
             return [
@@ -457,10 +485,7 @@ class Context:
 def target_key(table, row):
     columns = COLUMNS[table]
     return tagged_key(
-        [
-            ("text", row[columns.index(key)].encode("utf-8"))
-            for key in KEYS.get(table, ("id",))
-        ]
+        [("text", row[columns.index(key)].encode("utf-8")) for key in KEYS[table]]
     )
 
 
@@ -468,7 +493,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
     context = Context(db, src, run, encoding, verifying=verifying)
     output = {"operations": [], "mappings": [], "diagnostics": [], "decisions": []}
     for record in records:
-        record_id = context.record_id(record)
+        legacy_record_id = context.legacy_record_id(record)
         issues, row = [], None
         try:
             row = (
@@ -495,7 +520,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
             key = target_key(table, row)
             output["operations"].append(
                 {
-                    "record_id": record_id,
+                    "legacy_record_id": legacy_record_id,
                     "table": table,
                     "operation": operation,
                     "row": row,
@@ -504,7 +529,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
             if recipe != "repository_preferences":
                 output["mappings"].append(
                     [
-                        record_id,
+                        legacy_record_id,
                         table,
                         key.hex(),
                         "identity",
@@ -513,7 +538,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
                 )
         output["decisions"].append(
             {
-                "record_id": record_id,
+                "legacy_record_id": legacy_record_id,
                 "source_key": record.key.hex(),
                 "source_sha256": record.row_sha256.hex(),
                 "disposition": "normalized" if row is not None else "archive_only",
@@ -524,7 +549,13 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
                 "I31",
                 code,
                 severity,
-                canonical({"record_id": record_id, "column": column, "recipe": recipe}),
+                canonical(
+                    {
+                        "legacy_record_id": legacy_record_id,
+                        "column": column,
+                        "recipe": recipe,
+                    }
+                ),
             ]
             for code, severity, column in sorted(set(issues))
         )

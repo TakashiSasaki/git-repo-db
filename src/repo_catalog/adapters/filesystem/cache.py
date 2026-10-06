@@ -15,7 +15,7 @@ class CacheManager:
         self.s = store
 
     def paths(self, row):
-        expected = f"cache/{row['repo_id']}/{row['generation']}.git"
+        expected = f"cache/{row['repository_id']}/{row['generation']}.git"
         if row["path"] != expected:
             raise CatalogError(
                 "UNMANAGED_CACHE_PATH", "Cache path is not a managed generation"
@@ -27,7 +27,7 @@ class CacheManager:
             raise CatalogError(
                 "UNMANAGED_CACHE_PATH", "Refusing cache symlink or escaped path"
             )
-        quarantine = self.s.path / "quarantine" / row["id"]
+        quarantine = self.s.path / "quarantine" / row["active_cache_entry_id"]
         if quarantine.is_symlink() or not quarantine.resolve().is_relative_to(
             (self.s.path / "quarantine").resolve()
         ):
@@ -41,8 +41,12 @@ class CacheManager:
         if s.config["preservation"]["profile"] != "catalog-text-v1":
             return ["unknown_profile"]
         obligations = s.all(
-            "SELECT * FROM preservation_obligations WHERE cache_id=?",
-            (row["locator_id"] if "locator_id" in row.keys() else row["id"],),
+            "SELECT * FROM preservation_obligations WHERE cache_locator_id=?",
+            (
+                row["cache_locator_id"]
+                if "cache_locator_id" in row.keys()
+                else row["active_cache_entry_id"],
+            ),
         )
         reasons = []
         for r in obligations:
@@ -50,7 +54,7 @@ class CacheManager:
                 r[k]
                 for k in ("structure_done", "digest_done", "text_done", "published")
             ):
-                reasons.append("pending_obligations:" + r["acquisition_id"])
+                reasons.append("pending_obligations:" + r["git_acquisition_id"])
         # No fixed roots means failed transfer work; OS lock must prove all users stopped.
         return reasons
 
@@ -58,10 +62,7 @@ class CacheManager:
         s = self.s
         results = []
         rows = s.all(
-            "SELECT a.*,l.repo_id,l.path,l.access FROM active_cache_entries a "
-            "JOIN cache_locators l ON l.id=a.locator_id "
-            "WHERE l.access='target_active' AND a.state IN ('active','evicting') "
-            "ORDER BY a.last_used,a.id"
+            "SELECT a.*,l.repository_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' AND a.state IN ('active','evicting') ORDER BY a.last_used,a.active_cache_entry_id"
         )
         from repo_catalog.adapters.filesystem.capacity import Capacity
 
@@ -79,12 +80,12 @@ class CacheManager:
                 and used > cfg["max_bytes"] * cfg["low_water_ratio"]
             )
             try:
-                with FileLock(s.path / f"locks/cache-{row['id']}.lock"):
+                with FileLock(
+                    s.path / f"locks/cache-{row['active_cache_entry_id']}.lock"
+                ):
                     latest = s.one(
-                        "SELECT a.*,l.repo_id,l.path,l.access FROM active_cache_entries a "
-                        "JOIN cache_locators l ON l.id=a.locator_id "
-                        "WHERE a.id=? AND l.access='target_active'",
-                        (row["id"],),
+                        "SELECT a.*,l.repository_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE a.active_cache_entry_id=? AND l.access='target_active'",
+                        (row["active_cache_entry_id"],),
                     )
                     if latest is None:
                         raise CatalogError(
@@ -95,12 +96,12 @@ class CacheManager:
                         # Leases of dead parents are safe to clear only after the inherited OS lock is acquired.
                         with s.transaction():
                             s.execute(
-                                "DELETE FROM cache_leases WHERE cache_id=?",
-                                (row["id"],),
+                                "DELETE FROM cache_leases WHERE active_cache_entry_id=?",
+                                (row["active_cache_entry_id"],),
                             )
                             s.execute(
-                                "UPDATE active_cache_entries SET state='evicting' WHERE id=?",
-                                (row["id"],),
+                                "UPDATE active_cache_entries SET state='evicting' WHERE active_cache_entry_id=?",
+                                (row["active_cache_entry_id"],),
                             )
                         if path.exists():
                             if quarantine.exists():
@@ -123,16 +124,16 @@ class CacheManager:
                             )
                         with s.transaction():
                             s.execute(
-                                "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE id=?",
-                                (row["id"],),
+                                "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE active_cache_entry_id=?",
+                                (row["active_cache_entry_id"],),
                             )
                             s.execute(
-                                "UPDATE cache_locators SET state='missing' WHERE id=? AND access='target_active'",
-                                (row["locator_id"],),
+                                "UPDATE cache_locators SET state='missing' WHERE cache_locator_id=? AND access='target_active'",
+                                (row["cache_locator_id"],),
                             )
                             s.execute(
-                                "UPDATE content_locations SET state='unavailable' WHERE cache_id=?",
-                                (row["locator_id"],),
+                                "UPDATE content_locations SET state='unavailable' WHERE cache_locator_id=?",
+                                (row["cache_locator_id"],),
                             )
                         used -= bytes_used
                         action = "evicted"
@@ -145,7 +146,7 @@ class CacheManager:
                 action = "retained"
             results.append(
                 {
-                    "cache_id": row["id"],
+                    "active_cache_entry_id": row["active_cache_entry_id"],
                     "bytes": bytes_used,
                     "ttl_expired": ttl,
                     "action": action,

@@ -20,16 +20,16 @@ def cache_store(tmp_path):
         (tmp_path / directory).mkdir()
     with Store(tmp_path, initialize=True) as store:
         store.execute(
-            "INSERT INTO repositories(id,name,metadata) VALUES('repo','repo','{}')"
+            "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','repo','{}')"
         )
         store.execute(
-            "INSERT INTO git_acquisitions(id,repo_id,kind,request) VALUES('acquisition','repo','git','{}')"
+            "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,kind,request) VALUES('acquisition','repo','git','{}')"
         )
         store.execute(
-            "INSERT INTO cache_locators VALUES('locator','repo','cache/repo/1.git','target_active','available')"
+            "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES('locator','repo','cache/repo/1.git','target_active','available')"
         )
         store.execute(
-            "INSERT INTO active_cache_entries VALUES('active','locator',1,'active',0,4096)"
+            "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used,bytes) VALUES('active','locator',1,'active',0,4096)"
         )
         path = tmp_path / "cache/repo/1.git"
         path.mkdir(parents=True)
@@ -40,7 +40,7 @@ def cache_store(tmp_path):
 def seed_job(store, job="job", attempt=1):
     with store.transaction():
         store.execute(
-            "INSERT INTO jobs(id,kind,request,current_attempt) VALUES(?,'sync','{}',?)",
+            "INSERT INTO jobs(job_id,kind,request,current_attempt) VALUES(?,'sync','{}',?)",
             (job, attempt),
         )
         store.execute(
@@ -55,25 +55,25 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
     source.mkdir()
     (source / "HEAD").write_bytes(b"preserved bytes")
     store.execute(
-        "INSERT INTO cache_locators VALUES('preserved','repo',?,'source_readonly','available')",
+        "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES('preserved','repo',?,'source_readonly','available')",
         (str(source),),
     )
     store.execute(
-        "INSERT INTO contents(id,byte_length,text_state) VALUES(1,14,'unknown')"
+        "INSERT INTO contents(content_id,byte_length,text_state) VALUES(1,14,'unknown')"
     )
     store.execute(
-        "INSERT INTO content_locations VALUES(1,'cache','active-content','locator','available')"
+        "INSERT INTO content_locations(content_id,kind,locator,cache_locator_id,state) VALUES(1,'cache','active-content','locator','available')"
     )
     store.execute(
-        "INSERT INTO content_locations VALUES(1,'legacy','source-content','preserved','available')"
+        "INSERT INTO content_locations(content_id,kind,locator,cache_locator_id,state) VALUES(1,'legacy','source-content','preserved','available')"
     )
     # The schema must reject attempts to enroll preserved source material in GC.
     with pytest.raises(sqlite3.IntegrityError, match="Readonly source cache"):
         store.execute(
-            "INSERT INTO active_cache_entries VALUES('unsafe','preserved',2,'active',0,0)"
+            "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used,bytes) VALUES('unsafe','preserved',2,'active',0,0)"
         )
     store.execute(
-        "INSERT INTO preservation_obligations VALUES('acquisition','locator',1,1,1,0,0)"
+        "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('acquisition','locator',1,1,1,0,0)"
     )
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "retained"
@@ -82,22 +82,33 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "evicted"
     assert (
-        store.one("SELECT state FROM active_cache_entries WHERE id='active'")[0]
+        store.one(
+            "SELECT state FROM active_cache_entries WHERE active_cache_entry_id='active'"
+        )[0]
         == "evicted"
     )
     assert (
-        store.one("SELECT state FROM cache_locators WHERE id='locator'")[0] == "missing"
+        store.one("SELECT state FROM cache_locators WHERE cache_locator_id='locator'")[
+            0
+        ]
+        == "missing"
     )
     assert (
-        store.one("SELECT state FROM cache_locators WHERE id='preserved'")[0]
+        store.one(
+            "SELECT state FROM cache_locators WHERE cache_locator_id='preserved'"
+        )[0]
         == "available"
     )
     assert (
-        store.one("SELECT state FROM content_locations WHERE cache_id='locator'")[0]
+        store.one(
+            "SELECT state FROM content_locations WHERE cache_locator_id='locator'"
+        )[0]
         == "unavailable"
     )
     assert (
-        store.one("SELECT state FROM content_locations WHERE cache_id='preserved'")[0]
+        store.one(
+            "SELECT state FROM content_locations WHERE cache_locator_id='preserved'"
+        )[0]
         == "available"
     )
     assert (source / "HEAD").read_bytes() == b"preserved bytes"
@@ -106,7 +117,9 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
 def test_gc_os_lock_fences_lease_cleanup(cache_store):
     store = cache_store
     seed_job(store)
-    store.execute("INSERT INTO cache_leases VALUES('active','job',1,'fixture')")
+    store.execute(
+        "INSERT INTO cache_leases(active_cache_entry_id,job_id,attempt,acquired_at) VALUES('active','job',1,'fixture')"
+    )
     with FileLock(store.path / "locks/cache-active.lock"):
         entry = CacheManager(store).collect(apply=True)[0]
         assert entry["action"] == "retained"
@@ -128,7 +141,9 @@ def test_gc_quarantine_recovery(cache_store, monkeypatch):
         CacheManager(cache_store).collect(apply=True)
     assert (cache_store.path / "quarantine/active/HEAD").exists()
     assert (
-        cache_store.one("SELECT state FROM active_cache_entries WHERE id='active'")[0]
+        cache_store.one(
+            "SELECT state FROM active_cache_entries WHERE active_cache_entry_id='active'"
+        )[0]
         == "evicting"
     )
     monkeypatch.setattr(cache_module, "hook", lambda _: None)
@@ -138,8 +153,8 @@ def test_gc_quarantine_recovery(cache_store, monkeypatch):
 
 def test_gc_rejects_quarantine_escape(cache_store):
     row = {
-        "id": "../escape",
-        "repo_id": "repo",
+        "active_cache_entry_id": "../escape",
+        "repository_id": "repo",
         "generation": 1,
         "path": "cache/repo/1.git",
     }
@@ -161,7 +176,7 @@ def test_capacity_reservations_are_attempt_scoped(cache_store):
         store.execute(
             "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES('job',2,'running','{}')"
         )
-        store.execute("UPDATE jobs SET current_attempt=2 WHERE id='job'")
+        store.execute("UPDATE jobs SET current_attempt=2 WHERE job_id='job'")
     # Resuming cannot consume or release admission retained from an old attempt.
     with pytest.raises(CatalogError, match="Missing admission reservation"):
         capacity.monitor("job", capacity.used())
@@ -187,16 +202,16 @@ def test_acquisition_and_obligation_cannot_use_another_owner_cache(cache_store):
     store = cache_store
     seed_job(store)
     store.execute(
-        "INSERT INTO repositories(id,name,metadata) VALUES('other','other','{}')"
+        "INSERT INTO repositories(repository_id,name,metadata) VALUES('other','other','{}')"
     )
     store.execute(
-        "INSERT INTO git_acquisitions(id,repo_id,kind,request) VALUES('other-acquisition','other','git','{}')"
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,kind,request) VALUES('other-acquisition','other','git','{}')"
     )
     with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
         store.execute(
-            "INSERT INTO acquisition_progress(acquisition_id,job_id,attempt,state,generation,cache_id) VALUES('other-acquisition','job',1,'planned',1,'active')"
+            "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES('other-acquisition','job',1,'planned',1,'active')"
         )
     with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
         store.execute(
-            "INSERT INTO preservation_obligations VALUES('other-acquisition','locator',0,0,0,0,0)"
+            "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('other-acquisition','locator',0,0,0,0,0)"
         )

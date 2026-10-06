@@ -73,7 +73,7 @@ def test_derived_fts_and_statistics_preserve_catalog_identity(tmp_path):
             )[0]
             == "synthetic sentinel"
         )
-        assert reader.one("SELECT schema_version FROM database_identity")[0] == 3
+        assert reader.one("SELECT schema_version FROM database_identity")[0] == 4
 
 
 def test_job_attempt_resume_cleans_old_capacity_and_obeys_injected_time(tmp_path):
@@ -81,7 +81,10 @@ def test_job_attempt_resume_cleans_old_capacity_and_obeys_injected_time(tmp_path
     with Store(tmp_path / "state") as store:
         jobs = JobService(store, clock=lambda: 10)
         job = jobs.create("sync", {"kind": "git"})
-        store.execute("INSERT INTO space_reservations VALUES(?,1,4096,0)", (job,))
+        store.execute(
+            "INSERT INTO space_reservations(job_id,attempt,reserved,consumed) VALUES(?,1,4096,0)",
+            (job,),
+        )
         jobs.update(job, "waiting", "backoff", 11)
         before = store.revision()
         with pytest.raises(Waiting):
@@ -114,3 +117,30 @@ def test_runtime_refuses_v2_without_modifying_it(tmp_path):
     with pytest.raises(CatalogError, match="Catalog3 is required"):
         Store(tmp_path / "state")
     assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("readonly", [False, True])
+def test_previous_catalog3_identity_is_rejected_without_mutation(tmp_path, readonly):
+    state = tmp_path / "state"
+    initialize(state)
+    with Store(state) as store:
+        identity = tuple(
+            store.one(
+                "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+            )
+        )
+    database = state / "catalog.sqlite3"
+    database.unlink()
+    with sqlite3.connect(database) as old:
+        old.execute(
+            "CREATE TABLE database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle)"
+        )
+        old.execute(
+            "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle) VALUES(?,?,?,?,?,?,?)",
+            (*identity[:2], 3, *identity[3:]),
+        )
+    before = database.read_bytes()
+    with pytest.raises(CatalogError) as rejected:
+        Store(state, readonly=readonly)
+    assert rejected.value.code == "SCHEMA_ERROR"
+    assert database.read_bytes() == before

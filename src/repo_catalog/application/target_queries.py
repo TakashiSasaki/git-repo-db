@@ -30,7 +30,7 @@ def row_fields(row):
 
 def object_fields(row):
     return {
-        "object_id": row["id"],
+        "git_object_id": row["git_object_id"],
         "oid": f"{row['object_format']}:{row['oid'].hex()}",
         "type": row["type"],
         "byte_length": row["size"],
@@ -157,7 +157,7 @@ class TargetQueryService:
         repo = options.get("repo")
         if not repo:
             raise CatalogError("INVALID_ARGUMENT", "An explicit --repo ID is required")
-        if not self.s.one("SELECT 1 FROM repositories WHERE id=?", (repo,)):
+        if not self.s.one("SELECT 1 FROM repositories WHERE repository_id=?", (repo,)):
             raise CatalogError("NOT_FOUND", "Target repository not found")
         return repo
 
@@ -167,10 +167,14 @@ class TargetQueryService:
         elif command in ("commit", "tree", "file"):
             repo = self._repo(options)
             obj = self._commit_object(repo, options.get("commit"))
-            commit = self.s.one("SELECT * FROM commits WHERE object_id=?", (obj["id"],))
+            commit = self.s.one(
+                "SELECT * FROM commits WHERE git_object_id=?", (obj["git_object_id"],)
+            )
             if commit is None:
                 self._add_missing(
-                    "git", "commit_structure_missing", object_id=obj["id"]
+                    "git",
+                    "commit_structure_missing",
+                    git_object_id=obj["git_object_id"],
                 )
                 yield object_fields(obj)
             elif command == "commit":
@@ -178,7 +182,7 @@ class TargetQueryService:
             else:
                 raw_path = self._path(options) if command == "file" else None
                 found = False
-                for entry in self._tree(commit["tree_id"]):
+                for entry in self._tree(commit["tree_git_object_id"]):
                     if raw_path is not None and entry["raw_path"] != raw_path:
                         continue
                     found = True
@@ -213,7 +217,7 @@ class TargetQueryService:
         if repo:
             self._repo(options)
         for row in self.s.execute(
-            "SELECT * FROM repositories WHERE (? IS NULL OR id=?) ORDER BY id",
+            "SELECT * FROM repositories WHERE (? IS NULL OR repository_id=?) ORDER BY repository_id",
             (repo, repo),
         ):
             self._check()
@@ -222,29 +226,29 @@ class TargetQueryService:
                 "bindings": [
                     row_fields(r)
                     for r in self.s.execute(
-                        "SELECT * FROM repository_bindings WHERE repo_id=? ORDER BY id",
-                        (row["id"],),
+                        "SELECT * FROM repository_bindings WHERE repository_id=? ORDER BY repository_binding_id",
+                        (row["repository_id"],),
                     )
                 ],
                 "endpoints": [
                     row_fields(r)
                     for r in self.s.execute(
-                        "SELECT * FROM repository_endpoints WHERE repo_id=? ORDER BY id",
-                        (row["id"],),
+                        "SELECT * FROM repository_endpoints WHERE repository_id=? ORDER BY repository_endpoint_id",
+                        (row["repository_id"],),
                     )
                 ],
                 "name_assertions": [
                     dict(r)
                     for r in self.s.execute(
-                        "SELECT * FROM repository_name_assertions WHERE repo_id=? ORDER BY name",
-                        (row["id"],),
+                        "SELECT * FROM repository_name_assertions WHERE repository_id=? ORDER BY name",
+                        (row["repository_id"],),
                     )
                 ],
                 "sources": [
                     dict(r)
                     for r in self.s.execute(
-                        "SELECT * FROM source_repositories WHERE repo_id=? ORDER BY source_id",
-                        (row["id"],),
+                        "SELECT * FROM source_repositories WHERE repository_id=? ORDER BY source_id",
+                        (row["repository_id"],),
                     )
                 ],
             }
@@ -252,9 +256,7 @@ class TargetQueryService:
     def _commit_object(self, repo, value):
         oid = GitOid.parse(value or "")
         row = self.s.one(
-            "SELECT g.* FROM git_objects g WHERE g.object_format=? AND g.oid=? AND g.type='commit' "
-            "AND (EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.repo_id=? AND r.object_id=g.id) "
-            "OR EXISTS(SELECT 1 FROM acquisition_roots r WHERE r.repo_id=? AND r.object_format=g.object_format AND r.oid=g.oid))",
+            "SELECT g.* FROM git_objects g WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND (EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.repository_id=? AND r.git_object_id=g.git_object_id) OR EXISTS(SELECT 1 FROM acquisition_roots r WHERE r.repository_id=? AND r.object_format=g.object_format AND r.oid=g.oid))",
             (oid.algorithm, oid.value, repo, repo),
         )
         if not row:
@@ -265,12 +267,15 @@ class TargetQueryService:
         return row
 
     def _commit_details(self, obj, commit):
-        tree = self.s.one("SELECT * FROM git_objects WHERE id=?", (commit["tree_id"],))
+        tree = self.s.one(
+            "SELECT * FROM git_objects WHERE git_object_id=?",
+            (commit["tree_git_object_id"],),
+        )
         parents = [
             {"ordinal": r["parent_ordinal"], **object_fields(r)}
             for r in self.s.execute(
-                "SELECT p.parent_ordinal,g.* FROM commit_parents p JOIN git_objects g ON g.id=p.parent_id WHERE p.commit_id=? ORDER BY p.parent_ordinal",
-                (obj["id"],),
+                "SELECT p.parent_ordinal,g.* FROM commit_parents p JOIN git_objects g ON g.git_object_id=p.parent_git_object_id WHERE p.commit_git_object_id=? ORDER BY p.parent_ordinal",
+                (obj["git_object_id"],),
             )
         ]
         return {
@@ -304,33 +309,40 @@ class TargetQueryService:
             self._check()
             ident, prefix, ancestors = frames.pop()
             if ident in ancestors:
-                self._add_missing("git", "tree_cycle", object_id=ident)
+                self._add_missing("git", "tree_cycle", git_object_id=ident)
                 continue
             rows = self.s.all(
-                "SELECT * FROM tree_entries WHERE tree_id=? ORDER BY raw_name", (ident,)
+                "SELECT * FROM tree_entries WHERE tree_git_object_id=? ORDER BY raw_name",
+                (ident,),
             )
             if not rows:
-                obj = self.s.one("SELECT size FROM git_objects WHERE id=?", (ident,))
+                obj = self.s.one(
+                    "SELECT size FROM git_objects WHERE git_object_id=?", (ident,)
+                )
                 if obj and obj["size"]:
-                    self._add_missing("git", "tree_structure_missing", object_id=ident)
+                    self._add_missing(
+                        "git", "tree_structure_missing", git_object_id=ident
+                    )
             subtrees = []
             for row in rows:
                 self._check()
                 path = prefix + row["raw_name"]
                 if row["mode"] == 16384:
-                    subtrees.append((row["child_id"], path + b"/", ancestors | {ident}))
+                    subtrees.append(
+                        (row["child_git_object_id"], path + b"/", ancestors | {ident})
+                    )
                     continue
                 content = self.s.one(
-                    "SELECT c.* FROM blob_content_map b JOIN contents c ON c.id=b.content_id WHERE b.object_id=?",
-                    (row["child_id"],),
+                    "SELECT c.* FROM blob_content_map b JOIN contents c ON c.content_id=b.content_id WHERE b.git_object_id=?",
+                    (row["child_git_object_id"],),
                 )
-                digests = self._digests(content["id"]) if content else []
+                digests = self._digests(content["content_id"]) if content else []
                 yield {
                     "raw_path": path,
                     "mode": format(row["mode"], "06o"),
-                    "object_id": row["child_id"],
+                    "git_object_id": row["child_git_object_id"],
                     "oid": f"{row['child_format']}:{row['child_oid'].hex()}",
-                    "content_id": content["id"] if content else None,
+                    "content_id": content["content_id"] if content else None,
                     "byte_length": content["byte_length"] if content else None,
                     "text_state": content["text_state"] if content else "unknown",
                     "text": content["raw_text"] if content else None,
@@ -357,7 +369,7 @@ class TargetQueryService:
         if kind not in ("pull_request", "merge_request"):
             raise CatalogError("INVALID_ARGUMENT", "Unknown request kind")
         rows = self.s.all(
-            "SELECT * FROM change_requests WHERE repo_id=? AND number=? AND request_kind=? AND (? IS NULL OR binding_id=?) ORDER BY id",
+            "SELECT * FROM change_requests WHERE repository_id=? AND number=? AND request_kind=? AND (? IS NULL OR repository_binding_id=?) ORDER BY change_request_id",
             (repo, number, kind, options.get("binding"), options.get("binding")),
         )
         if not rows:
@@ -377,29 +389,31 @@ class TargetQueryService:
                 "pr", "change_request_observation_missing", change_request_id=ident
             )
         for row in self.s.execute(
-            "SELECT l.id,p.state,p.page_count,p.terminal,p.context_proven FROM code_listings l LEFT JOIN code_listing_progress p ON p.listing_id=l.id WHERE l.change_request_id=? ORDER BY l.id",
+            "SELECT l.code_listing_id,p.state,p.page_count,p.terminal,p.context_proven FROM code_listings l LEFT JOIN code_listing_progress p ON p.code_listing_id=l.code_listing_id WHERE l.change_request_id=? ORDER BY l.code_listing_id",
             (ident,),
         ):
             if row["state"] != "complete":
                 self._add_missing("pr", "code_listing_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT id,state FROM code_observations WHERE change_request_id=? AND state!='complete' ORDER BY id",
+            "SELECT code_observation_id,state FROM code_observations WHERE change_request_id=? AND state!='complete' ORDER BY code_observation_id",
             (ident,),
         ):
             self._add_missing("pr", "code_observation_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT c.id,p.state,p.reason saved_reason,p.cursor FROM fetch_collections c LEFT JOIN collection_progress p ON p.collection_id=c.id WHERE c.change_request_id=? ORDER BY c.id",
+            "SELECT c.fetch_collection_id,p.state,p.reason saved_reason,p.cursor FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.fetch_collection_id",
             (ident,),
         ):
             if row["state"] != "complete":
                 self._add_missing("pr", "collection_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT d.id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_versions v WHERE v.document_id=d.id) ORDER BY d.id",
+            "SELECT d.document_id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_versions v WHERE v.document_id=d.document_id) ORDER BY d.document_id",
             (ident,),
         ):
-            self._add_missing("pr", "document_body_missing", document_id=row["id"])
+            self._add_missing(
+                "pr", "document_body_missing", document_id=row["document_id"]
+            )
         for row in self.s.execute(
-            "SELECT s.id,c.effective_state FROM coverage_scopes s LEFT JOIN coverage_claims c ON c.scope_id=s.id WHERE s.change_request_id=? ORDER BY s.id,c.id",
+            "SELECT s.coverage_scope_id,c.effective_state FROM coverage_scopes s LEFT JOIN coverage_claims c ON c.coverage_scope_id=s.coverage_scope_id WHERE s.change_request_id=? ORDER BY s.coverage_scope_id,c.coverage_claim_id",
             (ident,),
         ):
             if row["effective_state"] not in ("complete", "not_applicable"):
@@ -407,30 +421,33 @@ class TargetQueryService:
 
     def _pr(self, options):
         request = self._pr_identity(options)
-        ident = request["id"]
+        ident = request["change_request_id"]
         self._pr_coverage(ident)
         yield {"record_kind": "change_request", **row_fields(request)}
         queries = (
             (
                 "observation",
-                "SELECT * FROM change_request_observations WHERE change_request_id=? ORDER BY id",
+                "SELECT * FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
             ),
             (
                 "document",
-                "SELECT * FROM documents WHERE change_request_id=? ORDER BY id",
+                "SELECT * FROM documents WHERE change_request_id=? ORDER BY document_id",
             ),
             (
                 "document_version",
-                "SELECT v.*,b.body,b.byte_length,b.sha256 FROM document_versions v JOIN documents d ON d.id=v.document_id JOIN text_bodies b ON b.id=v.body_id WHERE d.change_request_id=? ORDER BY v.id",
+                "SELECT v.*,b.body,b.byte_length,b.sha256 FROM document_versions v JOIN documents d ON d.document_id=v.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.change_request_id=? ORDER BY v.document_version_id",
             ),
             (
                 "document_observation",
-                "SELECT o.* FROM document_observations o JOIN documents d ON d.id=o.document_id WHERE d.change_request_id=? ORDER BY o.id",
+                "SELECT o.* FROM document_observations o JOIN documents d ON d.document_id=o.document_id WHERE d.change_request_id=? ORDER BY o.document_observation_id",
             ),
-            ("review", "SELECT * FROM reviews WHERE change_request_id=? ORDER BY id"),
+            (
+                "review",
+                "SELECT * FROM reviews WHERE change_request_id=? ORDER BY review_id",
+            ),
             (
                 "review_thread",
-                "SELECT * FROM review_threads WHERE change_request_id=? ORDER BY id",
+                "SELECT * FROM review_threads WHERE change_request_id=? ORDER BY review_thread_id",
             ),
             (
                 "review_comment",
@@ -438,27 +455,27 @@ class TargetQueryService:
             ),
             (
                 "event",
-                "SELECT * FROM change_request_events WHERE change_request_id=? ORDER BY id",
+                "SELECT * FROM change_request_events WHERE change_request_id=? ORDER BY change_request_event_id",
             ),
             (
                 "code_observation",
-                "SELECT * FROM code_observations WHERE change_request_id=? ORDER BY id",
+                "SELECT * FROM code_observations WHERE change_request_id=? ORDER BY code_observation_id",
             ),
             (
                 "code_listing",
-                "SELECT l.*,p.state,p.page_count,p.terminal,p.context_proven FROM code_listings l LEFT JOIN code_listing_progress p ON p.listing_id=l.id WHERE l.change_request_id=? ORDER BY l.id",
+                "SELECT l.*,p.state,p.page_count,p.terminal,p.context_proven FROM code_listings l LEFT JOIN code_listing_progress p ON p.code_listing_id=l.code_listing_id WHERE l.change_request_id=? ORDER BY l.code_listing_id",
             ),
             (
                 "code_commit",
-                "SELECT i.* FROM code_commits i JOIN code_listings l ON l.id=i.listing_id WHERE l.change_request_id=? ORDER BY i.listing_id,i.occurrence_id,i.position",
+                "SELECT i.* FROM code_commits i JOIN code_listings l ON l.code_listing_id=i.code_listing_id WHERE l.change_request_id=? ORDER BY i.code_listing_id,i.fetch_occurrence_id,i.position",
             ),
             (
                 "code_file_change",
-                "SELECT i.* FROM code_file_changes i JOIN code_listings l ON l.id=i.listing_id WHERE l.change_request_id=? ORDER BY i.listing_id,i.occurrence_id,i.position",
+                "SELECT i.* FROM code_file_changes i JOIN code_listings l ON l.code_listing_id=i.code_listing_id WHERE l.change_request_id=? ORDER BY i.code_listing_id,i.fetch_occurrence_id,i.position",
             ),
             (
                 "code_acquisition",
-                "SELECT a.* FROM code_acquisitions a JOIN code_observations o ON o.id=a.code_observation_id WHERE o.change_request_id=? ORDER BY a.code_observation_id,a.role",
+                "SELECT a.* FROM code_acquisitions a JOIN code_observations o ON o.code_observation_id=a.code_observation_id WHERE o.change_request_id=? ORDER BY a.code_observation_id,a.role",
             ),
         )
         for kind, sql in queries:
@@ -486,10 +503,7 @@ class TargetQueryService:
         if kind == "code":
             # Scan originals, not archived search_documents or rebuilt FTS.
             rows = self.s.execute(
-                "SELECT DISTINCT r.repo_id,g.id,g.object_format,g.oid,g.type,g.size,g.verified,c.id content_id,c.raw_text,c.text_state "
-                "FROM repository_object_sources r JOIN git_objects g ON g.id=r.object_id "
-                "LEFT JOIN blob_content_map b ON b.object_id=g.id LEFT JOIN contents c ON c.id=b.content_id "
-                "WHERE g.type='blob' AND (? IS NULL OR r.repo_id=?) ORDER BY r.repo_id,g.id",
+                "SELECT DISTINCT r.repository_id,g.git_object_id,g.object_format,g.oid,g.type,g.size,g.verified,c.content_id content_id,c.raw_text,c.text_state FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN blob_content_map b ON b.git_object_id=g.git_object_id LEFT JOIN contents c ON c.content_id=b.content_id WHERE g.type='blob' AND (? IS NULL OR r.repository_id=?) ORDER BY r.repository_id,g.git_object_id",
                 (repo, repo),
             )
             for row in rows:
@@ -498,14 +512,14 @@ class TargetQueryService:
                     self._add_missing(
                         "code",
                         "body_not_saved",
-                        repo_id=row["repo_id"],
-                        object_id=row["id"],
+                        repository_id=row["repository_id"],
+                        git_object_id=row["git_object_id"],
                         content_id=row["content_id"],
                         text_state=row["text_state"],
                     )
                 elif literal in row["raw_text"]:
                     yield {
-                        "repo_id": row["repo_id"],
+                        "repository_id": row["repository_id"],
                         **object_fields(row),
                         "content_id": row["content_id"],
                         "text": row["raw_text"],
@@ -513,44 +527,48 @@ class TargetQueryService:
                     }
         elif kind == "commits":
             for row in self.s.execute(
-                "SELECT DISTINCT r.repo_id,g.*,c.raw_message FROM repository_object_sources r JOIN git_objects g ON g.id=r.object_id LEFT JOIN commits c ON c.object_id=g.id WHERE g.type='commit' AND (? IS NULL OR r.repo_id=?) ORDER BY r.repo_id,g.id",
+                "SELECT DISTINCT r.repository_id,g.*,c.raw_message FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN commits c ON c.git_object_id=g.git_object_id WHERE g.type='commit' AND (? IS NULL OR r.repository_id=?) ORDER BY r.repository_id,g.git_object_id",
                 (repo, repo),
             ):
                 self._check()
                 if row["raw_message"] is None:
                     self._add_missing(
-                        "commits", "commit_structure_missing", object_id=row["id"]
+                        "commits",
+                        "commit_structure_missing",
+                        git_object_id=row["git_object_id"],
                     )
                     continue
                 try:
                     text = row["raw_message"].decode("utf8", "strict")
                 except UnicodeDecodeError:
                     self._add_missing(
-                        "commits", "message_non_utf8", object_id=row["id"]
+                        "commits",
+                        "message_non_utf8",
+                        git_object_id=row["git_object_id"],
                     )
                     continue
                 if literal in text:
                     yield {
-                        "repo_id": row["repo_id"],
+                        "repository_id": row["repository_id"],
                         **object_fields(row),
                         "text": text,
                         "raw_message": row["raw_message"],
                     }
         else:
             for request in self.s.execute(
-                "SELECT * FROM change_requests WHERE (? IS NULL OR repo_id=?) ORDER BY repo_id,id",
+                "SELECT * FROM change_requests WHERE (? IS NULL OR repository_id=?) ORDER BY repository_id,change_request_id",
                 (repo, repo),
             ):
-                ident = request["id"]
+                ident = request["change_request_id"]
                 self._pr_coverage(ident)
                 base = {
-                    "repo_id": request["repo_id"],
+                    "repository_id": request["repository_id"],
                     "change_request_id": ident,
                     "number": request["number"],
-                    "binding_id": request["binding_id"],
+                    "repository_binding_id": request["repository_binding_id"],
                 }
                 for row in self.s.execute(
-                    "SELECT * FROM change_request_observations WHERE change_request_id=? ORDER BY id",
+                    "SELECT * FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
                     (ident,),
                 ):
                     self._check()
@@ -561,22 +579,24 @@ class TargetQueryService:
                             yield {
                                 **base,
                                 "record_kind": "observation",
-                                "observation_id": row["id"],
+                                "change_request_observation_id": row[
+                                    "change_request_observation_id"
+                                ],
                                 "observed_at": row["observed_at"],
                                 "field": field,
                                 "text": text,
                             }
                 for row in self.s.execute(
-                    "SELECT d.id document_id,d.kind,v.id version_id,b.body,o.id observation_id,o.observed_at FROM documents d JOIN document_versions v ON v.document_id=d.id JOIN text_bodies b ON b.id=v.body_id LEFT JOIN document_observations o ON o.version_id=v.id WHERE d.change_request_id=? ORDER BY d.id,v.id,o.id",
+                    "SELECT d.document_id document_id,d.kind,v.document_version_id document_version_id,b.body,o.document_observation_id document_observation_id,o.observed_at FROM documents d JOIN document_versions v ON v.document_id=d.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id LEFT JOIN document_observations o ON o.document_version_id=v.document_version_id WHERE d.change_request_id=? ORDER BY d.document_id,v.document_version_id,o.document_observation_id",
                     (ident,),
                 ):
                     self._check()
-                    if row["observation_id"] is None:
+                    if row["document_observation_id"] is None:
                         self._add_missing(
                             "pr",
                             "document_observation_missing",
                             document_id=row["document_id"],
-                            version_id=row["version_id"],
+                            document_version_id=row["document_version_id"],
                         )
                     if literal in row["body"]:
                         yield {**base, "record_kind": "document", **dict(row)}

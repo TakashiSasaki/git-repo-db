@@ -77,7 +77,7 @@ def test_publication_fencing(catalog, tmp_path):
     state, fixture, repos = catalog
     run(state, "sync", "git")
     before = run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
-        "current_snapshot"
+        "current_snapshot_id"
     ]
     fixture.advance()
     process, hooks = start_hooked(
@@ -101,7 +101,7 @@ def test_publication_fencing(catalog, tmp_path):
     )
     assert (
         run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
-            "current_snapshot"
+            "current_snapshot_id"
         ]
         == before
     )

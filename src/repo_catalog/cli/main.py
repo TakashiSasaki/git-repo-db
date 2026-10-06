@@ -75,7 +75,7 @@ def parser():
     source.add_argument("--url")
     source.add_argument("--repo")
     source.add_argument("--instance")
-    source.add_argument("--provider-repo-id")
+    source.add_argument("--provider-repo-id", dest="provider_repository_id")
     source.add_argument("--token-env-var")
     source.add_argument(
         "--clone-url-override", action="append", default=[], metavar="REPO_ID=URL"
@@ -87,7 +87,7 @@ def parser():
     sync.add_argument("kind", choices=("git", "pr", "all"))
     repo_selector(sync)
     sync.add_argument("--source")
-    sync.add_argument("--endpoint", dest="endpoint_id")
+    sync.add_argument("--endpoint", dest="repository_endpoint_id")
     instances = commands.add_parser("instances").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
@@ -136,7 +136,7 @@ def parser():
             if category == "repos" and action == "bind":
                 child.add_argument("--repo", required=True)
                 child.add_argument("--instance", required=True)
-                child.add_argument("--provider-repo-id")
+                child.add_argument("--provider-repo-id", dest="provider_repository_id")
                 continue
             if category == "repos":
                 child.add_argument("--source")
@@ -146,7 +146,9 @@ def parser():
             elif category == "snapshots" and action == "show":
                 child.add_argument("--snapshot", required=True)
             elif category == "pr" and action == "thread":
-                child.add_argument("--thread-id", required=True)
+                child.add_argument(
+                    "--thread-id", dest="review_thread_id", required=True
+                )
             else:
                 child.add_argument(
                     "--repo",
@@ -356,7 +358,7 @@ def dispatch(args, token):
             include_repositories=args.include_repo,
             repo=args.repo,
             instance=args.instance,
-            provider_repo_id=args.provider_repo_id,
+            provider_repository_id=args.provider_repository_id,
             token_env_var=args.token_env_var,
         )
     if args.command == "instances" and args.action == "add":
@@ -369,7 +371,7 @@ def dispatch(args, token):
         return maintenance.endpoint_prefer(args.repo, args.endpoint)
     if args.command == "repos" and args.action == "bind":
         return maintenance.repository_bind(
-            args.repo, args.instance, args.provider_repo_id
+            args.repo, args.instance, args.provider_repository_id
         )
     from repo_catalog.application.collection_service import CollectionService
     from repo_catalog.application.contracts import CollectionRequest
@@ -383,7 +385,7 @@ def dispatch(args, token):
                 args.kind,
                 tuple(args.repos or ()),
                 args.source,
-                endpoint_id=args.endpoint_id,
+                repository_endpoint_id=args.repository_endpoint_id,
             )
         )
     if args.command == "jobs" and args.action == "resume":
@@ -397,7 +399,7 @@ def dispatch(args, token):
         # Read running state first so a live writer reports JOB_RUNNING, not a false successful cancellation.
         with Store(path, readonly=True) as s:
             row = s.one(
-                "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE j.id=?",
+                "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
                 (args.job_id,),
             )
             if row and row[0] == "running":

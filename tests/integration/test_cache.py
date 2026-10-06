@@ -51,12 +51,14 @@ def test_locks_fencing(catalog):
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         cache = db.execute(
-            "SELECT a.id FROM active_cache_entries a JOIN cache_locators l ON l.id=a.locator_id WHERE l.repo_id=?",
+            "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=?",
             (repos["alpha"],),
         ).fetchone()[0]
     with FileLock(state / f"locks/cache-{cache}.lock"):
         result = run(state, "cache", "gc", "--apply")
-        entry = next(r for r in result["data"]["entries"] if r["cache_id"] == cache)
+        entry = next(
+            r for r in result["data"]["entries"] if r["active_cache_entry_id"] == cache
+        )
         assert (
             entry["action"] == "retained" and "generation_in_use" in entry["blocked_by"]
         )
@@ -68,7 +70,7 @@ def test_old_obligations(catalog):
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         db.execute(
-            "UPDATE preservation_obligations SET text_done=0 WHERE acquisition_id=(SELECT s.acquisition_id FROM snapshots s JOIN repositories r ON r.current_snapshot_id=s.id WHERE r.id=?)",
+            "UPDATE preservation_obligations SET text_done=0 WHERE git_acquisition_id=(SELECT s.git_acquisition_id FROM snapshots s JOIN repositories r ON r.current_snapshot_id=s.snapshot_id WHERE r.repository_id=?)",
             (repos["alpha"],),
         )
     result = run(state, "cache", "gc", "--apply")
@@ -122,7 +124,7 @@ def test_orphan_git_holds_lock(catalog, tmp_path):
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         cache = db.execute(
-            "SELECT a.id FROM active_cache_entries a JOIN cache_locators l ON l.id=a.locator_id WHERE l.repo_id=?",
+            "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=?",
             (repos["alpha"],),
         ).fetchone()[0]
     lockfile = state / f"locks/cache-{cache}.lock"
@@ -148,7 +150,9 @@ with FileLock(sys.argv[1],inheritable=True) as lock:
         owner.kill()
         owner.wait()
         value = run(state, "cache", "gc", "--apply")
-        entry = next(e for e in value["data"]["entries"] if e["cache_id"] == cache)
+        entry = next(
+            e for e in value["data"]["entries"] if e["active_cache_entry_id"] == cache
+        )
         assert "generation_in_use" in entry["blocked_by"]
     finally:
         if owner.poll() is None:

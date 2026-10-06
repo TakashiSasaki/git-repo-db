@@ -36,8 +36,12 @@ def graph(request):
         "INSERT INTO collection_runs(id,job_id,repo_id,generation,attempt,state,started_at,refs_at,ended_at,object_format,kind,roots_manifest,request) VALUES('run','job','repo',1,1,'published',?,?,?,'sha1','git','[]','{}')",
         (STAMP, STAMP, STAMP),
     )
-    db.execute("INSERT INTO sources VALUES('source',NULL,'manual_git','source','{}')")
-    db.execute("INSERT INTO repositories VALUES('repo','name',NULL,NULL,'{}')")
+    db.execute(
+        "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('source',NULL,'manual_git','source','{}')"
+    )
+    db.execute(
+        "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','name',NULL,NULL,'{}')"
+    )
     body, missing_oid = b"hello\n", git_payload("blob", b"binary\xff")
     blob_oid = git_payload("blob", body)
     tree = b"100644 lost.bin\0" + missing_oid + b"100644 raw-\xff.py\0" + blob_oid
@@ -117,11 +121,11 @@ def graph(request):
         [(b"lost.bin", 3, missing_oid), (b"raw-\xff.py", 2, blob_oid)],
     )
     db.execute(
-        "INSERT INTO conversion_sources VALUES('sealed',?,?, 'v2','synthetic',x'',x'')",
+        "INSERT INTO conversion_sources(conversion_source_id,source_sha256,schema_sha256,format_id,source_db_instance_id,source_catalog,source_migrations) VALUES('sealed',?,?, 'v2','synthetic',x'',x'')",
         (b"s" * 32, b"d" * 32),
     )
     db.commit()
-    yield src, db, {"source_id": "sealed"}
+    yield src, db, {"conversion_source_id": "sealed"}
     src.close()
     db.close()
 
@@ -133,7 +137,7 @@ def normalize(graph, *, through=None):
     ):
         for record in archive.rows(src, table):
             db.execute(
-                "INSERT INTO legacy_records(source_id,source_table,source_key,row_sha256) VALUES('sealed',?,?,?)",
+                "INSERT INTO legacy_records(conversion_source_id,source_table,source_key,row_sha256) VALUES('sealed',?,?,?)",
                 (table, record.key, record.row_sha256),
             )
     db.commit()
@@ -154,7 +158,7 @@ def normalize(graph, *, through=None):
             table, row = operation["table"], operation["row"]
             if operation["operation"] == "manifest_completion":
                 db.execute(
-                    "UPDATE root_manifests SET complete=? WHERE tree_id=?",
+                    "UPDATE root_manifests SET complete=? WHERE tree_git_object_id=?",
                     (row[1], row[0]),
                 )
             else:
@@ -184,15 +188,17 @@ def test_stored_git_recipes_preserve_raw_bytes_ids_order_and_all_ref_origins(gra
         for row in db.execute("SELECT * FROM commit_parents ORDER BY parent_ordinal")
     ] == [(1, 0, 5), (1, 1, 6)]
     assert db.execute(
-        "SELECT raw_message,metadata FROM commits WHERE object_id=1"
+        "SELECT raw_message,metadata FROM commits WHERE git_object_id=1"
     ).fetchone()[:] == (b"merge \xff\n", '{ "exact": 1 }')
     assert (
-        db.execute("SELECT raw_name FROM tree_entries WHERE child_id=2").fetchone()[0]
+        db.execute(
+            "SELECT raw_name FROM tree_entries WHERE child_git_object_id=2"
+        ).fetchone()[0]
         == b"raw-\xff.py"
     )
     assert (
         db.execute(
-            "SELECT raw_path FROM root_manifest_entries WHERE object_id=2"
+            "SELECT raw_path FROM root_manifest_entries WHERE git_object_id=2"
         ).fetchone()[0]
         == b"raw-\xff.py"
     )
@@ -202,7 +208,7 @@ def test_stored_git_recipes_preserve_raw_bytes_ids_order_and_all_ref_origins(gra
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM root_origins WHERE root_id=21 AND origin_kind='ref'"
+            "SELECT count(*) FROM root_origins WHERE acquisition_root_id=21 AND origin_kind='ref'"
         ).fetchone()[0]
         == 3
     )
@@ -213,9 +219,17 @@ def test_stored_git_recipes_preserve_raw_bytes_ids_order_and_all_ref_origins(gra
         == 0
     )
     assert db.execute("SELECT complete FROM root_manifests").fetchone()[0] == 1
-    assert db.execute("SELECT id FROM git_objects WHERE verified=0").fetchone()[0] == 3
+    assert (
+        db.execute("SELECT git_object_id FROM git_objects WHERE verified=0").fetchone()[
+            0
+        ]
+        == 3
+    )
     assert codes(outputs["git_objects"]) == {"GIT_ORIGINAL_BYTES_MISSING"}
-    assert db.execute("SELECT raw_text FROM contents WHERE id=12").fetchone()[0] is None
+    assert (
+        db.execute("SELECT raw_text FROM contents WHERE content_id=12").fetchone()[0]
+        is None
+    )
     assert db.execute("PRAGMA foreign_key_check").fetchall() == []
     assert db.execute(
         "SELECT source_id,observed_at,refs_observed_at FROM git_acquisitions"
@@ -227,10 +241,15 @@ def test_missing_original_is_not_empty_and_old_verified_is_not_proof(graph):
     normalize(graph, through="git_objects")
     source = src.execute("SELECT verified,size FROM git_objects WHERE id=3").fetchone()
     assert source[:] == (1, 7)
-    assert db.execute("SELECT verified,size FROM git_objects WHERE id=3").fetchone()[
-        :
-    ] == (0, 7)
-    assert db.execute("SELECT verified FROM git_objects WHERE id=2").fetchone()[0] == 1
+    assert db.execute(
+        "SELECT verified,size FROM git_objects WHERE git_object_id=3"
+    ).fetchone()[:] == (0, 7)
+    assert (
+        db.execute("SELECT verified FROM git_objects WHERE git_object_id=2").fetchone()[
+            0
+        ]
+        == 1
+    )
 
 
 @pytest.mark.parametrize(
@@ -274,7 +293,7 @@ def test_malformed_relation_is_archived_with_attributed_diagnostic(
         decision["disposition"] == "archive_only" for decision in output["decisions"]
     )
     assert all(
-        '"record_id":' in row[3] and '"column":' in row[3]
+        '"legacy_record_id":' in row[3] and '"column":' in row[3]
         for row in output["diagnostics"]
     )
 
@@ -297,7 +316,9 @@ def test_malformed_tree_text_is_diagnosed_without_sqlite_decoder_failure(graph):
     assert "GIT_MALFORMED_TEXT" in codes(outputs["tree_entries"])
     assert "GIT_MANIFEST_COVERAGE_MISMATCH" in codes(outputs["root_manifests"])
     assert (
-        db.execute("SELECT complete FROM root_manifests WHERE tree_id=4").fetchone()[0]
+        db.execute(
+            "SELECT complete FROM root_manifests WHERE tree_git_object_id=4"
+        ).fetchone()[0]
         == 0
     )
 
@@ -315,7 +336,9 @@ def test_completed_manifest_requires_safe_parsed_empty_subtree(graph, name, pars
         src.execute("INSERT INTO root_manifests VALUES(8,1)")
     outputs = normalize(graph, through="root_manifests")
     assert (
-        db.execute("SELECT complete FROM root_manifests WHERE tree_id=4").fetchone()[0]
+        db.execute(
+            "SELECT complete FROM root_manifests WHERE tree_git_object_id=4"
+        ).fetchone()[0]
         == 0
     )
     assert "GIT_MANIFEST_COVERAGE_MISMATCH" in codes(outputs["root_manifests"])
@@ -328,9 +351,16 @@ def test_complete_manifest_cannot_hide_same_missing_tree_and_manifest_rows(graph
     src.execute("DELETE FROM tree_entries")
     src.execute("DELETE FROM root_manifest_entries")
     outputs = normalize(graph, through="root_manifests")
-    assert db.execute("SELECT verified FROM git_objects WHERE id=4").fetchone()[0] == 0
     assert (
-        db.execute("SELECT complete FROM root_manifests WHERE tree_id=4").fetchone()[0]
+        db.execute("SELECT verified FROM git_objects WHERE git_object_id=4").fetchone()[
+            0
+        ]
+        == 0
+    )
+    assert (
+        db.execute(
+            "SELECT complete FROM root_manifests WHERE tree_git_object_id=4"
+        ).fetchone()[0]
         == 0
     )
     assert "GIT_MANIFEST_COVERAGE_MISMATCH" in codes(outputs["root_manifests"])
@@ -361,11 +391,18 @@ def test_complete_manifest_requires_demonstrated_subtree_bytes(graph):
     )
     outputs = normalize(graph, through="root_manifests")
     assert db.execute(
-        "SELECT id,verified FROM git_objects WHERE id IN (4,8) ORDER BY id"
+        "SELECT git_object_id,verified FROM git_objects WHERE git_object_id IN (4,8) ORDER BY git_object_id"
     ).fetchall()[0][:] == (4, 1)
-    assert db.execute("SELECT verified FROM git_objects WHERE id=8").fetchone()[0] == 0
     assert (
-        db.execute("SELECT complete FROM root_manifests WHERE tree_id=4").fetchone()[0]
+        db.execute("SELECT verified FROM git_objects WHERE git_object_id=8").fetchone()[
+            0
+        ]
+        == 0
+    )
+    assert (
+        db.execute(
+            "SELECT complete FROM root_manifests WHERE tree_git_object_id=4"
+        ).fetchone()[0]
         == 0
     )
     assert "GIT_MANIFEST_COVERAGE_MISMATCH" in codes(outputs["root_manifests"])
@@ -381,7 +418,12 @@ def test_tag_message_does_not_satisfy_conflicting_target_type_header(graph):
         (git_payload("tag", raw), len(raw)),
     )
     outputs = normalize(graph, through="tag_objects")
-    assert db.execute("SELECT verified FROM git_objects WHERE id=7").fetchone()[0] == 1
+    assert (
+        db.execute("SELECT verified FROM git_objects WHERE git_object_id=7").fetchone()[
+            0
+        ]
+        == 1
+    )
     assert db.execute("SELECT count(*) FROM tag_objects").fetchone()[0] == 0
     assert "GIT_TAG_TARGET_MISMATCH" in codes(outputs["tag_objects"])
 
@@ -409,7 +451,7 @@ def test_unknown_origin_preserves_root_with_partial_provenance(graph):
     src.execute("DELETE FROM ref_observations")
     outputs = normalize(graph)
     assert db.execute(
-        "SELECT origin_kind,raw_ref_name,snapshot_id,change_request_id,observation_id FROM root_origins"
+        "SELECT origin_kind,raw_ref_name,snapshot_id,change_request_id,change_request_observation_id FROM root_origins"
     ).fetchone()[:] == ("legacy_unknown", None, None, None, None)
     assert "GIT_ROOT_ORIGIN_UNKNOWN" in codes(outputs["unknown_root_origins"])
 
@@ -450,12 +492,12 @@ def test_unknown_content_state_keeps_safe_identity_and_missing_bytes(graph):
     src.execute("UPDATE contents SET text_state='legacy-binary' WHERE id=12")
     outputs = normalize(graph)
     assert db.execute(
-        "SELECT byte_length,raw_text,text_state FROM contents WHERE id=12"
+        "SELECT byte_length,raw_text,text_state FROM contents WHERE content_id=12"
     ).fetchone()[:] == (7, None, "unknown")
     assert "GIT_UNKNOWN_TEXT_STATE" in codes(outputs["contents"])
     assert (
         db.execute(
-            "SELECT content_id FROM blob_content_map WHERE object_id=3"
+            "SELECT content_id FROM blob_content_map WHERE git_object_id=3"
         ).fetchone()[0]
         == 12
     )
@@ -466,9 +508,9 @@ def test_bad_legacy_verified_assertion_keeps_hash_demonstrated_identity(graph):
     src, db, _ = graph
     src.execute("UPDATE git_objects SET verified=9 WHERE id=2")
     outputs = normalize(graph, through="git_objects")
-    assert db.execute("SELECT id,verified FROM git_objects WHERE id=2").fetchone()[
-        :
-    ] == (2, 1)
+    assert db.execute(
+        "SELECT git_object_id,verified FROM git_objects WHERE git_object_id=2"
+    ).fetchone()[:] == (2, 1)
     assert "GIT_INVALID_VERIFICATION_ASSERTION" in codes(outputs["git_objects"])
     assert src.execute("SELECT verified FROM git_objects WHERE id=2").fetchone()[0] == 9
 
@@ -492,29 +534,35 @@ def test_pr_origin_requires_exact_saved_observation_and_code_acquisition(
     src.execute("INSERT INTO pr_git_links VALUES(501,'head','sha1',?,22)", (oid,))
     normalize(graph, through="root_manifest_entries")
     db.execute(
-        "INSERT INTO service_instances VALUES('instance','git','instance',NULL,NULL,'{}',NULL)"
+        "INSERT INTO service_instances(service_instance_id,kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('instance','git','instance',NULL,NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO repository_bindings VALUES('binding','repo','instance',NULL,'{}',NULL)"
+        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_id,provider_repository_id,metadata,created_at) VALUES('binding','repo','instance',NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO change_requests VALUES('pr','repo','binding','pull_request',7,NULL,NULL)"
+        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number,current_change_request_observation_id,provider_node_id) VALUES('pr','repo','binding','pull_request',7,NULL,NULL)"
     )
     db.execute(
-        "INSERT INTO change_request_observations VALUES(501,'pr',?,1,'{}','saved',?,NULL)",
+        "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at,published,payload,origin_key,parsed_at,origin_fetch_occurrence_id) VALUES(501,'pr',?,1,'{}','saved',?,NULL)",
         (STAMP, STAMP),
     )
     db.execute(
-        "INSERT INTO code_observations VALUES(501,'pr',501,NULL,NULL,'partial','sha1',?,NULL,'{}')",
+        "INSERT INTO code_observations(code_observation_id,change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details) VALUES(501,'pr',501,NULL,NULL,'partial','sha1',?,NULL,'{}')",
         (oid,),
     )
-    db.execute("INSERT INTO code_acquisitions VALUES(501,'head','sha1',?,22)", (oid,))
+    db.execute(
+        "INSERT INTO code_acquisitions(code_observation_id,role,object_format,oid,acquisition_root_id) VALUES(501,'head','sha1',?,22)",
+        (oid,),
+    )
     records = tuple(archive.rows(src, "pr_git_links"))
     output = git_domain.prepare(db, src, run, "pr_root_origins", 0, records)
     if claimed_observation == 501:
         row = output["operations"][0]["row"]
         assert row[1:] == (22, "pr_role", None, 501, None, "pr", 501, "repo")
-        db.execute("INSERT INTO root_origins VALUES(?,?,?,?,?,?,?,?,?)", row)
+        db.execute(
+            "INSERT INTO root_origins(root_origin_id,acquisition_root_id,origin_kind,raw_ref_name,source_ordinal,snapshot_id,change_request_id,change_request_observation_id,repository_id) VALUES(?,?,?,?,?,?,?,?,?)",
+            row,
+        )
         assert codes(output) == set()
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
     else:

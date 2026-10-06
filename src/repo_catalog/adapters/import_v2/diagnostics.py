@@ -33,7 +33,7 @@ def classify(record, encoding="UTF-8"):
 
 def store(db, run_id, code, severity, details):
     db.execute(
-        "INSERT INTO validation_results(run_id,invariant_id,code,severity,observed_at,details) VALUES(?,?,?,?,?,?)",
+        "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES(?,?,?,?,?,?)",
         (run_id, "I31", code, severity, now(), canonical(details)),
     )
 
@@ -49,7 +49,7 @@ def source_issues(db):
 def counts(db, run_id):
     return dict(
         db.execute(
-            "SELECT severity,count(*) FROM validation_results WHERE run_id=? GROUP BY severity",
+            "SELECT severity,count(*) FROM validation_results WHERE conversion_run_id=? GROUP BY severity",
             (run_id,),
         )
     )

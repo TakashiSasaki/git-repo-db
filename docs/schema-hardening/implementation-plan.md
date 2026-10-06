@@ -1,22 +1,16 @@
-# Catalog3 operational runtime stride
+# Current catalog3 implementation state
 
-Starting implementation: `3af3df84372354e972772b5c9600dfeeae0f0e15` (PR #1 head), incorporated by fast-forward from the original checkout at `9a4110185d7e7abffc291f9cfd118ca71587f998`.
+Catalog3 is the sole ordinary runtime; the packaged DDL and runtime identity module are authoritative. [Runtime handoff](runtime-handoff.md) records runnable commands, validation, preservation and limits. Earlier phase plans and design/export schemas are historical snapshots.
 
-## Implemented functional paths
+The naming stride starts from main `2566522c79c41aad9b410c2a3db6e699e2acdf65` on the new branch `refactor/catalog3-schema-names`, after merged PR #1. It advances runtime schema identity 3 → 4 while retaining `repo-catalog/catalog3`.
 
-1. Packaged the shared final catalog3 schema, mutable runtime store and evidence-based import finalization.
-2. Ordinary source discovery and Git/GitHub persistence now use catalog3; REST/GraphQL history, sealed listings and restart boundaries remain functional.
-3. Ordinary queries/search and doctor/backup/restore/cache/index maintenance now use catalog3 transaction snapshots.
-4. One packaged resumable guarded offline v2 importer retains typed archive/evidence; phase/predecessor compatibility machinery is retired.
-5. CI uses one working toolchain, changed-file selection and every surviving ordinary test file; minimum-version and historical count gates are retired.
-6. Focused synthetic fresh/imported, incremental/resume, preservation/recovery and installed-import checks passed. Hosted acceptance at `edce04b646e7b5006f1b15048cab765e3c416bfa` passed 330 ordinary tests and two isolated installed wheel/sdist checks; reconciliation found no unexecuted ordinary files. [Run 37412761695](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37412761695) and the functional handoff record the actual environment and checks. A subsequent prose-only update reports its runtime checks unexecuted rather than repeating the full suite.
-7. One scoped public Git trial at application commit `04f23c7082b1b9d0cd96df1062459b7b71049bb0` passed collection, unchanged re-sync, independent commit/blob comparisons and offline backup/restore. [Durable Markdown/JSON evidence](../validation/real-world/2026-10-06-museum-portal-git-04f23c7.md) was verified and published without repeating the trial.
-8. The [initial real API trial](../validation/real-world/2026-10-06-museum-portal-api-bdc6a6e.md) remains unchanged as evidence of safe interruption under the original 100-request budget. The [authorized complete continuation](../validation/real-world/2026-10-06-museum-portal-api-continuation-64da722.md) passed both full syncs, real reviews/threads, conditional/listing reuse, complete or honestly scoped queries, full DB checks and seven matching restored digests. Cumulative API sends: 860 / 1,000; the user explicitly extended the time budget. No product changes were required. [Retained-v2 discovery](../validation/real-world/2026-10-06-retained-v2-discovery-bdc6a6e.md) remains N/A without another search. **Ready for schema naming cleanup**; naming cleanup itself has not begun.
+Implemented scope:
 
-Functional subsystems evolve together without additional approval gates. Focused checks run during development; coherent final acceptance runs on the combined tree. Historical test counts, exact minimum SQLite lanes and converter predecessor reenactments are retired requirements.
+1. Audit all 74 runtime tables and 148 FK components; rename 135 columns using semantic entity identifiers, aligned neutral/owner FKs and explicit role prefixes. No table or logical relationship changes.
+2. Update SQLite/Git/GitHub writers, readers, query projections, indexing, finalization, maintenance, backup/restore, CLI row output and current fixtures/tests. Explicit target INSERTs and positional audit SELECTs name their columns.
+3. Keep v2 source schemas/names unchanged; target recipes and saved identity contexts translate to current catalog3 names while preserving exact acquired evidence. No old-catalog3 migration/view/alias or dual path.
+4. Replace the v2-era data-model description with the current catalog3 model and update current README/identity/architecture/operations guidance.
+5. Narrow CI classification to explicit runtime/CI contracts and named historical report inputs. Unknown inputs still expand testing; no change-aware CI redesign.
+6. Complete focused subsystem checks and the affected integration closure (242 passed). Final substantive revision `2399248c3cc5a49c56231a94b084d15fe3ce1852` passes 339 current acceptance tests, both isolated installed wheel/sdist checks, lint/format and schema/doctor checks. The existing collection/profile reconciliation confirms all 341 selected tests executed once on that clean revision. Exact results are recorded in the handoff.
 
-## Preservation and scope
-
-Ordinary acceptance uses synthetic fixtures; separately scoped real-world trials retain durable repository evidence. Source DB/cache bytes, meaningful identities, exact raw values and observation history remain protected. Optional missing content is reported as partial; critical identity corruption prevents finalization. Queries do not acquire or repair. Runtime writable caches are separate from imported source evidence.
-
-Authorized public Git/API trials and conservative retained-v2 discovery are recorded in `runtime-handoff.md`; deployment and active-catalog cutover remain separately authorized actions. The handoff distinguishes completed, partial and unexecuted work.
+Museum-portal Git/API and retained-v2 discovery reports retain their original pre-refactor commits and scope. They are not repeated for identifier changes. Semantic redesign, product features, exchange work, real-data activation and release publication are outside this stride.

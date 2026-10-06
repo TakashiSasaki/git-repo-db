@@ -23,11 +23,11 @@ def select_repositories(s, selectors=(), source=None):
     rows = s.all(
         "SELECT * FROM repositories"
         + (
-            " WHERE EXISTS(SELECT 1 FROM source_repositories m WHERE m.repo_id=repositories.id AND m.source_id=?)"
+            " WHERE EXISTS(SELECT 1 FROM source_repositories m WHERE m.repository_id=repositories.repository_id AND m.source_id=?)"
             if source
             else ""
         )
-        + " ORDER BY id",
+        + " ORDER BY repository_id",
         (source,) if source else (),
     )
     rows = [identity.repository_row(s, row) for row in rows]
@@ -42,10 +42,11 @@ def select_repositories(s, selectors=(), source=None):
         matches = [
             dict(r)
             for r in rows
-            if selector in (r["id"], r["name"], f"{r['provider_host']}/{r['name']}")
+            if selector
+            in (r["repository_id"], r["name"], f"{r['provider_host']}/{r['name']}")
             or s.one(
-                "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.id=b.instance_id WHERE b.repo_id=? AND ?=i.name||'/'||?",
-                (r["id"], selector, r["name"]),
+                "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.service_instance_id=b.service_instance_id WHERE b.repository_id=? AND ?=i.name||'/'||?",
+                (r["repository_id"], selector, r["name"]),
             )
         ]
         if not matches:
@@ -56,7 +57,7 @@ def select_repositories(s, selectors=(), source=None):
             raise CatalogError("INVALID_ARGUMENT", "Ambiguous repository selector")
         if matches[0] not in selected:
             selected.append(matches[0])
-    return sorted(selected, key=lambda r: r["id"])
+    return sorted(selected, key=lambda r: r["repository_id"])
 
 
 def single_repository(store, selector):
@@ -78,7 +79,7 @@ class CollectionService:
 
     def _discover(self, s, job, source):
         sources = s.all(
-            "SELECT * FROM sources" + (" WHERE id=?" if source else ""),
+            "SELECT * FROM sources" + (" WHERE source_id=?" if source else ""),
             (source,) if source else (),
         )
         if source and not sources:
@@ -98,7 +99,7 @@ class CollectionService:
                     repos = [
                         {
                             "host": "local",
-                            "provider_id": src["id"],
+                            "provider_repository_id": src["source_id"],
                             "name": src["name"],
                             "url": settings["url"],
                             "metadata": {},
@@ -114,17 +115,20 @@ class CollectionService:
                     repos = collector.inventory(src, job)
                     uncertainty = collector.inventory_uncertainty
                 if uncertainty:
-                    coverage.add("inventory", uncertainty, source_id=src["id"])
+                    coverage.add("inventory", uncertainty, source_id=src["source_id"])
                 with s.transaction():
                     for repo in repos:
-                        provider_id = (
-                            repo["provider_id"]
+                        provider_repository_id = (
+                            repo["provider_repository_id"]
                             if src["discovery_kind"] == "github_inventory"
-                            else settings.get("provider_repo_id")
+                            else settings.get("provider_repository_id")
                         )
-                        target = settings.get("repo_id")
+                        target = settings.get("repository_id")
                         existing = (
-                            s.one("SELECT id FROM repositories WHERE id=?", (target,))
+                            s.one(
+                                "SELECT repository_id FROM repositories WHERE repository_id=?",
+                                (target,),
+                            )
                             if target
                             else None
                         )
@@ -133,10 +137,10 @@ class CollectionService:
                                 "NOT_FOUND",
                                 "Explicit repository identity no longer exists",
                             )
-                        if src["instance_id"] and provider_id:
+                        if src["service_instance_id"] and provider_repository_id:
                             binding = s.one(
-                                "SELECT repo_id FROM repository_bindings WHERE instance_id=? AND provider_repo_id=?",
-                                (src["instance_id"], provider_id),
+                                "SELECT repository_id FROM repository_bindings WHERE service_instance_id=? AND provider_repository_id=?",
+                                (src["service_instance_id"], provider_repository_id),
                             )
                             if binding:
                                 if existing and existing[0] != binding[0]:
@@ -145,43 +149,48 @@ class CollectionService:
                                         "Source and provider identity refer to different repositories",
                                     )
                                 existing = s.one(
-                                    "SELECT id FROM repositories WHERE id=?",
+                                    "SELECT repository_id FROM repositories WHERE repository_id=?",
                                     (binding[0],),
                                 )
                         if not existing and src["discovery_kind"] == "manual_git":
                             existing = s.one(
-                                "SELECT repo_id FROM source_repositories WHERE source_id=?",
-                                (src["id"],),
+                                "SELECT repository_id FROM source_repositories WHERE source_id=?",
+                                (src["source_id"],),
                             )
                         ident = existing[0] if existing else str(uuid.uuid4())
                         if not existing:
                             s.execute(
-                                "INSERT INTO repositories(id,name,metadata) VALUES(?,?,?)",
+                                "INSERT INTO repositories(repository_id,name,metadata) VALUES(?,?,?)",
                                 (ident, repo["name"], json.dumps(repo["metadata"])),
                             )
                         elif src["discovery_kind"] == "github_inventory":
                             s.execute(
-                                "UPDATE repositories SET name=?,metadata=? WHERE id=?",
+                                "UPDATE repositories SET name=?,metadata=? WHERE repository_id=?",
                                 (repo["name"], json.dumps(repo["metadata"]), ident),
                             )
-                        if src["instance_id"]:
-                            identity.bind(s, ident, src["instance_id"], provider_id)
-                        identity.link_source(s, src["id"], ident)
+                        if src["service_instance_id"]:
+                            identity.bind(
+                                s,
+                                ident,
+                                src["service_instance_id"],
+                                provider_repository_id,
+                            )
+                        identity.link_source(s, src["source_id"], ident)
                         identity.add_endpoint(s, ident, repo["url"])
                         if not s.one(
-                            "SELECT 1 FROM repository_name_assertions WHERE repo_id=? AND name=?",
+                            "SELECT 1 FROM repository_name_assertions WHERE repository_id=? AND name=?",
                             (ident, repo["name"]),
                         ):
                             s.execute(
-                                "INSERT INTO repository_name_assertions VALUES(?,?,?)",
+                                "INSERT INTO repository_name_assertions(repository_id,name,observed_at) VALUES(?,?,?)",
                                 (ident, repo["name"], observed_at),
                             )
-                        items.append({"repo_id": ident, "name": repo["name"]})
+                        items.append({"repository_id": ident, "name": repo["name"]})
                     s.execute(
-                        "INSERT INTO inventory_observations VALUES(?,?,?,?,?,?)",
+                        "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at,reason) VALUES(?,?,?,?,?,?)",
                         (
                             run,
-                            src["id"],
+                            src["source_id"],
                             "partial" if uncertainty else "complete",
                             json.dumps(inventory_scope),
                             observed_at,
@@ -190,13 +199,13 @@ class CollectionService:
                     )
                     s.publish()
             except CatalogError as e:
-                coverage.add("inventory", e.code, source_id=src["id"])
+                coverage.add("inventory", e.code, source_id=src["source_id"])
                 with s.transaction():
                     s.execute(
-                        "INSERT INTO inventory_observations VALUES(?,?,?,?,?,?)",
+                        "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at,reason) VALUES(?,?,?,?,?,?)",
                         (
                             run,
-                            src["id"],
+                            src["source_id"],
                             "partial",
                             json.dumps(inventory_scope),
                             observed_at,
@@ -219,14 +228,14 @@ class CollectionService:
                 "kind": request.kind,
                 "repositories": list(request.repositories),
                 "source": request.source,
-                "endpoint_id": request.endpoint_id,
+                "repository_endpoint_id": request.repository_endpoint_id,
             }
             job = JobService(s).create("sync", data)
             return self._sync(s, job, data)
 
     def resume(self, job):
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
-            row = s.one("SELECT kind FROM jobs WHERE id=?", (job,))
+            row = s.one("SELECT kind FROM jobs WHERE job_id=?", (job,))
             if row is not None and row[0] not in ("discover", "sync"):
                 raise CatalogError("INVALID_ARGUMENT", "Unsupported resumable job kind")
             kind, request = JobService(s).resume(job)
@@ -241,7 +250,7 @@ class CollectionService:
         coverage = CoverageReport()
         not_before = None
         s.expected_attempt = s.one(
-            "SELECT current_attempt FROM jobs WHERE id=?", (job,)
+            "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
         )[0]
         try:
             from repo_catalog.adapters.filesystem.cache import CacheManager
@@ -256,27 +265,27 @@ class CollectionService:
             repos = select_repositories(
                 s, tuple(request["repositories"]), request.get("source")
             )
-            if request.get("endpoint_id") and len(repos) != 1:
+            if request.get("repository_endpoint_id") and len(repos) != 1:
                 raise CatalogError(
                     "INVALID_ARGUMENT", "An explicit endpoint requires one repository"
                 )
             for repo in repos:
-                endpoint_id = request.get("endpoint_id")
-                if not endpoint_id and request.get("source"):
+                repository_endpoint_id = request.get("repository_endpoint_id")
+                if not repository_endpoint_id and request.get("source"):
                     source = s.one(
-                        "SELECT * FROM sources WHERE id=?", (request["source"],)
+                        "SELECT * FROM sources WHERE source_id=?", (request["source"],)
                     )
                     settings = json.loads(source["settings"])
                     if source["discovery_kind"] == "manual_git":
                         source_endpoint = s.one(
-                            "SELECT id FROM repository_endpoints WHERE repo_id=? AND url=?",
-                            (repo["id"], identity.git_url(settings["url"])),
+                            "SELECT repository_endpoint_id FROM repository_endpoints WHERE repository_id=? AND url=?",
+                            (repo["repository_id"], identity.git_url(settings["url"])),
                         )
                         if not source_endpoint:
                             raise CatalogError(
                                 "NOT_FOUND", "Source endpoint is not registered"
                             )
-                        endpoint_id = source_endpoint[0]
+                        repository_endpoint_id = source_endpoint[0]
                 for kind in (
                     ("git", "pr") if request["kind"] == "all" else (request["kind"],)
                 ):
@@ -284,26 +293,28 @@ class CollectionService:
                     try:
                         if kind == "git":
                             done = s.one(
-                                "SELECT x.id FROM snapshots x JOIN git_acquisitions a ON a.id=x.acquisition_id JOIN acquisition_progress p ON p.acquisition_id=a.id WHERE p.job_id=? AND a.repo_id=? AND a.kind='git' AND p.state='published' AND x.published=1",
-                                (job, repo["id"]),
+                                "SELECT x.snapshot_id FROM snapshots x JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_id=? AND a.kind='git' AND p.state='published' AND x.published=1",
+                                (job, repo["repository_id"]),
                             )
                             item = (
                                 {
-                                    "repo_id": repo["id"],
+                                    "repository_id": repo["repository_id"],
                                     "snapshot_id": done[0],
                                     "state": "complete",
                                 }
                                 if done
                                 else GitImporter(s, self.token).sync(
-                                    repo, job, endpoint_id=endpoint_id
+                                    repo,
+                                    job,
+                                    repository_endpoint_id=repository_endpoint_id,
                                 )
                             )
                         else:
                             src = identity.pr_source(
-                                s, repo["id"], request.get("source")
+                                s, repo["repository_id"], request.get("source")
                             )
                             if not src:
-                                if identity.pr_applicable(s, repo["id"]):
+                                if identity.pr_applicable(s, repo["repository_id"]):
                                     raise CatalogError(
                                         "PROVIDER_UNSUPPORTED",
                                         "PR/MR API collection requires a supported API source",
@@ -311,7 +322,7 @@ class CollectionService:
                                 items.append(
                                     {
                                         "kind": kind,
-                                        "repo_id": repo["id"],
+                                        "repository_id": repo["repository_id"],
                                         "state": "not_applicable",
                                     }
                                 )
@@ -322,24 +333,24 @@ class CollectionService:
 
                             api_repo = {
                                 **dict(repo),
-                                "source_id": src["id"],
-                                "provider_repo_id": src["provider_repo_id"],
+                                "source_id": src["source_id"],
+                                "provider_repository_id": src["provider_repository_id"],
                             }
                             item = GitHubCollector(
                                 s,
                                 self.token,
                                 config=identity.github_config(s, src),
-                                endpoint_id=endpoint_id,
+                                repository_endpoint_id=repository_endpoint_id,
                             ).sync(api_repo, job)
                         items.append({"kind": kind, **item})
                     except CatalogError as e:
                         if e.code == "CANCELLED":
                             raise
-                        coverage.add(kind, e.code, repo_id=repo["id"])
+                        coverage.add(kind, e.code, repository_id=repo["repository_id"])
                         items.append(
                             {
                                 "kind": kind,
-                                "repo_id": repo["id"],
+                                "repository_id": repo["repository_id"],
                                 "state": "partial",
                                 "error": e.code,
                             }

@@ -17,8 +17,8 @@ def test_generation_switch(catalog):
             assert (
                 s.one(f"SELECT count(*) FROM {gen['table_name']}")[0]
                 == s.one(
-                    "SELECT count(*) FROM index_membership WHERE generation_id=?",
-                    (gen["id"],),
+                    "SELECT count(*) FROM index_membership WHERE index_generation_id=?",
+                    (gen["index_generation_id"],),
                 )[0]
             )
             assert (

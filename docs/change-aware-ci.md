@@ -6,7 +6,8 @@ PR の初回・再開などは merge-base から実際に試験する merge tree
 
 - 現在の leaf test の変更は、その file と静的検査を選びます。
 - source、共通 fixture、依存 lock、CI policy、importer は現在の acceptance 全体を選びます。
-- docs 内の SQL、JSON、CSV と実行入力の conversion recipe も全体を選びます。
+- 現行 runtime/schema/import contract は `src/**`、CI contract は policy/shared inputs として全体を選びます。
+- policy に明示した過去の schema-hardening SQL/JSON/CSV は report inputs です。実GitHub検証 JSON も evidence/report input のままです。拡張子だけで executable と扱いません。未分類の新規 SQL/JSON/CSV は全体へ広げます。
 - 通常の prose だけの変更は、読み取りと非空検査を行います。
 - 未知の依存、比較履歴の欠落・不正、explicit full は現在の acceptance 全体へ広げます。
 

@@ -27,35 +27,35 @@ def facts():
     put(
         db,
         "service_instances",
-        id="instance",
+        service_instance_id="instance",
         kind="github",
         name="synthetic",
         metadata="{}",
     )
     for owner, observation in (("a", 1), ("b", 2)):
-        put(db, "repositories", id=owner, name=owner, metadata="{}")
+        put(db, "repositories", repository_id=owner, name=owner, metadata="{}")
         put(
             db,
             "repository_bindings",
-            id="binding-" + owner,
-            repo_id=owner,
-            instance_id="instance",
-            provider_repo_id=owner,
+            repository_binding_id="binding-" + owner,
+            repository_id=owner,
+            service_instance_id="instance",
+            provider_repository_id=owner,
             metadata="{}",
         )
         put(
             db,
             "change_requests",
-            id="pr-" + owner,
-            repo_id=owner,
-            binding_id="binding-" + owner,
+            change_request_id="pr-" + owner,
+            repository_id=owner,
+            repository_binding_id="binding-" + owner,
             request_kind="pull_request",
             number=1,
         )
         put(
             db,
             "change_request_observations",
-            id=observation,
+            change_request_observation_id=observation,
             change_request_id="pr-" + owner,
             published=1,
             payload="{}",
@@ -64,9 +64,9 @@ def facts():
         put(
             db,
             "resume_scopes",
-            id="scope-" + owner,
-            repo_id=owner,
-            binding_id="binding-" + owner,
+            resume_scope_id="scope-" + owner,
+            repository_id=owner,
+            repository_binding_id="binding-" + owner,
             request_context="{}",
             parser_version="synthetic",
             profile_version="synthetic",
@@ -75,16 +75,16 @@ def facts():
         put(
             db,
             "fetch_collections",
-            id="collection-" + owner,
-            repo_id=owner,
+            fetch_collection_id="collection-" + owner,
+            repository_id=owner,
             change_request_id="pr-" + owner,
             kind="files",
-            scope_id="scope-" + owner,
+            resume_scope_id="scope-" + owner,
         )
         put(
             db,
             "payloads",
-            id=observation,
+            payload_id=observation,
             sha256=hashlib.sha256(owner.encode()).digest(),
             body=owner.encode(),
             byte_length=1,
@@ -93,8 +93,8 @@ def facts():
         put(
             db,
             "fetch_occurrences",
-            id=observation,
-            collection_id="collection-" + owner,
+            fetch_occurrence_id=observation,
+            fetch_collection_id="collection-" + owner,
             ordinal=0,
             payload_id=observation,
             request="{}",
@@ -103,16 +103,16 @@ def facts():
     put(
         db,
         "code_listings",
-        id="files",
+        code_listing_id="files",
         change_request_id="pr-a",
-        collection_id="collection-a",
+        fetch_collection_id="collection-a",
         kind="files",
-        scope_id="scope-a",
+        resume_scope_id="scope-a",
     )
     put(
         db,
         "code_listing_progress",
-        listing_id="files",
+        code_listing_id="files",
         state="partial",
         terminal=0,
         page_count=0,
@@ -121,8 +121,8 @@ def facts():
     put(
         db,
         "code_file_changes",
-        listing_id="files",
-        occurrence_id=1,
+        code_listing_id="files",
+        fetch_occurrence_id=1,
         position=0,
         raw_path=b"raw/\xff\tname",
         payload="{}",
@@ -139,12 +139,12 @@ def test_current_pointer_requires_same_owner_completed_observation(
 ):
     if observation == 1:
         facts.execute(
-            "UPDATE change_requests SET current_observation_id=? WHERE id=?",
+            "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
             (observation, owner),
         )
         assert (
             facts.execute(
-                "SELECT current_observation_id FROM change_requests WHERE id=?",
+                "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
                 (owner,),
             ).fetchone()[0]
             == 1
@@ -152,12 +152,12 @@ def test_current_pointer_requires_same_owner_completed_observation(
     else:
         with pytest.raises(sqlite3.IntegrityError):
             facts.execute(
-                "UPDATE change_requests SET current_observation_id=? WHERE id=?",
+                "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
                 (observation, owner),
             )
         assert (
             facts.execute(
-                "SELECT current_observation_id FROM change_requests WHERE id=?",
+                "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
                 (owner,),
             ).fetchone()[0]
             is None
@@ -169,18 +169,18 @@ def test_listing_and_page_must_share_scope_and_owner(facts):
         put(
             facts,
             "code_listings",
-            id="wrong",
+            code_listing_id="wrong",
             change_request_id="pr-a",
-            collection_id="collection-a",
+            fetch_collection_id="collection-a",
             kind="commits",
-            scope_id="scope-b",
+            resume_scope_id="scope-b",
         )
     with pytest.raises(sqlite3.IntegrityError):
         put(
             facts,
             "code_file_changes",
-            listing_id="files",
-            occurrence_id=2,
+            code_listing_id="files",
+            fetch_occurrence_id=2,
             position=1,
             raw_path=b"cross-owner",
             payload="{}",
@@ -190,8 +190,8 @@ def test_listing_and_page_must_share_scope_and_owner(facts):
             facts,
             "code_observations",
             change_request_id="pr-a",
-            observation_id=2,
-            file_listing_id="files",
+            change_request_observation_id=2,
+            file_code_listing_id="files",
             state="partial",
             details="{}",
         )
@@ -205,15 +205,15 @@ def test_listing_and_page_must_share_scope_and_owner(facts):
 )
 def test_completed_listing_seals_content_and_completion_marker(facts, attack):
     facts.execute(
-        "UPDATE code_listing_progress SET state='complete',terminal=1,page_count=1 WHERE listing_id='files'"
+        "UPDATE code_listing_progress SET state='complete',terminal=1,page_count=1 WHERE code_listing_id='files'"
     )
     statements = {
-        "append": "INSERT INTO code_file_changes VALUES('files',1,1,x'61','{}')",
-        "edit": "UPDATE code_file_changes SET raw_path=x'61' WHERE listing_id='files'",
-        "delete": "DELETE FROM code_file_changes WHERE listing_id='files'",
-        "reopen": "UPDATE code_listing_progress SET state='partial' WHERE listing_id='files'",
-        "remove-marker": "DELETE FROM code_listing_progress WHERE listing_id='files'",
-        "replace-marker": "INSERT OR REPLACE INTO code_listing_progress VALUES('files','partial',0,0,1)",
+        "append": "INSERT INTO code_file_changes(code_listing_id,fetch_occurrence_id,position,raw_path,payload) VALUES('files',1,1,x'61','{}')",
+        "edit": "UPDATE code_file_changes SET raw_path=x'61' WHERE code_listing_id='files'",
+        "delete": "DELETE FROM code_file_changes WHERE code_listing_id='files'",
+        "reopen": "UPDATE code_listing_progress SET state='partial' WHERE code_listing_id='files'",
+        "remove-marker": "DELETE FROM code_listing_progress WHERE code_listing_id='files'",
+        "replace-marker": "INSERT OR REPLACE INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES('files','partial',0,0,1)",
     }
     with pytest.raises(sqlite3.IntegrityError):
         facts.execute(statements[attack])
@@ -231,7 +231,7 @@ def test_pending_observation_cannot_become_current(facts):
     put(
         facts,
         "change_request_observations",
-        id=3,
+        change_request_observation_id=3,
         change_request_id="pr-a",
         published=0,
         payload="{}",
@@ -239,7 +239,7 @@ def test_pending_observation_cannot_become_current(facts):
     )
     with pytest.raises(sqlite3.IntegrityError):
         facts.execute(
-            "UPDATE change_requests SET current_observation_id=3 WHERE id='pr-a'"
+            "UPDATE change_requests SET current_change_request_observation_id=3 WHERE change_request_id='pr-a'"
         )
 
 
@@ -282,3 +282,23 @@ def test_derived_fts_and_analyze_do_not_change_catalog_identity(tmp_path):
         assert reader.one("PRAGMA foreign_keys")[0] == 1
         assert reader.one("PRAGMA recursive_triggers")[0] == 1
         assert reader.one("PRAGMA query_only")[0] == 1
+
+
+def test_runtime_identifiers_make_fk_domains_and_roles_explicit():
+    with sqlite3.connect(":memory:") as db:
+        db.executescript(schema_sql())
+        tables = db.execute(
+            "SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+        ).fetchall()
+        for (table,) in tables:
+            columns = db.execute(f"PRAGMA table_info({table})").fetchall()
+            assert "id" not in {column[1] for column in columns}, table
+            for fk in db.execute(f"PRAGMA foreign_key_list({table})"):
+                local, referenced = fk[3], fk[4]
+                if referenced.endswith("_id"):
+                    assert local == referenced or local.endswith("_" + referenced), (
+                        table,
+                        local,
+                        fk[2],
+                        referenced,
+                    )

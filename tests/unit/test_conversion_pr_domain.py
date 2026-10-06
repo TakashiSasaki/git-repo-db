@@ -19,7 +19,7 @@ from tests.support.integrated_fixture import (
 def apply(db, output, module):
     for operation in output["operations"]:
         table, row = operation["table"], operation["row"]
-        columns, keys = module.COLUMNS[table], module.KEYS.get(table, ("id",))
+        columns, keys = module.COLUMNS[table], module.KEYS[table]
         predicate = " AND ".join(f'"{key}"=?' for key in keys)
         key_values = [row[columns.index(key)] for key in keys]
         actual = db.execute(
@@ -30,17 +30,18 @@ def apply(db, output, module):
             db.execute(
                 f'UPDATE "{table}" SET '
                 + ",".join(f'"{column}"=?' for column in columns[1:])
-                + " WHERE listing_id=?",
+                + " WHERE code_listing_id=?",
                 [*row[1:], row[0]],
             )
         elif operation["operation"] == "preference":
             db.execute(
-                "UPDATE repositories SET preferred_endpoint_id=? WHERE id=?",
+                "UPDATE repositories SET preferred_repository_endpoint_id=? WHERE repository_id=?",
                 (row[2], row[0]),
             )
         elif operation["operation"] == "manifest_completion":
             db.execute(
-                "UPDATE root_manifests SET complete=? WHERE tree_id=?", (row[1], row[0])
+                "UPDATE root_manifests SET complete=? WHERE tree_git_object_id=?",
+                (row[1], row[0]),
             )
         elif actual is None:
             db.execute(
@@ -51,7 +52,7 @@ def apply(db, output, module):
             assert tuple(actual) == tuple(row), (table, tuple(actual), row)
     for mapped in output["mappings"]:
         db.execute(
-            "INSERT INTO id_mappings(record_id,target_table,target_key,relation,reason) VALUES(?,?,?,?,?)",
+            "INSERT INTO id_mappings(legacy_record_id,target_table,target_key,relation,reason) VALUES(?,?,?,?,?)",
             (mapped[0], mapped[1], bytes.fromhex(mapped[2]), *mapped[3:]),
         )
     db.commit()
@@ -77,11 +78,11 @@ def components(tmp_path, *, mutate=None, encoding="UTF-8", scale=1):
     db.row_factory = sqlite3.Row
     db.executescript(schema_sql())
     db.execute(
-        "INSERT INTO conversion_sources VALUES('source',?,?,'v2','synthetic',?,?)",
+        "INSERT INTO conversion_sources(conversion_source_id,source_sha256,schema_sha256,format_id,source_db_instance_id,source_catalog,source_migrations) VALUES('source',?,?,'v2','synthetic',?,?)",
         (b"s" * 32, b"c" * 32, b"{}", b"[]"),
     )
     db.execute(
-        "INSERT INTO conversion_runs VALUES('run','source',?,NULL,'p3-integrated/1','building','{}')",
+        "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at,ended_at,parser_version,state,manifest) VALUES('run','source',?,NULL,'p3-integrated/1','building','{}')",
         (STAMPS[0],),
     )
     run = dict(db.execute("SELECT * FROM conversion_runs").fetchone())
@@ -90,11 +91,11 @@ def components(tmp_path, *, mutate=None, encoding="UTF-8", scale=1):
     ).fetchall():
         for record in archive.rows(src, table[0]):
             saved = db.execute(
-                "INSERT INTO legacy_records(source_id,source_table,source_key,row_sha256) VALUES('source',?,?,?)",
+                "INSERT INTO legacy_records(conversion_source_id,source_table,source_key,row_sha256) VALUES('source',?,?,?)",
                 (record.table, record.key, record.row_sha256),
             ).lastrowid
             db.executemany(
-                "INSERT INTO legacy_values VALUES(?,?,?,?)",
+                "INSERT INTO legacy_values(legacy_record_id,column_name,storage_type,value_bytes) VALUES(?,?,?,?)",
                 [(saved, *value) for value in record.values],
             )
     db.commit()
@@ -192,7 +193,7 @@ def test_scaled_attribution_validates_each_saved_item_once_per_current_page(
     prepared = convert(db, src, run)
     assert (
         db.execute(
-            "SELECT count(*) FROM document_observations WHERE id BETWEEN 5001 AND ? AND occurrence_id IS NOT NULL",
+            "SELECT count(*) FROM document_observations WHERE document_observation_id BETWEEN 5001 AND ? AND fetch_occurrence_id IS NOT NULL",
             (5000 + scale - 1,),
         ).fetchone()[0]
         == scale - 1
@@ -285,13 +286,13 @@ def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repa
     before = src.execute("SELECT id,body FROM api_responses ORDER BY id").fetchall()
     output = convert(db, src, run)
     assert [(r["id"], r["body"]) for r in before] == [
-        (r["id"], r["body"])
-        for r in db.execute("SELECT id,body FROM payloads ORDER BY id")
+        (r["payload_id"], r["body"])
+        for r in db.execute("SELECT payload_id,body FROM payloads ORDER BY payload_id")
     ]
     assert [
         tuple(r)
         for r in db.execute(
-            "SELECT id,observed_at,payload,published FROM change_request_observations ORDER BY id"
+            "SELECT change_request_observation_id,observed_at,payload,published FROM change_request_observations ORDER BY change_request_observation_id"
         )
     ] == [
         (row["id"], row["observed_at"], row["payload"], 0)
@@ -299,7 +300,7 @@ def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repa
     ]
     history = list(
         db.execute(
-            "SELECT o.id,b.body,o.observed_at FROM document_observations o JOIN document_versions v ON v.id=o.version_id JOIN text_bodies b ON b.id=v.body_id WHERE o.document_id=? AND o.id<1000 ORDER BY o.id",
+            "SELECT o.document_observation_id,b.body,o.observed_at FROM document_observations o JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE o.document_id=? AND o.document_observation_id<1000 ORDER BY o.document_observation_id",
             (IDS["document_a"],),
         )
     )
@@ -311,22 +312,25 @@ def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repa
     bodies = [
         row[0]
         for row in db.execute(
-            "SELECT body_id FROM document_versions WHERE id IN (301,303) ORDER BY id"
+            "SELECT text_body_id FROM document_versions WHERE document_version_id IN (301,303) ORDER BY document_version_id"
         )
     ]
     assert len(set(bodies)) == 1
     repaired = db.execute(
-        "SELECT b.body,o.observed_at,o.parsed_at,f.next_cursor FROM document_observations o JOIN document_versions v ON v.id=o.version_id JOIN text_bodies b ON b.id=v.body_id JOIN fetch_occurrences f ON f.id=o.occurrence_id WHERE b.body=? ORDER BY o.observed_at",
+        "SELECT b.body,o.observed_at,o.parsed_at,f.next_cursor FROM document_observations o JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.fetch_occurrence_id WHERE b.body=? ORDER BY o.observed_at",
         (SAVED_EARLY_BODY,),
     ).fetchone()
     assert tuple(repaired)[:3] == (SAVED_EARLY_BODY, STAMPS[3], STAMPS[0])
     assert repaired[3] is not None
     assert all(
-        row[0] is None for row in db.execute("SELECT current_version_id FROM documents")
+        row[0] is None
+        for row in db.execute("SELECT current_document_version_id FROM documents")
     )
     assert all(
         row[0] is None
-        for row in db.execute("SELECT current_observation_id FROM change_requests")
+        for row in db.execute(
+            "SELECT current_change_request_observation_id FROM change_requests"
+        )
     )
     for recipe, expected in output.items():
         records = tuple(archive.rows(src, pr_domain.SOURCE_TABLES.get(recipe, recipe)))
@@ -353,23 +357,25 @@ def test_full_listings_seal_after_items_partial_pages_keep_cursor(tmp_path):
     ]
     assert [
         tuple(r)
-        for r in db.execute("SELECT id,state FROM code_observations ORDER BY id")
+        for r in db.execute(
+            "SELECT code_observation_id,state FROM code_observations ORDER BY code_observation_id"
+        )
     ] == [(301, "complete"), (302, "partial")]
     listing = db.execute(
-        "SELECT listing_id FROM code_listing_progress WHERE state='complete'"
+        "SELECT code_listing_id FROM code_listing_progress WHERE state='complete'"
     ).fetchone()[0]
     with pytest.raises(
         sqlite3.IntegrityError,
         match="Listing items require initialized partial progress",
     ):
         db.execute(
-            "INSERT INTO code_commits SELECT listing_id,occurrence_id,position+10,object_format,oid,payload FROM code_commits WHERE listing_id=?",
+            "INSERT INTO code_commits(code_listing_id,fetch_occurrence_id,position,object_format,oid,payload) SELECT code_listing_id,fetch_occurrence_id,position+10,object_format,oid,payload FROM code_commits WHERE code_listing_id=?",
             (listing,),
         )
     assert [
         tuple(r)
         for r in db.execute(
-            "SELECT code_observation_id,role,root_id FROM code_acquisitions ORDER BY code_observation_id,role"
+            "SELECT code_observation_id,role,acquisition_root_id FROM code_acquisitions ORDER BY code_observation_id,role"
         )
     ] == [
         (301, "base", 404),
@@ -425,7 +431,7 @@ def test_saved_page_replay_restores_same_collection_a_b_a_without_body_merge(tmp
     convert(db, src, run)
     history = list(
         db.execute(
-            "SELECT o.version_id,b.body,o.observed_at FROM document_observations o JOIN document_versions v ON v.id=o.version_id JOIN text_bodies b ON b.id=v.body_id WHERE o.document_id=? AND o.origin_key=? ORDER BY o.observed_at",
+            "SELECT o.document_version_id,b.body,o.observed_at FROM document_observations o JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE o.document_id=? AND o.origin_key=? ORDER BY o.observed_at",
             (IDS["document_a"], IDS["comments_a"]),
         )
     )
@@ -457,7 +463,9 @@ def test_malformed_saved_page_is_preserved_and_cannot_seal_listing(tmp_path):
         == 1
     )
     assert (
-        db.execute("SELECT state FROM code_observations WHERE id=301").fetchone()[0]
+        db.execute(
+            "SELECT state FROM code_observations WHERE code_observation_id=301"
+        ).fetchone()[0]
         == "partial"
     )
     assert any(
@@ -486,7 +494,7 @@ def test_saved_pr_title_body_reconstruct_history_and_original_metadata(tmp_path)
     convert(db, src, run)
     history = list(
         db.execute(
-            "SELECT v.id,b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.document_id=d.id JOIN document_versions v ON v.id=o.version_id JOIN text_bodies b ON b.id=v.body_id WHERE d.kind='pr-title' ORDER BY o.observed_at"
+            "SELECT v.document_version_id,b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.document_id=d.document_id JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.kind='pr-title' ORDER BY o.observed_at"
         )
     )
     assert [r[1] for r in history] == ["title A", "title B", "title A"]
@@ -527,7 +535,7 @@ def test_repeated_saved_document_metadata_has_stable_identity_and_distinct_obser
     db, src, run = components(tmp_path, mutate=mutate)
     convert(db, src, run)
     document = db.execute(
-        "SELECT id,metadata FROM documents WHERE provider_id='902'"
+        "SELECT document_id,metadata FROM documents WHERE provider_document_id='902'"
     ).fetchone()
     assert json.loads(document[1])["updated_at"] == "source-update-0"
     rows = list(
@@ -586,15 +594,15 @@ def test_pending_parent_and_etag_preserve_scope_payload_and_observation_time(tmp
     db, src, run = components(tmp_path, mutate=mutate)
     output = convert(db, src, run)
     assert (
-        db.execute("SELECT count(*) FROM documents WHERE provider_id='907'").fetchone()[
-            0
-        ]
+        db.execute(
+            "SELECT count(*) FROM documents WHERE provider_document_id='907'"
+        ).fetchone()[0]
         == 1
     )
     assert (
-        db.execute("SELECT count(*) FROM documents WHERE provider_id='908'").fetchone()[
-            0
-        ]
+        db.execute(
+            "SELECT count(*) FROM documents WHERE provider_document_id='908'"
+        ).fetchone()[0]
         == 0
     )
     assert (
@@ -604,7 +612,7 @@ def test_pending_parent_and_etag_preserve_scope_payload_and_observation_time(tmp
         == STAMPS[3]
     )
     validator = db.execute(
-        "SELECT v.etag,v.validated_at,s.principal_ref,s.api_version,s.confidence FROM validators v JOIN resume_scopes s ON s.id=v.scope_id"
+        "SELECT v.etag,v.validated_at,s.principal_ref,s.api_version,s.confidence FROM validators v JOIN resume_scopes s ON s.resume_scope_id=v.resume_scope_id"
     ).fetchone()
     assert tuple(validator) == (
         'W/"saved"',
@@ -692,13 +700,13 @@ def test_graphql_repeated_missing_thread_retains_initial_snapshot_and_later_fact
     db, src, run = components(tmp_path, mutate=mutate)
     output = convert(db, src, run)
     thread = db.execute(
-        "SELECT id,payload,observed_at FROM review_threads WHERE id LIKE '%THREAD_new'"
+        "SELECT review_thread_id,payload,observed_at FROM review_threads WHERE review_thread_id LIKE '%THREAD_new'"
     ).fetchone()
     assert json.loads(thread[1])["isResolved"] is False
     assert thread[2] == STAMPS[0]
     rows = list(
         db.execute(
-            "SELECT b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.document_id=d.id JOIN document_versions v ON v.id=o.version_id JOIN text_bodies b ON b.id=v.body_id WHERE d.provider_id='910' ORDER BY o.observed_at"
+            "SELECT b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.document_id=d.document_id JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.provider_document_id='910' ORDER BY o.observed_at"
         )
     )
     assert [(r[0], r[1]) for r in rows] == [
@@ -711,7 +719,7 @@ def test_graphql_repeated_missing_thread_retains_initial_snapshot_and_later_fact
     ]
     assert (
         db.execute(
-            "SELECT thread_id FROM review_comments WHERE document_id=(SELECT id FROM documents WHERE provider_id='910')"
+            "SELECT review_thread_id FROM review_comments WHERE document_id=(SELECT document_id FROM documents WHERE provider_document_id='910')"
         ).fetchone()[0]
         == thread[0]
     )
@@ -782,14 +790,14 @@ def test_saved_null_body_keeps_identity_each_occurrence_without_inventing_empty_
         == 1
     )
     assert (
-        db.execute("SELECT count(*) FROM documents WHERE provider_id='902'").fetchone()[
-            0
-        ]
+        db.execute(
+            "SELECT count(*) FROM documents WHERE provider_document_id='902'"
+        ).fetchone()[0]
         == 1
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM document_versions WHERE document_id IN (SELECT id FROM documents WHERE kind='pr-body' OR provider_id='902')"
+            "SELECT count(*) FROM document_versions WHERE document_id IN (SELECT document_id FROM documents WHERE kind='pr-body' OR provider_document_id='902')"
         ).fetchone()[0]
         == 0
     )
@@ -801,7 +809,7 @@ def test_saved_null_body_keeps_identity_each_occurrence_without_inventing_empty_
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM document_versions v JOIN text_bodies b ON b.id=v.body_id WHERE v.id=303 AND b.body=''"
+            "SELECT count(*) FROM document_versions v JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE v.document_version_id=303 AND b.body=''"
         ).fetchone()[0]
         == 1
     )
@@ -814,7 +822,7 @@ def test_saved_null_body_keeps_identity_each_occurrence_without_inventing_empty_
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM fetch_occurrences WHERE collection_id=?",
+            "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
             (IDS["comments_partial"],),
         ).fetchone()[0]
         == 3
@@ -853,13 +861,14 @@ def test_oversized_saved_page_defers_replay_preserves_payload_occurrence_and_dir
     db, src, run = components(tmp_path, mutate=mutate)
     output = convert(db, src, run)
     payload = db.execute(
-        "SELECT body,sha256,byte_length FROM payloads WHERE id=?", (saved["response"],)
+        "SELECT body,sha256,byte_length FROM payloads WHERE payload_id=?",
+        (saved["response"],),
     ).fetchone()
     assert len(payload[0]) == saved["bytes"]
     assert hashlib.sha256(payload[0]).digest() == payload[1] == saved["sha256"]
     assert payload[2] == saved["bytes"]
     occurrence = db.execute(
-        "SELECT observed_at,payload_id FROM fetch_occurrences WHERE collection_id=?",
+        "SELECT observed_at,payload_id FROM fetch_occurrences WHERE fetch_collection_id=?",
         (IDS["commits_complete"],),
     ).fetchone()
     assert tuple(occurrence) == (STAMPS[0], saved["response"])
@@ -867,7 +876,9 @@ def test_oversized_saved_page_defers_replay_preserves_payload_occurrence_and_dir
     # be replayed/proved complete within the decoder budget.
     assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
     assert (
-        db.execute("SELECT state FROM code_observations WHERE id=301").fetchone()[0]
+        db.execute(
+            "SELECT state FROM code_observations WHERE code_observation_id=301"
+        ).fetchone()[0]
         == "partial"
     )
     diagnostics = output["saved_listing_repair"]["diagnostics"]
@@ -878,14 +889,14 @@ def test_oversized_saved_page_defers_replay_preserves_payload_occurrence_and_dir
     assert attributed["column"] == "response_id"
     assert (
         db.execute(
-            "SELECT source_table FROM legacy_records WHERE id=?",
-            (attributed["record_id"],),
+            "SELECT source_table FROM legacy_records WHERE legacy_record_id=?",
+            (attributed["legacy_record_id"],),
         ).fetchone()[0]
         == "collection_pages"
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM document_observations WHERE document_id=? AND id<1000",
+            "SELECT count(*) FROM document_observations WHERE document_id=? AND document_observation_id<1000",
             (IDS["document_a"],),
         ).fetchone()[0]
         == 3
@@ -916,7 +927,7 @@ def test_oversized_normalized_pr_metadata_retains_direct_fact_defers_only_reanal
     output = convert(db, src, run)
     assert tuple(
         db.execute(
-            "SELECT payload,observed_at FROM change_request_observations WHERE id=301"
+            "SELECT payload,observed_at FROM change_request_observations WHERE change_request_observation_id=301"
         ).fetchone()
     ) == (saved["payload"], STAMPS[0])
     assert (
@@ -970,7 +981,7 @@ def test_small_deep_saved_json_is_attributed_without_decoder_crash(tmp_path):
     output = convert(db, src, run)
     assert (
         db.execute(
-            "SELECT body FROM payloads WHERE id=?", (saved["response"],)
+            "SELECT body FROM payloads WHERE payload_id=?", (saved["response"],)
         ).fetchone()[0]
         == saved["body"]
     )
@@ -980,7 +991,9 @@ def test_small_deep_saved_json_is_attributed_without_decoder_crash(tmp_path):
     )
     assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
     assert (
-        db.execute("SELECT state FROM code_observations WHERE id=301").fetchone()[0]
+        db.execute(
+            "SELECT state FROM code_observations WHERE code_observation_id=301"
+        ).fetchone()[0]
         == "partial"
     )
     db.close()
@@ -1049,7 +1062,7 @@ def test_large_scope_request_details_preserve_direct_rows_edges_and_completion(
     )
     code = list(
         db.execute(
-            "SELECT id,state,commit_listing_id,file_listing_id,details FROM code_observations ORDER BY id"
+            "SELECT code_observation_id,state,commit_code_listing_id,file_code_listing_id,details FROM code_observations ORDER BY code_observation_id"
         )
     )
     assert [(r[0], r[1]) for r in code] == [(301, "complete"), (302, "partial")]
@@ -1060,16 +1073,27 @@ def test_large_scope_request_details_preserve_direct_rows_edges_and_completion(
         IDS["commits_partial"],
         IDS["files_partial"],
     ):
+        context = db.execute(
+            "SELECT request_context FROM resume_scopes WHERE resume_scope_id=(SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?)",
+            (collection,),
+        ).fetchone()[0]
+        expected = json.loads(saved[collection])
+        expected["repository_id"] = expected.pop("repo_id")
+        assert json.loads(context) == expected
+        archived = db.execute(
+            "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.legacy_record_id=v.legacy_record_id WHERE r.source_table='collections' AND r.source_key=? AND v.column_name='scope'",
+            (
+                next(
+                    r.key
+                    for r in archive.rows(src, "collections")
+                    if r.key.endswith(collection.encode())
+                ),
+            ),
+        ).fetchone()[0]
+        assert bytes(archived).decode() == saved[collection]
         assert (
             db.execute(
-                "SELECT request_context FROM resume_scopes WHERE id=(SELECT scope_id FROM fetch_collections WHERE id=?)",
-                (collection,),
-            ).fetchone()[0]
-            == saved[collection]
-        )
-        assert (
-            db.execute(
-                "SELECT request FROM fetch_occurrences WHERE collection_id=?",
+                "SELECT request FROM fetch_occurrences WHERE fetch_collection_id=?",
                 (collection,),
             ).fetchone()[0]
             == saved[(collection, 0)]
@@ -1122,7 +1146,7 @@ def test_scope_scalar_extraction_preserves_last_duplicate_key_semantics(
     db, src, run = components(tmp_path, mutate=mutate)
     convert(db, src, run)
     scope = db.execute(
-        "SELECT principal_ref,api_version,endpoint,parser_version FROM resume_scopes WHERE id=(SELECT scope_id FROM fetch_collections WHERE id=?)",
+        "SELECT principal_ref,api_version,endpoint,parser_version FROM resume_scopes WHERE resume_scope_id=(SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?)",
         (IDS["commits_complete"],),
     ).fetchone()
     assert tuple(scope) == (
@@ -1132,7 +1156,9 @@ def test_scope_scalar_extraction_preserves_last_duplicate_key_semantics(
         "last-parser",
     )
     assert (
-        db.execute("SELECT state FROM code_observations WHERE id=301").fetchone()[0]
+        db.execute(
+            "SELECT state FROM code_observations WHERE code_observation_id=301"
+        ).fetchone()[0]
         == "complete"
     )
     assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
@@ -1172,7 +1198,7 @@ def test_selected_unpaired_surrogate_is_attributed_without_replacement_or_crash(
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM fetch_collections WHERE id=?",
+            "SELECT count(*) FROM fetch_collections WHERE fetch_collection_id=?",
             (IDS["commits_complete"],),
         ).fetchone()[0]
         == 0
@@ -1181,7 +1207,7 @@ def test_selected_unpaired_surrogate_is_attributed_without_replacement_or_crash(
         "SELECT 1 FROM resume_scopes WHERE principal_ref=?", ("\ufffd",)
     ).fetchone()
     archived = db.execute(
-        "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.id=v.record_id WHERE r.source_table='collections' AND v.column_name='scope' AND v.value_bytes=?",
+        "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.legacy_record_id=v.legacy_record_id WHERE r.source_table='collections' AND v.column_name='scope' AND v.value_bytes=?",
         (original.encode(encoding),),
     ).fetchone()
     assert archived is not None
@@ -1204,7 +1230,7 @@ def test_selected_paired_escaped_surrogates_backslashes_and_last_duplicate_survi
     db, src, run = components(tmp_path, mutate=mutate, encoding=encoding)
     output = convert(db, src, run)
     row = db.execute(
-        "SELECT principal_ref,api_version,request_context FROM resume_scopes WHERE id=(SELECT scope_id FROM fetch_collections WHERE id=?)",
+        "SELECT principal_ref,api_version,request_context FROM resume_scopes WHERE resume_scope_id=(SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?)",
         (IDS["commits_complete"],),
     ).fetchone()
     assert tuple(row) == ("😀", r"\ud800", original)

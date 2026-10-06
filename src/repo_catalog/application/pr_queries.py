@@ -22,22 +22,21 @@ def pr_state(payload):
 
 def _coverage(query, pr, documents_only):
     s = query.s
-    if pr["current_observation_id"] is None:
+    if pr["current_change_request_observation_id"] is None:
         query.coverage.add(
-            "pr", "current_selection_unresolved", change_request_id=pr["id"]
+            "pr",
+            "current_selection_unresolved",
+            change_request_id=pr["change_request_id"],
         )
-    if pr["observation_id"] is None:
+    if pr["change_request_observation_id"] is None:
         query.coverage.add(
-            "pr", "change_request_observation_missing", change_request_id=pr["id"]
+            "pr",
+            "change_request_observation_missing",
+            change_request_id=pr["change_request_id"],
         )
     rows = s.all(
-        "SELECT c.kind,p.state,c.id FROM fetch_collections c "
-        "LEFT JOIN collection_progress p ON p.collection_id=c.id "
-        "WHERE c.change_request_id=? AND NOT EXISTS(SELECT 1 FROM fetch_collections newer "
-        "WHERE newer.change_request_id=c.change_request_id AND newer.kind=c.kind "
-        "AND (coalesce(newer.observed_at,'')>coalesce(c.observed_at,'') "
-        "OR (newer.observed_at IS c.observed_at AND newer.rowid>c.rowid))) ORDER BY c.kind",
-        (pr["id"],),
+        "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? AND NOT EXISTS(SELECT 1 FROM fetch_collections newer WHERE newer.change_request_id=c.change_request_id AND newer.kind=c.kind AND (coalesce(newer.observed_at,'')>coalesce(c.observed_at,'') OR (newer.observed_at IS c.observed_at AND newer.rowid>c.rowid))) ORDER BY c.kind",
+        (pr["change_request_id"],),
     )
     for row in rows:
         if documents_only and row["kind"] in (
@@ -51,24 +50,29 @@ def _coverage(query, pr, documents_only):
             query.coverage.add(
                 "pr",
                 "collection_incomplete",
-                collection_id=row["id"],
+                fetch_collection_id=row["fetch_collection_id"],
                 collection_kind=row["kind"],
             )
     for row in s.all(
-        "SELECT cs.id,cs.kind,cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc "
-        "ON cc.id=cs.current_claim_id WHERE cs.change_request_id=?",
-        (pr["id"],),
+        "SELECT cs.coverage_scope_id,cs.kind,cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.change_request_id=?",
+        (pr["change_request_id"],),
     ):
         if documents_only and row["kind"] in ("pr-code", "code", "commits", "files"):
             continue
         if row["effective_state"] not in ("complete", "not_applicable"):
-            query.coverage.add("pr", "saved_scope_incomplete", scope_id=row["id"])
+            query.coverage.add(
+                "pr",
+                "saved_scope_incomplete",
+                coverage_scope_id=row["coverage_scope_id"],
+            )
 
     for row in s.all(
-        "SELECT d.id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_versions v WHERE v.document_id=d.id)",
-        (pr["id"],),
+        "SELECT d.document_id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_versions v WHERE v.document_id=d.document_id)",
+        (pr["change_request_id"],),
     ):
-        query.coverage.add("pr", "document_body_missing", document_id=row["id"])
+        query.coverage.add(
+            "pr", "document_body_missing", document_id=row["document_id"]
+        )
 
 
 def _bounded(item):
@@ -94,22 +98,18 @@ def _bounded(item):
 
 def pr_query(query, command, options):
     s, o = query.s, options
-    allowed = {r["id"] for r in query.repos(o)}
+    allowed = {r["repository_id"] for r in query.repos(o)}
     if command not in ("pr list", "search pr", "pr thread"):
         query.single_repo(o)
     rows = s.all(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.id observation_id "
-        "FROM change_requests p JOIN repositories r ON r.id=p.repo_id "
-        "LEFT JOIN change_request_observations obs ON obs.id=coalesce(p.current_observation_id, "
-        "(SELECT max(id) FROM change_request_observations WHERE change_request_id=p.id)) "
-        "ORDER BY p.repo_id,p.number,p.id"
+        "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.number,p.change_request_id"
     )
     rows = [
         r
         for r in rows
-        if r["repo_id"] in allowed
+        if r["repository_id"] in allowed
         and (o.get("number") is None or r["number"] == o["number"])
-        and (not o.get("binding") or r["binding_id"] == o["binding"])
+        and (not o.get("binding") or r["repository_binding_id"] == o["binding"])
     ]
     if o.get("number") is not None and not rows:
         raise CatalogError("NOT_FOUND", "Pull request not found")
@@ -117,27 +117,27 @@ def pr_query(query, command, options):
         raise CatalogError("INVALID_ARGUMENT", "Number is ambiguous; select --binding")
     if command == "pr thread":
         thread = s.one(
-            "SELECT t.*,p.repo_id,p.number FROM review_threads t JOIN change_requests p ON p.id=t.change_request_id WHERE t.id=?",
-            (o["thread_id"],),
+            "SELECT t.*,p.repository_id,p.number FROM review_threads t JOIN change_requests p ON p.change_request_id=t.change_request_id WHERE t.review_thread_id=?",
+            (o["review_thread_id"],),
         )
-        if not thread or thread["repo_id"] not in allowed:
+        if not thread or thread["repository_id"] not in allowed:
             raise CatalogError(
                 "NOT_FOUND", "Review thread not found in selected repository scope"
             )
         for row in s.all(
-            "SELECT d.id,b.body,rc.payload FROM review_comments rc JOIN documents d ON d.id=rc.document_id "
-            "LEFT JOIN document_versions v ON v.id=d.current_version_id LEFT JOIN text_bodies b ON b.id=v.body_id "
-            "WHERE rc.thread_id=? ORDER BY d.id",
-            (thread["id"],),
+            "SELECT d.document_id,b.body,rc.payload FROM review_comments rc JOIN documents d ON d.document_id=rc.document_id LEFT JOIN document_versions v ON v.document_version_id=d.current_document_version_id LEFT JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE rc.review_thread_id=? ORDER BY d.document_id",
+            (thread["review_thread_id"],),
         ):
             if row["body"] is None:
-                query.coverage.add("pr", "document_body_missing", document_id=row["id"])
+                query.coverage.add(
+                    "pr", "document_body_missing", document_id=row["document_id"]
+                )
             yield (
-                [row["id"]],
+                [row["document_id"]],
                 {
-                    "document_id": row["id"],
+                    "document_id": row["document_id"],
                     "body": row["body"],
-                    "thread_id": thread["id"],
+                    "review_thread_id": thread["review_thread_id"],
                     "thread": json.loads(thread["payload"]),
                     "review_position": json.loads(row["payload"]),
                 },
@@ -156,19 +156,18 @@ def pr_query(query, command, options):
     from repo_catalog.application.repository_identity import pr_applicable
 
     for repo in query.repos(o):
-        if not pr_applicable(s, repo["id"]):
+        if not pr_applicable(s, repo["repository_id"]):
             continue
         summary_kind = "pr-documents" if documents_only else "pr"
         summary = s.one(
-            "SELECT cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc "
-            "ON cc.id=cs.current_claim_id WHERE cs.repo_id=? AND cs.change_request_id IS NULL AND cs.kind=?",
-            (repo["id"], summary_kind),
+            "SELECT cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=? AND cs.change_request_id IS NULL AND cs.kind=?",
+            (repo["repository_id"], summary_kind),
         )
         if summary is None or summary[0] not in ("complete", "not_applicable"):
             query.coverage.add(
                 "pr",
                 "collection_incomplete",
-                repo_id=repo["id"],
+                repository_id=repo["repository_id"],
                 scope_kind=summary_kind,
             )
     for pr in rows:
@@ -187,30 +186,33 @@ def pr_query(query, command, options):
         if o.get("reviewer") and not any(
             (json.loads(r[0]).get("user") or {}).get("login") == o["reviewer"]
             for r in s.all(
-                "SELECT payload FROM reviews WHERE change_request_id=?", (pr["id"],)
+                "SELECT payload FROM reviews WHERE change_request_id=?",
+                (pr["change_request_id"],),
             )
         ):
             continue
         code = s.one(
-            "SELECT * FROM code_observations WHERE change_request_id=? AND observation_id=? ORDER BY id DESC LIMIT 1",
-            (pr["id"], pr["observation_id"]),
+            "SELECT * FROM code_observations WHERE change_request_id=? AND change_request_observation_id=? ORDER BY code_observation_id DESC LIMIT 1",
+            (pr["change_request_id"], pr["change_request_observation_id"]),
         )
         if not documents_only and code and code["state"] != "complete":
             query.coverage.add(
-                "pr", "code_observation_incomplete", code_observation_id=code["id"]
+                "pr",
+                "code_observation_incomplete",
+                code_observation_id=code["code_observation_id"],
             )
         if o.get("commit"):
             oid = GitOid.parse(o["commit"])
             if not code or not s.one(
-                "SELECT 1 FROM code_commits WHERE listing_id=? AND object_format=? AND oid=?",
-                (code["commit_listing_id"], oid.algorithm, oid.value),
+                "SELECT 1 FROM code_commits WHERE code_listing_id=? AND object_format=? AND oid=?",
+                (code["commit_code_listing_id"], oid.algorithm, oid.value),
             ):
                 continue
         if path is not None:
             changes = (
                 s.all(
-                    "SELECT raw_path FROM code_file_changes WHERE listing_id=?",
-                    (code["file_listing_id"],),
+                    "SELECT raw_path FROM code_file_changes WHERE code_listing_id=?",
+                    (code["file_code_listing_id"],),
                 )
                 if code
                 else []
@@ -226,21 +228,21 @@ def pr_query(query, command, options):
             ):
                 continue
         base = {
-            "repo_id": pr["repo_id"],
+            "repository_id": pr["repository_id"],
             "repository": pr["name"],
             "number": pr["number"],
-            "pr_id": pr["id"],
-            "change_request_id": pr["id"],
-            "binding_id": pr["binding_id"],
-            "current_selected": pr["current_observation_id"] is not None,
+            "pr_id": pr["change_request_id"],
+            "change_request_id": pr["change_request_id"],
+            "repository_binding_id": pr["repository_binding_id"],
+            "current_selected": pr["current_change_request_observation_id"] is not None,
             "state": state,
             "observed_at": pr["observed_at"],
             "url": payload.get("html_url"),
         }
         if command in ("pr list", "pr show"):
             collections = s.all(
-                "SELECT c.*,p.state,p.cursor,p.reason FROM fetch_collections c LEFT JOIN collection_progress p ON p.collection_id=c.id WHERE c.change_request_id=? ORDER BY c.kind,c.observed_at,c.id",
-                (pr["id"],),
+                "SELECT c.*,p.state,p.cursor,p.reason FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.kind,c.observed_at,c.fetch_collection_id",
+                (pr["change_request_id"],),
             )
             item = {
                 **base,
@@ -254,7 +256,7 @@ def pr_query(query, command, options):
                         {**dict(r), "oid": f"{r['object_format']}:{r['oid'].hex()}"}
                         for r in s.all(
                             "SELECT * FROM code_acquisitions WHERE code_observation_id=? ORDER BY role",
-                            (code["id"],),
+                            (code["code_observation_id"],),
                         )
                     ]
                     if code
@@ -264,8 +266,8 @@ def pr_query(query, command, options):
                     [
                         json.loads(r[0])
                         for r in s.all(
-                            "SELECT payload FROM code_commits WHERE listing_id=? ORDER BY occurrence_id,position",
-                            (code["commit_listing_id"],),
+                            "SELECT payload FROM code_commits WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
+                            (code["commit_code_listing_id"],),
                         )
                     ]
                     if code
@@ -275,8 +277,8 @@ def pr_query(query, command, options):
                     [
                         json.loads(r[0])
                         for r in s.all(
-                            "SELECT payload FROM code_file_changes WHERE listing_id=? ORDER BY occurrence_id,position",
-                            (code["file_listing_id"],),
+                            "SELECT payload FROM code_file_changes WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
+                            (code["file_code_listing_id"],),
                         )
                     ]
                     if code
@@ -285,22 +287,29 @@ def pr_query(query, command, options):
                 item["observations"] = [
                     dict(r)
                     for r in s.all(
-                        "SELECT id,observed_at FROM change_request_observations WHERE change_request_id=? ORDER BY id",
-                        (pr["id"],),
+                        "SELECT change_request_observation_id,observed_at FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
+                        (pr["change_request_id"],),
                     )
                 ]
-            yield [pr["repo_id"], pr["number"], pr["id"]], _bounded(item)
+            yield (
+                [pr["repository_id"], pr["number"], pr["change_request_id"]],
+                _bounded(item),
+            )
         elif command == "pr timeline":
             for event in s.all(
-                "SELECT * FROM change_request_events WHERE change_request_id=? ORDER BY ordinal,id",
-                (pr["id"],),
+                "SELECT * FROM change_request_events WHERE change_request_id=? ORDER BY ordinal,change_request_event_id",
+                (pr["change_request_id"],),
             ):
                 yield (
-                    [pr["repo_id"], pr["number"], event["id"]],
+                    [
+                        pr["repository_id"],
+                        pr["number"],
+                        event["change_request_event_id"],
+                    ],
                     {
                         **base,
-                        "event_id": event["id"],
-                        "provider_id": event["provider_id"],
+                        "event_id": event["change_request_event_id"],
+                        "provider_event_id": event["provider_event_id"],
                         "observed_at": event["observed_at"],
                         "payload": json.loads(event["payload"]),
                     },
@@ -308,26 +317,26 @@ def pr_query(query, command, options):
         else:
             versions = o.get("document_versions", "latest")
             docs = s.execute(
-                "SELECT d.*,v.id version_id,b.body FROM documents d JOIN document_versions v ON v.document_id=d.id JOIN text_bodies b ON b.id=v.body_id WHERE d.change_request_id=?"
+                "SELECT d.*,v.document_version_id document_version_id,b.body FROM documents d JOIN document_versions v ON v.document_id=d.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.change_request_id=?"
                 + (
-                    " AND v.id=d.current_version_id AND d.deleted=0"
+                    " AND v.document_version_id=d.current_document_version_id AND d.deleted=0"
                     if versions == "latest" and not o.get("version")
                     else ""
                 )
-                + " ORDER BY d.id,v.id",
-                (pr["id"],),
+                + " ORDER BY d.document_id,v.document_version_id",
+                (pr["change_request_id"],),
             )
             if o.get("version") and not s.one(
-                "SELECT 1 FROM document_versions v JOIN documents d ON d.id=v.document_id WHERE v.id=? AND d.change_request_id=?",
-                (o["version"], pr["id"]),
+                "SELECT 1 FROM document_versions v JOIN documents d ON d.document_id=v.document_id WHERE v.document_version_id=? AND d.change_request_id=?",
+                (o["version"], pr["change_request_id"]),
             ):
                 raise CatalogError("NOT_FOUND", "Document version not found in PR")
             for doc in docs:
                 if any(
                     o.get(k) is not None and doc[field] != o[k]
                     for k, field in (
-                        ("document", "id"),
-                        ("version", "version_id"),
+                        ("document", "document_id"),
+                        ("version", "document_version_id"),
                         ("document_kind", "kind"),
                         ("document_author", "author"),
                     )
@@ -335,13 +344,20 @@ def pr_query(query, command, options):
                     continue
                 meta = json.loads(doc["metadata"])
                 comment = s.one(
-                    "SELECT thread_id,payload FROM review_comments WHERE document_id=?",
-                    (doc["id"],),
+                    "SELECT review_thread_id,payload FROM review_comments WHERE document_id=?",
+                    (doc["document_id"],),
                 )
-                thread_id = comment["thread_id"] if comment else meta.get("thread_id")
+                review_thread_id = (
+                    comment["review_thread_id"]
+                    if comment
+                    else meta.get("review_thread_id")
+                )
                 thread = (
-                    s.one("SELECT payload FROM review_threads WHERE id=?", (thread_id,))
-                    if thread_id
+                    s.one(
+                        "SELECT payload FROM review_threads WHERE review_thread_id=?",
+                        (review_thread_id,),
+                    )
+                    if review_thread_id
                     else None
                 )
                 thread_payload = json.loads(thread[0]) if thread else {}
@@ -355,22 +371,27 @@ def pr_query(query, command, options):
                 ):
                     continue
                 if literal and not query.literal_match(
-                    "pr", doc["version_id"], doc["body"], literal
+                    "pr", doc["document_version_id"], doc["body"], literal
                 ):
                     continue
                 observations = [
                     dict(r)
                     for r in s.all(
-                        "SELECT id,observed_at,version_id FROM document_observations WHERE document_id=? AND version_id=? ORDER BY id",
-                        (doc["id"], doc["version_id"]),
+                        "SELECT document_observation_id,observed_at,document_version_id FROM document_observations WHERE document_id=? AND document_version_id=? ORDER BY document_observation_id",
+                        (doc["document_id"], doc["document_version_id"]),
                     )
                 ]
                 yield (
-                    [pr["repo_id"], pr["number"], doc["id"], doc["version_id"]],
+                    [
+                        pr["repository_id"],
+                        pr["number"],
+                        doc["document_id"],
+                        doc["document_version_id"],
+                    ],
                     {
                         **base,
-                        "document_id": doc["id"],
-                        "version_id": doc["version_id"],
+                        "document_id": doc["document_id"],
+                        "document_version_id": doc["document_version_id"],
                         "document_kind": doc["kind"],
                         "author": doc["author"],
                         "document_url": doc["url"],
