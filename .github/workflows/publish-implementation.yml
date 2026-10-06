@@ -31,7 +31,7 @@ jobs:
           Path('/tmp/verified-implementation.bundle').write_bytes(bundle)
           PY
           git bundle verify /tmp/verified-implementation.bundle
-          git fetch --no-tags /tmp/verified-implementation.bundle refs/heads/refactor/portable-document-observations
+          git fetch --no-tags /tmp/verified-implementation.bundle HEAD
           test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_HEAD"
           test "$(git rev-parse "$EXPECTED_HEAD^{tree}")" = "$EXPECTED_TREE"
           git merge-base --is-ancestor b6cca875b9a303989bc8947dc56dddb04d7b9ec2 "$EXPECTED_HEAD"
