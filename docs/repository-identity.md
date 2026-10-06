@@ -6,8 +6,8 @@ GitHub、GitLab、Gitea、Forgejo、Gitolite、plain Git、その他のサービ
 | 実体 | 識別・関係 |
 |---|---|
 | `repositories` | 内部UUIDv4。repoのカタログ上の同一性 |
-| `service_instances` | 内部UUIDv4、kind、一意のname、任意のweb/API base URL |
-| `repository_bindings` | repoとinstanceの対応。native IDは文字列またはNULL。`UNIQUE(service_instance_id, provider_repository_id)` |
+| `service_instances` | portable名前空間のUUIDv4、service_kind、一意のname、任意のweb/API base URL |
+| `repository_bindings` | repoとinstanceの対応。native IDは文字列またはNULL。`UNIQUE(service_instance_uuidv4, provider_repository_id)` |
 | `repository_endpoints` | 内部UUIDv4、repo、Git URL、transport、label、優先指定。`UNIQUE(repository_id,url)` |
 | `sources` | 発見・列挙の設定と任意のinstance参照。API tokenは環境変数名で参照 |
 | `source_repositories` | sourceとrepoの多対多関係、最初と最後の発見時刻 |
@@ -22,6 +22,8 @@ erDiagram
     REPOSITORIES ||--o{ SOURCE_REPOSITORIES : discovered_by
     SERVICE_INSTANCES o|--o{ SOURCES : configures
 ```
+
+CSPRNGから生成した正規小文字UUIDv4を `service_instance_uuidv4` として保持します。UUIDv5や任意文字列は受け入れません。UUIDの形式検査だけで原発行時の乱数源を証明できるわけではありません。異なるUUIDはURLが同じでも自動統合せず、export/import設計上も同じ名前空間を維持します（カタログ間交換機能そのものは未実装）。provider IDがあるrepositoryのportable identityは `(service_instance_uuidv4, provider_repository_id)` です。
 
 instance UUIDにより、同じhost上の別port/base pathや別オンプレ環境のnative IDを区別します。
 URL、DNS alias、同じcommit、同じ内容はrepo統合の根拠にしません。forkや独立mirrorは別Repo IDで登録できます。
@@ -83,7 +85,7 @@ repo-catalog --state-dir /path/to/state repos show --repo REPO_ID
 
 native IDが不明なら`--provider-repo-id`は省略可能です。同じinstance内で同じnative IDを別repoへ結び付ける操作は`IDENTITY_CONFLICT`として拒否します。
 既存repoを合併するコマンドはありません。誤った対応を自動的に上書きしません。
-kind/base URLの登録はAPI adapterの実装や実接続試験を意味しません。
+service_kind/base URLの登録はAPI adapterの実装や実接続試験を意味しません。
 
 GitHub API sourceはinstanceとtoken参照を選べます。
 

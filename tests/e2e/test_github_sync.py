@@ -172,7 +172,7 @@ def test_pr_documents(catalog):
     assert b"fixture-dummy" not in (state / "catalog.sqlite3").read_bytes()
 
 
-def test_versions_fencing(catalog):
+def test_observed_content_and_replay_fencing(catalog):
     state, fixture, repos = catalog
     with GitHubFixture(fixture) as api:
         _, repo, env = configure(state, api, fixture)
@@ -201,8 +201,8 @@ def test_versions_fencing(catalog):
             "comment-marker B",
             "--document-kind",
             "issue-comment",
-            "--document-versions",
-            "observed",
+            "--document-observations",
+            "all",
         )
         assert len(historical) == 3
         a = pages(
@@ -215,12 +215,12 @@ def test_versions_fencing(catalog):
             "comment-marker A",
             "--document-kind",
             "issue-comment",
-            "--document-versions",
-            "observed",
+            "--document-observations",
+            "all",
         )
-        assert len(a) == 6 and all(len(r["observations"]) == 1 for r in a)
+        assert len(a) == 6 and all(r["document_observed_at"] for r in a)
         assert all(
-            len({r["document_version_id"] for r in a if r["pr_id"] == pr}) == 2
+            len({r["document_observation_id"] for r in a if r["pr_id"] == pr}) == 2
             for pr in {r["pr_id"] for r in a}
         )
 

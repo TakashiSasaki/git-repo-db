@@ -73,7 +73,7 @@ def test_derived_fts_and_statistics_preserve_catalog_identity(tmp_path):
             )[0]
             == "synthetic sentinel"
         )
-        assert reader.one("SELECT schema_version FROM database_identity")[0] == 4
+        assert reader.one("SELECT schema_version FROM database_identity")[0] == 5
 
 
 def test_job_attempt_resume_cleans_old_capacity_and_obeys_injected_time(tmp_path):

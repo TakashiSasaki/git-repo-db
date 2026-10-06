@@ -93,7 +93,7 @@ def parser():
     )
     new_instance = instances.add_parser("add")
     new_instance.add_argument(
-        "kind",
+        "service_kind",
         choices=("github", "gitlab", "gitea", "forgejo", "gitolite", "git", "other"),
     )
     new_instance.add_argument("--name", required=True)
@@ -184,8 +184,14 @@ def parser():
                 child.add_argument("--binding")
                 if action not in ("list", "thread"):
                     child.add_argument("--number", required=True, type=int)
-                child.add_argument("--document")
-                child.add_argument("--version", type=int)
+                child.add_argument("--provider-change-request-document-id")
+                child.add_argument("--document-kind")
+                child.add_argument("--observation", type=int)
+                child.add_argument(
+                    "--document-observations",
+                    choices=("current", "all"),
+                    default="current",
+                )
     search = commands.add_parser("search").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
@@ -230,8 +236,10 @@ def parser():
             child.add_argument("--digest", required=True)
             child.add_argument("--byte-length", type=int)
         if kind == "pr":
+            child.add_argument("--provider-change-request-document-id")
+            child.add_argument("--observation", type=int)
             child.add_argument(
-                "--document-versions", choices=("latest", "observed"), default="latest"
+                "--document-observations", choices=("current", "all"), default="current"
             )
             child.add_argument(
                 "--state", choices=("all", "open", "closed", "merged"), default="all"
@@ -363,7 +371,7 @@ def dispatch(args, token):
         )
     if args.command == "instances" and args.action == "add":
         return maintenance.instance_add(
-            args.kind, args.name, args.web_base_url, args.api_base_url
+            args.service_kind, args.name, args.web_base_url, args.api_base_url
         )
     if args.command == "endpoints" and args.action == "add":
         return maintenance.endpoint_add(args.repo, args.url, args.label, args.preferred)

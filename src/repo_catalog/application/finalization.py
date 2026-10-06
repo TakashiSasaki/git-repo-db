@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+from repo_catalog.adapters.import_v2 import archive, mapping
+from repo_catalog.domain.document import DocumentKey, text_body_sha256
 from repo_catalog.domain.models import CatalogError
 
 IDENTITY_TABLES = {
@@ -38,6 +40,9 @@ DOMAIN_IDENTITIES = {
     "review_comments",
 }
 CRITICAL_CODES = {
+    "TEXT_BODY_DIGEST_MISMATCH",
+    "TEXT_BODY_IDENTITY_CONFLICT",
+    "PR_DOCUMENT_IDENTITY_CONFLICT",
     "SOURCE_FOREIGN_KEY_FAILURE",
     "IDENTITY_CONFLICT",
     "OBJECT_HASH_MISMATCH",
@@ -61,6 +66,23 @@ def check_catalog(store):
     integrity = [row[0] for row in store.all("PRAGMA quick_check")]
     if integrity != ["ok"]:
         issues.append({"code": "SQLITE_STRUCTURAL_CORRUPTION", "details": integrity})
+    for row in store.execute(
+        "SELECT text_body_id,body,byte_length,sha256 FROM text_bodies"
+    ):
+        try:
+            valid = (
+                text_body_sha256(row["body"]) == row["sha256"]
+                and len(row["body"].encode("utf-8")) == row["byte_length"]
+            )
+        except (TypeError, UnicodeError):
+            valid = False
+        if not valid:
+            issues.append(
+                {
+                    "code": "TEXT_BODY_DIGEST_MISMATCH",
+                    "text_body_id": row["text_body_id"],
+                }
+            )
     for row in store.all(
         "SELECT validation_result_id,code,details FROM validation_results WHERE severity='blocking'"
     ):
@@ -196,16 +218,6 @@ def finalize_catalog(store):
                 "change_request_id",
                 True,
             ),
-            (
-                "pr_documents",
-                "current_version",
-                "documents",
-                "document_id",
-                "current_document_version_id",
-                "document_versions",
-                "document_id",
-                False,
-            ),
         )
         for (
             source_table,
@@ -239,7 +251,6 @@ def finalize_catalog(store):
                 fact_entity_id = {
                     "snapshots": "snapshot_id",
                     "change_request_observations": "change_request_observation_id",
-                    "document_versions": "document_version_id",
                 }[facts]
                 candidate = store.one(
                     f"SELECT * FROM {facts} WHERE {fact_entity_id}=? AND {owner_column}=?",
@@ -253,14 +264,6 @@ def finalize_catalog(store):
                         store.one(
                             "SELECT 1 FROM git_acquisitions WHERE git_acquisition_id=? AND repository_id=? AND object_format IS NOT NULL AND refs_observed_at IS NOT NULL",
                             (candidate["git_acquisition_id"], owner),
-                        )
-                        is not None
-                    )
-                if valid and facts == "document_versions":
-                    valid = (
-                        store.one(
-                            "SELECT 1 FROM document_observations WHERE document_id=? AND document_version_id=? AND observed_at IS NOT NULL",
-                            (owner, candidate_id),
                         )
                         is not None
                     )
@@ -286,6 +289,8 @@ def finalize_catalog(store):
                             "reason": "saved_selection_not_suitable",
                         }
                     )
+
+        restore_document_selections(store, restored, unresolved)
 
         for run in runs:
             # The original manifest/typed archive remains unchanged. Readiness
@@ -318,3 +323,111 @@ def finalize_catalog(store):
             "unresolved_current": unresolved,
             "catalog": store.revision(),
         }
+
+
+def _mapped_values(store, legacy_record_id, table):
+    encoded = mapping.lookup(store.connection, legacy_record_id, table)
+    if encoded is None:
+        return None
+    result = []
+    for kind, raw in archive.decode_key(encoded):
+        if kind == "text":
+            result.append(raw.decode("utf-8"))
+        elif kind == "integer":
+            result.append(int(raw))
+        else:
+            result.append(raw)
+    return tuple(result)
+
+
+def restore_document_selections(store, restored, unresolved):
+    """Translate saved v2 current-version assertions to suitable observations.
+
+    No version table is recreated. A source version without an actual observed
+    fact cannot establish current. Timestamp ties are not broken by integer ID
+    or import order, and original assertions remain in the typed archive.
+    """
+    wanted = {}
+    for record, source_document in archived_rows(store, "pr_documents"):
+        values = _mapped_values(store, record, "documents")
+        if values is None:
+            continue
+        key = DocumentKey(*values)
+        origin = store.one(
+            "SELECT conversion_source_id FROM legacy_records WHERE legacy_record_id=?",
+            (record,),
+        )[0]
+        current = source_document.get("current_version")
+        evidence = {
+            "table": "documents",
+            "document_key": key._asdict(),
+            "legacy_record_id": record,
+        }
+        if current is None:
+            unresolved.append({**evidence, "reason": "no_saved_current_selection"})
+            continue
+        wanted[(origin, source_document.get("id"), current)] = {
+            "key": key,
+            "evidence": evidence,
+            "candidate": None,
+            "time": None,
+            "ambiguous": False,
+        }
+    # Only one scan of the source-observation archive, not one full scan per doc.
+    for record, source_observation in archived_rows(store, "resource_observations"):
+        origin = store.one(
+            "SELECT conversion_source_id FROM legacy_records WHERE legacy_record_id=?",
+            (record,),
+        )[0]
+        target = wanted.get(
+            (
+                origin,
+                source_observation.get("document_id"),
+                source_observation.get("version_id"),
+            )
+        )
+        if target is None:
+            continue
+        values = _mapped_values(store, record, "document_observations")
+        if values is None or len(values) != 1:
+            continue
+        candidate = store.one(
+            "SELECT document_observation_id,julianday(observed_at) observation_time FROM document_observations WHERE document_observation_id=? AND change_request_id=? AND kind=? AND provider_change_request_document_id=? AND observed_at IS NOT NULL",
+            (*values, *target["key"]),
+        )
+        if candidate is None or candidate["observation_time"] is None:
+            continue
+        timestamp = candidate["observation_time"]
+        if target["time"] is None or timestamp > target["time"]:
+            target.update(candidate=candidate[0], time=timestamp, ambiguous=False)
+        elif timestamp == target["time"] and candidate[0] != target["candidate"]:
+            target["ambiguous"] = True
+    for target in wanted.values():
+        candidate = target["candidate"]
+        if candidate is None or target["ambiguous"]:
+            unresolved.append(
+                {
+                    **target["evidence"],
+                    "reason": "saved_selection_ambiguous"
+                    if target["ambiguous"]
+                    else "saved_selection_not_suitable",
+                }
+            )
+            continue
+        current = store.one(
+            "SELECT current_document_observation_id FROM documents WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
+            target["key"],
+        )
+        if current is None or current[0] not in (None, candidate):
+            unresolved.append(
+                {
+                    **target["evidence"],
+                    "reason": "saved_selection_conflicts_with_current",
+                }
+            )
+            continue
+        store.execute(
+            "UPDATE documents SET current_document_observation_id=? WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
+            (candidate, *target["key"]),
+        )
+        restored.append({**target["evidence"], "candidate_id": candidate})

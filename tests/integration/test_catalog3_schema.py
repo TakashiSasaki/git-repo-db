@@ -27,8 +27,8 @@ def facts():
     put(
         db,
         "service_instances",
-        service_instance_id="instance",
-        kind="github",
+        service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
+        service_kind="github",
         name="synthetic",
         metadata="{}",
     )
@@ -39,7 +39,7 @@ def facts():
             "repository_bindings",
             repository_binding_id="binding-" + owner,
             repository_id=owner,
-            service_instance_id="instance",
+            service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
             provider_repository_id=owner,
             metadata="{}",
         )

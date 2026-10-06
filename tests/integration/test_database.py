@@ -38,7 +38,7 @@ def test_constraints_and_transaction_atomicity(state):
             s.execute("UPDATE database_identity SET publication_seq=999")
             s.execute("THIS IS NOT SQL")
         assert s.one("SELECT name FROM sqlite_master WHERE name='rolled_back'") is None
-        assert s.one("SELECT schema_version FROM database_identity")[0] == 4
+        assert s.one("SELECT schema_version FROM database_identity")[0] == 5
         assert s.revision() == original
     with Store(state, readonly=True) as s, pytest.raises(sqlite3.OperationalError):
         s.publish()

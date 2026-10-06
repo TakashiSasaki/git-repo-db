@@ -32,7 +32,7 @@ def refresh_documents(store, kind, token):
         )
     else:
         rows = store.execute(
-            "SELECT v.document_version_id source_key,b.body FROM document_versions v JOIN text_bodies b ON b.text_body_id=v.text_body_id ORDER BY v.document_version_id"
+            "SELECT lower(hex(sha256)) source_key,body FROM text_bodies ORDER BY sha256"
         )
     batch = []
     batch_bytes = 0

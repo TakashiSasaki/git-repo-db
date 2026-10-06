@@ -633,12 +633,12 @@ class QueryService:
                 [instance(s, o["instance"])]
                 if command.endswith("show")
                 else s.all(
-                    "SELECT * FROM service_instances ORDER BY service_instance_id"
+                    "SELECT * FROM service_instances ORDER BY service_instance_uuidv4"
                 )
             )
             for row in rows:
                 yield (
-                    [row["service_instance_id"]],
+                    [row["service_instance_uuidv4"]],
                     {**dict(row), "metadata": json.loads(row["metadata"])},
                 )
         elif command == "endpoints list":
