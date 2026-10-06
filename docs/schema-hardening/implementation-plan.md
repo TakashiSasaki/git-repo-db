@@ -11,6 +11,6 @@ Implemented scope:
 3. Keep v2 source schemas/names unchanged; target recipes and saved identity contexts translate to current catalog3 names while preserving exact acquired evidence. No old-catalog3 migration/view/alias or dual path.
 4. Replace the v2-era data-model description with the current catalog3 model and update current README/identity/architecture/operations guidance.
 5. Narrow CI classification to explicit runtime/CI contracts and named historical report inputs. Unknown inputs still expand testing; no change-aware CI redesign.
-6. Run focused subsystem checks and the affected integration closure, then one final complete current acceptance plus isolated installed wheel/sdist, lint/format and schema/doctor checks on the final substantive revision. Exact results are recorded in the handoff after execution.
+6. Complete focused subsystem checks and the affected integration closure (242 passed). Final substantive revision `2399248c3cc5a49c56231a94b084d15fe3ce1852` passes 339 current acceptance tests, both isolated installed wheel/sdist checks, lint/format and schema/doctor checks. The existing collection/profile reconciliation confirms all 341 selected tests executed once on that clean revision. Exact results are recorded in the handoff.
 
 Museum-portal Git/API and retained-v2 discovery reports retain their original pre-refactor commits and scope. They are not repeated for identifier changes. Semantic redesign, product features, exchange work, real-data activation and release publication are outside this stride.

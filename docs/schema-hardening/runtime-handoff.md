@@ -18,7 +18,15 @@ Current runtime/packaged import/CI contracts select acceptance tests. CI policy 
 
 The naming stride uses disposable synthetic Git repositories, loopback API fixtures and unchanged-format v2 fixtures. Actual environment: Python 3.12.14, SQLite 3.53.1, uv 0.12.19. Focused checks cover schema/owner/sealing rules, Git SHA-1/SHA-256 collection/restart, GitHub pages/history/listing reuse, v2 preservation/finalization, queries, cache, backup/restore and CI classification. A schema comparison confirms identical tables, column types/defaults/PK positions and FK actions after applying the rename map.
 
-Final substantive revision and final acceptance/packaging results are recorded here after execution. Historical real-world evidence below is not a fresh version-4 validation claim.
+Final substantive revision: [`2399248c3cc5a49c56231a94b084d15fe3ce1852`](https://github.com/TakashiSasaki/git-repo-db/commit/2399248c3cc5a49c56231a94b084d15fe3ce1852). Final profiles record this SHA with a clean working tree. Subsequent documentation edits only record these results.
+
+- Affected integration/import closure: **242 passed**, 16.82 seconds. Focused GitHub/identity checks: **18 passed**; focused Git/recovery/offline checks: **7 passed**.
+- Final complete current acceptance: **339 passed**, 45.73 seconds, four workers. Installed wheel and sdist-derived wheel: **2 passed**, 3.32 seconds, sequential, offline installation outside the checkout.
+- Existing collection/profile reconciliation: **341 required, 341 executed once**, no failures or skips on the final substantive revision.
+- Ruff lint and format passed (111 files); fresh version-4 init, STRICT/FTS doctor, full database integrity/owner check and prose/report validation passed.
+- Normalized schema comparison: all **74 tables, 82 explicit indexes and 256 triggers** match after the column rename map and version change, including column types/defaults/PK positions and all **148 FK components/actions**.
+
+New DDL SHA-256: `0f3d1850066ef3cc0d27ccf5b759d76fa89dc188764394bcefb7ff4c023f2391`. Historical real-world evidence below is not a fresh version-4 validation claim.
 
 ## Runnable ordinary commands
 
