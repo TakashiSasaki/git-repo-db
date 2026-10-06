@@ -5,10 +5,11 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-from scripts.schema_audit import schema_inventory
-
+from . import admission
 from .common import (
-    DESIGN,
+    DESIGN as DESIGN,
+)
+from .common import (
     ROOT,
     ConversionError,
     canonical,
@@ -75,6 +76,7 @@ def readonly(path):
                     "foreign_key_check",
                     "integrity_check",
                     "encoding",
+                    "data_version",
                 }
             )
             else sqlite3.SQLITE_DENY
@@ -87,19 +89,9 @@ def readonly(path):
 
 
 def identify(db):
-    # Audit inventory intentionally omits views/internal tables; do not silently
-    # accept extra layouts (including derived FTS/ANALYZE structures) in P2.
-    if db.execute(
-        "SELECT 1 FROM sqlite_schema WHERE type='view' OR (type='table' AND name LIKE 'sqlite_%')"
-    ).fetchone():
-        raise ConversionError("SOURCE_SCHEMA_MISMATCH")
-    inventory = schema_inventory(db)
-    contract = json.loads((DESIGN / "conversion-contract.json").read_bytes())
-    if (
-        inventory["schema_sha256"] != contract["source_schema_sha256"]
-        or inventory["schema_version"] != 2
-    ):
-        raise ConversionError("SOURCE_SCHEMA_MISMATCH")
+    report = admission.classify(db)
+    if not report["accepted"]:
+        raise admission.SourceAdmissionError(report)
     expected = [
         (int(p.name[:3]), digest(p.read_bytes()))
         for p in sorted((ROOT / "src/repo_catalog/resources/migrations").glob("*.sql"))
@@ -123,7 +115,10 @@ def identify(db):
     return {
         "format_id": "repo-catalog/v2",
         "db_instance_id": meta[0]["db_instance_id"],
-        "schema_sha256": inventory["schema_sha256"],
+        # Existing target conversion_sources uses this strict core identity.
+        # The complete inventory hash and physical file hash remain separate.
+        "schema_sha256": report["core_schema_sha256"],
+        **report,
         "catalog": meta,
         "migrations": [
             dict(r)
@@ -219,7 +214,7 @@ def seal(source, workspace, caches=(), *, expected_cache=None):
     return record
 
 
-def verify_seal(workspace):
+def verify_seal(workspace, *, allow_legacy=False):
     workspace = Path(workspace)
     record = json.loads((workspace / "sealed.json").read_bytes())
     if file_fingerprint(check_file(workspace / "source.sqlite3")) != record["sealed"]:
@@ -230,17 +225,26 @@ def verify_seal(workspace):
         raise ConversionError("SOURCE_REPLACED_OR_CHANGED")
     if cache_inventory([c["path"] for c in record["caches"]]) != record["caches"]:
         raise ConversionError("CACHE_FINGERPRINT_MISMATCH")
+    metadata_keys = {
+        "format_id",
+        "db_instance_id",
+        "schema_sha256",
+        "catalog",
+        "migrations",
+        "encoding",
+    }
+    physical_keys = {"original", "sealed", "caches"}
     with readonly(workspace / "source.sqlite3") as db:
-        if identify(db) != {
-            k: record[k]
-            for k in (
-                "format_id",
-                "db_instance_id",
-                "schema_sha256",
-                "catalog",
-                "migrations",
-                "encoding",
-            )
-        }:
+        metadata = identify(db)
+        if allow_legacy and set(record) == metadata_keys | physical_keys:
+            # Bounded compatibility is available only to the reviewed handoff
+            # verifier, and only for the former core-only descriptor layout.
+            if any(
+                d["classification"] != "strict_v2_core"
+                for d in metadata["preservation_dispositions"]
+            ):
+                raise ConversionError("LEGACY_SOURCE_LAYOUT_UNSUPPORTED")
+            metadata = {k: metadata[k] for k in metadata_keys}
+        if metadata != {k: v for k, v in record.items() if k not in physical_keys}:
             raise ConversionError("SOURCE_SCHEMA_MISMATCH")
     return record

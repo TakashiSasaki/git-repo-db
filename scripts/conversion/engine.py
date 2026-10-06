@@ -1,9 +1,15 @@
 import json
+import os
 import sqlite3
 from pathlib import Path
 
-from . import archive, batch, capacity, diagnostics, guards, source, target
-from .common import ConversionError, canonical, require_local_filesystem
+from . import archive, batch, capacity, diagnostics, guards, phase, source, target
+from .common import (
+    ConversionError,
+    canonical,
+    fsync_directory,
+    require_local_filesystem,
+)
 
 
 def no_fault(point, **context):
@@ -24,12 +30,54 @@ def run(policy, action, workspace, **options):
     if sqlite3.sqlite_version_info < (3, 46, 1):
         raise ConversionError("UNSUPPORTED_SQLITE_RUNTIME")
     if action == "seal":
-        return seal_input(workspace=workspace, **options)
+        try:
+            return seal_input(workspace=workspace, **options)
+        except source.admission.SourceAdmissionError as exc:
+            record_rejected_admission(workspace, options["source_path"], exc.report)
+            raise
     if action == "archive":
         return convert(workspace, **options)
     if action == "verify":
         return verify(workspace, **options)
+    if action == "handoff":
+        return phase.handoff(workspace, **options)
+    if action == "verify-phase":
+        return phase.verify(workspace, **options)
     raise ConversionError("UNKNOWN_CONVERSION_ACTION")
+
+
+def record_rejected_admission(workspace, source_path, report):
+    """Keep rejected schema evidence local; never print source DDL to stdout."""
+    workspace = Path(workspace)
+    content = canonical(
+        {
+            "state": "rejected",
+            "sealed": False,
+            "source_fingerprint": source.file_fingerprint(
+                source.check_file(source_path)
+            ),
+            "admission": report,
+        }
+    ).encode()
+    final = workspace / "source-admission.json"
+    temporary = workspace / "source-admission.json.part"
+    with target.writer_lock(workspace):
+        if os.path.lexists(final):
+            if (
+                final.is_symlink()
+                or not final.is_file()
+                or final.read_bytes() != content
+            ):
+                raise ConversionError("ADMISSION_REPORT_EXISTS")
+            return
+        if os.path.lexists(temporary):
+            raise ConversionError("ADMISSION_REPORT_INCOMPLETE")
+        with temporary.open("xb") as output:
+            output.write(content)
+            output.flush()
+            os.fsync(output.fileno())
+        temporary.rename(final)
+        fsync_directory(workspace)
 
 
 def seal_input(source_path, workspace, caches=(), *, free_bytes=None):
@@ -65,8 +113,15 @@ def validate_ledger(db, run, expected, fault):
     ).fetchall()
     totals = {
         name: 0
-        for name in ("legacy_records", "legacy_values", "repositories", "id_mappings")
+        for name in (
+            "legacy_records",
+            "legacy_values",
+            "repositories",
+            "id_mappings",
+            "validation_results",
+        )
     }
+    diagnostic_ids = set()
     for committed, (table, index, records, input_sha256) in zip(
         previous, expected, strict=False
     ):
@@ -79,9 +134,31 @@ def validate_ledger(db, run, expected, fault):
             raise ConversionError("COMMITTED_INPUT_MISMATCH")
         for name in totals:
             totals[name] += len(manifest["proof"][name])
+        diagnostic_ids.update(
+            row["key"][0] for row in manifest["proof"]["validation_results"]
+        )
         fault("during_resume", table=table, index=index)
     if len(previous) > len(expected):
         raise ConversionError("UNEXPECTED_COMMITTED_BATCH")
+    source_issues = json.loads(run["manifest"])["source_fk_issues"]
+    initial = [
+        row
+        for row in db.execute("SELECT * FROM validation_results")
+        if row["id"] not in diagnostic_ids
+    ]
+    if source_issues:
+        if len(initial) != 1 or tuple(initial[0])[1:] != (
+            run["id"],
+            "I01",
+            "SOURCE_FOREIGN_KEY_VIOLATION",
+            "blocking",
+            run["started_at"],
+            canonical({"count": len(source_issues)}),
+        ):
+            raise ConversionError("SOURCE_DIAGNOSTIC_MISMATCH")
+        totals["validation_results"] += 1
+    elif initial:
+        raise ConversionError("UNLEDGERED_OUTPUT")
     for name, count in totals.items():
         if db.execute(f"SELECT count(*) FROM {name}").fetchone()[0] != count:
             raise ConversionError("UNLEDGERED_OUTPUT")
@@ -119,6 +196,10 @@ def convert(
         )
         checked = capacity.preflight(workspace, required, free_bytes=free_bytes)
         destination = workspace / "target.sqlite3"
+        if destination.exists():
+            # Check ownership before opening a writable connection (whose
+            # journal pragmas can otherwise mutate a database header).
+            target.require_p2_destination(destination, sealed, signatures)
         if not destination.exists():
             target.create(
                 workspace,
@@ -241,3 +322,11 @@ def verify(workspace, *, ddl=None, contract=None):
                 "lifecycle": "building",
                 "diagnostics": diagnostics.counts(db, run["id"]),
             }
+
+
+def handoff(workspace, **options):
+    return phase.handoff(workspace, **options)
+
+
+def verify_phase(workspace, **options):
+    return phase.verify(workspace, **options)

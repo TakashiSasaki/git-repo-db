@@ -1,6 +1,6 @@
 # v2からのオフライン変換・検証・切替仕様
 
-これは実装仕様案。converter、実DB変換、切替はこの区切りで実行しない。
+これは全工程の仕様。実装済みのarchive基盤は[P2](p2-foundation.md)、operational source admissionとphase handoffは[P3A handoff](p3a-handoff.md)を参照する。以下の全domain変換・再解析・切替は後続工程で、実DB変換・切替は未実施。
 旧CLI互換・旧schemaへの書込み互換は不要。source DBと必要なcacheは保存し、targetは別の新規DBとする。
 
 ## 1. 安全境界とsource識別
@@ -9,13 +9,13 @@
 2. sealed source DBを用意する。未checkpoint WAL/rollback journalがあるsourceはそのまま受理しない。ユーザー管理下でSQLite backup等の整合copyを取得する方法と、旧ファイル一式の保全を先に確定する。converterはsourceへcheckpoint/VACUUM/migrate/backup manifest上書きを行わない。
 3. sourceはread-only open/query-only transaction、cacheはread-only mountまたは同等の書込み禁止経路で扱う。source内にログ/一時file/checkpointを作らない。
 4. source識別にはcatalog_meta、schema_migrations、**実際のsqlite_schema/PRAGMA制約**、DB file SHA-256、source db_instance_id、release SHA、SQLite runtime、configの非秘密参照を記録する。v2と申告されても実DDLが違えば診断する。
-5. 未知のextra table/column/trigger/shadow objectは列挙し、typed archiveまたはsealed source packageに収容して未対応を記録する。schema nameを動的DDLとして実行しない。
+5. 全schema object/columnをread-onlyで列挙する。strict v2 core、構造・生成来歴を照合したFTS、対応SQLiteのstatistics/internal構造だけを明示dispositionで認める。未知のextra table/column/view/trigger/index/shadow objectはadmissionを止める。prefixだけで除外せず、source DDLを実行しない。対応範囲とsealed-byte保全/rebuild除外は[P3Aのmatrix](p3a-handoff.md#source-admission-and-preservation)に記録する。
 6. targetは新path、new db_instance_id、明示format_id/version/DDL hash、building状態で作る。sourceのschema_migrationsをtargetの適用済みDDL ledgerへcopyしない。source ledgerはconversion_sourcesに記録する。
 
 setup用のgit clone/fetch、uv dependency取得はこの境界の前に行える。
 **conversion/reparse/index build/validationのprocessはGitHub APIもnetwork git fetchも呼ばない**。旧collector、content hydrate、pressure GC、通常sync/restoreを変換手段に使わない。
 
-Git原本読取りには既知cacheの`cat-file`等のread-only operationだけを許可する。
+P2/P3A workerは`cat-file`を含む全子processを拒否する。以下はP4で別途実装するGit原本読取り境界の仕様で、現在のguardを緩める指示ではない。Git原本読取りには既知cacheの`cat-file`等のread-only operationだけを許可する。
 `GIT_NO_LAZY_FETCH=1`、protocol allow deny-all、replace refs無効、optional locks無効、system/global config無効化を設定する。
 promisor/shallow/alternatesを調査し、alternatesは明示許可したread-only local rootsだけを辿る。missing objectが自動fetchを起動する経路を禁止する。
 source work/logsも手掛かりとして一覧化するが、未知spoolを完成した取得事実と扱わない。
@@ -35,7 +35,9 @@ target用の新integer領域は既存IDsの最大値と衝突しないよう予�
 source rowごとのcanonical serializationはcolumn順・SQLite storage type・byte length・exact bytesを含める。
 JSONが同義でもraw文字列/byteが変わるtransformは旧raw値を保持し、semantic decode結果と別hashを記録する。
 batchのデータ、ID map、manifest進捗は同一target transactionでcommitする。source cursor位置だけを先に進めない。
-再開はsource fingerprint・target DDL/parser version一致時だけ、最後のcommit batchから行う。中断したtargetのみrollback/cleanupできる。
+P2再開はsource/schema/cache、target DDL/contract/parser/converterとcommitted outputのexact一致時だけ、最後のcommit batchから行う。P3Aは完了済みP2をwriter lock下で検証し、同じtargetの別`conversion_runs` rowへphase-scoped receiptをatomicに保存する。P2のarchive/map/診断/batch/runを変更しない。handoff後は`verify-phase`を使い、P2 archive commandは書込み前に拒否する。許可する旧P2 predecessorは[P3A記録](p3a-handoff.md#verified-phase-transition)の一つだけで、hash無視のresumeはない。
+
+receiptの作成権限はphase初期化だけ。全domain変換を開始する後続phaseはpermitted ownership、version、output proofを別途定義する。`archive_complete`、phase initialization、`validated`/activeは別状態であり、handoff後もtarget lifecycleは`building`、semantic blockersを保持する。
 
 ## 3. 保全と再解析の順序
 

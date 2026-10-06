@@ -8,7 +8,9 @@ schema proposalと再現の期待値はレビュー可能にし、未確定を�
 
 ## P1成果と次工程の実装順序
 
-P1は独立完全DDL、機械契約、制約テストを作成した。[p1-design.md](p1-design.md)に採用判断・未実装・CIの確認方法を記録する。通常runner・実DB・旧cacheは対象外。[P2基盤](p2-foundation.md)でsealed input、exact archive、代表ID map、atomic batch/resume、guardとcapacityを実装した。全domain recipe/lookup/allocation/persistenceはP3へ残る。
+P1は独立完全DDL、機械契約、制約テストを作成した。[p1-design.md](p1-design.md)に採用判断・未実装・CIの確認方法を記録する。通常runner・実DB・旧cacheは対象外。[P2基盤](p2-foundation.md)でsealed input、exact archive、代表ID map、atomic batch/resume、guardとcapacityを実装した。[P3A handoff](p3a-handoff.md)はoperational source分類と検証済みP2境界のphase初期化を扱う。全domain recipe/lookup/allocation/persistenceはP3B〜P3Eへ残る。
+
+P3Aはbounded synthetic acceptanceを確認した。最終local affected closureはP2/P3A 5 filesの156 IDsをnative SQLite 3.53.1とaudited 3.46.1でそれぞれexactly-once pass、skip/failなし。source full inventory/disposition、recognized operational FTS/ANALYZE、complete P2 proof、atomic receipt/restart、genuine hot-journal spill recoveryとguardを含む。これはlocal focused evidenceで、policy/shared変更のfresh hosted full acceptanceと最終SHA/runはPR #1のvalidation記録で確認する。次のbounded実装はP3B。
 [P1仕上げ](p1-lifecycle.md)でcomplete markerの削除/置換経路を閉じ、本文補完・再発見・再検証・partial→complete・rollback/restartの正当系を完全DDLで実行する。変換契約のstaged writeと旧検証claimの保全をP2/P3へ渡す。synthetic admission例を新runtimeの完成と扱わない。
 
 ## 実装順序とgate
@@ -17,7 +19,11 @@ P1は独立完全DDL、機械契約、制約テストを作成した。[p1-desig
 |---|---|---|
 | P1 target DDL確定 | source mappingから全physical DDLを作る。format identity、scoped keys、publication/type triggers、JSON/state/numeric約束、archive/ledger、typed scope、sealと単調補完を確定 | 全table/column mapping整合。INSERT/UPDATE/DELETE・NULL・deferred/bootstrap・rollback試験。不正owner/type/flagとcomplete marker削除/REPLACEを拒否。本文/検証/再発見/再開の正当系も実行。標準gate・3.46.1・packaging・後段demo成功。old source formatはread-only入力専用 |
 | P2 conversion foundation | sealed source識別、未知構造・typed row hash、new destination、ID map、batch transaction、pause/resume、space preflight、network deny、source/cache write deny | every old key/columnの対応とtyped archive、fault injectionでcommitted batchだけ再開。source/cache fingerprint不変。API client/fetch/GCを起動できない |
-| P3 lossless normalized conversion | repo/binding/endpoint、Git構造、raw content/digest、API payload/page、PR/doc/version/observation、progress分離 | IDs/bytes/edges/current pointer・A-B-A・orphan/invalid data保持、missing raw不正complete防止。全DB間比較は件数以外の証拠を含む |
+| P3A operational source / phase handoff | strict coreと全schema inventory、既知FTS/SQLite statistics分類、全object disposition、verified P2 parentとphase receipt | actual v2 pathの合成fixture、positive/negative source admission、typed archive/map/診断proof、atomic handoff/restart、tamper/competing writer/旧P2 write拒否。lifecycleはbuilding |
+| P3B identity conversion | service/source/repository/binding/endpoint/name/membership、明示lookup/allocation/map | preserved IDs、conflict診断、same-owner edges。URL/OIDでmergeしない。P3A receiptから新phase ownership/proofを明示する |
+| P3C stored Git facts | objects/edges/content/digests/acquisitions/snapshots | IDs/bytes/ownership/parent order/raw names比較、missing raw不正complete防止。local raw再構成はP4 |
+| P3D saved API/PR history | payloads/pages/documents/versions/observations/reviews/events/unresolved data、progress分離 | A-B-A、本文共有と観測分離、orphan/invalid/partial scopeとoriginal time保持 |
+| P3E integrated normalized proof | P3B〜P3Dの合成入力→全normalized conversion→restart | IDs/bytes/edges/pointers/diagnosticsをarchive/sourceと比較。件数/FKだけで成功判定しない。まだactivationしない |
 | P4 offline reanalysis | saved REST/GraphQL pages、pending/unresolved payload、stable code listings、root origins、必要local Git raw、manifest/search rebuild | 同一OID refs、page中断再開、head/base変化、cap/GraphQL partial/上書きpage、非canonical raw不在を検証。旧assertionsと派生結果が別に辿れる |
 | P5 resume/first sync | typed completion/ETag/watermark/cursors、再利用のscope gate、new runtime command/query対応 | fixture clockでwatermark飛越しなし、replayで前進なし。request logで完了済み子resourceの全件再取得を避け、partialのみ続き、account/API/profile変更を拒否 |
 | P6 representative offline dry-run | 実データのsealed inputと容量条件を明示して、別targetへconversionし全proof/query/index gate、pause/abort/restartを検証 | 実データの非公開report、source不変、runtime query/coverage差分説明、bytes/edge/ID mapping、space/時間/indexコスト実測。未解決ケースのdecision manifest |
@@ -55,9 +61,9 @@ P1～P5のsynthetic試験を通ってもP6の実データ変換を成功済み�
 
 この区切りの終了は上記仕様と再現/診断のレビュー可能性で判定する。実移行の許可を既に得たものとして扱わない。
 
-## P3着手前の具体的な引継ぎ
+## P3AからP3Bへの具体的な引継ぎ
 
-- 現P2は53表/287列の基準v2構造だけを認め、通常運用で生成されたFTSやANALYZE/internal構造があるDBも拒否する。代表実データの移行前に、approved derived構造をschemaの構造と生成来歴で識別する。table-name prefixだけでは認めない。元file bytesを保全し、archive/rebuild/exclusionの判断を明示する。未知のuser構造は引き続きfail closed。
-- P2 archiveはnormalized target全体ではない。P3がdomain rowを書換える前にphase handoffを定義する。現在のresumeはconverter/contract fingerprintsとcommitted output全値のexact一致を要求し、P3変更後にP2 proofを無条件流用できない。
-- 全normalized conversion、offline replay/reanalysis、新runtime、first sync、実データdry-run、cutoverはP3〜P7。`archive_complete`をvalidated/activeや実移行成功と扱わない。
-- [変更依存CI](../change-aware-ci.md)はこの引継ぎをruntimeへ実装するものではない。SQL/契約/P2実装の変更時はschema/P2/minimum依存を選び、証拠がない場合はfull acceptanceを行う。
+- P3Aのaccepted/rejected layoutとrebuild/exclusionは[英語handoff](p3a-handoff.md#source-admission-and-preservation)を正本とする。strict 53表/287列coreとmigrationは変えず、full schema/physical bytesも保全する。未知user構造はfail closed。supported derived layoutを全SQLite拡張の許可と解釈しない。
+- P2 archiveはnormalized target全体ではない。P3Aは同一targetの別runにphase-scoped receiptを保存し、P2のarchive/map/診断/ledgerを保持する。このphaseのwrite ownershipはreceipt初期化のみ。P3Bはdomain書込み前にreviewed version、permitted ownership、output proofsとresume条件を実装する。元P2の現在値proofを変更後に無条件流用しない。
+- 次のbounded実装はP3B identity conversion。P3C〜P3E、offline replay/reanalysis、新runtime、first sync、実データdry-run、cutoverは後続工程。`archive_complete`やP3A receiptをvalidated/activeや実移行成功と扱わない。
+- [変更依存CI](../change-aware-ci.md)の既存p2/minimum-p2へP3A test collectionと依存を追加する。shared fixture/workerやpolicy変更は保守的にfull、未知pathもfullへ倒す。実行済み/再利用/対象外を区別する。

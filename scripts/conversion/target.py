@@ -1,5 +1,6 @@
 import fcntl
 import json
+import os
 import sqlite3
 import uuid
 from contextlib import contextmanager
@@ -18,6 +19,131 @@ from .common import (
     now,
 )
 
+# Exact reviewed P2 implementation at 1e052e4b666039704ad0b8ea3a1d7a752d561358.
+# Only the handoff verifier may admit it; ordinary P2 resume remains exact.
+REVIEWED_P2_CONVERTERS = frozenset(
+    {"644d04524ae83ffeccc0169e7e496328d8dc20f2b7a0a438839f39e271c747d3"}
+)
+
+
+def require_p2_owner(db):
+    runs = db.execute("SELECT parser_version FROM conversion_runs").fetchall()
+    if len(runs) != 1 or runs[0][0] != PARSER_VERSION:
+        raise ConversionError("PHASE_OWNERSHIP_MISMATCH")
+
+
+def require_p2_destination(path, sealed=None, signatures=None):
+    # An immutable ownership read ignores a target hot journal. The subsequent
+    # writer may recover that journal only after the prior committed owner was
+    # checked. Source sidecars remain prohibited by source.readonly.
+    with readonly_destination(path) as db:
+        try:
+            require_p2_owner(db)
+        except ConversionError:
+            journal = Path(str(path) + "-journal")
+            if sealed is None or signatures is None or not journal.is_file():
+                raise
+            with journal.open("rb") as file:
+                hot = journal.stat().st_size > 512 and file.read(8) == bytes.fromhex(
+                    "d9d505f920a163d7"
+                )
+            if not hot:
+                raise
+            # A spilled, uncommitted handoff can expose its inserted receipt
+            # through immutable reads. Only this recognized current-version
+            # transition may be recovered; recheck P2 ownership on the recovered
+            # connection before any normal archive write.
+            require_pending_handoff(db, sealed, signatures)
+
+
+def require_pending_handoff(db, sealed, signatures, *, allow_reviewed=False):
+    """Authorize recovery only for the bounded spilled phase initialization.
+
+    Overflow pages can be inconsistent through immutable reads while a rollback
+    journal is pending, so inspect headers and the new small phase receipt here.
+    Full P2 archive/manifest/output proofs follow SQLite recovery before writes.
+    """
+    from . import phase
+
+    rows = db.execute(
+        "SELECT id,source_id,started_at,ended_at,parser_version,state FROM conversion_runs"
+    ).fetchall()
+    parents = [row for row in rows if row["parser_version"] == PARSER_VERSION]
+    phases = [row for row in rows if row["parser_version"] == phase.PROTOCOL_VERSION]
+    if len(rows) != 2 or len(parents) != 1 or len(phases) != 1:
+        raise ConversionError("PHASE_OWNERSHIP_MISMATCH")
+    parent, phase_run = parents[0], phases[0]
+    receipt = json.loads(
+        db.execute(
+            "SELECT manifest FROM conversion_runs WHERE id=?", (phase_run["id"],)
+        ).fetchone()[0]
+    )
+    transition_id = receipt.pop("transition_id", None)
+    predecessor = receipt.get("parent", {}).get("converter_sha256")
+    identity = db.execute("SELECT * FROM database_identity").fetchone()
+    source_row = db.execute("SELECT * FROM conversion_sources").fetchall()
+    if (
+        parent["state"] != "paused"
+        or phase_run["state"] != "paused"
+        or phase_run["source_id"] != parent["source_id"]
+        or receipt.get("phase_protocol") != phase.PROTOCOL_VERSION
+        or receipt.get("state") != "committed"
+        or receipt.get("signatures") != signatures
+        or receipt.get("parent", {}).get("run_id") != parent["id"]
+        or receipt.get("parent", {}).get("parser_version") != PARSER_VERSION
+        or not (
+            predecessor == signatures["converter_sha256"]
+            or (allow_reviewed and predecessor in REVIEWED_P2_CONVERTERS)
+        )
+        or receipt.get("source", {}).get("source_id") != parent["source_id"]
+        or receipt.get("source", {}).get("seal_sha256")
+        != digest(canonical(sealed).encode())
+        or receipt.get("source", {}).get("physical_sha256")
+        != sealed["sealed"]["sha256"]
+        or receipt.get("source", {}).get("core_schema_sha256")
+        != sealed["schema_sha256"]
+        or phase_run["started_at"] != receipt.get("committed_at")
+        or phase_run["ended_at"] != receipt.get("committed_at")
+        or phase_run["id"] != transition_id
+        or transition_id != "p3a:" + digest(canonical(receipt).encode())
+        or identity is None
+        or identity["format_id"] != "repo-catalog/catalog3-p1"
+        or identity["schema_version"] != 3
+        or identity["lifecycle"] != "building"
+        or identity["ddl_sha256"].hex() != signatures["ddl_sha256"]
+        or receipt.get("target", {}).get("db_instance_id") != identity["db_instance_id"]
+        or len(source_row) != 1
+        or source_row[0]["id"] != parent["source_id"]
+        or source_row[0]["source_sha256"].hex() != sealed["sealed"]["sha256"]
+        or source_row[0]["schema_sha256"].hex() != sealed["schema_sha256"]
+        or source_row[0]["source_db_instance_id"] != sealed["db_instance_id"]
+        or source_row[0]["format_id"] != sealed["format_id"]
+        or source_row[0]["source_catalog"] != canonical(sealed["catalog"]).encode()
+        or source_row[0]["source_migrations"]
+        != canonical(sealed["migrations"]).encode()
+        or schema_fingerprint(db) != signatures["target_schema_sha256"]
+    ):
+        raise ConversionError("PHASE_OWNERSHIP_MISMATCH")
+    phase._require_predecessor_layout({"converter_sha256": predecessor}, sealed)
+    require_internal_schema(db)
+
+
+@contextmanager
+def readonly_destination(path):
+    path = Path(path).absolute()
+    if path.is_symlink() or not path.is_file():
+        raise ConversionError("DESTINATION_MISSING_OR_NOT_REGULAR")
+    db = sqlite3.connect(path.as_uri() + "?mode=ro&immutable=1", uri=True)
+    db.row_factory = sqlite3.Row
+    db.execute("PRAGMA query_only=ON")
+    db.execute("PRAGMA trusted_schema=OFF")
+    db.execute("PRAGMA temp_store=MEMORY")
+    db.enable_load_extension(False)
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 def schema_fingerprint(db):
     rows = [
@@ -27,6 +153,26 @@ def schema_fingerprint(db):
         )
     ]
     return digest(canonical(rows).encode())
+
+
+def require_internal_schema(db):
+    # The historical P2 fingerprint intentionally excludes SQLite names. Keep
+    # that proof definition, but separately verify every internal schema object
+    # against trusted target DDL; sqlite_ prefixes do not authorize ANALYZE or
+    # other additions to the independently identified destination.
+    query = (
+        "SELECT type,name,tbl_name,sql FROM sqlite_schema "
+        "WHERE name LIKE 'sqlite_%' ORDER BY type,name"
+    )
+    expected = sqlite3.connect(":memory:")
+    try:
+        expected.executescript((DESIGN / "target-schema.sql").read_text())
+        if [tuple(row) for row in db.execute(query)] != expected.execute(
+            query
+        ).fetchall():
+            raise ConversionError("TARGET_SCHEMA_MISMATCH")
+    finally:
+        expected.close()
 
 
 def resources(ddl=None, contract=None):
@@ -84,6 +230,14 @@ def writer_lock(workspace):
 
 
 def connect(path):
+    for suffix in ("-journal", "-wal", "-shm"):
+        sidecar = Path(str(path) + suffix)
+        if os.path.lexists(sidecar) and (
+            sidecar.is_symlink()
+            or not sidecar.is_file()
+            or sidecar.stat().st_nlink != 1
+        ):
+            raise ConversionError("TARGET_SIDECAR_ALIAS_UNSUPPORTED")
     db = sqlite3.connect(path, isolation_level=None)
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA foreign_keys=ON")
@@ -183,7 +337,17 @@ def create(
     return manifest
 
 
-def verify(db, sealed, signatures, *, batch_size=None, map_repositories=None):
+def verify(
+    db,
+    sealed,
+    signatures,
+    *,
+    batch_size=None,
+    map_repositories=None,
+    run_id=None,
+    allow_reviewed_predecessor=False,
+    check_integrity=True,
+):
     identity = db.execute("SELECT * FROM database_identity").fetchall()
     if (
         len(identity) != 1
@@ -195,15 +359,32 @@ def verify(db, sealed, signatures, *, batch_size=None, map_repositories=None):
         raise ConversionError("TARGET_IDENTITY_MISMATCH")
     if schema_fingerprint(db) != signatures["target_schema_sha256"]:
         raise ConversionError("TARGET_SCHEMA_MISMATCH")
-    runs = db.execute("SELECT * FROM conversion_runs").fetchall()
+    require_internal_schema(db)
+    if run_id is None:
+        require_p2_owner(db)
+    runs = db.execute(
+        "SELECT * FROM conversion_runs" + (" WHERE id=?" if run_id else ""),
+        (run_id,) if run_id else (),
+    ).fetchall()
     if len(runs) != 1:
         raise ConversionError("CONVERSION_RUN_MISMATCH")
     run = runs[0]
     if run["state"] not in {"building", "paused"}:
         raise ConversionError("CONVERSION_LIFECYCLE_MISMATCH")
     manifest = json.loads(run["manifest"])
+    accepted_converter = manifest.get("converter_sha256") == signatures[
+        "converter_sha256"
+    ] or (
+        allow_reviewed_predecessor
+        and manifest.get("converter_sha256") in REVIEWED_P2_CONVERTERS
+    )
     if (
-        any(manifest.get(key) != value for key, value in signatures.items())
+        any(
+            manifest.get(key) != value
+            for key, value in signatures.items()
+            if key != "converter_sha256"
+        )
+        or not accepted_converter
         or run["parser_version"] != PARSER_VERSION
     ):
         raise ConversionError("RESUME_VERSION_MISMATCH")
@@ -227,7 +408,7 @@ def verify(db, sealed, signatures, *, batch_size=None, map_repositories=None):
         or source["source_migrations"] != canonical(sealed["migrations"]).encode()
     ):
         raise ConversionError("RESUME_SOURCE_LEDGER_MISMATCH")
-    if (
+    if check_integrity and (
         db.execute("PRAGMA foreign_key_check").fetchone()
         or db.execute("PRAGMA integrity_check").fetchone()[0] != "ok"
     ):

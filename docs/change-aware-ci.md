@@ -10,15 +10,15 @@ PR #1のP1/P2を作り直さず、既存`tests / offline` jobのstepを条件付
 |---|---|
 | legacy | 残りのunit/integration/E2E。CLI、Git/HTTP、DB、query、cache等 |
 | schema | 完全DDL、断片DDL、契約、CSV/target inventory/生成Markdown、不変条件、v2 audit/design |
-| p2 | foundationとprotocol。schema validator/audit、migration、fixture、workerへの推移依存も含む |
+| p2 | foundation/protocol、operational source admission、phase handoff、guarded integrated flow。schema validator/audit、migration、fixture、workerへの推移依存も含む |
 | ci | profiler/planner/evidence/gateとworkflow連携試験 |
 | packaging | wheel/sdist由来wheelのoffline導入、CLIと同梱resources。逐次隔離 |
-| minimum-schema / minimum-p2 | 従来の4 P1 filesと2 P2 files。audit対応SQLite 3.46.1で独立実行 |
+| minimum-schema / minimum-p2 | 4 P1 filesと5 P2/P3A files。従来の4 P1/2 P2 filesのcoverage下限を保持し、audit対応SQLite 3.46.1で独立実行 |
 | static / smoke / build / demo | Ruff、FTS/doctor、build/export、既存offline-recovery demo |
 
 `src/**`、lock/build設定、`tests/support/**`、全階層conftest/init、SQLite preparation/driverは共有依存として広く再実行する。demoは`test_cache.expire`/`test_github_sync.configure`とCLI/Git/HTTP fixtureをimportするためlegacyとの依存を持つ。P2だけの変更にlegacy HTTP/Git E2E依存は見つからず、対応するschema/P2とminimumを選ぶ。leaf testは所属groupを選ぶ。未分類helper/新しい未知pathはfullへ倒す。新しいimport、file read、subprocess境界を追加する際はmappingもレビューする。
 
-prose/reportは列挙したpathだけ。`docs/ci-performance-results.json`と`docs/ci-selection-results.json`は測定report、`p2-foundation.md`は実装・運用記録で、application/schema fixtureは本文を読まない。stdlibでJSON構造・有限数、非空本文、local Markdown linkを確認する。`ci-performance-baseline.json`はprofiler入力なのでproseではない。DDL/JSON/CSV/生成`table-conversion.md`はschema入力で、docs全体をskipしない。生成Markdownもgeneratorとのbyte一致を試験する。
+prose/reportは列挙したpathだけ。`docs/ci-performance-results.json`と`docs/ci-selection-results.json`は測定report、`p2-foundation.md`と`p3a-handoff.md`は実装・運用記録で、application/schema fixtureは本文を読まない。stdlibでJSON構造・有限数、非空本文、local Markdown linkを確認する。`ci-performance-baseline.json`はprofiler入力なのでproseではない。DDL/JSON/CSV/生成`table-conversion.md`はschema入力で、docs全体をskipしない。生成Markdownもgeneratorとのbyte一致を試験する。
 
 sdistにreport bytesが同梱され得るが、installed CLIのresources/metadataやpackaging assertionはそれらを読まない。reportだけの更新では既存packaging成功を再利用できる。build設定・package resources・fixture/wheel準備を変えた場合は再実行する。
 
@@ -78,7 +78,7 @@ final gateにはworkflowと同じ`ci_profile run`で記録した準備/static/sm
 
 JUnit testcase aggregate秒とcommand wall秒を分ける。metadata lookup、planning、report validationもwall/profileを残し、selection内部時間、fresh/reused/minimum counts、準備cache statusをmanifestへ記録する。job runner時間とrun queue/feedbackはActions timestampsから別に算出する。比較記録は[CI性能](ci-performance.md)と`ci-selection-results.json`に置く。異なるfresh test集合や1 sampleから改善率を作らない。
 
-実DB/旧cache、converter runtime、P1 DDL/契約、通常migration経路は変更しない。P2 archive_completeはvalidated/activeではない。FTS/ANALYZE derived source認識、P2→P3 phase handoff、normalized conversion、offline replay、新runtime/first sync、実データdry-run/切替は[実装計画](schema-hardening/implementation-plan.md)のP3〜P7へ残す。
+このCI設計自体はconverter runtimeや通常migration経路を変更しない。P3AのFTS/ANALYZE source認識、phase handoffとその合成試験は[P3A記録](schema-hardening/p3a-handoff.md)で扱い、新modules/fixture/worker依存を既存p2/minimum-p2 laneへ登録する。`scripts/conversion/**`はp2依存、`tests/support/operational_source.py`とworker変更は共有依存として保守的にfullへ展開する。P2 archive_completeとP3A receiptはvalidated/activeではない。normalized conversionはP3B〜P3E、offline replay、新runtime/first sync、実データdry-run/切替は[実装計画](schema-hardening/implementation-plan.md)のP4〜P7へ残す。
 
 ## 確認記録
 

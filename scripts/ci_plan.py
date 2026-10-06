@@ -44,6 +44,10 @@ MINIMUM_SCHEMA = {
     "tests/integration/test_schema_proposal_core.py",
     "tests/integration/test_conversion_contract.py",
 }
+MINIMUM_P2 = {
+    "tests/integration/test_conversion_foundation.py",
+    "tests/unit/test_conversion_protocol.py",
+}
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 
@@ -94,10 +98,9 @@ def policy(root=ROOT):
         raise ValueError("Duplicate/invalid test group membership")
     if not set(value["minimum_schema"]) <= set(value["groups"]["schema"]):
         raise ValueError("Minimum lane is not a schema subset")
-    if set(value["minimum_schema"]) != MINIMUM_SCHEMA or set(value["groups"]["p2"]) != {
-        "tests/integration/test_conversion_foundation.py",
-        "tests/unit/test_conversion_protocol.py",
-    }:
+    if set(value["minimum_schema"]) != MINIMUM_SCHEMA or not MINIMUM_P2 <= set(
+        value["groups"]["p2"]
+    ):
         raise ValueError("Required minimum/P2 test files may not disappear")
     return value
 

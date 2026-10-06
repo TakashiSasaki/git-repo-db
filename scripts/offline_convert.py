@@ -1,4 +1,4 @@
-"""P2 standalone, guarded offline archive. Not a runtime/cutover command."""
+"""Guarded offline archive and verified P3A handoff. No runtime activation."""
 
 import argparse
 import json
@@ -13,7 +13,9 @@ from scripts.conversion.common import ConversionError  # noqa: E402
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("seal", "archive", "verify"))
+    parser.add_argument(
+        "action", choices=("seal", "archive", "verify", "handoff", "verify-phase")
+    )
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--source", type=Path)
     parser.add_argument("--source-cache", type=Path, action="append", default=[])
@@ -45,8 +47,8 @@ def main():
             caches=args.source_cache,
         )
         return {"sealed": True}
-    if args.action == "verify":
-        return engine.run(policy, "verify", args.work_dir)
+    if args.action in {"verify", "handoff", "verify-phase"}:
+        return engine.run(policy, args.action, args.work_dir)
     return engine.run(
         policy,
         "archive",
@@ -70,5 +72,17 @@ if __name__ == "__main__":
         code = (
             exc.code if isinstance(exc, ConversionError) else "STORAGE_OR_INPUT_FAILURE"
         )
-        print(json.dumps({"code": code, "severity": "blocking"}), file=sys.stderr)
+        result = {"code": code, "severity": "blocking"}
+        if hasattr(exc, "report"):
+            result["admission"] = {
+                "unsupported": sum(
+                    item["classification"] == "unsupported"
+                    for item in exc.report["preservation_dispositions"]
+                ),
+                "admission_version": exc.report.get("admission_version"),
+                "diagnostic_codes": sorted(
+                    {item["code"] for item in exc.report["diagnostics"]}
+                ),
+            }
+        print(json.dumps(result), file=sys.stderr)
         raise SystemExit(2) from None

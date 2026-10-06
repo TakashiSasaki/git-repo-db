@@ -19,16 +19,22 @@ import sqlite3  # noqa: E402
 if os.environ.get("TEST_SQLITE_MINIMUM"):
     assert sqlite3.sqlite_version == os.environ["TEST_SQLITE_MINIMUM"]
 
-from scripts.conversion import engine, guards, source
+from scripts.conversion import engine, guards, source, target
 from scripts.conversion.common import ConversionError
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("workspace", type=Path)
+    parser.add_argument(
+        "--action",
+        choices=("archive", "verify", "handoff", "verify-phase"),
+        default="archive",
+    )
     parser.add_argument("--fault")
     parser.add_argument("--fault-table")
     parser.add_argument("--hard-exit", action="store_true")
+    parser.add_argument("--spill", action="store_true")
     parser.add_argument("--probe")
     parser.add_argument("--free", type=int)
     parser.add_argument("--max-batches", type=int)
@@ -100,6 +106,19 @@ def main():
         raise AssertionError("PROBE_NOT_DENIED")
 
     fired = False
+    spilling_connection = None
+    if args.spill:
+        connect = target.connect
+
+        def spilling(path):
+            nonlocal spilling_connection
+            db = connect(path)
+            db.execute("PRAGMA cache_size=1")
+            db.execute("PRAGMA cache_spill=1")
+            spilling_connection = db
+            return db
+
+        target.connect = spilling
 
     def fault(point, **context):
         nonlocal fired
@@ -109,12 +128,21 @@ def main():
             and (args.fault_table is None or args.fault_table == context.get("table"))
         ):
             fired = True
+            if args.spill and point == "before_handoff_commit":
+                flush_target(spilling_connection)
             if args.hard_exit:
                 os._exit(77)
             if args.fault == "after_data":
                 raise sqlite3.OperationalError("database or disk is full")
             raise ConversionError("INJECTED_FAILURE")
 
+    if args.action != "archive":
+        return engine.run(
+            policy,
+            args.action,
+            args.workspace,
+            **({"fault": fault} if args.action == "handoff" else {}),
+        )
     return engine.run(
         policy,
         "archive",
@@ -124,6 +152,28 @@ def main():
         free_bytes=args.free,
         max_batches=args.max_batches,
         fault=fault,
+    )
+
+
+def flush_target(db):
+    """Test-only transient metadata pressure spills the pending receipt.
+
+    Restore the exact parent manifest before termination; neither temporary
+    padding nor the inserted phase receipt may survive rollback recovery.
+    SQLite writes normally through the same guarded target connection.
+    """
+    parent = db.execute(
+        "SELECT id,manifest FROM conversion_runs WHERE parser_version='p2-archive/1'"
+    ).fetchone()
+    padded = json.loads(parent["manifest"])
+    padded["test_spill_padding"] = "x" * (8 * 1024 * 1024)
+    db.execute(
+        "UPDATE conversion_runs SET manifest=? WHERE id=?",
+        (json.dumps(padded), parent["id"]),
+    )
+    db.execute(
+        "UPDATE conversion_runs SET manifest=? WHERE id=?",
+        (parent["manifest"], parent["id"]),
     )
 
 

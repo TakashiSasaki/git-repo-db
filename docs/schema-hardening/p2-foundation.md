@@ -1,6 +1,8 @@
 # P2 オフライン変換基盤
 
-対象は PR #1 / `design/schema-v2-hardening`。開始時にremoteをfetchし、PR/feature HEADは `84416f90cd1d06b87c605545ecf730cbda75165b`、mainは `9a4110185d7e7abffc291f9cfd118ca71587f998` と確認した。直近のP1 CI（PR run `37345555942`、push run `37345549896`）はいずれもsuccessで、後続修正はなかった。
+この文書はP2基盤と当時の検証記録。後続のoperational source admission、P2→P3 handoff、対応matrixと検証は[英語P3A handoff](p3a-handoff.md)を参照する。
+
+対象は PR #1 / `design/schema-v2-hardening`。P2開始時にremoteをfetchし、PR/feature HEADは `84416f90cd1d06b87c605545ecf730cbda75165b`、mainは `9a4110185d7e7abffc291f9cfd118ca71587f998` と確認した。直近のP1 CI（PR run `37345555942`、push run `37345549896`）はいずれもsuccessで、後続修正はなかった。
 
 P2は **synthetic入力で検証したarchive・ID map・batch/resume基盤**。実DBと旧cacheは開いていない。通常application/migration runner、001/002 migration、P1 DDL・変換契約・生成ビューは変更しない。targetは74 STRICT tables / 426 columns、format `repo-catalog/catalog3-p1` / version 3、DDL SHA-256 `fd39297f3b73abc190aa82a28164f2d496048d773cbbcc9039a54972046a5709` のまま。
 
@@ -24,12 +26,14 @@ flowchart LR
 | component | 責務 |
 |---|---|
 | `scripts/conversion/source.py` | sealing、v2構造・migration・identity照合、immutable RO、cache inventory |
+| `admission.py` | P3Aの全schema inventory、strict core照合、既知derived構造の分類・disposition |
 | `guards.py` | fresh workerの不可逆seccomp/audit policy、入力/外部write拒否 |
 | `archive.py` | 全source列のexact extraction、P1 TLV/key/hash、bounded row batches |
 | `target.py` | 独立DDL、新DB identity、writer OS lock、format/DDL/contract/code照合 |
 | `mapping.py` | typed target key、存在確認、stable allocation、衝突拒否 |
 | `batch.py` | transaction前のproof準備、SQL-only commit、committed output照合 |
 | `engine.py` | capacity→source照合→ledger照合→未確定batch→pause。公開入口はpolicy必須の`run` |
+| `phase.py` | 完全P2 boundary照合、同一targetのphase receipt、atomic handoff/restart検証 |
 | `capacity.py` / `diagnostics.py` | 容量前提、blocking/partial/infoの分類と保存 |
 
 component関数を直接呼ぶsynthetic unit testはあるが、運用入口の代替にはしない。不可逆guardをapplicationやpytest親processへ入れない。policyはworker単位の不変値で、process-globalなsync状態やfixture順に依存しない。
@@ -37,13 +41,13 @@ component関数を直接呼ぶsynthetic unit testはあるが、運用入口の�
 ## 入力のsealと不変性
 
 1. アプリを停止し、checkpoint済み・close済み・sidecarなしのv2 DBを準備する。live WAL、SHM、rollback journalがあれば拒否する。converter自身は元DBのcheckpoint、backup API、journal削除をしない。live DBからのcopyはこの実装の対応外で、運用側で整合した停止済み入力を準備する。
-2. 実構造fingerprintを `conversion-contract.json` の `source_schema_sha256` と照合する。現在は53表/287列の基準構造のみ。001/002の両migration checksumとversion、catalog identityも照合する。checksumを書換えない。
+2. strict v2 coreの実構造fingerprintを `conversion-contract.json` の `source_schema_sha256` と照合する。53表/287列の基準構造、001/002の両migration checksumとversion、catalog identityは引き続き厳密に照合する。P3Aでは認識済みFTS/statisticsを分類し、全schema inventoryとphysical source SHAも保持する。filtered core hashで全source証明を置き換えず、checksumを書換えない。
 3. 元fileのdevice/inode/size/mtime/ctimeとSHA-256を前後で確認し、専用workspaceへbyte copyする。copyのSHA/schema/identity一致、fsync、read-only mode、rename、descriptor保存を経て入力とする。
 4. source DBは `mode=ro&immutable=1`、`query_only=ON`、write/ATTACH拒否authorizer、extension無効、tempはmemoryで開く。conversion時にも元DB/copy/cacheのfingerprintを再照合する。同じbytesでも元fileのinode置換は拒否する。
 
 seal済みcopy、元DB、cache、`sealed.json` はresume中の固定入力。元DB/cacheを消したり移動したりした後のportable resumeはP2の対応外。DB/cachesはlocal filesystemに限定し、NFS/CIFS/FUSE等の未知/remote filesystem、symlink cache、special fileは拒否する。cacheは全regular fileとdirectoryのpath bytes、stat、file SHAを保存し、Git commandを実行しない。alternates/promisorのclosure回復やcache portabilityはP4で定義する。
 
-実行時追加FTS virtual/shadow tables、view、ANALYZE内部表、独自index/DDL等を含むv2は、現時点では **unsupported schemaとして停止**。それらを捨てて53表だけ移すことはしない。known derived schemaの認識・archive範囲拡張はP3へのblocking引継ぎ事項。
+P2初版は追加FTS/ANALYZEをunsupportedとして拒否した。P3Aではactual v2 indexing pathのFTS定義/列/options/shadow layoutとindex-generation来歴、対応runtimeのstatistics/internal構造を識別する。認めたderived bytesはsealed copyに残し、rebuild/exclusionを明示する。全core列はtyped archiveへ移す。未知view/table/trigger/indexや疑わしいlookalikeは引き続き停止する。正当/partial/stale/removedの対応範囲は[P3A matrix](p3a-handoff.md#source-admission-and-preservation)を参照する。
 
 ## 通信・write拒否
 
@@ -71,7 +75,7 @@ ledgerのinput hashはsealed SHA/table/batch index/全source key+row hashを含�
 
 resumeではsource/schema/migration/cache、target実DDL、DDL hash、contract bytes hash/version、parser version、converterコードhash、batch optionを照合する。現在の互換性規則は **exact code/hash/version match**。SQLite/Pythonは対応runtimeを使う。互換parserの範囲緩和はまだない。COMMIT前の例外/killはrollback（kill後のhot target journalはSQLiteのtarget recovery）、COMMIT直後のkillは既存batchのproofを認識して重複なしで続ける。
 
-`--max-batches`でpause可能。全archive batchを保存してもrunは`paused`、target lifecycleは`building`。`archive_complete`はarchive範囲の完了だけで、`validated`/activeを意味しない。P3開始後にdomain rowを変更する場合はphase handoffを明示し、P2の現在値proofを無条件に再利用しない。
+`--max-batches`でpause可能。全archive batchを保存してもrunは`paused`、target lifecycleは`building`。`archive_complete`はarchive範囲の完了だけで、`validated`/activeを意味しない。P3Aの`handoff`は完了済みP2のtyped archive/map/診断/output proofを検証して別runのreceiptを一度だけatomicにINSERTし、P2 evidenceを変更しない。以後は`verify-phase`で照合し、P2 writeは拒否する。このreceiptはdomain書込みをまだ許可しない。後続phaseはownership/proofを明示してから変更する。
 
 ## 容量と失敗
 
@@ -112,7 +116,7 @@ uv run --no-sync python scripts/offline_convert.py verify --work-dir artifacts/s
 
 ## P3〜P7への引継ぎ
 
-- P3: FTS等のknown source構造追加、全productionのrecipe/lookup/allocation/persistence、domain ownershipとcurrent pointer、phase handoff、archive→domain比較proof。代表repo mapだけで全conversion済みと扱わない。
+- P3Aのknown source分類とphase initializationは[P3A handoff](p3a-handoff.md)に記録する。P3B〜P3Eにはidentity、stored Git、saved API/PR、統合normalized proofのrecipe/lookup/allocation/persistence、domain ownershipとcurrent pointerを残す。代表repo mapだけで全conversion済みと扱わない。
 - P4: 保存REST/GraphQL page・unresolved payloadとGit rawのoffline再解析、root origins、stable listing、cryptographic admission、search/index rebuild。原文不在は診断し取得しない。
 - P5: completion/watermark/validator/page/cursorをtyped scopeへ回復、first syncの限定resume、新runtime/CLI接続。
 - P6: 別途対象を定めて実データのsealed dry-run、容量/性能/照会/未解決decisionの非公開検証。

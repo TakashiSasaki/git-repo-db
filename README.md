@@ -57,7 +57,7 @@ PR rootは明示選択します。通常照会はDBの読取りだけで完結�
 全取得対象Blobのdigestはbinaryや巨大Blobも含め記録しますが、全履歴・全binaryの原文保存ではありません。
 履歴の未保存本文は検索coverageに不足として出し、原文不在を空bytesへ置換しません。
 
-独立した新formatの設計と制約検証は [P1設計](docs/schema-hardening/p1-design.md) を参照してください。通常アプリのschemaはv2のままです。専用の[P2オフライン変換基盤](docs/schema-hardening/p2-foundation.md)はsynthetic入力で検証し、実データ移行・切替は行っていません。[CI計測と固定workerの比較](docs/ci-performance.md)も参照してください。
+独立した新formatの設計と制約検証は [P1設計](docs/schema-hardening/p1-design.md) を参照してください。通常アプリのschemaはv2のままです。専用の[P2オフライン変換基盤](docs/schema-hardening/p2-foundation.md)に[P3Aのoperational source分類とphase handoff](docs/schema-hardening/p3a-handoff.md)を加え、合成v2入力のFTS/ANALYZE保全と検証済みarchive境界を扱います。全domain変換・新runtime・実データ移行・切替は後続工程です。[CI計測と固定workerの比較](docs/ci-performance.md)も参照してください。
 
 ## テスト・再現demo
 

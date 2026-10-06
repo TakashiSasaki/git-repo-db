@@ -1,6 +1,6 @@
-# Schema v2ハードニング：P1 DDLとP2 offline基盤
+# Schema v2ハードニング：P1 DDL、P2基盤、P3A handoff
 
-**現在の成果物:** [P2基盤・範囲と検証](p2-foundation.md)、[CI計測](../ci-performance.md)、 [P1設計とCI修復](p1-design.md)、[完了一覧・正当な補完経路の仕上げ](p1-lifecycle.md)、[完全target DDL](target-schema.sql)、[機械可読変換契約](conversion-contract.json)、[I01〜I31対応](invariant-contract.json)。通常migration経路と実DBは変更していない。以下の調査・88件成功は前工程の記録。最新HEADの結果はPR checks/本文で確認する。
+**現在の成果物:** [P3A source admission・phase handoff](p3a-handoff.md)、[P2基盤・範囲と検証](p2-foundation.md)、[CI計測](../ci-performance.md)、 [P1設計とCI修復](p1-design.md)、[完了一覧・正当な補完経路の仕上げ](p1-lifecycle.md)、[完全target DDL](target-schema.sql)、[機械可読変換契約](conversion-contract.json)、[I01〜I31対応](invariant-contract.json)。通常migration経路と実DBは変更していない。以下の調査・88件成功は前工程の記録。最新HEADの結果はPR checks/本文とP3Aの検証記録で確認する。
 
 対象: `TakashiSasaki/git-repo-db`。調査日: 2026-10-05 UTC。
 作業ブランチ: `design/schema-v2-hardening`。

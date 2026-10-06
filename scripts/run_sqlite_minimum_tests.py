@@ -18,6 +18,9 @@ DEFAULT_FILES = [
     "tests/integration/test_conversion_contract.py",
     "tests/integration/test_conversion_foundation.py",
     "tests/unit/test_conversion_protocol.py",
+    "tests/integration/test_conversion_source_admission.py",
+    "tests/unit/test_conversion_phase.py",
+    "tests/integration/test_p3a_operational_flow.py",
 ]
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument("--files-from", type=Path)

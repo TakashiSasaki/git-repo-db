@@ -67,6 +67,9 @@ def test_report_after_untested_code_is_not_a_shortcut(history):
         "docs/schema-hardening/column-conversion.csv",
         "docs/schema-hardening/table-conversion.md",
         "scripts/conversion/engine.py",
+        "scripts/conversion/source.py",
+        "scripts/conversion/admission.py",
+        "scripts/conversion/phase.py",
         "scripts/offline_convert.py",
     ],
 )
@@ -85,14 +88,52 @@ def test_schema_and_p2_dependencies_select_constraints_on_both_runtimes(history,
 @pytest.mark.parametrize(
     "path",
     [
+        "tests/integration/test_conversion_source_admission.py",
+        "tests/unit/test_conversion_phase.py",
+        "tests/integration/test_p3a_operational_flow.py",
+    ],
+)
+def test_p3a_test_collections_run_in_native_and_minimum_conversion_lanes(history, path):
+    root, current, evidence = history
+    write(root, path, "def test_synthetic(): pass\n# Changed P3A test\n")
+    current = context(root, current["base_sha"], commit(root), "12")
+    result = ci_plan.make_plan(current, evidence, root=root)
+    for lane in ("p2", "minimum-p2"):
+        assert path in result["lanes"][lane]["test_files"]
+        assert result["lanes"][lane]["disposition"] == "selected"
+        assert path in result["lanes"][lane]["triggering_paths"]
+    assert result["lanes"]["schema"]["disposition"] == "selected"
+    assert result["lanes"]["minimum-schema"]["disposition"] == "selected"
+    assert result["lanes"]["legacy"]["disposition"] == "reused"
+    assert path not in result["lanes"]["legacy"]["test_files"]
+    assert result["preparation"]["sqlite-binding"]["disposition"] == "selected"
+
+
+def test_p3a_handoff_prose_reuses_verified_effective_inputs(history):
+    root, current, evidence = history
+    write(root, "docs/schema-hardening/p3a-handoff.md", "# P3B handoff\n")
+    current = context(root, current["base_sha"], commit(root), "12")
+    result = ci_plan.make_plan(current, evidence, root=root)
+    assert not result["full"] and not result["fallback_reasons"]
+    assert {lane["disposition"] for lane in result["lanes"].values()} == {"reused"}
+    assert result["always_checks"]["reports"]["disposition"] == "selected"
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
         "tests/conftest.py",
         "tests/support/cli.py",
+        "tests/support/operational_source.py",
+        "tests/support/conversion_worker.py",
         "uv.lock",
         "src/repo_catalog/example.py",
         ".github/workflows/tests.yml",
         "scripts/ci_dependencies.json",
         "scripts/ci_plan.py",
         "unrecognized.txt",
+        "tests/integration/p3a_fixture.py",
+        "scripts/p3a_unclassified.py",
     ],
 )
 def test_shared_runtime_lock_policy_and_unknown_inputs_widen_conservatively(
@@ -268,6 +309,24 @@ def test_policy_cannot_drop_fixed_minimum_lane(history):
     write(root, "scripts/ci_dependencies.json", json.dumps(rules))
     with pytest.raises(ValueError, match="may not disappear"):
         ci_plan.policy(root)
+
+
+@pytest.mark.parametrize("path", sorted(ci_plan.MINIMUM_P2))
+def test_policy_cannot_drop_preexisting_conversion_files(history, path):
+    root, _, _ = history
+    rules = ci_plan.policy(root)
+    rules["groups"]["p2"].remove(path)
+    write(root, "scripts/ci_dependencies.json", json.dumps(rules))
+    with pytest.raises(ValueError, match="may not disappear"):
+        ci_plan.policy(root)
+
+
+def test_policy_accepts_additional_conversion_tests_without_shrinking_floor(history):
+    root, _, _ = history
+    rules = ci_plan.policy(root)
+    rules["groups"]["p2"].append("tests/unit/test_future_conversion_phase.py")
+    write(root, "scripts/ci_dependencies.json", json.dumps(rules))
+    assert ci_plan.MINIMUM_P2 <= set(ci_plan.policy(root)["groups"]["p2"])
 
 
 def test_required_baseline_prevents_removal_of_preexisting_coverage():

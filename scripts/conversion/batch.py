@@ -2,7 +2,7 @@
 
 import json
 
-from . import diagnostics, mapping
+from . import diagnostics, mapping, target
 from .common import ConversionError, canonical, digest, now
 
 
@@ -100,6 +100,7 @@ def prepare(db, source_id, run_id, records, *, map_repositories, encoding):
 
 
 def commit(db, run, table, index, input_sha256, output, fault):
+    target.require_p2_owner(db)
     proof = {
         name: [row_proof(name, row) for row in rows] for name, rows in output.items()
     }
@@ -154,6 +155,14 @@ def commit(db, run, table, index, input_sha256, output, fault):
 
 def validate_output(db, batch):
     manifest = json.loads(batch["output_manifest"])
+    if set(manifest.get("proof", {})) != {
+        "legacy_records",
+        "legacy_values",
+        "repositories",
+        "id_mappings",
+        "validation_results",
+    }:
+        raise ConversionError("INVALID_BATCH_MANIFEST")
     actual = {}
     for name, rows in manifest["proof"].items():
         if name not in {
