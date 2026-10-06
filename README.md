@@ -57,7 +57,20 @@ PR rootは明示選択します。通常照会はDBの読取りだけで完結�
 全取得対象Blobのdigestはbinaryや巨大Blobも含め記録しますが、全履歴・全binaryの原文保存ではありません。
 履歴の未保存本文は検索coverageに不足として出し、原文不在を空bytesへ置換しません。
 
-独立した新formatの設計と制約検証は [P1設計](docs/schema-hardening/p1-design.md) を参照してください。通常アプリのschemaはv2のままです。専用の[P2オフライン変換基盤](docs/schema-hardening/p2-foundation.md)に[P3Aのoperational source分類とphase handoff](docs/schema-hardening/p3a-handoff.md)を加え、合成v2入力のFTS/ANALYZE保全と検証済みarchive境界を扱います。全domain変換・新runtime・実データ移行・切替は後続工程です。[CI計測と固定workerの比較](docs/ci-performance.md)も参照してください。
+独立 target への[統合オフライン変換](docs/schema-hardening/integrated-handoff.md)は、合成 v2 入力の保存済み Git・PR データを通常テーブルへ変換し、明示した target DB に対する読み取り専用クエリと検索を提供します。原文不足・部分一覧を表示し、target は `building` のままです。通常アプリは引き続き schema v2 を使用し、実データ移行・本番切り替え・新オンライン同期は後続範囲です。
+
+```bash
+uv run --no-sync python scripts/integrated_demo.py --state-dir artifacts/integrated-source --derived
+uv run --no-sync python scripts/offline_convert.py seal \
+  --work-dir artifacts/integrated-target \
+  --source artifacts/integrated-source/catalog.sqlite3 \
+  --source-cache artifacts/integrated-source/cache
+uv run --no-sync python scripts/offline_convert.py integrated --work-dir artifacts/integrated-target
+uv run --no-sync repo-catalog --format json target \
+  --database artifacts/integrated-target/target.sqlite3 --allow-building repos
+```
+
+fixture の DB/cache パスは作成コマンドの出力でも確認できます。コミット・ファイル・PR 履歴・検索と中断再開の具体例は[統合 handoff](docs/schema-hardening/integrated-handoff.md)を参照してください。
 
 ## テスト・再現demo
 

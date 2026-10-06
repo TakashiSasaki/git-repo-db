@@ -5,8 +5,8 @@ This file applies repository-wide. Follow the user's latest explicit scope and a
 ## Current state and working rules
 
 - `repo-catalog` is an unreleased Python CLI for offline-queryable Git structure/content, GitHub PRs, and observation history. The normal application still uses **schema v2**.
-- P1 provides the independent `repo-catalog/catalog3-p1` target, contracts and lifecycle tests. P2 implements synthetic-tested source sealing, typed archive, representative ID mappings, atomic batches, resume proofs and guards. P3A adds operational v2 admission and a verified P2-to-P3A receipt. P3B adds guarded identity recipes and a distinct phase owner with immutable parent and source-derived output proofs. Change-aware CI is implemented. Full normalized conversion and new-runtime integration are not complete.
-- P3B has reached its bounded synthetic acceptance boundary; see the [English handoff](docs/schema-hardening/p3b-handoff.md) for exact recipes, evidence and limits. The next implementation slice for a subsequent task is **P3C: stored Git facts**, below. Do not repeat P1/P2/P3A/P3B or reopen the CI optimization project without a concrete defect.
+- P1 provides the independent `repo-catalog/catalog3-p1` target, contracts and lifecycle tests. P2 implements synthetic-tested source sealing, typed archive, representative ID mappings, atomic batches, resume proofs and guards. P3A adds operational v2 admission and a verified P2-to-P3A receipt. P3B adds guarded identity recipes and a distinct phase owner with immutable parent and source-derived output proofs. Change-aware CI is implemented. Integrated stored Git/API/PR conversion and explicit read-only target queries/search are implemented; see [integrated handoff](docs/schema-hardening/integrated-handoff.md). Online-runtime/first-sync integration, real data and cutover remain later work.
+- P3B has reached its bounded synthetic acceptance boundary; see the [English handoff](docs/schema-hardening/p3b-handoff.md) for exact recipes, evidence and limits. The integrated milestone implements stored Git facts, saved API/PR history, bounded saved-data reconstruction and explicit read-only target queries/search; P3C/P3D/P3E are internal labels, not separate user acceptance gates. Do not repeat completed foundations. Do not repeat P1/P2/P3A/P3B or reopen the CI optimization project without a concrete defect.
 - P3B started at feature `e40430e3f38d3339d67017a04262445f9415a8ec`, base `9a4110185d7e7abffc291f9cfd118ca71587f998`. Substantive code `c17b9de2a3a7dd4a98c0d72b93d478f05c860218` passed fresh full hosted run [37397157259](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37397157259): 630 normal, 2 isolated packaging and 413 audited minimum tests. Fetch and record actual HEAD/base/delta; historical SHAs are not reset instructions or proof about later code.
 - Continue on `design/schema-v2-hardening` / PR #1 unless the latest request or repository state establishes another target. Do not commit directly to main, auto-merge, overwrite user changes, or interpret this guide as permission to convert/cut over real data.
 - Backward compatibility with old application/CLI/DB formats is unnecessary. **Acquired data must be preserved.** Prefer offline one-way conversion into a separate target; full GitHub re-download is not the normal migration strategy.
@@ -25,7 +25,7 @@ Start with [README](README.md) and [architecture](docs/architecture.md), then re
 
 The complete SQL and machine-readable contracts are authoritative; generated CSV/Markdown/inventory are views. `proposal-core.sql` is a regression fixture, not the complete target. `source-access.json` is lexical analysis, not a complete call graph. `tests/support/p1_admission.py` demonstrates lifecycle behavior, not a production runtime. Read [implementation status](docs/implementation-status.md) as historical evidence.
 
-## Accepted P3A/P3B boundaries and next bounded slice: P3C
+## Accepted P3A/P3B boundaries and integrated continuation
 
 P3A admits the strict v2 core plus structurally and relationally recognized application FTS and capability-tested SQLite statistics. It retains complete physical/schema identities and per-object dispositions. Unknown objects remain fail-closed and classification rejection has a private local machine-readable report. Accepted core table values are typed archive input; indexes/triggers and derived search/statistics remain sealed bytes with explicit rebuild/exclusion.
 
@@ -37,29 +37,18 @@ P3B uses a third `conversion_runs` owner with `p3b-identity/1`, entered through 
 
 Identity recipes preserve service/source/repository/endpoint IDs, names, metadata and original time bounds; new binding UUIDv4 allocations map the archived composite key atomically and remain stable within a workspace. Normalized v2 facts take precedence over archived legacy assertions, with attributed blocking/partial diagnostics for contradictions, missing/unsafe references, malformed values and unresolved legacy-only facts. Inventory observations remain archived and deferred. Execution completion, semantic readiness and activation remain separate; current snapshot/publication pointers stay NULL and lifecycle stays `building`.
 
-### P3C prerequisites and bounded implementation
+### Integrated implementation boundary and testing cadence
 
-- Read the P3B handoff, complete DDL/contracts and stored Git write paths before defining recipes. Convert only existing object/edge/content/digest/acquisition/snapshot facts from disposable sealed synthetic input. Local Git reconstruction is P4; acquisition, PR history and runtime integration remain later work.
-- Establish a distinct reviewed P3C write owner and bounded authentic P3B predecessor transition before domain writes. Preserve the complete identity owner, committed outputs, maps, decisions, diagnostics and parent archive/receipt proofs; do not expand P3B ownership or ignore fingerprints. Define exact permitted enrichments and their before/after proofs if required.
-- Preserve repository IDs, object-format-scoped OIDs, content bytes, digest representation, acquisition provenance, raw path/ref/tree-name bytes, same-owner edges and parent order. Retain legacy verification assertions separately; missing originals are not newly verified bytes or empty content. Do not merge distinct repositories sharing OIDs or content.
-- Keep lock/guards, atomic batches, stable committed maps, exact resume, bounded target recovery and source/cache immutability. Retain blockers and `building`; neither successful stored-fact conversion nor a snapshot recipe authorizes final pointer publication or activation.
-
-### P3C acceptance and deliverables
-
-Provide executable recipes/maps and phase-scoped source-derived proofs, focused positive/negative/fault tests and an English handoff. Run authentic P3B -> P3C ownership -> stored-fact batches -> interruption/resume -> independent ID/byte/edge/order/diagnostic comparison. Counts/FKs and self-reported hashes alone are insufficient; coherently rehashed corruption must fail source comparison.
-
-Retain identity regression cases, both representative-map modes, parent/phase/output tamper rejection, worker termination before/after COMMIT, competing writers and sidecar protections. Register actual dependencies and minimum-runtime collections; keep P1/P2/P3A/P3B, offline packaging and exact-ID gates. Report fresh/reused/not-applicable evidence honestly.
-
-P3B measurements expose O(N) verification ownership sets and parent proof metadata, multiple full boundary scans, and full row metadata in batch manifests. Prefer bounded extraction/proof buffers for P3C and measure remaining costs without weakening restart proofs or claiming real-dataset performance.
-
-### Later slices
-
-| Slice | Scope and completion evidence |
-|---|---|
-| P3C | Existing Git facts: objects/edges/content/digests/acquisitions/snapshots; compare bytes, IDs, ownership and order. Missing originals are not newly verified bytes. Git reconstruction is P4. |
-| P3D | Saved API/PR history: payloads/pages/documents/versions/observations/reviews/events/unresolved data; preserve A->B->A, timestamps and partial scopes. |
-| P3E | Integrated synthetic normalized conversion, restart and ID/byte/edge/pointer/diagnostic comparison; still not activation. |
-| P4-P7 | Offline reanalysis; new runtime/first-sync reuse; explicitly scoped real-data dry-run; separately scoped cutover/rollback. |
+- Reuse the P3B guarded writer, identity mappings and immutable parent evidence. Establish the minimum explicit integrated owner/transition from the accepted P3B state and a straightforward supported sealed-v2 path; do not widen P3B ownership or ignore fingerprints.
+- Convert stored Git objects, ordered parents, raw tree/ref/path bytes, contents/digests, acquisitions, snapshots, roots/origins and supported manifests. Resolve PR-dependent provenance within this milestone.
+- Convert saved API payloads/pages/scopes/memberships, PR identities/observations, document versions/observations, reviews/threads/comments/events, code listings/Git links and inventory observations. Replay saved payloads only for known normalization gaps; retain original observation times and partial pagination. Completed listings stay sealed.
+- Every legacy table needs a concise disposition: normalized, archive-preserved, reconstructed from saved data, or deferred operational state. Archival coverage alone is not normalized feature completion.
+- Provide explicit opt-in, read-only target repository/commit/file/PR-history queries and text search with honest missing-content coverage. Diagnostic reads may explicitly allow a building target. Do not initialize/migrate, fetch, run Git or publish during queries.
+- Within one locked invocation reuse validation of immutable inputs and unchanged state. Entry/resume verifies identity/recovery/checkpoints, batches verify new atomic output, exit compares committed results. Revalidate uncertainty after recovery/change and retain deliberate deep audit. Use bounded buffers and streaming comparisons; avoid duplicating payload bytes in proof manifests.
+- Required acceptance: operational v2 -> normalized target -> meaningful Git/PR queries/search; representative partial/malformed input; multiple refs/same OID, raw paths/ordered parents, distinct observations and A->B->A, pagination/resume/stable mappings; actual pre/post-COMMIT process interruption; source/cache immutability/network denial; independent byte/ID/edge/order comparisons; modest synthetic scaling measurement.
+- During editing run relevant recipe/query tests, then affected closure and compact end-to-end. Run required final CI once for stable integrated implementation, fixing real failures and rerunning affected/final checks. Preserve minimum-SQLite, offline packaging, safety coverage, baseline IDs, planner reuse and final fail-safe gate. Avoid duplicate full local runs immediately before identical hosted CI.
+- Keep executable contracts/generated views and implementation-plan.md consistent. Write one concise English integrated handoff and update PR #1 description. Complete independent functionality if a genuine domain blocker remains and report the precise limitation.
+- Real user data/cache access or conversion, cutover, default-catalog changes, new online sync, main commits and PR merge remain outside scope. P4-P7 online-runtime/first-sync and separately scoped real-data/cutover work follow later.
 
 ## Architecture and preservation rules
 

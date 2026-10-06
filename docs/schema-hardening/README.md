@@ -1,6 +1,6 @@
-# Schema v2ハードニング：P1 DDL、P2基盤、P3A handoff
+# Schema v2ハードニング：統合オフライン変換と target クエリ
 
-**現在の成果物:** [P3A source admission・phase handoff](p3a-handoff.md)、[P2基盤・範囲と検証](p2-foundation.md)、[CI計測](../ci-performance.md)、 [P1設計とCI修復](p1-design.md)、[完了一覧・正当な補完経路の仕上げ](p1-lifecycle.md)、[完全target DDL](target-schema.sql)、[機械可読変換契約](conversion-contract.json)、[I01〜I31対応](invariant-contract.json)。通常migration経路と実DBは変更していない。以下の調査・88件成功は前工程の記録。最新HEADの結果はPR checks/本文とP3Aの検証記録で確認する。
+**現在の成果物:** [統合変換・読み取り専用クエリ](integrated-handoff.md)、[P3B identity](p3b-handoff.md)、[P3A source admission・phase handoff](p3a-handoff.md)、[P2基盤・範囲と検証](p2-foundation.md)、[CI計測](../ci-performance.md)、 [P1設計とCI修復](p1-design.md)、[完了一覧・正当な補完経路の仕上げ](p1-lifecycle.md)、[完全target DDL](target-schema.sql)、[機械可読変換契約](conversion-contract.json)、[I01〜I31対応](invariant-contract.json)。通常migration経路と実DBは変更していない。以下の調査・88件成功は前工程の記録。最新HEADの結果は PR checks/本文と統合 handoff で確認する。
 
 対象: `TakashiSasaki/git-repo-db`。調査日: 2026-10-05 UTC。
 作業ブランチ: `design/schema-v2-hardening`。
@@ -78,7 +78,7 @@ SHA検査は保存済みAPI bodyとdocument bodyについて行う。32MiB超は
 前回pilot DBが作業環境に残っているため、これに86項目の読取り専用診断を行い、違反なし・source file前後一致を確認した。非公開artifactにのみ記録し、実データの行・API本文・識別子を公開文書へ転載しない。
 これは実DBの**変換テストではない**。提案DDLの制約と不具合再現はfixtureでのみ検証した。
 
-提案DDL断片はin-memory DBでparent ownership、pointer更新/削除、同一seedの複数ref、本文共有と観測の分離を確認する。完全target DDLはP1で独立作成した。P2 archive/map/batch基盤は独立commandで実装した。全domain converter・再解析engineはP3/P4であり、実データ移行成功を主張しない。
+提案DDL断片はin-memory DBでparent ownership、pointer更新/削除、同一seedの複数ref、本文共有と観測の分離を確認する。完全target DDLはP1で独立作成した。P2 archive/map/batch基盤は独立commandで実装した。保存済み Git/PR converter と限定保存ペイロード復元は統合実装へ進んだ。追加再解析と新オンライン runtime は後続範囲で、実データ移行成功を主張しない。
 
 ## 今回の検証記録
 

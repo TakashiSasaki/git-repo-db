@@ -17,6 +17,7 @@ JSON modeのstdoutは結果専用です。public schemaは同梱`resources/schem
 | PR照会 | pr list/show/documents/thread/timeline |
 | 原文 | content show/hydrate |
 | 状態 | coverage、status |
+| 独立target照会 | target repos/commit/tree/file/pr/search |
 
 各コマンドの引数は`repo-catalog COMMAND --help`または`repo-catalog COMMAND ACTION --help`で確認できます。
 repo selectorはUUIDv4、一意な名前、host/owner/name、instance名/repo名です。曖昧な指定は拒否します。
@@ -62,3 +63,24 @@ list/searchは`--limit`（既定100、上限1000）と`--cursor`を持ちます�
 取消しはforegroundへSIGINTを送ります。jobs cancelはqueued/waitingだけに適用し、runningを成功扱いにしません。
 content showは保存rawのみ、既定64 KiB、最大1 MiBの範囲をbase64で返します。
 hydrateは明示的な再取得で、保存profile対象外や取得元から失われた原文は復元できません。
+
+## 独立targetの読み取り
+
+変換先は`target --database PATH`で明示します。通常のstate設定や既定catalogを使わず、初期化・migration・Git・network・索引更新を行いません。完全なtarget DDLとdatabase identityのSHA-256を同梱の契約値と照合し、SQLite 3.46.1以上でsidecarのない停止中DBをimmutable/read-onlyで開きます。読み取り中のDB変更やsidecarを検出した場合は`TARGET_BUSY`（exit 5）です。pending journalの回復は変換workerで行ってください。
+
+```bash
+repo-catalog --format json target --database /absolute/path/target.sqlite3 --allow-building repos
+repo-catalog --format json target --database /absolute/path/target.sqlite3 --allow-building commit --repo REPO_ID --commit sha1:COMMIT_HEX
+repo-catalog --format json target --database /absolute/path/target.sqlite3 --allow-building tree --repo REPO_ID --commit sha1:COMMIT_HEX
+repo-catalog --format json target --database /absolute/path/target.sqlite3 --allow-building file --repo REPO_ID --commit sha1:COMMIT_HEX --path src/app.py
+repo-catalog --format json target --database /absolute/path/target.sqlite3 --allow-building pr --repo REPO_ID --number 7
+repo-catalog --format json target --database /absolute/path/target.sqlite3 --allow-building search --repo REPO_ID --kind code --literal 'search text'
+```
+
+`REPO_ID`と`COMMIT_HEX`は保存されたrepository IDと40桁のcommit OIDに置き換えます（SHA-256の場合は`sha256:`と64桁）。targetのrepo指定はIDの完全一致です。`repos`と`search`のrepo省略は全repositoryを対象にします。`file --path-b64 BASE64`は任意のraw pathを指定できます。`pr`の番号はbinding/kindに属し、曖昧な場合は`--binding BINDING_ID`、merge requestには`--request-kind merge_request`を指定します。
+
+commitはparent順序・raw header/message・treeを、fileは保存text・raw path・content digest・原文の有無を返します。PRは`record_kind`ごとにidentity、観測、文書版、文書観測、review/thread/comment/event、code listingと履歴を返し、A→B→Aや同じbodyを持つ別文書を保持します。searchは`--kind code|commits|pr`の保存原文をcase-sensitiveでscanします。PR文書検索は全保存版・全観測を対象にし、未保存のtextやpartial listing/collectionをcoverageへ記録します。
+
+各actionは`--limit`（既定100、上限1000）と`--offset`（既定0）を持ち、続きは`page.next_offset`を渡します。外側pageはPRの各履歴行も個別に数えます。検索pageの後に見つかる未保存原文もcoverageへ反映し、欠落の詳細は1000件までと追加件数を返します。timeout時は不確定なpageを捨てます。
+
+`catalog.lifecycle`を常に返します。`building`は`--allow-building`が必要で、診断結果は`partial`（exit 3）、publication/runtime readinessの保証を与えません。省略時と`rejected`は`TARGET_NOT_READY`（exit 5）です。`validated`でも保存scopeや原文に欠落があれば`partial`になります。現在snapshot/observationなどのpointerを更新したり、過去観測を現在の公開状態として扱ったりしません。
