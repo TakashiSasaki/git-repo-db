@@ -76,6 +76,7 @@
   "report_inputs": [
     "docs/ci-performance-baseline.json",
     "docs/ci-performance-results.json",
-    "docs/ci-selection-results.json"
+    "docs/ci-selection-results.json",
+    "docs/validation/real-world/*.json"
   ]
 }

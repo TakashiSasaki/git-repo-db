@@ -27,6 +27,7 @@ def followup(history, path, text="changed\n", event="push"):
         "docs/testing.md",
         "docs/schema-hardening/implementation-plan.md",
         "docs/ci-selection-results.json",
+        "docs/validation/real-world/2026-10-06-public-git.json",
     ],
 )
 def test_main_prose_change_does_not_require_unconditional_acceptance(history, path):

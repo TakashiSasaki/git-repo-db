@@ -1,0 +1,332 @@
+{
+  "version": 1,
+  "run_id": "2026-10-06-museum-portal-git-04f23c7",
+  "result": "PASS",
+  "application": {
+    "commit": "04f23c7082b1b9d0cd96df1062459b7b71049bb0",
+    "version": "0.2.0",
+    "wheel_sha256": "8a6deb0ac7d07d7e5c219f0c07885efc1bb71711d1c7f9d2fdc0ebcfc14678c7",
+    "source_tree_git_oid": "f54fcc7784d01a64ab6a4425d043894d94c42029"
+  },
+  "target": {
+    "repository": "TakashiSasaki/museum-portal",
+    "remote": "https://github.com/TakashiSasaki/museum-portal.git",
+    "ref": "refs/heads/museum-portal",
+    "path": "README.md",
+    "repo_id": "a3de86e5-3c5e-4873-924f-4dde465c1779",
+    "commit": "sha1:05603220b2dad79cae15c40ddcebcc69d9e62ba7",
+    "search_literal": "portal",
+    "file_raw_sha256": "886fc1f9546866d089cb07688b93bce10e1a562af6f24683209e72180bbc001d",
+    "observed_refs": [
+      {
+        "ref_b64": "cmVmcy9oZWFkcy9hZ2VudC9pbWFnaW5lZGVjay10YXAtZnVsbHNjcmVlbi12Mi10ZW1w",
+        "oid": "sha1:b83706e3c6560b54ebdd07eeb286dcc5297e242e"
+      },
+      {
+        "ref_b64": "cmVmcy9oZWFkcy9tdXNldW0tcG9ydGFs",
+        "oid": "sha1:05603220b2dad79cae15c40ddcebcc69d9e62ba7"
+      },
+      {
+        "ref_b64": "cmVmcy90YWdzL2Fpc3R1ZGlvLWluaXQ=",
+        "oid": "sha1:05603220b2dad79cae15c40ddcebcc69d9e62ba7"
+      }
+    ],
+    "tree_oid": "sha1:34d0fc96c96b1c6e34b6fa045a8138a4d4f5c216",
+    "ordered_parent_oids": [
+      "sha1:9735876c3f87e8a6111cb6ab26c27023a966d5a0",
+      "sha1:888f60ac3c934750ce5d5435c0d245a6a3ee6f94"
+    ],
+    "representative_file_bytes": 71
+  },
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "driver_python": "3.12.14",
+    "doctor": {
+      "fts5_trigram": true,
+      "git": "git version 2.52.0",
+      "python": "3.12.14",
+      "sqlite": "3.53.1",
+      "strict": true
+    },
+    "working_directory": "${TRIAL}/outside",
+    "state": "${TRIAL}/catalog",
+    "temporary_directories": "automatically created with tempfile.mkdtemp",
+    "uv_version": "0.12.19",
+    "network": "Inherited managed HTTP proxy and CA trust; public Git HTTPS only; offline DNS/socket guard for queries and maintenance.",
+    "sqlite_journal_mode": "delete"
+  },
+  "scope": {
+    "git_only": true,
+    "acquisition": "all advertised heads and tags of exactly one repository; no account discovery",
+    "repetitions": {
+      "initial_sync": 1,
+      "subsequent_sync": 1
+    },
+    "queries": "selected ref, representative saved text file, literal code search",
+    "excluded": [
+      "GitHub REST/GraphQL and PR histories",
+      "legacy-v2 import/finalization",
+      "active catalog switching",
+      "release publication"
+    ]
+  },
+  "budget": {
+    "elapsed_seconds_max": 600,
+    "git_remote_operations_max": 3,
+    "github_api_requests_max": 0,
+    "git_transfer_timeout_seconds": 120,
+    "enforcement": "supervised whole-workload deadline with descendant termination; locked admission gate before each Git remote operation; existing transfer deadline"
+  },
+  "requests": {
+    "github_api": 0,
+    "git_remote_operations": 3,
+    "git_http_requests": 7,
+    "families": {
+      "git_advertisement": 3,
+      "git_upload_pack": 4,
+      "proxy_connect": 3
+    },
+    "remote_operations": [
+      {
+        "elapsed_seconds": 0.4145,
+        "exit_code": 0,
+        "http_request_counts": {
+          "git_advertisement": 1,
+          "git_upload_pack": 1,
+          "proxy_connect": 1
+        },
+        "operation": "ls-remote",
+        "phase": "initial_sync",
+        "remote": true
+      },
+      {
+        "elapsed_seconds": 0.8734,
+        "exit_code": 0,
+        "http_request_counts": {
+          "git_advertisement": 1,
+          "git_upload_pack": 2,
+          "proxy_connect": 1
+        },
+        "operation": "fetch",
+        "phase": "initial_sync",
+        "remote": true
+      },
+      {
+        "elapsed_seconds": 0.4198,
+        "exit_code": 0,
+        "http_request_counts": {
+          "git_advertisement": 1,
+          "git_upload_pack": 1,
+          "proxy_connect": 1
+        },
+        "operation": "fetch",
+        "phase": "unchanged_sync",
+        "remote": true
+      }
+    ],
+    "offline_git_calls": 0,
+    "measurement": "temporary Git stderr observer counts outbound request lines and discards raw headers/bodies; proxy CONNECT counted separately; API collector unused"
+  },
+  "timing": {
+    "started_at_utc": "2026-10-06T05:19:08.894318+00:00",
+    "finished_at_utc": "2026-10-06T05:19:19.386008+00:00",
+    "elapsed_seconds": 10.4896,
+    "setup_elapsed_seconds": 2.1225,
+    "peak_child_rss_kib": 23520,
+    "timezone": "Asia/Tokyo",
+    "started_at_local": "2026-10-06T14:19:08.894318+09:00",
+    "finished_at_local": "2026-10-06T14:19:19.386008+09:00"
+  },
+  "sizes": {
+    "after_initial_sync": {
+      "database_bytes": 7081984,
+      "cache_logical_bytes": 897604,
+      "cache_regular_files": 8
+    },
+    "after_second_sync": {
+      "database_bytes": 7622656,
+      "cache_logical_bytes": 897727,
+      "cache_regular_files": 11
+    },
+    "final_catalog": {
+      "database_bytes": 7622656,
+      "cache_logical_bytes": 897727,
+      "cache_regular_files": 11
+    },
+    "restored_catalog": {
+      "database_bytes": 7622656,
+      "cache_logical_bytes": 0,
+      "cache_regular_files": 0
+    },
+    "backup_database_bytes": 7622656,
+    "backup_manifest_bytes": 1412
+  },
+  "queries": {
+    "refs": {
+      "fresh_sha256": "739df9fb2494241cb5746d8a860710fc5e8142f198f57915985e670c923773ff",
+      "restored_sha256": "739df9fb2494241cb5746d8a860710fc5e8142f198f57915985e670c923773ff",
+      "match": true,
+      "returned_rows": 3,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "commit": {
+      "fresh_sha256": "7893ba3be12ec60b7d98235fa31eef5827df26e7336927ec816f09011e04e65c",
+      "restored_sha256": "7893ba3be12ec60b7d98235fa31eef5827df26e7336927ec816f09011e04e65c",
+      "match": true,
+      "returned_rows": 1,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "tree": {
+      "fresh_sha256": "b384796dbc153194b3567ab9dee76785edd2003de45db9c9d903c59e4cfa7d8f",
+      "restored_sha256": "b384796dbc153194b3567ab9dee76785edd2003de45db9c9d903c59e4cfa7d8f",
+      "match": true,
+      "returned_rows": 108,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "file": {
+      "fresh_sha256": "41f1ee4df2d28ee7dac0f39d3a6fb4c62b6ded8f6b83486c80b01178db45f962",
+      "restored_sha256": "41f1ee4df2d28ee7dac0f39d3a6fb4c62b6ded8f6b83486c80b01178db45f962",
+      "match": true,
+      "returned_rows": 1,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "content": {
+      "fresh_sha256": "f0baddf99f8bfea61821b1224422ef487d8f13197dbd149475f23642872b35d8",
+      "restored_sha256": "f0baddf99f8bfea61821b1224422ef487d8f13197dbd149475f23642872b35d8",
+      "match": true,
+      "returned_rows": 1,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "code_search": {
+      "fresh_sha256": "4f4d11955385b89f5a95219d72b3b6189a2d136b9b8320484bd9e87298248f81",
+      "restored_sha256": "4f4d11955385b89f5a95219d72b3b6189a2d136b9b8320484bd9e87298248f81",
+      "match": true,
+      "returned_rows": 37,
+      "coverage_complete": true,
+      "has_more": false
+    }
+  },
+  "normalization": "JSON UTF-8, ensure_ascii=false, sorted object keys, compact separators; include command/items/coverage, preserve row and parent order, exclude envelope and page cursors",
+  "backup_restore": {
+    "result": "PASS",
+    "full_git_mirror": false,
+    "cache_included": false,
+    "manifest_checksum_verified": true,
+    "source_catalog_unchanged": true,
+    "normalized_query_pairs_matched": 6,
+    "restored_cache_logical_bytes": 0
+  },
+  "commands": [
+    {"label":"package_origin","argv":["${TRIAL}/venv/bin/python","-c","import repo_catalog; print(repo_catalog.__file__)"],"offline_guard":false,"exit_code":0,"elapsed_seconds":0.0205},
+    {"label":"doctor","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","doctor"],"offline_guard":false,"exit_code":0,"elapsed_seconds":0.1307,"status":"complete","coverage_complete":true},
+    {"label":"init","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","init","--profile","catalog-text-v1","--cache-max-bytes","67108864","--min-free-bytes","67108864"],"offline_guard":false,"exit_code":0,"elapsed_seconds":0.1121,"status":"complete","coverage_complete":true},
+    {"label":"source_add","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","sources","add","git-url","--name","TakashiSasaki/museum-portal","--url","https://github.com/TakashiSasaki/museum-portal.git"],"offline_guard":false,"exit_code":0,"elapsed_seconds":0.0959,"status":"complete","coverage_complete":true},
+    {"label":"discover","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","discover","--source","7bae2c0b-1b2b-4994-b747-79af887bb37c"],"offline_guard":false,"exit_code":0,"elapsed_seconds":0.141,"status":"complete","coverage_complete":true},
+    {"label":"repos","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","repos","list"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1126,"status":"complete","coverage_complete":true},
+    {"label":"initial_sync","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","sync","git","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779"],"offline_guard":false,"exit_code":0,"elapsed_seconds":6.5443,"status":"complete","coverage_complete":true},
+    {"label":"initial_refs","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","refs","list","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--limit","1000"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1119,"status":"complete","coverage_complete":true},
+    {"label":"initial_commit","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","commits","show","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1297,"status":"complete","coverage_complete":true},
+    {"label":"unchanged_sync","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","sync","git","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779"],"offline_guard":false,"exit_code":0,"elapsed_seconds":0.9111,"status":"complete","coverage_complete":true},
+    {"label":"fresh_refs","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","refs","list","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--limit","1000"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1182,"status":"complete","coverage_complete":true},
+    {"label":"fresh_commit","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","commits","show","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1189,"status":"complete","coverage_complete":true},
+    {"label":"fresh_tree","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","tree","list","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal","--limit","1000"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1238,"status":"complete","coverage_complete":true},
+    {"label":"fresh_file","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","file","show","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal","--path","README.md"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1219,"status":"complete","coverage_complete":true},
+    {"label":"fresh_content","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","content","show","--content-id","14","--length","1048576"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1149,"status":"complete","coverage_complete":true},
+    {"label":"fresh_code_search","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","search","code","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal","--literal","portal","--limit","1000"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1251,"status":"complete","coverage_complete":true},
+    {"label":"independent_git_commit","argv":["/usr/local/bin/git","--git-dir","${TRIAL}/catalog/cache/a3de86e5-3c5e-4873-924f-4dde465c1779/1.git","cat-file","-p","05603220b2dad79cae15c40ddcebcc69d9e62ba7"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.0021},
+    {"label":"independent_git_blob","argv":["/usr/local/bin/git","--git-dir","${TRIAL}/catalog/cache/a3de86e5-3c5e-4873-924f-4dde465c1779/1.git","cat-file","blob","a88da6f28eb20b6b8030a24e9e9bc276c701799d"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.0021},
+    {"label":"fresh_db_check","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","db","check","--full"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1828,"status":"complete","coverage_complete":true},
+    {"label":"backup","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/catalog","--format","json","db","backup","--output","${TRIAL}/backup/catalog.sqlite3"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1617,"status":"complete","coverage_complete":true},
+    {"label":"restore","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","db","restore","--input","${TRIAL}/backup/catalog.sqlite3"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1545,"status":"complete","coverage_complete":true},
+    {"label":"restored_refs","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","refs","list","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--limit","1000"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1243,"status":"complete","coverage_complete":true},
+    {"label":"restored_commit","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","commits","show","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1134,"status":"complete","coverage_complete":true},
+    {"label":"restored_tree","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","tree","list","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal","--limit","1000"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1226,"status":"complete","coverage_complete":true},
+    {"label":"restored_file","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","file","show","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal","--path","README.md"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1763,"status":"complete","coverage_complete":true},
+    {"label":"restored_content","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","content","show","--content-id","14","--length","1048576"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1126,"status":"complete","coverage_complete":true},
+    {"label":"restored_code_search","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","search","code","--repo","a3de86e5-3c5e-4873-924f-4dde465c1779","--ref","refs/heads/museum-portal","--literal","portal","--limit","1000"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1176,"status":"complete","coverage_complete":true},
+    {"label":"restored_db_check","argv":["${TRIAL}/venv/bin/repo-catalog","--state-dir","${TRIAL}/restored","--format","json","db","check","--full"],"offline_guard":true,"exit_code":0,"elapsed_seconds":0.1582,"status":"complete","coverage_complete":true}
+  ],
+  "criteria": [
+    {"id":"installed_package_outside_checkout","result":"PASS","pass_condition":"Imported package is in the separate installed venv; CLI cwd is outside the checkout."},
+    {"id":"doctor_does_not_create_state","result":"PASS","pass_condition":"Doctor completes without creating the absent catalog state."},
+    {"id":"exactly_one_target_repository","result":"PASS","pass_condition":"Discovery registers exactly TakashiSasaki/museum-portal and no other repository."},
+    {"id":"initial_sync_complete","result":"PASS","pass_condition":"Initial Git synchronization returns complete with exit 0."},
+    {"id":"target_ref_resolves","result":"PASS","pass_condition":"refs/heads/museum-portal resolves to one stored commit."},
+    {"id":"second_sync_complete","result":"PASS","pass_condition":"The subsequent Git synchronization returns complete with exit 0."},
+    {"id":"unchanged_refs_and_commit","result":"PASS","pass_condition":"All three ref/OID pairs and the selected commit query remain identical across syncs."},
+    {"id":"selected_text_file_saved","result":"PASS","pass_condition":"README.md has stored text rather than missing-content substitution."},
+    {"id":"selected_file_read_in_full","result":"PASS","pass_condition":"Content is complete and equals the UTF-8 bytes of the file query."},
+    {"id":"literal_search_finds_selected_file","result":"PASS","pass_condition":"Literal portal search returns a hit for README.md."},
+    {"id":"one_acquired_git_cache","result":"PASS","pass_condition":"Exactly one bare Git cache is available for independent local comparison."},
+    {"id":"independent_commit_tree_and_parent_order","result":"PASS","pass_condition":"Stored tree OID and ordered parents equal local git cat-file output."},
+    {"id":"independent_blob_bytes","result":"PASS","pass_condition":"Stored README.md bytes equal the independently read Git blob bytes."},
+    {"id":"fresh_structural_check","result":"PASS","pass_condition":"Full fresh-catalog check reports SQLite ok, no foreign-key violations and no owner-evidence errors."},
+    {"id":"backup_manifest_checksum","result":"PASS","pass_condition":"Backup SHA-256 equals the adjacent manifest checksum."},
+    {"id":"restore_destination_initially_absent","result":"PASS","pass_condition":"Restore uses a newly created, separate destination."},
+    {"id":"six_restored_normalized_queries_match","result":"PASS","pass_condition":"All six representative fresh/restored normalized query SHA-256 pairs match."},
+    {"id":"restored_structural_check","result":"PASS","pass_condition":"Full restored-catalog check reports SQLite ok, no foreign-key violations and no owner-evidence errors."},
+    {"id":"backup_source_catalog_unchanged","result":"PASS","pass_condition":"Source catalog file SHA-256 is unchanged by backup/restore and subsequent reads."},
+    {"id":"time_budget","result":"PASS","pass_condition":"Application validation workload finishes within the supervised 600-second deadline."},
+    {"id":"remote_operation_budget","result":"PASS","pass_condition":"At most three Git remote operations are admitted by the locked gate."},
+    {"id":"http_requests_observed","result":"PASS","pass_condition":"The observer measures outbound Git advertisement/upload-pack HTTP requests."},
+    {"id":"offline_queries_do_not_execute_git","result":"PASS","pass_condition":"Guarded ordinary queries and maintenance make no Git calls."}
+  ],
+  "diagnostics": [],
+  "failure": null,
+  "criteria_semantics": "PASS iff the pass_condition holds; FAIL otherwise. Excluded scopes are UNEXECUTED and never counted as PASS.",
+  "setup_commands": [
+    {"argv":["uv","build","--wheel","--out-dir","${TRIAL}/dist"],"exit_code":0,"elapsed_seconds":1.1193},
+    {"argv":["uv","export","--locked","--no-dev","--no-emit-project","--format","requirements-txt","--output-file","${TRIAL}/requirements.txt"],"exit_code":0,"elapsed_seconds":0.0195},
+    {"argv":["uv","venv","${TRIAL}/venv","--python","/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python","--no-python-downloads"],"exit_code":0,"elapsed_seconds":0.0596},
+    {"argv":["uv","pip","install","--python","${TRIAL}/venv/bin/python","--constraint","${TRIAL}/requirements.txt","${TRIAL}/dist/repo_catalog-0.2.0-py3-none-any.whl"],"exit_code":0,"elapsed_seconds":0.9241}
+  ],
+  "setup_environment": {
+    "UV_CACHE_DIR": "${TRIAL}/uv-cache",
+    "TMPDIR": "${TRIAL}/tmp",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "snapshots": {
+    "initial_sync": "bdf5525e-2f07-4b76-acc7-5a8b7dcaeff9",
+    "unchanged_sync": "251b2c44-52a7-48fc-8f50-d6e4ba94abfe"
+  },
+  "measurements_include_temporary_observer_overhead": true,
+  "limitations": [
+    "Git-only scope; no authenticated API/PR, conditional REST validators, GraphQL pagination or API rate-limit behavior tested.",
+    "No real existing v2 catalog was available; salvage import/finalization and preservation comparisons remain unexecuted.",
+    "Catalog backup excludes the Git cache and originals that were not saved; this is not a full Git mirror.",
+    "One small Linux repository run establishes only the recorded scope, not general release acceptance.",
+    "Earlier connector metadata lookups are reconnaissance outside this application trial and its API-zero budget."
+  ],
+  "evidence_change_checks": {
+    "focused_ci_tests": {
+      "status": "PASS",
+      "files": [
+        "tests/unit/test_ci_plan.py",
+        "tests/integration/test_ci_execution.py"
+      ],
+      "passed": 60,
+      "elapsed_seconds": 4.54
+    },
+    "initial_test_collection": {
+      "status": "FAILED_BEFORE_TEST_EXECUTION",
+      "exit_code": 4,
+      "reason": "jsonschema missing from the temporary development environment; installed the locked dependency before the successful focused run"
+    },
+    "ruff_lint_and_format": {
+      "status": "PASS",
+      "files": [
+        "scripts/ci_plan.py",
+        "tests/unit/test_ci_plan.py"
+      ]
+    },
+    "repository_report_validation": "PASS",
+    "diff_whitespace": "PASS",
+    "full_application_suite": "UNEXECUTED; application runtime source unchanged",
+    "hosted_ci": "UNEXECUTED; no remote push"
+  }
+}

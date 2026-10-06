@@ -39,7 +39,7 @@ cache/lease/予約/旧running processを有効な復元状態とみなしませ�
 
 catalog3 の新規初期化は packaged DDL から直接行います。旧 v2 の取得済みデータは、停止した source を別の新規 state へ `import-v2` で救出し、`db finalize` の明示的な readiness 検査を通します。元 source DB/cache は読取り専用証拠として保護され、runtime cache へ流用・回収されません。typed archive、診断、source identity と current 選択の証拠は target 内へ保存します。
 
-実データ試行には、保全したv2 DBとcacheの明示path、別の新規state、オフラインimportの実行許可を用意してください。cacheを保存していない場合も明示し、欠けた原本はpartial coverageとして扱います。指定前は使い捨ての合成データで導入確認だけを行います。
+実データ試行では、許可された場所から元DB/cacheを読み取り専用で特定し、取り込み先・backup・restore・測定先は自動生成した別の一時directoryに置きます。元データを一意に特定できない場合は、候補と不足情報を報告して変更前に停止します。cacheを保存していない場合も明示し、欠けた原本はpartial coverageとして扱います。旧DBの取り込みと公開repoからの新規収集は別の検証範囲です。
 
 sourceに`-wal`、`-shm`、`-journal`がある場合、削除してimportを通してはいけません。元DBとsidecar一式を保全し、writerを停止した状態でcacheとの整合性も確保した別コピーを用意します。sidecarが残る入力は、保全したコピー側でSQLite backup API等の整合コピー手順を行い、sidecarのない別DBを作ってからimportします。`import-v2`は元DBのcheckpointや修復を行わず、現在の`db backup`はcatalog3用です。元資料は実用上の受け入れが完了するまで保持してください。
 
@@ -48,6 +48,8 @@ imported current pointer は同じ owner の公開済み事実と元の選択証
 最初の sync で scope、service、principal、API/parser/profile、head/base の証拠が一致する一覧や validator を再利用します。不明な legacy cursor は再開に使わず、必要な対象だけ明示取得します。imported job/lease/容量予約は過去の証拠であり、新しい実行を開始してください。
 
 実GitHub同期は、対象1repoと操作範囲、通常のsecret供給、リクエスト数・時間予算を別途指定・許可してから行います。sourceの`--include-repo`は発見対象、`sync --repo`は収集対象を限定します。共通の`--timeout-seconds`は照会用で、同期全体の期限や要求数上限にはなりません。HTTP timeoutも要求単位です。指定予算を既存の制御で保証できない場合は、実行前に最小限のtransport上限を追加するか、確実に制限できる操作範囲へ絞ります。
+
+実データ検証は、失敗した試行も含めて`docs/validation/real-world/`へMarkdownと隣接JSONを記録し、handoffまたは関連PRからリンクします。application commit、対象ref/OID、環境、実行command、範囲と予算、実測の要求数・時間・DB/cache容量、照会・復元結果、診断とPASS/FAIL条件を残します。代表的な正規化照会出力はSHA-256で復元前後を比較します。DB/cache・認証付きHTTP原文・secret・private payloadはコミットしません。成功記録の正本はこの報告で、Issuesは不具合や未解決作業に使います。
 
 定期運用ではsync、jobs resume、cache gc --applyをcron/systemd等から呼べます。
 この開発では実ユーザーのスケジュールを登録しません。実運用の対象・周期・要求予算はpilot後に決めてください。

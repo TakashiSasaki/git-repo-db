@@ -2,6 +2,12 @@
 
 The ordinary application now uses catalog3 for initialization, registration/discovery, Git and GitHub REST/GraphQL collection, restart, offline queries/search, doctor, index/cache maintenance and backup/restore. The one offline v2 salvage importer writes the same packaged `resources/catalog3.sql` and requires explicit `db finalize` before normal use.
 
+## Authorized public Git trial, 2026-10-06
+
+[Museum-portal Git acquisition and recovery report](../validation/real-world/2026-10-06-museum-portal-git-04f23c7.md) and its adjacent JSON record a PASS at exact application commit `04f23c7082b1b9d0cd96df1062459b7b71049bb0`. The installed CLI collected one public repository, re-synced unchanged heads/tags, checked independent commit/parent/blob evidence, queried offline, and backed up/restored to a fresh cache-free location. Six normalized query digests matched. Workload: 10.49 seconds; three admitted Git remote operations, seven Git HTTP requests and zero GitHub API calls. All working state and measurements used automatically created temporary storage; only summaries are retained in Git.
+
+This supports personal use of the exercised public Git workflow. No application defect appeared. PR/REST/GraphQL behavior, real v2 import/preservation/finalization, active-catalog cutover and release publication remain unexecuted. Next concrete operation is a separately bounded PR/API trial for this same repository, or a real offline import once an unambiguous preserved v2 source is available. Previous synthetic and hosted results below retain their original scope and dates.
+
 ## Practical preparation, 2026-10-06
 
 Selected current feature head `07a100c13bafa812df3183854d237a9086860d55` without resetting history; preparation uses local branch `operational-trial-preparation`. Runtime code remains the validated implementation below. A wheel built from this head was installed with locked runtime dependencies into a separate venv and exercised outside the checkout. Environment: Python 3.12.14, SQLite 3.53.1, uv 0.12.19.

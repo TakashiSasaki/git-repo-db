@@ -264,7 +264,7 @@ def make_plan(context, root=ROOT, runtime_meta=None):
         if path in files:
             selected.add(path)
             static = True
-        elif path in rules.get("report_inputs", []):
+        elif matches(path, rules.get("report_inputs", [])):
             pass
         elif matches(path, rules["shared_inputs"] + rules["executable_inputs"]):
             reasons.append("Shared/executable input: " + path)
