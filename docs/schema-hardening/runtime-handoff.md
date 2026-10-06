@@ -4,9 +4,13 @@ The ordinary application now uses catalog3 for initialization, registration/disc
 
 ## Revisions and checks
 
-Original checkout: `9a4110185d7e7abffc291f9cfd118ca71587f998`. Latest integrated implementation reused by fast-forward: PR #1 head `3af3df84372354e972772b5c9600dfeeae0f0e15`. Policy checkpoint: `2060110517f35fb7e4981b30fd1789077f520d38`. Final implementation SHA and hosted result will be recorded after acceptance. Work continues on `design/schema-v2-hardening`, PR #1.
+Original checkout: `9a4110185d7e7abffc291f9cfd118ca71587f998`. Latest integrated implementation reused by fast-forward: PR #1 head `3af3df84372354e972772b5c9600dfeeae0f0e15`. Policy checkpoint: `2060110517f35fb7e4981b30fd1789077f520d38`. Final validated implementation: `edce04b646e7b5006f1b15048cab765e3c416bfa` on `design/schema-v2-hardening`, [PR #1](https://github.com/TakashiSasaki/git-repo-db/pull/1). The subsequent handoff-only commit changes these two Markdown reports; it does not change runtime code or claim a fresh full execution.
 
-Local development: Python 3.12.14, SQLite 3.53.1, uv 0.12.19. Focused synthetic checks exercised the implemented paths. Complete hosted acceptance and isolated installed wheel/sdist checks are pending, not passed. Every remaining ordinary test file belongs to the current acceptance manifest; opt-in live requests are excluded. There is no minimum SQLite or historical test-count lane.
+Hosted [full acceptance run 37412761695](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37412761695), testing merge `eabd80f4edb271e8d9be5df86edafdeb9320b94d`, passed: 330 ordinary tests in 75.87 seconds, plus two isolated installed wheel/sdist tests in 3.74 seconds. Reconciliation recorded 332 executed checks across 40 files, with no unexecuted or excluded ordinary files. Lint, format, SQLite capability/doctor and report checks passed. The Ubuntu 24.04 runner used Python 3.12.14, native SQLite 3.45.1 and uv 0.12.19. Every remaining ordinary test file belongs to current acceptance; opt-in live acquisition is outside this manifest. These are observed results, not future count targets.
+
+Local development used Python 3.12.14, SQLite 3.53.1 and uv 0.12.19. Focused synthetic checks covered fresh/imported collection, resume, preservation and maintenance; no identical complete local suite immediately preceded hosted acceptance. The default rollback journal works on the hosted binding. Optional WAL retains its verified-fix safeguard: unsupported bindings reject writable WAL without modifying the DB; supported bindings preserve active reader snapshots. No minimum-version lane or binding replacement is required.
+
+PR synchronization selects affected checks from the previous feature head to the actual merge tree, conservatively expanding for unknown history or base code changes. The final Markdown-only follow-up checks prose and reports runtime files unexecuted, with `full_acceptance=false`. The linked completed full run above remains the acceptance evidence for the validated implementation; no remote artifact result is reused as a newly executed check.
 
 ## Runnable ordinary commands
 
