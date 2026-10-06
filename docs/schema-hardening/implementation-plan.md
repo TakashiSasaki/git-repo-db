@@ -13,4 +13,4 @@ Implemented scope:
 5. Adapt guarded v2 salvage to the new target without altering source schema or bytes. Archive old IDs/version facts; map documents to composite keys and current-version assertions only to suitable real observations.
 6. Rebuild PR search inputs by content identity while returning distinct observations. Replace obsolete CLI version selectors with explicit observation selectors. Validate normal runtime, preservation, recovery and packaging on disposable synthetic sources.
 
-No v4 migration/compatibility views, separate portable schema, multi-catalog exchange, open-ended providers, real-data activation or release publication is included. Existing real-world reports retain their original commits and scopes.
+No v4 migration/compatibility views, separate portable schema, multi-catalog exchange, open-ended providers, real-data activation or release publication is included. Existing real-world reports retain their original commits and scopes. Final clean substantive revision `b6cca875b9a303989bc8947dc56dddb04d7b9ec2` passes 358 current tests and both installed distribution checks (360 reconciled), recorded in the runtime handoff.

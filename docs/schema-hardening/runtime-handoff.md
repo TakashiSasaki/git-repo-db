@@ -14,9 +14,11 @@ Starting main: `1ce7fccdb63ab7de74daf6694d2c7187fcddd835`. Working branch: `refa
 
 ## Validation
 
-Validation results and substantive commit are recorded after the final coherent checks. Work uses Python 3.13.5, native SQLite 3.46.1 and uv 0.12.19 in one practical environment, with delete journaling. Dependencies are installed offline from locked wheel hashes; development imports resolve the working source. The isolated distribution checks install genuine built wheels outside the checkout and do not use that development path.
+Clean substantive revision: `b6cca875b9a303989bc8947dc56dddb04d7b9ec2`. Current acceptance: **358 passed** (44.97s); isolated installed wheel/sdist-wheel: **2 passed** (3.08s). Planner/collection/profile reconciliation confirms **360 selected and executed once**, no failures/skips/unexecuted files. Ruff lint/format, STRICT/FTS doctor and prose validation passed. See [synthetic evidence](../validation/synthetic/2026-10-06-portable-document-observations.md) and its adjacent JSON. Subsequent evidence-only documentation is not fresh runtime validation.
 
-Focused checks cover natural-key relationships, current-pointer ownership, exact UTF-8/hash conflict handling, UUIDv4/namespace rules, API history/replay/scaling, preserved v2 conversion and imported-first-sync listing reuse. Full current acceptance and isolated packaging outcomes must be read from the final recorded evidence, not inferred from historical test counts.
+Work uses Python 3.13.5, native SQLite 3.46.1 and uv 0.10.0 in one practical environment, with delete journaling. Dependencies are installed offline from locked wheel hashes; development imports resolve the working source. The isolated distribution checks install genuine built wheels outside the checkout and do not use that development path.
+
+Focused checks cover natural-key relationships, current-pointer ownership, exact UTF-8/hash conflict handling, UUIDv4/namespace rules, API history/replay/scaling, preserved v2 conversion and imported-first-sync listing reuse. One prior tool-limited acceptance invocation was interrupted and is not counted as successful. The completed run is recorded in the linked evidence.
 
 ## Runnable ordinary commands
 
