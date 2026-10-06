@@ -16,6 +16,15 @@ from . import archive, batch, capacity, identity_phase, source, target
 from .common import ConversionError, canonical, digest, now, stat_identity
 
 PROTOCOL_VERSION = "p3-integrated/1"
+MAX_BATCH_SOURCE_BYTES = 8 * 1024 * 1024
+SINGLE_RECORD_RECIPES = frozenset(
+    {
+        "saved_document_repair",
+        "saved_listing_repair",
+        "saved_pr_document_repair",
+        "sync_checkpoints",
+    }
+)
 
 
 def no_fault(point, **context):
@@ -51,7 +60,7 @@ def definitions():
 
 def integrated_contract():
     columns, keys = definitions()
-    from . import identity
+    from . import identity, pr_domain
 
     normalized = {
         module.SOURCE_TABLES.get(recipe, recipe)
@@ -90,6 +99,15 @@ def integrated_contract():
             "operations": ["insert", "reuse", "update_listing_progress"],
         },
         "target_keys": {table: list(keys.get(table, ("id",))) for table in columns},
+        "batch_bounds": {
+            "max_source_record_bytes": MAX_BATCH_SOURCE_BYTES,
+            "source_record_size": "source_key bytes + row_sha256 bytes + typed column value_bytes; Python object overhead excluded",
+            "record_count": "receipt batch_size, capped at one for single_record_recipes",
+            "single_record_recipes": sorted(SINGLE_RECORD_RECIPES),
+            "oversized_source_record": "preserve in its own one-record batch; pending raw input is bounded by budget plus the largest individual source record",
+            "saved_replay_input_bytes": pr_domain.MAX_SAVED_REPLAY_BYTES,
+            "saved_replay_scope": "per decoded saved page/checkpoint object; derived operation count and Python object memory are not bounded by this input limit",
+        },
         "source_dispositions": {
             table: "normalized; invalid/unsupported records stay attributed in the typed archive"
             if table in normalized
@@ -152,13 +170,23 @@ def row_hash(row):
     return batch.proof_digest(batch.encode([row]))
 
 
+def source_record_bytes(record):
+    """Deterministic raw archive size; retain oversized individual records."""
+    return (
+        len(record.key)
+        + len(record.row_sha256)
+        + sum(len(value) for _, _, value in record.values)
+    )
+
+
 def batches(db, src, run, receipt):
     for module, recipe in recipe_plan():
-        index, pending = 0, []
+        index, pending, pending_bytes = 0, [], 0
+        record_limit = 1 if recipe in SINGLE_RECORD_RECIPES else receipt["batch_size"]
         table = module.SOURCE_TABLES.get(recipe, recipe)
         for record in archive.rows(src, table):
-            pending.append(record)
-            if len(pending) == receipt["batch_size"]:
+            record_bytes = source_record_bytes(record)
+            if pending and pending_bytes + record_bytes > MAX_BATCH_SOURCE_BYTES:
                 records = tuple(pending)
                 yield (
                     module,
@@ -167,7 +195,19 @@ def batches(db, src, run, receipt):
                     records,
                     input_hash(run, recipe, index, records),
                 )
-                index, pending = index + 1, []
+                index, pending, pending_bytes = index + 1, [], 0
+            pending.append(record)
+            pending_bytes += record_bytes
+            if len(pending) == record_limit or pending_bytes >= MAX_BATCH_SOURCE_BYTES:
+                records = tuple(pending)
+                yield (
+                    module,
+                    recipe,
+                    index,
+                    records,
+                    input_hash(run, recipe, index, records),
+                )
+                index, pending, pending_bytes = index + 1, [], 0
         if pending or index == 0:
             records = tuple(pending)
             yield (
@@ -572,9 +612,17 @@ def convert(
 
     workspace = Path(workspace)
     if (
-        batch_size < 1
+        not isinstance(batch_size, int)
         or isinstance(batch_size, bool)
-        or (max_batches is not None and max_batches < 0)
+        or batch_size < 1
+        or (
+            max_batches is not None
+            and (
+                not isinstance(max_batches, int)
+                or isinstance(max_batches, bool)
+                or max_batches < 0
+            )
+        )
     ):
         raise ConversionError("INVALID_BATCH_OPTIONS")
     _, spec, signatures = resources()

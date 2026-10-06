@@ -66,7 +66,7 @@ hydrateは明示的な再取得で、保存profile対象外や取得元から失
 
 ## 独立targetの読み取り
 
-変換先は`target --database PATH`で明示します。通常のstate設定や既定catalogを使わず、初期化・migration・Git・network・索引更新を行いません。完全なtarget DDLとdatabase identityのSHA-256を同梱の契約値と照合し、SQLite 3.46.1以上でsidecarのない停止中DBをimmutable/read-onlyで開きます。読み取り中のDB変更やsidecarを検出した場合は`TARGET_BUSY`（exit 5）です。pending journalの回復は変換workerで行ってください。
+変換先は`target --database PATH`で明示します。通常のstate設定や既定catalogを使わず、初期化・migration・Git・network・索引更新を行いません。完全なtarget DDLとdatabase identityのSHA-256を同梱の契約値と照合し、sidecarのない停止中DBをimmutable/read-onlyで開きます。この専用読み取りはSTRICT schemaを解釈できるSQLite 3.37.0以上と、接続上で確認するforeign_keys/recursive_triggers/query_onlyを必要とします。通常CIのSQLite 3.45.1でも照会でき、変換・書き込み・回復に必要な監査対応SQLite 3.46.1以上の条件は変えません。読み取り中のDB変更やsidecarを検出した場合は`TARGET_BUSY`（exit 5）です。pending journalの回復は変換workerで行ってください。
 
 ```bash
 repo-catalog --format json target --database /absolute/path/target.sqlite3 --allow-building repos

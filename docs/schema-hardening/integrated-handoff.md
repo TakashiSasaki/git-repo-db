@@ -74,6 +74,9 @@ PR output contains separate record kinds for identity, observations, documents,
 versions, reviews, threads, events and code listings. Pagination uses `next_offset`.
 Queries verify target identity/schema, use a sidecar-free immutable read, detect
 file changes, and never initialize state, migrate, fetch, run Git or repair indexes.
+Immutable reads require SQLite >=3.37.0 for STRICT schema parsing and checked
+read capabilities; actual SQLite 3.45.1 query tests pass. This does not change
+the audited SQLite >=3.46.1 requirement for conversion, writing or recovery.
 
 ## Converted data and source-table dispositions
 
@@ -118,8 +121,15 @@ validates new batches, then one streamed source-to-target comparison after new c
 parent immutability hash at exit. Unchanged complete checkpoints reuse the entry
 comparison instead of reconstructing the same output twice. Recovery or native-open changes invalidate entry reuse.
 `verify-stored` retains a deliberate deep read-only audit. Its ownership ledger
-uses SQLite keys/hashes and bounded Python row buffers; it does not materialize
-complete domain payloads. Metadata still scales with committed output count.
+uses SQLite keys/hashes rather than retaining complete domain payloads. Source
+batches are limited by row count and an 8 MiB typed-record byte budget; a larger
+single record remains preserved in an isolated batch. Referenced-page replay
+uses one source record per batch and a 32 MiB page/JSON decoding limit, matching
+the current acquisition page limit. Replay materializes bounded JSON documents
+and derived operations for one source record at a time; these byte limits are
+not a total-process RSS bound.
+Oversized replay keeps exact stored payloads and direct normalized facts with
+an attributed partial diagnostic. Metadata still scales with committed output count.
 
 Measured resumed P3B deep archive passes and identity reconstruction passes each
 fell from 4 to 2 per invocation. Its final deep audit remains. Integrated tests
@@ -148,6 +158,8 @@ the task report, not inferred from historical runs.
 - Saved replay handles supported REST/GraphQL/document/listing gaps; overwritten
   or absent historical payloads cannot be recreated. Unknown payload shapes and
   ambiguous PR-role/checkpoint scopes retain diagnostics/archive evidence.
+  Reanalysis above the 32 MiB decoding budget is deferred while original payloads
+  and supported direct normalized facts remain preserved.
 - Legacy principals/parser/profile scopes, opaque GraphQL cursors and unproven
   watermarks do not gain reusable first-sync status. Replay never advances a
   watermark or creates a new observation time.

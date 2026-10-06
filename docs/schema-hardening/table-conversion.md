@@ -58,6 +58,13 @@
 | tag_objects | tag_objects | none |
 | tree_entries | tree_entries | none |
 
+## Integrated input buffer bounds
+
+Raw source-record byte budget: 8388608 bytes. Size: source_key bytes + row_sha256 bytes + typed column value_bytes; Python object overhead excluded.
+Record limit: receipt batch_size, capped at one for single_record_recipes. Single-record recipes: saved_document_repair, saved_listing_repair, saved_pr_document_repair, sync_checkpoints.
+Oversized source record: preserve in its own one-record batch; pending raw input is bounded by budget plus the largest individual source record.
+Saved replay input limit: 33554432 bytes; per decoded saved page/checkpoint object; derived operation count and Python object memory are not bounded by this input limit.
+
 ## Integrated executable source dispositions
 
 | v2 table | implemented recipes | disposition |

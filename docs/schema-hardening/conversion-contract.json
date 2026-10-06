@@ -15388,6 +15388,20 @@
         "role"
       ]
     },
+    "batch_bounds": {
+      "max_source_record_bytes": 8388608,
+      "source_record_size": "source_key bytes + row_sha256 bytes + typed column value_bytes; Python object overhead excluded",
+      "record_count": "receipt batch_size, capped at one for single_record_recipes",
+      "single_record_recipes": [
+        "saved_document_repair",
+        "saved_listing_repair",
+        "saved_pr_document_repair",
+        "sync_checkpoints"
+      ],
+      "oversized_source_record": "preserve in its own one-record batch; pending raw input is bounded by budget plus the largest individual source record",
+      "saved_replay_input_bytes": 33554432,
+      "saved_replay_scope": "per decoded saved page/checkpoint object; derived operation count and Python object memory are not bounded by this input limit"
+    },
     "source_dispositions": {
       "acquisition_roots": "normalized; invalid/unsupported records stay attributed in the typed archive",
       "api_responses": "normalized; invalid/unsupported records stay attributed in the typed archive",

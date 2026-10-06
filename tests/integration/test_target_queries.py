@@ -338,6 +338,23 @@ def test_target_rejected_lifecycle_is_never_admitted(target_query_db):
     assert error.value.code == "TARGET_NOT_READY"
 
 
+def test_immutable_reader_runtime_is_separate_from_guarded_writer_floor(
+    target_query_db, monkeypatch
+):
+    # Normal Python 3.12 CI has SQLite 3.45.1, while guarded conversion uses
+    # the separately prepared audited >=3.46.1 binding. Reads need STRICT
+    # parsing and checked read capabilities, not the converter's writer floor.
+    monkeypatch.setattr(sqlite3, "sqlite_version_info", (3, 45, 1))
+    with TargetReader(target_query_db, allow_building=True) as reader:
+        assert reader.one("SELECT count(*) FROM repositories")[0] == 2
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            reader.execute("UPDATE database_identity SET publication_seq=1")
+    monkeypatch.setattr(sqlite3, "sqlite_version_info", (3, 36, 0))
+    with pytest.raises(CatalogError) as error:
+        TargetReader(target_query_db, allow_building=True)
+    assert error.value.code == "SCHEMA_ERROR"
+
+
 def test_commit_order_and_repository_ownership(target_query_db):
     result = query(target_query_db, "commit", repo="a", commit=OID)
     item = result.data["items"][0]

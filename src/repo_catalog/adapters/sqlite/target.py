@@ -44,8 +44,13 @@ class TargetReader:
             )
         self._check_sidecars()
         self.identity_before = self._file_identity()
-        if sqlite3.sqlite_version_info < (3, 46, 1):
-            raise CatalogError("SCHEMA_ERROR", "Target reads require SQLite >= 3.46.1")
+        # The guarded converter's audited >=3.46.1 write/recovery floor is
+        # separate. This reader only needs a STRICT-capable schema parser
+        # (3.37+) and immutable read/query-only capabilities, checked below.
+        if sqlite3.sqlite_version_info < (3, 37, 0):
+            raise CatalogError(
+                "SCHEMA_ERROR", "Immutable target reads require SQLite >= 3.37.0"
+            )
         self.connection = sqlite3.connect(
             self.path.as_uri() + "?mode=ro&immutable=1", uri=True, autocommit=True
         )
@@ -54,6 +59,14 @@ class TargetReader:
             self.connection.execute("PRAGMA foreign_keys=ON")
             self.connection.execute("PRAGMA recursive_triggers=ON")
             self.connection.execute("PRAGMA query_only=ON")
+            for capability in ("foreign_keys", "recursive_triggers", "query_only"):
+                enabled = self.connection.execute(f"PRAGMA {capability}").fetchone()
+                if enabled is None or enabled[0] != 1:
+                    raise CatalogError(
+                        "SCHEMA_ERROR",
+                        "Required target read capability is unavailable",
+                        {"capability": capability},
+                    )
             self.connection.execute("BEGIN")
             if schema_digest(self.connection) != TARGET_SCHEMA_SHA256:
                 raise CatalogError("SCHEMA_ERROR", "Target DDL does not match")

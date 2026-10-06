@@ -15,7 +15,23 @@ import sqlite3  # noqa: E402
 
 from scripts.conversion import engine, guards, target  # noqa: E402
 from scripts.conversion.common import ConversionError  # noqa: E402
-from tests.support.p3b_worker import flush_target  # noqa: E402
+
+
+def flush_target(db):
+    """Force journal spill without importing another process's SQLite bootstrap."""
+    parent = db.execute(
+        "SELECT id,manifest FROM conversion_runs WHERE parser_version='p2-archive/1'"
+    ).fetchone()
+    padded = json.loads(parent["manifest"])
+    padded["synthetic_test_spill"] = "x" * (8 * 1024 * 1024)
+    db.execute(
+        "UPDATE conversion_runs SET manifest=? WHERE id=?",
+        (json.dumps(padded), parent["id"]),
+    )
+    db.execute(
+        "UPDATE conversion_runs SET manifest=? WHERE id=?",
+        (parent["manifest"], parent["id"]),
+    )
 
 
 def main():

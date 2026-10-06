@@ -17,6 +17,10 @@ from . import identity
 from .common import ConversionError, canonical, strict_json
 
 VERSION = "integrated-pr/1"
+# Match the operational HTTP transport decoded-response limit without importing
+# application code into the guarded converter. This bounds decoder input, not
+# Python object or derived-operation memory. Exact source bytes remain admitted.
+MAX_SAVED_REPLAY_BYTES = 32 * 1024 * 1024
 RECIPES = (
     "jobs",
     "inventory_observations",
@@ -304,6 +308,75 @@ def target_key(table, row):
     )
 
 
+def selected_text_ranges(value, fields):
+    """Locate only final selected top-level string tokens without a JSON DOM."""
+    selected, depth, key, expect_key, offset = {}, 0, None, False, 0
+    maximum_key = 2 + 6 * max(map(len, fields))
+    while offset < len(value):
+        char = value[offset]
+        if char == '"':
+            end = value.find('"', offset + 1)
+            while end >= 0:
+                previous = end - 1
+                while previous >= offset and value[previous] == "\\":
+                    previous -= 1
+                if (end - previous - 1) % 2 == 0:
+                    break
+                end = value.find('"', end + 1)
+            if end < 0:
+                raise ValueError("Validated JSON string has no end")
+            if depth == 1:
+                if expect_key:
+                    parsed = (
+                        strict_json(value[offset : end + 1])
+                        if end + 1 - offset <= maximum_key
+                        else None
+                    )
+                    key = parsed if parsed in fields else None
+                    if key is not None:
+                        selected[key] = None
+                    expect_key = False
+                elif key is not None:
+                    selected[key] = (offset + 1, end)
+                    key = None
+            offset = end + 1
+            continue
+        if char in "[{":
+            depth += 1
+            if depth == 1:
+                expect_key = True
+        elif char in "]}":
+            depth -= 1
+            if depth == 1:
+                key = None
+        elif char == "," and depth == 1:
+            expect_key, key = True, None
+        offset += 1
+    return selected
+
+
+def paired_unicode_escapes(value, start, end):
+    """Accept escaped backslashes and paired surrogates; reject lone units."""
+    offset = start
+    while (offset := value.find("\\", offset, end)) >= 0:
+        if value[offset + 1] != "u":
+            offset += 2
+            continue
+        unit = int(value[offset + 2 : offset + 6], 16)
+        if 0xD800 <= unit <= 0xDBFF:
+            if offset + 12 > end or value[offset + 6 : offset + 8] != "\\u":
+                return False
+            low = int(value[offset + 8 : offset + 12], 16)
+            if not 0xDC00 <= low <= 0xDFFF:
+                return False
+            offset += 12
+        elif 0xDC00 <= unit <= 0xDFFF:
+            return False
+        else:
+            offset += 6
+    return True
+
+
 class Invalid(identity.Invalid):
     def __init__(self, code, column):
         super().__init__("PR_" + code.removeprefix("PR_"), column)
@@ -313,6 +386,71 @@ class Context(identity.Context):
     def __init__(self, db, src, run, encoding="UTF-8", *, verifying=False):
         super().__init__(db, src, run, encoding, verifying=verifying)
         self.parsed_at = run["started_at"]
+
+    def metadata(self, record, column="metadata"):
+        storage, raw = record.value(column)
+        if storage != "text" or len(raw) <= MAX_SAVED_REPLAY_BYTES:
+            try:
+                return super().metadata(record, column)
+            except RecursionError:
+                # A source object within SQLite's accepted JSON depth can
+                # exceed the Python decoder's depth in the current call stack.
+                # Keep that direct fact; semantic replay remains bounded below.
+                pass
+        # Direct normalized facts still preserve a large, valid object exactly.
+        # SQLite validates shape without constructing a Python JSON graph.
+        value = self.t(record, column)
+        valid = self.src.execute(
+            "SELECT CASE WHEN json_valid(?) THEN json_type(?)='object' ELSE 0 END",
+            (value, value),
+        ).fetchone()[0]
+        if not valid:
+            raise Invalid("INVALID_JSON", column)
+        return value
+
+    def selected_metadata(self, record, column, fields):
+        """Extract needed scalars with json.loads' last duplicate-key behavior.
+
+        json_extract chooses the first duplicate. json_each exposes keys in
+        source order; retain the last selected key and only materialize text.
+        Object/array/numeric values retain a type tag for semantic validation.
+        """
+        value = self.metadata(record, column)
+        if self.encoding.upper().startswith("UTF-16"):
+            for span in selected_text_ranges(value, fields).values():
+                if span is not None and not paired_unicode_escapes(value, *span):
+                    raise Invalid("MALFORMED_TEXT", column)
+        selected = {}
+        placeholders = ",".join("?" for _ in fields)
+        for key, kind, scalar in self.src.execute(
+            "SELECT key,type,CASE WHEN type='text' THEN CAST(atom AS BLOB) ELSE NULL END "
+            f"FROM json_each(?) WHERE key IN ({placeholders}) ORDER BY id",
+            (value, *fields),
+        ):
+            selected[key] = (kind, scalar)
+        for key, (kind, scalar) in selected.items():
+            if kind == "text":
+                try:
+                    scalar = scalar.decode(self.encoding)
+                except UnicodeError:
+                    raise Invalid("MALFORMED_TEXT", column) from None
+                selected[key] = (kind, scalar)
+        return value, selected
+
+    def decoded_metadata(self, record, column="metadata"):
+        storage, raw = record.value(column)
+        if storage == "text" and len(raw) > MAX_SAVED_REPLAY_BYTES:
+            raise Invalid("REPLAY_BUDGET_EXCEEDED", column)
+        value = self.t(record, column)
+        try:
+            parsed = strict_json(value)
+            if not isinstance(parsed, dict):
+                raise ValueError()
+        except RecursionError:
+            raise Invalid("JSON_DEPTH_UNSUPPORTED", column) from None
+        except ValueError:
+            raise Invalid("INVALID_JSON", column) from None
+        return parsed
 
     def i(self, record, column, *, minimum=None, choices=None):
         kind, raw = record.value(column)
@@ -385,12 +523,16 @@ class Context(identity.Context):
     def page_data(self, page):
         response = self.ref("api_responses", self.i(page, "response_id", minimum=1))
         raw = self.blob(response, "body")
+        if len(raw) > MAX_SAVED_REPLAY_BYTES:
+            raise Invalid("REPLAY_BUDGET_EXCEEDED", "response_id")
         if hashlib.sha256(raw).digest() != self.blob(
             response, "payload_sha256", length=32
         ):
             raise Invalid("PAYLOAD_DIGEST_MISMATCH", "payload_sha256")
         try:
             return strict_json(raw.decode("utf-8"))
+        except RecursionError:
+            raise Invalid("JSON_DEPTH_UNSUPPORTED", "response_id") from None
         except (ValueError, UnicodeError):
             raise Invalid("MALFORMED_PAYLOAD", "body") from None
 
@@ -404,30 +546,28 @@ class Context(identity.Context):
     def scope_row(self, collection):
         repo = self.t(collection, "repo_id")
         source = self.source(repo)
-        scope = strict_json(self.metadata(collection, "scope"))
-        if "repo_id" in scope and scope["repo_id"] != repo:
+        scope_text, scope = self.selected_metadata(
+            collection, "scope", ("repo_id", "principal", "api_version")
+        )
+        if "repo_id" in scope and scope["repo_id"] != ("text", repo):
             raise Invalid("SCOPE_OWNER_MISMATCH", "scope")
         pr = self.t(collection, "pr_id", nullable=True)
         binding = self.pr(pr)[2] if pr else None
         endpoint, parser = None, "legacy_unknown"
         first = next(self.pages(self.t(collection, "id")), None)
         if first:
-            request = strict_json(self.metadata(first, "request"))
-            endpoint = (
-                request.get("url") if isinstance(request.get("url"), str) else None
+            _, request = self.selected_metadata(
+                first, "request", ("url", "parser_version")
             )
-            parser = (
-                request.get("parser_version")
-                if isinstance(request.get("parser_version"), str)
-                else parser
-            )
-        principal = scope.get("principal")
-        version = scope.get("api_version")
-        if (
-            principal is not None
-            and not isinstance(principal, str)
-            or version is not None
-            and not isinstance(version, str)
+            url_kind, url = request.get("url", ("null", None))
+            parser_kind, parser_value = request.get("parser_version", ("null", None))
+            endpoint = url if url_kind == "text" else None
+            parser = parser_value if parser_kind == "text" else parser
+        principal_kind, principal = scope.get("principal", ("null", None))
+        version_kind, version = scope.get("api_version", ("null", None))
+        if principal_kind not in ("text", "null") or version_kind not in (
+            "text",
+            "null",
         ):
             raise Invalid("INVALID_SCOPE", "scope")
         return (
@@ -438,7 +578,7 @@ class Context(identity.Context):
             principal,
             version,
             endpoint,
-            self.metadata(collection, "scope"),
+            scope_text,
             parser,
             "legacy_unknown",
             "legacy_unknown",
@@ -580,7 +720,7 @@ class Context(identity.Context):
         ):
             record = self.ref("review_threads", saved[0])
             try:
-                if strict_json(self.metadata(record, "payload")).get("id") == provider:
+                if self.decoded_metadata(record, "payload").get("id") == provider:
                     found.append(saved[0])
             except identity.Invalid:
                 continue
@@ -631,7 +771,7 @@ class Context(identity.Context):
             if not isinstance(payload, dict):
                 raise Invalid("MALFORMED_PAYLOAD", "body")
             data = payload.get("data") or {}
-            request = strict_json(self.metadata(page, "request"))
+            request = self.decoded_metadata(page, "request")
             variables = request.get("variables") or {}
             threads = ((data.get("repository") or {}).get("pullRequest") or {}).get(
                 "reviewThreads"
@@ -843,8 +983,11 @@ class Context(identity.Context):
             if ordinal != count:
                 contiguous = False
             count += 1
-            request = strict_json(self.metadata(page, "request"))
-            url = request.get("url")
+            _, request = self.selected_metadata(page, "request", ("url",))
+            url_kind, url = request.get("url", ("null", None))
+            if url_kind not in ("text", "null"):
+                contiguous = False
+                url = None
             if count > 1 and (previous_cursor is None or url != previous_cursor):
                 contiguous = False
             if url in seen_urls:
@@ -881,10 +1024,7 @@ class Context(identity.Context):
                         )
                         if stored and self.t(stored, "path") != value["filename"]:
                             valid = False
-                    if (
-                        stored
-                        and strict_json(self.metadata(stored, "payload")) != value
-                    ):
+                    if stored and self.decoded_metadata(stored, "payload") != value:
                         valid = False
             except (identity.Invalid, ValueError, TypeError):
                 valid = False
@@ -905,12 +1045,12 @@ class Context(identity.Context):
                         valid = False
                 except identity.Invalid:
                     valid = False
-        details = strict_json(self.metadata(code, "details"))
+        _, details = self.selected_metadata(code, "details", ("api_head_base_stable",))
         proven = bool(
             fmt
             and head
             and base
-            and details.get("api_head_base_stable") is True
+            and details.get("api_head_base_stable", ("null", None))[0] == "true"
             and valid
         )
         complete = (
@@ -1511,7 +1651,7 @@ class Context(identity.Context):
 
     def pr_document(self, record, kind):
         pr = self.t(record, "pr_id")
-        payload = strict_json(self.metadata(record, "payload"))
+        payload = self.decoded_metadata(record, "payload")
         owner = self.pr(pr)
         if payload.get("number") != owner[4]:
             raise Invalid("PAYLOAD_OWNER_MISMATCH", "payload")
@@ -1614,7 +1754,7 @@ class Context(identity.Context):
     def checkpoint(self, record, emit, issue):
         scope, value = (
             self.t(record, "scope"),
-            strict_json(self.metadata(record, "value")),
+            self.decoded_metadata(record, "value"),
         )
         stamp = self.timestamp(record, "updated_at")
         if scope.startswith("pending-comment:"):
@@ -1685,8 +1825,12 @@ class Context(identity.Context):
                 )
                 issue("PENDING_PARENT_UNRESOLVED", "value", "partial")
         elif scope.startswith("etag:"):
+            if len(scope.encode("utf-8")) > MAX_SAVED_REPLAY_BYTES:
+                raise Invalid("REPLAY_BUDGET_EXCEEDED", "scope")
             try:
                 assertion = strict_json(scope[5:])
+            except RecursionError:
+                raise Invalid("JSON_DEPTH_UNSUPPORTED", "scope") from None
             except ValueError:
                 raise Invalid("INVALID_SCOPE", "scope") from None
             source, native = assertion.get("source"), assertion.get("repo")
@@ -1858,7 +2002,14 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
         except identity.Invalid as exc:
             operations.clear()
             mappings.clear()
-            issue(exc.code, exc.column, "blocking")
+            issue(
+                exc.code,
+                exc.column,
+                "partial"
+                if exc.code
+                in ("PR_REPLAY_BUDGET_EXCEEDED", "PR_JSON_DEPTH_UNSUPPORTED")
+                else "blocking",
+            )
         except (ValueError, TypeError, KeyError, UnicodeError):
             operations.clear()
             mappings.clear()

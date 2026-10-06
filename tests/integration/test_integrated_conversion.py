@@ -8,18 +8,20 @@ import sqlite3
 import subprocess
 import sys
 import time
+from types import SimpleNamespace
 
 import pytest
 
 from repo_catalog.application.target_queries import TargetQueryService
 from scripts.conversion import (
+    archive,
     batch,
     integrated_parent,
     integrated_phase,
     source,
     target,
 )
-from scripts.conversion.common import ROOT, canonical
+from scripts.conversion.common import ROOT, ConversionError, canonical
 from tests.support.integrated_fixture import (
     AVAILABLE_TEXT,
     IDS,
@@ -451,5 +453,165 @@ def test_guarded_integrated_recovers_spilled_upstream_receipt(tmp_path, phase):
         )
     assert cli("integrated", work, "--batch-size", 3)["complete"]
     assert cli("verify-stored", work)["complete"]
+    assert_exact_archive(database, work)
+    unchanged(database, cache, before)
+
+
+def test_source_byte_budget_preserves_exact_boundary_and_oversized_rows(monkeypatch):
+    records = [
+        archive.Record(
+            "synthetic",
+            bytes([index]),
+            hashlib.sha256(bytes([index])).digest(),
+            (("body", "blob", b"x" * length),),
+        )
+        for index, length in enumerate((31, 31, 1, 160, 31, 31))
+    ]
+    module = SimpleNamespace(SOURCE_TABLES={})
+    monkeypatch.setattr(
+        integrated_phase, "recipe_plan", lambda: [(module, "synthetic")]
+    )
+    monkeypatch.setattr(archive, "rows", lambda src, table: iter(records))
+    monkeypatch.setattr(integrated_phase, "MAX_BATCH_SOURCE_BYTES", 128)
+    run, receipt = {"source_id": "synthetic"}, {"batch_size": 100}
+    bounded = list(integrated_phase.batches(None, None, run, receipt))
+    assert [[row.key[0] for row in item[3]] for item in bounded] == [
+        [0, 1],
+        [2],
+        [3],
+        [4, 5],
+    ]
+    assert [item[2] for item in bounded] == list(range(4))
+    assert bounded == list(integrated_phase.batches(None, None, run, receipt))
+    assert all(
+        sum(integrated_phase.source_record_bytes(row) for row in item[3]) <= 128
+        or len(item[3]) == 1
+        for item in bounded
+    )
+    assert [item[4] for item in bounded] == [
+        integrated_phase.input_hash(run, "synthetic", item[2], item[3])
+        for item in bounded
+    ]
+    monkeypatch.setattr(integrated_phase, "MAX_BATCH_SOURCE_BYTES", 1024)
+    receipt["batch_size"] = 2
+    assert [
+        len(item[3]) for item in integrated_phase.batches(None, None, run, receipt)
+    ] == [
+        2,
+        2,
+        2,
+    ]
+
+
+@pytest.mark.parametrize(
+    "options",
+    (
+        {"batch_size": 1.5},
+        {"batch_size": True},
+        {"batch_size": None},
+        {"max_batches": 1.5},
+        {"max_batches": True},
+        {"max_batches": -1},
+    ),
+)
+def test_invalid_batch_limits_fail_before_workspace_access(tmp_path, options):
+    work = tmp_path / "absent"
+    with pytest.raises(ConversionError, match="INVALID_BATCH_OPTIONS"):
+        integrated_phase.convert(work, **options)
+    assert not work.exists()
+
+
+def test_referenced_saved_data_recipes_isolate_source_records(monkeypatch):
+    records = [
+        archive.Record("synthetic", bytes([index]), b"x" * 32, (("id", "blob", b"x"),))
+        for index in range(3)
+    ]
+    recipes = (
+        "saved_document_repair",
+        "saved_listing_repair",
+        "saved_pr_document_repair",
+        "sync_checkpoints",
+    )
+    module = SimpleNamespace(SOURCE_TABLES={})
+    monkeypatch.setattr(
+        integrated_phase,
+        "recipe_plan",
+        lambda: [(module, recipe) for recipe in recipes],
+    )
+    monkeypatch.setattr(archive, "rows", lambda src, table: iter(records))
+    descriptors = list(
+        integrated_phase.batches(
+            None, None, {"source_id": "synthetic"}, {"batch_size": 100}
+        )
+    )
+    assert len(descriptors) == 12
+    assert all(len(descriptor[3]) == 1 for descriptor in descriptors)
+    assert [(descriptor[1], descriptor[2]) for descriptor in descriptors] == [
+        (recipe, index) for recipe in recipes for index in range(3)
+    ]
+
+
+def test_component_budgeted_checkpoint_proofs_and_prefix_resume(tmp_path, monkeypatch):
+    database, cache, work, before = prepared(tmp_path)
+    cli("integrated", work, "--batch-size", 100, "--max-batches", 0)
+    with source.readonly(work / "target.sqlite3") as db:
+        run = db.execute(
+            "SELECT * FROM conversion_runs WHERE parser_version=?",
+            (integrated_phase.PROTOCOL_VERSION,),
+        ).fetchone()
+        receipt = json.loads(run["manifest"])
+    # This is an explicit component boundary, not a fingerprint override. The
+    # production verifier below must reject checkpoints made under test bounds.
+    with monkeypatch.context() as patch:
+        patch.setattr(integrated_phase, "MAX_BATCH_SOURCE_BYTES", 256)
+        db = target.connect(work / "target.sqlite3")
+        try:
+            with source.readonly(work / "source.sqlite3") as src:
+                descriptors = list(integrated_phase.batches(db, src, run, receipt))
+                assert any(
+                    sum(integrated_phase.source_record_bytes(row) for row in item[3])
+                    > 256
+                    and len(item[3]) == 1
+                    for item in descriptors
+                )
+                prefix = 5
+                for module, recipe, index, records, digest in descriptors[:prefix]:
+                    output = module.prepare(db, src, run, recipe, index, records)
+                    integrated_phase.commit(db, run, recipe, index, digest, output)
+                partial = integrated_phase.validate_output(db, src, run, receipt)
+                assert (
+                    not partial["complete"] and partial["committed_batches"] == prefix
+                )
+                mappings = list(db.execute("SELECT * FROM id_mappings ORDER BY id"))
+                for ordinal, descriptor in enumerate(
+                    integrated_phase.batches(db, src, run, receipt)
+                ):
+                    if ordinal < partial["committed_batches"]:
+                        continue
+                    module, recipe, index, records, digest = descriptor
+                    output = module.prepare(db, src, run, recipe, index, records)
+                    integrated_phase.commit(db, run, recipe, index, digest, output)
+                complete = integrated_phase.validate_output(
+                    db, src, run, receipt, require_complete=True
+                )
+                assert complete["complete"]
+                assert complete["committed_batches"] == len(descriptors)
+                for mapped in mappings:
+                    assert tuple(mapped) == tuple(
+                        db.execute(
+                            "SELECT * FROM id_mappings WHERE id=?", (mapped[0],)
+                        ).fetchone()
+                    )
+                assert all(
+                    AVAILABLE_TEXT not in row[0] and SAVED_EARLY_BODY not in row[0]
+                    for row in db.execute(
+                        "SELECT output_manifest FROM conversion_batches WHERE run_id=?",
+                        (run["id"],),
+                    )
+                )
+        finally:
+            db.close()
+    with pytest.raises(ConversionError, match="INTEGRATED_BATCH_PROOF_MISMATCH"):
+        integrated_phase.verify(work)
     assert_exact_archive(database, work)
     unchanged(database, cache, before)

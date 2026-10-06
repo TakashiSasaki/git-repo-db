@@ -377,6 +377,16 @@ def generate():
         )
     integrated = contract.get("p3_integrated")
     if integrated:
+        bounds = integrated["batch_bounds"]
+        lines += [
+            "",
+            "## Integrated input buffer bounds",
+            "",
+            f"Raw source-record byte budget: {bounds['max_source_record_bytes']} bytes. Size: {bounds['source_record_size']}.",
+            f"Record limit: {bounds['record_count']}. Single-record recipes: {', '.join(bounds['single_record_recipes'])}.",
+            f"Oversized source record: {bounds['oversized_source_record']}.",
+            f"Saved replay input limit: {bounds['saved_replay_input_bytes']} bytes; {bounds['saved_replay_scope']}.",
+        ]
         lines += [
             "",
             "## Integrated executable source dispositions",

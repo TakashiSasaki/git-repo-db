@@ -52,8 +52,17 @@ def apply(db, output, module):
     db.commit()
 
 
-def components(tmp_path, *, mutate=None):
+def components(tmp_path, *, mutate=None, encoding="UTF-8"):
     original, _ = make_integrated_source(tmp_path / "source")
+    if encoding != "UTF-8":
+        with sqlite3.connect(original) as initial:
+            schema_and_rows = "\n".join(initial.iterdump())
+        rewritten = tmp_path / "source" / "utf16.sqlite3"
+        with sqlite3.connect(rewritten) as rebuilt:
+            assert encoding in ("UTF-16le", "UTF-16be")
+            rebuilt.execute(f"PRAGMA encoding='{encoding}'")
+            rebuilt.executescript(schema_and_rows)
+        original = rewritten
     src = sqlite3.connect(original)
     src.row_factory = sqlite3.Row
     if mutate:
@@ -86,20 +95,29 @@ def components(tmp_path, *, mutate=None):
     db.commit()
     for recipe in identity.RECIPES:
         records = tuple(archive.rows(src, identity.SOURCE_TABLES.get(recipe, recipe)))
-        apply(db, identity.prepare(db, src, run, recipe, 0, records), identity)
+        apply(
+            db,
+            identity.prepare(db, src, run, recipe, 0, records, encoding=encoding),
+            identity,
+        )
     for recipe in git_domain.RECIPES:
         if recipe.endswith("root_origins"):
             continue
         records = tuple(archive.rows(src, git_domain.SOURCE_TABLES.get(recipe, recipe)))
-        apply(db, git_domain.prepare(db, src, run, recipe, 0, records), git_domain)
+        apply(
+            db,
+            git_domain.prepare(db, src, run, recipe, 0, records, encoding=encoding),
+            git_domain,
+        )
     return db, src, run
 
 
 def convert(db, src, run):
+    encoding = src.execute("PRAGMA encoding").fetchone()[0]
     prepared = {}
     for recipe in pr_domain.RECIPES:
         records = tuple(archive.rows(src, pr_domain.SOURCE_TABLES.get(recipe, recipe)))
-        output = pr_domain.prepare(db, src, run, recipe, 0, records)
+        output = pr_domain.prepare(db, src, run, recipe, 0, records, encoding=encoding)
         apply(db, output, pr_domain)
         prepared[recipe] = output
     assert not db.execute("PRAGMA foreign_key_check").fetchall()
@@ -647,5 +665,398 @@ def test_saved_null_body_keeps_identity_each_occurrence_without_inventing_empty_
         ).fetchone()[0]
         == 3
     )
+    db.close()
+    src.close()
+
+
+def test_oversized_saved_page_defers_replay_preserves_payload_occurrence_and_direct_rows(
+    tmp_path,
+):
+    assert pr_domain.MAX_SAVED_REPLAY_BYTES == 32 * 1024 * 1024
+    saved = {}
+
+    def mutate(src):
+        response = src.execute(
+            "SELECT response_id FROM collection_pages WHERE collection_id=? AND ordinal=0",
+            (IDS["commits_complete"],),
+        ).fetchone()[0]
+        value = json.loads(
+            src.execute(
+                "SELECT body FROM api_responses WHERE id=?", (response,)
+            ).fetchone()[0]
+        )[0]
+        value["padding"] = "x" * pr_domain.MAX_SAVED_REPLAY_BYTES
+        raw = json.dumps([value]).encode()
+        assert len(raw) > pr_domain.MAX_SAVED_REPLAY_BYTES
+        src.execute(
+            "UPDATE api_responses SET body=?,payload_sha256=? WHERE id=?",
+            (raw, hashlib.sha256(raw).digest(), response),
+        )
+        saved["response"] = response
+        saved["sha256"] = hashlib.sha256(raw).digest()
+        saved["bytes"] = len(raw)
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    payload = db.execute(
+        "SELECT body,sha256,byte_length FROM payloads WHERE id=?", (saved["response"],)
+    ).fetchone()
+    assert len(payload[0]) == saved["bytes"]
+    assert hashlib.sha256(payload[0]).digest() == payload[1] == saved["sha256"]
+    assert payload[2] == saved["bytes"]
+    occurrence = db.execute(
+        "SELECT observed_at,payload_id FROM fetch_occurrences WHERE collection_id=?",
+        (IDS["commits_complete"],),
+    ).fetchone()
+    assert tuple(occurrence) == (STAMPS[0], saved["response"])
+    # The already acquired normalized item survives even though its page cannot
+    # be replayed/proved complete within the decoder budget.
+    assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
+    assert (
+        db.execute("SELECT state FROM code_observations WHERE id=301").fetchone()[0]
+        == "partial"
+    )
+    diagnostics = output["saved_listing_repair"]["diagnostics"]
+    assert any(d[1:3] == ["PR_REPLAY_BUDGET_EXCEEDED", "partial"] for d in diagnostics)
+    attributed = json.loads(
+        next(d[3] for d in diagnostics if d[1] == "PR_REPLAY_BUDGET_EXCEEDED")
+    )
+    assert attributed["column"] == "response_id"
+    assert (
+        db.execute(
+            "SELECT source_table FROM legacy_records WHERE id=?",
+            (attributed["record_id"],),
+        ).fetchone()[0]
+        == "collection_pages"
+    )
+    assert (
+        db.execute(
+            "SELECT count(*) FROM document_observations WHERE document_id=? AND id<1000",
+            (IDS["document_a"],),
+        ).fetchone()[0]
+        == 3
+    )
+    db.close()
+    src.close()
+
+
+def test_oversized_normalized_pr_metadata_retains_direct_fact_defers_only_reanalysis(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(pr_domain, "MAX_SAVED_REPLAY_BYTES", 1024)
+    saved = {}
+
+    def mutate(src):
+        payload = json.loads(
+            src.execute("SELECT payload FROM pr_observations WHERE id=301").fetchone()[
+                0
+            ]
+        )
+        payload["padding"] = "x" * 1024
+        raw = json.dumps(payload)
+        assert len(raw.encode()) > pr_domain.MAX_SAVED_REPLAY_BYTES
+        src.execute("UPDATE pr_observations SET payload=? WHERE id=301", (raw,))
+        saved["payload"] = raw
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    assert tuple(
+        db.execute(
+            "SELECT payload,observed_at FROM change_request_observations WHERE id=301"
+        ).fetchone()
+    ) == (saved["payload"], STAMPS[0])
+    assert (
+        db.execute("SELECT count(*) FROM change_request_observations").fetchone()[0]
+        == 3
+    )
+    assert db.execute("SELECT count(*) FROM code_observations").fetchone()[0] == 2
+    assert (
+        db.execute(
+            "SELECT count(*) FROM document_observations WHERE origin_key='pr-observation:301'"
+        ).fetchone()[0]
+        == 0
+    )
+    assert (
+        db.execute(
+            "SELECT count(*) FROM document_observations WHERE origin_key='pr-observation:302'"
+        ).fetchone()[0]
+        == 2
+    )
+    assert any(
+        d[1:3] == ["PR_REPLAY_BUDGET_EXCEEDED", "partial"]
+        for d in output["saved_pr_document_repair"]["diagnostics"]
+    )
+    assert not output["change_request_observations"]["diagnostics"]
+    records = tuple(archive.rows(src, "pr_observations"))
+    assert output["saved_pr_document_repair"] == pr_domain.prepare(
+        db, src, run, "saved_pr_document_repair", 0, records, verifying=True
+    )
+    db.close()
+    src.close()
+
+
+def test_small_deep_saved_json_is_attributed_without_decoder_crash(tmp_path):
+    saved = {}
+
+    def mutate(src):
+        response = src.execute(
+            "SELECT response_id FROM collection_pages WHERE collection_id=? AND ordinal=0",
+            (IDS["commits_complete"],),
+        ).fetchone()[0]
+        raw = b"[" * 10000 + b"0" + b"]" * 10000
+        assert len(raw) < pr_domain.MAX_SAVED_REPLAY_BYTES
+        src.execute(
+            "UPDATE api_responses SET body=?,payload_sha256=? WHERE id=?",
+            (raw, hashlib.sha256(raw).digest(), response),
+        )
+        saved["response"] = response
+        saved["body"] = raw
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    assert (
+        db.execute(
+            "SELECT body FROM payloads WHERE id=?", (saved["response"],)
+        ).fetchone()[0]
+        == saved["body"]
+    )
+    assert any(
+        d[1:3] == ["PR_JSON_DEPTH_UNSUPPORTED", "partial"]
+        for d in output["saved_listing_repair"]["diagnostics"]
+    )
+    assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
+    assert (
+        db.execute("SELECT state FROM code_observations WHERE id=301").fetchone()[0]
+        == "partial"
+    )
+    db.close()
+    src.close()
+
+
+def test_large_scope_request_details_preserve_direct_rows_edges_and_completion(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(pr_domain, "MAX_SAVED_REPLAY_BYTES", 1024)
+    saved = {}
+
+    def mutate(src):
+        for collection in (
+            IDS["commits_complete"],
+            IDS["files_complete"],
+            IDS["commits_partial"],
+            IDS["files_partial"],
+        ):
+            scope = json.loads(
+                src.execute(
+                    "SELECT scope FROM collections WHERE id=?", (collection,)
+                ).fetchone()[0]
+            )
+            scope["padding"] = "x" * 1024
+            raw_scope = json.dumps(scope)
+            src.execute(
+                "UPDATE collections SET scope=? WHERE id=?", (raw_scope, collection)
+            )
+            saved[collection] = raw_scope
+            for ordinal, request in src.execute(
+                "SELECT ordinal,request FROM collection_pages WHERE collection_id=?",
+                (collection,),
+            ).fetchall():
+                parsed = json.loads(request)
+                parsed["padding"] = {"large": "y" * 1024}
+                raw_request = json.dumps(parsed)
+                src.execute(
+                    "UPDATE collection_pages SET request=? WHERE collection_id=? AND ordinal=?",
+                    (raw_request, collection, ordinal),
+                )
+                saved[(collection, ordinal)] = raw_request
+        for ident, details in src.execute(
+            "SELECT id,details FROM pr_code_observations"
+        ).fetchall():
+            parsed = json.loads(details)
+            parsed["padding"] = ["z" * 1024]
+            raw_details = json.dumps(parsed)
+            src.execute(
+                "UPDATE pr_code_observations SET details=? WHERE id=?",
+                (raw_details, ident),
+            )
+            saved[ident] = raw_details
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    assert (
+        db.execute("SELECT count(*) FROM code_commits").fetchone()[0]
+        == src.execute("SELECT count(*) FROM pr_commits").fetchone()[0]
+        == 2
+    )
+    assert (
+        db.execute("SELECT count(*) FROM code_file_changes").fetchone()[0]
+        == src.execute("SELECT count(*) FROM pr_file_changes").fetchone()[0]
+        == 2
+    )
+    code = list(
+        db.execute(
+            "SELECT id,state,commit_listing_id,file_listing_id,details FROM code_observations ORDER BY id"
+        )
+    )
+    assert [(r[0], r[1]) for r in code] == [(301, "complete"), (302, "partial")]
+    assert all(r[2] and r[3] and r[4] == saved[r[0]] for r in code)
+    for collection in (
+        IDS["commits_complete"],
+        IDS["files_complete"],
+        IDS["commits_partial"],
+        IDS["files_partial"],
+    ):
+        assert (
+            db.execute(
+                "SELECT request_context FROM resume_scopes WHERE id=(SELECT scope_id FROM fetch_collections WHERE id=?)",
+                (collection,),
+            ).fetchone()[0]
+            == saved[collection]
+        )
+        assert (
+            db.execute(
+                "SELECT request FROM fetch_occurrences WHERE collection_id=?",
+                (collection,),
+            ).fetchone()[0]
+            == saved[(collection, 0)]
+        )
+    assert not output["code_commits"]["diagnostics"]
+    assert not output["code_file_changes"]["diagnostics"]
+    records = tuple(archive.rows(src, "pr_code_observations"))
+    assert output["code_observations"] == pr_domain.prepare(
+        db, src, run, "code_observations", 0, records, verifying=True
+    )
+    db.close()
+    src.close()
+
+
+def test_scope_scalar_extraction_preserves_last_duplicate_key_semantics(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(pr_domain, "MAX_SAVED_REPLAY_BYTES", 1024)
+
+    def mutate(src):
+        scope = (
+            '{"repo_id":"wrong","repo_id":'
+            + json.dumps(IDS["repo"])
+            + ',"principal":{"invalid":"first"},"principal":null,"api_version":3,"api_version":"last-version","padding":'
+            + json.dumps("x" * 1024)
+            + "}"
+        )
+        src.execute(
+            "UPDATE collections SET scope=? WHERE id=?",
+            (scope, IDS["commits_complete"]),
+        )
+        request = (
+            '{"url":false,"url":"https://synthetic.invalid/last","parser_version":3,"parser_version":"last-parser","padding":'
+            + json.dumps("y" * 1024)
+            + "}"
+        )
+        src.execute(
+            "UPDATE collection_pages SET request=? WHERE collection_id=?",
+            (request, IDS["commits_complete"]),
+        )
+        details = (
+            '{"api_head_base_stable":false,"api_head_base_stable":true,"padding":'
+            + json.dumps("z" * 1024)
+            + "}"
+        )
+        src.execute(
+            "UPDATE pr_code_observations SET details=? WHERE id=301", (details,)
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    convert(db, src, run)
+    scope = db.execute(
+        "SELECT principal_ref,api_version,endpoint,parser_version FROM resume_scopes WHERE id=(SELECT scope_id FROM fetch_collections WHERE id=?)",
+        (IDS["commits_complete"],),
+    ).fetchone()
+    assert tuple(scope) == (
+        None,
+        "last-version",
+        "https://synthetic.invalid/last",
+        "last-parser",
+    )
+    assert (
+        db.execute("SELECT state FROM code_observations WHERE id=301").fetchone()[0]
+        == "complete"
+    )
+    assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
+    db.close()
+    src.close()
+
+
+@pytest.mark.parametrize("encoding", ["UTF-8", "UTF-16le", "UTF-16be"])
+@pytest.mark.parametrize(
+    "original",
+    [
+        r'{"principal":"\ud800","api_version":"original"}',
+        r'{"principal":"valid","principal":"\ud800","api_version":"original"}',
+    ],
+)
+def test_selected_unpaired_surrogate_is_attributed_without_replacement_or_crash(
+    tmp_path, encoding, original
+):
+
+    def mutate(src):
+        src.execute(
+            "UPDATE collections SET scope=? WHERE id=?",
+            (original, IDS["commits_complete"]),
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate, encoding=encoding)
+    output = convert(db, src, run)
+    assert (
+        src.execute(
+            "SELECT scope FROM collections WHERE id=?", (IDS["commits_complete"],)
+        ).fetchone()[0]
+        == original
+    )
+    assert any(
+        d[1:3] == ["PR_MALFORMED_TEXT", "blocking"]
+        for d in output["resume_scopes"]["diagnostics"]
+    )
+    assert (
+        db.execute(
+            "SELECT count(*) FROM fetch_collections WHERE id=?",
+            (IDS["commits_complete"],),
+        ).fetchone()[0]
+        == 0
+    )
+    assert not db.execute(
+        "SELECT 1 FROM resume_scopes WHERE principal_ref=?", ("\ufffd",)
+    ).fetchone()
+    archived = db.execute(
+        "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.id=v.record_id WHERE r.source_table='collections' AND v.column_name='scope' AND v.value_bytes=?",
+        (original.encode(encoding),),
+    ).fetchone()
+    assert archived is not None
+    db.close()
+    src.close()
+
+
+@pytest.mark.parametrize("encoding", ["UTF-8", "UTF-16le", "UTF-16be"])
+def test_selected_paired_escaped_surrogates_backslashes_and_last_duplicate_survive(
+    tmp_path, encoding
+):
+    original = r'{"principal":"\ud800","principal":"\ud83d\ude00","api_version":"\\ud800","padding":"\ud800"}'
+
+    def mutate(src):
+        src.execute(
+            "UPDATE collections SET scope=? WHERE id=?",
+            (original, IDS["commits_complete"]),
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate, encoding=encoding)
+    output = convert(db, src, run)
+    row = db.execute(
+        "SELECT principal_ref,api_version,request_context FROM resume_scopes WHERE id=(SELECT scope_id FROM fetch_collections WHERE id=?)",
+        (IDS["commits_complete"],),
+    ).fetchone()
+    assert tuple(row) == ("😀", r"\ud800", original)
+    assert not any(
+        d[1] == "PR_MALFORMED_TEXT" for d in output["resume_scopes"]["diagnostics"]
+    )
+    assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
     db.close()
     src.close()

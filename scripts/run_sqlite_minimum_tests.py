@@ -1,4 +1,4 @@
-"""Run independent target/core/contract tests with pinned SQLite 3.46.1.
+"""Run target/core/contracts and guarded conversion with pinned SQLite 3.46.1.
 
 Run scripts/prepare_sqlite_minimum.py before this offline lane.
 The application dependency/runner is not changed.
@@ -24,6 +24,10 @@ DEFAULT_FILES = [
     "tests/unit/test_conversion_identity.py",
     "tests/unit/test_conversion_identity_phase.py",
     "tests/integration/test_p3b_identity_flow.py",
+    "tests/unit/test_conversion_git_domain.py",
+    "tests/unit/test_conversion_pr_domain.py",
+    "tests/unit/test_conversion_integrated_parent.py",
+    "tests/integration/test_integrated_conversion.py",
 ]
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument("--files-from", type=Path)
