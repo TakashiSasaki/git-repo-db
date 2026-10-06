@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import resource
 import shutil
 import sqlite3
 import subprocess
@@ -274,9 +275,17 @@ def test_guard_denials_and_modest_scaling_without_payload_proof_copies(
     database, cache, work, before = prepared(tmp_path, scale=200)
     for probe in ("network", "source-write", "cache-write"):
         assert worker(work, "--probe", probe)["denied"] == probe
+    usage_before = resource.getrusage(resource.RUSAGE_CHILDREN)
     started = time.monotonic()
     status = cli("integrated", work, "--batch-size", 50)
     seconds = time.monotonic() - started
+    usage_after = resource.getrusage(resource.RUSAGE_CHILDREN)
+    child_cpu_seconds = (
+        usage_after.ru_utime
+        + usage_after.ru_stime
+        - usage_before.ru_utime
+        - usage_before.ru_stime
+    )
     assert (
         status["complete"] and status["normalized_rows"]["document_observations"] >= 200
     )
@@ -296,11 +305,14 @@ def test_guard_denials_and_modest_scaling_without_payload_proof_copies(
             {
                 "synthetic_scale": 200,
                 "conversion_seconds": round(seconds, 3),
+                "conversion_child_cpu_seconds": round(child_cpu_seconds, 3),
                 "batches": status["committed_batches"],
             }
         )
     )
-    assert seconds < 45
+    # Count the converter's work, independently of other xdist workers sharing
+    # the runner. Wall time remains reported and the child retains its timeout.
+    assert child_cpu_seconds < 45
     unchanged(database, cache, before)
 
 

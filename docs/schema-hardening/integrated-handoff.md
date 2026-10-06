@@ -136,7 +136,10 @@ fell from 4 to 2 per invocation. Its final deep audit remains. Integrated tests
 instrument the actual parent verifier to require one invocation-level entry call,
 and a 200-document synthetic timing/proof-size check guards against obvious
 repeated scans or payload-manifest copies. These are synthetic measurements, not
-real-data performance claims. The existing `ci_profile.py` measured a 200-document
+real-data performance claims. The scaling test reports wall time and uses child
+CPU time for its work budget so four CI workers sharing a runner do not consume
+each other's budget; the guarded child still has a wall-clock timeout.
+The existing `ci_profile.py` measured a 200-document
 full synthetic pipeline at 17.409 seconds locally (Python 3.12.14, SQLite 3.53.1);
 this includes archive and identity preparation, not just the new domain writer.
 
