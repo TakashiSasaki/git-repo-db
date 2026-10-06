@@ -2,6 +2,7 @@ import json
 import os
 import sqlite3
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,7 @@ def distributions(tmp_path_factory):
     work = tmp_path_factory.mktemp("distributions")
     env = {
         **os.environ,
+        "UV_PYTHON": sys.executable,
         "UV_CACHE_DIR": os.environ.get("UV_CACHE_DIR", "/workspace/.cache/uv"),
     }
     wheelhouse = Path(
@@ -88,7 +90,11 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     venv = tmp_path / "venv"
     outside = tmp_path / "outside"
     outside.mkdir()
-    checked(["uv", "venv", venv, "--python", "3.12", "--offline"], cwd=outside, env=env)
+    checked(
+        ["uv", "venv", venv, "--python", sys.executable, "--offline"],
+        cwd=outside,
+        env=env,
+    )
     checked(
         [
             "uv",
@@ -166,7 +172,7 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     with sqlite3.connect(state / "catalog.sqlite3") as connection:
         assert connection.execute(
             "SELECT format_id,schema_version,lifecycle FROM database_identity"
-        ).fetchone() == ("repo-catalog/catalog3", 4, "validated")
+        ).fetchone() == ("repo-catalog/catalog3", 5, "validated")
         assert not connection.execute(
             "SELECT name FROM sqlite_schema WHERE name='schema_migrations'"
         ).fetchall()

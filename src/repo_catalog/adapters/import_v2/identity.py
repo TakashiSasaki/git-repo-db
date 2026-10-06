@@ -28,7 +28,7 @@ SOURCE_TABLES = {
 KEYS = {
     "repository_name_assertions": ("repository_id", "name"),
     "source_repositories": ("source_id", "repository_id"),
-    "service_instances": ("service_instance_id",),
+    "service_instances": ("service_instance_uuidv4",),
     "sources": ("source_id",),
     "repositories": ("repository_id",),
     "repository_bindings": ("repository_binding_id",),
@@ -36,8 +36,8 @@ KEYS = {
 }
 COLUMNS = {
     "service_instances": (
-        "service_instance_id",
-        "kind",
+        "service_instance_uuidv4",
+        "service_kind",
         "name",
         "web_base_url",
         "api_base_url",
@@ -46,7 +46,7 @@ COLUMNS = {
     ),
     "sources": (
         "source_id",
-        "service_instance_id",
+        "service_instance_uuidv4",
         "discovery_kind",
         "name",
         "settings",
@@ -61,7 +61,7 @@ COLUMNS = {
     "repository_bindings": (
         "repository_binding_id",
         "repository_id",
-        "service_instance_id",
+        "service_instance_uuidv4",
         "provider_repository_id",
         "metadata",
         "created_at",
@@ -221,6 +221,18 @@ class Context:
         t = self.t
         if recipe == "service_instances":
             ident, kind = t(record, "id", nonempty=True), t(record, "kind")
+            # Never derive a service namespace from a URL/name or silently replace
+            # an invalid source namespace. The original is retained in the archive.
+            try:
+                parsed = uuid.UUID(ident)
+                if (
+                    str(parsed) != ident
+                    or parsed.version != 4
+                    or parsed.variant != uuid.RFC_4122
+                ):
+                    raise ValueError()
+            except ValueError:
+                raise Invalid("IDENTITY_INVALID_SERVICE_UUIDV4", "id") from None
             if kind not in (
                 "github",
                 "gitlab",

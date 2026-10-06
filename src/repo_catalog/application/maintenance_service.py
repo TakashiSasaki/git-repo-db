@@ -214,16 +214,19 @@ class MaintenanceService:
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             ident = str(uuid.uuid4())
             with s.transaction():
-                service_instance_id = (
-                    identity.instance(s, instance)["service_instance_id"]
+                service_instance_uuidv4 = (
+                    identity.instance(s, instance)["service_instance_uuidv4"]
                     if instance
                     else None
                 )
                 if kind == "github":
-                    service_instance_id = (
-                        service_instance_id or identity.default_github_instance(s)
+                    service_instance_uuidv4 = (
+                        service_instance_uuidv4 or identity.default_github_instance(s)
                     )
-                    if identity.instance(s, service_instance_id)["kind"] != "github":
+                    if (
+                        identity.instance(s, service_instance_uuidv4)["service_kind"]
+                        != "github"
+                    ):
                         raise CatalogError(
                             "INVALID_ARGUMENT",
                             "GitHub source requires a GitHub instance",
@@ -244,13 +247,13 @@ class MaintenanceService:
                         )
                     settings["provider_repository_id"] = str(provider_repository_id)
                 s.execute(
-                    "INSERT INTO sources(source_id,discovery_kind,name,settings,service_instance_id) VALUES(?,?,?,?,?)",
+                    "INSERT INTO sources(source_id,discovery_kind,name,settings,service_instance_uuidv4) VALUES(?,?,?,?,?)",
                     (
                         ident,
                         "github_inventory" if kind == "github" else "manual_git",
                         name,
                         json.dumps(settings),
-                        service_instance_id,
+                        service_instance_uuidv4,
                     ),
                 )
                 s.publish()
@@ -263,7 +266,7 @@ class MaintenanceService:
             with s.transaction():
                 ident = identity.add_instance(s, kind, name, web_base_url, api_base_url)
                 s.publish()
-            return Result({"service_instance_id": ident}, catalog=s.revision())
+            return Result({"service_instance_uuidv4": ident}, catalog=s.revision())
 
     def repository_bind(self, repo, instance, provider_repository_id=None):
         from repo_catalog.application.collection_service import single_repository
@@ -271,17 +274,17 @@ class MaintenanceService:
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
                 repository_id = single_repository(s, repo)["repository_id"]
-                service_instance_id = identity.instance(s, instance)[
-                    "service_instance_id"
+                service_instance_uuidv4 = identity.instance(s, instance)[
+                    "service_instance_uuidv4"
                 ]
                 identity.bind(
-                    s, repository_id, service_instance_id, provider_repository_id
+                    s, repository_id, service_instance_uuidv4, provider_repository_id
                 )
                 s.publish()
             return Result(
                 {
                     "repository_id": repository_id,
-                    "service_instance_id": service_instance_id,
+                    "service_instance_uuidv4": service_instance_uuidv4,
                     "provider_repository_id": provider_repository_id,
                 },
                 catalog=s.revision(),

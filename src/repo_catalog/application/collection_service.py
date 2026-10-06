@@ -45,7 +45,7 @@ def select_repositories(s, selectors=(), source=None):
             if selector
             in (r["repository_id"], r["name"], f"{r['provider_host']}/{r['name']}")
             or s.one(
-                "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.service_instance_id=b.service_instance_id WHERE b.repository_id=? AND ?=i.name||'/'||?",
+                "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.service_instance_uuidv4=b.service_instance_uuidv4 WHERE b.repository_id=? AND ?=i.name||'/'||?",
                 (r["repository_id"], selector, r["name"]),
             )
         ]
@@ -137,10 +137,13 @@ class CollectionService:
                                 "NOT_FOUND",
                                 "Explicit repository identity no longer exists",
                             )
-                        if src["service_instance_id"] and provider_repository_id:
+                        if src["service_instance_uuidv4"] and provider_repository_id:
                             binding = s.one(
-                                "SELECT repository_id FROM repository_bindings WHERE service_instance_id=? AND provider_repository_id=?",
-                                (src["service_instance_id"], provider_repository_id),
+                                "SELECT repository_id FROM repository_bindings WHERE service_instance_uuidv4=? AND provider_repository_id=?",
+                                (
+                                    src["service_instance_uuidv4"],
+                                    provider_repository_id,
+                                ),
                             )
                             if binding:
                                 if existing and existing[0] != binding[0]:
@@ -168,11 +171,11 @@ class CollectionService:
                                 "UPDATE repositories SET name=?,metadata=? WHERE repository_id=?",
                                 (repo["name"], json.dumps(repo["metadata"]), ident),
                             )
-                        if src["service_instance_id"]:
+                        if src["service_instance_uuidv4"]:
                             identity.bind(
                                 s,
                                 ident,
-                                src["service_instance_id"],
+                                src["service_instance_uuidv4"],
                                 provider_repository_id,
                             )
                         identity.link_source(s, src["source_id"], ident)

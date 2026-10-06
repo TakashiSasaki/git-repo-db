@@ -31,11 +31,11 @@ def github_runtime(tmp_path, monkeypatch):
         with Store(state, initialize=True) as store:
             with store.transaction():
                 store.execute(
-                    "INSERT INTO service_instances(service_instance_id,kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('instance','github','fixture',?,?, '{}',NULL)",
+                    "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('00000000-0000-4000-8000-000000000101','github','fixture',?,?, '{}',NULL)",
                     (api.url, api.url),
                 )
                 store.execute(
-                    "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('source','instance','github_inventory','fixture',?)",
+                    "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('source','00000000-0000-4000-8000-000000000101','github_inventory','fixture',?)",
                     (json.dumps({"owner": "fixture"}),),
                 )
                 store.execute(
@@ -46,7 +46,7 @@ def github_runtime(tmp_path, monkeypatch):
                     (fixture.alpha.url,),
                 )
                 store.execute(
-                    "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_id,provider_repository_id,metadata,created_at) VALUES('binding','repo','instance','101','{}',NULL)"
+                    "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','101','{}',NULL)"
                 )
                 store.execute(
                     "INSERT INTO source_repositories(source_id,repository_id,first_seen,last_seen) VALUES('source','repo',NULL,NULL)"
@@ -106,14 +106,13 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
         "SELECT f.*,o.fetch_occurrence_id fetch_occurrence_id,o.observed_at page_observed_at,p.body FROM fetch_collections f JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads p ON p.payload_id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='issue-comment' ORDER BY o.observed_at LIMIT 1"
     )
     current_version = store.one(
-        "SELECT current_document_version_id FROM documents WHERE document_id='repo:41:issue-comment:241'"
+        "SELECT current_document_observation_id FROM documents WHERE change_request_id='repo:41' AND kind='issue-comment' AND provider_change_request_document_id='241'"
     )[0]
-    version_count = store.one("SELECT count(*) FROM document_versions")[0]
     observation_count = store.one("SELECT count(*) FROM document_observations")[0]
     from repo_catalog.adapters.github.persistence import ApiFacts
 
     # Replaying a committed old A page while current B is selected must be a
-    # no-op; it cannot invent a return-to-A version or move the projection.
+    # no-op; it cannot invent a return-to-A observation or move the projection.
     with store.transaction():
         old_value = json.loads(old_page["body"])[0]
         ApiFacts(store, store.config["github"]).document(
@@ -129,11 +128,10 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
         )
     assert (
         store.one(
-            "SELECT current_document_version_id FROM documents WHERE document_id='repo:41:issue-comment:241'"
+            "SELECT current_document_observation_id FROM documents WHERE change_request_id='repo:41' AND kind='issue-comment' AND provider_change_request_document_id='241'"
         )[0]
         == current_version
     )
-    assert store.one("SELECT count(*) FROM document_versions")[0] == version_count
     assert (
         store.one("SELECT count(*) FROM document_observations")[0] == observation_count
     )
@@ -144,14 +142,14 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
         path.endswith(("/commits", "/files")) for _, path, _ in api.requests[first:]
     )
     versions = store.all(
-        "SELECT b.body,count(o.document_observation_id) observations FROM documents d JOIN document_versions v ON v.document_id=d.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id JOIN document_observations o ON o.document_version_id=v.document_version_id WHERE d.kind='issue-comment' AND d.change_request_id='repo:41' GROUP BY v.document_version_id"
+        "SELECT b.body,1 observations FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.kind='issue-comment' AND o.change_request_id='repo:41' ORDER BY o.document_observation_id"
     )
     assert {r["body"] for r in versions} == {"comment-marker A", "comment-marker B"}
     assert sum(r["observations"] for r in versions if r["body"].endswith("A")) == 2
     assert len(versions) == 3
     assert (
         store.one(
-            "SELECT count(DISTINCT v.text_body_id) FROM document_versions v JOIN documents d ON d.document_id=v.document_id WHERE d.kind='issue-comment' AND d.change_request_id='repo:41'"
+            "SELECT count(DISTINCT o.text_body_sha256) FROM document_observations o WHERE o.kind='issue-comment' AND o.change_request_id='repo:41'"
         )[0]
         == 2
     )
@@ -336,6 +334,9 @@ def legacy_github_source(path, fixture, api):
             "comment-return-a",
         )
     }
+    ids["instance"] = (
+        "00000000-0000-4000-8000-000000000101"  # fixed synthetic UUIDv4 namespace
+    )
     root = api.url + "/repos/fixture/alpha"
     version = DEFAULTS["github"]["rest_api_version"]
     stamp = "2026-01-01T00:00:00Z"
@@ -355,7 +356,11 @@ def legacy_github_source(path, fixture, api):
         )
         db.execute(
             "INSERT INTO sources VALUES(?,'github','fixture',?,?)",
-            (ids["source"], json.dumps({"owner": "fixture"}), ids["instance"]),
+            (
+                ids["source"],
+                json.dumps({"owner": "fixture"}),
+                ids["instance"],
+            ),
         )
         db.execute(
             "INSERT INTO repositories VALUES(?,?,'127.0.0.1','101','fixture/alpha',?,'{}',NULL)",

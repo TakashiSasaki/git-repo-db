@@ -1,32 +1,24 @@
 # Catalog3 runtime handoff
 
-The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) for initialization, discovery, Git/GitHub collection, restart, offline queries/search, finalization, cache/index maintenance and backup/restore. [Runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py) retains `repo-catalog/catalog3` and advances schema version **3 → 4** for the incompatible naming rewrite.
+The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 5**. Earlier catalog3 databases/backups are rejected; there is no v4 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
 
-## Schema naming stride
+## Identity and observation stride
 
-Starting main: `2566522c79c41aad9b410c2a3db6e699e2acdf65`, exactly the expected commit. The workspace initially contained the earlier merged PR #1 commit; the new branch `refactor/catalog3-schema-names` starts from fetched current main. PR #1 is historical, merged work.
+Starting main: `1ce7fccdb63ab7de74daf6694d2c7187fcddd835`. Working branch: `refactor/portable-document-observations`. [Current data model](../data-model.md) specifies the agreed rules and join examples. The public source was transported through a temporary read-only GitHub Actions bundle/wheel artifact because this editing container cannot resolve external hosts; the temporary workflow is removed from the final tree. No real source was acquired or activated.
 
-The audit covered **74 tables and 148 FK components**. **135 columns** change names; no tables or logical relationships change. Entity PKs use `<entity>_id`; neutral FKs use the identical name, including composite owner components. Role references retain explicit target types, such as `current_change_request_observation_id`, `commit_code_listing_id`, `tree_git_object_id` and `parent_git_object_id`. Resume/coverage scopes, cache locators/active entries, conversion/acquisition sources and catalog/provider IDs have distinct namespaces. See [current data model](../data-model.md) for JOIN examples and scalar/composite-key exceptions.
-
-`oid` remains Git BLOB bytes, scoped by `object_format`; `git_object_id` is the catalog row identifier. Singleton and attempt/ordinal keys remain scalars. Source-format field names and raw provider payload keys remain unchanged. The v2 importer translates old source columns and identity-context keys into current target projections while retaining exact source evidence in the typed archive.
-
-Fresh catalogs use only version 4. Earlier catalog3 development databases/backups are rejected. There is no catalog3 upgrade migration, compatibility view, alias, dual write or alternate old-name query path. The existing one-time offline v2 salvage tool is retained for acquired source evidence.
-
-Current runtime/packaged import/CI contracts select acceptance tests. CI policy explicitly lists historical schema-hardening SQL/JSON/CSV as report inputs; real-world JSON remains evidence/report input. Unknown files still select broader testing. Historical snapshots are unchanged.
+- Service namespaces are `service_instance_uuidv4`; new values use CSPRNG UUIDv4 and the DDL validates canonical v4 representation. `service_kind` retains the existing enum. URL equality never merges distinct namespaces. Provider-native values are retained.
+- Documents have a composite natural key, not `document_id` or a renamed substitute. Related FKs use the full key. `reviews.review_id`, formerly the synthetic document-ID alias, is removed with that alias.
+- `text_bodies.sha256` uniquely identifies exact UTF-8 content, with no normalization. Hash/body disagreement is an integrity failure. `text_body_id` remains catalog-local; observations reference SHA-256 directly.
+- `document_versions` is removed. Each real observation retains its body identity and provenance; A->A->B->A remains four observations sharing two bodies. `current_document_observation_id` must reference the same document. Missing current selection is reported, never inferred from maximum ID.
+- Normal REST/GraphQL collection, offline query/search, import/finalization and backup/restore use the new schema. PR search indexes each body once and still returns each requested observation. CLI uses `--document-observations current|all`, `--provider-change-request-document-id`, `--document-kind` and `--observation`.
 
 ## Validation
 
-The naming stride uses disposable synthetic Git repositories, loopback API fixtures and unchanged-format v2 fixtures. Actual environment: Python 3.12.14, SQLite 3.53.1, uv 0.12.19. Focused checks cover schema/owner/sealing rules, Git SHA-1/SHA-256 collection/restart, GitHub pages/history/listing reuse, v2 preservation/finalization, queries, cache, backup/restore and CI classification. A schema comparison confirms identical tables, column types/defaults/PK positions and FK actions after applying the rename map.
+Clean substantive revision: `b6cca875b9a303989bc8947dc56dddb04d7b9ec2`. Current acceptance: **358 passed** (44.97s); isolated installed wheel/sdist-wheel: **2 passed** (3.08s). Planner/collection/profile reconciliation confirms **360 selected and executed once**, no failures/skips/unexecuted files. Ruff lint/format, STRICT/FTS doctor and prose validation passed. See [synthetic evidence](../validation/synthetic/2026-10-06-portable-document-observations.md) and its adjacent JSON. Subsequent evidence-only documentation is not fresh runtime validation.
 
-Final substantive revision: [`2399248c3cc5a49c56231a94b084d15fe3ce1852`](https://github.com/TakashiSasaki/git-repo-db/commit/2399248c3cc5a49c56231a94b084d15fe3ce1852). Final profiles record this SHA with a clean working tree. Subsequent documentation edits only record these results.
+Work uses Python 3.13.5, native SQLite 3.46.1 and uv 0.10.0 in one practical environment, with delete journaling. Dependencies are installed offline from locked wheel hashes; development imports resolve the working source. The isolated distribution checks install genuine built wheels outside the checkout and do not use that development path.
 
-- Affected integration/import closure: **242 passed**, 16.82 seconds. Focused GitHub/identity checks: **18 passed**; focused Git/recovery/offline checks: **7 passed**.
-- Final complete current acceptance: **339 passed**, 45.73 seconds, four workers. Installed wheel and sdist-derived wheel: **2 passed**, 3.32 seconds, sequential, offline installation outside the checkout.
-- Existing collection/profile reconciliation: **341 required, 341 executed once**, no failures or skips on the final substantive revision.
-- Ruff lint and format passed (111 files); fresh version-4 init, STRICT/FTS doctor, full database integrity/owner check and prose/report validation passed.
-- Normalized schema comparison: all **74 tables, 82 explicit indexes and 256 triggers** match after the column rename map and version change, including column types/defaults/PK positions and all **148 FK components/actions**.
-
-New DDL SHA-256: `0f3d1850066ef3cc0d27ccf5b759d76fa89dc188764394bcefb7ff4c023f2391`. Historical real-world evidence below is not a fresh version-4 validation claim.
+Focused checks cover natural-key relationships, current-pointer ownership, exact UTF-8/hash conflict handling, UUIDv4/namespace rules, API history/replay/scaling, preserved v2 conversion and imported-first-sync listing reuse. One prior tool-limited acceptance invocation was interrupted and is not counted as successful. The completed run is recorded in the linked evidence.
 
 ## Runnable ordinary commands
 
@@ -63,16 +55,16 @@ repo-catalog --state-dir /tmp/catalog3-imported import-v2 \
   --source /tmp/catalog3-v2-fixture/catalog.sqlite3 \
   --source-cache /tmp/catalog3-v2-fixture/cache
 repo-catalog --state-dir /tmp/catalog3-imported db finalize
-repo-catalog --state-dir /tmp/catalog3-imported search pr --literal 'saved early-page' --document-versions observed
+repo-catalog --state-dir /tmp/catalog3-imported search pr --literal 'saved early-page' --document-observations all
 ```
 
 ## Preservation and restart
 
-The guarded offline worker prohibits source writes, network/process acquisition and unguarded SQLite writes. Exact source/cache fingerprints, typed values, stable mappings, attributable diagnostics and batch checkpoints remain inside the target. Queries work after source/import-workspace paths disappear. Missing content remains distinct from empty bytes; partial optional evidence remains useful with exit 3. Critical identity/owner corruption blocks finalization. Only explicit suitable same-owner saved publication/current assertions are restored; import time and integer ordering never select current facts.
+The guarded worker still prohibits source writes and acquisition. Original v2 document/version IDs, source body hashes, typed values, payloads and batch evidence remain in the catalog; source layouts are unchanged. Target document mappings contain composite keys, not replacement IDs. Legacy parser version tuples are transient import support only.
 
-Runtime connections use SQLite locking/transaction snapshots, FK and recursive triggers plus the existing OS writer lock. Shared Git traversal roots retain separate raw origins. Ordered parents and raw paths/refs/names survive. API payload/body dedup preserves A→B→A observations. Completed listings/manifests remain sealed. Resume/replay never advances watermarks as a new remote observation.
+A source version without an actual observation contributes text and archived evidence, not a fabricated observation. Finalization translates a saved current-version assertion only to a suitable same-document source observation of that version. The latest unambiguous recorded observation is used; ties, unknown times, missing observations and conflicting current assertions remain unresolved. Current selection never follows integer/import ordering. New observations are not invented by replay/import, and history/jobs/leases are not reactivated.
 
-Synthetic imported-first-sync logs check conditional detail 304s and zero commit/file requests for eligible unchanged saved listings. Reuse still requires matching service/binding/source, endpoint/API/parser/profile, principal/permissions where known, current authenticated head/base/count and terminal/context proofs. Unknown legacy cursors/watermarks receive targeted refresh. Legacy jobs/leases/reservations never become active, and runtime caches remain isolated from preserved source material.
+Normal SQLite transactions, foreign keys, recursive triggers, OS writer locks, completed-listing sealing, raw bytes and ordered Git parents remain enforced. Imported first-sync reuse still requires matching source/binding/principal/API/parser/profile/head/base and terminal-context evidence. Runtime caches remain separate from retained source material. Backup/restore copies local IDs and resets operational state; it is not multi-catalog exchange.
 
 ## Retained evidence and limits
 
@@ -83,6 +75,6 @@ Pre-refactor evidence remains unchanged:
 - [Complete PR/API continuation PASS](../validation/real-world/2026-10-06-museum-portal-api-continuation-64da722.md), application `64da7222c96d5cd31b7f08a35d77552394c64e46`; all 50 PRs, 121 reviews and 79 real threads, with interruption/recovery and backup/restore.
 - [Retained-v2 discovery N/A](../validation/real-world/2026-10-06-retained-v2-discovery-bdc6a6e.md); no genuine retained source was found.
 
-These are evidence for the schema-version-3 operational milestone. This naming stride does not repeat museum-portal/API trials, retained-source searches or real-data activation. Historical P1/P2/P3A/P3B/integrated SQL/JSON/CSV/reports remain snapshots, not current contracts or acceptance gates.
+These are evidence for the schema-version-3 operational milestone. This identity/observation stride does not repeat museum-portal/API trials, retained-source searches or real-data activation. Historical P1/P2/P3A/P3B/integrated SQL/JSON/CSV/reports remain snapshots, not current contracts or acceptance gates.
 
 Missing originals, unsupported payload shapes and malformed facts retain attributable coverage gaps. Additional providers, distributed synchronization, multi-catalog exchange, LFS/attachment originals, release publication and active-catalog cutover remain outside scope. Prior catalog3 DB compatibility is intentionally unsupported.

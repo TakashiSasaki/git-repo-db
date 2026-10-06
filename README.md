@@ -1,8 +1,8 @@
 # repo-catalog
 
 任意のGit取得先とGitHubのPRをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
-Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PR文書と観測版を永続化します。
-通常ランタイムは catalog3 です。 現在の schema version は **4** で、entity ID と FK は `repository_id`、`git_object_id`、`document_version_id` のように意味を明示します。[現行データモデル](docs/data-model.md)と packaged DDL が正本です。命名変更前の catalog3 開発 DB は対応しません。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。今回の実行環境は Python 3.12.14 / SQLite 3.53.1 です。
+Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PR文書と観測履歴を永続化します。
+通常ランタイムは catalog3 です。 現在の schema version は **5** で、entity ID と FK は `repository_id`、`git_object_id`、`document_observation_id` のように意味を明示します。[現行データモデル](docs/data-model.md)と packaged DDL が正本です。旧 catalog3 開発 DB は対応しません。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。検証した環境・範囲は[実行引き継ぎ](docs/schema-hardening/runtime-handoff.md)に記録しています。
 
 ## 開発・導入
 
@@ -51,7 +51,7 @@ GitHubは` sources add github --owner OWNER`で登録します。APIの認証は
 認証ユーザーの所有repoはprivate/fork/archivedを含め列挙し、PRは全状態を対象にします。少数対象のpilotは`--include-repo NAME`を繰り返して明示対象だけに限定できます。
 GitHub sourceの`--clone-url-override REPO_ID=URL`は、明示的なテスト設定や既存ローカル取得元への接続に使えます。
 
-catalog3 はRepo IDをUUIDv4とし、サービスinstance、native ID、取得URL、sourceを分離します。
+catalog3 はRepo IDとサービスの `service_instance_uuidv4` 名前空間、native ID、取得URL、sourceを分離します。文書は自然キーで識別し、観測から本文のSHA-256を直接参照します。文書用のローカルIDと中間の版テーブルは持ちません。
 SSHとHTTPS、ローカルとネットワークのマウントpathを同じRepo IDの取得先として明示登録できます。
 GitLab/Gitea/GitoliteなどのGitデータは` sources add git-url`で登録できます。GitLab/Giteaの自動列挙・MR/PR API adapterは後続範囲です。
 保存済み開発 v2 データは、新規 state へオフライン import します。登録例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
@@ -63,7 +63,7 @@ repo-catalog --state-dir /path/to/state repos list
 repo-catalog --state-dir /path/to/state refs list --repo REPO_ID
 repo-catalog --state-dir /path/to/state tree list --repo REPO_ID --ref refs/heads/main
 repo-catalog --state-dir /path/to/state search code --literal 認証
-repo-catalog --state-dir /path/to/state search pr --literal 認証 --document-versions observed
+repo-catalog --state-dir /path/to/state search pr --literal 認証 --document-observations all
 repo-catalog --state-dir /path/to/state --format json search hash \
   --algorithm raw-sha256 --digest ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 ```

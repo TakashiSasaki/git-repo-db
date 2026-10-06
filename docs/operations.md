@@ -37,7 +37,7 @@ restoreは新規/空stateだけに行い、元stateを上書き・削除しま�
 復元後の照会は保存データで動作します。収集の再開前に取得元、認証、予算を再確認してください。
 cache/lease/予約/旧running processを有効な復元状態とみなしません。
 
-catalog3 の新規初期化は schema version 4 の packaged DDL から直接行います。命名変更前の catalog3 開発 DB とその backup は拒否します。v3→v4 migration や互換 view はありません。旧 v2 の取得済みデータは、停止した source を別の新規 state へ `import-v2` で救出し、`db finalize` の明示的な readiness 検査を通します。元 source DB/cache は読取り専用証拠として保護され、runtime cache へ流用・回収されません。typed archive、診断、source identity と current 選択の証拠は target 内へ保存します。
+catalog3 の新規初期化は schema version 5 の packaged DDL から直接行います。旧 catalog3 開発 DB とその backup は拒否します。v4→v5 migration や互換 view はありません。旧 v2 の取得済みデータは、停止した source を別の新規 state へ `import-v2` で救出し、`db finalize` の明示的な readiness 検査を通します。元 source DB/cache は読取り専用証拠として保護され、runtime cache へ流用・回収されません。typed archive、診断、source identity と current 選択の証拠は target 内へ保存します。
 
 実データ試行では、許可された場所から元DB/cacheを読み取り専用で特定し、取り込み先・backup・restore・測定先は自動生成した別の一時directoryに置きます。元データを一意に特定できない場合は、候補と不足情報を報告して変更前に停止します。cacheを保存していない場合も明示し、欠けた原本はpartial coverageとして扱います。旧DBの取り込みと公開repoからの新規収集は別の検証範囲です。
 

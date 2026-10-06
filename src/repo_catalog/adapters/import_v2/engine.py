@@ -18,6 +18,7 @@ from repo_catalog.adapters.sqlite.schema import (
     SCHEMA_VERSION,
     schema_sql,
 )
+from repo_catalog.domain.document import text_body_sha256
 
 from . import (
     archive,
@@ -441,6 +442,22 @@ def commit(db, src, run, receipt, item, fault=no_fault):
         else:
             for op in output["operations"]:
                 table, row, operation = op["table"], op["row"], op["operation"]
+                if table == "text_bodies":
+                    _, body, byte_length, sha = row
+                    if (
+                        text_body_sha256(body) != sha
+                        or len(body.encode("utf-8")) != byte_length
+                    ):
+                        raise ConversionError("TEXT_BODY_DIGEST_MISMATCH")
+                    same_digest = db.execute(
+                        "SELECT body,byte_length FROM text_bodies WHERE sha256=?",
+                        (sha,),
+                    ).fetchone()
+                    if same_digest is not None and tuple(same_digest) != (
+                        body,
+                        byte_length,
+                    ):
+                        raise ConversionError("TEXT_BODY_IDENTITY_CONFLICT")
                 actual = find(db, table, row)
                 if operation in {"insert", "reuse"}:
                     if actual is None and operation == "insert":
