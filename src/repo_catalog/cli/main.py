@@ -25,11 +25,46 @@ def parser():
     p.add_argument("--format", choices=("table", "json"), default="table")
     p.add_argument("--timeout-seconds", type=float, default=30)
     commands = p.add_subparsers(dest="command", required=True, parser_class=Parser)
+    target = commands.add_parser("target")
+    target.add_argument("--database", required=True)
+    target.add_argument("--allow-building", action="store_true")
+    target_actions = target.add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    for action in ("repos", "commit", "tree", "file", "pr", "search"):
+        child = target_actions.add_parser(action)
+        child.add_argument("--repo", required=action not in ("repos", "search"))
+        child.add_argument("--limit", type=int, default=100)
+        child.add_argument("--offset", type=int, default=0)
+        if action in ("commit", "tree", "file"):
+            child.add_argument("--commit", required=True)
+        if action == "file":
+            select = child.add_mutually_exclusive_group(required=True)
+            select.add_argument("--path")
+            select.add_argument("--path-b64")
+        if action == "pr":
+            child.add_argument("--number", required=True, type=int)
+            child.add_argument("--binding")
+            child.add_argument(
+                "--request-kind",
+                choices=("pull_request", "merge_request"),
+                default="pull_request",
+            )
+        if action == "search":
+            child.add_argument(
+                "--kind", choices=("code", "commits", "pr"), required=True
+            )
+            child.add_argument("--literal", required=True)
     init = commands.add_parser("init")
     init.add_argument("--profile", required=True)
     init.add_argument("--cache-max-bytes", required=True, type=int)
     init.add_argument("--min-free-bytes", required=True, type=int)
     commands.add_parser("doctor")
+    importer = commands.add_parser("import-v2")
+    importer.add_argument("--source", required=True)
+    importer.add_argument("--source-cache", action="append", default=[])
+    importer.add_argument("--batch-size", type=int, default=100)
+    importer.add_argument("--max-batches", type=int)
     sources = commands.add_parser("sources").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
@@ -87,6 +122,7 @@ def parser():
         "snapshots": ("list", "show"),
         "refs": ("list",),
         "tree": ("list",),
+        "file": ("show",),
         "commits": ("list", "show", "compare"),
         "jobs": ("list", "show", "resume", "cancel"),
         "pr": ("list", "show", "documents", "thread", "timeline"),
@@ -117,12 +153,16 @@ def parser():
                     required=category not in ("repos", "pr") or action != "list",
                 )
                 child.add_argument("--snapshot")
-            if category in ("tree", "commits") and action in ("list", "show"):
+            if category in ("tree", "file", "commits") and action in ("list", "show"):
                 select = child.add_mutually_exclusive_group(required=True)
                 select.add_argument("--ref")
                 select.add_argument("--commit")
                 child.add_argument("--first-parent", action="store_true")
                 child.add_argument("--path-prefix")
+            if category == "file":
+                path = child.add_mutually_exclusive_group(required=True)
+                path.add_argument("--path")
+                path.add_argument("--path-b64")
             if category == "commits" and action == "compare":
                 child.add_argument("--left", required=True)
                 child.add_argument("--right", required=True)
@@ -139,6 +179,7 @@ def parser():
                     choices=("head", "tag", "pr-head", "pr-related"),
                 )
             if category == "pr":
+                child.add_argument("--binding")
                 if action not in ("list", "thread"):
                     child.add_argument("--number", required=True, type=int)
                 child.add_argument("--document")
@@ -229,7 +270,7 @@ def parser():
     db = commands.add_parser("db").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
-    db.add_parser("migrate")
+    db.add_parser("finalize")
     db.add_parser("check").add_argument("--full", action="store_true")
     db.add_parser("backup").add_argument("--output", required=True)
     db.add_parser("restore").add_argument("--input", required=True)
@@ -252,6 +293,44 @@ def repo_selector(p):
 
 
 def dispatch(args, token):
+    if args.command == "target":
+        from repo_catalog.application.target_queries import TargetQueryService
+
+        return TargetQueryService(
+            args.database, allow_building=args.allow_building, token=token
+        ).query(
+            args.action,
+            vars(args),
+            limit=args.limit,
+            offset=args.offset,
+            timeout=args.timeout_seconds,
+        )
+    if args.command == "import-v2":
+        from repo_catalog.application.import_service import import_catalog
+        from repo_catalog.domain.models import CoverageReport, Result
+
+        if not args.state_dir:
+            raise CatalogError(
+                "INVALID_ARGUMENT", "import-v2 requires an explicit new --state-dir"
+            )
+        report = import_catalog(
+            args.source,
+            state_path(args.state_dir),
+            source_caches=args.source_cache,
+            batch_size=args.batch_size,
+            max_batches=args.max_batches,
+            token=token,
+        )
+        coverage = CoverageReport()
+        if not report.get("complete"):
+            coverage.add("import", "import_incomplete")
+        return Result(
+            report, coverage, status="complete" if report.get("complete") else "partial"
+        )
+    if args.command == "db" and args.action == "restore" and not args.state_dir:
+        raise CatalogError(
+            "INVALID_ARGUMENT", "Restore requires an explicit new --state-dir"
+        )
     path = state_path(args.state_dir)
     maintenance = MaintenanceService(path)
     if args.command == "init":
@@ -317,7 +396,10 @@ def dispatch(args, token):
 
         # Read running state first so a live writer reports JOB_RUNNING, not a false successful cancellation.
         with Store(path, readonly=True) as s:
-            row = s.one("SELECT state FROM jobs WHERE id=?", (args.job_id,))
+            row = s.one(
+                "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE j.id=?",
+                (args.job_id,),
+            )
             if row and row[0] == "running":
                 raise CatalogError(
                     "JOB_RUNNING", "Send SIGINT to the foreground runner"

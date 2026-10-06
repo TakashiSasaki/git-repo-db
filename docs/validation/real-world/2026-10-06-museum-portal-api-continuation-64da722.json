@@ -1,0 +1,599 @@
+{
+  "version": 1,
+  "run_id": "2026-10-06-museum-portal-api-continuation-64da722",
+  "result": "PASS",
+  "application": {
+    "commit": "64da7222c96d5cd31b7f08a35d77552394c64e46",
+    "version": "0.2.0",
+    "installed_wheel_sha256": "8a6deb0ac7d07d7e5c219f0c07885efc1bb71711d1c7f9d2fdc0ebcfc14678c7",
+    "build": "uv build --wheel --out-dir ${TRIAL}/dist; install with locked runtime constraints into ${TRIAL}/venv"
+  },
+  "target": {
+    "repository": "TakashiSasaki/museum-portal",
+    "remote": "https://github.com/TakashiSasaki/museum-portal.git",
+    "all_pr_head_base_state_sha256": "fca508d8d5747069e4ab6a7f58a2c443cc28d2f5f83c08f7212bbbcde4dc2ae5",
+    "pr": 42,
+    "reviews": 83,
+    "threads": 52,
+    "documents": 183,
+    "head_oid": "sha1:dd871a91de3b581e13a0b10671de3307860d3164",
+    "base_oid": "sha1:0c41e93a4247ea0576033e567da596a2bbfabeaa",
+    "history_observations": 7,
+    "code_commits": 93,
+    "file_changes": 21
+  },
+  "continuity": {
+    "mode": "resume preserved prior state via exact disposable copy",
+    "prior_report": "docs/validation/real-world/2026-10-06-museum-portal-api-bdc6a6e.json",
+    "prior_budget_used": 95,
+    "identity": {
+      "db_instance_id": "2840c781-b053-4782-b571-2dcb944cc662",
+      "publication_seq": 221
+    },
+    "row_counts": {
+      "change_requests": 50,
+      "change_request_observations": 115,
+      "document_versions": 266,
+      "reviews": 0,
+      "review_threads": 0,
+      "review_comments": 100,
+      "change_request_events": 63,
+      "code_commits": 5,
+      "code_file_changes": 7,
+      "code_observations": 9
+    },
+    "source_fingerprint_before": {
+      "files": 88,
+      "bytes": 17519105,
+      "sha256": "599a047e116522383377b35e87457e76f2553c4564b702a2752fb099697f4c05"
+    },
+    "source_fingerprint_after_copy": {
+      "files": 88,
+      "bytes": 17519105,
+      "sha256": "599a047e116522383377b35e87457e76f2553c4564b702a2752fb099697f4c05"
+    },
+    "copied_state_fingerprint": {
+      "files": 88,
+      "bytes": 17519105,
+      "sha256": "599a047e116522383377b35e87457e76f2553c4564b702a2752fb099697f4c05"
+    },
+    "five_query_digest_verification": {
+      "pr_identity": {
+        "sha256": "1de262e8af30f5df4738f261dd345afd12e2c96d9d3f9657940037a405b1de41",
+        "matches_durable_prior_report": true
+      },
+      "pr_history": {
+        "sha256": "6fcf1f2abb86c3547b8934f7dbd09c34ae14bf8c42144446cb084a376b968715",
+        "matches_durable_prior_report": true
+      },
+      "documents": {
+        "sha256": "356d8d4940b22020dd78ef2057fc768ba0a463f16a2d5a6d4b95090c4121a6ac",
+        "matches_durable_prior_report": true
+      },
+      "events": {
+        "sha256": "ea9831cd6a72d39361ac6bd606865c11aa5757410801002fdd7e4b0e05036b5b",
+        "matches_durable_prior_report": true
+      },
+      "pr_search": {
+        "sha256": "d7bef1dc7def3378b5d1ebb5a93457941ca4caa5b694dce8fda9953d0a1985ab",
+        "matches_durable_prior_report": true
+      }
+    },
+    "source_fingerprint_after_continuation": {
+      "files": 88,
+      "bytes": 17519105,
+      "sha256": "599a047e116522383377b35e87457e76f2553c4564b702a2752fb099697f4c05"
+    }
+  },
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "wheel_sha256": "8a6deb0ac7d07d7e5c219f0c07885efc1bb71711d1c7f9d2fdc0ebcfc14678c7",
+    "git": "2.52.0",
+    "working_directory": "${TRIAL}/outside",
+    "state": "${TRIAL}/catalog",
+    "temporary_root": "automatic tempfile.mkdtemp",
+    "rest_api_version": "2026-03-10",
+    "credential": "existing GH_TOKEN through normal configured transport; no credential/header retention"
+  },
+  "budget": {
+    "cumulative_api_requests_max": 1000,
+    "prior_api_requests": 95,
+    "additional_api_requests_max": 905,
+    "initial_elapsed_seconds_max": 600,
+    "subsequent_time_extension": "User explicitly authorized more execution time after safe time-limit stop; this resumed remainder was bounded to another 600 seconds, without resetting API count.",
+    "git_remote_operations_max": 400,
+    "git_transfer_timeout_seconds": 45,
+    "enforcement": "Locked gate before every HTTP send including retries, seeded at 95, max 1000; only approved target GET and static read-only GraphQL; shared monotonic deadline plus process descendant termination. No artificial per-phase cap. Git observer allows only ls-remote/fetch of exact target and discards raw HTTP trace."
+  },
+  "requests": {
+    "github_api_additional": 765,
+    "github_api_cumulative": 860,
+    "phases": {
+      "first_sync": {
+        "requests": 408,
+        "families": {
+          "authentication": 2,
+          "reviews": 45,
+          "comments": 89,
+          "events": 46,
+          "graphql": 45,
+          "pr_commits": 45,
+          "pr_files": 45,
+          "pr_detail": 90,
+          "incremental_review_comments": 1
+        },
+        "statuses": {
+          "200": 408
+        },
+        "conditional_requests": 0
+      },
+      "second_sync": {
+        "requests": 357,
+        "families": {
+          "authentication": 2,
+          "pr_inventory": 1,
+          "incremental_issue_comments": 1,
+          "incremental_review_comments": 1,
+          "pr_detail": 100,
+          "comments": 100,
+          "reviews": 50,
+          "events": 52,
+          "graphql": 50
+        },
+        "statuses": {
+          "200": 306,
+          "304": 50,
+          "None": 1
+        },
+        "conditional_requests": 50
+      }
+    },
+    "quotas": {
+      "rest": {
+        "first_observed": 14817,
+        "minimum_observed": 14127,
+        "last_observed": 14127
+      },
+      "graphql": {
+        "first_observed": 9935,
+        "minimum_observed": 9819,
+        "last_observed": 9819
+      }
+    },
+    "git_http": 335,
+    "git_remote_operations": 143
+  },
+  "timing": {
+    "started_at_utc": "2026-10-06T06:03:34.050005+00:00",
+    "finished_at_utc": "2026-10-06T06:21:06.928108+00:00",
+    "elapsed_seconds": 1052.8766,
+    "original_bounded_window_seconds": 599.0362,
+    "extended_window_seconds": 220.6934,
+    "time_extension_authorized_at_utc": "2026-10-06T06:17:26.234700+00:00",
+    "extended_window_max_seconds": 600,
+    "peak_child_rss_kib": 55648,
+    "started_at_jst": "2026-10-06T15:03:34.050005+09:00",
+    "finished_at_jst": "2026-10-06T15:21:06.928108+09:00"
+  },
+  "sizes": {
+    "after_first": {
+      "database_bytes": 77496320,
+      "cache_bytes": 1952416,
+      "cache_files": 1121
+    },
+    "final": {
+      "database_bytes": 101138432,
+      "cache_bytes": 1961272,
+      "cache_files": 1337
+    },
+    "restored": {
+      "database_bytes": 101138432,
+      "cache_bytes": 0,
+      "cache_files": 0
+    },
+    "backup_bytes": 101138432
+  },
+  "collected_counts": {
+    "change_requests": 50,
+    "change_request_observations": 305,
+    "documents": 430,
+    "document_versions": 430,
+    "reviews": 121,
+    "review_threads": 79,
+    "review_comments": 143,
+    "change_request_events": 1238,
+    "code_commits": 207,
+    "code_file_changes": 137,
+    "code_observations": 105
+  },
+  "queries": {
+    "pr_identity": {
+      "fresh_sha256": "2ce62d08b7b7a5ad2e7a8ec024c6ef34c37592cfd7754ea170051edeeaf7e257",
+      "restored_sha256": "2ce62d08b7b7a5ad2e7a8ec024c6ef34c37592cfd7754ea170051edeeaf7e257",
+      "match": true,
+      "rows": 50,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "pr_history": {
+      "fresh_sha256": "71a36913f9fa86ab3f1e8751fac505ed983e15f4e2d636d6044fe6ade4d77b03",
+      "restored_sha256": "71a36913f9fa86ab3f1e8751fac505ed983e15f4e2d636d6044fe6ade4d77b03",
+      "match": true,
+      "rows": 1,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "documents": {
+      "fresh_sha256": "c6bb03275d7ceecd9dcb357d7dea3b6d48c8544d10519e8d9593eea830e3d5ab",
+      "restored_sha256": "c6bb03275d7ceecd9dcb357d7dea3b6d48c8544d10519e8d9593eea830e3d5ab",
+      "match": true,
+      "rows": 183,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "events": {
+      "fresh_sha256": "38c2d49349eb41e09fe31e6d939510af5a48d5768d28b7a8ed850bb2c0f3c29d",
+      "restored_sha256": "38c2d49349eb41e09fe31e6d939510af5a48d5768d28b7a8ed850bb2c0f3c29d",
+      "match": true,
+      "rows": 302,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "pr_search": {
+      "fresh_sha256": "ed7480c89546f3e22efd377d22f1c0025499a74cb3ac7a265166413a20b6f307",
+      "restored_sha256": "ed7480c89546f3e22efd377d22f1c0025499a74cb3ac7a265166413a20b6f307",
+      "match": true,
+      "rows": 66,
+      "coverage_complete": true,
+      "has_more": false
+    },
+    "code_search": {
+      "fresh_sha256": "34b592c9477ec87885f3a2b8272dd0c52ce70f9d3805932964fcac75f7ec41d8",
+      "restored_sha256": "34b592c9477ec87885f3a2b8272dd0c52ce70f9d3805932964fcac75f7ec41d8",
+      "match": true,
+      "rows": 1000,
+      "coverage_complete": false,
+      "has_more": true
+    },
+    "thread": {
+      "fresh_sha256": "84dab83063f8103bad813d02d03f261d81397895a1305a26325fb58ea4d3fb7a",
+      "restored_sha256": "84dab83063f8103bad813d02d03f261d81397895a1305a26325fb58ea4d3fb7a",
+      "match": true,
+      "rows": 4,
+      "coverage_complete": true,
+      "has_more": false
+    }
+  },
+  "coverage_limitations": {
+    "code_history": {
+      "missing_historical_bodies": 270,
+      "policy_exclusions": 5,
+      "rows": 1000,
+      "has_more": true,
+      "required_current_root_tip_eligible_bodies_missing": 0,
+      "reason": "catalog-text-v1 preserves selected root-tip text; historical unsaved bodies intentionally remain partial, as README documents. No required tip text missing."
+    }
+  },
+  "normalization": "UTF-8 JSON, sorted object keys, compact separators; include command/items/coverage, preserve row order and nested IDs/raw values/observations/code/listings; omit execution/catalog envelope and pagination cursors. No payloads retained in Git.",
+  "backup_restore": {
+    "result": "PASS",
+    "query_digest_pairs": 7,
+    "manifest_sha256_valid": true,
+    "source_db_unchanged": true,
+    "cache_included": false,
+    "full_git_mirror": false
+  },
+  "commands": [
+    {
+      "label": "first_sync_initial_observer_partial",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json jobs resume 3f810d30-a192-4fac-a1d7-64a8e22656c8",
+      "offline_guard": false,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 362.1901,
+      "error": null
+    },
+    {
+      "label": "first_sync",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json jobs resume 3f810d30-a192-4fac-a1d7-64a8e22656c8",
+      "offline_guard": false,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 2.5598,
+      "error": null
+    },
+    {
+      "label": "second_sync_initial_time_limit",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json sync pr --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c",
+      "offline_guard": false,
+      "exit_code": 130,
+      "status": "cancelled",
+      "elapsed_seconds": 142.9541,
+      "error": "CANCELLED"
+    },
+    {
+      "label": "second_sync",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json jobs resume 589b11e4-5aae-4f67-9f4f-a52cdd654367",
+      "offline_guard": false,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 160.5985,
+      "error": null
+    },
+    {
+      "label": "fresh_pr_identity",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json pr list --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1725,
+      "error": null
+    },
+    {
+      "label": "fresh_pr_history",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json pr show --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 42",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.139,
+      "error": null
+    },
+    {
+      "label": "fresh_documents",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json pr documents --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 42 --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1643,
+      "error": null
+    },
+    {
+      "label": "fresh_events",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json pr timeline --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 42 --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1437,
+      "error": null
+    },
+    {
+      "label": "fresh_pr_search",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json search pr --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --literal museum --document-versions observed --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1958,
+      "error": null
+    },
+    {
+      "label": "fresh_code_search",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json search code --scope history --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --pr 42 --literal museum --limit 1000",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.5655,
+      "error": null
+    },
+    {
+      "label": "fresh_thread",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json pr thread --thread-id 1627b1b0-2476-4ccf-966c-ecc0d6ec541c:27:thread:PRRT_kwDOR0Y0Bs6CcNP0 --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1195,
+      "error": null
+    },
+    {
+      "label": "fresh_check",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json db check --full",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.9154,
+      "error": null
+    },
+    {
+      "label": "backup",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog --format json db backup --output ${TRIAL}/completed-backup/catalog.sqlite3",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.7867,
+      "error": null
+    },
+    {
+      "label": "restore",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json db restore --input ${TRIAL}/completed-backup/catalog.sqlite3",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.5233,
+      "error": null
+    },
+    {
+      "label": "restored_pr_identity",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json pr list --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.167,
+      "error": null
+    },
+    {
+      "label": "restored_pr_history",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json pr show --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 42",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1369,
+      "error": null
+    },
+    {
+      "label": "restored_documents",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json pr documents --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 42 --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1641,
+      "error": null
+    },
+    {
+      "label": "restored_events",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json pr timeline --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 42 --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1447,
+      "error": null
+    },
+    {
+      "label": "restored_pr_search",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json search pr --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --literal museum --document-versions observed --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.188,
+      "error": null
+    },
+    {
+      "label": "restored_code_search",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json search code --scope history --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --pr 42 --literal museum --limit 1000",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.5025,
+      "error": null
+    },
+    {
+      "label": "restored_thread",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json pr thread --thread-id 1627b1b0-2476-4ccf-966c-ecc0d6ec541c:27:thread:PRRT_kwDOR0Y0Bs6CcNP0 --limit 1000",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1112,
+      "error": null
+    },
+    {
+      "label": "restored_check",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/completed-restored --format json db check --full",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.7986,
+      "error": null
+    }
+  ],
+  "criteria": [
+    {
+      "id": "first_sync_complete",
+      "result": "PASS"
+    },
+    {
+      "id": "second_sync_complete",
+      "result": "PASS"
+    },
+    {
+      "id": "remote_head_base_state_unchanged",
+      "result": "PASS"
+    },
+    {
+      "id": "all_current_code_observations_complete",
+      "result": "PASS"
+    },
+    {
+      "id": "fifty_pr_identities",
+      "result": "PASS"
+    },
+    {
+      "id": "nonempty_pr_history_documents_events_search",
+      "result": "PASS"
+    },
+    {
+      "id": "nonempty_code_commit_file_listings",
+      "result": "PASS"
+    },
+    {
+      "id": "fresh_integrity",
+      "result": "PASS"
+    },
+    {
+      "id": "backup_checksum",
+      "result": "PASS"
+    },
+    {
+      "id": "restored_integrity",
+      "result": "PASS"
+    },
+    {
+      "id": "source_unchanged_by_backup_restore",
+      "result": "PASS"
+    },
+    {
+      "id": "query_digests_match",
+      "result": "PASS"
+    },
+    {
+      "id": "request_time_budget",
+      "result": "PASS"
+    },
+    {
+      "id": "second_no_commit_file_redownload",
+      "result": "PASS"
+    },
+    {
+      "id": "representative_queries_complete_or_honestly_scoped",
+      "result": "PASS"
+    },
+    {
+      "id": "preserved_original_db_cache_unchanged",
+      "result": "PASS"
+    },
+    {
+      "id": "prior_reports_unchanged",
+      "result": "PASS"
+    },
+    {
+      "id": "no_api_failures",
+      "result": "PASS"
+    }
+  ],
+  "diagnostics": {
+    "observer_scope_fix": "The temporary URL gate initially rejected legitimate canonical pagination /repositories/1195783174/... . Permit only this verified provider ID in addition to the named repository. No product changes, counter reset, deadline reset or response filtering.",
+    "failure": null,
+    "api_failure_count": 0,
+    "time_limit_aborted_send_count": 1,
+    "code_query_command_correction": "PR code search uses --scope history; default current permits heads only. Initial invalid invocation was corrected offline; no product change.",
+    "application_warnings": [
+      {
+        "phase": "first_sync_initial_observer_partial",
+        "status": "partial",
+        "error": null
+      },
+      {
+        "phase": "second_sync_initial_time_limit",
+        "status": "cancelled",
+        "error": "CANCELLED"
+      },
+      {
+        "phase": "fresh_code_search",
+        "status": "partial",
+        "error": null
+      },
+      {
+        "phase": "restored_code_search",
+        "status": "partial",
+        "error": null
+      }
+    ]
+  },
+  "limitations": [
+    "History code search intentionally reports 270 unsaved ancestor bodies and five policy exclusions, returns a bounded 1000-row page with more results, and has zero missing required current root-tip text.",
+    "Existing public history and supported current representations only; no claim to recover unseen historical remote changes.",
+    "Backup excludes Git cache and is not a full repository mirror.",
+    "Retained real-v2 trial remains the previously recorded N/A; no search/import repeated.",
+    "No product code/schema naming changes or broad application suite rerun.",
+    "No remote GitHub state mutation or publication performed in this read-only continuation."
+  ]
+}

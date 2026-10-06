@@ -1,5 +1,6 @@
 import json
 import os
+import sqlite3
 import subprocess
 from pathlib import Path
 
@@ -19,7 +20,11 @@ def checked(args, *, cwd, env=None):
         env=env,
         timeout=120,
     )
-    assert p.returncode == 0, (args, p.stdout, p.stderr)
+    if p.returncode:
+        pytest.fail(
+            f"Command failed: {args}\nstdout:\n{p.stdout}\nstderr:\n{p.stderr}",
+            pytrace=False,
+        )
     return p.stdout
 
 
@@ -30,7 +35,17 @@ def distributions(tmp_path_factory):
         **os.environ,
         "UV_CACHE_DIR": os.environ.get("UV_CACHE_DIR", "/workspace/.cache/uv"),
     }
-    checked(["uv", "build", "--offline", "--out-dir", work / "dist"], cwd=ROOT, env=env)
+    wheelhouse = Path(
+        os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
+    ).resolve()
+    assert (wheelhouse / "manifest.json").is_file(), (
+        "Run scripts/prepare_wheelhouse.py before offline tests"
+    )
+    env["REPO_CATALOG_WHEELHOUSE"] = str(wheelhouse)
+    offline_sources = ["--offline", "--no-index", "--find-links", str(wheelhouse)]
+    checked(
+        ["uv", "build", *offline_sources, "--out-dir", work / "dist"], cwd=ROOT, env=env
+    )
     checked(
         [
             "uv",
@@ -53,7 +68,7 @@ def distributions(tmp_path_factory):
         archive.extractall(work / "sdist", filter="data")
     source = next((work / "sdist").iterdir())
     checked(
-        ["uv", "build", "--offline", "--wheel", "--out-dir", work / "sdist-wheel"],
+        ["uv", "build", *offline_sources, "--wheel", "--out-dir", work / "sdist-wheel"],
         cwd=source,
         env=env,
     )
@@ -80,6 +95,9 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
             "pip",
             "install",
             "--offline",
+            "--no-index",
+            "--find-links",
+            env["REPO_CATALOG_WHEELHOUSE"],
             "--python",
             venv / "bin/python",
             "--constraint",
@@ -99,6 +117,22 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         env=env,
     ).strip()
     assert origin.startswith(str(venv)) and not origin.startswith(str(ROOT))
+    resources = json.loads(
+        checked(
+            [
+                venv / "bin/python",
+                "-c",
+                "import json; from importlib.resources import files; "
+                "root=files('repo_catalog').joinpath('resources'); "
+                "import repo_catalog.adapters.import_v2.engine; "
+                "print(json.dumps({'schema': root.joinpath('catalog3.sql').is_file(), "
+                "'import_contract': root.joinpath('import_v2/conversion-contract.json').is_file()}))",
+            ],
+            cwd=outside,
+            env=env,
+        )
+    )
+    assert resources == {"schema": True, "import_contract": True}
     repo = FixtureRepo(tmp_path / "remote.git")
     repo.commit("A", {b"hello.txt": "認証 wheel".encode()})
     repo.ref("refs/heads/main", "A")
@@ -129,6 +163,13 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         "--min-free-bytes",
         "0",
     )
+    with sqlite3.connect(state / "catalog.sqlite3") as connection:
+        assert connection.execute(
+            "SELECT format_id,schema_version,lifecycle FROM database_identity"
+        ).fetchone() == ("repo-catalog/catalog3", 3, "validated")
+        assert not connection.execute(
+            "SELECT name FROM sqlite_schema WHERE name='schema_migrations'"
+        ).fetchall()
     source = cli(
         "sources", "add", "local-git", "--name", "packaged", "--url", repo.url
     )["data"]["source_id"]

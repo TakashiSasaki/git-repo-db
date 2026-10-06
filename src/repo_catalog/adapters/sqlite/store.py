@@ -1,30 +1,19 @@
 from __future__ import annotations
 
-import hashlib
+import json
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from importlib.resources import files
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.schema import (
+    DDL_SHA256,
+    FORMAT_ID,
+    SCHEMA_VERSION,
+    schema_sql,
+)
 from repo_catalog.config import load
 from repo_catalog.domain.models import CatalogError, now
-
-SCHEMA_VERSION = 2
-
-
-def migrations():
-    resources = {}
-    for resource in files("repo_catalog").joinpath("resources/migrations").iterdir():
-        if not resource.name.endswith(".sql"):
-            continue
-        version = int(resource.name.split("_")[0])
-        if version in resources:
-            raise CatalogError("SCHEMA_ERROR", "Duplicate migration version")
-        resources[version] = resource
-    if sorted(resources) != list(range(1, SCHEMA_VERSION + 1)):
-        raise CatalogError("SCHEMA_ERROR", "Migration versions must be contiguous")
-    return resources
 
 
 def statements(sql):
@@ -35,12 +24,22 @@ def statements(sql):
             yield pending
             pending = ""
     if pending.strip():
-        raise CatalogError("SCHEMA_ERROR", "Incomplete migration SQL")
+        raise CatalogError("SCHEMA_ERROR", "Incomplete schema SQL")
 
 
 class Store:
-    def __init__(self, state_dir, *, readonly=False, initialize=False, migrate=False):
-        self.path = Path(state_dir)
+    """Mutable catalog3 connection; readers use SQLite transaction snapshots."""
+
+    def __init__(
+        self,
+        state_dir,
+        *,
+        readonly=False,
+        initialize=False,
+        migrate=False,
+        allow_building=False,
+    ):
+        self.path = Path(state_dir).resolve()
         self.config = load(self.path)
         db = (self.path / self.config["database"]["filename"]).resolve()
         if not db.is_relative_to(self.path):
@@ -49,48 +48,99 @@ class Store:
             )
         if not initialize and not db.is_file():
             raise CatalogError("NOT_INITIALIZED", "Catalog database does not exist")
-        self.db_path = db
-        self.readonly = readonly
+        self.db_path, self.readonly = db, readonly
         self.connection = sqlite3.connect(
             db.as_uri() + ("?mode=ro" if readonly else "?mode=rwc"),
             uri=True,
             autocommit=True,
         )
         self.connection.row_factory = sqlite3.Row
-        self.connection.execute("PRAGMA foreign_keys=ON")
-        self.connection.execute(
-            f"PRAGMA busy_timeout={int(self.config['database']['busy_timeout_ms'])}"
-        )
-        if not readonly:
-            mode = self.config["database"]["journal_mode"]
-            v = tuple(map(int, sqlite3.sqlite_version.split(".")))
-            if mode == "wal" and not (v >= (3, 51, 3) or v in ((3, 44, 6), (3, 50, 7))):
-                raise CatalogError(
-                    "UNSAFE_WAL_RUNTIME", "WAL requires a verified WAL-reset fix"
-                )
-            actual = self.connection.execute(f"PRAGMA journal_mode={mode}").fetchone()[
-                0
-            ]
-            if actual != mode:
-                raise CatalogError(
-                    "DATABASE_ERROR", "Cannot apply configured journal mode"
-                )
-            self.connection.execute("PRAGMA synchronous=EXTRA")
         try:
-            if initialize or migrate:
-                self.migrate()
-            elif (
-                self.one("SELECT schema_version FROM catalog_meta WHERE id=1")[0]
-                != SCHEMA_VERSION
+            self.execute("PRAGMA foreign_keys=ON")
+            self.execute("PRAGMA recursive_triggers=ON")
+            self.execute(
+                f"PRAGMA busy_timeout={int(self.config['database']['busy_timeout_ms'])}"
+            )
+            for capability in ("foreign_keys", "recursive_triggers"):
+                if self.one(f"PRAGMA {capability}")[0] != 1:
+                    raise CatalogError(
+                        "RUNTIME_UNSUPPORTED", f"SQLite lacks {capability}"
+                    )
+            # Reject an existing foreign/building catalog before any persistent
+            # journal setting can alter bytes belonging to another format.
+            if not initialize:
+                self.verify_format(allow_building=allow_building)
+            if initialize and self.one(
+                "SELECT 1 FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'"
             ):
                 raise CatalogError(
-                    "SCHEMA_ERROR",
-                    "Explicit migration required; unknown schema cannot be written",
+                    "SCHEMA_ERROR", "Initialization requires an empty database"
                 )
-            self.verify_migrations()
+            if readonly:
+                self.execute("PRAGMA query_only=ON")
+            else:
+                mode = self.config["database"]["journal_mode"]
+                version = sqlite3.sqlite_version_info
+                if mode == "wal" and not (
+                    version >= (3, 51, 3) or version in ((3, 44, 6), (3, 50, 7))
+                ):
+                    raise CatalogError(
+                        "UNSAFE_WAL_RUNTIME", "WAL requires a verified WAL-reset fix"
+                    )
+                if self.one(f"PRAGMA journal_mode={mode}")[0] != mode:
+                    raise CatalogError(
+                        "DATABASE_ERROR", "Cannot apply configured journal mode"
+                    )
+                self.execute("PRAGMA synchronous=EXTRA")
+            if initialize:
+                if self.one(
+                    "SELECT 1 FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'"
+                ):
+                    raise CatalogError(
+                        "SCHEMA_ERROR", "Initialization requires an empty database"
+                    )
+                with self.transaction():
+                    for statement in statements(schema_sql()):
+                        self.execute(statement)
+                    self.execute(
+                        "INSERT INTO database_identity VALUES(1,?,?,?,0,?,'validated')",
+                        (FORMAT_ID, SCHEMA_VERSION, str(uuid.uuid4()), DDL_SHA256),
+                    )
+            self.verify_format(allow_building=allow_building)
+        except sqlite3.Error as cause:
+            self.connection.close()
+            raise CatalogError(
+                "SCHEMA_ERROR",
+                "Catalog3 is required; salvage v2 into a new state directory with import-v2",
+            ) from cause
         except BaseException:
             self.connection.close()
             raise
+
+    def verify_format(self, *, allow_building=False):
+        rows = self.all("SELECT * FROM database_identity")
+        if len(rows) != 1 or rows[0]["singleton"] != 1:
+            raise CatalogError("SCHEMA_ERROR", "Invalid catalog identity")
+        row = rows[0]
+        if (
+            row["format_id"] != FORMAT_ID
+            or row["schema_version"] != SCHEMA_VERSION
+            or bytes(row["ddl_sha256"]) != DDL_SHA256
+        ):
+            raise CatalogError(
+                "SCHEMA_ERROR",
+                "Unsupported catalog format; reimport preserved v2 input into a new catalog",
+            )
+        # Derived FTS/statistics do not affect identity. Structural verification is
+        # explicit doctor/db-check work, not a full schema/archive audit per query.
+        if row["lifecycle"] != "validated" and not (
+            allow_building and row["lifecycle"] == "building"
+        ):
+            raise CatalogError(
+                "TARGET_NOT_READY",
+                "Complete import and run db finalize before ordinary use",
+                {"lifecycle": row["lifecycle"]},
+            )
 
     def close(self):
         self.connection.close()
@@ -123,83 +173,45 @@ class Store:
 
     def publish(self):
         self.execute(
-            "UPDATE catalog_meta SET publication_seq=publication_seq+1 WHERE id=1"
+            "UPDATE database_identity SET publication_seq=publication_seq+1 WHERE singleton=1"
         )
 
     def revision(self):
-        row = self.one(
-            "SELECT db_instance_id,publication_seq FROM catalog_meta WHERE id=1"
+        return dict(
+            self.one(
+                "SELECT db_instance_id,publication_seq FROM database_identity WHERE singleton=1"
+            )
         )
-        return dict(row)
 
     def migrate(self):
-        existing = self.one(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_migrations'"
+        raise CatalogError(
+            "SCHEMA_ERROR",
+            "Catalog3 initializes directly; use import-v2 for offline salvage",
         )
-        current = (
-            self.one("SELECT max(version) FROM schema_migrations")[0] if existing else 0
-        )
-        if current and current > SCHEMA_VERSION:
-            raise CatalogError(
-                "SCHEMA_ERROR", "Database schema is newer than this package"
-            )
-        if existing:
-            self.verify_migrations()
-        for version, resource in sorted(migrations().items()):
-            if version <= (current or 0):
-                continue
-            sql = resource.read_text()
-            rebuild = version == 2
-            if rebuild:
-                self.execute("PRAGMA foreign_keys=OFF")
-            try:
-                with self.transaction():
-                    for statement in statements(sql):
-                        self.execute(statement)
-                    if version == 2:
-                        from repo_catalog.application.repository_identity import (
-                            backfill_v2,
-                        )
-
-                        backfill_v2(self)
-                    if not self.one("SELECT 1 FROM catalog_meta WHERE id=1"):
-                        self.execute(
-                            "INSERT INTO catalog_meta VALUES(1,?,0,?)",
-                            (str(uuid.uuid4()), version),
-                        )
-                    else:
-                        self.execute(
-                            "UPDATE catalog_meta SET schema_version=? WHERE id=1",
-                            (version,),
-                        )
-                        if current:
-                            self.publish()
-                    self.execute(
-                        "INSERT INTO schema_migrations VALUES(?,?,?)",
-                        (version, hashlib.sha256(sql.encode()).hexdigest(), now()),
-                    )
-                    if self.all("PRAGMA foreign_key_check"):
-                        raise CatalogError(
-                            "SCHEMA_ERROR", "Migration foreign key check failed"
-                        )
-            finally:
-                if rebuild:
-                    self.execute("PRAGMA foreign_keys=ON")
-
-    def verify_migrations(self):
-        resources = migrations()
-        for r in self.all("SELECT * FROM schema_migrations"):
-            resource = resources.get(r["version"])
-            if (
-                resource is None
-                or hashlib.sha256(resource.read_bytes()).hexdigest() != r["checksum"]
-            ):
-                raise CatalogError("SCHEMA_ERROR", "Migration checksum mismatch")
 
     def coverage(self, owner, kind, state, details="{}"):
+        state = {"pending": "unknown", "unavailable": "partial"}.get(state, state)
+        if not isinstance(details, str):
+            details = json.dumps(details)
+        cr = self.one("SELECT repo_id FROM change_requests WHERE id=?", (owner,))
+        repo = cr[0] if cr else owner
+        scope = self.one(
+            "SELECT id FROM coverage_scopes WHERE repo_id=? AND change_request_id IS ? AND kind=?",
+            (repo, owner if cr else None, kind),
+        )
+        scope_id = scope[0] if scope else str(uuid.uuid4())
+        if not scope:
+            self.execute(
+                "INSERT INTO coverage_scopes VALUES(?,?,?,?,NULL)",
+                (scope_id, repo, owner if cr else None, kind),
+            )
+        claim = self.execute(
+            "INSERT INTO coverage_claims(scope_id,asserted_state,effective_state,details,observed_at,evaluated_at) VALUES(?,?,?,?,?,?)",
+            (scope_id, state, state, details, now(), now()),
+        ).lastrowid
         self.execute(
-            "INSERT INTO coverage_components VALUES(?,?,?,?) ON CONFLICT(owner_id,kind) DO UPDATE SET state=excluded.state,details=excluded.details",
-            (owner, kind, state, details),
+            "UPDATE coverage_scopes SET current_claim_id=? WHERE id=?",
+            (claim, scope_id),
         )
 
     def object_id(self, algorithm, oid):

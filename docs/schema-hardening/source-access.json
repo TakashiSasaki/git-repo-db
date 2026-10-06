@@ -1,0 +1,732 @@
+{
+  "limitations": "Lexical SQL table references, not a call graph; dynamic SQL, filesystem and tests require manual review in README.md",
+  "tables": {
+    "acquisition_roots": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:316",
+        "src/repo_catalog/adapters/github/collector.py:796",
+        "src/repo_catalog/adapters/github/collector.py:900",
+        "src/repo_catalog/application/query_service.py:320",
+        "src/repo_catalog/application/query_service.py:323",
+        "src/repo_catalog/application/query_service.py:345"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:294",
+        "src/repo_catalog/adapters/git/importer.py:349"
+      ]
+    },
+    "api_responses": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:110",
+        "src/repo_catalog/adapters/github/collector.py:1225",
+        "src/repo_catalog/adapters/github/collector.py:273",
+        "src/repo_catalog/adapters/github/collector.py:343",
+        "src/repo_catalog/adapters/github/collector.py:89"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:106",
+        "src/repo_catalog/adapters/github/collector.py:1221",
+        "src/repo_catalog/adapters/github/collector.py:339"
+      ]
+    },
+    "blob_content_map": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:316",
+        "src/repo_catalog/adapters/git/importer.py:442",
+        "src/repo_catalog/adapters/git/importer.py:612",
+        "src/repo_catalog/adapters/git/importer.py:797",
+        "src/repo_catalog/application/maintenance_service.py:548",
+        "src/repo_catalog/application/query_service.py:439",
+        "src/repo_catalog/application/query_service.py:758"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:656"
+      ]
+    },
+    "cache_entries": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/filesystem/cache.py:56",
+        "src/repo_catalog/adapters/filesystem/cache.py:76",
+        "src/repo_catalog/adapters/git/importer.py:107",
+        "src/repo_catalog/adapters/git/importer.py:38",
+        "src/repo_catalog/adapters/git/importer.py:57",
+        "src/repo_catalog/application/maintenance_service.py:554",
+        "src/repo_catalog/application/maintenance_service.py:561",
+        "src/repo_catalog/application/query_service.py:957"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/filesystem/cache.py:111",
+        "src/repo_catalog/adapters/filesystem/cache.py:87",
+        "src/repo_catalog/adapters/git/importer.py:383",
+        "src/repo_catalog/adapters/git/importer.py:46",
+        "src/repo_catalog/application/maintenance_service.py:494"
+      ]
+    },
+    "cache_leases": {
+      "other": [],
+      "read": [],
+      "write": [
+        "src/repo_catalog/adapters/filesystem/cache.py:83",
+        "src/repo_catalog/adapters/git/importer.py:127",
+        "src/repo_catalog/adapters/git/importer.py:379",
+        "src/repo_catalog/application/maintenance_service.py:495"
+      ]
+    },
+    "catalog_meta": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/sqlite/store.py:131",
+        "src/repo_catalog/adapters/sqlite/store.py:165",
+        "src/repo_catalog/adapters/sqlite/store.py:83",
+        "src/repo_catalog/application/maintenance_service.py:116",
+        "src/repo_catalog/application/maintenance_service.py:336",
+        "src/repo_catalog/application/maintenance_service.py:374"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/sqlite/store.py:126",
+        "src/repo_catalog/adapters/sqlite/store.py:167",
+        "src/repo_catalog/adapters/sqlite/store.py:172",
+        "src/repo_catalog/application/maintenance_service.py:491"
+      ]
+    },
+    "collection_memberships": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:316"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:368"
+      ]
+    },
+    "collection_pages": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:1233",
+        "src/repo_catalog/adapters/github/collector.py:1240",
+        "src/repo_catalog/adapters/github/collector.py:273",
+        "src/repo_catalog/adapters/github/collector.py:288"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:1245",
+        "src/repo_catalog/adapters/github/collector.py:347"
+      ]
+    },
+    "collection_runs": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:104",
+        "src/repo_catalog/adapters/git/importer.py:26",
+        "src/repo_catalog/adapters/git/importer.py:328",
+        "src/repo_catalog/adapters/git/importer.py:34",
+        "src/repo_catalog/adapters/git/importer.py:395",
+        "src/repo_catalog/adapters/git/importer.py:599",
+        "src/repo_catalog/adapters/git/importer.py:85",
+        "src/repo_catalog/adapters/git/importer.py:97",
+        "src/repo_catalog/application/collection_service.py:280",
+        "src/repo_catalog/application/maintenance_service.py:548",
+        "src/repo_catalog/application/query_service.py:320",
+        "src/repo_catalog/application/query_service.py:345",
+        "src/repo_catalog/application/query_service.py:494",
+        "src/repo_catalog/application/query_service.py:614",
+        "src/repo_catalog/application/query_service.py:758"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:101",
+        "src/repo_catalog/adapters/git/importer.py:177",
+        "src/repo_catalog/adapters/git/importer.py:265",
+        "src/repo_catalog/adapters/git/importer.py:345",
+        "src/repo_catalog/adapters/git/importer.py:62",
+        "src/repo_catalog/adapters/git/importer.py:94"
+      ]
+    },
+    "collections": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:267",
+        "src/repo_catalog/adapters/github/collector.py:869",
+        "src/repo_catalog/application/pr_queries.py:102",
+        "src/repo_catalog/application/pr_queries.py:226"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:1191",
+        "src/repo_catalog/adapters/github/collector.py:1201",
+        "src/repo_catalog/adapters/github/collector.py:296",
+        "src/repo_catalog/adapters/github/collector.py:372",
+        "src/repo_catalog/adapters/github/collector.py:388",
+        "src/repo_catalog/adapters/github/collector.py:397"
+      ]
+    },
+    "commit_parents": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/query_service.py:206",
+        "src/repo_catalog/application/query_service.py:423",
+        "src/repo_catalog/application/query_service.py:714"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:696"
+      ]
+    },
+    "commits": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:316",
+        "src/repo_catalog/adapters/git/importer.py:738",
+        "src/repo_catalog/application/query_service.py:206",
+        "src/repo_catalog/application/query_service.py:461",
+        "src/repo_catalog/application/query_service.py:477",
+        "src/repo_catalog/application/query_service.py:696",
+        "src/repo_catalog/application/query_service.py:709",
+        "src/repo_catalog/application/query_service.py:813"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:688"
+      ]
+    },
+    "content_digests": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:442",
+        "src/repo_catalog/adapters/git/importer.py:612",
+        "src/repo_catalog/adapters/git/importer.py:630",
+        "src/repo_catalog/adapters/git/importer.py:638",
+        "src/repo_catalog/adapters/git/importer.py:797",
+        "src/repo_catalog/application/query_service.py:747",
+        "src/repo_catalog/application/query_service.py:778",
+        "src/repo_catalog/application/query_service.py:911"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:652"
+      ]
+    },
+    "content_locations": {
+      "other": [],
+      "read": [],
+      "write": [
+        "src/repo_catalog/adapters/filesystem/cache.py:115",
+        "src/repo_catalog/adapters/git/importer.py:809",
+        "src/repo_catalog/application/maintenance_service.py:498"
+      ]
+    },
+    "contents": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:612",
+        "src/repo_catalog/adapters/git/importer.py:630",
+        "src/repo_catalog/adapters/git/importer.py:797",
+        "src/repo_catalog/application/maintenance_service.py:529",
+        "src/repo_catalog/application/query_service.py:250",
+        "src/repo_catalog/application/query_service.py:439",
+        "src/repo_catalog/application/query_service.py:747",
+        "src/repo_catalog/application/query_service.py:859",
+        "src/repo_catalog/application/query_service.py:880"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:647",
+        "src/repo_catalog/adapters/git/importer.py:807"
+      ]
+    },
+    "coverage_components": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/pr_queries.py:67",
+        "src/repo_catalog/application/pr_queries.py:72",
+        "src/repo_catalog/application/query_service.py:621",
+        "src/repo_catalog/application/query_service.py:939"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/sqlite/store.py:201"
+      ]
+    },
+    "document_versions": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:492",
+        "src/repo_catalog/application/pr_queries.py:246",
+        "src/repo_catalog/application/pr_queries.py:38"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:488"
+      ]
+    },
+    "git_objects": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:316",
+        "src/repo_catalog/adapters/git/importer.py:395",
+        "src/repo_catalog/adapters/git/importer.py:435",
+        "src/repo_catalog/adapters/git/importer.py:550",
+        "src/repo_catalog/adapters/git/importer.py:589",
+        "src/repo_catalog/adapters/git/importer.py:612",
+        "src/repo_catalog/adapters/git/importer.py:797",
+        "src/repo_catalog/adapters/sqlite/store.py:207",
+        "src/repo_catalog/application/maintenance_service.py:548",
+        "src/repo_catalog/application/query_service.py:397",
+        "src/repo_catalog/application/query_service.py:405",
+        "src/repo_catalog/application/query_service.py:477",
+        "src/repo_catalog/application/query_service.py:709",
+        "src/repo_catalog/application/query_service.py:714",
+        "src/repo_catalog/application/query_service.py:717",
+        "src/repo_catalog/application/query_service.py:758",
+        "src/repo_catalog/application/query_service.py:813"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:567",
+        "src/repo_catalog/adapters/git/importer.py:624"
+      ]
+    },
+    "index_generations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/sqlite/index.py:36",
+        "src/repo_catalog/adapters/sqlite/index.py:57",
+        "src/repo_catalog/adapters/sqlite/index.py:94",
+        "src/repo_catalog/application/maintenance_service.py:428",
+        "src/repo_catalog/application/query_service.py:513"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/sqlite/index.py:105",
+        "src/repo_catalog/adapters/sqlite/index.py:39",
+        "src/repo_catalog/adapters/sqlite/index.py:88",
+        "src/repo_catalog/adapters/sqlite/index.py:91",
+        "src/repo_catalog/application/maintenance_service.py:440"
+      ]
+    },
+    "index_membership": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/sqlite/index.py:65",
+        "src/repo_catalog/application/query_service.py:524"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/sqlite/index.py:101",
+        "src/repo_catalog/adapters/sqlite/index.py:73"
+      ]
+    },
+    "inventory_runs": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/query_service.py:231"
+      ],
+      "write": [
+        "src/repo_catalog/application/collection_service.py:193",
+        "src/repo_catalog/application/collection_service.py:201",
+        "src/repo_catalog/application/collection_service.py:93"
+      ]
+    },
+    "jobs": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:131",
+        "src/repo_catalog/adapters/git/importer.py:325",
+        "src/repo_catalog/adapters/git/importer.py:59",
+        "src/repo_catalog/adapters/git/importer.py:89",
+        "src/repo_catalog/adapters/github/collector.py:408",
+        "src/repo_catalog/application/collection_service.py:238",
+        "src/repo_catalog/application/job_service.py:22",
+        "src/repo_catalog/application/job_service.py:51",
+        "src/repo_catalog/application/query_service.py:919",
+        "src/repo_catalog/cli/main.py:320"
+      ],
+      "write": [
+        "src/repo_catalog/application/job_service.py:16",
+        "src/repo_catalog/application/job_service.py:38",
+        "src/repo_catalog/application/job_service.py:46",
+        "src/repo_catalog/application/maintenance_service.py:501"
+      ]
+    },
+    "pr_code_observations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:861",
+        "src/repo_catalog/application/pr_queries.py:106"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:670",
+        "src/repo_catalog/adapters/github/collector.py:740"
+      ]
+    },
+    "pr_commits": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/pr_queries.py:114",
+        "src/repo_catalog/application/pr_queries.py:180"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:685"
+      ]
+    },
+    "pr_documents": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:456",
+        "src/repo_catalog/adapters/github/collector.py:461",
+        "src/repo_catalog/application/pr_queries.py:246",
+        "src/repo_catalog/application/pr_queries.py:38"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:474",
+        "src/repo_catalog/adapters/github/collector.py:496"
+      ]
+    },
+    "pr_events": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/pr_queries.py:231"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:641"
+      ]
+    },
+    "pr_file_changes": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/pr_queries.py:131",
+        "src/repo_catalog/application/pr_queries.py:191"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:694"
+      ]
+    },
+    "pr_git_links": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:900",
+        "src/repo_catalog/application/pr_queries.py:169"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:800"
+      ]
+    },
+    "pr_observations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:587",
+        "src/repo_catalog/adapters/github/collector.py:861",
+        "src/repo_catalog/application/pr_queries.py:201",
+        "src/repo_catalog/application/pr_queries.py:25"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:432"
+      ]
+    },
+    "pr_reviews": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:760",
+        "src/repo_catalog/adapters/github/collector.py:892",
+        "src/repo_catalog/application/pr_queries.py:94"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:513"
+      ]
+    },
+    "preservation_obligations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/filesystem/cache.py:40",
+        "src/repo_catalog/application/maintenance_service.py:408"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:269",
+        "src/repo_catalog/adapters/git/importer.py:341",
+        "src/repo_catalog/adapters/git/importer.py:77"
+      ]
+    },
+    "pull_requests": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:423",
+        "src/repo_catalog/adapters/github/collector.py:587",
+        "src/repo_catalog/adapters/github/collector.py:665",
+        "src/repo_catalog/adapters/github/collector.py:938",
+        "src/repo_catalog/adapters/github/collector.py:986",
+        "src/repo_catalog/application/pr_queries.py:25",
+        "src/repo_catalog/application/pr_queries.py:42"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:428",
+        "src/repo_catalog/adapters/github/collector.py:436"
+      ]
+    },
+    "ref_observations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/query_service.py:345",
+        "src/repo_catalog/application/query_service.py:367",
+        "src/repo_catalog/application/query_service.py:633"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:280"
+      ]
+    },
+    "repositories": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:357",
+        "src/repo_catalog/application/collection_service.py:127",
+        "src/repo_catalog/application/collection_service.py:148",
+        "src/repo_catalog/application/collection_service.py:24",
+        "src/repo_catalog/application/maintenance_service.py:402",
+        "src/repo_catalog/application/maintenance_service.py:414",
+        "src/repo_catalog/application/maintenance_service.py:420",
+        "src/repo_catalog/application/pr_queries.py:25",
+        "src/repo_catalog/application/repository_identity.py:213",
+        "src/repo_catalog/application/repository_identity.py:272"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:362",
+        "src/repo_catalog/adapters/github/collector.py:63",
+        "src/repo_catalog/application/collection_service.py:167",
+        "src/repo_catalog/application/collection_service.py:180",
+        "src/repo_catalog/application/repository_identity.py:161"
+      ]
+    },
+    "repository_bindings": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/collection_service.py:138",
+        "src/repo_catalog/application/collection_service.py:46",
+        "src/repo_catalog/application/repository_identity.py:110",
+        "src/repo_catalog/application/repository_identity.py:120",
+        "src/repo_catalog/application/repository_identity.py:255",
+        "src/repo_catalog/application/repository_identity.py:270",
+        "src/repo_catalog/application/repository_identity.py:281"
+      ],
+      "write": [
+        "src/repo_catalog/application/repository_identity.py:137",
+        "src/repo_catalog/application/repository_identity.py:142"
+      ]
+    },
+    "repository_endpoints": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/collection_service.py:265",
+        "src/repo_catalog/application/maintenance_service.py:414",
+        "src/repo_catalog/application/query_service.py:561",
+        "src/repo_catalog/application/repository_identity.py:149",
+        "src/repo_catalog/application/repository_identity.py:167",
+        "src/repo_catalog/application/repository_identity.py:178",
+        "src/repo_catalog/application/repository_identity.py:187"
+      ],
+      "write": [
+        "src/repo_catalog/application/repository_identity.py:155",
+        "src/repo_catalog/application/repository_identity.py:158",
+        "src/repo_catalog/application/repository_identity.py:174"
+      ]
+    },
+    "repository_names": {
+      "other": [],
+      "read": [],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:66",
+        "src/repo_catalog/application/collection_service.py:188"
+      ]
+    },
+    "repository_object_sources": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:395",
+        "src/repo_catalog/adapters/git/importer.py:599",
+        "src/repo_catalog/application/maintenance_service.py:548",
+        "src/repo_catalog/application/query_service.py:494",
+        "src/repo_catalog/application/query_service.py:758"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:604"
+      ]
+    },
+    "resource_observations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/pr_queries.py:296"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:500"
+      ]
+    },
+    "review_comments": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/pr_queries.py:38"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:518"
+      ]
+    },
+    "review_threads": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:1006",
+        "src/repo_catalog/application/pr_queries.py:271",
+        "src/repo_catalog/application/pr_queries.py:34"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:1068"
+      ]
+    },
+    "root_manifest_entries": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:316"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:754"
+      ]
+    },
+    "root_manifests": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:745"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:704",
+        "src/repo_catalog/adapters/git/importer.py:792"
+      ]
+    },
+    "schema_migrations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/sqlite/store.py:140",
+        "src/repo_catalog/adapters/sqlite/store.py:191"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/sqlite/store.py:178"
+      ]
+    },
+    "search_documents": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/sqlite/index.py:33",
+        "src/repo_catalog/adapters/sqlite/index.py:50",
+        "src/repo_catalog/adapters/sqlite/index.py:80",
+        "src/repo_catalog/application/query_service.py:517"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:700",
+        "src/repo_catalog/adapters/git/importer.py:813",
+        "src/repo_catalog/adapters/github/collector.py:504"
+      ]
+    },
+    "service_instances": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/collection_service.py:46",
+        "src/repo_catalog/application/query_service.py:551",
+        "src/repo_catalog/application/repository_identity.py:255",
+        "src/repo_catalog/application/repository_identity.py:270",
+        "src/repo_catalog/application/repository_identity.py:281",
+        "src/repo_catalog/application/repository_identity.py:45",
+        "src/repo_catalog/application/repository_identity.py:83",
+        "src/repo_catalog/application/repository_identity.py:95"
+      ],
+      "write": [
+        "src/repo_catalog/application/repository_identity.py:87"
+      ]
+    },
+    "snapshots": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:357",
+        "src/repo_catalog/application/maintenance_service.py:402",
+        "src/repo_catalog/application/query_service.py:279",
+        "src/repo_catalog/application/query_service.py:345",
+        "src/repo_catalog/application/query_service.py:595",
+        "src/repo_catalog/application/query_service.py:604"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:354",
+        "src/repo_catalog/adapters/git/importer.py:82"
+      ]
+    },
+    "source_repositories": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/collection_service.py:153",
+        "src/repo_catalog/application/collection_service.py:26",
+        "src/repo_catalog/application/maintenance_service.py:420",
+        "src/repo_catalog/application/repository_identity.py:270"
+      ],
+      "write": [
+        "src/repo_catalog/application/repository_identity.py:199"
+      ]
+    },
+    "sources": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:43",
+        "src/repo_catalog/application/collection_service.py:260",
+        "src/repo_catalog/application/collection_service.py:80",
+        "src/repo_catalog/application/query_service.py:227",
+        "src/repo_catalog/application/repository_identity.py:207",
+        "src/repo_catalog/application/repository_identity.py:265",
+        "src/repo_catalog/application/repository_identity.py:270"
+      ],
+      "write": [
+        "src/repo_catalog/application/maintenance_service.py:240",
+        "src/repo_catalog/application/repository_identity.py:210"
+      ]
+    },
+    "space_reservations": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/filesystem/capacity.py:44",
+        "src/repo_catalog/adapters/filesystem/capacity.py:71",
+        "src/repo_catalog/adapters/filesystem/capacity.py:77",
+        "src/repo_catalog/application/query_service.py:973"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/filesystem/capacity.py:63",
+        "src/repo_catalog/adapters/filesystem/capacity.py:94",
+        "src/repo_catalog/adapters/filesystem/capacity.py:99",
+        "src/repo_catalog/application/maintenance_service.py:496"
+      ]
+    },
+    "sync_checkpoints": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/github/collector.py:1021",
+        "src/repo_catalog/adapters/github/collector.py:1092",
+        "src/repo_catalog/adapters/github/collector.py:594",
+        "src/repo_catalog/adapters/github/collector.py:83",
+        "src/repo_catalog/adapters/github/collector.py:911",
+        "src/repo_catalog/adapters/github/collector.py:981"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/github/collector.py:1000",
+        "src/repo_catalog/adapters/github/collector.py:114",
+        "src/repo_catalog/adapters/github/collector.py:1143",
+        "src/repo_catalog/adapters/github/collector.py:1168",
+        "src/repo_catalog/adapters/github/collector.py:814",
+        "src/repo_catalog/adapters/github/collector.py:945",
+        "src/repo_catalog/adapters/github/collector.py:977"
+      ]
+    },
+    "tag_objects": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/application/query_service.py:208",
+        "src/repo_catalog/application/query_service.py:405"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:729"
+      ]
+    },
+    "tree_entries": {
+      "other": [],
+      "read": [
+        "src/repo_catalog/adapters/git/importer.py:763",
+        "src/repo_catalog/application/query_service.py:207",
+        "src/repo_catalog/application/query_service.py:433",
+        "src/repo_catalog/application/query_service.py:434"
+      ],
+      "write": [
+        "src/repo_catalog/adapters/git/importer.py:719"
+      ]
+    }
+  }
+}

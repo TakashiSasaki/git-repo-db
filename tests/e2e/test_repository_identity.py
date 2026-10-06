@@ -181,7 +181,7 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
         assert db.execute("SELECT count(*) FROM review_threads").fetchone()[0] == 6
         assert (
             db.execute(
-                "SELECT count(*) FROM review_comments c JOIN pr_documents d ON d.id=c.document_id JOIN review_threads t ON t.id=c.thread_id WHERE d.pr_id!=t.pr_id"
+                "SELECT count(*) FROM review_comments c JOIN documents d ON d.id=c.document_id JOIN review_threads t ON t.id=c.thread_id WHERE d.change_request_id!=t.change_request_id"
             ).fetchone()[0]
             == 0
         )
@@ -325,7 +325,7 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
         "endpoint_id"
     ]
     with sqlite3.connect(state / "catalog.sqlite3") as db:
-        assert db.execute("SELECT count(*) FROM collection_runs").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM git_acquisitions").fetchone()[0] == 0
     assert (
         run(
             state, "sync", "git", "--repo", repos["beta"], "--endpoint", ep, expected=3
@@ -333,8 +333,10 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
         == "NOT_FOUND"
     )
     with sqlite3.connect(state / "catalog.sqlite3") as db:
-        assert db.execute("SELECT count(*) FROM collection_runs").fetchone()[0] == 0
-        assert db.execute("SELECT count(*) FROM cache_entries").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM git_acquisitions").fetchone()[0] == 0
+        assert (
+            db.execute("SELECT count(*) FROM active_cache_entries").fetchone()[0] == 0
+        )
     run(state, "sync", "git", "--endpoint", ep, expected=2)
     p, hooks = start_hooked(
         state,
@@ -352,7 +354,7 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
     job = interrupted_job(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         original = db.execute(
-            "SELECT id FROM repository_endpoints WHERE repo_id=? AND is_preferred=1",
+            "SELECT preferred_endpoint_id FROM repositories WHERE id=?",
             (repos["alpha"],),
         ).fetchone()[0]
     run(state, "endpoints", "prefer", "--repo", repos["alpha"], "--endpoint", original)
@@ -360,12 +362,12 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
     assert resumed["endpoint_id"] == ep and resumed["endpoint_url"] == alt.as_uri()
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         assert db.execute(
-            "SELECT endpoint_id,endpoint_url FROM collection_runs WHERE job_id=?",
+            "SELECT a.endpoint_id,a.endpoint_url FROM git_acquisitions a JOIN acquisition_progress p ON p.acquisition_id=a.id WHERE p.job_id=?",
             (job,),
         ).fetchone() == (ep, alt.as_uri())
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(
-                "UPDATE collection_runs SET repo_id=? WHERE job_id=?",
+                "UPDATE git_acquisitions SET repo_id=? WHERE id IN (SELECT acquisition_id FROM acquisition_progress WHERE job_id=?)",
                 (repos["beta"], job),
             )
     run(state, "db", "check", "--full")

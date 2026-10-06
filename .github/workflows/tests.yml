@@ -1,24 +1,75 @@
 name: tests
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run the complete current catalog3 acceptance suite
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   offline:
     runs-on: ubuntu-24.04
+    env:
+      CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.12.19'
-      - run: uv sync --locked --group dev
-      - run: uv run --no-sync ruff check src tests scripts
-      - run: uv run --no-sync ruff format --check src tests scripts
-      - name: Required FTS success lane
+      - name: Plan checks from changed files
+        id: plan
+        run: python scripts/ci_profile.py run --name planning -- python scripts/ci_plan.py
+      - name: Validate prose
+        run: python scripts/ci_profile.py run --name report-validation -- python scripts/ci_execute.py reports
+      - name: Prepare dependencies (online preparation)
+        if: steps.plan.outputs.dependencies == 'true'
+        run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev --python "$(command -v python)"
+      - name: Prepare locked wheels (online preparation)
+        if: steps.plan.outputs.wheelhouse == 'true'
+        run: python scripts/ci_profile.py run --name wheelhouse -- uv run --no-sync python scripts/prepare_wheelhouse.py
+      - name: Ruff lint and formatting
+        if: steps.plan.outputs.static == 'true'
         run: |
-          uv run --no-sync python -c "import sqlite3; c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
-      - run: uv run --no-sync repo-catalog --format json doctor
-      - run: uv build --out-dir artifacts/dist
-      - run: uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
-      - run: uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging --strict-markers -m "not live and not benchmark"
-      - run: uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
+          python scripts/ci_profile.py run --name lint -- uv run --no-sync ruff check src tests scripts
+          python scripts/ci_profile.py run --name format -- uv run --no-sync ruff format --check src tests scripts
+      - name: Inspect SQLite capabilities and doctor
+        if: steps.plan.outputs.smoke == 'true'
+        run: |
+          python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
+          python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog --format json doctor
+      - name: Collect selected tests before execution
+        if: steps.plan.outputs.tests == 'true' || steps.plan.outputs.packaging == 'true'
+        run: uv run --no-sync python scripts/ci_execute.py collect
+      - name: Current catalog3 checks (offline)
+        if: steps.plan.outputs.tests == 'true'
+        run: uv run --no-sync python scripts/ci_execute.py run --lane tests
+      - name: Installed wheel and sdist checks (offline, sequential)
+        if: steps.plan.outputs.packaging == 'true'
+        run: uv run --no-sync python scripts/ci_execute.py run --lane packaging
+      - name: Reconcile selected checks and report unexecuted coverage
+        if: always()
+        run: python scripts/ci_execute.py gate
+      - name: Retain timing and selection evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-profile-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/ci-profile/*.json
+            artifacts/ci-profile/*.md
+            artifacts/ci-profile/*.xml
+            artifacts/ci-profile/selected-tests.txt
+          retention-days: 30

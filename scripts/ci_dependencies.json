@@ -1,0 +1,82 @@
+{
+  "version": 2,
+  "policy_inputs": [
+    ".github/workflows/tests.yml",
+    "scripts/ci_plan.py",
+    "scripts/ci_execute.py",
+    "scripts/ci_dependencies.json",
+    "scripts/ci_profile.py"
+  ],
+  "shared_inputs": [
+    "src/**",
+    "tests/conftest.py",
+    "tests/support/**",
+    "tests/**/conftest.py",
+    "tests/**/__init__.py",
+    "pyproject.toml",
+    "uv.lock",
+    ".python-version",
+    ".github/**",
+    "scripts/**",
+    ".gitignore"
+  ],
+  "executable_inputs": [
+    "docs/**/*.sql",
+    "docs/**/*.json",
+    "docs/**/*.csv",
+    "docs/schema-hardening/table-conversion.md",
+    "docs/*.sql",
+    "docs/*.json",
+    "docs/*.csv"
+  ],
+  "prose": [
+    "AGENTS.md",
+    "README.md",
+    "docs/**/*.md",
+    "docs/*.md"
+  ],
+  "acceptance_files": [
+    "tests/e2e/test_backup.py",
+    "tests/e2e/test_cache.py",
+    "tests/e2e/test_cli_contract.py",
+    "tests/e2e/test_cli_more.py",
+    "tests/e2e/test_content.py",
+    "tests/e2e/test_digests.py",
+    "tests/e2e/test_git_sync.py",
+    "tests/e2e/test_github_sync.py",
+    "tests/e2e/test_http_compression.py",
+    "tests/e2e/test_jobs.py",
+    "tests/e2e/test_offline.py",
+    "tests/e2e/test_queries.py",
+    "tests/e2e/test_recovery.py",
+    "tests/e2e/test_repository_identity.py",
+    "tests/e2e/test_search.py",
+    "tests/e2e/test_text_policy.py",
+    "tests/integration/test_application_contract.py",
+    "tests/integration/test_cache.py",
+    "tests/integration/test_ci_execution.py",
+    "tests/integration/test_database.py",
+    "tests/integration/test_git_objects.py",
+    "tests/integration/test_network_guard.py",
+    "tests/integration/test_search_index.py",
+    "tests/integration/test_target_schema.py",
+    "tests/packaging/test_distribution.py",
+    "tests/unit/test_ci_plan.py",
+    "tests/unit/test_ci_profile.py",
+    "tests/unit/test_contracts.py",
+    "tests/unit/test_conversion_git_domain.py",
+    "tests/unit/test_conversion_pr_domain.py",
+    "tests/unit/test_import_archive.py"
+  ],
+  "notes": "Current catalog3 behavior and import protection determine coverage. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. Update this file when replacing obsolete tests with current runtime workflows.",
+  "acceptance_patterns": [
+    "tests/integration/test_catalog3*.py",
+    "tests/integration/test_runtime*.py"
+  ],
+  "report_inputs": [
+    "docs/ci-performance-baseline.json",
+    "docs/ci-performance-results.json",
+    "docs/ci-selection-results.json",
+    "docs/validation/real-world/*.json"
+  ]
+}

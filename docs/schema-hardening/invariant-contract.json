@@ -1,0 +1,421 @@
+{
+  "invariants": [
+    {
+      "id": "I01",
+      "ddl_tables": [
+        "repositories",
+        "repository_bindings"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_fresh_complete_schema"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "UUIDv4発行・identity conflict診断・URL/OIDによる自動統合禁止はP2/P3 application"
+    },
+    {
+      "id": "I02",
+      "ddl_tables": [
+        "repository_endpoints",
+        "git_acquisitions"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_cross_owner_and_parent_deletion"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "preferredの存在・旧URLの矛盾と未知の過去URLはP3 admission"
+    },
+    {
+      "id": "I03",
+      "ddl_tables": [
+        "snapshots"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_parent_identity_and_facts_fixed"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "旧snapshot/run/repo edge照合はP3"
+    },
+    {
+      "id": "I04",
+      "ddl_tables": [
+        "repositories",
+        "snapshots"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_reviewed_multi_statement_attack"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "公開前の保存義務・raw closure証明とcurrent順序はP3/P5 admission"
+    },
+    {
+      "id": "I05",
+      "ddl_tables": [
+        "change_requests",
+        "change_request_observations"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_reviewed_multi_statement_attack"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "payload保全・旧pointerの曖昧さ解決はP3"
+    },
+    {
+      "id": "I06",
+      "ddl_tables": [
+        "documents",
+        "document_versions"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_parent_identity_and_facts_fixed"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "不正旧pointerはarchiveしてactivation阻害、勝手に最新選択しないP3"
+    },
+    {
+      "id": "I07",
+      "ddl_tables": [
+        "document_observations"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_body_sharing_preserves_a_b_a_and_times"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "観測順序・旧時刻と原本を全row比較するP3"
+    },
+    {
+      "id": "I08",
+      "ddl_tables": [
+        "reviews",
+        "review_threads",
+        "review_comments"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_cross_owner_and_parent_deletion"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "binding内provider ID解釈・thread履歴再解析はP3/P4"
+    },
+    {
+      "id": "I09",
+      "ddl_tables": [
+        "code_observations",
+        "code_listings",
+        "code_listing_progress",
+        "code_commits",
+        "code_file_changes"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_listing_scope_context_partial_complete",
+        "tests/integration/test_p1_storage_lifecycle.py::test_completed_listing_cannot_reopen",
+        "tests/integration/test_p1_storage_lifecycle.py::test_listing_initialization_requires_partial_marker",
+        "tests/integration/test_p1_storage_lifecycle.py::test_partial_pages_rollback_restart_complete_and_seal"
+      ],
+      "implemented": "Complete listing permanently sealed independent of observation references; marker DELETE/REPLACE/downgrade forbidden; append requires initialized partial progress, including explicit transactions/savepoints.",
+      "remaining": "全page連続性・terminal/context/cap評価はP4/P5 audit。SQLのproven flagだけで原本完成を証明しない"
+    },
+    {
+      "id": "I10",
+      "ddl_tables": [
+        "fetch_collections"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_cross_owner_and_parent_deletion"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "旧collection scopeとAPI主体推定の限界をP3/P4診断"
+    },
+    {
+      "id": "I11",
+      "ddl_tables": [
+        "code_acquisitions",
+        "root_origins"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_git_meaning_and_multiple_ref_origins"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "API期待OIDと実byte OIDの暗号学的照合はP4"
+    },
+    {
+      "id": "I12",
+      "ddl_tables": [
+        "acquisition_roots",
+        "root_origins"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_git_meaning_and_multiple_ref_origins"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "失われたcapture事実は捏造せずcache由来と区別するP4"
+    },
+    {
+      "id": "I13",
+      "ddl_tables": [
+        "git_objects",
+        "acquisition_roots",
+        "ref_observations"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_oid_type_numeric_boolean_null",
+        "tests/integration/test_p1_storage_lifecycle.py::test_git_verification_is_monotonic_and_checks_bytes"
+      ],
+      "implemented": "OID/type shape plus immutable Git identity; monotonic verified projection. Synthetic admission verifies supplied local typed-header bytes before 0-to-1.",
+      "remaining": "元TEXT OID字句archiveとdecode失敗分類はP3"
+    },
+    {
+      "id": "I14",
+      "ddl_tables": [
+        "commits",
+        "tree_entries",
+        "tag_objects",
+        "git_objects"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_git_meaning_and_multiple_ref_origins",
+        "tests/integration/test_p1_storage_lifecycle.py::test_git_verification_rejects_wrong_typed_header"
+      ],
+      "implemented": "Git edge/type/format constraints plus local typed-header/OID/size admission example; full parsing/closure remains separate.",
+      "remaining": "Git raw bytesのOID/size実証とparent densityはP4"
+    },
+    {
+      "id": "I15",
+      "ddl_tables": [
+        "contents",
+        "content_digests",
+        "blob_content_map",
+        "content_locations"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_git_meaning_and_multiple_ref_origins",
+        "tests/integration/test_p1_storage_lifecycle.py::test_local_text_completion_reaches_query_and_search",
+        "tests/integration/test_p1_storage_lifecycle.py::test_text_admission_rejects_unproven_completion",
+        "tests/integration/test_p1_storage_lifecycle.py::test_sql_text_completion_shape_and_length_guards"
+      ],
+      "implemented": "Write-once eligible text completion, saved SHA-256 anchor/length/NUL SQL guards; synthetic admission checks all raw digests and strict UTF-8, preserves content ID/time and resolves a durable location.",
+      "remaining": "P3/P4/P5全production入口へraw digest/UTF-8/length admissionとdurable locator解決・証跡を実装。今回のhelperはsynthetic例だけ。直接SQLは暗号学的一致を証明しない。"
+    },
+    {
+      "id": "I16",
+      "ddl_tables": [
+        "payloads",
+        "text_bodies"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_body_sharing_preserves_a_b_a_and_times"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "SHA実byte再計算・decoded/wire表現区別はP3/P4 audit"
+    },
+    {
+      "id": "I17",
+      "ddl_tables": [
+        "snapshots",
+        "git_objects"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_oid_type_numeric_boolean_null",
+        "tests/integration/test_p1_storage_lifecycle.py::test_git_verification_is_monotonic_and_checks_bytes",
+        "tests/integration/test_p1_storage_lifecycle.py::test_monotonic_completions_can_rollback_and_restart"
+      ],
+      "implemented": "Boolean CHECK and no verification downgrade; admitted 0-to-1 and transaction rollback/restart demonstrated.",
+      "remaining": "旧verified claimはtyped archive保全。新bitはoffline原文検証済みのtyped P3 providerから供給。provider/証跡/再解析のproduction実装はP3/P4、直接SQLはhashを検証しない。"
+    },
+    {
+      "id": "I18",
+      "ddl_tables": [
+        "job_attempts",
+        "commit_parents"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_old_cache_and_job_runtime_are_not_reactivated"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "dense ordinal/page chain/real有限性・allocation collision監査はP3/P4"
+    },
+    {
+      "id": "I19",
+      "ddl_tables": [
+        "sources",
+        "fetch_occurrences"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_json_and_listing_state"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "JSON期待key dialect/schema解釈はP3/P4。不正原文はtyped archive"
+    },
+    {
+      "id": "I20",
+      "ddl_tables": [
+        "job_attempts",
+        "collection_progress",
+        "code_listing_progress"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_json_and_listing_state",
+        "tests/integration/test_p1_storage_lifecycle.py::test_listing_initialization_requires_partial_marker",
+        "tests/integration/test_p1_storage_lifecycle.py::test_partial_pages_rollback_restart_complete_and_seal"
+      ],
+      "implemented": "State domains; listing partial initialization/continuation/completion/seal, full rollback/restart example. Full runtime state machine remains unimplemented.",
+      "remaining": "合法state遷移・attempt fence・完了postconditionはP5 application"
+    },
+    {
+      "id": "I21",
+      "ddl_tables": [
+        "document_observations",
+        "fetch_occurrences"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_body_sharing_preserves_a_b_a_and_times",
+        "tests/integration/test_p1_storage_lifecycle.py::test_partial_pages_rollback_restart_complete_and_seal",
+        "tests/integration/test_p1_storage_lifecycle.py::test_monotonic_completions_can_rollback_and_restart"
+      ],
+      "implemented": "Original occurrence/observation/created timestamps survive rollback/replay; parsed time remains separate; synthetic inputs compared by bytes/ID/ordinal/time.",
+      "remaining": "変換/再解析clockをobserved_atへ入れないことはP3/P4 byte/semantic proof"
+    },
+    {
+      "id": "I22",
+      "ddl_tables": [
+        "text_bodies",
+        "document_observations"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_body_sharing_preserves_a_b_a_and_times"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "body exact一致による共有、旧version/observation IDs維持はP3"
+    },
+    {
+      "id": "I23",
+      "ddl_tables": [
+        "incremental_scans"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_resume_scope_and_immutable_scan"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "元scan開始境界の証明とwatermark overlap/replay非前進はP4/P5 application"
+    },
+    {
+      "id": "I24",
+      "ddl_tables": [
+        "resume_scopes",
+        "validators",
+        "resume_cursors"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_resume_scope_and_immutable_scan"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "principal/権限/API/parser/profile変更時の再利用拒否はP5 admission"
+    },
+    {
+      "id": "I25",
+      "ddl_tables": [
+        "jobs",
+        "job_attempts",
+        "acquisition_progress"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_old_cache_and_job_runtime_are_not_reactivated"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "最後に保存された旧attemptだけを移すP3、lease/予約は新規P5"
+    },
+    {
+      "id": "I26",
+      "ddl_tables": [
+        "coverage_scopes",
+        "coverage_claims"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_fresh_complete_schema"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate",
+      "remaining": "effective coverage証明、partial格上げ禁止、legacy assertionとの差分説明はP3/P4/P5"
+    },
+    {
+      "id": "I27",
+      "ddl_tables": [
+        "cache_locators",
+        "active_cache_entries"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_old_cache_and_job_runtime_are_not_reactivated",
+        "tests/integration/test_conversion_foundation.py::test_guarded_worker_denies_acquisition_and_source_mutation",
+        "tests/integration/test_conversion_foundation.py::test_source_change_blocks_resume"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate; P2 guarded worker denies source/cache writes, all Git/process/network acquisition and checks cache/source fingerprints.",
+      "remaining": "Git raw/object availability、alternates/promisor closure、durable target cacheの再解析とadmissionはP4。元cacheのwrite/fetchは許可しない。"
+    },
+    {
+      "id": "I28",
+      "ddl_tables": [
+        "repositories",
+        "repository_bindings",
+        "repository_name_assertions",
+        "source_repositories",
+        "inventory_observations"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_fresh_complete_schema",
+        "tests/integration/test_p1_storage_lifecycle.py::test_source_pair_rediscovery_aggregates_without_rewriting_events",
+        "tests/integration/test_p1_storage_lifecycle.py::test_source_unknown_times_and_submillisecond_replay"
+      ],
+      "implemented": "Source pair is retained min/max aggregate, not event identity; repeated/out-of-order discovery allowed. SQL parse/coarse bound checks plus exact timezone-aware synthetic admission preserve separate event rows.",
+      "remaining": "P3で旧aggregateの不正/矛盾をarchive診断。juliandayはmicrosecond/timezoneを保証しないためP3/P5入口へ厳密datetime admissionを移す。個別の発見証拠・alias/principal解釈は別fact/原本から保全する。"
+    },
+    {
+      "id": "I29",
+      "ddl_tables": [
+        "search_documents",
+        "index_generations",
+        "contents",
+        "content_locations",
+        "blob_content_map"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_fresh_complete_schema",
+        "tests/integration/test_p1_storage_lifecycle.py::test_local_text_completion_reaches_query_and_search"
+      ],
+      "implemented": "Hydrated durable text reachable via stable blob/content/location references and used as actual search_documents input; full index generation/runtime integration remains pending.",
+      "remaining": "final durable inputsから索引offline再構築・scan原文同値性はP4/P5"
+    },
+    {
+      "id": "I30",
+      "ddl_tables": [
+        "database_identity",
+        "conversion_sources",
+        "conversion_runs"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_fresh_complete_schema",
+        "tests/integration/test_conversion_foundation.py::test_complete_exact_archive_and_replay",
+        "tests/integration/test_conversion_foundation.py::test_resume_rejects_version_or_output_mismatch",
+        "tests/integration/test_conversion_foundation.py::test_postcommit_crash_recognized_without_duplication"
+      ],
+      "implemented": "DDL shape/ownership/identity guarantees only; crypto/semantic facts require named residual gate; P2 verifies real DDL/contract/converter hashes, source fingerprints and atomic output proofs; fresh target remains building even after archive completion.",
+      "remaining": "domain変換/reanalysis/validated/activation gateはP3-P7。通常runtimeの新format対応は未実装。"
+    },
+    {
+      "id": "I31",
+      "ddl_tables": [
+        "snapshots",
+        "documents",
+        "document_versions",
+        "contents",
+        "git_objects",
+        "source_repositories",
+        "code_listing_progress"
+      ],
+      "tests": [
+        "tests/integration/test_target_schema.py::test_replace_upsert_and_same_repo_reassignment",
+        "tests/integration/test_p1_storage_lifecycle.py::test_completed_listing_cannot_reopen",
+        "tests/integration/test_p1_storage_lifecycle.py::test_local_text_completion_reaches_query_and_search",
+        "tests/integration/test_p1_storage_lifecycle.py::test_monotonic_completions_can_rollback_and_restart"
+      ],
+      "implemented": "Identity/ownership/history fixed, narrowly allowed monotonic text/verification/aggregate completion and permanent listing seal; rollback/bootstrap remain legitimate.",
+      "remaining": "新runtimeへ例示した単調admissionと証跡・scope/page完成gateを接続するP3/P4/P5は未実装。既知本文の訂正や完了集合の再解析は別fact+診断で扱う。"
+    }
+  ]
+}

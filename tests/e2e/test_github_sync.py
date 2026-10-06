@@ -105,8 +105,6 @@ def test_resume_skips_completed_prs(catalog):
         _, repo, env = configure(state, api, fixture)
         api.failures["/repos/fixture/alpha/pulls/42/reviews"] = [500] * 5
         result = run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
-        with sqlite3.connect(state / "catalog.sqlite3") as db:
-            db.execute("DELETE FROM sync_checkpoints WHERE scope LIKE 'pr-complete:%'")
         previous = len(api.requests)
         run(state, "jobs", "resume", result["data"]["job_id"], env=env)
         for method, path, params in api.requests[previous:]:
@@ -220,7 +218,11 @@ def test_versions_fencing(catalog):
             "--document-versions",
             "observed",
         )
-        assert all(len(r["observations"]) == 2 for r in a)
+        assert len(a) == 6 and all(len(r["observations"]) == 1 for r in a)
+        assert all(
+            len({r["version_id"] for r in a if r["pr_id"] == pr}) == 2
+            for pr in {r["pr_id"] for r in a}
+        )
 
 
 def test_private_inventory(catalog):
@@ -304,13 +306,14 @@ def test_nested_pagination(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
                 db.execute(
-                    "SELECT count(*) FROM review_threads WHERE pr_id=?", (repo + ":41",)
+                    "SELECT count(*) FROM review_threads WHERE change_request_id=?",
+                    (repo + ":41",),
                 ).fetchone()[0]
                 == 101
             )
             assert (
                 db.execute(
-                    "SELECT count(*) FROM pr_documents WHERE pr_id=? AND kind='review-comment'",
+                    "SELECT count(*) FROM documents WHERE change_request_id=? AND kind='review-comment'",
                     (repo + ":41",),
                 ).fetchone()[0]
                 == 10201
@@ -327,7 +330,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             old = dict(
                 db.execute(
-                    "SELECT scope,value FROM sync_checkpoints WHERE scope LIKE 'watermark:%'"
+                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.id=i.collection_id ORDER BY i.scan_started_at"
                 )
             )
         api.stage = "B"
@@ -336,11 +339,11 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             new = dict(
                 db.execute(
-                    "SELECT scope,value FROM sync_checkpoints WHERE scope LIKE 'watermark:%'"
+                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.id=i.collection_id ORDER BY i.scan_started_at"
                 )
             )
-        issue = next(k for k in old if ":issue-comment:" in k)
-        review = next(k for k in old if ":review-comment:" in k)
+        issue = "issue-comment-incremental"
+        review = "review-comment-incremental"
         assert old[issue] == new[issue] and old[review] != new[review]
         assert any(
             params.get("since")
@@ -370,7 +373,7 @@ def test_code_races_caps(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
                 db.execute(
-                    "SELECT count(*) FROM pr_file_changes WHERE code_observation=?",
+                    "SELECT count(*) FROM code_file_changes f JOIN code_observations c ON c.file_listing_id=f.listing_id WHERE c.id=?",
                     (shown["code_observation"]["id"],),
                 ).fetchone()[0]
                 == 3001
@@ -389,7 +392,7 @@ def test_rate_etag(catalog):
         run(state, "jobs", "resume", job, env=env, expected=3)
         assert len(api.requests) == requests
         with sqlite3.connect(state / "catalog.sqlite3") as db:
-            db.execute("UPDATE jobs SET not_before=0 WHERE id=?", (job,))
+            db.execute("UPDATE job_attempts SET not_before=0 WHERE job_id=?", (job,))
         run(state, "jobs", "resume", job, env=env)
         before = pages(
             state, "search", "pr", "--repo", repo, "--literal", "body-marker"
@@ -413,7 +416,7 @@ def test_page_crash(catalog, tmp_path):
         process.communicate(timeout=10)
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
-                db.execute("SELECT count(*) FROM collection_pages").fetchone()[0] == 1
+                db.execute("SELECT count(*) FROM fetch_occurrences").fetchone()[0] == 1
             )
         run(state, "jobs", "resume", interrupted_job(state), env=env)
         assert len(pages(state, "pr", "list", "--repo", repo)) == 3

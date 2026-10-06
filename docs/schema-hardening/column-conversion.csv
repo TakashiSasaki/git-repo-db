@@ -1,0 +1,288 @@
+source_table,source_column,target,relation,dependent_recipes,transform_rules,failure_policy,validation
+acquisition_roots,id,acquisition_roots.id | root_origins.id | root_origins.root_id | legacy_values.value_bytes,split,root_origins,allocate_id | copy | lookup_root | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+acquisition_roots,run_id,acquisition_roots.acquisition_id | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+acquisition_roots,repo_id,acquisition_roots.repo_id | root_origins.repo_id | legacy_values.value_bytes,split,root_origins,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+acquisition_roots,object_format,acquisition_roots.object_format | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+acquisition_roots,oid,acquisition_roots.oid | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+acquisition_roots,role,acquisition_roots.role | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+acquisition_roots,pr_number,legacy_values.value_bytes,archive,root_origins,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+acquisition_roots,observation_id,legacy_values.value_bytes,archive,root_origins,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+acquisition_roots,expected_oid,acquisition_roots.expected_oid | legacy_values.value_bytes,identity,root_origins,oid_decode | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+acquisition_roots,published,acquisition_roots.published | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+api_responses,id,payloads.id | unresolved_payloads.payload_id | legacy_values.value_bytes,split,unresolved_payloads,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+api_responses,payload_sha256,payloads.sha256 | legacy_values.value_bytes,identity,unresolved_payloads,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+api_responses,body,payloads.body | payloads.byte_length | legacy_values.value_bytes,split,unresolved_payloads,byte_length | copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+blob_content_map,object_id,blob_content_map.object_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+blob_content_map,content_id,blob_content_map.content_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+blob_content_map,run_id,blob_content_map.acquisition_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+cache_entries,id,cache_locators.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+cache_entries,repo_id,cache_locators.repo_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+cache_entries,generation,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+cache_entries,path,cache_locators.path | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+cache_entries,state,cache_locators.state | legacy_values.value_bytes,identity,,legacy_state | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+cache_entries,last_used,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+cache_entries,bytes,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+cache_leases,cache_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+cache_leases,job_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+cache_leases,attempt,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+cache_leases,acquired_at,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+catalog_meta,id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,blocking,exact_archive
+catalog_meta,db_instance_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+catalog_meta,publication_seq,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+catalog_meta,schema_version,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+collection_memberships,collection_id,collection_memberships.collection_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_memberships,resource_id,collection_memberships.document_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_memberships,ordinal,collection_memberships.ordinal | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_pages,collection_id,fetch_occurrences.id | fetch_occurrences.collection_id | legacy_values.value_bytes,split,code_listings | fetch_occurrences | code_listing_progress | code_commits | code_file_changes,allocate_id | copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_pages,ordinal,fetch_occurrences.ordinal | legacy_values.value_bytes,identity,code_listings | fetch_occurrences | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_pages,response_id,fetch_occurrences.payload_id | legacy_values.value_bytes,identity,code_listings | fetch_occurrences | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_pages,request,fetch_occurrences.request | legacy_values.value_bytes,identity,code_listings | fetch_occurrences | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_pages,next_cursor,fetch_occurrences.next_cursor | legacy_values.value_bytes,identity,code_listings | fetch_occurrences | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_pages,observed_at,fetch_occurrences.observed_at | legacy_values.value_bytes,identity,code_listings | fetch_occurrences | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,id,git_acquisitions.id | acquisition_progress.acquisition_id | legacy_values.value_bytes,split,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+collection_runs,job_id,acquisition_progress.job_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,repo_id,git_acquisitions.repo_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+collection_runs,cache_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+collection_runs,generation,acquisition_progress.generation | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,attempt,acquisition_progress.attempt | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,state,acquisition_progress.state | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,started_at,git_acquisitions.started_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,refs_at,git_acquisitions.refs_observed_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,ended_at,acquisition_progress.ended_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,object_format,git_acquisitions.object_format | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,kind,git_acquisitions.kind | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,archive_only,exact_archive
+collection_runs,roots_manifest,git_acquisitions.roots_manifest | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,request,git_acquisitions.request | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,endpoint_id,git_acquisitions.endpoint_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collection_runs,endpoint_url,git_acquisitions.endpoint_url | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collections,id,fetch_collections.id | fetch_collections.scope_id | collection_progress.collection_id | resume_scopes.id | legacy_values.value_bytes,split,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,allocate_id | copy | lookup_scope | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+collections,pr_id,fetch_collections.change_request_id | legacy_values.value_bytes,identity,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+collections,repo_id,fetch_collections.repo_id | resume_scopes.repo_id | legacy_values.value_bytes,split,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+collections,kind,fetch_collections.kind | legacy_values.value_bytes,identity,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collections,job_id,collection_progress.job_id | collection_progress.attempt | legacy_values.value_bytes,split,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | lookup_last_attempt | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collections,state,collection_progress.state | completion_markers.asserted_state | legacy_values.value_bytes,split,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | legacy_state | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collections,scope,resume_scopes.request_context | legacy_values.value_bytes,identity,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,archive_only,exact_archive
+collections,cursor,collection_progress.cursor | legacy_values.value_bytes,identity,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collections,observed_at,fetch_collections.observed_at | completion_markers.observed_at | legacy_values.value_bytes,split,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+collections,reason,collection_progress.reason | legacy_values.value_bytes,identity,code_listings | completion_markers | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commit_parents,commit_id,commit_parents.commit_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commit_parents,parent_ordinal,commit_parents.parent_ordinal | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commit_parents,parent_id,commit_parents.parent_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commits,object_id,commits.object_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commits,tree_id,commits.tree_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commits,raw_headers,commits.raw_headers | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commits,raw_message,commits.raw_message | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+commits,metadata,commits.metadata | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_digests,content_id,content_digests.content_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_digests,representation,content_digests.representation | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_digests,algorithm,content_digests.algorithm | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_digests,digest,content_digests.digest | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_digests,verified_at,content_digests.verified_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_digests,pipeline_version,content_digests.pipeline_version | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_locations,content_id,content_locations.content_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_locations,kind,content_locations.kind | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_locations,locator,content_locations.locator | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_locations,cache_id,content_locations.cache_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+content_locations,state,content_locations.state | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+contents,id,contents.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+contents,byte_length,contents.byte_length | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+contents,raw_text,contents.raw_text | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof | offline_verification
+contents,text_state,contents.text_state | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+contents,created_at,contents.created_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+coverage_components,owner_id,coverage_scopes.id | coverage_claims.id | coverage_claims.scope_id | legacy_values.value_bytes,split,coverage_scopes | coverage_claims,allocate_id | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+coverage_components,kind,coverage_scopes.kind | legacy_values.value_bytes,identity,coverage_scopes | coverage_claims,copy | sqlite_exact_bytes,archive_only,exact_archive
+coverage_components,state,coverage_claims.asserted_state | legacy_values.value_bytes,identity,coverage_scopes | coverage_claims,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+coverage_components,details,coverage_claims.details | legacy_values.value_bytes,identity,coverage_scopes | coverage_claims,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+document_versions,id,text_bodies.id | document_versions.id | document_versions.body_id | legacy_values.value_bytes,split,,copy | lookup_body | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+document_versions,document_id,document_versions.document_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+document_versions,body,text_bodies.body | text_bodies.byte_length | text_bodies.sha256 | legacy_values.value_bytes,split,,byte_length | copy | sha256 | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+document_versions,body_sha256,document_versions.legacy_body_sha256 | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+git_objects,id,git_objects.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+git_objects,object_format,git_objects.object_format | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+git_objects,oid,git_objects.oid | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+git_objects,type,git_objects.type | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+git_objects,size,git_objects.size | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+git_objects,verified,legacy_values.value_bytes,derived,git_objects,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof | offline_verification
+index_generations,id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+index_generations,kind,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+index_generations,state,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+index_generations,table_name,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+index_generations,target_max_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+index_generations,created_at,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+index_membership,generation_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+index_membership,document_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+index_membership,input_version,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+inventory_runs,id,inventory_observations.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+inventory_runs,source_id,inventory_observations.source_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+inventory_runs,state,inventory_observations.asserted_state | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+inventory_runs,scope,inventory_observations.scope | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+inventory_runs,observed_at,inventory_observations.observed_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+inventory_runs,reason,inventory_observations.reason | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,id,job_attempts.job_id | jobs.id | legacy_values.value_bytes,split,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+jobs,kind,jobs.kind | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,request,jobs.request | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,state,job_attempts.state | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,attempt,job_attempts.attempt | jobs.current_attempt | legacy_values.value_bytes,split,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,not_before,job_attempts.not_before | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,checkpoint,job_attempts.checkpoint | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,reason,job_attempts.reason | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,created_at,job_attempts.created_at | jobs.created_at | legacy_values.value_bytes,split,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+jobs,updated_at,job_attempts.updated_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_code_observations,id,code_observations.id | code_observations.commit_listing_id | code_observations.file_listing_id | legacy_values.value_bytes,split,code_listings | code_observations | root_origins | code_listing_progress | code_commits | code_file_changes,copy | replay_listing | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_code_observations,pr_id,code_listings.change_request_id | code_observations.change_request_id | legacy_values.value_bytes,split,code_listings | code_observations | root_origins | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_code_observations,observation_id,code_observations.observation_id | legacy_values.value_bytes,identity,code_listings | code_observations | root_origins | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_code_observations,head_oid,code_listings.object_format | code_listings.head_oid | code_observations.object_format | code_observations.head_oid | legacy_values.value_bytes,split,code_listings | code_observations | root_origins | code_listing_progress | code_commits | code_file_changes,oid_decode | oid_format | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_code_observations,base_oid,code_listings.base_oid | code_observations.base_oid | legacy_values.value_bytes,split,code_listings | code_observations | root_origins | code_listing_progress | code_commits | code_file_changes,oid_decode | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_code_observations,state,legacy_values.value_bytes,archive,code_listings | code_observations | root_origins | code_listing_progress | code_commits | code_file_changes,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_code_observations,details,code_observations.details | legacy_values.value_bytes,identity,code_listings | code_observations | root_origins | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_commits,code_observation,code_commits.listing_id | code_commits.occurrence_id | legacy_values.value_bytes,split,code_listings | code_listing_progress | code_commits | code_file_changes,lookup_occurrence | replay_listing | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_commits,ordinal,legacy_values.value_bytes,archive,code_listings | code_listing_progress | code_commits | code_file_changes,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_commits,oid,code_commits.object_format | code_commits.oid | legacy_values.value_bytes,split,code_listings | code_listing_progress | code_commits | code_file_changes,oid_decode | oid_format | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_commits,payload,code_commits.payload | legacy_values.value_bytes,identity,code_listings | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_documents,id,documents.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_documents,pr_id,documents.change_request_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_documents,kind,documents.kind | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_documents,provider_id,documents.provider_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_documents,node_id,documents.node_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_documents,author,documents.author | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_documents,url,documents.url | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_documents,current_version,documents.current_version_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_documents,deleted,documents.deleted | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_documents,metadata,documents.metadata | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_events,id,change_request_events.id | legacy_values.value_bytes,identity,change_request_events,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_events,pr_id,change_request_events.change_request_id | legacy_values.value_bytes,identity,change_request_events,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_events,run_id,legacy_values.value_bytes,archive,change_request_events,sqlite_exact_bytes,archive_only,exact_archive
+pr_events,ordinal,change_request_events.ordinal | legacy_values.value_bytes,identity,change_request_events,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_events,provider_id,change_request_events.provider_id | legacy_values.value_bytes,identity,change_request_events,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_events,payload,change_request_events.payload | legacy_values.value_bytes,identity,change_request_events,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_file_changes,code_observation,code_file_changes.listing_id | code_file_changes.occurrence_id | legacy_values.value_bytes,split,code_listings | code_listing_progress | code_commits | code_file_changes,lookup_occurrence | replay_listing | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_file_changes,ordinal,legacy_values.value_bytes,archive,code_listings | code_listing_progress | code_commits | code_file_changes,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_file_changes,path,code_file_changes.raw_path | legacy_values.value_bytes,identity,code_listings | code_listing_progress | code_commits | code_file_changes,sqlite_exact_bytes | utf8_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_file_changes,payload,code_file_changes.payload | legacy_values.value_bytes,identity,code_listings | code_listing_progress | code_commits | code_file_changes,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_git_links,code_observation,code_acquisitions.code_observation_id | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_git_links,role,code_acquisitions.role | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_git_links,object_format,code_acquisitions.object_format | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_git_links,oid,code_acquisitions.oid | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_git_links,acquisition_id,code_acquisitions.root_id | legacy_values.value_bytes,identity,root_origins,lookup_root | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_observations,id,change_request_observations.id | legacy_values.value_bytes,identity,change_request_observations,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_observations,pr_id,change_request_observations.change_request_id | legacy_values.value_bytes,identity,change_request_observations,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_observations,job_id,legacy_values.value_bytes,archive,change_request_observations,sqlite_exact_bytes,archive_only,exact_archive
+pr_observations,observed_at,change_request_observations.observed_at | legacy_values.value_bytes,identity,change_request_observations,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_observations,payload,change_request_observations.payload | legacy_values.value_bytes,identity,change_request_observations,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_observations,published,change_request_observations.published | legacy_values.value_bytes,identity,change_request_observations,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pr_reviews,id,reviews.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_reviews,pr_id,reviews.change_request_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_reviews,document_id,reviews.document_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pr_reviews,payload,reviews.payload | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+preservation_obligations,run_id,preservation_obligations.acquisition_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+preservation_obligations,cache_id,preservation_obligations.cache_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+preservation_obligations,roots_fixed,preservation_obligations.roots_fixed | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+preservation_obligations,structure_done,preservation_obligations.structure_done | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+preservation_obligations,digest_done,preservation_obligations.digest_done | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+preservation_obligations,text_done,preservation_obligations.text_done | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+preservation_obligations,published,preservation_obligations.published | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pull_requests,id,change_requests.id | change_requests.binding_id | legacy_values.value_bytes,split,change_requests,copy | lookup_binding | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pull_requests,repo_id,change_requests.repo_id | change_requests.binding_id | legacy_values.value_bytes,split,change_requests,copy | lookup_binding | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+pull_requests,number,change_requests.number | legacy_values.value_bytes,identity,change_requests,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pull_requests,node_id,change_requests.node_id | legacy_values.value_bytes,identity,change_requests,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+pull_requests,current_observation,change_requests.current_observation_id | legacy_values.value_bytes,identity,change_requests,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+ref_observations,snapshot_id,ref_observations.snapshot_id | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+ref_observations,raw_ref_name,ref_observations.raw_ref_name | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+ref_observations,kind,ref_observations.kind | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+ref_observations,object_format,ref_observations.object_format | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+ref_observations,target_oid,ref_observations.target_oid | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+ref_observations,peeled_oid,ref_observations.peeled_oid | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+ref_observations,target_type,ref_observations.target_type | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repositories,id,repositories.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+repositories,source_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+repositories,provider_host,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+repositories,provider_repo_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+repositories,name,repositories.name | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repositories,url,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+repositories,metadata,repositories.metadata | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repositories,current_snapshot,repositories.current_snapshot_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+repository_bindings,repo_id,repository_bindings.id | repository_bindings.repo_id | legacy_values.value_bytes,split,,allocate_id | copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+repository_bindings,instance_id,repository_bindings.instance_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_bindings,provider_repo_id,repository_bindings.provider_repo_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_bindings,metadata,repository_bindings.metadata | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_bindings,created_at,repository_bindings.created_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_endpoints,id,repository_endpoints.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+repository_endpoints,repo_id,repository_endpoints.repo_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+repository_endpoints,url,repository_endpoints.url | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_endpoints,transport,repository_endpoints.transport | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_endpoints,label,repository_endpoints.label | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_endpoints,is_preferred,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+repository_endpoints,metadata,repository_endpoints.metadata | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_endpoints,created_at,repository_endpoints.created_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_names,repo_id,repository_name_assertions.repo_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+repository_names,name,repository_name_assertions.name | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_names,observed_at,repository_name_assertions.observed_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_object_sources,repo_id,repository_object_sources.repo_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+repository_object_sources,object_id,repository_object_sources.object_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+repository_object_sources,run_id,repository_object_sources.acquisition_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+resource_observations,id,document_observations.id | legacy_values.value_bytes,identity,document_observations,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+resource_observations,document_id,document_observations.document_id | legacy_values.value_bytes,identity,document_observations,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+resource_observations,version_id,document_observations.version_id | legacy_values.value_bytes,identity,document_observations,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+resource_observations,collection_run,document_observations.origin_key | legacy_values.value_bytes,identity,document_observations,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+resource_observations,observed_at,document_observations.observed_at | legacy_values.value_bytes,identity,document_observations,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+resource_observations,metadata,document_observations.metadata | legacy_values.value_bytes,identity,document_observations,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+review_comments,document_id,review_comments.document_id | legacy_values.value_bytes,identity,review_comments,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+review_comments,thread_id,review_comments.thread_id | legacy_values.value_bytes,identity,review_comments,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+review_comments,payload,review_comments.payload | legacy_values.value_bytes,identity,review_comments,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+review_threads,id,review_threads.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+review_threads,pr_id,review_threads.change_request_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+review_threads,payload,review_threads.payload | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+review_threads,observed_at,review_threads.observed_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifest_entries,tree_id,root_manifest_entries.tree_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifest_entries,raw_path,root_manifest_entries.raw_path | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifest_entries,mode,root_manifest_entries.mode | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifest_entries,object_id,root_manifest_entries.object_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifest_entries,object_format,root_manifest_entries.object_format | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifest_entries,oid,root_manifest_entries.oid | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifests,tree_id,root_manifests.tree_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+root_manifests,complete,root_manifests.complete | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+schema_migrations,version,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+schema_migrations,checksum,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+schema_migrations,applied_at,legacy_values.value_bytes,archive,,sqlite_exact_bytes,archive_only,exact_archive
+search_documents,id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+search_documents,kind,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+search_documents,source_key,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+search_documents,body,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+search_documents,metadata,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+service_instances,id,service_instances.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+service_instances,kind,service_instances.kind | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+service_instances,name,service_instances.name | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+service_instances,web_base_url,service_instances.web_base_url | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+service_instances,api_base_url,service_instances.api_base_url | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+service_instances,metadata,service_instances.metadata | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+service_instances,created_at,service_instances.created_at | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+snapshots,id,snapshots.id | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+snapshots,run_id,snapshots.acquisition_id | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+snapshots,repo_id,snapshots.repo_id | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+snapshots,generation,snapshots.generation | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+snapshots,published,snapshots.published | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+snapshots,created_at,snapshots.created_at | legacy_values.value_bytes,identity,root_origins,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+source_repositories,source_id,source_repositories.source_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+source_repositories,repo_id,source_repositories.repo_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+source_repositories,first_seen,source_repositories.first_seen | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+source_repositories,last_seen,source_repositories.last_seen | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+sources,id,sources.id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,blocking,exact_archive | target_constraints | edge_proof
+sources,kind,sources.discovery_kind | legacy_values.value_bytes,identity,,source_kind | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+sources,name,sources.name | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+sources,settings,sources.settings | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+sources,instance_id,sources.instance_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+space_reservations,job_id,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+space_reservations,reserved,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+space_reservations,consumed,legacy_values.value_bytes,archive,,sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+sync_checkpoints,scope,legacy_values.value_bytes,archive,validators | incremental_scans | resume_cursors,sqlite_exact_bytes,archive_only,exact_archive
+sync_checkpoints,value,legacy_values.value_bytes,archive,validators | incremental_scans | resume_cursors,sqlite_exact_bytes,archive_only,exact_archive
+sync_checkpoints,updated_at,legacy_values.value_bytes,archive,validators | incremental_scans | resume_cursors,sqlite_exact_bytes,archive_only,exact_archive
+tag_objects,object_id,tag_objects.object_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tag_objects,target_id,tag_objects.target_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tag_objects,raw_payload,tag_objects.raw_payload | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tree_entries,tree_id,tree_entries.tree_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tree_entries,raw_name,tree_entries.raw_name | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tree_entries,mode,tree_entries.mode | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tree_entries,child_format,tree_entries.child_format | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tree_entries,child_oid,tree_entries.child_oid | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof
+tree_entries,child_id,tree_entries.child_id | legacy_values.value_bytes,identity,,copy | sqlite_exact_bytes,partial,exact_archive | target_constraints | edge_proof

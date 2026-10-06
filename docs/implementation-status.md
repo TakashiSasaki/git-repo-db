@@ -1,3 +1,9 @@
+# Current implementation status
+
+The ordinary product runtime is catalog3. See [runtime handoff](schema-hardening/runtime-handoff.md) for runnable commands, current validation and limits. The earlier v1/v2 and independent-target milestones are historical context; they are not compatibility or acceptance requirements.
+
+## Historical v2 implementation record
+
 # 実装状況
 
 仕様の基準は添付 `github-repository-catalog-plan-2026-10-05-2.md` 第19節。

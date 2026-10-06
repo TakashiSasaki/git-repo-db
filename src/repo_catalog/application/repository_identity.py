@@ -139,8 +139,8 @@ def bind(store, repo_id, instance_id, provider_repo_id=None):
             )
         return
     store.execute(
-        "INSERT INTO repository_bindings VALUES(?,?,?,?,?)",
-        (repo_id, instance_id, provider_repo_id, "{}", now()),
+        "INSERT INTO repository_bindings VALUES(?,?,?,?,?,?)",
+        (str(uuid.uuid4()), repo_id, instance_id, provider_repo_id, "{}", now()),
     )
 
 
@@ -152,13 +152,9 @@ def prefer_endpoint(store, repo_id, endpoint_id):
     if not row:
         raise CatalogError("NOT_FOUND", "Endpoint not found in selected repository")
     store.execute(
-        "UPDATE repository_endpoints SET is_preferred=0 WHERE repo_id=?", (repo_id,)
+        "UPDATE repositories SET preferred_endpoint_id=? WHERE id=?",
+        (endpoint_id, repo_id),
     )
-    store.execute(
-        "UPDATE repository_endpoints SET is_preferred=1 WHERE id=?", (endpoint_id,)
-    )
-    # Preserve the existing repository.url field as the preferred URL projection.
-    store.execute("UPDATE repositories SET url=? WHERE id=?", (row["url"], repo_id))
 
 
 def add_endpoint(store, repo_id, url, label=None, preferred=False, *, normalize=True):
@@ -171,11 +167,11 @@ def add_endpoint(store, repo_id, url, label=None, preferred=False, *, normalize=
     else:
         ident = str(uuid.uuid4())
         store.execute(
-            "INSERT INTO repository_endpoints VALUES(?,?,?,?,?,0,?,?)",
+            "INSERT INTO repository_endpoints VALUES(?,?,?,?,?,?,?)",
             (ident, repo_id, url, transport(url), label, "{}", now()),
         )
     if preferred or not store.one(
-        "SELECT 1 FROM repository_endpoints WHERE repo_id=? AND is_preferred=1",
+        "SELECT 1 FROM repositories WHERE id=? AND preferred_endpoint_id IS NOT NULL",
         (repo_id,),
     ):
         prefer_endpoint(store, repo_id, ident)
@@ -185,7 +181,11 @@ def add_endpoint(store, repo_id, url, label=None, preferred=False, *, normalize=
 def endpoint(store, repo_id, endpoint_id=None):
     row = store.one(
         "SELECT * FROM repository_endpoints WHERE repo_id=? AND "
-        + ("id=?" if endpoint_id else "is_preferred=1"),
+        + (
+            "id=?"
+            if endpoint_id
+            else "id=(SELECT preferred_endpoint_id FROM repositories WHERE id=repo_id)"
+        ),
         (repo_id, endpoint_id) if endpoint_id else (repo_id,),
     )
     if not row:
@@ -195,27 +195,48 @@ def endpoint(store, repo_id, endpoint_id=None):
 
 def link_source(store, source_id, repo_id):
     stamp = now()
-    store.execute(
-        "INSERT INTO source_repositories VALUES(?,?,?,?) ON CONFLICT(source_id,repo_id) DO UPDATE SET last_seen=excluded.last_seen",
-        (source_id, repo_id, stamp, stamp),
+    current = store.one(
+        "SELECT last_seen FROM source_repositories WHERE source_id=? AND repo_id=?",
+        (source_id, repo_id),
     )
-
-
-def backfill_v2(store):
-    """Called inside the v2 migration transaction; never infer historical URLs."""
-    hosted = {}
-    for source in store.all("SELECT * FROM sources WHERE kind='github'"):
-        ident = default_github_instance(store)
+    if current:
+        # Preserve the imported aggregate if the source recorded a later time.
         store.execute(
-            "UPDATE sources SET instance_id=? WHERE id=?", (ident, source["id"])
+            "UPDATE source_repositories SET last_seen=CASE WHEN last_seen IS NULL OR julianday(last_seen)<julianday(?) THEN ? ELSE last_seen END WHERE source_id=? AND repo_id=?",
+            (stamp, stamp, source_id, repo_id),
         )
-        hosted[source["id"]] = ident
-    for repo in store.all("SELECT * FROM repositories ORDER BY id"):
-        link_source(store, repo["source_id"], repo["id"])
-        add_endpoint(store, repo["id"], repo["url"], preferred=True, normalize=False)
-        if repo["source_id"] in hosted:
-            bind(store, repo["id"], hosted[repo["source_id"]], repo["provider_repo_id"])
-    # v1 did not record the URL used by each run: endpoint columns stay NULL.
+    else:
+        store.execute(
+            "INSERT INTO source_repositories VALUES(?,?,?,?)",
+            (source_id, repo_id, stamp, stamp),
+        )
+
+
+def repository_row(store, row):
+    """Build the small collector/selector projection from catalog3 identity facts."""
+    value = dict(row)
+    selected = store.one(
+        "SELECT url FROM repository_endpoints WHERE id=? AND repo_id=?",
+        (value["preferred_endpoint_id"], value["id"]),
+    )
+    source = store.one(
+        "SELECT source_id FROM source_repositories WHERE repo_id=? ORDER BY first_seen,source_id LIMIT 1",
+        (value["id"],),
+    )
+    binding = store.one(
+        "SELECT b.provider_repo_id,i.name,i.web_base_url FROM repository_bindings b JOIN service_instances i ON i.id=b.instance_id WHERE b.repo_id=? ORDER BY i.name LIMIT 1",
+        (value["id"],),
+    )
+    value.update(
+        url=selected[0] if selected else None,
+        source_id=source[0] if source else None,
+        provider_repo_id=binding["provider_repo_id"] if binding else None,
+        provider_host=(urlsplit(binding["web_base_url"]).hostname or binding["name"])
+        if binding
+        else "local",
+        current_snapshot=value["current_snapshot_id"],
+    )
+    return value
 
 
 def github_config(store, src):
@@ -262,14 +283,16 @@ def pr_source(store, repo_id, requested_source=None):
             "PR namespaces for multiple GitHub instances on one Repo ID are not supported",
         )
     if requested_source:
-        chosen = store.one("SELECT kind FROM sources WHERE id=?", (requested_source,))
-        if chosen and chosen[0] != "github":
+        chosen = store.one(
+            "SELECT discovery_kind FROM sources WHERE id=?", (requested_source,)
+        )
+        if chosen and chosen[0] != "github_inventory":
             requested_source = None
     params = (repo_id, requested_source) if requested_source else (repo_id,)
     row = store.one(
-        "SELECT s.*,b.provider_repo_id,i.web_base_url FROM source_repositories m JOIN sources s ON s.id=m.source_id JOIN service_instances i ON i.id=s.instance_id JOIN repository_bindings b ON b.repo_id=m.repo_id AND b.instance_id=i.id WHERE m.repo_id=? AND s.kind='github'"
+        "SELECT s.*,b.provider_repo_id,i.web_base_url FROM source_repositories m JOIN sources s ON s.id=m.source_id JOIN service_instances i ON i.id=s.instance_id JOIN repository_bindings b ON b.repo_id=m.repo_id AND b.instance_id=i.id WHERE m.repo_id=? AND s.discovery_kind='github_inventory'"
         + (" AND s.id=?" if requested_source else "")
-        + " ORDER BY CASE WHEN s.id=(SELECT source_id FROM repositories WHERE id=m.repo_id) THEN 0 ELSE 1 END,s.id LIMIT 1",
+        + " ORDER BY m.first_seen,s.id LIMIT 1",
         params,
     )
     return row

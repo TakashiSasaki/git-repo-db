@@ -1,9 +1,22 @@
 import json
 import os
 import subprocess
+from functools import lru_cache
 from importlib.resources import files
 
 import jsonschema
+
+
+@lru_cache(maxsize=1)
+def response_validator():
+    schema = json.loads(
+        files("repo_catalog")
+        .joinpath("resources/schemas/cli-v1.schema.json")
+        .read_text()
+    )
+    validator = jsonschema.validators.validator_for(schema)
+    validator.check_schema(schema)  # Once per process; validate EVERY response.
+    return validator(schema)
 
 
 def run(state, *args, expected=0, env=None):
@@ -29,14 +42,7 @@ def run(state, *args, expected=0, env=None):
         value = json.loads(p.stdout)
     except ValueError:
         raise AssertionError((p.returncode, p.stdout, p.stderr))
-    jsonschema.validate(
-        value,
-        json.loads(
-            files("repo_catalog")
-            .joinpath("resources/schemas/cli-v1.schema.json")
-            .read_text()
-        ),
-    )
+    response_validator().validate(value)
     if expected is not None:
         assert p.returncode == expected, (p.returncode, value, p.stderr)
     return value

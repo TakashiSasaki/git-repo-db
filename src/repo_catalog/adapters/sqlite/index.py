@@ -7,6 +7,8 @@ def fts_available(store):
     if store.config["search"]["backend"] == "scan":
         return False
     c = sqlite3.connect(":memory:")
+    c.execute("PRAGMA foreign_keys=ON")
+    c.execute("PRAGMA recursive_triggers=ON")
     try:
         c.execute(
             "CREATE VIRTUAL TABLE f USING fts5(body, tokenize='trigram case_sensitive 1',content='',detail=full)"
@@ -16,6 +18,58 @@ def fts_available(store):
         return False
     finally:
         c.close()
+
+
+def refresh_documents(store, kind, token):
+    """Reconstruct disposable search inputs from catalog originals, including imports."""
+    if kind == "code":
+        rows = store.execute(
+            "SELECT id source_key,raw_text body FROM contents WHERE raw_text IS NOT NULL ORDER BY id"
+        )
+    elif kind == "commits":
+        rows = store.execute(
+            "SELECT object_id source_key,raw_message body FROM commits ORDER BY object_id"
+        )
+    else:
+        rows = store.execute(
+            "SELECT v.id source_key,b.body FROM document_versions v JOIN text_bodies b ON b.id=v.body_id ORDER BY v.id"
+        )
+    batch = []
+    batch_bytes = 0
+    for row in rows:
+        token.check()
+        body = (
+            row["body"].decode("utf8", "replace")
+            if isinstance(row["body"], bytes)
+            else row["body"]
+        )
+        row_bytes = len(body.encode("utf8"))
+        if batch and (len(batch) == 200 or batch_bytes + row_bytes > 8_388_608):
+            _save_documents(store, kind, batch)
+            batch = []
+            batch_bytes = 0
+        batch.append((str(row["source_key"]), body))
+        batch_bytes += row_bytes
+    if batch:
+        _save_documents(store, kind, batch)
+
+
+def _save_documents(store, kind, batch):
+    with store.transaction():
+        for key, body in batch:
+            row = store.one(
+                "SELECT id,body FROM search_documents WHERE kind=? AND source_key=?",
+                (kind, key),
+            )
+            if row is None:
+                store.execute(
+                    "INSERT INTO search_documents(kind,source_key,body,metadata) VALUES(?,?,?,'{}')",
+                    (kind, key, body),
+                )
+            elif row["body"] != body:
+                store.execute(
+                    "UPDATE search_documents SET body=? WHERE id=?", (body, row["id"])
+                )
 
 
 def rebuild(store, kind, token=None):
@@ -29,6 +83,7 @@ def rebuild(store, kind, token=None):
     results = []
     for current in ("code", "pr", "commits") if kind == "all" else (kind,):
         token.check()
+        refresh_documents(s, current, token)
         maximum = s.one(
             "SELECT coalesce(max(id),0) FROM search_documents WHERE kind=?", (current,)
         )[0]
@@ -46,10 +101,17 @@ def rebuild(store, kind, token=None):
         count = 0
         while True:
             token.check()
-            batch = s.all(
+            batch = []
+            batch_bytes = 0
+            for document in s.execute(
                 "SELECT * FROM search_documents WHERE kind=? AND id>? AND id<=? ORDER BY id LIMIT 200",
                 (current, last, maximum),
-            )
+            ):
+                document_bytes = len(document["body"].encode("utf8"))
+                if batch and batch_bytes + document_bytes > 8_388_608:
+                    break
+                batch.append(document)
+                batch_bytes += document_bytes
             if not batch:
                 break
             with s.transaction():

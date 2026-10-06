@@ -1,0 +1,23 @@
+{
+  "status": "historical-only",
+  "acceptance_gate": false,
+  "current_policy": "scripts/ci_dependencies.json",
+  "profile_version": 1,
+  "description": "Local current P2 required normal lane after hardlink guard fix; advisory only; different runner contexts are not compared",
+  "runtime": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "cpu_count": 5,
+    "affinity": 5,
+    "cpu_quota": "400000 100000"
+  },
+  "lanes": {
+    "tests": {
+      "mode": "xdist",
+      "workers": 4,
+      "samples": 3,
+      "test_count": 319,
+      "median_seconds": 37.244
+    }
+  }
+}

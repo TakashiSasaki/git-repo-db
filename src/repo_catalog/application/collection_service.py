@@ -30,6 +30,7 @@ def select_repositories(s, selectors=(), source=None):
         + " ORDER BY id",
         (source,) if source else (),
     )
+    rows = [identity.repository_row(s, row) for row in rows]
     if not selectors or selectors == ("all",):
         return rows
     if "all" in selectors:
@@ -88,14 +89,12 @@ class CollectionService:
             self.token.check()
             settings = json.loads(src["settings"])
             run = str(uuid.uuid4())
-            with s.transaction():
-                s.execute(
-                    "INSERT INTO inventory_runs VALUES(?,?,?,?,?,NULL)",
-                    (run, src["id"], "running", json.dumps(settings), now()),
-                )
+            observed_at = now()
+            inventory_scope = dict(settings)
+            collector = None
             try:
                 uncertainty = None
-                if src["kind"] == "local-git":
+                if src["discovery_kind"] == "manual_git":
                     repos = [
                         {
                             "host": "local",
@@ -111,6 +110,7 @@ class CollectionService:
                     collector = GitHubCollector(
                         s, self.token, config=identity.github_config(s, src)
                     )
+                    inventory_scope["response_evidence"] = collector.inventory_evidence
                     repos = collector.inventory(src, job)
                     uncertainty = collector.inventory_uncertainty
                 if uncertainty:
@@ -119,7 +119,7 @@ class CollectionService:
                     for repo in repos:
                         provider_id = (
                             repo["provider_id"]
-                            if src["kind"] == "github"
+                            if src["discovery_kind"] == "github_inventory"
                             else settings.get("provider_repo_id")
                         )
                         target = settings.get("repo_id")
@@ -148,34 +148,18 @@ class CollectionService:
                                     "SELECT id FROM repositories WHERE id=?",
                                     (binding[0],),
                                 )
-                        if not existing and src["kind"] == "local-git":
+                        if not existing and src["discovery_kind"] == "manual_git":
                             existing = s.one(
                                 "SELECT repo_id FROM source_repositories WHERE source_id=?",
                                 (src["id"],),
                             )
                         ident = existing[0] if existing else str(uuid.uuid4())
                         if not existing:
-                            host = repo["host"]
-                            if src["kind"] == "github" and src["instance_id"]:
-                                from urllib.parse import urlsplit
-
-                                value = identity.instance(s, src["instance_id"])
-                                host = urlsplit(
-                                    value["web_base_url"] or value["api_base_url"]
-                                ).hostname
                             s.execute(
-                                "INSERT INTO repositories(id,source_id,provider_host,provider_repo_id,name,url,metadata) VALUES(?,?,?,?,?,?,?)",
-                                (
-                                    ident,
-                                    src["id"],
-                                    host,
-                                    repo["provider_id"],
-                                    repo["name"],
-                                    repo["url"],
-                                    json.dumps(repo["metadata"]),
-                                ),
+                                "INSERT INTO repositories(id,name,metadata) VALUES(?,?,?)",
+                                (ident, repo["name"], json.dumps(repo["metadata"])),
                             )
-                        elif src["kind"] == "github":
+                        elif src["discovery_kind"] == "github_inventory":
                             s.execute(
                                 "UPDATE repositories SET name=?,metadata=? WHERE id=?",
                                 (repo["name"], json.dumps(repo["metadata"]), ident),
@@ -184,22 +168,40 @@ class CollectionService:
                             identity.bind(s, ident, src["instance_id"], provider_id)
                         identity.link_source(s, src["id"], ident)
                         identity.add_endpoint(s, ident, repo["url"])
-                        s.execute(
-                            "INSERT OR IGNORE INTO repository_names VALUES(?,?,?)",
-                            (ident, repo["name"], now()),
-                        )
+                        if not s.one(
+                            "SELECT 1 FROM repository_name_assertions WHERE repo_id=? AND name=?",
+                            (ident, repo["name"]),
+                        ):
+                            s.execute(
+                                "INSERT INTO repository_name_assertions VALUES(?,?,?)",
+                                (ident, repo["name"], observed_at),
+                            )
                         items.append({"repo_id": ident, "name": repo["name"]})
                     s.execute(
-                        "UPDATE inventory_runs SET state=?,reason=? WHERE id=?",
-                        ("partial" if uncertainty else "complete", uncertainty, run),
+                        "INSERT INTO inventory_observations VALUES(?,?,?,?,?,?)",
+                        (
+                            run,
+                            src["id"],
+                            "partial" if uncertainty else "complete",
+                            json.dumps(inventory_scope),
+                            observed_at,
+                            uncertainty,
+                        ),
                     )
                     s.publish()
             except CatalogError as e:
                 coverage.add("inventory", e.code, source_id=src["id"])
                 with s.transaction():
                     s.execute(
-                        "UPDATE inventory_runs SET state='partial',reason=? WHERE id=?",
-                        (e.code, run),
+                        "INSERT INTO inventory_observations VALUES(?,?,?,?,?,?)",
+                        (
+                            run,
+                            src["id"],
+                            "partial",
+                            json.dumps(inventory_scope),
+                            observed_at,
+                            e.code,
+                        ),
                     )
         JobService(s).update(
             job, "complete" if coverage.complete_for_requested_scope else "waiting"
@@ -224,6 +226,9 @@ class CollectionService:
 
     def resume(self, job):
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
+            row = s.one("SELECT kind FROM jobs WHERE id=?", (job,))
+            if row is not None and row[0] not in ("discover", "sync"):
+                raise CatalogError("INVALID_ARGUMENT", "Unsupported resumable job kind")
             kind, request = JobService(s).resume(job)
             if kind == "discover":
                 return self._discover(s, job, request.get("source"))
@@ -235,7 +240,9 @@ class CollectionService:
         items = []
         coverage = CoverageReport()
         not_before = None
-        s.expected_attempt = s.one("SELECT attempt FROM jobs WHERE id=?", (job,))[0]
+        s.expected_attempt = s.one(
+            "SELECT current_attempt FROM jobs WHERE id=?", (job,)
+        )[0]
         try:
             from repo_catalog.adapters.filesystem.cache import CacheManager
             from repo_catalog.adapters.filesystem.capacity import Capacity
@@ -260,7 +267,7 @@ class CollectionService:
                         "SELECT * FROM sources WHERE id=?", (request["source"],)
                     )
                     settings = json.loads(source["settings"])
-                    if source["kind"] == "local-git":
+                    if source["discovery_kind"] == "manual_git":
                         source_endpoint = s.one(
                             "SELECT id FROM repository_endpoints WHERE repo_id=? AND url=?",
                             (repo["id"], identity.git_url(settings["url"])),
@@ -277,7 +284,7 @@ class CollectionService:
                     try:
                         if kind == "git":
                             done = s.one(
-                                "SELECT id FROM collection_runs WHERE job_id=? AND repo_id=? AND kind='git' AND state='published'",
+                                "SELECT x.id FROM snapshots x JOIN git_acquisitions a ON a.id=x.acquisition_id JOIN acquisition_progress p ON p.acquisition_id=a.id WHERE p.job_id=? AND a.repo_id=? AND a.kind='git' AND p.state='published' AND x.published=1",
                                 (job, repo["id"]),
                             )
                             item = (

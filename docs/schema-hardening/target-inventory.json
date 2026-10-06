@@ -1,0 +1,3987 @@
+{
+  "ddl_sha256": "fd39297f3b73abc190aa82a28164f2d496048d773cbbcc9039a54972046a5709",
+  "tables": {
+    "acquisition_progress": [
+      {
+        "cid": 0,
+        "name": "acquisition_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "job_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "attempt",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "generation",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "ended_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "acquisition_roots": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "acquisition_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "oid",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "role",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "expected_oid",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "published",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "active_cache_entries": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "locator_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "generation",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "last_used",
+        "type": "REAL",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "bytes",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "blob_content_map": [
+      {
+        "cid": 0,
+        "name": "object_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "content_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "acquisition_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "cache_leases": [
+      {
+        "cid": 0,
+        "name": "cache_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "job_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "attempt",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 3,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "acquired_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "cache_locators": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "path",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "access",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "change_request_events": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "origin_key",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "ordinal",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "provider_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "change_request_observations": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "published",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "origin_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "parsed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "origin_occurrence_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "change_requests": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "binding_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "request_kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "number",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "current_observation_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "node_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "code_acquisitions": [
+      {
+        "cid": 0,
+        "name": "code_observation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "role",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "oid",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "root_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "code_commits": [
+      {
+        "cid": 0,
+        "name": "listing_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "occurrence_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "position",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 3,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "oid",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "code_file_changes": [
+      {
+        "cid": 0,
+        "name": "listing_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "occurrence_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "position",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 3,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "raw_path",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "code_listing_progress": [
+      {
+        "cid": 0,
+        "name": "listing_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "terminal",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "page_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "context_proven",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "code_listings": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "collection_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "scope_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "head_oid",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "base_oid",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "code_observations": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "observation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "commit_listing_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "file_listing_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "head_oid",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 8,
+        "name": "base_oid",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 9,
+        "name": "details",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "collection_memberships": [
+      {
+        "cid": 0,
+        "name": "collection_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "document_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "ordinal",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "collection_progress": [
+      {
+        "cid": 0,
+        "name": "collection_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "job_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "attempt",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "cursor",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "commit_parents": [
+      {
+        "cid": 0,
+        "name": "commit_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "parent_ordinal",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "parent_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "commits": [
+      {
+        "cid": 0,
+        "name": "object_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "tree_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "raw_headers",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "raw_message",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "completion_markers": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "scope_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "collection_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "asserted_state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "evidence",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "content_digests": [
+      {
+        "cid": 0,
+        "name": "content_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "representation",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "algorithm",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 3,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "digest",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "verified_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "pipeline_version",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "content_locations": [
+      {
+        "cid": 0,
+        "name": "content_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "locator",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 3,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "cache_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "contents": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "byte_length",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "raw_text",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "text_state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "conversion_batches": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "run_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "source_table",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "input_sha256",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "committed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "output_manifest",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "conversion_runs": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "ended_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "parser_version",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "manifest",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "conversion_sources": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "source_sha256",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "schema_sha256",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "format_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "source_db_instance_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "source_catalog",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "source_migrations",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "coverage_claims": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "scope_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "asserted_state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "effective_state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "details",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "evaluated_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "coverage_scopes": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "current_claim_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "database_identity": [
+      {
+        "cid": 0,
+        "name": "singleton",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "format_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "schema_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "db_instance_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "publication_seq",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "ddl_sha256",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "lifecycle",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "document_observations": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "document_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "version_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "parsed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "origin_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "occurrence_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "document_versions": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "document_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "body_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "legacy_body_sha256",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "documents": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "provider_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "current_version_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "deleted",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "node_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "author",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 8,
+        "name": "url",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 9,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "fetch_collections": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "scope_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "fetch_occurrences": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "collection_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "ordinal",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "payload_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "request",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "next_cursor",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "parsed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "git_acquisitions": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "endpoint_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "endpoint_url",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "refs_observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 8,
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 9,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 10,
+        "name": "request",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 11,
+        "name": "roots_manifest",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "git_objects": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "oid",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "size",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "verified",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "id_mappings": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "record_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "target_table",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "target_key",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "relation",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "incremental_scans": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "scope_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "collection_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "scan_started_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "safe_watermark",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "evidence",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "index_generations": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "table_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "target_max_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "index_membership": [
+      {
+        "cid": 0,
+        "name": "generation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "document_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "input_version",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "inventory_observations": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "asserted_state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "scope",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "job_attempts": [
+      {
+        "cid": 0,
+        "name": "job_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "attempt",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "state",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "not_before",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "checkpoint",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "jobs": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "request",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "current_attempt",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "legacy_records": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "source_table",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "source_key",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "row_sha256",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "legacy_values": [
+      {
+        "cid": 0,
+        "name": "record_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "column_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "storage_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "value_bytes",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "payloads": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "sha256",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "body",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "byte_length",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "representation",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "preservation_obligations": [
+      {
+        "cid": 0,
+        "name": "acquisition_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "cache_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "roots_fixed",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "structure_done",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "digest_done",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "text_done",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "published",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "reanalysis_runs": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "conversion_run_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "parser_version",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "parsed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "evidence",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "ref_observations": [
+      {
+        "cid": 0,
+        "name": "snapshot_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "raw_ref_name",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "target_oid",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "peeled_oid",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "target_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "repositories": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "preferred_endpoint_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "current_snapshot_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "repository_bindings": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "instance_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "provider_repo_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "repository_endpoints": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "url",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "transport",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "label",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "repository_name_assertions": [
+      {
+        "cid": 0,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "repository_object_sources": [
+      {
+        "cid": 0,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "object_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "acquisition_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 3,
+        "hidden": 0
+      }
+    ],
+    "resume_cursors": [
+      {
+        "cid": 0,
+        "name": "scope_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "scan_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "next_cursor",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "reusable",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "resume_scopes": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "binding_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "principal_ref",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "api_version",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "endpoint",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "request_context",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 8,
+        "name": "parser_version",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 9,
+        "name": "profile_version",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 10,
+        "name": "confidence",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "review_comments": [
+      {
+        "cid": 0,
+        "name": "document_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "thread_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "review_threads": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "reviews": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "document_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "root_manifest_entries": [
+      {
+        "cid": 0,
+        "name": "tree_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "raw_path",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "mode",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "object_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "object_format",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "oid",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "root_manifests": [
+      {
+        "cid": 0,
+        "name": "tree_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "complete",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "root_origins": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "root_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "origin_kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "raw_ref_name",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "source_ordinal",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "snapshot_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "change_request_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 7,
+        "name": "observation_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 8,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "search_documents": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "source_key",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "body",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "service_instances": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "web_base_url",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "api_base_url",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "metadata",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "snapshots": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "acquisition_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "published",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "generation",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "source_repositories": [
+      {
+        "cid": 0,
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "repo_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "first_seen",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "last_seen",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "sources": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "instance_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "discovery_kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "settings",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "space_reservations": [
+      {
+        "cid": 0,
+        "name": "job_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "reserved",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "consumed",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "tag_objects": [
+      {
+        "cid": 0,
+        "name": "object_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "target_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "raw_payload",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "text_bodies": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "body",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "byte_length",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "sha256",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "tree_entries": [
+      {
+        "cid": 0,
+        "name": "tree_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "raw_name",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "mode",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "child_format",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "child_oid",
+        "type": "BLOB",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "child_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "unresolved_payloads": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "payload_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "legacy_record_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "validation_results": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "run_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "invariant_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "severity",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 5,
+        "name": "observed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 6,
+        "name": "details",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ],
+    "validators": [
+      {
+        "cid": 0,
+        "name": "scope_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 1,
+        "hidden": 0
+      },
+      {
+        "cid": 1,
+        "name": "validator_key",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 2,
+        "hidden": 0
+      },
+      {
+        "cid": 2,
+        "name": "etag",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 3,
+        "name": "payload_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      },
+      {
+        "cid": 4,
+        "name": "validated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "pk": 0,
+        "hidden": 0
+      }
+    ]
+  }
+}

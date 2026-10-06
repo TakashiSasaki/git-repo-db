@@ -24,20 +24,22 @@ def test_runtime_journal(state):
         assert s.one("PRAGMA foreign_keys")[0] == 1
 
 
-def test_constraints_migration_atomicity(state):
+def test_constraints_and_transaction_atomicity(state):
     with Store(state) as s:
+        original = s.revision()
         with pytest.raises(sqlite3.IntegrityError):
             with s.transaction():
                 s.execute(
-                    "INSERT INTO git_objects(object_format,oid,type,size) VALUES('sha1',?,'blob',0)",
+                    "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES('sha1',?,'blob',0,1)",
                     (b"bad",),
                 )
         with pytest.raises(sqlite3.OperationalError), s.transaction():
             s.execute("CREATE TABLE rolled_back(x TEXT) STRICT")
-            s.execute("UPDATE catalog_meta SET schema_version=999")
+            s.execute("UPDATE database_identity SET publication_seq=999")
             s.execute("THIS IS NOT SQL")
         assert s.one("SELECT name FROM sqlite_master WHERE name='rolled_back'") is None
-        assert s.one("SELECT schema_version FROM catalog_meta")[0] == 2
+        assert s.one("SELECT schema_version FROM database_identity")[0] == 3
+        assert s.revision() == original
     with Store(state, readonly=True) as s, pytest.raises(sqlite3.OperationalError):
         s.publish()
 

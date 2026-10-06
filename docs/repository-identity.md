@@ -1,4 +1,4 @@
-# リポジトリ識別と取得先（schema v2）
+# リポジトリ識別と取得先（catalog3）
 
 Repo IDはURLから独立したUUIDv4です。別プロトコルやマウントpathを同じrepoの取得先として明示登録できます。
 GitHub、GitLab、Gitea、Forgejo、Gitolite、plain Git、その他のサービスをinstance単位で表現します。
@@ -11,7 +11,7 @@ GitHub、GitLab、Gitea、Forgejo、Gitolite、plain Git、その他のサービ
 | `repository_endpoints` | 内部UUIDv4、repo、Git URL、transport、label、優先指定。`UNIQUE(repo_id,url)` |
 | `sources` | 発見・列挙の設定と任意のinstance参照。API tokenは環境変数名で参照 |
 | `source_repositories` | sourceとrepoの多対多関係、最初と最後の発見時刻 |
-| `collection_runs` | 取得・解析run。使用endpoint IDとURLを保持 |
+| `git_acquisitions` | 取得・解析run。使用endpoint IDとURLを保持 |
 
 ```mermaid
 erDiagram
@@ -98,26 +98,11 @@ repo-catalog --state-dir /path/to/state sources add github --owner team \
 同一instanceを複数source・アカウントで列挙してもnative IDによりRepo IDを再利用します。
 API通信設定とtoken参照はsourceごとに選択し、条件付きGET・増分checkpointを別sourceから混用しません。
 GitHub互換APIのinstance分離はloopback fixtureで検証しています。実GHESやGitLab/Gitea/SSHの接続試験は別途必要です。
-GitLab/Gitea/Forgejoの自動列挙・MR/PR収集adapterと共通PR/MRモデルは未実装です。Git-onlyはPRを`not_applicable`、対応サービスのbindingがあるのに利用可能なAPI sourceがない場合は`PROVIDER_UNSUPPORTED`/partialを返します。
+GitLab/Gitea/Forgejoの自動列挙・MR/PR収集adapterは未実装です。共通データモデルは binding/request-kind ごとの番号空間を持ちます。Git-onlyはPRを`not_applicable`、対応サービスのbindingがあるのに利用可能なAPI sourceがない場合は`PROVIDER_UNSUPPORTED`/partialを返します。
 1つのRepo IDに複数GitHub instanceを結び付けた場合も、サービスごとのPR番号空間の分離は後続範囲なのでPR収集は`PROVIDER_UNSUPPORTED`とします。Gitの複数取得先は利用できます。
 
-## v1の移行
+## 保存済み v2 の import
 
-旧版CLIでバックアップを取ってから新版を導入します。
+現在の製品ランタイムは catalog3 だけです。旧 decoder は packaged import support に分離されています。保存した v2 DB/cache から別の新規 state へ `import-v2` を行い、`db finalize` で重要な identity/owner と保存された current 選択を検査します。通常の初期化・照会・収集は古い migration を実行しません。
 
-```bash
-repo-catalog --state-dir /path/to/state db backup --output /path/to/v1-backup.sqlite3
-# 新版へ切り替えた後に実行
-repo-catalog --state-dir /path/to/state db migrate
-repo-catalog --state-dir /path/to/state db check --full
-```
-
-`001_initial.sql`のchecksumは維持し、番号付き`002_repository_identity.sql`を適用します。
-既存のrepository/source/object/content/snapshot IDと本文・digestを保持し、Gitの再取得・再hashは行いません。
-GitHub sourceにinstanceを設定し、既存URLから優先endpoint、既存sourceから対応、既存native IDからbindingを作ります。
-既存の`repositories.source_id/provider_host/provider_repo_id`は互換情報として保持し、`repositories.url`は優先URLの表示値になります。
-新しい対応の正本はbindings/endpoints/source_repositoriesです。
-
-v1のcollection runには当時使ったURLが記録されていないため、移行時のURLを過去の取得先として書き込みません。
-移行後に開始したrunのみendpointの来歴を記録します。旧backupのrestoreも復元先をv2へ移行し、backup自体を変更しません。
-table再構築・backfill・FK検査を同じtransactionで行い、失敗時にはv1へrollbackします。
+内部 ID、provider-native ID、endpoint/source の関係、元の observation 時刻、raw bytes は保持します。不明な値や矛盾は typed archive と帰属付き診断に残し、架空の identity や再観測を作りません。実データに対する dry run と切り替えは、この合成検証とは別の作業です。

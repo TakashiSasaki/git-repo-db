@@ -1,31 +1,31 @@
 # 検証方法
 
-依存準備は`uv sync --locked --group dev`です。取得とテスト実行を分離します。
-標準試験は実アカウントや実tokenを不要にし、外部通信を遮断します。
-親pytestと子Pythonにはloopbackだけを許可するsocket guard、Gitにはfile-only transportを適用します。
-未知の合成API要求、API版やdummy認証headerの欠落はfixtureが拒否します。
+catalog3 の通常動作と v2 のオフライン救出を、一つの Python/SQLite binding で検証します。最小 SQLite 版の独立 lane と過去の phase 互換性・試験件数・node ID 下限は廃止しました。実行時の版と機能を記録し、FK、recursive triggers、FTS、WAL の既知の修正条件など、必要な正しさの条件は維持します。
+
+依存取得は試験より先に行います。
+
+```bash
+uv sync --locked --group dev
+uv run --no-sync python scripts/prepare_wheelhouse.py
+uv run --no-sync python -c 'import platform, sqlite3; print(platform.python_version(), sqlite3.sqlite_version)'
+uv --version
+```
+
+編集中は変更した機能の試験を実行します。仕上げでは [現在の acceptance policy](../scripts/ci_dependencies.json) の機能試験を一度実行し、installed package を独立した逐次 lane で確認します。
 
 ```bash
 uv run --no-sync ruff check src tests scripts
 uv run --no-sync ruff format --check src tests scripts
-uv run --no-sync pytest tests/unit tests/integration tests/e2e --strict-markers -m "not live and not benchmark"
-uv build --out-dir artifacts/dist
-uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
-uv run --no-sync pytest tests/packaging --strict-markers -m "not live and not benchmark"
-uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
+uv run --no-sync python scripts/ci_execute.py current --lane tests
+uv run --no-sync python scripts/ci_execute.py current --lane packaging
 ```
 
-Git fixtureはplumbingで生成し、author/committer/time/parent順を固定します。
-alpha/beta/empty、S1/S2、force-push・branch削除、9→7出現、SHA-256 repo、空/巨大/binary/改行差/非UTF-8を検証します。
-期待値は固定仕様、元bytes、外部digestコマンドから作り、アプリimporterをオラクルにしません。
+`current` は作業ツリーに存在する現在の manifest と `test_catalog3*.py` / `test_runtime*.py` を使います。編集中の結果は dirty-tree 状態を含む生の profile として保存し、確定した Git tree の CI acceptance manifest と区別します。全履歴の試験や phase export は再実行しません。現在の対象から外した試験は CI plan の `excluded_files` に列挙し、選択されなかった現在の試験は `unexecuted_files` に列挙します。
 
-API fixtureは全PR状態・文書種別、101 thread/101 replies、REST/GraphQL統合、A→B→A、独立watermark、cap、rate limit、ETag、部分応答を含みます。
-停止試験は明示的に有効化したhookの到達通知で位置を確定し、sleepで停止地点を推測しません。
-SQLITE_FULLは一時DBのmax_page_countで再現し、ホストのディスクを埋めません。
+現在の acceptance は、新規初期化・探索・Git/PR 取得、増分取得と部分応答の再開、要求ログ、オフライン照会と検索、停止・保全・バックアップ、v2 から通常利用への救出を対象にします。same-owner 関係、完了 listing の封印、公開可能性、raw bytes、履歴、原本保護を検証します。DDL の正本は package 内の `resources/catalog3.sql` です。
 
-package試験はwheelとsdist由来wheelをofflineで新規venvへ導入し、source外CWDから起動します。
-import元を確認し、console scriptとpython -mの両入口、migration/schema/GraphQL等の同梱資源を利用します。
-FTS対応CIでは再構築の成功、利用不能構成では明示操作のexit 4とscanの同値性を検証します。
+通常の pytest は外部通信と実 token を遮断します。親と子 Python の guard は合成 HTTP fixture 用の loopback だけを許し、Git transport は file に限定します。v2 importer の source-write / acquisition guard は、fixture 通信より強い独立境界です。依存準備のために importer の guard を解除しません。すべての stateful command は disposable な `--state-dir` を指定します。
 
-live/pilot/benchmarkは標準試験とは別です。実認証、対象、容量/要求予算が設定された後に明示実行します。
-実行結果・未実行項目・残件はimplementation-status.mdに記録します。
+package 試験は lock と SHA で検証した wheelhouse を `--offline --no-index --find-links` で使います。wheel と sdist 由来 wheel を新しい venv に導入し、source 外の CWD から console script と `python -m` を実行します。catalog3 DDL、import contract と importer の同梱、新規 catalog3 初期化、取得・検索・再構築・整合性を確認します。
+
+今回の作業環境は Python 3.12.14、SQLite 3.53.1、uv 0.12.19 です。これは実測値であり、下限版の保証ではありません。最終結果と未実行項目は機能 handoff に記録します。CI の選択と結果照合は [変更に応じた CI](change-aware-ci.md)、計測は [CI 性能](ci-performance.md) を参照してください。

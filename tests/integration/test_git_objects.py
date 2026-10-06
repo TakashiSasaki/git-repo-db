@@ -60,10 +60,10 @@ def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
         )
         assert result["state"] == "complete"
         acquired = store.one(
-            "SELECT role,oid,published FROM acquisition_roots WHERE run_id=?",
+            "SELECT role,oid,published FROM acquisition_roots WHERE acquisition_id=?",
             (result["run_id"],),
         )
-        assert acquired["role"] == "base" and acquired["published"] == 1
+        assert acquired["role"] == "traversal" and acquired["published"] == 1
         assert acquired["oid"].hex() == fixture.alpha.commits["N"]
 
 
@@ -144,7 +144,7 @@ def test_incomplete_closure(catalog):
 
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         path = db.execute(
-            "SELECT path FROM cache_entries WHERE repo_id=? AND state='available'",
+            "SELECT l.path FROM active_cache_entries c JOIN cache_locators l ON l.id=c.locator_id WHERE l.repo_id=? AND l.access='target_active' AND c.state='active'",
             (repos["alpha"],),
         ).fetchone()[0]
     (state / path / "objects/pack/missing.promisor").touch()
