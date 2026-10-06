@@ -82,7 +82,35 @@ def parse_diff(raw):
 def changes(root, context):
     if context.get("diff_complete") is False:
         raise ValueError("Diff is absent or truncated")
-    if context["event"] == "pull_request":
+    if context["event"] == "pull_request" and context.get("action") == "synchronize":
+        before = context.get("before_sha")
+        if (
+            not isinstance(before, str)
+            or not SHA.fullmatch(before)
+            or set(before) == {"0"}
+        ):
+            raise ValueError("Missing/invalid PR synchronization history")
+        git(root, "cat-file", "-e", before + "^{commit}")
+        if subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "merge-base",
+                "--is-ancestor",
+                before,
+                context["feature_sha"],
+            ],
+            capture_output=True,
+        ).returncode:
+            raise ValueError(
+                "PR before revision is not an ancestor (force push/unknown history)"
+            )
+        # Select fresh affected checks. This is not acceptance-result reuse:
+        # unexecuted runtime coverage stays explicitly unexecuted. Comparing
+        # against the actual merge tree also includes current base deltas.
+        start = before
+    elif context["event"] == "pull_request":
         bases = (
             git(
                 root, "merge-base", "--all", context["base_sha"], context["feature_sha"]
@@ -169,6 +197,7 @@ def context_from_environment():
     return {
         "repository": os.environ.get("GITHUB_REPOSITORY"),
         "event": os.environ.get("GITHUB_EVENT_NAME", "local"),
+        "action": event.get("action"),
         "feature_sha": pr.get("head", {}).get("sha") or head,
         "base_sha": pr.get("base", {}).get("sha"),
         "tested_sha": head,

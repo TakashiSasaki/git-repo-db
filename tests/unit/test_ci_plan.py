@@ -3,7 +3,7 @@ import json
 import pytest
 
 from scripts import ci_plan
-from tests.support.ci_fixture import commit, context, repository, write
+from tests.support.ci_fixture import command, commit, context, repository, write
 
 
 @pytest.fixture
@@ -142,3 +142,152 @@ def test_dirty_checkout_cannot_record_validation(history):
     write(root, "README.md", "# Uncommitted\n")
     with pytest.raises(ValueError, match="Commit"):
         ci_plan.make_plan(context(root, base, head), root=root)
+
+
+def synchronize_context(history):
+    root, base, before = history
+    write(root, "docs/schema-hardening/runtime-handoff.md", "# Final results\n")
+    head = commit(root)
+    return dict(context(root, base, head), action="synchronize", before_sha=before)
+
+
+def test_pr_synchronize_prose_uses_before_to_actual_merge_without_fresh_runtime_claim(
+    history,
+):
+    root, _, before = history
+    plan = ci_plan.make_plan(synchronize_context(history), root=root)
+    assert plan["comparison_sha"] == before
+    assert plan["changed"] == [
+        {"status": "A", "paths": ["docs/schema-hardening/runtime-handoff.md"]}
+    ]
+    assert not plan["full"]
+    assert plan["unexecuted_files"] == plan["acceptance_files"]
+    assert all(
+        item["disposition"] == "not_applicable" for item in plan["lanes"].values()
+    )
+    assert all(
+        item["disposition"] == "not_applicable" for item in plan["preparation"].values()
+    )
+
+
+@pytest.mark.parametrize("before", [None, 1, "short", "0" * 40, "f" * 40])
+def test_pr_synchronize_missing_invalid_or_unavailable_before_requires_full(
+    history, before
+):
+    root, _, _ = history
+    ctx = dict(synchronize_context(history), before_sha=before)
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert plan["full"]
+    assert plan["comparison_sha"] is None
+    assert plan["fallback_reasons"]
+
+
+def test_pr_synchronize_nonancestor_before_requires_full(history):
+    root, base, old_head = history
+    command(root, "checkout", "--detach", base)
+    write(root, "README.md", "# Force-pushed prose\n")
+    head = commit(root)
+    ctx = dict(context(root, base, head), action="synchronize", before_sha=old_head)
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert plan["full"]
+    assert any("not an ancestor" in reason for reason in plan["fallback_reasons"])
+
+
+def test_pr_synchronize_wrong_effective_merge_parents_require_full(history):
+    root, _, _ = history
+    ctx = synchronize_context(history)
+    ctx["tested_sha"] = ctx["feature_sha"]
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert plan["full"]
+    assert any("merge parents" in reason for reason in plan["fallback_reasons"])
+
+
+def test_pr_synchronize_current_base_code_is_in_actual_merge_diff(history):
+    root, base, before = history
+    ctx = synchronize_context(history)
+    feature = ctx["feature_sha"]
+    command(root, "checkout", "--detach", base)
+    write(root, "src/repo_catalog/base_only.py", "# Current base code\n")
+    current_base = commit(root)
+    actual_tree = command(
+        root, "merge-tree", "--write-tree", current_base, feature
+    ).splitlines()[0]
+    tested = command(
+        root,
+        "commit-tree",
+        actual_tree,
+        "-p",
+        current_base,
+        "-p",
+        feature,
+        input=b"effective merge\n",
+    )
+    command(root, "checkout", "--detach", tested)
+    ctx.update(base_sha=current_base, tested_sha=tested)
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert plan["comparison_sha"] == before
+    assert plan["full"]
+    assert {path for change in plan["changed"] for path in change["paths"]} == {
+        "docs/schema-hardening/runtime-handoff.md",
+        "src/repo_catalog/base_only.py",
+    }
+
+
+def test_force_push_cannot_use_before_present_only_in_current_base(history):
+    root, original_base, old_head = history
+    command(root, "checkout", "--detach", original_base)
+    write(root, "README.md", "# Replacement feature\n")
+    feature = commit(root)
+    actual_tree = command(
+        root, "merge-tree", "--write-tree", old_head, feature
+    ).splitlines()[0]
+    tested = command(
+        root,
+        "commit-tree",
+        actual_tree,
+        "-p",
+        old_head,
+        "-p",
+        feature,
+        input=b"effective merge\n",
+    )
+    command(root, "checkout", "--detach", tested)
+    ctx = dict(
+        context(root, old_head, feature),
+        action="synchronize",
+        before_sha=old_head,
+        tested_sha=tested,
+    )
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert plan["full"]
+    assert any("not an ancestor" in reason for reason in plan["fallback_reasons"])
+
+
+@pytest.mark.parametrize("action", [None, "opened", "reopened"])
+def test_other_pr_actions_keep_cumulative_merge_base_selection(history, action):
+    root, base, _ = history
+    ctx = dict(synchronize_context(history), action=action)
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert plan["comparison_sha"] == base
+    assert plan["full"]
+
+
+def test_github_context_retains_synchronize_action_and_before(tmp_path, monkeypatch):
+    event_file = tmp_path / "event.json"
+    event_file.write_text(
+        json.dumps(
+            {
+                "action": "synchronize",
+                "before": "a" * 40,
+                "pull_request": {"head": {"sha": "b" * 40}, "base": {"sha": "c" * 40}},
+            }
+        )
+    )
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_file))
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setattr(ci_plan, "git", lambda *args: ("d" * 40 + "\n").encode())
+    ctx = ci_plan.context_from_environment()
+    assert ctx["action"] == "synchronize"
+    assert ctx["before_sha"] == "a" * 40
+    assert ctx["feature_sha"] == "b" * 40
+    assert ctx["tested_sha"] == "d" * 40

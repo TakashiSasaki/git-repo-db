@@ -82,14 +82,19 @@ def test_reconciliation_rejects_failed_missing_skipped_or_tampered_outputs(
     assert not (output / "validation-manifest.json").exists()
 
 
+@pytest.mark.parametrize("event", ["push", "pull_request"])
 def test_prose_followup_reports_unexecuted_files_without_claiming_full_acceptance(
     acceptance,
+    event,
 ):
     root, full_output = acceptance
     full = ci_execute.gate(full_output / "plan.json", root)
     head = full["context"]["feature_sha"]
     write(root, "README.md", "# Updated prose\n")
-    current = context(root, head, commit(root), event="push")
+    base = full["context"]["base_sha"] if event == "pull_request" else head
+    current = context(root, base, commit(root), event=event)
+    if event == "pull_request":
+        current.update(action="synchronize", before_sha=head)
     output = full_output.parent / "prose"
     write_results(output, ci_plan.make_plan(current, root=root), root)
     result = ci_execute.gate(output / "plan.json", root)
