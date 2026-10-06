@@ -386,6 +386,9 @@ class Context(identity.Context):
     def __init__(self, db, src, run, encoding="UTF-8", *, verifying=False):
         super().__init__(db, src, run, encoding, verifying=verifying)
         self.parsed_at = run["started_at"]
+        self._attribution_page = None
+        self._attribution = {}
+        self._attribution_error = None
 
     def metadata(self, record, column="metadata"):
         storage, raw = record.value(column)
@@ -878,28 +881,77 @@ class Context(identity.Context):
     def first_saved_document_row(self, pr, document):
         return self.first_saved_document_fact(pr, document)[0]
 
+    def _page_attribution(self, page):
+        """Index one immutable source page's valid prefix for this prepare call.
+
+        Body strings belong only to the current bounded decoded page. Evict
+        them before decoding another page; no target fact or global payload
+        cache participates in attribution or independent verification.
+        """
+        key = page.table, page.key, page.row_sha256
+        if key == self._attribution_page:
+            return self._attribution
+        self._attribution_page = None
+        self._attribution = {}
+        self._attribution_error = None
+        try:
+            self.occurrence_row(page)
+            for pr, kind, value, position, thread in self.page_documents(page):
+                row, body = self.saved_document(pr, kind, value, thread)
+                self._attribution.setdefault(row[0], []).append((body, position))
+        except identity.Invalid:
+            # Original scans could return a valid early match before a later
+            # malformed/dependent item stopped that page. Keep exactly that
+            # valid prefix; subsequent items cannot establish an origin.
+            pass
+        except (
+            ValueError,
+            TypeError,
+            KeyError,
+            UnicodeError,
+            AttributeError,
+            RecursionError,
+        ) as exc:
+            # Eager indexing must preserve an original early return even when
+            # a later malformed item raises a parser error. A lookup without
+            # a prefix match still raises that error, as the original scan did.
+            # Store no traceback/frame that could retain the decoded page.
+            self._attribution_error = type(exc), exc.args
+        self._attribution_page = key
+        return self._attribution
+
+    def _page_has_body(self, page, document, body):
+        # Keep page-owned body references inside this short scope so advancing
+        # the outer page scan cannot retain the previous page through locals.
+        found = any(
+            candidate == body
+            for candidate, _ in self._page_attribution(page).get(document, ())
+        )
+        if not found and self._attribution_error:
+            kind, args = self._attribution_error
+            raise kind(*args)
+        return found
+
+    def _page_document_position(self, page, document):
+        entries = self._page_attribution(page).get(document)
+        if entries:
+            return entries[0][1]
+        if self._attribution_error:
+            kind, args = self._attribution_error
+            raise kind(*args)
+        return None
+
     def first_source_page(self, collection, document, body):
         for page in self.pages(collection):
-            try:
-                self.occurrence_row(page)
-                for pr, kind, value, _, thread in self.page_documents(page):
-                    row, raw_body = self.saved_document(pr, kind, value, thread)
-                    if row[0] == document and raw_body == body:
-                        return self.i(page, "ordinal")
-            except identity.Invalid:
-                continue
+            if self._page_has_body(page, document, body):
+                return self.i(page, "ordinal")
         return None
 
     def first_document_position(self, collection, document):
         for page in self.pages(collection):
-            try:
-                self.occurrence_row(page)
-                for pr, kind, value, pos, thread in self.page_documents(page):
-                    row, _ = self.saved_document(pr, kind, value, thread)
-                    if row[0] == document:
-                        return self.i(page, "ordinal"), pos
-            except identity.Invalid:
-                continue
+            position = self._page_document_position(page, document)
+            if position is not None:
+                return self.i(page, "ordinal"), position
         return None
 
     def code_context(self, record):

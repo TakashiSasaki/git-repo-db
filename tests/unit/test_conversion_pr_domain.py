@@ -52,8 +52,8 @@ def apply(db, output, module):
     db.commit()
 
 
-def components(tmp_path, *, mutate=None, encoding="UTF-8"):
-    original, _ = make_integrated_source(tmp_path / "source")
+def components(tmp_path, *, mutate=None, encoding="UTF-8", scale=1):
+    original, _ = make_integrated_source(tmp_path / "source", scale=scale)
     if encoding != "UTF-8":
         with sqlite3.connect(original) as initial:
             schema_and_rows = "\n".join(initial.iterdump())
@@ -122,6 +122,155 @@ def convert(db, src, run):
         prepared[recipe] = output
     assert not db.execute("PRAGMA foreign_key_check").fetchall()
     return prepared
+
+
+@pytest.mark.parametrize("malformed_first", (False, True))
+def test_page_attribution_keeps_valid_prefix_exact_bodies_and_earliest_position(
+    tmp_path, malformed_first
+):
+    def mutate(src):
+        malformed = {"id": 999}
+        values = [
+            [{"id": 901, "body": "A"}, {"id": 901, "body": None}],
+            [
+                {"id": 902, "body": ""},
+                {"id": 902, "body": "A"},
+                {"id": 902, "body": "B"},
+                {"id": 902, "body": "A"},
+            ],
+            [{"id": 901, "body": "A"}, {"id": 901, "body": None}],
+        ]
+        values[0].insert(0 if malformed_first else 2, malformed)
+        values[0].append({"id": 901, "body": "unvisited after malformed"})
+        for ordinal, items in enumerate(values):
+            response = src.execute(
+                "SELECT response_id FROM collection_pages WHERE collection_id=? AND ordinal=?",
+                (IDS["comments_partial"], ordinal),
+            ).fetchone()[0]
+            raw = json.dumps(items).encode()
+            src.execute(
+                "UPDATE api_responses SET body=?,payload_sha256=? WHERE id=?",
+                (raw, hashlib.sha256(raw).digest(), response),
+            )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    context = pr_domain.Context(db, src, run)
+    cid, document = IDS["comments_partial"], IDS["document_a"]
+    earliest = 2 if malformed_first else 0
+    assert context.first_source_page(cid, document, "A") == earliest
+    assert context.first_source_page(cid, document, None) == earliest
+    assert context.first_document_position(cid, document) == (earliest, 0)
+    assert context.first_source_page(cid, document, "") is None
+    assert context.first_source_page(cid, document, "unvisited after malformed") is None
+    repaired = f"{IDS['pr']}:issue-comment:902"
+    for body in ("", "A", "B"):
+        assert context.first_source_page(cid, repaired, body) == 1
+    assert context.first_source_page(cid, repaired, None) is None
+    assert context.first_document_position(cid, repaired) == (1, 0)
+    db.close()
+    src.close()
+
+
+def test_scaled_attribution_validates_each_saved_item_once_per_current_page(
+    tmp_path, monkeypatch
+):
+    scale, calls = 200, 0
+    original = pr_domain.Context.saved_document
+
+    def counted(self, *args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(pr_domain.Context, "saved_document", counted)
+    db, src, run = components(tmp_path, scale=scale)
+    prepared = convert(db, src, run)
+    assert (
+        db.execute(
+            "SELECT count(*) FROM document_observations WHERE id BETWEEN 5001 AND ? AND occurrence_id IS NOT NULL",
+            (5000 + scale - 1,),
+        ).fetchone()[0]
+        == scale - 1
+    )
+    # The 199 scaled documents share one saved page. Attribution must not
+    # revalidate every preceding item separately for each source observation.
+    assert calls < scale * 12
+    previous = calls
+    for recipe in ("document_observations", "saved_document_repair"):
+        records = tuple(archive.rows(src, pr_domain.SOURCE_TABLES[recipe]))
+        assert prepared[recipe] == pr_domain.prepare(
+            db, src, run, recipe, 0, records, verifying=True
+        )
+    # Verification rebuilds the source proof rather than retaining the earlier
+    # page index or accepting rows from the now-populated target database.
+    assert previous < calls < previous + scale * 12
+    db.close()
+    src.close()
+
+
+@pytest.mark.parametrize(
+    ("malformed", "error"),
+    ((7, AttributeError), ({"id": "THREAD_bad", "comments": {"nodes": 7}}, TypeError)),
+)
+def test_attribution_defers_malformed_graphql_tail_until_no_prefix_match(
+    tmp_path, malformed, error
+):
+    def mutate(src):
+        payload = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {
+                            "nodes": [
+                                {
+                                    "id": "THREAD_synthetic",
+                                    "comments": {
+                                        "nodes": [
+                                            {
+                                                "id": 1002,
+                                                "body": "Inline original 日本語",
+                                            }
+                                        ]
+                                    },
+                                },
+                                malformed,
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        response = src.execute(
+            "SELECT response_id FROM collection_pages WHERE collection_id=? AND ordinal=0",
+            (IDS["threads"],),
+        ).fetchone()[0]
+        raw = json.dumps(payload, ensure_ascii=False).encode()
+        src.execute(
+            "UPDATE api_responses SET body=?,payload_sha256=? WHERE id=?",
+            (raw, hashlib.sha256(raw).digest(), response),
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    context = pr_domain.Context(db, src, run)
+    assert (
+        context.first_source_page(
+            IDS["threads"], IDS["document_line"], "Inline original 日本語"
+        )
+        == 0
+    )
+    assert context.first_document_position(IDS["threads"], IDS["document_line"]) == (
+        0,
+        0,
+    )
+    with pytest.raises(error):
+        context.first_source_page(IDS["threads"], IDS["document_line"], "unmatched")
+    with pytest.raises(error):
+        context.first_document_position(IDS["threads"], "unmatched")
+    # Advancing to another source page evicts both the prefix and deferred
+    # failure; a malformed old tail cannot affect a valid unrelated origin.
+    assert context.first_source_page(IDS["comments_a"], IDS["document_a"], "A") == 0
+    db.close()
+    src.close()
 
 
 def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repair(

@@ -128,6 +128,12 @@ uses one source record per batch and a 32 MiB page/JSON decoding limit, matching
 the current acquisition page limit. Replay materializes bounded JSON documents
 and derived operations for one source record at a time; these byte limits are
 not a total-process RSS bound.
+Within a recipe batch, saved-document attribution indexes only the current page's
+validated document IDs, exact body values and first positions. Moving to another
+page discards that index. Requests referring to the same page reuse its projections;
+a deliberate verification builds its own index from
+the sealed source. Exact body comparison and original page ordering still decide
+attribution, including valid prefixes before a malformed item.
 Oversized replay keeps exact stored payloads and direct normalized facts with
 an attributed partial diagnostic. Metadata still scales with committed output count.
 
@@ -139,9 +145,13 @@ repeated scans or payload-manifest copies. These are synthetic measurements, not
 real-data performance claims. The scaling test reports wall time and uses child
 CPU time for its work budget so four CI workers sharing a runner do not consume
 each other's budget; the guarded child still has a wall-clock timeout.
-The existing `ci_profile.py` measured a 200-document
-full synthetic pipeline at 17.409 seconds locally (Python 3.12.14, SQLite 3.53.1);
-this includes archive and identity preparation, not just the new domain writer.
+The corrected guarded 200-document pipeline measured 4.123 wall seconds and
+4.113 child CPU seconds locally (Python 3.12.14, audited SQLite 3.46.1), completing
+88 batches. This includes archive and identity preparation and the final comparison,
+but excludes sealing and guard probes. A separate deterministic regression requires
+fewer than 2,400 saved-item validations across the scaled component conversion and
+rebuilds attribution independently during verification. These bounds and one local
+timing sample do not establish a real-data throughput estimate.
 
 Focused acceptance includes operational FTS/ANALYZE input, meaningful Git/PR queries
 and all three searches, exact archive/edge/path/ID/order comparisons, malformed
