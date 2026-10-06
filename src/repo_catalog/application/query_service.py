@@ -228,7 +228,7 @@ class QueryService:
                 if o.get("source") and o["source"] != source["id"]:
                     continue
                 latest = self.s.one(
-                    "SELECT state FROM inventory_runs WHERE source_id=? ORDER BY observed_at DESC LIMIT 1",
+                    "SELECT asserted_state FROM inventory_observations WHERE source_id=? ORDER BY observed_at DESC LIMIT 1",
                     (source["id"],),
                 )
                 if not latest or latest[0] != "complete":
@@ -243,7 +243,16 @@ class QueryService:
                     if time.monotonic() > self.deadline:
                         raise TimeoutError()
                     cid = entry["content_id"]
-                    if cid is None or cid in seen:
+                    if cid is None:
+                        if entry["mode"] != "160000":
+                            self.coverage.add(
+                                "code",
+                                "body_not_saved",
+                                object_id=entry["object_id"],
+                                **path_fields(entry["raw_path"]),
+                            )
+                        continue
+                    if cid in seen:
                         continue
                     seen.add(cid)
                     c = self.s.one(
@@ -317,48 +326,77 @@ class QueryService:
         ):
             raise CatalogError("INVALID_ARGUMENT", "Current scope permits only heads")
         if pr or any(k.startswith("pr-") for k in kinds):
-            sql = "SELECT a.* FROM acquisition_roots a JOIN collection_runs r ON r.id=a.run_id WHERE a.repo_id=? AND a.published=1 AND a.pr_number IS NOT NULL"
-            args = [repo["id"]]
-            if pr:
-                sql += " AND a.pr_number=? AND a.observation_id=(SELECT max(a2.observation_id) FROM acquisition_roots a2 WHERE a2.repo_id=a.repo_id AND a2.pr_number=a.pr_number AND a2.published=1)"
-                args.append(pr)
-            rows = self.s.all(sql, args)
+            rows = self.s.all(
+                "SELECT DISTINCT a.*,p.number pr_number,o.observation_id,ca.role origin_role FROM acquisition_roots a "
+                "JOIN root_origins o ON o.root_id=a.id AND o.origin_kind='pr_role' "
+                "JOIN change_requests p ON p.id=o.change_request_id "
+                "JOIN code_observations co ON co.change_request_id=p.id AND co.observation_id=o.observation_id "
+                "JOIN code_acquisitions ca ON ca.code_observation_id=co.id AND ca.root_id=a.id "
+                "WHERE a.repo_id=? AND a.published=1 "
+                "AND (? IS NULL OR p.number=?) "
+                "AND ((?='recorded' AND ? IS NULL) OR o.observation_id=p.current_observation_id) "
+                "AND co.id=(SELECT max(latest.id) FROM code_observations latest WHERE latest.change_request_id=p.id AND latest.observation_id=o.observation_id) "
+                "ORDER BY a.id,ca.role",
+                (repo["id"], pr, pr, scope, pr),
+            )
             selected = [
                 {
                     "id": r["id"],
                     "oid": r["oid"],
                     "object_format": r["object_format"],
-                    "name": f"pr/{r['pr_number']}/{r['role']}",
+                    "name": f"pr/{r['pr_number']}/{r['origin_role']}",
                     "snapshot": None,
-                    "role": r["role"],
+                    "role": r["origin_role"],
                 }
                 for r in rows
                 if not kinds
-                or ("pr-head" if r["role"] == "head" else "pr-related") in kinds
+                or ("pr-head" if r["origin_role"] == "head" else "pr-related") in kinds
             ]
+            if pr and not selected:
+                self.coverage.add(
+                    "pr", "pr_root_unavailable", repo_id=repo["id"], number=pr
+                )
             normal = [k for k in kinds if not k.startswith("pr-")]
             if normal:
                 selected += self.roots(repo, {**o, "ref_kinds": normal})
             return selected
         if scope == "recorded":
             rows = self.s.all(
-                "SELECT a.*,s.id snapshot_id,f.raw_ref_name FROM acquisition_roots a JOIN collection_runs r ON r.id=a.run_id LEFT JOIN snapshots s ON s.run_id=r.id LEFT JOIN ref_observations f ON f.snapshot_id=s.id AND f.target_oid=a.oid WHERE a.repo_id=? AND a.published=1 ORDER BY a.id",
+                "SELECT DISTINCT a.*,o.id origin_id,o.snapshot_id,o.raw_ref_name,p.number pr_number,f.kind ref_kind,ca.role origin_role "
+                "FROM acquisition_roots a LEFT JOIN root_origins o ON o.root_id=a.id "
+                "LEFT JOIN change_requests p ON p.id=o.change_request_id "
+                "LEFT JOIN ref_observations f ON f.snapshot_id=o.snapshot_id AND f.raw_ref_name=o.raw_ref_name "
+                "LEFT JOIN code_observations co ON co.change_request_id=o.change_request_id AND co.observation_id=o.observation_id "
+                "LEFT JOIN code_acquisitions ca ON ca.code_observation_id=co.id AND ca.root_id=a.id "
+                "WHERE a.repo_id=? AND a.published=1 ORDER BY a.id,o.id,ca.role",
                 (repo["id"],),
             )
             return [
                 {
-                    "id": r["id"],
+                    "id": r["origin_id"] or r["id"],
                     "oid": r["oid"],
                     "object_format": r["object_format"],
                     "name": r["raw_ref_name"].decode("utf8", "backslashreplace")
                     if r["raw_ref_name"]
-                    else f"pr/{r['pr_number']}/{r['role']}",
+                    else f"pr/{r['pr_number']}/{r['origin_role'] or r['role']}",
                     "snapshot": r["snapshot_id"],
-                    "role": r["role"],
+                    "role": r["origin_role"] or r["ref_kind"] or r["role"],
                 }
                 for r in rows
                 if (not refs or r["raw_ref_name"] in [x.encode() for x in refs])
-                and (not kinds or r["role"] in kinds)
+                and (
+                    not kinds
+                    or (
+                        r["ref_kind"]
+                        if r["raw_ref_name"]
+                        else "pr-head"
+                        if r["origin_role"] == "head"
+                        else "pr-related"
+                        if r["pr_number"]
+                        else r["role"]
+                    )
+                    in kinds
+                )
             ]
         snapshot = self.snapshot(repo, o)
         if not snapshot:
@@ -405,6 +443,10 @@ class QueryService:
                 "SELECT g.* FROM tag_objects t JOIN git_objects g ON g.id=t.target_id WHERE t.object_id=?",
                 (row["id"],),
             )
+        if row is None:
+            self.coverage.add(
+                "git", "root_object_missing", object_format=fmt, oid=oid.hex()
+            )
         return row
 
     def commit_set(self, roots, first_parent=False):
@@ -412,6 +454,12 @@ class QueryService:
         for root in roots:
             obj = self.peel(root["object_format"], root["oid"])
             if obj and obj["type"] == "commit":
+                if not self.s.one(
+                    "SELECT 1 FROM commits WHERE object_id=?", (obj["id"],)
+                ):
+                    self.coverage.add(
+                        "git", "commit_structure_missing", object_id=obj["id"]
+                    )
                 ids.append(obj["id"])
         if not ids:
             return set()
@@ -426,28 +474,46 @@ class QueryService:
         }
 
     def tree_entries(self, tree, prefix=b""):
-        # Traversal uses the durable structural catalog, including historical roots.
-        rows = self.s.execute(
-            """WITH RECURSIVE walk(tree_id,path) AS (
-            SELECT ?,CAST(? AS BLOB) UNION ALL
-            SELECT e.child_id,CAST(w.path||e.raw_name||x'2f' AS BLOB) FROM tree_entries e JOIN walk w ON w.tree_id=e.tree_id WHERE e.mode=16384)
-            SELECT e.*,CAST(w.path||e.raw_name AS BLOB) raw_path FROM walk w JOIN tree_entries e ON e.tree_id=w.tree_id WHERE e.mode!=16384 ORDER BY raw_path""",
-            (tree, prefix),
-        )
-        for r in rows:
-            content = self.s.one(
-                "SELECT c.* FROM blob_content_map b JOIN contents c ON c.id=b.content_id WHERE b.object_id=?",
-                (r["child_id"],),
+        # Raw byte frames avoid text coercion and terminate incomplete/cyclic
+        # imported trees while preserving the usable recorded entries.
+        frames = [(tree, prefix, frozenset())]
+        while frames:
+            self.token.check()
+            if time.monotonic() > self.deadline:
+                raise TimeoutError()
+            ident, raw_prefix, ancestors = frames.pop()
+            if ident in ancestors:
+                self.coverage.add("git", "tree_cycle", object_id=ident)
+                continue
+            rows = self.s.all(
+                "SELECT * FROM tree_entries WHERE tree_id=? ORDER BY raw_name", (ident,)
             )
-            yield {
-                "raw_path": r["raw_path"],
-                "mode": format(r["mode"], "06o"),
-                "oid": f"{r['child_format']}:{r['child_oid'].hex()}",
-                "object_id": r["child_id"],
-                "content_id": content["id"] if content else None,
-                "text_state": content["text_state"] if content else "not_applicable",
-                "raw_available": bool(content and content["raw_text"] is not None),
-            }
+            if not rows:
+                obj = self.s.one("SELECT size FROM git_objects WHERE id=?", (ident,))
+                if not obj or obj["size"]:
+                    self.coverage.add("git", "tree_structure_missing", object_id=ident)
+            subtrees = []
+            for row in rows:
+                raw_path = raw_prefix + row["raw_name"]
+                if row["mode"] == 16384:
+                    subtrees.append(
+                        (row["child_id"], raw_path + b"/", ancestors | {ident})
+                    )
+                    continue
+                content = self.s.one(
+                    "SELECT c.* FROM blob_content_map b JOIN contents c ON c.id=b.content_id WHERE b.object_id=?",
+                    (row["child_id"],),
+                )
+                yield {
+                    "raw_path": raw_path,
+                    "mode": format(row["mode"], "06o"),
+                    "oid": f"{row['child_format']}:{row['child_oid'].hex()}",
+                    "object_id": row["child_id"],
+                    "content_id": content["id"] if content else None,
+                    "text_state": content["text_state"] if content else "unknown",
+                    "raw_available": bool(content and content["raw_text"] is not None),
+                }
+            frames.extend(reversed(subtrees))
 
     def occurrences(self, repo, o):
         roots = self.roots(repo, o)
@@ -459,8 +525,13 @@ class QueryService:
                     continue
                 tree = self.s.one(
                     "SELECT tree_id FROM commits WHERE object_id=?", (obj["id"],)
-                )[0]
-                for entry in self.tree_entries(tree):
+                )
+                if tree is None:
+                    self.coverage.add(
+                        "git", "commit_structure_missing", object_id=obj["id"]
+                    )
+                    continue
+                for entry in self.tree_entries(tree[0]):
                     yield (
                         (root["name"], entry["raw_path"].hex()),
                         {
@@ -473,7 +544,7 @@ class QueryService:
                     )
         else:
             commits = self.commit_set(roots)
-            for obj in self.s.all(
+            for obj in self.s.execute(
                 "SELECT g.*,c.tree_id FROM commits c JOIN git_objects g ON g.id=c.object_id ORDER BY g.oid"
             ):
                 if obj["id"] not in commits:
@@ -489,13 +560,17 @@ class QueryService:
                     )
 
     def public_object(self, repo, obj):
-        return (
-            self.s.one(
-                "SELECT 1 FROM repository_object_sources p JOIN collection_runs r ON r.id=p.run_id WHERE p.repo_id=? AND p.object_id=? AND r.state='published'",
-                (repo["id"], obj),
-            )
-            is not None
+        sources = self.s.all(
+            "SELECT p.acquisition_id,r.state FROM repository_object_sources p "
+            "LEFT JOIN acquisition_progress r ON r.acquisition_id=p.acquisition_id "
+            "WHERE p.repo_id=? AND p.object_id=? ORDER BY p.acquisition_id",
+            (repo["id"], obj),
         )
+        if sources and not any(row["state"] == "published" for row in sources):
+            self.coverage.add(
+                "git", "acquisition_not_published", repo_id=repo["id"], object_id=obj
+            )
+        return bool(sources)
 
     def literal(self, o):
         text = o.get("literal")
@@ -611,15 +686,15 @@ class QueryService:
                         **dict(r),
                         "run": dict(
                             s.one(
-                                "SELECT * FROM collection_runs WHERE id=?",
-                                (r["run_id"],),
+                                "SELECT * FROM git_acquisitions WHERE id=?",
+                                (r["acquisition_id"],),
                             )
                         ),
                         "coverage": [
                             dict(x)
                             for x in s.all(
-                                "SELECT * FROM coverage_components WHERE owner_id=?",
-                                (r["id"],),
+                                "SELECT cs.*,cc.effective_state state,cc.details FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.id=cs.current_claim_id WHERE cs.repo_id=?",
+                                (r["repo_id"],),
                             )
                         ],
                     },
@@ -650,6 +725,7 @@ class QueryService:
                 )
         elif command in (
             "tree list",
+            "file show",
             "commits list",
             "commits show",
             "commits compare",
@@ -681,8 +757,13 @@ class QueryService:
                     roots = self.roots(repo, {**o, "refs": [o["ref"]]})
                 ids = self.commit_set(roots, o.get("first_parent", False))
                 if command == "commits show":
+                    obj = self.peel(roots[0]["object_format"], roots[0]["oid"])
+                    if not obj or obj["type"] != "commit":
+                        raise CatalogError(
+                            "NOT_FOUND", "Stored commit structure missing"
+                        )
                     ids = {obj["id"]}
-                if command == "tree list":
+                if command in ("tree list", "file show"):
                     obj = self.peel(roots[0]["object_format"], roots[0]["oid"])
                     if not obj or obj["type"] not in ("tree", "commit"):
                         raise CatalogError(
@@ -697,15 +778,50 @@ class QueryService:
                             (obj["id"],),
                         )[0]
                     )
+                    wanted = None
+                    if command == "file show":
+                        from repo_catalog.application.target_queries import (
+                            TargetQueryService,
+                        )
+
+                        wanted = TargetQueryService._path(o)
+                    found = False
                     for entry in self.tree_entries(tree):
+                        if wanted is not None and entry["raw_path"] != wanted:
+                            continue
+                        found = True
                         if o.get("path_prefix") and not entry["raw_path"].startswith(
                             o["path_prefix"].encode()
                         ):
                             continue
                         raw = entry.pop("raw_path")
+                        if command == "file show":
+                            content = (
+                                s.one(
+                                    "SELECT * FROM contents WHERE id=?",
+                                    (entry["content_id"],),
+                                )
+                                if entry["content_id"]
+                                else None
+                            )
+                            entry["text"] = content["raw_text"] if content else None
+                            entry["byte_length"] = (
+                                content["byte_length"] if content else None
+                            )
+                            if entry["text"] is None and entry["mode"] != "160000":
+                                self.coverage.add(
+                                    "code",
+                                    "body_not_saved",
+                                    content_id=entry["content_id"],
+                                    **path_fields(raw),
+                                )
                         yield [raw.hex()], {**entry, **path_fields(raw)}
+                    if wanted is not None and not found:
+                        raise CatalogError(
+                            "NOT_FOUND", "Raw path not present in stored tree"
+                        )
                     return
-            for r in s.all(
+            for r in s.execute(
                 "SELECT g.*,c.* FROM commits c JOIN git_objects g ON g.id=c.object_id ORDER BY g.oid"
             ):
                 if r["id"] not in ids:
@@ -755,7 +871,7 @@ class QueryService:
                     ):
                         continue
                     sources = s.all(
-                        "SELECT DISTINCT p.repo_id,p.run_id,g.object_format,g.oid FROM repository_object_sources p JOIN collection_runs r ON r.id=p.run_id JOIN git_objects g ON g.id=p.object_id JOIN blob_content_map b ON b.object_id=g.id WHERE b.content_id=? AND r.state='published' ORDER BY p.repo_id,p.run_id",
+                        "SELECT DISTINCT p.repo_id,p.acquisition_id,r.state acquisition_state,g.object_format,g.oid FROM repository_object_sources p LEFT JOIN acquisition_progress r ON r.acquisition_id=p.acquisition_id JOIN git_objects g ON g.id=p.object_id JOIN blob_content_map b ON b.object_id=g.id WHERE b.content_id=? ORDER BY p.repo_id,p.acquisition_id",
                         (c["id"],),
                     )
                     sources = [
@@ -766,6 +882,12 @@ class QueryService:
                         in scoped[r["repo_id"]]
                     ]
                     if sources:
+                        if not any(
+                            row["acquisition_state"] == "published" for row in sources
+                        ):
+                            self.coverage.add(
+                                "git", "acquisition_not_published", content_id=c["id"]
+                            )
                         yield (
                             [c["id"]],
                             {
@@ -809,7 +931,7 @@ class QueryService:
                 if command == "search commits":
                     ids = self.commit_set(self.roots(repo, o))
                     needle = literal.encode("utf8")
-                    for r in s.all(
+                    for r in s.execute(
                         "SELECT g.*,c.raw_message FROM commits c JOIN git_objects g ON g.id=c.object_id ORDER BY g.oid"
                     ):
                         message = r["raw_message"].decode("utf8", "replace")
@@ -916,9 +1038,9 @@ class QueryService:
             )
         elif command in ("jobs list", "jobs show"):
             rows = s.all(
-                "SELECT * FROM jobs"
-                + (" WHERE id=?" if o.get("job_id") else "")
-                + " ORDER BY id",
+                "SELECT j.*,a.state,a.attempt,a.not_before,a.checkpoint,a.reason,a.updated_at FROM jobs j LEFT JOIN job_attempts a ON a.job_id=j.id AND a.attempt=j.current_attempt"
+                + (" WHERE j.id=?" if o.get("job_id") else "")
+                + " ORDER BY j.id",
                 (o["job_id"],) if o.get("job_id") else (),
             )
             if o.get("job_id") and not rows:
@@ -936,8 +1058,8 @@ class QueryService:
             for repo in self.repos(o):
                 snapshot = self.snapshot(repo, o)
                 components = s.all(
-                    "SELECT * FROM coverage_components WHERE owner_id IN (?,?)",
-                    (repo["id"], snapshot["id"] if snapshot else ""),
+                    "SELECT cs.*,cc.effective_state state,cc.details FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.id=cs.current_claim_id WHERE cs.repo_id=? AND (? IS NULL OR cs.kind=?)",
+                    (repo["id"], o.get("kind"), o.get("kind")),
                 )
                 yield (
                     [repo["id"]],
@@ -945,7 +1067,7 @@ class QueryService:
                         "repo_id": repo["id"],
                         "snapshot_id": snapshot["id"] if snapshot else None,
                         "components": [
-                            {**dict(r), "details": json.loads(r["details"])}
+                            {**dict(r), "details": json.loads(r["details"] or "{}")}
                             for r in components
                             if not o.get("kind") or r["kind"] == o["kind"]
                         ],
@@ -954,7 +1076,9 @@ class QueryService:
         elif command.startswith("pr ") or command == "search pr":
             yield from self.pr_query(command, o)
         elif command == "cache status":
-            for r in s.all("SELECT * FROM cache_entries ORDER BY id"):
+            for r in s.all(
+                "SELECT a.*,l.repo_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.id=a.locator_id WHERE l.access='target_active' ORDER BY a.id"
+            ):
                 from repo_catalog.adapters.filesystem.cache import CacheManager
                 from repo_catalog.adapters.filesystem.capacity import (
                     Capacity,

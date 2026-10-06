@@ -1,4 +1,4 @@
-"""Explicit offline queries over normalized conversion output, never runtime cutover."""
+"""Explicit catalog3 diagnostics; ordinary runtime queries use QueryService."""
 
 from __future__ import annotations
 

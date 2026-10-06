@@ -1,4 +1,7 @@
 {
+  "status": "historical-only",
+  "acceptance_gate": false,
+  "current_policy": "scripts/ci_dependencies.json",
   "profile_version": 1,
   "description": "Local current P2 required normal lane after hardlink guard fix; advisory only; different runner contexts are not compared",
   "runtime": {

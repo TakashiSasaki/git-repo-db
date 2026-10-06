@@ -1,87 +1,25 @@
-# 変更に応じた保守的CI
+# 変更に応じた CI
 
-PR #1のP1/P2を作り直さず、既存`tests / offline` jobのstepを条件付きにする。main pushとmanual dispatchはfull acceptanceを維持する。PR/ref別concurrency、固定4 worker、逐次packaging、SQLite 3.46.1、offline guardは維持する。branch protection設定は変更しない。
+CI は [現在の policy](../scripts/ci_dependencies.json) と有効な Git tree からチェックを選びます。通常の lane は `tests`、installed wheel / sdist は逐次 `packaging`、静的検査は `static`、SQLite 機能と doctor は `smoke` です。一つの Python/SQLite binding を使い、独立した SQLite-minimum lane、過去の phase lane、件数・node ID 下限、GitHub artifact の再利用判定を廃止しました。
 
-## 正本と依存境界
+PR は merge-base から実際に試験する merge tree への差分、main push は `before` から試験 tree への差分を使います。rename の両側と削除も NUL 区切りで読み、path を shell code として実行しません。
 
-正本は [`scripts/ci_dependencies.json`](../scripts/ci_dependencies.json)。[`ci_plan.py`](../scripts/ci_plan.py)はstdlibとlocal Gitでplanを作る。mapping/policyを変えた場合は新policyのfull acceptanceが必要で、旧policyの成功をそのまま使わない。
+- 現在の leaf test の変更は、その file と静的検査を選びます。
+- source、共通 fixture、依存 lock、CI policy、importer は現在の acceptance 全体を選びます。
+- docs 内の SQL、JSON、CSV と実行入力の conversion recipe も全体を選びます。
+- 通常の prose だけの変更は、読み取りと非空検査を行います。
+- 未知の依存、比較履歴の欠落・不正、explicit full は現在の acceptance 全体へ広げます。
 
-| lane | 入力・検証範囲 |
-|---|---|
-| legacy | 残りのunit/integration/E2E。CLI、Git/HTTP、DB、query、cache等 |
-| schema | 完全DDL、断片DDL、契約、CSV/target inventory/生成Markdown、不変条件、v2 audit/design |
-| p2 | foundation/protocol、operational source admission、P3A/P3B phase handoff、identity recipes、guarded integrated flow。schema validator/audit、migration、fixture、workerへの推移依存も含む |
-| ci | profiler/planner/evidence/gateとworkflow連携試験 |
-| packaging | wheel/sdist由来wheelのoffline導入、CLIと同梱resources。逐次隔離 |
-| minimum-schema / minimum-p2 | 4 P1 filesと8 P2/P3A/P3B files。従来の4 P1/2 P2 filesのcoverage下限を保持し、audit対応SQLite 3.46.1で独立実行 |
-| static / smoke / build / demo | Ruff、FTS/doctor、build/export、既存offline-recovery demo |
+main push だからという理由で無条件の full acceptance は行いません。manual full は明示的な選択です。既知の prose 以外を推測で除外しません。
 
-`src/**`、lock/build設定、`tests/support/**`、全階層conftest/init、SQLite preparation/driverは共有依存として広く再実行する。demoは`test_cache.expire`/`test_github_sync.configure`とCLI/Git/HTTP fixtureをimportするためlegacyとの依存を持つ。P2だけの変更にlegacy HTTP/Git E2E依存は見つからず、対応するschema/P2とminimumを選ぶ。leaf testは所属groupを選ぶ。未分類helper/新しい未知pathはfullへ倒す。新しいimport、file read、subprocess境界を追加する際はmappingもレビューする。
+現在の manifest は新しい catalog3 runtime と救出の動作試験を中心にし、検証済みの通常試験と保護境界を含みます。過去の phase export や古い DDL pin の試験は現行 acceptance の下限にしません。manifest の入れ替えは、残る動作と安全条件を現行試験が覆うように行います。
 
-P3Bのauthentic predecessor fixtureはguarded workerの起動前にreviewed Git revision `e40430e3f38d3339d67017a04262445f9415a8ec`から`scripts/conversion/`、`scripts/offline_convert.py`、`scripts/schema_contract.py`、`scripts/schema_audit.py`、`docs/schema-hardening/`、`src/repo_catalog/resources/migrations/`をexportする。converterが読むDDL/JSON contracts/`current-schema.json`/migration SQLのcurrent tree対応pathはschema/shared入力に既に含まれる。minimum predecessor CLIはguardの前にcurrent `scripts/sqlite_minimum.py`を`runpy`でloadする。固定revisionとexport/bootstrap境界はshared fixtureの入力として検証する。checkoutの全履歴を保持し、export時に現在のconverterをpredecessorの代わりに使わない。exportされたprose本文をconverterは読まない。
+実行前に選択した file の node ID を収集し、結果の JUnit と exactly once で照合します。失敗、skip、欠落、重複、余分な ID、別 run / attempt / SHA の古い結果、版の違う binding は成功扱いにしません。確定した CI の証跡は clean tree と一致する必要があります。
 
-prose/reportは列挙したpathだけ。`docs/ci-performance-results.json`と`docs/ci-selection-results.json`は測定report、`p2-foundation.md`、`p3a-handoff.md`、`p3b-handoff.md`は実装・運用記録で、application/schema fixtureは本文を読まない。stdlibでJSON構造・有限数、非空本文、local Markdown linkを確認する。`ci-performance-baseline.json`はprofiler入力なのでproseではない。DDL/JSON/CSV/生成`table-conversion.md`はschema入力で、docs全体をskipしない。生成Markdownもgeneratorとのbyte一致を試験する。
-
-sdistにreport bytesが同梱され得るが、installed CLIのresources/metadataやpackaging assertionはそれらを読まない。reportだけの更新では既存packaging成功を再利用できる。build設定・package resources・fixture/wheel準備を変えた場合は再実行する。
-
-## 比較と証拠
-
-PRはmerge-base→feature HEADの累積diffを`git diff --name-status -z --find-renames`で読む。renameは旧/新path、deleteも残す。HEAD^や直近pushだけを基準にしない。main pushはbefore/after、history欠落・複数merge-base・truncation・未知pathはfull。checkoutは全履歴を取得し、eventのbase/featureと実merge parentを照合する。local使用はbaseがfeatureのancestorの場合にfeature treeを使える。tree証拠を記録する際はcleanなcommit済みcheckoutを要求する。
-
-再利用は次を全て満たす**一つのfull acceptance artifact**に限定する。
-
-- 同じrepository/PRの`pull_request` run。fork、異なるworkflow、failed/cancelled/queued/partialは不可。
-- `offline` jobと必須final gateがcompleted/success。run/attempt、feature/base、artifact所属、期限、download SHA-256、manifest bytesを確認する。
-- 同じbase、prior featureが現在featureのancestor。force-push/unknown historyはfull。base更新も保守的にfull。
-- Actionsの`pull_requests` linkのhead/base SHAはPR更新で変化するlive metadataなのでhistorical revisionに使わない。immutableな`run.head_sha`、manifest、実Git merge parentsを使う。
-- tested merge treeから各laneのmode/type/blob OIDを再計算し、policy、lock/依存、Python ABI/version、native SQLite、OS/arch、runner image/compiler、uv pinを照合する。
-- 全lane fresh/pass、complete collection、minimum coverage、selection digestが正しい。
-
-現在のmerge SHA自体が過去と同じである必要はない。reportで変わるblobは該当application laneに含めず、実効入力が一致することを示す。累積PRにP2変更が残っていても、検証済み入力と一致すればreuseする。先行未検証codeがあればそのlane fingerprintが異なり再実行する。
-
-metadataは最新5 runの中から同PRの最新successを候補にし、最大1 artifact・4 API callsと必要なら1 Git commit fetchだけを使う。APIはGET/read権限だけ。signed downloadへのredirectでAuthorizationを外し、archiveを展開せずmanifestだけ読む。不足/期限切れ/不一致はfull。legacy artifactは新gateのmanifestを持たないので性能baselineとしてのみ利用する。reuse-only runを次のanchorへ連鎖させないため、連続report更新や候補外の古いfull証拠では再びfullになる場合がある。一般的なremote result cacheは作らない。
-
-## coverageと準備
-
-plan JSON/Markdownにselected/reused、path/推移依存、selection digest、lane-input fingerprint、prior run、fallback理由を出す。reports/final gateは毎回実行する。dependencies/wheelhouse/minimum bindingは必要なselected laneがある時だけ準備し、不要ならnot_applicableと記録する。binding/build cacheはtest evidenceと扱わない。
-
-fresh testがあれば、実行前に**全required collection**を取得してgroupへ分ける。selected集合を先に固定し、JUnit/profileでpassedをexactly once照合する。skip/xfail、失敗、欠落、重複、余分なID、別run/attemptの古い出力は拒否する。full modeは全collectionを実行する。既存`ci_profile.coverage`もselected集合に対して使用する。追加試験を含めたcollectionを取得し、検証済み321 required IDs / 228 minimum IDsを[`ci_required_baseline.json`](../scripts/ci_required_baseline.json)でcoverage下限にする。改名/整理する場合はbaselineとpolicyの明示レビューが必要。
-
-20件未満のnative/minimum selectionは逐次、20件以上は固定4 worker。packagingは常に逐次。selected stepのifが誤ってskipされた場合も`always()`のfinal gateが出力欠落を拒否する。workflow自体はpaths-ignoreで消さず、required check名を維持する。
-
-minimum bindingの冷準備はreviewed CIで24.882秒だった。まず不要なcompileを完全に除く方式を採用し、ABI/toolchain/source hash/auditを検証するpersistent binary cacheは今回は追加しない。selected時は従来のhash固定ソースから再現可能にbuildし、実version/audit、P1/P2能力を試験する。従ってbinary cache hitの互換性を主張せず、planのcache statusは`not-enabled`。
-
-## local使用
-
-開発中はsynthetic planner testsを先に実行する。外部API不要。
+`plan.json` は現在の対象、対象外の `excluded_files`、未実行の `unexecuted_files` を保存します。成功した選択実行も、現在の全 acceptance を実行していなければ `full_acceptance=false` です。過去の成功を今回実行した試験として数えません。`validation-manifest.json` はすべての選択チェックが照合できた場合だけ作ります。失敗時は raw JUnit/profile を artifact に残します。
 
 ```bash
-uv run --no-sync pytest tests/unit/test_ci_plan.py tests/unit/test_ci_evidence.py \
-  tests/integration/test_ci_execution.py tests/unit/test_ci_profile.py -q
+uv run --no-sync pytest tests/unit/test_ci_plan.py tests/unit/test_ci_profile.py tests/integration/test_ci_execution.py -q
 ```
 
-commit済みclean checkoutのfull planを作る。
-
-```bash
-python scripts/ci_plan.py --full --output artifacts/ci-profile/local-plan
-python scripts/ci_execute.py reports --plan artifacts/ci-profile/local-plan/plan.json
-# 通常の依存/wheelhouse/minimum準備を先に行った場合:
-python scripts/ci_execute.py collect --plan artifacts/ci-profile/local-plan/plan.json
-python scripts/ci_execute.py run --lane tests --plan artifacts/ci-profile/local-plan/plan.json
-python scripts/ci_execute.py run --lane packaging --plan artifacts/ci-profile/local-plan/plan.json
-python scripts/ci_execute.py run --lane sqlite-minimum --plan artifacts/ci-profile/local-plan/plan.json
-```
-
-`--context JSON`はevent/repository/pr/feature_sha/base_sha/tested_sha/run_id/run_attempt/head_repository/full/before_sha/diff_completeを指定できる。paths/statusはそのGit historyから完全に抽出する。local reuse検証ではdownloadとmetadataを検証した`--evidence JSON`を指定する。synthetic metadataをhosted evidenceとして扱わない。
-
-final gateにはworkflowと同じ`ci_profile run`で記録した準備/static/smoke/build/demo/cheap commandの出力も必要。任意の一部commandだけを実行してfull acceptanceと報告しない。CIではcheckout以外のexpensive stepをplan outputsで制御し、最後に`python scripts/ci_execute.py gate`を必ず実行する。
-
-## 計測と範囲
-
-JUnit testcase aggregate秒とcommand wall秒を分ける。metadata lookup、planning、report validationもwall/profileを残し、selection内部時間、fresh/reused/minimum counts、準備cache statusをmanifestへ記録する。job runner時間とrun queue/feedbackはActions timestampsから別に算出する。比較記録は[CI性能](ci-performance.md)と`ci-selection-results.json`に置く。異なるfresh test集合や1 sampleから改善率を作らない。
-
-このCI設計自体はconverter runtimeや通常migration経路を変更しない。P3AのFTS/ANALYZE source認識、phase handoffとその合成試験は[P3A記録](schema-hardening/p3a-handoff.md)で扱い、新modules/fixture/worker依存を既存p2/minimum-p2 laneへ登録する。`scripts/conversion/**`はp2依存、`tests/support/operational_source.py`、`tests/support/p3b_fixture.py`、`tests/support/p3b_worker.py`とworker変更は共有依存として保守的にfullへ展開する。P2 archive_completeとP3A receiptはvalidated/activeではない。normalized conversionはP3B〜P3E、offline replay、新runtime/first sync、実データdry-run/切替は[実装計画](schema-hardening/implementation-plan.md)のP4〜P7へ残す。
-
-## 確認記録
-
-remote開始SHA、verified baseline、local full/focusedと最終full acceptance（`0d3ca46`、run 37386072605）は[計測結果](ci-performance.md)と[`ci-selection-results.json`](ci-selection-results.json)に記録する。この文書/reportだけのfollow-upではコード/DDL/契約を変えず、対応HEADの実際のplan/outcome artifactでreuseを確認する。PR #1のhandoffにそのrun IDと実測を追記し、未実行laneをfresh passと記載しない。
+[過去の選択結果](ci-selection-results.json) は `historical-only` です。過去の件数・承認結果は現行の acceptance gate ではありません。

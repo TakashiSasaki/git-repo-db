@@ -44,7 +44,9 @@ def test_exit_codes(catalog):
         == "INVALID_ARGUMENT"
     )
     with sqlite3.connect(state / "catalog.sqlite3") as db:
-        db.execute("UPDATE schema_migrations SET checksum='wrong'")
+        # Synthetic physical corruption bypasses the ordinary immutable guard.
+        db.execute("DROP TRIGGER database_identity_immutable")
+        db.execute("UPDATE database_identity SET ddl_sha256=zeroblob(32)")
     assert run(state, "repos", "list", expected=5)["error"]["code"] == "SCHEMA_ERROR"
 
 
@@ -82,7 +84,15 @@ def test_publication_fencing(catalog, tmp_path):
         state, "before_publish", tmp_path, "sync", "git", "--repo", repos["alpha"]
     )
     with sqlite3.connect(state / "catalog.sqlite3") as db:
-        db.execute("UPDATE collection_runs SET attempt=99 WHERE state!='published'")
+        db.execute("PRAGMA foreign_keys=ON")
+        db.execute(
+            "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) "
+            "SELECT job_id,99,'running','{}' FROM acquisition_progress "
+            "WHERE state!='published'"
+        )
+        db.execute(
+            "UPDATE acquisition_progress SET attempt=99 WHERE state!='published'"
+        )
     (hooks / "before_publish.release").touch()
     out, err = process.communicate(timeout=10)
     assert (
@@ -106,5 +116,5 @@ def test_read_transaction_released_before_output(catalog):
     with Store(state) as s:
         s.execute("PRAGMA busy_timeout=0")
         with s.transaction():
-            s.execute("UPDATE catalog_meta SET publication_seq=publication_seq")
+            s.execute("UPDATE database_identity SET publication_seq=publication_seq")
     assert result.data["items"]

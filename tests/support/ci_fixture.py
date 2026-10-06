@@ -1,14 +1,9 @@
-"""Synthetic Git histories and Actions metadata, never hosted test evidence."""
+"""Disposable Git histories and command records for current CI selection tests."""
 
-import hashlib
 import json
 import subprocess
-from pathlib import Path
 
-from scripts import ci_plan
-from scripts.ci_evidence import GATE_STEP
-
-REPOSITORY = "TakashiSasaki/git-repo-db"
+from scripts import ci_execute, ci_plan
 
 
 def command(root, *args, input=None):
@@ -36,60 +31,25 @@ def repository(root):
     command(root, "init", "-q")
     command(root, "config", "user.name", "Synthetic Fixture")
     command(root, "config", "user.email", "fixture@example.invalid")
-    write(root, "README.md", "# Synthetic fixture\n")
-    write(root, "scripts/conversion/engine.py", "# Base synthetic engine\n")
-    base = commit(root, "base")
     rules = ci_plan.policy()
+    rules["acceptance_files"] = [
+        "tests/unit/test_contracts.py",
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+    ]
     for path in rules["policy_inputs"]:
         write(root, path)
     write(root, "scripts/ci_dependencies.json", json.dumps(rules))
-    files = sum(rules["groups"].values(), []) + [
-        "tests/packaging/test_distribution.py",
-        "tests/e2e/test_cli_more.py",
-        "tests/integration/test_v2_hardening_reproductions.py",
-    ]
-    for path in files:
+    for path in rules["acceptance_files"]:
         write(root, path, "def test_synthetic(): pass\n")
-    write(
-        root,
-        "scripts/ci_required_baseline.json",
-        json.dumps(
-            {
-                "version": 1,
-                "required_ids": sorted(p + "::test_synthetic" for p in files),
-                "minimum_ids": sorted(
-                    p + "::test_synthetic"
-                    for p in rules["minimum_schema"] + rules["groups"]["p2"]
-                ),
-            }
-        ),
-    )
-    for path in [
-        "src/repo_catalog/example.py",
-        "tests/conftest.py",
-        "tests/support/cli.py",
-        "scripts/conversion/engine.py",
-        "pyproject.toml",
-        "uv.lock",
-        ".gitignore",
-        "scripts/demo.py",
-        "scripts/prepare_wheelhouse.py",
-        "scripts/schema_contract.py",
-        "scripts/run_sqlite_minimum_tests.py",
-        "scripts/prepare_sqlite_minimum.py",
-        "scripts/sqlite_minimum.py",
-        "docs/schema-hardening/target-schema.sql",
-        "docs/schema-hardening/table-conversion.md",
-        "docs/schema-hardening/column-conversion.csv",
-    ]:
-        write(root, path)
-    write(root, "docs/schema-hardening/conversion-contract.json", '{"synthetic":true}')
-    write(root, "docs/schema-hardening/p2-foundation.md", "# Synthetic P2 report\n")
-    head = commit(root, "feature")
-    return base, head
+    write(root, "README.md", "# Synthetic fixture\n")
+    write(root, "src/repo_catalog/example.py", "# Synthetic source\n")
+    base = commit(root, "base")
+    write(root, "src/repo_catalog/example.py", "# Changed source\n")
+    return base, commit(root, "feature")
 
 
-def context(root, base, head, run_id="10"):
+def context(root, base, head, run_id="10", event="pull_request"):
     merge = command(
         root,
         "commit-tree",
@@ -98,172 +58,70 @@ def context(root, base, head, run_id="10"):
         base,
         "-p",
         head,
-        input=b"synthetic tested merge\n",
+        input=b"synthetic merge\n",
     )
     return {
-        "repository": REPOSITORY,
-        "head_repository": REPOSITORY,
-        "event": "pull_request",
-        "pr": 1,
+        "event": event,
         "base_sha": base,
+        "before_sha": base,
         "feature_sha": head,
-        "tested_sha": merge,
+        "tested_sha": merge if event == "pull_request" else head,
         "run_id": run_id,
         "run_attempt": "1",
         "full": False,
     }
 
 
-def materialize(plan):
-    for name, item in plan["lanes"].items():
-        nodes = sorted(p + "::test_synthetic" for p in item["test_files"])
-        item.update(
-            test_ids=nodes,
-            selection_digest=ci_plan.digest(nodes),
-            selection_kind="nodeids",
-        )
-    plan["required_ids"] = sorted(
-        n for k in (*ci_plan.NORMAL, "packaging") for n in plan["lanes"][k]["test_ids"]
-    )
-    return plan
-
-
-def manifest(plan):
-    materialize(plan)
-    return {
-        "version": 1,
-        "context": plan["context"],
-        "policy_hash": plan["policy_hash"],
-        "runtime": plan["runtime"],
-        "outcome": "passed",
-        "full_acceptance": True,
-        "required_ids": plan["required_ids"],
-        "lanes": {
-            k: {
-                "state": "passed",
-                "provenance": "fresh",
-                "input_fingerprint": v["input_fingerprint"],
-                "test_ids": v["test_ids"],
-                "selection_digest": v["selection_digest"],
-            }
-            for k, v in plan["lanes"].items()
-        },
-    }
-
-
-def envelope(record):
-    ctx = record["context"]
-    run_id = int(ctx["run_id"])
-    checksum = hashlib.sha256(b"synthetic archive").hexdigest()
-    raw = json.dumps(record)
-    return {
-        "manifest": record,
-        "manifest_bytes": raw,
-        "manifest_sha256": hashlib.sha256(raw.encode()).hexdigest(),
-        "archive_sha256": checksum,
-        "run": {
-            "id": run_id,
-            "run_attempt": 1,
-            "repository": {"id": 42, "full_name": REPOSITORY},
-            "head_repository": {"full_name": REPOSITORY},
-            "head_sha": ctx["feature_sha"],
-            "status": "completed",
-            "conclusion": "success",
-            "event": "pull_request",
-            "path": ".github/workflows/tests.yml",
-            "pull_requests": [
-                {
-                    "number": 1,
-                    "head": {"sha": ctx["feature_sha"]},
-                    "base": {"sha": ctx["base_sha"]},
-                }
-            ],
-        },
-        "artifact": {
-            "id": 123,
-            "name": f"ci-profile-{run_id}-1",
-            "expired": False,
-            "expires_at": "2099-01-01T00:00:00Z",
-            "digest": "sha256:" + checksum,
-            "workflow_run": {
-                "id": run_id,
-                "head_sha": ctx["feature_sha"],
-                "repository_id": 42,
-                "head_repository_id": 42,
-            },
-        },
-        "jobs": {
-            "total_count": 1,
-            "jobs": [
-                {
-                    "head_sha": ctx["feature_sha"],
-                    "name": "offline",
-                    "status": "completed",
-                    "conclusion": "success",
-                    "steps": [
-                        {
-                            "name": GATE_STEP,
-                            "status": "completed",
-                            "conclusion": "success",
-                        }
-                    ],
-                }
-            ],
-        },
-    }
-
-
 def profile(ctx, meta, nodes=()):
     return {
         "exit_code": 0,
-        "wall_seconds": 1.0,
+        "wall_seconds": 0.01,
         "runtime": {
+            **meta,
             "commit_sha": ctx["tested_sha"],
-            "python": meta["python"],
-            "sqlite": meta["sqlite"],
             "tracked_changes": False,
-            "run_id": ctx["run_id"],
-            "run_attempt": ctx["run_attempt"],
+            "run_id": ctx.get("run_id"),
+            "run_attempt": ctx.get("run_attempt"),
             "feature_sha": ctx["feature_sha"],
         },
-        "junit": {"tests": [{"nodeid": n, "status": "passed"} for n in nodes]},
+        "junit": {"tests": [{"nodeid": node, "status": "passed"} for node in nodes]},
     }
 
 
-def write_results(output, plan):
-    from scripts import ci_execute
-
+def write_results(output, plan, root):
     output.mkdir()
-    materialize(plan)
-    (output / "plan.json").write_text(json.dumps(plan))
-    (output / "required-tests.txt").write_text("\n".join(plan["required_ids"]))
-    ctx, meta = plan["context"], plan["runtime"]
-    for name, groups in {
-        "tests": ci_plan.NORMAL,
-        "packaging": ("packaging",),
-        "sqlite-minimum": ("minimum-schema", "minimum-p2"),
-    }.items():
-        nodes = sorted(n for k in groups for n in plan["lanes"][k]["test_ids"])
-        record = profile(ctx, meta, nodes)
-        if name == "sqlite-minimum":
-            record["runtime"]["sqlite"] = "3.46.1"
-        (output / (name + ".json")).write_text(json.dumps(record))
-    for name in (
-        "dependency-setup",
-        "wheelhouse",
-        "sqlite-preparation",
-        "lint",
-        "format",
-        "fts",
-        "doctor",
-        "build",
-        "export",
-        "offline-recovery",
-        "evidence-lookup",
-        "planning",
-        "report-validation",
-    ):
-        (output / (name + ".json")).write_text(json.dumps(profile(ctx, meta)))
-    (output / "reports.json").write_text(
-        json.dumps(ci_execute.reports(Path(plan["fixture_root"])))
-    )
+    selected = []
+    for name in ci_plan.TEST_LANES:
+        item = plan["lanes"][name]
+        nodes = sorted(p + "::test_synthetic" for p in item["test_files"])
+        if nodes:
+            item.update(
+                test_ids=nodes,
+                selection_kind="nodeids",
+                selection_digest=ci_plan.digest(nodes),
+            )
+            write(
+                output,
+                name + ".json",
+                json.dumps(profile(plan["context"], plan["runtime"], nodes)),
+            )
+            selected.extend(nodes)
+    if selected:
+        plan["selected_ids"] = sorted(selected)
+        write(output, "selected-tests.txt", "\n".join(sorted(selected)) + "\n")
+    write(output, "plan.json", json.dumps(plan))
+    write(output, "reports.json", json.dumps(ci_execute.reports(root)))
+    names = ["planning", "report-validation"]
+    if plan["lanes"]["static"]["disposition"] == "selected":
+        names += ["lint", "format"]
+    if plan["lanes"]["smoke"]["disposition"] == "selected":
+        names += ["fts", "doctor"]
+    for name, item in plan["preparation"].items():
+        if item["disposition"] == "selected":
+            names.append("dependency-setup" if name == "dependencies" else name)
+    for name in names:
+        write(
+            output,
+            name + ".json",
+            json.dumps(profile(plan["context"], plan["runtime"])),
+        )

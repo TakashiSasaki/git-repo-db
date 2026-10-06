@@ -8,7 +8,7 @@ from tests.support.process import start_hooked, wait_unlocked
 def interrupted_job(state):
     with sqlite3.connect(state / "catalog.sqlite3") as c:
         return c.execute(
-            "SELECT id FROM jobs WHERE state='running' AND kind='sync' ORDER BY created_at DESC LIMIT 1"
+            "SELECT j.id FROM jobs j JOIN job_attempts a ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE a.state='running' AND j.kind='sync' ORDER BY j.created_at DESC LIMIT 1"
         ).fetchone()[0]
 
 
@@ -46,7 +46,7 @@ def test_kill_mid_blob(catalog, tmp_path):
             c.execute("SELECT count(*) FROM snapshots WHERE published=1").fetchone()[0]
             == 0
         )
-        cache = c.execute("SELECT id FROM cache_entries").fetchone()[0]
+        cache = c.execute("SELECT id FROM active_cache_entries").fetchone()[0]
     wait_unlocked(state / f"locks/cache-{cache}.lock")
     run(state, "jobs", "resume", interrupted_job(state))
     assert pages(state, "search", "code", "--repo", repos["alpha"], "--literal", "認証")

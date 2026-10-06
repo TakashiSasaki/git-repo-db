@@ -2,7 +2,7 @@
 
 任意のGit取得先とGitHubのPRをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PR文書と観測版を永続化します。
-初版はLinux/WSL2のローカルfilesystem、Python 3.12+、Git 2.43+を対象にしています。
+通常ランタイムは catalog3 です。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。今回の実行環境は Python 3.12.14 / SQLite 3.53.1 です。
 
 ## 開発・導入
 
@@ -33,10 +33,10 @@ GitHubは` sources add github --owner OWNER`で登録します。APIの認証は
 認証ユーザーの所有repoはprivate/fork/archivedを含め列挙し、PRは全状態を対象にします。少数対象のpilotは`--include-repo NAME`を繰り返して明示対象だけに限定できます。
 GitHub sourceの`--clone-url-override REPO_ID=URL`は、明示的なテスト設定や既存ローカル取得元への接続に使えます。
 
-DB schema v2はRepo IDをUUIDv4とし、サービスinstance、native ID、取得URL、sourceを分離します。
+catalog3 はRepo IDをUUIDv4とし、サービスinstance、native ID、取得URL、sourceを分離します。
 SSHとHTTPS、ローカルとネットワークのマウントpathを同じRepo IDの取得先として明示登録できます。
 GitLab/Gitea/GitoliteなどのGitデータは` sources add git-url`で登録できます。GitLab/Giteaの自動列挙・MR/PR API adapterは後続範囲です。
-既存v1 DBはバックアップ後に`db migrate`を実行します。登録・移行例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
+保存済み開発 v2 データは、新規 state へオフライン import します。登録例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
 
 ## 照会
 
@@ -57,27 +57,30 @@ PR rootは明示選択します。通常照会はDBの読取りだけで完結�
 全取得対象Blobのdigestはbinaryや巨大Blobも含め記録しますが、全履歴・全binaryの原文保存ではありません。
 履歴の未保存本文は検索coverageに不足として出し、原文不在を空bytesへ置換しません。
 
-独立 target への[統合オフライン変換](docs/schema-hardening/integrated-handoff.md)は、合成 v2 入力の保存済み Git・PR データを通常テーブルへ変換し、明示した target DB に対する読み取り専用クエリと検索を提供します。原文不足・部分一覧を表示し、target は `building` のままです。通常アプリは引き続き schema v2 を使用し、実データ移行・本番切り替え・新オンライン同期は後続範囲です。
+## 保存済み開発 v2 データの救出
+
+停止済みで sidecar のない v2 DB を、新しい保存先へ import します。元の DB/cache を上書きせず、通信も行いません。schema と importer は installed package に含まれています。
 
 ```bash
-uv run --no-sync python scripts/integrated_demo.py --state-dir artifacts/integrated-source --derived
-uv run --no-sync python scripts/offline_convert.py seal \
-  --work-dir artifacts/integrated-target \
-  --source artifacts/integrated-source/catalog.sqlite3 \
-  --source-cache artifacts/integrated-source/cache
-uv run --no-sync python scripts/offline_convert.py integrated --work-dir artifacts/integrated-target
-uv run --no-sync repo-catalog --format json target \
-  --database artifacts/integrated-target/target.sqlite3 --allow-building repos
+repo-catalog --state-dir /path/to/new-state import-v2 \
+  --source /path/to/preserved-v2.sqlite3 --source-cache /path/to/preserved-cache
+repo-catalog --state-dir /path/to/new-state db finalize
+repo-catalog --state-dir /path/to/new-state repos list
+repo-catalog --state-dir /path/to/new-state search pr --literal 認証
 ```
 
-fixture の DB/cache パスは作成コマンドの出力でも確認できます。コミット・ファイル・PR 履歴・検索と中断再開の具体例は[統合 handoff](docs/schema-hardening/integrated-handoff.md)を参照してください。
+中断後は同じ source と state、batch-size で `import-v2` を再実行します。`--max-batches` で処理を区切れます。typed archive、ID map、履歴、帰属付き診断を保存します。欠けた本文や不明な current 選択は partial として残し、重要な identity/owner 破損や import 未完了は finalize を拒否します。
+
+最初の明示的な `sync` では、scope と取得証拠に応じて既存データを再利用・条件付き検証し、不明な cursor や不足した一覧は対象を絞って更新します。import の replay は新しい観測時刻や watermark を作りません。通常照会は元 import workspace の path を必要としません。
+
+機能と検証結果の一覧は [runtime handoff](docs/schema-hardening/runtime-handoff.md) を参照してください。実ユーザーのデータ移行・active catalog 切り替えは別作業です。
 
 ## テスト・再現demo
 
 ```bash
 uv run --no-sync python scripts/prepare_wheelhouse.py  # 依存のonline準備
-uv run --no-sync pytest tests/unit tests/integration tests/e2e tests/packaging \
-  --strict-markers -m "not live and not benchmark"
+uv run --no-sync python scripts/ci_execute.py current --lane tests
+uv run --no-sync python scripts/ci_execute.py current --lane packaging
 uv run --no-sync python scripts/demo.py \
   --work-dir artifacts/demo-run-001 --scenario offline-recovery
 ```

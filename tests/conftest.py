@@ -1,20 +1,6 @@
-import os
-import sys
 from pathlib import Path
 
 import pytest
-
-# xdist starts a fresh interpreter. Activate the explicitly prepared minimum
-# binding before test modules can import SQLite; never quietly fall back to the
-# runner's native version. Normal pytest/application processes are unchanged.
-if os.environ.get("TEST_SQLITE_MINIMUM"):
-    if "sqlite3" not in sys.modules:
-        from scripts.sqlite_minimum import activate
-
-        activate()
-    import sqlite3
-
-    assert sqlite3.sqlite_version == os.environ["TEST_SQLITE_MINIMUM"]
 
 from tests.support.cli import add_local, run
 from tests.support.git_fixture import GitFixture

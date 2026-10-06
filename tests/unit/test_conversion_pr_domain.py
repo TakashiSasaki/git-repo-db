@@ -6,8 +6,8 @@ import sqlite3
 
 import pytest
 
-from scripts.conversion import archive, git_domain, identity, pr_domain
-from scripts.conversion.common import DESIGN
+from repo_catalog.adapters.import_v2 import archive, git_domain, identity, pr_domain
+from repo_catalog.adapters.sqlite.schema import schema_sql
 from tests.support.integrated_fixture import (
     IDS,
     SAVED_EARLY_BODY,
@@ -38,9 +38,14 @@ def apply(db, output, module):
                 "UPDATE repositories SET preferred_endpoint_id=? WHERE id=?",
                 (row[2], row[0]),
             )
+        elif operation["operation"] == "manifest_completion":
+            db.execute(
+                "UPDATE root_manifests SET complete=? WHERE tree_id=?", (row[1], row[0])
+            )
         elif actual is None:
             db.execute(
-                f'INSERT INTO "{table}" VALUES({",".join("?" for _ in row)})', row
+                f'INSERT INTO "{table}"({",".join(columns)}) VALUES({",".join("?" for _ in row)})',
+                row,
             )
         else:
             assert tuple(actual) == tuple(row), (table, tuple(actual), row)
@@ -70,7 +75,7 @@ def components(tmp_path, *, mutate=None, encoding="UTF-8", scale=1):
         src.commit()
     db = sqlite3.connect(":memory:")
     db.row_factory = sqlite3.Row
-    db.executescript((DESIGN / "target-schema.sql").read_text())
+    db.executescript(schema_sql())
     db.execute(
         "INSERT INTO conversion_sources VALUES('source',?,?,'v2','synthetic',?,?)",
         (b"s" * 32, b"c" * 32, b"{}", b"[]"),

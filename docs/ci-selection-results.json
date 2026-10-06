@@ -1,4 +1,7 @@
 {
+  "status": "historical-only",
+  "acceptance_gate": false,
+  "current_policy": "scripts/ci_dependencies.json",
   "version": 1,
   "scope": "conservative change-aware CI; no real-data migration",
   "repository": "TakashiSasaki/git-repo-db",

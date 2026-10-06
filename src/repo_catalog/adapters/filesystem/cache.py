@@ -28,8 +28,12 @@ class CacheManager:
                 "UNMANAGED_CACHE_PATH", "Refusing cache symlink or escaped path"
             )
         quarantine = self.s.path / "quarantine" / row["id"]
-        if quarantine.is_symlink():
-            raise CatalogError("UNMANAGED_CACHE_PATH", "Quarantine cannot be a symlink")
+        if quarantine.is_symlink() or not quarantine.resolve().is_relative_to(
+            (self.s.path / "quarantine").resolve()
+        ):
+            raise CatalogError(
+                "UNMANAGED_CACHE_PATH", "Refusing quarantine symlink or escaped path"
+            )
         return path, quarantine
 
     def gate(self, row):
@@ -37,7 +41,8 @@ class CacheManager:
         if s.config["preservation"]["profile"] != "catalog-text-v1":
             return ["unknown_profile"]
         obligations = s.all(
-            "SELECT * FROM preservation_obligations WHERE cache_id=?", (row["id"],)
+            "SELECT * FROM preservation_obligations WHERE cache_id=?",
+            (row["locator_id"] if "locator_id" in row.keys() else row["id"],),
         )
         reasons = []
         for r in obligations:
@@ -45,7 +50,7 @@ class CacheManager:
                 r[k]
                 for k in ("structure_done", "digest_done", "text_done", "published")
             ):
-                reasons.append("pending_obligations:" + r["run_id"])
+                reasons.append("pending_obligations:" + r["acquisition_id"])
         # No fixed roots means failed transfer work; OS lock must prove all users stopped.
         return reasons
 
@@ -53,7 +58,10 @@ class CacheManager:
         s = self.s
         results = []
         rows = s.all(
-            "SELECT * FROM cache_entries WHERE state IN ('available','evicting') ORDER BY last_used,id"
+            "SELECT a.*,l.repo_id,l.path,l.access FROM active_cache_entries a "
+            "JOIN cache_locators l ON l.id=a.locator_id "
+            "WHERE l.access='target_active' AND a.state IN ('active','evicting') "
+            "ORDER BY a.last_used,a.id"
         )
         from repo_catalog.adapters.filesystem.capacity import Capacity
 
@@ -73,8 +81,15 @@ class CacheManager:
             try:
                 with FileLock(s.path / f"locks/cache-{row['id']}.lock"):
                     latest = s.one(
-                        "SELECT * FROM cache_entries WHERE id=?", (row["id"],)
+                        "SELECT a.*,l.repo_id,l.path,l.access FROM active_cache_entries a "
+                        "JOIN cache_locators l ON l.id=a.locator_id "
+                        "WHERE a.id=? AND l.access='target_active'",
+                        (row["id"],),
                     )
+                    if latest is None:
+                        raise CatalogError(
+                            "CACHE_INTEGRITY", "Active cache disappeared"
+                        )
                     reasons = self.gate(latest)
                     if apply and candidate and not reasons:
                         # Leases of dead parents are safe to clear only after the inherited OS lock is acquired.
@@ -84,7 +99,7 @@ class CacheManager:
                                 (row["id"],),
                             )
                             s.execute(
-                                "UPDATE cache_entries SET state='evicting' WHERE id=?",
+                                "UPDATE active_cache_entries SET state='evicting' WHERE id=?",
                                 (row["id"],),
                             )
                         if path.exists():
@@ -108,12 +123,16 @@ class CacheManager:
                             )
                         with s.transaction():
                             s.execute(
-                                "UPDATE cache_entries SET state='evicted',bytes=0 WHERE id=?",
+                                "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE id=?",
                                 (row["id"],),
                             )
                             s.execute(
+                                "UPDATE cache_locators SET state='missing' WHERE id=? AND access='target_active'",
+                                (row["locator_id"],),
+                            )
+                            s.execute(
                                 "UPDATE content_locations SET state='unavailable' WHERE cache_id=?",
-                                (row["id"],),
+                                (row["locator_id"],),
                             )
                         used -= bytes_used
                         action = "evicted"

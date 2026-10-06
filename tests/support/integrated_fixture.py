@@ -1,4 +1,4 @@
-"""Disposable operational v2 evidence for the integrated offline milestone.
+"""Disposable operational v2 evidence for catalog3 salvage acceptance.
 
 Fixture creation performs SQLite/file writes only. All names, payloads and
 objects are synthetic; no Git command, API call or user cache is involved.
@@ -12,9 +12,9 @@ import json
 import sqlite3
 from pathlib import Path
 
+from tests.support.identity_source import IDS as IDENTITY_IDS
+from tests.support.identity_source import make_identity_source
 from tests.support.operational_source import add_operational_indexes
-from tests.support.p3b_fixture import IDS as IDENTITY_IDS
-from tests.support.p3b_fixture import make_identity_source
 
 IDS = {
     **IDENTITY_IDS,

@@ -77,10 +77,11 @@ def runtime():
         run_id=os.environ.get("GITHUB_RUN_ID"),
         run_attempt=os.environ.get("GITHUB_RUN_ATTEMPT"),
         feature_sha=os.environ.get("CI_FEATURE_SHA"),
-        tracked_changes=subprocess.run(
-            ["git", "diff", "--quiet"], check=False
-        ).returncode
-        != 0,
+        tracked_changes=bool(
+            subprocess.check_output(
+                ["git", "status", "--porcelain", "--untracked-files=normal"], text=True
+            )
+        ),
     )
 
 
@@ -112,8 +113,6 @@ def run(args):
         raise ValueError("A command is required")
     args.output.mkdir(parents=True, exist_ok=True)
     meta = runtime()
-    if args.sqlite:
-        meta["sqlite"] = args.sqlite  # minimum lane itself asserts its actual runtime
     started_at = datetime.now(UTC).isoformat()
     if args.junit:
         args.junit.parent.mkdir(parents=True, exist_ok=True)
@@ -233,7 +232,6 @@ def main():
         "--mode", choices=("sequential", "xdist", "sharded"), default="sequential"
     )
     execute.add_argument("--workers", type=int, default=1)
-    execute.add_argument("--sqlite")
     execute.add_argument("--series")
     execute.add_argument("--reference", type=Path)
     execute.add_argument("command", nargs=argparse.REMAINDER)

@@ -19,94 +19,97 @@ class GitImporter:
         self.s, self.token = store, token
 
     def sync(self, repo, job, *, pr_roots=None, observation_id=None, endpoint_id=None):
+        """Collect into catalog3; committed fixed roots are reused across retries."""
         s = self.s
         kind = "pr" if pr_roots else "git"
-        request = json.dumps(pr_roots or {}, sort_keys=True)
+        request = json.dumps({"roots": pr_roots or []}, sort_keys=True)
         run = s.one(
-            "SELECT * FROM collection_runs WHERE job_id=? AND repo_id=? AND kind=? AND request=? AND state!='published' ORDER BY generation DESC LIMIT 1",
+            "SELECT a.*,p.generation,p.attempt,p.state,p.cache_id FROM git_acquisitions a "
+            "JOIN acquisition_progress p ON p.acquisition_id=a.id WHERE p.job_id=? "
+            "AND a.repo_id=? AND a.kind=? AND a.request=? ORDER BY p.generation DESC LIMIT 1",
             (job, repo["id"], kind, request),
         )
         selected = endpoint(
             s, repo["id"], (run["endpoint_id"] if run else None) or endpoint_id
         )
+        attempt = s.one("SELECT current_attempt FROM jobs WHERE id=?", (job,))[0]
         if not run:
             generation = s.one(
-                "SELECT coalesce(max(generation),0)+1 FROM collection_runs WHERE repo_id=?",
+                "SELECT coalesce(max(p.generation),0)+1 FROM acquisition_progress p JOIN git_acquisitions a ON a.id=p.acquisition_id WHERE a.repo_id=?",
                 (repo["id"],),
             )[0]
             cache = s.one(
-                "SELECT * FROM cache_entries WHERE repo_id=? AND state='available' ORDER BY generation DESC LIMIT 1",
+                "SELECT c.*,l.repo_id,l.path FROM active_cache_entries c JOIN cache_locators l ON l.id=c.locator_id "
+                "WHERE l.repo_id=? AND l.access='target_active' AND l.state='available' AND c.state='active' ORDER BY c.generation DESC LIMIT 1",
                 (repo["id"],),
             )
-            if not cache:
-                cid = str(uuid.uuid4())
-                relative = f"cache/{repo['id']}/{generation}.git"
-                with s.transaction():
-                    s.execute(
-                        "INSERT INTO cache_entries VALUES(?,?,?,?,?,?,?)",
-                        (
-                            cid,
-                            repo["id"],
-                            generation,
-                            relative,
-                            "available",
-                            time.time(),
-                            0,
-                        ),
-                    )
-                cache = s.one("SELECT * FROM cache_entries WHERE id=?", (cid,))
             rid = str(uuid.uuid4())
-            attempt = s.one("SELECT attempt FROM jobs WHERE id=?", (job,))[0]
             with s.transaction():
+                if not cache:
+                    cid = str(uuid.uuid4())
+                    relative = f"cache/{repo['id']}/{generation}.git"
+                    s.execute(
+                        "INSERT INTO cache_locators VALUES(?,?,?,'target_active','available')",
+                        (cid, repo["id"], relative),
+                    )
+                    s.execute(
+                        "INSERT INTO active_cache_entries VALUES(?,?,?,'active',?,0)",
+                        (cid, cid, generation, time.time()),
+                    )
+                    cache = s.one(
+                        "SELECT c.*,l.repo_id,l.path FROM active_cache_entries c JOIN cache_locators l ON l.id=c.locator_id WHERE c.id=?",
+                        (cid,),
+                    )
                 s.execute(
-                    "INSERT INTO collection_runs(id,job_id,repo_id,cache_id,generation,attempt,state,started_at,kind,request) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO git_acquisitions(id,repo_id,endpoint_id,endpoint_url,source_id,kind,started_at,request) VALUES(?,?,?,?,?,?,?,?)",
                     (
                         rid,
-                        job,
                         repo["id"],
-                        cache["id"],
-                        generation,
-                        attempt,
-                        "planned",
-                        now(),
+                        selected["id"],
+                        selected["url"],
+                        repo.get("source_id") if isinstance(repo, dict) else None,
                         kind,
+                        now(),
                         request,
                     ),
                 )
                 s.execute(
-                    "INSERT INTO preservation_obligations(run_id,cache_id) VALUES(?,?)",
-                    (rid, cache["id"]),
+                    "INSERT INTO acquisition_progress(acquisition_id,job_id,attempt,state,generation,cache_id) VALUES(?,?,?,'planned',?,?)",
+                    (rid, job, attempt, generation, cache["id"]),
+                )
+                s.execute(
+                    "INSERT INTO preservation_obligations VALUES(?,?,0,0,0,0,0)",
+                    (rid, cache["locator_id"]),
                 )
                 if kind == "git":
                     s.execute(
-                        "INSERT INTO snapshots VALUES(?,?,?,?,0,?)",
+                        "INSERT INTO snapshots VALUES(?,?,?,0,?,?)",
                         (rid, rid, repo["id"], generation, now()),
                     )
-            run = s.one("SELECT * FROM collection_runs WHERE id=?", (rid,))
-        attempt = getattr(
-            s,
-            "expected_attempt",
-            s.one("SELECT attempt FROM jobs WHERE id=?", (job,))[0],
-        )
-        if run["attempt"] != attempt:
+            run = s.one(
+                "SELECT a.*,p.generation,p.attempt,p.state,p.cache_id FROM git_acquisitions a JOIN acquisition_progress p ON p.acquisition_id=a.id WHERE a.id=?",
+                (rid,),
+            )
+        elif run["state"] == "published":
+            return self.result(repo, run, kind)
+        elif run["attempt"] != attempt:
             with s.transaction():
                 s.execute(
-                    "UPDATE collection_runs SET attempt=? WHERE id=?",
+                    "UPDATE acquisition_progress SET attempt=? WHERE acquisition_id=?",
                     (attempt, run["id"]),
                 )
-            run = s.one("SELECT * FROM collection_runs WHERE id=?", (run["id"],))
-        if not run["endpoint_url"] and not run["roots_manifest"]:
-            with s.transaction():
-                s.execute(
-                    "UPDATE collection_runs SET endpoint_id=?,endpoint_url=? WHERE id=?",
-                    (selected["id"], selected["url"], run["id"]),
-                )
-            run = s.one("SELECT * FROM collection_runs WHERE id=?", (run["id"],))
-        # A run retains its chosen URL across retries and preferred-URL changes.
-        repo = {**dict(repo), "url": run["endpoint_url"] or selected["url"]}
-        cache = s.one("SELECT * FROM cache_entries WHERE id=?", (run["cache_id"],))
+        repo = {**dict(repo), "url": run["endpoint_url"]}
+        cache = s.one(
+            "SELECT c.*,l.repo_id,l.path,l.access,l.state AS locator_state FROM active_cache_entries c JOIN cache_locators l ON l.id=c.locator_id WHERE c.id=?",
+            (run["cache_id"],),
+        )
         path = (s.path / cache["path"]).resolve()
-        if not path.is_relative_to(s.path / "cache") or cache["state"] != "available":
+        if (
+            cache["access"] != "target_active"
+            or not path.is_relative_to((s.path / "cache").resolve())
+            or cache["state"] != "active"
+            or cache["locator_state"] != "available"
+        ):
             raise CatalogError("CACHE_UNAVAILABLE", "Run cache generation unavailable")
         with FileLock(
             s.path / f"locks/cache-{cache['id']}.lock", inheritable=True
@@ -123,18 +126,16 @@ class GitImporter:
                 self.token, lock, lambda: Capacity(s).monitor(job, baseline)
             )
             with s.transaction():
-                s.execute(
-                    "INSERT OR REPLACE INTO cache_leases VALUES(?,?,?,?)",
-                    (
-                        cache["id"],
-                        job,
-                        s.one("SELECT attempt FROM jobs WHERE id=?", (job,))[0],
-                        now(),
-                    ),
-                )
+                if not s.one(
+                    "SELECT 1 FROM cache_leases WHERE cache_id=? AND job_id=? AND attempt=?",
+                    (cache["id"], job, attempt),
+                ):
+                    s.execute(
+                        "INSERT INTO cache_leases VALUES(?,?,?,?)",
+                        (cache["id"], job, attempt, now()),
+                    )
             try:
                 if not path.exists():
-                    # Format is detected from successful remote ref advertisement, never from dates.
                     advertised = runner.run(["ls-remote", repo["url"]])
                     first = next(
                         (line.split()[0] for line in advertised.splitlines() if line),
@@ -166,7 +167,7 @@ class GitImporter:
                 ):
                     raise CatalogError(
                         "INCOMPLETE_CLOSURE",
-                        "Shallow/promisor/alternate cache is not a full independent closure",
+                        "Cache must have an independent full closure",
                     )
                 if run["roots_manifest"]:
                     refs = json.loads(run["roots_manifest"])
@@ -174,9 +175,14 @@ class GitImporter:
                     namespace = f"refs/intake/{run['id']}"
                     with s.transaction():
                         s.execute(
-                            "UPDATE collection_runs SET state='fetching',object_format=? WHERE id=?",
-                            (fmt, run["id"]),
+                            "UPDATE acquisition_progress SET state='fetching' WHERE acquisition_id=?",
+                            (run["id"],),
                         )
+                        if run["object_format"] is None:
+                            s.execute(
+                                "UPDATE git_acquisitions SET object_format=? WHERE id=?",
+                                (fmt, run["id"]),
+                            )
                     specs = (
                         [
                             f"+refs/heads/*:{namespace}/heads/*",
@@ -235,52 +241,57 @@ class GitImporter:
                     refs = []
                     for line in raw.splitlines():
                         ref, oid, typ, peeled = line.split(b"\0")
-                        suffix = ref.removeprefix(namespace.encode() + b"/")
-                        original = b"refs/" + suffix
-                        refs.append(
-                            {
-                                "name": original.decode("utf8", "backslashreplace"),
-                                "name_b64": base64.b64encode(original).decode(),
-                                "oid": oid.decode(),
-                                "type": typ.decode(),
-                                "peeled": peeled.decode() or None,
-                            }
+                        original = b"refs/" + ref.removeprefix(
+                            namespace.encode() + b"/"
                         )
-                    if kind == "pr":
-                        for r in refs:
-                            root = pr_roots[int(r["name"].split("/")[-1])]
-                            r.update(
+                        item = {
+                            "name": original.decode("utf8", "backslashreplace"),
+                            "name_b64": base64.b64encode(original).decode(),
+                            "oid": oid.decode(),
+                            "type": typ.decode(),
+                            "peeled": peeled.decode() or None,
+                        }
+                        if kind == "pr":
+                            root = pr_roots[int(item["name"].split("/")[-1])]
+                            item.update(
                                 role=root["role"],
                                 number=root["number"],
                                 expected=root["expected"],
                             )
-                            if r["oid"] != root["expected"]:
+                            if item["oid"] != root["expected"]:
                                 raise CatalogError(
                                     "PR_CODE_RACE",
                                     "API and fetched PR code OIDs differ",
                                     retryable=True,
                                 )
+                        refs.append(item)
+                    observed_at = now()
                     with s.transaction():
                         s.execute(
-                            "UPDATE collection_runs SET state='refs_captured',roots_manifest=?,refs_at=?,object_format=? WHERE id=?",
-                            (json.dumps(refs), now(), fmt, run["id"]),
+                            "UPDATE git_acquisitions SET roots_manifest=?,refs_observed_at=?,observed_at=? WHERE id=?",
+                            (json.dumps(refs), observed_at, observed_at, run["id"]),
                         )
                         s.execute(
-                            "UPDATE preservation_obligations SET roots_fixed=1 WHERE run_id=?",
+                            "UPDATE acquisition_progress SET state='refs_captured' WHERE acquisition_id=?",
                             (run["id"],),
                         )
-                        for r in refs:
+                        s.execute(
+                            "UPDATE preservation_obligations SET roots_fixed=1 WHERE acquisition_id=?",
+                            (run["id"],),
+                        )
+                        for ordinal, r in enumerate(refs):
+                            raw_name = base64.b64decode(r["name_b64"])
                             if kind == "git":
                                 refkind = (
                                     "head"
-                                    if r["name"].startswith("refs/heads/")
+                                    if raw_name.startswith(b"refs/heads/")
                                     else "tag"
                                 )
                                 s.execute(
                                     "INSERT INTO ref_observations VALUES(?,?,?,?,?,?,?)",
                                     (
                                         run["id"],
-                                        base64.b64decode(r["name_b64"]),
+                                        raw_name,
                                         refkind,
                                         fmt,
                                         bytes.fromhex(r["oid"]),
@@ -290,100 +301,175 @@ class GitImporter:
                                         r["type"],
                                     ),
                                 )
-                            s.execute(
-                                "INSERT INTO acquisition_roots(run_id,repo_id,object_format,oid,role,pr_number,observation_id,expected_oid) VALUES(?,?,?,?,?,?,?,?)",
-                                (
-                                    run["id"],
-                                    repo["id"],
-                                    fmt,
-                                    bytes.fromhex(r["oid"]),
-                                    r.get(
-                                        "role",
-                                        "head"
-                                        if r["name"].startswith("refs/heads/")
-                                        else "tag",
-                                    ),
-                                    r.get("number"),
-                                    observation_id,
-                                    r.get("expected"),
-                                ),
+                            root_oid = bytes.fromhex(r["peeled"] or r["oid"])
+                            root = s.one(
+                                "SELECT id FROM acquisition_roots WHERE acquisition_id=? AND object_format=? AND oid=? AND role='traversal'",
+                                (run["id"], fmt, root_oid),
                             )
+                            root_id = (
+                                root[0]
+                                if root
+                                else s.execute(
+                                    "INSERT INTO acquisition_roots(acquisition_id,object_format,oid,role,repo_id,expected_oid,published) VALUES(?,?,?,'traversal',?,?,0)",
+                                    (
+                                        run["id"],
+                                        fmt,
+                                        root_oid,
+                                        repo["id"],
+                                        bytes.fromhex(r["expected"])
+                                        if r.get("expected")
+                                        else None,
+                                    ),
+                                ).lastrowid
+                            )
+                            if kind == "git":
+                                s.execute(
+                                    "INSERT INTO root_origins(root_id,origin_kind,raw_ref_name,source_ordinal,snapshot_id,repo_id) VALUES(?,'ref',?,?,?,?)",
+                                    (root_id, raw_name, ordinal, run["id"], repo["id"]),
+                                )
                 if kind != "pr" or not self.reusable_direct_roots(repo, fmt, pr_roots):
                     self.import_objects(path, fmt, refs, repo, run, job, lock)
                 self.manifests(fmt, refs, job)
-                # Required durable text is only all observed heads tips, not all historical blobs.
-                required = s.all(
-                    "SELECT DISTINCT b.object_id FROM root_manifest_entries e JOIN blob_content_map b ON b.object_id=e.object_id WHERE e.tree_id IN (SELECT c.tree_id FROM acquisition_roots r JOIN git_objects g ON g.object_format=r.object_format AND g.oid=r.oid JOIN commits c ON c.object_id=g.id WHERE r.run_id=? AND r.role='head')",
-                    (run["id"],),
-                )
-                for item in required:
-                    self.preserve_text(path, fmt, item[0], run, runner)
+                required = set()
+                for ref in refs:
+                    if (
+                        ref["name"].startswith("refs/heads/")
+                        or ref.get("role") == "head"
+                    ):
+                        obj = s.object_id(fmt, bytes.fromhex(ref["oid"]))
+                        tree = s.one(
+                            "SELECT tree_id FROM commits WHERE object_id=?", (obj,)
+                        )
+                        if tree:
+                            required.update(
+                                row[0]
+                                for row in s.all(
+                                    "SELECT b.object_id FROM root_manifest_entries e JOIN blob_content_map b ON b.object_id=e.object_id WHERE e.tree_id=?",
+                                    (tree[0],),
+                                )
+                            )
+                for obj in required:
+                    self.preserve_text(path, fmt, obj, run, runner)
                 hook("before_publish")
                 self.token.check()
                 with s.transaction():
-                    current_attempt = s.one(
-                        "SELECT attempt,state FROM jobs WHERE id=?", (job,)
+                    active = s.one(
+                        "SELECT j.current_attempt,a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE j.id=?",
+                        (job,),
                     )
-                    run_attempt = s.one(
-                        "SELECT attempt,state FROM collection_runs WHERE id=?",
+                    progress = s.one(
+                        "SELECT attempt FROM acquisition_progress WHERE acquisition_id=?",
                         (run["id"],),
                     )
                     if (
-                        current_attempt["attempt"] != attempt
-                        or current_attempt["state"] != "running"
-                        or run_attempt["attempt"] != attempt
+                        active["current_attempt"] != attempt
+                        or active["state"] != "running"
+                        or progress[0] != attempt
                     ):
                         raise CatalogError(
                             "STALE_ATTEMPT",
-                            "Refusing publication from an obsolete attempt",
+                            "Refusing publication from obsolete attempt",
                         )
                     s.execute(
-                        "UPDATE preservation_obligations SET structure_done=1,digest_done=1,text_done=1,published=1 WHERE run_id=?",
+                        "UPDATE preservation_obligations SET structure_done=1,digest_done=1,text_done=1,published=1 WHERE acquisition_id=?",
                         (run["id"],),
                     )
                     s.execute(
-                        "UPDATE collection_runs SET state='published',ended_at=? WHERE id=?",
+                        "UPDATE acquisition_progress SET state='published',ended_at=? WHERE acquisition_id=?",
                         (now(), run["id"]),
                     )
                     s.execute(
-                        "UPDATE acquisition_roots SET published=1 WHERE run_id=?",
+                        "UPDATE acquisition_roots SET published=1 WHERE acquisition_id=?",
                         (run["id"],),
                     )
                     if kind == "git":
                         s.execute(
                             "UPDATE snapshots SET published=1 WHERE id=?", (run["id"],)
                         )
+                        incoming = s.one(
+                            "SELECT refs_observed_at FROM git_acquisitions WHERE id=?",
+                            (run["id"],),
+                        )[0]
                         current = s.one(
-                            "SELECT generation FROM snapshots WHERE id=(SELECT current_snapshot FROM repositories WHERE id=?)",
+                            "SELECT a.refs_observed_at FROM repositories r JOIN snapshots x ON x.id=r.current_snapshot_id JOIN git_acquisitions a ON a.id=x.acquisition_id WHERE r.id=?",
                             (repo["id"],),
                         )
-                        if not current or current[0] < run["generation"]:
+                        if (
+                            not current
+                            or current[0] is None
+                            or s.one(
+                                "SELECT julianday(?) > julianday(?)",
+                                (incoming, current[0]),
+                            )[0]
+                        ):
                             s.execute(
-                                "UPDATE repositories SET current_snapshot=? WHERE id=?",
+                                "UPDATE repositories SET current_snapshot_id=? WHERE id=?",
                                 (run["id"], repo["id"]),
                             )
                     for component in ("structure", "digests", "heads-text", "refs"):
-                        s.coverage(run["id"], component, "complete")
+                        s.coverage(
+                            repo["id"],
+                            component,
+                            "complete",
+                            {"acquisition_id": run["id"]},
+                        )
                     s.publish()
-                return {
-                    "repo_id": repo["id"],
-                    "run_id": run["id"],
-                    "snapshot_id": run["id"] if kind == "git" else None,
-                    "state": "complete",
-                    "endpoint_id": run["endpoint_id"],
-                    "endpoint_url": run["endpoint_url"],
-                }
+                return self.result(repo, run, kind)
             finally:
                 with s.transaction():
                     s.execute(
-                        "DELETE FROM cache_leases WHERE cache_id=? AND job_id=?",
-                        (cache["id"], job),
+                        "DELETE FROM cache_leases WHERE cache_id=? AND job_id=? AND attempt=?",
+                        (cache["id"], job, attempt),
                     )
                     s.execute(
-                        "UPDATE cache_entries SET last_used=? WHERE id=?",
+                        "UPDATE active_cache_entries SET last_used=? WHERE id=?",
                         (time.time(), cache["id"]),
                     )
                     Capacity(s).release(job)
+
+    @staticmethod
+    def result(repo, run, kind):
+        return {
+            "repo_id": repo["id"],
+            "run_id": run["id"],
+            "snapshot_id": run["id"] if kind == "git" else None,
+            "state": "complete",
+            "endpoint_id": run["endpoint_id"],
+            "endpoint_url": run["endpoint_url"],
+        }
+
+    def ensure(self, table, columns, values, keys):
+        """Insert an immutable fact only when absent; conflict triggers stay enabled."""
+        items = dict(zip(columns, values))
+        where = " AND ".join(f"{name}=?" for name in keys)
+        prior = self.s.one(
+            f"SELECT * FROM {table} WHERE {where}", tuple(items[name] for name in keys)
+        )
+        if prior:
+            # Metadata representations and original observation timestamps can
+            # differ after salvage; actual Git bytes and digests cannot.
+            ignored = {
+                "verified",
+                "verified_at",
+                "pipeline_version",
+                "metadata",
+                "complete",
+            }
+            for name, value in items.items():
+                if name not in ignored and prior[name] != value:
+                    raise CatalogError(
+                        "INTEGRITY_ERROR",
+                        f"Stored {table} fact differs from acquired bytes",
+                    )
+            if table == "git_objects" and items["verified"] and not prior["verified"]:
+                self.s.execute(
+                    "UPDATE git_objects SET verified=1 WHERE id=?", (prior["id"],)
+                )
+            return
+        self.s.execute(
+            f"INSERT INTO {table}({','.join(columns)}) VALUES({','.join('?' for _ in values)})",
+            values,
+        )
 
     def reusable_direct_roots(self, repo, fmt, roots):
         for root in roots:
@@ -392,7 +478,7 @@ class GitImporter:
             if root["role"] == "head" or root["ref"] != root.get("expected"):
                 return False
             if not self.s.one(
-                "SELECT 1 FROM git_objects g JOIN repository_object_sources p ON p.object_id=g.id JOIN collection_runs r ON r.id=p.run_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repo_id=? AND r.state='published' LIMIT 1",
+                "SELECT 1 FROM git_objects g JOIN repository_object_sources p ON p.object_id=g.id JOIN acquisition_progress r ON r.acquisition_id=p.acquisition_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repo_id=? AND r.state='published' LIMIT 1",
                 (fmt, bytes.fromhex(root["ref"]), repo["id"]),
             ):
                 return False
@@ -403,7 +489,9 @@ class GitImporter:
         capacity = Capacity(s)
         next_capacity_scan = 0.0
         used = 0
-        roots = b"".join(r["oid"].encode() + b"\n" for r in refs)
+        roots = b"".join(
+            oid.encode() + b"\n" for oid in sorted({r["oid"] for r in refs})
+        )
         spool = s.path / "work" / f"{run['id']}.objects"
         with spool.open("w+b") as out:
             p = subprocess.run(
@@ -546,10 +634,6 @@ class GitImporter:
                             "INTEGRITY_ERROR",
                             "Git object OID or batch framing mismatch",
                         )
-                    existing = s.one(
-                        "SELECT * FROM git_objects WHERE object_format=? AND oid=?",
-                        (fmt, bytes.fromhex(oid.decode())),
-                    )
                     if typ == "blob":
                         text_state = "oversize"
                         if text_buffer is not None:
@@ -563,16 +647,17 @@ class GitImporter:
                         self.save_blob(fmt, oid, size, hashes, text_state, repo, run)
                     else:
                         with s.transaction():
-                            s.execute(
-                                "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES(?,?,?,?,1) ON CONFLICT(object_format,oid) DO NOTHING",
-                                (fmt, bytes.fromhex(oid.decode()), typ, size),
+                            self.ensure(
+                                "git_objects",
+                                ("object_format", "oid", "type", "size", "verified"),
+                                (fmt, bytes.fromhex(oid.decode()), typ, size, 1),
+                                ("object_format", "oid"),
                             )
                             obj = s.object_id(fmt, bytes.fromhex(oid.decode()))
                             self.source(obj, repo, run)
                         # Deferred parsing allows arbitrary rev-list object order.
                         raw_path = s.path / "work" / f"{run['id']}-{oid.decode()}.raw"
-                        if existing is None or not self.parsed(obj, typ):
-                            raw_path.write_bytes(data)
+                        raw_path.write_bytes(data)
                 if reader.wait() != 0:
                     raise CatalogError("INCOMPLETE_CLOSURE", "cat-file failed")
             finally:
@@ -595,37 +680,35 @@ class GitImporter:
         hook("after_digest")
 
     def source(self, obj, repo, run):
-        prior = self.s.one(
-            "SELECT 1 FROM repository_object_sources p JOIN collection_runs r ON r.id=p.run_id WHERE p.repo_id=? AND p.object_id=? AND r.state='published'",
-            (repo["id"], obj),
+        self.ensure(
+            "repository_object_sources",
+            ("repo_id", "object_id", "acquisition_id"),
+            (repo["id"], obj, run["id"]),
+            ("repo_id", "object_id", "acquisition_id"),
         )
-        if not prior:
-            self.s.execute(
-                "INSERT OR IGNORE INTO repository_object_sources VALUES(?,?,?)",
-                (repo["id"], obj, run["id"]),
-            )
 
     def save_blob(self, fmt, oid, size, hashes, state, repo, run):
         s = self.s
         raw = bytes.fromhex(oid.decode())
         previous = s.one(
-            "SELECT c.id,c.byte_length,d.digest FROM git_objects g JOIN blob_content_map b ON b.object_id=g.id JOIN contents c ON c.id=b.content_id JOIN content_digests d ON d.content_id=c.id AND d.algorithm='sha256' WHERE g.object_format=? AND g.oid=?",
+            "SELECT c.id,c.byte_length FROM git_objects g JOIN blob_content_map b ON b.object_id=g.id JOIN contents c ON c.id=b.content_id WHERE g.object_format=? AND g.oid=?",
             (fmt, raw),
         )
-        if previous and (
-            previous["digest"] != hashes["sha256"].digest()
-            or previous["byte_length"] != size
-        ):
+        if previous and previous["byte_length"] != size:
             raise CatalogError(
-                "INTEGRITY_ERROR", "Existing OID maps to different raw content"
+                "INTEGRITY_ERROR", "Existing OID maps to different raw length"
             )
         with s.transaction():
-            s.execute(
-                "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES(?,?,'blob',?,1) ON CONFLICT(object_format,oid) DO NOTHING",
-                (fmt, raw, size),
+            self.ensure(
+                "git_objects",
+                ("object_format", "oid", "type", "size", "verified"),
+                (fmt, raw, "blob", size, 1),
+                ("object_format", "oid"),
             )
             obj = s.object_id(fmt, raw)
-            if not previous:
+            if previous:
+                cid = previous["id"]
+            else:
                 candidates = s.all(
                     "SELECT c.id FROM contents c JOIN content_digests d ON d.content_id=c.id WHERE d.algorithm='sha256' AND d.digest=? AND c.byte_length=?",
                     (hashes["sha256"].digest(), size),
@@ -647,13 +730,22 @@ class GitImporter:
                         "INSERT INTO contents(byte_length,text_state,created_at) VALUES(?,?,?)",
                         (size, state, now()),
                     ).lastrowid
-                for algo, h in hashes.items():
-                    s.execute(
-                        "INSERT OR IGNORE INTO content_digests VALUES(?,?,?,?,?,?)",
-                        (cid, "raw-content-v1", algo, h.digest(), now(), "v1"),
-                    )
                 s.execute(
                     "INSERT INTO blob_content_map VALUES(?,?,?)", (obj, cid, run["id"])
+                )
+            for algo, h in hashes.items():
+                self.ensure(
+                    "content_digests",
+                    (
+                        "content_id",
+                        "representation",
+                        "algorithm",
+                        "digest",
+                        "verified_at",
+                        "pipeline_version",
+                    ),
+                    (cid, "raw-content-v1", algo, h.digest(), now(), "v1"),
+                    ("content_id", "representation", "algorithm"),
                 )
             self.source(obj, repo, run)
 
@@ -684,24 +776,32 @@ class GitImporter:
                 for k, v in entries
                 if k not in (b"tree", b"parent")
             }
-            s.execute(
-                "INSERT OR IGNORE INTO commits VALUES(?,?,?,?,?)",
+            self.ensure(
+                "commits",
+                ("object_id", "tree_id", "raw_headers", "raw_message", "metadata"),
                 (obj["id"], tid, headers, message, json.dumps(metadata)),
+                ("object_id",),
             )
             for ordinal, parent in enumerate(v for k, v in entries if k == b"parent"):
                 pid = s.object_id(fmt, bytes.fromhex(parent.decode()))
                 if pid is None:
                     raise CatalogError("INCOMPLETE_CLOSURE", "Missing parent")
-                s.execute(
-                    "INSERT OR IGNORE INTO commit_parents VALUES(?,?,?)",
+                self.ensure(
+                    "commit_parents",
+                    ("commit_id", "parent_ordinal", "parent_id"),
                     (obj["id"], ordinal, pid),
+                    ("commit_id", "parent_ordinal"),
                 )
-            s.execute(
-                "INSERT OR IGNORE INTO search_documents(kind,source_key,body) VALUES('commits',?,?)",
-                (str(obj["id"]), message.decode("utf8", "replace")),
+            self.ensure(
+                "search_documents",
+                ("kind", "source_key", "body", "metadata"),
+                ("commits", str(obj["id"]), message.decode("utf8", "replace"), "{}"),
+                ("kind", "source_key"),
             )
         elif obj["type"] == "tree":
-            s.execute("INSERT OR IGNORE INTO root_manifests VALUES(?,0)", (obj["id"],))
+            self.ensure(
+                "root_manifests", ("tree_id", "complete"), (obj["id"], 0), ("tree_id",)
+            )
             offset = 0
             n = 20 if fmt == "sha1" else 32
             while offset < len(data):
@@ -715,9 +815,18 @@ class GitImporter:
                 child_id = None if mode == 0o160000 else s.object_id(fmt, child)
                 if child_id is None and mode != 0o160000:
                     raise CatalogError("INCOMPLETE_CLOSURE", "Missing tree child")
-                s.execute(
-                    "INSERT OR IGNORE INTO tree_entries VALUES(?,?,?,?,?,?)",
+                self.ensure(
+                    "tree_entries",
+                    (
+                        "tree_id",
+                        "raw_name",
+                        "mode",
+                        "child_format",
+                        "child_oid",
+                        "child_id",
+                    ),
                     (obj["id"], name, mode, fmt, child, child_id),
+                    ("tree_id", "raw_name"),
                 )
                 offset = end + 1 + n
         elif obj["type"] == "tag":
@@ -725,9 +834,11 @@ class GitImporter:
             tid = s.object_id(fmt, target)
             if tid is None:
                 raise CatalogError("INCOMPLETE_CLOSURE", "Missing tag target")
-            s.execute(
-                "INSERT OR IGNORE INTO tag_objects VALUES(?,?,?)",
+            self.ensure(
+                "tag_objects",
+                ("object_id", "target_id", "raw_payload"),
                 (obj["id"], tid, data),
+                ("object_id",),
             )
 
     def manifests(self, fmt, refs, job):
@@ -750,10 +861,20 @@ class GitImporter:
 
         def flush():
             with s.transaction():
-                s.connection.executemany(
-                    "INSERT OR IGNORE INTO root_manifest_entries VALUES(?,?,?,?,?,?)",
-                    batch,
-                )
+                for row in batch:
+                    self.ensure(
+                        "root_manifest_entries",
+                        (
+                            "tree_id",
+                            "raw_path",
+                            "mode",
+                            "object_id",
+                            "object_format",
+                            "oid",
+                        ),
+                        row,
+                        ("tree_id", "raw_path"),
+                    )
             batch.clear()
 
         while stack:
@@ -805,11 +926,21 @@ class GitImporter:
         text = raw.decode("utf8", "strict")
         with s.transaction():
             s.execute("UPDATE contents SET raw_text=? WHERE id=?", (text, r["id"]))
-            s.execute(
-                "INSERT OR IGNORE INTO content_locations VALUES(?,'durable-content',?,NULL,'available')",
-                (r["id"], f"sqlite:contents/{r['id']}"),
+            self.ensure(
+                "content_locations",
+                ("content_id", "kind", "locator", "cache_id", "state"),
+                (
+                    r["id"],
+                    "durable-content",
+                    f"sqlite:contents/{r['id']}",
+                    None,
+                    "available",
+                ),
+                ("content_id", "kind", "locator"),
             )
-            s.execute(
-                "INSERT OR IGNORE INTO search_documents(kind,source_key,body) VALUES('code',?,?)",
-                (str(r["id"]), text),
+            self.ensure(
+                "search_documents",
+                ("kind", "source_key", "body", "metadata"),
+                ("code", str(r["id"]), text, "{}"),
+                ("kind", "source_key"),
             )

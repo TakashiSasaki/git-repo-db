@@ -1,4 +1,7 @@
 {
+  "status": "historical-only",
+  "acceptance_gate": false,
+  "current_policy": "scripts/ci_dependencies.json",
   "version": 1,
   "base_sha": "9a4110185d7e7abffc291f9cfd118ca71587f998",
   "starting_feature_sha": "84416f90cd1d06b87c605545ecf730cbda75165b",

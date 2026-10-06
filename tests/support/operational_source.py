@@ -1,27 +1,11 @@
 """Synthetic operational v2 fixtures prepared outside the converter guard."""
 
-import copy
+import sqlite3
 from pathlib import Path
 
-from repo_catalog.adapters.sqlite import index
-from repo_catalog.adapters.sqlite.store import Store
-from repo_catalog.application.maintenance_service import MaintenanceService
-from repo_catalog.config import DEFAULTS, serialize
-from repo_catalog.domain.models import CatalogError
+from tests.support.legacy_v2 import initialize
 
 STAMP = "2026-01-01T00:00:00Z"
-
-
-class PartialIndex:
-    """Cancel the actual rebuild after its first committed 200-document batch."""
-
-    def __init__(self):
-        self.calls = 0
-
-    def check(self):
-        self.calls += 1
-        if self.calls == 3:
-            raise CatalogError("CANCELLED", "Synthetic fixture checkpoint")
 
 
 def add_operational_indexes(
@@ -33,53 +17,62 @@ def add_operational_indexes(
     ones; all other acquisition facts and deliberately invalid values remain.
     """
     database = Path(database)
-    config = copy.deepcopy(DEFAULTS)
-    config["database"]["filename"] = database.name
-    config["cache"].update(max_bytes=67108864, min_free_bytes=0)
-    (database.parent / "catalog.toml").write_text(serialize(config))
-    with Store(database.parent) as store:
-        with store.transaction():
-            store.execute("DELETE FROM index_membership")
-            store.execute("DELETE FROM index_generations")
-            store.execute("DELETE FROM search_documents")
-            for kind in ("code", "pr", "commits"):
-                for number in range(documents):
-                    store.execute(
-                        "INSERT INTO search_documents(kind,source_key,body,metadata) VALUES(?,?,?,?)",
-                        (
-                            kind,
-                            f"synthetic-{kind}-{number}",
-                            f"Original Abc {kind} {number} 日本語",
-                            "{}",
-                        ),
-                    )
-        for kind in kinds:
-            try:
-                index.rebuild(store, kind, token=PartialIndex() if partial else None)
-            except CatalogError as exc:
-                if not partial or exc.code != "CANCELLED":
-                    raise
-        with store.transaction():
-            store.execute("UPDATE index_generations SET created_at=?", (STAMP,))
+    with sqlite3.connect(database) as db:
+        db.execute("PRAGMA foreign_keys=ON")
+        db.execute("DELETE FROM index_membership")
+        db.execute("DELETE FROM index_generations")
+        db.execute("DELETE FROM search_documents")
+        for kind in ("code", "pr", "commits"):
+            for number in range(documents):
+                db.execute(
+                    "INSERT INTO search_documents(kind,source_key,body,metadata) VALUES(?,?,?,?)",
+                    (
+                        kind,
+                        f"synthetic-{kind}-{number}",
+                        f"Original Abc {kind} {number} 日本語",
+                        "{}",
+                    ),
+                )
+        for ident, kind in enumerate(kinds, 1):
+            table = f"catalog_fts_{ident}"
+            maximum = db.execute(
+                "SELECT coalesce(max(id),0) FROM search_documents WHERE kind=?", (kind,)
+            ).fetchone()[0]
+            db.execute(
+                "INSERT INTO index_generations VALUES(?,?,?,?,?,?)",
+                (
+                    ident,
+                    kind,
+                    "building" if partial else "ready",
+                    table,
+                    maximum,
+                    STAMP,
+                ),
+            )
+            db.execute(
+                f"CREATE VIRTUAL TABLE {table} USING fts5(body, tokenize='trigram case_sensitive 1',content='',detail=full)"
+            )
+            rows = db.execute(
+                "SELECT id,body FROM search_documents WHERE kind=? AND id<=? ORDER BY id",
+                (kind, maximum),
+            ).fetchall()
+            for row in rows[:200] if partial else rows:
+                db.execute(f"INSERT INTO {table}(rowid,body) VALUES(?,?)", row)
+                db.execute(
+                    "INSERT INTO index_membership VALUES(?,?,?)",
+                    (ident, row[0], "utf8-literal-v1"),
+                )
         if analyze:
-            store.execute("ANALYZE")
+            db.execute("ANALYZE")
 
 
 def make_operational_source(
     state_dir, *, kinds=(), analyze=False, documents=3, partial=False
 ):
     state_dir = Path(state_dir)
-    MaintenanceService(state_dir).init("catalog-text-v1", 67108864, 0)
-    database = state_dir / "catalog.sqlite3"
-    with Store(state_dir) as store:
-        with store.transaction():
-            store.execute(
-                "UPDATE catalog_meta SET db_instance_id='00000000-0000-4000-8000-000000000003'"
-            )
-            store.execute("UPDATE schema_migrations SET applied_at=?", (STAMP,))
+    database, cache = initialize(state_dir)
     add_operational_indexes(
         database, kinds=kinds, analyze=analyze, documents=documents, partial=partial
     )
-    cache = state_dir / "cache"
     (cache / "synthetic-evidence").write_bytes(b"synthetic-cache-original")
     return database, cache

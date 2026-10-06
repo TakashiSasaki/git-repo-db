@@ -1,4 +1,4 @@
-"""Conservative, stdlib-only CI planning and effective Git-tree fingerprints."""
+"""Small changed-file CI planner for the current catalog3 acceptance suite."""
 
 import argparse
 import fnmatch
@@ -14,71 +14,16 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-LANES = (
-    "static",
-    "legacy",
-    "schema",
-    "p2",
-    "ci",
-    "packaging",
-    "minimum-schema",
-    "minimum-p2",
-    "smoke",
-    "build",
-    "demo",
-)
-TEST_LANES = (
-    "legacy",
-    "schema",
-    "p2",
-    "ci",
-    "packaging",
-    "minimum-schema",
-    "minimum-p2",
-)
-NORMAL = ("legacy", "schema", "p2", "ci")
+LANES = ("static", "tests", "packaging", "smoke")
+TEST_LANES = ("tests", "packaging")
 REQUIRED_DIRS = ("tests/unit", "tests/integration", "tests/e2e", "tests/packaging")
-MINIMUM_SCHEMA = {
-    "tests/integration/test_target_schema.py",
-    "tests/integration/test_p1_storage_lifecycle.py",
-    "tests/integration/test_schema_proposal_core.py",
-    "tests/integration/test_conversion_contract.py",
-}
-MINIMUM_P2 = {
-    "tests/integration/test_conversion_foundation.py",
-    "tests/unit/test_conversion_protocol.py",
-}
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 
 def digest(value):
     return hashlib.sha256(
-        json.dumps(
-            value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-        ).encode()
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
-
-
-def load_evidence(path):
-    try:
-        value = json.loads(path.read_bytes())
-        return value if isinstance(value, dict) else None
-    except (OSError, ValueError):
-        return None  # Missing/corrupt evidence requires execution, not reuse.
-
-
-def check_baseline(required, minimum, root=ROOT):
-    baseline = json.loads((root / "scripts/ci_required_baseline.json").read_bytes())
-    if (
-        baseline["version"] != 1
-        or not baseline["required_ids"]
-        or not baseline["minimum_ids"]
-    ):
-        raise ValueError("Invalid required-test baseline")
-    for key, actual in (("required_ids", required), ("minimum_ids", minimum)):
-        nodes = baseline[key]
-        if len(nodes) != len(set(nodes)) or not set(nodes) <= set(actual):
-            raise ValueError("Previously required tests disappeared: " + key)
 
 
 def git(root, *args):
@@ -89,19 +34,13 @@ def git(root, *args):
 
 def policy(root=ROOT):
     value = json.loads((root / "scripts/ci_dependencies.json").read_bytes())
-    if value["version"] != 1 or set(value["groups"]) != {"schema", "p2", "ci"}:
-        raise ValueError("Unsupported dependency policy")
-    grouped = sum(value["groups"].values(), [])
-    if len(grouped) != len(set(grouped)) or not all(
-        p.startswith("tests/") and p.endswith(".py") for p in grouped
+    if value["version"] != 2 or not value["acceptance_files"]:
+        raise ValueError("Unsupported or empty acceptance policy")
+    files = value["acceptance_files"]
+    if len(files) != len(set(files)) or not all(
+        p.startswith("tests/") and p.endswith(".py") for p in files
     ):
-        raise ValueError("Duplicate/invalid test group membership")
-    if not set(value["minimum_schema"]) <= set(value["groups"]["schema"]):
-        raise ValueError("Minimum lane is not a schema subset")
-    if set(value["minimum_schema"]) != MINIMUM_SCHEMA or not MINIMUM_P2 <= set(
-        value["groups"]["p2"]
-    ):
-        raise ValueError("Required minimum/P2 test files may not disappear")
+        raise ValueError("Duplicate/invalid acceptance test files")
     return value
 
 
@@ -110,22 +49,17 @@ def tree(root, revision):
         raise ValueError("Expected a full Git SHA")
     entries = {}
     for item in git(root, "ls-tree", "-rz", "--full-tree", revision).split(b"\0"):
-        if not item:
-            continue
-        meta, raw_path = item.split(b"\t", 1)
-        mode, kind, oid = meta.decode("ascii").split()
-        path = raw_path.decode("utf-8", "surrogateescape")
-        entries[path] = [mode, kind, oid]
+        if item:
+            meta, raw_path = item.split(b"\t", 1)
+            entries[raw_path.decode("utf-8", "surrogateescape")] = meta.decode().split()
     return entries
 
 
 def parse_diff(raw):
-    """Parse --name-status -z, including both rename/copy sides; never shell paths."""
     parts = raw.split(b"\0")
     if parts.pop() != b"":
         raise ValueError("Truncated Git diff")
-    changed = []
-    i = 0
+    changed, i = [], 0
     while i < len(parts):
         status = parts[i].decode("ascii")
         i += 1
@@ -148,8 +82,7 @@ def parse_diff(raw):
 def changes(root, context):
     if context.get("diff_complete") is False:
         raise ValueError("Diff is absent or truncated")
-    event = context["event"]
-    if event == "pull_request":
+    if context["event"] == "pull_request":
         bases = (
             git(
                 root, "merge-base", "--all", context["base_sha"], context["feature_sha"]
@@ -161,7 +94,7 @@ def changes(root, context):
             raise ValueError("Missing/ambiguous merge base")
         start = bases[0]
     elif (
-        event == "push"
+        context["event"] == "push"
         and SHA.fullmatch(context.get("before_sha", ""))
         and set(context["before_sha"]) != {"0"}
     ):
@@ -177,7 +110,7 @@ def changes(root, context):
             "-z",
             "--find-renames",
             start,
-            context["feature_sha"],
+            context["tested_sha"],
         )
     )
 
@@ -186,78 +119,45 @@ def matches(path, patterns):
     return any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns)
 
 
-def test_files(entries):
-    return sorted(
-        p
-        for p in entries
-        if p.rsplit("/", 1)[-1].startswith("test_")
-        and p.endswith(".py")
-        and any(p.startswith(d + "/") for d in REQUIRED_DIRS)
+def acceptance_files(entries, rules):
+    files = sorted(
+        set(rules["acceptance_files"])
+        | {
+            path
+            for path in entries
+            if path.endswith(".py")
+            and path.rsplit("/", 1)[-1].startswith("test_")
+            and matches(path, rules.get("acceptance_patterns", []))
+        }
     )
+    if not set(files) <= set(entries):
+        raise ValueError("Acceptance test files are missing; update the current policy")
+    return files
 
 
-def groups(entries, rules):
-    files = test_files(entries)
-    if not set(sum(rules["groups"].values(), [])) <= set(files):
-        raise ValueError("Declared required test files are missing")
-    named = {k: sorted(set(v) & set(files)) for k, v in rules["groups"].items()}
-    assigned = set(sum(named.values(), []))
-    named["packaging"] = [p for p in files if p.startswith("tests/packaging/")]
-    named["legacy"] = [
-        p for p in files if p not in assigned and p not in named["packaging"]
+def current_acceptance_files(root=ROOT):
+    entries = [
+        str(path.relative_to(root))
+        for directory in REQUIRED_DIRS
+        for path in (root / directory).glob("**/test_*.py")
     ]
-    named["minimum-schema"] = sorted(set(rules["minimum_schema"]) & set(files))
-    named["minimum-p2"] = named["p2"]
-    # Every current required file belongs to exactly one normal/packaging group.
-    partition = sum((named[k] for k in (*NORMAL, "packaging")), [])
-    if len(partition) != len(set(partition)) or set(partition) != set(files):
-        raise ValueError("Required test partition is not exhaustive")
-    return named
+    return acceptance_files(entries, policy(root))
 
 
 def runtime():
-    os_release = platform.freedesktop_os_release()
+    try:
+        uv = subprocess.check_output(["uv", "--version"], text=True).strip()
+    except (OSError, subprocess.CalledProcessError):
+        uv = None
     return {
         "python": platform.python_version(),
         "abi": sysconfig.get_config_var("SOABI"),
         "sqlite": sqlite3.sqlite_version,
-        "os": [os_release.get("ID"), os_release.get("VERSION_ID")],
+        "os": platform.system(),
         "arch": platform.machine(),
         "git": subprocess.check_output(["git", "--version"], text=True).strip(),
-        "uv": "0.12.19",
-        "minimum_sqlite": "3.46.1",
+        "uv": uv,
         "runner_image": [os.environ.get("ImageOS"), os.environ.get("ImageVersion")],
-        "compiler": subprocess.check_output(
-            ["cc", "--version"], text=True
-        ).splitlines()[0],
-    }
-
-
-def lane_inputs(entries, rules, named):
-    common = rules["common_inputs"]
-    schema_tests = (
-        named["schema"]
-        + named["p2"]
-        + ["tests/integration/test_v2_hardening_reproductions.py"]
-    )
-    patterns = {
-        "static": ["src/**", "tests/**", "scripts/**", "pyproject.toml", "uv.lock"],
-        "legacy": common + named["legacy"],
-        "schema": common + rules["schema_inputs"] + schema_tests,
-        "p2": common + rules["schema_inputs"] + schema_tests,
-        "ci": common
-        + named["ci"]
-        + rules["policy_inputs"]
-        + ["docs/ci-performance-baseline.json"],
-        "packaging": common + named["packaging"] + ["scripts/prepare_wheelhouse.py"],
-        "minimum-schema": common + rules["schema_inputs"] + schema_tests,
-        "minimum-p2": common + rules["schema_inputs"] + schema_tests,
-        "smoke": common,
-        "build": common + ["scripts/prepare_wheelhouse.py"],
-        "demo": common + named["legacy"] + ["scripts/demo.py"],
-    }
-    return {
-        k: {p: v for p, v in entries.items() if matches(p, patterns[k])} for k in LANES
     }
 
 
@@ -265,18 +165,16 @@ def context_from_environment():
     path = os.environ.get("GITHUB_EVENT_PATH")
     event = json.loads(Path(path).read_bytes()) if path else {}
     pr = event.get("pull_request", {})
+    head = git(ROOT, "rev-parse", "HEAD").decode().strip()
     return {
-        "repository": os.environ.get("GITHUB_REPOSITORY", "TakashiSasaki/git-repo-db"),
+        "repository": os.environ.get("GITHUB_REPOSITORY"),
         "event": os.environ.get("GITHUB_EVENT_NAME", "local"),
-        "pr": event.get("number"),
-        "feature_sha": pr.get("head", {}).get("sha")
-        or git(ROOT, "rev-parse", "HEAD").decode().strip(),
+        "feature_sha": pr.get("head", {}).get("sha") or head,
         "base_sha": pr.get("base", {}).get("sha"),
-        "tested_sha": git(ROOT, "rev-parse", "HEAD").decode().strip(),
-        "head_repository": pr.get("head", {}).get("repo", {}).get("full_name"),
+        "tested_sha": head,
         "before_sha": event.get("before"),
         "run_id": os.environ.get("GITHUB_RUN_ID"),
-        "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
+        "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
         "full": event.get("inputs", {}).get("full", False) in (True, "true"),
     }
 
@@ -285,103 +183,25 @@ def check_context(root, context):
     for field in ("feature_sha", "tested_sha"):
         if not SHA.fullmatch(context.get(field) or ""):
             raise ValueError("Invalid revision: " + field)
-    if context["event"] != "pull_request":
-        return
-    if not SHA.fullmatch(context.get("base_sha") or ""):
-        raise ValueError("Invalid base revision")
-    parents = (
-        git(root, "show", "-s", "--format=%P", context["tested_sha"]).decode().split()
-    )
-    if parents != [context["base_sha"], context["feature_sha"]]:
-        # Local use may use the feature tree if the base is already its ancestor.
-        if (
-            context.get("run_id")
-            or context["tested_sha"] != context["feature_sha"]
-            or git(root, "merge-base", context["base_sha"], context["feature_sha"])
+    if context["event"] == "pull_request":
+        parents = (
+            git(root, "show", "-s", "--format=%P", context["tested_sha"])
             .decode()
-            .strip()
-            != context["base_sha"]
-        ):
-            raise ValueError("Effective merge parents do not match event revisions")
-
-
-def validate_evidence(evidence, context, policy_hash, runtime_meta, root):
-    """Only verified full acceptance artifacts can back reuse; no result-cache chain."""
-    from scripts.ci_evidence import verify_envelope
-
-    verify_envelope(evidence, context)
-    manifest = evidence["manifest"]
-    if (
-        manifest["version"] != 1
-        or not manifest["full_acceptance"]
-        or manifest["outcome"] != "passed"
-    ):
-        raise ValueError("Prior evidence is not a full acceptance")
-    prior = manifest["context"]
-    if (
-        prior["base_sha"] != context["base_sha"]
-        or prior["repository"] != context["repository"]
-        or prior["pr"] != context["pr"]
-    ):
-        raise ValueError("Prior base/repository/PR context differs")
-    if manifest["policy_hash"] != policy_hash or manifest["runtime"] != runtime_meta:
-        raise ValueError("Prior policy/dependency/runtime differs")
-    if subprocess.run(
-        [
-            "git",
-            "-C",
-            str(root),
-            "merge-base",
-            "--is-ancestor",
-            prior["feature_sha"],
-            context["feature_sha"],
-        ],
-        capture_output=True,
-    ).returncode:
-        raise ValueError(
-            "Prior feature is not an ancestor (force push/unknown history)"
+            .split()
         )
-    check_context(root, prior)
-    rules = policy(root)
-    old = tree(root, prior["tested_sha"])
-    old_policy = digest({p: old.get(p) for p in rules["policy_inputs"]})
-    if old_policy != policy_hash:
-        raise ValueError("Tested workflow/planner policy differs")
-    named = groups(old, rules)
-    inputs = lane_inputs(old, rules, named)
-    if set(manifest["lanes"]) != set(LANES):
-        raise ValueError("Incomplete evidence lanes")
-    all_ids = []
-    for lane in LANES:
-        item = manifest["lanes"][lane]
-        if (
-            item["state"] != "passed"
-            or item["provenance"] != "fresh"
-            or item["input_fingerprint"] != digest(inputs[lane])
-        ):
-            raise ValueError("Prior lane failed/skipped/incomplete or inputs differ")
-        nodes = item["test_ids"]
-        if item["selection_digest"] != digest(nodes) or len(nodes) != len(set(nodes)):
-            raise ValueError("Prior selection digest/duplicates invalid")
-        if lane in TEST_LANES:
-            if not nodes or {n.split("::")[0] for n in nodes} != set(named[lane]):
-                raise ValueError("Prior test-file coverage differs")
-        elif nodes:
-            raise ValueError("Non-test lane claimed tests")
-        if lane in (*NORMAL, "packaging"):
-            all_ids += nodes
-    if sorted(all_ids) != manifest["required_ids"] or len(all_ids) != len(set(all_ids)):
-        raise ValueError("Prior required collection mismatch")
-    check_baseline(
-        all_ids,
-        manifest["lanes"]["minimum-schema"]["test_ids"]
-        + manifest["lanes"]["minimum-p2"]["test_ids"],
-        root,
-    )
-    return manifest
+        if parents != [context["base_sha"], context["feature_sha"]]:
+            if (
+                context.get("run_id")
+                or context["tested_sha"] != context["feature_sha"]
+                or git(root, "merge-base", context["base_sha"], context["feature_sha"])
+                .decode()
+                .strip()
+                != context["base_sha"]
+            ):
+                raise ValueError("Effective merge parents do not match event revisions")
 
 
-def make_plan(context, evidence=None, root=ROOT, runtime_meta=None):
+def make_plan(context, root=ROOT, runtime_meta=None):
     started = time.perf_counter()
     if git(root, "status", "--porcelain", "--untracked-files=normal"):
         raise ValueError(
@@ -391,12 +211,16 @@ def make_plan(context, evidence=None, root=ROOT, runtime_meta=None):
         root, "rev-parse", context["tested_sha"] + "^{tree}"
     ):
         raise ValueError("Working checkout does not match the effective tested tree")
-    rules = policy(root)
-    entries = tree(root, context["tested_sha"])
-    named = groups(entries, rules)
-    inputs = lane_inputs(entries, rules, named)
-    meta = runtime_meta or runtime()
-    policy_hash = digest({p: entries.get(p) for p in rules["policy_inputs"]})
+    rules, entries = policy(root), tree(root, context["tested_sha"])
+    files = acceptance_files(entries, rules)
+    excluded = sorted(
+        path
+        for path in entries
+        if path.endswith(".py")
+        and path.rsplit("/", 1)[-1].startswith("test_")
+        and any(path.startswith(directory + "/") for directory in REQUIRED_DIRS)
+        and path not in files
+    )
     reasons = []
     try:
         check_context(root, context)
@@ -405,202 +229,126 @@ def make_plan(context, evidence=None, root=ROOT, runtime_meta=None):
         comparison, changed = None, []
         reasons.append(str(error))
     paths = sorted({p for row in changed for p in row["paths"]})
-    known = (
-        rules["prose"]
-        + rules["policy_inputs"]
-        + rules["common_inputs"]
-        + rules["schema_inputs"]
-        + [
-            *test_files(entries),
-            "scripts/prepare_wheelhouse.py",
-            "scripts/demo.py",
-            "docs/ci-performance-baseline.json",
-            ".gitignore",
-        ]
-    )
-    unknown = [p for p in paths if not matches(p, known)]
-    if unknown:
-        reasons.append("Unknown dependency paths: " + repr(unknown))
-    if matches_any := [p for p in paths if p in rules["policy_inputs"]]:
-        # An ancestor full acceptance for exactly this new policy may be reused.
-        policy_changed = matches_any
-    else:
-        policy_changed = []
-    if context["event"] != "pull_request" or context.get("full"):
-        reasons.append("Main/push/manual/local or explicit full acceptance")
-    if context.get("head_repository") != context["repository"]:
-        reasons.append("Fork/unknown head context: full, no evidence reuse")
-    prior = None
-    if not reasons and evidence:
-        try:
-            prior = validate_evidence(evidence, context, policy_hash, meta, root)
-        except (
-            ValueError,
-            KeyError,
-            TypeError,
-            subprocess.CalledProcessError,
-        ) as error:
-            reasons.append("Evidence rejected: " + str(error))
-    if prior is None and not reasons:
-        reasons.append("No verified unchanged-input full acceptance evidence")
-    if policy_changed and prior is None:
-        reasons.append("Workflow/planner policy changes require full acceptance")
+    selected = set()
+    static = smoke = False
+    for path in paths:
+        if path in files:
+            selected.add(path)
+            static = True
+        elif path in rules.get("report_inputs", []):
+            pass
+        elif matches(path, rules["shared_inputs"] + rules["executable_inputs"]):
+            reasons.append("Shared/executable input: " + path)
+        elif matches(path, rules["prose"]):
+            pass
+        else:
+            reasons.append("Unknown dependency path: " + path)
+    if context.get("full"):
+        reasons.append("Explicit full acceptance")
+    if reasons:
+        selected = set(files)
+        static = smoke = True
     lanes = {}
-    for lane in LANES:
-        fingerprint = digest(inputs[lane])
-        reused = (
-            prior is not None
-            and fingerprint == prior["lanes"][lane]["input_fingerprint"]
-        )
-        lanes[lane] = {
-            "disposition": "reused" if reused else "selected",
-            "input_fingerprint": fingerprint,
-            "input_paths": sorted(inputs[lane]),
-            "triggering_paths": [
+    for name in LANES:
+        lane_files = (
+            sorted(
                 p
-                for p in paths
-                if p in inputs[lane] or p not in entries and p not in rules["prose"]
-            ],
-            "dependencies": [
-                "effective merge tree",
-                "policy",
-                "runtime",
-                "locked dependencies",
-            ],
-            "test_files": named.get(lane, []),
-            "test_ids": prior["lanes"][lane]["test_ids"] if reused else [],
-            "selection_digest": prior["lanes"][lane]["selection_digest"]
-            if reused
-            else digest(named.get(lane, [])),
-            "selection_kind": "nodeids"
-            if reused or lane not in TEST_LANES
-            else "files-until-collection",
-            "prior_run": prior["context"]["run_id"] if reused else None,
+                for p in selected
+                if p.startswith("tests/packaging/") == (name == "packaging")
+            )
+            if name in TEST_LANES
+            else []
+        )
+        active = (
+            bool(lane_files)
+            if name in TEST_LANES
+            else static
+            if name == "static"
+            else smoke
+        )
+        lanes[name] = {
+            "disposition": "selected" if active else "not_applicable",
+            "test_files": lane_files,
+            "test_ids": [],
+            "selection_kind": "files-until-collection" if lane_files else "nodeids",
+            "selection_digest": digest(lane_files),
         }
-    normal = any(lanes[k]["disposition"] == "selected" for k in NORMAL)
-    minimum = any(
-        lanes[k]["disposition"] == "selected" for k in ("minimum-schema", "minimum-p2")
-    )
     packaging = lanes["packaging"]["disposition"] == "selected"
-    preparation = {
-        "dependencies": normal
-        or minimum
-        or packaging
-        or any(
-            lanes[k]["disposition"] == "selected"
-            for k in ("static", "smoke", "build", "demo")
-        ),
-        "wheelhouse": packaging or lanes["build"]["disposition"] == "selected",
-        "sqlite-binding": minimum or lanes["p2"]["disposition"] == "selected",
-    }
-    result = {
-        "version": 1,
+    return {
+        "version": 2,
         "context": context,
-        "runtime": meta,
-        "policy_hash": policy_hash,
+        "runtime": runtime_meta or runtime(),
+        "policy_hash": digest({p: entries.get(p) for p in rules["policy_inputs"]}),
+        "tree_hash": digest(entries),
         "comparison_sha": comparison,
         "changed": changed,
         "fallback_reasons": reasons,
-        "full": all(v["disposition"] == "selected" for v in lanes.values()),
+        "full": set(files) == selected and static and smoke,
+        "acceptance_files": files,
+        "excluded_files": excluded,
+        "unexecuted_files": sorted(set(files) - selected),
         "lanes": lanes,
         "preparation": {
-            k: {
-                "disposition": "selected" if v else "not_applicable",
-                "cache": "not-enabled",
-                "test_ids": [],
-                "selection_digest": digest([]),
-                "input_fingerprint": digest(
-                    {"runtime": meta, "policy": policy_hash, "kind": k}
-                ),
-                "prior_run": None,
-                "reason": "Required by selected execution lanes"
-                if v
-                else "No selected lane requires preparation",
-            }
-            for k, v in preparation.items()
-        },
-        "prior_manifest": prior,
-        "always_checks": {
-            "reports": {
-                "disposition": "selected",
-                "input_fingerprint": digest(
-                    {p: entries.get(p) for p in rules["prose"]}
-                ),
-                "selection_digest": digest([]),
+            "dependencies": {
+                "disposition": "selected"
+                if selected or static or smoke
+                else "not_applicable"
             },
-            "final-gate": {
-                "disposition": "selected",
-                "input_fingerprint": policy_hash,
-                "selection_digest": digest([]),
+            "wheelhouse": {
+                "disposition": "selected" if packaging else "not_applicable"
             },
         },
         "selection_wall_seconds": time.perf_counter() - started,
     }
-    return result
 
 
 def explain(plan):
     lines = [
         "## Validation plan",
         "",
-        f"Effective SHA `{plan['context']['tested_sha']}`; base `{plan['context'].get('base_sha')}`.",
+        f"Effective SHA `{plan['context']['tested_sha']}`; full acceptance: {plan['full']}.",
         "",
-        "| Lane | Disposition | Expected tests | Prior successful run |",
-        "|---|---|---:|---|",
+        "| Lane | Disposition | Test files |",
+        "|---|---|---:|",
     ]
-    for name, item in plan["lanes"].items():
-        lines.append(
-            f"| {name} | {item['disposition']} | {len(item['test_ids']) if item['selection_kind'] == 'nodeids' else 'collect ' + str(len(item['test_files'])) + ' files'} | {item['prior_run'] or '—'} |"
-        )
+    lines += [
+        f"| {name} | {item['disposition']} | {len(item['test_files'])} |"
+        for name, item in plan["lanes"].items()
+    ]
     lines += [
         "",
-        "Selected = fresh execution required; reused = verified earlier acceptance, no fresh test claim.",
-    ]
-    lines += (
-        ["", "Fallback: " + reason]
-        if (reason := "; ".join(plan["fallback_reasons"]))
-        else []
-    )
-    lines += [
+        f"Unexecuted acceptance files: {len(plan['unexecuted_files'])}. Earlier test results are never claimed as fresh execution.",
+        f"Files outside current acceptance: {len(plan['excluded_files'])}; listed in plan.json.",
         "",
-        f"Planner: {plan['selection_wall_seconds']:.3f}s. Preparation: "
-        + ", ".join(f"{k}={v['disposition']}" for k, v in plan["preparation"].items()),
+        f"Planner: {plan['selection_wall_seconds']:.3f}s.",
     ]
+    lines += ["", *plan["fallback_reasons"]]
     return "\n".join(lines) + "\n"
 
 
 def write_plan(plan, output):
     output.mkdir(parents=True, exist_ok=True)
-    (output / "plan.json").write_text(
-        json.dumps(plan, indent=2, ensure_ascii=True) + "\n"
-    )
+    (output / "plan.json").write_text(json.dumps(plan, indent=2) + "\n")
     report = explain(plan)
     (output / "plan.md").write_text(report)
-    if os.environ.get("GITHUB_STEP_SUMMARY"):
-        with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as handle:
-            handle.write(report)
-    if os.environ.get("GITHUB_OUTPUT"):
-        with open(os.environ["GITHUB_OUTPUT"], "a") as handle:
-            for name, item in plan["preparation"].items():
-                handle.write(
-                    f"{name}={str(item['disposition'] == 'selected').lower()}\n"
-                )
-            for name, item in plan["lanes"].items():
-                handle.write(
-                    f"{name}={str(item['disposition'] == 'selected').lower()}\n"
-                )
-            handle.write(
-                f"normal={str(any(plan['lanes'][k]['disposition'] == 'selected' for k in NORMAL)).lower()}\n"
-            )
-            handle.write(
-                f"minimum={str(any(plan['lanes'][k]['disposition'] == 'selected' for k in ('minimum-schema', 'minimum-p2'))).lower()}\n"
-            )
+    for env, value in (
+        ("GITHUB_STEP_SUMMARY", report),
+        (
+            "GITHUB_OUTPUT",
+            "".join(
+                f"{name}={str(item['disposition'] == 'selected').lower()}\n"
+                for name, item in {**plan["lanes"], **plan["preparation"]}.items()
+            ),
+        ),
+    ):
+        if os.environ.get(env):
+            with open(os.environ[env], "a") as handle:
+                handle.write(value)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--context", type=Path)
-    parser.add_argument("--evidence", type=Path)
     parser.add_argument("--output", type=Path, default=Path("artifacts/ci-profile"))
     parser.add_argument("--full", action="store_true")
     args = parser.parse_args()
@@ -611,12 +359,8 @@ def main():
     )
     if args.full:
         context["full"] = True
-    evidence = load_evidence(args.evidence) if args.evidence else None
-    write_plan(make_plan(context, evidence), args.output)
+    write_plan(make_plan(context), args.output)
 
 
 if __name__ == "__main__":
-    import sys
-
-    sys.path.insert(0, str(ROOT))
     main()

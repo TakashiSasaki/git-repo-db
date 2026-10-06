@@ -44,7 +44,6 @@ def test_command_status_metadata_and_stale_junit(tmp_path, monkeypatch, exit_cod
         junit=xml,
         mode="sequential",
         workers=1,
-        sqlite=None,
     )
     assert ci_profile.run(args) == (exit_code or 2)
     saved = json.loads((tmp_path / "command.json").read_text())

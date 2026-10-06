@@ -1,11 +1,18 @@
-"""P1 target contracts in isolated SQLite databases; no production runner/data."""
+"""Catalog3 structural contracts in isolated synthetic SQLite databases."""
 
 import hashlib
 import sqlite3
 
 import pytest
 
-from scripts.schema_contract import construct
+from repo_catalog.adapters.sqlite.schema import schema_sql
+
+
+def construct(sql=None):
+    db = sqlite3.connect(":memory:", isolation_level=None)
+    db.executescript(sql or schema_sql())
+    return db
+
 
 H = b"h" * 20
 B = b"b" * 20
@@ -152,7 +159,7 @@ def build_target(sql=None):
             binding_id="binding-" + repo,
             source_id="source",
             request_context="{}",
-            parser_version="p1",
+            parser_version="catalog3-test/1",
             profile_version="catalog-text-v1",
             confidence="proven",
         )

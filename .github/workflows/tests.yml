@@ -6,12 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       full:
-        description: Full acceptance (manual runs remain conservative)
+        description: Run the complete current catalog3 acceptance suite
         type: boolean
         default: true
 permissions:
   contents: read
-  actions: read
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -27,62 +26,43 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Inspect one prior acceptance artifact (read-only, bounded)
-        env:
-          CI_READ_TOKEN: ${{ github.token }}
-        run: python scripts/ci_profile.py run --name evidence-lookup -- python scripts/ci_evidence.py
-      - name: Plan validation against effective merge inputs
-        id: plan
-        run: python scripts/ci_profile.py run --name planning -- python scripts/ci_plan.py --evidence artifacts/ci-profile/evidence.json
-      - name: Validate explicit prose/report inputs
-        run: python scripts/ci_profile.py run --name report-validation -- python scripts/ci_execute.py reports
       - uses: astral-sh/setup-uv@v6
-        if: steps.plan.outputs.dependencies == 'true'
         with:
           version: '0.12.19'
-      - name: Prepare test dependencies (online preparation)
+      - name: Plan checks from changed files
+        id: plan
+        run: python scripts/ci_profile.py run --name planning -- python scripts/ci_plan.py
+      - name: Validate prose
+        run: python scripts/ci_profile.py run --name report-validation -- python scripts/ci_execute.py reports
+      - name: Prepare dependencies (online preparation)
         if: steps.plan.outputs.dependencies == 'true'
-        run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev
+        run: python scripts/ci_profile.py run --name dependency-setup -- uv sync --locked --group dev --python "$(command -v python)"
       - name: Prepare locked wheels (online preparation)
         if: steps.plan.outputs.wheelhouse == 'true'
         run: python scripts/ci_profile.py run --name wheelhouse -- uv run --no-sync python scripts/prepare_wheelhouse.py
-      - name: Prepare minimum SQLite lane (online preparation)
-        if: steps.plan.outputs['sqlite-binding'] == 'true'
-        run: python scripts/ci_profile.py run --name sqlite-preparation -- uv run --no-sync python scripts/prepare_sqlite_minimum.py
       - name: Ruff lint and formatting
         if: steps.plan.outputs.static == 'true'
         run: |
           python scripts/ci_profile.py run --name lint -- uv run --no-sync ruff check src tests scripts
           python scripts/ci_profile.py run --name format -- uv run --no-sync ruff format --check src tests scripts
-      - name: Required FTS success lane and doctor
+      - name: Inspect SQLite capabilities and doctor
         if: steps.plan.outputs.smoke == 'true'
         run: |
-          python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c "import sqlite3; c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
+          python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
           python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog --format json doctor
-      - name: Build and locked runtime export
-        if: steps.plan.outputs.build == 'true'
-        run: |
-          python scripts/ci_profile.py run --name build -- uv build --out-dir artifacts/dist
-          python scripts/ci_profile.py run --name export -- uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file artifacts/runtime-requirements.txt
-      - name: Collect complete required IDs before executing affected tests
-        if: steps.plan.outputs.normal == 'true' || steps.plan.outputs.packaging == 'true' || steps.plan.outputs.minimum == 'true'
-        run: python scripts/ci_execute.py collect
-      - name: Selected required tests (offline, fixed workers for larger sets)
-        if: steps.plan.outputs.normal == 'true'
-        run: python scripts/ci_execute.py run --lane tests
-      - name: Packaging, isolated sequential lane (offline)
+      - name: Collect selected tests before execution
+        if: steps.plan.outputs.tests == 'true' || steps.plan.outputs.packaging == 'true'
+        run: uv run --no-sync python scripts/ci_execute.py collect
+      - name: Current catalog3 checks (offline)
+        if: steps.plan.outputs.tests == 'true'
+        run: uv run --no-sync python scripts/ci_execute.py run --lane tests
+      - name: Installed wheel and sdist checks (offline, sequential)
         if: steps.plan.outputs.packaging == 'true'
-        run: python scripts/ci_execute.py run --lane packaging
-      - name: SQLite 3.46.1 independent schema constraints (offline)
-        if: steps.plan.outputs.minimum == 'true'
-        run: python scripts/ci_execute.py run --lane sqlite-minimum
-      - name: Offline recovery demo
-        if: steps.plan.outputs.demo == 'true'
-        run: python scripts/ci_profile.py run --name offline-recovery -- uv run --no-sync python scripts/demo.py --work-dir artifacts/demo-run-001 --scenario offline-recovery
-      - name: Validate plan and all required outcomes
+        run: uv run --no-sync python scripts/ci_execute.py run --lane packaging
+      - name: Reconcile selected checks and report unexecuted coverage
         if: always()
         run: python scripts/ci_execute.py gate
-      - name: Retain timing and selection evidence (no databases or caches)
+      - name: Retain timing and selection evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -91,5 +71,5 @@ jobs:
             artifacts/ci-profile/*.json
             artifacts/ci-profile/*.md
             artifacts/ci-profile/*.xml
-            artifacts/ci-profile/required-tests.txt
+            artifacts/ci-profile/selected-tests.txt
           retention-days: 30

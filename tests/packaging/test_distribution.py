@@ -1,5 +1,6 @@
 import json
 import os
+import sqlite3
 import subprocess
 from pathlib import Path
 
@@ -116,6 +117,22 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         env=env,
     ).strip()
     assert origin.startswith(str(venv)) and not origin.startswith(str(ROOT))
+    resources = json.loads(
+        checked(
+            [
+                venv / "bin/python",
+                "-c",
+                "import json; from importlib.resources import files; "
+                "root=files('repo_catalog').joinpath('resources'); "
+                "import repo_catalog.adapters.import_v2.engine; "
+                "print(json.dumps({'schema': root.joinpath('catalog3.sql').is_file(), "
+                "'import_contract': root.joinpath('import_v2/conversion-contract.json').is_file()}))",
+            ],
+            cwd=outside,
+            env=env,
+        )
+    )
+    assert resources == {"schema": True, "import_contract": True}
     repo = FixtureRepo(tmp_path / "remote.git")
     repo.commit("A", {b"hello.txt": "認証 wheel".encode()})
     repo.ref("refs/heads/main", "A")
@@ -146,6 +163,13 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         "--min-free-bytes",
         "0",
     )
+    with sqlite3.connect(state / "catalog.sqlite3") as connection:
+        assert connection.execute(
+            "SELECT format_id,schema_version,lifecycle FROM database_identity"
+        ).fetchone() == ("repo-catalog/catalog3", 3, "validated")
+        assert not connection.execute(
+            "SELECT name FROM sqlite_schema WHERE name='schema_migrations'"
+        ).fetchall()
     source = cli(
         "sources", "add", "local-git", "--name", "packaged", "--url", repo.url
     )["data"]["source_id"]

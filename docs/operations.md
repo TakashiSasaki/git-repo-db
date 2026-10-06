@@ -36,11 +36,11 @@ restoreは新規/空stateだけに行い、元stateを上書き・削除しま�
 復元後の照会は保存データで動作します。収集の再開前に取得元、認証、予算を再確認してください。
 cache/lease/予約/旧running processを有効な復元状態とみなしません。
 
-v1からv2へ更新するときは旧版CLIでbackupを取得し、新版へ切り替えた後に`db migrate`、`db check --full`を実行します。
-通常の照会や収集はschemaを自動更新しません。migrationは既存Repo ID・Git object・本文・digestを維持し、Git/API通信を必要としません。
-既存DBの移行はpublication_seqを1進めるため、移行前のcursorは再開始します。新規DBの初期publication_seqは0です。
-v1 backupのrestoreは新規の復元先をv2へ移行し、入力backupを変更しません。新版から旧schemaへの逆migrationはありません。
-詳細は[リポジトリ識別と取得先](repository-identity.md)を参照してください。
+catalog3 の新規初期化は packaged DDL から直接行います。旧 v2 の取得済みデータは、停止した source を別の新規 state へ `import-v2` で救出し、`db finalize` の明示的な readiness 検査を通します。元 source DB/cache は読取り専用証拠として保護され、runtime cache へ流用・回収されません。typed archive、診断、source identity と current 選択の証拠は target 内へ保存します。
+
+imported current pointer は同じ owner の公開済み事実と元の選択証拠からだけ復元します。最大 ID、import 時刻、曖昧な watermark を根拠にしません。重要な owner/identity 破損は finalize を拒否します。任意の本文欠落や部分一覧は coverage として通常利用できます。元 import workspace がなくても通常照会できます。
+
+最初の sync で scope、service、principal、API/parser/profile、head/base の証拠が一致する一覧や validator を再利用します。不明な legacy cursor は再開に使わず、必要な対象だけ明示取得します。imported job/lease/容量予約は過去の証拠であり、新しい実行を開始してください。
 
 定期運用ではsync、jobs resume、cache gc --applyをcron/systemd等から呼べます。
 この開発では実ユーザーのスケジュールを登録しません。実運用の対象・周期・要求予算はpilot後に決めてください。

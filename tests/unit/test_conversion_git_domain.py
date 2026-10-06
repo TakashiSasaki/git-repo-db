@@ -5,8 +5,9 @@ import sqlite3
 
 import pytest
 
-from scripts.conversion import archive, git_domain
-from scripts.conversion.common import ROOT
+from repo_catalog.adapters.import_v2 import archive, git_domain
+from repo_catalog.adapters.import_v2.common import DESIGN
+from repo_catalog.adapters.sqlite.schema import schema_sql
 
 STAMP = "2026-01-02T03:04:05Z"
 
@@ -20,9 +21,9 @@ def graph(request):
     src, db = sqlite3.connect(":memory:"), sqlite3.connect(":memory:")
     src.row_factory = db.row_factory = sqlite3.Row
     src.execute(f"PRAGMA encoding='{getattr(request, 'param', 'UTF-8')}'")
-    for path in sorted((ROOT / "src/repo_catalog/resources/migrations").glob("*.sql")):
+    for path in sorted((DESIGN / "migrations").glob("*.sql")):
         src.executescript(path.read_text())
-    db.executescript((ROOT / "docs/schema-hardening/target-schema.sql").read_text())
+    db.executescript(schema_sql())
     src.execute("INSERT INTO sources VALUES('source','local-git','source','{}',NULL)")
     src.execute(
         "INSERT INTO repositories VALUES('repo','source','local','repo','name','/synthetic','{}',NULL)"
@@ -151,7 +152,17 @@ def normalize(graph, *, through=None):
         outputs[recipe] = output
         for operation in output["operations"]:
             table, row = operation["table"], operation["row"]
-            db.execute(f"INSERT INTO {table} VALUES({','.join('?' for _ in row)})", row)
+            if operation["operation"] == "manifest_completion":
+                db.execute(
+                    "UPDATE root_manifests SET complete=? WHERE tree_id=?",
+                    (row[1], row[0]),
+                )
+            else:
+                columns = ",".join(git_domain.COLUMNS[table])
+                db.execute(
+                    f"INSERT INTO {table}({columns}) VALUES({','.join('?' for _ in row)})",
+                    row,
+                )
         db.commit()
         if recipe == through:
             break

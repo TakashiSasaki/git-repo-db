@@ -2,9 +2,9 @@
 
 This guide applies repository-wide. Coding-agent task specifications and handoffs are written in English; user-facing explanations may be Japanese.
 
-## Current authorized stride
+## Current product and working rules
 
-Make catalog3 the sole ordinary runtime for initialization, source discovery, Git and GitHub collection, resumable synchronization, offline queries/search and essential maintenance. Reuse the integrated implementation starting at `3af3df84372354e972772b5c9600dfeeae0f0e15`. The attached runtime-stride specification defines the current scope; historical reports are evidence, not standing acceptance gates.
+Catalog3 is the sole ordinary runtime for initialization, source discovery, Git and GitHub collection, resumable synchronization, offline queries/search and essential maintenance. One packaged guarded offline v2 salvage importer writes the same format; explicit finalization establishes readiness. See `docs/schema-hardening/runtime-handoff.md` for implemented behavior, validation and limits. Historical reports are evidence, not standing acceptance gates.
 
 This is an unreleased single-developer application. Backward compatibility with old schemas, CLI/API outputs, converter phases and workspaces is unnecessary. Direct main development, a single branch or stacked PRs are allowed. Intermediate checkpoints may be incomplete. Do not discard uncommitted work or rewrite history for tidiness.
 
@@ -31,7 +31,7 @@ Keep lightweight timing and changed-file selection. Unknown impacts expand testi
 
 ## Sources and handoff
 
-Start with `docs/schema-hardening/integrated-handoff.md`, the complete target schema, conversion domain recipes, `application/target_queries.py`, `adapters/sqlite/target.py` and the affected normal runtime. Historical P1/P2/P3A/P3B reports do not require reenactment or exact predecessor support.
+Start with `docs/schema-hardening/runtime-handoff.md`, packaged `resources/catalog3.sql`, `adapters/sqlite/schema.py`, the relevant normal runtime services and `adapters/import_v2` domain recipes. Historical P1/P2/P3A/P3B/integrated reports and design SQL are snapshots; they do not require reenactment or exact predecessor support.
 
 Update `docs/schema-hardening/implementation-plan.md` and the relevant operating/CI documentation to the implemented state. Keep one concise functional handoff with starting/final SHAs, branch, runnable ordinary commands, environment/check results, import protection, first-sync request behavior and honest gaps. Real-data dry run and cutover require separate authorization.
 

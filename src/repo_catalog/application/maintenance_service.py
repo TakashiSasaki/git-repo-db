@@ -70,6 +70,8 @@ class MaintenanceService:
         except (OSError, subprocess.SubprocessError):
             pass
         c = sqlite3.connect(":memory:")
+        c.execute("PRAGMA foreign_keys=ON")
+        c.execute("PRAGMA recursive_triggers=ON")
         for key, sql in [
             ("strict", "CREATE TABLE p(x INTEGER) STRICT"),
             (
@@ -105,15 +107,12 @@ class MaintenanceService:
                 "Required Python/Git/SQLite capability missing",
                 data,
             )
-        git_version = tuple(
-            int(x) for x in capabilities["git"].split()[2].split(".")[:2]
-        )
-        if git_version < (2, 43):
-            raise CatalogError("RUNTIME_UNSUPPORTED", "Git 2.43+ required", data)
         if initialized:
             with Store(self.path, readonly=True) as s:
                 data.update(
-                    schema_version=s.one("SELECT schema_version FROM catalog_meta")[0],
+                    schema_version=s.one(
+                        "SELECT schema_version FROM database_identity"
+                    )[0],
                     journal_mode=s.one("PRAGMA journal_mode")[0],
                     configuration=s.config,
                 )
@@ -237,8 +236,14 @@ class MaintenanceService:
                         )
                     settings["provider_repo_id"] = str(provider_repo_id)
                 s.execute(
-                    "INSERT INTO sources(id,kind,name,settings,instance_id) VALUES(?,?,?,?,?)",
-                    (ident, kind, name, json.dumps(settings), instance_id),
+                    "INSERT INTO sources(id,discovery_kind,name,settings,instance_id) VALUES(?,?,?,?,?)",
+                    (
+                        ident,
+                        "github_inventory" if kind == "github" else "manual_git",
+                        name,
+                        json.dumps(settings),
+                        instance_id,
+                    ),
                 )
                 s.publish()
             return Result(
@@ -324,25 +329,32 @@ class MaintenanceService:
     def database(self, action, args):
         if action == "restore":
             return self.restore(args.input)
+        if action == "finalize":
+            from repo_catalog.application.finalization import finalize_catalog
+
+            with (
+                FileLock(self.path / "locks/writer.lock"),
+                Store(self.path, allow_building=True) as s,
+            ):
+                report = finalize_catalog(s)
+                return (
+                    report
+                    if isinstance(report, Result)
+                    else Result(report, catalog=s.revision())
+                )
         with (
             FileLock(self.path / "locks/writer.lock"),
-            Store(self.path, migrate=action == "migrate") as s,
+            Store(self.path) as s,
         ):
-            if action == "migrate":
-                s.migrate()
-                return Result(
-                    {
-                        "schema_version": s.one(
-                            "SELECT schema_version FROM catalog_meta"
-                        )[0]
-                    },
-                    catalog=s.revision(),
-                )
             if action == "check":
                 return self.check(s, args.full)
             if action == "backup":
                 output = Path(args.output).expanduser().resolve()
-                if output.exists() or output == s.db_path:
+                if (
+                    output.exists()
+                    or output.with_name(output.name + ".manifest.json").exists()
+                    or output == s.db_path
+                ):
                     raise CatalogError(
                         "INVALID_ARGUMENT", "Backup output must be a new file"
                     )
@@ -350,11 +362,15 @@ class MaintenanceService:
                 stage = output.with_name(output.name + "." + uuid.uuid4().hex + ".tmp")
                 try:
                     target = sqlite3.connect(stage)
+                    target.execute("PRAGMA foreign_keys=ON")
+                    target.execute("PRAGMA recursive_triggers=ON")
                     try:
                         s.connection.backup(target)
                     finally:
                         target.close()
                     conn = sqlite3.connect(stage.as_uri() + "?mode=ro", uri=True)
+                    conn.execute("PRAGMA foreign_keys=ON")
+                    conn.execute("PRAGMA recursive_triggers=ON")
                     try:
                         if (
                             conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok"
@@ -371,7 +387,7 @@ class MaintenanceService:
                     os.rename(stage, output)
                     manifest = {
                         "schema_version": s.one(
-                            "SELECT schema_version FROM catalog_meta"
+                            "SELECT schema_version FROM database_identity"
                         )[0],
                         "catalog": s.revision(),
                         "sha256": digest,
@@ -390,67 +406,74 @@ class MaintenanceService:
         raise CatalogError("INVALID_ARGUMENT", "Unknown database operation")
 
     def check(self, s, full=False):
-        checks = {}
-        checks["sqlite"] = [
-            r[0]
-            for r in s.all("PRAGMA integrity_check" if full else "PRAGMA quick_check")
-        ]
-        checks["foreign_keys"] = [tuple(r) for r in s.all("PRAGMA foreign_key_check")]
-        checks["dangling_publications"] = [
-            dict(r)
-            for r in s.all(
-                "SELECT r.id FROM repositories r LEFT JOIN snapshots sn ON sn.id=r.current_snapshot WHERE r.current_snapshot IS NOT NULL AND (sn.id IS NULL OR sn.published!=1)"
-            )
-        ]
-        checks["unfinished_published_runs"] = [
-            dict(r)
-            for r in s.all(
-                "SELECT * FROM preservation_obligations WHERE published=1 AND (roots_fixed!=1 OR structure_done!=1 OR digest_done!=1 OR text_done!=1)"
-            )
-        ]
-        checks["repository_endpoints"] = [
-            dict(r)
-            for r in s.all(
-                "SELECT r.id FROM repositories r LEFT JOIN repository_endpoints e ON e.repo_id=r.id AND e.is_preferred=1 WHERE e.id IS NULL OR r.url!=e.url"
-            )
-        ]
-        checks["source_memberships"] = [
-            dict(r)
-            for r in s.all(
-                "SELECT r.id FROM repositories r LEFT JOIN source_repositories m ON m.repo_id=r.id AND m.source_id=r.source_id WHERE m.repo_id IS NULL"
-            )
-        ]
-        from repo_catalog.adapters.sqlite.index import fts_available
+        from repo_catalog.application.finalization import check_catalog
 
-        checks["index"] = {"status": "unavailable", "generations": []}
-        if fts_available(s):
-            checks["index"]["status"] = "passed"
-            for row in s.all("SELECT * FROM index_generations WHERE state='ready'"):
-                try:
-                    with s.transaction():
-                        s.execute(
-                            f"INSERT INTO {row['table_name']}({row['table_name']}) VALUES('integrity-check')"
-                        )
-                    checks["index"]["generations"].append(
-                        {"id": row["id"], "status": "passed"}
+        checks = {
+            "owner_evidence": check_catalog(s),
+            "sqlite": [
+                r[0]
+                for r in s.all(
+                    "PRAGMA integrity_check" if full else "PRAGMA quick_check"
+                )
+            ],
+            "foreign_keys": [tuple(r) for r in s.all("PRAGMA foreign_key_check")],
+            "dangling_publications": [
+                dict(r)
+                for r in s.all(
+                    "SELECT r.id FROM repositories r LEFT JOIN snapshots sn ON sn.id=r.current_snapshot_id "
+                    "WHERE r.current_snapshot_id IS NOT NULL AND (sn.id IS NULL OR sn.repo_id!=r.id OR sn.published!=1)"
+                )
+            ],
+            "unfinished_published_runs": [
+                dict(r)
+                for r in s.all(
+                    "SELECT * FROM preservation_obligations WHERE published=1 AND "
+                    "(roots_fixed!=1 OR structure_done!=1 OR digest_done!=1 OR text_done!=1)"
+                )
+            ],
+            "repository_endpoints": [
+                dict(r)
+                for r in s.all(
+                    "SELECT r.id FROM repositories r LEFT JOIN repository_endpoints e ON e.id=r.preferred_endpoint_id "
+                    "WHERE r.preferred_endpoint_id IS NOT NULL AND (e.id IS NULL OR e.repo_id!=r.id)"
+                )
+            ],
+            "change_request_current": [
+                dict(r)
+                for r in s.all(
+                    "SELECT p.id FROM change_requests p LEFT JOIN change_request_observations o ON o.id=p.current_observation_id "
+                    "WHERE p.current_observation_id IS NOT NULL AND (o.id IS NULL OR o.change_request_id!=p.id OR o.published!=1)"
+                )
+            ],
+            "index": {"status": "passed", "generations": []},
+        }
+        for row in s.all("SELECT * FROM index_generations WHERE state='ready'"):
+            try:
+                with s.transaction():
+                    s.execute(
+                        f"INSERT INTO {row['table_name']}({row['table_name']}) VALUES('integrity-check')"
                     )
-                except sqlite3.Error:
-                    with s.transaction():
-                        s.execute(
-                            "UPDATE index_generations SET state='unavailable' WHERE id=?",
-                            (row["id"],),
-                        )
-                    checks["index"]["status"] = "failed"
-                    checks["index"]["generations"].append(
-                        {"id": row["id"], "status": "failed"}
-                    )
+                checks["index"]["generations"].append(
+                    {"id": row["id"], "status": "passed"}
+                )
+            except sqlite3.Error:
+                checks["index"]["status"] = "failed"
+                checks["index"]["generations"].append(
+                    {"id": row["id"], "status": "failed"}
+                )
         if (
             checks["sqlite"] != ["ok"]
-            or checks["foreign_keys"]
-            or checks["dangling_publications"]
-            or checks["unfinished_published_runs"]
-            or checks["repository_endpoints"]
-            or checks["source_memberships"]
+            or any(
+                checks[key]
+                for key in (
+                    "owner_evidence",
+                    "foreign_keys",
+                    "dangling_publications",
+                    "unfinished_published_runs",
+                    "repository_endpoints",
+                    "change_request_current",
+                )
+            )
             or checks["index"]["status"] == "failed"
         ):
             raise CatalogError(
@@ -484,21 +507,26 @@ class MaintenanceService:
             for directory in ("cache", "work", "quarantine", "locks", "logs"):
                 (stage / directory).mkdir(mode=0o700)
             shutil.copyfile(source, stage / cfg["database"]["filename"])
-            with Store(stage, migrate=True) as s:
+            with Store(stage) as s:
                 self.check(s)
                 with s.transaction():
                     s.execute(
-                        "UPDATE catalog_meta SET db_instance_id=? WHERE id=1",
+                        "UPDATE database_identity SET db_instance_id=? WHERE singleton=1",
                         (str(uuid.uuid4()),),
                     )
-                    s.execute("UPDATE cache_entries SET state='evicted',bytes=0")
+                    s.execute(
+                        "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE locator_id IN (SELECT id FROM cache_locators WHERE access='target_active')"
+                    )
+                    s.execute(
+                        "UPDATE cache_locators SET state='missing' WHERE access='target_active'"
+                    )
                     s.execute("DELETE FROM cache_leases")
                     s.execute("DELETE FROM space_reservations")
                     s.execute(
-                        "UPDATE content_locations SET state='unavailable' WHERE kind='cache'"
+                        "UPDATE content_locations SET state='unavailable' WHERE kind='cache' AND cache_id IN (SELECT id FROM cache_locators WHERE access='target_active')"
                     )
                     s.execute(
-                        "UPDATE jobs SET state='interrupted',reason='restored_state_requires_admission' WHERE state='running'"
+                        "UPDATE job_attempts SET state='interrupted',reason='restored_state_requires_admission' WHERE state='running'"
                     )
                 revision = s.revision()
             (stage / "restore-origin.json").write_text(
@@ -510,6 +538,8 @@ class MaintenanceService:
                     }
                 )
             )
+            if self.path.exists():
+                self.path.rmdir()
             os.rename(stage, self.path)
             return Result(
                 {"state_dir": str(self.path), "source_catalog": manifest["catalog"]},
@@ -545,20 +575,20 @@ class MaintenanceService:
             try:
                 for repo in repos:
                     candidates = s.all(
-                        "SELECT g.*,b.run_id FROM blob_content_map b JOIN git_objects g ON g.id=b.object_id JOIN repository_object_sources p ON p.object_id=g.id JOIN collection_runs r ON r.id=p.run_id WHERE b.content_id=? AND p.repo_id=? AND r.state='published'",
+                        "SELECT g.*,b.acquisition_id FROM blob_content_map b JOIN git_objects g ON g.id=b.object_id JOIN repository_object_sources p ON p.object_id=g.id JOIN acquisition_progress r ON r.acquisition_id=p.acquisition_id WHERE b.content_id=? AND p.repo_id=? AND r.state='published'",
                         (content_id, repo["id"]),
                     )
                     if not candidates:
                         continue
                     cache = s.one(
-                        "SELECT * FROM cache_entries WHERE repo_id=? AND state='available' ORDER BY generation DESC LIMIT 1",
+                        "SELECT a.*,l.repo_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.id=a.locator_id WHERE l.repo_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
                         (repo["id"],),
                     )
                     if not cache:
                         # Explicit re-fetch creates a fresh current observation, without claiming lost OIDs are available.
                         GitImporter(s, token).sync(repo, job)
                         cache = s.one(
-                            "SELECT * FROM cache_entries WHERE repo_id=? AND state='available' ORDER BY generation DESC LIMIT 1",
+                            "SELECT a.*,l.repo_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.id=a.locator_id WHERE l.repo_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
                             (repo["id"],),
                         )
                     with FileLock(
@@ -571,7 +601,7 @@ class MaintenanceService:
                                     s.path / cache["path"],
                                     obj["object_format"],
                                     obj["id"],
-                                    {"id": obj["run_id"]},
+                                    {"id": obj["acquisition_id"]},
                                     runner,
                                 )
                             except CatalogError as e:

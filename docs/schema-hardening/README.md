@@ -1,3 +1,11 @@
+# 過去のスキーマ設計・変換調査資料
+
+このディレクトリの P1/P2/P3A/P3B/統合変換仕様、DDL、試験件数は過去の設計・検証記録です。以下の「現在」「現行」は当時の実装を指します。通常の初期化・取得・照会・保守、および v2 salvage importer が共有する DDL 正本は [`src/repo_catalog/resources/catalog3.sql`](../../src/repo_catalog/resources/catalog3.sql) です。`target-schema.sql` と `proposal-core.sql` は履歴として残す設計スナップショットであり、実行時の入力ではありません。
+
+現在の操作は [CLI ガイド](../cli.md)、実装範囲は [実装計画](implementation-plan.md) を参照してください。旧 phase/workspace・レビュー済み predecessor の互換経路と、それを再演する試験・generator は退役しました。取得済み v2 の読み取り専用 parser と旧 DDL は `resources/import_v2` に隔離し、一つのパッケージ化された再開可能 importer が扱います。
+
+---
+
 # Schema v2ハードニング：統合オフライン変換と target クエリ
 
 **現在の成果物:** [統合変換・読み取り専用クエリ](integrated-handoff.md)、[P3B identity](p3b-handoff.md)、[P3A source admission・phase handoff](p3a-handoff.md)、[P2基盤・範囲と検証](p2-foundation.md)、[CI計測](../ci-performance.md)、 [P1設計とCI修復](p1-design.md)、[完了一覧・正当な補完経路の仕上げ](p1-lifecycle.md)、[完全target DDL](target-schema.sql)、[機械可読変換契約](conversion-contract.json)、[I01〜I31対応](invariant-contract.json)。通常migration経路と実DBは変更していない。以下の調査・88件成功は前工程の記録。最新HEADの結果は PR checks/本文と統合 handoff で確認する。
