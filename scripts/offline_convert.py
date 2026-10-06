@@ -1,4 +1,4 @@
-"""Guarded offline archive and verified P3A handoff. No runtime activation."""
+"""Guarded offline archive, phase handoff and identity conversion."""
 
 import argparse
 import json
@@ -14,7 +14,17 @@ from scripts.conversion.common import ConversionError  # noqa: E402
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "action", choices=("seal", "archive", "verify", "handoff", "verify-phase")
+        "action",
+        choices=(
+            "seal",
+            "archive",
+            "verify",
+            "handoff",
+            "verify-phase",
+            "identity-init",
+            "identity",
+            "verify-identity",
+        ),
     )
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--source", type=Path)
@@ -47,8 +57,20 @@ def main():
             caches=args.source_cache,
         )
         return {"sealed": True}
-    if args.action in {"verify", "handoff", "verify-phase"}:
+    if args.action in {"verify", "handoff", "verify-phase", "verify-identity"}:
         return engine.run(policy, args.action, args.work_dir)
+    if args.action == "identity-init":
+        return engine.run(
+            policy, args.action, args.work_dir, batch_size=args.batch_size
+        )
+    if args.action == "identity":
+        return engine.run(
+            policy,
+            args.action,
+            args.work_dir,
+            batch_size=args.batch_size,
+            max_batches=args.max_batches,
+        )
     return engine.run(
         policy,
         "archive",

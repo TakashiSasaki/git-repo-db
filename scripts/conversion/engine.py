@@ -3,7 +3,17 @@ import os
 import sqlite3
 from pathlib import Path
 
-from . import archive, batch, capacity, diagnostics, guards, phase, source, target
+from . import (
+    archive,
+    batch,
+    capacity,
+    diagnostics,
+    guards,
+    identity_phase,
+    phase,
+    source,
+    target,
+)
 from .common import (
     ConversionError,
     canonical,
@@ -43,6 +53,12 @@ def run(policy, action, workspace, **options):
         return phase.handoff(workspace, **options)
     if action == "verify-phase":
         return phase.verify(workspace, **options)
+    if action == "identity-init":
+        return identity_phase.initialize(workspace, **options)
+    if action == "identity":
+        return identity_phase.convert(workspace, **options)
+    if action == "verify-identity":
+        return identity_phase.verify(workspace, **options)
     raise ConversionError("UNKNOWN_CONVERSION_ACTION")
 
 

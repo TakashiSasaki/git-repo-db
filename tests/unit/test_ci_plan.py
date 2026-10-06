@@ -64,12 +64,18 @@ def test_report_after_untested_code_is_not_a_shortcut(history):
     [
         "docs/schema-hardening/target-schema.sql",
         "docs/schema-hardening/conversion-contract.json",
+        "docs/schema-hardening/invariant-contract.json",
+        "docs/schema-hardening/current-schema.json",
         "docs/schema-hardening/column-conversion.csv",
         "docs/schema-hardening/table-conversion.md",
+        "scripts/schema_contract.py",
+        "scripts/schema_audit.py",
         "scripts/conversion/engine.py",
         "scripts/conversion/source.py",
         "scripts/conversion/admission.py",
         "scripts/conversion/phase.py",
+        "scripts/conversion/identity.py",
+        "scripts/conversion/identity_phase.py",
         "scripts/offline_convert.py",
     ],
 )
@@ -109,9 +115,45 @@ def test_p3a_test_collections_run_in_native_and_minimum_conversion_lanes(history
     assert result["preparation"]["sqlite-binding"]["disposition"] == "selected"
 
 
+@pytest.mark.parametrize(
+    "path",
+    [
+        "tests/unit/test_conversion_identity.py",
+        "tests/unit/test_conversion_identity_phase.py",
+        "tests/integration/test_p3b_identity_flow.py",
+    ],
+)
+def test_p3b_identity_tests_run_in_native_and_minimum_conversion_lanes(history, path):
+    root, current, evidence = history
+    write(root, path, "def test_synthetic(): pass\n# Changed P3B test\n")
+    current = context(root, current["base_sha"], commit(root), "12")
+    result = ci_plan.make_plan(current, evidence, root=root)
+    for lane in ("p2", "minimum-p2"):
+        item = result["lanes"][lane]
+        assert item["disposition"] == "selected"
+        assert path in item["test_files"]
+        assert path in item["input_paths"]
+        assert path in item["triggering_paths"]
+    assert result["lanes"]["schema"]["disposition"] == "selected"
+    assert result["lanes"]["minimum-schema"]["disposition"] == "selected"
+    assert result["lanes"]["legacy"]["disposition"] == "reused"
+    assert path not in result["lanes"]["legacy"]["test_files"]
+    assert result["preparation"]["sqlite-binding"]["disposition"] == "selected"
+
+
 def test_p3a_handoff_prose_reuses_verified_effective_inputs(history):
     root, current, evidence = history
-    write(root, "docs/schema-hardening/p3a-handoff.md", "# P3B handoff\n")
+    write(root, "docs/schema-hardening/p3a-handoff.md", "# Synthetic phase handoff\n")
+    current = context(root, current["base_sha"], commit(root), "12")
+    result = ci_plan.make_plan(current, evidence, root=root)
+    assert not result["full"] and not result["fallback_reasons"]
+    assert {lane["disposition"] for lane in result["lanes"].values()} == {"reused"}
+    assert result["always_checks"]["reports"]["disposition"] == "selected"
+
+
+def test_p3b_handoff_prose_reuses_verified_effective_inputs(history):
+    root, current, evidence = history
+    write(root, "docs/schema-hardening/p3b-handoff.md", "# Synthetic P3B handoff\n")
     current = context(root, current["base_sha"], commit(root), "12")
     result = ci_plan.make_plan(current, evidence, root=root)
     assert not result["full"] and not result["fallback_reasons"]
@@ -126,6 +168,10 @@ def test_p3a_handoff_prose_reuses_verified_effective_inputs(history):
         "tests/support/cli.py",
         "tests/support/operational_source.py",
         "tests/support/conversion_worker.py",
+        "tests/support/p3b_fixture.py",
+        "tests/support/p3b_worker.py",
+        "scripts/sqlite_minimum.py",
+        "src/repo_catalog/resources/migrations/002_repository_identity.sql",
         "uv.lock",
         "src/repo_catalog/example.py",
         ".github/workflows/tests.yml",

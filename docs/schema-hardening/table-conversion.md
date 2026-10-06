@@ -1,6 +1,6 @@
 # v2テーブル変換対応（機械契約から生成）
 
-正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2 archive/map/batch基盤は実装済み。全domainのnormalized converterはP3で未実装。
+正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2 archive/map/batch基盤は実装済み。P3B identity converterはbounded phaseで実装済み。Git/API等の残るdomain converterはP3C以降へ保留。
 
 | v2 table | target producers | columns without direct output (archive / recipe inputs) |
 |---|---|---|

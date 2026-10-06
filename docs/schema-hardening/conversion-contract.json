@@ -14671,5 +14671,285 @@
     "documents.current_version_id",
     "jobs.current_attempt",
     "coverage_scopes.current_claim_id"
-  ]
+  ],
+  "p3b_identity": {
+    "protocol": "p3b-identity/1",
+    "recipe_version": "P3B identity/1",
+    "implementation": "scripts.conversion.identity",
+    "recipes": [
+      {
+        "recipe": "service_instances",
+        "source_table": "service_instances",
+        "source_key": [
+          "id"
+        ],
+        "target_table": "service_instances",
+        "target_key": [
+          "id"
+        ],
+        "dependencies": [
+          "verified complete typed archive"
+        ],
+        "transformation_and_lookup": "preserve id/kind/name/base URLs/exact object metadata/nullable created_at; reject duplicate names and unsupported kinds",
+        "operation": "preserve_or_allocate_identity",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_INSTANCE_NAME_CONFLICT",
+          "IDENTITY_UNKNOWN_KIND",
+          "IDENTITY_INVALID_TIME"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      },
+      {
+        "recipe": "sources",
+        "source_table": "sources",
+        "source_key": [
+          "id"
+        ],
+        "target_table": "sources",
+        "target_key": [
+          "id"
+        ],
+        "dependencies": [
+          "verified complete typed archive",
+          "service_instances"
+        ],
+        "transformation_and_lookup": "preserve id/instance/name/exact object settings; local-git->manual_git, github->github_inventory; github requires one valid github instance",
+        "operation": "preserve_or_allocate_identity",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_MISSING_REFERENCE",
+          "IDENTITY_UNSAFE_DEPENDENCY",
+          "IDENTITY_UNKNOWN_KIND",
+          "IDENTITY_MISSING_INSTANCE",
+          "IDENTITY_INSTANCE_KIND_CONFLICT"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      },
+      {
+        "recipe": "repositories",
+        "source_table": "repositories",
+        "source_key": [
+          "id"
+        ],
+        "target_table": "repositories",
+        "target_key": [
+          "id"
+        ],
+        "dependencies": [
+          "verified complete typed archive"
+        ],
+        "transformation_and_lookup": "preserve id/name/exact object metadata; both pointers NULL; verify and reuse existing P2 representative map only if original P2 projection succeeded",
+        "operation": "preserve_or_allocate_identity",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_LEGACY_MEMBERSHIP_MISSING",
+          "IDENTITY_LEGACY_BINDING_MISSING",
+          "IDENTITY_LEGACY_NATIVE_CONFLICT",
+          "IDENTITY_LEGACY_NATIVE_UNRESOLVED",
+          "IDENTITY_LEGACY_HOST_CONFLICT",
+          "IDENTITY_LEGACY_HOST_UNRESOLVED",
+          "IDENTITY_MISSING_REFERENCE",
+          "IDENTITY_UNSAFE_DEPENDENCY"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      },
+      {
+        "recipe": "repository_bindings",
+        "source_table": "repository_bindings",
+        "source_key": [
+          "repo_id",
+          "instance_id"
+        ],
+        "target_table": "repository_bindings",
+        "target_key": [
+          "id"
+        ],
+        "dependencies": [
+          "verified complete typed archive",
+          "repositories",
+          "service_instances"
+        ],
+        "transformation_and_lookup": "preserve repo/instance/native ID/exact object metadata/nullable created_at; allocate UUIDv4 once against full archived composite source key; reject conflicting (instance,native) owners; NULL native permitted",
+        "operation": "preserve_or_allocate_identity",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_NATIVE_CONFLICT",
+          "IDENTITY_MISSING_REFERENCE",
+          "IDENTITY_UNSAFE_DEPENDENCY",
+          "IDENTITY_INVALID_TIME"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      },
+      {
+        "recipe": "repository_endpoints",
+        "source_table": "repository_endpoints",
+        "source_key": [
+          "id"
+        ],
+        "target_table": "repository_endpoints",
+        "target_key": [
+          "id"
+        ],
+        "dependencies": [
+          "verified complete typed archive",
+          "repositories"
+        ],
+        "transformation_and_lookup": "preserve id/repo/URL/transport/nullable label/exact object metadata/nullable created_at; no path/URL rewriting; is_preferred remains archived evidence for later pointer recipe",
+        "operation": "preserve_or_allocate_identity",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_ENDPOINT_CONFLICT",
+          "IDENTITY_UNKNOWN_KIND",
+          "IDENTITY_INVALID_PREFERENCE",
+          "IDENTITY_MISSING_REFERENCE",
+          "IDENTITY_UNSAFE_DEPENDENCY",
+          "IDENTITY_INVALID_TIME"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      },
+      {
+        "recipe": "repository_name_assertions",
+        "source_table": "repository_names",
+        "source_key": [
+          "repo_id",
+          "name"
+        ],
+        "target_table": "repository_name_assertions",
+        "target_key": [
+          "repo_id",
+          "name"
+        ],
+        "dependencies": [
+          "verified complete typed archive",
+          "repositories"
+        ],
+        "transformation_and_lookup": "copy repository_names repo/name/nullable observed_at exactly; do not fabricate historical names or timestamps",
+        "operation": "preserve_or_allocate_identity",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_MISSING_REFERENCE",
+          "IDENTITY_UNSAFE_DEPENDENCY",
+          "IDENTITY_INVALID_TIME"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      },
+      {
+        "recipe": "source_repositories",
+        "source_table": "source_repositories",
+        "source_key": [
+          "source_id",
+          "repo_id"
+        ],
+        "target_table": "source_repositories",
+        "target_key": [
+          "source_id",
+          "repo_id"
+        ],
+        "dependencies": [
+          "verified complete typed archive",
+          "sources",
+          "repositories",
+          "repository_bindings for github_inventory"
+        ],
+        "transformation_and_lookup": "preserve source/repo and exact nullable first_seen/last_seen bounds; strict RFC3339 ordering and target julianday representability; settings.repo_id must identify same owner; github membership requires exact valid repo/instance binding",
+        "operation": "preserve_or_allocate_identity",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_SOURCE_OWNER_CONFLICT",
+          "IDENTITY_MISSING_REFERENCE",
+          "IDENTITY_UNSAFE_DEPENDENCY",
+          "IDENTITY_INVALID_TIME",
+          "IDENTITY_REVERSED_BOUNDS"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      },
+      {
+        "recipe": "repository_preferences",
+        "source_table": "repositories",
+        "source_key": [
+          "id"
+        ],
+        "target_table": "repositories",
+        "target_key": [
+          "id"
+        ],
+        "dependencies": [
+          "verified complete typed archive",
+          "repositories",
+          "repository_endpoints"
+        ],
+        "transformation_and_lookup": "NULL->one eligible endpoint ID with source is_preferred=1, exact same repository and exact legacy repository.url; no preference/ambiguity stays NULL with diagnostic",
+        "operation": "source_owned_null_to_preferred",
+        "ownership": "source record/key; attributed atomic P3B batch",
+        "diagnostics": [
+          "IDENTITY_INVALID_TYPE",
+          "IDENTITY_MALFORMED_TEXT",
+          "IDENTITY_INVALID_KEY",
+          "IDENTITY_INVALID_JSON",
+          "IDENTITY_PREFERENCE_MISSING",
+          "IDENTITY_PREFERENCE_AMBIGUOUS",
+          "IDENTITY_UNSAFE_PREFERENCE",
+          "IDENTITY_ENDPOINT_OWNER_CONFLICT",
+          "IDENTITY_LEGACY_URL_CONFLICT"
+        ],
+        "diagnostic_location": "legacy record_id + original column + recipe; archived exact typed value",
+        "on_invalid": "archive_only and blocking diagnostic; preference missing/ambiguous partial; legacy conflicts retain safe repository projection",
+        "validation": "independent source-derived exact values/keys/relations/decisions; complete table and map/diagnostic ownership; committed output proof plus target FK/CHECK/trigger enforcement"
+      }
+    ],
+    "batch": "domain rows/maps/diagnostics/source decisions/output proof/progress commit atomically",
+    "allocation": "UUIDv4 only for archived repository_bindings composite (repo_id,instance_id); committed typed map is stable within workspace",
+    "representatives": "verified exact P2 IDs/bytes are reused; original proof retains NULL pointers; source-derived preferred pointer has separate P3B proof",
+    "metadata": "strict JSON object; exact source text including spacing; malformed/null required metadata omitted and archived with blocking diagnostic",
+    "timestamps": "nullable timezone-aware RFC3339, microsecond precision at most; exact source spelling; membership min/max bounds are aggregates",
+    "legacy": "normalized v2 bindings/endpoints/membership authoritative; legacy repository columns remain archived assertions; GitHub native/host contradictions block readiness; local source IDs are not native provider IDs; nonempty legacy GitHub assertions without normalized native/host evidence remain partial and attributed",
+    "preferences": "only one eligible source endpoint with is_preferred=1, same repo, exact legacy URL; otherwise NULL with diagnostic",
+    "pointers": "current_snapshot_id and all publication/current pointers remain NULL; lifecycle building",
+    "dependencies": "missing/unsafe instance/repository/source/binding omits dependent row deterministically",
+    "verification": "recompute every processed source decision and output relation independently of mutable stored output hashes; reject unattributed output",
+    "inventory_observations": "deferred exact inventory_runs typed archive; aggregate membership does not require fabricated individual observations"
+  }
 }

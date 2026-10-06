@@ -1,7 +1,8 @@
 """Validate/generate P1 design artifacts. No source DB or cache is opened.
 
 The contract is a typed recipe specification, not a converter. Pure scalar rules
-are executable here; lookup/allocation/replay and persistence are P2--P4 work.
+are executable here. P3B identity lookup/allocation/persistence executes in
+scripts/conversion/identity.py; remaining Git/API recipes and replay are later work.
 """
 
 import argparse
@@ -15,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1] / "docs/schema-hardening"
 
 # Registered grammar: adding a transform requires a reviewed signature here as
-# well as a contract entry. Contextual recipes are implemented by later stages.
+# well as a contract entry. Contextual behavior belongs to conversion phases.
 SIGNATURES = {
     "copy": (1, None),
     "oid_decode": (1, "BLOB"),
@@ -363,7 +364,7 @@ def generate():
     lines = [
         "# v2テーブル変換対応（機械契約から生成）",
         "",
-        "正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2 archive/map/batch基盤は実装済み。全domainのnormalized converterはP3で未実装。",
+        "正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2 archive/map/batch基盤は実装済み。P3B identity converterはbounded phaseで実装済み。Git/API等の残るdomain converterはP3C以降へ保留。",
         "",
         "| v2 table | target producers | columns without direct output (archive / recipe inputs) |",
         "|---|---|---|",

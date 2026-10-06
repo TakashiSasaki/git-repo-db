@@ -56,6 +56,7 @@
     "docs/schema-hardening/p1-lifecycle.md",
     "docs/schema-hardening/p2-foundation.md",
     "docs/schema-hardening/p3a-handoff.md",
+    "docs/schema-hardening/p3b-handoff.md",
     "docs/ci-selection-results.json"
   ],
   "groups": {
@@ -73,7 +74,10 @@
       "tests/unit/test_conversion_protocol.py",
       "tests/integration/test_conversion_source_admission.py",
       "tests/unit/test_conversion_phase.py",
-      "tests/integration/test_p3a_operational_flow.py"
+      "tests/integration/test_p3a_operational_flow.py",
+      "tests/unit/test_conversion_identity.py",
+      "tests/unit/test_conversion_identity_phase.py",
+      "tests/integration/test_p3b_identity_flow.py"
     ],
     "ci": [
       "tests/unit/test_ci_profile.py",
@@ -91,7 +95,7 @@
   "notes": {
     "common": "conftest imports CLI/Git helpers; support fixtures and migrations are shared. Unknown/shared changes widen to full.",
     "schema": "schema_contract reads DDL/current-schema/contract; invariant test reads inventory/CSV and referenced test AST; design/audit imports are transitive P2 dependencies.",
-    "p2": "conversion imports schema_contract/schema_audit, hashes every conversion module (including admission/phase), and reads source migrations plus DDL/contracts. P3A admission, phase and guarded operational-flow tests run in native and minimum-p2 lanes. Operational fixtures call the actual v2 Store/index path; tests/support/operational_source.py and subprocess conversion_worker.py remain shared inputs. No legacy HTTP/Git E2E dependency.",
+    "p2": "Conversion imports schema_contract/schema_audit and hashes every conversion module (including admission, phase, identity and identity_phase); it reads source migrations plus DDL/contracts. P2/P3A/P3B protocol, guarded flow and identity recipe/phase tests run in native and minimum-p2 lanes. Operational fixtures call the actual v2 Store/index path. tests/support/operational_source.py, p3b_fixture.py and subprocess conversion_worker.py/p3b_worker.py remain shared inputs. p3b_fixture exports authentic reviewed Git revision e40430e3f38d3339d67017a04262445f9415a8ec before guarded execution: scripts/conversion/, offline_convert.py, schema_contract.py, schema_audit.py, docs/schema-hardening/ and src/repo_catalog/resources/migrations/. Runtime reads include target-schema.sql, conversion-contract.json, current-schema.json and migration SQL; corresponding current-tree executable inputs are already covered by schema/common patterns. Minimum predecessor CLI bootstrap separately loads current scripts/sqlite_minimum.py via runpy before guarded old CLI execution. The immutable Git revision is fixture code input and requires full checkout history; exported prose is not read by the converter. No legacy HTTP/Git E2E dependency.",
     "demo": "demo imports test_cache.expire, test_github_sync.configure and tests.support CLI/Git/HTTP fixtures.",
     "reports": "These explicit prose/reports are not application/schema fixture inputs. ci-performance-results JSON receives stdlib structure checks. baseline JSON is profiler input and is not prose.",
     "packaging": "CLI/resources/build metadata/locked wheels and packaging helpers determine assertions. Report bytes may appear in sdist but are not consumed by installed CLI or packaging assertions. Generated schema views are not prose."
