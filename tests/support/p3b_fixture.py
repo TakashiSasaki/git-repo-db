@@ -53,7 +53,7 @@ SHARED_URL = "https://synthetic.invalid/same/repo.git"
 SHARED_NAME = "same/repo 日本語"
 
 
-def export_reviewed(destination):
+def export_reviewed(destination, *, revision=REVIEWED_P3A):
     """Export actual reviewed code/resources outside the guarded worker."""
     destination = Path(destination)
     destination.mkdir()
@@ -61,7 +61,7 @@ def export_reviewed(destination):
         [
             "git",
             "archive",
-            REVIEWED_P3A,
+            revision,
             "scripts/conversion",
             "scripts/offline_convert.py",
             "scripts/schema_audit.py",

@@ -219,7 +219,11 @@ REVIEWED_BASE_CONTRACT_SHA256 = (
 
 
 def validate_contract(spec):
-    original = {key: value for key, value in spec.items() if key != "p3b_identity"}
+    original = {
+        key: value
+        for key, value in spec.items()
+        if key not in {"p3b_identity", "p3_integrated"}
+    }
     if (
         spec.get("p3b_identity") != identity_contract()
         or digest(canonical(original).encode()) != REVIEWED_BASE_CONTRACT_SHA256

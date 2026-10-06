@@ -59,7 +59,138 @@ def run(policy, action, workspace, **options):
         return identity_phase.convert(workspace, **options)
     if action == "verify-identity":
         return identity_phase.verify(workspace, **options)
+    if action in {"stored", "verify-stored"}:
+        from . import integrated_phase
+
+        if action == "verify-stored":
+            return integrated_phase.verify(workspace)
+        return integrated_phase.convert(workspace, **options)
+    if action == "integrated":
+        # A straightforward sealed-v2 path. Parent phases keep their owners and
+        # evidence; an already accepted P3B target enters the bounded transition.
+        destination = Path(workspace) / "target.sqlite3"
+        owners = _integrated_owners(destination)
+        batch_size = options.get("batch_size", 100)
+        if not owners or owners == {"p2-archive/1"}:
+            archive_options = {"batch_size": batch_size}
+            if owners:
+                archive_options = _integrated_archive_options(workspace)
+            convert(workspace, **archive_options)
+            phase.handoff(workspace)
+            owners = _integrated_owners(destination)
+        journal = Path(str(destination) + "-journal")
+        if (
+            owners == {"p2-archive/1", phase.PROTOCOL_VERSION}
+            and journal.exists()
+            and identity_phase._hot_journal(journal)
+        ):
+            # An immutable read can see a spilled, uncommitted P3A receipt.
+            # Its own writer recovers and verifies the transition before the
+            # next phase chooses its committed predecessor.
+            phase.handoff(workspace)
+            owners = _integrated_owners(destination)
+        if identity_phase.PROTOCOL_VERSION not in owners:
+            identity_phase.convert(workspace, batch_size=batch_size)
+        elif "p3-integrated/1" not in owners:
+            with target.readonly_destination(destination) as db:
+                row = db.execute(
+                    "SELECT id,manifest FROM conversion_runs WHERE parser_version=?",
+                    (identity_phase.PROTOCOL_VERSION,),
+                ).fetchone()
+                receipt = json.loads(row["manifest"])
+            # Current P3B can be interrupted after its receipt or any batch.
+            # Continue its exact saved options. A reviewed P3B is admitted only
+            # through the integrated verifier's complete immutable proof.
+            if receipt.get("signatures") == identity_phase.resources()[2]:
+                hot = journal.exists() and identity_phase._hot_journal(journal)
+                if hot or not _tentative_identity_complete(
+                    workspace, row["id"], receipt.get("batch_size")
+                ):
+                    identity_phase.convert(workspace, batch_size=receipt["batch_size"])
+        from . import integrated_phase
+
+        return integrated_phase.convert(workspace, **options)
     raise ConversionError("UNKNOWN_CONVERSION_ACTION")
+
+
+def _integrated_owners(destination):
+    if not os.path.lexists(destination):
+        return set()
+    identity_phase._destination(destination.parent)
+    with target.readonly_destination(destination) as db:
+        headers = list(db.execute("SELECT parser_version FROM conversion_runs"))
+    phases = (
+        "p2-archive/1",
+        phase.PROTOCOL_VERSION,
+        identity_phase.PROTOCOL_VERSION,
+        "p3-integrated/1",
+    )
+    owners = {row[0] for row in headers}
+    if len(headers) != len(owners) or owners != set(phases[: len(headers)]):
+        raise ConversionError("PHASE_OWNERSHIP_MISMATCH")
+    return owners
+
+
+def _tentative_identity_complete(workspace, run_id, batch_size):
+    """Select an upstream resume without trusting this cursor as proof."""
+    if (
+        not isinstance(batch_size, int)
+        or isinstance(batch_size, bool)
+        or batch_size < 1
+    ):
+        raise ConversionError("INVALID_BATCH_OPTIONS")
+    workspace = Path(workspace)
+    with (
+        source.readonly(workspace / "source.sqlite3") as src,
+        target.readonly_destination(workspace / "target.sqlite3") as db,
+    ):
+        last = db.execute(
+            "SELECT source_table FROM conversion_batches WHERE run_id=? ORDER BY id DESC LIMIT 1",
+            (run_id,),
+        ).fetchone()
+        if last is None or last[0] != "repository_preferences":
+            return False
+        rows = src.execute("SELECT count(*) FROM repositories").fetchone()[0]
+        expected = max(1, (rows + batch_size - 1) // batch_size)
+        completed = db.execute(
+            "SELECT count(*) FROM conversion_batches WHERE run_id=? AND source_table='repository_preferences'",
+            (run_id,),
+        ).fetchone()[0]
+    # A fabricated final cursor still fails the subsequent complete P3B
+    # source/output proof before the integrated writer opens for mutation.
+    return completed == expected
+
+
+def _integrated_archive_options(workspace):
+    """Read original archive options, recovering only its recognized owner."""
+    workspace = Path(workspace)
+    destination = workspace / "target.sqlite3"
+    journal = Path(str(destination) + "-journal")
+    if journal.exists() and identity_phase._hot_journal(journal):
+        # P2 manifests can use inconsistent overflow pages before recovery.
+        # Follow its existing bounded ownership gate, then exact identity and
+        # source checks. convert() proves every recovered checkpoint before
+        # performing another archive write.
+        with target.writer_lock(workspace):
+            sealed = source.verify_seal(workspace)
+            _, _, signatures = target.resources()
+            target.require_p2_destination(destination, sealed, signatures)
+            db = target.connect(destination)
+            try:
+                _, manifest = target.verify(db, sealed, signatures)
+            finally:
+                db.close()
+    else:
+        with target.readonly_destination(destination) as db:
+            manifest = json.loads(
+                db.execute(
+                    "SELECT manifest FROM conversion_runs WHERE parser_version='p2-archive/1'"
+                ).fetchone()[0]
+            )
+    return {
+        "batch_size": manifest["batch_size"],
+        "map_repositories": manifest["map_repositories"],
+    }
 
 
 def record_rejected_admission(workspace, source_path, report):

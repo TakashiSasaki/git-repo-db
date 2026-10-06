@@ -1,6 +1,6 @@
 # v2テーブル変換対応（機械契約から生成）
 
-正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2 archive/map/batch基盤は実装済み。P3B identity converterはbounded phaseで実装済み。Git/API等の残るdomain converterはP3C以降へ保留。
+正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2/P3B基盤に保存済みGit/API/PRの統合変換と明示的なreadonly target queryを実装した。実行recipeと各旧tableのdispositionはp3_integratedを参照する。通常runtime切替・実データ移行は後続範囲。
 
 | v2 table | target producers | columns without direct output (archive / recipe inputs) |
 |---|---|---|
@@ -57,3 +57,61 @@
 | sync_checkpoints | legacy_records / legacy_values | scope, value, updated_at |
 | tag_objects | tag_objects | none |
 | tree_entries | tree_entries | none |
+
+## Integrated executable source dispositions
+
+| v2 table | implemented recipes | disposition |
+|---|---|---|
+| acquisition_roots | acquisition_roots, unknown_root_origins | normalized; invalid/unsupported records stay attributed in the typed archive |
+| api_responses | payloads | normalized; invalid/unsupported records stay attributed in the typed archive |
+| blob_content_map | blob_content_map | normalized; invalid/unsupported records stay attributed in the typed archive |
+| cache_entries | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| cache_leases | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| catalog_meta | parent/archive | archive preserved; source format/migration identity already authenticated |
+| collection_memberships | collection_memberships | normalized; invalid/unsupported records stay attributed in the typed archive |
+| collection_pages | fetch_occurrences, saved_document_repair, saved_listing_repair | normalized; invalid/unsupported records stay attributed in the typed archive |
+| collection_runs | git_acquisitions | normalized; invalid/unsupported records stay attributed in the typed archive |
+| collections | resume_scopes, fetch_collections | normalized; invalid/unsupported records stay attributed in the typed archive |
+| commit_parents | commit_parents | normalized; invalid/unsupported records stay attributed in the typed archive |
+| commits | commits | normalized; invalid/unsupported records stay attributed in the typed archive |
+| content_digests | content_digests | normalized; invalid/unsupported records stay attributed in the typed archive |
+| content_locations | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| contents | contents | normalized; invalid/unsupported records stay attributed in the typed archive |
+| coverage_components | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| document_versions | document_versions | normalized; invalid/unsupported records stay attributed in the typed archive |
+| git_objects | git_objects | normalized; invalid/unsupported records stay attributed in the typed archive |
+| index_generations | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| index_membership | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| inventory_runs | inventory_observations | normalized; invalid/unsupported records stay attributed in the typed archive |
+| jobs | jobs | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_code_observations | code_listings, code_listing_completion, code_observations | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_commits | code_commits | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_documents | documents | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_events | change_request_events | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_file_changes | code_file_changes | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_git_links | code_acquisitions, pr_root_origins | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_observations | change_request_observations, saved_pr_document_repair | normalized; invalid/unsupported records stay attributed in the typed archive |
+| pr_reviews | reviews | normalized; invalid/unsupported records stay attributed in the typed archive |
+| preservation_obligations | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| pull_requests | change_requests | normalized; invalid/unsupported records stay attributed in the typed archive |
+| ref_observations | ref_observations, ref_root_origins | normalized; invalid/unsupported records stay attributed in the typed archive |
+| repositories | parent/archive | normalized; invalid/unsupported records stay attributed in the typed archive |
+| repository_bindings | parent/archive | normalized; invalid/unsupported records stay attributed in the typed archive |
+| repository_endpoints | parent/archive | normalized; invalid/unsupported records stay attributed in the typed archive |
+| repository_names | parent/archive | normalized; invalid/unsupported records stay attributed in the typed archive |
+| repository_object_sources | repository_object_sources | normalized; invalid/unsupported records stay attributed in the typed archive |
+| resource_observations | document_observations | normalized; invalid/unsupported records stay attributed in the typed archive |
+| review_comments | review_comments | normalized; invalid/unsupported records stay attributed in the typed archive |
+| review_threads | review_threads | normalized; invalid/unsupported records stay attributed in the typed archive |
+| root_manifest_entries | root_manifest_entries | normalized; invalid/unsupported records stay attributed in the typed archive |
+| root_manifests | root_manifests | normalized; invalid/unsupported records stay attributed in the typed archive |
+| schema_migrations | parent/archive | archive preserved; source format/migration identity already authenticated |
+| search_documents | parent/archive | archive preserved; derived search is replaced by original-text scan |
+| service_instances | parent/archive | normalized; invalid/unsupported records stay attributed in the typed archive |
+| snapshots | snapshots | normalized; invalid/unsupported records stay attributed in the typed archive |
+| source_repositories | parent/archive | normalized; invalid/unsupported records stay attributed in the typed archive |
+| sources | parent/archive | normalized; invalid/unsupported records stay attributed in the typed archive |
+| space_reservations | parent/archive | deferred operational state; exact typed archive and sealed cache evidence retained |
+| sync_checkpoints | sync_checkpoints | normalized; invalid/unsupported records stay attributed in the typed archive |
+| tag_objects | tag_objects | normalized; invalid/unsupported records stay attributed in the typed archive |
+| tree_entries | tree_entries | normalized; invalid/unsupported records stay attributed in the typed archive |

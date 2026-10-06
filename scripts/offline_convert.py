@@ -24,6 +24,9 @@ def main():
             "identity-init",
             "identity",
             "verify-identity",
+            "integrated",
+            "stored",
+            "verify-stored",
         ),
     )
     parser.add_argument("--work-dir", type=Path, required=True)
@@ -57,13 +60,19 @@ def main():
             caches=args.source_cache,
         )
         return {"sealed": True}
-    if args.action in {"verify", "handoff", "verify-phase", "verify-identity"}:
+    if args.action in {
+        "verify",
+        "handoff",
+        "verify-phase",
+        "verify-identity",
+        "verify-stored",
+    }:
         return engine.run(policy, args.action, args.work_dir)
     if args.action == "identity-init":
         return engine.run(
             policy, args.action, args.work_dir, batch_size=args.batch_size
         )
-    if args.action == "identity":
+    if args.action in {"identity", "integrated", "stored"}:
         return engine.run(
             policy,
             args.action,

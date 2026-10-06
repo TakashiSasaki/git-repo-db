@@ -5,7 +5,15 @@ import os
 
 import pytest
 
-from scripts.conversion import batch, engine, identity_phase, phase, source, target
+from scripts.conversion import (
+    batch,
+    engine,
+    identity,
+    identity_phase,
+    phase,
+    source,
+    target,
+)
 from scripts.conversion.common import ConversionError, canonical
 from tests.support.conversion_fixture import make_source
 
@@ -275,3 +283,61 @@ def test_identity_completion_keeps_retained_semantic_blockers_visible(parent):
     assert not result["activation_permitted"] and result["lifecycle"] == "building"
     verified = identity_phase.verify(workspace)
     assert verified == {**result, "new_batches": 0, "new_phase": False}
+
+
+@pytest.mark.parametrize("existing", [False, True])
+@pytest.mark.parametrize("action", ["initialize", "convert"])
+def test_locked_identity_invocation_reuses_unchanged_entry_proofs(
+    parent, monkeypatch, existing, action
+):
+    _, _, workspace = parent
+    if existing:
+        identity_phase.initialize(workspace, batch_size=2)
+    counts = {"archive": 0, "identity": 0, "seal": 0}
+
+    def count_call(name, function):
+        def counted(*args, **kwargs):
+            counts[name] += 1
+            return function(*args, **kwargs)
+
+        return counted
+
+    monkeypatch.setattr(
+        phase, "_exact_archive", count_call("archive", phase._exact_archive)
+    )
+    monkeypatch.setattr(
+        identity, "validate_output", count_call("identity", identity.validate_output)
+    )
+    monkeypatch.setattr(source, "verify_seal", count_call("seal", source.verify_seal))
+    result = getattr(identity_phase, action)(workspace, batch_size=2)
+    assert result["phase_committed"]
+    assert counts == {
+        "archive": 2 if action == "convert" else 1,
+        "identity": 2 if action == "convert" else int(existing),
+        "seal": 2 if action == "convert" else 1,
+    }
+
+
+def test_changed_native_open_state_requires_fresh_entry_proofs(parent, monkeypatch):
+    _, _, workspace = parent
+    identity_phase.initialize(workspace, batch_size=2)
+    connect, exact_archive = target.connect, phase._exact_archive
+    archive_checks = 0
+
+    def changed_open(path):
+        db = connect(path)
+        # A transaction can preserve logical values while invalidating the
+        # verified file state; native-open/recovery reuse must still be refused.
+        db.execute("UPDATE conversion_runs SET manifest=manifest||' '")
+        db.execute("UPDATE conversion_runs SET manifest=rtrim(manifest)")
+        return db
+
+    def counted_archive(*args, **kwargs):
+        nonlocal archive_checks
+        archive_checks += 1
+        return exact_archive(*args, **kwargs)
+
+    monkeypatch.setattr(target, "connect", changed_open)
+    monkeypatch.setattr(phase, "_exact_archive", counted_archive)
+    assert identity_phase.initialize(workspace, batch_size=2)["phase_committed"]
+    assert archive_checks == 2

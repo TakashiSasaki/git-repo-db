@@ -14951,5 +14951,504 @@
     "dependencies": "missing/unsafe instance/repository/source/binding omits dependent row deterministically",
     "verification": "recompute every processed source decision and output relation independently of mutable stored output hashes; reject unattributed output",
     "inventory_observations": "deferred exact inventory_runs typed archive; aggregate membership does not require fabricated individual observations"
+  },
+  "p3_integrated": {
+    "protocol": "p3-integrated/1",
+    "implementation": "scripts.conversion.integrated_phase",
+    "recipes": [
+      {
+        "recipe": "git_acquisitions",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "collection_runs"
+      },
+      {
+        "recipe": "git_objects",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "git_objects"
+      },
+      {
+        "recipe": "contents",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "contents"
+      },
+      {
+        "recipe": "commits",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "commits"
+      },
+      {
+        "recipe": "commit_parents",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "commit_parents"
+      },
+      {
+        "recipe": "tree_entries",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "tree_entries"
+      },
+      {
+        "recipe": "tag_objects",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "tag_objects"
+      },
+      {
+        "recipe": "content_digests",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "content_digests"
+      },
+      {
+        "recipe": "blob_content_map",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "blob_content_map"
+      },
+      {
+        "recipe": "repository_object_sources",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "repository_object_sources"
+      },
+      {
+        "recipe": "snapshots",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "snapshots"
+      },
+      {
+        "recipe": "ref_observations",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "ref_observations"
+      },
+      {
+        "recipe": "acquisition_roots",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "acquisition_roots"
+      },
+      {
+        "recipe": "root_manifests",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "root_manifests"
+      },
+      {
+        "recipe": "root_manifest_entries",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "root_manifest_entries"
+      },
+      {
+        "recipe": "jobs",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "jobs"
+      },
+      {
+        "recipe": "inventory_observations",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "inventory_runs"
+      },
+      {
+        "recipe": "payloads",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "api_responses"
+      },
+      {
+        "recipe": "change_requests",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pull_requests"
+      },
+      {
+        "recipe": "resume_scopes",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "collections"
+      },
+      {
+        "recipe": "fetch_collections",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "collections"
+      },
+      {
+        "recipe": "fetch_occurrences",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "collection_pages"
+      },
+      {
+        "recipe": "change_request_observations",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_observations"
+      },
+      {
+        "recipe": "documents",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_documents"
+      },
+      {
+        "recipe": "document_versions",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "document_versions"
+      },
+      {
+        "recipe": "document_observations",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "resource_observations"
+      },
+      {
+        "recipe": "saved_pr_document_repair",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_observations"
+      },
+      {
+        "recipe": "reviews",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_reviews"
+      },
+      {
+        "recipe": "review_threads",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "review_threads"
+      },
+      {
+        "recipe": "review_comments",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "review_comments"
+      },
+      {
+        "recipe": "change_request_events",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_events"
+      },
+      {
+        "recipe": "collection_memberships",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "collection_memberships"
+      },
+      {
+        "recipe": "saved_document_repair",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "collection_pages"
+      },
+      {
+        "recipe": "sync_checkpoints",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "sync_checkpoints"
+      },
+      {
+        "recipe": "code_listings",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_code_observations"
+      },
+      {
+        "recipe": "code_commits",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_commits"
+      },
+      {
+        "recipe": "code_file_changes",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_file_changes"
+      },
+      {
+        "recipe": "saved_listing_repair",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "collection_pages"
+      },
+      {
+        "recipe": "code_listing_completion",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_code_observations"
+      },
+      {
+        "recipe": "code_observations",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_code_observations"
+      },
+      {
+        "recipe": "code_acquisitions",
+        "implementation": "scripts.conversion.pr_domain",
+        "source_table": "pr_git_links"
+      },
+      {
+        "recipe": "ref_root_origins",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "ref_observations"
+      },
+      {
+        "recipe": "pr_root_origins",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "pr_git_links"
+      },
+      {
+        "recipe": "unknown_root_origins",
+        "implementation": "scripts.conversion.git_domain",
+        "source_table": "acquisition_roots"
+      }
+    ],
+    "write_ownership": {
+      "tables": [
+        "acquisition_roots",
+        "blob_content_map",
+        "change_request_events",
+        "change_request_observations",
+        "change_requests",
+        "code_acquisitions",
+        "code_commits",
+        "code_file_changes",
+        "code_listing_progress",
+        "code_listings",
+        "code_observations",
+        "collection_memberships",
+        "collection_progress",
+        "commit_parents",
+        "commits",
+        "completion_markers",
+        "content_digests",
+        "contents",
+        "document_observations",
+        "document_versions",
+        "documents",
+        "fetch_collections",
+        "fetch_occurrences",
+        "git_acquisitions",
+        "git_objects",
+        "incremental_scans",
+        "inventory_observations",
+        "job_attempts",
+        "jobs",
+        "payloads",
+        "ref_observations",
+        "repository_object_sources",
+        "resume_cursors",
+        "resume_scopes",
+        "review_comments",
+        "review_threads",
+        "reviews",
+        "root_manifest_entries",
+        "root_manifests",
+        "root_origins",
+        "snapshots",
+        "tag_objects",
+        "text_bodies",
+        "tree_entries",
+        "unresolved_payloads",
+        "validators"
+      ],
+      "operations": [
+        "insert",
+        "reuse",
+        "update_listing_progress"
+      ]
+    },
+    "target_keys": {
+      "git_acquisitions": [
+        "id"
+      ],
+      "git_objects": [
+        "id"
+      ],
+      "contents": [
+        "id"
+      ],
+      "commits": [
+        "object_id"
+      ],
+      "commit_parents": [
+        "commit_id",
+        "parent_ordinal"
+      ],
+      "tree_entries": [
+        "tree_id",
+        "raw_name"
+      ],
+      "tag_objects": [
+        "object_id"
+      ],
+      "content_digests": [
+        "content_id",
+        "representation",
+        "algorithm"
+      ],
+      "blob_content_map": [
+        "object_id"
+      ],
+      "repository_object_sources": [
+        "repo_id",
+        "object_id",
+        "acquisition_id"
+      ],
+      "snapshots": [
+        "id"
+      ],
+      "ref_observations": [
+        "snapshot_id",
+        "raw_ref_name"
+      ],
+      "acquisition_roots": [
+        "id"
+      ],
+      "root_manifests": [
+        "tree_id"
+      ],
+      "root_manifest_entries": [
+        "tree_id",
+        "raw_path"
+      ],
+      "root_origins": [
+        "id"
+      ],
+      "jobs": [
+        "id"
+      ],
+      "job_attempts": [
+        "job_id",
+        "attempt"
+      ],
+      "inventory_observations": [
+        "id"
+      ],
+      "payloads": [
+        "id"
+      ],
+      "change_requests": [
+        "id"
+      ],
+      "resume_scopes": [
+        "id"
+      ],
+      "fetch_collections": [
+        "id"
+      ],
+      "collection_progress": [
+        "collection_id"
+      ],
+      "fetch_occurrences": [
+        "id"
+      ],
+      "change_request_observations": [
+        "id"
+      ],
+      "text_bodies": [
+        "id"
+      ],
+      "documents": [
+        "id"
+      ],
+      "document_versions": [
+        "id"
+      ],
+      "document_observations": [
+        "id"
+      ],
+      "reviews": [
+        "id"
+      ],
+      "review_threads": [
+        "id"
+      ],
+      "review_comments": [
+        "document_id"
+      ],
+      "change_request_events": [
+        "id"
+      ],
+      "collection_memberships": [
+        "collection_id",
+        "document_id"
+      ],
+      "unresolved_payloads": [
+        "id"
+      ],
+      "validators": [
+        "scope_id",
+        "validator_key"
+      ],
+      "incremental_scans": [
+        "id"
+      ],
+      "resume_cursors": [
+        "scope_id"
+      ],
+      "completion_markers": [
+        "id"
+      ],
+      "code_listings": [
+        "id"
+      ],
+      "code_listing_progress": [
+        "listing_id"
+      ],
+      "code_commits": [
+        "listing_id",
+        "occurrence_id",
+        "position"
+      ],
+      "code_file_changes": [
+        "listing_id",
+        "occurrence_id",
+        "position"
+      ],
+      "code_observations": [
+        "id"
+      ],
+      "code_acquisitions": [
+        "code_observation_id",
+        "role"
+      ]
+    },
+    "source_dispositions": {
+      "acquisition_roots": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "api_responses": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "blob_content_map": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "cache_entries": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "cache_leases": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "catalog_meta": "archive preserved; source format/migration identity already authenticated",
+      "collection_memberships": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "collection_pages": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "collection_runs": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "collections": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "commit_parents": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "commits": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "content_digests": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "content_locations": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "contents": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "coverage_components": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "document_versions": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "git_objects": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "index_generations": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "index_membership": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "inventory_runs": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "jobs": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_code_observations": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_commits": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_documents": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_events": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_file_changes": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_git_links": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_observations": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "pr_reviews": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "preservation_obligations": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "pull_requests": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "ref_observations": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "repositories": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "repository_bindings": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "repository_endpoints": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "repository_names": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "repository_object_sources": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "resource_observations": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "review_comments": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "review_threads": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "root_manifest_entries": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "root_manifests": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "schema_migrations": "archive preserved; source format/migration identity already authenticated",
+      "search_documents": "archive preserved; derived search is replaced by original-text scan",
+      "service_instances": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "snapshots": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "source_repositories": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "sources": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "space_reservations": "deferred operational state; exact typed archive and sealed cache evidence retained",
+      "sync_checkpoints": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "tag_objects": "normalized; invalid/unsupported records stay attributed in the typed archive",
+      "tree_entries": "normalized; invalid/unsupported records stay attributed in the typed archive"
+    },
+    "git_verification": "source-owned conversion run and atomic output proofs are the verification pipeline; verify only reconstructable exact Git bytes/hash/size, preserve legacy claims separately",
+    "origin_order": "deterministic source-key ref/PR ordinals are reconstructed ordering; exact original roots_manifest array remains preserved",
+    "checkpoint": "rows, typed mappings, diagnostics and committed source/output hashes in one transaction",
+    "verification": "one authenticated entry/resume audit and one streamed source comparison at exit; deliberate deep audit available",
+    "content": "available originals and digest assertions preserved separately; unavailable bytes never become empty bytes",
+    "observations": "saved source times, distinct occurrences and A->B->A retained; replay does not advance watermarks",
+    "publication": "building, no activation or new current/publication pointers"
   }
 }

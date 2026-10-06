@@ -76,6 +76,10 @@ def test_report_after_untested_code_is_not_a_shortcut(history):
         "scripts/conversion/phase.py",
         "scripts/conversion/identity.py",
         "scripts/conversion/identity_phase.py",
+        "scripts/conversion/git_domain.py",
+        "scripts/conversion/pr_domain.py",
+        "scripts/conversion/integrated_parent.py",
+        "scripts/conversion/integrated_phase.py",
         "scripts/offline_convert.py",
     ],
 )
@@ -141,6 +145,48 @@ def test_p3b_identity_tests_run_in_native_and_minimum_conversion_lanes(history, 
     assert result["preparation"]["sqlite-binding"]["disposition"] == "selected"
 
 
+@pytest.mark.parametrize(
+    "path",
+    [
+        "tests/unit/test_conversion_git_domain.py",
+        "tests/unit/test_conversion_pr_domain.py",
+        "tests/unit/test_conversion_integrated_parent.py",
+        "tests/integration/test_integrated_conversion.py",
+    ],
+)
+def test_integrated_tests_run_in_native_and_minimum_conversion_lanes(history, path):
+    root, current, evidence = history
+    write(root, path, "def test_synthetic(): pass\n# Changed integrated test\n")
+    current = context(root, current["base_sha"], commit(root), "12")
+    result = ci_plan.make_plan(current, evidence, root=root)
+    for lane in ("p2", "minimum-p2"):
+        item = result["lanes"][lane]
+        assert item["disposition"] == "selected"
+        assert path in item["test_files"]
+        assert path in item["input_paths"]
+        assert path in item["triggering_paths"]
+    assert result["lanes"]["schema"]["disposition"] == "selected"
+    assert result["lanes"]["minimum-schema"]["disposition"] == "selected"
+    assert result["lanes"]["legacy"]["disposition"] == "reused"
+    assert path not in result["lanes"]["legacy"]["test_files"]
+    assert result["preparation"]["sqlite-binding"]["disposition"] == "selected"
+
+
+def test_target_query_ddl_pins_run_in_schema_group(history):
+    root, current, evidence = history
+    path = "tests/integration/test_target_queries.py"
+    write(root, path, "def test_synthetic(): pass\n# Changed target reader test\n")
+    current = context(root, current["base_sha"], commit(root), "12")
+    result = ci_plan.make_plan(current, evidence, root=root)
+    assert path in result["lanes"]["schema"]["test_files"]
+    for lane in ("schema", "p2", "minimum-schema", "minimum-p2"):
+        assert result["lanes"][lane]["disposition"] == "selected"
+        assert path in result["lanes"][lane]["input_paths"]
+    assert path not in result["lanes"]["p2"]["test_files"]
+    assert path not in result["lanes"]["legacy"]["test_files"]
+    assert result["lanes"]["legacy"]["disposition"] == "reused"
+
+
 def test_p3a_handoff_prose_reuses_verified_effective_inputs(history):
     root, current, evidence = history
     write(root, "docs/schema-hardening/p3a-handoff.md", "# Synthetic phase handoff\n")
@@ -161,6 +207,16 @@ def test_p3b_handoff_prose_reuses_verified_effective_inputs(history):
     assert result["always_checks"]["reports"]["disposition"] == "selected"
 
 
+def test_integrated_handoff_prose_reuses_verified_effective_inputs(history):
+    root, current, evidence = history
+    write(root, "docs/schema-hardening/integrated-handoff.md", "# Integrated handoff\n")
+    current = context(root, current["base_sha"], commit(root), "12")
+    result = ci_plan.make_plan(current, evidence, root=root)
+    assert not result["full"] and not result["fallback_reasons"]
+    assert {lane["disposition"] for lane in result["lanes"].values()} == {"reused"}
+    assert result["always_checks"]["reports"]["disposition"] == "selected"
+
+
 @pytest.mark.parametrize(
     "path",
     [
@@ -170,6 +226,9 @@ def test_p3b_handoff_prose_reuses_verified_effective_inputs(history):
         "tests/support/conversion_worker.py",
         "tests/support/p3b_fixture.py",
         "tests/support/p3b_worker.py",
+        "tests/support/integrated_fixture.py",
+        "tests/support/integrated_worker.py",
+        "scripts/integrated_demo.py",
         "scripts/sqlite_minimum.py",
         "src/repo_catalog/resources/migrations/002_repository_identity.sql",
         "uv.lock",

@@ -25,6 +25,36 @@ def parser():
     p.add_argument("--format", choices=("table", "json"), default="table")
     p.add_argument("--timeout-seconds", type=float, default=30)
     commands = p.add_subparsers(dest="command", required=True, parser_class=Parser)
+    target = commands.add_parser("target")
+    target.add_argument("--database", required=True)
+    target.add_argument("--allow-building", action="store_true")
+    target_actions = target.add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    for action in ("repos", "commit", "tree", "file", "pr", "search"):
+        child = target_actions.add_parser(action)
+        child.add_argument("--repo", required=action not in ("repos", "search"))
+        child.add_argument("--limit", type=int, default=100)
+        child.add_argument("--offset", type=int, default=0)
+        if action in ("commit", "tree", "file"):
+            child.add_argument("--commit", required=True)
+        if action == "file":
+            select = child.add_mutually_exclusive_group(required=True)
+            select.add_argument("--path")
+            select.add_argument("--path-b64")
+        if action == "pr":
+            child.add_argument("--number", required=True, type=int)
+            child.add_argument("--binding")
+            child.add_argument(
+                "--request-kind",
+                choices=("pull_request", "merge_request"),
+                default="pull_request",
+            )
+        if action == "search":
+            child.add_argument(
+                "--kind", choices=("code", "commits", "pr"), required=True
+            )
+            child.add_argument("--literal", required=True)
     init = commands.add_parser("init")
     init.add_argument("--profile", required=True)
     init.add_argument("--cache-max-bytes", required=True, type=int)
@@ -252,6 +282,18 @@ def repo_selector(p):
 
 
 def dispatch(args, token):
+    if args.command == "target":
+        from repo_catalog.application.target_queries import TargetQueryService
+
+        return TargetQueryService(
+            args.database, allow_building=args.allow_building, token=token
+        ).query(
+            args.action,
+            vars(args),
+            limit=args.limit,
+            offset=args.offset,
+            timeout=args.timeout_seconds,
+        )
     path = state_path(args.state_dir)
     maintenance = MaintenanceService(path)
     if args.command == "init":

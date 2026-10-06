@@ -364,7 +364,7 @@ def generate():
     lines = [
         "# v2テーブル変換対応（機械契約から生成）",
         "",
-        "正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2 archive/map/batch基盤は実装済み。P3B identity converterはbounded phaseで実装済み。Git/API等の残るdomain converterはP3C以降へ保留。",
+        "正本: conversion-contract.json。全旧値はlegacy_records/legacy_valuesにも型・key・exact bytes付きで保持する。P2/P3B基盤に保存済みGit/API/PRの統合変換と明示的なreadonly target queryを実装した。実行recipeと各旧tableのdispositionはp3_integratedを参照する。通常runtime切替・実データ移行は後続範囲。",
         "",
         "| v2 table | target producers | columns without direct output (archive / recipe inputs) |",
         "|---|---|---|",
@@ -375,6 +375,24 @@ def generate():
         lines.append(
             f"| {table} | {', '.join(producers) or 'legacy_records / legacy_values'} | {', '.join(r['column'] for r in rows if not r['outputs']) or 'none'} |"
         )
+    integrated = contract.get("p3_integrated")
+    if integrated:
+        lines += [
+            "",
+            "## Integrated executable source dispositions",
+            "",
+            "| v2 table | implemented recipes | disposition |",
+            "|---|---|---|",
+        ]
+        for table, disposition in sorted(integrated["source_dispositions"].items()):
+            recipes = [
+                entry["recipe"]
+                for entry in integrated["recipes"]
+                if entry["source_table"] == table
+            ]
+            lines.append(
+                f"| {table} | {', '.join(recipes) or 'parent/archive'} | {disposition} |"
+            )
     (ROOT / "table-conversion.md").write_text("\n".join(lines) + "\n")
     (ROOT / "target-inventory.json").write_text(
         json.dumps({"ddl_sha256": contract["ddl_sha256"], "tables": target}, indent=2)

@@ -7,6 +7,7 @@ original representative rows independently from the enriched current projection.
 
 import json
 import sqlite3
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import archive, batch, capacity, mapping, phase, source, target
@@ -311,10 +312,10 @@ def _receipt(
     return value
 
 
-def check(db, src, sealed, spec, signatures, *, require_identity=True, batch_size=None):
-    parent, handoff, prior, prior_signatures, view = check_parent(
-        db, src, sealed, spec, signatures
-    )
+def _check_identity(
+    db, sealed, signatures, verified_parent, *, require_identity=True, batch_size=None
+):
+    parent, handoff, prior, prior_signatures = verified_parent
     _, _, run = _owners(db, require_identity=require_identity)
     if not run:
         return None, None
@@ -346,6 +347,18 @@ def check(db, src, sealed, spec, signatures, *, require_identity=True, batch_siz
     if batch_size is not None and batch_size != receipt["batch_size"]:
         raise ConversionError("RESUME_OPTIONS_MISMATCH")
     return run, receipt
+
+
+def check(db, src, sealed, spec, signatures, *, require_identity=True, batch_size=None):
+    verified_parent = check_parent(db, src, sealed, spec, signatures)[:4]
+    return _check_identity(
+        db,
+        sealed,
+        signatures,
+        verified_parent,
+        require_identity=require_identity,
+        batch_size=batch_size,
+    )
 
 
 def _result(receipt, *, created=False):
@@ -511,59 +524,84 @@ def _pending(db, sealed, spec, signatures):
             raise ConversionError("IDENTITY_PHASE_RECEIPT_MISMATCH")
 
 
-def _open(workspace, src, sealed, spec, signatures, *, batch_size=None):
-    """Proof before writable open, then recognized recovery and full recheck."""
+@dataclass(frozen=True)
+class _VerifiedEntry:
+    """Proof material scoped to one unchanged, writer-locked invocation."""
+
+    parent: tuple
+    run: sqlite3.Row | None
+    receipt: dict | None
+    status: dict | None
+
+
+def _verify_entry(db, src, sealed, spec, signatures, *, batch_size, fault):
+    from . import identity
+
+    verified_parent = check_parent(db, src, sealed, spec, signatures)[:4]
+    run, receipt = _check_identity(
+        db,
+        sealed,
+        signatures,
+        verified_parent,
+        require_identity=False,
+        batch_size=batch_size,
+    )
+    status = (
+        identity.validate_output(db, src, run, receipt, fault=fault) if run else None
+    )
+    return _VerifiedEntry(verified_parent, run, receipt, status)
+
+
+def _file_state(path):
+    stat = path.stat()
+    return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
+
+
+def _open(workspace, src, sealed, spec, signatures, *, batch_size=None, fault=no_fault):
+    """Verify entry once; recovery or changed native-open state invalidates it."""
     path = _destination(workspace)
     journal = Path(str(path) + "-journal")
+    before = _file_state(path)
+    verified = None
     with target.readonly_destination(path) as existing:
         if journal.exists() and _hot_journal(journal):
             _pending(existing, sealed, spec, signatures)
         else:
-            run, receipt = check(
+            verified = _verify_entry(
                 existing,
                 src,
                 sealed,
                 spec,
                 signatures,
-                require_identity=False,
                 batch_size=batch_size,
+                fault=fault,
             )
-            if run:
-                from . import identity
-
-                identity.validate_output(existing, src, run, receipt)
+    if _file_state(_destination(workspace)) != before:
+        raise ConversionError("DESTINATION_CHANGED_DURING_VERIFICATION")
     db = target.connect(path)
     try:
-        run, receipt = check(
-            db,
-            src,
-            sealed,
-            spec,
-            signatures,
-            require_identity=False,
-            batch_size=batch_size,
-        )
-        if run:
-            from . import identity
-
-            identity.validate_output(db, src, run, receipt)
-        return db
+        if verified is None or _file_state(path) != before:
+            verified = _verify_entry(
+                db,
+                src,
+                sealed,
+                spec,
+                signatures,
+                batch_size=batch_size,
+                fault=fault,
+            )
+        return db, verified
     except BaseException:
         db.close()
         raise
 
 
 def _initialize(
-    db, src, workspace, sealed, spec, signatures, *, batch_size, free_bytes, fault
+    db, workspace, sealed, signatures, verified, *, batch_size, free_bytes, fault
 ):
-    run, receipt = check(
-        db, src, sealed, spec, signatures, require_identity=False, batch_size=batch_size
-    )
-    if run:
-        return run, receipt, False
-    parent, handoff, prior, prior_signatures, _ = check_parent(
-        db, src, sealed, spec, signatures
-    )
+    if verified.run:
+        return verified.run, verified.receipt, False
+    parent, handoff, prior, prior_signatures = verified.parent
     receipt = _receipt(
         db,
         sealed,
@@ -583,7 +621,6 @@ def _initialize(
         },
         free_bytes=free_bytes,
     )
-    source.verify_seal(workspace, allow_legacy=True)
     try:
         db.execute("BEGIN IMMEDIATE")
         db.execute(
@@ -642,15 +679,16 @@ def initialize(
     with target.writer_lock(workspace):
         sealed = source.verify_seal(workspace, allow_legacy=True)
         with source.readonly(workspace / "source.sqlite3") as src:
-            db = _open(workspace, src, sealed, spec, signatures, batch_size=batch_size)
+            db, verified = _open(
+                workspace, src, sealed, spec, signatures, batch_size=batch_size
+            )
             try:
                 _, receipt, created = _initialize(
                     db,
-                    src,
                     workspace,
                     sealed,
-                    spec,
                     signatures,
+                    verified,
                     batch_size=batch_size,
                     free_bytes=free_bytes,
                     fault=fault,
@@ -680,20 +718,31 @@ def convert(
     with target.writer_lock(workspace):
         sealed = source.verify_seal(workspace, allow_legacy=True)
         with source.readonly(workspace / "source.sqlite3") as src:
-            db = _open(workspace, src, sealed, spec, signatures, batch_size=batch_size)
+            db, verified = _open(
+                workspace,
+                src,
+                sealed,
+                spec,
+                signatures,
+                batch_size=batch_size,
+                fault=fault,
+            )
             try:
                 run, receipt, created = _initialize(
                     db,
-                    src,
                     workspace,
                     sealed,
-                    spec,
                     signatures,
+                    verified,
                     batch_size=batch_size,
                     free_bytes=free_bytes,
                     fault=fault,
                 )
-                status = identity.validate_output(db, src, run, receipt, fault=fault)
+                status = verified.status
+                if status is None:
+                    status = identity.validate_output(
+                        db, src, run, receipt, fault=fault
+                    )
                 completed, committed = status["committed_batches"], 0
                 for position, (recipe, index, records, input_sha256) in enumerate(
                     identity.batches(db, src, run, receipt, batch_size)
