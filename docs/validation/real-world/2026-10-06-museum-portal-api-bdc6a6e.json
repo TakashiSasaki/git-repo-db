@@ -1,0 +1,476 @@
+{
+  "version": 1,
+  "run_id": "2026-10-06-museum-portal-api-bdc6a6e",
+  "result": "FAIL",
+  "disposition": "BLOCKED_BY_ORIGINAL_BUDGET",
+  "application": {
+    "commit": "bdc6a6eb9044f316cd9ebea9e70dd484b49ff406",
+    "version": "0.2.0",
+    "wheel_sha256": "8a6deb0ac7d07d7e5c219f0c07885efc1bb71711d1c7f9d2fdc0ebcfc14678c7"
+  },
+  "target": {
+    "repository": "TakashiSasaki/museum-portal",
+    "scope": "normal repository-wide PR sync, all 50 PRs",
+    "representative_pr": 1,
+    "head_oid": "sha1:1ddd0bc9f00bc30ceadda72a2afa682d996ff77f",
+    "base_oid": "sha1:72db8ca2049b4398be283cb0a4be238f7f5f53b8"
+  },
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "git": "2.52.0",
+    "installed_wheel": true,
+    "cwd": "${TRIAL}/outside",
+    "state": "${TRIAL}/catalog-fresh",
+    "storage": "automatic tempfile.mkdtemp root",
+    "rest_api_version": "2026-03-10",
+    "credential": "existing GH_TOKEN; value/headers never recorded"
+  },
+  "selection": [
+    {
+      "repository": "TakashiSasaki/museum-portal",
+      "public": true,
+      "size_kib": 899,
+      "pr_count_lower_bound": 50,
+      "more_pr_pages": false
+    },
+    {
+      "repository": "TakashiSasaki/museum-portal-aistudio",
+      "public": true,
+      "size_kib": 1067,
+      "pr_count_lower_bound": 0,
+      "more_pr_pages": false
+    },
+    {
+      "repository": "TakashiSasaki/templates",
+      "public": true,
+      "size_kib": 20045,
+      "pr_count_lower_bound": 100,
+      "more_pr_pages": true
+    }
+  ],
+  "authentication": {
+    "result": "PASS",
+    "login": "TakashiSasaki",
+    "rest": true,
+    "read_only_graphql": true
+  },
+  "budget": {
+    "github_api_requests_max": 100,
+    "elapsed_seconds_max": 600,
+    "admission_requests_max": 96,
+    "first_sync_api_max": 43,
+    "second_sync_api_max": 43,
+    "git_remote_operations_max": 40,
+    "git_transfer_timeout_seconds": 45,
+    "enforcement": "Locked counter before every httpx send, including retries; only approved GET/read-only GraphQL; CANCELLED before phase request 44; shared monotonic deadline and supervised processes; raw Git HTTP traces discarded in pipe."
+  },
+  "requests": {
+    "github_api": 95,
+    "phases": {
+      "discover": {
+        "requests": 2,
+        "families": {
+          "authentication": 1,
+          "repository_metadata": 1
+        },
+        "statuses": {
+          "200": 2
+        },
+        "conditional_requests": 0
+      },
+      "first_sync": {
+        "requests": 43,
+        "families": {
+          "authentication": 1,
+          "pr_inventory": 1,
+          "incremental_issue_comments": 1,
+          "incremental_review_comments": 1,
+          "pr_detail": 9,
+          "comments": 9,
+          "reviews": 5,
+          "events": 4,
+          "graphql": 4,
+          "pr_commits": 4,
+          "pr_files": 4
+        },
+        "statuses": {
+          "200": 43
+        },
+        "conditional_requests": 0
+      },
+      "preflight": {
+        "requests": 7,
+        "families": {
+          "authentication": 1,
+          "repository_metadata": 3,
+          "pr_inventory": 3
+        },
+        "statuses": {
+          "200": 7
+        },
+        "conditional_requests": 0
+      },
+      "second_sync": {
+        "requests": 43,
+        "families": {
+          "authentication": 1,
+          "pr_inventory": 1,
+          "incremental_issue_comments": 1,
+          "incremental_review_comments": 1,
+          "pr_detail": 11,
+          "comments": 11,
+          "reviews": 5,
+          "events": 5,
+          "graphql": 5,
+          "pr_commits": 1,
+          "pr_files": 1
+        },
+        "statuses": {
+          "200": 38,
+          "304": 5
+        },
+        "conditional_requests": 5
+      }
+    },
+    "git_http": 35,
+    "git_remote_operations": 15
+  },
+  "timing": {
+    "started_at_utc": "2026-10-06T05:43:06.925611+00:00",
+    "cli_elapsed_seconds": 65.449,
+    "finished_at_utc": "2026-10-06T05:50:01.325265+00:00",
+    "elapsed_since_preflight": 414.3997,
+    "preflight_http_elapsed_seconds": 2.9553,
+    "first_sync_seconds": 35.7341,
+    "second_sync_seconds": 26.2701
+  },
+  "sizes": {
+    "after_first": {
+      "database_bytes": 14041088,
+      "cache_bytes": 220567,
+      "cache_files": 42
+    },
+    "final": {
+      "database_bytes": 17264640,
+      "cache_bytes": 253608,
+      "cache_files": 84
+    },
+    "restored": {
+      "database_bytes": 17264640,
+      "cache_bytes": 0,
+      "cache_files": 0
+    },
+    "backup_bytes": 17264640
+  },
+  "collected_counts": {
+    "change_requests": 50,
+    "change_request_observations": 115,
+    "document_versions": 266,
+    "reviews": 0,
+    "review_threads": 0,
+    "review_comments": 100,
+    "change_request_events": 63,
+    "code_commits": 5,
+    "code_file_changes": 7,
+    "code_observations": 9
+  },
+  "representative_result_counts": {
+    "pr_identity": 50,
+    "pr1_observations": 5,
+    "pr1_documents": 3,
+    "pr1_events": 14,
+    "pr1_commits": 1,
+    "pr1_file_changes": 1,
+    "pr1_code_links": 3,
+    "literal_search": 49
+  },
+  "queries": {
+    "pr_identity": {
+      "fresh_sha256": "1de262e8af30f5df4738f261dd345afd12e2c96d9d3f9657940037a405b1de41",
+      "restored_sha256": "1de262e8af30f5df4738f261dd345afd12e2c96d9d3f9657940037a405b1de41",
+      "match": true,
+      "rows": 50,
+      "coverage_complete": false
+    },
+    "pr_history": {
+      "fresh_sha256": "6fcf1f2abb86c3547b8934f7dbd09c34ae14bf8c42144446cb084a376b968715",
+      "restored_sha256": "6fcf1f2abb86c3547b8934f7dbd09c34ae14bf8c42144446cb084a376b968715",
+      "match": true,
+      "rows": 1,
+      "coverage_complete": false
+    },
+    "documents": {
+      "fresh_sha256": "356d8d4940b22020dd78ef2057fc768ba0a463f16a2d5a6d4b95090c4121a6ac",
+      "restored_sha256": "356d8d4940b22020dd78ef2057fc768ba0a463f16a2d5a6d4b95090c4121a6ac",
+      "match": true,
+      "rows": 3,
+      "coverage_complete": false
+    },
+    "events": {
+      "fresh_sha256": "ea9831cd6a72d39361ac6bd606865c11aa5757410801002fdd7e4b0e05036b5b",
+      "restored_sha256": "ea9831cd6a72d39361ac6bd606865c11aa5757410801002fdd7e4b0e05036b5b",
+      "match": true,
+      "rows": 14,
+      "coverage_complete": false
+    },
+    "pr_search": {
+      "fresh_sha256": "d7bef1dc7def3378b5d1ebb5a93457941ca4caa5b694dce8fda9953d0a1985ab",
+      "restored_sha256": "d7bef1dc7def3378b5d1ebb5a93457941ca4caa5b694dce8fda9953d0a1985ab",
+      "match": true,
+      "rows": 49,
+      "coverage_complete": false
+    }
+  },
+  "normalization": "UTF-8 sorted-key compact JSON of command/items/coverage; preserve row order, nested IDs/history/code; exclude execution/catalog envelope and page cursors. Payloads not committed.",
+  "second_sync": {
+    "detail_304": 5,
+    "reused_commit_file_prs": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "newly_acquired_commit_file_prs": [
+      5
+    ],
+    "required_requests": "Authentication, inventory, incremental comments, current detail validators/code head-base checks, unvalidated comments/reviews/events/GraphQL. PR #5 listings were incomplete on first run."
+  },
+  "backup_restore": {
+    "result": "PASS",
+    "query_pairs": 5,
+    "full_db_checks": "PASS on collected/restored state",
+    "source_database_unchanged": true,
+    "manifest_sha256_valid": true,
+    "cache_included": false,
+    "full_git_mirror": false
+  },
+  "commands": [
+    {
+      "label": "init",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json init --profile catalog-text-v1 --cache-max-bytes 134217728 --min-free-bytes 67108864",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1137,
+      "error": null
+    },
+    {
+      "label": "source_add",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json sources add github --owner TakashiSasaki --include-repo museum-portal",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.097,
+      "error": null
+    },
+    {
+      "label": "discover",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json discover --source 7e9e6dce-a086-4b3e-9f40-65c2f9ae1ef2",
+      "offline_guard": false,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.9753,
+      "error": null
+    },
+    {
+      "label": "repos",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json repos list",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1194,
+      "error": null
+    },
+    {
+      "label": "first_sync",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json sync pr --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c",
+      "offline_guard": false,
+      "exit_code": 130,
+      "status": "cancelled",
+      "elapsed_seconds": 35.7341,
+      "error": "CANCELLED"
+    },
+    {
+      "label": "second_sync",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json sync pr --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c",
+      "offline_guard": false,
+      "exit_code": 130,
+      "status": "cancelled",
+      "elapsed_seconds": 26.2701,
+      "error": "CANCELLED"
+    },
+    {
+      "label": "fresh_pr_identity",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json pr list --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --limit 1000",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1476,
+      "error": null
+    },
+    {
+      "label": "fresh_pr_history",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json pr show --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 1",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1158,
+      "error": null
+    },
+    {
+      "label": "fresh_documents",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json pr documents --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 1",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1293,
+      "error": null
+    },
+    {
+      "label": "fresh_events",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json pr timeline --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 1",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1263,
+      "error": null
+    },
+    {
+      "label": "fresh_pr_search",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json search pr --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --literal museum --document-versions observed --limit 1000",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1539,
+      "error": null
+    },
+    {
+      "label": "fresh_check",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json db check --full",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1713,
+      "error": null
+    },
+    {
+      "label": "backup",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/catalog-fresh --format json db backup --output ${TRIAL}/backup/catalog.sqlite3",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1444,
+      "error": null
+    },
+    {
+      "label": "restore",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/restored --format json db restore --input ${TRIAL}/backup/catalog.sqlite3",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1708,
+      "error": null
+    },
+    {
+      "label": "restored_pr_identity",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/restored --format json pr list --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --limit 1000",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1622,
+      "error": null
+    },
+    {
+      "label": "restored_pr_history",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/restored --format json pr show --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 1",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1131,
+      "error": null
+    },
+    {
+      "label": "restored_documents",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/restored --format json pr documents --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 1",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1852,
+      "error": null
+    },
+    {
+      "label": "restored_events",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/restored --format json pr timeline --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --number 1",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.1224,
+      "error": null
+    },
+    {
+      "label": "restored_pr_search",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/restored --format json search pr --repo 1627b1b0-2476-4ccf-966c-ecc0d6ec541c --literal museum --document-versions observed --limit 1000",
+      "offline_guard": true,
+      "exit_code": 3,
+      "status": "partial",
+      "elapsed_seconds": 0.17,
+      "error": null
+    },
+    {
+      "label": "restored_check",
+      "command": "${TRIAL}/venv/bin/repo-catalog --state-dir ${TRIAL}/restored --format json db check --full",
+      "offline_guard": true,
+      "exit_code": 0,
+      "status": "complete",
+      "elapsed_seconds": 0.1506,
+      "error": null
+    }
+  ],
+  "criteria": [
+    {
+      "id": "complete_first_and_second_sync",
+      "result": "FAIL",
+      "pass_condition": "Both full requested syncs complete before agreed limits."
+    },
+    {
+      "id": "read_only_request_time_budget",
+      "result": "PASS",
+      "pass_condition": "At most 100 admitted API sends including retries, 600 seconds, approved read-only scope."
+    },
+    {
+      "id": "meaningful_results_and_reuse",
+      "result": "PASS",
+      "pass_condition": "Nonempty PR/history/documents/events/search/code results and no commit/file redownload for completed unchanged #1\u20134."
+    },
+    {
+      "id": "backup_restore",
+      "result": "PASS",
+      "pass_condition": "Full checks and checksum pass; all five normalized query and coverage digest pairs match."
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "VALIDATION_PHASE_LIMIT",
+      "phases": [
+        "first_sync",
+        "second_sync"
+      ],
+      "application_exit": 130,
+      "meaning": "Intentional budget cancellation, not an API rate/permission error."
+    },
+    {
+      "code": "PR_COLLECTION_INCOMPLETE",
+      "query_exit": 3,
+      "meaning": "All five queries correctly return partial whole-repository coverage."
+    }
+  ],
+  "blocker": "100-call budget cannot complete normal repository-wide sync for 50 PRs; no per-PR selector. Detail+reviews+timeline alone are at least 150 calls before other child lists, GraphQL or a second run.",
+  "limitations": [
+    "Only PR #1\u20134 code contexts completed initially; #1\u20135 on second run.",
+    "No reviews or review threads returned for processed PRs; 100 real review comments acquired. Nonempty review/thread history untested.",
+    "Partial preservation PASS does not establish complete acquisition.",
+    "No product code change or application suite rerun. Temporary driver setup errors corrected before acquisition; no product defect inferred."
+  ]
+}

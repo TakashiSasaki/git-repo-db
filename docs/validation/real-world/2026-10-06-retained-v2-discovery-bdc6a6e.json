@@ -1,0 +1,139 @@
+{
+  "result": "N/A",
+  "reason": "No retained genuine pre-catalog3/v2 source found",
+  "default_state": "/home/agent/.local/state/repo-catalog",
+  "default_exists": false,
+  "XDG_STATE_HOME_set": false,
+  "known_roots": [
+    "/workspace/git-repo-db",
+    "/tmp/repo-catalog-real-world-adij66vr"
+  ],
+  "excluded_current_trial": "/tmp/repo-catalog-api-c8c9yo8f",
+  "candidates": [
+    {
+      "path": "/workspace/git-repo-db/artifacts/operational-trial-20261006/restored-state/catalog.sqlite3",
+      "database_bytes": 1122304,
+      "sha256_before": "d2a09abae7c120d647b812b9a4ce3ccd7f49f2abbb7da206232f6054a2fece1c",
+      "sha256_after": "d2a09abae7c120d647b812b9a4ce3ccd7f49f2abbb7da206232f6054a2fece1c",
+      "tables_count": 74,
+      "catalog3": true,
+      "format_identity": {
+        "format_id": "repo-catalog/catalog3",
+        "schema_version": 3,
+        "lifecycle": "validated"
+      },
+      "provenance": "prior synthetic installed-wheel trial",
+      "unchanged": true
+    },
+    {
+      "path": "/workspace/git-repo-db/artifacts/operational-trial-20261006/fresh-state/catalog.sqlite3",
+      "database_bytes": 1122304,
+      "sha256_before": "16047beb31b3f1bedc523d5ffbde5918f17e99a7eddbf1dec501018f5078242a",
+      "sha256_after": "16047beb31b3f1bedc523d5ffbde5918f17e99a7eddbf1dec501018f5078242a",
+      "tables_count": 74,
+      "catalog3": true,
+      "format_identity": {
+        "format_id": "repo-catalog/catalog3",
+        "schema_version": 3,
+        "lifecycle": "validated"
+      },
+      "provenance": "prior synthetic installed-wheel trial",
+      "unchanged": true
+    },
+    {
+      "path": "/tmp/repo-catalog-real-world-adij66vr/restored/catalog.sqlite3",
+      "database_bytes": 7622656,
+      "sha256_before": "1869080adeed76e6f491dc1c474fb44d2b46d591334351ecb606bdad833bd44b",
+      "sha256_after": "1869080adeed76e6f491dc1c474fb44d2b46d591334351ecb606bdad833bd44b",
+      "tables_count": 74,
+      "catalog3": true,
+      "format_identity": {
+        "format_id": "repo-catalog/catalog3",
+        "schema_version": 3,
+        "lifecycle": "validated"
+      },
+      "provenance": "accepted public Git trial / backup / restore",
+      "unchanged": true
+    },
+    {
+      "path": "/tmp/repo-catalog-real-world-adij66vr/backup/catalog.sqlite3",
+      "database_bytes": 7622656,
+      "sha256_before": "623a8fe1173222be6f35565f1378163502836363006d73e2bf74332fd04a0a51",
+      "sha256_after": "623a8fe1173222be6f35565f1378163502836363006d73e2bf74332fd04a0a51",
+      "tables_count": 74,
+      "catalog3": true,
+      "format_identity": {
+        "format_id": "repo-catalog/catalog3",
+        "schema_version": 3,
+        "lifecycle": "validated"
+      },
+      "provenance": "accepted public Git trial / backup / restore",
+      "unchanged": true
+    },
+    {
+      "path": "/tmp/repo-catalog-real-world-adij66vr/catalog/catalog.sqlite3",
+      "database_bytes": 7622656,
+      "sha256_before": "e96038f90d09a7f76606953581399c9e51a4d2b4df5c26e26ffdcab89988bcd8",
+      "sha256_after": "e96038f90d09a7f76606953581399c9e51a4d2b4df5c26e26ffdcab89988bcd8",
+      "tables_count": 74,
+      "catalog3": true,
+      "format_identity": {
+        "format_id": "repo-catalog/catalog3",
+        "schema_version": 3,
+        "lifecycle": "validated"
+      },
+      "provenance": "accepted public Git trial / backup / restore",
+      "unchanged": true
+    },
+    {
+      "path": "/workspace/git-repo-db/artifacts/operational-trial-20261006/synthetic-backup.sqlite3",
+      "database_bytes": 1122304,
+      "sha256_before": "7e21f5f611257cf4a5b28fdf1395f14fca17b15e2a45b94ad56af9621f17fe8c",
+      "format_identity": {
+        "format_id": "repo-catalog/catalog3",
+        "schema_version": 3,
+        "lifecycle": "validated"
+      },
+      "catalog3": true,
+      "provenance": "prior synthetic installed-wheel trial",
+      "sha256_after": "7e21f5f611257cf4a5b28fdf1395f14fca17b15e2a45b94ad56af9621f17fe8c",
+      "unchanged": true
+    }
+  ],
+  "elapsed_seconds": 0.1282,
+  "version": 1,
+  "run_id": "2026-10-06-retained-v2-discovery-bdc6a6e",
+  "application_commit": "bdc6a6eb9044f316cd9ebea9e70dd484b49ff406",
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1"
+  },
+  "requests": {
+    "http": 0,
+    "github_api": 0
+  },
+  "scope": "Configured/default state and known application/catalog locations only; no unrelated files.",
+  "commands": [
+    "Resolve configured/default repo-catalog state path.",
+    "List exact application state/config/catalog names at known locations.",
+    "SQLite URI mode=ro; SELECT format_id,schema_version,lifecycle FROM database_identity.",
+    "Compare database SHA-256 before/after classification."
+  ],
+  "criteria": [
+    {
+      "id": "genuine_retained_v2_trial",
+      "result": "N/A",
+      "pass_condition": "Only a uniquely identified real v2 source may be imported; none found."
+    },
+    {
+      "id": "source_safety",
+      "result": "PASS",
+      "pass_condition": "All six DB digests match before/after; caches never opened or mutated."
+    }
+  ],
+  "import_finalize_backup_restore": "N/A; not executed without a genuine retained v2 source",
+  "limitations": [
+    "Scoped absence; does not assert no legacy data exists in unrelated locations."
+  ],
+  "classification_recorded_at_utc": "2026-10-06T05:50:03.610766+00:00"
+}

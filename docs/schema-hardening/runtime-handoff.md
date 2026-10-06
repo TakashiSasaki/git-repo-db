@@ -2,11 +2,21 @@
 
 The ordinary application now uses catalog3 for initialization, registration/discovery, Git and GitHub REST/GraphQL collection, restart, offline queries/search, doctor, index/cache maintenance and backup/restore. The one offline v2 salvage importer writes the same packaged `resources/catalog3.sql` and requires explicit `db finalize` before normal use.
 
+## Remaining real operational validation, 2026-10-06
+
+Verified local commits `04f23c7082b1b9d0cd96df1062459b7b71049bb0` and `bdc6a6eb9044f316cd9ebea9e70dd484b49ff406`, their ancestry and the prior Git report, preserving the checkout. Published both to `design/schema-v2-hardening` / [PR #1](https://github.com/TakashiSasaki/git-repo-db/pull/1); the earlier Git-only PASS was not repeated.
+
+The [first PR/API trial](../validation/real-world/2026-10-06-museum-portal-api-bdc6a6e.md) at exact installed application commit `bdc6a6eb9044f316cd9ebea9e70dd484b49ff406` is **FAIL under the original budget**. The existing credential and read-only REST/GraphQL access worked. `museum-portal` was the smallest useful candidate with 50 PRs. Reconnaissance/discovery used nine calls; initial and subsequent normal syncs each used 43 calls and were deliberately cancelled before exceeding their admission caps. Total 95 API sends, 35 Git HTTP requests; sync durations 35.73 / 26.27 seconds. Already completed #1–4 commit/file listings were reused; five detail validations returned 304. Useful partial queries, structural checks and backup/restore succeeded; all five normalized query/coverage digest pairs matched. No product defect was inferred from the intentional interruption, and no product code or schema changed.
+
+[Retained real v2 discovery](../validation/real-world/2026-10-06-retained-v2-discovery-bdc6a6e.md) is **N/A**: default state is absent, and all six DBs in known application/catalog trial locations are identified catalog3 artifacts. Read-only classification left their digests unchanged; existing caches were untouched. No synthetic or newly collected source was represented as real v2.
+
+The user subsequently reported that more API capacity is available. A revised numeric request/time budget has been requested; a new fresh-state continuation is prepared but has not started. Keep the original failed attempt and give the continuation a distinct report. At this checkpoint: **Not ready — complete real PR/API validation remains pending the enlarged bounded trial.** Do not begin schema naming cleanup. No application test suite was rerun for these evidence-only changes; ordinary report checks and whitespace validation passed.
+
 ## Authorized public Git trial, 2026-10-06
 
 [Museum-portal Git acquisition and recovery report](../validation/real-world/2026-10-06-museum-portal-git-04f23c7.md) and its adjacent JSON record a PASS at exact application commit `04f23c7082b1b9d0cd96df1062459b7b71049bb0`. The installed CLI collected one public repository, re-synced unchanged heads/tags, checked independent commit/parent/blob evidence, queried offline, and backed up/restored to a fresh cache-free location. Six normalized query digests matched. Workload: 10.49 seconds; three admitted Git remote operations, seven Git HTTP requests and zero GitHub API calls. All working state and measurements used automatically created temporary storage; only summaries are retained in Git.
 
-This supports personal use of the exercised public Git workflow. No application defect appeared. PR/REST/GraphQL behavior, real v2 import/preservation/finalization, active-catalog cutover and release publication remain unexecuted. Next concrete operation is a separately bounded PR/API trial for this same repository, or a real offline import once an unambiguous preserved v2 source is available. Previous synthetic and hosted results below retain their original scope and dates.
+This supports personal use of the exercised public Git workflow. No application defect appeared. The later bounded API attempt and retained-v2 discovery are recorded above; active-catalog cutover and release publication remain unexecuted. Previous synthetic and hosted results below retain their original scope and dates.
 
 ## Practical preparation, 2026-10-06
 
@@ -90,4 +100,4 @@ Retired: normal v2 store/migration runner; phase/predecessor conversion protocol
 
 Missing original bytes, unsupported legacy payload shapes and malformed facts retain attributable archive/coverage gaps. Unsupported intermediate workspaces are reimported from preserved v2 input. Additional provider adapters, distributed synchronization, LFS/attachment originals, every historical payload shape and real-data activation are outside this stride.
 
-No actual user DB/cache was opened or converted, no live acquisition used real credentials, and no release or active-catalog cutover occurred. Real-data dry run, capacity/request budgets, deployment and cutover remain separately authorized work.
+The historical synthetic acceptance above did not use real credentials or retained user data. Later separately authorized public Git/API trials are recorded at the top. No real retained v2 conversion, release or active-catalog cutover occurred.
