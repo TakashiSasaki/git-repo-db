@@ -165,7 +165,7 @@ def test_pr_root_scopes(catalog):
         "--ref-kind",
         "pr-head",
     )
-    snapshot = pages(state, "snapshots", "list", "--repo", repo)[0]["id"]
+    snapshot = pages(state, "snapshots", "list", "--repo", repo)[0]["snapshot_id"]
     run(
         state,
         "search",

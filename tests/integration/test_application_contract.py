@@ -24,8 +24,7 @@ def test_operational_failure_retains_resumable_job(catalog, monkeypatch):
     job = raised.value.details["job_id"]
     with Store(state, readonly=True) as store:
         assert store.one(
-            "SELECT a.state,a.reason FROM jobs j JOIN job_attempts a "
-            "ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE j.id=?",
+            "SELECT a.state,a.reason FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
             (job,),
         )[:] == (
             "failed",

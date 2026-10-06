@@ -30,16 +30,18 @@ def test_query_observes_sqlite_wal_snapshot_and_derived_schema(tmp_path):
     with sqlite3.connect(database, autocommit=True) as writer:
         writer.execute("PRAGMA journal_mode=WAL")
         writer.execute(
-            "INSERT INTO repositories VALUES('repo','before',NULL,NULL,'{}')"
+            "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','before',NULL,NULL,'{}')"
         )
         writer.execute(
-            "CREATE VIEW optional_query_projection AS SELECT id FROM repositories"
+            "CREATE VIEW optional_query_projection AS SELECT repository_id FROM repositories"
         )
         writer.execute("ANALYZE")
         with Store(state, readonly=True) as reader, reader.transaction(read=True):
             assert reader.one("SELECT name FROM repositories")[0] == "before"
             writer.execute("BEGIN IMMEDIATE")
-            writer.execute("UPDATE repositories SET name='after' WHERE id='repo'")
+            writer.execute(
+                "UPDATE repositories SET name='after' WHERE repository_id='repo'"
+            )
             writer.execute("COMMIT")
             assert reader.one("SELECT name FROM repositories")[0] == "before"
             # A new ordinary query reads committed WAL bytes; it does not run a
@@ -54,7 +56,7 @@ def test_fresh_catalog3_doctor_and_file_query(catalog):
     state, fixture, repositories = catalog
     run(state, "sync", "git")
     doctor = run(state, "doctor")
-    assert doctor["data"]["schema_version"] == 3
+    assert doctor["data"]["schema_version"] == 4
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         assert (
             db.execute("SELECT format_id FROM database_identity").fetchone()[0]
@@ -88,14 +90,14 @@ def test_backup_restore_explicit_empty_destination(catalog, tmp_path):
         db.execute("PRAGMA foreign_keys=ON")
         db.execute("PRAGMA recursive_triggers=ON")
         content_id = db.execute(
-            "SELECT id FROM contents ORDER BY id LIMIT 1"
+            "SELECT content_id FROM contents ORDER BY content_id LIMIT 1"
         ).fetchone()[0]
         db.execute(
-            "INSERT INTO cache_locators VALUES('preserved-source',?,'/synthetic/sealed-cache','source_readonly','available')",
+            "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES('preserved-source',?,'/synthetic/sealed-cache','source_readonly','available')",
             (repositories["alpha"],),
         )
         db.execute(
-            "INSERT INTO content_locations VALUES(?,'cache','source-observation','preserved-source','available')",
+            "INSERT INTO content_locations(content_id,kind,locator,cache_locator_id,state) VALUES(?,'cache','source-observation','preserved-source','available')",
             (content_id,),
         )
     output = tmp_path / "backup.sqlite3"
@@ -130,18 +132,18 @@ def test_backup_restore_explicit_empty_destination(catalog, tmp_path):
         )
         assert (
             after.execute(
-                "SELECT * FROM cache_locators WHERE id='preserved-source'"
+                "SELECT * FROM cache_locators WHERE cache_locator_id='preserved-source'"
             ).fetchone()
             == before.execute(
-                "SELECT * FROM cache_locators WHERE id='preserved-source'"
+                "SELECT * FROM cache_locators WHERE cache_locator_id='preserved-source'"
             ).fetchone()
         )
         assert (
             after.execute(
-                "SELECT * FROM content_locations WHERE cache_id='preserved-source'"
+                "SELECT * FROM content_locations WHERE cache_locator_id='preserved-source'"
             ).fetchall()
             == before.execute(
-                "SELECT * FROM content_locations WHERE cache_id='preserved-source'"
+                "SELECT * FROM content_locations WHERE cache_locator_id='preserved-source'"
             ).fetchall()
         )
         assert not after.execute(

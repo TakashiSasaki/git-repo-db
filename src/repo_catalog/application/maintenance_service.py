@@ -130,19 +130,19 @@ class MaintenanceService:
         include_repositories=None,
         repo=None,
         instance=None,
-        provider_repo_id=None,
+        provider_repository_id=None,
         token_env_var=None,
     ):
         if kind == "git-url":
             kind = "local-git"
         if kind not in ("github", "local-git"):
             raise CatalogError("INVALID_ARGUMENT", "Unknown source kind")
-        if provider_repo_id is not None and not instance:
+        if provider_repository_id is not None and not instance:
             raise CatalogError(
                 "INVALID_ARGUMENT", "Provider repository ID requires an instance"
             )
         if kind == "github":
-            if repo or provider_repo_id:
+            if repo or provider_repository_id:
                 raise CatalogError(
                     "INVALID_ARGUMENT",
                     "Use repos bind to attach a GitHub provider ID before discovery",
@@ -214,10 +214,16 @@ class MaintenanceService:
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             ident = str(uuid.uuid4())
             with s.transaction():
-                instance_id = identity.instance(s, instance)["id"] if instance else None
+                service_instance_id = (
+                    identity.instance(s, instance)["service_instance_id"]
+                    if instance
+                    else None
+                )
                 if kind == "github":
-                    instance_id = instance_id or identity.default_github_instance(s)
-                    if identity.instance(s, instance_id)["kind"] != "github":
+                    service_instance_id = (
+                        service_instance_id or identity.default_github_instance(s)
+                    )
+                    if identity.instance(s, service_instance_id)["kind"] != "github":
                         raise CatalogError(
                             "INVALID_ARGUMENT",
                             "GitHub source requires a GitHub instance",
@@ -227,22 +233,24 @@ class MaintenanceService:
                         single_repository,
                     )
 
-                    settings["repo_id"] = single_repository(s, repo)["id"]
-                if provider_repo_id is not None:
-                    if not str(provider_repo_id).strip():
+                    settings["repository_id"] = single_repository(s, repo)[
+                        "repository_id"
+                    ]
+                if provider_repository_id is not None:
+                    if not str(provider_repository_id).strip():
                         raise CatalogError(
                             "INVALID_ARGUMENT",
                             "Provider repository ID must be nonempty",
                         )
-                    settings["provider_repo_id"] = str(provider_repo_id)
+                    settings["provider_repository_id"] = str(provider_repository_id)
                 s.execute(
-                    "INSERT INTO sources(id,discovery_kind,name,settings,instance_id) VALUES(?,?,?,?,?)",
+                    "INSERT INTO sources(source_id,discovery_kind,name,settings,service_instance_id) VALUES(?,?,?,?,?)",
                     (
                         ident,
                         "github_inventory" if kind == "github" else "manual_git",
                         name,
                         json.dumps(settings),
-                        instance_id,
+                        service_instance_id,
                     ),
                 )
                 s.publish()
@@ -255,22 +263,26 @@ class MaintenanceService:
             with s.transaction():
                 ident = identity.add_instance(s, kind, name, web_base_url, api_base_url)
                 s.publish()
-            return Result({"instance_id": ident}, catalog=s.revision())
+            return Result({"service_instance_id": ident}, catalog=s.revision())
 
-    def repository_bind(self, repo, instance, provider_repo_id=None):
+    def repository_bind(self, repo, instance, provider_repository_id=None):
         from repo_catalog.application.collection_service import single_repository
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
-                repo_id = single_repository(s, repo)["id"]
-                instance_id = identity.instance(s, instance)["id"]
-                identity.bind(s, repo_id, instance_id, provider_repo_id)
+                repository_id = single_repository(s, repo)["repository_id"]
+                service_instance_id = identity.instance(s, instance)[
+                    "service_instance_id"
+                ]
+                identity.bind(
+                    s, repository_id, service_instance_id, provider_repository_id
+                )
                 s.publish()
             return Result(
                 {
-                    "repo_id": repo_id,
-                    "instance_id": instance_id,
-                    "provider_repo_id": provider_repo_id,
+                    "repository_id": repository_id,
+                    "service_instance_id": service_instance_id,
+                    "provider_repository_id": provider_repository_id,
                 },
                 catalog=s.revision(),
             )
@@ -280,23 +292,28 @@ class MaintenanceService:
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
-                repo_id = single_repository(s, repo)["id"]
-                ident = identity.add_endpoint(s, repo_id, url, label, preferred)
+                repository_id = single_repository(s, repo)["repository_id"]
+                ident = identity.add_endpoint(s, repository_id, url, label, preferred)
                 s.publish()
             return Result(
-                {"repo_id": repo_id, "endpoint_id": ident}, catalog=s.revision()
+                {"repository_id": repository_id, "repository_endpoint_id": ident},
+                catalog=s.revision(),
             )
 
-    def endpoint_prefer(self, repo, endpoint_id):
+    def endpoint_prefer(self, repo, repository_endpoint_id):
         from repo_catalog.application.collection_service import single_repository
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
-                repo_id = single_repository(s, repo)["id"]
-                identity.prefer_endpoint(s, repo_id, endpoint_id)
+                repository_id = single_repository(s, repo)["repository_id"]
+                identity.prefer_endpoint(s, repository_id, repository_endpoint_id)
                 s.publish()
             return Result(
-                {"repo_id": repo_id, "endpoint_id": endpoint_id}, catalog=s.revision()
+                {
+                    "repository_id": repository_id,
+                    "repository_endpoint_id": repository_endpoint_id,
+                },
+                catalog=s.revision(),
             )
 
     def gc(self, apply=False):
@@ -420,8 +437,7 @@ class MaintenanceService:
             "dangling_publications": [
                 dict(r)
                 for r in s.all(
-                    "SELECT r.id FROM repositories r LEFT JOIN snapshots sn ON sn.id=r.current_snapshot_id "
-                    "WHERE r.current_snapshot_id IS NOT NULL AND (sn.id IS NULL OR sn.repo_id!=r.id OR sn.published!=1)"
+                    "SELECT r.repository_id FROM repositories r LEFT JOIN snapshots sn ON sn.snapshot_id=r.current_snapshot_id WHERE r.current_snapshot_id IS NOT NULL AND (sn.snapshot_id IS NULL OR sn.repository_id!=r.repository_id OR sn.published!=1)"
                 )
             ],
             "unfinished_published_runs": [
@@ -434,15 +450,13 @@ class MaintenanceService:
             "repository_endpoints": [
                 dict(r)
                 for r in s.all(
-                    "SELECT r.id FROM repositories r LEFT JOIN repository_endpoints e ON e.id=r.preferred_endpoint_id "
-                    "WHERE r.preferred_endpoint_id IS NOT NULL AND (e.id IS NULL OR e.repo_id!=r.id)"
+                    "SELECT r.repository_id FROM repositories r LEFT JOIN repository_endpoints e ON e.repository_endpoint_id=r.preferred_repository_endpoint_id WHERE r.preferred_repository_endpoint_id IS NOT NULL AND (e.repository_endpoint_id IS NULL OR e.repository_id!=r.repository_id)"
                 )
             ],
             "change_request_current": [
                 dict(r)
                 for r in s.all(
-                    "SELECT p.id FROM change_requests p LEFT JOIN change_request_observations o ON o.id=p.current_observation_id "
-                    "WHERE p.current_observation_id IS NOT NULL AND (o.id IS NULL OR o.change_request_id!=p.id OR o.published!=1)"
+                    "SELECT p.change_request_id FROM change_requests p LEFT JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.current_change_request_observation_id IS NOT NULL AND (o.change_request_observation_id IS NULL OR o.change_request_id!=p.change_request_id OR o.published!=1)"
                 )
             ],
             "index": {"status": "passed", "generations": []},
@@ -454,12 +468,18 @@ class MaintenanceService:
                         f"INSERT INTO {row['table_name']}({row['table_name']}) VALUES('integrity-check')"
                     )
                 checks["index"]["generations"].append(
-                    {"id": row["id"], "status": "passed"}
+                    {
+                        "index_generation_id": row["index_generation_id"],
+                        "status": "passed",
+                    }
                 )
             except sqlite3.Error:
                 checks["index"]["status"] = "failed"
                 checks["index"]["generations"].append(
-                    {"id": row["id"], "status": "failed"}
+                    {
+                        "index_generation_id": row["index_generation_id"],
+                        "status": "failed",
+                    }
                 )
         if (
             checks["sqlite"] != ["ok"]
@@ -515,7 +535,7 @@ class MaintenanceService:
                         (str(uuid.uuid4()),),
                     )
                     s.execute(
-                        "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE locator_id IN (SELECT id FROM cache_locators WHERE access='target_active')"
+                        "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE cache_locator_id IN (SELECT cache_locator_id FROM cache_locators WHERE access='target_active')"
                     )
                     s.execute(
                         "UPDATE cache_locators SET state='missing' WHERE access='target_active'"
@@ -523,7 +543,7 @@ class MaintenanceService:
                     s.execute("DELETE FROM cache_leases")
                     s.execute("DELETE FROM space_reservations")
                     s.execute(
-                        "UPDATE content_locations SET state='unavailable' WHERE kind='cache' AND cache_id IN (SELECT id FROM cache_locators WHERE access='target_active')"
+                        "UPDATE content_locations SET state='unavailable' WHERE kind='cache' AND cache_locator_id IN (SELECT cache_locator_id FROM cache_locators WHERE access='target_active')"
                     )
                     s.execute(
                         "UPDATE job_attempts SET state='interrupted',reason='restored_state_requires_admission' WHERE state='running'"
@@ -556,7 +576,7 @@ class MaintenanceService:
         from repo_catalog.application.job_service import JobService
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
-            content = s.one("SELECT * FROM contents WHERE id=?", (content_id,))
+            content = s.one("SELECT * FROM contents WHERE content_id=?", (content_id,))
             if not content:
                 raise CatalogError("NOT_FOUND", "Content not found")
             if content["text_state"] != "eligible":
@@ -575,24 +595,25 @@ class MaintenanceService:
             try:
                 for repo in repos:
                     candidates = s.all(
-                        "SELECT g.*,b.acquisition_id FROM blob_content_map b JOIN git_objects g ON g.id=b.object_id JOIN repository_object_sources p ON p.object_id=g.id JOIN acquisition_progress r ON r.acquisition_id=p.acquisition_id WHERE b.content_id=? AND p.repo_id=? AND r.state='published'",
-                        (content_id, repo["id"]),
+                        "SELECT g.*,b.git_acquisition_id FROM blob_content_map b JOIN git_objects g ON g.git_object_id=b.git_object_id JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE b.content_id=? AND p.repository_id=? AND r.state='published'",
+                        (content_id, repo["repository_id"]),
                     )
                     if not candidates:
                         continue
                     cache = s.one(
-                        "SELECT a.*,l.repo_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.id=a.locator_id WHERE l.repo_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
-                        (repo["id"],),
+                        "SELECT a.*,l.repository_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
+                        (repo["repository_id"],),
                     )
                     if not cache:
                         # Explicit re-fetch creates a fresh current observation, without claiming lost OIDs are available.
                         GitImporter(s, token).sync(repo, job)
                         cache = s.one(
-                            "SELECT a.*,l.repo_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.id=a.locator_id WHERE l.repo_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
-                            (repo["id"],),
+                            "SELECT a.*,l.repository_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
+                            (repo["repository_id"],),
                         )
                     with FileLock(
-                        s.path / f"locks/cache-{cache['id']}.lock", inheritable=True
+                        s.path / f"locks/cache-{cache['active_cache_entry_id']}.lock",
+                        inheritable=True,
                     ) as lock:
                         runner = GitRunner(token, lock)
                         for obj in candidates:
@@ -600,8 +621,8 @@ class MaintenanceService:
                                 GitImporter(s, token).preserve_text(
                                     s.path / cache["path"],
                                     obj["object_format"],
-                                    obj["id"],
-                                    {"id": obj["acquisition_id"]},
+                                    obj["git_object_id"],
+                                    {"git_acquisition_id": obj["git_acquisition_id"]},
                                     runner,
                                 )
                             except CatalogError as e:

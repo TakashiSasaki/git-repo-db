@@ -14,18 +14,18 @@ class JobService:
         timestamp = now()
         with self.store.transaction():
             self.store.execute(
-                "INSERT INTO jobs(id,kind,request,current_attempt,created_at) VALUES(?,?,?,1,?)",
+                "INSERT INTO jobs(job_id,kind,request,current_attempt,created_at) VALUES(?,?,?,1,?)",
                 (job, kind, json.dumps(request), timestamp),
             )
             self.store.execute(
-                "INSERT INTO job_attempts VALUES(?,1,'running',?,?,NULL,'{}',NULL)",
+                "INSERT INTO job_attempts(job_id,attempt,state,created_at,updated_at,not_before,checkpoint,reason) VALUES(?,1,'running',?,?,NULL,'{}',NULL)",
                 (job, timestamp, timestamp),
             )
         return job
 
     def resume(self, job):
         row = self.store.one(
-            "SELECT j.*,a.state,a.not_before FROM jobs j JOIN job_attempts a ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE j.id=?",
+            "SELECT j.*,a.state,a.not_before FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
             (job,),
         )
         if not row:
@@ -52,26 +52,26 @@ class JobService:
                     (timestamp, job, row["current_attempt"]),
                 )
             self.store.execute(
-                "INSERT INTO job_attempts VALUES(?,?,'running',?,?,NULL,'{}',NULL)",
+                "INSERT INTO job_attempts(job_id,attempt,state,created_at,updated_at,not_before,checkpoint,reason) VALUES(?,?,'running',?,?,NULL,'{}',NULL)",
                 (job, attempt, timestamp, timestamp),
             )
             self.store.execute("DELETE FROM cache_leases WHERE job_id=?", (job,))
             self.store.execute("DELETE FROM space_reservations WHERE job_id=?", (job,))
             self.store.execute(
-                "UPDATE jobs SET current_attempt=? WHERE id=?", (attempt, job)
+                "UPDATE jobs SET current_attempt=? WHERE job_id=?", (attempt, job)
             )
         return row["kind"], json.loads(row["request"])
 
     def update(self, job, state, reason=None, not_before=None):
         with self.store.transaction():
             self.store.execute(
-                "UPDATE job_attempts SET state=?,reason=?,not_before=?,updated_at=? WHERE job_id=? AND attempt=(SELECT current_attempt FROM jobs WHERE id=?)",
+                "UPDATE job_attempts SET state=?,reason=?,not_before=?,updated_at=? WHERE job_id=? AND attempt=(SELECT current_attempt FROM jobs WHERE job_id=?)",
                 (state, reason, not_before, now(), job, job),
             )
 
     def cancel(self, job):
         row = self.store.one(
-            "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE j.id=?",
+            "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
             (job,),
         )
         if not row:

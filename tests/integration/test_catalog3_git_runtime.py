@@ -27,10 +27,10 @@ def runtime(tmp_path):
 def register(store, url):
     with store.transaction():
         store.execute(
-            "INSERT INTO repositories VALUES('repo','fixture',NULL,NULL,'{}')"
+            "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture',NULL,NULL,'{}')"
         )
         add_endpoint(store, "repo", url)
-    return {"id": "repo", "name": "fixture"}
+    return {"repository_id": "repo", "name": "fixture"}
 
 
 def collect(store, repo, token=None, job=None):
@@ -67,12 +67,15 @@ def test_catalog3_git_preserves_roots_bytes_parents_and_new_observations(tmp_pat
         first = collect(store, repo)
         sid = first["snapshot_id"]
         assert (
-            store.one("SELECT current_snapshot_id FROM repositories WHERE id='repo'")[0]
+            store.one(
+                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+            )[0]
             == sid
         )
         assert (
             store.one(
-                "SELECT count(*) FROM acquisition_roots WHERE acquisition_id=?", (sid,)
+                "SELECT count(*) FROM acquisition_roots WHERE git_acquisition_id=?",
+                (sid,),
             )[0]
             == 1
         )
@@ -82,16 +85,19 @@ def test_catalog3_git_preserves_roots_bytes_parents_and_new_observations(tmp_pat
             ]
             == 4
         )
-        assert store.one("SELECT published FROM snapshots WHERE id=?", (sid,))[0] == 1
+        assert (
+            store.one("SELECT published FROM snapshots WHERE snapshot_id=?", (sid,))[0]
+            == 1
+        )
         oid = bytes.fromhex(fixture.commits["M"])
         commit = store.one(
-            "SELECT c.* FROM commits c JOIN git_objects g ON g.id=c.object_id WHERE g.object_format=? AND g.oid=?",
+            "SELECT c.* FROM commits c JOIN git_objects g ON g.git_object_id=c.git_object_id WHERE g.object_format=? AND g.oid=?",
             (fmt, oid),
         )
         assert commit["raw_message"] == "commit M 認証\n".encode()
         parents = store.all(
-            "SELECT g.oid FROM commit_parents p JOIN git_objects g ON g.id=p.parent_id WHERE p.commit_id=? ORDER BY p.parent_ordinal",
-            (commit["object_id"],),
+            "SELECT g.oid FROM commit_parents p JOIN git_objects g ON g.git_object_id=p.parent_git_object_id WHERE p.commit_git_object_id=? ORDER BY p.parent_ordinal",
+            (commit["git_object_id"],),
         )
         assert [r[0].hex() for r in parents] == [
             fixture.commits["B"],
@@ -99,8 +105,8 @@ def test_catalog3_git_preserves_roots_bytes_parents_and_new_observations(tmp_pat
         ]
         assert (
             store.one(
-                "SELECT raw_path FROM root_manifest_entries WHERE tree_id=?",
-                (commit["tree_id"],),
+                "SELECT raw_path FROM root_manifest_entries WHERE tree_git_object_id=?",
+                (commit["tree_git_object_id"],),
             )[0]
             == b"raw-\xff.txt"
         )
@@ -115,7 +121,9 @@ def test_catalog3_git_preserves_roots_bytes_parents_and_new_observations(tmp_pat
             for t in ("git_objects", "contents", "content_digests")
         ]
         assert (
-            store.one("SELECT current_snapshot_id FROM repositories WHERE id='repo'")[0]
+            store.one(
+                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+            )[0]
             == second["snapshot_id"]
         )
         assert not store.all("PRAGMA foreign_key_check")
@@ -142,7 +150,9 @@ def test_interrupted_fixed_refs_resume_without_new_remote_observation(
         run = store.one("SELECT * FROM git_acquisitions")
         observed = run["refs_observed_at"]
         assert (
-            store.one("SELECT current_snapshot_id FROM repositories WHERE id='repo'")[0]
+            store.one(
+                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+            )[0]
             is None
         )
         JobService(store).update(job, "interrupted")
@@ -152,15 +162,17 @@ def test_interrupted_fixed_refs_resume_without_new_remote_observation(
         fixture.commit("B", {b"a.txt": b"changed"}, parents=("A",))
         fixture.ref("refs/heads/main", "B")
         resumed = collect(store, repo, job=job)
-        assert resumed["run_id"] == run["id"]
+        assert resumed["git_acquisition_id"] == run["git_acquisition_id"]
         assert (
             store.one(
-                "SELECT refs_observed_at FROM git_acquisitions WHERE id=?", (run["id"],)
+                "SELECT refs_observed_at FROM git_acquisitions WHERE git_acquisition_id=?",
+                (run["git_acquisition_id"],),
             )[0]
             == observed
         )
         ref = store.one(
-            "SELECT target_oid FROM ref_observations WHERE snapshot_id=?", (run["id"],)
+            "SELECT target_oid FROM ref_observations WHERE snapshot_id=?",
+            (run["git_acquisition_id"],),
         )
         assert ref[0].hex() == fixture.commits["A"]
         assert store.one("SELECT count(*) FROM root_origins")[0] == 1
@@ -185,7 +197,7 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
         monkeypatch.setattr(GitImporter, "import_objects", interrupt)
         with pytest.raises(CatalogError):
             collect(store, repo, job=job)
-        old = store.one("SELECT id FROM git_acquisitions")[0]
+        old = store.one("SELECT git_acquisition_id FROM git_acquisitions")[0]
         JobService(store).update(job, "interrupted")
         monkeypatch.setattr(GitImporter, "import_objects", original)
         fixture.commit("B", {b"a.txt": b"changed"}, parents=("A",))
@@ -194,9 +206,14 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
         JobService(store).resume(job)
         collect(store, repo, job=job)
         assert old != newest
-        assert store.one("SELECT published FROM snapshots WHERE id=?", (old,))[0] == 1
         assert (
-            store.one("SELECT current_snapshot_id FROM repositories WHERE id='repo'")[0]
+            store.one("SELECT published FROM snapshots WHERE snapshot_id=?", (old,))[0]
+            == 1
+        )
+        assert (
+            store.one(
+                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+            )[0]
             == newest
         )
 
@@ -228,20 +245,20 @@ def test_unknown_provider_binding_admits_one_proven_identity(tmp_path):
     with runtime(tmp_path) as store:
         with store.transaction():
             store.execute(
-                "INSERT INTO repositories VALUES('repo','fixture',NULL,NULL,'{}')"
+                "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture',NULL,NULL,'{}')"
             )
             store.execute(
-                "INSERT INTO repositories VALUES('other','other',NULL,NULL,'{}')"
+                "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('other','other',NULL,NULL,'{}')"
             )
             service = add_instance(store, "github", "fixture-github")
             bind(store, "repo", service)
             binding = store.one(
-                "SELECT id FROM repository_bindings WHERE repo_id='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_id='repo'"
             )[0]
             bind(store, "repo", service, "42")
             assert tuple(
                 store.one(
-                    "SELECT id,provider_repo_id FROM repository_bindings WHERE repo_id='repo'"
+                    "SELECT repository_binding_id,provider_repository_id FROM repository_bindings WHERE repository_id='repo'"
                 )
             ) == (binding, "42")
             with pytest.raises(CatalogError, match="different identity"):

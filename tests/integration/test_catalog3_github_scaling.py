@@ -14,40 +14,34 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
         assert store.one("PRAGMA foreign_keys")[0] == 1
         assert store.one("PRAGMA recursive_triggers")[0] == 1
         facts = ApiFacts(store, store.config["github"])
-        collection = {"id": "collection", "change_request_id": "pr"}
+        collection = {"fetch_collection_id": "collection", "change_request_id": "pr"}
         with store.transaction():
             store.execute(
-                "INSERT INTO service_instances(id,kind,name,metadata) "
-                "VALUES('instance','github','synthetic','{}')"
+                "INSERT INTO service_instances(service_instance_id,kind,name,metadata) VALUES('instance','github','synthetic','{}')"
             )
             store.execute(
-                "INSERT INTO repositories(id,name,metadata) "
-                "VALUES('repo','synthetic','{}')"
+                "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','synthetic','{}')"
             )
             store.execute(
-                "INSERT INTO repository_bindings(id,repo_id,instance_id,provider_repo_id,metadata) "
-                "VALUES('binding','repo','instance','repo','{}')"
+                "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_id,provider_repository_id,metadata) VALUES('binding','repo','instance','repo','{}')"
             )
             store.execute(
-                "INSERT INTO change_requests(id,repo_id,binding_id,request_kind,number) "
-                "VALUES('pr','repo','binding','pull_request',1)"
+                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number) VALUES('pr','repo','binding','pull_request',1)"
             )
             store.execute(
-                "INSERT INTO resume_scopes(id,repo_id,binding_id,request_context,parser_version,profile_version,confidence) "
-                "VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
+                "INSERT INTO resume_scopes(resume_scope_id,repository_id,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
             )
             store.execute(
-                "INSERT INTO fetch_collections(id,repo_id,change_request_id,kind,scope_id,observed_at) "
-                "VALUES('collection','repo','pr','threads','scope',?)",
+                "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,kind,resume_scope_id,observed_at) VALUES('collection','repo','pr','threads','scope',?)",
                 (TIME,),
             )
             occurrence = store.execute(
-                "INSERT INTO fetch_occurrences(collection_id,ordinal,payload_id,request,observed_at,parsed_at) "
-                "VALUES('collection',0,?,'{}',?,?)",
+                "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,observed_at,parsed_at) VALUES('collection',0,?,'{}',?,?)",
                 (facts.payload(b"{}"), TIME, TIME),
             ).lastrowid
             store.execute(
-                "INSERT INTO review_threads VALUES('thread','pr','{}',?)", (TIME,)
+                "INSERT INTO review_threads(review_thread_id,change_request_id,payload,observed_at) VALUES('thread','pr','{}',?)",
+                (TIME,),
             )
 
             def insert_comments(start, end):
@@ -123,7 +117,7 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
         assert store.one("SELECT count(*) FROM text_bodies")[0] == 1
         assert (
             store.one(
-                "SELECT count(*) FROM document_observations WHERE occurrence_id=?",
+                "SELECT count(*) FROM document_observations WHERE fetch_occurrence_id=?",
                 (occurrence,),
             )[0]
             == 544

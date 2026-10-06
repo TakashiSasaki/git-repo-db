@@ -7,8 +7,8 @@ GitHub、GitLab、Gitea、Forgejo、Gitolite、plain Git、その他のサービ
 |---|---|
 | `repositories` | 内部UUIDv4。repoのカタログ上の同一性 |
 | `service_instances` | 内部UUIDv4、kind、一意のname、任意のweb/API base URL |
-| `repository_bindings` | repoとinstanceの対応。native IDは文字列またはNULL。`UNIQUE(instance_id, provider_repo_id)` |
-| `repository_endpoints` | 内部UUIDv4、repo、Git URL、transport、label、優先指定。`UNIQUE(repo_id,url)` |
+| `repository_bindings` | repoとinstanceの対応。native IDは文字列またはNULL。`UNIQUE(service_instance_id, provider_repository_id)` |
+| `repository_endpoints` | 内部UUIDv4、repo、Git URL、transport、label、優先指定。`UNIQUE(repository_id,url)` |
 | `sources` | 発見・列挙の設定と任意のinstance参照。API tokenは環境変数名で参照 |
 | `source_repositories` | sourceとrepoの多対多関係、最初と最後の発見時刻 |
 | `git_acquisitions` | 取得・解析run。使用endpoint IDとURLを保持 |

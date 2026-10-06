@@ -25,6 +25,18 @@ def sha(path):
 
 def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_path):
     source, cache, *_ = make_integrated_source(tmp_path / "legacy")
+    with sqlite3.connect(source) as legacy:
+        settings = json.loads(
+            legacy.execute(
+                "SELECT settings FROM sources WHERE id=?", (IDS["other_source"],)
+            ).fetchone()[0]
+        )
+        settings.update(repo_id=IDS["repo"], provider_repo_id="401")
+        saved_settings = json.dumps(settings)
+        legacy.execute(
+            "UPDATE sources SET settings=? WHERE id=?",
+            (saved_settings, IDS["other_source"]),
+        )
     before = sha(source)
     cached = sha(cache / "synthetic-evidence")
     state = tmp_path / "catalog3"
@@ -81,10 +93,26 @@ def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_pa
     shutil.rmtree(state / "import-v2")
     with Store(state, readonly=True) as store:
         assert (
-            store.one("SELECT id FROM repositories WHERE id=?", (IDS["repo"],))[0]
+            store.one(
+                "SELECT repository_id FROM repositories WHERE repository_id=?",
+                (IDS["repo"],),
+            )[0]
             == IDS["repo"]
         )
         assert store.one("SELECT count(*) FROM legacy_records")[0] > 100
+        settings = json.loads(
+            store.one(
+                "SELECT settings FROM sources WHERE source_id=?", (IDS["other_source"],)
+            )[0]
+        )
+        assert settings["repository_id"] == IDS["repo"]
+        assert settings["provider_repository_id"] == "401"
+        assert "repo_id" not in settings and "provider_repo_id" not in settings
+        archived = store.one(
+            "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.legacy_record_id=v.legacy_record_id WHERE r.source_table='sources' AND v.column_name='settings' AND v.value_bytes=?",
+            (saved_settings.encode(),),
+        )
+        assert bytes(archived[0]).decode() == saved_settings
         assert store.one("SELECT count(*) FROM legacy_values")[0] > 500
 
 

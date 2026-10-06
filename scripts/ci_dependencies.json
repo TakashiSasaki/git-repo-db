@@ -20,15 +20,7 @@
     "scripts/**",
     ".gitignore"
   ],
-  "executable_inputs": [
-    "docs/**/*.sql",
-    "docs/**/*.json",
-    "docs/**/*.csv",
-    "docs/schema-hardening/table-conversion.md",
-    "docs/*.sql",
-    "docs/*.json",
-    "docs/*.csv"
-  ],
+  "executable_inputs": [],
   "prose": [
     "AGENTS.md",
     "README.md",
@@ -68,7 +60,7 @@
     "tests/unit/test_conversion_pr_domain.py",
     "tests/unit/test_import_archive.py"
   ],
-  "notes": "Current catalog3 behavior and import protection determine coverage. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. Update this file when replacing obsolete tests with current runtime workflows.",
+  "notes": "Current catalog3 behavior and import protection determine coverage. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. Update this file when replacing obsolete tests with current runtime workflows. Runtime/schema and packaged v2 salvage contracts are shared src inputs. Named historical schema-hardening snapshots are report inputs; unclassified files conservatively select full acceptance.",
   "acceptance_patterns": [
     "tests/integration/test_catalog3*.py",
     "tests/integration/test_runtime*.py"
@@ -77,6 +69,15 @@
     "docs/ci-performance-baseline.json",
     "docs/ci-performance-results.json",
     "docs/ci-selection-results.json",
-    "docs/validation/real-world/*.json"
+    "docs/validation/real-world/*.json",
+    "docs/schema-hardening/column-conversion.csv",
+    "docs/schema-hardening/conversion-contract.json",
+    "docs/schema-hardening/current-schema.json",
+    "docs/schema-hardening/index-probe.json",
+    "docs/schema-hardening/invariant-contract.json",
+    "docs/schema-hardening/proposal-core.sql",
+    "docs/schema-hardening/source-access.json",
+    "docs/schema-hardening/target-inventory.json",
+    "docs/schema-hardening/target-schema.sql"
   ]
 }

@@ -47,7 +47,9 @@ def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
     monkeypatch.setattr(GitRunner, "transfer", no_transfer)
     monkeypatch.setattr(GitImporter, "import_objects", no_transfer)
     with Store(state) as store:
-        repo = store.one("SELECT * FROM repositories WHERE id=?", (repos["alpha"],))
+        repo = store.one(
+            "SELECT * FROM repositories WHERE repository_id=?", (repos["alpha"],)
+        )
         job = JobService(store).create("sync", {})
         root = {
             "ref": fixture.alpha.commits["N"],
@@ -60,8 +62,8 @@ def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
         )
         assert result["state"] == "complete"
         acquired = store.one(
-            "SELECT role,oid,published FROM acquisition_roots WHERE acquisition_id=?",
-            (result["run_id"],),
+            "SELECT role,oid,published FROM acquisition_roots WHERE git_acquisition_id=?",
+            (result["git_acquisition_id"],),
         )
         assert acquired["role"] == "traversal" and acquired["published"] == 1
         assert acquired["oid"].hex() == fixture.alpha.commits["N"]
@@ -80,16 +82,17 @@ def test_manifest_uses_bounded_write_batches(catalog):
     expected = len(git(fixture.alpha.path, "ls-tree", "-r", "-z", oid).split(b"\0")) - 1
     statements = []
     with Store(state) as store:
-        tree = store.object_id("sha1", bytes.fromhex(oid))
+        tree = store.git_object_id("sha1", bytes.fromhex(oid))
         assert not store.one(
-            "SELECT complete FROM root_manifests WHERE tree_id=?", (tree,)
+            "SELECT complete FROM root_manifests WHERE tree_git_object_id=?", (tree,)
         )[0]
         store.config["collection"]["write_batch_rows"] = 2
         store.connection.set_trace_callback(statements.append)
         GitImporter(store, CancellationToken()).build_manifest(tree)
         assert (
             store.one(
-                "SELECT count(*) FROM root_manifest_entries WHERE tree_id=?", (tree,)
+                "SELECT count(*) FROM root_manifest_entries WHERE tree_git_object_id=?",
+                (tree,),
             )[0]
             == expected
         )
@@ -138,20 +141,20 @@ def test_incomplete_closure(catalog):
     state, fixture, repos = catalog
     run(state, "sync", "git")
     before = run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
-        "current_snapshot"
+        "current_snapshot_id"
     ]
     import sqlite3
 
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         path = db.execute(
-            "SELECT l.path FROM active_cache_entries c JOIN cache_locators l ON l.id=c.locator_id WHERE l.repo_id=? AND l.access='target_active' AND c.state='active'",
+            "SELECT l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_id=? AND l.access='target_active' AND c.state='active'",
             (repos["alpha"],),
         ).fetchone()[0]
     (state / path / "objects/pack/missing.promisor").touch()
     run(state, "sync", "git", "--repo", repos["alpha"], expected=3)
     assert (
         run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
-            "current_snapshot"
+            "current_snapshot_id"
         ]
         == before
     )

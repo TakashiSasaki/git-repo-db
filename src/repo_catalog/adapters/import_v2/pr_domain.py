@@ -71,7 +71,7 @@ SOURCE_TABLES = {
     "code_acquisitions": "pr_git_links",
 }
 COLUMNS = {
-    "jobs": ("id", "kind", "request", "current_attempt", "created_at"),
+    "jobs": ("job_id", "kind", "request", "current_attempt", "created_at"),
     "job_attempts": (
         "job_id",
         "attempt",
@@ -83,27 +83,27 @@ COLUMNS = {
         "reason",
     ),
     "inventory_observations": (
-        "id",
+        "inventory_observation_id",
         "source_id",
         "asserted_state",
         "scope",
         "observed_at",
         "reason",
     ),
-    "payloads": ("id", "sha256", "body", "byte_length", "representation"),
+    "payloads": ("payload_id", "sha256", "body", "byte_length", "representation"),
     "change_requests": (
-        "id",
-        "repo_id",
-        "binding_id",
+        "change_request_id",
+        "repository_id",
+        "repository_binding_id",
         "request_kind",
         "number",
-        "current_observation_id",
-        "node_id",
+        "current_change_request_observation_id",
+        "provider_node_id",
     ),
     "resume_scopes": (
-        "id",
-        "repo_id",
-        "binding_id",
+        "resume_scope_id",
+        "repository_id",
+        "repository_binding_id",
         "source_id",
         "principal_ref",
         "api_version",
@@ -114,16 +114,16 @@ COLUMNS = {
         "confidence",
     ),
     "fetch_collections": (
-        "id",
-        "repo_id",
+        "fetch_collection_id",
+        "repository_id",
         "change_request_id",
         "source_id",
         "kind",
-        "scope_id",
+        "resume_scope_id",
         "observed_at",
     ),
     "collection_progress": (
-        "collection_id",
+        "fetch_collection_id",
         "job_id",
         "attempt",
         "state",
@@ -131,8 +131,8 @@ COLUMNS = {
         "reason",
     ),
     "fetch_occurrences": (
-        "id",
-        "collection_id",
+        "fetch_occurrence_id",
+        "fetch_collection_id",
         "ordinal",
         "payload_id",
         "request",
@@ -141,109 +141,140 @@ COLUMNS = {
         "parsed_at",
     ),
     "change_request_observations": (
-        "id",
+        "change_request_observation_id",
         "change_request_id",
         "observed_at",
         "published",
         "payload",
         "origin_key",
         "parsed_at",
-        "origin_occurrence_id",
+        "origin_fetch_occurrence_id",
     ),
-    "text_bodies": ("id", "body", "byte_length", "sha256"),
+    "text_bodies": ("text_body_id", "body", "byte_length", "sha256"),
     "documents": (
-        "id",
+        "document_id",
         "change_request_id",
         "kind",
-        "provider_id",
-        "current_version_id",
+        "provider_document_id",
+        "current_document_version_id",
         "deleted",
-        "node_id",
+        "provider_node_id",
         "author",
         "url",
         "metadata",
     ),
-    "document_versions": ("id", "document_id", "body_id", "legacy_body_sha256"),
-    "document_observations": (
-        "id",
+    "document_versions": (
+        "document_version_id",
         "document_id",
-        "version_id",
+        "text_body_id",
+        "legacy_body_sha256",
+    ),
+    "document_observations": (
+        "document_observation_id",
+        "document_id",
+        "document_version_id",
         "observed_at",
         "parsed_at",
         "origin_key",
-        "occurrence_id",
+        "fetch_occurrence_id",
         "metadata",
     ),
-    "reviews": ("id", "change_request_id", "document_id", "payload"),
-    "review_threads": ("id", "change_request_id", "payload", "observed_at"),
-    "review_comments": ("document_id", "change_request_id", "thread_id", "payload"),
-    "change_request_events": (
-        "id",
+    "reviews": ("review_id", "change_request_id", "document_id", "payload"),
+    "review_threads": (
+        "review_thread_id",
         "change_request_id",
-        "origin_key",
-        "ordinal",
-        "provider_id",
         "payload",
         "observed_at",
     ),
-    "collection_memberships": ("collection_id", "document_id", "ordinal"),
-    "unresolved_payloads": ("id", "payload_id", "legacy_record_id", "reason"),
-    "validators": ("scope_id", "validator_key", "etag", "payload_id", "validated_at"),
+    "review_comments": (
+        "document_id",
+        "change_request_id",
+        "review_thread_id",
+        "payload",
+    ),
+    "change_request_events": (
+        "change_request_event_id",
+        "change_request_id",
+        "origin_key",
+        "ordinal",
+        "provider_event_id",
+        "payload",
+        "observed_at",
+    ),
+    "collection_memberships": ("fetch_collection_id", "document_id", "ordinal"),
+    "unresolved_payloads": (
+        "unresolved_payload_id",
+        "payload_id",
+        "legacy_record_id",
+        "reason",
+    ),
+    "validators": (
+        "resume_scope_id",
+        "validator_key",
+        "etag",
+        "payload_id",
+        "validated_at",
+    ),
     "incremental_scans": (
-        "id",
-        "scope_id",
-        "collection_id",
+        "incremental_scan_id",
+        "resume_scope_id",
+        "fetch_collection_id",
         "scan_started_at",
         "safe_watermark",
         "evidence",
     ),
-    "resume_cursors": ("scope_id", "scan_id", "next_cursor", "reusable"),
+    "resume_cursors": (
+        "resume_scope_id",
+        "incremental_scan_id",
+        "next_cursor",
+        "reusable",
+    ),
     "completion_markers": (
-        "id",
-        "scope_id",
-        "collection_id",
+        "completion_marker_id",
+        "resume_scope_id",
+        "fetch_collection_id",
         "asserted_state",
         "evidence",
         "observed_at",
     ),
     "code_listings": (
-        "id",
+        "code_listing_id",
         "change_request_id",
-        "collection_id",
+        "fetch_collection_id",
         "kind",
-        "scope_id",
+        "resume_scope_id",
         "object_format",
         "head_oid",
         "base_oid",
     ),
     "code_listing_progress": (
-        "listing_id",
+        "code_listing_id",
         "state",
         "terminal",
         "page_count",
         "context_proven",
     ),
     "code_commits": (
-        "listing_id",
-        "occurrence_id",
+        "code_listing_id",
+        "fetch_occurrence_id",
         "position",
         "object_format",
         "oid",
         "payload",
     ),
     "code_file_changes": (
-        "listing_id",
-        "occurrence_id",
+        "code_listing_id",
+        "fetch_occurrence_id",
         "position",
         "raw_path",
         "payload",
     ),
     "code_observations": (
-        "id",
+        "code_observation_id",
         "change_request_id",
-        "observation_id",
-        "commit_listing_id",
-        "file_listing_id",
+        "change_request_observation_id",
+        "commit_code_listing_id",
+        "file_code_listing_id",
         "state",
         "object_format",
         "head_oid",
@@ -255,20 +286,40 @@ COLUMNS = {
         "role",
         "object_format",
         "oid",
-        "root_id",
+        "acquisition_root_id",
     ),
 }
 KEYS = {
     "job_attempts": ("job_id", "attempt"),
-    "collection_progress": ("collection_id",),
+    "collection_progress": ("fetch_collection_id",),
     "review_comments": ("document_id",),
-    "collection_memberships": ("collection_id", "document_id"),
-    "validators": ("scope_id", "validator_key"),
-    "resume_cursors": ("scope_id",),
-    "code_listing_progress": ("listing_id",),
-    "code_commits": ("listing_id", "occurrence_id", "position"),
-    "code_file_changes": ("listing_id", "occurrence_id", "position"),
+    "collection_memberships": ("fetch_collection_id", "document_id"),
+    "validators": ("resume_scope_id", "validator_key"),
+    "resume_cursors": ("resume_scope_id",),
+    "code_listing_progress": ("code_listing_id",),
+    "code_commits": ("code_listing_id", "fetch_occurrence_id", "position"),
+    "code_file_changes": ("code_listing_id", "fetch_occurrence_id", "position"),
     "code_acquisitions": ("code_observation_id", "role"),
+    "jobs": ("job_id",),
+    "inventory_observations": ("inventory_observation_id",),
+    "payloads": ("payload_id",),
+    "change_requests": ("change_request_id",),
+    "resume_scopes": ("resume_scope_id",),
+    "fetch_collections": ("fetch_collection_id",),
+    "fetch_occurrences": ("fetch_occurrence_id",),
+    "change_request_observations": ("change_request_observation_id",),
+    "text_bodies": ("text_body_id",),
+    "documents": ("document_id",),
+    "document_versions": ("document_version_id",),
+    "document_observations": ("document_observation_id",),
+    "reviews": ("review_id",),
+    "review_threads": ("review_thread_id",),
+    "change_request_events": ("change_request_event_id",),
+    "unresolved_payloads": ("unresolved_payload_id",),
+    "incremental_scans": ("incremental_scan_id",),
+    "completion_markers": ("completion_marker_id",),
+    "code_listings": ("code_listing_id",),
+    "code_observations": ("code_observation_id",),
 }
 DOCUMENT_KINDS = {
     "comments": "issue-comment",
@@ -294,7 +345,7 @@ def stable_id(namespace, *parts, integer=False):
 
 
 def target_key(table, row):
-    cells = [row[COLUMNS[table].index(key)] for key in KEYS.get(table, ("id",))]
+    cells = [row[COLUMNS[table].index(key)] for key in KEYS[table]]
     return tagged_key(
         [
             ("integer", value)
@@ -572,6 +623,14 @@ class Context(identity.Context):
             "null",
         ):
             raise Invalid("INVALID_SCOPE", "scope")
+        # The archived scope retains exact v2 keys; the runtime context uses
+        # catalog3 identifiers. SQLite can rename this key without decoding
+        # unrelated, potentially deep provider evidence in Python.
+        if "repo_id" in scope:
+            scope_text = self.src.execute(
+                "SELECT json_set(json_remove(?, '$.repo_id'), '$.repository_id', ?)",
+                (scope_text, repo),
+            ).fetchone()[0]
         return (
             self.scope_id(collection),
             repo,
@@ -1593,7 +1652,7 @@ class Context(identity.Context):
                             integer=True,
                         ),
                         self.i(page, "response_id"),
-                        self.record_id(page),
+                        self.legacy_record_id(page),
                         "saved document body is NULL; original occurrence retained",
                     ),
                     relation="derived",
@@ -1746,7 +1805,7 @@ class Context(identity.Context):
                             "null-pr-body", self.i(record, "id"), document, integer=True
                         ),
                         None,
-                        self.record_id(record),
+                        self.legacy_record_id(record),
                         "saved PR body is NULL; original observation retained",
                     ),
                     relation="derived",
@@ -1835,7 +1894,7 @@ class Context(identity.Context):
                         (
                             stable_id("null-pending-body", scope, integer=True),
                             None,
-                            self.record_id(record),
+                            self.legacy_record_id(record),
                             "pending document body is NULL; original observation retained",
                         ),
                         relation="derived",
@@ -1869,7 +1928,7 @@ class Context(identity.Context):
                     (
                         stable_id("pending-unresolved", scope, integer=True),
                         None,
-                        self.record_id(record),
+                        self.legacy_record_id(record),
                         "pending resource parent unresolved",
                     ),
                     relation="derived",
@@ -1941,7 +2000,7 @@ class Context(identity.Context):
                 (
                     stable_id("checkpoint", scope, integer=True),
                     None,
-                    self.record_id(record),
+                    self.legacy_record_id(record),
                     "legacy operational checkpoint retained; scope not proven",
                 ),
                 relation="archive",
@@ -2016,12 +2075,12 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
     context = Context(db, src, run, encoding, verifying=verifying)
     output = {"operations": [], "mappings": [], "diagnostics": [], "decisions": []}
     for record in records:
-        record_id = context.record_id(record)
+        legacy_record_id = context.legacy_record_id(record)
         operations, mappings, issues = [], [], []
 
         def emit(table, row, *, operation="insert", relation="identity", before=None):
             op = {
-                "record_id": record_id,
+                "legacy_record_id": legacy_record_id,
                 "table": table,
                 "operation": operation,
                 "row": tuple(row),
@@ -2031,7 +2090,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
             operations.append(op)
             mappings.append(
                 [
-                    record_id,
+                    legacy_record_id,
                     table,
                     target_key(table, row).hex(),
                     relation,
@@ -2069,7 +2128,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
         output["mappings"].extend(mappings)
         output["decisions"].append(
             {
-                "record_id": record_id,
+                "legacy_record_id": legacy_record_id,
                 "source_key": record.key.hex(),
                 "source_sha256": record.row_sha256.hex(),
                 "disposition": "normalized" if operations else "archive_only",
@@ -2080,7 +2139,13 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
                 "I31",
                 code,
                 severity,
-                canonical({"record_id": record_id, "column": column, "recipe": recipe}),
+                canonical(
+                    {
+                        "legacy_record_id": legacy_record_id,
+                        "column": column,
+                        "recipe": recipe,
+                    }
+                ),
             ]
             for code, severity, column in sorted(set(issues))
         )

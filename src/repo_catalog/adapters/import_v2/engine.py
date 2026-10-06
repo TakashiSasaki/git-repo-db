@@ -91,7 +91,7 @@ def typed_key(values):
 
 def key_values(table, row):
     columns, keys = definitions()
-    return tuple(row[columns[table].index(key)] for key in keys.get(table, ("id",)))
+    return tuple(row[columns[table].index(key)] for key in keys[table])
 
 
 def row_hash(row):
@@ -99,7 +99,7 @@ def row_hash(row):
 
 
 def find(db, table, row):
-    keys = definitions()[1].get(table, ("id",))
+    keys = definitions()[1][table]
     return db.execute(
         f"SELECT {','.join(identifier(c) for c in definitions()[0][table])} FROM {identifier(table)} WHERE "
         + " AND ".join(f"{identifier(key)}=?" for key in keys),
@@ -179,7 +179,11 @@ def create(destination, sealed, batch_size, estimate):
         raise ConversionError("DESTINATION_EXISTS")
     with temporary.open("xb"):
         pass
-    stamp, source_id, run_id = now(), str(uuid.uuid4()), str(uuid.uuid4())
+    stamp, conversion_source_id, conversion_run_id = (
+        now(),
+        str(uuid.uuid4()),
+        str(uuid.uuid4()),
+    )
     receipt = {
         "protocol": PROTOCOL,
         "implementation_sha256": implementation_signature(),
@@ -194,13 +198,13 @@ def create(destination, sealed, batch_size, estimate):
         db.executescript(schema_sql())
         db.execute("BEGIN IMMEDIATE")
         db.execute(
-            "INSERT INTO database_identity VALUES(1,?,?,?,0,?,'building')",
+            "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle) VALUES(1,?,?,?,0,?,'building')",
             (FORMAT_ID, SCHEMA_VERSION, str(uuid.uuid4()), DDL_SHA256),
         )
         db.execute(
-            "INSERT INTO conversion_sources VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO conversion_sources(conversion_source_id,source_sha256,schema_sha256,format_id,source_db_instance_id,source_catalog,source_migrations) VALUES(?,?,?,?,?,?,?)",
             (
-                source_id,
+                conversion_source_id,
                 bytes.fromhex(sealed["sealed"]["sha256"]),
                 bytes.fromhex(sealed["schema_sha256"]),
                 sealed["format_id"],
@@ -210,8 +214,14 @@ def create(destination, sealed, batch_size, estimate):
             ),
         )
         db.execute(
-            "INSERT INTO conversion_runs VALUES(?,?,?,NULL,?,'building',?)",
-            (run_id, source_id, stamp, PROTOCOL, canonical(receipt)),
+            "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at,ended_at,parser_version,state,manifest) VALUES(?,?,?,NULL,?,'building',?)",
+            (
+                conversion_run_id,
+                conversion_source_id,
+                stamp,
+                PROTOCOL,
+                canonical(receipt),
+            ),
         )
         db.execute("COMMIT")
     temporary.rename(destination)
@@ -219,8 +229,12 @@ def create(destination, sealed, batch_size, estimate):
 
 
 def check(db, sealed, batch_size):
-    identities = db.execute("SELECT * FROM database_identity").fetchall()
-    runs = db.execute("SELECT * FROM conversion_runs").fetchall()
+    identities = db.execute(
+        "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+    ).fetchall()
+    runs = db.execute(
+        "SELECT conversion_run_id,conversion_source_id,started_at,ended_at,parser_version,state,manifest FROM conversion_runs"
+    ).fetchall()
     if (
         len(identities) != 1
         or identities[0]["format_id"] != FORMAT_ID
@@ -245,9 +259,11 @@ def check(db, sealed, batch_size):
         or receipt.get("batch_size") != batch_size
     ):
         raise ConversionError("IMPORT_RESUME_MISMATCH")
-    saved = db.execute("SELECT * FROM conversion_sources").fetchall()
+    saved = db.execute(
+        "SELECT conversion_source_id,source_sha256,schema_sha256,format_id,source_db_instance_id,source_catalog,source_migrations FROM conversion_sources"
+    ).fetchall()
     if len(saved) != 1 or tuple(saved[0]) != (
-        run["source_id"],
+        run["conversion_source_id"],
         bytes.fromhex(sealed["sealed"]["sha256"]),
         bytes.fromhex(sealed["schema_sha256"]),
         sealed["format_id"],
@@ -301,7 +317,7 @@ def descriptor(run, module, name, index, records):
         canonical(
             {
                 "protocol": PROTOCOL,
-                "source_id": run["source_id"],
+                "conversion_source_id": run["conversion_source_id"],
                 "recipe": name,
                 "index": index,
                 "records": [[r.key.hex(), r.row_sha256.hex()] for r in records],
@@ -317,19 +333,25 @@ def archive_output(db, run, records, stamp, encoding):
     rows = {"legacy_records": [], "legacy_values": [], "validation_results": []}
     for record in records:
         rows["legacy_records"].append(
-            (ident, run["source_id"], record.table, record.key, record.row_sha256)
+            (
+                ident,
+                run["conversion_source_id"],
+                record.table,
+                record.key,
+                record.row_sha256,
+            )
         )
         rows["legacy_values"].extend((ident, *value) for value in record.values)
         for code, severity, column in diagnostics.classify(record, encoding):
             rows["validation_results"].append(
                 (
                     diag,
-                    run["id"],
+                    run["conversion_run_id"],
                     "I31",
                     code,
                     severity,
                     stamp,
-                    canonical({"record_id": ident, "column": column}),
+                    canonical({"legacy_record_id": ident, "column": column}),
                 )
             )
             diag += 1
@@ -348,7 +370,7 @@ def compact(output, mapping_ids, diagnostic_ids, stamp):
     operations = []
     for op in output["operations"]:
         value = {
-            "record_id": op["record_id"],
+            "legacy_record_id": op["legacy_record_id"],
             "table": op["table"],
             "operation": op["operation"],
             "key": batch.encode([key_values(op["table"], op["row"])])[0],
@@ -439,14 +461,14 @@ def commit(db, src, run, receipt, item, fault=no_fault):
                     ]:
                         raise ConversionError("IMPORT_BEFORE_IMAGE_MISMATCH")
                     db.execute(
-                        "UPDATE repositories SET preferred_endpoint_id=? WHERE id=?",
+                        "UPDATE repositories SET preferred_repository_endpoint_id=? WHERE repository_id=?",
                         (row[2], row[0]),
                     )
                 elif operation == "manifest_completion" and table == "root_manifests":
                     if actual is None or actual[0] != row[0] or actual[1] != 0:
                         raise ConversionError("IMPORT_BEFORE_IMAGE_MISMATCH")
                     db.execute(
-                        "UPDATE root_manifests SET complete=? WHERE tree_id=?",
+                        "UPDATE root_manifests SET complete=? WHERE tree_git_object_id=?",
                         (row[1], row[0]),
                     )
                 elif (
@@ -460,19 +482,19 @@ def commit(db, src, run, receipt, item, fault=no_fault):
                         + ",".join(
                             f"{identifier(c)}=?" for c in definitions()[0][table][1:]
                         )
-                        + " WHERE listing_id=?",
+                        + " WHERE code_listing_id=?",
                         [*row[1:], row[0]],
                     )
                 else:
                     raise ConversionError("IMPORT_UNOWNED_OPERATION")
             fault("after_data", table=name, index=index)
             for ident, mapped in zip(mapping_ids, output["mappings"], strict=True):
-                record_id, table, key, relation, reason = mapped
+                legacy_record_id, table, key, relation, reason = mapped
                 values = [
                     raw.decode("utf-8") if kind == "text" else raw
                     for kind, raw in archive.decode_key(bytes.fromhex(key))
                 ]
-                keys = definitions()[1].get(table, ("id",))
+                keys = definitions()[1][table]
                 found = db.execute(
                     f"SELECT {','.join(identifier(k) for k in keys)} FROM {identifier(table)} WHERE "
                     + " AND ".join(f"{identifier(k)}=?" for k in keys),
@@ -481,22 +503,35 @@ def commit(db, src, run, receipt, item, fault=no_fault):
                 if found is None or typed_key(tuple(found)).hex() != key:
                     raise ConversionError("IMPORT_MAPPING_TARGET_MISSING")
                 db.execute(
-                    "INSERT INTO id_mappings VALUES(?,?,?,?,?,?)",
-                    (ident, record_id, table, bytes.fromhex(key), relation, reason),
+                    "INSERT INTO id_mappings(id_mapping_id,legacy_record_id,target_table,target_key,relation,reason) VALUES(?,?,?,?,?,?)",
+                    (
+                        ident,
+                        legacy_record_id,
+                        table,
+                        bytes.fromhex(key),
+                        relation,
+                        reason,
+                    ),
                 )
             fault("after_mapping", table=name, index=index)
             for ident, diagnostic in zip(
                 diagnostic_ids, output["diagnostics"], strict=True
             ):
                 db.execute(
-                    "INSERT INTO validation_results VALUES(?,?,?,?,?,?,?)",
-                    (ident, run["id"], *diagnostic[:3], stamp, diagnostic[3]),
+                    "INSERT INTO validation_results(validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES(?,?,?,?,?,?,?)",
+                    (
+                        ident,
+                        run["conversion_run_id"],
+                        *diagnostic[:3],
+                        stamp,
+                        diagnostic[3],
+                    ),
                 )
         db.execute(
-            "INSERT INTO conversion_batches VALUES(?,?,?,?,?,?)",
+            "INSERT INTO conversion_batches(conversion_batch_id,conversion_run_id,source_table,input_sha256,committed_at,output_manifest) VALUES(?,?,?,?,?,?)",
             (
                 batch.next_id(db, "conversion_batches"),
-                run["id"],
+                run["conversion_run_id"],
                 name,
                 bytes.fromhex(input_sha256),
                 stamp,
@@ -504,8 +539,8 @@ def commit(db, src, run, receipt, item, fault=no_fault):
             ),
         )
         db.execute(
-            "UPDATE conversion_runs SET state='building',ended_at=NULL WHERE id=?",
-            (run["id"],),
+            "UPDATE conversion_runs SET state='building',ended_at=NULL WHERE conversion_run_id=?",
+            (run["conversion_run_id"],),
         )
         fault("before_commit", table=name, index=index)
         db.execute("COMMIT")
@@ -526,7 +561,8 @@ def verify_output(db, src, run, receipt):
     count = 0
     try:
         for saved_batch in db.execute(
-            "SELECT * FROM conversion_batches WHERE run_id=? ORDER BY id", (run["id"],)
+            "SELECT conversion_batch_id,conversion_run_id,source_table,input_sha256,committed_at,output_manifest FROM conversion_batches WHERE conversion_run_id=? ORDER BY conversion_batch_id",
+            (run["conversion_run_id"],),
         ):
             item = next(expected, None)
             if item is None:
@@ -552,25 +588,28 @@ def verify_output(db, src, run, receipt):
                 }
                 for record in records:
                     actual = db.execute(
-                        "SELECT * FROM legacy_records WHERE source_id=? AND source_table=? AND source_key=?",
-                        (run["source_id"], record.table, record.key),
+                        "SELECT legacy_record_id,conversion_source_id,source_table,source_key,row_sha256 FROM legacy_records WHERE conversion_source_id=? AND source_table=? AND source_key=?",
+                        (run["conversion_source_id"], record.table, record.key),
                     ).fetchone()
                     if actual is None or actual["row_sha256"] != record.row_sha256:
                         raise ConversionError("IMPORT_ARCHIVE_MISMATCH")
                     rows["legacy_records"].append(tuple(actual))
                     rows["legacy_values"].extend(
-                        (actual["id"], *value) for value in record.values
+                        (actual["legacy_record_id"], *value) for value in record.values
                     )
                     for code, severity, column in diagnostics.classify(
                         record, receipt["encoding"]
                     ):
                         found = db.execute(
-                            "SELECT * FROM validation_results WHERE run_id=? AND code=? AND details=?",
+                            "SELECT validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at,details FROM validation_results WHERE conversion_run_id=? AND code=? AND details=?",
                             (
-                                run["id"],
+                                run["conversion_run_id"],
                                 code,
                                 canonical(
-                                    {"record_id": actual["id"], "column": column}
+                                    {
+                                        "legacy_record_id": actual["legacy_record_id"],
+                                        "column": column,
+                                    }
                                 ),
                             ),
                         ).fetchall()
@@ -578,14 +617,17 @@ def verify_output(db, src, run, receipt):
                             raise ConversionError("IMPORT_ARCHIVE_DIAGNOSTIC_MISMATCH")
                         rows["validation_results"].append(
                             (
-                                found[0]["id"],
-                                run["id"],
+                                found[0]["validation_result_id"],
+                                run["conversion_run_id"],
                                 "I31",
                                 code,
                                 severity,
                                 saved_batch["committed_at"],
                                 canonical(
-                                    {"record_id": actual["id"], "column": column}
+                                    {
+                                        "legacy_record_id": actual["legacy_record_id"],
+                                        "column": column,
+                                    }
                                 ),
                             )
                         )
@@ -597,12 +639,12 @@ def verify_output(db, src, run, receipt):
                             row[:2] if table == "legacy_values" else row[:1]
                         )
                         ledger.execute(
-                            "INSERT INTO rows VALUES(?,?,?)",
+                            "INSERT INTO rows(t,k,h) VALUES(?,?,?)",
                             (table, key, row_hash(row)),
                         )
                         if table == "validation_results":
                             ledger.execute(
-                                "INSERT INTO diagnostics VALUES(?)", (row[0],)
+                                "INSERT INTO diagnostics(id) VALUES(?)", (row[0],)
                             )
             else:
                 output = module.prepare(
@@ -650,15 +692,16 @@ def verify_output(db, src, run, receipt):
                     ):
                         raise ConversionError("IMPORT_OUTPUT_CONFLICT")
                     ledger.execute(
-                        "INSERT INTO rows VALUES(?,?,?) ON CONFLICT(t,k) DO UPDATE SET h=excluded.h",
+                        "INSERT INTO rows(t,k,h) VALUES(?,?,?) ON CONFLICT(t,k) DO UPDATE SET h=excluded.h",
                         (table, key, sha),
                     )
                 for ident, mapped in zip(
                     saved["mapping_ids"], output["mappings"], strict=True
                 ):
-                    ledger.execute("INSERT INTO maps VALUES(?)", (ident,))
+                    ledger.execute("INSERT INTO maps(id) VALUES(?)", (ident,))
                     actual = db.execute(
-                        "SELECT * FROM id_mappings WHERE id=?", (ident,)
+                        "SELECT id_mapping_id,legacy_record_id,target_table,target_key,relation,reason FROM id_mappings WHERE id_mapping_id=?",
+                        (ident,),
                     ).fetchone()
                     if actual is None or tuple(actual) != (
                         ident,
@@ -673,14 +716,15 @@ def verify_output(db, src, run, receipt):
                 ):
                     row = (
                         ident,
-                        run["id"],
+                        run["conversion_run_id"],
                         *diagnostic[:3],
                         saved_batch["committed_at"],
                         diagnostic[3],
                     )
-                    ledger.execute("INSERT INTO diagnostics VALUES(?)", (ident,))
+                    ledger.execute("INSERT INTO diagnostics(id) VALUES(?)", (ident,))
                     actual = db.execute(
-                        "SELECT * FROM validation_results WHERE id=?", (ident,)
+                        "SELECT validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at,details FROM validation_results WHERE validation_result_id=?",
+                        (ident,),
                     ).fetchone()
                     if actual is None or tuple(actual) != row:
                         raise ConversionError("IMPORT_DIAGNOSTIC_MISMATCH")
@@ -689,13 +733,31 @@ def verify_output(db, src, run, receipt):
         for table in ("legacy_records", "legacy_values", *definitions()[0]):
             total = 0
             columns = definitions()[0].get(table)
-            selected = ",".join(identifier(c) for c in columns) if columns else "*"
+            columns = (
+                columns
+                or {
+                    "legacy_records": (
+                        "legacy_record_id",
+                        "conversion_source_id",
+                        "source_table",
+                        "source_key",
+                        "row_sha256",
+                    ),
+                    "legacy_values": (
+                        "legacy_record_id",
+                        "column_name",
+                        "storage_type",
+                        "value_bytes",
+                    ),
+                }[table]
+            )
+            selected = ",".join(identifier(c) for c in columns)
             for actual in db.execute(f"SELECT {selected} FROM {identifier(table)}"):
                 key = (
                     typed_key(
                         tuple(actual[:2] if table == "legacy_values" else actual[:1])
                     )
-                    if columns is None
+                    if table in {"legacy_records", "legacy_values"}
                     else typed_key(key_values(table, actual))
                 )
                 saved = ledger.execute(
@@ -723,7 +785,7 @@ def verify_output(db, src, run, receipt):
         return {
             "complete": complete,
             "committed_batches": count,
-            "diagnostics": diagnostics.counts(db, run["id"]),
+            "diagnostics": diagnostics.counts(db, run["conversion_run_id"]),
         }
     finally:
         ledger.close()
@@ -870,11 +932,11 @@ def run(
                 receipt["source_foreign_key_issues"] = diagnostics.source_issues(src)
                 db.execute("BEGIN IMMEDIATE")
                 db.execute(
-                    "UPDATE conversion_runs SET state='paused',ended_at=?,manifest=? WHERE id=?",
+                    "UPDATE conversion_runs SET state='paused',ended_at=?,manifest=? WHERE conversion_run_id=?",
                     (
                         now() if status["complete"] else None,
                         canonical(receipt),
-                        run_row["id"],
+                        run_row["conversion_run_id"],
                     ),
                 )
                 db.execute("COMMIT")

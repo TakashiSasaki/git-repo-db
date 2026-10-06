@@ -41,7 +41,7 @@ def test_rewrite_delete(catalog):
     state, fixture, repos = catalog
     run(state, "sync", "git")
     snapshots = pages(state, "snapshots", "list", "--repo", repos["alpha"])
-    s1 = snapshots[0]["id"]
+    s1 = snapshots[0]["snapshot_id"]
     content = run(
         state,
         "search",

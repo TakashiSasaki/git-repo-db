@@ -71,5 +71,5 @@ def add_local(state, name, url):
         "data"
     ]["source_id"]
     return run(state, "discover", "--source", source)["data"]["repositories"][0][
-        "repo_id"
+        "repository_id"
     ]

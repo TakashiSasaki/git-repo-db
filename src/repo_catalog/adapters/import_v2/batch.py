@@ -19,4 +19,10 @@ def row_proof(name, row):
 
 
 def next_id(db, table):
-    return db.execute(f"SELECT coalesce(max(id),0)+1 FROM {table}").fetchone()[0]
+    column = {
+        "legacy_records": "legacy_record_id",
+        "id_mappings": "id_mapping_id",
+        "validation_results": "validation_result_id",
+        "conversion_batches": "conversion_batch_id",
+    }[table]
+    return db.execute(f"SELECT coalesce(max({column}),0)+1 FROM {table}").fetchone()[0]

@@ -43,9 +43,9 @@ SOURCE_TABLES = {
 }
 COLUMNS = {
     "git_acquisitions": (
-        "id",
-        "repo_id",
-        "endpoint_id",
+        "git_acquisition_id",
+        "repository_id",
+        "repository_endpoint_id",
         "endpoint_url",
         "object_format",
         "refs_observed_at",
@@ -56,19 +56,36 @@ COLUMNS = {
         "request",
         "roots_manifest",
     ),
-    "git_objects": ("id", "object_format", "oid", "type", "size", "verified"),
-    "contents": ("id", "byte_length", "raw_text", "text_state", "created_at"),
-    "commits": ("object_id", "tree_id", "raw_headers", "raw_message", "metadata"),
-    "commit_parents": ("commit_id", "parent_ordinal", "parent_id"),
+    "git_objects": (
+        "git_object_id",
+        "object_format",
+        "oid",
+        "type",
+        "size",
+        "verified",
+    ),
+    "contents": ("content_id", "byte_length", "raw_text", "text_state", "created_at"),
+    "commits": (
+        "git_object_id",
+        "tree_git_object_id",
+        "raw_headers",
+        "raw_message",
+        "metadata",
+    ),
+    "commit_parents": (
+        "commit_git_object_id",
+        "parent_ordinal",
+        "parent_git_object_id",
+    ),
     "tree_entries": (
-        "tree_id",
+        "tree_git_object_id",
         "raw_name",
         "mode",
         "child_format",
         "child_oid",
-        "child_id",
+        "child_git_object_id",
     ),
-    "tag_objects": ("object_id", "target_id", "raw_payload"),
+    "tag_objects": ("git_object_id", "target_git_object_id", "raw_payload"),
     "content_digests": (
         "content_id",
         "representation",
@@ -77,12 +94,16 @@ COLUMNS = {
         "verified_at",
         "pipeline_version",
     ),
-    "blob_content_map": ("object_id", "content_id", "acquisition_id"),
-    "repository_object_sources": ("repo_id", "object_id", "acquisition_id"),
+    "blob_content_map": ("git_object_id", "content_id", "git_acquisition_id"),
+    "repository_object_sources": (
+        "repository_id",
+        "git_object_id",
+        "git_acquisition_id",
+    ),
     "snapshots": (
-        "id",
-        "acquisition_id",
-        "repo_id",
+        "snapshot_id",
+        "git_acquisition_id",
+        "repository_id",
         "published",
         "generation",
         "created_at",
@@ -97,47 +118,57 @@ COLUMNS = {
         "target_type",
     ),
     "acquisition_roots": (
-        "id",
-        "acquisition_id",
+        "acquisition_root_id",
+        "git_acquisition_id",
         "object_format",
         "oid",
         "role",
-        "repo_id",
+        "repository_id",
         "expected_oid",
         "published",
     ),
-    "root_manifests": ("tree_id", "complete"),
+    "root_manifests": ("tree_git_object_id", "complete"),
     "root_manifest_entries": (
-        "tree_id",
+        "tree_git_object_id",
         "raw_path",
         "mode",
-        "object_id",
+        "git_object_id",
         "object_format",
         "oid",
     ),
     "root_origins": (
-        "id",
-        "root_id",
+        "root_origin_id",
+        "acquisition_root_id",
         "origin_kind",
         "raw_ref_name",
         "source_ordinal",
         "snapshot_id",
         "change_request_id",
-        "observation_id",
-        "repo_id",
+        "change_request_observation_id",
+        "repository_id",
     ),
 }
 KEYS = {
-    "commits": ("object_id",),
-    "commit_parents": ("commit_id", "parent_ordinal"),
-    "tree_entries": ("tree_id", "raw_name"),
-    "tag_objects": ("object_id",),
+    "commits": ("git_object_id",),
+    "commit_parents": ("commit_git_object_id", "parent_ordinal"),
+    "tree_entries": ("tree_git_object_id", "raw_name"),
+    "tag_objects": ("git_object_id",),
     "content_digests": ("content_id", "representation", "algorithm"),
-    "blob_content_map": ("object_id",),
-    "repository_object_sources": ("repo_id", "object_id", "acquisition_id"),
+    "blob_content_map": ("git_object_id",),
+    "repository_object_sources": (
+        "repository_id",
+        "git_object_id",
+        "git_acquisition_id",
+    ),
     "ref_observations": ("snapshot_id", "raw_ref_name"),
-    "root_manifests": ("tree_id",),
-    "root_manifest_entries": ("tree_id", "raw_path"),
+    "root_manifests": ("tree_git_object_id",),
+    "root_manifest_entries": ("tree_git_object_id", "raw_path"),
+    "git_acquisitions": ("git_acquisition_id",),
+    "git_objects": ("git_object_id",),
+    "contents": ("content_id",),
+    "snapshots": ("snapshot_id",),
+    "acquisition_roots": ("acquisition_root_id",),
+    "root_origins": ("root_origin_id",),
 }
 MODES = (0o40000, 0o100644, 0o100755, 0o120000, 0o160000)
 
@@ -148,7 +179,7 @@ class Invalid(identity.Invalid):
 
 def target_key(table, row):
     values = []
-    for column in KEYS.get(table, ("id",)):
+    for column in KEYS[table]:
         value = row[COLUMNS[table].index(column)]
         if isinstance(value, bytes):
             values.append(("blob", value))
@@ -255,7 +286,8 @@ class Context(identity.Context):
         return record
 
     def target(self, table, *key):
-        predicate = " AND ".join(column + "=?" for column in KEYS.get(table, ("id",)))
+        columns = list(self.db.execute(f"PRAGMA table_info({table})"))
+        predicate = " AND ".join(c["name"] + "=?" for c in columns if c["pk"])
         row = self.db.execute(
             f"SELECT * FROM {table} WHERE {predicate}", key
         ).fetchone()
@@ -295,7 +327,7 @@ class Context(identity.Context):
         if repo is not None and owner != repo:
             raise Invalid("GIT_OWNER_MISMATCH", column)
         target = self.target("git_acquisitions", ident)
-        if target["repo_id"] != owner:
+        if target["repository_id"] != owner:
             raise Invalid("GIT_OWNER_MISMATCH", column)
         return ident, owner
 
@@ -498,7 +530,8 @@ class Context(identity.Context):
             endpoint = self.t(record, "endpoint_id", nullable=True, nonempty=True)
             if (
                 endpoint is not None
-                and self.target("repository_endpoints", endpoint)["repo_id"] != repo
+                and self.target("repository_endpoints", endpoint)["repository_id"]
+                != repo
             ):
                 raise Invalid("GIT_OWNER_MISMATCH", "endpoint_id")
             row = (
@@ -781,9 +814,9 @@ class Context(identity.Context):
         number = self.integer(source_root, "pr_number", nullable=True)
         claimed_observation = self.integer(source_root, "observation_id", nullable=True)
         if (
-            owner["repo_id"] != root["repo_id"]
+            owner["repository_id"] != root["repository_id"]
             or code["change_request_id"] != pr_id
-            or code["observation_id"] != observation
+            or code["change_request_observation_id"] != observation
             or number is not None
             and number != owner["number"]
             or claimed_observation is not None
@@ -791,12 +824,12 @@ class Context(identity.Context):
         ):
             raise Invalid("GIT_PR_ROOT_MISMATCH", "observation_id")
         linked = self.db.execute(
-            "SELECT root_id FROM code_acquisitions WHERE code_observation_id=? AND role=?",
+            "SELECT acquisition_root_id FROM code_acquisitions WHERE code_observation_id=? AND role=?",
             (code_id, role),
         ).fetchone()
         if linked is None or linked[0] != root_id:
             raise Invalid("GIT_UNSAFE_DEPENDENCY", "code_acquisitions")
-        return root_id, code_id, pr_id, observation, root["repo_id"]
+        return root_id, code_id, pr_id, observation, root["repository_id"]
 
     def origins(self, recipe, record):
         rows = []
@@ -851,7 +884,7 @@ class Context(identity.Context):
             known = False
             for encoded_snapshot, name in self.src.execute(
                 "SELECT CAST(f.snapshot_id AS BLOB),f.raw_ref_name FROM ref_observations f JOIN snapshots s ON s.id=f.snapshot_id WHERE s.run_id=? AND f.object_format=? AND COALESCE(f.peeled_oid,f.target_oid)=?",
-                (root["acquisition_id"], root["object_format"], root["oid"]),
+                (root["git_acquisition_id"], root["object_format"], root["oid"]),
             ):
                 try:
                     snapshot = encoded_snapshot.decode(self.encoding)
@@ -890,7 +923,7 @@ class Context(identity.Context):
                             None,
                             None,
                             None,
-                            root["repo_id"],
+                            root["repository_id"],
                         ),
                         "split",
                     )
@@ -904,7 +937,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
     output = {"operations": [], "mappings": [], "diagnostics": [], "decisions": []}
     for record in records:
         context.issues = []
-        record_id = context.record_id(record)
+        legacy_record_id = context.legacy_record_id(record)
         rows = []
         valid = True
         try:
@@ -915,7 +948,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
         for table, row, relation in rows:
             output["operations"].append(
                 {
-                    "record_id": record_id,
+                    "legacy_record_id": legacy_record_id,
                     "table": table,
                     "operation": "manifest_completion"
                     if recipe == "root_manifest_completion"
@@ -925,7 +958,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
             )
             output["mappings"].append(
                 [
-                    record_id,
+                    legacy_record_id,
                     table,
                     target_key(table, row).hex(),
                     relation,
@@ -934,7 +967,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
             )
         output["decisions"].append(
             {
-                "record_id": record_id,
+                "legacy_record_id": legacy_record_id,
                 "source_key": record.key.hex(),
                 "source_sha256": record.row_sha256.hex(),
                 "disposition": "normalized" if valid else "archive_only",
@@ -945,7 +978,13 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
                 "I31",
                 code,
                 severity,
-                canonical({"record_id": record_id, "column": column, "recipe": recipe}),
+                canonical(
+                    {
+                        "legacy_record_id": legacy_record_id,
+                        "column": column,
+                        "recipe": recipe,
+                    }
+                ),
             ]
             for code, severity, column in sorted(set(context.issues))
         )

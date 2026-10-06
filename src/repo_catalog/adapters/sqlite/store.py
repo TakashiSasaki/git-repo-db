@@ -103,7 +103,7 @@ class Store:
                     for statement in statements(schema_sql()):
                         self.execute(statement)
                     self.execute(
-                        "INSERT INTO database_identity VALUES(1,?,?,?,0,?,'validated')",
+                        "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle) VALUES(1,?,?,?,0,?,'validated')",
                         (FORMAT_ID, SCHEMA_VERSION, str(uuid.uuid4()), DDL_SHA256),
                     )
             self.verify_format(allow_building=allow_building)
@@ -118,7 +118,9 @@ class Store:
             raise
 
     def verify_format(self, *, allow_building=False):
-        rows = self.all("SELECT * FROM database_identity")
+        rows = self.all(
+            "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+        )
         if len(rows) != 1 or rows[0]["singleton"] != 1:
             raise CatalogError("SCHEMA_ERROR", "Invalid catalog identity")
         row = rows[0]
@@ -193,30 +195,33 @@ class Store:
         state = {"pending": "unknown", "unavailable": "partial"}.get(state, state)
         if not isinstance(details, str):
             details = json.dumps(details)
-        cr = self.one("SELECT repo_id FROM change_requests WHERE id=?", (owner,))
+        cr = self.one(
+            "SELECT repository_id FROM change_requests WHERE change_request_id=?",
+            (owner,),
+        )
         repo = cr[0] if cr else owner
         scope = self.one(
-            "SELECT id FROM coverage_scopes WHERE repo_id=? AND change_request_id IS ? AND kind=?",
+            "SELECT coverage_scope_id FROM coverage_scopes WHERE repository_id=? AND change_request_id IS ? AND kind=?",
             (repo, owner if cr else None, kind),
         )
-        scope_id = scope[0] if scope else str(uuid.uuid4())
+        coverage_scope_id = scope[0] if scope else str(uuid.uuid4())
         if not scope:
             self.execute(
-                "INSERT INTO coverage_scopes VALUES(?,?,?,?,NULL)",
-                (scope_id, repo, owner if cr else None, kind),
+                "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,change_request_id,kind,current_coverage_claim_id) VALUES(?,?,?,?,NULL)",
+                (coverage_scope_id, repo, owner if cr else None, kind),
             )
         claim = self.execute(
-            "INSERT INTO coverage_claims(scope_id,asserted_state,effective_state,details,observed_at,evaluated_at) VALUES(?,?,?,?,?,?)",
-            (scope_id, state, state, details, now(), now()),
+            "INSERT INTO coverage_claims(coverage_scope_id,asserted_state,effective_state,details,observed_at,evaluated_at) VALUES(?,?,?,?,?,?)",
+            (coverage_scope_id, state, state, details, now(), now()),
         ).lastrowid
         self.execute(
-            "UPDATE coverage_scopes SET current_claim_id=? WHERE id=?",
-            (claim, scope_id),
+            "UPDATE coverage_scopes SET current_coverage_claim_id=? WHERE coverage_scope_id=?",
+            (claim, coverage_scope_id),
         )
 
-    def object_id(self, algorithm, oid):
+    def git_object_id(self, algorithm, oid):
         row = self.one(
-            "SELECT id FROM git_objects WHERE object_format=? AND oid=?",
+            "SELECT git_object_id FROM git_objects WHERE object_format=? AND oid=?",
             (algorithm, oid),
         )
         return row[0] if row else None

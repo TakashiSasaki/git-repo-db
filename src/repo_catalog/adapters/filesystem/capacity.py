@@ -36,7 +36,9 @@ class Capacity:
         )
 
     def attempt(self, job_id):
-        row = self.store.one("SELECT current_attempt FROM jobs WHERE id=?", (job_id,))
+        row = self.store.one(
+            "SELECT current_attempt FROM jobs WHERE job_id=?", (job_id,)
+        )
         if row is None or row[0] is None:
             raise CatalogError("CAPACITY_ERROR", "Job has no current attempt")
         return row[0]

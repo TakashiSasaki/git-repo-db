@@ -22,7 +22,7 @@ def configure(state, api, fixture):
     )["data"]["source_id"]
     env = {"GH_TOKEN": "fixture-dummy"}
     repo = run(state, "discover", "--source", sid, env=env)["data"]["repositories"][0][
-        "repo_id"
+        "repository_id"
     ]
     return sid, repo, env
 
@@ -220,7 +220,7 @@ def test_versions_fencing(catalog):
         )
         assert len(a) == 6 and all(len(r["observations"]) == 1 for r in a)
         assert all(
-            len({r["version_id"] for r in a if r["pr_id"] == pr}) == 2
+            len({r["document_version_id"] for r in a if r["pr_id"] == pr}) == 2
             for pr in {r["pr_id"] for r in a}
         )
 
@@ -244,7 +244,7 @@ def test_unknown_inventory_scope_retains_known_repositories(catalog):
         api.inventory_verified = False
         partial = run(state, "discover", "--source", sid, env=env, expected=3)
         assert partial["data"]["repositories"] == [
-            {"repo_id": repo, "name": "fixture/alpha"}
+            {"repository_id": repo, "name": "fixture/alpha"}
         ]
         assert (
             partial["coverage"]["missing"][0]["reason"] == "INVENTORY_SCOPE_UNVERIFIED"
@@ -330,7 +330,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             old = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.id=i.collection_id ORDER BY i.scan_started_at"
+                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at"
                 )
             )
         api.stage = "B"
@@ -339,7 +339,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             new = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.id=i.collection_id ORDER BY i.scan_started_at"
+                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at"
                 )
             )
         issue = "issue-comment-incremental"
@@ -373,8 +373,8 @@ def test_code_races_caps(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
                 db.execute(
-                    "SELECT count(*) FROM code_file_changes f JOIN code_observations c ON c.file_listing_id=f.listing_id WHERE c.id=?",
-                    (shown["code_observation"]["id"],),
+                    "SELECT count(*) FROM code_file_changes f JOIN code_observations c ON c.file_code_listing_id=f.code_listing_id WHERE c.code_observation_id=?",
+                    (shown["code_observation"]["code_observation_id"],),
                 ).fetchone()[0]
                 == 3001
             )

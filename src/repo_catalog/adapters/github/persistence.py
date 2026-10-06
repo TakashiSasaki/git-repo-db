@@ -42,8 +42,7 @@ class ApiFacts:
 
     def fence(self, job):
         row = self.s.one(
-            "SELECT j.current_attempt,a.state FROM jobs j JOIN job_attempts a "
-            "ON a.job_id=j.id AND a.attempt=j.current_attempt WHERE j.id=?",
+            "SELECT j.current_attempt,a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
             (job,),
         )
         if (
@@ -59,16 +58,15 @@ class ApiFacts:
 
     def scope(self, repo, endpoint, context=None):
         binding = self.s.one(
-            "SELECT b.id FROM repository_bindings b JOIN sources s ON s.instance_id=b.instance_id "
-            "WHERE b.repo_id=? AND s.id=?",
-            (repo["id"], repo["source_id"]),
+            "SELECT b.repository_binding_id FROM repository_bindings b JOIN sources s ON s.service_instance_id=b.service_instance_id WHERE b.repository_id=? AND s.source_id=?",
+            (repo["repository_id"], repo["source_id"]),
         )
         if not binding:
             raise CatalogError(
                 "IDENTITY_CONFLICT", "API source has no repository binding"
             )
         context = {
-            "provider_repo_id": repo["provider_repo_id"],
+            "provider_repository_id": repo["provider_repository_id"],
             "accept": "application/vnd.github+json",
             "rest_page_size": self.cfg["rest_page_size"],
             "graphql_page_size": self.cfg["graphql_page_size"],
@@ -77,7 +75,7 @@ class ApiFacts:
         if self.permissions is not None:
             context["permissions"] = self.permissions
         row = [
-            repo["id"],
+            repo["repository_id"],
             binding[0],
             repo["source_id"],
             self.principal,
@@ -92,53 +90,51 @@ class ApiFacts:
             row[-2] = canonical(row[-2])
         ident = "api:" + hashlib.sha256(canonical(row).encode()).hexdigest()
         existing = self.s.all(
-            "SELECT id,request_context FROM resume_scopes WHERE repo_id=? AND binding_id=? AND source_id=? "
-            "AND principal_ref IS ? AND api_version IS ? AND endpoint IS ? AND parser_version=? AND profile_version=? AND confidence='proven'",
+            "SELECT resume_scope_id,request_context FROM resume_scopes WHERE repository_id=? AND repository_binding_id=? AND source_id=? AND principal_ref IS ? AND api_version IS ? AND endpoint IS ? AND parser_version=? AND profile_version=? AND confidence='proven'",
             (*row[:6], row[7], row[8]),
         )
         for scope in existing:
             if json.loads(scope["request_context"]) == context:
-                return scope["id"]
-        if not self.s.one("SELECT 1 FROM resume_scopes WHERE id=?", (ident,)):
+                return scope["resume_scope_id"]
+        if not self.s.one(
+            "SELECT 1 FROM resume_scopes WHERE resume_scope_id=?", (ident,)
+        ):
             self.s.execute(
-                "INSERT INTO resume_scopes VALUES(?,?,?,?,?,?,?,?,?,?,?)", (ident, *row)
+                "INSERT INTO resume_scopes(resume_scope_id,repository_id,repository_binding_id,source_id,principal_ref,api_version,endpoint,request_context,parser_version,profile_version,confidence) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                (ident, *row),
             )
         return ident
 
     def begin(self, repo, pr, kind, job, endpoint, context=None, *, reuse=False):
         scope = self.scope(repo, endpoint, context)
         previous = self.s.one(
-            "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p "
-            "ON p.collection_id=f.id WHERE f.scope_id=? AND f.change_request_id IS ? AND f.kind=? "
-            "AND p.job_id=? ORDER BY f.observed_at DESC,f.id DESC LIMIT 1",
+            "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.resume_scope_id=? AND f.change_request_id IS ? AND f.kind=? AND p.job_id=? ORDER BY f.observed_at DESC,f.fetch_collection_id DESC LIMIT 1",
             (scope, pr, kind, job),
         )
         if not previous and reuse:
             previous = self.s.one(
-                "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p "
-                "ON p.collection_id=f.id WHERE f.scope_id=? AND f.change_request_id IS ? AND f.kind=? "
-                "AND p.state='complete' ORDER BY f.observed_at DESC,f.id DESC LIMIT 1",
+                "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.resume_scope_id=? AND f.change_request_id IS ? AND f.kind=? AND p.state='complete' ORDER BY f.observed_at DESC,f.fetch_collection_id DESC LIMIT 1",
                 (scope, pr, kind),
             )
         if previous:
             if previous["state"] != "complete":
                 self.s.execute(
-                    "UPDATE collection_progress SET attempt=?,state='running',reason=NULL WHERE collection_id=?",
-                    (self.fence(job), previous["id"]),
+                    "UPDATE collection_progress SET attempt=?,state='running',reason=NULL WHERE fetch_collection_id=?",
+                    (self.fence(job), previous["fetch_collection_id"]),
                 )
             return dict(previous)
         ident = str(uuid.uuid4())
         self.s.execute(
-            "INSERT INTO fetch_collections VALUES(?,?,?,?,?,?,?)",
-            (ident, repo["id"], pr, repo["source_id"], kind, scope, now()),
+            "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,source_id,kind,resume_scope_id,observed_at) VALUES(?,?,?,?,?,?,?)",
+            (ident, repo["repository_id"], pr, repo["source_id"], kind, scope, now()),
         )
         self.s.execute(
-            "INSERT INTO collection_progress VALUES(?,?,?,'running',NULL,NULL)",
+            "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'running',NULL,NULL)",
             (ident, job, self.fence(job)),
         )
         return {
-            "id": ident,
-            "scope_id": scope,
+            "fetch_collection_id": ident,
+            "resume_scope_id": scope,
             "state": "running",
             "cursor": None,
             "change_request_id": pr,
@@ -148,7 +144,7 @@ class ApiFacts:
     def payload(self, raw):
         digest = hashlib.sha256(raw).digest()
         row = self.s.one(
-            "SELECT id FROM payloads WHERE sha256=? AND body=?", (digest, raw)
+            "SELECT payload_id FROM payloads WHERE sha256=? AND body=?", (digest, raw)
         )
         if row:
             return row[0]
@@ -159,15 +155,14 @@ class ApiFacts:
 
     def page(self, collection, response, request, next_cursor, *, advance=True):
         ordinal = self.s.one(
-            "SELECT coalesce(max(ordinal),-1)+1 FROM fetch_occurrences WHERE collection_id=?",
-            (collection["id"],),
+            "SELECT coalesce(max(ordinal),-1)+1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (collection["fetch_collection_id"],),
         )[0]
         timestamp = now()
         ident = self.s.execute(
-            "INSERT INTO fetch_occurrences(collection_id,ordinal,payload_id,request,next_cursor,observed_at,parsed_at) "
-            "VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,next_cursor,observed_at,parsed_at) VALUES(?,?,?,?,?,?,?)",
             (
-                collection["id"],
+                collection["fetch_collection_id"],
                 ordinal,
                 self.payload(response.content),
                 canonical(request),
@@ -178,21 +173,21 @@ class ApiFacts:
         ).lastrowid
         if advance:
             self.s.execute(
-                "UPDATE collection_progress SET cursor=? WHERE collection_id=?",
-                (next_cursor, collection["id"]),
+                "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                (next_cursor, collection["fetch_collection_id"]),
             )
         return ident, ordinal, timestamp
 
     def finish(self, collection, *, evidence=None):
         self.s.execute(
-            "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE collection_id=?",
-            (collection["id"],),
+            "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
+            (collection["fetch_collection_id"],),
         )
         self.s.execute(
-            "INSERT INTO completion_markers(scope_id,collection_id,asserted_state,evidence,observed_at) VALUES(?,?,'complete',?,?)",
+            "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at) VALUES(?,?,'complete',?,?)",
             (
-                collection["scope_id"],
-                collection["id"],
+                collection["resume_scope_id"],
+                collection["fetch_collection_id"],
                 canonical(evidence or {"parser": PARSER, "terminal": True}),
                 now(),
             ),
@@ -200,12 +195,12 @@ class ApiFacts:
 
     def partial(self, collection, reason):
         self.s.execute(
-            "UPDATE collection_progress SET state='partial',reason=? WHERE collection_id=?",
-            (reason, collection["id"]),
+            "UPDATE collection_progress SET state='partial',reason=? WHERE fetch_collection_id=?",
+            (reason, collection["fetch_collection_id"]),
         )
 
     def origin(self, collection, occurrence, position):
-        return f"api:{collection['id']}:{occurrence}:{position}"
+        return f"api:{collection['fetch_collection_id']}:{occurrence}:{position}"
 
     def document(
         self,
@@ -227,12 +222,12 @@ class ApiFacts:
             value.get("id") if isinstance(value.get("id"), str) else None
         )
         found = self.s.one(
-            "SELECT id,current_version_id FROM documents WHERE change_request_id=? AND kind=? AND provider_id=?",
+            "SELECT document_id,current_document_version_id FROM documents WHERE change_request_id=? AND kind=? AND provider_document_id=?",
             (pr, kind, str(provider)),
         )
         if not found and node:
             found = self.s.one(
-                "SELECT id,current_version_id FROM documents WHERE change_request_id=? AND kind=? AND node_id=?",
+                "SELECT document_id,current_document_version_id FROM documents WHERE change_request_id=? AND kind=? AND provider_node_id=?",
                 (pr, kind, node),
             )
         ident = found[0] if found else f"{pr}:{kind}:{provider}"
@@ -251,10 +246,10 @@ class ApiFacts:
             if key not in ("body", "title", "user", "author")
         }
         if thread:
-            metadata["thread_id"] = thread
+            metadata["review_thread_id"] = thread
         if found:
             self.s.execute(
-                "UPDATE documents SET node_id=coalesce(?,node_id),author=?,url=?,metadata=?,deleted=0 WHERE id=?",
+                "UPDATE documents SET provider_node_id=coalesce(?,provider_node_id),author=?,url=?,metadata=?,deleted=0 WHERE document_id=?",
                 (
                     node,
                     author.get("login"),
@@ -265,7 +260,7 @@ class ApiFacts:
             )
         else:
             self.s.execute(
-                "INSERT INTO documents VALUES(?,?,?,?,NULL,0,?,?,?,?)",
+                "INSERT INTO documents(document_id,change_request_id,kind,provider_document_id,current_document_version_id,deleted,provider_node_id,author,url,metadata) VALUES(?,?,?,?,NULL,0,?,?,?,?)",
                 (
                     ident,
                     pr,
@@ -280,9 +275,10 @@ class ApiFacts:
         raw = body.encode("utf-8")
         digest = hashlib.sha256(raw).digest()
         stored = self.s.one(
-            "SELECT id FROM text_bodies WHERE sha256=? AND body=?", (digest, body)
+            "SELECT text_body_id FROM text_bodies WHERE sha256=? AND body=?",
+            (digest, body),
         )
-        body_id = (
+        text_body_id = (
             stored[0]
             if stored
             else self.s.execute(
@@ -291,15 +287,19 @@ class ApiFacts:
             ).lastrowid
         )
         version = self.s.one(
-            "SELECT id FROM document_versions WHERE document_id=? AND id=? AND body_id=?",
-            (ident, found["current_version_id"] if found else None, body_id),
+            "SELECT document_version_id FROM document_versions WHERE document_id=? AND document_version_id=? AND text_body_id=?",
+            (
+                ident,
+                found["current_document_version_id"] if found else None,
+                text_body_id,
+            ),
         )
-        version_id = (
+        document_version_id = (
             version[0]
             if version
             else self.s.execute(
-                "INSERT INTO document_versions(document_id,body_id) VALUES(?,?)",
-                (ident, body_id),
+                "INSERT INTO document_versions(document_id,text_body_id) VALUES(?,?)",
+                (ident, text_body_id),
             ).lastrowid
         )
         # The replay guard above returned before any writes. This caller holds
@@ -309,10 +309,10 @@ class ApiFacts:
             occurrence if collection.get("change_request_id") == pr else None
         )
         self.s.execute(
-            "INSERT INTO document_observations(document_id,version_id,observed_at,parsed_at,origin_key,occurrence_id,metadata) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO document_observations(document_id,document_version_id,observed_at,parsed_at,origin_key,fetch_occurrence_id,metadata) VALUES(?,?,?,?,?,?,?)",
             (
                 ident,
-                version_id,
+                document_version_id,
                 observed_at,
                 now(),
                 origin,
@@ -321,24 +321,26 @@ class ApiFacts:
             ),
         )
         self.s.execute(
-            "UPDATE documents SET current_version_id=? WHERE id=?", (version_id, ident)
+            "UPDATE documents SET current_document_version_id=? WHERE document_id=?",
+            (document_version_id, ident),
         )
         if collection.get("change_request_id") == pr and not self.s.one(
-            "SELECT 1 FROM collection_memberships WHERE collection_id=? AND document_id=?",
-            (collection["id"], ident),
+            "SELECT 1 FROM collection_memberships WHERE fetch_collection_id=? AND document_id=?",
+            (collection["fetch_collection_id"], ident),
         ):
             self.s.execute(
-                "INSERT INTO collection_memberships VALUES(?,?,?)",
-                (collection["id"], ident, position),
+                "INSERT INTO collection_memberships(fetch_collection_id,document_id,ordinal) VALUES(?,?,?)",
+                (collection["fetch_collection_id"], ident, position),
             )
         if kind == "review":
-            if self.s.one("SELECT 1 FROM reviews WHERE id=?", (ident,)):
+            if self.s.one("SELECT 1 FROM reviews WHERE review_id=?", (ident,)):
                 self.s.execute(
-                    "UPDATE reviews SET payload=? WHERE id=?", (canonical(value), ident)
+                    "UPDATE reviews SET payload=? WHERE review_id=?",
+                    (canonical(value), ident),
                 )
             else:
                 self.s.execute(
-                    "INSERT INTO reviews VALUES(?,?,?,?)",
+                    "INSERT INTO reviews(review_id,change_request_id,document_id,payload) VALUES(?,?,?,?)",
                     (ident, pr, ident, canonical(value)),
                 )
         if kind == "review-comment":
@@ -346,12 +348,12 @@ class ApiFacts:
                 "SELECT 1 FROM review_comments WHERE document_id=?", (ident,)
             ):
                 self.s.execute(
-                    "UPDATE review_comments SET thread_id=coalesce(?,thread_id),payload=? WHERE document_id=?",
+                    "UPDATE review_comments SET review_thread_id=coalesce(?,review_thread_id),payload=? WHERE document_id=?",
                     (thread, canonical(value), ident),
                 )
             else:
                 self.s.execute(
-                    "INSERT INTO review_comments VALUES(?,?,?,?)",
+                    "INSERT INTO review_comments(document_id,change_request_id,review_thread_id,payload) VALUES(?,?,?,?)",
                     (ident, pr, thread, canonical(value)),
                 )
         return ident

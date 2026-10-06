@@ -42,7 +42,8 @@ def git_url(value):
 
 def instance(store, selector):
     rows = store.all(
-        "SELECT * FROM service_instances WHERE id=? OR name=?", (selector, selector)
+        "SELECT * FROM service_instances WHERE service_instance_id=? OR name=?",
+        (selector, selector),
     )
     if len(rows) != 1:
         raise CatalogError(
@@ -84,7 +85,7 @@ def add_instance(store, kind, name, web_base_url=None, api_base_url=None):
         raise CatalogError("IDENTITY_CONFLICT", "Instance name already exists")
     ident = str(uuid.uuid4())
     store.execute(
-        "INSERT INTO service_instances VALUES(?,?,?,?,?,?,?)",
+        "INSERT INTO service_instances(service_instance_id,kind,name,web_base_url,api_base_url,metadata,created_at) VALUES(?,?,?,?,?,?,?)",
         (ident, kind, name, web_base_url, api_base_url, "{}", now()),
     )
     return ident
@@ -95,7 +96,7 @@ def default_github_instance(store):
         "SELECT * FROM service_instances WHERE name='github.com' AND kind='github'"
     )
     if row:
-        return row["id"]
+        return row["service_instance_id"]
     return add_instance(
         store,
         "github",
@@ -105,110 +106,128 @@ def default_github_instance(store):
     )
 
 
-def bind(store, repo_id, instance_id, provider_repo_id=None):
+def bind(store, repository_id, service_instance_id, provider_repository_id=None):
     current = store.one(
-        "SELECT * FROM repository_bindings WHERE repo_id=? AND instance_id=?",
-        (repo_id, instance_id),
+        "SELECT * FROM repository_bindings WHERE repository_id=? AND service_instance_id=?",
+        (repository_id, service_instance_id),
     )
-    if provider_repo_id is not None:
-        provider_repo_id = str(provider_repo_id)
-        if not provider_repo_id.strip():
+    if provider_repository_id is not None:
+        provider_repository_id = str(provider_repository_id)
+        if not provider_repository_id.strip():
             raise CatalogError(
                 "INVALID_ARGUMENT", "Provider repository ID must be nonempty"
             )
         other = store.one(
-            "SELECT repo_id FROM repository_bindings WHERE instance_id=? AND provider_repo_id=?",
-            (instance_id, provider_repo_id),
+            "SELECT repository_id FROM repository_bindings WHERE service_instance_id=? AND provider_repository_id=?",
+            (service_instance_id, provider_repository_id),
         )
-        if other and other[0] != repo_id:
+        if other and other[0] != repository_id:
             raise CatalogError(
                 "IDENTITY_CONFLICT",
                 "Provider identity is already bound to another repository",
-                {"repo_id": other[0]},
+                {"repository_id": other[0]},
             )
-        if current and current["provider_repo_id"] not in (None, provider_repo_id):
+        if current and current["provider_repository_id"] not in (
+            None,
+            provider_repository_id,
+        ):
             raise CatalogError(
                 "IDENTITY_CONFLICT",
                 "Repository already has a different identity in this instance",
             )
     if current:
-        if provider_repo_id is not None and current["provider_repo_id"] is None:
+        if (
+            provider_repository_id is not None
+            and current["provider_repository_id"] is None
+        ):
             store.execute(
-                "UPDATE repository_bindings SET provider_repo_id=? WHERE repo_id=? AND instance_id=?",
-                (provider_repo_id, repo_id, instance_id),
+                "UPDATE repository_bindings SET provider_repository_id=? WHERE repository_id=? AND service_instance_id=?",
+                (provider_repository_id, repository_id, service_instance_id),
             )
         return
     store.execute(
-        "INSERT INTO repository_bindings VALUES(?,?,?,?,?,?)",
-        (str(uuid.uuid4()), repo_id, instance_id, provider_repo_id, "{}", now()),
+        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_id,provider_repository_id,metadata,created_at) VALUES(?,?,?,?,?,?)",
+        (
+            str(uuid.uuid4()),
+            repository_id,
+            service_instance_id,
+            provider_repository_id,
+            "{}",
+            now(),
+        ),
     )
 
 
-def prefer_endpoint(store, repo_id, endpoint_id):
+def prefer_endpoint(store, repository_id, repository_endpoint_id):
     row = store.one(
-        "SELECT * FROM repository_endpoints WHERE id=? AND repo_id=?",
-        (endpoint_id, repo_id),
+        "SELECT * FROM repository_endpoints WHERE repository_endpoint_id=? AND repository_id=?",
+        (repository_endpoint_id, repository_id),
     )
     if not row:
         raise CatalogError("NOT_FOUND", "Endpoint not found in selected repository")
     store.execute(
-        "UPDATE repositories SET preferred_endpoint_id=? WHERE id=?",
-        (endpoint_id, repo_id),
+        "UPDATE repositories SET preferred_repository_endpoint_id=? WHERE repository_id=?",
+        (repository_endpoint_id, repository_id),
     )
 
 
-def add_endpoint(store, repo_id, url, label=None, preferred=False, *, normalize=True):
+def add_endpoint(
+    store, repository_id, url, label=None, preferred=False, *, normalize=True
+):
     url = git_url(url) if normalize else url
     row = store.one(
-        "SELECT id FROM repository_endpoints WHERE repo_id=? AND url=?", (repo_id, url)
+        "SELECT repository_endpoint_id FROM repository_endpoints WHERE repository_id=? AND url=?",
+        (repository_id, url),
     )
     if row:
         ident = row[0]
     else:
         ident = str(uuid.uuid4())
         store.execute(
-            "INSERT INTO repository_endpoints VALUES(?,?,?,?,?,?,?)",
-            (ident, repo_id, url, transport(url), label, "{}", now()),
+            "INSERT INTO repository_endpoints(repository_endpoint_id,repository_id,url,transport,label,metadata,created_at) VALUES(?,?,?,?,?,?,?)",
+            (ident, repository_id, url, transport(url), label, "{}", now()),
         )
     if preferred or not store.one(
-        "SELECT 1 FROM repositories WHERE id=? AND preferred_endpoint_id IS NOT NULL",
-        (repo_id,),
+        "SELECT 1 FROM repositories WHERE repository_id=? AND preferred_repository_endpoint_id IS NOT NULL",
+        (repository_id,),
     ):
-        prefer_endpoint(store, repo_id, ident)
+        prefer_endpoint(store, repository_id, ident)
     return ident
 
 
-def endpoint(store, repo_id, endpoint_id=None):
+def endpoint(store, repository_id, repository_endpoint_id=None):
     row = store.one(
-        "SELECT * FROM repository_endpoints WHERE repo_id=? AND "
+        "SELECT * FROM repository_endpoints WHERE repository_id=? AND "
         + (
-            "id=?"
-            if endpoint_id
-            else "id=(SELECT preferred_endpoint_id FROM repositories WHERE id=repo_id)"
+            "repository_endpoint_id=?"
+            if repository_endpoint_id
+            else "repository_endpoint_id=(SELECT preferred_repository_endpoint_id FROM repositories WHERE repositories.repository_id=repository_endpoints.repository_id)"
         ),
-        (repo_id, endpoint_id) if endpoint_id else (repo_id,),
+        (repository_id, repository_endpoint_id)
+        if repository_endpoint_id
+        else (repository_id,),
     )
     if not row:
         raise CatalogError("NOT_FOUND", "Repository endpoint not found")
     return row
 
 
-def link_source(store, source_id, repo_id):
+def link_source(store, source_id, repository_id):
     stamp = now()
     current = store.one(
-        "SELECT last_seen FROM source_repositories WHERE source_id=? AND repo_id=?",
-        (source_id, repo_id),
+        "SELECT last_seen FROM source_repositories WHERE source_id=? AND repository_id=?",
+        (source_id, repository_id),
     )
     if current:
         # Preserve the imported aggregate if the source recorded a later time.
         store.execute(
-            "UPDATE source_repositories SET last_seen=CASE WHEN last_seen IS NULL OR julianday(last_seen)<julianday(?) THEN ? ELSE last_seen END WHERE source_id=? AND repo_id=?",
-            (stamp, stamp, source_id, repo_id),
+            "UPDATE source_repositories SET last_seen=CASE WHEN last_seen IS NULL OR julianday(last_seen)<julianday(?) THEN ? ELSE last_seen END WHERE source_id=? AND repository_id=?",
+            (stamp, stamp, source_id, repository_id),
         )
     else:
         store.execute(
-            "INSERT INTO source_repositories VALUES(?,?,?,?)",
-            (source_id, repo_id, stamp, stamp),
+            "INSERT INTO source_repositories(source_id,repository_id,first_seen,last_seen) VALUES(?,?,?,?)",
+            (source_id, repository_id, stamp, stamp),
         )
 
 
@@ -216,33 +235,32 @@ def repository_row(store, row):
     """Build the small collector/selector projection from catalog3 identity facts."""
     value = dict(row)
     selected = store.one(
-        "SELECT url FROM repository_endpoints WHERE id=? AND repo_id=?",
-        (value["preferred_endpoint_id"], value["id"]),
+        "SELECT url FROM repository_endpoints WHERE repository_endpoint_id=? AND repository_id=?",
+        (value["preferred_repository_endpoint_id"], value["repository_id"]),
     )
     source = store.one(
-        "SELECT source_id FROM source_repositories WHERE repo_id=? ORDER BY first_seen,source_id LIMIT 1",
-        (value["id"],),
+        "SELECT source_id FROM source_repositories WHERE repository_id=? ORDER BY first_seen,source_id LIMIT 1",
+        (value["repository_id"],),
     )
     binding = store.one(
-        "SELECT b.provider_repo_id,i.name,i.web_base_url FROM repository_bindings b JOIN service_instances i ON i.id=b.instance_id WHERE b.repo_id=? ORDER BY i.name LIMIT 1",
-        (value["id"],),
+        "SELECT b.provider_repository_id,i.name,i.web_base_url FROM repository_bindings b JOIN service_instances i ON i.service_instance_id=b.service_instance_id WHERE b.repository_id=? ORDER BY i.name LIMIT 1",
+        (value["repository_id"],),
     )
     value.update(
         url=selected[0] if selected else None,
         source_id=source[0] if source else None,
-        provider_repo_id=binding["provider_repo_id"] if binding else None,
+        provider_repository_id=binding["provider_repository_id"] if binding else None,
         provider_host=(urlsplit(binding["web_base_url"]).hostname or binding["name"])
         if binding
         else "local",
-        current_snapshot=value["current_snapshot_id"],
     )
     return value
 
 
 def github_config(store, src):
     config = dict(store.config["github"])
-    if src["instance_id"]:
-        value = instance(store, src["instance_id"])
+    if src["service_instance_id"]:
+        value = instance(store, src["service_instance_id"])
         if value["kind"] != "github":
             raise CatalogError(
                 "PROVIDER_UNSUPPORTED", "This source requires a GitHub instance"
@@ -270,11 +288,11 @@ def github_config(store, src):
     return config
 
 
-def pr_source(store, repo_id, requested_source=None):
+def pr_source(store, repository_id, requested_source=None):
     if (
         store.one(
-            "SELECT count(*) FROM repository_bindings b JOIN service_instances i ON i.id=b.instance_id WHERE b.repo_id=? AND i.kind='github'",
-            (repo_id,),
+            "SELECT count(*) FROM repository_bindings b JOIN service_instances i ON i.service_instance_id=b.service_instance_id WHERE b.repository_id=? AND i.kind='github'",
+            (repository_id,),
         )[0]
         > 1
     ):
@@ -284,24 +302,24 @@ def pr_source(store, repo_id, requested_source=None):
         )
     if requested_source:
         chosen = store.one(
-            "SELECT discovery_kind FROM sources WHERE id=?", (requested_source,)
+            "SELECT discovery_kind FROM sources WHERE source_id=?", (requested_source,)
         )
         if chosen and chosen[0] != "github_inventory":
             requested_source = None
-    params = (repo_id, requested_source) if requested_source else (repo_id,)
+    params = (repository_id, requested_source) if requested_source else (repository_id,)
     row = store.one(
-        "SELECT s.*,b.provider_repo_id,i.web_base_url FROM source_repositories m JOIN sources s ON s.id=m.source_id JOIN service_instances i ON i.id=s.instance_id JOIN repository_bindings b ON b.repo_id=m.repo_id AND b.instance_id=i.id WHERE m.repo_id=? AND s.discovery_kind='github_inventory'"
-        + (" AND s.id=?" if requested_source else "")
-        + " ORDER BY m.first_seen,s.id LIMIT 1",
+        "SELECT s.*,b.provider_repository_id,i.web_base_url FROM source_repositories m JOIN sources s ON s.source_id=m.source_id JOIN service_instances i ON i.service_instance_id=s.service_instance_id JOIN repository_bindings b ON b.repository_id=m.repository_id AND b.service_instance_id=i.service_instance_id WHERE m.repository_id=? AND s.discovery_kind='github_inventory'"
+        + (" AND s.source_id=?" if requested_source else "")
+        + " ORDER BY m.first_seen,s.source_id LIMIT 1",
         params,
     )
     return row
 
 
-def pr_applicable(store, repo_id):
+def pr_applicable(store, repository_id):
     return bool(
         store.one(
-            "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.id=b.instance_id WHERE b.repo_id=? AND i.kind NOT IN ('git','gitolite') LIMIT 1",
-            (repo_id,),
+            "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.service_instance_id=b.service_instance_id WHERE b.repository_id=? AND i.kind NOT IN ('git','gitolite') LIMIT 1",
+            (repository_id,),
         )
     )

@@ -33,7 +33,7 @@ def build_target(sql=None):
     put(
         db,
         "service_instances",
-        id="instance",
+        service_instance_id="instance",
         kind="github",
         name="fixture",
         metadata="{}",
@@ -41,28 +41,28 @@ def build_target(sql=None):
     put(
         db,
         "sources",
-        id="source",
-        instance_id="instance",
+        source_id="source",
+        service_instance_id="instance",
         discovery_kind="github_inventory",
         name="fixture",
         settings="{}",
     )
     for index, repo in enumerate(("a", "b"), 1):
-        put(db, "repositories", id=repo, name=repo, metadata="{}")
+        put(db, "repositories", repository_id=repo, name=repo, metadata="{}")
         put(
             db,
             "repository_bindings",
-            id="binding-" + repo,
-            repo_id=repo,
-            instance_id="instance",
-            provider_repo_id=repo,
+            repository_binding_id="binding-" + repo,
+            repository_id=repo,
+            service_instance_id="instance",
+            provider_repository_id=repo,
             metadata="{}",
         )
         put(
             db,
             "repository_endpoints",
-            id="endpoint-" + repo,
-            repo_id=repo,
+            repository_endpoint_id="endpoint-" + repo,
+            repository_id=repo,
             url="file:///fixture/" + repo,
             transport="file",
             metadata="{}",
@@ -70,9 +70,9 @@ def build_target(sql=None):
         put(
             db,
             "git_acquisitions",
-            id="run-" + repo,
-            repo_id=repo,
-            endpoint_id="endpoint-" + repo,
+            git_acquisition_id="run-" + repo,
+            repository_id=repo,
+            repository_endpoint_id="endpoint-" + repo,
             endpoint_url="file:///fixture/" + repo,
             object_format="sha1",
             kind="git",
@@ -82,9 +82,9 @@ def build_target(sql=None):
         put(
             db,
             "snapshots",
-            id="snapshot-" + repo,
-            acquisition_id="run-" + repo,
-            repo_id=repo,
+            snapshot_id="snapshot-" + repo,
+            git_acquisition_id="run-" + repo,
+            repository_id=repo,
             published=0,
             generation=1,
             created_at=TIME,
@@ -92,38 +92,42 @@ def build_target(sql=None):
         put(
             db,
             "change_requests",
-            id="cr-" + repo,
-            repo_id=repo,
-            binding_id="binding-" + repo,
+            change_request_id="cr-" + repo,
+            repository_id=repo,
+            repository_binding_id="binding-" + repo,
             request_kind="pull_request",
             number=1,
         )
         put(
             db,
             "change_request_observations",
-            id=index,
+            change_request_observation_id=index,
             change_request_id="cr-" + repo,
             observed_at=TIME,
             published=0,
             payload="{}",
             parsed_at=TIME,
         )
-        db.execute("UPDATE snapshots SET published=1 WHERE id=?", ("snapshot-" + repo,))
         db.execute(
-            "UPDATE change_request_observations SET published=1 WHERE id=?", (index,)
+            "UPDATE snapshots SET published=1 WHERE snapshot_id=?",
+            ("snapshot-" + repo,),
         )
         db.execute(
-            "UPDATE repositories SET current_snapshot_id=? WHERE id=?",
+            "UPDATE change_request_observations SET published=1 WHERE change_request_observation_id=?",
+            (index,),
+        )
+        db.execute(
+            "UPDATE repositories SET current_snapshot_id=? WHERE repository_id=?",
             ("snapshot-" + repo, repo),
         )
         db.execute(
-            "UPDATE change_requests SET current_observation_id=? WHERE id=?",
+            "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
             (index, "cr-" + repo),
         )
         put(
             db,
             "text_bodies",
-            id=index,
+            text_body_id=index,
             body=repo,
             byte_length=1,
             sha256=hashlib.sha256(repo.encode()).digest(),
@@ -131,22 +135,28 @@ def build_target(sql=None):
         put(
             db,
             "documents",
-            id="doc-" + repo,
+            document_id="doc-" + repo,
             change_request_id="cr-" + repo,
             kind="pr-body",
-            provider_id="native",
+            provider_document_id="native",
             deleted=0,
             metadata="{}",
         )
-        put(db, "document_versions", id=index, document_id="doc-" + repo, body_id=index)
+        put(
+            db,
+            "document_versions",
+            document_version_id=index,
+            document_id="doc-" + repo,
+            text_body_id=index,
+        )
         db.execute(
-            "UPDATE documents SET current_version_id=? WHERE id=?",
+            "UPDATE documents SET current_document_version_id=? WHERE document_id=?",
             (index, "doc-" + repo),
         )
         put(
             db,
             "review_threads",
-            id="thread-" + repo,
+            review_thread_id="thread-" + repo,
             change_request_id="cr-" + repo,
             payload="{}",
             observed_at=TIME,
@@ -154,9 +164,9 @@ def build_target(sql=None):
         put(
             db,
             "resume_scopes",
-            id="scope-" + repo,
-            repo_id=repo,
-            binding_id="binding-" + repo,
+            resume_scope_id="scope-" + repo,
+            repository_id=repo,
+            repository_binding_id="binding-" + repo,
             source_id="source",
             request_context="{}",
             parser_version="catalog3-test/1",
@@ -168,21 +178,21 @@ def build_target(sql=None):
             put(
                 db,
                 "fetch_collections",
-                id=collection,
-                repo_id=repo,
+                fetch_collection_id=collection,
+                repository_id=repo,
                 change_request_id="cr-" + repo,
                 source_id="source",
-                scope_id="scope-" + repo,
+                resume_scope_id="scope-" + repo,
                 kind=kind,
             )
             put(
                 db,
                 "code_listings",
-                id="listing-" + collection,
+                code_listing_id="listing-" + collection,
                 change_request_id="cr-" + repo,
-                collection_id=collection,
+                fetch_collection_id=collection,
                 kind=kind,
-                scope_id="scope-" + repo,
+                resume_scope_id="scope-" + repo,
                 object_format="sha1",
                 head_oid=H,
                 base_oid=B,
@@ -190,7 +200,7 @@ def build_target(sql=None):
             put(
                 db,
                 "code_listing_progress",
-                listing_id="listing-" + collection,
+                code_listing_id="listing-" + collection,
                 state="partial",
                 terminal=0,
                 page_count=0,
@@ -199,7 +209,7 @@ def build_target(sql=None):
     put(
         db,
         "payloads",
-        id=1,
+        payload_id=1,
         sha256=hashlib.sha256(b"[]").digest(),
         body=b"[]",
         byte_length=2,
@@ -208,8 +218,8 @@ def build_target(sql=None):
     put(
         db,
         "fetch_occurrences",
-        id=1,
-        collection_id="a-commits",
+        fetch_occurrence_id=1,
+        fetch_collection_id="a-commits",
         ordinal=0,
         payload_id=1,
         request="{}",
@@ -219,8 +229,8 @@ def build_target(sql=None):
     put(
         db,
         "fetch_occurrences",
-        id=2,
-        collection_id="a-files",
+        fetch_occurrence_id=2,
+        fetch_collection_id="a-files",
         ordinal=0,
         payload_id=1,
         request="{}",
@@ -263,21 +273,21 @@ def test_fresh_complete_schema(target):
 @pytest.mark.parametrize(
     "sql",
     [
-        "UPDATE snapshots SET id='temporary' WHERE id='snapshot-a'",
-        "UPDATE snapshots SET acquisition_id='run-b', repo_id='b' WHERE id='snapshot-a'",
-        "UPDATE snapshots SET published=0 WHERE id='snapshot-a'",
-        "UPDATE change_request_observations SET id=999 WHERE id=1",
-        "UPDATE change_request_observations SET change_request_id='cr-b' WHERE id=1",
-        "UPDATE change_request_observations SET published=0 WHERE id=1",
-        "UPDATE documents SET id='temporary' WHERE id='doc-a'",
-        "UPDATE documents SET change_request_id='cr-b' WHERE id='doc-a'",
-        "UPDATE document_versions SET id=999 WHERE id=1",
-        "UPDATE text_bodies SET id=999 WHERE id=1",
-        "UPDATE code_listings SET id='temporary' WHERE id='listing-a-commits'",
-        "UPDATE code_listings SET scope_id='scope-b' WHERE id='listing-a-commits'",
-        "DELETE FROM snapshots WHERE id='snapshot-a'",
-        "DELETE FROM document_versions WHERE id=1",
-        "DELETE FROM text_bodies WHERE id=1",
+        "UPDATE snapshots SET snapshot_id='temporary' WHERE snapshot_id='snapshot-a'",
+        "UPDATE snapshots SET git_acquisition_id='run-b', repository_id='b' WHERE snapshot_id='snapshot-a'",
+        "UPDATE snapshots SET published=0 WHERE snapshot_id='snapshot-a'",
+        "UPDATE change_request_observations SET change_request_observation_id=999 WHERE change_request_observation_id=1",
+        "UPDATE change_request_observations SET change_request_id='cr-b' WHERE change_request_observation_id=1",
+        "UPDATE change_request_observations SET published=0 WHERE change_request_observation_id=1",
+        "UPDATE documents SET document_id='temporary' WHERE document_id='doc-a'",
+        "UPDATE documents SET change_request_id='cr-b' WHERE document_id='doc-a'",
+        "UPDATE document_versions SET document_version_id=999 WHERE document_version_id=1",
+        "UPDATE text_bodies SET text_body_id=999 WHERE text_body_id=1",
+        "UPDATE code_listings SET code_listing_id='temporary' WHERE code_listing_id='listing-a-commits'",
+        "UPDATE code_listings SET resume_scope_id='scope-b' WHERE code_listing_id='listing-a-commits'",
+        "DELETE FROM snapshots WHERE snapshot_id='snapshot-a'",
+        "DELETE FROM document_versions WHERE document_version_id=1",
+        "DELETE FROM text_bodies WHERE text_body_id=1",
     ],
 )
 def test_parent_identity_and_facts_fixed(target, mode, sql):
@@ -294,14 +304,14 @@ def test_parent_identity_and_facts_fixed(target, mode, sql):
     if mode == "transaction":
         db.execute("COMMIT")
     assert (
-        db.execute("SELECT published FROM snapshots WHERE id='snapshot-a'").fetchone()[
-            0
-        ]
+        db.execute(
+            "SELECT published FROM snapshots WHERE snapshot_id='snapshot-a'"
+        ).fetchone()[0]
         == 1
     )
     assert (
         db.execute(
-            "SELECT published FROM change_request_observations WHERE id=1"
+            "SELECT published FROM change_request_observations WHERE change_request_observation_id=1"
         ).fetchone()[0]
         == 1
     )
@@ -322,7 +332,7 @@ def test_parent_identity_and_facts_fixed(target, mode, sql):
             "change_request_observations",
             1,
             999,
-            "current_observation_id",
+            "current_change_request_observation_id",
             "change_requests",
             "cr-a",
         ),
@@ -334,17 +344,29 @@ def test_reviewed_multi_statement_attack(
     db = target
     db.execute("BEGIN")
     db.execute("SAVEPOINT attack")
+    entity_id = {
+        "snapshots": "snapshot_id",
+        "change_request_observations": "change_request_observation_id",
+    }[table]
+    owner_id = {
+        "repositories": "repository_id",
+        "change_requests": "change_request_id",
+    }[owner]
     with pytest.raises(sqlite3.IntegrityError):
-        db.execute(f"UPDATE {table} SET id=? WHERE id=?", (temp, key))
+        db.execute(f"UPDATE {table} SET {entity_id}=? WHERE {entity_id}=?", (temp, key))
     db.execute("ROLLBACK TO attack")
     db.execute("RELEASE attack")
     db.execute("COMMIT")
     assert (
-        db.execute(f"SELECT published FROM {table} WHERE id=?", (key,)).fetchone()[0]
+        db.execute(
+            f"SELECT published FROM {table} WHERE {entity_id}=?", (key,)
+        ).fetchone()[0]
         == 1
     )
     assert (
-        db.execute(f"SELECT {pointer} FROM {owner} WHERE id=?", (entity,)).fetchone()[0]
+        db.execute(
+            f"SELECT {pointer} FROM {owner} WHERE {owner_id}=?", (entity,)
+        ).fetchone()[0]
         == key
     )
 
@@ -352,14 +374,14 @@ def test_reviewed_multi_statement_attack(
 @pytest.mark.parametrize(
     "sql",
     [
-        "UPDATE repositories SET current_snapshot_id='snapshot-b' WHERE id='a'",
-        "UPDATE repositories SET preferred_endpoint_id='endpoint-b' WHERE id='a'",
-        "UPDATE change_requests SET current_observation_id=2 WHERE id='cr-a'",
-        "UPDATE documents SET current_version_id=2 WHERE id='doc-a'",
-        "INSERT INTO review_comments VALUES('doc-a','cr-a','thread-b','{}')",
-        "INSERT INTO reviews VALUES('review','cr-a','doc-b','{}')",
-        "UPDATE fetch_collections SET change_request_id='cr-b' WHERE id='a-commits'",
-        "DELETE FROM repositories WHERE id='a'",
+        "UPDATE repositories SET current_snapshot_id='snapshot-b' WHERE repository_id='a'",
+        "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_id='a'",
+        "UPDATE change_requests SET current_change_request_observation_id=2 WHERE change_request_id='cr-a'",
+        "UPDATE documents SET current_document_version_id=2 WHERE document_id='doc-a'",
+        "INSERT INTO review_comments(document_id,change_request_id,review_thread_id,payload) VALUES('doc-a','cr-a','thread-b','{}')",
+        "INSERT INTO reviews(review_id,change_request_id,document_id,payload) VALUES('review','cr-a','doc-b','{}')",
+        "UPDATE fetch_collections SET change_request_id='cr-b' WHERE fetch_collection_id='a-commits'",
+        "DELETE FROM repositories WHERE repository_id='a'",
     ],
 )
 def test_cross_owner_and_parent_deletion(target, sql):
@@ -372,38 +394,38 @@ def test_replace_upsert_and_same_repo_reassignment(target, recursive):
     db = target
     db.execute(f"PRAGMA recursive_triggers={recursive}")
     for sql in (
-        "INSERT OR REPLACE INTO snapshots SELECT id,acquisition_id,repo_id,0,generation,created_at FROM snapshots WHERE id='snapshot-a'",
-        "INSERT INTO snapshots SELECT * FROM snapshots WHERE id='snapshot-a' ON CONFLICT(id) DO UPDATE SET published=0",
-        "INSERT OR REPLACE INTO document_versions VALUES(1,'doc-b',2,NULL)",
-        "INSERT OR REPLACE INTO text_bodies SELECT 99,body,byte_length,sha256 FROM text_bodies WHERE id=1",
-        "INSERT OR REPLACE INTO code_listings SELECT * FROM code_listings WHERE id='listing-a-commits'",
+        "INSERT OR REPLACE INTO snapshots SELECT snapshot_id,git_acquisition_id,repository_id,0,generation,created_at FROM snapshots WHERE snapshot_id='snapshot-a'",
+        "INSERT INTO snapshots SELECT * FROM snapshots WHERE snapshot_id='snapshot-a' ON CONFLICT(snapshot_id) DO UPDATE SET published=0",
+        "INSERT OR REPLACE INTO document_versions(document_version_id,document_id,text_body_id,legacy_body_sha256) VALUES(1,'doc-b',2,NULL)",
+        "INSERT OR REPLACE INTO text_bodies SELECT 99,body,byte_length,sha256 FROM text_bodies WHERE text_body_id=1",
+        "INSERT OR REPLACE INTO code_listings SELECT * FROM code_listings WHERE code_listing_id='listing-a-commits'",
     ):
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(sql)
     put(
         db,
         "git_acquisitions",
-        id="other-run-a",
-        repo_id="a",
+        git_acquisition_id="other-run-a",
+        repository_id="a",
         object_format="sha1",
         kind="git",
         request="{}",
     )
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
-            "UPDATE snapshots SET acquisition_id='other-run-a' WHERE id='snapshot-a'"
+            "UPDATE snapshots SET git_acquisition_id='other-run-a' WHERE snapshot_id='snapshot-a'"
         )
 
 
 def test_bootstrap_and_rollback(target):
     db = target
     db.execute("BEGIN")
-    put(db, "repositories", id="new", name="new", metadata="{}")
+    put(db, "repositories", repository_id="new", name="new", metadata="{}")
     put(
         db,
         "git_acquisitions",
-        id="new-run",
-        repo_id="new",
+        git_acquisition_id="new-run",
+        repository_id="new",
         object_format="sha1",
         kind="git",
         request="{}",
@@ -411,22 +433,27 @@ def test_bootstrap_and_rollback(target):
     put(
         db,
         "snapshots",
-        id="new-snapshot",
-        acquisition_id="new-run",
-        repo_id="new",
+        snapshot_id="new-snapshot",
+        git_acquisition_id="new-run",
+        repository_id="new",
         published=0,
         generation=0,
     )
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
-            "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE id='new'"
+            "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_id='new'"
         )
-    db.execute("UPDATE snapshots SET published=1 WHERE id='new-snapshot'")
+    db.execute("UPDATE snapshots SET published=1 WHERE snapshot_id='new-snapshot'")
     db.execute(
-        "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE id='new'"
+        "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_id='new'"
     )
     db.execute("ROLLBACK")
-    assert db.execute("SELECT id FROM repositories WHERE id='new'").fetchall() == []
+    assert (
+        db.execute(
+            "SELECT repository_id FROM repositories WHERE repository_id='new'"
+        ).fetchall()
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -466,18 +493,18 @@ def test_bootstrap_and_rollback(target):
 )
 def test_oid_type_numeric_boolean_null(target, fields):
     with pytest.raises(sqlite3.IntegrityError):
-        put(target, "git_objects", id=1, **fields)
+        put(target, "git_objects", git_object_id=1, **fields)
 
 
 @pytest.mark.parametrize(
     "sql",
     [
-        "INSERT INTO sources VALUES('bad','instance','github_inventory','bad','[]')",
-        "INSERT INTO sources VALUES('bad','instance','github_inventory','bad','invalid-json')",
-        "INSERT INTO code_listing_progress VALUES('listing-a-commits','invented',0,0,0)",
-        "UPDATE code_listing_progress SET page_count=-1 WHERE listing_id='listing-a-commits'",
-        "UPDATE code_listing_progress SET state='complete' WHERE listing_id='listing-a-commits'",
-        "INSERT INTO code_observations(id,change_request_id,observation_id,state,details) VALUES(1,'cr-a',1,'complete','{}')",
+        "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('bad','instance','github_inventory','bad','[]')",
+        "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('bad','instance','github_inventory','bad','invalid-json')",
+        "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES('listing-a-commits','invented',0,0,0)",
+        "UPDATE code_listing_progress SET page_count=-1 WHERE code_listing_id='listing-a-commits'",
+        "UPDATE code_listing_progress SET state='complete' WHERE code_listing_id='listing-a-commits'",
+        "INSERT INTO code_observations(code_observation_id,change_request_id,change_request_observation_id,state,details) VALUES(1,'cr-a',1,'complete','{}')",
     ],
 )
 def test_json_and_listing_state(target, sql):
@@ -491,7 +518,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
         put(
             db,
             "git_objects",
-            id=id,
+            git_object_id=id,
             object_format="sha1",
             oid=oid,
             type=kind,
@@ -502,8 +529,8 @@ def test_git_meaning_and_multiple_ref_origins(target):
         put(
             db,
             "commits",
-            object_id=2,
-            tree_id=3,
+            git_object_id=2,
+            tree_git_object_id=3,
             raw_headers=b"",
             raw_message=b"",
             metadata="{}",
@@ -511,20 +538,26 @@ def test_git_meaning_and_multiple_ref_origins(target):
     put(
         db,
         "commits",
-        object_id=2,
-        tree_id=1,
+        git_object_id=2,
+        tree_git_object_id=1,
         raw_headers=b"",
         raw_message=b"",
         metadata="{}",
     )
     with pytest.raises(sqlite3.IntegrityError):
-        put(db, "commit_parents", commit_id=2, parent_ordinal=0, parent_id=3)
+        put(
+            db,
+            "commit_parents",
+            commit_git_object_id=2,
+            parent_ordinal=0,
+            parent_git_object_id=3,
+        )
     put(
         db,
         "acquisition_roots",
-        id=1,
-        acquisition_id="run-a",
-        repo_id="a",
+        acquisition_root_id=1,
+        git_acquisition_id="run-a",
+        repository_id="a",
         object_format="sha1",
         oid=H,
         role="head",
@@ -544,35 +577,43 @@ def test_git_meaning_and_multiple_ref_origins(target):
         put(
             db,
             "root_origins",
-            id=ordinal + 1,
-            root_id=1,
+            root_origin_id=ordinal + 1,
+            acquisition_root_id=1,
             origin_kind="ref",
             raw_ref_name=name,
             source_ordinal=ordinal,
             snapshot_id="snapshot-a",
-            repo_id="a",
+            repository_id="a",
         )
     assert (
-        db.execute("SELECT count(*) FROM root_origins WHERE root_id=1").fetchone()[0]
+        db.execute(
+            "SELECT count(*) FROM root_origins WHERE acquisition_root_id=1"
+        ).fetchone()[0]
         == 2
     )
     with pytest.raises(sqlite3.IntegrityError):
         put(
             db,
             "root_origins",
-            id=3,
-            root_id=1,
+            root_origin_id=3,
+            acquisition_root_id=1,
             origin_kind="ref",
             raw_ref_name=b"no-ref",
             source_ordinal=2,
             snapshot_id="snapshot-a",
-            repo_id="a",
+            repository_id="a",
         )
 
 
 def test_body_sharing_preserves_a_b_a_and_times(target):
     db = target
-    put(db, "document_versions", id=3, document_id="doc-a", body_id=2)
+    put(
+        db,
+        "document_versions",
+        document_version_id=3,
+        document_id="doc-a",
+        text_body_id=2,
+    )
     for id, version, time in (
         (1, 1, "observed-A"),
         (2, 3, "observed-B"),
@@ -582,15 +623,15 @@ def test_body_sharing_preserves_a_b_a_and_times(target):
         put(
             db,
             "document_observations",
-            id=id,
+            document_observation_id=id,
             document_id="doc-a",
-            version_id=version,
+            document_version_id=version,
             observed_at=time,
             parsed_at="later",
             metadata="{}",
         )
     assert db.execute(
-        "SELECT version_id,observed_at FROM document_observations ORDER BY id"
+        "SELECT document_version_id,observed_at FROM document_observations ORDER BY document_observation_id"
     ).fetchall() == [
         (1, "observed-A"),
         (3, "observed-B"),
@@ -602,9 +643,9 @@ def test_body_sharing_preserves_a_b_a_and_times(target):
         put(
             db,
             "document_observations",
-            id=5,
+            document_observation_id=5,
             document_id="doc-a",
-            version_id=2,
+            document_version_id=2,
             parsed_at="later",
             metadata="{}",
         )
@@ -616,8 +657,8 @@ def test_listing_scope_context_partial_complete(target):
         put(
             db,
             "code_commits",
-            listing_id="listing-a-files",
-            occurrence_id=1,
+            code_listing_id="listing-a-files",
+            fetch_occurrence_id=1,
             position=0,
             object_format="sha1",
             oid=H,
@@ -627,8 +668,8 @@ def test_listing_scope_context_partial_complete(target):
         put(
             db,
             "code_commits",
-            listing_id="listing-a-commits",
-            occurrence_id=2,
+            code_listing_id="listing-a-commits",
+            fetch_occurrence_id=2,
             position=0,
             object_format="sha1",
             oid=H,
@@ -637,8 +678,8 @@ def test_listing_scope_context_partial_complete(target):
     put(
         db,
         "code_commits",
-        listing_id="listing-a-commits",
-        occurrence_id=1,
+        code_listing_id="listing-a-commits",
+        fetch_occurrence_id=1,
         position=0,
         object_format="sha1",
         oid=H,
@@ -646,17 +687,17 @@ def test_listing_scope_context_partial_complete(target):
     )
     for id in ("listing-a-commits", "listing-a-files"):
         db.execute(
-            "UPDATE code_listing_progress SET state='complete',terminal=1,context_proven=1,page_count=1 WHERE listing_id=?",
+            "UPDATE code_listing_progress SET state='complete',terminal=1,context_proven=1,page_count=1 WHERE code_listing_id=?",
             (id,),
         )
     put(
         db,
         "code_observations",
-        id=1,
+        code_observation_id=1,
         change_request_id="cr-a",
-        observation_id=1,
-        commit_listing_id="listing-a-commits",
-        file_listing_id="listing-a-files",
+        change_request_observation_id=1,
+        commit_code_listing_id="listing-a-commits",
+        file_code_listing_id="listing-a-files",
         state="complete",
         object_format="sha1",
         head_oid=H,
@@ -667,11 +708,11 @@ def test_listing_scope_context_partial_complete(target):
         put(
             db,
             "code_observations",
-            id=2,
+            code_observation_id=2,
             change_request_id="cr-a",
-            observation_id=1,
-            commit_listing_id="listing-a-commits",
-            file_listing_id="listing-a-files",
+            change_request_observation_id=1,
+            commit_code_listing_id="listing-a-commits",
+            file_code_listing_id="listing-a-files",
             state="complete",
             object_format="sha1",
             head_oid=B,
@@ -680,14 +721,14 @@ def test_listing_scope_context_partial_complete(target):
         )
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
-            "UPDATE code_listing_progress SET state='partial' WHERE listing_id='listing-a-commits'"
+            "UPDATE code_listing_progress SET state='partial' WHERE code_listing_id='listing-a-commits'"
         )
     with pytest.raises(sqlite3.IntegrityError):
         put(
             db,
             "code_commits",
-            listing_id="listing-a-commits",
-            occurrence_id=1,
+            code_listing_id="listing-a-commits",
+            fetch_occurrence_id=1,
             position=1,
             object_format="sha1",
             oid=B,
@@ -700,40 +741,52 @@ def test_resume_scope_and_immutable_scan(target):
     put(
         db,
         "incremental_scans",
-        id="scan",
-        scope_id="scope-a",
-        collection_id="a-commits",
+        incremental_scan_id="scan",
+        resume_scope_id="scope-a",
+        fetch_collection_id="a-commits",
         scan_started_at=TIME,
         safe_watermark=TIME,
         evidence="{}",
     )
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
-            "UPDATE incremental_scans SET safe_watermark='2099-01-01' WHERE id='scan'"
+            "UPDATE incremental_scans SET safe_watermark='2099-01-01' WHERE incremental_scan_id='scan'"
         )
     with pytest.raises(sqlite3.IntegrityError):
         put(
             db,
             "completion_markers",
-            id=1,
-            scope_id="scope-b",
-            collection_id="a-commits",
+            completion_marker_id=1,
+            resume_scope_id="scope-b",
+            fetch_collection_id="a-commits",
             asserted_state="complete",
             evidence="{}",
         )
     put(
         db,
         "completion_markers",
-        id=1,
-        scope_id="scope-a",
-        collection_id="a-commits",
+        completion_marker_id=1,
+        resume_scope_id="scope-a",
+        fetch_collection_id="a-commits",
         asserted_state="partial",
         evidence="{}",
         observed_at=TIME,
     )
-    put(db, "resume_cursors", scope_id="scope-a", scan_id="scan", reusable=0)
+    put(
+        db,
+        "resume_cursors",
+        resume_scope_id="scope-a",
+        incremental_scan_id="scan",
+        reusable=0,
+    )
     with pytest.raises(sqlite3.IntegrityError):
-        put(db, "resume_cursors", scope_id="scope-b", scan_id="scan", reusable=1)
+        put(
+            db,
+            "resume_cursors",
+            resume_scope_id="scope-b",
+            incremental_scan_id="scan",
+            reusable=1,
+        )
 
 
 def test_old_cache_and_job_runtime_are_not_reactivated(target):
@@ -741,8 +794,8 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
     put(
         db,
         "cache_locators",
-        id="old-cache",
-        repo_id="a",
+        cache_locator_id="old-cache",
+        repository_id="a",
         path="/synthetic/sealed-cache",
         access="source_readonly",
         state="available",
@@ -751,14 +804,14 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
         put(
             db,
             "active_cache_entries",
-            id="active",
-            locator_id="old-cache",
+            active_cache_entry_id="active",
+            cache_locator_id="old-cache",
             generation=1,
             state="active",
             last_used=1.0,
             bytes=0,
         )
-    put(db, "jobs", id="job", kind="legacy", request="{}")
+    put(db, "jobs", job_id="job", kind="legacy", request="{}")
     with pytest.raises(sqlite3.IntegrityError):
         put(
             db,
@@ -776,7 +829,7 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
         state="interrupted",
         checkpoint="{}",
     )
-    db.execute("UPDATE jobs SET current_attempt=5 WHERE id='job'")
+    db.execute("UPDATE jobs SET current_attempt=5 WHERE job_id='job'")
     assert db.execute(
         "SELECT attempt FROM job_attempts WHERE job_id='job'"
     ).fetchall() == [(5,)]
@@ -786,13 +839,13 @@ def test_existing_version_ids_survive_shared_body(target):
     put(
         target,
         "document_versions",
-        id=99,
+        document_version_id=99,
         document_id="doc-a",
-        body_id=1,
+        text_body_id=1,
         legacy_body_sha256=b"x" * 32,
     )
     assert target.execute(
-        "SELECT id FROM document_versions WHERE document_id='doc-a' AND body_id=1 ORDER BY id"
+        "SELECT document_version_id FROM document_versions WHERE document_id='doc-a' AND text_body_id=1 ORDER BY document_version_id"
     ).fetchall() == [(1,), (99,)]
 
 
@@ -801,8 +854,8 @@ def test_listing_commit_oid_format_matches_context(target):
         put(
             target,
             "code_commits",
-            listing_id="listing-a-commits",
-            occurrence_id=1,
+            code_listing_id="listing-a-commits",
+            fetch_occurrence_id=1,
             position=0,
             object_format="sha256",
             oid=b"x" * 32,

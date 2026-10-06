@@ -18,10 +18,12 @@ from repo_catalog.domain.models import CatalogError, Waiting, now
 class GitHubCollector:
     """Explicit acquisition into ordinary catalog3 facts; no legacy write model."""
 
-    def __init__(self, store, token, transport=None, *, config=None, endpoint_id=None):
+    def __init__(
+        self, store, token, transport=None, *, config=None, repository_endpoint_id=None
+    ):
         self.s, self.token = store, token
         self.cfg = config or store.config["github"]
-        self.endpoint_id = endpoint_id
+        self.repository_endpoint_id = repository_endpoint_id
         self.http = transport or GitHubTransport(self.cfg, token)
         self.owned = transport is None
         self.inventory_uncertainty = None
@@ -54,7 +56,8 @@ class GitHubCollector:
             parts = target_path[len(rest_prefix) :].split("/")
             source = json.loads(
                 self.s.one(
-                    "SELECT settings FROM sources WHERE id=?", (repo["source_id"],)
+                    "SELECT settings FROM sources WHERE source_id=?",
+                    (repo["source_id"],),
                 )[0]
             )
             if len(parts) < 2 or parts[0].lower() != source["owner"].lower():
@@ -65,21 +68,22 @@ class GitHubCollector:
             identity = self.http.request(
                 "GET", self.http.base + "/repos/" + name
             ).json()
-            if str(identity.get("id")) != repo["provider_repo_id"]:
+            if str(identity.get("id")) != repo["provider_repository_id"]:
                 raise CatalogError(
                     "SCOPE_MISMATCH", "Redirect changed repository identity"
                 )
             with self.s.transaction():
                 self.s.execute(
-                    "UPDATE repositories SET name=? WHERE id=?", (name, repo["id"])
+                    "UPDATE repositories SET name=? WHERE repository_id=?",
+                    (name, repo["repository_id"]),
                 )
                 if not self.s.one(
-                    "SELECT 1 FROM repository_name_assertions WHERE repo_id=? AND name=?",
-                    (repo["id"], name),
+                    "SELECT 1 FROM repository_name_assertions WHERE repository_id=? AND name=?",
+                    (repo["repository_id"], name),
                 ):
                     self.s.execute(
-                        "INSERT INTO repository_name_assertions VALUES(?,?,?)",
-                        (repo["id"], name, now()),
+                        "INSERT INTO repository_name_assertions(repository_id,name,observed_at) VALUES(?,?,?)",
+                        (repo["repository_id"], name, now()),
                     )
                 self.s.publish()
             url = target
@@ -131,7 +135,7 @@ class GitHubCollector:
                     selected.append(
                         {
                             "host": "github.com",
-                            "provider_id": provider,
+                            "provider_repository_id": provider,
                             "name": payload["full_name"],
                             "url": cfg.get("clone_url_overrides", {}).get(
                                 provider, payload["clone_url"]
@@ -199,14 +203,14 @@ class GitHubCollector:
                     result.append(
                         {
                             "host": "github.com",
-                            "provider_id": provider,
+                            "provider_repository_id": provider,
                             "name": r["full_name"],
                             "url": clone,
                             "metadata": r,
                         }
                     )
                 url = self.http.next_url(response)
-            by_id = {repo["provider_id"]: repo for repo in result}
+            by_id = {repo["provider_repository_id"]: repo for repo in result}
             result = list(by_id.values())
             counts = (identity.get("public_repos"), identity.get("owned_private_repos"))
             if (
@@ -261,35 +265,37 @@ class GitHubCollector:
             listing = None
             if listing_kind:
                 listing = s.one(
-                    "SELECT id FROM code_listings WHERE collection_id=? AND kind=?",
-                    (collection["id"], listing_kind),
+                    "SELECT code_listing_id FROM code_listings WHERE fetch_collection_id=? AND kind=?",
+                    (collection["fetch_collection_id"], listing_kind),
                 )
                 if not listing:
                     algorithm, head, base = oid_context(context or {})
-                    ident = collection["id"] + ":" + listing_kind
+                    ident = collection["fetch_collection_id"] + ":" + listing_kind
                     s.execute(
-                        "INSERT INTO code_listings VALUES(?,?,?,?,?,?,?,?)",
+                        "INSERT INTO code_listings(code_listing_id,change_request_id,fetch_collection_id,kind,resume_scope_id,object_format,head_oid,base_oid) VALUES(?,?,?,?,?,?,?,?)",
                         (
                             ident,
                             pr,
-                            collection["id"],
+                            collection["fetch_collection_id"],
                             listing_kind,
-                            collection["scope_id"],
+                            collection["resume_scope_id"],
                             algorithm,
                             head,
                             base,
                         ),
                     )
                     s.execute(
-                        "INSERT INTO code_listing_progress VALUES(?,'partial',0,0,0)",
+                        "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES(?,'partial',0,0,0)",
                         (ident,),
                     )
                     listing = (ident,)
             if collection["state"] == "complete":
-                return collection["id"], listing[0] if listing else None
+                return collection["fetch_collection_id"], listing[
+                    0
+                ] if listing else None
         previous = s.one(
-            "SELECT ordinal,next_cursor FROM fetch_occurrences WHERE collection_id=? ORDER BY ordinal DESC,id DESC LIMIT 1",
-            (collection["id"],),
+            "SELECT ordinal,next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY ordinal DESC,fetch_occurrence_id DESC LIMIT 1",
+            (collection["fetch_collection_id"],),
         )
         # A committed terminal page still needs its completion boundary, never a
         # repeated request. Empty initial cursor without a page means start fresh.
@@ -335,7 +341,7 @@ class GitHubCollector:
                         )
                     if listing:
                         s.execute(
-                            "UPDATE code_listing_progress SET page_count=page_count+1,terminal=? WHERE listing_id=?",
+                            "UPDATE code_listing_progress SET page_count=page_count+1,terminal=? WHERE code_listing_id=?",
                             (int(next_url is None), listing[0]),
                         )
                     s.publish()
@@ -347,7 +353,8 @@ class GitHubCollector:
                     "code_commits" if listing_kind == "commits" else "code_file_changes"
                 )
                 count = s.one(
-                    f"SELECT count(*) FROM {table} WHERE listing_id=?", (listing[0],)
+                    f"SELECT count(*) FROM {table} WHERE code_listing_id=?",
+                    (listing[0],),
                 )[0]
                 if cap and (count >= cap or reported is not None and count < reported):
                     raise CatalogError(
@@ -360,12 +367,12 @@ class GitHubCollector:
                 self.facts.finish(collection)
                 if listing:
                     s.execute(
-                        "UPDATE code_listing_progress SET state='complete',terminal=1,context_proven=1 WHERE listing_id=?",
+                        "UPDATE code_listing_progress SET state='complete',terminal=1,context_proven=1 WHERE code_listing_id=?",
                         (listing[0],),
                     )
-                s.coverage(pr or repo["id"], kind, "complete")
+                s.coverage(pr or repo["repository_id"], kind, "complete")
                 s.publish()
-            return collection["id"], listing[0] if listing else None
+            return collection["fetch_collection_id"], listing[0] if listing else None
         except CatalogError as error:
             with s.transaction():
                 if response is not None and uncommitted:
@@ -382,7 +389,7 @@ class GitHubCollector:
                         advance=False,
                     )
                     payload_id = s.one(
-                        "SELECT payload_id FROM fetch_occurrences WHERE id=?",
+                        "SELECT payload_id FROM fetch_occurrences WHERE fetch_occurrence_id=?",
                         (occurrence,),
                     )[0]
                     s.execute(
@@ -392,15 +399,20 @@ class GitHubCollector:
                             canonical(
                                 {
                                     "code": error.code,
-                                    "collection_id": collection["id"],
-                                    "occurrence_id": occurrence,
+                                    "fetch_collection_id": collection[
+                                        "fetch_collection_id"
+                                    ],
+                                    "fetch_occurrence_id": occurrence,
                                 }
                             ),
                         ),
                     )
                 self.facts.partial(collection, error.code)
                 s.coverage(
-                    pr or repo["id"], kind, "partial", canonical({"reason": error.code})
+                    pr or repo["repository_id"],
+                    kind,
+                    "partial",
+                    canonical({"reason": error.code}),
                 )
                 s.publish()
             raise
@@ -417,44 +429,55 @@ class GitHubCollector:
         ):
             raise CatalogError("API_SCHEMA", "PR identity missing")
         binding = s.one(
-            "SELECT binding_id FROM resume_scopes WHERE id=?", (collection["scope_id"],)
+            "SELECT repository_binding_id FROM resume_scopes WHERE resume_scope_id=?",
+            (collection["resume_scope_id"],),
         )[0]
         row = s.one(
-            "SELECT * FROM change_requests WHERE binding_id=? AND request_kind='pull_request' AND number=?",
+            "SELECT * FROM change_requests WHERE repository_binding_id=? AND request_kind='pull_request' AND number=?",
             (binding, value["number"]),
         )
-        ident = row["id"] if row else f"{repo['id']}:{value['number']}"
+        ident = (
+            row["change_request_id"]
+            if row
+            else f"{repo['repository_id']}:{value['number']}"
+        )
         if (
             row
-            and row["node_id"]
+            and row["provider_node_id"]
             and value.get("node_id")
-            and row["node_id"] != value["node_id"]
+            and row["provider_node_id"] != value["node_id"]
         ):
             raise CatalogError(
                 "IDENTITY_CONFLICT", "PR number changed provider identity"
             )
         if not row:
             s.execute(
-                "INSERT INTO change_requests VALUES(?,?,?,'pull_request',?,NULL,?)",
-                (ident, repo["id"], binding, value["number"], value.get("node_id")),
+                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number,current_change_request_observation_id,provider_node_id) VALUES(?,?,?,'pull_request',?,NULL,?)",
+                (
+                    ident,
+                    repo["repository_id"],
+                    binding,
+                    value["number"],
+                    value.get("node_id"),
+                ),
             )
         origin = self.facts.origin(collection, occurrence, position)
         existing = s.one(
-            "SELECT id FROM change_request_observations WHERE change_request_id=? AND origin_key=?",
+            "SELECT change_request_observation_id FROM change_request_observations WHERE change_request_id=? AND origin_key=?",
             (ident, origin),
         )
         if existing:
             return ident
-        if row and row["node_id"] is None and value.get("node_id"):
+        if row and row["provider_node_id"] is None and value.get("node_id"):
             s.execute(
-                "UPDATE change_requests SET node_id=? WHERE id=?",
+                "UPDATE change_requests SET provider_node_id=? WHERE change_request_id=?",
                 (value["node_id"], ident),
             )
         observation = (
             existing[0]
             if existing
             else s.execute(
-                "INSERT INTO change_request_observations(change_request_id,observed_at,published,payload,origin_key,parsed_at,origin_occurrence_id) VALUES(?,?,?,?,?,?,?)",
+                "INSERT INTO change_request_observations(change_request_id,observed_at,published,payload,origin_key,parsed_at,origin_fetch_occurrence_id) VALUES(?,?,?,?,?,?,?)",
                 (
                     ident,
                     timestamp,
@@ -468,7 +491,7 @@ class GitHubCollector:
         )
         if publish or not row:
             s.execute(
-                "UPDATE change_requests SET current_observation_id=? WHERE id=?",
+                "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
                 (observation, ident),
             )
             for offset, (kind, body) in enumerate(
@@ -493,37 +516,42 @@ class GitHubCollector:
     def detail(self, repo, pr, job, url):
         with self.s.transaction():
             self.facts.fence(job)
-            collection = self.facts.begin(repo, pr["id"], "pr-detail", job, url)
+            collection = self.facts.begin(
+                repo, pr["change_request_id"], "pr-detail", job, url
+            )
             validator = self.s.one(
-                "SELECT * FROM validators WHERE scope_id=? AND validator_key='representation'",
-                (collection["scope_id"],),
+                "SELECT * FROM validators WHERE resume_scope_id=? AND validator_key='representation'",
+                (collection["resume_scope_id"],),
             )
             imported_validator = False
             if not validator:
-                validator = self.imported_validator(repo, url, collection["scope_id"])
+                validator = self.imported_validator(
+                    repo, url, collection["resume_scope_id"]
+                )
                 imported_validator = validator is not None
         if collection["state"] == "complete":
             row = self.s.one(
-                "SELECT o.* FROM change_request_observations o JOIN fetch_occurrences f ON f.id=o.origin_occurrence_id WHERE f.collection_id=? ORDER BY f.ordinal DESC,o.id DESC LIMIT 1",
-                (collection["id"],),
+                "SELECT o.* FROM change_request_observations o JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.origin_fetch_occurrence_id WHERE f.fetch_collection_id=? ORDER BY f.ordinal DESC,o.change_request_observation_id DESC LIMIT 1",
+                (collection["fetch_collection_id"],),
             )
             if row:
                 value = json.loads(row["payload"])
-                self.authorized_prs.add((pr["id"], *oid_context(value)))
-                return value, row["id"]
+                self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
+                return value, row["change_request_observation_id"]
             current = self.s.one(
-                "SELECT p.current_observation_id,o.payload FROM change_requests p JOIN change_request_observations o ON o.id=p.current_observation_id WHERE p.id=?",
-                (pr["id"],),
+                "SELECT p.current_change_request_observation_id,o.payload FROM change_requests p JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.change_request_id=?",
+                (pr["change_request_id"],),
             )
             value = json.loads(current["payload"])
-            self.authorized_prs.add((pr["id"], *oid_context(value)))
-            return value, current["current_observation_id"]
+            self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
+            return value, current["current_change_request_observation_id"]
         headers = {"If-None-Match": validator["etag"]} if validator else {}
         response = self.request_get(url, repo, headers=headers)
         if response.status_code == 304:
             payload = (
                 self.s.one(
-                    "SELECT body FROM payloads WHERE id=?", (validator["payload_id"],)
+                    "SELECT body FROM payloads WHERE payload_id=?",
+                    (validator["payload_id"],),
                 )
                 if validator
                 else None
@@ -531,8 +559,8 @@ class GitHubCollector:
             if payload:
                 value = json.loads(payload[0])
                 admitted = self.s.one(
-                    "SELECT p.current_observation_id,o.payload FROM change_requests p JOIN change_request_observations o ON o.id=p.current_observation_id WHERE p.id=?",
-                    (pr["id"],),
+                    "SELECT p.current_change_request_observation_id,o.payload FROM change_requests p JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.change_request_id=?",
+                    (pr["change_request_id"],),
                 )
                 if not admitted or json.loads(admitted["payload"]) != value:
                     # A newer race observation can differ from this validator.
@@ -540,7 +568,7 @@ class GitHubCollector:
                     # cached A bytes to the newer B observation.
                     payload = None
                 else:
-                    current = admitted["current_observation_id"]
+                    current = admitted["current_change_request_observation_id"]
             if payload:
                 # A validation is a successful boundary, not a new observation of
                 # cached bytes. It records no page/document/PR occurrence.
@@ -552,9 +580,9 @@ class GitHubCollector:
                     )
                     if imported_validator:
                         self.s.execute(
-                            "INSERT INTO validators VALUES(?,'representation',?,?,?)",
+                            "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at) VALUES(?,'representation',?,?,?)",
                             (
-                                collection["scope_id"],
+                                collection["resume_scope_id"],
                                 validator["etag"],
                                 validator["payload_id"],
                                 now(),
@@ -562,11 +590,11 @@ class GitHubCollector:
                         )
                     else:
                         self.s.execute(
-                            "UPDATE validators SET validated_at=? WHERE scope_id=? AND validator_key='representation'",
-                            (now(), collection["scope_id"]),
+                            "UPDATE validators SET validated_at=? WHERE resume_scope_id=? AND validator_key='representation'",
+                            (now(), collection["resume_scope_id"]),
                         )
                     self.s.publish()
-                self.authorized_prs.add((pr["id"], *oid_context(value)))
+                self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
                 return value, current
             response = self.request_get(url, repo)
             if response.status_code == 304:
@@ -582,19 +610,19 @@ class GitHubCollector:
                 payload_id = self.facts.payload(response.content)
                 if validator and not imported_validator:
                     self.s.execute(
-                        "UPDATE validators SET etag=?,payload_id=?,validated_at=? WHERE scope_id=? AND validator_key='representation'",
+                        "UPDATE validators SET etag=?,payload_id=?,validated_at=? WHERE resume_scope_id=? AND validator_key='representation'",
                         (
                             response.headers["etag"],
                             payload_id,
                             timestamp,
-                            collection["scope_id"],
+                            collection["resume_scope_id"],
                         ),
                     )
                 else:
                     self.s.execute(
-                        "INSERT INTO validators VALUES(?,'representation',?,?,?)",
+                        "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at) VALUES(?,'representation',?,?,?)",
                         (
-                            collection["scope_id"],
+                            collection["resume_scope_id"],
                             response.headers["etag"],
                             payload_id,
                             timestamp,
@@ -603,9 +631,10 @@ class GitHubCollector:
             self.facts.finish(collection)
             self.s.publish()
         current = self.s.one(
-            "SELECT current_observation_id FROM change_requests WHERE id=?", (pr["id"],)
+            "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
+            (pr["change_request_id"],),
         )[0]
-        self.authorized_prs.add((pr["id"], *oid_context(value)))
+        self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
         return value, current
 
     def incremental_comments(self, repo, job, kind, endpoint, parent_field):
@@ -614,7 +643,7 @@ class GitHubCollector:
                 repo, endpoint, {"kind": kind, "sort": "updated", "direction": "asc"}
             )
         previous = self.s.one(
-            "SELECT i.* FROM incremental_scans i JOIN collection_progress p ON p.collection_id=i.collection_id WHERE json_extract(i.evidence,'$.stable_scope')=? AND i.safe_watermark IS NOT NULL AND p.state='complete' ORDER BY i.scan_started_at DESC LIMIT 1",
+            "SELECT i.* FROM incremental_scans i JOIN collection_progress p ON p.fetch_collection_id=i.fetch_collection_id WHERE json_extract(i.evidence,'$.stable_scope')=? AND i.safe_watermark IS NOT NULL AND p.state='complete' ORDER BY i.scan_started_at DESC LIMIT 1",
             (scope,),
         )
         started = now()
@@ -632,9 +661,9 @@ class GitHubCollector:
         # Resume keeps its originally bounded request and original scan start;
         # resumption itself must never move a child watermark.
         existing = self.s.one(
-            "SELECT f.id,f.observed_at,s.endpoint FROM fetch_collections f JOIN collection_progress p ON p.collection_id=f.id JOIN resume_scopes s ON s.id=f.scope_id WHERE f.repo_id=? AND f.kind=? AND p.job_id=? AND s.source_id=? AND s.principal_ref=? AND s.api_version=? AND s.parser_version=? AND s.profile_version=? AND s.confidence='proven' ORDER BY f.observed_at DESC LIMIT 1",
+            "SELECT f.fetch_collection_id,f.observed_at,s.endpoint FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN resume_scopes s ON s.resume_scope_id=f.resume_scope_id WHERE f.repository_id=? AND f.kind=? AND p.job_id=? AND s.source_id=? AND s.principal_ref=? AND s.api_version=? AND s.parser_version=? AND s.profile_version=? AND s.confidence='proven' ORDER BY f.observed_at DESC LIMIT 1",
             (
-                repo["id"],
+                repo["repository_id"],
                 kind + "-incremental",
                 job,
                 repo["source_id"],
@@ -667,12 +696,13 @@ class GitHubCollector:
             except ValueError:
                 raise CatalogError("API_SCHEMA", "Invalid comment parent") from None
             pr = self.s.one(
-                "SELECT id FROM change_requests WHERE repo_id=? AND number=?",
-                (repo["id"], number),
+                "SELECT change_request_id FROM change_requests WHERE repository_id=? AND number=?",
+                (repo["repository_id"], number),
             )
             if not pr:
                 payload_id = self.s.one(
-                    "SELECT payload_id FROM fetch_occurrences WHERE id=?", (occurrence,)
+                    "SELECT payload_id FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+                    (occurrence,),
                 )[0]
                 self.s.execute(
                     "INSERT INTO unresolved_payloads(payload_id,reason) VALUES(?,?)",
@@ -714,15 +744,16 @@ class GitHubCollector:
         with self.s.transaction():
             self.facts.fence(job)
             if not self.s.one(
-                "SELECT 1 FROM incremental_scans WHERE collection_id=?", (cid,)
+                "SELECT 1 FROM incremental_scans WHERE fetch_collection_id=?", (cid,)
             ):
                 actual_scope = self.s.one(
-                    "SELECT scope_id FROM fetch_collections WHERE id=?", (cid,)
+                    "SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?",
+                    (cid,),
                 )[0]
                 # Each request scope records its own scan, and a stable scope also
                 # points to that same endpoint context via safe scan lookup below.
                 self.s.execute(
-                    "INSERT INTO incremental_scans VALUES(?,?,?,?,?,?)",
+                    "INSERT INTO incremental_scans(incremental_scan_id,resume_scope_id,fetch_collection_id,scan_started_at,safe_watermark,evidence) VALUES(?,?,?,?,?,?)",
                     (
                         cid,
                         actual_scope,
@@ -770,7 +801,7 @@ class GitHubCollector:
         with self.s.transaction():
             collection = self.facts.begin(
                 repo,
-                pr["id"],
+                pr["change_request_id"],
                 "threads",
                 job,
                 self.http.graphql,
@@ -784,8 +815,8 @@ class GitHubCollector:
         merge = {}
         if collection["state"] == "complete":
             last = self.s.one(
-                "SELECT p.body FROM fetch_occurrences o JOIN payloads p ON p.id=o.payload_id WHERE o.collection_id=? ORDER BY o.ordinal DESC LIMIT 1",
-                (collection["id"],),
+                "SELECT p.body FROM fetch_occurrences o JOIN payloads p ON p.payload_id=o.payload_id WHERE o.fetch_collection_id=? ORDER BY o.ordinal DESC LIMIT 1",
+                (collection["fetch_collection_id"],),
             )
             if last:
                 p = (
@@ -814,11 +845,14 @@ class GitHubCollector:
                 }
                 if pending.get("occurrence"):
                     page = self.s.one(
-                        "SELECT o.*,p.body FROM fetch_occurrences o JOIN payloads p ON p.id=o.payload_id WHERE o.id=? AND o.collection_id=?",
-                        (pending["occurrence"], collection["id"]),
+                        "SELECT o.*,p.body FROM fetch_occurrences o JOIN payloads p ON p.payload_id=o.payload_id WHERE o.fetch_occurrence_id=? AND o.fetch_collection_id=?",
+                        (pending["occurrence"], collection["fetch_collection_id"]),
                     )
                     payload = json.loads(page["body"])
-                    occurrence, timestamp = page["id"], page["observed_at"]
+                    occurrence, timestamp = (
+                        page["fetch_occurrence_id"],
+                        page["observed_at"],
+                    )
                 else:
                     response = self.http.request(
                         "POST",
@@ -849,10 +883,10 @@ class GitHubCollector:
                             advance=False,
                         )
                         for index, thread in enumerate(connection.get("nodes") or []):
-                            thread_id = self._thread(repo, pr, thread, timestamp)
+                            review_thread_id = self._thread(repo, pr, thread, timestamp)
                             self._thread_documents(
                                 pr,
-                                thread_id,
+                                review_thread_id,
                                 thread.get("comments") or {},
                                 collection,
                                 occurrence,
@@ -866,12 +900,12 @@ class GitHubCollector:
                         )
                         if not payload.get("errors") and valid_info:
                             self.s.execute(
-                                "UPDATE collection_progress SET cursor=? WHERE collection_id=?",
+                                "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
                                 (
                                     canonical(
                                         {"cursor": cursor, "occurrence": occurrence}
                                     ),
-                                    collection["id"],
+                                    collection["fetch_collection_id"],
                                 ),
                             )
                         self.s.publish()
@@ -896,12 +930,14 @@ class GitHubCollector:
                 if "pageInfo" not in connection:
                     raise CatalogError("API_SCHEMA", "Missing thread pageInfo")
                 for thread in connection.get("nodes") or []:
-                    thread_id = f"{pr['id']}:thread:{thread['id']}"
+                    review_thread_id = (
+                        f"{pr['change_request_id']}:thread:{thread['id']}"
+                    )
                     self._thread_children(
                         repo,
                         pr,
                         thread,
-                        thread_id,
+                        review_thread_id,
                         job,
                         child_query,
                         collection,
@@ -917,12 +953,12 @@ class GitHubCollector:
                     if info.get("hasNextPage"):
                         pending = {"cursor": next_cursor}
                         self.s.execute(
-                            "UPDATE collection_progress SET cursor=? WHERE collection_id=?",
-                            (canonical(pending), collection["id"]),
+                            "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                            (canonical(pending), collection["fetch_collection_id"]),
                         )
                     else:
                         self.facts.finish(collection)
-                        self.s.coverage(pr["id"], "threads", "complete")
+                        self.s.coverage(pr["change_request_id"], "threads", "complete")
                     self.s.publish()
                 if not info.get("hasNextPage"):
                     return merge
@@ -930,10 +966,10 @@ class GitHubCollector:
             with self.s.transaction():
                 if error.details.get("refresh_root"):
                     self.s.execute(
-                        "UPDATE collection_progress SET cursor=? WHERE collection_id=?",
+                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
                         (
                             canonical({"cursor": pending.get("cursor")}),
-                            collection["id"],
+                            collection["fetch_collection_id"],
                         ),
                     )
                 self.facts.partial(collection, error.code)
@@ -953,31 +989,40 @@ class GitHubCollector:
     def _thread(self, repo, pr, thread, timestamp):
         if not thread.get("id"):
             raise CatalogError("API_SCHEMA", "Thread identity missing")
-        ident = f"{pr['id']}:thread:{thread['id']}"
+        ident = f"{pr['change_request_id']}:thread:{thread['id']}"
         value = canonical(
             {key: item for key, item in thread.items() if key != "comments"}
         )
-        if self.s.one("SELECT 1 FROM review_threads WHERE id=?", (ident,)):
+        if self.s.one(
+            "SELECT 1 FROM review_threads WHERE review_thread_id=?", (ident,)
+        ):
             self.s.execute(
-                "UPDATE review_threads SET payload=?,observed_at=? WHERE id=?",
+                "UPDATE review_threads SET payload=?,observed_at=? WHERE review_thread_id=?",
                 (value, timestamp, ident),
             )
         else:
             self.s.execute(
-                "INSERT INTO review_threads VALUES(?,?,?,?)",
-                (ident, pr["id"], value, timestamp),
+                "INSERT INTO review_threads(review_thread_id,change_request_id,payload,observed_at) VALUES(?,?,?,?)",
+                (ident, pr["change_request_id"], value, timestamp),
             )
         return ident
 
     def _thread_documents(
-        self, pr, thread_id, connection, collection, occurrence, offset, timestamp
+        self,
+        pr,
+        review_thread_id,
+        connection,
+        collection,
+        occurrence,
+        offset,
+        timestamp,
     ):
         for position, value in enumerate(connection.get("nodes") or []):
             provider = value.get("fullDatabaseId") or value.get("id")
             if provider is None:
                 raise CatalogError("API_SCHEMA", "GraphQL comment identity missing")
             self.facts.document(
-                pr["id"],
+                pr["change_request_id"],
                 "review-comment",
                 str(provider),
                 "" if value.get("body") is None else value["body"],
@@ -986,7 +1031,7 @@ class GitHubCollector:
                 occurrence,
                 offset + position,
                 timestamp,
-                thread=thread_id,
+                thread=review_thread_id,
             )
 
     def _thread_children(
@@ -994,7 +1039,7 @@ class GitHubCollector:
         repo,
         pr,
         thread,
-        thread_id,
+        review_thread_id,
         job,
         query,
         parent,
@@ -1016,7 +1061,7 @@ class GitHubCollector:
         with self.s.transaction():
             collection = self.facts.begin(
                 repo,
-                pr["id"],
+                pr["change_request_id"],
                 "thread-comments",
                 job,
                 self.http.graphql,
@@ -1025,8 +1070,8 @@ class GitHubCollector:
         if collection["state"] == "complete":
             return
         page = self.s.one(
-            "SELECT next_cursor FROM fetch_occurrences WHERE collection_id=? ORDER BY ordinal DESC LIMIT 1",
-            (collection["id"],),
+            "SELECT next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
+            (collection["fetch_collection_id"],),
         )
         cursor = page[0] if page else info.get("endCursor")
         seen = set()
@@ -1073,7 +1118,7 @@ class GitHubCollector:
                     )
                     self._thread_documents(
                         pr,
-                        thread_id,
+                        review_thread_id,
                         comments,
                         collection,
                         occurrence,
@@ -1104,7 +1149,7 @@ class GitHubCollector:
 
     def completed_pr(self, repo, job, pr_id):
         row = self.s.one(
-            "SELECT c.id,c.head_oid,c.base_oid,c.details,sc.request_context scope_context FROM code_observations c JOIN change_request_observations o ON o.id=c.observation_id JOIN fetch_occurrences a ON a.id=o.origin_occurrence_id JOIN collection_progress p ON p.collection_id=a.collection_id JOIN fetch_collections f ON f.id=p.collection_id JOIN resume_scopes sc ON sc.id=f.scope_id WHERE p.job_id=? AND c.change_request_id=? AND c.state='complete' AND sc.source_id=? AND sc.principal_ref=? AND sc.api_version=? AND sc.parser_version=? AND sc.profile_version=? AND sc.confidence='proven' ORDER BY c.id DESC LIMIT 1",
+            "SELECT c.code_observation_id,c.head_oid,c.base_oid,c.details,sc.request_context scope_context FROM code_observations c JOIN change_request_observations o ON o.change_request_observation_id=c.change_request_observation_id JOIN fetch_occurrences a ON a.fetch_occurrence_id=o.origin_fetch_occurrence_id JOIN collection_progress p ON p.fetch_collection_id=a.fetch_collection_id JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id JOIN resume_scopes sc ON sc.resume_scope_id=f.resume_scope_id WHERE p.job_id=? AND c.change_request_id=? AND c.state='complete' AND sc.source_id=? AND sc.principal_ref=? AND sc.api_version=? AND sc.parser_version=? AND sc.profile_version=? AND sc.confidence='proven' ORDER BY c.code_observation_id DESC LIMIT 1",
             (
                 job,
                 pr_id,
@@ -1124,7 +1169,7 @@ class GitHubCollector:
         kinds = {
             r[0]
             for r in self.s.all(
-                "SELECT f.kind FROM fetch_collections f JOIN collection_progress p ON p.collection_id=f.id WHERE p.job_id=? AND f.change_request_id=? AND p.state='complete'",
+                "SELECT f.kind FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE p.job_id=? AND f.change_request_id=? AND p.state='complete'",
                 (job, pr_id),
             )
         }
@@ -1136,8 +1181,8 @@ class GitHubCollector:
         links = {
             r[0]
             for r in self.s.all(
-                "SELECT a.role FROM code_acquisitions a JOIN acquisition_roots r ON r.id=a.root_id WHERE a.code_observation_id=? AND r.published=1",
-                (row["id"],),
+                "SELECT a.role FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id WHERE a.code_observation_id=? AND r.published=1",
+                (row["code_observation_id"],),
             )
         }
         roles = set(json.loads(row["details"]).get("expected_roles", {}))
@@ -1152,7 +1197,7 @@ class GitHubCollector:
         with s.transaction():
             for component in ("pr", "pr-documents"):
                 s.coverage(
-                    repo["id"],
+                    repo["repository_id"],
                     component,
                     "partial",
                     canonical({"reason": "collection_in_progress", "job_id": job}),
@@ -1173,7 +1218,10 @@ class GitHubCollector:
                 waiting = error.details.get("not_before", waiting)
                 with s.transaction():
                     s.coverage(
-                        repo["id"], kind, "partial", canonical({"reason": error.code})
+                        repo["repository_id"],
+                        kind,
+                        "partial",
+                        canonical({"reason": error.code}),
                     )
                     s.publish()
                 return None
@@ -1227,12 +1275,12 @@ class GitHubCollector:
                     ),
                 )
             prs = s.all(
-                "SELECT p.*,o.payload FROM change_requests p LEFT JOIN change_request_observations o ON o.id=p.current_observation_id WHERE p.repo_id=? ORDER BY p.number",
-                (repo["id"],),
+                "SELECT p.*,o.payload FROM change_requests p LEFT JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.repository_id=? ORDER BY p.number",
+                (repo["repository_id"],),
             )
             for pr in prs:
                 self.token.check()
-                if self.completed_pr(repo, job, pr["id"]):
+                if self.completed_pr(repo, job, pr["change_request_id"]):
                     continue
                 initial_failures = len(failures)
                 url = root + f"/pulls/{pr['number']}"
@@ -1241,7 +1289,7 @@ class GitHubCollector:
                     before, current = detail
                 else:
                     before = json.loads(pr["payload"]) if pr["payload"] else {}
-                    current = pr["current_observation_id"]
+                    current = pr["current_change_request_observation_id"]
                 for kind, endpoint in (
                     ("issue-comment", root + f"/issues/{pr['number']}/comments"),
                     ("review", url + "/reviews"),
@@ -1251,19 +1299,19 @@ class GitHubCollector:
                         kind,
                         lambda kind=kind, endpoint=endpoint: self.collection(
                             repo,
-                            pr["id"],
+                            pr["change_request_id"],
                             kind,
                             job,
                             endpoint + f"?per_page={size}",
-                            self._document_normalizer(pr["id"], kind),
+                            self._document_normalizer(pr["change_request_id"], kind),
                         ),
                     )
 
                 def event(value, collection, occurrence, position, timestamp, listing):
                     s.execute(
-                        "INSERT INTO change_request_events(change_request_id,origin_key,ordinal,provider_id,payload,observed_at) VALUES(?,?,?,?,?,?)",
+                        "INSERT INTO change_request_events(change_request_id,origin_key,ordinal,provider_event_id,payload,observed_at) VALUES(?,?,?,?,?,?)",
                         (
-                            pr["id"],
+                            pr["change_request_id"],
                             self.facts.origin(collection, occurrence, position),
                             position,
                             str(value["id"]) if value.get("id") is not None else None,
@@ -1276,7 +1324,7 @@ class GitHubCollector:
                     "timeline",
                     lambda: self.collection(
                         repo,
-                        pr["id"],
+                        pr["change_request_id"],
                         "timeline",
                         job,
                         root + f"/issues/{pr['number']}/timeline?per_page={size}",
@@ -1295,7 +1343,7 @@ class GitHubCollector:
                         raise CatalogError("API_SCHEMA", "PR commit OID missing")
                     oid = GitOid.parse(algorithm + ":" + value["sha"]).value
                     s.execute(
-                        "INSERT INTO code_commits VALUES(?,?,?,?,?,?)",
+                        "INSERT INTO code_commits(code_listing_id,fetch_occurrence_id,position,object_format,oid,payload) VALUES(?,?,?,?,?,?)",
                         (
                             listing,
                             occurrence,
@@ -1312,7 +1360,7 @@ class GitHubCollector:
                     if not isinstance(value.get("filename"), str):
                         raise CatalogError("API_SCHEMA", "PR file path missing")
                     s.execute(
-                        "INSERT INTO code_file_changes VALUES(?,?,?,?,?)",
+                        "INSERT INTO code_file_changes(code_listing_id,fetch_occurrence_id,position,raw_path,payload) VALUES(?,?,?,?,?)",
                         (
                             listing,
                             occurrence,
@@ -1327,7 +1375,7 @@ class GitHubCollector:
                     "pr-commits",
                     lambda: self.collection(
                         repo,
-                        pr["id"],
+                        pr["change_request_id"],
                         "pr-commits",
                         job,
                         url + f"/commits?per_page={size}",
@@ -1346,7 +1394,7 @@ class GitHubCollector:
                     "pr-files",
                     lambda: self.collection(
                         repo,
-                        pr["id"],
+                        pr["change_request_id"],
                         "pr-files",
                         job,
                         url + f"/files?per_page={size}",
@@ -1380,10 +1428,10 @@ class GitHubCollector:
                     failures.append({"kind": "pr-code", "reason": "PR_CODE_RACE"})
 
                 # Failed listings still retain their IDs and early pages.
-                def listing_id(kind):
+                def code_listing_id(kind):
                     row = s.one(
-                        "SELECT l.id FROM code_listings l JOIN collection_progress p ON p.collection_id=l.collection_id WHERE l.change_request_id=? AND l.kind=? AND l.head_oid IS ? AND l.base_oid IS ? ORDER BY (p.job_id=?) DESC,l.id DESC LIMIT 1",
-                        (pr["id"], kind, head, base, job),
+                        "SELECT l.code_listing_id FROM code_listings l JOIN collection_progress p ON p.fetch_collection_id=l.fetch_collection_id WHERE l.change_request_id=? AND l.kind=? AND l.head_oid IS ? AND l.base_oid IS ? ORDER BY (p.job_id=?) DESC,l.code_listing_id DESC LIMIT 1",
+                        (pr["change_request_id"], kind, head, base, job),
                     )
                     return row[0] if row else None
 
@@ -1393,7 +1441,8 @@ class GitHubCollector:
                     **merge,
                 }
                 for review in s.all(
-                    "SELECT payload FROM reviews WHERE change_request_id=?", (pr["id"],)
+                    "SELECT payload FROM reviews WHERE change_request_id=?",
+                    (pr["change_request_id"],),
                 ):
                     value = json.loads(review[0]).get("commit_id")
                     if value:
@@ -1401,12 +1450,14 @@ class GitHubCollector:
                 with s.transaction():
                     self.facts.fence(job)
                     code = s.execute(
-                        "INSERT INTO code_observations(change_request_id,observation_id,commit_listing_id,file_listing_id,state,object_format,head_oid,base_oid,details) VALUES(?,?,?,?,?,?,?,?,?)",
+                        "INSERT INTO code_observations(change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details) VALUES(?,?,?,?,?,?,?,?,?)",
                         (
-                            pr["id"],
+                            pr["change_request_id"],
                             current,
-                            commits[1] if commits else listing_id("commits"),
-                            files_result[1] if files_result else listing_id("files"),
+                            commits[1] if commits else code_listing_id("commits"),
+                            files_result[1]
+                            if files_result
+                            else code_listing_id("files"),
                             state,
                             algorithm,
                             head,
@@ -1448,45 +1499,48 @@ class GitHubCollector:
                                     "number": pr["number"],
                                 }
                             ],
-                            observation_id=current,
-                            endpoint_id=self.endpoint_id,
+                            change_request_observation_id=current,
+                            repository_endpoint_id=self.repository_endpoint_id,
                         ),
                     )
                     if fetched:
                         with s.transaction():
                             for rootrow in s.all(
-                                "SELECT * FROM acquisition_roots WHERE acquisition_id=? AND oid=?",
-                                (fetched["run_id"], bytes.fromhex(expected)),
+                                "SELECT * FROM acquisition_roots WHERE git_acquisition_id=? AND oid=?",
+                                (
+                                    fetched["git_acquisition_id"],
+                                    bytes.fromhex(expected),
+                                ),
                             ):
                                 if not s.one(
                                     "SELECT 1 FROM code_acquisitions WHERE code_observation_id=? AND role=?",
                                     (code, role),
                                 ):
                                     s.execute(
-                                        "INSERT INTO code_acquisitions VALUES(?,?,?,?,?)",
+                                        "INSERT INTO code_acquisitions(code_observation_id,role,object_format,oid,acquisition_root_id) VALUES(?,?,?,?,?)",
                                         (
                                             code,
                                             role,
                                             rootrow["object_format"],
                                             rootrow["oid"],
-                                            rootrow["id"],
+                                            rootrow["acquisition_root_id"],
                                         ),
                                     )
                                 if not s.one(
-                                    "SELECT 1 FROM root_origins WHERE root_id=? AND observation_id=?",
-                                    (rootrow["id"], current),
+                                    "SELECT 1 FROM root_origins WHERE acquisition_root_id=? AND change_request_observation_id=?",
+                                    (rootrow["acquisition_root_id"], current),
                                 ):
                                     s.execute(
-                                        "INSERT INTO root_origins(root_id,origin_kind,source_ordinal,change_request_id,observation_id,repo_id) VALUES(?,'pr_role',?,?,?,?)",
+                                        "INSERT INTO root_origins(acquisition_root_id,origin_kind,source_ordinal,change_request_id,change_request_observation_id,repository_id) VALUES(?,'pr_role',?,?,?,?)",
                                         (
-                                            rootrow["id"],
+                                            rootrow["acquisition_root_id"],
                                             s.one(
-                                                "SELECT coalesce(max(source_ordinal),-1)+1 FROM root_origins WHERE root_id=? AND origin_kind='pr_role'",
-                                                (rootrow["id"],),
+                                                "SELECT coalesce(max(source_ordinal),-1)+1 FROM root_origins WHERE acquisition_root_id=? AND origin_kind='pr_role'",
+                                                (rootrow["acquisition_root_id"],),
                                             )[0],
-                                            pr["id"],
+                                            pr["change_request_id"],
                                             current,
-                                            repo["id"],
+                                            repo["repository_id"],
                                         ),
                                     )
                             s.publish()
@@ -1500,13 +1554,13 @@ class GitHubCollector:
             ]
             with s.transaction():
                 s.coverage(
-                    repo["id"],
+                    repo["repository_id"],
                     "pr-documents",
                     "partial" if document_failures else "complete",
                     canonical({"missing": document_failures}),
                 )
                 s.coverage(
-                    repo["id"],
+                    repo["repository_id"],
                     "pr",
                     "partial" if failures else "complete",
                     canonical({"missing": failures}),
@@ -1523,7 +1577,7 @@ class GitHubCollector:
                     True,
                 )
             return {
-                "repo_id": repo["id"],
+                "repository_id": repo["repository_id"],
                 "state": "complete",
                 "pull_requests": len(prs),
             }
@@ -1534,20 +1588,25 @@ class GitHubCollector:
     def imported_validator(self, repo, url, runtime_scope):
         """A legacy validator can issue a conditional request, never skip one."""
         binding = self.s.one(
-            "SELECT binding_id FROM resume_scopes WHERE id=?", (runtime_scope,)
+            "SELECT repository_binding_id FROM resume_scopes WHERE resume_scope_id=?",
+            (runtime_scope,),
         )[0]
         candidates = self.s.all(
-            "SELECT v.*,sc.request_context,sc.principal_ref FROM validators v JOIN resume_scopes sc ON sc.id=v.scope_id "
-            "WHERE sc.repo_id=? AND sc.binding_id=? AND sc.source_id=? AND sc.endpoint=? AND sc.api_version=? "
-            "AND sc.confidence='legacy_unknown' AND sc.parser_version='v1' ORDER BY v.validated_at DESC",
-            (repo["id"], binding, repo["source_id"], url, self.cfg["rest_api_version"]),
+            "SELECT v.*,sc.request_context,sc.principal_ref FROM validators v JOIN resume_scopes sc ON sc.resume_scope_id=v.resume_scope_id WHERE sc.repository_id=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.endpoint=? AND sc.api_version=? AND sc.confidence='legacy_unknown' AND sc.parser_version='v1' ORDER BY v.validated_at DESC",
+            (
+                repo["repository_id"],
+                binding,
+                repo["source_id"],
+                url,
+                self.cfg["rest_api_version"],
+            ),
         )
         for validator in candidates:
             context = json.loads(validator["request_context"])
             if (
                 validator["principal_ref"] is not None
                 and validator["principal_ref"] != self.facts.principal
-                or str(context.get("repo")) != repo["provider_repo_id"]
+                or str(context.get("repo")) != repo["provider_repository_id"]
                 or context.get("source") != repo["source_id"]
                 or context.get("accept") != "application/vnd.github+json"
             ):
@@ -1578,21 +1637,18 @@ class GitHubCollector:
         ):
             return None
         binding = self.s.one(
-            "SELECT binding_id FROM change_requests WHERE id=?", (pr,)
+            "SELECT repository_binding_id FROM change_requests WHERE change_request_id=?",
+            (pr,),
         )[0]
         rows = self.s.all(
-            "SELECT l.*,sc.endpoint,sc.principal_ref,sc.request_context,sc.profile_version,p.page_count FROM code_listings l "
-            "JOIN code_listing_progress p ON p.listing_id=l.id JOIN resume_scopes sc ON sc.id=l.scope_id "
-            "WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? "
-            "AND p.state='complete' AND p.terminal=1 AND p.context_proven=1 AND sc.repo_id=? AND sc.binding_id=? "
-            "AND sc.source_id=? AND sc.api_version=? AND sc.parser_version='v1' AND sc.confidence='legacy_unknown'",
+            "SELECT l.*,sc.endpoint,sc.principal_ref,sc.request_context,sc.profile_version,p.page_count FROM code_listings l JOIN code_listing_progress p ON p.code_listing_id=l.code_listing_id JOIN resume_scopes sc ON sc.resume_scope_id=l.resume_scope_id WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? AND p.state='complete' AND p.terminal=1 AND p.context_proven=1 AND sc.repository_id=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.api_version=? AND sc.parser_version='v1' AND sc.confidence='legacy_unknown'",
             (
                 pr,
                 kind,
                 algorithm,
                 head,
                 base,
-                repo["id"],
+                repo["repository_id"],
                 binding,
                 repo["source_id"],
                 self.cfg["rest_api_version"],
@@ -1621,7 +1677,7 @@ class GitHubCollector:
             if (
                 listing["profile_version"]
                 not in ("legacy_unknown", self.s.config["preservation"]["profile"])
-                or prior_context.get("repo_id") != repo["id"]
+                or prior_context.get("repository_id") != repo["repository_id"]
                 or prior_context.get("accept", "application/vnd.github+json")
                 != "application/vnd.github+json"
                 or prior_context.get("api_version", self.cfg["rest_api_version"])
@@ -1635,15 +1691,16 @@ class GitHubCollector:
                 continue
             table = "code_commits" if kind == "commits" else "code_file_changes"
             count = self.s.one(
-                f"SELECT count(*) FROM {table} WHERE listing_id=?", (listing["id"],)
+                f"SELECT count(*) FROM {table} WHERE code_listing_id=?",
+                (listing["code_listing_id"],),
             )[0]
             if count != reported or cap and count >= cap:
                 continue
             self.s.execute(
-                "INSERT INTO completion_markers(scope_id,collection_id,asserted_state,evidence,observed_at) VALUES(?,?,'complete',?,?)",
+                "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at) VALUES(?,?,'complete',?,?)",
                 (
-                    listing["scope_id"],
-                    listing["collection_id"],
+                    listing["resume_scope_id"],
+                    listing["fetch_collection_id"],
                     canonical(
                         {
                             "boundary": "authenticated-current-head-base",
@@ -1665,7 +1722,7 @@ class GitHubCollector:
                 ),
             )
             self.s.publish()
-            return listing["collection_id"], listing["id"]
+            return listing["fetch_collection_id"], listing["code_listing_id"]
         return None
 
     def code_check(self, repo, pr, job, url, observation):
@@ -1674,7 +1731,7 @@ class GitHubCollector:
             self.facts.fence(job)
             collection = self.facts.begin(
                 repo,
-                pr["id"],
+                pr["change_request_id"],
                 "pr-code-check",
                 job,
                 url,
@@ -1687,6 +1744,7 @@ class GitHubCollector:
             self.facts.finish(collection)
             self.s.publish()
         response.extensions["catalog_observation_id"] = self.s.one(
-            "SELECT current_observation_id FROM change_requests WHERE id=?", (pr["id"],)
+            "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
+            (pr["change_request_id"],),
         )[0]
         return response

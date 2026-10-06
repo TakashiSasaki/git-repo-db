@@ -31,32 +31,32 @@ def github_runtime(tmp_path, monkeypatch):
         with Store(state, initialize=True) as store:
             with store.transaction():
                 store.execute(
-                    "INSERT INTO service_instances VALUES('instance','github','fixture',?,?, '{}',NULL)",
+                    "INSERT INTO service_instances(service_instance_id,kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('instance','github','fixture',?,?, '{}',NULL)",
                     (api.url, api.url),
                 )
                 store.execute(
-                    "INSERT INTO sources VALUES('source','instance','github_inventory','fixture',?)",
+                    "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('source','instance','github_inventory','fixture',?)",
                     (json.dumps({"owner": "fixture"}),),
                 )
                 store.execute(
-                    "INSERT INTO repositories VALUES('repo','fixture/alpha','endpoint',NULL,'{}')"
+                    "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture/alpha','endpoint',NULL,'{}')"
                 )
                 store.execute(
-                    "INSERT INTO repository_endpoints VALUES('endpoint','repo',?,'file',NULL,'{}',NULL)",
+                    "INSERT INTO repository_endpoints(repository_endpoint_id,repository_id,url,transport,label,metadata,created_at) VALUES('endpoint','repo',?,'file',NULL,'{}',NULL)",
                     (fixture.alpha.url,),
                 )
                 store.execute(
-                    "INSERT INTO repository_bindings VALUES('binding','repo','instance','101','{}',NULL)"
+                    "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_id,provider_repository_id,metadata,created_at) VALUES('binding','repo','instance','101','{}',NULL)"
                 )
                 store.execute(
-                    "INSERT INTO source_repositories VALUES('source','repo',NULL,NULL)"
+                    "INSERT INTO source_repositories(source_id,repository_id,first_seen,last_seen) VALUES('source','repo',NULL,NULL)"
                 )
             repo = {
-                "id": "repo",
+                "repository_id": "repo",
                 "name": "fixture/alpha",
                 "source_id": "source",
-                "provider_repo_id": "101",
-                "preferred_endpoint_id": "endpoint",
+                "provider_repository_id": "101",
+                "preferred_repository_endpoint_id": "endpoint",
             }
             yield store, repo, fixture, api
             assert not api.errors
@@ -65,12 +65,12 @@ def github_runtime(tmp_path, monkeypatch):
 def sync(store, repo, *, job=None):
     if job is None:
         job = JobService(store).create(
-            "sync", {"kind": "pr", "repositories": [repo["id"]]}
+            "sync", {"kind": "pr", "repositories": [repo["repository_id"]]}
         )
     else:
         JobService(store).resume(job)
     store.expected_attempt = store.one(
-        "SELECT current_attempt FROM jobs WHERE id=?", (job,)
+        "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
     )[0]
     try:
         result = GitHubCollector(store, CancellationToken()).sync(repo, job)
@@ -103,10 +103,10 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
     api.stage = "B"
     sync(store, repo)
     old_page = store.one(
-        "SELECT f.*,o.id occurrence_id,o.observed_at page_observed_at,p.body FROM fetch_collections f JOIN fetch_occurrences o ON o.collection_id=f.id JOIN payloads p ON p.id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='issue-comment' ORDER BY o.observed_at LIMIT 1"
+        "SELECT f.*,o.fetch_occurrence_id fetch_occurrence_id,o.observed_at page_observed_at,p.body FROM fetch_collections f JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads p ON p.payload_id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='issue-comment' ORDER BY o.observed_at LIMIT 1"
     )
     current_version = store.one(
-        "SELECT current_version_id FROM documents WHERE id='repo:41:issue-comment:241'"
+        "SELECT current_document_version_id FROM documents WHERE document_id='repo:41:issue-comment:241'"
     )[0]
     version_count = store.one("SELECT count(*) FROM document_versions")[0]
     observation_count = store.one("SELECT count(*) FROM document_observations")[0]
@@ -123,13 +123,13 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
             old_value["body"],
             old_value,
             dict(old_page),
-            old_page["occurrence_id"],
+            old_page["fetch_occurrence_id"],
             0,
             old_page["page_observed_at"],
         )
     assert (
         store.one(
-            "SELECT current_version_id FROM documents WHERE id='repo:41:issue-comment:241'"
+            "SELECT current_document_version_id FROM documents WHERE document_id='repo:41:issue-comment:241'"
         )[0]
         == current_version
     )
@@ -144,14 +144,14 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
         path.endswith(("/commits", "/files")) for _, path, _ in api.requests[first:]
     )
     versions = store.all(
-        "SELECT b.body,count(o.id) observations FROM documents d JOIN document_versions v ON v.document_id=d.id JOIN text_bodies b ON b.id=v.body_id JOIN document_observations o ON o.version_id=v.id WHERE d.kind='issue-comment' AND d.change_request_id='repo:41' GROUP BY v.id"
+        "SELECT b.body,count(o.document_observation_id) observations FROM documents d JOIN document_versions v ON v.document_id=d.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id JOIN document_observations o ON o.document_version_id=v.document_version_id WHERE d.kind='issue-comment' AND d.change_request_id='repo:41' GROUP BY v.document_version_id"
     )
     assert {r["body"] for r in versions} == {"comment-marker A", "comment-marker B"}
     assert sum(r["observations"] for r in versions if r["body"].endswith("A")) == 2
     assert len(versions) == 3
     assert (
         store.one(
-            "SELECT count(DISTINCT v.body_id) FROM document_versions v JOIN documents d ON d.id=v.document_id WHERE d.kind='issue-comment' AND d.change_request_id='repo:41'"
+            "SELECT count(DISTINCT v.text_body_id) FROM document_versions v JOIN documents d ON d.document_id=v.document_id WHERE d.kind='issue-comment' AND d.change_request_id='repo:41'"
         )[0]
         == 2
     )
@@ -183,12 +183,13 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(github_runtim
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
     listing = store.one(
-        "SELECT l.id,l.collection_id,p.state,p.page_count FROM code_listings l JOIN code_listing_progress p ON p.listing_id=l.id WHERE l.change_request_id='repo:41' AND l.kind='commits'"
+        "SELECT l.code_listing_id,l.fetch_collection_id,p.state,p.page_count FROM code_listings l JOIN code_listing_progress p ON p.code_listing_id=l.code_listing_id WHERE l.change_request_id='repo:41' AND l.kind='commits'"
     )
     assert listing["state"] == "partial" and listing["page_count"] == 1
     assert (
         store.one(
-            "SELECT count(*) FROM code_commits WHERE listing_id=?", (listing["id"],)
+            "SELECT count(*) FROM code_commits WHERE code_listing_id=?",
+            (listing["code_listing_id"],),
         )[0]
         == 1
     )
@@ -212,21 +213,22 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(github_runtim
     )
     assert (
         store.one(
-            "SELECT count(*) FROM code_commits WHERE listing_id=?", (listing["id"],)
+            "SELECT count(*) FROM code_commits WHERE code_listing_id=?",
+            (listing["code_listing_id"],),
         )[0]
         == 2
     )
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences WHERE collection_id=?",
-            (listing["collection_id"],),
+            "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (listing["fetch_collection_id"],),
         )[0]
         == 2
     )
     assert (
         store.one(
-            "SELECT state FROM code_listing_progress WHERE listing_id=?",
-            (listing["id"],),
+            "SELECT state FROM code_listing_progress WHERE code_listing_id=?",
+            (listing["code_listing_id"],),
         )[0]
         == "complete"
     )
@@ -237,7 +239,7 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
     api.incremental = True
     sync(store, repo)
     old = store.all(
-        "SELECT i.safe_watermark,f.kind FROM incremental_scans i JOIN fetch_collections f ON f.id=i.collection_id ORDER BY i.scan_started_at"
+        "SELECT i.safe_watermark,f.kind FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at"
     )
     api.stage = "B"
     api.failures["/repos/fixture/alpha/issues/comments"] = [503] * 5
@@ -245,12 +247,12 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
         sync(store, repo)
     assert (
         store.one(
-            "SELECT count(*) FROM incremental_scans i JOIN fetch_collections f ON f.id=i.collection_id WHERE f.kind='issue-comment-incremental'"
+            "SELECT count(*) FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id WHERE f.kind='issue-comment-incremental'"
         )[0]
         == 1
     )
     review = store.one(
-        "SELECT i.safe_watermark,i.collection_id FROM incremental_scans i JOIN fetch_collections f ON f.id=i.collection_id WHERE f.kind='review-comment-incremental' ORDER BY i.scan_started_at DESC LIMIT 1"
+        "SELECT i.safe_watermark,i.fetch_collection_id FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id WHERE f.kind='review-comment-incremental' ORDER BY i.scan_started_at DESC LIMIT 1"
     )
     assert review["safe_watermark"] != next(
         r["safe_watermark"] for r in old if r["kind"] == "review-comment-incremental"
@@ -262,8 +264,8 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
     )
     assert (
         store.one(
-            "SELECT safe_watermark FROM incremental_scans WHERE collection_id=?",
-            (review["collection_id"],),
+            "SELECT safe_watermark FROM incremental_scans WHERE fetch_collection_id=?",
+            (review["fetch_collection_id"],),
         )[0]
         == review["safe_watermark"]
     )
@@ -283,7 +285,7 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
         sync(store, repo)
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.id=o.collection_id WHERE f.kind='threads'"
+            "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
         )[0]
         == 3
     )
@@ -303,7 +305,7 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
     )
     assert (
         store.one(
-            "SELECT count(*) FROM collection_progress p JOIN fetch_collections f ON f.id=p.collection_id WHERE f.kind='thread-comments' AND p.state='complete'"
+            "SELECT count(*) FROM collection_progress p JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id WHERE f.kind='thread-comments' AND p.state='complete'"
         )[0]
         == 2
     )
@@ -551,7 +553,10 @@ def test_import_first_sync_conditional_detail_and_saved_complete_listings(
         with Store(state, allow_building=True) as store:
             finalize_catalog(store)
             historical_observations = {
-                r[0] for r in store.all("SELECT id FROM document_observations")
+                r[0]
+                for r in store.all(
+                    "SELECT document_observation_id FROM document_observations"
+                )
             }
             assert (
                 store.one(
@@ -561,17 +566,17 @@ def test_import_first_sync_conditional_detail_and_saved_complete_listings(
             )
             assert (
                 store.one(
-                    "SELECT current_observation_id FROM change_requests WHERE id=?",
+                    "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
                     (pr,),
                 )[0]
                 == 1
             )
             repo = {
-                "id": ids["repo"],
+                "repository_id": ids["repo"],
                 "name": "fixture/alpha",
                 "source_id": ids["source"],
-                "provider_repo_id": "101",
-                "preferred_endpoint_id": ids["endpoint"],
+                "provider_repository_id": "101",
+                "preferred_repository_endpoint_id": ids["endpoint"],
             }
             sync(store, repo)
             assert not any(
@@ -588,7 +593,10 @@ def test_import_first_sync_conditional_detail_and_saved_complete_listings(
                 path.endswith("/pulls/42/commits") for _, path, _ in api.requests
             )
             assert historical_observations <= {
-                r[0] for r in store.all("SELECT id FROM document_observations")
+                r[0]
+                for r in store.all(
+                    "SELECT document_observation_id FROM document_observations"
+                )
             }
             assert (
                 store.one(
@@ -613,7 +621,8 @@ def test_import_first_sync_conditional_detail_and_saved_complete_listings(
             old_listings = {
                 row[0]
                 for row in store.all(
-                    "SELECT id FROM code_listings WHERE change_request_id=?", (pr,)
+                    "SELECT code_listing_id FROM code_listings WHERE change_request_id=?",
+                    (pr,),
                 )
             }
             fixture.alpha.commit(
@@ -651,12 +660,13 @@ def test_import_first_sync_conditional_detail_and_saved_complete_listings(
             assert old_listings <= {
                 row[0]
                 for row in store.all(
-                    "SELECT id FROM code_listings WHERE change_request_id=?", (pr,)
+                    "SELECT code_listing_id FROM code_listings WHERE change_request_id=?",
+                    (pr,),
                 )
             }
             assert (
                 store.one(
-                    "SELECT count(*) FROM code_listing_progress p JOIN code_listings l ON l.id=p.listing_id WHERE l.change_request_id=? AND p.state='complete'",
+                    "SELECT count(*) FROM code_listing_progress p JOIN code_listings l ON l.code_listing_id=p.code_listing_id WHERE l.change_request_id=? AND p.state='complete'",
                     (pr,),
                 )[0]
                 == 4
@@ -685,7 +695,7 @@ def test_304_never_attaches_cached_head_to_newer_race_observation(github_runtime
     with pytest.raises(CatalogError):
         sync(store, repo)
     current = store.one(
-        "SELECT o.payload FROM change_requests p JOIN change_request_observations o ON o.id=p.current_observation_id WHERE p.id='repo:41'"
+        "SELECT o.payload FROM change_requests p JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.change_request_id='repo:41'"
     )
     assert json.loads(current[0])["head"]["sha"] == fixture.alpha.commits["N"]
     api.stage = "A"
@@ -704,15 +714,18 @@ def test_304_never_attaches_cached_head_to_newer_race_observation(github_runtime
     # Every complete code observation is backed by exactly its admitted head/base,
     # including after A -> code-race B -> cached conditional A.
     for row in store.all(
-        "SELECT c.head_oid,c.base_oid,o.payload FROM code_observations c JOIN change_request_observations o ON o.id=c.observation_id WHERE c.state='complete'"
+        "SELECT c.head_oid,c.base_oid,o.payload FROM code_observations c JOIN change_request_observations o ON o.change_request_observation_id=c.change_request_observation_id WHERE c.state='complete'"
     ):
         value = json.loads(row["payload"])
         assert row["head_oid"].hex() == value["head"]["sha"]
         assert row["base_oid"].hex() == value["base"]["sha"]
-    for row in store.all("SELECT p.current_observation_id FROM change_requests p"):
+    for row in store.all(
+        "SELECT p.current_change_request_observation_id FROM change_requests p"
+    ):
         assert (
             store.one(
-                "SELECT count(*) FROM root_origins WHERE observation_id=?", (row[0],)
+                "SELECT count(*) FROM root_origins WHERE change_request_observation_id=?",
+                (row[0],),
             )[0]
             > 0
         )
@@ -747,7 +760,7 @@ def test_review_target_failure_is_retried_on_resume(github_runtime, monkeypatch)
         for _, path, _ in api.requests[first:]
     )
     code = store.one(
-        "SELECT id FROM code_observations WHERE change_request_id='repo:41' ORDER BY id DESC LIMIT 1"
+        "SELECT code_observation_id FROM code_observations WHERE change_request_id='repo:41' ORDER BY code_observation_id DESC LIMIT 1"
     )[0]
     assert (
         store.one(
@@ -776,24 +789,24 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
     child = store.one(
-        "SELECT p.state,p.cursor,f.id FROM collection_progress p JOIN fetch_collections f ON f.id=p.collection_id WHERE f.kind='thread-comments' AND f.change_request_id='repo:41'"
+        "SELECT p.state,p.cursor,f.fetch_collection_id FROM collection_progress p JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id WHERE f.kind='thread-comments' AND f.change_request_id='repo:41'"
     )
     assert child["state"] == "partial" and child["cursor"] == "100"
     root_pages = store.one(
-        "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.id=o.collection_id WHERE f.kind='threads'"
+        "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
     )[0]
     sync(store, repo, job=partial.value.details["job_id"])
     assert child_requests == ["100", "100"]
     assert (
         store.one(
-            "SELECT state FROM collection_progress WHERE collection_id=?",
-            (child["id"],),
+            "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
+            (child["fetch_collection_id"],),
         )[0]
         == "complete"
     )
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.id=o.collection_id WHERE f.kind='threads'"
+            "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
         )[0]
         == root_pages
     )
@@ -818,7 +831,7 @@ def test_malformed_rest_page_keeps_payload_and_retries_without_skipping(github_r
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
     row = store.one(
-        "SELECT f.id,p.cursor,p.state,a.body FROM fetch_collections f JOIN collection_progress p ON p.collection_id=f.id JOIN fetch_occurrences o ON o.collection_id=f.id JOIN payloads a ON a.id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='review'"
+        "SELECT f.fetch_collection_id,p.cursor,p.state,a.body FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads a ON a.payload_id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='review'"
     )
     assert row["state"] == "partial"
     assert json.loads(row["body"]) == rejected
@@ -827,13 +840,15 @@ def test_malformed_rest_page_keeps_payload_and_retries_without_skipping(github_r
     assert requests == 2
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences WHERE collection_id=?", (row["id"],)
+            "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (row["fetch_collection_id"],),
         )[0]
         == 2
     )
     assert (
         store.one(
-            "SELECT state FROM collection_progress WHERE collection_id=?", (row["id"],)
+            "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
+            (row["fetch_collection_id"],),
         )[0]
         == "complete"
     )

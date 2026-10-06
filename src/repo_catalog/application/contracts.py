@@ -26,7 +26,7 @@ class CollectionRequest:
     repositories: tuple[str, ...] = ()
     source: str | None = None
     job_id: str | None = None
-    endpoint_id: str | None = None
+    repository_endpoint_id: str | None = None
 
 
 @dataclass(frozen=True)
