@@ -2,6 +2,16 @@
 
 The ordinary application now uses catalog3 for initialization, registration/discovery, Git and GitHub REST/GraphQL collection, restart, offline queries/search, doctor, index/cache maintenance and backup/restore. The one offline v2 salvage importer writes the same packaged `resources/catalog3.sql` and requires explicit `db finalize` before normal use.
 
+## Practical preparation, 2026-10-06
+
+Selected current feature head `07a100c13bafa812df3183854d237a9086860d55` without resetting history; preparation uses local branch `operational-trial-preparation`. Runtime code remains the validated implementation below. A wheel built from this head was installed with locked runtime dependencies into a separate venv and exercised outside the checkout. Environment: Python 3.12.14, SQLite 3.53.1, uv 0.12.19.
+
+One disposable synthetic trial passed: doctor without state creation, fresh init/empty repository query, local Git registration/discovery/sync, repository/ref/commit/tree/file queries, literal code search, full DB check, backup, restore into a new location and restored search. CLI workflow elapsed time was 1.55 seconds; largest child peak RSS was 20,736 KiB. Wheel size was 176,590 bytes; collected DB, backup and restored DB were each 1,122,304 bytes. Local detailed output is retained in ignored `artifacts/operational-trial-20261006/smoke-results.json`. These small-fixture measurements do not estimate real import cost.
+
+No runtime defect appeared. Guidance now includes wheel installation, retaining the backup/manifest pair, consistent-copy preparation without deleting source sidecars, and the absence of an aggregate sync budget in query timeouts. Existing prose validation and `git diff --check` passed. No full suite, v2 import, PR-history trial or authenticated GitHub acquisition was rerun; prior hosted acceptance remains historical evidence. Application GitHub requests: zero; no live budget was authorized.
+
+The installed basic workflow is usable with disposable data. Personal-data acceptance and release-candidate closure remain pending the authorized practical trials. Next action: supply a preserved consistent v2 DB/cache (or explicitly absent cache), a separate destination and offline-import permission. Then perform one import/finalize/query/preservation/backup trial. Live synchronization additionally needs one approved repository/operation scope, normal secret configuration and an enforceable request/time budget. Publication, active-catalog switching and source deletion remain separately instructed actions.
+
 ## Revisions and checks
 
 Original checkout: `9a4110185d7e7abffc291f9cfd118ca71587f998`. Latest integrated implementation reused by fast-forward: PR #1 head `3af3df84372354e972772b5c9600dfeeae0f0e15`. Policy checkpoint: `2060110517f35fb7e4981b30fd1789077f520d38`. Final validated implementation: `edce04b646e7b5006f1b15048cab765e3c416bfa` on `design/schema-v2-hardening`, [PR #1](https://github.com/TakashiSasaki/git-repo-db/pull/1). The subsequent handoff-only commit changes these two Markdown reports; it does not change runtime code or claim a fresh full execution.

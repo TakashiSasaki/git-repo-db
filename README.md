@@ -15,6 +15,24 @@ uv run --no-sync repo-catalog --format json doctor
 `doctor`は未初期化でもruntime能力を診断し、stateやDBを作成しません。
 PythonへリンクされたSQLiteはSTRICT対応が必要です。FTS5 trigramは任意で、なくても原文scan検索が使えます。
 
+通常利用向けには、checkoutでwheelを作り、Python 3.12以上の別venvへ導入します。依存は既存のlockに固定します。以下のbuild/installは依存の取得に通信を使う場合があります。導入後のCLIはcheckoutを必要としません。
+
+```bash
+uv build --wheel --out-dir artifacts/dist
+uv export --locked --no-dev --no-emit-project --format requirements-txt \
+  --output-file artifacts/runtime-requirements.txt
+uv venv /path/to/venv --python 3.12
+uv pip install --python /path/to/venv/bin/python \
+  --constraint artifacts/runtime-requirements.txt \
+  artifacts/dist/repo_catalog-0.2.0-py3-none-any.whl
+/path/to/venv/bin/repo-catalog --state-dir /path/to/new-state doctor
+/path/to/venv/bin/repo-catalog --state-dir /path/to/new-state init \
+  --profile catalog-text-v1 --cache-max-bytes 67108864 --min-free-bytes 0
+/path/to/venv/bin/repo-catalog --state-dir /path/to/new-state repos list
+```
+
+`/path/to/new-state`は確認用の新規保存先です。この容量設定は小さな動作確認用で、実データの容量は別途決めます。実データ試行の入力・許可とbackupの保管要件は[運用](docs/operations.md)を参照してください。
+
 ## 初期化と収集
 
 global optionはsubcommandより前へ置きます。以下の容量は操作例であり、300repo向けの推奨値ではありません。
