@@ -5,9 +5,9 @@ This file applies repository-wide. Follow the user's latest explicit scope and a
 ## Current state and working rules
 
 - `repo-catalog` is an unreleased Python CLI for offline-queryable Git structure/content, GitHub PRs, and observation history. The normal application still uses **schema v2**.
-- P1 provides the independent `repo-catalog/catalog3-p1` target, contracts and lifecycle tests. P2 implements synthetic-tested source sealing, typed archive, representative ID mappings, atomic batches, resume proofs and guards. P3A adds operational v2 source admission and a verified atomic P2-to-P3A phase receipt, tested on native and audited minimum SQLite. Change-aware CI is implemented. Full normalized conversion and new-runtime integration are not complete.
-- P3A has reached its bounded synthetic acceptance boundary, with the affected P2/P3A closure passing on native and audited minimum SQLite; see the [English handoff](docs/schema-hardening/p3a-handoff.md) for exact evidence and limits. The next implementation slice for a subsequent task is **P3B: identity conversion**, below. Do not repeat P1/P2/P3A or reopen the CI optimization project without a concrete defect.
-- P3A starting baseline: feature `1e052e4b666039704ad0b8ea3a1d7a752d561358`, historical substantive CI code `0d3ca4693a03d5daa8210e2fd3a44dd1e613cd09`, main `9a4110185d7e7abffc291f9cfd118ca71587f998`. Fetch and record actual HEAD/base/delta; these historical SHAs are not reset instructions or proof about later code.
+- P1 provides the independent `repo-catalog/catalog3-p1` target, contracts and lifecycle tests. P2 implements synthetic-tested source sealing, typed archive, representative ID mappings, atomic batches, resume proofs and guards. P3A adds operational v2 admission and a verified P2-to-P3A receipt. P3B adds guarded identity recipes and a distinct phase owner with immutable parent and source-derived output proofs. Change-aware CI is implemented. Full normalized conversion and new-runtime integration are not complete.
+- P3B has reached its bounded synthetic acceptance boundary; see the [English handoff](docs/schema-hardening/p3b-handoff.md) for exact recipes, evidence and limits. The next implementation slice for a subsequent task is **P3C: stored Git facts**, below. Do not repeat P1/P2/P3A/P3B or reopen the CI optimization project without a concrete defect.
+- P3B started at feature `e40430e3f38d3339d67017a04262445f9415a8ec`, base `9a4110185d7e7abffc291f9cfd118ca71587f998`. Substantive code `c17b9de2a3a7dd4a98c0d72b93d478f05c860218` passed fresh full hosted run [37397157259](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37397157259): 630 normal, 2 isolated packaging and 413 audited minimum tests. Fetch and record actual HEAD/base/delta; historical SHAs are not reset instructions or proof about later code.
 - Continue on `design/schema-v2-hardening` / PR #1 unless the latest request or repository state establishes another target. Do not commit directly to main, auto-merge, overwrite user changes, or interpret this guide as permission to convert/cut over real data.
 - Backward compatibility with old application/CLI/DB formats is unnecessary. **Acquired data must be preserved.** Prefer offline one-way conversion into a separate target; full GitHub re-download is not the normal migration strategy.
 
@@ -19,13 +19,13 @@ Start with [README](README.md) and [architecture](docs/architecture.md), then re
 |---|---|
 | Target guarantees | [hardening overview](docs/schema-hardening/README.md), [invariants](docs/schema-hardening/invariants.md), [P1 design](docs/schema-hardening/p1-design.md), [lifecycle](docs/schema-hardening/p1-lifecycle.md) |
 | Executable target contract | [complete DDL](docs/schema-hardening/target-schema.sql), [conversion contract](docs/schema-hardening/conversion-contract.json), [invariant contract](docs/schema-hardening/invariant-contract.json) |
-| Conversion and roadmap | [P2 foundation](docs/schema-hardening/p2-foundation.md), [P3A handoff](docs/schema-hardening/p3a-handoff.md), [offline conversion](docs/schema-hardening/offline-conversion.md), [implementation plan](docs/schema-hardening/implementation-plan.md), [table mapping](docs/schema-hardening/table-conversion.md), [column mapping](docs/schema-hardening/column-conversion.csv) |
+| Conversion and roadmap | [P2 foundation](docs/schema-hardening/p2-foundation.md), [P3A handoff](docs/schema-hardening/p3a-handoff.md), [P3B handoff](docs/schema-hardening/p3b-handoff.md), [offline conversion](docs/schema-hardening/offline-conversion.md), [implementation plan](docs/schema-hardening/implementation-plan.md), [table mapping](docs/schema-hardening/table-conversion.md), [column mapping](docs/schema-hardening/column-conversion.csv) |
 | Existing application | [data model](docs/data-model.md), [repository identity](docs/repository-identity.md), [CLI](docs/cli.md), [operations](docs/operations.md) |
 | Validation | [testing](docs/testing.md), [change-aware CI](docs/change-aware-ci.md), [performance](docs/ci-performance.md), `.github/workflows/tests.yml`, `scripts/ci_dependencies.json` |
 
 The complete SQL and machine-readable contracts are authoritative; generated CSV/Markdown/inventory are views. `proposal-core.sql` is a regression fixture, not the complete target. `source-access.json` is lexical analysis, not a complete call graph. `tests/support/p1_admission.py` demonstrates lifecycle behavior, not a production runtime. Read [implementation status](docs/implementation-status.md) as historical evidence.
 
-## P3A boundary and next bounded slice: P3B
+## Accepted P3A/P3B boundaries and next bounded slice: P3C
 
 P3A admits the strict v2 core plus structurally and relationally recognized application FTS and capability-tested SQLite statistics. It retains complete physical/schema identities and per-object dispositions. Unknown objects remain fail-closed and classification rejection has a private local machine-readable report. Accepted core table values are typed archive input; indexes/triggers and derived search/statistics remain sealed bytes with explicit rebuild/exclusion.
 
@@ -33,31 +33,26 @@ The same-target phase model uses a second `conversion_runs` row with `p3a-handof
 
 Current P3A phase/source fingerprints remain exact. Only the handoff verifier accepts the reviewed P2 predecessor at `1e052e4b666039704ad0b8ea3a1d7a752d561358` with its exact baseline seal and unchanged DDL/contract/parser. No global hash-ignore or force-resume option exists. Source capability probes on an older fixture interpreter do not relax the guarded operational SQLite >=3.46.1 requirement. Read the [handoff](docs/schema-hardening/p3a-handoff.md) before evolving this protocol.
 
-For a subsequent P3B task, implement identity conversion only; do not attempt all remaining domain recipes at once.
+P3B uses a third `conversion_runs` owner with `p3b-identity/1`, entered through guarded `identity-init`, `identity` and phase-aware `verify-identity`. It accepts the authentic reviewed P3A converter at `e40430e3f38d3339d67017a04262445f9415a8ec` through a bounded predecessor verifier; current P3B resume remains exact. P2 archive/source/run/batch/map/diagnostic facts and P3A receipt/run bytes remain immutable. Original representative repository projections retain their historical proofs; current values and the only permitted NULL-to-preferred-endpoint enrichment have separate source-derived proofs. Old phase writes refuse the third owner before writable open. Read-only verification refuses pending sidecars; bounded target recovery is followed by complete proof verification.
 
-### 1. Establish reviewed P3B write ownership and resume proof
+Identity recipes preserve service/source/repository/endpoint IDs, names, metadata and original time bounds; new binding UUIDv4 allocations map the archived composite key atomically and remain stable within a workspace. Normalized v2 facts take precedence over archived legacy assertions, with attributed blocking/partial diagnostics for contradictions, missing/unsafe references, malformed values and unresolved legacy-only facts. Inventory observations remain archived and deferred. Execution completion, semantic readiness and activation remain separate; current snapshot/publication pointers stay NULL and lifecycle stays `building`.
 
-- Verify the accepted P3A receipt and parent evidence before any domain mutation. Define a concrete P3B phase/protocol version, permitted tables/operations and phase-scoped committed output proofs.
-- Preserve P2 archive, parent receipt, mapping and diagnostic facts. Any permitted enrichment of representative repository rows must have explicit ownership and a new proof; do not silently reuse their original P2 current-value hashes after changing them.
-- Keep exact resume within each phase and explicitly reviewed predecessor verification. Use the existing writer lock, atomic commit boundary and stable allocation rules; test before/after-COMMIT failure, repeat invocation, restart and competing writers.
-- Keep lifecycle `building`; neither successful identity conversion nor phase completion permits current-pointer publication, normal-runtime activation or real-data cutover.
+### P3C prerequisites and bounded implementation
 
-### 2. Convert service/source/repository identity facts
+- Read the P3B handoff, complete DDL/contracts and stored Git write paths before defining recipes. Convert only existing object/edge/content/digest/acquisition/snapshot facts from disposable sealed synthetic input. Local Git reconstruction is P4; acquisition, PR history and runtime integration remain later work.
+- Establish a distinct reviewed P3C write owner and bounded authentic P3B predecessor transition before domain writes. Preserve the complete identity owner, committed outputs, maps, decisions, diagnostics and parent archive/receipt proofs; do not expand P3B ownership or ignore fingerprints. Define exact permitted enrichments and their before/after proofs if required.
+- Preserve repository IDs, object-format-scoped OIDs, content bytes, digest representation, acquisition provenance, raw path/ref/tree-name bytes, same-owner edges and parent order. Retain legacy verification assertions separately; missing originals are not newly verified bytes or empty content. Do not merge distinct repositories sharing OIDs or content.
+- Keep lock/guards, atomic batches, stable committed maps, exact resume, bounded target recovery and source/cache immutability. Retain blockers and `building`; neither successful stored-fact conversion nor a snapshot recipe authorizes final pointer publication or activation.
 
-- Implement service instances, sources, repositories, bindings, endpoints, name facts and source membership from preserved source values. Use explicit recipe/lookup/allocation/persistence, with typed ID maps where allocation is required.
-- Preserve existing repository/local IDs. Distinguish repository UUID, provider-native identity, discovery source, URL and mount path. Shared OIDs, equivalent URLs or names do not authorize merging forks/mirrors.
-- Retain original names, metadata, source/member time bounds and acquisition assertions. Report contradictory legacy identity columns, ambiguous binding/endpoint ownership and missing references instead of inventing values or selecting a convenient latest row.
-- Enforce same-owner relations and valid scoped pointers, but do not populate final current/publication pointers prematurely. Preserve malformed, unknown and partial facts in the archive with explicit diagnostics.
+### P3C acceptance and deliverables
 
-### P3B acceptance and deliverables
+Provide executable recipes/maps and phase-scoped source-derived proofs, focused positive/negative/fault tests and an English handoff. Run authentic P3B -> P3C ownership -> stored-fact batches -> interruption/resume -> independent ID/byte/edge/order/diagnostic comparison. Counts/FKs and self-reported hashes alone are insufficient; coherently rehashed corruption must fail source comparison.
 
-Provide working identity recipes/maps, machine-readable phase ownership/output proofs, focused positive/negative/fault tests and an updated English handoff. Run a guarded synthetic source -> admitted seal -> complete archive -> verified P3A boundary -> P3B identity conversion -> restart comparison.
+Retain identity regression cases, both representative-map modes, parent/phase/output tamper rejection, worker termination before/after COMMIT, competing writers and sidecar protections. Register actual dependencies and minimum-runtime collections; keep P1/P2/P3A/P3B, offline packaging and exact-ID gates. Report fresh/reused/not-applicable evidence honestly.
 
-Compare IDs, typed bytes, source/service/binding/endpoint/member edges, original times and diagnostics. Include duplicate URL/name/shared-OID repositories that remain distinct; conflicting native identities; missing/ambiguous bindings; same-owner violations; existing representative maps; unknown/malformed/partial inputs; source/cache immutability; tampered parent/phase/output; and atomic/repeated/competing-writer behavior. Counts/FK checks alone are insufficient.
+P3B measurements expose O(N) verification ownership sets and parent proof metadata, multiple full boundary scans, and full row metadata in batch manifests. Prefer bounded extraction/proof buffers for P3C and measure remaining costs without weakening restart proofs or claiming real-dataset performance.
 
-Update the dependency map and selectors for actual imports, file reads, fixtures and test collections. Keep P1/P2/P3A acceptance, audited minimum-runtime coverage, offline packaging and existing guards. Report fresh/reused/not-applicable coverage accurately. Do not use actual user DB/cache, acquisition APIs, normal sync/restore or activation.
-
-### Later slices, not part of P3B
+### Later slices
 
 | Slice | Scope and completion evidence |
 |---|---|

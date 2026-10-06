@@ -16,9 +16,14 @@ base-to-feature delta comprised 15 commits and 85 files, 41,511 insertions and
 
 Run [37392666849](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37392666849)
 is historical P3A evidence for that starting feature: 520 normal, 2 isolated
-packaging and 317 minimum-SQLite tests. It does not validate P3B. Final committed
-SHAs and fresh hosted acceptance will be recorded after implementation and
-verification; there is no merge, real-data migration or runtime switch.
+packaging and 317 minimum-SQLite tests. It does not validate P3B. Substantive P3B
+code was committed as `c17b9de2a3a7dd4a98c0d72b93d478f05c860218` and passed fresh
+full run [37397157259](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37397157259),
+tested merge `8b452a89279ad4dd1ade42e699bd5367d0b3c8ca` against the same base.
+PR #1 remains open and unmerged. Subsequent guide/report edits do not change
+converter inputs; their actual final feature SHA and planner outcome are recorded
+in the final task report, avoiding a self-referential documentation commit.
+There is no real-data migration or runtime switch.
 
 ## Guarded commands and ownership
 
@@ -211,8 +216,64 @@ modules, protocol inputs, authentic historical fixture exports and all three new
 test modules to native/minimum-p2. Policy and shared-fixture changes require
 fresh full acceptance under the existing planner, including P1, application,
 audited SQLite, isolated offline packaging and the always-running exact-ID gate.
-The first substantive commit will undergo that consolidated acceptance; hosted
-results will be recorded separately after they complete.
+
+The complete local workflow also passed on the clean substantive commit, with
+630 normal, 2 packaging and 413 minimum tests. An independent review reconciled
+its pre-collected IDs, XML, profiles, selection digests and Git-tree inputs.
+Local profile command wall seconds were 72.196, 2.726 and 46.733 respectively;
+Python 3.12.14, outer native SQLite 3.53.1, audited minimum 3.46.1, Debian 13
+x86_64, Git 2.52.0 and uv 0.12.19. Local evidence is retained under
+`artifacts/ci-profile/p3b-full`; manifest SHA-256
+`7f072da5f63c8e5c9abd8e6979d3a4b5997cd543c5ae532381ea628a4a5ba8f0`.
+This locally forced full plan reused no historical acceptance.
+
+Hosted run 37397157259 independently passed the same exact collection. The
+planner selected full acceptance because policy/dependencies changed and prior
+P3A evidence was incompatible. All required results were fresh: 632 required
+normal/packaging IDs, plus 413 independently executed minimum IDs; reused 0.
+Both baseline floors (321 required and 228 minimum) remain included. There were
+no missing/extra/duplicate IDs, skips, failures or errors. Static, FTS/doctor,
+build/export, synthetic offline-recovery demo and the final gate also passed.
+
+| Hosted execution | Fresh passed | Workers | Command wall seconds |
+|---|---:|---:|---:|
+| Normal: legacy + schema + conversion + CI | 630 | 4 | 197.951 |
+| Isolated offline packaging | 2 | 1 | 3.599 |
+| Audited minimum SQLite | 413 | 4 | 128.931 |
+
+Hosted Python was 3.12.14, outer native SQLite **3.45.1**, minimum 3.46.1,
+Ubuntu 24.04 x86_64 image `20260927.320.1`, Git 2.55.0, uv 0.12.19 and
+Ubuntu GCC 13.3.0. The normal pytest parent uses its native binding; guarded
+converter children select the prepared audited 3.46.1 when that parent is below
+the operational minimum. Child runtime assertions and the independent minimum
+lane prove the guard remains >=3.46.1. These runtimes and suites differ from the
+local measurements; the timings are not a speedup comparison.
+
+Exact per-lane IDs are in the artifact's `plan.json` and
+`validation-manifest.json`; `required-tests.txt` records the pre-execution
+collection. The following SHA-256 digests identify each sorted selection:
+
+| Lane | IDs | Selection digest |
+|---|---:|---|
+| legacy | 77 | `3af4904da90c29235b61aacf33dec164071fb69bf6de43202c57da49e6ff0968` |
+| schema | 170 | `970d64eb51351dd0043a5b6ed459ec6f6ba73fe3e04cbf06f9395b06ee1df85e` |
+| p2 (including P3A/P3B) | 252 | `a1af0e8d571b9ce0e76c8e6100409886248ec40e4e4b490a3fded0b02c2a6e7d` |
+| ci | 131 | `4681ae7d5fd28c453e0cf3567535b724cc5638eeb687c46c81f72d33c99a4d70` |
+| packaging | 2 | `2ebb9344e18d00d3e699fd0c8ab7039bf3134e2dd987b1482ccab070d267b136` |
+| minimum-schema | 161 | `b2cc455c264d45da7204ce431e592ddc81e3e2fe8b932ee2534829c2b8e32150` |
+| minimum-p2 | 252 | `a1af0e8d571b9ce0e76c8e6100409886248ec40e4e4b490a3fded0b02c2a6e7d` |
+
+Artifact [`ci-profile-37397157259-1`, ID 11383676121](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37397157259/artifacts/11383676121)
+contains only selection/timing/test evidence, no databases or caches. The
+downloaded raw ZIP matches GitHub's SHA-256
+`229d70a60e1a2cc5cc3a8df40fb8a3ec69ac82aa219fa9c4ca9aa0b8261dca16`;
+the extracted manifest is
+`3a6e6daeb467f9228d5e71680deb04fb945ad6e1a24805a5135b2f02a658b75a`.
+It is retained locally at `artifacts/p3b-hosted-full/`. XML/profile/manifest IDs
+and fingerprints were independently reconciled. Report-only follow-ups may
+reuse this full hosted evidence only when the existing planner verifies their
+effective inputs, base/history, policy/runtime and complete prior outcomes.
+Their fresh report/final checks and reused tests must be reported separately.
 
 Two disposable size samples ran authentic P3A -> current P3B initialization ->
 two-batch pause -> resume -> independent verification -> repeat, using identity
@@ -249,6 +310,11 @@ Earlier development measurements have different converter identities and are
 retained separately. No DB/cache/payload or benchmarking framework is committed.
 
 ## Next bounded scope
+
+After acceptance, `AGENTS.md` and `implementation-plan.md` mark P3B complete
+and make P3C the next bounded task. The executable conversion contract,
+generated table view, dependency map and minimum test collection describe the
+implemented identity slice; the complete target DDL remains unchanged.
 
 P3C must define ownership beyond this frozen identity owner before writing stored
 Git facts. It must preserve object/content/digest/acquisition/snapshot IDs and
