@@ -38,4 +38,4 @@ WALは明示設定かつ修正済みruntimeのgateを通した場合のみ有効
 
 v2 救出は専用 guarded child process で typed archive と domain recipe を atomic batch に保存する一つの importer です。歴史的な phase receipt と predecessor compatibility はランタイムの前提ではありません。`db finalize` は保存された current assertion と同じ owner の公開事実を検査し、readiness decision を target 内へ記録します。
 
-Active catalog3 schema identity is version 5. [Data model](data-model.md) is the current identifier contract: portable UUIDv4 service namespaces, natural document keys and observations pointing directly to SHA-256 text identity. Documents have neither a surrogate ID nor a version table. Composite FK ownership and explicit current-observation selection are retained. There is no old-catalog3 migration or alias layer.
+Active catalog3 schema identity is version 6. [Data model](data-model.md) is the current identifier contract: portable UUIDv4 service namespaces, natural document keys and observations pointing directly to SHA-256 text identity. Documents have neither a surrogate ID nor a version table. Composite FK ownership and explicit current-observation selection are retained. There is no old-catalog3 migration or alias layer.
