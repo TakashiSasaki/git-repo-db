@@ -4,7 +4,7 @@ The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resourc
 
 ## Coverage claim derivation (schema 9)
 
-Published base: PR #5 `refactor/unix-microsecond-timestamps` at `fee685db14e8052d2e9decd5f4b3470d4da80517`; branch `refactor/coverage-model`. Local implementation started from the tested timestamp revision `27ab5e37ae5fefbccfee4e8217c657356961c3ef`, with its later timestamp validation evidence carried forward. The ordinary catalog still has 65 tables and now derives current coverage through one view; the separate import workspace remains schema 2.
+Current stack base: PR #5 `refactor/unix-microsecond-timestamps` at `9abfdc0eb439a823246e306e7773b775cfaa75e7`; coverage is PR #7 on branch `refactor/coverage-model-v2`. PR #7 supersedes the closed PR #6 after a post-implementation design review. The ordinary catalog still has 65 tables and derives current coverage through one view; the separate import workspace remains schema 2.
 
 Claims store only their local ID, scope ID, `coverage_state`, required `observed_at_us` and optional advisory `details_json`. Their semantic identity is scope/time/state. Admission atomically ignores older claims and same-time/state duplicates, retains same-time distinct states, and preserves existing details exactly. Claims cannot be replaced, edited or deleted. No payload/evidence reference is required for validity.
 
@@ -12,7 +12,7 @@ Claims store only their local ID, scope ID, `coverage_state`, required `observed
 
 Git/REST/GraphQL producers evaluate saved fixed-root/page observation times. Nested child collection context binds it to the owning root collection, so resumed timestamp maxima include earlier child pages without mixing other root scans. PR-only Git acquisition cannot assert repository-wide refs completeness. Resume does not create a new observation from saved pages, and failures without observed incomplete data do not overwrite semantic coverage. Job failures and partial collections remain visible separately. Ordinary/diagnostic PR queries, coverage/status and snapshot outputs agree on the derived current view.
 
-Completed clean local acceptance on `48f4f42c6835ad20df20e47fd1bfbf06c3383909`: **622 ordinary + 2 independent packaging tests passed**, with all 624 selected tests executed exactly once across 46 files. See [coverage synthetic evidence](../validation/synthetic/2026-10-07-coverage-claims.md) and adjacent JSON for the environment, timing, earlier failures and nested-page review correction. GitHub CI is separately attributed to the published commit. Only disposable synthetic data was used; no real-source acquisition, active-catalog switch, main merge or release was performed.
+The earlier PR #6 synthetic acceptance (**622 ordinary + 2 packaging**) remains historical evidence only. Post-implementation review found additional correctness gaps, which PR #7 fixes. GitHub Actions [run 37651588299](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37651588299) passed on implementation head `f0159dcd86d733a4b9c13d1015c661af80b776fc`: **632 ordinary + 2 packaging tests**, **634 executed**, 46 selected files, zero unexecuted/excluded files; Ruff lint/format and SQLite doctor also passed. Only disposable synthetic data was used; no real-source acquisition, active-catalog switch, main merge or release was performed.
 
 ## Unix epoch microseconds (schema 8)
 
