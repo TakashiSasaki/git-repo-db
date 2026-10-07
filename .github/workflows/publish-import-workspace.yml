@@ -1,0 +1,38 @@
+# Temporary transport of verified public Git objects; absent from the final tree.
+name: publish-import-workspace
+on:
+  push:
+    branches: [refactor/import-workspace-db]
+    paths: ['.github/implementation/import-workspace-part-*']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify and publish tested Git objects
+        env:
+          EXPECTED_HEAD: 28515698783ce95d18a2931ad999b86efa2b6e0d
+          EXPECTED_TREE: ee73601654c4b8f68769d3ef2532f88ccb8c1324
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          raw = b''.join(Path(f'.github/implementation/import-workspace-part-{i}').read_bytes() for i in range(8))
+          assert len(raw) == 22467
+          assert hashlib.sha256(raw).hexdigest() == 'd1516c590854ff2fa6b37509fe97527a9ced3ea4d454386e980d4005b29359a9'
+          Path('/tmp/import-workspace.bundle').write_bytes(raw)
+          PY
+          git bundle verify /tmp/import-workspace.bundle
+          git fetch --no-tags /tmp/import-workspace.bundle HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse "$EXPECTED_HEAD^{tree}")" = "$EXPECTED_TREE"
+          git merge-base --is-ancestor 23941ef421e3459d38becc65878e2c14b96576d5 "$EXPECTED_HEAD"
+          NEW=$(printf '%s\n' 'Publish verified separate import workspace implementation' | git -c user.name=ChatGPT -c user.email=noreply@openai.com commit-tree "$EXPECTED_TREE" -p "$GITHUB_SHA" -p "$EXPECTED_HEAD")
+          test "$(git ls-remote origin refs/heads/refactor/import-workspace-db | cut -f1)" = "$GITHUB_SHA"
+          git push origin "$NEW:refs/heads/refactor/import-workspace-db"
+          printf 'Published %s; tested tree %s.\n' "$NEW" "$EXPECTED_TREE" >> "$GITHUB_STEP_SUMMARY"
