@@ -1,0 +1,13 @@
+{
+  "review_findings": [3],
+  "upstream_commit": "9abfdc0eb439a823246e306e7773b775cfaa75e7",
+  "tested_commit": "e54ca1c0232be75b5ce035b95c4117cd0d167b99",
+  "tested_tree": "087b997afe6a021acc4d63a8f1d974dfc5dc0adb",
+  "publication_branch": "refactor/unix-microsecond-timestamps",
+  "tests": {"executed": 173, "passed": 173, "failed": 0, "errors": 0, "skipped": 0, "pytest_wall_seconds": 31.92, "junit_suite_seconds": 31.309},
+  "modules": ["tests/integration/test_catalog3_timestamps.py", "tests/unit/test_conversion_git_domain.py", "tests/unit/test_conversion_pr_domain.py"],
+  "static_checks": ["ruff check", "ruff format --check", "git diff --check"],
+  "environment": {"python": "3.12.14", "sqlite": "3.53.1", "git": "2.51.1", "uv": "0.12.19", "platform": "Linux x86_64"},
+  "earlier_failures": {"hour_only_offset_cases": 4, "trailing_nul_cases": 4, "formatting": 1},
+  "limits": ["synthetic data only", "local focused validation; integrated acceptance recorded separately", "no main merge or release"]
+}
