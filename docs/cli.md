@@ -43,7 +43,8 @@ raw pathの正本はpath_b64で、UTF-8不正時のpath_utf8はnull、安全表�
 `search path --path-b64 BASE64`と`file show --path-b64 BASE64`により任意のraw pathを指定できます。`file show --repo REPO_ID --commit sha1:HEX --path PATH`は保存textと原文の有無を返し、未保存のbodyはnullとpartial coverageになります。
 
 PR検索はtitle/body/issue-comment/review/review-commentを区別します。
-`pr thread` は `--repo REPO_ID --number NUMBER --provider-resource-id PROVIDER_RESOURCE_ID` でChange Requestを先にscopeし、その中のreview threadを選択します。`provider_resource_id` 単独のprovider全体一意性は仮定しません。
+PR番号は `--provider-change-request-number`、種別は `--change-request-kind pull_request|merge_request` で指定します。正規化された結果でも `provider_change_request_number` と `change_request_kind` を使い、raw payload 内のprovider固有キーは変更しません。
+`pr thread` は `--repo REPO_ID --provider-change-request-number NUMBER --provider-resource-id PROVIDER_RESOURCE_ID` でChange Requestを先にscopeし、その中のreview threadを選択します。`provider_resource_id` 単独のprovider全体一意性は仮定しません。
 `--document-observations current|all`で現在採用している観測と保存済みの全観測を選びます。既定は `current` です。
 `--document-kind` と `--provider-change-request-document-id` で文書自然キーの構成要素を指定でき、`--observation INTEGER` で保存観測を選択します。
 結果は `document_kind`、`provider_change_request_document_id`、`document_observation_id`、`text_body_sha256`、`document_observed_at`、`document_current_selected` 等を返します。文書ID・版IDは返さず、旧オプションの互換別名もありません。
@@ -103,7 +104,7 @@ repo-catalog --state-dir /tmp/disposable-import repos list
 
 ```bash
 repo-catalog --format json target --database /tmp/disposable-import/catalog.sqlite3 --allow-building repos
-repo-catalog --format json target --database /tmp/disposable-import/catalog.sqlite3 --allow-building pr --repo REPO_ID --number 7
+repo-catalog --format json target --database /tmp/disposable-import/catalog.sqlite3 --allow-building pr --repo REPO_ID --provider-change-request-number 7
 ```
 
 `target`はrepository IDの完全一致を要求し、`--limit`と`--offset`で保存履歴行を個別にページ化します。PRの`record_kind`はidentity、観測、文書、文書観測、review/thread/comment/event、code listing履歴を区別します。診断結果だけでruntime readinessやcurrent pointerを変更しません。

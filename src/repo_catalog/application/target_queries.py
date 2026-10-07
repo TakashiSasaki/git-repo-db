@@ -362,9 +362,12 @@ class TargetQueryService:
 
     def _pr_identity(self, options):
         repo = self._repo(options)
-        number = options.get("number")
+        number = options.get("provider_change_request_number")
         if type(number) is not int or number <= 0:
-            raise CatalogError("INVALID_ARGUMENT", "A positive --number is required")
+            raise CatalogError(
+                "INVALID_ARGUMENT",
+                "A positive --provider-change-request-number is required",
+            )
         kind = options.get("change_request_kind", "pull_request")
         if kind not in ("pull_request", "merge_request"):
             raise CatalogError("INVALID_ARGUMENT", "Unknown request kind")
@@ -558,7 +561,10 @@ class TargetQueryService:
                 base = {
                     "repository_id": request["repository_id"],
                     "change_request_id": ident,
-                    "number": request["provider_change_request_number"],
+                    "provider_change_request_number": request[
+                        "provider_change_request_number"
+                    ],
+                    "change_request_kind": request["change_request_kind"],
                     "repository_binding_id": request["repository_binding_id"],
                 }
                 for row in self.s.execute(

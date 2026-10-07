@@ -11,6 +11,7 @@ import struct
 import uuid
 from urllib.parse import urlsplit
 
+from repo_catalog.adapters.github.identity import database_resource_id
 from repo_catalog.domain.document import text_body_sha256
 
 from . import identity
@@ -767,12 +768,18 @@ class Context(identity.Context):
         # This tuple describes the v2 source projection, not the target schema.
         pr = self.t(record, "pr_id")
         self.pr(pr)
+        try:
+            provider = database_resource_id(
+                self.t(record, "provider_id", nonempty=True)
+            )
+        except ValueError:
+            raise Invalid("CANONICAL_DOCUMENT_ID_MISSING", "provider_id") from None
         return self.remember_source_document(
             (
                 self.t(record, "id"),
                 pr,
                 self.t(record, "kind", nonempty=True),
-                self.t(record, "provider_id", nonempty=True),
+                provider,
                 None,
                 self.i(record, "deleted", choices=(0, 1)),
                 self.t(record, "node_id", nullable=True),
@@ -846,27 +853,32 @@ class Context(identity.Context):
 
     def thread_provider_resource_id(self, source_thread_id, *, payload=None):
         cached = self._thread_provider_resource_ids.get(source_thread_id)
-        if cached is not None:
+        if cached is not None and payload is None:
             return cached
         if payload is None:
             record = self.lookup("review_threads", source_thread_id)
             if record is None:
                 raise Invalid("THREAD_REFERENCE_UNRESOLVED", "thread_id")
             payload = self.metadata(record, "payload")
-        try:
-            value = strict_json(payload)
-        except (ValueError, TypeError):
-            raise Invalid("INVALID_SAVED_IDENTITY", "payload") from None
-        provider = value.get("id") if isinstance(value, dict) else None
-        if not isinstance(provider, str) or not provider:
+        # Extract only the identity. Large/deep original provider evidence is
+        # preserved without constructing a full Python JSON object.
+        selected = self.src.execute(
+            "SELECT type, atom FROM json_each(?) WHERE key='id' ORDER BY id DESC LIMIT 1",
+            (payload,),
+        ).fetchone()
+        if not selected or selected[0] != "text" or not selected[1]:
             raise Invalid("INVALID_SAVED_IDENTITY", "payload")
+        provider = selected[1]
+        if cached is not None and cached != provider:
+            raise Invalid("THREAD_IDENTITY_CONFLICT", "payload")
         self._thread_provider_resource_ids[source_thread_id] = provider
         return provider
 
     def thread_identity(self, pr, provider):
         existing = self.lookup("review_threads", provider)
         if existing and self.t(existing, "pr_id") == pr:
-            self._thread_provider_resource_ids[provider] = provider
+            if self.thread_provider_resource_id(provider) != provider:
+                raise Invalid("THREAD_IDENTITY_CONFLICT", "payload")
             return provider
         found = []
         for saved in self.src.execute(
@@ -971,10 +983,14 @@ class Context(identity.Context):
         self.pr(pr)
         if not isinstance(value, dict):
             raise Invalid("MALFORMED_PAYLOAD", "body")
-        provider = value.get("fullDatabaseId") or value.get("id")
-        if provider is None or isinstance(provider, (list, dict, bool)):
-            raise Invalid("INVALID_SAVED_IDENTITY", "body")
-        provider = str(provider)
+        try:
+            provider = database_resource_id(
+                value.get("fullDatabaseId")
+                if "fullDatabaseId" in value
+                else value.get("id")
+            )
+        except ValueError:
+            raise Invalid("CANONICAL_DOCUMENT_ID_MISSING", "body") from None
         found = self.src.execute(
             "SELECT id FROM pr_documents WHERE pr_id=? AND kind=? AND provider_id=?",
             (pr, kind, provider),
@@ -2219,7 +2235,11 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
                 exc.column,
                 "partial"
                 if exc.code
-                in ("PR_REPLAY_BUDGET_EXCEEDED", "PR_JSON_DEPTH_UNSUPPORTED")
+                in (
+                    "PR_REPLAY_BUDGET_EXCEEDED",
+                    "PR_JSON_DEPTH_UNSUPPORTED",
+                    "PR_CANONICAL_DOCUMENT_ID_MISSING",
+                )
                 else "blocking",
             )
         except (ValueError, TypeError, KeyError, UnicodeError):

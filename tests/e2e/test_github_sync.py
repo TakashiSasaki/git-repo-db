@@ -148,9 +148,9 @@ def test_pr_documents(catalog):
             "closed",
             "merged",
         }
-        shown = run(state, "pr", "show", "--repo", repo, "--number", 43)["data"][
-            "items"
-        ][0]
+        shown = run(
+            state, "pr", "show", "--repo", repo, "--provider-change-request-number", 43
+        )["data"]["items"][0]
         assert (
             json.loads(shown["code_observation"]["details"])["merge"]["test-merge"]
             is None
@@ -359,9 +359,16 @@ def test_code_races_caps(catalog):
         api.cap_mode = True
         api.prs[41].update(commits=251, changed_files=3001)
         run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
-        shown = run(state, "pr", "show", "--repo", repo, "--number", 41, expected=3)[
-            "data"
-        ]["items"][0]
+        shown = run(
+            state,
+            "pr",
+            "show",
+            "--repo",
+            repo,
+            "--provider-change-request-number",
+            41,
+            expected=3,
+        )["data"]["items"][0]
         assert shown["code_observation"]["state"] == "partial"
         assert any(c["reason"] == "API_CAP" for c in shown["collections"])
         assert len(shown["file_changes"]) == 100

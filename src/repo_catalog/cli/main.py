@@ -43,10 +43,12 @@ def parser():
             select.add_argument("--path")
             select.add_argument("--path-b64")
         if action == "pr":
-            child.add_argument("--number", required=True, type=int)
+            child.add_argument(
+                "--provider-change-request-number", required=True, type=int
+            )
             child.add_argument("--binding")
             child.add_argument(
-                "--request-kind",
+                "--change-request-kind",
                 choices=("pull_request", "merge_request"),
                 default="pull_request",
             )
@@ -147,7 +149,9 @@ def parser():
                 child.add_argument("--snapshot", required=True)
             elif category == "pr" and action == "thread":
                 child.add_argument("--repo", required=True)
-                child.add_argument("--number", required=True, type=int)
+                child.add_argument(
+                    "--provider-change-request-number", required=True, type=int
+                )
                 child.add_argument("--provider-resource-id", required=True)
             else:
                 child.add_argument(
@@ -182,8 +186,13 @@ def parser():
                 )
             if category == "pr":
                 child.add_argument("--binding")
+                child.add_argument(
+                    "--change-request-kind", choices=("pull_request", "merge_request")
+                )
                 if action not in ("list", "thread"):
-                    child.add_argument("--number", required=True, type=int)
+                    child.add_argument(
+                        "--provider-change-request-number", required=True, type=int
+                    )
                 child.add_argument("--provider-change-request-document-id")
                 child.add_argument("--document-kind")
                 child.add_argument("--observation", type=int)

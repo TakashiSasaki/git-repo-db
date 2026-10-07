@@ -896,3 +896,62 @@ def test_changed_observed_permission_scope_refreshes_complete_listings(github_ru
         ]
         == 12
     )
+
+
+@pytest.mark.parametrize("child_page", [False, True], ids=["root-page", "child-page"])
+def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias(
+    github_runtime, child_page
+):
+    store, repo, fixture, api = github_runtime
+    api.reply_count = 101 if child_page else 1
+    original = api.route
+    enabled = True
+    rejected_nodes = []
+
+    def route(method, path, params, body):
+        result, headers = original(method, path, params, body)
+        if enabled and method == "POST":
+            variables = body["variables"]
+            if (
+                child_page
+                and "thread" in variables
+                and variables["thread"].startswith("THREAD41-")
+            ):
+                comment = result["data"]["node"]["comments"]["nodes"][0]
+            elif not child_page and variables.get("number") == 41:
+                comment = result["data"]["repository"]["pullRequest"]["reviewThreads"][
+                    "nodes"
+                ][0]["comments"]["nodes"][0]
+            else:
+                return result, headers
+            rejected_nodes.append(comment["id"])
+            comment["fullDatabaseId"] = None
+        return result, headers
+
+    api.route = route
+    with pytest.raises(CatalogError) as partial:
+        sync(store, repo)
+    assert rejected_nodes
+    assert (
+        store.one(
+            "SELECT count(*) FROM unresolved_payloads WHERE reason LIKE '%CANONICAL_DOCUMENT_ID_MISSING%'"
+        )[0]
+        > 0
+    )
+    for node in rejected_nodes:
+        assert not store.one(
+            "SELECT 1 FROM documents WHERE provider_change_request_document_id=?",
+            (node,),
+        )
+        assert any(
+            node.encode() in row[0] for row in store.all("SELECT body FROM payloads")
+        )
+    enabled = False
+    sync(store, repo, job=partial.value.details["job_id"])
+    assert (
+        store.one(
+            "SELECT count(*) FROM review_comments WHERE change_request_id='repo:41' AND review_thread_provider_resource_id='THREAD41-0'"
+        )[0]
+        == api.reply_count
+    )
+    assert not store.all("PRAGMA foreign_key_check")
