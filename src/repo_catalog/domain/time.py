@@ -50,6 +50,11 @@ def parse_iso8601_us(value: str) -> int:
     """
     if not isinstance(value, str):
         raise TypeError("An ISO 8601 timestamp must be a string")
+    # datetime.fromisoformat() collapses sub-second UTC offsets whose whole
+    # seconds are zero (for example +00:00:00.000001) to UTC. Reject those
+    # uncommon external forms rather than silently merging distinct instants.
+    if re.search(r"[+-]\d{2}:?\d{2}(?::?\d{2})?[.,]\d+$", value):
+        raise ValueError("Fractional timezone offsets are not supported")
     for fraction in re.findall(r"[.,](\d+)", value):
         if any(digit != "0" for digit in fraction[6:]):
             raise ValueError("Timestamp precision exceeds microseconds")
