@@ -37,7 +37,7 @@ restoreは新規/空stateだけに行い、元stateを上書き・削除しま�
 復元後の照会は保存データで動作します。収集の再開前に取得元、認証、予算を再確認してください。
 cache/lease/予約/旧running processを有効な復元状態とみなしません。
 
-catalog3 の新規初期化は schema version 6 の packaged DDL から直接行います。旧 catalog3 開発 DB とその backup は拒否します。v4/v5→v6 migration や互換 view はありません。旧 v2 の取得済みデータは、停止した source を別の新規 state へ `import-v2` で救出し、`db finalize` の明示的な readiness 検査を通します。元 source DB/cache は読取り専用証拠として保護され、runtime cache へ流用・回収されません。typed archive、診断、source identity と current 選択の証拠は target 内へ保存します。
+catalog3 の新規初期化は schema version 7 の packaged DDL から直接行います。旧 catalog3 開発 DB とその backup は拒否します。旧catalog3→v7 migration や互換 view はありません。旧 v2 の取得済みデータは、停止した source を別の新規 state へ `import-v2` で救出し、`db finalize` の明示的な readiness 検査を通します。元 source DB/cache は読取り専用証拠として保護され、runtime cache へ流用・回収されません。typed archive、変換診断、source identity と current 選択の原証拠は別の `import-v2/workspace.sqlite3` に保存します。正規化済みの事実・観測・coverageは `catalog.sqlite3` に残ります。
 
 実データ試行では、許可された場所から元DB/cacheを読み取り専用で特定し、取り込み先・backup・restore・測定先は自動生成した別の一時directoryに置きます。元データを一意に特定できない場合は、候補と不足情報を報告して変更前に停止します。cacheを保存していない場合も明示し、欠けた原本はpartial coverageとして扱います。旧DBの取り込みと公開repoからの新規収集は別の検証範囲です。
 
@@ -54,3 +54,11 @@ imported current pointer は同じ owner の公開済み事実と元の選択証
 定期運用ではsync、jobs resume、cache gc --applyをcron/systemd等から呼べます。
 この開発では実ユーザーのスケジュールを登録しません。実運用の対象・周期・要求予算はpilot後に決めてください。
 LFS実体、添付実体、完全原本archive、全履歴本文・diff索引、意味検索、Web GUIは後続範囲です。
+
+## Import workspaceの寿命
+
+import開始から `db finalize` 成功までは、`catalog.sqlite3` と `import-v2/` 配下のworkspace・sealed sourceを一組として保持します。workspaceはプロセス終了でも消えない作業用DBです。途中で片方だけをコピー・移動・削除して再開しないでください。workspaceの欠落・別catalogとの取り違え・schema改変・symlink/hardlinkは拒否します。
+
+両DBの変更とbatch receiptは、固定workspaceをATTACHした一つのSQLite transactionでcommitします。この処理中は両方のDBにDELETE journalとsynchronous=EXTRAを要求します。WALで独立した二つのcommitを行う実装にはしません。初期作成の二つのファイル名公開の間で停止した場合も、対応するidentityを検証して再開します。
+
+正常にfinalizeされたcatalogはworkspaceなしで照会・検査・backup/restoreできます。`import-v2/` はその後に破棄可能ですが、自動削除はしません。未完了・失敗状態では保持してください。元のv2 DB/cacheはworkspaceとは別であり、削除・書換えの対象にしません。通常のbackupはworkspaceを含みません。

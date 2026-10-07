@@ -8,6 +8,7 @@ import pytest
 
 from repo_catalog.adapters.import_v2 import archive, git_domain, identity, pr_domain
 from repo_catalog.adapters.sqlite.schema import schema_sql
+from tests.support.import_workspace import memory_workspace
 from tests.support.integrated_fixture import (
     IDS,
     SAVED_EARLY_BODY,
@@ -85,6 +86,7 @@ def components(tmp_path, *, mutate=None, encoding="UTF-8", scale=1):
     db = sqlite3.connect(":memory:")
     db.row_factory = sqlite3.Row
     db.executescript(schema_sql())
+    memory_workspace(db)
     db.execute(
         "INSERT INTO conversion_sources(conversion_source_id,source_sha256,schema_sha256,format_id,source_db_instance_id,source_catalog,source_migrations) VALUES('source',?,?,'v2','synthetic',?,?)",
         (b"s" * 32, b"c" * 32, b"{}", b"[]"),

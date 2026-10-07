@@ -108,3 +108,7 @@ repo-catalog --format json target --database /tmp/disposable-import/catalog.sqli
 ```
 
 `target`はrepository IDの完全一致を要求し、`--limit`と`--offset`で保存履歴行を個別にページ化します。PRの`record_kind`はidentity、観測、文書、文書観測、review/thread/comment/event、code listing履歴を区別します。診断結果だけでruntime readinessやcurrent pointerを変更しません。
+
+### Import/finalization workspace
+
+`import-v2` はstate配下の `import-v2/workspace.sqlite3` を自動作成し、同じ引数での再実行時に再利用します。別途一時pathを指定する必要はありません。これはimportの旧値・対応表・進捗・診断専用で、通常catalogのテーブルではありません。`db finalize` 成功後はworkspaceなしで通常運用でき、`db backup` には含めません。未完了時の削除や、二つのDBの片方だけの移動はしないでください。workspaceと原資料の自動削除は行いません。

@@ -1,6 +1,14 @@
 # Catalog3 runtime handoff
 
-The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 6**. Earlier catalog3 databases/backups are rejected; there is no v4/v5 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 7**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+
+## Import workspace separation (schema 7)
+
+Starting main: `314cfb4466c4206401c7e0c994eedd9481283c88`; branch `refactor/import-workspace-db`. The eight import/finalization-only tables now live in the separate `import-v2/workspace.sqlite3`, with a private identity/schema binding. Ordinary catalogs have 65 tables instead of 73. `unresolved_payloads` retains semantic gap information without a cross-file legacy-record FK.
+
+Resume retains the workspace until finalization; target facts and workspace receipts commit in the same attached-database transaction, using DELETE journals and synchronous=EXTRA for both files. Only the fixed verified local workspace can be attached. Source/network guards and denial of arbitrary ATTACH remain. Finalization restores the same justified selections and commits readiness with the workspace receipt. Normal reads/checks/backup/restore never require scratch after finalization. Workspace removal is possible after success, not automatic; originals and failed/unfinalized workspaces are retained.
+
+This is a storage-lifetime refactor, not a multi-catalog exporter, removal of shared API evidence, a v2-source change, or a release/main cutover. Prior schema-6 and schema-5 results below remain historical evidence.
 
 ## Identity and observation stride
 
@@ -12,13 +20,13 @@ Starting main: `1ce7fccdb63ab7de74daf6694d2c7187fcddd835`. Working branch: `refa
 - `document_versions` is removed. Each real observation retains its body identity and provenance; A->A->B->A remains four observations sharing two bodies. `current_document_observation_id` must reference the same document. Missing current selection is reported, never inferred from maximum ID.
 - Normal REST/GraphQL collection, offline query/search, import/finalization and backup/restore use the new schema. PR search indexes each body once and still returns each requested observation. CLI uses `--document-observations current|all`, `--provider-change-request-document-id`, `--document-kind` and `--observation`.
 
-## Provider-resource stride (schema 6)
+## Prior provider-resource stride (schema 6)
 
 Resumed from `e51be9e8b8a1af2bdf1b82db0acf11318e5d386d` on the same PR branch. Change-request identity uses `(Repository portable identity, change_request_kind, provider_change_request_number)`. Normalized `provider_node_id` columns and synthetic `review_thread_id` are removed; review threads use `(change_request_id, provider_resource_id)` with same-parent comment FKs. The resource value is not assumed globally unique across a service or all provider types.
 
 GitHub documents require their database identity (`id` / `fullDatabaseId`), without Node-ID fallback or alternate-key matching. Node-only response evidence is retained with partial diagnostics and retryable pagination. Node IDs remain raw provider evidence and are used as opaque review-thread resource handles where required by GraphQL. CLI uses `--provider-change-request-number`, `--change-request-kind` and scoped `--provider-resource-id` for thread selection.
 
-Current completed validation: clean substantive commit `db69fe28dbf279627b9e3631682b1f009e20c362`, **383 ordinary + 2 independent packaging tests passed**, with 385 selected tests executed exactly once. See [schema-6 synthetic evidence](../validation/synthetic/2026-10-07-provider-resource-identity.md) and adjacent JSON for environment, timing, initial failures and unexecuted scopes. The publication wrapper preserves the tested Git objects; evidence-only follow-ups do not constitute a separate runtime test run.
+Prior completed validation: clean substantive commit `db69fe28dbf279627b9e3631682b1f009e20c362`, **383 ordinary + 2 independent packaging tests passed**, with 385 selected tests executed exactly once. See [schema-6 synthetic evidence](../validation/synthetic/2026-10-07-provider-resource-identity.md) and adjacent JSON for environment, timing, initial failures and unexecuted scopes. The publication wrapper preserves the tested Git objects; evidence-only follow-ups do not constitute a separate runtime test run.
 
 ## Prior schema-5 validation
 
@@ -68,11 +76,11 @@ repo-catalog --state-dir /tmp/catalog3-imported search pr --literal 'saved early
 
 ## Preservation and restart
 
-The guarded worker still prohibits source writes and acquisition. Original v2 document/version IDs, source body hashes, typed values, payloads and batch evidence remain in the catalog; source layouts are unchanged. Target document mappings contain composite keys, not replacement IDs. Legacy parser version tuples are transient import support only.
+The guarded worker still prohibits source writes and acquisition. Original v2 document/version IDs, source body hashes, typed values and batch evidence remain in the separate workspace while import/finalization needs them; source layouts are unchanged. Normalized payload facts stay in the catalog. Target document mappings contain composite keys, not replacement IDs. Legacy parser version tuples are transient import support only.
 
 A source version without an actual observation contributes text and archived evidence, not a fabricated observation. Finalization translates a saved current-version assertion only to a suitable same-document source observation of that version. The latest unambiguous recorded observation is used; ties, unknown times, missing observations and conflicting current assertions remain unresolved. Current selection never follows integer/import ordering. New observations are not invented by replay/import, and history/jobs/leases are not reactivated.
 
-Normal SQLite transactions, foreign keys, recursive triggers, OS writer locks, completed-listing sealing, raw bytes and ordered Git parents remain enforced. Imported first-sync reuse still requires matching source/binding/principal/API/parser/profile/head/base and terminal-context evidence. Runtime caches remain separate from retained source material. Backup/restore copies local IDs and resets operational state; it is not multi-catalog exchange.
+Normal SQLite transactions, foreign keys, recursive triggers, OS writer locks, completed-listing sealing, raw bytes and ordered Git parents remain enforced. Imported first-sync reuse still requires matching source/binding/principal/API/parser/profile/head/base and terminal-context evidence. Runtime caches remain separate from retained source material. Backup/restore copies local IDs and resets operational state; it excludes the separate import workspace and is not multi-catalog exchange.
 
 ## Retained evidence and limits
 

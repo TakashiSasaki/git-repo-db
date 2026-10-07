@@ -269,7 +269,7 @@ def test_fresh_complete_schema(target):
     db = target
     assert (
         len(db.execute("SELECT name FROM sqlite_schema WHERE type='table'").fetchall())
-        == 73
+        == 65
     )
     assert all(
         row[5] == 1

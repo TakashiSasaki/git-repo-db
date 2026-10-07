@@ -16,3 +16,7 @@ Implemented scope:
 7. Use explicit change-request kind/provider-number names, remove secondary normalized Node-ID aliases and replace local thread IDs with parent-scoped provider resource keys. Retain failed canonical-ID response evidence and resume without admitting Node-keyed documents.
 
 No v4/v5 migration/compatibility views, separate portable schema, multi-catalog exchange, open-ended providers, real-data activation or release publication is included. Existing real-world reports retain their original commits and scopes. Prior schema-5 clean substantive revision `b6cca875b9a303989bc8947dc56dddb04d7b9ec2` passes 358 current tests and both installed distribution checks (360 reconciled), recorded in the runtime handoff.
+
+## Import-workspace storage boundary
+
+The schema-7 runtime keeps only ordinary catalog entities. The eight conversion/archive/mapping/diagnostic tables belong to a durable but disposable workspace DB through finalization. Same-transaction attached writes preserve resume integrity; normal finalized operation and backups are independent of workspace. See the current runtime handoff and data model; historical phase contracts are not expanded or rerun.
