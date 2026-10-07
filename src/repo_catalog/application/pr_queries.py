@@ -114,13 +114,13 @@ def pr_query(query, command, options):
     if command not in ("pr list", "search pr", "pr thread"):
         query.single_repo(o)
     rows = s.all(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.number,p.change_request_id"
+        "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id"
     )
     rows = [
         r
         for r in rows
         if r["repository_id"] in allowed
-        and (o.get("number") is None or r["number"] == o["number"])
+        and (o.get("number") is None or r["provider_change_request_number"] == o["number"])
         and (not o.get("binding") or r["repository_binding_id"] == o["binding"])
     ]
     if o.get("number") is not None and not rows:
@@ -128,17 +128,18 @@ def pr_query(query, command, options):
     if o.get("number") is not None and len(rows) != 1:
         raise CatalogError("INVALID_ARGUMENT", "Number is ambiguous; select --binding")
     if command == "pr thread":
+        request = rows[0]
         thread = s.one(
-            "SELECT t.*,p.repository_id,p.number FROM review_threads t JOIN change_requests p ON p.change_request_id=t.change_request_id WHERE t.review_thread_id=?",
-            (o["review_thread_id"],),
+            "SELECT * FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+            (request["change_request_id"], o["provider_resource_id"]),
         )
-        if not thread or thread["repository_id"] not in allowed:
+        if not thread:
             raise CatalogError(
-                "NOT_FOUND", "Review thread not found in selected repository scope"
+                "NOT_FOUND", "Review thread not found in selected change request"
             )
         for row in s.all(
-            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,o.document_observation_id,b.body,rc.payload FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations o ON o.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE rc.review_thread_id=? ORDER BY d.kind,d.provider_change_request_document_id",
-            (thread["review_thread_id"],),
+            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,o.document_observation_id,b.body,rc.payload FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations o ON o.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE rc.change_request_id=? AND rc.review_thread_provider_resource_id=? ORDER BY d.kind,d.provider_change_request_document_id",
+            (request["change_request_id"], thread["provider_resource_id"]),
         ):
             key = DocumentKey(
                 row["change_request_id"],
@@ -161,7 +162,7 @@ def pr_query(query, command, options):
                     "provider_change_request_document_id": key.provider_change_request_document_id,
                     "document_observation_id": row["document_observation_id"],
                     "body": row["body"],
-                    "review_thread_id": thread["review_thread_id"],
+                    "review_thread_provider_resource_id": thread["provider_resource_id"],
                     "thread": json.loads(thread["payload"]),
                     "review_position": json.loads(row["payload"]),
                 },
@@ -254,7 +255,7 @@ def pr_query(query, command, options):
         base = {
             "repository_id": pr["repository_id"],
             "repository": pr["name"],
-            "number": pr["number"],
+            "number": pr["provider_change_request_number"],
             "pr_id": pr["change_request_id"],
             "change_request_id": pr["change_request_id"],
             "repository_binding_id": pr["repository_binding_id"],
@@ -316,7 +317,7 @@ def pr_query(query, command, options):
                     )
                 ]
             yield (
-                [pr["repository_id"], pr["number"], pr["change_request_id"]],
+                [pr["repository_id"], pr["provider_change_request_number"], pr["change_request_id"]],
                 _bounded(item),
             )
         elif command == "pr timeline":
@@ -327,7 +328,7 @@ def pr_query(query, command, options):
                 yield (
                     [
                         pr["repository_id"],
-                        pr["number"],
+                        pr["provider_change_request_number"],
                         event["change_request_event_id"],
                     ],
                     {
@@ -376,20 +377,23 @@ def pr_query(query, command, options):
                 )
                 meta = json.loads(doc["observation_metadata"])
                 comment = s.one(
-                    "SELECT review_thread_id,payload FROM review_comments WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
+                    "SELECT review_thread_provider_resource_id,payload FROM review_comments WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
                     key,
                 )
-                review_thread_id = (
-                    comment["review_thread_id"]
+                review_thread_provider_resource_id = (
+                    comment["review_thread_provider_resource_id"]
                     if comment
-                    else meta.get("review_thread_id")
+                    else meta.get("review_thread_provider_resource_id")
                 )
                 thread = (
                     s.one(
-                        "SELECT payload FROM review_threads WHERE review_thread_id=?",
-                        (review_thread_id,),
+                        "SELECT payload FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+                        (
+                            doc["change_request_id"],
+                            review_thread_provider_resource_id,
+                        ),
                     )
-                    if review_thread_id
+                    if review_thread_provider_resource_id
                     else None
                 )
                 thread_payload = json.loads(thread[0]) if thread else {}
@@ -410,7 +414,7 @@ def pr_query(query, command, options):
                 yield (
                     [
                         pr["repository_id"],
-                        pr["number"],
+                        pr["provider_change_request_number"],
                         *key,
                         doc["document_observation_id"],
                     ],
