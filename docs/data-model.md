@@ -85,6 +85,8 @@ Each `document_observations` row directly references `text_body_sha256 -> text_b
 
 `coverage_scopes` identifies one repository or change-request component by its owner and `kind`. Partial unique indexes enforce one scope per `(repository_id, kind)` for repository scopes and per `(change_request_id, kind)` for change-request scopes; the latter retains same-repository ownership. A scope has no current-claim pointer.
 
+Writer calls identify the repository explicitly and optionally name a change request belonging to it. A local repository ID may equal another repository's change-request ID; ID equality never selects an owner type. Claim IDs may be negative. Automatic allocation after an explicit negative ID retains the same immutable admission rules.
+
 `coverage_claims` contains exactly these fields:
 
 | Field | Contract |
@@ -113,6 +115,12 @@ The `current_coverage` view first selects **all claims at the maximum observatio
 `export_current_claims` returns the whole maximum-time set, retaining `unknown`, conflict constituents and each claim's separate raw `details_json` or `NULL`. This implements selection policy only: local IDs still require explicit destination scope resolution, and a multi-catalog wire format and import workflow remain deferred. CLI `coverage`, `status` and snapshot results expose the derived scope and its `claims` list using one SQLite snapshot. PR queries use the same current view so historical incomplete claims do not poison a newer complete result.
 
 Runtime producers use the original observation being evaluated. Git repository-wide claims use the fixed refs observation and are emitted only by repository Git collection, not PR-only roots. REST claims use actual saved page times; thread completion includes nested GraphQL page times. Replaying a committed terminal page or resuming an older fixed root does not acquire the resume time. A job start, local failure or failure before any response does not itself create a coverage claim; incomplete observed prefixes can produce `partial`. Job/collection progress remains separately queryable. Partial optional evidence remains queryable, while critical identity corruption blocks finalization.
+
+PR code observations are finalized after acquisition, with their exact required role links and coverage claim published atomically. Complete code requires stable API head/base, complete context-proven lists, resolved target enumeration and preserved matching Git roots. Partial GraphQL responses retain any valid merge targets without treating an incomplete target set as complete. A failed refresh may reuse previously preserved exact roots; an unobserved transport failure alone does not create a new partial claim.
+
+Query completeness also accounts for structural gaps in the requested saved data. A new current PR observation without its required code observation, or a purportedly complete code observation lacking required published role links, is reported as incomplete without modifying claims. PR queries evaluate these gaps and semantic coverage for the requested identity scope within one read transaction, before pagination. Document-only queries exclude code-only collection/claim kinds; commit or path constraints require code coverage. Page size, byte cutoff and cursor position do not change this assessment. Content filters remain conservative where missing saved information could itself match the filter.
+
+Imported listing reuse records the original authenticated detail/304 boundary, including its marker, PR observation and time. Reusing the same boundary does not append another completion marker. A 304 replay resolves its saved authorized observation even after the current PR pointer advances. GraphQL connection completion requires explicit nodes and valid pagination fields; malformed root or nested pages retain their response and retry boundary and remain partial.
 
 ## Preservation, search and salvage
 

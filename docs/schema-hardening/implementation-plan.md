@@ -2,6 +2,20 @@
 
 Catalog3 is the sole ordinary runtime. Packaged DDL and the runtime identity module are authoritative; [runtime handoff](runtime-handoff.md) records commands, validation and limits. Historical phase plans and design/export schemas remain snapshots.
 
+## Design-review corrections
+
+The correction work starts from reviewed PR #6 `cd900e252f1320e0cc304fc200317d7190af0143` and includes the subsequent PR #5 timestamp guard at `9abfdc0eb439a823246e306e7773b775cfaa75e7`. Work branch: `fix/coverage-review-findings`; publication updates the existing coverage PR after retaining the upstream timestamp ancestry.
+
+| Order | Review findings | Implementation and acceptance criteria |
+| --- | --- | --- |
+| 1 | 1, 2 | Finalize code observations only after resolving required roles and checking stored acquisitions. A stable API head with mismatched Git refs, or incomplete merge-role enumeration, cannot assert code completeness. Actual observed gaps propagate to PR and repository coverage; an unobserved request failure alone does not create a claim. |
+| 2 | 4, 8 | Preserve original authorization time and identity when reusing imported listings; repeated JobService resume creates no duplicate marker. Require valid GraphQL connection nodes, pagination flags and continuing cursors before claiming terminal completeness. |
+| 3 | 5, 6 | Share document/code scope classification, and evaluate requested PR coverage independently of page size, byte cutoff and cursor position in the same read snapshot. Document-only queries exclude code-only gaps. |
+| 4 | 3, 7, 9 | Reject fractional UTC offsets across supported parser spellings, retaining raw imported evidence and NULL plus a diagnostic. Make repository/PR coverage ownership explicit. Permit negative local claim IDs without disrupting automatic allocation or weakening immutable admission. |
+| 5 | All | Preserve focused failure evidence, review the integrated changes, and run coherent current-runtime, guarded salvage and installed-distribution acceptance with collection/execution reconciliation. Record exact revisions and results in the runtime handoff and synthetic validation report. |
+
+Use only disposable synthetic catalogs, Git remotes and HTTP responses. Existing raw evidence, import protection and immutable coverage semantics remain part of acceptance. Multi-catalog transport, schema compatibility and release/main publication are outside this correction milestone.
+
 ## Coverage derivation (schema 9)
 
 Starting from published PR #5 at `fee685db14e8052d2e9decd5f4b3470d4da80517`, branch `refactor/coverage-model` replaces mutable coverage selection with immutable scope/time/state claims and a derived `current_coverage` view. The latest time is chosen before unknown is weakened; same-time determinate disagreement becomes derived conflict. Admission ignores stale and semantic duplicate inputs without changing details. Export selection preserves every latest claim; a multi-catalog exchange protocol remains deferred.
