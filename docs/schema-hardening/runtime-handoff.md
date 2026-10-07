@@ -8,6 +8,8 @@ Starting main: `314cfb4466c4206401c7e0c994eedd9481283c88`; branch `refactor/impo
 
 Resume retains the workspace until finalization; target facts and workspace receipts commit in the same attached-database transaction, using DELETE journals and synchronous=EXTRA for both files. Only the fixed verified local workspace can be attached. Source/network guards and denial of arbitrary ATTACH remain. Finalization restores the same justified selections and commits readiness with the workspace receipt. Normal reads/checks/backup/restore never require scratch after finalization. Workspace removal is possible after success, not automatic; originals and failed/unfinalized workspaces are retained.
 
+Completed local acceptance on `23941ef421e3459d38becc65878e2c14b96576d5`: **396 ordinary + 2 independent packaging tests passed**, with all 398 selected tests executed exactly once. See [workspace synthetic evidence](../validation/synthetic/2026-10-07-import-workspace.md) and adjacent JSON. Later GitHub CI is separately attributed to its exact commit.
+
 This is a storage-lifetime refactor, not a multi-catalog exporter, removal of shared API evidence, a v2-source change, or a release/main cutover. Prior schema-6 and schema-5 results below remain historical evidence.
 
 ## Identity and observation stride
