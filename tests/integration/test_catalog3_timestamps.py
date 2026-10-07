@@ -83,6 +83,24 @@ def test_datetime_boundary_requires_timezone():
     assert datetime_to_us(datetime(1970, 1, 1, tzinfo=UTC)) == 0
 
 
+@pytest.mark.parametrize("offset", ["00", "0000", "00:00", "000000", "00:00:00"])
+@pytest.mark.parametrize("sign", ["+", "-"])
+@pytest.mark.parametrize("fraction", [".000001", ",000001"])
+def test_all_fractional_offset_spellings_are_explicitly_rejected(
+    offset, sign, fraction
+):
+    value = f"1970-01-01T00:00:00{sign}{offset}{fraction}"
+    with pytest.raises(ValueError, match="Fractional timezone offsets"):
+        parse_iso8601_us(value)
+
+
+@pytest.mark.parametrize("offset", ["00", "00:00:00"])
+@pytest.mark.parametrize("sign", ["+", "-"])
+def test_nul_cannot_bypass_fractional_offset_validation(offset, sign):
+    with pytest.raises(ValueError):
+        parse_iso8601_us(f"1970-01-01T00:00:00{sign}{offset}.000001\x00")
+
+
 @pytest.mark.parametrize("value", [MIN_INT64, -1, 0, 1, MAX_INT64])
 def test_internal_timestamp_accepts_the_entire_signed_int64_range(value):
     assert validate_epoch_us(value) == value
