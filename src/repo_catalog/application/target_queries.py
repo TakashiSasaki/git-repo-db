@@ -365,7 +365,7 @@ class TargetQueryService:
         number = options.get("number")
         if type(number) is not int or number <= 0:
             raise CatalogError("INVALID_ARGUMENT", "A positive --number is required")
-        kind = options.get("request_kind", "pull_request")
+        kind = options.get("change_request_kind", "pull_request")
         if kind not in ("pull_request", "merge_request"):
             raise CatalogError("INVALID_ARGUMENT", "Unknown request kind")
         rows = self.s.all(
