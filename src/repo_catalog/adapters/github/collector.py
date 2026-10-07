@@ -421,19 +421,14 @@ class GitHubCollector:
         self, repo, value, collection, occurrence, position, timestamp, *, publish=True
     ):
         s = self.s
-        if (
-            type(value.get("number")) is not int
-            or value["number"] <= 0
-            or type(value.get("id")) not in (int, str)
-            or not value["id"]
-        ):
-            raise CatalogError("API_SCHEMA", "PR identity missing")
+        if type(value.get("number")) is not int or value["number"] <= 0:
+            raise CatalogError("API_SCHEMA", "PR number missing")
         binding = s.one(
             "SELECT repository_binding_id FROM resume_scopes WHERE resume_scope_id=?",
             (collection["resume_scope_id"],),
         )[0]
         row = s.one(
-            "SELECT * FROM change_requests WHERE repository_binding_id=? AND request_kind='pull_request' AND number=?",
+            "SELECT * FROM change_requests WHERE repository_binding_id=? AND change_request_kind='pull_request' AND provider_change_request_number=?",
             (binding, value["number"]),
         )
         ident = (
@@ -441,24 +436,14 @@ class GitHubCollector:
             if row
             else f"{repo['repository_id']}:{value['number']}"
         )
-        if (
-            row
-            and row["provider_node_id"]
-            and value.get("node_id")
-            and row["provider_node_id"] != value["node_id"]
-        ):
-            raise CatalogError(
-                "IDENTITY_CONFLICT", "PR number changed provider identity"
-            )
         if not row:
             s.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number,current_change_request_observation_id,provider_node_id) VALUES(?,?,?,'pull_request',?,NULL,?)",
+                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES(?,?,?,'pull_request',?,NULL)",
                 (
                     ident,
                     repo["repository_id"],
                     binding,
                     value["number"],
-                    value.get("node_id"),
                 ),
             )
         origin = self.facts.origin(collection, occurrence, position)
@@ -468,11 +453,6 @@ class GitHubCollector:
         )
         if existing:
             return ident
-        if row and row["provider_node_id"] is None and value.get("node_id"):
-            s.execute(
-                "UPDATE change_requests SET provider_node_id=? WHERE change_request_id=?",
-                (value["node_id"], ident),
-            )
         observation = (
             existing[0]
             if existing
@@ -696,7 +676,7 @@ class GitHubCollector:
             except ValueError:
                 raise CatalogError("API_SCHEMA", "Invalid comment parent") from None
             pr = self.s.one(
-                "SELECT change_request_id FROM change_requests WHERE repository_id=? AND number=?",
+                "SELECT change_request_id FROM change_requests WHERE repository_id=? AND provider_change_request_number=?",
                 (repo["repository_id"], number),
             )
             if not pr:
@@ -808,7 +788,7 @@ class GitHubCollector:
                 {
                     "owner": owner,
                     "name": name,
-                    "number": pr["number"],
+                    "number": pr["provider_change_request_number"],
                     "query": root_query,
                 },
             )
@@ -839,7 +819,7 @@ class GitHubCollector:
                 variables = {
                     "owner": owner,
                     "name": name,
-                    "number": pr["number"],
+                    "number": pr["provider_change_request_number"],
                     "cursor": cursor,
                     "pageSize": self.cfg["graphql_page_size"],
                 }
@@ -883,10 +863,10 @@ class GitHubCollector:
                             advance=False,
                         )
                         for index, thread in enumerate(connection.get("nodes") or []):
-                            review_thread_id = self._thread(repo, pr, thread, timestamp)
+                            review_thread_provider_resource_id = self._thread(repo, pr, thread, timestamp)
                             self._thread_documents(
                                 pr,
-                                review_thread_id,
+                                review_thread_provider_resource_id,
                                 thread.get("comments") or {},
                                 collection,
                                 occurrence,
@@ -930,14 +910,12 @@ class GitHubCollector:
                 if "pageInfo" not in connection:
                     raise CatalogError("API_SCHEMA", "Missing thread pageInfo")
                 for thread in connection.get("nodes") or []:
-                    review_thread_id = (
-                        f"{pr['change_request_id']}:thread:{thread['id']}"
-                    )
+                    review_thread_provider_resource_id = str(thread["id"])
                     self._thread_children(
                         repo,
                         pr,
                         thread,
-                        review_thread_id,
+                        review_thread_provider_resource_id,
                         job,
                         child_query,
                         collection,
@@ -989,28 +967,29 @@ class GitHubCollector:
     def _thread(self, repo, pr, thread, timestamp):
         if not thread.get("id"):
             raise CatalogError("API_SCHEMA", "Thread identity missing")
-        ident = f"{pr['change_request_id']}:thread:{thread['id']}"
+        provider_resource_id = str(thread["id"])
         value = canonical(
             {key: item for key, item in thread.items() if key != "comments"}
         )
         if self.s.one(
-            "SELECT 1 FROM review_threads WHERE review_thread_id=?", (ident,)
+            "SELECT 1 FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+            (pr["change_request_id"], provider_resource_id),
         ):
             self.s.execute(
-                "UPDATE review_threads SET payload=?,observed_at=? WHERE review_thread_id=?",
-                (value, timestamp, ident),
+                "UPDATE review_threads SET payload=?,observed_at=? WHERE change_request_id=? AND provider_resource_id=?",
+                (value, timestamp, pr["change_request_id"], provider_resource_id),
             )
         else:
             self.s.execute(
-                "INSERT INTO review_threads(review_thread_id,change_request_id,payload,observed_at) VALUES(?,?,?,?)",
-                (ident, pr["change_request_id"], value, timestamp),
+                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at) VALUES(?,?,?,?)",
+                (pr["change_request_id"], provider_resource_id, value, timestamp),
             )
-        return ident
+        return provider_resource_id
 
     def _thread_documents(
         self,
         pr,
-        review_thread_id,
+        review_thread_provider_resource_id,
         connection,
         collection,
         occurrence,
@@ -1031,7 +1010,7 @@ class GitHubCollector:
                 occurrence,
                 offset + position,
                 timestamp,
-                thread=review_thread_id,
+                thread=review_thread_provider_resource_id,
             )
 
     def _thread_children(
@@ -1039,7 +1018,7 @@ class GitHubCollector:
         repo,
         pr,
         thread,
-        review_thread_id,
+        review_thread_provider_resource_id,
         job,
         query,
         parent,
@@ -1118,7 +1097,7 @@ class GitHubCollector:
                     )
                     self._thread_documents(
                         pr,
-                        review_thread_id,
+                        review_thread_provider_resource_id,
                         comments,
                         collection,
                         occurrence,
@@ -1283,7 +1262,7 @@ class GitHubCollector:
                 if self.completed_pr(repo, job, pr["change_request_id"]):
                     continue
                 initial_failures = len(failures)
-                url = root + f"/pulls/{pr['number']}"
+                url = root + f"/pulls/{pr['provider_change_request_number']}"
                 detail = attempt("pr-detail", lambda: self.detail(repo, pr, job, url))
                 if detail:
                     before, current = detail
@@ -1291,7 +1270,7 @@ class GitHubCollector:
                     before = json.loads(pr["payload"]) if pr["payload"] else {}
                     current = pr["current_change_request_observation_id"]
                 for kind, endpoint in (
-                    ("issue-comment", root + f"/issues/{pr['number']}/comments"),
+                    ("issue-comment", root + f"/issues/{pr['provider_change_request_number']}/comments"),
                     ("review", url + "/reviews"),
                     ("review-comment", url + "/comments"),
                 ):
@@ -1327,7 +1306,7 @@ class GitHubCollector:
                         pr["change_request_id"],
                         "timeline",
                         job,
-                        root + f"/issues/{pr['number']}/timeline?per_page={size}",
+                        root + f"/issues/{pr['provider_change_request_number']}/timeline?per_page={size}",
                         event,
                     ),
                 )
@@ -1491,12 +1470,12 @@ class GitHubCollector:
                             job,
                             pr_roots=[
                                 {
-                                    "ref": f"refs/pull/{pr['number']}/head"
+                                    "ref": f"refs/pull/{pr['provider_change_request_number']}/head"
                                     if role == "head"
                                     else expected,
                                     "expected": expected,
                                     "role": role,
-                                    "number": pr["number"],
+                                    "number": pr["provider_change_request_number"],
                                 }
                             ],
                             change_request_observation_id=current,
