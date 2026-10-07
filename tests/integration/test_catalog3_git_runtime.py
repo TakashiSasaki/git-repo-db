@@ -148,7 +148,7 @@ def test_interrupted_fixed_refs_resume_without_new_remote_observation(
         with pytest.raises(CatalogError, match="Synthetic interruption"):
             collect(store, repo, job=job)
         run = store.one("SELECT * FROM git_acquisitions")
-        observed = run["refs_observed_at"]
+        observed = run["refs_observed_at_us"]
         assert (
             store.one(
                 "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
@@ -165,7 +165,7 @@ def test_interrupted_fixed_refs_resume_without_new_remote_observation(
         assert resumed["git_acquisition_id"] == run["git_acquisition_id"]
         assert (
             store.one(
-                "SELECT refs_observed_at FROM git_acquisitions WHERE git_acquisition_id=?",
+                "SELECT refs_observed_at_us FROM git_acquisitions WHERE git_acquisition_id=?",
                 (run["git_acquisition_id"],),
             )[0]
             == observed
@@ -183,6 +183,8 @@ def test_interrupted_fixed_refs_resume_without_new_remote_observation(
 def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
     tmp_path, monkeypatch
 ):
+    first_us = 1_791_360_000_123_456
+    monkeypatch.setattr("repo_catalog.adapters.git.importer.now_us", lambda: first_us)
     fixture = FixtureRepo(tmp_path / "remote.git")
     fixture.commit("A", {b"a.txt": b"abc"})
     fixture.ref("refs/heads/main", "A")
@@ -200,9 +202,19 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
         old = store.one("SELECT git_acquisition_id FROM git_acquisitions")[0]
         JobService(store).update(job, "interrupted")
         monkeypatch.setattr(GitImporter, "import_objects", original)
+        # Distinct observations within one millisecond must keep their ordering.
+        monkeypatch.setattr(
+            "repo_catalog.adapters.git.importer.now_us", lambda: first_us + 1
+        )
         fixture.commit("B", {b"a.txt": b"changed"}, parents=("A",))
         fixture.ref("refs/heads/main", "B")
         newest = collect(store, repo)["snapshot_id"]
+        assert [
+            row[0]
+            for row in store.all(
+                "SELECT refs_observed_at_us FROM git_acquisitions ORDER BY refs_observed_at_us"
+            )
+        ] == [first_us, first_us + 1]
         JobService(store).resume(job)
         collect(store, repo, job=job)
         assert old != newest

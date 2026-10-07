@@ -5,7 +5,6 @@ normalization gaps and keeps the page's observation time separate from parsing.
 """
 
 import hashlib
-import math
 import re
 import struct
 import uuid
@@ -13,6 +12,7 @@ from urllib.parse import urlsplit
 
 from repo_catalog.adapters.github.identity import database_resource_id
 from repo_catalog.domain.document import text_body_sha256
+from repo_catalog.domain.time import unix_seconds_to_us
 
 from . import identity
 from .common import ConversionError, canonical, strict_json
@@ -74,14 +74,14 @@ SOURCE_TABLES = {
     "code_acquisitions": "pr_git_links",
 }
 COLUMNS = {
-    "jobs": ("job_id", "kind", "request", "current_attempt", "created_at"),
+    "jobs": ("job_id", "kind", "request", "current_attempt", "created_at_us"),
     "job_attempts": (
         "job_id",
         "attempt",
         "state",
-        "created_at",
-        "updated_at",
-        "not_before",
+        "created_at_us",
+        "updated_at_us",
+        "not_before_us",
         "checkpoint",
         "reason",
     ),
@@ -90,7 +90,7 @@ COLUMNS = {
         "source_id",
         "asserted_state",
         "scope",
-        "observed_at",
+        "observed_at_us",
         "reason",
     ),
     "payloads": ("payload_id", "sha256", "body", "byte_length", "representation"),
@@ -122,7 +122,7 @@ COLUMNS = {
         "source_id",
         "kind",
         "resume_scope_id",
-        "observed_at",
+        "observed_at_us",
     ),
     "collection_progress": (
         "fetch_collection_id",
@@ -139,17 +139,17 @@ COLUMNS = {
         "payload_id",
         "request",
         "next_cursor",
-        "observed_at",
-        "parsed_at",
+        "observed_at_us",
+        "parsed_at_us",
     ),
     "change_request_observations": (
         "change_request_observation_id",
         "change_request_id",
-        "observed_at",
+        "observed_at_us",
         "published",
         "payload",
         "origin_key",
-        "parsed_at",
+        "parsed_at_us",
         "origin_fetch_occurrence_id",
     ),
     "text_bodies": ("text_body_id", "body", "byte_length", "sha256"),
@@ -169,8 +169,8 @@ COLUMNS = {
         "kind",
         "provider_change_request_document_id",
         "text_body_sha256",
-        "observed_at",
-        "parsed_at",
+        "observed_at_us",
+        "parsed_at_us",
         "origin_key",
         "fetch_occurrence_id",
         "metadata",
@@ -185,7 +185,7 @@ COLUMNS = {
         "change_request_id",
         "provider_resource_id",
         "payload",
-        "observed_at",
+        "observed_at_us",
     ),
     "review_comments": (
         "change_request_id",
@@ -201,7 +201,7 @@ COLUMNS = {
         "ordinal",
         "provider_event_id",
         "payload",
-        "observed_at",
+        "observed_at_us",
     ),
     "collection_memberships": (
         "fetch_collection_id",
@@ -220,14 +220,14 @@ COLUMNS = {
         "validator_key",
         "etag",
         "payload_id",
-        "validated_at",
+        "validated_at_us",
     ),
     "incremental_scans": (
         "incremental_scan_id",
         "resume_scope_id",
         "fetch_collection_id",
-        "scan_started_at",
-        "safe_watermark",
+        "scan_started_at_us",
+        "safe_watermark_us",
         "evidence",
     ),
     "resume_cursors": (
@@ -242,7 +242,7 @@ COLUMNS = {
         "fetch_collection_id",
         "asserted_state",
         "evidence",
-        "observed_at",
+        "observed_at_us",
     ),
     "code_listings": (
         "code_listing_id",
@@ -448,9 +448,11 @@ class Invalid(identity.Invalid):
 
 
 class Context(identity.Context):
+    TIME_ISSUE_PREFIX = "PR_"
+
     def __init__(self, db, src, run, encoding="UTF-8", *, verifying=False):
         super().__init__(db, src, run, encoding, verifying=verifying)
-        self.parsed_at = run["started_at"]
+        self.parsed_at_us = run["started_at_us"]
         self._attribution_page = None
         self._attribution = {}
         self._attribution_error = None
@@ -682,17 +684,20 @@ class Context(identity.Context):
             state = "unknown"
         storage, raw = record.value("not_before")
         if storage == "null":
-            not_before = None
+            not_before_us = None
         elif storage == "real":
-            not_before = struct.unpack(">d", raw)[0]
+            not_before_us = struct.unpack(">d", raw)[0]
         elif storage == "integer":
-            not_before = float(int(raw))
+            not_before_us = int(raw)
         else:
-            raise Invalid("INVALID_TYPE", "not_before")
-        if not_before is not None and (
-            not math.isfinite(not_before) or not 0 <= not_before < 1e308
-        ):
-            raise Invalid("INVALID_VALUE", "not_before")
+            not_before_us = None
+            self.time_issues.append(("PR_INVALID_TIME", "partial", "not_before"))
+        if not_before_us is not None:
+            try:
+                not_before_us = unix_seconds_to_us(not_before_us)
+            except (TypeError, ValueError, OverflowError):
+                not_before_us = None
+                self.time_issues.append(("PR_INVALID_TIME", "partial", "not_before"))
         created, updated = (
             self.timestamp(record, "created_at"),
             self.timestamp(record, "updated_at"),
@@ -705,7 +710,7 @@ class Context(identity.Context):
                 state,
                 created,
                 updated,
-                not_before,
+                not_before_us,
                 self.metadata(record, "checkpoint"),
                 self.t(record, "reason", nullable=True),
             ),
@@ -747,7 +752,7 @@ class Context(identity.Context):
             self.metadata(record, "request"),
             self.t(record, "next_cursor", nullable=True),
             self.timestamp(record, "observed_at"),
-            self.parsed_at,
+            self.parsed_at_us,
         )
 
     def remember_source_document(self, row):
@@ -1408,7 +1413,7 @@ class Context(identity.Context):
                     0,
                     self.metadata(record, "payload"),
                     t(record, "job_id"),
-                    self.parsed_at,
+                    self.parsed_at_us,
                     None,
                 ),
             )
@@ -1448,7 +1453,7 @@ class Context(identity.Context):
                     document,
                     version,
                     self.timestamp(record, "observed_at"),
-                    self.parsed_at,
+                    self.parsed_at_us,
                     origin,
                     occurrence,
                     self.metadata(record),
@@ -1804,7 +1809,7 @@ class Context(identity.Context):
                         document,
                         version,
                         self.timestamp(page, "observed_at"),
-                        self.parsed_at,
+                        self.parsed_at_us,
                         cid,
                         occurrence
                         if self.t(collection, "pr_id", nullable=True) == pr
@@ -1966,7 +1971,7 @@ class Context(identity.Context):
                         document,
                         version,
                         self.timestamp(record, "observed_at"),
-                        self.parsed_at,
+                        self.parsed_at_us,
                         f"pr-observation:{ident}",
                         None,
                         canonical(
@@ -2031,7 +2036,7 @@ class Context(identity.Context):
                         row[0],
                         version,
                         stamp,
-                        self.parsed_at,
+                        self.parsed_at_us,
                         scope,
                         None,
                         canonical({"saved_pending_resource": True}),
@@ -2191,6 +2196,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
     context = Context(db, src, run, encoding, verifying=verifying)
     output = {"operations": [], "mappings": [], "diagnostics": [], "decisions": []}
     for record in records:
+        context.time_issues = []
         legacy_record_id = context.legacy_record_id(record)
         operations, mappings, issues = [], [], []
 
@@ -2249,6 +2255,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
             operations.clear()
             mappings.clear()
             issue("MALFORMED_VALUE", "source_value", "blocking")
+        issues.extend(context.time_issues)
         output["operations"].extend(operations)
         output["mappings"].extend(mappings)
         output["decisions"].append(

@@ -582,12 +582,12 @@ class TargetQueryService:
                                 "change_request_observation_id": row[
                                     "change_request_observation_id"
                                 ],
-                                "observed_at": row["observed_at"],
+                                "observed_at_us": row["observed_at_us"],
                                 "field": field,
                                 "text": text,
                             }
                 for row in self.s.execute(
-                    "SELECT o.change_request_id,o.kind,o.provider_change_request_document_id,lower(hex(o.text_body_sha256)) text_body_sha256,b.body,o.document_observation_id,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.kind,o.provider_change_request_document_id,o.document_observation_id",
+                    "SELECT o.change_request_id,o.kind,o.provider_change_request_document_id,lower(hex(o.text_body_sha256)) text_body_sha256,b.body,o.document_observation_id,o.observed_at_us FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.kind,o.provider_change_request_document_id,o.document_observation_id",
                     (ident,),
                 ):
                     self._check()

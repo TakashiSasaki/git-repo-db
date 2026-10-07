@@ -8,6 +8,7 @@ from repo_catalog.adapters.import_v2 import archive, mapping, workspace
 from repo_catalog.adapters.import_v2.common import ConversionError
 from repo_catalog.domain.document import DocumentKey, text_body_sha256
 from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.time import now_us
 
 IDENTITY_TABLES = {
     "service_instances",
@@ -216,7 +217,7 @@ def _finalize_catalog(store):
             if (
                 legacy.get("published") == 1
                 and candidate
-                and candidate["observed_at"]
+                and candidate["observed_at_us"] is not None
                 and candidate["payload"] == legacy.get("payload")
             ):
                 store.execute(
@@ -289,7 +290,7 @@ def _finalize_catalog(store):
                 if valid and facts == "snapshots":
                     valid = (
                         store.one(
-                            "SELECT 1 FROM git_acquisitions WHERE git_acquisition_id=? AND repository_id=? AND object_format IS NOT NULL AND refs_observed_at IS NOT NULL",
+                            "SELECT 1 FROM git_acquisitions WHERE git_acquisition_id=? AND repository_id=? AND object_format IS NOT NULL AND refs_observed_at_us IS NOT NULL",
                             (candidate["git_acquisition_id"], owner),
                         )
                         is not None
@@ -328,9 +329,10 @@ def _finalize_catalog(store):
             )
             if not previous:
                 store.execute(
-                    "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES(?,'runtime-readiness','RUNTIME_FINALIZATION','info',datetime('now'),?)",
+                    "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at_us,details) VALUES(?,'runtime-readiness','RUNTIME_FINALIZATION','info',?,?)",
                     (
                         run["conversion_run_id"],
+                        now_us(),
                         json.dumps(
                             {"restored": restored, "unresolved": unresolved},
                             sort_keys=True,
@@ -423,12 +425,12 @@ def restore_document_selections(store, restored, unresolved):
         if values is None or len(values) != 1:
             continue
         candidate = store.one(
-            "SELECT document_observation_id,julianday(observed_at) observation_time FROM document_observations WHERE document_observation_id=? AND change_request_id=? AND kind=? AND provider_change_request_document_id=? AND observed_at IS NOT NULL",
+            "SELECT document_observation_id,observed_at_us observation_time_us FROM document_observations WHERE document_observation_id=? AND change_request_id=? AND kind=? AND provider_change_request_document_id=? AND observed_at_us IS NOT NULL",
             (*values, *target["key"]),
         )
-        if candidate is None or candidate["observation_time"] is None:
+        if candidate is None or candidate["observation_time_us"] is None:
             continue
-        timestamp = candidate["observation_time"]
+        timestamp = candidate["observation_time_us"]
         if target["time"] is None or timestamp > target["time"]:
             target.update(candidate=candidate[0], time=timestamp, ambiguous=False)
         elif timestamp == target["time"] and candidate[0] != target["candidate"]:

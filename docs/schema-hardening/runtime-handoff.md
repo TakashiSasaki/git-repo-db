@@ -1,6 +1,12 @@
 # Catalog3 runtime handoff
 
-The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 7**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 8**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+
+## Unix epoch microseconds (schema 8)
+
+Base: PR #4 `refactor/import-workspace-db` at `307ab6a8df3bc05a99670495676ef25b7c613289`; branch `refactor/unix-microsecond-timestamps`. Ordinary and workspace absolute timestamps now use signed 64-bit integer Unix microseconds with `_us` suffixes. Workspace schema advances to 2. Normalized CLI/operational fields use the same units; raw provider/Git/legacy evidence remains unchanged. Source-observation ordering, finalization, cache TTL and job retry deadlines compare integers, including epoch 0 and negative instants. Shared boundary helpers avoid floating-point timestamp conversion, and GitHub date request parameters explicitly format UTC ISO 8601.
+
+This timestamp stride retains the existing coverage state/pointer model for the following coverage PR. Fresh catalogs reject earlier schema identities; there is no in-place migration. Completed clean local acceptance on `27ab5e37ae5fefbccfee4e8217c657356961c3ef`: **500 ordinary + 2 independent packaging tests passed**, 502 selected/executed exactly once across 44 files. See [timestamp synthetic evidence](../validation/synthetic/2026-10-07-unix-microseconds.md) and adjacent JSON. GitHub CI remains separately attributed to the published commit.
 
 ## Import workspace separation (schema 7)
 

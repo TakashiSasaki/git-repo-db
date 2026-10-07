@@ -4,12 +4,7 @@ import base64
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from typing import Any
-
-
-def now() -> str:
-    return datetime.now(UTC).isoformat()
 
 
 class CatalogError(Exception):

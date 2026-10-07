@@ -2,7 +2,6 @@ import ctypes
 import hashlib
 import json
 import os
-from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,11 +29,6 @@ def strict_json(value):
 
 def digest(value):
     return hashlib.sha256(value).hexdigest()
-
-
-def now():
-    """Converter event time ONLY; never a substitute for a source observation."""
-    return datetime.now(UTC).isoformat()
 
 
 def stat_identity(path):

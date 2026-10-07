@@ -1,31 +1,32 @@
 import json
-import time
 import uuid
 
-from repo_catalog.domain.models import CatalogError, Waiting, now
+from repo_catalog.domain.models import CatalogError, Waiting
+from repo_catalog.domain.time import now_us, validate_epoch_us
 
 
 class JobService:
-    def __init__(self, store, *, clock=time.time):
-        self.store, self.clock = store, clock
+    def __init__(self, store, *, clock_us=now_us):
+        """Use an injectable wall clock returning integer Unix epoch microseconds."""
+        self.store, self.clock_us = store, clock_us
 
     def create(self, kind, request):
         job = str(uuid.uuid4())
-        timestamp = now()
+        timestamp = validate_epoch_us(self.clock_us())
         with self.store.transaction():
             self.store.execute(
-                "INSERT INTO jobs(job_id,kind,request,current_attempt,created_at) VALUES(?,?,?,1,?)",
+                "INSERT INTO jobs(job_id,kind,request,current_attempt,created_at_us) VALUES(?,?,?,1,?)",
                 (job, kind, json.dumps(request), timestamp),
             )
             self.store.execute(
-                "INSERT INTO job_attempts(job_id,attempt,state,created_at,updated_at,not_before,checkpoint,reason) VALUES(?,1,'running',?,?,NULL,'{}',NULL)",
+                "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,updated_at_us,not_before_us,checkpoint,reason) VALUES(?,1,'running',?,?,NULL,'{}',NULL)",
                 (job, timestamp, timestamp),
             )
         return job
 
     def resume(self, job):
         row = self.store.one(
-            "SELECT j.*,a.state,a.not_before FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
+            "SELECT j.*,a.state,a.not_before_us FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
             (job,),
         )
         if not row:
@@ -37,22 +38,23 @@ class JobService:
             )
         if row["state"] in ("complete", "cancelled"):
             raise CatalogError("INVALID_ARGUMENT", "Job is not resumable")
-        if row["not_before"] and row["not_before"] > self.clock():
+        timestamp = validate_epoch_us(self.clock_us())
+        if row["not_before_us"] is not None and row["not_before_us"] > timestamp:
             raise Waiting(
                 "NOT_BEFORE",
                 "Job is waiting for its scheduled retry",
-                {"not_before": row["not_before"]},
+                {"not_before_us": row["not_before_us"]},
                 True,
             )
-        timestamp, attempt = now(), row["current_attempt"] + 1
+        attempt = row["current_attempt"] + 1
         with self.store.transaction():
             if row["state"] == "running":
                 self.store.execute(
-                    "UPDATE job_attempts SET state='interrupted',updated_at=?,reason='process_restart' WHERE job_id=? AND attempt=?",
+                    "UPDATE job_attempts SET state='interrupted',updated_at_us=?,reason='process_restart' WHERE job_id=? AND attempt=?",
                     (timestamp, job, row["current_attempt"]),
                 )
             self.store.execute(
-                "INSERT INTO job_attempts(job_id,attempt,state,created_at,updated_at,not_before,checkpoint,reason) VALUES(?,?,'running',?,?,NULL,'{}',NULL)",
+                "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,updated_at_us,not_before_us,checkpoint,reason) VALUES(?,?,'running',?,?,NULL,'{}',NULL)",
                 (job, attempt, timestamp, timestamp),
             )
             self.store.execute("DELETE FROM cache_leases WHERE job_id=?", (job,))
@@ -62,11 +64,14 @@ class JobService:
             )
         return row["kind"], json.loads(row["request"])
 
-    def update(self, job, state, reason=None, not_before=None):
+    def update(self, job, state, reason=None, not_before_us=None):
+        if not_before_us is not None:
+            validate_epoch_us(not_before_us)
+        timestamp = validate_epoch_us(self.clock_us())
         with self.store.transaction():
             self.store.execute(
-                "UPDATE job_attempts SET state=?,reason=?,not_before=?,updated_at=? WHERE job_id=? AND attempt=(SELECT current_attempt FROM jobs WHERE job_id=?)",
-                (state, reason, not_before, now(), job, job),
+                "UPDATE job_attempts SET state=?,reason=?,not_before_us=?,updated_at_us=? WHERE job_id=? AND attempt=(SELECT current_attempt FROM jobs WHERE job_id=?)",
+                (state, reason, not_before_us, timestamp, job, job),
             )
 
     def cancel(self, job):

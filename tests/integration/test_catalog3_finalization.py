@@ -8,6 +8,7 @@ from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.finalization import check_catalog, finalize_catalog
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.time import parse_iso8601_us
 from tests.support.import_workspace import create_workspace
 
 
@@ -22,14 +23,14 @@ def pending(tmp_path, *, complete=True):
         (b"x" * 32, b"y" * 32, b"{}", b"{}"),
     )
     s.execute(
-        "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at,ended_at,parser_version,state,manifest) VALUES('run','src','2026-01-01',NULL,'offline-v2/1','paused',?)",
+        "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at_us,ended_at_us,parser_version,state,manifest) VALUES('run','src',1767225600000000,NULL,'offline-v2/1','paused',?)",
         (json.dumps({"complete": complete}),),
     )
     s.execute(
         "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','repo','{}')"
     )
     s.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,refs_observed_at,kind,request) VALUES('acq','repo','sha1','2026-01-01','legacy','{}')"
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,refs_observed_at_us,kind,request) VALUES('acq','repo','sha1',1767225600000000,'legacy','{}')"
     )
     return s
 
@@ -57,13 +58,13 @@ def archived(store, table, values, encoding="utf-8"):
 def test_saved_pointer_beats_largest_id_or_newest_timestamp_and_is_idempotent(tmp_path):
     with pending(tmp_path) as store:
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at) VALUES('saved','acq','repo',1,1,'2026-01-01')"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('saved','acq','repo',1,1,1767225600000000)"
         )
         store.execute(
-            "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,refs_observed_at,kind,request) VALUES('later-acq','repo','sha1','2026-02-01','legacy','{}')"
+            "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,refs_observed_at_us,kind,request) VALUES('later-acq','repo','sha1',1769904000000000,'legacy','{}')"
         )
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at) VALUES('zz-largest','later-acq','repo',1,100,'2026-02-01')"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('zz-largest','later-acq','repo',1,100,1769904000000000)"
         )
         archived(store, "repositories", {"id": "repo", "current_snapshot": "saved"})
         result = finalize_catalog(store)
@@ -86,7 +87,7 @@ def test_missing_selection_or_unpublished_fact_stays_unset_without_blocking_cata
 ):
     with pending(tmp_path) as store:
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at) VALUES('incomplete','acq','repo',0,1,'2026-01-01')"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('incomplete','acq','repo',0,1,1767225600000000)"
         )
         archived(
             store, "repositories", {"id": "repo", "current_snapshot": "incomplete"}
@@ -105,7 +106,7 @@ def test_partial_content_diagnostics_do_not_block_but_identity_corruption_does(
     with pending(tmp_path) as store:
         record = archived(store, "contents", {"id": "1", "raw_text": None})
         store.execute(
-            "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES('run','content','ORIGINAL_BYTES_MISSING','blocking','2026-01-01',?)",
+            "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at_us,details) VALUES('run','content','ORIGINAL_BYTES_MISSING','blocking',1767225600000000,?)",
             (json.dumps({"legacy_record_id": record}),),
         )
         assert check_catalog(store) == []
@@ -113,7 +114,7 @@ def test_partial_content_diagnostics_do_not_block_but_identity_corruption_does(
             store, "repositories", {"id": "malformed", "name": "bad"}
         )
         store.execute(
-            "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES('run','identity','MALFORMED_TEXT','blocking','2026-01-01',?)",
+            "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at_us,details) VALUES('run','identity','MALFORMED_TEXT','blocking',1767225600000000,?)",
             (json.dumps({"legacy_record_id": identity_record}),),
         )
         with pytest.raises(CatalogError, match="Critical import"):
@@ -138,7 +139,7 @@ def test_saved_selection_decodes_retained_source_text_encoding(tmp_path):
             (json.dumps({"complete": True, "encoding": "UTF-16le"}),),
         )
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at) VALUES('選択','acq','repo',1,1,'2026-01-01')"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('選択','acq','repo',1,1,1767225600000000)"
         )
         archived(
             store,
@@ -162,7 +163,7 @@ def test_saved_selection_decodes_retained_source_text_encoding(tmp_path):
 def test_domain_identity_corruption_prevents_finalization(tmp_path, code):
     with pending(tmp_path) as store:
         store.execute(
-            "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES('run','identity',?,'blocking','2026-01-01','{}')",
+            "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at_us,details) VALUES('run','identity',?,'blocking',1767225600000000,'{}')",
             (code,),
         )
         with pytest.raises(CatalogError):
@@ -210,8 +211,10 @@ def document_source(store, observations):
     # version mapping. Its original value remains in the typed archive.
     archived(store, "document_versions", {"id": "7", "body": "retained text"})
     for ident, version, stamp in observations:
+        if isinstance(stamp, str):
+            stamp = parse_iso8601_us(stamp + "T00:00:00Z")
         store.execute(
-            "INSERT INTO document_observations(document_observation_id,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at,parsed_at,metadata) VALUES(?,?,?,?,?,?,'2026-10-06','{}')",
+            "INSERT INTO document_observations(document_observation_id,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,metadata) VALUES(?,?,?,?,?,?,1791244800000000,'{}')",
             (ident, *key, digest, stamp),
         )
         mapped(
@@ -239,6 +242,54 @@ def test_saved_version_selects_real_observation_not_largest_id_or_other_version(
         assert store.one("SELECT count(*) FROM document_observations")[0] == 3
         assert not store.one(
             "SELECT 1 FROM sqlite_schema WHERE name='document_versions'"
+        )
+
+
+@pytest.mark.parametrize(
+    "observations,expected",
+    [
+        ([(3, 7, -1), (2, 7, 0)], 2),
+        ([(3, 7, 1767225600000000), (2, 7, 1767225600000001)], 2),
+        ([(1, 7, 0)], 1),
+    ],
+)
+def test_saved_document_selection_compares_exact_microseconds_including_epoch(
+    tmp_path, observations, expected
+):
+    with pending(tmp_path) as store:
+        document_source(store, observations)
+        result = finalize_catalog(store)
+        assert (
+            store.one("SELECT current_document_observation_id FROM documents")[0]
+            == expected
+        )
+        assert any(row.get("candidate_id") == expected for row in result["restored"])
+
+
+def test_saved_pr_observation_at_unix_epoch_remains_publishable(tmp_path):
+    with pending(tmp_path) as store:
+        document_source(store, [])
+        store.execute(
+            "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at_us,published,payload,parsed_at_us) VALUES(42,'pr',0,0,'{}',1767225600000000)"
+        )
+        archived(
+            store,
+            "pr_observations",
+            {"id": "42", "pr_id": "pr", "published": 1, "payload": "{}"},
+        )
+        archived(store, "pull_requests", {"id": "pr", "current_observation": 42})
+        finalize_catalog(store)
+        assert (
+            store.one(
+                "SELECT published FROM change_request_observations WHERE change_request_observation_id=42"
+            )[0]
+            == 1
+        )
+        assert (
+            store.one(
+                "SELECT current_change_request_observation_id FROM change_requests"
+            )[0]
+            == 42
         )
 
 

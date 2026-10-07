@@ -218,7 +218,7 @@ def test_observed_content_and_replay_fencing(catalog):
             "--document-observations",
             "all",
         )
-        assert len(a) == 6 and all(r["document_observed_at"] for r in a)
+        assert len(a) == 6 and all(r["document_observed_at_us"] for r in a)
         assert all(
             len({r["document_observation_id"] for r in a if r["pr_id"] == pr}) == 2
             for pr in {r["pr_id"] for r in a}
@@ -330,7 +330,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             old = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at"
+                    "SELECT f.kind,i.safe_watermark_us FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
                 )
             )
         api.stage = "B"
@@ -339,7 +339,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             new = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at"
+                    "SELECT f.kind,i.safe_watermark_us FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
                 )
             )
         issue = "issue-comment-incremental"
@@ -399,7 +399,7 @@ def test_rate_etag(catalog):
         run(state, "jobs", "resume", job, env=env, expected=3)
         assert len(api.requests) == requests
         with sqlite3.connect(state / "catalog.sqlite3") as db:
-            db.execute("UPDATE job_attempts SET not_before=0 WHERE job_id=?", (job,))
+            db.execute("UPDATE job_attempts SET not_before_us=0 WHERE job_id=?", (job,))
         run(state, "jobs", "resume", job, env=env)
         before = pages(
             state, "search", "pr", "--repo", repo, "--literal", "body-marker"

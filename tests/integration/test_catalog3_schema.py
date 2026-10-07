@@ -10,7 +10,7 @@ from repo_catalog.adapters.sqlite.schema import schema_sql
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.config import DEFAULTS, serialize
 
-TIME = "2026-10-06T00:00:00Z"
+TIME_US = 1_791_244_800_000_000
 
 
 def put(db, table, **values):
@@ -59,7 +59,7 @@ def facts():
             change_request_id="pr-" + owner,
             published=1,
             payload="{}",
-            parsed_at=TIME,
+            parsed_at_us=TIME_US,
         )
         put(
             db,
@@ -98,7 +98,7 @@ def facts():
             ordinal=0,
             payload_id=observation,
             request="{}",
-            parsed_at=TIME,
+            parsed_at_us=TIME_US,
         )
     put(
         db,
@@ -235,12 +235,53 @@ def test_pending_observation_cannot_become_current(facts):
         change_request_id="pr-a",
         published=0,
         payload="{}",
-        parsed_at=TIME,
+        parsed_at_us=TIME_US,
     )
     with pytest.raises(sqlite3.IntegrityError):
         facts.execute(
             "UPDATE change_requests SET current_change_request_observation_id=3 WHERE change_request_id='pr-a'"
         )
+
+
+def test_source_seen_range_preserves_order_at_single_microsecond_precision(facts):
+    put(
+        facts,
+        "sources",
+        source_id="source",
+        discovery_kind="manual_git",
+        name="synthetic",
+        settings="{}",
+    )
+    put(
+        facts,
+        "source_repositories",
+        source_id="source",
+        repository_id="a",
+        first_seen_us=TIME_US,
+        last_seen_us=TIME_US + 1,
+    )
+    for first_seen_us, last_seen_us in ((TIME_US + 1, TIME_US + 1), (TIME_US, TIME_US)):
+        with pytest.raises(sqlite3.IntegrityError, match="aggregate time regression"):
+            facts.execute(
+                "UPDATE source_repositories SET first_seen_us=?,last_seen_us=?",
+                (first_seen_us, last_seen_us),
+            )
+    with pytest.raises(sqlite3.IntegrityError):
+        put(
+            facts,
+            "source_repositories",
+            source_id="source",
+            repository_id="b",
+            first_seen_us=TIME_US + 1,
+            last_seen_us=TIME_US,
+        )
+    facts.execute(
+        "UPDATE source_repositories SET first_seen_us=?,last_seen_us=?",
+        (TIME_US - 1, TIME_US + 2),
+    )
+    assert facts.execute(
+        "SELECT first_seen_us,last_seen_us FROM source_repositories"
+    ).fetchone() == (TIME_US - 1, TIME_US + 2)
 
 
 def test_derived_fts_and_analyze_do_not_change_catalog_identity(tmp_path):

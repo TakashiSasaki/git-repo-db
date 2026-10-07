@@ -19,6 +19,7 @@ from repo_catalog.adapters.sqlite.schema import (
     schema_sql,
 )
 from repo_catalog.domain.document import text_body_sha256
+from repo_catalog.domain.time import now_us
 
 from . import (
     archive,
@@ -37,7 +38,6 @@ from .common import (
     canonical,
     digest,
     fsync_directory,
-    now,
     require_local_filesystem,
 )
 from .types import identifier, tagged_key
@@ -194,7 +194,7 @@ def create(destination, sealed, batch_size, estimate, fault=no_fault):
     with work_pending.open("xb"):
         pass
     stamp, conversion_source_id, conversion_run_id = (
-        now(),
+        now_us(),
         str(uuid.uuid4()),
         str(uuid.uuid4()),
     )
@@ -229,7 +229,7 @@ def create(destination, sealed, batch_size, estimate, fault=no_fault):
             ),
         )
         db.execute(
-            "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at,ended_at,parser_version,state,manifest) VALUES(?,?,?,NULL,?,'building',?)",
+            "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at_us,ended_at_us,parser_version,state,manifest) VALUES(?,?,?,NULL,?,'building',?)",
             (
                 conversion_run_id,
                 conversion_source_id,
@@ -255,7 +255,7 @@ def check(db, sealed, batch_size):
         "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
     ).fetchall()
     runs = db.execute(
-        "SELECT conversion_run_id,conversion_source_id,started_at,ended_at,parser_version,state,manifest FROM conversion_runs"
+        "SELECT conversion_run_id,conversion_source_id,started_at_us,ended_at_us,parser_version,state,manifest FROM conversion_runs"
     ).fetchall()
     if (
         len(identities) != 1
@@ -408,13 +408,13 @@ def compact(output, mapping_ids, diagnostic_ids, stamp):
         "diagnostic_ids": diagnostic_ids,
         "mappings_sha256": row_hash(output["mappings"]),
         "diagnostics_sha256": row_hash(output["diagnostics"]),
-        "observed_at": stamp,
+        "observed_at_us": stamp,
     }
 
 
 def commit(db, src, run, receipt, item, fault=no_fault):
     module, name, index, records, input_sha256 = item
-    stamp = now()
+    stamp = now_us()
     if module is None:
         rows = archive_output(db, run, records, stamp, receipt["encoding"])
         saved = archive_proof(rows)
@@ -556,7 +556,7 @@ def commit(db, src, run, receipt, item, fault=no_fault):
                 diagnostic_ids, output["diagnostics"], strict=True
             ):
                 db.execute(
-                    "INSERT INTO validation_results(validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES(?,?,?,?,?,?,?)",
+                    "INSERT INTO validation_results(validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at_us,details) VALUES(?,?,?,?,?,?,?)",
                     (
                         ident,
                         run["conversion_run_id"],
@@ -566,7 +566,7 @@ def commit(db, src, run, receipt, item, fault=no_fault):
                     ),
                 )
         db.execute(
-            "INSERT INTO conversion_batches(conversion_batch_id,conversion_run_id,source_table,input_sha256,committed_at,output_manifest) VALUES(?,?,?,?,?,?)",
+            "INSERT INTO conversion_batches(conversion_batch_id,conversion_run_id,source_table,input_sha256,committed_at_us,output_manifest) VALUES(?,?,?,?,?,?)",
             (
                 batch.next_id(db, "conversion_batches"),
                 run["conversion_run_id"],
@@ -577,7 +577,7 @@ def commit(db, src, run, receipt, item, fault=no_fault):
             ),
         )
         db.execute(
-            "UPDATE conversion_runs SET state='building',ended_at=NULL WHERE conversion_run_id=?",
+            "UPDATE conversion_runs SET state='building',ended_at_us=NULL WHERE conversion_run_id=?",
             (run["conversion_run_id"],),
         )
         fault("before_commit", table=name, index=index)
@@ -599,7 +599,7 @@ def verify_output(db, src, run, receipt):
     count = 0
     try:
         for saved_batch in db.execute(
-            "SELECT conversion_batch_id,conversion_run_id,source_table,input_sha256,committed_at,output_manifest FROM conversion_batches WHERE conversion_run_id=? ORDER BY conversion_batch_id",
+            "SELECT conversion_batch_id,conversion_run_id,source_table,input_sha256,committed_at_us,output_manifest FROM conversion_batches WHERE conversion_run_id=? ORDER BY conversion_batch_id",
             (run["conversion_run_id"],),
         ):
             item = next(expected, None)
@@ -639,7 +639,7 @@ def verify_output(db, src, run, receipt):
                         record, receipt["encoding"]
                     ):
                         found = db.execute(
-                            "SELECT validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at,details FROM validation_results WHERE conversion_run_id=? AND code=? AND details=?",
+                            "SELECT validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at_us,details FROM validation_results WHERE conversion_run_id=? AND code=? AND details=?",
                             (
                                 run["conversion_run_id"],
                                 code,
@@ -660,7 +660,7 @@ def verify_output(db, src, run, receipt):
                                 "I31",
                                 code,
                                 severity,
-                                saved_batch["committed_at"],
+                                saved_batch["committed_at_us"],
                                 canonical(
                                     {
                                         "legacy_record_id": actual["legacy_record_id"],
@@ -699,7 +699,7 @@ def verify_output(db, src, run, receipt):
                     output,
                     saved.get("mapping_ids", []),
                     saved.get("diagnostic_ids", []),
-                    saved_batch["committed_at"],
+                    saved_batch["committed_at_us"],
                 ):
                     raise ConversionError("IMPORT_SOURCE_OUTPUT_MISMATCH")
                 if len(saved["mapping_ids"]) != len(output["mappings"]) or len(
@@ -756,12 +756,12 @@ def verify_output(db, src, run, receipt):
                         ident,
                         run["conversion_run_id"],
                         *diagnostic[:3],
-                        saved_batch["committed_at"],
+                        saved_batch["committed_at_us"],
                         diagnostic[3],
                     )
                     ledger.execute("INSERT INTO diagnostics(id) VALUES(?)", (ident,))
                     actual = db.execute(
-                        "SELECT validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at,details FROM validation_results WHERE validation_result_id=?",
+                        "SELECT validation_result_id,conversion_run_id,invariant_id,code,severity,observed_at_us,details FROM validation_results WHERE validation_result_id=?",
                         (ident,),
                     ).fetchone()
                     if actual is None or tuple(actual) != row:
@@ -964,9 +964,9 @@ def run(
                 receipt["source_foreign_key_issues"] = diagnostics.source_issues(src)
                 db.execute("BEGIN IMMEDIATE")
                 db.execute(
-                    "UPDATE conversion_runs SET state='paused',ended_at=?,manifest=? WHERE conversion_run_id=?",
+                    "UPDATE conversion_runs SET state='paused',ended_at_us=?,manifest=? WHERE conversion_run_id=?",
                     (
-                        now() if status["complete"] else None,
+                        now_us() if status["complete"] else None,
                         canonical(receipt),
                         run_row["conversion_run_id"],
                     ),

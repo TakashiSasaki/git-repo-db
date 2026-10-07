@@ -4,6 +4,7 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.maintenance_service import MaintenanceService
@@ -73,24 +74,31 @@ def test_derived_fts_and_statistics_preserve_catalog_identity(tmp_path):
             )[0]
             == "synthetic sentinel"
         )
-        assert reader.one("SELECT schema_version FROM database_identity")[0] == 7
+        assert (
+            reader.one("SELECT schema_version FROM database_identity")[0]
+            == SCHEMA_VERSION
+        )
 
 
 def test_job_attempt_resume_cleans_old_capacity_and_obeys_injected_time(tmp_path):
     initialize(tmp_path / "state")
     with Store(tmp_path / "state") as store:
-        jobs = JobService(store, clock=lambda: 10)
+        jobs = JobService(store, clock_us=lambda: 10_000_000)
         job = jobs.create("sync", {"kind": "git"})
         store.execute(
             "INSERT INTO space_reservations(job_id,attempt,reserved,consumed) VALUES(?,1,4096,0)",
             (job,),
         )
-        jobs.update(job, "waiting", "backoff", 11)
+        jobs.update(job, "waiting", "backoff", not_before_us=11_000_000)
         before = store.revision()
-        with pytest.raises(Waiting):
+        with pytest.raises(Waiting) as waiting:
             jobs.resume(job)
+        assert waiting.value.details["not_before_us"] == 11_000_000
+        assert tuple(
+            store.one("SELECT not_before_us,typeof(not_before_us) FROM job_attempts")
+        ) == (11_000_000, "integer")
         assert store.one("SELECT current_attempt FROM jobs")[0] == 1
-        jobs.clock = lambda: 12
+        jobs.clock_us = lambda: 12_000_000
         assert jobs.resume(job) == ("sync", {"kind": "git"})
         assert store.one("SELECT current_attempt FROM jobs")[0] == 2
         assert (
@@ -102,6 +110,21 @@ def test_job_attempt_resume_cleans_old_capacity_and_obeys_injected_time(tmp_path
         jobs.update(legacy, "interrupted")
         with pytest.raises(CatalogError, match="historical jobs"):
             jobs.resume(legacy)
+
+
+def test_job_retry_at_epoch_zero_is_a_real_deadline(tmp_path):
+    initialize(tmp_path / "state")
+    with Store(tmp_path / "state") as store:
+        jobs = JobService(store, clock_us=lambda: -1)
+        job = jobs.create("sync", {"kind": "git"})
+        jobs.update(job, "waiting", "backoff", not_before_us=0)
+        with pytest.raises(Waiting) as waiting:
+            jobs.resume(job)
+        assert waiting.value.details["not_before_us"] == 0
+        assert store.one("SELECT current_attempt FROM jobs")[0] == 1
+        jobs.clock_us = lambda: 0
+        assert jobs.resume(job) == ("sync", {"kind": "git"})
+        assert store.one("SELECT current_attempt FROM jobs")[0] == 2
 
 
 def test_runtime_refuses_v2_without_modifying_it(tmp_path):

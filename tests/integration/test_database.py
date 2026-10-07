@@ -4,6 +4,7 @@ import pytest
 
 from repo_catalog.adapters.filesystem.capacity import Capacity
 from repo_catalog.adapters.filesystem.locks import FileLock
+from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.maintenance_service import MaintenanceService
@@ -38,7 +39,9 @@ def test_constraints_and_transaction_atomicity(state):
             s.execute("UPDATE database_identity SET publication_seq=999")
             s.execute("THIS IS NOT SQL")
         assert s.one("SELECT name FROM sqlite_master WHERE name='rolled_back'") is None
-        assert s.one("SELECT schema_version FROM database_identity")[0] == 7
+        assert (
+            s.one("SELECT schema_version FROM database_identity")[0] == SCHEMA_VERSION
+        )
         assert s.revision() == original
     with Store(state, readonly=True) as s, pytest.raises(sqlite3.OperationalError):
         s.publish()
@@ -63,8 +66,8 @@ def test_full_rollback(state):
         with pytest.raises(sqlite3.OperationalError):
             with s.transaction():
                 s.execute(
-                    "INSERT INTO contents(byte_length,raw_text,text_state,created_at) VALUES(?,?,?,?)",
-                    (1048576, "x" * 1048576, "eligible", "fixture"),
+                    "INSERT INTO contents(byte_length,raw_text,text_state,created_at_us) VALUES(?,?,?,?)",
+                    (1048576, "x" * 1048576, "eligible", 0),
                 )
                 s.publish()
         assert s.revision() == old and not s.connection.in_transaction

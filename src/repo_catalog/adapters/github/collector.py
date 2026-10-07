@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
 from importlib.resources import files
 from urllib.parse import urlencode, urljoin, urlsplit
 
@@ -13,7 +12,8 @@ from repo_catalog.adapters.github.persistence import (
     oid_context,
 )
 from repo_catalog.adapters.github.transport import GitHubTransport
-from repo_catalog.domain.models import CatalogError, Waiting, now
+from repo_catalog.domain.models import CatalogError, Waiting
+from repo_catalog.domain.time import format_iso8601_us, now_us
 
 
 class GitHubCollector:
@@ -83,8 +83,8 @@ class GitHubCollector:
                     (repo["repository_id"], name),
                 ):
                     self.s.execute(
-                        "INSERT INTO repository_name_assertions(repository_id,name,observed_at) VALUES(?,?,?)",
-                        (repo["repository_id"], name, now()),
+                        "INSERT INTO repository_name_assertions(repository_id,name,observed_at_us) VALUES(?,?,?)",
+                        (repo["repository_id"], name, now_us()),
                     )
                 self.s.publish()
             url = target
@@ -98,7 +98,7 @@ class GitHubCollector:
                     "payload_id": payload_id,
                     "url": url,
                     "method": method,
-                    "observed_at": now(),
+                    "observed_at_us": now_us(),
                     "etag": response.headers.get("etag"),
                     "next_url": self.http.next_url(response),
                 }
@@ -471,14 +471,14 @@ class GitHubCollector:
             existing[0]
             if existing
             else s.execute(
-                "INSERT INTO change_request_observations(change_request_id,observed_at,published,payload,origin_key,parsed_at,origin_fetch_occurrence_id) VALUES(?,?,?,?,?,?,?)",
+                "INSERT INTO change_request_observations(change_request_id,observed_at_us,published,payload,origin_key,parsed_at_us,origin_fetch_occurrence_id) VALUES(?,?,?,?,?,?,?)",
                 (
                     ident,
                     timestamp,
                     int(publish or not row),
                     canonical(value),
                     origin,
-                    now(),
+                    now_us(),
                     occurrence,
                 ),
             ).lastrowid
@@ -574,18 +574,18 @@ class GitHubCollector:
                     )
                     if imported_validator:
                         self.s.execute(
-                            "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at) VALUES(?,'representation',?,?,?)",
+                            "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at_us) VALUES(?,'representation',?,?,?)",
                             (
                                 collection["resume_scope_id"],
                                 validator["etag"],
                                 validator["payload_id"],
-                                now(),
+                                now_us(),
                             ),
                         )
                     else:
                         self.s.execute(
-                            "UPDATE validators SET validated_at=? WHERE resume_scope_id=? AND validator_key='representation'",
-                            (now(), collection["resume_scope_id"]),
+                            "UPDATE validators SET validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
+                            (now_us(), collection["resume_scope_id"]),
                         )
                     self.s.publish()
                 self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
@@ -604,7 +604,7 @@ class GitHubCollector:
                 payload_id = self.facts.payload(response.content)
                 if validator and not imported_validator:
                     self.s.execute(
-                        "UPDATE validators SET etag=?,payload_id=?,validated_at=? WHERE resume_scope_id=? AND validator_key='representation'",
+                        "UPDATE validators SET etag=?,payload_id=?,validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
                         (
                             response.headers["etag"],
                             payload_id,
@@ -614,7 +614,7 @@ class GitHubCollector:
                     )
                 else:
                     self.s.execute(
-                        "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at) VALUES(?,'representation',?,?,?)",
+                        "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at_us) VALUES(?,'representation',?,?,?)",
                         (
                             collection["resume_scope_id"],
                             response.headers["etag"],
@@ -637,25 +637,24 @@ class GitHubCollector:
                 repo, endpoint, {"kind": kind, "sort": "updated", "direction": "asc"}
             )
         previous = self.s.one(
-            "SELECT i.* FROM incremental_scans i JOIN collection_progress p ON p.fetch_collection_id=i.fetch_collection_id WHERE json_extract(i.evidence,'$.stable_scope')=? AND i.safe_watermark IS NOT NULL AND p.state='complete' ORDER BY i.scan_started_at DESC LIMIT 1",
+            "SELECT i.* FROM incremental_scans i JOIN collection_progress p ON p.fetch_collection_id=i.fetch_collection_id WHERE json_extract(i.evidence,'$.stable_scope')=? AND i.safe_watermark_us IS NOT NULL AND p.state='complete' ORDER BY i.scan_started_at_us DESC LIMIT 1",
             (scope,),
         )
-        started = now()
+        started = now_us()
         parameters = {
             "per_page": self.cfg["rest_page_size"],
             "sort": "updated",
             "direction": "asc",
         }
         if previous:
-            parameters["since"] = (
-                datetime.fromisoformat(previous["safe_watermark"])
-                - timedelta(minutes=5)
-            ).isoformat()
+            parameters["since"] = format_iso8601_us(
+                previous["safe_watermark_us"] - 300_000_000
+            )
         endpoint_url = endpoint + "?" + urlencode(parameters)
         # Resume keeps its originally bounded request and original scan start;
         # resumption itself must never move a child watermark.
         existing = self.s.one(
-            "SELECT f.fetch_collection_id,f.observed_at,s.endpoint FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN resume_scopes s ON s.resume_scope_id=f.resume_scope_id WHERE f.repository_id=? AND f.kind=? AND p.job_id=? AND s.source_id=? AND s.principal_ref=? AND s.api_version=? AND s.parser_version=? AND s.profile_version=? AND s.confidence='proven' ORDER BY f.observed_at DESC LIMIT 1",
+            "SELECT f.fetch_collection_id,f.observed_at_us,s.endpoint FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN resume_scopes s ON s.resume_scope_id=f.resume_scope_id WHERE f.repository_id=? AND f.kind=? AND p.job_id=? AND s.source_id=? AND s.principal_ref=? AND s.api_version=? AND s.parser_version=? AND s.profile_version=? AND s.confidence='proven' ORDER BY f.observed_at_us DESC LIMIT 1",
             (
                 repo["repository_id"],
                 kind + "-incremental",
@@ -668,7 +667,7 @@ class GitHubCollector:
             ),
         )
         if existing:
-            endpoint_url, started = existing["endpoint"], existing["observed_at"]
+            endpoint_url, started = existing["endpoint"], existing["observed_at_us"]
 
         def normalize(value, collection, occurrence, position, timestamp, listing):
             parent = value.get(parent_field)
@@ -747,7 +746,7 @@ class GitHubCollector:
                 # Each request scope records its own scan, and a stable scope also
                 # points to that same endpoint context via safe scan lookup below.
                 self.s.execute(
-                    "INSERT INTO incremental_scans(incremental_scan_id,resume_scope_id,fetch_collection_id,scan_started_at,safe_watermark,evidence) VALUES(?,?,?,?,?,?)",
+                    "INSERT INTO incremental_scans(incremental_scan_id,resume_scope_id,fetch_collection_id,scan_started_at_us,safe_watermark_us,evidence) VALUES(?,?,?,?,?,?)",
                     (
                         cid,
                         actual_scope,
@@ -876,7 +875,7 @@ class GitHubCollector:
                     payload = json.loads(page["body"])
                     occurrence, timestamp = (
                         page["fetch_occurrence_id"],
-                        page["observed_at"],
+                        page["observed_at_us"],
                     )
                 else:
                     response = self.http.request(
@@ -949,7 +948,7 @@ class GitHubCollector:
                     raise Waiting(
                         "RATE_LIMIT",
                         "GraphQL rate limited",
-                        {"not_before": self.http.clock() + 60},
+                        {"not_before_us": self.http.clock_us() + 60_000_000},
                         True,
                     )
                 if payload.get("errors"):
@@ -1030,12 +1029,12 @@ class GitHubCollector:
             (pr["change_request_id"], provider_resource_id),
         ):
             self.s.execute(
-                "UPDATE review_threads SET payload=?,observed_at=? WHERE change_request_id=? AND provider_resource_id=?",
+                "UPDATE review_threads SET payload=?,observed_at_us=? WHERE change_request_id=? AND provider_resource_id=?",
                 (value, timestamp, pr["change_request_id"], provider_resource_id),
             )
         else:
             self.s.execute(
-                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at) VALUES(?,?,?,?)",
+                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at_us) VALUES(?,?,?,?)",
                 (pr["change_request_id"], provider_resource_id, value, timestamp),
             )
         return provider_resource_id
@@ -1246,7 +1245,11 @@ class GitHubCollector:
 
         def attempt(kind, operation):
             nonlocal waiting
-            if waiting and waiting > self.http.clock() and kind != "pr-git":
+            if (
+                waiting is not None
+                and waiting > self.http.clock_us()
+                and kind != "pr-git"
+            ):
                 failures.append({"kind": kind, "reason": "RATE_LIMIT_WAIT"})
                 return None
             try:
@@ -1255,7 +1258,7 @@ class GitHubCollector:
                 if error.code in ("CANCELLED", "STALE_ATTEMPT"):
                     raise
                 failures.append({"kind": kind, "reason": error.code})
-                waiting = error.details.get("not_before", waiting)
+                waiting = error.details.get("not_before_us", waiting)
                 with s.transaction():
                     s.coverage(
                         repo["repository_id"],
@@ -1353,7 +1356,7 @@ class GitHubCollector:
 
                 def event(value, collection, occurrence, position, timestamp, listing):
                     s.execute(
-                        "INSERT INTO change_request_events(change_request_id,origin_key,ordinal,provider_event_id,payload,observed_at) VALUES(?,?,?,?,?,?)",
+                        "INSERT INTO change_request_events(change_request_id,origin_key,ordinal,provider_event_id,payload,observed_at_us) VALUES(?,?,?,?,?,?)",
                         (
                             pr["change_request_id"],
                             self.facts.origin(collection, occurrence, position),
@@ -1617,7 +1620,7 @@ class GitHubCollector:
                     "Some PR collections are incomplete",
                     {
                         "missing": failures,
-                        **({"not_before": waiting} if waiting else {}),
+                        **({"not_before_us": waiting} if waiting is not None else {}),
                     },
                     True,
                 )
@@ -1637,7 +1640,7 @@ class GitHubCollector:
             (runtime_scope,),
         )[0]
         candidates = self.s.all(
-            "SELECT v.*,sc.request_context,sc.principal_ref FROM validators v JOIN resume_scopes sc ON sc.resume_scope_id=v.resume_scope_id WHERE sc.repository_id=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.endpoint=? AND sc.api_version=? AND sc.confidence='legacy_unknown' AND sc.parser_version='v1' ORDER BY v.validated_at DESC",
+            "SELECT v.*,sc.request_context,sc.principal_ref FROM validators v JOIN resume_scopes sc ON sc.resume_scope_id=v.resume_scope_id WHERE sc.repository_id=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.endpoint=? AND sc.api_version=? AND sc.confidence='legacy_unknown' AND sc.parser_version='v1' ORDER BY v.validated_at_us DESC",
             (
                 repo["repository_id"],
                 binding,
@@ -1742,7 +1745,7 @@ class GitHubCollector:
             if count != reported or cap and count >= cap:
                 continue
             self.s.execute(
-                "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at) VALUES(?,?,'complete',?,?)",
+                "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
                 (
                     listing["resume_scope_id"],
                     listing["fetch_collection_id"],
@@ -1763,7 +1766,7 @@ class GitHubCollector:
                             "legacy_cursor_reused": False,
                         }
                     ),
-                    now(),
+                    now_us(),
                 ),
             )
             self.s.publish()

@@ -1,9 +1,9 @@
 """Source-owned identity recipes for the guarded v2 salvage importer."""
 
-import re
 import uuid
-from datetime import datetime
 from urllib.parse import urlsplit
+
+from repo_catalog.domain.time import parse_iso8601_us
 
 from . import archive, mapping
 from .common import ConversionError, canonical, strict_json
@@ -42,7 +42,7 @@ COLUMNS = {
         "web_base_url",
         "api_base_url",
         "metadata",
-        "created_at",
+        "created_at_us",
     ),
     "sources": (
         "source_id",
@@ -64,7 +64,7 @@ COLUMNS = {
         "service_instance_uuidv4",
         "provider_repository_id",
         "metadata",
-        "created_at",
+        "created_at_us",
     ),
     "repository_endpoints": (
         "repository_endpoint_id",
@@ -73,10 +73,15 @@ COLUMNS = {
         "transport",
         "label",
         "metadata",
-        "created_at",
+        "created_at_us",
     ),
-    "repository_name_assertions": ("repository_id", "name", "observed_at"),
-    "source_repositories": ("source_id", "repository_id", "first_seen", "last_seen"),
+    "repository_name_assertions": ("repository_id", "name", "observed_at_us"),
+    "source_repositories": (
+        "source_id",
+        "repository_id",
+        "first_seen_us",
+        "last_seen_us",
+    ),
 }
 
 
@@ -104,26 +109,16 @@ def text(record, column, *, nullable=False, nonempty=False, encoding="UTF-8"):
     return value
 
 
-def instant(value):
-    if not re.fullmatch(
-        r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
-        r"(?:\.[0-9]{1,6})?(?:Z|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])",
-        value,
-    ):
-        raise ValueError()
-    parsed = datetime.fromisoformat(value)
-    if parsed.utcoffset() is None:
-        raise ValueError()
-    return parsed
-
-
 class Context:
     """Small schema cache; source lookups do not materialize an identity graph."""
+
+    TIME_ISSUE_PREFIX = "IDENTITY_"
 
     def __init__(self, db, src, run, encoding="UTF-8", *, verifying=False):
         self.db, self.src, self.run = db, src, run
         self.encoding, self.verifying = encoding, verifying
         self.schemas = {}
+        self.time_issues = []
 
     def t(self, record, column, **options):
         return text(record, column, encoding=self.encoding, **options)
@@ -138,13 +133,28 @@ class Context:
         return value
 
     def timestamp(self, record, column):
-        value = self.t(record, column, nullable=True)
-        if value is not None:
-            try:
-                instant(value)
-            except ValueError:
-                raise Invalid("IDENTITY_INVALID_TIME", column) from None
-        return value
+        """Translate source time at admission, retaining unknown facts as NULL.
+
+        The typed archive keeps the original value. Parser/converter time must
+        never stand in for a missing or malformed source observation.
+        """
+        if record.value(column)[0] == "null":
+            if column in ("observed_at", "refs_at"):
+                self.time_issues.append(
+                    (
+                        self.TIME_ISSUE_PREFIX + "OBSERVATION_TIME_MISSING",
+                        "partial",
+                        column,
+                    )
+                )
+            return None
+        try:
+            return parse_iso8601_us(self.t(record, column))
+        except (Invalid, TypeError, ValueError, OverflowError):
+            self.time_issues.append(
+                (self.TIME_ISSUE_PREFIX + "INVALID_TIME", "partial", column)
+            )
+            return None
 
     def schema(self, table):
         if table not in self.schemas:
@@ -379,18 +389,7 @@ class Context:
                 self.timestamp(record, "first_seen"),
                 self.timestamp(record, "last_seen"),
             )
-            for column, value in (("first_seen", first), ("last_seen", last)):
-                if (
-                    value is not None
-                    and self.db.execute("SELECT julianday(?)", (value,)).fetchone()[0]
-                    is None
-                ):
-                    raise Invalid("IDENTITY_INVALID_TIME", column)
-            if (
-                first is not None
-                and last is not None
-                and instant(first) > instant(last)
-            ):
+            if first is not None and last is not None and first > last:
                 raise Invalid("IDENTITY_REVERSED_BOUNDS", "last_seen")
             return [source, repo, first, last]
         raise ConversionError("UNKNOWN_IDENTITY_RECIPE")
@@ -505,6 +504,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
     context = Context(db, src, run, encoding, verifying=verifying)
     output = {"operations": [], "mappings": [], "diagnostics": [], "decisions": []}
     for record in records:
+        context.time_issues = []
         legacy_record_id = context.legacy_record_id(record)
         issues, row = [], None
         try:
@@ -526,6 +526,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
             )
         if recipe == "repositories":
             issues.extend(context.legacy_issues(record))
+        issues.extend(context.time_issues)
         if row is not None:
             table = "repositories" if recipe == "repository_preferences" else recipe
             operation = "preference" if recipe == "repository_preferences" else "insert"

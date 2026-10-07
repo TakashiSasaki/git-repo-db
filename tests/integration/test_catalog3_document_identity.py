@@ -17,6 +17,8 @@ from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.domain.document import DocumentKey, text_body_sha256
 from repo_catalog.domain.models import CatalogError
 
+OBSERVED_AT_US = 1_791_244_800_000_000
+
 
 @pytest.fixture
 def catalog(tmp_path):
@@ -42,7 +44,7 @@ def catalog(tmp_path):
         yield state, store
 
 
-def observe(store, key, body, position, *, date="2026-10-06T00:00:00Z", node=None):
+def observe(store, key, body, position, *, observed_at_us=OBSERVED_AT_US, node=None):
     """Synthetic admitted observations; no Git or network acquisition."""
     return ApiFacts(store, store.config["github"]).document(
         *key,
@@ -51,7 +53,7 @@ def observe(store, key, body, position, *, date="2026-10-06T00:00:00Z", node=Non
         {"fetch_collection_id": "synthetic-origin", "change_request_id": None},
         1,
         position,
-        date,
+        observed_at_us,
     )
 
 
@@ -155,12 +157,15 @@ def test_direct_observations_keep_a_a_b_a_and_replay_does_not_move_current(catal
         for position, body in enumerate(
             ("A marker", "A marker", "B marker", "A marker")
         ):
-            observe(store, key, body, position, date=f"2026-10-06T00:00:0{position}Z")
+            observe(
+                store, key, body, position, observed_at_us=OBSERVED_AT_US + position
+            )
     rows = store.all(
-        "SELECT document_observation_id,text_body_sha256 FROM document_observations ORDER BY document_observation_id"
+        "SELECT document_observation_id,text_body_sha256,observed_at_us FROM document_observations ORDER BY document_observation_id"
     )
     assert len(rows) == 4 and len({row[0] for row in rows}) == 4
     assert rows[0][1] == rows[1][1] == rows[3][1] != rows[2][1]
+    assert [row[2] for row in rows] == [OBSERVED_AT_US + i for i in range(4)]
     current = store.one("SELECT current_document_observation_id FROM documents")[0]
     assert current == rows[3][0]
     with store.transaction():

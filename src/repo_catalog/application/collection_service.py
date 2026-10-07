@@ -15,8 +15,8 @@ from repo_catalog.domain.models import (
     CatalogError,
     CoverageReport,
     Result,
-    now,
 )
+from repo_catalog.domain.time import now_us
 
 
 def select_repositories(s, selectors=(), source=None):
@@ -90,7 +90,7 @@ class CollectionService:
             self.token.check()
             settings = json.loads(src["settings"])
             run = str(uuid.uuid4())
-            observed_at = now()
+            observed_at_us = now_us()
             inventory_scope = dict(settings)
             collector = None
             try:
@@ -185,18 +185,18 @@ class CollectionService:
                             (ident, repo["name"]),
                         ):
                             s.execute(
-                                "INSERT INTO repository_name_assertions(repository_id,name,observed_at) VALUES(?,?,?)",
-                                (ident, repo["name"], observed_at),
+                                "INSERT INTO repository_name_assertions(repository_id,name,observed_at_us) VALUES(?,?,?)",
+                                (ident, repo["name"], observed_at_us),
                             )
                         items.append({"repository_id": ident, "name": repo["name"]})
                     s.execute(
-                        "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at,reason) VALUES(?,?,?,?,?,?)",
+                        "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at_us,reason) VALUES(?,?,?,?,?,?)",
                         (
                             run,
                             src["source_id"],
                             "partial" if uncertainty else "complete",
                             json.dumps(inventory_scope),
-                            observed_at,
+                            observed_at_us,
                             uncertainty,
                         ),
                     )
@@ -205,13 +205,13 @@ class CollectionService:
                 coverage.add("inventory", e.code, source_id=src["source_id"])
                 with s.transaction():
                     s.execute(
-                        "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at,reason) VALUES(?,?,?,?,?,?)",
+                        "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at_us,reason) VALUES(?,?,?,?,?,?)",
                         (
                             run,
                             src["source_id"],
                             "partial",
                             json.dumps(inventory_scope),
-                            observed_at,
+                            observed_at_us,
                             e.code,
                         ),
                     )
@@ -251,7 +251,7 @@ class CollectionService:
     def _sync(self, s, job, request):
         items = []
         coverage = CoverageReport()
-        not_before = None
+        not_before_us = None
         s.expected_attempt = s.one(
             "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
         )[0]
@@ -358,11 +358,11 @@ class CollectionService:
                                 "error": e.code,
                             }
                         )
-                        not_before = e.details.get("not_before", not_before)
+                        not_before_us = e.details.get("not_before_us", not_before_us)
             JobService(s).update(
                 job,
                 "complete" if coverage.complete_for_requested_scope else "waiting",
-                not_before=not_before,
+                not_before_us=not_before_us,
             )
             return Result(
                 {"job_id": job, "results": items},

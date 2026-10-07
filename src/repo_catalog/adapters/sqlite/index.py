@@ -1,6 +1,7 @@
 import sqlite3
 
-from repo_catalog.domain.models import CancellationToken, CatalogError, now
+from repo_catalog.domain.models import CancellationToken, CatalogError
+from repo_catalog.domain.time import now_us
 
 
 def fts_available(store):
@@ -95,8 +96,8 @@ def rebuild(store, kind, token=None):
             )[0]
             table = f"catalog_fts_{ident}"
             s.execute(
-                "INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,created_at) VALUES(?,?,?,?,?,?)",
-                (ident, current, "building", table, maximum, now()),
+                "INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,created_at_us) VALUES(?,?,?,?,?,?)",
+                (ident, current, "building", table, maximum, now_us()),
             )
             s.execute(
                 f"CREATE VIRTUAL TABLE {table} USING fts5(body, tokenize='trigram case_sensitive 1',content='',detail=full)"

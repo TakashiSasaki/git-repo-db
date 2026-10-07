@@ -228,7 +228,7 @@ class QueryService:
                 if o.get("source") and o["source"] != source["source_id"]:
                     continue
                 latest = self.s.one(
-                    "SELECT asserted_state FROM inventory_observations WHERE source_id=? ORDER BY observed_at DESC LIMIT 1",
+                    "SELECT asserted_state FROM inventory_observations WHERE source_id=? ORDER BY observed_at_us DESC LIMIT 1",
                     (source["source_id"],),
                 )
                 if not latest or latest[0] != "complete":
@@ -1062,7 +1062,7 @@ class QueryService:
             )
         elif command in ("jobs list", "jobs show"):
             rows = s.all(
-                "SELECT j.*,a.state,a.attempt,a.not_before,a.checkpoint,a.reason,a.updated_at FROM jobs j LEFT JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt"
+                "SELECT j.*,a.state,a.attempt,a.not_before_us,a.checkpoint,a.reason,a.updated_at_us FROM jobs j LEFT JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt"
                 + (" WHERE j.job_id=?" if o.get("job_id") else "")
                 + " ORDER BY j.job_id",
                 (o["job_id"],) if o.get("job_id") else (),
