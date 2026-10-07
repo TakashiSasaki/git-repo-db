@@ -97,10 +97,9 @@ COLUMNS = {
         "change_request_id",
         "repository_id",
         "repository_binding_id",
-        "request_kind",
-        "number",
+        "change_request_kind",
+        "provider_change_request_number",
         "current_change_request_observation_id",
-        "provider_node_id",
     ),
     "resume_scopes": (
         "resume_scope_id",
@@ -159,7 +158,6 @@ COLUMNS = {
         "provider_change_request_document_id",
         "current_document_observation_id",
         "deleted",
-        "provider_node_id",
         "author",
         "url",
         "metadata",
@@ -183,8 +181,8 @@ COLUMNS = {
         "payload",
     ),
     "review_threads": (
-        "review_thread_id",
         "change_request_id",
+        "provider_resource_id",
         "payload",
         "observed_at",
     ),
@@ -192,7 +190,7 @@ COLUMNS = {
         "change_request_id",
         "kind",
         "provider_change_request_document_id",
-        "review_thread_id",
+        "review_thread_provider_resource_id",
         "payload",
     ),
     "change_request_events": (
@@ -330,7 +328,7 @@ KEYS = {
     "documents": ("change_request_id", "kind", "provider_change_request_document_id"),
     "document_observations": ("document_observation_id",),
     "reviews": ("change_request_id", "kind", "provider_change_request_document_id"),
-    "review_threads": ("review_thread_id",),
+    "review_threads": ("change_request_id", "provider_resource_id"),
     "change_request_events": ("change_request_event_id",),
     "unresolved_payloads": ("unresolved_payload_id",),
     "incremental_scans": ("incremental_scan_id",),
@@ -459,6 +457,7 @@ class Context(identity.Context):
         self._source_document_keys = {}
         self._source_version_digests = {}
         self._body_digests = {}
+        self._thread_provider_resource_ids = {}
 
     def metadata(self, record, column="metadata"):
         storage, raw = record.value(column)
@@ -581,7 +580,6 @@ class Context(identity.Context):
             "pull_request",
             self.i(record, "number", minimum=1),
             None,
-            self.t(record, "node_id", nullable=True),
         )
 
     def source(self, repo):
@@ -812,7 +810,7 @@ class Context(identity.Context):
         """
         if table == "documents":
             self.remember_source_document(row)
-            return (*row[1:4], None, *row[5:])
+            return (*row[1:4], None, row[5], *row[7:])
         if table == "document_versions":
             self._source_version_digests[row[0]] = self._body_digests[row[2]]
             return None
@@ -827,18 +825,48 @@ class Context(identity.Context):
             if key[0] != row[1] or key[1] != "review":
                 raise Invalid("OWNER_MISMATCH", "document_id")
             return (*key, row[3])
+        if table == "review_threads":
+            return (
+                row[1],
+                self.thread_provider_resource_id(row[0], payload=row[2]),
+                row[2],
+                row[3],
+            )
         if table == "review_comments":
             key = self.document_key(row[0])
             if key[0] != row[1] or key[1] != "review-comment":
                 raise Invalid("OWNER_MISMATCH", "document_id")
-            return (*key, *row[2:])
+            provider_resource_id = (
+                self.thread_provider_resource_id(row[2]) if row[2] else None
+            )
+            return (*key, provider_resource_id, row[3])
         if table == "collection_memberships":
             return (row[0], *self.document_key(row[1]), row[2])
         return row
 
+    def thread_provider_resource_id(self, source_thread_id, *, payload=None):
+        cached = self._thread_provider_resource_ids.get(source_thread_id)
+        if cached is not None:
+            return cached
+        if payload is None:
+            record = self.lookup("review_threads", source_thread_id)
+            if record is None:
+                raise Invalid("THREAD_REFERENCE_UNRESOLVED", "thread_id")
+            payload = self.metadata(record, "payload")
+        try:
+            value = strict_json(payload)
+        except (ValueError, TypeError):
+            raise Invalid("INVALID_SAVED_IDENTITY", "payload") from None
+        provider = value.get("id") if isinstance(value, dict) else None
+        if not isinstance(provider, str) or not provider:
+            raise Invalid("INVALID_SAVED_IDENTITY", "payload")
+        self._thread_provider_resource_ids[source_thread_id] = provider
+        return provider
+
     def thread_identity(self, pr, provider):
         existing = self.lookup("review_threads", provider)
         if existing and self.t(existing, "pr_id") == pr:
+            self._thread_provider_resource_ids[provider] = provider
             return provider
         found = []
         for saved in self.src.execute(
@@ -852,7 +880,9 @@ class Context(identity.Context):
                 continue
         if len(found) > 1:
             raise Invalid("THREAD_IDENTITY_CONFLICT", "body")
-        return found[0] if found else f"{pr}:thread:{provider}"
+        source_thread_id = found[0] if found else f"{pr}:thread:{provider}"
+        self._thread_provider_resource_ids[source_thread_id] = provider
+        return source_thread_id
 
     def first_saved_thread_snapshot(self, pr, provider):
         for saved in self.src.execute(
@@ -961,7 +991,9 @@ class Context(identity.Context):
             if k not in ("body", "title", "user", "author")
         }
         if thread:
-            metadata["thread_id"] = thread
+            metadata["review_thread_provider_resource_id"] = (
+                self.thread_provider_resource_id(thread)
+            )
         author = value.get("user") or value.get("author") or {}
         if not isinstance(author, dict):
             raise Invalid("MALFORMED_PAYLOAD", "body")
