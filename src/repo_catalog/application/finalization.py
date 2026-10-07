@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 
-from repo_catalog.adapters.import_v2 import archive, mapping
+from repo_catalog.adapters.import_v2 import archive, mapping, workspace
+from repo_catalog.adapters.import_v2.common import ConversionError
 from repo_catalog.domain.document import DocumentKey, text_body_sha256
 from repo_catalog.domain.models import CatalogError
 
@@ -83,6 +84,9 @@ def check_catalog(store):
                     "text_body_id": row["text_body_id"],
                 }
             )
+    # Normal operation/backup never needs or attaches import scratch data.
+    if not workspace.has_attachment(store.connection):
+        return issues
     for row in store.all(
         "SELECT validation_result_id,code,details FROM validation_results WHERE severity='blocking'"
     ):
@@ -142,6 +146,27 @@ def archived_rows(store, table):
 
 
 def finalize_catalog(store):
+    """Finalize with scratch attached; subsequent normal use is self-contained."""
+    if (
+        store.one("SELECT lifecycle FROM database_identity WHERE singleton=1")[0]
+        == "validated"
+    ):
+        return {
+            "lifecycle": "validated",
+            "restored": [],
+            "unresolved_current": [],
+            "catalog": store.revision(),
+        }
+    try:
+        with workspace.attached(store.connection, store.db_path):
+            return _finalize_catalog(store)
+    except ConversionError as exc:
+        raise CatalogError(
+            exc.code, "Import workspace is missing, inconsistent or unsafe"
+        ) from exc
+
+
+def _finalize_catalog(store):
     """Validate readiness; restore explicit same-owner published assertions only."""
     with store.transaction():
         if (
@@ -156,6 +181,8 @@ def finalize_catalog(store):
             }
         issues = check_catalog(store)
         runs = store.all("SELECT * FROM conversion_runs")
+        if len(runs) != 1:
+            issues.append({"code": "IMPORT_RUN_MISSING_OR_AMBIGUOUS"})
         for run in runs:
             manifest = json.loads(run["manifest"])
             if run["parser_version"] != "offline-v2/1" or not manifest.get("complete"):
@@ -293,8 +320,8 @@ def finalize_catalog(store):
         restore_document_selections(store, restored, unresolved)
 
         for run in runs:
-            # The original manifest/typed archive remains unchanged. Readiness
-            # decisions are retained inside the catalog, independent of paths.
+            # The source archive and readiness receipt remain in scratch only.
+            # Committing this receipt and catalog readiness is one transaction.
             previous = store.one(
                 "SELECT 1 FROM validation_results WHERE conversion_run_id=? AND code='RUNTIME_FINALIZATION'",
                 (run["conversion_run_id"],),
@@ -310,6 +337,10 @@ def finalize_catalog(store):
                         ),
                     ),
                 )
+            store.execute(
+                "UPDATE conversion_runs SET state='validated' WHERE conversion_run_id=?",
+                (run["conversion_run_id"],),
+            )
         # Old process state is historical; it cannot become a running job.
         store.execute("DELETE FROM cache_leases")
         store.execute("DELETE FROM space_reservations")

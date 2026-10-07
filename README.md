@@ -2,7 +2,7 @@
 
 任意のGit取得先とGitHubのPRをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PR文書と観測履歴を永続化します。
-通常ランタイムは catalog3 です。 現在の schema version は **6** で、entity ID と FK は `repository_id`、`git_object_id`、`document_observation_id` のように意味を明示します。[現行データモデル](docs/data-model.md)と packaged DDL が正本です。旧 catalog3 開発 DB は対応しません。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。検証した環境・範囲は[実行引き継ぎ](docs/schema-hardening/runtime-handoff.md)に記録しています。
+通常ランタイムは catalog3 です。 現在の schema version は **7** で、entity ID と FK は `repository_id`、`git_object_id`、`document_observation_id` のように意味を明示します。[現行データモデル](docs/data-model.md)と packaged DDL が正本です。旧 catalog3 開発 DB は対応しません。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。検証した環境・範囲は[実行引き継ぎ](docs/schema-hardening/runtime-handoff.md)に記録しています。
 
 ## 開発・導入
 
@@ -87,7 +87,7 @@ repo-catalog --state-dir /path/to/new-state repos list
 repo-catalog --state-dir /path/to/new-state search pr --literal 認証
 ```
 
-中断後は同じ source と state、batch-size で `import-v2` を再実行します。`--max-batches` で処理を区切れます。typed archive、ID map、履歴、帰属付き診断を保存します。欠けた本文や不明な current 選択は partial として残し、重要な identity/owner 破損や import 未完了は finalize を拒否します。
+中断後は同じ source と state、batch-size で `import-v2` を再実行します。`--max-batches` で処理を区切れます。typed archive、ID map、変換の帰属付き診断は `import-v2/workspace.sqlite3` に、正規化されたデータと観測履歴は `catalog.sqlite3` に保存します。workspaceはfinalize完了までは必要ですが、その後の通常運用・backup/restoreはworkspaceに依存しません。欠けた本文や不明な current 選択は partial として残し、重要な identity/owner 破損や import 未完了は finalize を拒否します。
 
 最初の明示的な `sync` では、scope と取得証拠に応じて既存データを再利用・条件付き検証し、不明な cursor や不足した一覧は対象を絞って更新します。import の replay は新しい観測時刻や watermark を作りません。通常照会は元 import workspace の path を必要としません。
 

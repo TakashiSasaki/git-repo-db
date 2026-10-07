@@ -11,10 +11,12 @@ from pathlib import Path
 
 import pytest
 
+from repo_catalog.adapters.import_v2 import workspace
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.finalization import finalize_catalog
 from repo_catalog.application.import_service import import_catalog
 from repo_catalog.domain.models import CancellationToken, CatalogError
+from tests.support.import_workspace import inspect_import
 from tests.support.integrated_fixture import AVAILABLE_TEXT, IDS, make_integrated_source
 from tests.support.legacy_v2 import initialize
 
@@ -44,14 +46,20 @@ def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_pa
         source, state, source_caches=[cache], batch_size=2, max_batches=3
     )
     assert first["complete"] is False and first["committed_batches"] == 3
-    with Store(state, allow_building=True) as store:
+    with (
+        Store(state, allow_building=True) as store,
+        workspace.attached(store.connection, store.db_path),
+    ):
         assert store.one("SELECT lifecycle FROM database_identity")[0] == "building"
         with pytest.raises(CatalogError):
             finalize_catalog(store)
     completed = import_catalog(source, state, source_caches=[cache], batch_size=2)
     assert completed["complete"] and completed["lifecycle"] == "building"
     assert sha(source) == before and sha(cache / "synthetic-evidence") == cached
-    with Store(state, allow_building=True) as store:
+    with (
+        Store(state, allow_building=True) as store,
+        workspace.attached(store.connection, store.db_path),
+    ):
         assert store.one("SELECT count(*) FROM conversion_runs")[0] == 1
         assert (
             store.one(
@@ -86,9 +94,15 @@ def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_pa
             )[0]
             == 0
         )
+        archived = store.one(
+            "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.legacy_record_id=v.legacy_record_id WHERE r.source_table='sources' AND v.column_name='settings' AND v.value_bytes=?",
+            (saved_settings.encode(),),
+        )
+        assert bytes(archived[0]).decode() == saved_settings
+        assert store.one("SELECT count(*) FROM legacy_values")[0] > 500
         result = finalize_catalog(store)
         assert result["lifecycle"] == "validated"
-    # Audit queries after finalization do not depend on the original source file.
+    # Ordinary queries after finalization depend on neither source nor scratch.
     source.rename(source.with_suffix(".preserved"))
     shutil.rmtree(state / "import-v2")
     with Store(state, readonly=True) as store:
@@ -99,7 +113,9 @@ def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_pa
             )[0]
             == IDS["repo"]
         )
-        assert store.one("SELECT count(*) FROM legacy_records")[0] > 100
+        assert not store.one(
+            "SELECT name FROM sqlite_schema WHERE name='legacy_records'"
+        )
         settings = json.loads(
             store.one(
                 "SELECT settings FROM sources WHERE source_id=?", (IDS["other_source"],)
@@ -108,12 +124,6 @@ def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_pa
         assert settings["repository_id"] == IDS["repo"]
         assert settings["provider_repository_id"] == "401"
         assert "repo_id" not in settings and "provider_repo_id" not in settings
-        archived = store.one(
-            "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.legacy_record_id=v.legacy_record_id WHERE r.source_table='sources' AND v.column_name='settings' AND v.value_bytes=?",
-            (saved_settings.encode(),),
-        )
-        assert bytes(archived[0]).decode() == saved_settings
-        assert store.one("SELECT count(*) FROM legacy_values")[0] > 500
 
 
 def test_import_resume_refuses_changed_source_and_existing_runtime(tmp_path):
@@ -217,7 +227,7 @@ def test_installed_wheel_imports_without_checkout_documents(tmp_path):
         check=True,
     )
     assert json.loads(child.stdout)["complete"] is True
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
+    with inspect_import(state) as db:
         assert db.execute(
             "SELECT format_id,lifecycle FROM database_identity"
         ).fetchone() == ("repo-catalog/catalog3", "building")
@@ -281,7 +291,7 @@ worker.main()
     assert child.returncode == 77
     if crash_point == "after_commit":
         with sqlite3.connect(
-            (state / "catalog.sqlite3").as_uri() + "?mode=ro", uri=True
+            (state / "import-v2/workspace.sqlite3").as_uri() + "?mode=ro", uri=True
         ) as db:
             assert (
                 db.execute(
@@ -292,10 +302,10 @@ worker.main()
     else:
         # Leave rollback recovery to the guarded importer; opening a writer here
         # would recover the journal before the boundary under test runs.
-        assert (state / "catalog.sqlite3-journal").is_file()
+        assert (state / "import-v2/workspace.sqlite3-journal").is_file()
     result = import_catalog(source, state, source_caches=[cache])
     assert result["complete"] and sha(source) == before
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
+    with inspect_import(state) as db:
         assert db.execute("SELECT count(*) FROM repositories").fetchone()[0] == 1
         assert (
             db.execute(
@@ -347,7 +357,7 @@ def test_import_cancellation_stops_guarded_worker_and_resumes_committed_batches(
     class CancelAfterCheckpoint(CancellationToken):
         def check(self):
             with sqlite3.connect(
-                (state / "catalog.sqlite3").as_uri() + "?mode=ro", uri=True
+                (state / "import-v2/workspace.sqlite3").as_uri() + "?mode=ro", uri=True
             ) as db:
                 if db.execute("SELECT count(*) FROM conversion_batches").fetchone()[0]:
                     self.cancelled = True
@@ -362,7 +372,7 @@ def test_import_cancellation_stops_guarded_worker_and_resumes_committed_batches(
             token=CancelAfterCheckpoint(),
         )
     assert error.value.code == "CANCELLED" and error.value.retryable
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
+    with inspect_import(state) as db:
         committed = db.execute("SELECT count(*) FROM conversion_batches").fetchone()[0]
         assert committed > 0
         assert not json.loads(

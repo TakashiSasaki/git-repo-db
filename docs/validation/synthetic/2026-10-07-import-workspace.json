@@ -1,0 +1,59 @@
+{
+  "title": "Separate durable import/finalization workspace",
+  "starting_main": "314cfb4466c4206401c7e0c994eedd9481283c88",
+  "branch": "refactor/import-workspace-db",
+  "tested_commit": "23941ef421e3459d38becc65878e2c14b96576d5",
+  "tested_tree": "a938da1ed1b83fc26b52074de9e0ca98293894c7",
+  "schema_version": 7,
+  "runtime_tables": 65,
+  "moved_import_tables": 8,
+  "workspace_private_binding_tables": 1,
+  "result": "passed",
+  "runtime": {
+    "python": "3.13.5",
+    "abi": "cpython-313-x86_64-linux-gnu",
+    "sqlite": "3.46.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.47.3",
+    "uv": "uv 0.10.0",
+    "runner_image": [
+      null,
+      null
+    ]
+  },
+  "coverage": {
+    "executed": 398,
+    "selected_files": 43,
+    "unexecuted_files": [],
+    "excluded_files": []
+  },
+  "ordinary_tests": 396,
+  "packaging_tests": 2,
+  "ordinary_wall_seconds": 48.91486660500004,
+  "packaging_wall_seconds": 3.0862228670000604,
+  "evidence_sha256": {
+    "validation-manifest.json": "c5abab634f2c5d2063219e0629210cf552eb38319226b9f1ffd34bb4e71b88de",
+    "tests.xml": "535d35fae1ccaaf1198f62eb48556bb6a60525ea2eca5bc850c2f7ef11062d8f",
+    "packaging.xml": "9427e63eca7b7ca88e6a0e22bd77e512849285878ecd90f90263822d2a1d6710"
+  },
+  "checks": [
+    "lint",
+    "format",
+    "STRICT/FTS doctor",
+    "prose validation",
+    "locked Linux dependency hashes",
+    "explicit full planner/collection/profile reconciliation"
+  ],
+  "earlier_attempts": "Two tool-limited full-suite invocations were interrupted and are not successful acceptance. Completed focused runs passed 75 and 13 tests before this separate final acceptance.",
+  "unexecuted": [
+    "live provider acquisition",
+    "real retained-source import",
+    "physical power-cut fault injection",
+    "multi-catalog export/import",
+    "release publication",
+    "main merge",
+    "automatic workspace or original-source deletion"
+  ],
+  "environment_note": "Offline source transport and locked public wheels. Development uses an installed wheel plus a source-path .pth override after editable-build preparation lacked editables. Packaging tests independently built and installed real wheels outside the checkout; no development override there."
+}

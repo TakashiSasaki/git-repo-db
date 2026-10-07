@@ -1,7 +1,7 @@
 """One source-owned importer, using the authoritative ordinary runtime schema.
 
-Raw archives, normalized facts, typed ID mappings, diagnostics and source/output
-proofs are retained in the destination. Every batch commits them together.
+Normalized facts live in the destination; archives, mappings, diagnostics and
+source/output proofs live in a separate workspace. Each batch commits both together.
 """
 
 import json
@@ -31,6 +31,7 @@ from . import (
     pr_domain,
     source,
 )
+from . import workspace as import_workspace
 from .common import (
     ConversionError,
     canonical,
@@ -128,7 +129,7 @@ def expected_schema():
 
 
 @contextmanager
-def connect(path):
+def connect(path, *, creating_workspace=False):
     path = Path(path)
     if path.is_symlink() or not path.is_file() or path.stat().st_nlink != 1:
         raise ConversionError("DESTINATION_NOT_REGULAR")
@@ -140,17 +141,22 @@ def connect(path):
             or sidecar.stat().st_nlink != 1
         ):
             raise ConversionError("TARGET_SIDECAR_ALIAS_UNSUPPORTED")
-    db = sqlite3.connect(path, isolation_level=None)
+    db = sqlite3.connect(path, isolation_level=None, uri=True)
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA foreign_keys=ON")
     db.execute("PRAGMA recursive_triggers=ON")
     db.execute("PRAGMA synchronous=EXTRA")
     db.execute("PRAGMA temp_store=MEMORY")
     db.enable_load_extension(False)
+    try:
+        import_workspace.attach(db, path, creating=creating_workspace)
+    except BaseException:
+        db.close()
+        raise
     db.set_authorizer(
         lambda action, arg1, arg2, *args: (
             sqlite3.SQLITE_DENY
-            if action == sqlite3.SQLITE_ATTACH
+            if action in (sqlite3.SQLITE_ATTACH, sqlite3.SQLITE_DETACH)
             or (action == sqlite3.SQLITE_FUNCTION and arg2 == "load_extension")
             else sqlite3.SQLITE_OK
         )
@@ -174,11 +180,18 @@ def implementation_signature():
     )
 
 
-def create(destination, sealed, batch_size, estimate):
+def create(destination, sealed, batch_size, estimate, fault=no_fault):
     temporary = Path(str(destination) + ".part")
     if os.path.lexists(destination) or os.path.lexists(temporary):
         raise ConversionError("DESTINATION_EXISTS")
+    work = import_workspace.path_for(destination)
+    work_pending = import_workspace.path_for(temporary)
+    work.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(work) or os.path.lexists(work_pending):
+        raise ConversionError("IMPORT_WORKSPACE_EXISTS")
     with temporary.open("xb"):
+        pass
+    with work_pending.open("xb"):
         pass
     stamp, conversion_source_id, conversion_run_id = (
         now(),
@@ -195,13 +208,14 @@ def create(destination, sealed, batch_size, estimate):
         "capacity": estimate,
         "complete": False,
     }
-    with connect(temporary) as db:
+    with connect(temporary, creating_workspace=True) as db:
         db.executescript(schema_sql())
         db.execute("BEGIN IMMEDIATE")
         db.execute(
             "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle) VALUES(1,?,?,?,0,?,'building')",
             (FORMAT_ID, SCHEMA_VERSION, str(uuid.uuid4()), DDL_SHA256),
         )
+        import_workspace.initialize(db)
         db.execute(
             "INSERT INTO conversion_sources(conversion_source_id,source_sha256,schema_sha256,format_id,source_db_instance_id,source_catalog,source_migrations) VALUES(?,?,?,?,?,?,?)",
             (
@@ -225,11 +239,18 @@ def create(destination, sealed, batch_size, estimate):
             ),
         )
         db.execute("COMMIT")
+    # Both initial identities have committed before publishing either filename.
+    fsync_directory(work.parent)
+    fsync_directory(destination.parent)
     temporary.rename(destination)
     fsync_directory(destination.parent)
+    fault("after_catalog_initialization_publish")
+    work_pending.rename(work)
+    fsync_directory(work.parent)
 
 
 def check(db, sealed, batch_size):
+    import_workspace.verify(db)
     identities = db.execute(
         "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
     ).fetchall()
@@ -840,11 +861,11 @@ def run(
                 raise ConversionError("DESTINATION_EXISTS")
             # An interrupted initial seal has no committed descriptor or target.
             # Discard only this importer's isolated temporary output before retry.
+            import_workspace.discard_pending_initialization(destination)
             for incomplete in (
                 workspace / "source.sqlite3.part",
                 workspace / "source.sqlite3",
                 workspace / "sealed.json.part",
-                Path(str(destination) + ".part"),
             ):
                 if os.path.lexists(incomplete):
                     if (
@@ -902,15 +923,7 @@ def run(
             raise ConversionError("IMPORT_RESUME_SOURCE_MISMATCH")
         with source.readonly(workspace / "source.sqlite3") as src:
             if not destination.exists():
-                temporary = Path(str(destination) + ".part")
-                if os.path.lexists(temporary):
-                    if (
-                        temporary.is_symlink()
-                        or not temporary.is_file()
-                        or temporary.stat().st_nlink != 1
-                    ):
-                        raise ConversionError("IMPORT_INCOMPLETE_OUTPUT_ALIAS")
-                    temporary.unlink()
+                import_workspace.discard_pending_initialization(destination)
                 # A seal may survive interruption before destination creation.
                 tables = {
                     item["table"]
@@ -924,7 +937,8 @@ def run(
                         src, tables, (workspace / "source.sqlite3").stat().st_size
                     ),
                 )
-                create(destination, sealed, batch_size, estimate)
+                create(destination, sealed, batch_size, estimate, fault)
+            import_workspace.recover_initialization(destination)
             with connect(destination) as db:
                 run_row, receipt = check(db, sealed, batch_size)
                 status = verify_output(db, src, run_row, receipt)
@@ -943,6 +957,7 @@ def run(
                     or db.execute("PRAGMA integrity_check").fetchone()[0] != "ok"
                 ):
                     raise ConversionError("IMPORT_TARGET_INTEGRITY_FAILURE")
+                import_workspace.verify(db)
                 source.verify_seal(workspace)
                 receipt["complete"] = status["complete"]
                 receipt["committed_batches"] = status["committed_batches"]
@@ -965,4 +980,5 @@ def run(
                     "sqlite_version": sqlite3.sqlite_version,
                     "source_untouched": True,
                     "acquisition_allowed": False,
+                    "import_workspace": str(import_workspace.path_for(destination)),
                 }
