@@ -985,6 +985,7 @@ class GitHubCollector:
                 continue
             target = value[field]
             if target is None:
+                roles[role] = None
                 continue
             oid = target.get("oid") if isinstance(target, dict) else None
             if not isinstance(oid, str):

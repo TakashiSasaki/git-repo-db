@@ -151,10 +151,19 @@ def test_pr_documents(catalog):
         shown = run(
             state, "pr", "show", "--repo", repo, "--provider-change-request-number", 43
         )["data"]["items"][0]
-        assert (
-            json.loads(shown["code_observation"]["details"])["merge"]["test-merge"]
-            is None
-        )
+        code = shown["code_observation"]
+        details = json.loads(code["details"])
+        links = {link["role"]: link for link in shown["code_links"]}
+        assert code["state"] == "complete"
+        assert details["code_inputs_complete"] is True
+        assert details["merge"]["test-merge"] is None
+        assert "test-merge" not in details["expected_roles"]
+        assert "test-merge" not in links
+        merge_oid = fixture.alpha.commits["P"]
+        assert details["merge"]["merge"] == merge_oid
+        assert details["expected_roles"]["merge"] == merge_oid
+        assert links["merge"]["oid"] == f"{code['object_format']}:{merge_oid}"
+        assert links["merge"]["acquisition_root_id"] is not None
         assert pages(
             state,
             "search",
