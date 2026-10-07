@@ -708,7 +708,7 @@ def test_graphql_repeated_missing_thread_retains_initial_snapshot_and_later_fact
     db, src, run = components(tmp_path, mutate=mutate)
     output = convert(db, src, run)
     thread = db.execute(
-        "SELECT review_thread_id,payload,observed_at FROM review_threads WHERE review_thread_id LIKE '%THREAD_new'"
+        "SELECT provider_resource_id,payload,observed_at FROM review_threads WHERE provider_resource_id='THREAD_new'"
     ).fetchone()
     assert json.loads(thread[1])["isResolved"] is False
     assert thread[2] == STAMPS[0]
@@ -727,7 +727,7 @@ def test_graphql_repeated_missing_thread_retains_initial_snapshot_and_later_fact
     ]
     assert (
         db.execute(
-            "SELECT review_thread_id FROM review_comments WHERE provider_change_request_document_id='910'"
+            "SELECT review_thread_provider_resource_id FROM review_comments WHERE provider_change_request_document_id='910'"
         ).fetchone()[0]
         == thread[0]
     )
