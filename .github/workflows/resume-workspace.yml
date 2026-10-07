@@ -1,11 +1,11 @@
-# Temporary transport for the offline editor; removed before final revision.
+# Temporary transport; the verified final tree contains none of these files.
 name: resume-workspace
 on:
   push:
     branches: [refactor/portable-document-observations]
-    paths: [.github/workflows/resume-workspace.yml]
+    paths: ['.github/implementation/resume-part-*']
 permissions:
-  contents: read
+  contents: write
 jobs:
   prepare:
     runs-on: ubuntu-24.04
@@ -13,14 +13,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
-      - name: Bundle tracked public repository
+      - name: Verify and stage tested Git objects
+        env:
+          EXPECTED_HEAD: db69fe28dbf279627b9e3631682b1f009e20c362
+          EXPECTED_TREE: e795aad41fa73a876a2a55a5d9e4891914a1a898
         run: |
-          mkdir -p /tmp/resume-workspace
-          git bundle create /tmp/resume-workspace/source.bundle --all
-          git rev-parse HEAD > /tmp/resume-workspace/revision.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: resume-workspace
-          path: /tmp/resume-workspace/
-          retention-days: 1
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import lzma
+          raw = b''.join(Path(f'.github/implementation/resume-part-{i}').read_bytes() for i in range(11))
+          assert len(raw) == 10844
+          assert hashlib.sha256(raw).hexdigest() == '6197b5437a4e1ebdaccd71e826210c05981f04be8288bd40628a6631bcea269d'
+          bundle = lzma.decompress(raw)
+          assert len(bundle) == 10784
+          assert hashlib.sha256(bundle).hexdigest() == '967265136ab2df3959c7bbc78743c04c11bda779a7f05eaa45e8b2da1510bb78'
+          Path('/tmp/resume-fixes.bundle').write_bytes(bundle)
+          PY
+          git bundle verify /tmp/resume-fixes.bundle
+          git fetch --no-tags /tmp/resume-fixes.bundle HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse "$EXPECTED_HEAD^{tree}")" = "$EXPECTED_TREE"
+          git merge-base --is-ancestor 282d576934e5b765499e4c7674c7312bd4ca1280 "$EXPECTED_HEAD"
+          git push origin "$EXPECTED_HEAD:refs/heads/transport/provider-resource-db69fe28"
+          printf 'Staged verified commit %s, tree %s.\n' "$EXPECTED_HEAD" "$EXPECTED_TREE" >> "$GITHUB_STEP_SUMMARY"
