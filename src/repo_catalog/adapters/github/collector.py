@@ -80,7 +80,7 @@ class GitHubCollector:
 
     def summary_observed_at_us(self, repo, job, *, documents_only=False):
         return self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_id=? AND f.source_id=? AND p.job_id=?"
+            "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0"
             + (
                 " AND f.kind NOT IN ('pr-commits','pr-files','timeline')"
                 if documents_only
@@ -870,6 +870,17 @@ class GitHubCollector:
         self, collection, response, variables, query, cursor, error
     ):
         """Retain raw rejected evidence in the caller's writer transaction."""
+        operational_only = False
+        if error.code == "RATE_LIMIT":
+            resource = (
+                ("data", "node")
+                if "thread" in variables
+                else ("data", "repository", "pullRequest")
+            )
+            try:
+                self.graphql_object(response.json(), *resource)
+            except CatalogError:
+                operational_only = True
         occurrence, _, _ = self.facts.page(
             collection,
             response,
@@ -879,6 +890,7 @@ class GitHubCollector:
                 "query": query,
                 "variables": variables,
                 "normalization_error": error.code,
+                **({"operational_only": True} if operational_only else {}),
             },
             cursor,
             advance=False,
@@ -894,6 +906,27 @@ class GitHubCollector:
                 canonical({"code": error.code, "fetch_occurrence_id": occurrence}),
             ),
         )
+
+    def graphql_errors(self, payload, *resource):
+        """Classify error-only responses before requiring ordinary data fields."""
+        errors = payload.get("errors") if isinstance(payload, dict) else None
+        if isinstance(errors, list) and any(
+            isinstance(error, dict) and error.get("type") == "RATE_LIMITED"
+            for error in errors
+        ):
+            raise Waiting(
+                "RATE_LIMIT",
+                "GraphQL rate limited",
+                {"not_before_us": self.http.clock_us() + 60_000_000},
+                True,
+            )
+        if errors:
+            try:
+                self.graphql_object(payload, *resource)
+            except CatalogError:
+                raise CatalogError(
+                    "GRAPHQL_PARTIAL", "GraphQL error-only response"
+                ) from None
 
     @staticmethod
     def graphql_object(value, *path):
@@ -929,7 +962,7 @@ class GitHubCollector:
         if collection is None:
             return {}, False, None
         page = self.s.one(
-            "SELECT p.body,o.observed_at_us FROM fetch_occurrences o JOIN payloads p ON p.payload_id=o.payload_id WHERE o.fetch_collection_id=? ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC LIMIT 1",
+            "SELECT p.body,o.observed_at_us FROM fetch_occurrences o JOIN payloads p ON p.payload_id=o.payload_id WHERE o.fetch_collection_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC LIMIT 1",
             (collection["fetch_collection_id"],),
         )
         if page is None:
@@ -1034,6 +1067,7 @@ class GitHubCollector:
                         (pending["occurrence"], collection["fetch_collection_id"]),
                     )
                     payload = json.loads(page["body"])
+                    self.graphql_errors(payload, "data", "repository", "pullRequest")
                     occurrence, timestamp = (
                         page["fetch_occurrence_id"],
                         page["observed_at_us"],
@@ -1046,6 +1080,7 @@ class GitHubCollector:
                     )
                     uncommitted = True
                     payload = response.json()
+                    self.graphql_errors(payload, "data", "repository", "pullRequest")
                     p = self.graphql_object(
                         payload, "data", "repository", "pullRequest"
                     )
@@ -1097,15 +1132,6 @@ class GitHubCollector:
                 connection = p.get("reviewThreads")
                 nodes, info, next_cursor = self.graphql_connection(connection)
                 merge = self._merge_roles(p)
-                if any(
-                    e.get("type") == "RATE_LIMITED" for e in payload.get("errors") or []
-                ):
-                    raise Waiting(
-                        "RATE_LIMIT",
-                        "GraphQL rate limited",
-                        {"not_before_us": self.http.clock_us() + 60_000_000},
-                        True,
-                    )
                 if payload.get("errors"):
                     raise CatalogError(
                         "GRAPHQL_PARTIAL", "GraphQL partial page; cursor retained"
@@ -1306,6 +1332,7 @@ class GitHubCollector:
                 )
                 uncommitted = True
                 payload = response.json()
+                self.graphql_errors(payload, "data", "node")
                 comments = self.graphql_object(payload, "data", "node").get("comments")
                 _, info, next_cursor = self.graphql_connection(comments)
                 with self.s.transaction():
@@ -1784,6 +1811,63 @@ class GitHubCollector:
                         and not missing_roles
                         else "partial"
                     )
+                    code_failures = code_input_failures + failures[oldfail:]
+                    prior_code_coverage = s.one(
+                        "SELECT observed_at_us FROM current_coverage WHERE repository_id=? AND change_request_id=? AND kind='pr-code'",
+                        (repo["repository_id"], pr["change_request_id"]),
+                    )
+                    observed_incomplete_merge = (
+                        merge_observed_at_us is not None
+                        and not merge_complete
+                        and (
+                            prior_code_coverage is None
+                            or prior_code_coverage["observed_at_us"] is None
+                            or merge_observed_at_us
+                            >= prior_code_coverage["observed_at_us"]
+                        )
+                    )
+                    observed_incomplete_code = (
+                        code_race
+                        or bool(missing_roles)
+                        or observed_incomplete_merge
+                        or any(
+                            (repo["repository_id"], pr["change_request_id"], kind)
+                            in self.observed_partial_scopes
+                            for kind in ("pr-commits", "pr-files", "review", "threads")
+                        )
+                    )
+                    prior_code = s.one(
+                        "SELECT * FROM code_observations WHERE change_request_id=? AND change_request_observation_id=? ORDER BY code_observation_id DESC LIMIT 1",
+                        (pr["change_request_id"], current),
+                    )
+                    prior_roles = (
+                        json.loads(prior_code["details"]).get("expected_roles")
+                        if prior_code
+                        else None
+                    )
+                    if isinstance(prior_roles, dict) and merge_observed_at_us is None:
+                        # No merge input was observed on this attempt. Absence
+                        # from its inputs cannot revoke a prior saved role.
+                        prior_roles = {
+                            role: oid
+                            for role, oid in prior_roles.items()
+                            if role not in ("merge", "test-merge")
+                        }
+                    if (
+                        state == "partial"
+                        and not observed_incomplete_code
+                        and prior_code
+                        and prior_code["state"] == "complete"
+                        and prior_code["head_oid"] == head
+                        and prior_code["base_oid"] == base
+                        and prior_code["commit_code_listing_id"] == commit_listing
+                        and prior_code["file_code_listing_id"] == file_listing
+                        and prior_roles
+                        == {role: oid for role, oid in role_oids.items() if oid}
+                    ):
+                        # An unsuccessful check of an already represented
+                        # observation is job progress, not a partial code fact.
+                        continue
                     code = s.execute(
                         "INSERT INTO code_observations(change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details) VALUES(?,?,?,?,?,?,?,?,?)",
                         (
@@ -1839,33 +1923,8 @@ class GitHubCollector:
                                     repo["repository_id"],
                                 ),
                             )
-                    code_failures = code_input_failures + failures[oldfail:]
-                    prior_code_coverage = s.one(
-                        "SELECT observed_at_us FROM current_coverage WHERE repository_id=? AND change_request_id=? AND kind='pr-code'",
-                        (repo["repository_id"], pr["change_request_id"]),
-                    )
-                    observed_incomplete_merge = (
-                        merge_observed_at_us is not None
-                        and not merge_complete
-                        and (
-                            prior_code_coverage is None
-                            or prior_code_coverage["observed_at_us"] is None
-                            or merge_observed_at_us
-                            >= prior_code_coverage["observed_at_us"]
-                        )
-                    )
-                    observed_incomplete_code = (
-                        code_race
-                        or bool(missing_roles)
-                        or observed_incomplete_merge
-                        or any(
-                            (repo["repository_id"], pr["change_request_id"], kind)
-                            in self.observed_partial_scopes
-                            for kind in ("pr-commits", "pr-files", "review", "threads")
-                        )
-                    )
                     code_observed_at_us = s.one(
-                        "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_id=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads')",
+                        "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_id=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads')",
                         (
                             repo["repository_id"],
                             pr["change_request_id"],

@@ -49,6 +49,160 @@ def test_rate_limit_boundaries_are_exact_epoch_microseconds(headers, expected_us
     assert type(raised.value.details["not_before_us"]) is int
 
 
+@pytest.mark.parametrize("boundary", ["root", "child"])
+@pytest.mark.parametrize("data_shape", ["null", "empty", "null-resource"])
+@pytest.mark.parametrize(
+    "error_type,expected_code,delay_us",
+    [
+        ("RATE_LIMITED", "RATE_LIMIT", 60_000_000),
+        ("FORBIDDEN", "GRAPHQL_PARTIAL", None),
+    ],
+)
+def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
+    github_runtime,
+    monkeypatch,
+    boundary,
+    data_shape,
+    error_type,
+    expected_code,
+    delay_us,
+):
+    store, repo, fixture, api = github_runtime
+    pr = {"change_request_id": "repo:41", "provider_change_request_number": 41}
+    with store.transaction():
+        store.execute(
+            "INSERT INTO change_requests(change_request_id,repository_id,"
+            "repository_binding_id,change_request_kind,provider_change_request_number) "
+            "VALUES('repo:41','repo','binding','pull_request',41)"
+        )
+    if boundary == "child":
+        api.reply_count = 101
+
+    stamp_us = 1_000_000
+    monkeypatch.setattr(
+        "repo_catalog.adapters.github.persistence.now_us", lambda: stamp_us
+    )
+    jobs = JobService(store, clock_us=lambda: stamp_us)
+    job = jobs.create("sync", {"kind": "pr"})
+    store.expected_attempt = 1
+    original = api.route
+    blocked = True
+    requested = []
+    error_payload = {
+        "data": None,
+        "errors": [{"type": error_type, "message": "synthetic GraphQL failure"}],
+    }
+    if data_shape == "empty":
+        error_payload["data"] = {}
+    elif data_shape == "null-resource":
+        error_payload["data"] = (
+            {"node": None}
+            if boundary == "child"
+            else {"repository": {"pullRequest": None}}
+        )
+
+    def route(method, path, params, body):
+        nonlocal stamp_us
+        if method == "POST":
+            location = "child" if "thread" in body["variables"] else "root"
+            requested.append(location)
+            if blocked and location == boundary:
+                stamp_us = 9_000_000
+                return error_payload, {}
+        return original(method, path, params, body)
+
+    api.route = route
+
+    def collector():
+        result = GitHubCollector(store, CancellationToken())
+        result.facts.principal = "fixture"
+        result.http.clock_us = lambda: stamp_us
+        return result
+
+    current = collector()
+    try:
+        with pytest.raises(CatalogError) as raised:
+            current.threads(repo, pr, job)
+    finally:
+        current.http.close()
+
+    error = raised.value
+    assert error.code == expected_code
+    deadline_us = stamp_us + delay_us if delay_us is not None else None
+    assert error.details.get("not_before_us") == deadline_us
+    rejected_kind = "threads" if boundary == "root" else "thread-comments"
+    rejected = store.one(
+        "SELECT o.next_cursor,o.request,p.body,u.reason "
+        "FROM fetch_occurrences o "
+        "JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id "
+        "JOIN payloads p ON p.payload_id=o.payload_id "
+        "JOIN unresolved_payloads u ON u.payload_id=p.payload_id "
+        "WHERE f.kind=? ORDER BY o.fetch_occurrence_id DESC LIMIT 1",
+        (rejected_kind,),
+    )
+    assert json.loads(rejected["body"]) == error_payload
+    assert rejected["next_cursor"] == (None if boundary == "root" else "100")
+    assert expected_code in rejected["reason"]
+    assert json.loads(rejected["request"]).get("operational_only", False) is (
+        expected_code == "RATE_LIMIT"
+    )
+    if expected_code == "RATE_LIMIT":
+        assert current.summary_observed_at_us(repo, job) == (
+            1_000_000 if boundary == "child" else None
+        )
+        assert current.saved_thread_code_input(pr["change_request_id"])[2] == (
+            1_000_000 if boundary == "child" else None
+        )
+    assert not store.one(
+        "SELECT 1 FROM completion_markers c "
+        "JOIN fetch_collections f ON f.fetch_collection_id=c.fetch_collection_id "
+        "WHERE f.kind IN ('threads','thread-comments')"
+    )
+    if boundary == "root" and expected_code == "RATE_LIMIT":
+        assert not store.one(
+            "SELECT 1 FROM current_coverage "
+            "WHERE change_request_id='repo:41' AND kind='threads'"
+        )
+    jobs.update(job, "waiting", expected_code, not_before_us=deadline_us)
+    waiting = store.one(
+        "SELECT a.state,a.not_before_us FROM jobs j "
+        "JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt "
+        "WHERE j.job_id=?",
+        (job,),
+    )
+    assert waiting["state"] == "waiting"
+    assert waiting["not_before_us"] == deadline_us
+    if deadline_us is not None:
+        with pytest.raises(Waiting) as early:
+            jobs.resume(job)
+        assert early.value.code == "NOT_BEFORE"
+        assert early.value.details["not_before_us"] == deadline_us
+
+    request_boundary = len(requested)
+    stamp_us = deadline_us if deadline_us is not None else stamp_us + 1_000_000
+    jobs.resume(job)
+    store.expected_attempt = 2
+    blocked = False
+    current = collector()
+    try:
+        current.threads(repo, pr, job)
+    finally:
+        current.http.close()
+    # A child retry reads its saved root and requests only the original child
+    # cursor. A rejected root restarts at the original root boundary.
+    assert requested[request_boundary:] == [boundary]
+    assert (
+        store.one(
+            "SELECT coverage_state FROM current_coverage "
+            "WHERE change_request_id='repo:41' AND kind='threads'"
+        )[0]
+        == "complete"
+    )
+    jobs.update(job, "complete")
+    assert store.one("SELECT current_attempt FROM jobs WHERE job_id=?", (job,))[0] == 2
+    assert not store.all("PRAGMA foreign_key_check")
+
+
 @pytest.fixture
 def github_runtime(tmp_path, monkeypatch):
     fixture = GitFixture(tmp_path / "remotes")
@@ -396,6 +550,164 @@ def test_failed_git_refresh_reuses_preserved_exact_roles_without_new_claim(
         )
         == claim
     )
+
+
+def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
+    github_runtime, monkeypatch
+):
+    store, repo, fixture, api = github_runtime
+    api.etag = True
+    stamp_us = 1_000_000
+    monkeypatch.setattr(
+        "repo_catalog.adapters.github.persistence.now_us", lambda: stamp_us
+    )
+    monkeypatch.setattr(
+        "repo_catalog.adapters.github.collector.now_us", lambda: stamp_us
+    )
+    sync(store, repo)
+    claims = {
+        row["coverage_scope_id"]: (row["coverage_state"], row["observed_at_us"])
+        for row in store.all(
+            "SELECT * FROM current_coverage WHERE kind IN ('pr-code','pr','pr-documents')"
+        )
+    }
+    code_rows = [
+        tuple(row)
+        for row in store.all(
+            "SELECT code_observation_id,change_request_observation_id,state FROM code_observations ORDER BY code_observation_id"
+        )
+    ]
+    stamp_us = 2_000_000
+    original = api.route
+
+    def route(method, path, params, body):
+        nonlocal stamp_us
+        if method == "POST":
+            stamp_us = 9_000_000
+            return {"data": None, "errors": [{"type": "RATE_LIMITED"}]}, {}
+        return original(method, path, params, body)
+
+    api.route = route
+    jobs = JobService(store, clock_us=lambda: stamp_us)
+    job = jobs.create("sync", {"kind": "pr", "repositories": ["repo"]})
+    store.expected_attempt = 1
+    collector = GitHubCollector(store, CancellationToken())
+    collector.http.clock_us = lambda: stamp_us
+    with pytest.raises(Waiting) as raised:
+        collector.sync(repo, job)
+    assert raised.value.code == "PR_PARTIAL"
+    assert raised.value.details["not_before_us"] == 69_000_000
+    jobs.update(job, "waiting", raised.value.code, not_before_us=69_000_000)
+    assert any(
+        failure["reason"] == "RATE_LIMIT" for failure in raised.value.details["missing"]
+    )
+    assert {
+        row["coverage_scope_id"]: (row["coverage_state"], row["observed_at_us"])
+        for row in store.all(
+            "SELECT * FROM current_coverage WHERE kind IN ('pr-code','pr','pr-documents')"
+        )
+    } == claims
+    assert [
+        tuple(row)
+        for row in store.all(
+            "SELECT code_observation_id,change_request_observation_id,state FROM code_observations ORDER BY code_observation_id"
+        )
+    ] == code_rows
+    assert collector.summary_observed_at_us(repo, job) == 2_000_000
+    receipt = store.one(
+        "SELECT observed_at_us FROM fetch_occurrences WHERE json_extract(request,'$.operational_only')=1"
+    )
+    assert receipt["observed_at_us"] == 9_000_000
+
+
+@pytest.mark.parametrize("scenario", ["same-current", "new-current", "observed-race"])
+def test_failed_code_check_after_detail_keeps_only_justified_code_observations(
+    github_runtime, monkeypatch, scenario
+):
+    from urllib.parse import urlsplit
+
+    from repo_catalog.application.query_service import QueryService
+
+    store, repo, fixture, api = github_runtime
+    api.etag = True
+    sync(store, repo)
+    previous = store.one(
+        "SELECT * FROM code_observations WHERE change_request_id='repo:41' ORDER BY code_observation_id DESC LIMIT 1"
+    )
+    previous_count = store.one(
+        "SELECT count(*) FROM code_observations WHERE change_request_id='repo:41'"
+    )[0]
+    previous_claim = tuple(
+        store.one(
+            "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
+        )
+    )
+    if scenario == "new-current":
+        api.stage = "B"
+        api.prs[41]["title"] = "new actual API observation"
+    elif scenario == "observed-race":
+        fixture.alpha.ref("refs/pull/41/head", "N")
+    attempts = []
+    original = httpx.Client.stream
+
+    def stream(client, method, url, **kwargs):
+        if (
+            method == "GET"
+            and urlsplit(str(url)).path == "/repos/fixture/alpha/pulls/41"
+            and not kwargs.get("headers", {}).get("If-None-Match")
+        ):
+            attempts.append(str(url))
+            raise httpx.ConnectError("Synthetic code-check transport failure")
+        return original(client, method, url, **kwargs)
+
+    monkeypatch.setattr(httpx.Client, "stream", stream)
+    with pytest.raises(CatalogError) as raised:
+        sync(store, repo)
+    assert raised.value.code == "PR_PARTIAL"
+    assert len(attempts) == store.config["github"]["max_attempts"]
+    latest = store.one(
+        "SELECT * FROM code_observations WHERE change_request_id='repo:41' ORDER BY code_observation_id DESC LIMIT 1"
+    )
+    current = store.one(
+        "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id='repo:41'"
+    )[0]
+    assert (current != previous["change_request_observation_id"]) is (
+        scenario == "new-current"
+    )
+    result = QueryService(store.path).query(
+        "pr show", {"repo": "repo", "provider_change_request_number": 41}
+    )
+    if scenario == "same-current":
+        assert latest["code_observation_id"] == previous["code_observation_id"]
+        assert (
+            store.one(
+                "SELECT count(*) FROM code_observations WHERE change_request_id='repo:41'"
+            )[0]
+            == previous_count
+        )
+        assert (
+            tuple(
+                store.one(
+                    "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
+                )
+            )
+            == previous_claim
+        )
+        assert result.status == "complete"
+    else:
+        assert latest["state"] == "partial"
+        assert result.status == "partial"
+    if scenario == "observed-race":
+        assert any(
+            failure["reason"] == "PR_CODE_RACE"
+            for failure in raised.value.details["missing"]
+        )
+        assert (
+            store.one(
+                "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
+            )[0]
+            == "partial"
+        )
 
 
 def test_saved_partial_graphql_retains_merge_target_and_partial_code(github_runtime):

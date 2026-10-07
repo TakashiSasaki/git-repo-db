@@ -209,7 +209,7 @@ class ApiFacts:
     def observed_at_us(self, collection):
         """Latest actual saved response; starting or replaying a scan adds no time."""
         return self.s.one(
-            "SELECT MAX(observed_at_us) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            "SELECT MAX(observed_at_us) FROM fetch_occurrences WHERE fetch_collection_id=? AND coalesce(json_extract(request,'$.operational_only'),0)=0",
             (collection["fetch_collection_id"],),
         )[0]
 
@@ -225,6 +225,7 @@ class ApiFacts:
                JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id
                JOIN fetch_occurrences o ON o.fetch_collection_id=member.fetch_collection_id
                WHERE root.fetch_collection_id=?
+                 AND coalesce(json_extract(o.request,'$.operational_only'),0)=0
                  AND (member.fetch_collection_id=root.fetch_collection_id
                       OR (member.kind='thread-comments'
                           AND json_extract(scope.request_context,'$.parent_fetch_collection_id')
