@@ -30,4 +30,6 @@ Environment: Python 3.12.14, SQLite 3.53.1, Git 2.51.1, uv 0.12.19, Linux x86_64
 
 Only synthetic source values were used. No real source acquisition, retained catalog change, main merge or release was performed. This is a boundary-validation correction without a schema version change or compatibility layer. This report and its JSON summary are evidence-only additions after the tested source commit.
 
-Publication is pending user approval: automatic approval review rejected the GitHub push because it interpreted the current request as authorizing planning/implementation but not remote publication. A subsequent read confirmed PR #5 still points to `9abfdc0eb439a823246e306e7773b775cfaa75e7`. The rejected operation was not retried through another interface.
+## Earlier publication checkpoint
+
+At the end of the original validation, automatic approval review rejected the GitHub push because it interpreted that request as authorizing planning/implementation but not remote publication. A subsequent read confirmed PR #5 still pointed to `9abfdc0eb439a823246e306e7773b775cfaa75e7`. The rejected operation was not retried through another interface. This records the earlier checkpoint; current publication and hosted validation are tracked in [PR #5](https://github.com/TakashiSasaki/git-repo-db/pull/5).
