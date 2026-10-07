@@ -151,6 +151,9 @@ def convert(db, src, run):
         ("2026-01-02T03:04:05.123456Z", 1767323045123456, None),
         ("2026-01-02T03:04:05", None, "PR_INVALID_TIME"),
         ("2026-01-02T03:04:05.1234567Z", None, "PR_INVALID_TIME"),
+        ("1970-01-01T00:00:00-00:00:00.000001", None, "PR_INVALID_TIME"),
+        ("1970-01-01T00:00:00+00,000001", None, "PR_INVALID_TIME"),
+        ("1970-01-01T00:00:00-00:00:00.000001\x00", None, "PR_INVALID_TIME"),
         ("invalid-source-time", None, "PR_INVALID_TIME"),
     ],
 )

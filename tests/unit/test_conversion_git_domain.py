@@ -265,6 +265,9 @@ def test_missing_original_is_not_empty_and_old_verified_is_not_proof(graph):
         (None, None, "GIT_OBSERVATION_TIME_MISSING"),
         ("2026-01-02T03:04:05", None, "GIT_INVALID_TIME"),
         ("2026-01-02T03:04:05.0000001Z", None, "GIT_INVALID_TIME"),
+        ("1970-01-01T00:00:00+00:00:00.000001", None, "GIT_INVALID_TIME"),
+        ("1970-01-01T00:00:00-00.000001", None, "GIT_INVALID_TIME"),
+        ("1970-01-01T00:00:00+00.000001\x00", None, "GIT_INVALID_TIME"),
         ("invalid-source-time", None, "GIT_INVALID_TIME"),
     ],
 )
