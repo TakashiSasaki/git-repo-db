@@ -4,6 +4,7 @@
   "tested_commit": "e54ca1c0232be75b5ce035b95c4117cd0d167b99",
   "tested_tree": "087b997afe6a021acc4d63a8f1d974dfc5dc0adb",
   "publication_branch": "refactor/unix-microsecond-timestamps",
+  "publication_status": "pending user approval after automatic approval review rejection; remote unchanged at 9abfdc0eb439a823246e306e7773b775cfaa75e7",
   "tests": {"executed": 173, "passed": 173, "failed": 0, "errors": 0, "skipped": 0, "pytest_wall_seconds": 31.92, "junit_suite_seconds": 31.309},
   "modules": ["tests/integration/test_catalog3_timestamps.py", "tests/unit/test_conversion_git_domain.py", "tests/unit/test_conversion_pr_domain.py"],
   "static_checks": ["ruff check", "ruff format --check", "git diff --check"],

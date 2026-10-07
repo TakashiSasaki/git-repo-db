@@ -2,7 +2,7 @@
 
 ## Revision and scope
 
-Review finding 3 concerns fractional UTC offsets that Python can collapse to UTC. PR #5 already contained the initial rejection in `9abfdc0eb439a823246e306e7773b775cfaa75e7`. The completed correction is tested at `e54ca1c0232be75b5ce035b95c4117cd0d167b99`, Git tree `087b997afe6a021acc4d63a8f1d974dfc5dc0adb`, on local branch `fix/timestamp-offset-spellings`, published to `refactor/unix-microsecond-timestamps`.
+Review finding 3 concerns fractional UTC offsets that Python can collapse to UTC. PR #5 already contained the initial rejection in `9abfdc0eb439a823246e306e7773b775cfaa75e7`. The completed correction is tested at `e54ca1c0232be75b5ce035b95c4117cd0d167b99`, Git tree `087b997afe6a021acc4d63a8f1d974dfc5dc0adb`, on local branch `fix/timestamp-offset-spellings`. The intended publication target is `refactor/unix-microsecond-timestamps`.
 
 The guard now covers hour-only, compact and colon-separated offsets, both signs and decimal separators. Independent review also found that a trailing NUL can be accepted by `datetime.fromisoformat()` after a fractional offset and evade a suffix check. Any NUL in an external timestamp is now rejected. Valid local timestamp fractions and whole-second UTC offsets retain their existing exact conversion behavior.
 
@@ -29,3 +29,5 @@ Environment: Python 3.12.14, SQLite 3.53.1, Git 2.51.1, uv 0.12.19, Linux x86_64
 - Earlier 167-test focused runs passed before the NUL finding; they do not cover the final NUL correction and are not substituted for the final 173-test result.
 
 Only synthetic source values were used. No real source acquisition, retained catalog change, main merge or release was performed. This is a boundary-validation correction without a schema version change or compatibility layer. This report and its JSON summary are evidence-only additions after the tested source commit.
+
+Publication is pending user approval: automatic approval review rejected the GitHub push because it interpreted the current request as authorizing planning/implementation but not remote publication. A subsequent read confirmed PR #5 still points to `9abfdc0eb439a823246e306e7773b775cfaa75e7`. The rejected operation was not retried through another interface.
