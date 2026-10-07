@@ -1691,6 +1691,8 @@ class GitHubCollector:
                         (code,),
                     )
                 }
+                # Stable API head/base is not enough for complete code coverage:
+                # every expected Git role must also have a persisted acquisition link.
                 missing_roles = sorted(
                     role
                     for role, expected in role_oids.items()
