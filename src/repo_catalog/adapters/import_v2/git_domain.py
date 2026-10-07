@@ -818,7 +818,7 @@ class Context(identity.Context):
             or code["change_request_id"] != pr_id
             or code["change_request_observation_id"] != observation
             or number is not None
-            and number != owner["number"]
+            and number != owner["provider_change_request_number"]
             or claimed_observation is not None
             and claimed_observation != observation
         ):
