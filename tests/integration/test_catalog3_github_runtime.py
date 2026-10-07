@@ -287,6 +287,238 @@ def test_sync_failure_before_any_response_preserves_saved_coverage(github_runtim
     ] == claims
 
 
+@pytest.mark.parametrize("previously_saved", [False, True])
+def test_git_ref_mismatch_cannot_publish_complete_code(
+    github_runtime, previously_saved
+):
+    from repo_catalog.application.query_service import QueryService
+
+    store, repo, fixture, api = github_runtime
+    sync(store, repo)
+    new_head = fixture.alpha.commit(
+        "Q", {b"new-only-Q.txt": b"required PR code"}, ("P",)
+    )
+    api.prs[41]["head"]["sha"] = new_head
+    original = api.route
+
+    def route(method, path, params, body):
+        if path == "/repos/fixture/alpha/pulls/41/commits":
+            return [{"sha": new_head}], {}
+        if path == "/repos/fixture/alpha/pulls/41/files":
+            return [{"filename": "new-only-Q.txt", "status": "added"}], {}
+        return original(method, path, params, body)
+
+    api.route = route
+    if previously_saved:
+        fixture.alpha.ref("refs/pull/41/head", "Q")
+        sync(store, repo)
+    fixture.alpha.ref("refs/pull/41/head", "N")
+    with pytest.raises(CatalogError) as raised:
+        sync(store, repo)
+    assert raised.value.code == "PR_PARTIAL"
+    assert any(
+        failure["reason"] == "PR_CODE_RACE"
+        for failure in raised.value.details["missing"]
+    )
+    assert (
+        bool(
+            store.one(
+                "SELECT 1 FROM git_objects WHERE oid=?", (bytes.fromhex(new_head),)
+            )
+        )
+        is previously_saved
+    )
+    code = store.one(
+        "SELECT * FROM code_observations WHERE change_request_id='repo:41' ORDER BY code_observation_id DESC LIMIT 1"
+    )
+    assert code["state"] == "partial"
+    assert json.loads(code["details"])["expected_roles"]["head"] == new_head
+    assert (
+        bool(
+            store.one(
+                "SELECT 1 FROM code_acquisitions WHERE code_observation_id=? AND role='head'",
+                (code["code_observation_id"],),
+            )
+        )
+        is previously_saved
+    )
+    for pr, kind in (("repo:41", "pr-code"), (None, "pr")):
+        coverage = store.one(
+            "SELECT coverage_state,observed_at_us FROM current_coverage WHERE repository_id='repo' AND change_request_id IS ? AND kind=?",
+            (pr, kind),
+        )
+        assert coverage["coverage_state"] == "partial"
+        assert store.one(
+            "SELECT 1 FROM fetch_occurrences WHERE observed_at_us=?",
+            (coverage["observed_at_us"],),
+        )
+    result = QueryService(store.path).query(
+        "pr show", {"repo": "repo", "provider_change_request_number": 41}
+    )
+    assert result.status == "partial"
+    assert result.coverage.missing
+    assert not result.coverage.complete_for_requested_scope
+
+
+def test_failed_git_refresh_reuses_preserved_exact_roles_without_new_claim(
+    github_runtime, monkeypatch
+):
+    from repo_catalog.adapters.git.importer import GitImporter
+
+    store, repo, fixture, api = github_runtime
+    sync(store, repo)
+    original = GitImporter.sync
+    claim = tuple(
+        store.one(
+            "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
+        )
+    )
+
+    def fail_refresh(self, repo, job, **kwargs):
+        root = kwargs["pr_roots"][0]
+        if root["number"] == 41:
+            raise CatalogError("GIT_ERROR", "Synthetic transport failure before fetch")
+        return original(self, repo, job, **kwargs)
+
+    monkeypatch.setattr(GitImporter, "sync", fail_refresh)
+    with pytest.raises(CatalogError):
+        sync(store, repo)
+    code = store.one(
+        "SELECT * FROM code_observations WHERE change_request_id='repo:41' ORDER BY code_observation_id DESC LIMIT 1"
+    )
+    assert code["state"] == "complete"
+    assert json.loads(code["details"])["missing_roles"] == []
+    assert (
+        tuple(
+            store.one(
+                "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
+            )
+        )
+        == claim
+    )
+
+
+def test_saved_partial_graphql_retains_merge_target_and_partial_code(github_runtime):
+    store, repo, fixture, api = github_runtime
+    api.graphql_partial = True
+    merge_oid = fixture.alpha.commit(
+        "merge-Q", {b"merge-only.txt": b"observed merge target"}, ("P",)
+    )
+    original = api.route
+
+    def route(method, path, params, body):
+        value, headers = original(method, path, params, body)
+        if method == "POST" and body["variables"].get("number") == 43:
+            value["data"]["repository"]["pullRequest"]["mergeCommit"] = {
+                "oid": merge_oid
+            }
+        return value, headers
+
+    api.route = route
+    with pytest.raises(CatalogError) as raised:
+        sync(store, repo)
+    assert raised.value.code == "PR_PARTIAL"
+    code = store.one(
+        "SELECT * FROM code_observations WHERE change_request_id='repo:43' ORDER BY code_observation_id DESC LIMIT 1"
+    )
+    details = json.loads(code["details"])
+    assert details["expected_roles"]["merge"] == merge_oid
+    assert details["code_inputs_complete"] is False
+    assert code["state"] == "partial"
+    assert store.one(
+        "SELECT 1 FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id WHERE a.code_observation_id=? AND a.role='merge' AND a.oid=? AND r.published=1",
+        (code["code_observation_id"], bytes.fromhex(merge_oid)),
+    )
+    assert (
+        store.one(
+            "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:43' AND kind='pr-code'"
+        )[0]
+        == "partial"
+    )
+    assert not store.one(
+        "SELECT 1 FROM coverage_claims c JOIN coverage_scopes s ON s.coverage_scope_id=c.coverage_scope_id WHERE s.change_request_id='repo:43' AND s.kind='pr-code' AND c.coverage_state='complete'"
+    )
+
+
+def test_unobserved_thread_retry_does_not_promote_stale_partial_code(github_runtime):
+    store, repo, fixture, api = github_runtime
+    api.graphql_partial = True
+    with pytest.raises(CatalogError) as partial:
+        sync(store, repo)
+    api.graphql_partial = False
+    sync(store, repo)
+    claims = {
+        row["coverage_scope_id"]: (row["coverage_state"], row["observed_at_us"])
+        for row in store.all(
+            "SELECT * FROM current_coverage WHERE kind IN ('pr-code','threads','pr')"
+        )
+    }
+    assert all(state == "complete" for state, _ in claims.values())
+    api.failures["/graphql"] = [503] * 15
+    with pytest.raises(CatalogError):
+        sync(store, repo, job=partial.value.details["job_id"])
+    assert {
+        row["coverage_scope_id"]: (row["coverage_state"], row["observed_at_us"])
+        for row in store.all(
+            "SELECT * FROM current_coverage WHERE kind IN ('pr-code','threads','pr')"
+        )
+    } == claims
+
+
+def test_interrupted_new_pr_head_is_not_complete_before_code_publication(
+    github_runtime, monkeypatch
+):
+    from repo_catalog.adapters.git.importer import GitImporter
+    from repo_catalog.application.query_service import QueryService
+
+    store, repo, fixture, api = github_runtime
+    sync(store, repo)
+    new_head = fixture.alpha.commit("Q", {b"new-only.txt": b"unsaved code"}, ("P",))
+    fixture.alpha.ref("refs/pull/41/head", "Q")
+    api.prs[41]["head"]["sha"] = new_head
+    original_route, original_sync = api.route, GitImporter.sync
+
+    def route(method, path, params, body):
+        if path == "/repos/fixture/alpha/pulls/41/commits":
+            return [{"sha": new_head}], {}
+        return original_route(method, path, params, body)
+
+    def interrupt(self, repo, job, **kwargs):
+        if kwargs["pr_roots"][0]["number"] == 41:
+            raise CatalogError("CANCELLED", "After API Q, before Git Q")
+        return original_sync(self, repo, job, **kwargs)
+
+    api.route = route
+    monkeypatch.setattr(GitImporter, "sync", interrupt)
+    with pytest.raises(CatalogError) as raised:
+        sync(store, repo)
+    assert raised.value.code == "CANCELLED"
+    current = store.one(
+        "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id='repo:41'"
+    )[0]
+    assert not store.one(
+        "SELECT 1 FROM code_observations WHERE change_request_observation_id=?",
+        (current,),
+    )
+    assert not store.one(
+        "SELECT 1 FROM git_objects WHERE oid=?", (bytes.fromhex(new_head),)
+    )
+    # Coverage history remains immutable; current-data readiness must also be
+    # checked before the reader can claim the newly published PR is complete.
+    assert (
+        store.one(
+            "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
+        )[0]
+        == "complete"
+    )
+    result = QueryService(store.path).query(
+        "pr show", {"repo": "repo", "provider_change_request_number": 41}
+    )
+    assert result.status == "partial"
+    assert result.coverage.missing
+    assert not result.coverage.complete_for_requested_scope
+
+
 @pytest.mark.parametrize("newer_sync", [False, True])
 def test_partial_listing_resumes_same_items_and_no_completed_pages(
     github_runtime, newer_sync
@@ -1296,3 +1528,262 @@ def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias
         == api.reply_count
     )
     assert not store.all("PRAGMA foreign_key_check")
+
+
+@pytest.mark.parametrize("boundary", ["root", "nested-initial", "nested-child"])
+@pytest.mark.parametrize(
+    "malformation",
+    [
+        "missing-nodes",
+        "null-nodes",
+        "mapping-nodes",
+        "empty-page-info",
+        "null-has-next",
+        "integer-has-next",
+        "missing-next-cursor",
+    ],
+)
+def test_malformed_graphql_connections_are_partial_and_retryable(
+    github_runtime, boundary, malformation
+):
+    store, repo, fixture, api = github_runtime
+    pr = {"change_request_id": "repo:41", "provider_change_request_number": 41}
+    with store.transaction():
+        store.execute(
+            "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('repo:41','repo','binding','pull_request',41)"
+        )
+    if boundary == "nested-child":
+        api.reply_count = 101
+    original = api.route
+    malformed_response = None
+
+    def route(method, path, params, body):
+        nonlocal malformed_response
+        value, headers = original(method, path, params, body)
+        if method != "POST":
+            return value, headers
+        child = "thread" in body["variables"]
+        if child != (boundary == "nested-child"):
+            return value, headers
+        if child:
+            connection = value["data"]["node"]["comments"]
+        else:
+            connection = value["data"]["repository"]["pullRequest"]["reviewThreads"]
+            if boundary == "nested-initial":
+                connection = connection["nodes"][0]["comments"]
+        if malformation == "missing-nodes":
+            connection.pop("nodes")
+        elif malformation == "null-nodes":
+            connection["nodes"] = None
+        elif malformation == "mapping-nodes":
+            connection["nodes"] = {}
+        elif malformation == "empty-page-info":
+            connection["pageInfo"] = {}
+        elif malformation == "null-has-next":
+            connection["pageInfo"]["hasNextPage"] = None
+        elif malformation == "integer-has-next":
+            connection["pageInfo"]["hasNextPage"] = 0
+        else:
+            connection["pageInfo"] = {"hasNextPage": True, "endCursor": None}
+        malformed_response = value
+        return value, headers
+
+    api.route = route
+    jobs = JobService(store)
+    job = jobs.create("sync", {"kind": "pr"})
+    collector = GitHubCollector(store, CancellationToken())
+    collector.facts.principal = "fixture"
+    try:
+        with pytest.raises(CatalogError) as raised:
+            collector.threads(repo, pr, job)
+        assert raised.value.code == "API_SCHEMA"
+    finally:
+        collector.http.close()
+    assert malformed_response is not None
+    assert any(
+        json.loads(row["body"]) == malformed_response
+        for row in store.all(
+            "SELECT p.body FROM unresolved_payloads u JOIN payloads p ON p.payload_id=u.payload_id"
+        )
+    )
+    assert (
+        store.one(
+            "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:41' AND kind='threads'"
+        )[0]
+        == "partial"
+    )
+    assert not store.one(
+        "SELECT 1 FROM fetch_collections f JOIN completion_markers c ON c.fetch_collection_id=f.fetch_collection_id WHERE f.kind IN ('threads','thread-comments')"
+    )
+    jobs.update(job, "waiting")
+    jobs.resume(job)
+    api.route = original
+    collector = GitHubCollector(store, CancellationToken())
+    collector.facts.principal = "fixture"
+    try:
+        collector.threads(repo, pr, job)
+    finally:
+        collector.http.close()
+    assert (
+        store.one(
+            "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:41' AND kind='threads'"
+        )[0]
+        == "complete"
+    )
+    assert not store.all("PRAGMA foreign_key_check")
+
+
+@pytest.mark.parametrize("not_modified", [False, True])
+@pytest.mark.parametrize("advance_current", [False, True])
+def test_imported_listing_resume_preserves_authorization_time_and_identity(
+    tmp_path, monkeypatch, not_modified, advance_current
+):
+    from repo_catalog.application.finalization import finalize_catalog
+    from repo_catalog.application.import_service import import_catalog
+    from repo_catalog.config import load
+
+    fixture = GitFixture(tmp_path / "remotes")
+    with GitHubFixture(fixture) as api:
+        source, cache, ids, pr_id = legacy_github_source(
+            tmp_path / "legacy", fixture, api
+        )
+        state = tmp_path / "catalog3"
+        import_catalog(source, state, source_caches=[cache], batch_size=10)
+        config = load(state)
+        config["github"].update(rest_base_url=api.url, graphql_url=api.url + "/graphql")
+        (state / "catalog.toml").write_text(serialize(config))
+        monkeypatch.setenv("GH_TOKEN", "fixture-dummy")
+        api.etag = not_modified
+        observed_at_us = 1_000_000
+        monkeypatch.setattr(
+            "repo_catalog.adapters.github.collector.now_us", lambda: observed_at_us
+        )
+        monkeypatch.setattr(
+            "repo_catalog.adapters.github.persistence.now_us", lambda: observed_at_us
+        )
+        with Store(state, allow_building=True) as store:
+            finalize_catalog(store)
+            repo = {
+                "repository_id": ids["repo"],
+                "name": "fixture/alpha",
+                "source_id": ids["source"],
+                "provider_repository_id": "101",
+                "preferred_repository_endpoint_id": ids["endpoint"],
+            }
+            pr = dict(
+                store.one(
+                    "SELECT * FROM change_requests WHERE change_request_id=?", (pr_id,)
+                )
+            )
+            jobs = JobService(store)
+            job = jobs.create("sync", {"kind": "pr"})
+            store.expected_attempt = 1
+            url = api.url + "/repos/fixture/alpha/pulls/41"
+
+            def collector():
+                result = GitHubCollector(store, CancellationToken())
+                result.facts.principal = "fixture"
+                return result
+
+            current = collector()
+            try:
+                authorized_value, authorized_observation = current.detail(
+                    repo, pr, job, url
+                )
+            finally:
+                current.http.close()
+            marker = store.one(
+                "SELECT c.completion_marker_id,c.observed_at_us FROM completion_markers c JOIN fetch_collections f ON f.fetch_collection_id=c.fetch_collection_id WHERE f.kind='pr-detail'"
+            )
+            assert marker["observed_at_us"] == 1_000_000
+            if advance_current:
+                # A later real response can change the current projection after
+                # the saved 200/304 boundary. Its identity cannot replace the
+                # observation originally authorized by that boundary on resume.
+                observed_at_us = 1_500_000
+                api.prs[41]["head"]["sha"] = fixture.alpha.commit(
+                    "Q", {b"later-head.txt": b"later observed code"}, ("P",)
+                )
+                current = collector()
+                try:
+                    current.code_check(repo, pr, job, url, authorized_observation)
+                finally:
+                    current.http.close()
+            current_observation = store.one(
+                "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
+                (pr_id,),
+            )[0]
+            counts = (
+                store.one("SELECT count(*) FROM fetch_occurrences")[0],
+                store.one("SELECT count(*) FROM change_request_observations")[0],
+            )
+            http_count = len(api.requests)
+            listing_results = []
+            for observed_at_us in (2_000_000, 3_000_000):
+                if observed_at_us == 3_000_000:
+                    jobs.update(job, "waiting")
+                    jobs.resume(job)
+                    store.expected_attempt = 2
+                current = collector()
+                try:
+                    value, replayed_observation = current.detail(repo, pr, job, url)
+                    assert value == authorized_value
+                    assert replayed_observation == authorized_observation
+                    reused = []
+                    for kind, reported, cap in (
+                        ("commits", value["commits"], 250),
+                        ("files", value["changed_files"], 3000),
+                    ):
+                        reused.append(
+                            current.collection(
+                                repo,
+                                pr_id,
+                                "pr-" + kind,
+                                job,
+                                url + "/" + kind + "?per_page=100",
+                                lambda *args: None,
+                                context={"head": value["head"], "base": value["base"]},
+                                listing_kind=kind,
+                                reported=reported,
+                                cap=cap,
+                                reuse=True,
+                            )
+                        )
+                    listing_results.append(reused)
+                finally:
+                    current.http.close()
+            assert listing_results[0] == listing_results[1]
+            assert len(api.requests) == http_count
+            assert (
+                store.one("SELECT count(*) FROM fetch_occurrences")[0],
+                store.one("SELECT count(*) FROM change_request_observations")[0],
+            ) == counts
+            assert (
+                store.one(
+                    "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
+                    (pr_id,),
+                )[0]
+                == current_observation
+            )
+            markers = store.all(
+                "SELECT observed_at_us,evidence FROM completion_markers WHERE json_extract(evidence,'$.boundary')='authenticated-current-head-base'"
+            )
+            assert len(markers) == 2
+            for reused in markers:
+                assert reused["observed_at_us"] == 1_000_000
+                authorization = json.loads(reused["evidence"])["authorization"]
+                assert (
+                    authorization["completion_marker_id"]
+                    == marker["completion_marker_id"]
+                )
+                assert authorization["observed_at_us"] == 1_000_000
+                assert (
+                    authorization["change_request_observation_id"]
+                    == authorized_observation
+                )
+            assert (
+                store.one("SELECT current_attempt FROM jobs WHERE job_id=?", (job,))[0]
+                == 2
+            )
+            assert not store.all("PRAGMA foreign_key_check")
+        assert not api.errors
