@@ -36,7 +36,7 @@ def catalog(tmp_path):
                     (f"repo{number}",),
                 )[0]
                 store.execute(
-                    "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number) VALUES(?,?,?,'pull_request',1)",
+                    "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',1)",
                     (f"pr{number}", f"repo{number}", binding),
                 )
         yield state, store
