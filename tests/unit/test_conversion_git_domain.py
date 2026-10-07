@@ -540,7 +540,7 @@ def test_pr_origin_requires_exact_saved_observation_and_code_acquisition(
         "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at) VALUES('binding','repo','00000000-0000-4000-8000-000000000101',NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number,current_change_request_observation_id,provider_node_id) VALUES('pr','repo','binding','pull_request',7,NULL,NULL)"
+        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES('pr','repo','binding','pull_request',7,NULL)"
     )
     db.execute(
         "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at,published,payload,origin_key,parsed_at,origin_fetch_occurrence_id) VALUES(501,'pr',?,1,'{}','saved',?,NULL)",
