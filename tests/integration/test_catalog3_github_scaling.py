@@ -26,7 +26,7 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                 "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','repo','{}')"
             )
             store.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number) VALUES('pr','repo','binding','pull_request',1)"
+                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo','binding','pull_request',1)"
             )
             store.execute(
                 "INSERT INTO resume_scopes(resume_scope_id,repository_id,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
@@ -40,7 +40,7 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                 (facts.payload(b"{}"), TIME, TIME),
             ).lastrowid
             store.execute(
-                "INSERT INTO review_threads(review_thread_id,change_request_id,payload,observed_at) VALUES('thread','pr','{}',?)",
+                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at) VALUES('pr','thread','{}',?)",
                 (TIME,),
             )
 
