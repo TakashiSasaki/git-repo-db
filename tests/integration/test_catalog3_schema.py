@@ -49,8 +49,8 @@ def facts():
             change_request_id="pr-" + owner,
             repository_id=owner,
             repository_binding_id="binding-" + owner,
-            change_request_kind="pull_request",
-            provider_change_request_number=1,
+            change_change_request_kind="pull_request",
+            provider_change_request_provider_change_request_number=1,
         )
         put(
             db,
