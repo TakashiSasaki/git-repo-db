@@ -588,18 +588,18 @@ class GitHubCollector:
             )
             if row:
                 value = json.loads(row["payload"])
-                self.authorized_prs[
-                    (pr["change_request_id"], *oid_context(value))
-                ] = row["observed_at_us"]
+                self.authorized_prs[(pr["change_request_id"], *oid_context(value))] = (
+                    row["observed_at_us"]
+                )
                 return value, row["change_request_observation_id"]
             current = self.s.one(
                 "SELECT p.current_change_request_observation_id,o.payload,o.observed_at_us FROM change_requests p JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.change_request_id=?",
                 (pr["change_request_id"],),
             )
             value = json.loads(current["payload"])
-            self.authorized_prs[
-                (pr["change_request_id"], *oid_context(value))
-            ] = current["observed_at_us"]
+            self.authorized_prs[(pr["change_request_id"], *oid_context(value))] = (
+                current["observed_at_us"]
+            )
             return value, current["current_change_request_observation_id"]
         headers = {"If-None-Match": validator["etag"]} if validator else {}
         response = self.request_get(url, repo, headers=headers)
@@ -652,9 +652,9 @@ class GitHubCollector:
                             (validated_at_us, collection["resume_scope_id"]),
                         )
                     self.s.publish()
-                self.authorized_prs[
-                    (pr["change_request_id"], *oid_context(value))
-                ] = validated_at_us
+                self.authorized_prs[(pr["change_request_id"], *oid_context(value))] = (
+                    validated_at_us
+                )
                 return value, current
             response = self.request_get(url, repo)
             if response.status_code == 304:
@@ -694,9 +694,7 @@ class GitHubCollector:
             "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
             (pr["change_request_id"],),
         )[0]
-        self.authorized_prs[
-            (pr["change_request_id"], *oid_context(value))
-        ] = timestamp
+        self.authorized_prs[(pr["change_request_id"], *oid_context(value))] = timestamp
         return value, current
 
     def incremental_comments(self, repo, job, kind, endpoint, parent_field):
@@ -1024,7 +1022,9 @@ class GitHubCollector:
                     )
                 info, next_cursor, valid_info = self._page_info(connection)
                 if not valid_info:
-                    raise CatalogError("API_SCHEMA", "Missing or invalid thread pageInfo")
+                    raise CatalogError(
+                        "API_SCHEMA", "Missing or invalid thread pageInfo"
+                    )
                 for thread in connection.get("nodes") or []:
                     review_thread_provider_resource_id = str(thread["id"])
                     self._thread_children(
@@ -1264,7 +1264,9 @@ class GitHubCollector:
                         "GRAPHQL_PARTIAL", "Thread comments page has errors"
                     )
                 if not valid_info:
-                    raise CatalogError("API_SCHEMA", "Missing or invalid nested pageInfo")
+                    raise CatalogError(
+                        "API_SCHEMA", "Missing or invalid nested pageInfo"
+                    )
                 cursor = next_cursor
             with self.s.transaction():
                 self.facts.fence(job)

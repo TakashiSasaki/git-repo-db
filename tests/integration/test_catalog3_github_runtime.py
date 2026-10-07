@@ -1428,7 +1428,9 @@ def test_graphql_page_info_requires_boolean_has_next_page(github_runtime):
             and "thread" not in body["variables"]
         ):
             injected = True
-            payload["data"]["repository"]["pullRequest"]["reviewThreads"]["pageInfo"] = {}
+            payload["data"]["repository"]["pullRequest"]["reviewThreads"][
+                "pageInfo"
+            ] = {}
         return payload, headers
 
     api.route = route
@@ -1439,6 +1441,9 @@ def test_graphql_page_info_requires_boolean_has_next_page(github_runtime):
         "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:41' AND kind='threads'"
     )
     assert thread_coverage["coverage_state"] == "partial"
-    assert store.one(
-        "SELECT count(*) FROM unresolved_payloads WHERE reason LIKE '%API_SCHEMA%'"
-    )[0] >= 1
+    assert (
+        store.one(
+            "SELECT count(*) FROM unresolved_payloads WHERE reason LIKE '%API_SCHEMA%'"
+        )[0]
+        >= 1
+    )
