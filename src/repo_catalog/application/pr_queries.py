@@ -113,6 +113,19 @@ def pr_query(query, command, options):
     allowed = {r["repository_id"] for r in query.repos(o)}
     if command not in ("pr list", "search pr", "pr thread"):
         query.single_repo(o)
+    selected_kind = o.get("change_request_kind")
+    if selected_kind not in (None, "pull_request", "merge_request"):
+        raise CatalogError("INVALID_ARGUMENT", "Unknown change request kind")
+    if command == "pr thread" and (
+        type(o.get("provider_change_request_number")) is not int
+        or o["provider_change_request_number"] <= 0
+        or not isinstance(o.get("provider_resource_id"), str)
+        or not o["provider_resource_id"]
+    ):
+        raise CatalogError(
+            "INVALID_ARGUMENT",
+            "Thread selection requires a positive provider change request number and provider resource ID",
+        )
     rows = s.all(
         "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id"
     )
@@ -120,13 +133,21 @@ def pr_query(query, command, options):
         r
         for r in rows
         if r["repository_id"] in allowed
-        and (o.get("number") is None or r["provider_change_request_number"] == o["number"])
+        and (
+            o.get("provider_change_request_number") is None
+            or r["provider_change_request_number"]
+            == o["provider_change_request_number"]
+        )
+        and (selected_kind is None or r["change_request_kind"] == selected_kind)
         and (not o.get("binding") or r["repository_binding_id"] == o["binding"])
     ]
-    if o.get("number") is not None and not rows:
+    if o.get("provider_change_request_number") is not None and not rows:
         raise CatalogError("NOT_FOUND", "Pull request not found")
-    if o.get("number") is not None and len(rows) != 1:
-        raise CatalogError("INVALID_ARGUMENT", "Number is ambiguous; select --binding")
+    if o.get("provider_change_request_number") is not None and len(rows) != 1:
+        raise CatalogError(
+            "INVALID_ARGUMENT",
+            "Number is ambiguous; select --binding and --change-request-kind",
+        )
     if command == "pr thread":
         request = rows[0]
         thread = s.one(
@@ -162,7 +183,9 @@ def pr_query(query, command, options):
                     "provider_change_request_document_id": key.provider_change_request_document_id,
                     "document_observation_id": row["document_observation_id"],
                     "body": row["body"],
-                    "review_thread_provider_resource_id": thread["provider_resource_id"],
+                    "review_thread_provider_resource_id": thread[
+                        "provider_resource_id"
+                    ],
                     "thread": json.loads(thread["payload"]),
                     "review_position": json.loads(row["payload"]),
                 },
@@ -255,7 +278,8 @@ def pr_query(query, command, options):
         base = {
             "repository_id": pr["repository_id"],
             "repository": pr["name"],
-            "number": pr["provider_change_request_number"],
+            "provider_change_request_number": pr["provider_change_request_number"],
+            "change_request_kind": pr["change_request_kind"],
             "pr_id": pr["change_request_id"],
             "change_request_id": pr["change_request_id"],
             "repository_binding_id": pr["repository_binding_id"],
@@ -317,7 +341,11 @@ def pr_query(query, command, options):
                     )
                 ]
             yield (
-                [pr["repository_id"], pr["provider_change_request_number"], pr["change_request_id"]],
+                [
+                    pr["repository_id"],
+                    pr["provider_change_request_number"],
+                    pr["change_request_id"],
+                ],
                 _bounded(item),
             )
         elif command == "pr timeline":

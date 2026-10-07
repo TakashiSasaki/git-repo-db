@@ -1245,3 +1245,49 @@ def test_selected_paired_escaped_surrogates_backslashes_and_last_duplicate_survi
     assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
     db.close()
     src.close()
+
+
+def test_node_only_source_document_stays_archived_not_canonical(tmp_path):
+    def mutate(src):
+        src.execute(
+            "UPDATE pr_documents SET provider_id='NODE_only' WHERE id=?",
+            (IDS["document_a"],),
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    assert not db.execute(
+        "SELECT 1 FROM documents WHERE provider_change_request_document_id='NODE_only'"
+    ).fetchone()
+    assert any(
+        item[1] == "PR_CANONICAL_DOCUMENT_ID_MISSING" and item[2] == "partial"
+        for batch in output.values()
+        for item in batch.get("diagnostics", [])
+    )
+    assert db.execute(
+        "SELECT 1 FROM legacy_values WHERE column_name='provider_id' AND value_bytes=?",
+        (b"NODE_only",),
+    ).fetchone()
+    db.close()
+    src.close()
+
+
+def test_source_thread_local_id_is_not_used_when_provider_id_missing(tmp_path):
+    def mutate(src):
+        src.execute(
+            "UPDATE review_threads SET payload='{}' WHERE id=?", (IDS["thread"],)
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    assert not db.execute(
+        "SELECT 1 FROM review_threads WHERE provider_resource_id=?", (IDS["thread"],)
+    ).fetchone()
+    assert any(
+        item[1] == "PR_INVALID_SAVED_IDENTITY"
+        for batch in output.values()
+        for item in batch.get("diagnostics", [])
+    )
+    assert not db.execute("PRAGMA foreign_key_check").fetchall()
+    db.close()
+    src.close()

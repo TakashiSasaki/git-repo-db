@@ -180,7 +180,9 @@ def test_direct_observations_keep_a_a_b_a_and_replay_does_not_move_current(catal
     after = query.query("search pr", options).data["items"]
     assert after == before
     assert store.one("SELECT count(*) FROM search_documents WHERE kind='pr'")[0] == 2
-    latest = query.query("pr documents", {"repo": "repo1", "number": 1}).data["items"]
+    latest = query.query(
+        "pr documents", {"repo": "repo1", "provider_change_request_number": 1}
+    ).data["items"]
     assert len(latest) == 1 and latest[0]["document_observation_id"] == current
     assert "document_id" not in latest[0] and "document_version_id" not in latest[0]
 
@@ -263,13 +265,20 @@ def test_unresolved_current_is_partial_not_implicit_maximum_observation(catalog)
     with store.transaction():
         observe(store, DocumentKey("pr1", "pr-body", "123"), "A", 0)
         store.execute("UPDATE documents SET current_document_observation_id=NULL")
-    result = QueryService(state).query("pr documents", {"repo": "repo1", "number": 1})
+    result = QueryService(state).query(
+        "pr documents", {"repo": "repo1", "provider_change_request_number": 1}
+    )
     assert result.data["items"] == []
     assert any(
         item["reason"] == "document_current_selection_unresolved"
         for item in result.coverage.missing
     )
     history = QueryService(state).query(
-        "pr documents", {"repo": "repo1", "number": 1, "document_observations": "all"}
+        "pr documents",
+        {
+            "repo": "repo1",
+            "provider_change_request_number": 1,
+            "document_observations": "all",
+        },
     )
     assert len(history.data["items"]) == 1

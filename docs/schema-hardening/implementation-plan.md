@@ -2,7 +2,7 @@
 
 Catalog3 is the sole ordinary runtime. Packaged DDL and the runtime identity module are authoritative; [runtime handoff](runtime-handoff.md) records commands, validation and limits. Historical phase plans and design/export schemas remain snapshots.
 
-This stride starts at main `1ce7fccdb63ab7de74daf6694d2c7187fcddd835` on `refactor/portable-document-observations`. It advances schema identity **4 -> 5**, retaining `repo-catalog/catalog3`, and implements the user's agreed identity/observation decisions rather than another purely mechanical rename.
+This stride starts at main `1ce7fccdb63ab7de74daf6694d2c7187fcddd835` on `refactor/portable-document-observations`. It advances schema identity **4 -> 6**, retaining `repo-catalog/catalog3`, and implements the user's agreed identity/observation decisions rather than another purely mechanical rename.
 
 Implemented scope:
 
@@ -13,4 +13,6 @@ Implemented scope:
 5. Adapt guarded v2 salvage to the new target without altering source schema or bytes. Archive old IDs/version facts; map documents to composite keys and current-version assertions only to suitable real observations.
 6. Rebuild PR search inputs by content identity while returning distinct observations. Replace obsolete CLI version selectors with explicit observation selectors. Validate normal runtime, preservation, recovery and packaging on disposable synthetic sources.
 
-No v4 migration/compatibility views, separate portable schema, multi-catalog exchange, open-ended providers, real-data activation or release publication is included. Existing real-world reports retain their original commits and scopes. Final clean substantive revision `b6cca875b9a303989bc8947dc56dddb04d7b9ec2` passes 358 current tests and both installed distribution checks (360 reconciled), recorded in the runtime handoff.
+7. Use explicit change-request kind/provider-number names, remove secondary normalized Node-ID aliases and replace local thread IDs with parent-scoped provider resource keys. Retain failed canonical-ID response evidence and resume without admitting Node-keyed documents.
+
+No v4/v5 migration/compatibility views, separate portable schema, multi-catalog exchange, open-ended providers, real-data activation or release publication is included. Existing real-world reports retain their original commits and scopes. Prior schema-5 clean substantive revision `b6cca875b9a303989bc8947dc56dddb04d7b9ec2` passes 358 current tests and both installed distribution checks (360 reconciled), recorded in the runtime handoff.
