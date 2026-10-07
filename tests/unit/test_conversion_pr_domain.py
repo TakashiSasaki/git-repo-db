@@ -16,6 +16,14 @@ from tests.support.integrated_fixture import (
 )
 
 
+def source_document_key(source, source_id):
+    return tuple(
+        source.execute(
+            "SELECT pr_id,kind,provider_id FROM pr_documents WHERE id=?", (source_id,)
+        ).fetchone()
+    )
+
+
 def apply(db, output, module):
     for operation in output["operations"]:
         table, row = operation["table"], operation["row"]
@@ -300,8 +308,8 @@ def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repa
     ]
     history = list(
         db.execute(
-            "SELECT o.document_observation_id,b.body,o.observed_at FROM document_observations o JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE o.document_id=? AND o.document_observation_id<1000 ORDER BY o.document_observation_id",
-            (IDS["document_a"],),
+            "SELECT o.document_observation_id,b.body,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? AND o.kind=? AND o.provider_change_request_document_id=? AND o.document_observation_id<1000 ORDER BY o.document_observation_id",
+            source_document_key(src, IDS["document_a"]),
         )
     )
     assert [tuple(row) for row in history] == [
@@ -312,19 +320,19 @@ def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repa
     bodies = [
         row[0]
         for row in db.execute(
-            "SELECT text_body_id FROM document_versions WHERE document_version_id IN (301,303) ORDER BY document_version_id"
+            "SELECT text_body_sha256 FROM document_observations WHERE document_observation_id IN (301,303) ORDER BY document_observation_id"
         )
     ]
     assert len(set(bodies)) == 1
     repaired = db.execute(
-        "SELECT b.body,o.observed_at,o.parsed_at,f.next_cursor FROM document_observations o JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.fetch_occurrence_id WHERE b.body=? ORDER BY o.observed_at",
+        "SELECT b.body,o.observed_at,o.parsed_at,f.next_cursor FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.fetch_occurrence_id WHERE b.body=? ORDER BY o.observed_at",
         (SAVED_EARLY_BODY,),
     ).fetchone()
     assert tuple(repaired)[:3] == (SAVED_EARLY_BODY, STAMPS[3], STAMPS[0])
     assert repaired[3] is not None
     assert all(
         row[0] is None
-        for row in db.execute("SELECT current_document_version_id FROM documents")
+        for row in db.execute("SELECT current_document_observation_id FROM documents")
     )
     assert all(
         row[0] is None
@@ -431,8 +439,8 @@ def test_saved_page_replay_restores_same_collection_a_b_a_without_body_merge(tmp
     convert(db, src, run)
     history = list(
         db.execute(
-            "SELECT o.document_version_id,b.body,o.observed_at FROM document_observations o JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE o.document_id=? AND o.origin_key=? ORDER BY o.observed_at",
-            (IDS["document_a"], IDS["comments_a"]),
+            "SELECT o.document_observation_id,b.body,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? AND o.kind=? AND o.provider_change_request_document_id=? AND o.origin_key=? ORDER BY o.observed_at",
+            (*source_document_key(src, IDS["document_a"]), IDS["comments_a"]),
         )
     )
     assert [r[1] for r in history] == ["A", "B", "A"]
@@ -494,7 +502,7 @@ def test_saved_pr_title_body_reconstruct_history_and_original_metadata(tmp_path)
     convert(db, src, run)
     history = list(
         db.execute(
-            "SELECT v.document_version_id,b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.document_id=d.document_id JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.kind='pr-title' ORDER BY o.observed_at"
+            "SELECT o.document_observation_id,b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE d.kind='pr-title' ORDER BY o.observed_at"
         )
     )
     assert [r[1] for r in history] == ["title A", "title B", "title A"]
@@ -535,13 +543,13 @@ def test_repeated_saved_document_metadata_has_stable_identity_and_distinct_obser
     db, src, run = components(tmp_path, mutate=mutate)
     convert(db, src, run)
     document = db.execute(
-        "SELECT document_id,metadata FROM documents WHERE provider_document_id='902'"
+        "SELECT change_request_id,kind,provider_change_request_document_id,metadata FROM documents WHERE provider_change_request_document_id='902'"
     ).fetchone()
-    assert json.loads(document[1])["updated_at"] == "source-update-0"
+    assert json.loads(document[3])["updated_at"] == "source-update-0"
     rows = list(
         db.execute(
-            "SELECT metadata FROM document_observations WHERE document_id=? ORDER BY observed_at",
-            (document[0],),
+            "SELECT metadata FROM document_observations WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=? ORDER BY observed_at",
+            tuple(document[:3]),
         )
     )
     assert [json.loads(r[0])["updated_at"] for r in rows] == [
@@ -595,13 +603,13 @@ def test_pending_parent_and_etag_preserve_scope_payload_and_observation_time(tmp
     output = convert(db, src, run)
     assert (
         db.execute(
-            "SELECT count(*) FROM documents WHERE provider_document_id='907'"
+            "SELECT count(*) FROM documents WHERE provider_change_request_document_id='907'"
         ).fetchone()[0]
         == 1
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM documents WHERE provider_document_id='908'"
+            "SELECT count(*) FROM documents WHERE provider_change_request_document_id='908'"
         ).fetchone()[0]
         == 0
     )
@@ -700,13 +708,13 @@ def test_graphql_repeated_missing_thread_retains_initial_snapshot_and_later_fact
     db, src, run = components(tmp_path, mutate=mutate)
     output = convert(db, src, run)
     thread = db.execute(
-        "SELECT review_thread_id,payload,observed_at FROM review_threads WHERE review_thread_id LIKE '%THREAD_new'"
+        "SELECT provider_resource_id,payload,observed_at FROM review_threads WHERE provider_resource_id='THREAD_new'"
     ).fetchone()
     assert json.loads(thread[1])["isResolved"] is False
     assert thread[2] == STAMPS[0]
     rows = list(
         db.execute(
-            "SELECT b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.document_id=d.document_id JOIN document_versions v ON v.document_version_id=o.document_version_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.provider_document_id='910' ORDER BY o.observed_at"
+            "SELECT b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE d.provider_change_request_document_id='910' ORDER BY o.observed_at"
         )
     )
     assert [(r[0], r[1]) for r in rows] == [
@@ -719,7 +727,7 @@ def test_graphql_repeated_missing_thread_retains_initial_snapshot_and_later_fact
     ]
     assert (
         db.execute(
-            "SELECT review_thread_id FROM review_comments WHERE document_id=(SELECT document_id FROM documents WHERE provider_document_id='910')"
+            "SELECT review_thread_provider_resource_id FROM review_comments WHERE provider_change_request_document_id='910'"
         ).fetchone()[0]
         == thread[0]
     )
@@ -791,13 +799,13 @@ def test_saved_null_body_keeps_identity_each_occurrence_without_inventing_empty_
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM documents WHERE provider_document_id='902'"
+            "SELECT count(*) FROM documents WHERE provider_change_request_document_id='902'"
         ).fetchone()[0]
         == 1
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM document_versions WHERE document_id IN (SELECT document_id FROM documents WHERE kind='pr-body' OR provider_document_id='902')"
+            "SELECT count(*) FROM document_observations WHERE kind='pr-body' OR provider_change_request_document_id='902'"
         ).fetchone()[0]
         == 0
     )
@@ -808,10 +816,7 @@ def test_saved_null_body_keeps_identity_each_occurrence_without_inventing_empty_
         == 6
     )
     assert (
-        db.execute(
-            "SELECT count(*) FROM document_versions v JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE v.document_version_id=303 AND b.body=''"
-        ).fetchone()[0]
-        == 1
+        db.execute("SELECT count(*) FROM text_bodies WHERE body=''").fetchone()[0] == 1
     )
     assert (
         sum(
@@ -896,8 +901,8 @@ def test_oversized_saved_page_defers_replay_preserves_payload_occurrence_and_dir
     )
     assert (
         db.execute(
-            "SELECT count(*) FROM document_observations WHERE document_id=? AND document_observation_id<1000",
-            (IDS["document_a"],),
+            "SELECT count(*) FROM document_observations WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=? AND document_observation_id<1000",
+            source_document_key(src, IDS["document_a"]),
         ).fetchone()[0]
         == 3
     )
@@ -1238,5 +1243,51 @@ def test_selected_paired_escaped_surrogates_backslashes_and_last_duplicate_survi
         d[1] == "PR_MALFORMED_TEXT" for d in output["resume_scopes"]["diagnostics"]
     )
     assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
+    db.close()
+    src.close()
+
+
+def test_node_only_source_document_stays_archived_not_canonical(tmp_path):
+    def mutate(src):
+        src.execute(
+            "UPDATE pr_documents SET provider_id='NODE_only' WHERE id=?",
+            (IDS["document_a"],),
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    assert not db.execute(
+        "SELECT 1 FROM documents WHERE provider_change_request_document_id='NODE_only'"
+    ).fetchone()
+    assert any(
+        item[1] == "PR_CANONICAL_DOCUMENT_ID_MISSING" and item[2] == "partial"
+        for batch in output.values()
+        for item in batch.get("diagnostics", [])
+    )
+    assert db.execute(
+        "SELECT 1 FROM legacy_values WHERE column_name='provider_id' AND value_bytes=?",
+        (b"NODE_only",),
+    ).fetchone()
+    db.close()
+    src.close()
+
+
+def test_source_thread_local_id_is_not_used_when_provider_id_missing(tmp_path):
+    def mutate(src):
+        src.execute(
+            "UPDATE review_threads SET payload='{}' WHERE id=?", (IDS["thread"],)
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    output = convert(db, src, run)
+    assert not db.execute(
+        "SELECT 1 FROM review_threads WHERE provider_resource_id=?", (IDS["thread"],)
+    ).fetchone()
+    assert any(
+        item[1] == "PR_INVALID_SAVED_IDENTITY"
+        for batch in output.values()
+        for item in batch.get("diagnostics", [])
+    )
+    assert not db.execute("PRAGMA foreign_key_check").fetchall()
     db.close()
     src.close()

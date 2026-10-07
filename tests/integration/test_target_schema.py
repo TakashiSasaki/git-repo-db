@@ -33,8 +33,8 @@ def build_target(sql=None):
     put(
         db,
         "service_instances",
-        service_instance_id="instance",
-        kind="github",
+        service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
+        service_kind="github",
         name="fixture",
         metadata="{}",
     )
@@ -42,7 +42,7 @@ def build_target(sql=None):
         db,
         "sources",
         source_id="source",
-        service_instance_id="instance",
+        service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
         discovery_kind="github_inventory",
         name="fixture",
         settings="{}",
@@ -54,7 +54,7 @@ def build_target(sql=None):
             "repository_bindings",
             repository_binding_id="binding-" + repo,
             repository_id=repo,
-            service_instance_id="instance",
+            service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
             provider_repository_id=repo,
             metadata="{}",
         )
@@ -95,8 +95,8 @@ def build_target(sql=None):
             change_request_id="cr-" + repo,
             repository_id=repo,
             repository_binding_id="binding-" + repo,
-            request_kind="pull_request",
-            number=1,
+            change_request_kind="pull_request",
+            provider_change_request_number=1,
         )
         put(
             db,
@@ -135,28 +135,42 @@ def build_target(sql=None):
         put(
             db,
             "documents",
-            document_id="doc-" + repo,
             change_request_id="cr-" + repo,
             kind="pr-body",
-            provider_document_id="native",
+            provider_change_request_document_id="native",
             deleted=0,
             metadata="{}",
         )
         put(
             db,
-            "document_versions",
-            document_version_id=index,
-            document_id="doc-" + repo,
-            text_body_id=index,
+            "document_observations",
+            document_observation_id=index,
+            change_request_id="cr-" + repo,
+            kind="pr-body",
+            provider_change_request_document_id="native",
+            text_body_sha256=hashlib.sha256(repo.encode()).digest(),
+            observed_at=TIME,
+            parsed_at=TIME,
+            metadata="{}",
         )
         db.execute(
-            "UPDATE documents SET current_document_version_id=? WHERE document_id=?",
-            (index, "doc-" + repo),
+            "UPDATE documents SET current_document_observation_id=? WHERE change_request_id=? AND kind='pr-body' AND provider_change_request_document_id='native'",
+            (index, "cr-" + repo),
         )
+        for document_kind in ("review", "review-comment"):
+            put(
+                db,
+                "documents",
+                change_request_id="cr-" + repo,
+                kind=document_kind,
+                provider_change_request_document_id="native-" + repo,
+                deleted=0,
+                metadata="{}",
+            )
         put(
             db,
             "review_threads",
-            review_thread_id="thread-" + repo,
+            provider_resource_id="thread-" + repo,
             change_request_id="cr-" + repo,
             payload="{}",
             observed_at=TIME,
@@ -255,7 +269,7 @@ def test_fresh_complete_schema(target):
     db = target
     assert (
         len(db.execute("SELECT name FROM sqlite_schema WHERE type='table'").fetchall())
-        == 74
+        == 73
     )
     assert all(
         row[5] == 1
@@ -279,14 +293,14 @@ def test_fresh_complete_schema(target):
         "UPDATE change_request_observations SET change_request_observation_id=999 WHERE change_request_observation_id=1",
         "UPDATE change_request_observations SET change_request_id='cr-b' WHERE change_request_observation_id=1",
         "UPDATE change_request_observations SET published=0 WHERE change_request_observation_id=1",
-        "UPDATE documents SET document_id='temporary' WHERE document_id='doc-a'",
-        "UPDATE documents SET change_request_id='cr-b' WHERE document_id='doc-a'",
-        "UPDATE document_versions SET document_version_id=999 WHERE document_version_id=1",
+        "UPDATE documents SET provider_change_request_document_id='temporary' WHERE change_request_id='cr-a'",
+        "UPDATE documents SET change_request_id='cr-b' WHERE change_request_id='cr-a'",
+        "UPDATE document_observations SET document_observation_id=999 WHERE document_observation_id=1",
         "UPDATE text_bodies SET text_body_id=999 WHERE text_body_id=1",
         "UPDATE code_listings SET code_listing_id='temporary' WHERE code_listing_id='listing-a-commits'",
         "UPDATE code_listings SET resume_scope_id='scope-b' WHERE code_listing_id='listing-a-commits'",
         "DELETE FROM snapshots WHERE snapshot_id='snapshot-a'",
-        "DELETE FROM document_versions WHERE document_version_id=1",
+        "DELETE FROM document_observations WHERE document_observation_id=1",
         "DELETE FROM text_bodies WHERE text_body_id=1",
     ],
 )
@@ -377,9 +391,9 @@ def test_reviewed_multi_statement_attack(
         "UPDATE repositories SET current_snapshot_id='snapshot-b' WHERE repository_id='a'",
         "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_id='a'",
         "UPDATE change_requests SET current_change_request_observation_id=2 WHERE change_request_id='cr-a'",
-        "UPDATE documents SET current_document_version_id=2 WHERE document_id='doc-a'",
-        "INSERT INTO review_comments(document_id,change_request_id,review_thread_id,payload) VALUES('doc-a','cr-a','thread-b','{}')",
-        "INSERT INTO reviews(review_id,change_request_id,document_id,payload) VALUES('review','cr-a','doc-b','{}')",
+        "UPDATE documents SET current_document_observation_id=2 WHERE change_request_id='cr-a' AND kind='pr-body'",
+        "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES('cr-a','review-comment','native-a','thread-b','{}')",
+        "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id,payload) VALUES('cr-a','review','native-b','{}')",
         "UPDATE fetch_collections SET change_request_id='cr-b' WHERE fetch_collection_id='a-commits'",
         "DELETE FROM repositories WHERE repository_id='a'",
     ],
@@ -396,7 +410,7 @@ def test_replace_upsert_and_same_repo_reassignment(target, recursive):
     for sql in (
         "INSERT OR REPLACE INTO snapshots SELECT snapshot_id,git_acquisition_id,repository_id,0,generation,created_at FROM snapshots WHERE snapshot_id='snapshot-a'",
         "INSERT INTO snapshots SELECT * FROM snapshots WHERE snapshot_id='snapshot-a' ON CONFLICT(snapshot_id) DO UPDATE SET published=0",
-        "INSERT OR REPLACE INTO document_versions(document_version_id,document_id,text_body_id,legacy_body_sha256) VALUES(1,'doc-b',2,NULL)",
+        "INSERT OR REPLACE INTO document_observations SELECT 1,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at,parsed_at,origin_key,fetch_occurrence_id,metadata FROM document_observations WHERE document_observation_id=2",
         "INSERT OR REPLACE INTO text_bodies SELECT 99,body,byte_length,sha256 FROM text_bodies WHERE text_body_id=1",
         "INSERT OR REPLACE INTO code_listings SELECT * FROM code_listings WHERE code_listing_id='listing-a-commits'",
     ):
@@ -499,8 +513,8 @@ def test_oid_type_numeric_boolean_null(target, fields):
 @pytest.mark.parametrize(
     "sql",
     [
-        "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('bad','instance','github_inventory','bad','[]')",
-        "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('bad','instance','github_inventory','bad','invalid-json')",
+        "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('bad','00000000-0000-4000-8000-000000000101','github_inventory','bad','[]')",
+        "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('bad','00000000-0000-4000-8000-000000000101','github_inventory','bad','invalid-json')",
         "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES('listing-a-commits','invented',0,0,0)",
         "UPDATE code_listing_progress SET page_count=-1 WHERE code_listing_id='listing-a-commits'",
         "UPDATE code_listing_progress SET state='complete' WHERE code_listing_id='listing-a-commits'",
@@ -607,45 +621,38 @@ def test_git_meaning_and_multiple_ref_origins(target):
 
 def test_body_sharing_preserves_a_b_a_and_times(target):
     db = target
-    put(
-        db,
-        "document_versions",
-        document_version_id=3,
-        document_id="doc-a",
-        text_body_id=2,
+    values = (
+        (11, "a", "observed-A"),
+        (12, "b", "observed-B"),
+        (13, "a", "observed-A-again"),
+        (14, "a", "same-body-new-observation"),
     )
-    for id, version, time in (
-        (1, 1, "observed-A"),
-        (2, 3, "observed-B"),
-        (3, 1, "observed-A-again"),
-        (4, 1, "same-body-new-observation"),
-    ):
+    for ident, body, timestamp in values:
         put(
             db,
             "document_observations",
-            document_observation_id=id,
-            document_id="doc-a",
-            document_version_id=version,
-            observed_at=time,
+            document_observation_id=ident,
+            change_request_id="cr-a",
+            kind="pr-body",
+            provider_change_request_document_id="native",
+            text_body_sha256=hashlib.sha256(body.encode()).digest(),
+            observed_at=timestamp,
             parsed_at="later",
             metadata="{}",
         )
     assert db.execute(
-        "SELECT document_version_id,observed_at FROM document_observations ORDER BY document_observation_id"
-    ).fetchall() == [
-        (1, "observed-A"),
-        (3, "observed-B"),
-        (1, "observed-A-again"),
-        (1, "same-body-new-observation"),
-    ]
+        "SELECT b.body,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.document_observation_id>=11 ORDER BY o.document_observation_id"
+    ).fetchall() == [(body, timestamp) for _, body, timestamp in values]
     assert db.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 2
     with pytest.raises(sqlite3.IntegrityError):
         put(
             db,
             "document_observations",
-            document_observation_id=5,
-            document_id="doc-a",
-            document_version_id=2,
+            document_observation_id=15,
+            change_request_id="cr-a",
+            kind="pr-body",
+            provider_change_request_document_id="absent",
+            text_body_sha256=hashlib.sha256(b"a").digest(),
             parsed_at="later",
             metadata="{}",
         )
@@ -835,17 +842,22 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
     ).fetchall() == [(5,)]
 
 
-def test_existing_version_ids_survive_shared_body(target):
+def test_distinct_observation_ids_survive_shared_body(target):
     put(
         target,
-        "document_versions",
-        document_version_id=99,
-        document_id="doc-a",
-        text_body_id=1,
-        legacy_body_sha256=b"x" * 32,
+        "document_observations",
+        document_observation_id=99,
+        change_request_id="cr-a",
+        kind="pr-body",
+        provider_change_request_document_id="native",
+        text_body_sha256=hashlib.sha256(b"a").digest(),
+        observed_at=TIME,
+        parsed_at=TIME,
+        metadata="{}",
     )
     assert target.execute(
-        "SELECT document_version_id FROM document_versions WHERE document_id='doc-a' AND text_body_id=1 ORDER BY document_version_id"
+        "SELECT document_observation_id FROM document_observations WHERE change_request_id='cr-a' AND text_body_sha256=? ORDER BY document_observation_id",
+        (hashlib.sha256(b"a").digest(),),
     ).fetchall() == [(1,), (99,)]
 
 

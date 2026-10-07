@@ -37,7 +37,7 @@ def graph(request):
         (STAMP, STAMP, STAMP),
     )
     db.execute(
-        "INSERT INTO sources(source_id,service_instance_id,discovery_kind,name,settings) VALUES('source',NULL,'manual_git','source','{}')"
+        "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('source',NULL,'manual_git','source','{}')"
     )
     db.execute(
         "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','name',NULL,NULL,'{}')"
@@ -534,13 +534,13 @@ def test_pr_origin_requires_exact_saved_observation_and_code_acquisition(
     src.execute("INSERT INTO pr_git_links VALUES(501,'head','sha1',?,22)", (oid,))
     normalize(graph, through="root_manifest_entries")
     db.execute(
-        "INSERT INTO service_instances(service_instance_id,kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('instance','git','instance',NULL,NULL,'{}',NULL)"
+        "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('00000000-0000-4000-8000-000000000101','git','00000000-0000-4000-8000-000000000101',NULL,NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_id,provider_repository_id,metadata,created_at) VALUES('binding','repo','instance',NULL,'{}',NULL)"
+        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at) VALUES('binding','repo','00000000-0000-4000-8000-000000000101',NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number,current_change_request_observation_id,provider_node_id) VALUES('pr','repo','binding','pull_request',7,NULL,NULL)"
+        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES('pr','repo','binding','pull_request',7,NULL)"
     )
     db.execute(
         "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at,published,payload,origin_key,parsed_at,origin_fetch_occurrence_id) VALUES(501,'pr',?,1,'{}','saved',?,NULL)",

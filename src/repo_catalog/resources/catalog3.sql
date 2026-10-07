@@ -1,5 +1,6 @@
 -- Authoritative catalog3 runtime and offline-import schema.
--- Entity keys use <entity>_id; neutral FKs use the same name.
+-- Named surrogate keys use <entity>_id; documents use their natural composite key.
+-- Service namespaces explicitly use service_instance_uuidv4; neutral FKs match.
 -- Role FKs use <role>_<entity>_id. Git oid BLOBs are not catalog IDs.
 -- Every connection enables foreign_keys and recursive_triggers.
 PRAGMA foreign_keys=ON;
@@ -7,20 +8,27 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=4),
+    schema_version INTEGER NOT NULL CHECK(schema_version=6),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
 ) STRICT;
 CREATE TABLE service_instances(
-service_instance_id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('github','gitlab','gitea','forgejo','gitolite','git','other')),
+service_instance_uuidv4 TEXT PRIMARY KEY CHECK(
+    length(service_instance_uuidv4)=36 AND length(CAST(service_instance_uuidv4 AS BLOB))=36
+    AND substr(service_instance_uuidv4,9,1)='-' AND substr(service_instance_uuidv4,14,1)='-'
+    AND substr(service_instance_uuidv4,19,1)='-' AND substr(service_instance_uuidv4,24,1)='-'
+    AND length(replace(service_instance_uuidv4,'-',''))=32
+    AND replace(service_instance_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*'
+    AND substr(service_instance_uuidv4,15,1)='4' AND substr(service_instance_uuidv4,20,1) IN ('8','9','a','b')
+), service_kind TEXT NOT NULL CHECK(service_kind IN ('github','gitlab','gitea','forgejo','gitolite','git','other')),
     name TEXT NOT NULL UNIQUE,
     web_base_url TEXT, api_base_url TEXT,
     metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
     created_at TEXT
 ) STRICT;
 CREATE TABLE sources(
-source_id TEXT PRIMARY KEY, service_instance_id TEXT REFERENCES service_instances(service_instance_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+source_id TEXT PRIMARY KEY, service_instance_uuidv4 TEXT REFERENCES service_instances(service_instance_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT,
     discovery_kind TEXT NOT NULL CHECK(discovery_kind IN ('manual_git','github_inventory')),
     name TEXT NOT NULL,
     settings TEXT NOT NULL CHECK(json_valid(settings) AND json_type(settings)='object')
@@ -35,10 +43,10 @@ repository_id TEXT PRIMARY KEY, name TEXT NOT NULL,
 CREATE TABLE repository_bindings(
 repository_binding_id TEXT PRIMARY KEY,
     repository_id TEXT NOT NULL REFERENCES repositories(repository_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    service_instance_id TEXT NOT NULL REFERENCES service_instances(service_instance_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    service_instance_uuidv4 TEXT NOT NULL REFERENCES service_instances(service_instance_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT,
     provider_repository_id TEXT CHECK(provider_repository_id IS NULL OR length(provider_repository_id)>0),
     metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'), created_at TEXT,
-    UNIQUE(repository_id,service_instance_id), UNIQUE(service_instance_id,provider_repository_id), UNIQUE(repository_binding_id,repository_id)
+    UNIQUE(repository_id,service_instance_uuidv4), UNIQUE(service_instance_uuidv4,provider_repository_id), UNIQUE(repository_binding_id,repository_id)
 ) STRICT;
 CREATE TABLE repository_endpoints(
 repository_endpoint_id TEXT PRIMARY KEY,
@@ -68,10 +76,9 @@ snapshot_id TEXT PRIMARY KEY, git_acquisition_id TEXT NOT NULL UNIQUE,
 ) STRICT;
 CREATE TABLE change_requests(
 change_request_id TEXT PRIMARY KEY, repository_id TEXT NOT NULL, repository_binding_id TEXT NOT NULL,
-    request_kind TEXT NOT NULL CHECK(request_kind IN ('pull_request','merge_request')),
-    number INTEGER NOT NULL CHECK(number>0), current_change_request_observation_id INTEGER,
-    provider_node_id TEXT,
-    UNIQUE(repository_binding_id,request_kind,number), UNIQUE(change_request_id,repository_id),
+    change_request_kind TEXT NOT NULL CHECK(change_request_kind IN ('pull_request','merge_request')),
+    provider_change_request_number INTEGER NOT NULL CHECK(provider_change_request_number>0), current_change_request_observation_id INTEGER,
+    UNIQUE(repository_binding_id,change_request_kind,provider_change_request_number), UNIQUE(change_request_id,repository_id),
     FOREIGN KEY(repository_binding_id,repository_id) REFERENCES repository_bindings(repository_binding_id,repository_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     FOREIGN KEY(current_change_request_observation_id,change_request_id) REFERENCES change_request_observations(change_request_observation_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
 ) STRICT;
@@ -86,41 +93,49 @@ change_request_observation_id INTEGER PRIMARY KEY,
 CREATE TABLE text_bodies(
 text_body_id INTEGER PRIMARY KEY, body TEXT NOT NULL,
     byte_length INTEGER NOT NULL CHECK(byte_length>=0 AND byte_length=length(CAST(body AS BLOB))),
-    sha256 BLOB NOT NULL CHECK(length(sha256)=32), UNIQUE(sha256,body)
+    sha256 BLOB NOT NULL CHECK(length(sha256)=32), UNIQUE(sha256)
 ) STRICT;
 CREATE TABLE documents(
-document_id TEXT PRIMARY KEY,
     change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    kind TEXT NOT NULL, provider_document_id TEXT NOT NULL, current_document_version_id INTEGER,
+    kind TEXT NOT NULL CHECK(length(kind)>0),
+    provider_change_request_document_id TEXT NOT NULL CHECK(length(provider_change_request_document_id)>0),
+    current_document_observation_id INTEGER,
     deleted INTEGER NOT NULL CHECK(deleted IN (0,1)),
-    provider_node_id TEXT, author TEXT, url TEXT, metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
-    UNIQUE(document_id,change_request_id), UNIQUE(change_request_id,kind,provider_document_id),
-    FOREIGN KEY(current_document_version_id,document_id) REFERENCES document_versions(document_version_id,document_id) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
+    author TEXT, url TEXT,
+    metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
+    PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
+    FOREIGN KEY(current_document_observation_id,change_request_id,kind,provider_change_request_document_id) REFERENCES document_observations(document_observation_id,change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
 ) STRICT;
-CREATE TABLE document_versions(
-document_version_id INTEGER PRIMARY KEY,
-    document_id TEXT NOT NULL REFERENCES documents(document_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    text_body_id INTEGER NOT NULL REFERENCES text_bodies(text_body_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    legacy_body_sha256 BLOB CHECK(legacy_body_sha256 IS NULL OR length(legacy_body_sha256)=32),
-    UNIQUE(document_version_id,document_id)
-) STRICT;
+
 CREATE TABLE document_observations(
-document_observation_id INTEGER PRIMARY KEY, document_id TEXT NOT NULL, document_version_id INTEGER NOT NULL,
+    document_observation_id INTEGER PRIMARY KEY,
+    change_request_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    provider_change_request_document_id TEXT NOT NULL,
+    text_body_sha256 BLOB NOT NULL REFERENCES text_bodies(sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
     observed_at TEXT, parsed_at TEXT NOT NULL,
-    origin_key TEXT, fetch_occurrence_id INTEGER REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT, metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
-    FOREIGN KEY(document_version_id,document_id) REFERENCES document_versions(document_version_id,document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+    origin_key TEXT,
+    fetch_occurrence_id INTEGER REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
+    UNIQUE(document_observation_id,change_request_id,kind,provider_change_request_document_id),
+    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE review_threads(
-review_thread_id TEXT PRIMARY KEY,
     change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    provider_resource_id TEXT NOT NULL CHECK(length(provider_resource_id)>0),
     payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), observed_at TEXT,
-    UNIQUE(review_thread_id,change_request_id)
+    PRIMARY KEY(change_request_id,provider_resource_id)
 ) STRICT;
 CREATE TABLE review_comments(
-document_id TEXT PRIMARY KEY, change_request_id TEXT NOT NULL, review_thread_id TEXT,
+    change_request_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    provider_change_request_document_id TEXT NOT NULL,
+    review_thread_provider_resource_id TEXT,
     payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'),
-    FOREIGN KEY(document_id,change_request_id) REFERENCES documents(document_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    FOREIGN KEY(review_thread_id,change_request_id) REFERENCES review_threads(review_thread_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+    PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
+    CHECK(kind='review-comment'),
+    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    FOREIGN KEY(change_request_id,review_thread_provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE fetch_collections(
 fetch_collection_id TEXT PRIMARY KEY, repository_id TEXT NOT NULL REFERENCES repositories(repository_id) ON UPDATE RESTRICT ON DELETE RESTRICT, change_request_id TEXT,
@@ -219,7 +234,13 @@ CREATE TABLE fetch_occurrences(
 fetch_occurrence_id INTEGER PRIMARY KEY, fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, ordinal INTEGER NOT NULL CHECK(ordinal>=0), payload_id INTEGER NOT NULL REFERENCES payloads(payload_id) ON UPDATE RESTRICT ON DELETE RESTRICT, request TEXT NOT NULL CHECK(json_valid(request) AND json_type(request)='object'), next_cursor TEXT, observed_at TEXT, parsed_at TEXT NOT NULL, UNIQUE(fetch_occurrence_id,fetch_collection_id)
 ) STRICT;
 CREATE TABLE collection_memberships(
-fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, document_id TEXT NOT NULL REFERENCES documents(document_id) ON UPDATE RESTRICT ON DELETE RESTRICT, ordinal INTEGER NOT NULL CHECK(ordinal>=0), PRIMARY KEY(fetch_collection_id,document_id)
+    fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    change_request_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    provider_change_request_document_id TEXT NOT NULL,
+    ordinal INTEGER NOT NULL CHECK(ordinal>=0),
+    PRIMARY KEY(fetch_collection_id,change_request_id,kind,provider_change_request_document_id),
+    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE unresolved_payloads(
 unresolved_payload_id INTEGER PRIMARY KEY, payload_id INTEGER REFERENCES payloads(payload_id) ON UPDATE RESTRICT ON DELETE RESTRICT, legacy_record_id INTEGER REFERENCES legacy_records(legacy_record_id) ON UPDATE RESTRICT ON DELETE RESTRICT, reason TEXT NOT NULL, CHECK(payload_id IS NOT NULL OR legacy_record_id IS NOT NULL)
@@ -243,7 +264,13 @@ CREATE TABLE coverage_claims(
 coverage_claim_id INTEGER PRIMARY KEY, coverage_scope_id TEXT NOT NULL REFERENCES coverage_scopes(coverage_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, asserted_state TEXT NOT NULL CHECK(asserted_state IN ('complete','partial','unknown','not_applicable')), effective_state TEXT NOT NULL CHECK(effective_state IN ('complete','partial','unknown','not_applicable')), details TEXT NOT NULL CHECK(json_valid(details) AND json_type(details)='object'), observed_at TEXT, evaluated_at TEXT NOT NULL, UNIQUE(coverage_claim_id,coverage_scope_id)
 ) STRICT;
 CREATE TABLE reviews(
-review_id TEXT PRIMARY KEY, change_request_id TEXT NOT NULL, document_id TEXT NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), FOREIGN KEY(document_id,change_request_id) REFERENCES documents(document_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+    change_request_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    provider_change_request_document_id TEXT NOT NULL,
+    payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'),
+    PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
+    CHECK(kind='review'),
+    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE change_request_events(
 change_request_event_id INTEGER PRIMARY KEY, change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT, origin_key TEXT NOT NULL, ordinal INTEGER NOT NULL CHECK(ordinal>=0), provider_event_id TEXT, payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), observed_at TEXT
@@ -356,8 +383,8 @@ CREATE TRIGGER change_request_observations_no_replace BEFORE INSERT ON change_re
 CREATE TRIGGER change_request_observations_retain BEFORE DELETE ON change_request_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX change_request_observations_fk_0 ON change_request_observations(origin_fetch_occurrence_id);
 CREATE INDEX change_request_observations_fk_1 ON change_request_observations(change_request_id);
-CREATE TRIGGER change_requests_immutable BEFORE UPDATE ON change_requests WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.repository_id IS NOT OLD.repository_id OR NEW.repository_binding_id IS NOT OLD.repository_binding_id OR NEW.request_kind IS NOT OLD.request_kind OR NEW.number IS NOT OLD.number BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER change_requests_no_replace BEFORE INSERT ON change_requests WHEN EXISTS(SELECT 1 FROM change_requests WHERE (change_request_id=NEW.change_request_id) OR (change_request_id=NEW.change_request_id AND repository_id=NEW.repository_id) OR (repository_binding_id=NEW.repository_binding_id AND request_kind=NEW.request_kind AND number=NEW.number) OR (change_request_id=NEW.change_request_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER change_requests_immutable BEFORE UPDATE ON change_requests WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.repository_id IS NOT OLD.repository_id OR NEW.repository_binding_id IS NOT OLD.repository_binding_id OR NEW.change_request_kind IS NOT OLD.change_request_kind OR NEW.provider_change_request_number IS NOT OLD.provider_change_request_number BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER change_requests_no_replace BEFORE INSERT ON change_requests WHEN EXISTS(SELECT 1 FROM change_requests WHERE (change_request_id=NEW.change_request_id) OR (change_request_id=NEW.change_request_id AND repository_id=NEW.repository_id) OR (repository_binding_id=NEW.repository_binding_id AND change_request_kind=NEW.change_request_kind AND provider_change_request_number=NEW.provider_change_request_number) OR (change_request_id=NEW.change_request_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX change_requests_fk_0 ON change_requests(current_change_request_observation_id,change_request_id);
 CREATE INDEX change_requests_fk_1 ON change_requests(repository_binding_id,repository_id);
 CREATE TRIGGER code_acquisitions_immutable BEFORE UPDATE ON code_acquisitions WHEN NEW.code_observation_id IS NOT OLD.code_observation_id OR NEW.role IS NOT OLD.role OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid OR NEW.acquisition_root_id IS NOT OLD.acquisition_root_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
@@ -385,10 +412,6 @@ CREATE TRIGGER code_observations_retain BEFORE DELETE ON code_observations BEGIN
 CREATE INDEX code_observations_fk_0 ON code_observations(file_code_listing_id,change_request_id);
 CREATE INDEX code_observations_fk_1 ON code_observations(commit_code_listing_id,change_request_id);
 CREATE INDEX code_observations_fk_2 ON code_observations(change_request_observation_id,change_request_id);
-CREATE TRIGGER collection_memberships_immutable BEFORE UPDATE ON collection_memberships WHEN NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.document_id IS NOT OLD.document_id OR NEW.ordinal IS NOT OLD.ordinal BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER collection_memberships_no_replace BEFORE INSERT ON collection_memberships WHEN EXISTS(SELECT 1 FROM collection_memberships WHERE (fetch_collection_id=NEW.fetch_collection_id AND document_id=NEW.document_id) OR (fetch_collection_id=NEW.fetch_collection_id AND document_id=NEW.document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER collection_memberships_retain BEFORE DELETE ON collection_memberships BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX collection_memberships_fk_0 ON collection_memberships(document_id);
 CREATE TRIGGER collection_progress_immutable BEFORE UPDATE ON collection_progress WHEN NEW.fetch_collection_id IS NOT OLD.fetch_collection_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER collection_progress_no_replace BEFORE INSERT ON collection_progress WHEN EXISTS(SELECT 1 FROM collection_progress WHERE (fetch_collection_id=NEW.fetch_collection_id) OR (fetch_collection_id=NEW.fetch_collection_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX collection_progress_fk_0 ON collection_progress(job_id,attempt);
@@ -438,22 +461,8 @@ CREATE INDEX coverage_scopes_fk_1 ON coverage_scopes(change_request_id,repositor
 CREATE INDEX coverage_scopes_fk_2 ON coverage_scopes(repository_id);
 CREATE TRIGGER database_identity_immutable BEFORE UPDATE ON database_identity WHEN NEW.singleton IS NOT OLD.singleton OR NEW.format_id IS NOT OLD.format_id OR NEW.schema_version IS NOT OLD.schema_version OR NEW.ddl_sha256 IS NOT OLD.ddl_sha256 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER database_identity_no_replace BEFORE INSERT ON database_identity WHEN EXISTS(SELECT 1 FROM database_identity WHERE (singleton=NEW.singleton)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER document_observations_immutable BEFORE UPDATE ON document_observations WHEN NEW.document_observation_id IS NOT OLD.document_observation_id OR NEW.document_id IS NOT OLD.document_id OR NEW.document_version_id IS NOT OLD.document_version_id OR NEW.observed_at IS NOT OLD.observed_at OR NEW.parsed_at IS NOT OLD.parsed_at OR NEW.origin_key IS NOT OLD.origin_key OR NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.metadata IS NOT OLD.metadata BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER document_observations_no_replace BEFORE INSERT ON document_observations WHEN EXISTS(SELECT 1 FROM document_observations WHERE (document_observation_id=NEW.document_observation_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER document_observations_retain BEFORE DELETE ON document_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX document_observations_fk_0 ON document_observations(document_version_id,document_id);
-CREATE INDEX document_observations_fk_1 ON document_observations(fetch_occurrence_id);
--- Remote observation replay and external node identity are hot per-comment
+-- Remote observation replay and provider-resource relationships are hot per-comment
 -- lookups. Keep them indexed as collections/history grow.
-CREATE INDEX document_observations_origin_lookup ON document_observations(document_id,origin_key);
-CREATE TRIGGER document_versions_immutable BEFORE UPDATE ON document_versions WHEN NEW.document_version_id IS NOT OLD.document_version_id OR NEW.document_id IS NOT OLD.document_id OR NEW.text_body_id IS NOT OLD.text_body_id OR NEW.legacy_body_sha256 IS NOT OLD.legacy_body_sha256 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER document_versions_no_replace BEFORE INSERT ON document_versions WHEN EXISTS(SELECT 1 FROM document_versions WHERE document_version_id=NEW.document_version_id) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER document_versions_retain BEFORE DELETE ON document_versions BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX document_versions_fk_0 ON document_versions(text_body_id);
-CREATE TRIGGER documents_immutable BEFORE UPDATE ON documents WHEN NEW.document_id IS NOT OLD.document_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_document_id IS NOT OLD.provider_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER documents_no_replace BEFORE INSERT ON documents WHEN EXISTS(SELECT 1 FROM documents WHERE (document_id=NEW.document_id) OR (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_document_id=NEW.provider_document_id) OR (document_id=NEW.document_id AND change_request_id=NEW.change_request_id) OR (document_id=NEW.document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE INDEX documents_fk_0 ON documents(current_document_version_id,document_id);
-CREATE INDEX documents_node_lookup ON documents(change_request_id,kind,provider_node_id);
 CREATE TRIGGER fetch_collections_immutable BEFORE UPDATE ON fetch_collections WHEN NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.repository_id IS NOT OLD.repository_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.source_id IS NOT OLD.source_id OR NEW.kind IS NOT OLD.kind OR NEW.resume_scope_id IS NOT OLD.resume_scope_id OR NEW.observed_at IS NOT OLD.observed_at BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER fetch_collections_no_replace BEFORE INSERT ON fetch_collections WHEN EXISTS(SELECT 1 FROM fetch_collections WHERE (fetch_collection_id=NEW.fetch_collection_id) OR (fetch_collection_id=NEW.fetch_collection_id AND change_request_id=NEW.change_request_id) OR (fetch_collection_id=NEW.fetch_collection_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER fetch_collections_retain BEFORE DELETE ON fetch_collections BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -523,8 +532,8 @@ CREATE TRIGGER repositories_immutable BEFORE UPDATE ON repositories WHEN NEW.rep
 CREATE TRIGGER repositories_no_replace BEFORE INSERT ON repositories WHEN EXISTS(SELECT 1 FROM repositories WHERE (repository_id=NEW.repository_id) OR (repository_id=NEW.repository_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX repositories_fk_0 ON repositories(current_snapshot_id,repository_id);
 CREATE INDEX repositories_fk_1 ON repositories(preferred_repository_endpoint_id,repository_id);
-CREATE TRIGGER repository_bindings_immutable BEFORE UPDATE ON repository_bindings WHEN NEW.repository_binding_id IS NOT OLD.repository_binding_id OR NEW.repository_id IS NOT OLD.repository_id OR NEW.service_instance_id IS NOT OLD.service_instance_id OR (OLD.provider_repository_id IS NOT NULL AND NEW.provider_repository_id IS NOT OLD.provider_repository_id) BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER repository_bindings_no_replace BEFORE INSERT ON repository_bindings WHEN EXISTS(SELECT 1 FROM repository_bindings WHERE (repository_binding_id=NEW.repository_binding_id) OR (repository_binding_id=NEW.repository_binding_id AND repository_id=NEW.repository_id) OR (service_instance_id=NEW.service_instance_id AND provider_repository_id=NEW.provider_repository_id) OR (repository_id=NEW.repository_id AND service_instance_id=NEW.service_instance_id) OR (repository_binding_id=NEW.repository_binding_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER repository_bindings_immutable BEFORE UPDATE ON repository_bindings WHEN NEW.repository_binding_id IS NOT OLD.repository_binding_id OR NEW.repository_id IS NOT OLD.repository_id OR NEW.service_instance_uuidv4 IS NOT OLD.service_instance_uuidv4 OR (OLD.provider_repository_id IS NOT NULL AND NEW.provider_repository_id IS NOT OLD.provider_repository_id) BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER repository_bindings_no_replace BEFORE INSERT ON repository_bindings WHEN EXISTS(SELECT 1 FROM repository_bindings WHERE (repository_binding_id=NEW.repository_binding_id) OR (repository_binding_id=NEW.repository_binding_id AND repository_id=NEW.repository_id) OR (service_instance_uuidv4=NEW.service_instance_uuidv4 AND provider_repository_id=NEW.provider_repository_id) OR (repository_id=NEW.repository_id AND service_instance_uuidv4=NEW.service_instance_uuidv4) OR (repository_binding_id=NEW.repository_binding_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER repository_endpoints_immutable BEFORE UPDATE ON repository_endpoints WHEN NEW.repository_endpoint_id IS NOT OLD.repository_endpoint_id OR NEW.repository_id IS NOT OLD.repository_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER repository_endpoints_no_replace BEFORE INSERT ON repository_endpoints WHEN EXISTS(SELECT 1 FROM repository_endpoints WHERE (repository_endpoint_id=NEW.repository_endpoint_id) OR (repository_endpoint_id=NEW.repository_endpoint_id AND repository_id=NEW.repository_id) OR (repository_id=NEW.repository_id AND url=NEW.url) OR (repository_endpoint_id=NEW.repository_endpoint_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER repository_name_assertions_immutable BEFORE UPDATE ON repository_name_assertions WHEN NEW.repository_id IS NOT OLD.repository_id OR NEW.name IS NOT OLD.name OR NEW.observed_at IS NOT OLD.observed_at BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
@@ -544,18 +553,9 @@ CREATE TRIGGER resume_scopes_retain BEFORE DELETE ON resume_scopes BEGIN SELECT 
 CREATE INDEX resume_scopes_fk_0 ON resume_scopes(repository_binding_id,repository_id);
 CREATE INDEX resume_scopes_fk_1 ON resume_scopes(source_id);
 CREATE INDEX resume_scopes_fk_2 ON resume_scopes(repository_id);
-CREATE TRIGGER review_comments_immutable BEFORE UPDATE ON review_comments WHEN NEW.document_id IS NOT OLD.document_id OR NEW.change_request_id IS NOT OLD.change_request_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER review_comments_no_replace BEFORE INSERT ON review_comments WHEN EXISTS(SELECT 1 FROM review_comments WHERE (document_id=NEW.document_id) OR (document_id=NEW.document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER review_comments_retain BEFORE DELETE ON review_comments BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX review_comments_fk_0 ON review_comments(review_thread_id,change_request_id);
-CREATE INDEX review_comments_fk_1 ON review_comments(document_id,change_request_id);
-CREATE TRIGGER review_threads_immutable BEFORE UPDATE ON review_threads WHEN NEW.review_thread_id IS NOT OLD.review_thread_id OR NEW.change_request_id IS NOT OLD.change_request_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER review_threads_no_replace BEFORE INSERT ON review_threads WHEN EXISTS(SELECT 1 FROM review_threads WHERE (review_thread_id=NEW.review_thread_id) OR (review_thread_id=NEW.review_thread_id AND change_request_id=NEW.change_request_id) OR (review_thread_id=NEW.review_thread_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER review_threads_immutable BEFORE UPDATE ON review_threads WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.provider_resource_id IS NOT OLD.provider_resource_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER review_threads_no_replace BEFORE INSERT ON review_threads WHEN EXISTS(SELECT 1 FROM review_threads WHERE change_request_id=NEW.change_request_id AND provider_resource_id=NEW.provider_resource_id) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX review_threads_fk_0 ON review_threads(change_request_id);
-CREATE TRIGGER reviews_immutable BEFORE UPDATE ON reviews WHEN NEW.review_id IS NOT OLD.review_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.document_id IS NOT OLD.document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER reviews_no_replace BEFORE INSERT ON reviews WHEN EXISTS(SELECT 1 FROM reviews WHERE (review_id=NEW.review_id) OR (review_id=NEW.review_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER reviews_retain BEFORE DELETE ON reviews BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX reviews_fk_0 ON reviews(document_id,change_request_id);
 CREATE TRIGGER root_manifest_entries_immutable BEFORE UPDATE ON root_manifest_entries WHEN NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.raw_path IS NOT OLD.raw_path OR NEW.mode IS NOT OLD.mode OR NEW.git_object_id IS NOT OLD.git_object_id OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER root_manifest_entries_no_replace BEFORE INSERT ON root_manifest_entries WHEN EXISTS(SELECT 1 FROM root_manifest_entries WHERE (tree_git_object_id=NEW.tree_git_object_id AND raw_path=NEW.raw_path) OR (tree_git_object_id=NEW.tree_git_object_id AND raw_path=NEW.raw_path)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER root_manifest_entries_retain BEFORE DELETE ON root_manifest_entries BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -572,8 +572,8 @@ CREATE INDEX root_origins_fk_2 ON root_origins(snapshot_id,repository_id);
 CREATE INDEX root_origins_fk_3 ON root_origins(acquisition_root_id,repository_id);
 CREATE TRIGGER search_documents_immutable BEFORE UPDATE ON search_documents WHEN NEW.search_document_id IS NOT OLD.search_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER search_documents_no_replace BEFORE INSERT ON search_documents WHEN EXISTS(SELECT 1 FROM search_documents WHERE (search_document_id=NEW.search_document_id) OR (kind=NEW.kind AND source_key=NEW.source_key)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER service_instances_immutable BEFORE UPDATE ON service_instances WHEN NEW.service_instance_id IS NOT OLD.service_instance_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER service_instances_no_replace BEFORE INSERT ON service_instances WHEN EXISTS(SELECT 1 FROM service_instances WHERE (service_instance_id=NEW.service_instance_id) OR (name=NEW.name) OR (service_instance_id=NEW.service_instance_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER service_instances_immutable BEFORE UPDATE ON service_instances WHEN NEW.service_instance_uuidv4 IS NOT OLD.service_instance_uuidv4 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER service_instances_no_replace BEFORE INSERT ON service_instances WHEN EXISTS(SELECT 1 FROM service_instances WHERE (service_instance_uuidv4=NEW.service_instance_uuidv4) OR (name=NEW.name) OR (service_instance_uuidv4=NEW.service_instance_uuidv4)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER snapshots_immutable BEFORE UPDATE ON snapshots WHEN NEW.snapshot_id IS NOT OLD.snapshot_id OR NEW.git_acquisition_id IS NOT OLD.git_acquisition_id OR NEW.repository_id IS NOT OLD.repository_id OR NEW.generation IS NOT OLD.generation OR NEW.created_at IS NOT OLD.created_at OR (OLD.published=1 AND NEW.published!=1) BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER snapshots_no_replace BEFORE INSERT ON snapshots WHEN EXISTS(SELECT 1 FROM snapshots WHERE (snapshot_id=NEW.snapshot_id) OR (snapshot_id=NEW.snapshot_id AND repository_id=NEW.repository_id) OR (git_acquisition_id=NEW.git_acquisition_id) OR (snapshot_id=NEW.snapshot_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER snapshots_retain BEFORE DELETE ON snapshots BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -585,9 +585,9 @@ CREATE TRIGGER source_repositories_immutable BEFORE UPDATE ON source_repositorie
 CREATE TRIGGER source_repositories_no_replace BEFORE INSERT ON source_repositories WHEN EXISTS(SELECT 1 FROM source_repositories WHERE (source_id=NEW.source_id AND repository_id=NEW.repository_id) OR (source_id=NEW.source_id AND repository_id=NEW.repository_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER source_repositories_retain BEFORE DELETE ON source_repositories BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX source_repositories_fk_0 ON source_repositories(repository_id);
-CREATE TRIGGER sources_immutable BEFORE UPDATE ON sources WHEN NEW.source_id IS NOT OLD.source_id OR NEW.service_instance_id IS NOT OLD.service_instance_id OR NEW.discovery_kind IS NOT OLD.discovery_kind BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER sources_immutable BEFORE UPDATE ON sources WHEN NEW.source_id IS NOT OLD.source_id OR NEW.service_instance_uuidv4 IS NOT OLD.service_instance_uuidv4 OR NEW.discovery_kind IS NOT OLD.discovery_kind BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER sources_no_replace BEFORE INSERT ON sources WHEN EXISTS(SELECT 1 FROM sources WHERE (source_id=NEW.source_id) OR (source_id=NEW.source_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE INDEX sources_fk_0 ON sources(service_instance_id);
+CREATE INDEX sources_fk_0 ON sources(service_instance_uuidv4);
 CREATE TRIGGER space_reservations_immutable BEFORE UPDATE ON space_reservations WHEN NEW.job_id IS NOT OLD.job_id OR NEW.attempt IS NOT OLD.attempt BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER space_reservations_no_replace BEFORE INSERT ON space_reservations WHEN EXISTS(SELECT 1 FROM space_reservations WHERE (job_id=NEW.job_id AND attempt=NEW.attempt) OR (job_id=NEW.job_id AND attempt=NEW.attempt)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER tag_objects_immutable BEFORE UPDATE ON tag_objects WHEN NEW.git_object_id IS NOT OLD.git_object_id OR NEW.target_git_object_id IS NOT OLD.target_git_object_id OR NEW.raw_payload IS NOT OLD.raw_payload BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
@@ -595,7 +595,7 @@ CREATE TRIGGER tag_objects_no_replace BEFORE INSERT ON tag_objects WHEN EXISTS(S
 CREATE TRIGGER tag_objects_retain BEFORE DELETE ON tag_objects BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX tag_objects_fk_0 ON tag_objects(target_git_object_id);
 CREATE TRIGGER text_bodies_immutable BEFORE UPDATE ON text_bodies WHEN NEW.text_body_id IS NOT OLD.text_body_id OR NEW.body IS NOT OLD.body OR NEW.byte_length IS NOT OLD.byte_length OR NEW.sha256 IS NOT OLD.sha256 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER text_bodies_no_replace BEFORE INSERT ON text_bodies WHEN EXISTS(SELECT 1 FROM text_bodies WHERE (text_body_id=NEW.text_body_id) OR (sha256=NEW.sha256 AND body=NEW.body)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER text_bodies_no_replace BEFORE INSERT ON text_bodies WHEN EXISTS(SELECT 1 FROM text_bodies WHERE (text_body_id=NEW.text_body_id) OR (sha256=NEW.sha256)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER text_bodies_retain BEFORE DELETE ON text_bodies BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE TRIGGER tree_entries_immutable BEFORE UPDATE ON tree_entries WHEN NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.raw_name IS NOT OLD.raw_name OR NEW.mode IS NOT OLD.mode OR NEW.child_format IS NOT OLD.child_format OR NEW.child_oid IS NOT OLD.child_oid OR NEW.child_git_object_id IS NOT OLD.child_git_object_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER tree_entries_no_replace BEFORE INSERT ON tree_entries WHEN EXISTS(SELECT 1 FROM tree_entries WHERE (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name) OR (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
@@ -647,10 +647,6 @@ CREATE TRIGGER origin_pr_insert BEFORE INSERT ON root_origins WHEN NEW.origin_ki
 CREATE TRIGGER origin_pr_update BEFORE UPDATE ON root_origins WHEN NEW.origin_kind='pr_role' AND NOT EXISTS(SELECT 1 FROM acquisition_roots r JOIN code_acquisitions a ON a.acquisition_root_id=r.acquisition_root_id JOIN code_observations o ON o.code_observation_id=a.code_observation_id WHERE r.acquisition_root_id=NEW.acquisition_root_id AND o.change_request_id=NEW.change_request_id AND o.change_request_observation_id=NEW.change_request_observation_id) BEGIN SELECT RAISE(ABORT,'PR origin must match code acquisition'); END;
 CREATE TRIGGER root_format_insert BEFORE INSERT ON acquisition_roots WHEN NOT EXISTS(SELECT 1 FROM git_acquisitions a WHERE a.git_acquisition_id=NEW.git_acquisition_id AND a.object_format=NEW.object_format) BEGIN SELECT RAISE(ABORT,'Root format must match acquisition'); END;
 CREATE TRIGGER root_format_update BEFORE UPDATE ON acquisition_roots WHEN NOT EXISTS(SELECT 1 FROM git_acquisitions a WHERE a.git_acquisition_id=NEW.git_acquisition_id AND a.object_format=NEW.object_format) BEGIN SELECT RAISE(ABORT,'Root format must match acquisition'); END;
-CREATE TRIGGER membership_owner_insert BEFORE INSERT ON collection_memberships WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f JOIN documents d ON d.change_request_id=f.change_request_id WHERE f.fetch_collection_id=NEW.fetch_collection_id AND d.document_id=NEW.document_id) BEGIN SELECT RAISE(ABORT,'Membership must belong to same CR'); END;
-CREATE TRIGGER membership_owner_update BEFORE UPDATE ON collection_memberships WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f JOIN documents d ON d.change_request_id=f.change_request_id WHERE f.fetch_collection_id=NEW.fetch_collection_id AND d.document_id=NEW.document_id) BEGIN SELECT RAISE(ABORT,'Membership must belong to same CR'); END;
-CREATE TRIGGER document_origin_insert BEFORE INSERT ON document_observations WHEN NEW.fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN documents d ON d.change_request_id=f.change_request_id WHERE o.fetch_occurrence_id=NEW.fetch_occurrence_id AND d.document_id=NEW.document_id) BEGIN SELECT RAISE(ABORT,'Document occurrence belongs to another CR'); END;
-CREATE TRIGGER document_origin_update BEFORE UPDATE ON document_observations WHEN NEW.fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN documents d ON d.change_request_id=f.change_request_id WHERE o.fetch_occurrence_id=NEW.fetch_occurrence_id AND d.document_id=NEW.document_id) BEGIN SELECT RAISE(ABORT,'Document occurrence belongs to another CR'); END;
 CREATE TRIGGER scan_scope_insert BEFORE INSERT ON incremental_scans WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.resume_scope_id=NEW.resume_scope_id) BEGIN SELECT RAISE(ABORT,'Scan scope mismatch'); END;
 CREATE TRIGGER scan_scope_update BEFORE UPDATE ON incremental_scans WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.resume_scope_id=NEW.resume_scope_id) BEGIN SELECT RAISE(ABORT,'Scan scope mismatch'); END;
 CREATE TRIGGER completion_scope_insert BEFORE INSERT ON completion_markers WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.resume_scope_id=NEW.resume_scope_id) BEGIN SELECT RAISE(ABORT,'Completion scope mismatch'); END;
@@ -679,3 +675,33 @@ CREATE TRIGGER obligation_cache_owner_insert BEFORE INSERT ON preservation_oblig
 
 CREATE TRIGGER acquisition_cache_owner_update BEFORE UPDATE ON acquisition_progress WHEN NEW.active_cache_entry_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_acquisitions g JOIN active_cache_entries a ON a.active_cache_entry_id=NEW.active_cache_entry_id JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE g.git_acquisition_id=NEW.git_acquisition_id AND g.repository_id=l.repository_id AND l.access='target_active') BEGIN SELECT RAISE(ABORT,'Acquisition cache owner mismatch'); END;
 CREATE TRIGGER obligation_cache_owner_update BEFORE UPDATE ON preservation_obligations WHEN NEW.cache_locator_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_acquisitions g JOIN cache_locators l ON l.cache_locator_id=NEW.cache_locator_id WHERE g.git_acquisition_id=NEW.git_acquisition_id AND g.repository_id=l.repository_id AND l.access='target_active') BEGIN SELECT RAISE(ABORT,'Preservation cache owner mismatch'); END;
+
+-- Natural-key documents, immutable observations and direct content identity.
+CREATE TRIGGER documents_immutable BEFORE UPDATE ON documents WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER documents_no_replace BEFORE INSERT ON documents WHEN EXISTS(SELECT 1 FROM documents WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER documents_retain BEFORE DELETE ON documents BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
+CREATE TRIGGER reviews_immutable BEFORE UPDATE ON reviews WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER reviews_no_replace BEFORE INSERT ON reviews WHEN EXISTS(SELECT 1 FROM reviews WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER reviews_retain BEFORE DELETE ON reviews BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
+CREATE TRIGGER review_comments_immutable BEFORE UPDATE ON review_comments WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER review_comments_no_replace BEFORE INSERT ON review_comments WHEN EXISTS(SELECT 1 FROM review_comments WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER review_comments_retain BEFORE DELETE ON review_comments BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
+CREATE TRIGGER collection_memberships_immutable BEFORE UPDATE ON collection_memberships WHEN NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id OR NEW.ordinal IS NOT OLD.ordinal BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER collection_memberships_no_replace BEFORE INSERT ON collection_memberships WHEN EXISTS(SELECT 1 FROM collection_memberships WHERE (fetch_collection_id=NEW.fetch_collection_id AND change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER collection_memberships_retain BEFORE DELETE ON collection_memberships BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
+CREATE TRIGGER document_observations_immutable BEFORE UPDATE ON document_observations WHEN NEW.document_observation_id IS NOT OLD.document_observation_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id OR NEW.text_body_sha256 IS NOT OLD.text_body_sha256 OR NEW.observed_at IS NOT OLD.observed_at OR NEW.parsed_at IS NOT OLD.parsed_at OR NEW.origin_key IS NOT OLD.origin_key OR NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.metadata IS NOT OLD.metadata BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER document_observations_no_replace BEFORE INSERT ON document_observations WHEN EXISTS(SELECT 1 FROM document_observations WHERE (document_observation_id=NEW.document_observation_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER document_observations_retain BEFORE DELETE ON document_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
+CREATE INDEX documents_current_observation_fk ON documents(current_document_observation_id,change_request_id,kind,provider_change_request_document_id);
+CREATE INDEX document_observations_document_fk ON document_observations(change_request_id,kind,provider_change_request_document_id);
+CREATE INDEX document_observations_origin_lookup ON document_observations(change_request_id,kind,provider_change_request_document_id,origin_key);
+CREATE INDEX document_observations_body_fk ON document_observations(text_body_sha256);
+CREATE INDEX document_observations_occurrence_fk ON document_observations(fetch_occurrence_id);
+CREATE INDEX review_comments_thread_fk ON review_comments(change_request_id,review_thread_provider_resource_id);
+CREATE INDEX collection_memberships_document_fk ON collection_memberships(change_request_id,kind,provider_change_request_document_id);
+CREATE TRIGGER document_current_insert BEFORE INSERT ON documents WHEN NEW.current_document_observation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM document_observations o WHERE o.document_observation_id=NEW.current_document_observation_id AND o.change_request_id=NEW.change_request_id AND o.kind=NEW.kind AND o.provider_change_request_document_id=NEW.provider_change_request_document_id AND o.observed_at IS NOT NULL) BEGIN SELECT RAISE(ABORT,'Current document requires a same-document observed fact'); END;
+CREATE TRIGGER membership_owner_insert BEFORE INSERT ON collection_memberships WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Membership must belong to same CR'); END;
+CREATE TRIGGER document_origin_insert BEFORE INSERT ON document_observations WHEN NEW.fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE o.fetch_occurrence_id=NEW.fetch_occurrence_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Document occurrence belongs to another CR'); END;
+CREATE TRIGGER document_current_update BEFORE UPDATE ON documents WHEN NEW.current_document_observation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM document_observations o WHERE o.document_observation_id=NEW.current_document_observation_id AND o.change_request_id=NEW.change_request_id AND o.kind=NEW.kind AND o.provider_change_request_document_id=NEW.provider_change_request_document_id AND o.observed_at IS NOT NULL) BEGIN SELECT RAISE(ABORT,'Current document requires a same-document observed fact'); END;
+CREATE TRIGGER membership_owner_update BEFORE UPDATE ON collection_memberships WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Membership must belong to same CR'); END;
+CREATE TRIGGER document_origin_update BEFORE UPDATE ON document_observations WHEN NEW.fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE o.fetch_occurrence_id=NEW.fetch_occurrence_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Document occurrence belongs to another CR'); END;

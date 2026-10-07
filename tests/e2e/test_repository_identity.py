@@ -196,7 +196,7 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
         assert db.execute("SELECT count(*) FROM review_threads").fetchone()[0] == 6
         assert (
             db.execute(
-                "SELECT count(*) FROM review_comments c JOIN documents d ON d.document_id=c.document_id JOIN review_threads t ON t.review_thread_id=c.review_thread_id WHERE d.change_request_id!=t.change_request_id"
+                "SELECT count(*) FROM review_comments c JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN review_threads t ON t.change_request_id=c.change_request_id AND t.provider_resource_id=c.review_thread_provider_resource_id WHERE c.review_thread_provider_resource_id IS NOT NULL AND t.provider_resource_id IS NULL"
             ).fetchone()[0]
             == 0
         )
@@ -228,7 +228,7 @@ def test_instance_scoped_native_ids_and_conflicts(catalog):
         "https://code.example.net:8443",
         "--api-base-url",
         "https://code.example.net:8443/api/v4",
-    )["data"]["service_instance_id"]
+    )["data"]["service_instance_uuidv4"]
     b = run(
         state,
         "instances",
@@ -240,7 +240,7 @@ def test_instance_scoped_native_ids_and_conflicts(catalog):
         "https://code.example.net:9443",
         "--api-base-url",
         "https://code.example.net:9443/api/v4",
-    )["data"]["service_instance_id"]
+    )["data"]["service_instance_uuidv4"]
     assert uuid.UUID(a).version == uuid.UUID(b).version == 4
     run(
         state,

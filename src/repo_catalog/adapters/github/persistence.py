@@ -6,6 +6,8 @@ import hashlib
 import json
 import uuid
 
+from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
+from repo_catalog.domain.document import DocumentKey
 from repo_catalog.domain.models import CatalogError, now
 
 PARSER = "catalog3-github/1"
@@ -58,7 +60,7 @@ class ApiFacts:
 
     def scope(self, repo, endpoint, context=None):
         binding = self.s.one(
-            "SELECT b.repository_binding_id FROM repository_bindings b JOIN sources s ON s.service_instance_id=b.service_instance_id WHERE b.repository_id=? AND s.source_id=?",
+            "SELECT b.repository_binding_id FROM repository_bindings b JOIN sources s ON s.service_instance_uuidv4=b.service_instance_uuidv4 WHERE b.repository_id=? AND s.source_id=?",
             (repo["repository_id"], repo["source_id"]),
         )
         if not binding:
@@ -218,142 +220,95 @@ class ApiFacts:
     ):
         if not isinstance(body, str):
             raise CatalogError("API_SCHEMA", "Expected document text")
-        node = value.get("node_id") or (
-            value.get("id") if isinstance(value.get("id"), str) else None
+        key = DocumentKey(pr, kind, str(provider))
+        predicate = (
+            "change_request_id=? AND kind=? AND provider_change_request_document_id=?"
         )
-        found = self.s.one(
-            "SELECT document_id,current_document_version_id FROM documents WHERE change_request_id=? AND kind=? AND provider_document_id=?",
-            (pr, kind, str(provider)),
-        )
-        if not found and node:
-            found = self.s.one(
-                "SELECT document_id,current_document_version_id FROM documents WHERE change_request_id=? AND kind=? AND provider_node_id=?",
-                (pr, kind, node),
-            )
-        ident = found[0] if found else f"{pr}:{kind}:{provider}"
+        found = self.s.one("SELECT * FROM documents WHERE " + predicate, key)
         origin = self.origin(collection, occurrence, position)
         if found and self.s.one(
-            "SELECT 1 FROM document_observations WHERE document_id=? AND origin_key=?",
-            (ident, origin),
+            "SELECT 1 FROM document_observations WHERE "
+            + predicate
+            + " AND origin_key=?",
+            (*key, origin),
         ):
-            # Reparse of an admitted response cannot move the current projection
-            # backward or create a second version/remote observation.
-            return ident
+            # Parsing the same admitted response again is not a new observation
+            # and cannot overwrite a later current projection.
+            return key
         author = value.get("user") or value.get("author") or {}
         metadata = {
-            key: item
-            for key, item in value.items()
-            if key not in ("body", "title", "user", "author")
+            field: item
+            for field, item in value.items()
+            if field not in ("body", "title", "user", "author")
         }
         if thread:
-            metadata["review_thread_id"] = thread
+            metadata["review_thread_provider_resource_id"] = thread
+        projection = (
+            author.get("login"),
+            value.get("html_url") or value.get("url"),
+            canonical(metadata),
+        )
         if found:
             self.s.execute(
-                "UPDATE documents SET provider_node_id=coalesce(?,provider_node_id),author=?,url=?,metadata=?,deleted=0 WHERE document_id=?",
-                (
-                    node,
-                    author.get("login"),
-                    value.get("html_url") or value.get("url"),
-                    canonical(metadata),
-                    ident,
-                ),
+                "UPDATE documents SET author=?,url=?,metadata=?,deleted=0 WHERE "
+                + predicate,
+                (*projection, *key),
             )
         else:
             self.s.execute(
-                "INSERT INTO documents(document_id,change_request_id,kind,provider_document_id,current_document_version_id,deleted,provider_node_id,author,url,metadata) VALUES(?,?,?,?,NULL,0,?,?,?,?)",
-                (
-                    ident,
-                    pr,
-                    kind,
-                    str(provider),
-                    node,
-                    author.get("login"),
-                    value.get("html_url") or value.get("url"),
-                    canonical(metadata),
-                ),
+                "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id,current_document_observation_id,deleted,author,url,metadata) VALUES(?,?,?,NULL,0,?,?,?)",
+                (*key, *projection),
             )
-        raw = body.encode("utf-8")
-        digest = hashlib.sha256(raw).digest()
-        stored = self.s.one(
-            "SELECT text_body_id FROM text_bodies WHERE sha256=? AND body=?",
-            (digest, body),
-        )
-        text_body_id = (
-            stored[0]
-            if stored
-            else self.s.execute(
-                "INSERT INTO text_bodies(body,byte_length,sha256) VALUES(?,?,?)",
-                (body, len(raw), digest),
-            ).lastrowid
-        )
-        version = self.s.one(
-            "SELECT document_version_id FROM document_versions WHERE document_id=? AND document_version_id=? AND text_body_id=?",
-            (
-                ident,
-                found["current_document_version_id"] if found else None,
-                text_body_id,
-            ),
-        )
-        document_version_id = (
-            version[0]
-            if version
-            else self.s.execute(
-                "INSERT INTO document_versions(document_id,text_body_id) VALUES(?,?)",
-                (ident, text_body_id),
-            ).lastrowid
-        )
-        # The replay guard above returned before any writes. This caller holds
-        # the SQLite writer transaction, so repeating that lookup after creating
-        # the version cannot reveal another writer's observation.
+        digest = intern_text_body(self.s.connection, body)
         owner_occurrence = (
             occurrence if collection.get("change_request_id") == pr else None
         )
-        self.s.execute(
-            "INSERT INTO document_observations(document_id,document_version_id,observed_at,parsed_at,origin_key,fetch_occurrence_id,metadata) VALUES(?,?,?,?,?,?,?)",
+        observation = self.s.execute(
+            "INSERT INTO document_observations(change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at,parsed_at,origin_key,fetch_occurrence_id,metadata) VALUES(?,?,?,?,?,?,?,?,?)",
             (
-                ident,
-                document_version_id,
+                *key,
+                digest,
                 observed_at,
                 now(),
                 origin,
                 owner_occurrence,
                 canonical(metadata),
             ),
-        )
+        ).lastrowid
         self.s.execute(
-            "UPDATE documents SET current_document_version_id=? WHERE document_id=?",
-            (document_version_id, ident),
+            "UPDATE documents SET current_document_observation_id=? WHERE " + predicate,
+            (observation, *key),
         )
         if collection.get("change_request_id") == pr and not self.s.one(
-            "SELECT 1 FROM collection_memberships WHERE fetch_collection_id=? AND document_id=?",
-            (collection["fetch_collection_id"], ident),
+            "SELECT 1 FROM collection_memberships WHERE fetch_collection_id=? AND "
+            + predicate,
+            (collection["fetch_collection_id"], *key),
         ):
             self.s.execute(
-                "INSERT INTO collection_memberships(fetch_collection_id,document_id,ordinal) VALUES(?,?,?)",
-                (collection["fetch_collection_id"], ident, position),
+                "INSERT INTO collection_memberships(fetch_collection_id,change_request_id,kind,provider_change_request_document_id,ordinal) VALUES(?,?,?,?,?)",
+                (collection["fetch_collection_id"], *key, position),
             )
         if kind == "review":
-            if self.s.one("SELECT 1 FROM reviews WHERE review_id=?", (ident,)):
+            if self.s.one("SELECT 1 FROM reviews WHERE " + predicate, key):
                 self.s.execute(
-                    "UPDATE reviews SET payload=? WHERE review_id=?",
-                    (canonical(value), ident),
+                    "UPDATE reviews SET payload=? WHERE " + predicate,
+                    (canonical(value), *key),
                 )
             else:
                 self.s.execute(
-                    "INSERT INTO reviews(review_id,change_request_id,document_id,payload) VALUES(?,?,?,?)",
-                    (ident, pr, ident, canonical(value)),
+                    "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id,payload) VALUES(?,?,?,?)",
+                    (*key, canonical(value)),
                 )
         if kind == "review-comment":
-            if self.s.one(
-                "SELECT 1 FROM review_comments WHERE document_id=?", (ident,)
-            ):
+            if self.s.one("SELECT 1 FROM review_comments WHERE " + predicate, key):
                 self.s.execute(
-                    "UPDATE review_comments SET review_thread_id=coalesce(?,review_thread_id),payload=? WHERE document_id=?",
-                    (thread, canonical(value), ident),
+                    "UPDATE review_comments SET review_thread_provider_resource_id=coalesce(?,review_thread_provider_resource_id),payload=? WHERE "
+                    + predicate,
+                    (thread, canonical(value), *key),
                 )
             else:
                 self.s.execute(
-                    "INSERT INTO review_comments(document_id,change_request_id,review_thread_id,payload) VALUES(?,?,?,?)",
-                    (ident, pr, thread, canonical(value)),
+                    "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES(?,?,?,?,?)",
+                    (*key, thread, canonical(value)),
                 )
-        return ident
+        return key

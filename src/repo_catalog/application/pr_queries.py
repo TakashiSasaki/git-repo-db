@@ -6,6 +6,7 @@ import base64
 import binascii
 import json
 
+from repo_catalog.domain.document import DocumentKey
 from repo_catalog.domain.models import CatalogError, GitOid
 
 
@@ -67,11 +68,22 @@ def _coverage(query, pr, documents_only):
             )
 
     for row in s.all(
-        "SELECT d.document_id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_versions v WHERE v.document_id=d.document_id)",
+        "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) has_observation FROM documents d WHERE d.change_request_id=? AND d.current_document_observation_id IS NULL",
         (pr["change_request_id"],),
     ):
+        key = DocumentKey(
+            row["change_request_id"],
+            row["kind"],
+            row["provider_change_request_document_id"],
+        )
         query.coverage.add(
-            "pr", "document_body_missing", document_id=row["document_id"]
+            "pr",
+            "document_current_selection_unresolved"
+            if row["has_observation"]
+            else "document_body_missing",
+            change_request_id=key.change_request_id,
+            document_kind=key.kind,
+            provider_change_request_document_id=key.provider_change_request_document_id,
         )
 
 
@@ -101,43 +113,79 @@ def pr_query(query, command, options):
     allowed = {r["repository_id"] for r in query.repos(o)}
     if command not in ("pr list", "search pr", "pr thread"):
         query.single_repo(o)
+    selected_kind = o.get("change_request_kind")
+    if selected_kind not in (None, "pull_request", "merge_request"):
+        raise CatalogError("INVALID_ARGUMENT", "Unknown change request kind")
+    if command == "pr thread" and (
+        type(o.get("provider_change_request_number")) is not int
+        or o["provider_change_request_number"] <= 0
+        or not isinstance(o.get("provider_resource_id"), str)
+        or not o["provider_resource_id"]
+    ):
+        raise CatalogError(
+            "INVALID_ARGUMENT",
+            "Thread selection requires a positive provider change request number and provider resource ID",
+        )
     rows = s.all(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.number,p.change_request_id"
+        "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id"
     )
     rows = [
         r
         for r in rows
         if r["repository_id"] in allowed
-        and (o.get("number") is None or r["number"] == o["number"])
+        and (
+            o.get("provider_change_request_number") is None
+            or r["provider_change_request_number"]
+            == o["provider_change_request_number"]
+        )
+        and (selected_kind is None or r["change_request_kind"] == selected_kind)
         and (not o.get("binding") or r["repository_binding_id"] == o["binding"])
     ]
-    if o.get("number") is not None and not rows:
+    if o.get("provider_change_request_number") is not None and not rows:
         raise CatalogError("NOT_FOUND", "Pull request not found")
-    if o.get("number") is not None and len(rows) != 1:
-        raise CatalogError("INVALID_ARGUMENT", "Number is ambiguous; select --binding")
-    if command == "pr thread":
-        thread = s.one(
-            "SELECT t.*,p.repository_id,p.number FROM review_threads t JOIN change_requests p ON p.change_request_id=t.change_request_id WHERE t.review_thread_id=?",
-            (o["review_thread_id"],),
+    if o.get("provider_change_request_number") is not None and len(rows) != 1:
+        raise CatalogError(
+            "INVALID_ARGUMENT",
+            "Number is ambiguous; select --binding and --change-request-kind",
         )
-        if not thread or thread["repository_id"] not in allowed:
+    if command == "pr thread":
+        request = rows[0]
+        thread = s.one(
+            "SELECT * FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+            (request["change_request_id"], o["provider_resource_id"]),
+        )
+        if not thread:
             raise CatalogError(
-                "NOT_FOUND", "Review thread not found in selected repository scope"
+                "NOT_FOUND", "Review thread not found in selected change request"
             )
         for row in s.all(
-            "SELECT d.document_id,b.body,rc.payload FROM review_comments rc JOIN documents d ON d.document_id=rc.document_id LEFT JOIN document_versions v ON v.document_version_id=d.current_document_version_id LEFT JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE rc.review_thread_id=? ORDER BY d.document_id",
-            (thread["review_thread_id"],),
+            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,o.document_observation_id,b.body,rc.payload FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations o ON o.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE rc.change_request_id=? AND rc.review_thread_provider_resource_id=? ORDER BY d.kind,d.provider_change_request_document_id",
+            (request["change_request_id"], thread["provider_resource_id"]),
         ):
+            key = DocumentKey(
+                row["change_request_id"],
+                row["kind"],
+                row["provider_change_request_document_id"],
+            )
             if row["body"] is None:
                 query.coverage.add(
-                    "pr", "document_body_missing", document_id=row["document_id"]
+                    "pr",
+                    "document_body_missing",
+                    change_request_id=key.change_request_id,
+                    document_kind=key.kind,
+                    provider_change_request_document_id=key.provider_change_request_document_id,
                 )
             yield (
-                [row["document_id"]],
+                list(key),
                 {
-                    "document_id": row["document_id"],
+                    "change_request_id": key.change_request_id,
+                    "document_kind": key.kind,
+                    "provider_change_request_document_id": key.provider_change_request_document_id,
+                    "document_observation_id": row["document_observation_id"],
                     "body": row["body"],
-                    "review_thread_id": thread["review_thread_id"],
+                    "review_thread_provider_resource_id": thread[
+                        "provider_resource_id"
+                    ],
                     "thread": json.loads(thread["payload"]),
                     "review_position": json.loads(row["payload"]),
                 },
@@ -230,7 +278,8 @@ def pr_query(query, command, options):
         base = {
             "repository_id": pr["repository_id"],
             "repository": pr["name"],
-            "number": pr["number"],
+            "provider_change_request_number": pr["provider_change_request_number"],
+            "change_request_kind": pr["change_request_kind"],
             "pr_id": pr["change_request_id"],
             "change_request_id": pr["change_request_id"],
             "repository_binding_id": pr["repository_binding_id"],
@@ -292,7 +341,11 @@ def pr_query(query, command, options):
                     )
                 ]
             yield (
-                [pr["repository_id"], pr["number"], pr["change_request_id"]],
+                [
+                    pr["repository_id"],
+                    pr["provider_change_request_number"],
+                    pr["change_request_id"],
+                ],
                 _bounded(item),
             )
         elif command == "pr timeline":
@@ -303,7 +356,7 @@ def pr_query(query, command, options):
                 yield (
                     [
                         pr["repository_id"],
-                        pr["number"],
+                        pr["provider_change_request_number"],
                         event["change_request_event_id"],
                     ],
                     {
@@ -315,88 +368,99 @@ def pr_query(query, command, options):
                     },
                 )
         else:
-            versions = o.get("document_versions", "latest")
+            selection = o.get("document_observations", "current")
+            if o.get("observation") and not s.one(
+                "SELECT 1 FROM document_observations WHERE document_observation_id=? AND change_request_id=?",
+                (o["observation"], pr["change_request_id"]),
+            ):
+                raise CatalogError("NOT_FOUND", "Document observation not found in PR")
             docs = s.execute(
-                "SELECT d.*,v.document_version_id document_version_id,b.body FROM documents d JOIN document_versions v ON v.document_id=d.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.change_request_id=?"
+                "SELECT d.*,obs.document_observation_id,obs.text_body_sha256,obs.observed_at document_observed_at,obs.parsed_at document_parsed_at,obs.origin_key,obs.fetch_occurrence_id,obs.metadata observation_metadata,b.body FROM documents d JOIN document_observations obs USING(change_request_id,kind,provider_change_request_document_id) JOIN text_bodies b ON b.sha256=obs.text_body_sha256 WHERE d.change_request_id=?"
                 + (
-                    " AND v.document_version_id=d.current_document_version_id AND d.deleted=0"
-                    if versions == "latest" and not o.get("version")
+                    " AND obs.document_observation_id=d.current_document_observation_id AND d.deleted=0"
+                    if selection == "current" and not o.get("observation")
                     else ""
                 )
-                + " ORDER BY d.document_id,v.document_version_id",
+                + " ORDER BY d.kind,d.provider_change_request_document_id,obs.document_observation_id",
                 (pr["change_request_id"],),
             )
-            if o.get("version") and not s.one(
-                "SELECT 1 FROM document_versions v JOIN documents d ON d.document_id=v.document_id WHERE v.document_version_id=? AND d.change_request_id=?",
-                (o["version"], pr["change_request_id"]),
-            ):
-                raise CatalogError("NOT_FOUND", "Document version not found in PR")
             for doc in docs:
                 if any(
-                    o.get(k) is not None and doc[field] != o[k]
-                    for k, field in (
-                        ("document", "document_id"),
-                        ("version", "document_version_id"),
+                    o.get(option) is not None and doc[field] != o[option]
+                    for option, field in (
+                        (
+                            "provider_change_request_document_id",
+                            "provider_change_request_document_id",
+                        ),
+                        ("observation", "document_observation_id"),
                         ("document_kind", "kind"),
                         ("document_author", "author"),
                     )
                 ):
                     continue
-                meta = json.loads(doc["metadata"])
-                comment = s.one(
-                    "SELECT review_thread_id,payload FROM review_comments WHERE document_id=?",
-                    (doc["document_id"],),
+                key = DocumentKey(
+                    doc["change_request_id"],
+                    doc["kind"],
+                    doc["provider_change_request_document_id"],
                 )
-                review_thread_id = (
-                    comment["review_thread_id"]
+                meta = json.loads(doc["observation_metadata"])
+                comment = s.one(
+                    "SELECT review_thread_provider_resource_id,payload FROM review_comments WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
+                    key,
+                )
+                review_thread_provider_resource_id = (
+                    comment["review_thread_provider_resource_id"]
                     if comment
-                    else meta.get("review_thread_id")
+                    else meta.get("review_thread_provider_resource_id")
                 )
                 thread = (
                     s.one(
-                        "SELECT payload FROM review_threads WHERE review_thread_id=?",
-                        (review_thread_id,),
+                        "SELECT payload FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+                        (
+                            doc["change_request_id"],
+                            review_thread_provider_resource_id,
+                        ),
                     )
-                    if review_thread_id
+                    if review_thread_provider_resource_id
                     else None
                 )
                 thread_payload = json.loads(thread[0]) if thread else {}
                 if any(
-                    o.get(k, "any") != "any"
-                    and thread_payload.get(field) is not (o[k] == "true")
-                    for k, field in (
+                    o.get(option, "any") != "any"
+                    and thread_payload.get(field) is not (o[option] == "true")
+                    for option, field in (
                         ("resolved", "isResolved"),
                         ("outdated", "isOutdated"),
                     )
                 ):
                     continue
+                digest = doc["text_body_sha256"].hex()
                 if literal and not query.literal_match(
-                    "pr", doc["document_version_id"], doc["body"], literal
+                    "pr", digest, doc["body"], literal
                 ):
                     continue
-                observations = [
-                    dict(r)
-                    for r in s.all(
-                        "SELECT document_observation_id,observed_at,document_version_id FROM document_observations WHERE document_id=? AND document_version_id=? ORDER BY document_observation_id",
-                        (doc["document_id"], doc["document_version_id"]),
-                    )
-                ]
                 yield (
                     [
                         pr["repository_id"],
-                        pr["number"],
-                        doc["document_id"],
-                        doc["document_version_id"],
+                        pr["provider_change_request_number"],
+                        *key,
+                        doc["document_observation_id"],
                     ],
                     {
                         **base,
-                        "document_id": doc["document_id"],
-                        "document_version_id": doc["document_version_id"],
-                        "document_kind": doc["kind"],
+                        "document_kind": key.kind,
+                        "provider_change_request_document_id": key.provider_change_request_document_id,
+                        "document_observation_id": doc["document_observation_id"],
+                        "text_body_sha256": digest,
+                        "document_observed_at": doc["document_observed_at"],
+                        "document_parsed_at": doc["document_parsed_at"],
+                        "document_current_selected": doc["document_observation_id"]
+                        == doc["current_document_observation_id"],
+                        "origin_key": doc["origin_key"],
+                        "fetch_occurrence_id": doc["fetch_occurrence_id"],
                         "author": doc["author"],
                         "document_url": doc["url"],
                         "body": doc["body"],
-                        "observations": observations,
                         "metadata": meta,
                         "thread": thread_payload or None,
                         **(

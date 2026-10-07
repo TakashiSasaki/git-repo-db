@@ -17,16 +17,16 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
         collection = {"fetch_collection_id": "collection", "change_request_id": "pr"}
         with store.transaction():
             store.execute(
-                "INSERT INTO service_instances(service_instance_id,kind,name,metadata) VALUES('instance','github','synthetic','{}')"
+                "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES('00000000-0000-4000-8000-000000000101','github','synthetic','{}')"
             )
             store.execute(
                 "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','synthetic','{}')"
             )
             store.execute(
-                "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_id,provider_repository_id,metadata) VALUES('binding','repo','instance','repo','{}')"
+                "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','repo','{}')"
             )
             store.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number) VALUES('pr','repo','binding','pull_request',1)"
+                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo','binding','pull_request',1)"
             )
             store.execute(
                 "INSERT INTO resume_scopes(resume_scope_id,repository_id,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
@@ -40,7 +40,7 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                 (facts.payload(b"{}"), TIME, TIME),
             ).lastrowid
             store.execute(
-                "INSERT INTO review_threads(review_thread_id,change_request_id,payload,observed_at) VALUES('thread','pr','{}',?)",
+                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at) VALUES('pr','thread','{}',?)",
                 (TIME,),
             )
 
@@ -79,7 +79,6 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                     store.one(f"SELECT count(*) FROM {table}")[0]
                     for table in (
                         "documents",
-                        "document_versions",
                         "document_observations",
                     )
                 )
@@ -88,12 +87,12 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
             early_steps = measured_comments(64, 96)
             early_counts = fact_counts()
             early_replay_steps = measured_comments(64, 96)
-            assert fact_counts() == early_counts == (96, 96, 96)
+            assert fact_counts() == early_counts == (96, 96)
             insert_comments(96, 512)
             late_steps = measured_comments(512, 544)
             late_counts = fact_counts()
             late_replay_steps = measured_comments(512, 544)
-            assert fact_counts() == late_counts == (544, 544, 544)
+            assert fact_counts() == late_counts == (544, 544)
 
         # Count actual SQLite instructions, including all ownership/FK triggers,
         # rather than elapsed time. A missing replay or node lookup index makes
@@ -108,7 +107,6 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
         )
         for table in (
             "documents",
-            "document_versions",
             "document_observations",
             "review_comments",
             "collection_memberships",

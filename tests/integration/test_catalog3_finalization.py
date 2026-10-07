@@ -166,3 +166,108 @@ def test_domain_identity_corruption_prevents_finalization(tmp_path, code):
         with pytest.raises(CatalogError):
             finalize_catalog(store)
         assert store.one("SELECT lifecycle FROM database_identity")[0] == "building"
+
+
+def document_source(store, observations):
+    """Saved version assertions stay evidence, not a recreated version entity."""
+    from repo_catalog.adapters.import_v2.types import tagged_key
+    from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
+    from repo_catalog.application.repository_identity import add_instance, bind
+
+    service = add_instance(store, "github", "fixture")
+    bind(store, "repo", service, "42")
+    binding = store.one("SELECT repository_binding_id FROM repository_bindings")[0]
+    store.execute(
+        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo',?,'pull_request',1)",
+        (binding,),
+    )
+    key = ("pr", "pr-body", "123")
+    store.execute(
+        "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id,deleted,metadata) VALUES(?,?,?,0,'{}')",
+        key,
+    )
+    digest = intern_text_body(store.connection, "retained text")
+
+    def mapped(table, source_values, target_table, target_values):
+        record = archived(store, table, source_values)
+        target_key = tagged_key(
+            [
+                ("integer", value)
+                if isinstance(value, int)
+                else ("text", value.encode())
+                for value in target_values
+            ]
+        )
+        store.execute(
+            "INSERT INTO id_mappings(legacy_record_id,target_table,target_key,relation,reason) VALUES(?,?,?,'identity','test')",
+            (record, target_table, target_key),
+        )
+
+    mapped("pr_documents", {"id": "old-doc", "current_version": 7}, "documents", key)
+    # This orphan source version itself is NOT an observation and has no target
+    # version mapping. Its original value remains in the typed archive.
+    archived(store, "document_versions", {"id": "7", "body": "retained text"})
+    for ident, version, stamp in observations:
+        store.execute(
+            "INSERT INTO document_observations(document_observation_id,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at,parsed_at,metadata) VALUES(?,?,?,?,?,?,'2026-10-06','{}')",
+            (ident, *key, digest, stamp),
+        )
+        mapped(
+            "resource_observations",
+            {"id": str(ident), "document_id": "old-doc", "version_id": version},
+            "document_observations",
+            (ident,),
+        )
+    return key
+
+
+def test_saved_version_selects_real_observation_not_largest_id_or_other_version(
+    tmp_path,
+):
+    with pending(tmp_path) as store:
+        document_source(
+            store,
+            [(900, 7, "2026-01-01"), (12, 7, "2026-01-02"), (999, 8, "2026-01-03")],
+        )
+        result = finalize_catalog(store)
+        assert (
+            store.one("SELECT current_document_observation_id FROM documents")[0] == 12
+        )
+        assert any(row.get("candidate_id") == 12 for row in result["restored"])
+        assert store.one("SELECT count(*) FROM document_observations")[0] == 3
+        assert not store.one(
+            "SELECT 1 FROM sqlite_schema WHERE name='document_versions'"
+        )
+
+
+@pytest.mark.parametrize(
+    "observations,reason",
+    [
+        ([], "saved_selection_not_suitable"),
+        ([(1, 7, "2026-01-01"), (2, 7, "2026-01-01")], "saved_selection_ambiguous"),
+        ([(1, 7, None)], "saved_selection_not_suitable"),
+    ],
+)
+def test_orphan_or_ambiguous_saved_version_does_not_invent_current(
+    tmp_path, observations, reason
+):
+    with pending(tmp_path) as store:
+        document_source(store, observations)
+        result = finalize_catalog(store)
+        assert (
+            store.one("SELECT current_document_observation_id FROM documents")[0]
+            is None
+        )
+        assert store.one("SELECT count(*) FROM document_observations")[0] == len(
+            observations
+        )
+        assert any(
+            row.get("table") == "documents" and row["reason"] == reason
+            for row in result["unresolved_current"]
+        )
+        assert (
+            store.one(
+                "SELECT count(*) FROM legacy_records WHERE source_table='document_versions'"
+            )[0]
+            == 1
+        )

@@ -362,14 +362,17 @@ class TargetQueryService:
 
     def _pr_identity(self, options):
         repo = self._repo(options)
-        number = options.get("number")
+        number = options.get("provider_change_request_number")
         if type(number) is not int or number <= 0:
-            raise CatalogError("INVALID_ARGUMENT", "A positive --number is required")
-        kind = options.get("request_kind", "pull_request")
+            raise CatalogError(
+                "INVALID_ARGUMENT",
+                "A positive --provider-change-request-number is required",
+            )
+        kind = options.get("change_request_kind", "pull_request")
         if kind not in ("pull_request", "merge_request"):
             raise CatalogError("INVALID_ARGUMENT", "Unknown request kind")
         rows = self.s.all(
-            "SELECT * FROM change_requests WHERE repository_id=? AND number=? AND request_kind=? AND (? IS NULL OR repository_binding_id=?) ORDER BY change_request_id",
+            "SELECT * FROM change_requests WHERE repository_id=? AND provider_change_request_number=? AND change_request_kind=? AND (? IS NULL OR repository_binding_id=?) ORDER BY change_request_id",
             (repo, number, kind, options.get("binding"), options.get("binding")),
         )
         if not rows:
@@ -406,12 +409,10 @@ class TargetQueryService:
             if row["state"] != "complete":
                 self._add_missing("pr", "collection_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT d.document_id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_versions v WHERE v.document_id=d.document_id) ORDER BY d.document_id",
+            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) ORDER BY d.kind,d.provider_change_request_document_id",
             (ident,),
         ):
-            self._add_missing(
-                "pr", "document_body_missing", document_id=row["document_id"]
-            )
+            self._add_missing("pr", "document_body_missing", **dict(row))
         for row in self.s.execute(
             "SELECT s.coverage_scope_id,c.effective_state FROM coverage_scopes s LEFT JOIN coverage_claims c ON c.coverage_scope_id=s.coverage_scope_id WHERE s.change_request_id=? ORDER BY s.coverage_scope_id,c.coverage_claim_id",
             (ident,),
@@ -431,27 +432,23 @@ class TargetQueryService:
             ),
             (
                 "document",
-                "SELECT * FROM documents WHERE change_request_id=? ORDER BY document_id",
-            ),
-            (
-                "document_version",
-                "SELECT v.*,b.body,b.byte_length,b.sha256 FROM document_versions v JOIN documents d ON d.document_id=v.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id WHERE d.change_request_id=? ORDER BY v.document_version_id",
+                "SELECT * FROM documents WHERE change_request_id=? ORDER BY kind,provider_change_request_document_id",
             ),
             (
                 "document_observation",
-                "SELECT o.* FROM document_observations o JOIN documents d ON d.document_id=o.document_id WHERE d.change_request_id=? ORDER BY o.document_observation_id",
+                "SELECT o.*,b.body,b.byte_length FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.document_observation_id",
             ),
             (
                 "review",
-                "SELECT * FROM reviews WHERE change_request_id=? ORDER BY review_id",
+                "SELECT * FROM reviews WHERE change_request_id=? ORDER BY kind,provider_change_request_document_id",
             ),
             (
                 "review_thread",
-                "SELECT * FROM review_threads WHERE change_request_id=? ORDER BY review_thread_id",
+                "SELECT * FROM review_threads WHERE change_request_id=? ORDER BY provider_resource_id",
             ),
             (
                 "review_comment",
-                "SELECT * FROM review_comments WHERE change_request_id=? ORDER BY document_id",
+                "SELECT * FROM review_comments WHERE change_request_id=? ORDER BY kind,provider_change_request_document_id",
             ),
             (
                 "event",
@@ -564,7 +561,10 @@ class TargetQueryService:
                 base = {
                     "repository_id": request["repository_id"],
                     "change_request_id": ident,
-                    "number": request["number"],
+                    "provider_change_request_number": request[
+                        "provider_change_request_number"
+                    ],
+                    "change_request_kind": request["change_request_kind"],
                     "repository_binding_id": request["repository_binding_id"],
                 }
                 for row in self.s.execute(
@@ -587,16 +587,9 @@ class TargetQueryService:
                                 "text": text,
                             }
                 for row in self.s.execute(
-                    "SELECT d.document_id document_id,d.kind,v.document_version_id document_version_id,b.body,o.document_observation_id document_observation_id,o.observed_at FROM documents d JOIN document_versions v ON v.document_id=d.document_id JOIN text_bodies b ON b.text_body_id=v.text_body_id LEFT JOIN document_observations o ON o.document_version_id=v.document_version_id WHERE d.change_request_id=? ORDER BY d.document_id,v.document_version_id,o.document_observation_id",
+                    "SELECT o.change_request_id,o.kind,o.provider_change_request_document_id,lower(hex(o.text_body_sha256)) text_body_sha256,b.body,o.document_observation_id,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.kind,o.provider_change_request_document_id,o.document_observation_id",
                     (ident,),
                 ):
                     self._check()
-                    if row["document_observation_id"] is None:
-                        self._add_missing(
-                            "pr",
-                            "document_observation_missing",
-                            document_id=row["document_id"],
-                            document_version_id=row["document_version_id"],
-                        )
                     if literal in row["body"]:
                         yield {**base, "record_kind": "document", **dict(row)}

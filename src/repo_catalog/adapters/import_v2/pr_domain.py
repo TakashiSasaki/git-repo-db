@@ -11,6 +11,9 @@ import struct
 import uuid
 from urllib.parse import urlsplit
 
+from repo_catalog.adapters.github.identity import database_resource_id
+from repo_catalog.domain.document import text_body_sha256
+
 from . import identity
 from .common import ConversionError, canonical, strict_json
 from .types import tagged_key
@@ -95,10 +98,9 @@ COLUMNS = {
         "change_request_id",
         "repository_id",
         "repository_binding_id",
-        "request_kind",
-        "number",
+        "change_request_kind",
+        "provider_change_request_number",
         "current_change_request_observation_id",
-        "provider_node_id",
     ),
     "resume_scopes": (
         "resume_scope_id",
@@ -152,44 +154,44 @@ COLUMNS = {
     ),
     "text_bodies": ("text_body_id", "body", "byte_length", "sha256"),
     "documents": (
-        "document_id",
         "change_request_id",
         "kind",
-        "provider_document_id",
-        "current_document_version_id",
+        "provider_change_request_document_id",
+        "current_document_observation_id",
         "deleted",
-        "provider_node_id",
         "author",
         "url",
         "metadata",
     ),
-    "document_versions": (
-        "document_version_id",
-        "document_id",
-        "text_body_id",
-        "legacy_body_sha256",
-    ),
     "document_observations": (
         "document_observation_id",
-        "document_id",
-        "document_version_id",
+        "change_request_id",
+        "kind",
+        "provider_change_request_document_id",
+        "text_body_sha256",
         "observed_at",
         "parsed_at",
         "origin_key",
         "fetch_occurrence_id",
         "metadata",
     ),
-    "reviews": ("review_id", "change_request_id", "document_id", "payload"),
-    "review_threads": (
-        "review_thread_id",
+    "reviews": (
         "change_request_id",
+        "kind",
+        "provider_change_request_document_id",
+        "payload",
+    ),
+    "review_threads": (
+        "change_request_id",
+        "provider_resource_id",
         "payload",
         "observed_at",
     ),
     "review_comments": (
-        "document_id",
         "change_request_id",
-        "review_thread_id",
+        "kind",
+        "provider_change_request_document_id",
+        "review_thread_provider_resource_id",
         "payload",
     ),
     "change_request_events": (
@@ -201,7 +203,13 @@ COLUMNS = {
         "payload",
         "observed_at",
     ),
-    "collection_memberships": ("fetch_collection_id", "document_id", "ordinal"),
+    "collection_memberships": (
+        "fetch_collection_id",
+        "change_request_id",
+        "kind",
+        "provider_change_request_document_id",
+        "ordinal",
+    ),
     "unresolved_payloads": (
         "unresolved_payload_id",
         "payload_id",
@@ -292,8 +300,17 @@ COLUMNS = {
 KEYS = {
     "job_attempts": ("job_id", "attempt"),
     "collection_progress": ("fetch_collection_id",),
-    "review_comments": ("document_id",),
-    "collection_memberships": ("fetch_collection_id", "document_id"),
+    "review_comments": (
+        "change_request_id",
+        "kind",
+        "provider_change_request_document_id",
+    ),
+    "collection_memberships": (
+        "fetch_collection_id",
+        "change_request_id",
+        "kind",
+        "provider_change_request_document_id",
+    ),
     "validators": ("resume_scope_id", "validator_key"),
     "resume_cursors": ("resume_scope_id",),
     "code_listing_progress": ("code_listing_id",),
@@ -309,11 +326,10 @@ KEYS = {
     "fetch_occurrences": ("fetch_occurrence_id",),
     "change_request_observations": ("change_request_observation_id",),
     "text_bodies": ("text_body_id",),
-    "documents": ("document_id",),
-    "document_versions": ("document_version_id",),
+    "documents": ("change_request_id", "kind", "provider_change_request_document_id"),
     "document_observations": ("document_observation_id",),
-    "reviews": ("review_id",),
-    "review_threads": ("review_thread_id",),
+    "reviews": ("change_request_id", "kind", "provider_change_request_document_id"),
+    "review_threads": ("change_request_id", "provider_resource_id"),
     "change_request_events": ("change_request_event_id",),
     "unresolved_payloads": ("unresolved_payload_id",),
     "incremental_scans": ("incremental_scan_id",),
@@ -439,6 +455,10 @@ class Context(identity.Context):
         self._attribution_page = None
         self._attribution = {}
         self._attribution_error = None
+        self._source_document_keys = {}
+        self._source_version_digests = {}
+        self._body_digests = {}
+        self._thread_provider_resource_ids = {}
 
     def metadata(self, record, column="metadata"):
         storage, raw = record.value(column)
@@ -561,7 +581,6 @@ class Context(identity.Context):
             "pull_request",
             self.i(record, "number", minimum=1),
             None,
-            self.t(record, "node_id", nullable=True),
         )
 
     def source(self, repo):
@@ -732,48 +751,134 @@ class Context(identity.Context):
             self.parsed_at,
         )
 
+    def remember_source_document(self, row):
+        ident, key = row[0], tuple(row[1:4])
+        old = self._source_document_keys.get(ident)
+        if old is not None and old != key:
+            raise Invalid("DOCUMENT_IDENTITY_CONFLICT", "document_id")
+        self._source_document_keys[ident] = key
+        return row
+
+    def document_key(self, source_document):
+        if source_document not in self._source_document_keys:
+            self.document_row(self.ref("pr_documents", source_document))
+        return self._source_document_keys[source_document]
+
     def document_row(self, record):
+        # This tuple describes the v2 source projection, not the target schema.
         pr = self.t(record, "pr_id")
         self.pr(pr)
-        return (
-            self.t(record, "id"),
-            pr,
-            self.t(record, "kind", nonempty=True),
-            self.t(record, "provider_id", nonempty=True),
-            None,
-            self.i(record, "deleted", choices=(0, 1)),
-            self.t(record, "node_id", nullable=True),
-            self.t(record, "author", nullable=True),
-            self.t(record, "url", nullable=True),
-            self.metadata(record),
+        try:
+            provider = database_resource_id(
+                self.t(record, "provider_id", nonempty=True)
+            )
+        except ValueError:
+            raise Invalid("CANONICAL_DOCUMENT_ID_MISSING", "provider_id") from None
+        return self.remember_source_document(
+            (
+                self.t(record, "id"),
+                pr,
+                self.t(record, "kind", nonempty=True),
+                provider,
+                None,
+                self.i(record, "deleted", choices=(0, 1)),
+                self.t(record, "node_id", nullable=True),
+                self.t(record, "author", nullable=True),
+                self.t(record, "url", nullable=True),
+                self.metadata(record),
+            )
         )
 
     def version_row(self, record):
+        # A legacy version contributes text and provenance, never a target
+        # version entity. Only actual source observations create observations.
         document = self.t(record, "document_id")
         self.document_row(self.ref("pr_documents", document))
         body, legacy_sha = (
             self.t(record, "body"),
             self.blob(record, "body_sha256", length=32),
         )
-        return (
-            self.i(record, "id", minimum=1),
-            document,
-            stable_id("body", body, integer=True),
-            legacy_sha,
-        )
+        ident = self.i(record, "id", minimum=1)
+        self._source_version_digests[ident] = text_body_sha256(body)
+        return ident, document, self.body_row(body)[0], legacy_sha
 
     def body_row(self, body):
         raw = body.encode("utf-8")
-        return (
-            stable_id("body", body, integer=True),
-            body,
-            len(raw),
-            hashlib.sha256(raw).digest(),
-        )
+        ident, digest = stable_id("body", body, integer=True), text_body_sha256(body)
+        self._body_digests[ident] = digest
+        return ident, body, len(raw), digest
+
+    def target_document_row(self, table, row):
+        """Project legacy parser tuples directly into the current natural keys.
+
+        This is source-format support confined to the salvage adapter. Aliases
+        are transient, reconstructed per batch; durable mappings contain the
+        target composite key, not a hidden replacement document ID.
+        """
+        if table == "documents":
+            self.remember_source_document(row)
+            return (*row[1:4], None, row[5], *row[7:])
+        if table == "document_versions":
+            self._source_version_digests[row[0]] = self._body_digests[row[2]]
+            return None
+        if table == "document_observations":
+            digest = self._source_version_digests.get(row[2])
+            if digest is None:
+                self.version_row(self.ref("document_versions", row[2]))
+                digest = self._source_version_digests[row[2]]
+            return (row[0], *self.document_key(row[1]), digest, *row[3:])
+        if table == "reviews":
+            key = self.document_key(row[2])
+            if key[0] != row[1] or key[1] != "review":
+                raise Invalid("OWNER_MISMATCH", "document_id")
+            return (*key, row[3])
+        if table == "review_threads":
+            return (
+                row[1],
+                self.thread_provider_resource_id(row[0], payload=row[2]),
+                row[2],
+                row[3],
+            )
+        if table == "review_comments":
+            key = self.document_key(row[0])
+            if key[0] != row[1] or key[1] != "review-comment":
+                raise Invalid("OWNER_MISMATCH", "document_id")
+            provider_resource_id = (
+                self.thread_provider_resource_id(row[2]) if row[2] else None
+            )
+            return (*key, provider_resource_id, row[3])
+        if table == "collection_memberships":
+            return (row[0], *self.document_key(row[1]), row[2])
+        return row
+
+    def thread_provider_resource_id(self, source_thread_id, *, payload=None):
+        cached = self._thread_provider_resource_ids.get(source_thread_id)
+        if cached is not None and payload is None:
+            return cached
+        if payload is None:
+            record = self.lookup("review_threads", source_thread_id)
+            if record is None:
+                raise Invalid("THREAD_REFERENCE_UNRESOLVED", "thread_id")
+            payload = self.metadata(record, "payload")
+        # Extract only the identity. Large/deep original provider evidence is
+        # preserved without constructing a full Python JSON object.
+        selected = self.src.execute(
+            "SELECT type, atom FROM json_each(?) WHERE key='id' ORDER BY id DESC LIMIT 1",
+            (payload,),
+        ).fetchone()
+        if not selected or selected[0] != "text" or not selected[1]:
+            raise Invalid("INVALID_SAVED_IDENTITY", "payload")
+        provider = selected[1]
+        if cached is not None and cached != provider:
+            raise Invalid("THREAD_IDENTITY_CONFLICT", "payload")
+        self._thread_provider_resource_ids[source_thread_id] = provider
+        return provider
 
     def thread_identity(self, pr, provider):
         existing = self.lookup("review_threads", provider)
         if existing and self.t(existing, "pr_id") == pr:
+            if self.thread_provider_resource_id(provider) != provider:
+                raise Invalid("THREAD_IDENTITY_CONFLICT", "payload")
             return provider
         found = []
         for saved in self.src.execute(
@@ -787,7 +892,9 @@ class Context(identity.Context):
                 continue
         if len(found) > 1:
             raise Invalid("THREAD_IDENTITY_CONFLICT", "body")
-        return found[0] if found else f"{pr}:thread:{provider}"
+        source_thread_id = found[0] if found else f"{pr}:thread:{provider}"
+        self._thread_provider_resource_ids[source_thread_id] = provider
+        return source_thread_id
 
     def first_saved_thread_snapshot(self, pr, provider):
         for saved in self.src.execute(
@@ -876,10 +983,14 @@ class Context(identity.Context):
         self.pr(pr)
         if not isinstance(value, dict):
             raise Invalid("MALFORMED_PAYLOAD", "body")
-        provider = value.get("fullDatabaseId") or value.get("id")
-        if provider is None or isinstance(provider, (list, dict, bool)):
-            raise Invalid("INVALID_SAVED_IDENTITY", "body")
-        provider = str(provider)
+        try:
+            provider = database_resource_id(
+                value.get("fullDatabaseId")
+                if "fullDatabaseId" in value
+                else value.get("id")
+            )
+        except ValueError:
+            raise Invalid("CANONICAL_DOCUMENT_ID_MISSING", "body") from None
         found = self.src.execute(
             "SELECT id FROM pr_documents WHERE pr_id=? AND kind=? AND provider_id=?",
             (pr, kind, provider),
@@ -896,7 +1007,9 @@ class Context(identity.Context):
             if k not in ("body", "title", "user", "author")
         }
         if thread:
-            metadata["thread_id"] = thread
+            metadata["review_thread_provider_resource_id"] = (
+                self.thread_provider_resource_id(thread)
+            )
         author = value.get("user") or value.get("author") or {}
         if not isinstance(author, dict):
             raise Invalid("MALFORMED_PAYLOAD", "body")
@@ -916,7 +1029,7 @@ class Context(identity.Context):
         for cell in row[6:9]:
             if cell is not None and not isinstance(cell, str):
                 raise Invalid("MALFORMED_PAYLOAD", "body")
-        return row, body
+        return self.remember_source_document(row), body
 
     def first_saved_document_fact(self, pr, document):
         # Document metadata is one stable source fact. Later page observations
@@ -2079,6 +2192,11 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
         operations, mappings, issues = [], [], []
 
         def emit(table, row, *, operation="insert", relation="identity", before=None):
+            row = context.target_document_row(table, row)
+            if row is None:
+                return
+            if before is not None:
+                before = context.target_document_row(table, before)
             op = {
                 "legacy_record_id": legacy_record_id,
                 "table": table,
@@ -2117,7 +2235,11 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
                 exc.column,
                 "partial"
                 if exc.code
-                in ("PR_REPLAY_BUDGET_EXCEEDED", "PR_JSON_DEPTH_UNSUPPORTED")
+                in (
+                    "PR_REPLAY_BUDGET_EXCEEDED",
+                    "PR_JSON_DEPTH_UNSUPPORTED",
+                    "PR_CANONICAL_DOCUMENT_ID_MISSING",
+                )
                 else "blocking",
             )
         except (ValueError, TypeError, KeyError, UnicodeError):

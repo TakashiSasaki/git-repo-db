@@ -1,0 +1,65 @@
+{
+  "run_id": "2026-10-07-provider-resource-identity",
+  "repository": "TakashiSasaki/git-repo-db",
+  "branch": "refactor/portable-document-observations",
+  "pull_request": 3,
+  "starting_commit": "e51be9e8b8a1af2bdf1b82db0acf11318e5d386d",
+  "tested_commit": "db69fe28dbf279627b9e3631682b1f009e20c362",
+  "tested_tree": "e795aad41fa73a876a2a55a5d9e4891914a1a898",
+  "format_id": "repo-catalog/catalog3",
+  "schema_version": 6,
+  "tracked_changes": false,
+  "outcome": "passed",
+  "environment": {
+    "python": "3.13.5",
+    "sqlite": "3.46.1",
+    "git": "2.47.3",
+    "uv": "0.10.0",
+    "ruff": "0.16.10",
+    "pytest": "9.1.1",
+    "pytest_xdist": "3.8.0",
+    "os": "Linux",
+    "arch": "x86_64"
+  },
+  "acceptance": {
+    "ordinary_passed": 383,
+    "ordinary_wall_seconds": 49.01610673799996,
+    "workers": 4,
+    "packaging_passed": 2,
+    "packaging_wall_seconds": 3.3292289729999993,
+    "packaging_sequential": true,
+    "executed_exactly_once": 385,
+    "selected_files": 42,
+    "failures": 0,
+    "skips": 0,
+    "unexecuted_files": [],
+    "excluded_files": [],
+    "lint": "passed",
+    "format": "passed",
+    "formatted_python_files": 116,
+    "doctor": "passed",
+    "reports": "passed",
+    "verified_linux_required_wheels": 24
+  },
+  "evidence_sha256": {
+    "validation_manifest": "765d92bf3fab8b12075fc44d566b524cc47838443b1e1cb84970894f7999378d",
+    "ordinary_junit": "7b5cc95790d1527c39ad1a054ad458c53b52fa9e915af8884f37c8b3c9a7e141",
+    "packaging_junit": "c2d3fe28f0675c317df7e854096cb666a3d6a4aec276191c040341b2c9397f00"
+  },
+  "prior_checks": {
+    "starting_ci_run": 37566067078,
+    "starting_ci_result": "format failure; tests not executed",
+    "diagnostic_passed": 356,
+    "diagnostic_failed": 2,
+    "diagnostic_cause": "obsolete schema-version expectations, subsequently fixed",
+    "tool_limited_incomplete_invocations": 2
+  },
+  "not_executed": [
+    "real_user_database_or_cache",
+    "live_provider_collection",
+    "multi_catalog_exchange",
+    "release_publication",
+    "main_merge",
+    "active_catalog_cutover"
+  ]
+}
