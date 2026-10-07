@@ -1254,7 +1254,7 @@ class GitHubCollector:
                     ),
                 )
             prs = s.all(
-                "SELECT p.*,o.payload FROM change_requests p LEFT JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.repository_id=? ORDER BY p.number",
+                "SELECT p.*,o.payload FROM change_requests p LEFT JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.repository_id=? ORDER BY p.provider_change_request_number",
                 (repo["repository_id"],),
             )
             for pr in prs:
