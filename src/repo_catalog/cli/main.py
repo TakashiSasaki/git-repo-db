@@ -146,9 +146,9 @@ def parser():
             elif category == "snapshots" and action == "show":
                 child.add_argument("--snapshot", required=True)
             elif category == "pr" and action == "thread":
-                child.add_argument(
-                    "--thread-id", dest="review_thread_id", required=True
-                )
+                child.add_argument("--repo", required=True)
+                child.add_argument("--number", required=True, type=int)
+                child.add_argument("--provider-resource-id", required=True)
             else:
                 child.add_argument(
                     "--repo",
