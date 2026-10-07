@@ -195,10 +195,19 @@ class Store:
         )
 
     def coverage(
-        self, owner, kind, coverage_state, details_json=None, *, observed_at_us
+        self,
+        repository_id,
+        kind,
+        coverage_state,
+        details_json=None,
+        *,
+        change_request_id=None,
+        observed_at_us,
     ):
         """Admit a claim for an explicit observation; never invent replay time.
 
+        The repository is always explicit. An optional change request must belong
+        to that repository; overlapping IDs never determine the owner type.
         Scope discovery and creation serialize with claim admission. Callers may
         include this operation in their existing page/publication transaction.
         """
@@ -211,20 +220,36 @@ class Store:
             nullcontext() if self.connection.in_transaction else self.transaction()
         )
         with transaction:
-            cr = self.one(
-                "SELECT repository_id FROM change_requests WHERE change_request_id=?",
-                (owner,),
-            )
-            repo, change_request = (cr[0], owner) if cr else (owner, None)
+            if (
+                self.one(
+                    "SELECT 1 FROM repositories WHERE repository_id=?", (repository_id,)
+                )
+                is None
+            ):
+                raise CatalogError(
+                    "INVALID_COVERAGE_OWNER", "Coverage requires an existing repository"
+                )
+            if (
+                change_request_id is not None
+                and self.one(
+                    "SELECT 1 FROM change_requests WHERE change_request_id=? AND repository_id=?",
+                    (change_request_id, repository_id),
+                )
+                is None
+            ):
+                raise CatalogError(
+                    "INVALID_COVERAGE_OWNER",
+                    "Coverage change request must belong to the specified repository",
+                )
             scope = self.one(
                 "SELECT coverage_scope_id FROM coverage_scopes WHERE repository_id=? AND change_request_id IS ? AND kind=?",
-                (repo, change_request, kind),
+                (repository_id, change_request_id, kind),
             )
             scope_id = scope[0] if scope else str(uuid.uuid4())
             if scope is None:
                 self.execute(
                     "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,change_request_id,kind) VALUES(?,?,?,?)",
-                    (scope_id, repo, change_request, kind),
+                    (scope_id, repository_id, change_request_id, kind),
                 )
             return admit_claim(
                 self.connection, scope_id, coverage_state, observed_at_us, details_json

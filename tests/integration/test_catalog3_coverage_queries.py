@@ -141,9 +141,21 @@ def test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage(
     state, store = coverage_catalog
     with store.transaction():
         for coverage_state in old_states:
-            store.coverage("pr", "pr-documents", coverage_state, observed_at_us=0)
+            store.coverage(
+                "repo",
+                "pr-documents",
+                coverage_state,
+                change_request_id="pr",
+                observed_at_us=0,
+            )
         for coverage_state in latest_states:
-            store.coverage("pr", "pr-documents", coverage_state, observed_at_us=1)
+            store.coverage(
+                "repo",
+                "pr-documents",
+                coverage_state,
+                change_request_id="pr",
+                observed_at_us=1,
+            )
     scope = store.one(
         "SELECT coverage_scope_id FROM coverage_scopes WHERE change_request_id='pr' AND kind='pr-documents'"
     )[0]

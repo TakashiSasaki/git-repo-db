@@ -296,6 +296,78 @@ def test_structure_retains_immutable_claims_and_prevents_semantic_duplicates(
     assert export_current_claims(catalog, "scope") == before
 
 
+def test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids(catalog):
+    original = '{ "original": "unchanged" }'
+    catalog.execute(
+        "INSERT INTO coverage_claims(coverage_claim_id,coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(-1,'scope','complete',10,?)",
+        (original,),
+    )
+    catalog.execute(
+        "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','partial',10)"
+    )
+    selected = export_current_claims(catalog, "scope")
+    assert len({row["coverage_claim_id"] for row in selected}) == 2
+    assert selected[0]["coverage_claim_id"] == -1
+    assert selected[0]["details_json"] == original
+    assert current_coverages(catalog, "repo")[0]["coverage_state"] == "conflict"
+    newer = admit_claim(catalog, "scope", "unknown", 11)
+    assert newer is not None and newer != -1
+    before = [tuple(row) for row in catalog.execute("SELECT * FROM coverage_claims")]
+    assert admit_claim(catalog, "scope", "complete", 10, '{"ignored":1}') is None
+    assert admit_claim(catalog, "scope", "unknown", 11, '{"ignored":2}') is None
+    assert [
+        tuple(row) for row in catalog.execute("SELECT * FROM coverage_claims")
+    ] == before
+
+
+@pytest.mark.parametrize("local_id", [-1, 0, 1])
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')",
+        "INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')",
+        "REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')",
+        "INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us",
+        "INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json",
+        "UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?",
+        "DELETE FROM coverage_claims WHERE coverage_claim_id=?",
+    ],
+)
+def test_all_local_ids_reject_collision_replacement_and_updates(
+    catalog, local_id, statement
+):
+    catalog.execute(
+        "INSERT INTO coverage_claims VALUES(?,'scope','complete',1,?)",
+        (local_id, '{ "original": true }'),
+    )
+    before = export_current_claims(catalog, "scope")
+    with pytest.raises(sqlite3.IntegrityError):
+        catalog.execute(statement, (local_id,))
+    assert export_current_claims(catalog, "scope") == before
+
+
+@pytest.mark.parametrize("local_id", [-1, 0, 1])
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')",
+        "INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING",
+    ],
+)
+def test_explicit_id_conflict_can_only_be_ignored_without_mutation(
+    catalog, local_id, statement
+):
+    catalog.execute(
+        "INSERT INTO coverage_claims VALUES(?,'scope','complete',1,?)",
+        (local_id, '{ "original": true }'),
+    )
+    before = export_current_claims(catalog, "scope")
+    changes = catalog.total_changes
+    catalog.execute(statement, (local_id,))
+    assert catalog.total_changes == changes
+    assert export_current_claims(catalog, "scope") == before
+
+
 def test_scope_uniqueness_prevents_split_repository_coverage(catalog):
     with pytest.raises(sqlite3.IntegrityError):
         catalog.execute(
