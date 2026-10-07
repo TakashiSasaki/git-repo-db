@@ -369,7 +369,7 @@ class TargetQueryService:
         if kind not in ("pull_request", "merge_request"):
             raise CatalogError("INVALID_ARGUMENT", "Unknown request kind")
         rows = self.s.all(
-            "SELECT * FROM change_requests WHERE repository_id=? AND number=? AND request_kind=? AND (? IS NULL OR repository_binding_id=?) ORDER BY change_request_id",
+            "SELECT * FROM change_requests WHERE repository_id=? AND provider_change_request_number=? AND change_request_kind=? AND (? IS NULL OR repository_binding_id=?) ORDER BY change_request_id",
             (repo, number, kind, options.get("binding"), options.get("binding")),
         )
         if not rows:
@@ -441,7 +441,7 @@ class TargetQueryService:
             ),
             (
                 "review_thread",
-                "SELECT * FROM review_threads WHERE change_request_id=? ORDER BY review_thread_id",
+                "SELECT * FROM review_threads WHERE change_request_id=? ORDER BY provider_resource_id",
             ),
             (
                 "review_comment",
@@ -558,7 +558,7 @@ class TargetQueryService:
                 base = {
                     "repository_id": request["repository_id"],
                     "change_request_id": ident,
-                    "number": request["number"],
+                    "number": request["provider_change_request_number"],
                     "repository_binding_id": request["repository_binding_id"],
                 }
                 for row in self.s.execute(
