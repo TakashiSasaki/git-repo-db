@@ -178,7 +178,7 @@ def document_source(store, observations):
     bind(store, "repo", service, "42")
     binding = store.one("SELECT repository_binding_id FROM repository_bindings")[0]
     store.execute(
-        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,request_kind,number) VALUES('pr','repo',?,'pull_request',1)",
+        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo',?,'pull_request',1)",
         (binding,),
     )
     key = ("pr", "pr-body", "123")
