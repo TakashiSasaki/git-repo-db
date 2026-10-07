@@ -253,11 +253,12 @@ def _code_coverage(query, pr, payload):
             code_observation_id=code["code_observation_id"],
         )
     else:
-        _code_role_coverage(query, pr, code)
+        for gap in code_role_gaps(query.s, pr, code, check=query.check):
+            query.coverage.add("pr", **gap)
 
 
-def _code_role_coverage(query, pr, code):
-    """Check saved targets even when imported evidence labels a row complete."""
+def code_role_gaps(store, pr, code, *, check):
+    """Yield shared ordinary/diagnostic checks of explicitly required targets."""
     required = {
         role: GitOid(code["object_format"], code[role + "_oid"])
         for role in ("head", "base")
@@ -265,55 +266,51 @@ def _code_role_coverage(query, pr, code):
     }
     declared = json.loads(code["details"]).get("expected_roles", {})
     if not isinstance(declared, dict):
-        query.coverage.add(
-            "pr",
-            "code_role_targets_unresolved",
-            code_observation_id=code["code_observation_id"],
-        )
+        yield {
+            "reason": "code_role_targets_unresolved",
+            "code_observation_id": code["code_observation_id"],
+        }
         declared = {}
     for role, value in declared.items():
-        query.check()
+        check()
         try:
             if not role or not isinstance(value, str):
                 raise ValueError()
             oid = GitOid.parse(f"{code['object_format']}:{value}")
         except (ValueError, CatalogError):
-            query.coverage.add(
-                "pr",
-                "code_role_targets_unresolved",
-                code_observation_id=code["code_observation_id"],
-                role=role,
-            )
+            yield {
+                "reason": "code_role_targets_unresolved",
+                "code_observation_id": code["code_observation_id"],
+                "role": role,
+            }
             continue
         if role in required and required[role] != oid:
-            query.coverage.add(
-                "pr",
-                "code_role_target_conflict",
-                code_observation_id=code["code_observation_id"],
-                role=role,
-            )
+            yield {
+                "reason": "code_role_target_conflict",
+                "code_observation_id": code["code_observation_id"],
+                "role": role,
+            }
         else:
             required[role] = oid
     if not required:
         return
     links = {
         (row["role"], row["object_format"], row["oid"])
-        for row in query.s.execute(
+        for row in store.execute(
             "SELECT a.role,a.object_format,a.oid FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id JOIN git_objects o ON o.object_format=a.object_format AND o.oid=a.oid WHERE a.code_observation_id=? AND r.repository_id=? AND r.published=1 AND r.object_format=a.object_format AND r.oid=a.oid AND (r.expected_oid IS NULL OR r.expected_oid=a.oid) AND o.type='commit' AND o.verified=1",
             (code["code_observation_id"], pr["repository_id"]),
         )
     }
     for role, oid in sorted(required.items()):
-        query.check()
+        check()
         if (role, oid.algorithm, oid.value) not in links:
-            query.coverage.add(
-                "pr",
-                "code_role_acquisition_missing",
-                change_request_id=pr["change_request_id"],
-                code_observation_id=code["code_observation_id"],
-                role=role,
-                expected_oid=f"{oid.algorithm}:{oid.value.hex()}",
-            )
+            yield {
+                "reason": "code_role_acquisition_missing",
+                "change_request_id": pr["change_request_id"],
+                "code_observation_id": code["code_observation_id"],
+                "role": role,
+                "expected_oid": f"{oid.algorithm}:{oid.value.hex()}",
+            }
 
 
 def prepare_pr_coverage(query, command, o):
@@ -367,8 +364,6 @@ def prepare_pr_coverage(query, command, o):
         if documents_only:
             continue
         payload = json.loads(pr["payload"] or "{}")
-        if not _matches_pr_filters(query, pr, payload, pr_state(payload), o):
-            continue
         _code_coverage(query, pr, payload)
 
 

@@ -375,6 +375,16 @@ def test_scope_uniqueness_prevents_split_repository_coverage(catalog):
         )
 
 
+def test_explicit_negative_claim_id_does_not_block_generated_ids(catalog):
+    catalog.execute(
+        "INSERT INTO coverage_claims(coverage_claim_id,coverage_scope_id,coverage_state,observed_at_us) VALUES(-1,'scope','complete',0)"
+    )
+    inserted = admit_claim(catalog, "scope", "partial", 1)
+    assert inserted is not None
+    assert inserted != -1
+    assert current_coverages(catalog, "repo")[0]["coverage_state"] == "partial"
+
+
 def test_claim_admission_participates_in_caller_rollback(catalog):
     catalog.execute("BEGIN IMMEDIATE")
     admit_claim(catalog, "scope", "complete", 0)

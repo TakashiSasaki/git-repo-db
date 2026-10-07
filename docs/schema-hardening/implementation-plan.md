@@ -4,7 +4,7 @@ Catalog3 is the sole ordinary runtime. Packaged DDL and the runtime identity mod
 
 ## Design-review corrections
 
-The correction work starts from reviewed PR #6 `cd900e252f1320e0cc304fc200317d7190af0143` and includes the subsequent PR #5 timestamp guard at `9abfdc0eb439a823246e306e7773b775cfaa75e7`. Work branch: `fix/coverage-review-findings`; publication updates the existing coverage PR after retaining the upstream timestamp ancestry.
+The correction work started from reviewed PR #6 `cd900e252f1320e0cc304fc200317d7190af0143` and includes the subsequent PR #5 timestamp guard at `9abfdc0eb439a823246e306e7773b775cfaa75e7`. Initial work branch: `fix/coverage-review-findings`. Read-only verification subsequently found that PR #7, `refactor/coverage-model-v2` at `304ea4acc5ea224ead8e7e9774aca7851035b553`, superseded closed PR #6. Branch `fix/coverage-review-pr7` reconciles both implementations without rewriting either history. Intended publication targets are the existing PR #5 and PR #7 branches; remote updates remain pending explicit user authorization.
 
 | Order | Review findings | Implementation and acceptance criteria |
 | --- | --- | --- |
@@ -18,9 +18,9 @@ Use only disposable synthetic catalogs, Git remotes and HTTP responses. Existing
 
 ## Coverage derivation (schema 9)
 
-Starting from published PR #5 at `fee685db14e8052d2e9decd5f4b3470d4da80517`, branch `refactor/coverage-model` replaces mutable coverage selection with immutable scope/time/state claims and a derived `current_coverage` view. The latest time is chosen before unknown is weakened; same-time determinate disagreement becomes derived conflict. Admission ignores stale and semantic duplicate inputs without changing details. Export selection preserves every latest claim; a multi-catalog exchange protocol remains deferred.
+Starting from current PR #5 at `9abfdc0eb439a823246e306e7773b775cfaa75e7`, PR #7 branch `refactor/coverage-model-v2` replaces mutable coverage selection with immutable scope/time/state claims and a derived `current_coverage` view. The latest time is chosen before unknown is weakened; same-time determinate disagreement becomes derived conflict. Admission ignores stale and semantic duplicate inputs without changing details. Export selection preserves every latest claim; a multi-catalog exchange protocol remains deferred.
 
-All coverage producers preserve actual saved observation times across resume. Repository Git scopes exclude PR-only acquisition; failures without observed incomplete evidence remain operational job state. Ordinary and diagnostic queries use the same view and return separate advisory details. Schema 9 retains 65 ordinary tables and workspace schema 2. Final synthetic acceptance and installed distribution checks are attributed in the runtime handoff.
+All coverage producers preserve actual saved observation times across resume. Repository Git scopes exclude PR-only acquisition; failures without observed incomplete evidence remain operational job state. PR-code completeness also requires every role named by the observed API state to have a persisted Git acquisition. Reuse of imported sealed listings is tied to the authorizing observation rather than replay time. Ordinary and diagnostic queries use the same view; document-only queries exclude code-only scopes, and pagination does not change coverage evaluation. Schema 9 retains 65 ordinary tables and workspace schema 2. Local and hosted acceptance are separately attributed in the runtime handoff.
 
 ## Timestamp normalization (schema 8)
 

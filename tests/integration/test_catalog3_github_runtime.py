@@ -1019,6 +1019,12 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
         sync(store, repo)
     assert (
         store.one(
+            "SELECT count(*) FROM current_coverage WHERE kind='pr-code' AND coverage_state='partial'"
+        )[0]
+        >= 1
+    )
+    assert (
+        store.one(
             "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
         )[0]
         == 3
@@ -2099,3 +2105,82 @@ def test_imported_listing_resume_preserves_authorization_time_and_identity(
             )
             assert not store.all("PRAGMA foreign_key_check")
         assert not api.errors
+
+
+def test_git_ref_race_records_partial_code_and_repository_coverage(github_runtime):
+    store, repo, fixture, api = github_runtime
+    sync(store, repo)
+
+    fixture.alpha.commit(
+        "Q",
+        {**fixture.m, b"pr-only.txt": b"new-pr-code"},
+        ("P",),
+    )
+    expected = fixture.alpha.commits["Q"]
+    api.prs[41]["head"]["sha"] = expected
+    original = api.route
+
+    def route(method, path, params, body):
+        if path == "/repos/fixture/alpha/pulls/41/commits":
+            return [{"sha": expected}], {}
+        return original(method, path, params, body)
+
+    api.route = route
+    # The API consistently observes Q while the Git PR ref still resolves to N.
+    fixture.alpha.ref("refs/pull/41/head", "N")
+
+    with pytest.raises(CatalogError):
+        sync(store, repo)
+
+    pr_code = store.one(
+        "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
+    )
+    repository = store.one(
+        "SELECT coverage_state,observed_at_us FROM current_coverage WHERE repository_id='repo' AND change_request_id IS NULL AND kind='pr'"
+    )
+    assert pr_code["coverage_state"] == "partial"
+    assert repository["coverage_state"] == "partial"
+
+    code = store.one(
+        "SELECT c.* FROM code_observations c JOIN change_requests p ON p.change_request_id=c.change_request_id WHERE c.change_request_id='repo:41' AND c.change_request_observation_id=p.current_change_request_observation_id ORDER BY c.code_observation_id DESC LIMIT 1"
+    )
+    details = json.loads(code["details"])
+    assert details["expected_roles"]["head"] == expected
+    assert not store.one(
+        "SELECT 1 FROM code_acquisitions WHERE code_observation_id=? AND role='head'",
+        (code["code_observation_id"],),
+    )
+    assert not store.one(
+        "SELECT 1 FROM git_objects WHERE oid=?",
+        (bytes.fromhex(expected),),
+    )
+
+
+def test_graphql_page_info_requires_boolean_has_next_page(github_runtime):
+    store, repo, fixture, api = github_runtime
+    original = api.route
+    injected = False
+
+    def route(method, path, params, body):
+        nonlocal injected
+        payload, headers = original(method, path, params, body)
+        if (
+            not injected
+            and method == "POST"
+            and body["variables"].get("number") == 41
+            and "thread" not in body["variables"]
+        ):
+            injected = True
+            payload["data"]["repository"]["pullRequest"]["reviewThreads"][
+                "pageInfo"
+            ] = {}
+        return payload, headers
+
+    api.route = route
+    with pytest.raises(CatalogError):
+        sync(store, repo)
+
+    thread_coverage = store.one(
+        "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:41' AND kind='threads'"
+    )
+    assert thread_coverage["coverage_state"] == "partial"

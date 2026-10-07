@@ -109,7 +109,7 @@ repo-catalog --format json target --database /tmp/disposable-import/catalog.sqli
 repo-catalog --format json target --database /tmp/disposable-import/catalog.sqlite3 --allow-building pr --repo REPO_ID --provider-change-request-number 7
 ```
 
-`target`はrepository IDの完全一致を要求し、`--limit`と`--offset`で保存履歴行を個別にページ化します。PRの`record_kind`はidentity、観測、文書、文書観測、review/thread/comment/event、code listing履歴を区別します。診断結果だけでruntime readinessやcurrent pointerを変更しません。
+`target`はrepository IDの完全一致を要求し、`--limit`と`--offset`で保存履歴行を個別にページ化します。PRの`record_kind`はidentity、観測、文書、文書観測、review/thread/comment/event、code listing履歴を区別します。通常照会は現在のコード観測を評価し、`target`の診断照会は保存された過去のコード観測にも同じ取得対象の欠落チェックを行います。診断結果だけでruntime readinessやcurrent pointerを変更しません。
 
 ### Import/finalization workspace
 
