@@ -30,7 +30,63 @@ class GitHubCollector:
         self.inventory_uncertainty = None
         self.inventory_evidence = []
         self.facts = ApiFacts(store, self.cfg)
-        self.authorized_prs = set()
+        self.authorized_prs = {}
+        self.observed_partial_scopes = set()
+
+    def coverage_claim(
+        self,
+        repo,
+        change_request_id,
+        kind,
+        state,
+        observed_at_us,
+        details_json=None,
+    ):
+        if observed_at_us is None:
+            return
+        repository_id = repo["repository_id"]
+        self.s.coverage(
+            repository_id,
+            kind,
+            state,
+            details_json,
+            observed_at_us=observed_at_us,
+            change_request_id=change_request_id,
+        )
+        if state == "partial":
+            current = self.s.one(
+                "SELECT observed_at_us,coverage_state FROM current_coverage WHERE repository_id=? AND change_request_id IS ? AND kind=?",
+                (repository_id, change_request_id, kind),
+            )
+            if (
+                current
+                and current["observed_at_us"] == observed_at_us
+                and current["coverage_state"] in ("partial", "conflict")
+            ):
+                self.observed_partial_scopes.add(
+                    (repository_id, change_request_id, kind)
+                )
+
+    def collection_coverage(self, repo, pr, kind, collection, state, *, reason=None):
+        self.coverage_claim(
+            repo,
+            pr,
+            kind,
+            state,
+            self.facts.observed_at_us(collection),
+            {"reason": reason} if reason else None,
+        )
+
+    def summary_observed_at_us(self, repo, job, *, documents_only=False):
+        return self.s.one(
+            "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_id=? AND f.source_id=? AND p.job_id=?"
+            + (
+                " AND f.kind NOT IN ('pr-commits','pr-files','timeline')"
+                if documents_only
+                else ""
+            ),
+            (repo["repository_id"], repo["source_id"], job),
+        )[0]
 
     def request_get(self, url, repo=None, **kwargs):
         seen = set()
@@ -371,7 +427,7 @@ class GitHubCollector:
                         "UPDATE code_listing_progress SET state='complete',terminal=1,context_proven=1 WHERE code_listing_id=?",
                         (listing[0],),
                     )
-                s.coverage(pr or repo["repository_id"], kind, "complete")
+                self.collection_coverage(repo, pr, kind, collection, "complete")
                 s.publish()
             return collection["fetch_collection_id"], listing[0] if listing else None
         except CatalogError as error:
@@ -409,12 +465,14 @@ class GitHubCollector:
                         ),
                     )
                 self.facts.partial(collection, error.code)
-                s.coverage(
-                    pr or repo["repository_id"],
-                    kind,
-                    "partial",
-                    canonical({"reason": error.code}),
-                )
+                if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
+                    self.facts.pending_response(collection) or error.code == "API_CAP"
+                ):
+                    # A saved prefix or rejected response needs another acquisition.
+                    # A committed terminal page interrupted before finish does not.
+                    self.collection_coverage(
+                        repo, pr, kind, collection, "partial", reason=error.code
+                    )
                 s.publish()
             raise
 
@@ -530,14 +588,18 @@ class GitHubCollector:
             )
             if row:
                 value = json.loads(row["payload"])
-                self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
+                self.authorized_prs[
+                    (pr["change_request_id"], *oid_context(value))
+                ] = row["observed_at_us"]
                 return value, row["change_request_observation_id"]
             current = self.s.one(
-                "SELECT p.current_change_request_observation_id,o.payload FROM change_requests p JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.change_request_id=?",
+                "SELECT p.current_change_request_observation_id,o.payload,o.observed_at_us FROM change_requests p JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.change_request_id=?",
                 (pr["change_request_id"],),
             )
             value = json.loads(current["payload"])
-            self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
+            self.authorized_prs[
+                (pr["change_request_id"], *oid_context(value))
+            ] = current["observed_at_us"]
             return value, current["current_change_request_observation_id"]
         headers = {"If-None-Match": validator["etag"]} if validator else {}
         response = self.request_get(url, repo, headers=headers)
@@ -566,11 +628,13 @@ class GitHubCollector:
             if payload:
                 # A validation is a successful boundary, not a new observation of
                 # cached bytes. It records no page/document/PR occurrence.
+                validated_at_us = now_us()
                 with self.s.transaction():
                     self.facts.fence(job)
                     self.facts.finish(
                         collection,
                         evidence={"status": 304, "payload_id": validator["payload_id"]},
+                        observed_at_us=validated_at_us,
                     )
                     if imported_validator:
                         self.s.execute(
@@ -579,16 +643,18 @@ class GitHubCollector:
                                 collection["resume_scope_id"],
                                 validator["etag"],
                                 validator["payload_id"],
-                                now_us(),
+                                validated_at_us,
                             ),
                         )
                     else:
                         self.s.execute(
                             "UPDATE validators SET validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
-                            (now_us(), collection["resume_scope_id"]),
+                            (validated_at_us, collection["resume_scope_id"]),
                         )
                     self.s.publish()
-                self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
+                self.authorized_prs[
+                    (pr["change_request_id"], *oid_context(value))
+                ] = validated_at_us
                 return value, current
             response = self.request_get(url, repo)
             if response.status_code == 304:
@@ -628,7 +694,9 @@ class GitHubCollector:
             "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
             (pr["change_request_id"],),
         )[0]
-        self.authorized_prs.add((pr["change_request_id"], *oid_context(value)))
+        self.authorized_prs[
+            (pr["change_request_id"], *oid_context(value))
+        ] = timestamp
         return value, current
 
     def incremental_comments(self, repo, job, kind, endpoint, parent_field):
@@ -851,6 +919,11 @@ class GitHubCollector:
             if collection["cursor"]
             else {"cursor": None}
         )
+        child_collections = []
+
+        def observed_at_us():
+            return self.facts.thread_observed_at_us(collection)
+
         seen = set()
         response, uncommitted = None, False
         try:
@@ -889,10 +962,7 @@ class GitHubCollector:
                         "pullRequest"
                     ) or {}
                     connection = p.get("reviewThreads") or {}
-                    info = connection.get("pageInfo") or {}
-                    next_cursor = (
-                        info.get("endCursor") if info.get("hasNextPage") else None
-                    )
+                    info, next_cursor, valid_info = self._page_info(connection)
                     with self.s.transaction():
                         self.facts.fence(job)
                         occurrence, _, timestamp = self.facts.page(
@@ -922,9 +992,6 @@ class GitHubCollector:
                             )
                         # Root page and pending child boundary commit together. Resume
                         # reads this exact page and never records it as a new response.
-                        valid_info = "pageInfo" in connection and (
-                            not info.get("hasNextPage") or bool(next_cursor)
-                        )
                         if not payload.get("errors") and valid_info:
                             self.s.execute(
                                 "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
@@ -955,8 +1022,9 @@ class GitHubCollector:
                     raise CatalogError(
                         "GRAPHQL_PARTIAL", "GraphQL partial page; cursor retained"
                     )
-                if "pageInfo" not in connection:
-                    raise CatalogError("API_SCHEMA", "Missing thread pageInfo")
+                info, next_cursor, valid_info = self._page_info(connection)
+                if not valid_info:
+                    raise CatalogError("API_SCHEMA", "Missing or invalid thread pageInfo")
                 for thread in connection.get("nodes") or []:
                     review_thread_provider_resource_id = str(thread["id"])
                     self._thread_children(
@@ -969,11 +1037,8 @@ class GitHubCollector:
                         collection,
                         occurrence,
                         timestamp,
+                        child_collections,
                     )
-                info = connection["pageInfo"]
-                next_cursor = info.get("endCursor") if info.get("hasNextPage") else None
-                if info.get("hasNextPage") and not next_cursor:
-                    raise CatalogError("API_SCHEMA", "Missing thread cursor")
                 with self.s.transaction():
                     self.facts.fence(job)
                     if info.get("hasNextPage"):
@@ -983,8 +1048,14 @@ class GitHubCollector:
                             (canonical(pending), collection["fetch_collection_id"]),
                         )
                     else:
-                        self.facts.finish(collection)
-                        self.s.coverage(pr["change_request_id"], "threads", "complete")
+                        self.facts.finish(collection, observed_at_us=observed_at_us())
+                        self.coverage_claim(
+                            repo,
+                            pr["change_request_id"],
+                            "threads",
+                            "complete",
+                            observed_at_us(),
+                        )
                     self.s.publish()
                 if not info.get("hasNextPage"):
                     return merge
@@ -1004,8 +1075,36 @@ class GitHubCollector:
                         ),
                     )
                 self.facts.partial(collection, error.code)
+                if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
+                    any(
+                        self.facts.pending_response(item)
+                        for item in (collection, *child_collections)
+                    )
+                    or error.code
+                    in (
+                        "GRAPHQL_PARTIAL",
+                        "API_SCHEMA",
+                        "CANONICAL_DOCUMENT_ID_MISSING",
+                    )
+                ):
+                    self.coverage_claim(
+                        repo,
+                        pr["change_request_id"],
+                        "threads",
+                        "partial",
+                        observed_at_us(),
+                        {"reason": error.code},
+                    )
                 self.s.publish()
             raise
+
+    @staticmethod
+    def _page_info(connection):
+        info = connection.get("pageInfo")
+        if not isinstance(info, dict) or type(info.get("hasNextPage")) is not bool:
+            return {}, None, False
+        next_cursor = info.get("endCursor") if info["hasNextPage"] else None
+        return info, next_cursor, not info["hasNextPage"] or bool(next_cursor)
 
     @staticmethod
     def _merge_roles(value):
@@ -1075,18 +1174,17 @@ class GitHubCollector:
         parent,
         parent_occurrence,
         timestamp,
+        child_collections,
     ):
         initial = thread.get("comments") or {}
-        if "pageInfo" not in initial:
+        info, initial_cursor, valid_info = self._page_info(initial)
+        if not valid_info:
             raise CatalogError(
-                "API_SCHEMA", "Missing nested pageInfo", {"refresh_root": True}
+                "API_SCHEMA",
+                "Missing or invalid nested pageInfo",
+                {"refresh_root": True},
             )
-        info = initial["pageInfo"]
-        if info.get("hasNextPage") and not info.get("endCursor"):
-            raise CatalogError(
-                "API_SCHEMA", "Missing initial nested cursor", {"refresh_root": True}
-            )
-        if not info.get("hasNextPage"):
+        if not info["hasNextPage"]:
             return
         with self.s.transaction():
             collection = self.facts.begin(
@@ -1095,15 +1193,20 @@ class GitHubCollector:
                 "thread-comments",
                 job,
                 self.http.graphql,
-                {"thread": thread["id"], "query": query},
+                {
+                    "thread": thread["id"],
+                    "query": query,
+                    "parent_fetch_collection_id": parent["fetch_collection_id"],
+                },
             )
+        child_collections.append(collection)
         if collection["state"] == "complete":
             return
         page = self.s.one(
             "SELECT next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
             (collection["fetch_collection_id"],),
         )
-        cursor = page[0] if page else info.get("endCursor")
+        cursor = page[0] if page else initial_cursor
         seen = set()
         response, uncommitted = None, False
         try:
@@ -1129,11 +1232,7 @@ class GitHubCollector:
                 comments = ((payload.get("data") or {}).get("node") or {}).get(
                     "comments"
                 ) or {}
-                info = comments.get("pageInfo") or {}
-                next_cursor = info.get("endCursor") if info.get("hasNextPage") else None
-                valid_info = "pageInfo" in comments and (
-                    not info.get("hasNextPage") or bool(next_cursor)
-                )
+                info, next_cursor, valid_info = self._page_info(comments)
                 with self.s.transaction():
                     self.facts.fence(job)
                     occurrence, ordinal, timestamp = self.facts.page(
@@ -1164,12 +1263,8 @@ class GitHubCollector:
                     raise CatalogError(
                         "GRAPHQL_PARTIAL", "Thread comments page has errors"
                     )
-                if (
-                    "pageInfo" not in comments
-                    or info.get("hasNextPage")
-                    and not next_cursor
-                ):
-                    raise CatalogError("API_SCHEMA", "Missing nested cursor/pageInfo")
+                if not valid_info:
+                    raise CatalogError("API_SCHEMA", "Missing or invalid nested pageInfo")
                 cursor = next_cursor
             with self.s.transaction():
                 self.facts.fence(job)
@@ -1233,15 +1328,7 @@ class GitHubCollector:
         s = self.s
         root = f"{self.http.base}/repos/{repo['name']}"
         failures, waiting = [], None
-        with s.transaction():
-            for component in ("pr", "pr-documents"):
-                s.coverage(
-                    repo["repository_id"],
-                    component,
-                    "partial",
-                    canonical({"reason": "collection_in_progress", "job_id": job}),
-                )
-            s.publish()
+        self.observed_partial_scopes.clear()
 
         def attempt(kind, operation):
             nonlocal waiting
@@ -1259,14 +1346,6 @@ class GitHubCollector:
                     raise
                 failures.append({"kind": kind, "reason": error.code})
                 waiting = error.details.get("not_before_us", waiting)
-                with s.transaction():
-                    s.coverage(
-                        repo["repository_id"],
-                        kind,
-                        "partial",
-                        canonical({"reason": error.code}),
-                    )
-                    s.publish()
                 return None
 
         try:
@@ -1418,6 +1497,11 @@ class GitHubCollector:
                         ),
                     )
 
+                code_context_failures = [
+                    failure
+                    for failure in failures[initial_failures:]
+                    if failure["kind"] in {"pr-detail", "review", "threads"}
+                ]
                 oldfail = len(failures)
                 commits = attempt(
                     "pr-commits",
@@ -1469,7 +1553,13 @@ class GitHubCollector:
                     current = after_response.extensions["catalog_observation_id"]
                 state = (
                     "complete"
-                    if same and len(failures) == oldfail and commits and files_result
+                    if (
+                        same
+                        and not code_context_failures
+                        and len(failures) == oldfail
+                        and commits
+                        and files_result
+                    )
                     else "partial"
                 )
                 if not same:
@@ -1592,6 +1682,64 @@ class GitHubCollector:
                                         ),
                                     )
                             s.publish()
+                linked_roles = {
+                    row["role"]
+                    for row in s.all(
+                        "SELECT role FROM code_acquisitions WHERE code_observation_id=?",
+                        (code,),
+                    )
+                }
+                missing_roles = sorted(
+                    role
+                    for role, expected in role_oids.items()
+                    if expected and role not in linked_roles
+                )
+                runtime_code_failures = failures[oldfail:]
+                code_failures = [*code_context_failures, *runtime_code_failures]
+                if missing_roles and not code_failures:
+                    missing_failure = {
+                        "kind": "pr-git",
+                        "reason": "PR_CODE_ROLE_MISSING",
+                        "roles": missing_roles,
+                    }
+                    failures.append(missing_failure)
+                    code_failures.append(missing_failure)
+                observed_incomplete_code = (
+                    bool(code_context_failures)
+                    or not same
+                    or bool(missing_roles)
+                    or any(
+                        (
+                            repo["repository_id"],
+                            pr["change_request_id"],
+                            kind,
+                        )
+                        in self.observed_partial_scopes
+                        for kind in ("pr-commits", "pr-files")
+                    )
+                )
+                if after_response is not None and (
+                    not code_failures or observed_incomplete_code
+                ):
+                    partial_code = bool(code_failures or missing_roles)
+                    details = (
+                        {
+                            "missing": code_failures,
+                            "missing_roles": missing_roles,
+                        }
+                        if partial_code
+                        else None
+                    )
+                    with s.transaction():
+                        self.coverage_claim(
+                            repo,
+                            pr["change_request_id"],
+                            "pr-code",
+                            "partial" if partial_code else "complete",
+                            after_response.extensions["catalog_observed_at_us"],
+                            details,
+                        )
+                        s.publish()
                 if len(failures) != initial_failures:
                     continue
             document_failures = [
@@ -1601,18 +1749,37 @@ class GitHubCollector:
                 not in {"pr-git", "pr-code", "pr-commits", "pr-files", "timeline"}
             ]
             with s.transaction():
-                s.coverage(
-                    repo["repository_id"],
-                    "pr-documents",
-                    "partial" if document_failures else "complete",
-                    canonical({"missing": document_failures}),
-                )
-                s.coverage(
-                    repo["repository_id"],
-                    "pr",
-                    "partial" if failures else "complete",
-                    canonical({"missing": failures}),
-                )
+                for component, missing in (
+                    ("pr-documents", document_failures),
+                    ("pr", failures),
+                ):
+                    documents_only = component == "pr-documents"
+                    observed_incomplete = any(
+                        not documents_only
+                        or kind
+                        not in (
+                            "pr-git",
+                            "pr-code",
+                            "pr-commits",
+                            "pr-files",
+                            "timeline",
+                        )
+                        for _, _, kind in self.observed_partial_scopes
+                    )
+                    if missing and not observed_incomplete:
+                        # Failed work with no observed incomplete response is progress,
+                        # not a newer assessment of the saved repository coverage.
+                        continue
+                    self.coverage_claim(
+                        repo,
+                        None,
+                        component,
+                        "partial" if missing else "complete",
+                        self.summary_observed_at_us(
+                            repo, job, documents_only=documents_only
+                        ),
+                        {"missing": missing} if missing else None,
+                    )
                 s.publish()
             if failures:
                 raise Waiting(
@@ -1676,14 +1843,17 @@ class GitHubCollector:
         binding, endpoint, principal where known, exact OIDs and reported count.
         """
         algorithm, head, base = oid_context(context or {})
+        authorization_key = (pr, algorithm, head, base)
         if (
             not algorithm
             or not head
             or not base
             or type(reported) is not int
-            or (pr, algorithm, head, base) not in self.authorized_prs
+            or authorization_key not in self.authorized_prs
+            or self.authorized_prs[authorization_key] is None
         ):
             return None
+        authorization_observed_at_us = self.authorized_prs[authorization_key]
         binding = self.s.one(
             "SELECT repository_binding_id FROM change_requests WHERE change_request_id=?",
             (pr,),
@@ -1744,32 +1914,37 @@ class GitHubCollector:
             )[0]
             if count != reported or cap and count >= cap:
                 continue
-            self.s.execute(
-                "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
-                (
-                    listing["resume_scope_id"],
-                    listing["fetch_collection_id"],
-                    canonical(
-                        {
-                            "boundary": "authenticated-current-head-base",
-                            "principal": self.facts.principal,
-                            "job_id": job,
-                            "parser": PARSER,
-                            "profile": self.s.config["preservation"]["profile"],
-                            "legacy_profile": listing["profile_version"],
-                            "profile_admission": "REST membership and raw paths independent of Git text retention",
-                            "saved_parser": "v1",
-                            "parser_admission": "imported terminal contiguous raw pages and matching normalized items",
-                            "reported": reported,
-                            "head": head.hex(),
-                            "base": base.hex(),
-                            "legacy_cursor_reused": False,
-                        }
-                    ),
-                    now_us(),
-                ),
+            marker = self.s.one(
+                "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete' AND observed_at_us=? AND json_extract(evidence,'$.boundary')='authenticated-current-head-base'",
+                (listing["fetch_collection_id"], authorization_observed_at_us),
             )
-            self.s.publish()
+            if marker is None:
+                self.s.execute(
+                    "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
+                    (
+                        listing["resume_scope_id"],
+                        listing["fetch_collection_id"],
+                        canonical(
+                            {
+                                "boundary": "authenticated-current-head-base",
+                                "principal": self.facts.principal,
+                                "job_id": job,
+                                "parser": PARSER,
+                                "profile": self.s.config["preservation"]["profile"],
+                                "legacy_profile": listing["profile_version"],
+                                "profile_admission": "REST membership and raw paths independent of Git text retention",
+                                "saved_parser": "v1",
+                                "parser_admission": "imported terminal contiguous raw pages and matching normalized items",
+                                "reported": reported,
+                                "head": head.hex(),
+                                "base": base.hex(),
+                                "legacy_cursor_reused": False,
+                            }
+                        ),
+                        authorization_observed_at_us,
+                    ),
+                )
+                self.s.publish()
             return listing["fetch_collection_id"], listing["code_listing_id"]
         return None
 
@@ -1795,4 +1970,5 @@ class GitHubCollector:
             "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
             (pr["change_request_id"],),
         )[0]
+        response.extensions["catalog_observed_at_us"] = timestamp
         return response

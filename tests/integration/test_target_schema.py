@@ -274,7 +274,7 @@ def test_fresh_complete_schema(target):
     assert all(
         row[5] == 1
         for row in db.execute("PRAGMA table_list")
-        if row[1] not in ("sqlite_schema", "sqlite_temp_schema")
+        if row[2] == "table" and row[1] not in ("sqlite_schema", "sqlite_temp_schema")
     )
     assert all(
         fk[5] == "RESTRICT" and fk[6] == "RESTRICT"

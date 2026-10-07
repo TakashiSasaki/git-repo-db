@@ -55,12 +55,19 @@ def _coverage(query, pr, documents_only):
                 collection_kind=row["kind"],
             )
     for row in s.all(
-        "SELECT cs.coverage_scope_id,cs.kind,cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.change_request_id=?",
+        "SELECT coverage_scope_id,kind,coverage_state FROM current_coverage WHERE change_request_id=?",
         (pr["change_request_id"],),
     ):
-        if documents_only and row["kind"] in ("pr-code", "code", "commits", "files"):
+        if documents_only and row["kind"] in (
+            "pr-code",
+            "pr-commits",
+            "pr-files",
+            "code",
+            "commits",
+            "files",
+        ):
             continue
-        if row["effective_state"] not in ("complete", "not_applicable"):
+        if row["coverage_state"] not in ("complete", "not_applicable"):
             query.coverage.add(
                 "pr",
                 "saved_scope_incomplete",
@@ -208,7 +215,7 @@ def pr_query(query, command, options):
             continue
         summary_kind = "pr-documents" if documents_only else "pr"
         summary = s.one(
-            "SELECT cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=? AND cs.change_request_id IS NULL AND cs.kind=?",
+            "SELECT coverage_state FROM current_coverage WHERE repository_id=? AND change_request_id IS NULL AND kind=?",
             (repo["repository_id"], summary_kind),
         )
         if summary is None or summary[0] not in ("complete", "not_applicable"):
@@ -218,9 +225,37 @@ def pr_query(query, command, options):
                 repository_id=repo["repository_id"],
                 scope_kind=summary_kind,
             )
+    code_by_change_request = {}
     for pr in rows:
         query.token.check()
         _coverage(query, pr, documents_only)
+        code = s.one(
+            "SELECT * FROM code_observations WHERE change_request_id=? AND change_request_observation_id=? ORDER BY code_observation_id DESC LIMIT 1",
+            (pr["change_request_id"], pr["change_request_observation_id"]),
+        )
+        code_by_change_request[pr["change_request_id"]] = code
+        if not documents_only and code:
+            expected_roles = set(
+                (json.loads(code["details"]).get("expected_roles") or {}).keys()
+            )
+            linked_roles = {
+                row[0]
+                for row in s.all(
+                    "SELECT role FROM code_acquisitions WHERE code_observation_id=?",
+                    (code["code_observation_id"],),
+                )
+            }
+            missing_roles = sorted(expected_roles - linked_roles)
+            if code["state"] != "complete" or missing_roles:
+                query.coverage.add(
+                    "pr",
+                    "code_observation_incomplete",
+                    code_observation_id=code["code_observation_id"],
+                    missing_roles=missing_roles,
+                )
+
+    for pr in rows:
+        query.token.check()
         payload = json.loads(pr["payload"] or "{}")
         state = pr_state(payload)
         if o.get("state", "all") != "all" and state != o["state"]:
@@ -239,16 +274,7 @@ def pr_query(query, command, options):
             )
         ):
             continue
-        code = s.one(
-            "SELECT * FROM code_observations WHERE change_request_id=? AND change_request_observation_id=? ORDER BY code_observation_id DESC LIMIT 1",
-            (pr["change_request_id"], pr["change_request_observation_id"]),
-        )
-        if not documents_only and code and code["state"] != "complete":
-            query.coverage.add(
-                "pr",
-                "code_observation_incomplete",
-                code_observation_id=code["code_observation_id"],
-            )
+        code = code_by_change_request[pr["change_request_id"]]
         if o.get("commit"):
             oid = GitOid.parse(o["commit"])
             if not code or not s.one(

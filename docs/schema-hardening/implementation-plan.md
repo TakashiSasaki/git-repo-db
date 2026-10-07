@@ -2,6 +2,12 @@
 
 Catalog3 is the sole ordinary runtime. Packaged DDL and the runtime identity module are authoritative; [runtime handoff](runtime-handoff.md) records commands, validation and limits. Historical phase plans and design/export schemas remain snapshots.
 
+## Coverage derivation (schema 9)
+
+Starting from published PR #5 at `fee685db14e8052d2e9decd5f4b3470d4da80517`, branch `refactor/coverage-model` replaces mutable coverage selection with immutable scope/time/state claims and a derived `current_coverage` view. The latest time is chosen before unknown is weakened; same-time determinate disagreement becomes derived conflict. Admission ignores stale and semantic duplicate inputs without changing details. Export selection preserves every latest claim; a multi-catalog exchange protocol remains deferred.
+
+All coverage producers preserve actual saved observation times across resume. Repository Git scopes exclude PR-only acquisition; failures without observed incomplete evidence remain operational job state. Ordinary and diagnostic queries use the same view and return separate advisory details. Schema 9 retains 65 ordinary tables and workspace schema 2. Final synthetic acceptance and installed distribution checks are attributed in the runtime handoff.
+
 ## Timestamp normalization (schema 8)
 
 Starting from PR #4 at `307ab6a8df3bc05a99670495676ef25b7c613289`, branch `refactor/unix-microsecond-timestamps` normalizes all catalog/workspace absolute times to signed 64-bit Unix epoch microseconds with `_us` names. Integer ordering applies to source membership, observations, finalization, retry deadlines and cache TTL; provider requests format dates at the boundary. Preserved source bytes and legacy source schemas remain unchanged. Workspace identity advances to 2. The subsequent coverage stride uses this timestamp contract.

@@ -2,7 +2,7 @@
 
 任意のGit取得先とGitHubのPRをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PR文書と観測履歴を永続化します。
-通常ランタイムは catalog3 です。 現在の schema version は **8** で、entity ID と FK は `repository_id`、`git_object_id`、`document_observation_id` のように意味を明示します。保存する絶対時刻は Unix epoch からのマイクロ秒を INTEGER で保持し、`observed_at_us` のように単位を付けます。[現行データモデル](docs/data-model.md)と packaged DDL が正本です。旧 catalog3 開発 DB は対応しません。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。検証した環境・範囲は[実行引き継ぎ](docs/schema-hardening/runtime-handoff.md)に記録しています。
+通常ランタイムは catalog3 です。 現在の schema version は **9** で、entity ID と FK は `repository_id`、`git_object_id`、`document_observation_id` のように意味を明示します。保存する絶対時刻は Unix epoch からのマイクロ秒を INTEGER で保持し、`observed_at_us` のように単位を付けます。[現行データモデル](docs/data-model.md)と packaged DDL が正本です。旧 catalog3 開発 DB は対応しません。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。検証した環境・範囲は[実行引き継ぎ](docs/schema-hardening/runtime-handoff.md)に記録しています。
 
 ## 開発・導入
 
@@ -74,6 +74,8 @@ PR rootは明示選択します。通常照会はDBの読取りだけで完結�
 `catalog-text-v1`は全heads先端のUTF-8 strict・NULなし・8 MiB以下の本文を可逆保存します。
 全取得対象Blobのdigestはbinaryや巨大Blobも含め記録しますが、全履歴・全binaryの原文保存ではありません。
 履歴の未保存本文は検索coverageに不足として出し、原文不在を空bytesへ置換しません。
+
+保存された coverage は scope ごとの最新観測時刻にある claim 集合から導出します。保存状態は `complete`、`partial`、`unknown`、`not_applicable` です。同時刻の `unknown` は他の状態を妨げませんが、他の状態が複数あれば `conflict` と表示します。新しい `unknown` から古い `complete` へは戻りません。`coverage`、`status`、snapshot の JSON は各 claim とその `details_json` を個別に返します。重複・古い claim の登録は NO-OP で、既存の claim と詳細を変更しません。
 
 ## 保存済み開発 v2 データの救出
 

@@ -1,6 +1,18 @@
 # Catalog3 runtime handoff
 
-The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 8**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 9**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+
+## Coverage claim derivation (schema 9)
+
+Published base: PR #5 `refactor/unix-microsecond-timestamps` at `fee685db14e8052d2e9decd5f4b3470d4da80517`; branch `refactor/coverage-model`. Local implementation started from the tested timestamp revision `27ab5e37ae5fefbccfee4e8217c657356961c3ef`, with its later timestamp validation evidence carried forward. The ordinary catalog still has 65 tables and now derives current coverage through one view; the separate import workspace remains schema 2.
+
+Claims store only their local ID, scope ID, `coverage_state`, required `observed_at_us` and optional advisory `details_json`. Their semantic identity is scope/time/state. Admission atomically ignores older claims and same-time/state duplicates, retains same-time distinct states, and preserves existing details exactly. Claims cannot be replaced, edited or deleted. No payload/evidence reference is required for validity.
+
+`current_coverage` selects the maximum observation time first, then ignores `unknown` only when a determinate state exists at that same time. More than one distinct determinate state derives `conflict`; conflict is never a stored claim. A newer unknown or conflict never falls back to older complete history. An empty scope has unknown state, a NULL time and no claims. Coverage has no mutable current pointer, asserted/effective split, evaluation time or correction mechanism. Latest export selection includes every tied claim with its own details; the actual multi-catalog exchange protocol remains deferred.
+
+Git/REST/GraphQL producers evaluate saved fixed-root/page observation times. Nested child collection context binds it to the owning root collection, so resumed timestamp maxima include earlier child pages without mixing other root scans. PR-only Git acquisition cannot assert repository-wide refs completeness. Resume does not create a new observation from saved pages, and failures without observed incomplete data do not overwrite semantic coverage. Job failures and partial collections remain visible separately. Ordinary/diagnostic PR queries, coverage/status and snapshot outputs agree on the derived current view.
+
+Completed clean local acceptance on `48f4f42c6835ad20df20e47fd1bfbf06c3383909`: **622 ordinary + 2 independent packaging tests passed**, with all 624 selected tests executed exactly once across 46 files. See [coverage synthetic evidence](../validation/synthetic/2026-10-07-coverage-claims.md) and adjacent JSON for the environment, timing, earlier failures and nested-page review correction. GitHub CI is separately attributed to the published commit. Only disposable synthetic data was used; no real-source acquisition, active-catalog switch, main merge or release was performed.
 
 ## Unix epoch microseconds (schema 8)
 

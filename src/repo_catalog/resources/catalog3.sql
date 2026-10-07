@@ -9,7 +9,7 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=8),
+    schema_version INTEGER NOT NULL CHECK(schema_version=9),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
@@ -236,11 +236,36 @@ CREATE TABLE completion_markers(
 completion_marker_id INTEGER PRIMARY KEY, resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, asserted_state TEXT NOT NULL CHECK(asserted_state IN ('complete','partial','unknown')), evidence TEXT NOT NULL CHECK(json_valid(evidence) AND json_type(evidence)='object'), observed_at_us INTEGER
 ) STRICT;
 CREATE TABLE coverage_scopes(
-coverage_scope_id TEXT PRIMARY KEY, repository_id TEXT NOT NULL REFERENCES repositories(repository_id) ON UPDATE RESTRICT ON DELETE RESTRICT, change_request_id TEXT, kind TEXT NOT NULL, current_coverage_claim_id INTEGER, FOREIGN KEY(change_request_id,repository_id) REFERENCES change_requests(change_request_id,repository_id) ON UPDATE RESTRICT ON DELETE RESTRICT, FOREIGN KEY(current_coverage_claim_id,coverage_scope_id) REFERENCES coverage_claims(coverage_claim_id,coverage_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
+coverage_scope_id TEXT PRIMARY KEY,
+    repository_id TEXT NOT NULL REFERENCES repositories(repository_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    change_request_id TEXT, kind TEXT NOT NULL,
+    FOREIGN KEY(change_request_id,repository_id) REFERENCES change_requests(change_request_id,repository_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
+CREATE UNIQUE INDEX coverage_scope_repository_kind ON coverage_scopes(repository_id,kind) WHERE change_request_id IS NULL;
+CREATE UNIQUE INDEX coverage_scope_change_request_kind ON coverage_scopes(change_request_id,kind) WHERE change_request_id IS NOT NULL;
 CREATE TABLE coverage_claims(
-coverage_claim_id INTEGER PRIMARY KEY, coverage_scope_id TEXT NOT NULL REFERENCES coverage_scopes(coverage_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, asserted_state TEXT NOT NULL CHECK(asserted_state IN ('complete','partial','unknown','not_applicable')), effective_state TEXT NOT NULL CHECK(effective_state IN ('complete','partial','unknown','not_applicable')), details TEXT NOT NULL CHECK(json_valid(details) AND json_type(details)='object'), observed_at_us INTEGER, evaluated_at_us INTEGER NOT NULL, UNIQUE(coverage_claim_id,coverage_scope_id)
+coverage_claim_id INTEGER PRIMARY KEY,
+    coverage_scope_id TEXT NOT NULL REFERENCES coverage_scopes(coverage_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    coverage_state TEXT NOT NULL CHECK(coverage_state IN ('complete','partial','unknown','not_applicable')),
+    observed_at_us INTEGER NOT NULL,
+    details_json TEXT CHECK(details_json IS NULL OR (json_valid(details_json) AND json_type(details_json)='object')),
+    UNIQUE(coverage_scope_id,observed_at_us,coverage_state)
 ) STRICT;
+-- Pick the latest observation first, including unknown. Older facts never provide
+-- fallback from a latest unknown/conflict. Empty scopes have no invented claim.
+CREATE VIEW current_coverage AS
+SELECT s.coverage_scope_id,s.repository_id,s.change_request_id,s.kind,
+       max(c.observed_at_us) AS observed_at_us,
+       CASE WHEN count(DISTINCT CASE WHEN c.coverage_state!='unknown' THEN c.coverage_state END)>1
+            THEN 'conflict'
+            ELSE coalesce(max(CASE WHEN c.coverage_state!='unknown' THEN c.coverage_state END),'unknown')
+       END AS coverage_state,
+       count(c.coverage_claim_id) AS claim_count
+FROM coverage_scopes s
+LEFT JOIN coverage_claims c
+  ON c.coverage_scope_id=s.coverage_scope_id
+ AND c.observed_at_us=(SELECT max(latest.observed_at_us) FROM coverage_claims latest WHERE latest.coverage_scope_id=s.coverage_scope_id)
+GROUP BY s.coverage_scope_id;
 CREATE TABLE reviews(
     change_request_id TEXT NOT NULL,
     kind TEXT NOT NULL,
@@ -415,13 +440,12 @@ CREATE INDEX content_locations_fk_0 ON content_locations(cache_locator_id);
 CREATE TRIGGER contents_immutable BEFORE UPDATE ON contents WHEN NEW.content_id IS NOT OLD.content_id OR NEW.byte_length IS NOT OLD.byte_length OR NEW.text_state IS NOT OLD.text_state OR NEW.created_at_us IS NOT OLD.created_at_us OR (NEW.raw_text IS NOT OLD.raw_text AND NOT (OLD.raw_text IS NULL AND NEW.raw_text IS NOT NULL AND OLD.text_state='eligible' AND instr(NEW.raw_text,char(0))=0 AND EXISTS(SELECT 1 FROM content_digests WHERE content_id=OLD.content_id AND representation='raw-content-v1' AND algorithm='sha256'))) BEGIN SELECT RAISE(ABORT,'Immutable content or invalid text completion'); END;
 CREATE TRIGGER contents_no_replace BEFORE INSERT ON contents WHEN EXISTS(SELECT 1 FROM contents WHERE (content_id=NEW.content_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER contents_retain BEFORE DELETE ON contents BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE TRIGGER coverage_claims_immutable BEFORE UPDATE ON coverage_claims WHEN NEW.coverage_claim_id IS NOT OLD.coverage_claim_id OR NEW.coverage_scope_id IS NOT OLD.coverage_scope_id OR NEW.asserted_state IS NOT OLD.asserted_state OR NEW.effective_state IS NOT OLD.effective_state OR NEW.details IS NOT OLD.details OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.evaluated_at_us IS NOT OLD.evaluated_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER coverage_claims_no_replace BEFORE INSERT ON coverage_claims WHEN EXISTS(SELECT 1 FROM coverage_claims WHERE (coverage_claim_id=NEW.coverage_claim_id) OR (coverage_claim_id=NEW.coverage_claim_id AND coverage_scope_id=NEW.coverage_scope_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER coverage_claims_immutable BEFORE UPDATE ON coverage_claims WHEN NEW.coverage_claim_id IS NOT OLD.coverage_claim_id OR NEW.coverage_scope_id IS NOT OLD.coverage_scope_id OR NEW.coverage_state IS NOT OLD.coverage_state OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.details_json IS NOT OLD.details_json BEGIN SELECT RAISE(ABORT,'Immutable coverage claim'); END;
+CREATE TRIGGER coverage_claims_no_replace BEFORE INSERT ON coverage_claims WHEN EXISTS(SELECT 1 FROM coverage_claims WHERE coverage_scope_id=NEW.coverage_scope_id AND observed_at_us=NEW.observed_at_us AND coverage_state=NEW.coverage_state) BEGIN SELECT RAISE(ABORT,'Duplicate coverage claim; use admission'); END;
 CREATE TRIGGER coverage_claims_retain BEFORE DELETE ON coverage_claims BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX coverage_claims_fk_0 ON coverage_claims(coverage_scope_id);
 CREATE TRIGGER coverage_scopes_immutable BEFORE UPDATE ON coverage_scopes WHEN NEW.coverage_scope_id IS NOT OLD.coverage_scope_id OR NEW.repository_id IS NOT OLD.repository_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER coverage_scopes_no_replace BEFORE INSERT ON coverage_scopes WHEN EXISTS(SELECT 1 FROM coverage_scopes WHERE (coverage_scope_id=NEW.coverage_scope_id) OR (coverage_scope_id=NEW.coverage_scope_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE INDEX coverage_scopes_fk_0 ON coverage_scopes(current_coverage_claim_id,coverage_scope_id);
+CREATE TRIGGER coverage_scopes_no_replace BEFORE INSERT ON coverage_scopes WHEN EXISTS(SELECT 1 FROM coverage_scopes WHERE coverage_scope_id=NEW.coverage_scope_id OR (repository_id=NEW.repository_id AND change_request_id IS NEW.change_request_id AND kind=NEW.kind)) BEGIN SELECT RAISE(ABORT,'Duplicate coverage scope'); END;
 CREATE INDEX coverage_scopes_fk_1 ON coverage_scopes(change_request_id,repository_id);
 CREATE INDEX coverage_scopes_fk_2 ON coverage_scopes(repository_id);
 CREATE TRIGGER database_identity_immutable BEFORE UPDATE ON database_identity WHEN NEW.singleton IS NOT OLD.singleton OR NEW.format_id IS NOT OLD.format_id OR NEW.schema_version IS NOT OLD.schema_version OR NEW.ddl_sha256 IS NOT OLD.ddl_sha256 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;

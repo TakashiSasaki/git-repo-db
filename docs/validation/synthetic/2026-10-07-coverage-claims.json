@@ -1,0 +1,69 @@
+{
+  "run_id": "2026-10-07-coverage-claims",
+  "kind": "synthetic-local-acceptance",
+  "base_sha": "fee685db14e8052d2e9decd5f4b3470d4da80517",
+  "branch": "refactor/coverage-model",
+  "tested_commit": "48f4f42c6835ad20df20e47fd1bfbf06c3383909",
+  "tested_tree": "25df9e9511a5f0c25e68ba631b051d9a070f4b12",
+  "schema_version": 9,
+  "workspace_schema_version": 2,
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "git": "git version 2.51.1",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "os": "Linux",
+    "arch": "x86_64"
+  },
+  "checks": {
+    "tests": {
+      "passed": 622,
+      "failed": 0,
+      "skipped": 0,
+      "wall_seconds": 143.17654541500087
+    },
+    "packaging": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "wall_seconds": 14.066754821000359
+    }
+  },
+  "gate": {
+    "executed": 624,
+    "selected_files": 46,
+    "unexecuted_files": [],
+    "excluded_files": []
+  },
+  "other_checks": [
+    "Ruff lint",
+    "Ruff format",
+    "prose/JSON validation",
+    "STRICT and FTS5 doctor",
+    "25 compatible uv.lock wheels verified by SHA-256",
+    "independent contract and runtime review"
+  ],
+  "earlier_attempts": [
+    {
+      "revision": "uncommitted coverage producer changes before 9c4c6f2",
+      "result": "43 passed, 1 failed in owned runtime group",
+      "cause": "old e2e expectation replaced semantic coverage after authentication failed before any new repository observation",
+      "correction": "preserve saved coverage and report the failed synchronization as a waiting job; targeted rerun passed"
+    },
+    {
+      "commit": "9c4c6f250edf5e6df78847ed5549e05703385bb5",
+      "result": "620 passed, 1 failed in current ordinary acceptance",
+      "cause": "the STRICT-table assertion also inspected the new view",
+      "correction": "restrict the STRICT assertion to actual tables; targeted rerun passed"
+    }
+  ],
+  "review_corrections": [
+    "Nested GraphQL completion originally omitted child collections from earlier root pages after cursor resume. Persistent exact-parent context and owner-scoped timestamp selection now retain root100/child300/resumed-root200 as 300 and exclude unrelated child900."
+  ],
+  "limits": [
+    "Synthetic data only; no real source acquisition or activation",
+    "Latest selection/admission helpers are implemented; the multi-catalog wire protocol and import workflow remain deferred",
+    "No previous catalog migration, main merge or release",
+    "GitHub CI is separate and not claimed by this local report"
+  ]
+}

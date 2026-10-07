@@ -189,7 +189,9 @@ class ApiFacts:
             )
         return ident, ordinal, timestamp
 
-    def finish(self, collection, *, evidence=None):
+    def finish(self, collection, *, evidence=None, observed_at_us=None):
+        if observed_at_us is None:
+            observed_at_us = self.observed_at_us(collection)
         self.s.execute(
             "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
             (collection["fetch_collection_id"],),
@@ -200,9 +202,43 @@ class ApiFacts:
                 collection["resume_scope_id"],
                 collection["fetch_collection_id"],
                 canonical(evidence or {"parser": PARSER, "terminal": True}),
-                now_us(),
+                observed_at_us,
             ),
         )
+
+    def observed_at_us(self, collection):
+        """Latest actual saved response; starting or replaying a scan adds no time."""
+        return self.s.one(
+            "SELECT MAX(observed_at_us) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (collection["fetch_collection_id"],),
+        )[0]
+
+    def thread_observed_at_us(self, collection):
+        """Include every child associated with this root, including earlier resumes."""
+        return self.s.one(
+            """SELECT MAX(o.observed_at_us)
+               FROM fetch_collections root
+               JOIN fetch_collections member
+                 ON member.repository_id=root.repository_id
+                AND member.change_request_id IS root.change_request_id
+                AND member.source_id IS root.source_id
+               JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id
+               JOIN fetch_occurrences o ON o.fetch_collection_id=member.fetch_collection_id
+               WHERE root.fetch_collection_id=?
+                 AND (member.fetch_collection_id=root.fetch_collection_id
+                      OR (member.kind='thread-comments'
+                          AND json_extract(scope.request_context,'$.parent_fetch_collection_id')
+                              =root.fetch_collection_id))""",
+            (collection["fetch_collection_id"],),
+        )[0]
+
+    def pending_response(self, collection):
+        """Whether acquisition still requires a response, not just local completion."""
+        page = self.s.one(
+            "SELECT next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY ordinal DESC,fetch_occurrence_id DESC LIMIT 1",
+            (collection["fetch_collection_id"],),
+        )
+        return page is None or page["next_cursor"] is not None
 
     def partial(self, collection, reason):
         self.s.execute(

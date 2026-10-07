@@ -398,10 +398,28 @@ class TargetQueryService:
             if row["state"] != "complete":
                 self._add_missing("pr", "code_listing_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT code_observation_id,state FROM code_observations WHERE change_request_id=? AND state!='complete' ORDER BY code_observation_id",
+            "SELECT code_observation_id,state,details FROM code_observations WHERE change_request_id=? ORDER BY code_observation_id",
             (ident,),
         ):
-            self._add_missing("pr", "code_observation_incomplete", **dict(row))
+            expected_roles = set(
+                (json.loads(row["details"]).get("expected_roles") or {}).keys()
+            )
+            linked_roles = {
+                linked[0]
+                for linked in self.s.execute(
+                    "SELECT role FROM code_acquisitions WHERE code_observation_id=?",
+                    (row["code_observation_id"],),
+                )
+            }
+            missing_roles = sorted(expected_roles - linked_roles)
+            if row["state"] != "complete" or missing_roles:
+                self._add_missing(
+                    "pr",
+                    "code_observation_incomplete",
+                    code_observation_id=row["code_observation_id"],
+                    state=row["state"],
+                    missing_roles=missing_roles,
+                )
         for row in self.s.execute(
             "SELECT c.fetch_collection_id,p.state,p.reason saved_reason,p.cursor FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.fetch_collection_id",
             (ident,),
@@ -414,10 +432,10 @@ class TargetQueryService:
         ):
             self._add_missing("pr", "document_body_missing", **dict(row))
         for row in self.s.execute(
-            "SELECT s.coverage_scope_id,c.effective_state FROM coverage_scopes s LEFT JOIN coverage_claims c ON c.coverage_scope_id=s.coverage_scope_id WHERE s.change_request_id=? ORDER BY s.coverage_scope_id,c.coverage_claim_id",
+            "SELECT coverage_scope_id,coverage_state FROM current_coverage WHERE change_request_id=? ORDER BY coverage_scope_id",
             (ident,),
         ):
-            if row["effective_state"] not in ("complete", "not_applicable"):
+            if row["coverage_state"] not in ("complete", "not_applicable"):
                 self._add_missing("pr", "saved_scope_incomplete", **dict(row))
 
     def _pr(self, options):
