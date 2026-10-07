@@ -7,6 +7,7 @@ import sqlite3
 import time
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.coverage import current_coverages
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.collection_service import select_repositories
 from repo_catalog.domain.models import (
@@ -702,13 +703,7 @@ class QueryService:
                                 (r["git_acquisition_id"],),
                             )
                         ),
-                        "coverage": [
-                            dict(x)
-                            for x in s.all(
-                                "SELECT cs.*,cc.effective_state state,cc.details FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=?",
-                                (r["repository_id"],),
-                            )
-                        ],
+                        "coverage": current_coverages(s.connection, r["repository_id"]),
                     },
                 )
         elif command == "refs list":
@@ -1081,20 +1076,15 @@ class QueryService:
         elif command in ("coverage", "status"):
             for repo in self.repos(o):
                 snapshot = self.snapshot(repo, o)
-                components = s.all(
-                    "SELECT cs.*,cc.effective_state state,cc.details FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=? AND (? IS NULL OR cs.kind=?)",
-                    (repo["repository_id"], o.get("kind"), o.get("kind")),
+                components = current_coverages(
+                    s.connection, repo["repository_id"], o.get("kind")
                 )
                 yield (
                     [repo["repository_id"]],
                     {
                         "repository_id": repo["repository_id"],
                         "snapshot_id": snapshot["snapshot_id"] if snapshot else None,
-                        "components": [
-                            {**dict(r), "details": json.loads(r["details"] or "{}")}
-                            for r in components
-                            if not o.get("kind") or r["kind"] == o["kind"]
-                        ],
+                        "components": components,
                     },
                 )
         elif command.startswith("pr ") or command == "search pr":

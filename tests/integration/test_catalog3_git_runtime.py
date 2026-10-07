@@ -215,6 +215,7 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
                 "SELECT refs_observed_at_us FROM git_acquisitions ORDER BY refs_observed_at_us"
             )
         ] == [first_us, first_us + 1]
+        assert store.one("SELECT count(*) FROM coverage_claims")[0] == 4
         JobService(store).resume(job)
         collect(store, repo, job=job)
         assert old != newest
@@ -228,6 +229,11 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
             )[0]
             == newest
         )
+        assert store.one("SELECT count(*) FROM coverage_claims")[0] == 4
+        assert {
+            (row["coverage_state"], row["observed_at_us"])
+            for row in store.all("SELECT * FROM current_coverage")
+        } == {("complete", first_us + 1)}
 
 
 def test_unverified_imported_oid_needs_actual_bytes_before_admission(tmp_path):

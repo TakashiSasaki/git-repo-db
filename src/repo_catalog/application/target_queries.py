@@ -414,10 +414,10 @@ class TargetQueryService:
         ):
             self._add_missing("pr", "document_body_missing", **dict(row))
         for row in self.s.execute(
-            "SELECT s.coverage_scope_id,c.effective_state FROM coverage_scopes s LEFT JOIN coverage_claims c ON c.coverage_scope_id=s.coverage_scope_id WHERE s.change_request_id=? ORDER BY s.coverage_scope_id,c.coverage_claim_id",
+            "SELECT coverage_scope_id,coverage_state FROM current_coverage WHERE change_request_id=? ORDER BY coverage_scope_id",
             (ident,),
         ):
-            if row["effective_state"] not in ("complete", "not_applicable"):
+            if row["coverage_state"] not in ("complete", "not_applicable"):
                 self._add_missing("pr", "saved_scope_incomplete", **dict(row))
 
     def _pr(self, options):

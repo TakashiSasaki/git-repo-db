@@ -1,6 +1,6 @@
 # Catalog3 data model
 
-The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **8**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
+The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **9**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
 
 ## Absolute timestamps and durations
 
@@ -81,7 +81,38 @@ Each `document_observations` row directly references `text_body_sha256 -> text_b
 
 `payloads` deduplicates saved API bytes, while `fetch_collections`, `fetch_occurrences` and `collection_memberships` preserve separate requests/pages/membership. `resume_scopes`, `validators`, `incremental_scans`, `resume_cursors` and `completion_markers` retain request context and safe restart boundaries. `code_listings`, `code_listing_progress`, `code_commits` and `code_file_changes` use `code_listing_id`, `fetch_collection_id` and `fetch_occurrence_id`; completion seals membership. `unresolved_payloads` retains attributable parsing gaps. Resume/replay does not create new remote observations or advance watermarks.
 
-`coverage_scopes` and `coverage_claims` keep asserted/evaluated completeness separate from acquisition facts, with `current_coverage_claim_id` selecting the evaluated claim. Partial optional evidence remains queryable; critical identity corruption blocks finalization.
+## Coverage claims and current state
+
+`coverage_scopes` identifies one repository or change-request component by its owner and `kind`. Partial unique indexes enforce one scope per `(repository_id, kind)` for repository scopes and per `(change_request_id, kind)` for change-request scopes; the latter retains same-repository ownership. A scope has no current-claim pointer.
+
+`coverage_claims` contains exactly these fields:
+
+| Field | Contract |
+| --- | --- |
+| `coverage_claim_id` | Catalog-local integer primary key. |
+| `coverage_scope_id` | Required reference to the evaluated scope. |
+| `coverage_state` | One of `complete`, `partial`, `unknown`, `not_applicable`. |
+| `observed_at_us` | Required signed 64-bit integer Unix microseconds. Epoch 0 and negative instants are valid. |
+| `details_json` | Optional JSON object stored as text; `NULL` means no advisory details. |
+
+Claim identity is `(coverage_scope_id, observed_at_us, coverage_state)`, with a matching `UNIQUE` constraint. Advisory details do not affect identity, admission, ordering or state derivation. A claim does not need a provider payload, evidence row or details object to be valid. The coverage model has no separate asserted/effective states, evaluation timestamp, correction, retraction or invalidation operation. Other acquisition/progress entities retain their own state fields.
+
+The `current_coverage` view first selects **all claims at the maximum observation time for each scope**, including `unknown`. It then derives one state from that set:
+
+| States at the latest observation time | Derived state |
+| --- | --- |
+| `unknown` only | `unknown` |
+| One distinct state other than `unknown`, optionally with `unknown` | That state |
+| Two or more distinct states other than `unknown`, optionally with `unknown` | `conflict` |
+| No claims in the scope | `unknown`, with `observed_at_us = NULL` and no synthetic claim |
+
+`not_applicable` participates as a determinate state. `conflict` is derived and cannot be stored as a claim. A newer `unknown` therefore supersedes an older `complete`; a latest conflict never falls back to an older unambiguous result. The view also exposes `claim_count`. It selects no arbitrary winning row and combines no details.
+
+[Domain helpers](../src/repo_catalog/domain/coverage.py) express latest selection, derivation and admission. [SQLite admission](../src/repo_catalog/adapters/sqlite/coverage.py) performs the stale/duplicate checks and insertion in one atomic statement. An incoming observation older than the existing maximum is a NO-OP. The same time and state is also a NO-OP, preserving the original details exactly. A different state at the same time is retained alongside existing claims; a newer observation is appended without deleting history. Scope creation shares the writer transaction. Constraints and retention triggers reject direct replacement, mutation or deletion of existing claims.
+
+`export_current_claims` returns the whole maximum-time set, retaining `unknown`, conflict constituents and each claim's separate raw `details_json` or `NULL`. This implements selection policy only: local IDs still require explicit destination scope resolution, and a multi-catalog wire format and import workflow remain deferred. CLI `coverage`, `status` and snapshot results expose the derived scope and its `claims` list using one SQLite snapshot. PR queries use the same current view so historical incomplete claims do not poison a newer complete result.
+
+Runtime producers use the original observation being evaluated. Git repository-wide claims use the fixed refs observation and are emitted only by repository Git collection, not PR-only roots. REST claims use actual saved page times; thread completion includes nested GraphQL page times. Replaying a committed terminal page or resuming an older fixed root does not acquire the resume time. A job start, local failure or failure before any response does not itself create a coverage claim; incomplete observed prefixes can produce `partial`. Job/collection progress remains separately queryable. Partial optional evidence remains queryable, while critical identity corruption blocks finalization.
 
 ## Preservation, search and salvage
 

@@ -55,12 +55,12 @@ def _coverage(query, pr, documents_only):
                 collection_kind=row["kind"],
             )
     for row in s.all(
-        "SELECT cs.coverage_scope_id,cs.kind,cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.change_request_id=?",
+        "SELECT coverage_scope_id,kind,coverage_state FROM current_coverage WHERE change_request_id=?",
         (pr["change_request_id"],),
     ):
         if documents_only and row["kind"] in ("pr-code", "code", "commits", "files"):
             continue
-        if row["effective_state"] not in ("complete", "not_applicable"):
+        if row["coverage_state"] not in ("complete", "not_applicable"):
             query.coverage.add(
                 "pr",
                 "saved_scope_incomplete",
@@ -208,7 +208,7 @@ def pr_query(query, command, options):
             continue
         summary_kind = "pr-documents" if documents_only else "pr"
         summary = s.one(
-            "SELECT cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=? AND cs.change_request_id IS NULL AND cs.kind=?",
+            "SELECT coverage_state FROM current_coverage WHERE repository_id=? AND change_request_id IS NULL AND kind=?",
             (repo["repository_id"], summary_kind),
         )
         if summary is None or summary[0] not in ("complete", "not_applicable"):

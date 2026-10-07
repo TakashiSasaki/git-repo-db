@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.coverage import admit_claim
 from repo_catalog.adapters.sqlite.schema import (
     DDL_SHA256,
     FORMAT_ID,
@@ -13,8 +14,9 @@ from repo_catalog.adapters.sqlite.schema import (
     schema_sql,
 )
 from repo_catalog.config import load
+from repo_catalog.domain.coverage import STORED_COVERAGE_STATES
 from repo_catalog.domain.models import CatalogError
-from repo_catalog.domain.time import now_us
+from repo_catalog.domain.time import validate_epoch_us
 
 
 def statements(sql):
@@ -192,33 +194,41 @@ class Store:
             "Catalog3 initializes directly; use import-v2 for offline salvage",
         )
 
-    def coverage(self, owner, kind, state, details="{}"):
-        state = {"pending": "unknown", "unavailable": "partial"}.get(state, state)
-        if not isinstance(details, str):
-            details = json.dumps(details)
-        cr = self.one(
-            "SELECT repository_id FROM change_requests WHERE change_request_id=?",
-            (owner,),
+    def coverage(
+        self, owner, kind, coverage_state, details_json=None, *, observed_at_us
+    ):
+        """Admit a claim for an explicit observation; never invent replay time.
+
+        Scope discovery and creation serialize with claim admission. Callers may
+        include this operation in their existing page/publication transaction.
+        """
+        validate_epoch_us(observed_at_us)
+        if coverage_state not in STORED_COVERAGE_STATES:
+            raise ValueError("Invalid stored coverage state")
+        if isinstance(details_json, dict):
+            details_json = json.dumps(details_json, allow_nan=False)
+        transaction = (
+            nullcontext() if self.connection.in_transaction else self.transaction()
         )
-        repo = cr[0] if cr else owner
-        scope = self.one(
-            "SELECT coverage_scope_id FROM coverage_scopes WHERE repository_id=? AND change_request_id IS ? AND kind=?",
-            (repo, owner if cr else None, kind),
-        )
-        coverage_scope_id = scope[0] if scope else str(uuid.uuid4())
-        if not scope:
-            self.execute(
-                "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,change_request_id,kind,current_coverage_claim_id) VALUES(?,?,?,?,NULL)",
-                (coverage_scope_id, repo, owner if cr else None, kind),
+        with transaction:
+            cr = self.one(
+                "SELECT repository_id FROM change_requests WHERE change_request_id=?",
+                (owner,),
             )
-        claim = self.execute(
-            "INSERT INTO coverage_claims(coverage_scope_id,asserted_state,effective_state,details,observed_at_us,evaluated_at_us) VALUES(?,?,?,?,?,?)",
-            (coverage_scope_id, state, state, details, now_us(), now_us()),
-        ).lastrowid
-        self.execute(
-            "UPDATE coverage_scopes SET current_coverage_claim_id=? WHERE coverage_scope_id=?",
-            (claim, coverage_scope_id),
-        )
+            repo, change_request = (cr[0], owner) if cr else (owner, None)
+            scope = self.one(
+                "SELECT coverage_scope_id FROM coverage_scopes WHERE repository_id=? AND change_request_id IS ? AND kind=?",
+                (repo, change_request, kind),
+            )
+            scope_id = scope[0] if scope else str(uuid.uuid4())
+            if scope is None:
+                self.execute(
+                    "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,change_request_id,kind) VALUES(?,?,?,?)",
+                    (scope_id, repo, change_request, kind),
+                )
+            return admit_claim(
+                self.connection, scope_id, coverage_state, observed_at_us, details_json
+            )
 
     def git_object_id(self, algorithm, oid):
         row = self.one(
