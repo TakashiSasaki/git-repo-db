@@ -95,8 +95,8 @@ def build_target(sql=None):
             change_request_id="cr-" + repo,
             repository_id=repo,
             repository_binding_id="binding-" + repo,
-            request_kind="pull_request",
-            number=1,
+            change_request_kind="pull_request",
+            provider_change_request_number=1,
         )
         put(
             db,
@@ -170,7 +170,7 @@ def build_target(sql=None):
         put(
             db,
             "review_threads",
-            review_thread_id="thread-" + repo,
+            provider_resource_id="thread-" + repo,
             change_request_id="cr-" + repo,
             payload="{}",
             observed_at=TIME,
@@ -392,7 +392,7 @@ def test_reviewed_multi_statement_attack(
         "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_id='a'",
         "UPDATE change_requests SET current_change_request_observation_id=2 WHERE change_request_id='cr-a'",
         "UPDATE documents SET current_document_observation_id=2 WHERE change_request_id='cr-a' AND kind='pr-body'",
-        "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_id,payload) VALUES('cr-a','review-comment','native-a','thread-b','{}')",
+        "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES('cr-a','review-comment','native-a','thread-b','{}')",
         "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id,payload) VALUES('cr-a','review','native-b','{}')",
         "UPDATE fetch_collections SET change_request_id='cr-b' WHERE fetch_collection_id='a-commits'",
         "DELETE FROM repositories WHERE repository_id='a'",
