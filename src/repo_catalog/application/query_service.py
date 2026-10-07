@@ -119,9 +119,7 @@ class QueryService:
                     self.token.check()
                     self.prepare_coverage(command, opts)
                     for sortkey, item in self.iter_query(command, opts):
-                        self.token.check()
-                        if time.monotonic() > self.deadline:
-                            raise TimeoutError()
+                        self.check()
                         if last is not None and sortkey <= last:
                             continue
                         size = len(
@@ -134,6 +132,7 @@ class QueryService:
                             break
                         items.append((sortkey, item))
                         page_bytes += size
+                    self.check()
                 except (TimeoutError, sqlite3.OperationalError) as e:
                     self.token.check()
                     if (
@@ -211,6 +210,11 @@ class QueryService:
             SELECT git_object_id FROM reach"""
         return {r[0] for r in self.s.execute(sql, ids)}
 
+    def check(self):
+        self.token.check()
+        if time.monotonic() > self.deadline:
+            raise TimeoutError()
+
     def prepare_coverage(self, command, o):
         if (
             command
@@ -238,6 +242,10 @@ class QueryService:
                         "inventory_incomplete",
                         source_id=source["source_id"],
                     )
+        if command.startswith("pr ") or command == "search pr":
+            from repo_catalog.application.pr_queries import prepare_pr_coverage
+
+            prepare_pr_coverage(self, command, o)
         if command == "search code":
             seen = set()
             for repo in self.repos(o):
