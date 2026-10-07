@@ -224,30 +224,7 @@ class ApiFacts:
         predicate = (
             "change_request_id=? AND kind=? AND provider_change_request_document_id=?"
         )
-        node = value.get("node_id") or (
-            value.get("id") if isinstance(value.get("id"), str) else None
-        )
         found = self.s.one("SELECT * FROM documents WHERE " + predicate, key)
-        if not found and node:
-            alternatives = self.s.all(
-                "SELECT * FROM documents WHERE change_request_id=? AND kind=? AND provider_node_id=?",
-                (pr, kind, node),
-            )
-            if len(alternatives) > 1:
-                raise CatalogError(
-                    "IDENTITY_CONFLICT", "Ambiguous provider document node"
-                )
-            found = alternatives[0] if alternatives else None
-            if found:
-                # REST/GraphQL may expose alternate provider-issued identifiers.
-                # Keep the admitted natural key; raw payload retains the alias.
-                key = DocumentKey(
-                    found["change_request_id"],
-                    found["kind"],
-                    found["provider_change_request_document_id"],
-                )
-        if found and node and found["provider_node_id"] not in (None, node):
-            raise CatalogError("IDENTITY_CONFLICT", "Provider document node changed")
         origin = self.origin(collection, occurrence, position)
         if found and self.s.one(
             "SELECT 1 FROM document_observations WHERE "
@@ -265,22 +242,21 @@ class ApiFacts:
             if field not in ("body", "title", "user", "author")
         }
         if thread:
-            metadata["review_thread_id"] = thread
+            metadata["review_thread_provider_resource_id"] = thread
         projection = (
-            node,
             author.get("login"),
             value.get("html_url") or value.get("url"),
             canonical(metadata),
         )
         if found:
             self.s.execute(
-                "UPDATE documents SET provider_node_id=coalesce(?,provider_node_id),author=?,url=?,metadata=?,deleted=0 WHERE "
+                "UPDATE documents SET author=?,url=?,metadata=?,deleted=0 WHERE "
                 + predicate,
                 (*projection, *key),
             )
         else:
             self.s.execute(
-                "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id,current_document_observation_id,deleted,provider_node_id,author,url,metadata) VALUES(?,?,?,NULL,0,?,?,?,?)",
+                "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id,current_document_observation_id,deleted,author,url,metadata) VALUES(?,?,?,NULL,0,?,?,?)",
                 (*key, *projection),
             )
         digest = intern_text_body(self.s.connection, body)
@@ -326,13 +302,13 @@ class ApiFacts:
         if kind == "review-comment":
             if self.s.one("SELECT 1 FROM review_comments WHERE " + predicate, key):
                 self.s.execute(
-                    "UPDATE review_comments SET review_thread_id=coalesce(?,review_thread_id),payload=? WHERE "
+                    "UPDATE review_comments SET review_thread_provider_resource_id=coalesce(?,review_thread_provider_resource_id),payload=? WHERE "
                     + predicate,
                     (thread, canonical(value), *key),
                 )
             else:
                 self.s.execute(
-                    "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_id,payload) VALUES(?,?,?,?,?)",
+                    "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES(?,?,?,?,?)",
                     (*key, thread, canonical(value)),
                 )
         return key
