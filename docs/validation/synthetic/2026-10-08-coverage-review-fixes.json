@@ -1,0 +1,489 @@
+{
+  "report_version": 1,
+  "report_date_local": "2026-10-08",
+  "report_timezone": "Asia/Tokyo",
+  "evidence_kind": "recovered completed local synthetic acceptance; evidence audit only in resumed turn",
+  "outcome": "passed",
+  "tested_commit": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+  "tested_tree": "85a104190093492452dc81bcd956f1ee17dd76f0",
+  "work_branch": "fix/coverage-review-pr7",
+  "publication_pr": "https://github.com/TakashiSasaki/git-repo-db/pull/7",
+  "publication_branch": "refactor/coverage-model-v2",
+  "reviewed_commit": "cd900e252f1320e0cc304fc200317d7190af0143",
+  "reconciled_pr7_commit": "304ea4acc5ea224ead8e7e9774aca7851035b553",
+  "reconciled_local_commit": "39026fc66cebfed8cfb10c2bdc0a5d538d2fad0b",
+  "schema": {
+    "catalog": 9,
+    "import_workspace": 2
+  },
+  "environment": {
+    "python": "3.12.14",
+    "abi": "cpython-312-x86_64-linux-gnu",
+    "sqlite": "3.53.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.51.1",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "runner_image": [
+      null,
+      null
+    ]
+  },
+  "cpu": {
+    "cpu_count": 9,
+    "affinity": 9,
+    "cpu_quota": "800000 100000"
+  },
+  "full_acceptance": true,
+  "ordinary": {
+    "executed": 819,
+    "passed": 819,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "test_files": 47,
+    "profile_wall_seconds": 177.9345105809989,
+    "junit_suite_seconds": 177.188,
+    "started_at": "2026-10-07T17:08:26.196325+00:00",
+    "mode": "xdist",
+    "workers": 4,
+    "selection_digest": "9c8408ed7cc17e290e758574024825126c903f011f798d7e801dcdc1baaedbc7"
+  },
+  "packaging": {
+    "executed": 2,
+    "passed": 2,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "test_files": 1,
+    "profile_wall_seconds": 20.313949245999538,
+    "junit_suite_seconds": 7.608,
+    "started_at": "2026-10-07T17:08:26.198305+00:00",
+    "mode": "sequential",
+    "workers": 1,
+    "selection_digest": "2ebb9344e18d00d3e699fd0c8ab7039bf3134e2dd987b1482ccab070d267b136"
+  },
+  "reconciliation": {
+    "selected": 821,
+    "executed_once": 821,
+    "selected_files": 48,
+    "missing": 0,
+    "extra": 0,
+    "duplicate": 0,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "unexecuted_files": [],
+    "excluded_files": [],
+    "selected_ids_digest": "dc5d7707fbe13361955de2dccc0316bf2930b0e8512ac918e094633675872e95",
+    "digest_encoding": "SHA-256 of UTF-8 json.dumps(sorted selected node IDs, sort_keys=True, separators=(comma,colon)); same encoding as scripts/ci_plan.py:digest",
+    "policy_hash": "d44c4cac72c15881a4b1b67794ed4ee71f6d5986bc04041dbf6da3c375b8962b",
+    "plan_tree_hash": "dc575274892fe0988f0540efab08c9c56210a2e7f3c596d7ac78fda1523ab340",
+    "verified_sources": [
+      "selected-tests.txt",
+      "plan.json selected_ids and lane test_ids",
+      "validation-manifest.json test_ids",
+      "tests.json and packaging.json JUnit records",
+      "tests.xml and packaging.xml testcase nodes"
+    ]
+  },
+  "commands": {
+    "tests": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "pytest",
+        "tests/e2e/test_backup.py",
+        "tests/e2e/test_cache.py",
+        "tests/e2e/test_cli_contract.py",
+        "tests/e2e/test_cli_more.py",
+        "tests/e2e/test_content.py",
+        "tests/e2e/test_digests.py",
+        "tests/e2e/test_git_sync.py",
+        "tests/e2e/test_github_sync.py",
+        "tests/e2e/test_http_compression.py",
+        "tests/e2e/test_jobs.py",
+        "tests/e2e/test_offline.py",
+        "tests/e2e/test_queries.py",
+        "tests/e2e/test_recovery.py",
+        "tests/e2e/test_repository_identity.py",
+        "tests/e2e/test_search.py",
+        "tests/e2e/test_text_policy.py",
+        "tests/integration/test_application_contract.py",
+        "tests/integration/test_cache.py",
+        "tests/integration/test_catalog3_cache.py",
+        "tests/integration/test_catalog3_coverage.py",
+        "tests/integration/test_catalog3_coverage_ownership.py",
+        "tests/integration/test_catalog3_coverage_queries.py",
+        "tests/integration/test_catalog3_document_identity.py",
+        "tests/integration/test_catalog3_finalization.py",
+        "tests/integration/test_catalog3_git_runtime.py",
+        "tests/integration/test_catalog3_github_runtime.py",
+        "tests/integration/test_catalog3_github_scaling.py",
+        "tests/integration/test_catalog3_import_workspace.py",
+        "tests/integration/test_catalog3_pr_scope_coverage.py",
+        "tests/integration/test_catalog3_provider_identity.py",
+        "tests/integration/test_catalog3_queries.py",
+        "tests/integration/test_catalog3_schema.py",
+        "tests/integration/test_catalog3_store.py",
+        "tests/integration/test_catalog3_timestamps.py",
+        "tests/integration/test_ci_execution.py",
+        "tests/integration/test_database.py",
+        "tests/integration/test_git_objects.py",
+        "tests/integration/test_network_guard.py",
+        "tests/integration/test_runtime_import.py",
+        "tests/integration/test_search_index.py",
+        "tests/integration/test_target_schema.py",
+        "tests/unit/test_ci_plan.py",
+        "tests/unit/test_ci_profile.py",
+        "tests/unit/test_contracts.py",
+        "tests/unit/test_conversion_git_domain.py",
+        "tests/unit/test_conversion_pr_domain.py",
+        "tests/unit/test_import_archive.py",
+        "--strict-markers",
+        "-m",
+        "not live and not benchmark",
+        "--junitxml",
+        "artifacts/ci-profile/tests.xml",
+        "--durations=20",
+        "-n",
+        "4"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 177.9345105809989,
+      "started_at": "2026-10-07T17:08:26.196325+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "packaging": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "pytest",
+        "tests/packaging/test_distribution.py",
+        "--strict-markers",
+        "-m",
+        "not live and not benchmark",
+        "--junitxml",
+        "artifacts/ci-profile/packaging.xml",
+        "--durations=20"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 20.313949245999538,
+      "started_at": "2026-10-07T17:08:26.198305+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "lint": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07655325400264701,
+      "started_at": "2026-10-07T17:08:15.513024+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "format": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0790823149982316,
+      "started_at": "2026-10-07T17:08:15.511996+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "fts": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "-c",
+        "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.08608403100151918,
+      "started_at": "2026-10-07T17:08:15.368266+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "doctor": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "repo-catalog",
+        "--format",
+        "json",
+        "doctor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.20871973099929164,
+      "started_at": "2026-10-07T17:08:15.458160+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "dependency-setup": {
+      "command": [
+        "uv",
+        "sync",
+        "--offline",
+        "--locked",
+        "--group",
+        "dev"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.02448424999965937,
+      "started_at": "2026-10-07T17:08:07.443613+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "wheelhouse": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/prepare_wheelhouse.py"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.20143517500036978,
+      "started_at": "2026-10-07T17:08:15.560213+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "planning": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/ci_plan.py",
+        "--full"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.21932335599922226,
+      "started_at": "2026-10-07T17:08:06.522667+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    },
+    "report-validation": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/ci_execute.py",
+        "reports"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.30552652299957117,
+      "started_at": "2026-10-07T17:08:15.300970+00:00",
+      "commit_sha": "604de8db0e957da28ea33f1e74110bc609d4cf63",
+      "tracked_changes": false
+    }
+  },
+  "prose_report_validation": {
+    "outcome": "passed",
+    "checked_files": 51
+  },
+  "warnings_and_retries": {
+    "profile_advisory_warnings": 0,
+    "profile_measurement_errors": 0,
+    "pytest_warning_count": null,
+    "pytest_warning_count_note": "The profiles do not retain the pytest stdout warning summary; no total pytest warning count is inferred.",
+    "final_duplicate_test_executions": 0,
+    "final_retry_note": "The recorded final commands contain no pytest rerun option and final node IDs occur exactly once. The preceding failed full run is attributed separately, not counted in the final 821."
+  },
+  "earlier_failed_run": {
+    "tested_commit": "0897fbc2ea1a943eb42264998d85ffcd668d5792",
+    "ordinary": {
+      "executed": 819,
+      "passed": 818,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0,
+      "profile_wall_seconds": 176.04086850800013
+    },
+    "packaging": {
+      "executed": 2,
+      "passed": 2,
+      "profile_wall_seconds": 7.824794627998926
+    },
+    "failed_nodeid": "tests/e2e/test_github_sync.py::test_pr_documents",
+    "failure_message": "KeyError: 'test-merge'",
+    "success_manifest_present": false,
+    "fix": "604de8d preserves explicit null merge metadata without adding an absent merge target to expected_roles; the regression also retains the acquired actual merge role."
+  },
+  "resumed_turn_audit": {
+    "full_suite_rerun": false,
+    "packaging_rerun": false,
+    "checks": [
+      "Independent exact-SHA/runtime/clean-profile verification for all 10 command profiles.",
+      "Independent raw XML/profile/selection/manifest exactly-once reconciliation.",
+      "Read-only plan rebuild matched clean tested tree, current policy, runtime and selected files before evidence-only edits.",
+      "Root re-ran uv run --no-sync python scripts/ci_execute.py gate on clean 604de8d: exit 0, 821 executed, 48 selected files, zero unexecuted/excluded."
+    ],
+    "later_evidence_only_changes": "Later report/handoff or timestamp-evidence documentation commits are not a new runtime acceptance run; these results remain attributed to 604de8d.",
+    "additional_focused_checks": {
+      "passed": 47,
+      "groups": {
+        "rate_limit_304_authorization_and_races": 24,
+        "malformed_graphql_and_stale_resume": 22,
+        "explicit_null_e2e": 1
+      },
+      "counting_note": "Separate focused rechecks may overlap the original acceptance; they are not added to the final 821.",
+      "initial_setup_failure": "The first explicit-null E2E attempt could not find repo-catalog on PATH. Repeating with .venv/bin on PATH passed without a code change."
+    },
+    "additional_query_probes": {
+      "disposable_catalogs": 3,
+      "conditions": [
+        "contradictory role roots",
+        "missing role roots",
+        "unverified role roots"
+      ],
+      "result": "passed",
+      "counting_note": "Ad hoc read/query probes, not additional selected acceptance cases."
+    }
+  },
+  "fixed_semantics": [
+    "PR code completeness requires complete target enumeration and stored matching Git acquisitions for every required role; new observations and actual Git/API races retain their gaps.",
+    "Partial GraphQL data preserves valid merge targets; explicit null targets remain advisory null values and are not acquisition requirements.",
+    "Imported listing and 304 reuse retain the original authorizing PR observation, marker and observed_at_us without duplicate completion markers or fresh replay timestamps.",
+    "Error-only rate limits and unobserved failed rechecks preserve operational evidence and retry deadlines without fabricating newer semantic incomplete content; real incomplete observed data still contributes partial coverage.",
+    "Document-only queries exclude code-only scope kinds; identity-scope completeness is independent of result limits, byte cutoff and cursor position; ordinary and historical target queries share required-role checks.",
+    "Coverage owner kind is explicit, and negative local claim IDs do not prevent unrelated automatic allocation.",
+    "Malformed GraphQL root and nested connection fields cannot imply terminal completeness.",
+    "Fractional UTC offset spellings and NUL in timestamps are rejected; failed imports retain raw values, NULL normalized time and attributed diagnostics."
+  ],
+  "limits": [
+    "Disposable synthetic data only; live and benchmark markers were not selected.",
+    "No real acquisition, retained-source mutation, active-catalog cutover, compatibility migration, main merge or release is validated here.",
+    "Guarded v2 salvage remains covered by the ordinary synthetic acceptance.",
+    "This report does not assert hosted CI success for any later publication SHA.",
+    "Multi-catalog wire format/import workflow and additional providers remain out of scope.",
+    "Full stdout/stderr logs are not present in the recovered command profiles; raw JUnit and structured command results are preserved.",
+    "Exploratory inherited malformed-input limitation: a REST review with commit_id='not-an-oid' reaches an uncaught ValueError in unchanged Git import bytes.fromhex parsing; outside the original nine review findings and not changed by this correction."
+  ],
+  "evidence_files": {
+    "artifacts/ci-profile/plan.json": {
+      "sha256": "07d6d0cddc3347418dfe7ba53f61b88942538f603085e5a78691dd258a7786cb",
+      "bytes": 234164
+    },
+    "artifacts/ci-profile/selected-tests.txt": {
+      "sha256": "766edccd973ae71025604714a640aa78f5e4690f1aacc8cea735209b74074367",
+      "bytes": 106265
+    },
+    "artifacts/ci-profile/validation-manifest.json": {
+      "sha256": "a8e74056aeb1aba9ec56c2486d31c912995ed37a98fc56f709a0f7b0152c2754",
+      "bytes": 113370
+    },
+    "artifacts/ci-profile/validation-summary.md": {
+      "sha256": "7d5364718dd3938200da8f6ca4389a8163b41c14d1b93b6031045005f7874275",
+      "bytes": 123
+    },
+    "artifacts/ci-profile/tests.json": {
+      "sha256": "539b47e9f9e044711a1da967c4c53f36ce4e034ac0f9bbb90418e15b35e707d4",
+      "bytes": 328082
+    },
+    "artifacts/ci-profile/tests.xml": {
+      "sha256": "3d5629a3a41e8bab3765a607f88bf6d24e12b559b121848a54fe0d762c551d64",
+      "bytes": 139509
+    },
+    "artifacts/ci-profile/packaging.json": {
+      "sha256": "a9c9ce68e48396d4f8f771f71131f6635c2e7de8f7b11f424a077f0458510fb7",
+      "bytes": 1560
+    },
+    "artifacts/ci-profile/packaging.xml": {
+      "sha256": "d16182bb4c1cc92626029d52fc9d6ab3dcd9be325f032cfa1d7feeb27ce76a79",
+      "bytes": 466
+    },
+    "artifacts/ci-profile/planning.json": {
+      "sha256": "94fc4e0210c75eac825af3750b3d78cdcc1125cb26bbdc3c614db9e3ce23730a",
+      "bytes": 636
+    },
+    "artifacts/ci-profile/lint.json": {
+      "sha256": "62b46269efa21da3514b48f889592e9513626158e3eff4a5337a2f51e1aa025e",
+      "bytes": 638
+    },
+    "artifacts/ci-profile/format.json": {
+      "sha256": "142257d2be3b35fc066a2652e7bccfcbe41fb839f5b8095f543ffcf400c38f84",
+      "bytes": 657
+    },
+    "artifacts/ci-profile/fts.json": {
+      "sha256": "4818cc5c6a6ef45d1073d17fa5d84c49ccf1d0b85c31b9447e71e6e24d01da3f",
+      "bytes": 795
+    },
+    "artifacts/ci-profile/doctor.json": {
+      "sha256": "c4db84f80d8bc73c8aa3177c1bea322d90fae8f50e6d2d7aa5e6d09487f517fd",
+      "bytes": 640
+    },
+    "artifacts/ci-profile/dependency-setup.json": {
+      "sha256": "70c035b59c8dd27fda9e7c6c34e33242e12d95fb7ab31246f43454fc60cc2830",
+      "bytes": 641
+    },
+    "artifacts/ci-profile/wheelhouse.json": {
+      "sha256": "422a6445aa79f4c7693b6861a32919c5a55d3e16a5d67c3b1eff81b9d06d5717",
+      "bytes": 637
+    },
+    "artifacts/ci-profile/report-validation.json": {
+      "sha256": "b52cd0772d135d8ca076ea98dfc8e50858eaacde1ad0633e462e93b899635b4f",
+      "bytes": 658
+    },
+    "artifacts/ci-profile/reports.json": {
+      "sha256": "d448b240c9c1511b777fd1fdba8f24cc0b254150b26648cb9db27c3426d00df3",
+      "bytes": 2595
+    }
+  },
+  "earlier_failure_evidence_files": {
+    "artifacts/ci-profile-0897fbc-failed/plan.json": {
+      "sha256": "b1feb6cf92f90cb061844d7d5392b7cfeff30a4b7b6707810359848a9c34d6e3",
+      "bytes": 234165
+    },
+    "artifacts/ci-profile-0897fbc-failed/selected-tests.txt": {
+      "sha256": "766edccd973ae71025604714a640aa78f5e4690f1aacc8cea735209b74074367",
+      "bytes": 106265
+    },
+    "artifacts/ci-profile-0897fbc-failed/tests.json": {
+      "sha256": "07cebc107bc5532d327caf60b0453b3f3c31ffb4e875238f54a89bdf084995c4",
+      "bytes": 328074
+    },
+    "artifacts/ci-profile-0897fbc-failed/tests.xml": {
+      "sha256": "f3ebb7c8e8ffdc3472bdaa6f9042b47e920ba6514d864faabe9a1dc8368ee263",
+      "bytes": 141332
+    },
+    "artifacts/ci-profile-0897fbc-failed/packaging.json": {
+      "sha256": "f0ddf7231754a3ce5d59d48971e894c7587f553b49f9cf0cf2082f3abeae2685",
+      "bytes": 1560
+    },
+    "artifacts/ci-profile-0897fbc-failed/packaging.xml": {
+      "sha256": "66eb0e423e5c079d990471e8c24d627d1b7994480044810e0e9bf5c8cd1481f2",
+      "bytes": 466
+    }
+  },
+  "publication_identity": {
+    "transport": "connected GitHub Git Data API",
+    "verification": "Exact Git tree and parent relationships preserved; existing remote history retained",
+    "local_to_published_mapping": "Source-local-commit and Source-local-tree commit trailers",
+    "published_head_tracking": "https://github.com/TakashiSasaki/git-repo-db/pull/7"
+  }
+}
