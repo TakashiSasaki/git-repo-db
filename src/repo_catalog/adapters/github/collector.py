@@ -1884,18 +1884,6 @@ class GitHubCollector:
         from repo_catalog.domain.current_state import fingerprint_candidate
 
         nodes, _, _ = self.graphql_connection(connection, refresh_root=refresh_root)
-        if self.facts.replaying:
-            # Validate portable database identifiers while keeping immutable
-            # thread replay free of mutable admission and transport dependencies.
-            for value in nodes:
-                current_parser.review_comment(
-                    value,
-                    {"acquisition_scope": {}},
-                    timestamp,
-                    graphql=True,
-                    thread=review_thread_provider_resource_id,
-                )
-            return []
         context = self.facts.current_context(
             repo, pr["change_request_id"], self.http.graphql, "review-comment"
         )
