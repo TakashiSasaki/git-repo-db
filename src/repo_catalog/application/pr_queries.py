@@ -9,6 +9,12 @@ import json
 from repo_catalog.domain.document import DocumentKey
 from repo_catalog.domain.models import CatalogError, GitOid
 
+# Fetch collections and coverage scopes use both the listing names and their
+# PR-prefixed forms. Keep one classification for document-only completeness.
+_CODE_KINDS = frozenset(
+    ("pr-code", "code", "commits", "files", "pr-commits", "pr-files")
+)
+
 
 def pr_state(payload):
     merged = payload.get("merged")
@@ -35,17 +41,13 @@ def _coverage(query, pr, documents_only):
             "change_request_observation_missing",
             change_request_id=pr["change_request_id"],
         )
-    rows = s.all(
+    rows = s.execute(
         "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? AND NOT EXISTS(SELECT 1 FROM fetch_collections newer WHERE newer.change_request_id=c.change_request_id AND newer.kind=c.kind AND ((newer.observed_at_us IS NOT NULL AND (c.observed_at_us IS NULL OR newer.observed_at_us>c.observed_at_us)) OR (newer.observed_at_us IS c.observed_at_us AND newer.rowid>c.rowid))) ORDER BY c.kind",
         (pr["change_request_id"],),
     )
     for row in rows:
-        if documents_only and row["kind"] in (
-            "commits",
-            "files",
-            "pr-commits",
-            "pr-files",
-        ):
+        query.check()
+        if documents_only and row["kind"] in _CODE_KINDS:
             continue
         if row["state"] != "complete":
             query.coverage.add(
@@ -54,23 +56,25 @@ def _coverage(query, pr, documents_only):
                 fetch_collection_id=row["fetch_collection_id"],
                 collection_kind=row["kind"],
             )
-    for row in s.all(
-        "SELECT cs.coverage_scope_id,cs.kind,cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.change_request_id=?",
+    for row in s.execute(
+        "SELECT coverage_scope_id,kind,coverage_state FROM current_coverage WHERE change_request_id=?",
         (pr["change_request_id"],),
     ):
-        if documents_only and row["kind"] in ("pr-code", "code", "commits", "files"):
+        query.check()
+        if documents_only and row["kind"] in _CODE_KINDS:
             continue
-        if row["effective_state"] not in ("complete", "not_applicable"):
+        if row["coverage_state"] not in ("complete", "not_applicable"):
             query.coverage.add(
                 "pr",
                 "saved_scope_incomplete",
                 coverage_scope_id=row["coverage_scope_id"],
             )
 
-    for row in s.all(
+    for row in s.execute(
         "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) has_observation FROM documents d WHERE d.change_request_id=? AND d.current_document_observation_id IS NULL",
         (pr["change_request_id"],),
     ):
+        query.check()
         key = DocumentKey(
             row["change_request_id"],
             row["kind"],
@@ -108,8 +112,13 @@ def _bounded(item):
     return item
 
 
-def pr_query(query, command, options):
-    s, o = query.s, options
+def _scope_rows(query, command, o):
+    """Stream the identity scope, before filters requiring saved content.
+
+    Missing content in this scope may itself be a matching result, so coverage
+    cannot be restricted to rows that happen to survive content filters.
+    """
+    s = query.s
     allowed = {r["repository_id"] for r in query.repos(o)}
     if command not in ("pr list", "search pr", "pr thread"):
         query.single_repo(o)
@@ -126,55 +135,253 @@ def pr_query(query, command, options):
             "INVALID_ARGUMENT",
             "Thread selection requires a positive provider change request number and provider resource ID",
         )
-    rows = s.all(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id"
-    )
-    rows = [
-        r
-        for r in rows
-        if r["repository_id"] in allowed
-        and (
-            o.get("provider_change_request_number") is None
-            or r["provider_change_request_number"]
-            == o["provider_change_request_number"]
-        )
-        and (selected_kind is None or r["change_request_kind"] == selected_kind)
-        and (not o.get("binding") or r["repository_binding_id"] == o["binding"])
+    conditions = [
+        "p.repository_id IN (" + ",".join("?" for _ in allowed) + ")"
+        if allowed
+        else "0"
     ]
-    if o.get("provider_change_request_number") is not None and not rows:
-        raise CatalogError("NOT_FOUND", "Pull request not found")
-    if o.get("provider_change_request_number") is not None and len(rows) != 1:
-        raise CatalogError(
-            "INVALID_ARGUMENT",
-            "Number is ambiguous; select --binding and --change-request-kind",
-        )
-    if command == "pr thread":
-        request = rows[0]
-        thread = s.one(
-            "SELECT * FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
-            (request["change_request_id"], o["provider_resource_id"]),
-        )
-        if not thread:
+    values = list(allowed)
+    for option, column in (
+        ("provider_change_request_number", "provider_change_request_number"),
+        ("change_request_kind", "change_request_kind"),
+        ("binding", "repository_binding_id"),
+    ):
+        value = o.get(option)
+        if value is None or option == "binding" and not value:
+            continue
+        conditions.append(f"p.{column}=?")
+        values.append(value)
+    rows = s.execute(
+        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) WHERE "
+        + " AND ".join(conditions)
+        + " ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id",
+        values,
+    )
+    if o.get("provider_change_request_number") is not None:
+        # Two identities are enough to prove that a provider number is ambiguous.
+        rows = rows.fetchmany(2)
+        if not rows:
+            raise CatalogError("NOT_FOUND", "Pull request not found")
+        if len(rows) != 1:
             raise CatalogError(
-                "NOT_FOUND", "Review thread not found in selected change request"
+                "INVALID_ARGUMENT",
+                "Number is ambiguous; select --binding and --change-request-kind",
             )
-        for row in s.all(
+    return rows
+
+
+def _selected_thread(query, rows, o):
+    request = next(iter(rows))
+    thread = query.s.one(
+        "SELECT * FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+        (request["change_request_id"], o["provider_resource_id"]),
+    )
+    if not thread:
+        raise CatalogError(
+            "NOT_FOUND", "Review thread not found in selected change request"
+        )
+    return request, thread
+
+
+def _query_filters(query, command, o):
+    literal = query.literal(o) if command == "search pr" else None
+    path = o.get("path").encode("utf8") if o.get("path") is not None else None
+    if o.get("path_b64"):
+        try:
+            path = base64.b64decode(o["path_b64"], validate=True)
+        except (ValueError, binascii.Error):
+            raise CatalogError("INVALID_ARGUMENT", "Malformed base64 path") from None
+    documents_only = command in ("search pr", "pr documents") and not any(
+        o.get(k) is not None for k in ("commit", "path", "path_b64")
+    )
+    return literal, path, documents_only
+
+
+def _matches_pr_filters(query, pr, payload, state, o):
+    if o.get("state", "all") != "all" and state != o["state"]:
+        return False
+    if o.get("author") and (payload.get("user") or {}).get("login") != o["author"]:
+        return False
+    if o.get("draft", "any") != "any" and payload.get("draft") is not (
+        o["draft"] == "true"
+    ):
+        return False
+    if o.get("reviewer"):
+        for row in query.s.execute(
+            "SELECT payload FROM reviews WHERE change_request_id=?",
+            (pr["change_request_id"],),
+        ):
+            query.check()
+            if (json.loads(row[0]).get("user") or {}).get("login") == o["reviewer"]:
+                break
+        else:
+            return False
+    return True
+
+
+def _code_observation(query, pr):
+    return query.s.one(
+        "SELECT * FROM code_observations WHERE change_request_id=? AND change_request_observation_id=? ORDER BY code_observation_id DESC LIMIT 1",
+        (pr["change_request_id"], pr["change_request_observation_id"]),
+    )
+
+
+def _code_coverage(query, pr, payload):
+    code = _code_observation(query, pr)
+    if code is None:
+        # A current API observation can be committed before its Git acquisition
+        # finishes. An older complete claim cannot prove this observation's
+        # code is present. Metadata-only PRs have no inferred code obligation.
+        expects_code = any(
+            isinstance(payload.get(role), dict) and payload[role].get("sha") is not None
+            for role in ("head", "base")
+        ) or query.s.one(
+            "SELECT 1 FROM code_observations WHERE change_request_id=? UNION ALL SELECT 1 FROM code_listings WHERE change_request_id=? LIMIT 1",
+            (pr["change_request_id"], pr["change_request_id"]),
+        )
+        if expects_code:
+            query.coverage.add(
+                "pr",
+                "code_observation_missing",
+                change_request_id=pr["change_request_id"],
+                change_request_observation_id=pr["change_request_observation_id"],
+            )
+    elif code["state"] != "complete":
+        query.coverage.add(
+            "pr",
+            "code_observation_incomplete",
+            code_observation_id=code["code_observation_id"],
+        )
+    else:
+        for gap in code_role_gaps(query.s, pr, code, check=query.check):
+            query.coverage.add("pr", **gap)
+
+
+def code_role_gaps(store, pr, code, *, check):
+    """Yield shared ordinary/diagnostic checks of explicitly required targets."""
+    required = {
+        role: GitOid(code["object_format"], code[role + "_oid"])
+        for role in ("head", "base")
+        if code[role + "_oid"] is not None
+    }
+    declared = json.loads(code["details"]).get("expected_roles", {})
+    if not isinstance(declared, dict):
+        yield {
+            "reason": "code_role_targets_unresolved",
+            "code_observation_id": code["code_observation_id"],
+        }
+        declared = {}
+    for role, value in declared.items():
+        check()
+        try:
+            if not role or not isinstance(value, str):
+                raise ValueError()
+            oid = GitOid.parse(f"{code['object_format']}:{value}")
+        except (ValueError, CatalogError):
+            yield {
+                "reason": "code_role_targets_unresolved",
+                "code_observation_id": code["code_observation_id"],
+                "role": role,
+            }
+            continue
+        if role in required and required[role] != oid:
+            yield {
+                "reason": "code_role_target_conflict",
+                "code_observation_id": code["code_observation_id"],
+                "role": role,
+            }
+        else:
+            required[role] = oid
+    if not required:
+        return
+    links = {
+        (row["role"], row["object_format"], row["oid"])
+        for row in store.execute(
+            "SELECT a.role,a.object_format,a.oid FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id JOIN git_objects o ON o.object_format=a.object_format AND o.oid=a.oid WHERE a.code_observation_id=? AND r.repository_id=? AND r.published=1 AND r.object_format=a.object_format AND r.oid=a.oid AND (r.expected_oid IS NULL OR r.expected_oid=a.oid) AND o.type='commit' AND o.verified=1",
+            (code["code_observation_id"], pr["repository_id"]),
+        )
+    }
+    for role, oid in sorted(required.items()):
+        check()
+        if (role, oid.algorithm, oid.value) not in links:
+            yield {
+                "reason": "code_role_acquisition_missing",
+                "change_request_id": pr["change_request_id"],
+                "code_observation_id": code["code_observation_id"],
+                "role": role,
+                "expected_oid": f"{oid.algorithm}:{oid.value.hex()}",
+            }
+
+
+def prepare_pr_coverage(query, command, o):
+    """Evaluate the full requested scope in the query's read snapshot.
+
+    Row projection can stop at either page bound without changing this report.
+    Only PR metadata and missing references are scanned; document result bodies
+    and nested output arrays remain lazy.
+    """
+    s = query.s
+    rows = _scope_rows(query, command, o)
+    if command == "pr thread":
+        request, thread = _selected_thread(query, rows, o)
+        for row in s.execute(
+            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations obs ON obs.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=obs.text_body_sha256 WHERE rc.change_request_id=? AND rc.review_thread_provider_resource_id=? AND b.sha256 IS NULL ORDER BY d.kind,d.provider_change_request_document_id",
+            (request["change_request_id"], thread["provider_resource_id"]),
+        ):
+            query.check()
+            query.coverage.add(
+                "pr",
+                "document_body_missing",
+                change_request_id=row["change_request_id"],
+                document_kind=row["kind"],
+                provider_change_request_document_id=row[
+                    "provider_change_request_document_id"
+                ],
+            )
+        return
+    _, _, documents_only = _query_filters(query, command, o)
+    from repo_catalog.application.repository_identity import pr_applicable
+
+    for repo in query.repos(o):
+        query.check()
+        if not pr_applicable(s, repo["repository_id"]):
+            continue
+        summary_kind = "pr-documents" if documents_only else "pr"
+        summary = s.one(
+            "SELECT coverage_state FROM current_coverage WHERE repository_id=? AND change_request_id IS NULL AND kind=?",
+            (repo["repository_id"], summary_kind),
+        )
+        if summary is None or summary[0] not in ("complete", "not_applicable"):
+            query.coverage.add(
+                "pr",
+                "collection_incomplete",
+                repository_id=repo["repository_id"],
+                scope_kind=summary_kind,
+            )
+    for pr in rows:
+        query.check()
+        _coverage(query, pr, documents_only)
+        if documents_only:
+            continue
+        payload = json.loads(pr["payload"] or "{}")
+        _code_coverage(query, pr, payload)
+
+
+def pr_query(query, command, options):
+    s, o = query.s, options
+    rows = _scope_rows(query, command, o)
+    if command == "pr thread":
+        request, thread = _selected_thread(query, rows, o)
+        for row in s.execute(
             "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,o.document_observation_id,b.body,rc.payload FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations o ON o.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE rc.change_request_id=? AND rc.review_thread_provider_resource_id=? ORDER BY d.kind,d.provider_change_request_document_id",
             (request["change_request_id"], thread["provider_resource_id"]),
         ):
+            query.check()
             key = DocumentKey(
                 row["change_request_id"],
                 row["kind"],
                 row["provider_change_request_document_id"],
             )
-            if row["body"] is None:
-                query.coverage.add(
-                    "pr",
-                    "document_body_missing",
-                    change_request_id=key.change_request_id,
-                    document_kind=key.kind,
-                    provider_change_request_document_id=key.provider_change_request_document_id,
-                )
             yield (
                 list(key),
                 {
@@ -191,64 +398,14 @@ def pr_query(query, command, options):
                 },
             )
         return
-    literal = query.literal(o) if command == "search pr" else None
-    path = o.get("path").encode("utf8") if o.get("path") is not None else None
-    if o.get("path_b64"):
-        try:
-            path = base64.b64decode(o["path_b64"], validate=True)
-        except (ValueError, binascii.Error):
-            raise CatalogError("INVALID_ARGUMENT", "Malformed base64 path") from None
-    documents_only = command in ("search pr", "pr documents") and not any(
-        o.get(k) is not None for k in ("commit", "path", "path_b64")
-    )
-    from repo_catalog.application.repository_identity import pr_applicable
-
-    for repo in query.repos(o):
-        if not pr_applicable(s, repo["repository_id"]):
-            continue
-        summary_kind = "pr-documents" if documents_only else "pr"
-        summary = s.one(
-            "SELECT cc.effective_state FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=? AND cs.change_request_id IS NULL AND cs.kind=?",
-            (repo["repository_id"], summary_kind),
-        )
-        if summary is None or summary[0] not in ("complete", "not_applicable"):
-            query.coverage.add(
-                "pr",
-                "collection_incomplete",
-                repository_id=repo["repository_id"],
-                scope_kind=summary_kind,
-            )
+    literal, path, documents_only = _query_filters(query, command, o)
     for pr in rows:
-        query.token.check()
-        _coverage(query, pr, documents_only)
+        query.check()
         payload = json.loads(pr["payload"] or "{}")
         state = pr_state(payload)
-        if o.get("state", "all") != "all" and state != o["state"]:
+        if not _matches_pr_filters(query, pr, payload, state, o):
             continue
-        if o.get("author") and (payload.get("user") or {}).get("login") != o["author"]:
-            continue
-        if o.get("draft", "any") != "any" and payload.get("draft") is not (
-            o["draft"] == "true"
-        ):
-            continue
-        if o.get("reviewer") and not any(
-            (json.loads(r[0]).get("user") or {}).get("login") == o["reviewer"]
-            for r in s.all(
-                "SELECT payload FROM reviews WHERE change_request_id=?",
-                (pr["change_request_id"],),
-            )
-        ):
-            continue
-        code = s.one(
-            "SELECT * FROM code_observations WHERE change_request_id=? AND change_request_observation_id=? ORDER BY code_observation_id DESC LIMIT 1",
-            (pr["change_request_id"], pr["change_request_observation_id"]),
-        )
-        if not documents_only and code and code["state"] != "complete":
-            query.coverage.add(
-                "pr",
-                "code_observation_incomplete",
-                code_observation_id=code["code_observation_id"],
-            )
+        code = None if documents_only else _code_observation(query, pr)
         if o.get("commit"):
             oid = GitOid.parse(o["commit"])
             if not code or not s.one(
@@ -385,6 +542,7 @@ def pr_query(query, command, options):
                 (pr["change_request_id"],),
             )
             for doc in docs:
+                query.check()
                 if any(
                     o.get(option) is not None and doc[field] != o[option]
                     for option, field in (

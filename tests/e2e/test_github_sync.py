@@ -151,10 +151,19 @@ def test_pr_documents(catalog):
         shown = run(
             state, "pr", "show", "--repo", repo, "--provider-change-request-number", 43
         )["data"]["items"][0]
-        assert (
-            json.loads(shown["code_observation"]["details"])["merge"]["test-merge"]
-            is None
-        )
+        code = shown["code_observation"]
+        details = json.loads(code["details"])
+        links = {link["role"]: link for link in shown["code_links"]}
+        assert code["state"] == "complete"
+        assert details["code_inputs_complete"] is True
+        assert details["merge"]["test-merge"] is None
+        assert "test-merge" not in details["expected_roles"]
+        assert "test-merge" not in links
+        merge_oid = fixture.alpha.commits["P"]
+        assert details["merge"]["merge"] == merge_oid
+        assert details["expected_roles"]["merge"] == merge_oid
+        assert links["merge"]["oid"] == f"{code['object_format']}:{merge_oid}"
+        assert links["merge"]["acquisition_root_id"] is not None
         assert pages(
             state,
             "search",
@@ -253,13 +262,17 @@ def test_unknown_inventory_scope_retains_known_repositories(catalog):
         run(state, "jobs", "resume", partial["data"]["job_id"], env=env)
 
 
-def test_refresh_failure_does_not_reuse_complete_coverage(catalog):
+def test_unobserved_refresh_failure_preserves_saved_coverage_and_waits(catalog):
     state, fixture, repos = catalog
     with GitHubFixture(fixture) as api:
         _, repo, env = configure(state, api, fixture)
         run(state, "sync", "pr", "--repo", repo, env=env)
         api.failures["/user"] = [401]
-        run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
+        failed = run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
+        assert failed["data"]["results"][0]["error"] == "CREDENTIALS_MISSING"
+        assert not failed["coverage"]["complete_for_requested_scope"]
+        job = run(state, "jobs", "show", failed["data"]["job_id"])["data"]["items"][0]
+        assert job["state"] == "waiting"
         saved = run(
             state,
             "search",
@@ -268,11 +281,9 @@ def test_refresh_failure_does_not_reuse_complete_coverage(catalog):
             repo,
             "--literal",
             "body-marker",
-            expected=3,
         )
         assert (
-            saved["data"]["items"]
-            and not saved["coverage"]["complete_for_requested_scope"]
+            saved["data"]["items"] and saved["coverage"]["complete_for_requested_scope"]
         )
 
 

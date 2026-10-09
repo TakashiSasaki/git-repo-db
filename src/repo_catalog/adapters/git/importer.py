@@ -421,13 +421,16 @@ class GitImporter:
                                 "UPDATE repositories SET current_snapshot_id=? WHERE repository_id=?",
                                 (run["git_acquisition_id"], repo["repository_id"]),
                             )
-                    for component in ("structure", "digests", "heads-text", "refs"):
-                        s.coverage(
-                            repo["repository_id"],
-                            component,
-                            "complete",
-                            {"git_acquisition_id": run["git_acquisition_id"]},
-                        )
+                        # Fixed-root resume preserves its original remote observation.
+                        # A PR-only acquisition cannot establish repository-wide refs.
+                        for component in ("structure", "digests", "heads-text", "refs"):
+                            s.coverage(
+                                repo["repository_id"],
+                                component,
+                                "complete",
+                                {"git_acquisition_id": run["git_acquisition_id"]},
+                                observed_at_us=incoming,
+                            )
                     s.publish()
                 return self.result(repo, run, kind)
             finally:

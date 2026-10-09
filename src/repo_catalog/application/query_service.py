@@ -7,6 +7,7 @@ import sqlite3
 import time
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.coverage import current_coverages
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.collection_service import select_repositories
 from repo_catalog.domain.models import (
@@ -118,9 +119,7 @@ class QueryService:
                     self.token.check()
                     self.prepare_coverage(command, opts)
                     for sortkey, item in self.iter_query(command, opts):
-                        self.token.check()
-                        if time.monotonic() > self.deadline:
-                            raise TimeoutError()
+                        self.check()
                         if last is not None and sortkey <= last:
                             continue
                         size = len(
@@ -133,6 +132,7 @@ class QueryService:
                             break
                         items.append((sortkey, item))
                         page_bytes += size
+                    self.check()
                 except (TimeoutError, sqlite3.OperationalError) as e:
                     self.token.check()
                     if (
@@ -210,6 +210,11 @@ class QueryService:
             SELECT git_object_id FROM reach"""
         return {r[0] for r in self.s.execute(sql, ids)}
 
+    def check(self):
+        self.token.check()
+        if time.monotonic() > self.deadline:
+            raise TimeoutError()
+
     def prepare_coverage(self, command, o):
         if (
             command
@@ -237,6 +242,10 @@ class QueryService:
                         "inventory_incomplete",
                         source_id=source["source_id"],
                     )
+        if command.startswith("pr ") or command == "search pr":
+            from repo_catalog.application.pr_queries import prepare_pr_coverage
+
+            prepare_pr_coverage(self, command, o)
         if command == "search code":
             seen = set()
             for repo in self.repos(o):
@@ -702,13 +711,7 @@ class QueryService:
                                 (r["git_acquisition_id"],),
                             )
                         ),
-                        "coverage": [
-                            dict(x)
-                            for x in s.all(
-                                "SELECT cs.*,cc.effective_state state,cc.details FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=?",
-                                (r["repository_id"],),
-                            )
-                        ],
+                        "coverage": current_coverages(s.connection, r["repository_id"]),
                     },
                 )
         elif command == "refs list":
@@ -1081,20 +1084,15 @@ class QueryService:
         elif command in ("coverage", "status"):
             for repo in self.repos(o):
                 snapshot = self.snapshot(repo, o)
-                components = s.all(
-                    "SELECT cs.*,cc.effective_state state,cc.details FROM coverage_scopes cs LEFT JOIN coverage_claims cc ON cc.coverage_claim_id=cs.current_coverage_claim_id WHERE cs.repository_id=? AND (? IS NULL OR cs.kind=?)",
-                    (repo["repository_id"], o.get("kind"), o.get("kind")),
+                components = current_coverages(
+                    s.connection, repo["repository_id"], o.get("kind")
                 )
                 yield (
                     [repo["repository_id"]],
                     {
                         "repository_id": repo["repository_id"],
                         "snapshot_id": snapshot["snapshot_id"] if snapshot else None,
-                        "components": [
-                            {**dict(r), "details": json.loads(r["details"] or "{}")}
-                            for r in components
-                            if not o.get("kind") or r["kind"] == o["kind"]
-                        ],
+                        "components": components,
                     },
                 )
         elif command.startswith("pr ") or command == "search pr":
