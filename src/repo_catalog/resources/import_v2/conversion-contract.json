@@ -353,11 +353,19 @@
       "failure": "blocking",
       "outputs": [
         {
-          "column": "id",
+          "column": "representation",
           "production": "payloads"
         },
         {
-          "column": "payload_id",
+          "column": "sha256",
+          "production": "payloads"
+        },
+        {
+          "column": "payload_representation",
+          "production": "unresolved_payloads"
+        },
+        {
+          "column": "payload_sha256",
           "production": "unresolved_payloads"
         }
       ],
@@ -387,8 +395,12 @@
       "dependent_recipes": [
         "unresolved_payloads"
       ],
-      "failure": "partial",
+      "failure": "blocking",
       "outputs": [
+        {
+          "column": "sha256",
+          "production": "stored_bytes"
+        },
         {
           "column": "sha256",
           "production": "payloads"
@@ -424,11 +436,11 @@
       "outputs": [
         {
           "column": "body",
-          "production": "payloads"
+          "production": "stored_bytes"
         },
         {
           "column": "byte_length",
-          "production": "payloads"
+          "production": "stored_bytes"
         }
       ],
       "relation": "split",
@@ -1124,11 +1136,15 @@
       "failure": "partial",
       "outputs": [
         {
-          "column": "payload_id",
+          "column": "payload_representation",
+          "production": "fetch_occurrences"
+        },
+        {
+          "column": "payload_sha256",
           "production": "fetch_occurrences"
         }
       ],
-      "relation": "identity",
+      "relation": "split",
       "table": "collection_pages",
       "validation": [
         "exact_archive",

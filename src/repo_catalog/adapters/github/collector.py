@@ -13,6 +13,7 @@ from repo_catalog.adapters.github.persistence import (
 )
 from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.domain.models import CatalogError, Waiting
+from repo_catalog.domain.payload import PayloadRef
 from repo_catalog.domain.time import format_iso8601_us, now_us
 
 
@@ -149,10 +150,10 @@ class GitHubCollector:
     def inventory_request(self, method, url, **kwargs):
         response = self.http.request(method, url, **kwargs)
         with self.s.transaction():
-            payload_id = self.facts.payload(response.content)
+            payload_ref = self.facts.payload(response.content)
             self.inventory_evidence.append(
                 {
-                    "payload_id": payload_id,
+                    "payload": payload_ref.as_json(),
                     "url": url,
                     "method": method,
                     "observed_at_us": now_us(),
@@ -446,14 +447,14 @@ class GitHubCollector:
                         url,
                         advance=False,
                     )
-                    payload_id = s.one(
-                        "SELECT payload_id FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+                    payload_key = s.one(
+                        "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
                         (occurrence,),
-                    )[0]
+                    )
                     s.execute(
-                        "INSERT INTO unresolved_payloads(payload_id,reason) VALUES(?,?)",
+                        "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
                         (
-                            payload_id,
+                            *payload_key,
                             canonical(
                                 {
                                     "code": error.code,
@@ -623,8 +624,8 @@ class GitHubCollector:
         if response.status_code == 304:
             payload = (
                 self.s.one(
-                    "SELECT body FROM payloads WHERE payload_id=?",
-                    (validator["payload_id"],),
+                    "SELECT b.body FROM payloads p JOIN stored_bytes b ON b.sha256=p.sha256 WHERE p.representation=? AND p.sha256=?",
+                    (validator["payload_representation"], validator["payload_sha256"]),
                 )
                 if validator
                 else None
@@ -652,18 +653,22 @@ class GitHubCollector:
                         collection,
                         evidence={
                             "status": 304,
-                            "payload_id": validator["payload_id"],
+                            "payload": PayloadRef(
+                                validator["payload_representation"],
+                                validator["payload_sha256"],
+                            ).as_json(),
                             "change_request_observation_id": current,
                         },
                         observed_at_us=validated_at_us,
                     )
                     if imported_validator:
                         self.s.execute(
-                            "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at_us) VALUES(?,'representation',?,?,?)",
+                            "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_representation,payload_sha256,validated_at_us) VALUES(?,'representation',?,?,?,?)",
                             (
                                 collection["resume_scope_id"],
                                 validator["etag"],
-                                validator["payload_id"],
+                                validator["payload_representation"],
+                                validator["payload_sha256"],
                                 validated_at_us,
                             ),
                         )
@@ -686,24 +691,24 @@ class GitHubCollector:
             )
             self.ensure_pr(repo, value, collection, occurrence, 0, timestamp)
             if response.headers.get("etag"):
-                payload_id = self.facts.payload(response.content)
+                payload_ref = self.facts.payload(response.content)
                 if validator and not imported_validator:
                     self.s.execute(
-                        "UPDATE validators SET etag=?,payload_id=?,validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
+                        "UPDATE validators SET etag=?,payload_representation=?,payload_sha256=?,validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
                         (
                             response.headers["etag"],
-                            payload_id,
+                            *payload_ref.parameters(),
                             timestamp,
                             collection["resume_scope_id"],
                         ),
                     )
                 else:
                     self.s.execute(
-                        "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_id,validated_at_us) VALUES(?,'representation',?,?,?)",
+                        "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_representation,payload_sha256,validated_at_us) VALUES(?,'representation',?,?,?,?)",
                         (
                             collection["resume_scope_id"],
                             response.headers["etag"],
-                            payload_id,
+                            *payload_ref.parameters(),
                             timestamp,
                         ),
                     )
@@ -778,14 +783,14 @@ class GitHubCollector:
                 (repo["repository_uuidv4"], number),
             )
             if not pr:
-                payload_id = self.s.one(
-                    "SELECT payload_id FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+                payload_key = self.s.one(
+                    "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
                     (occurrence,),
-                )[0]
+                )
                 self.s.execute(
-                    "INSERT INTO unresolved_payloads(payload_id,reason) VALUES(?,?)",
+                    "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
                     (
-                        payload_id,
+                        *payload_key,
                         canonical(
                             {
                                 "code": "COMMENT_PARENT_UNKNOWN",
@@ -895,14 +900,14 @@ class GitHubCollector:
             cursor,
             advance=False,
         )
-        payload_id = self.s.one(
-            "SELECT payload_id FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+        payload_key = self.s.one(
+            "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
             (occurrence,),
-        )[0]
+        )
         self.s.execute(
-            "INSERT INTO unresolved_payloads(payload_id,reason) VALUES(?,?)",
+            "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
             (
-                payload_id,
+                *payload_key,
                 canonical({"code": error.code, "fetch_occurrence_id": occurrence}),
             ),
         )
@@ -962,7 +967,7 @@ class GitHubCollector:
         if collection is None:
             return {}, False, None
         page = self.s.one(
-            "SELECT p.body,o.observed_at_us FROM fetch_occurrences o JOIN payloads p ON p.payload_id=o.payload_id WHERE o.fetch_collection_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC LIMIT 1",
+            "SELECT b.body,o.observed_at_us FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_collection_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC LIMIT 1",
             (collection["fetch_collection_id"],),
         )
         if page is None:
@@ -1027,7 +1032,7 @@ class GitHubCollector:
         merge = {}
         if collection["state"] == "complete":
             last = self.s.one(
-                "SELECT p.body FROM fetch_occurrences o JOIN payloads p ON p.payload_id=o.payload_id WHERE o.fetch_collection_id=? ORDER BY o.ordinal DESC LIMIT 1",
+                "SELECT b.body FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_collection_id=? ORDER BY o.ordinal DESC LIMIT 1",
                 (collection["fetch_collection_id"],),
             )
             if last:
@@ -1064,7 +1069,7 @@ class GitHubCollector:
                 }
                 if pending.get("occurrence"):
                     page = self.s.one(
-                        "SELECT o.*,p.body FROM fetch_occurrences o JOIN payloads p ON p.payload_id=o.payload_id WHERE o.fetch_occurrence_id=? AND o.fetch_collection_id=?",
+                        "SELECT o.*,b.body FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_occurrence_id=? AND o.fetch_collection_id=?",
                         (pending["occurrence"], collection["fetch_collection_id"]),
                     )
                     payload = json.loads(page["body"])

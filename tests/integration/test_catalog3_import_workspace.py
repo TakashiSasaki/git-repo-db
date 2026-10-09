@@ -38,7 +38,7 @@ def test_fresh_catalog_has_no_import_tables_or_workspace(tmp_path):
     MaintenanceService(state).init("catalog-text-v1", 67108864, 0)
     with Store(state) as store:
         assert not (tables(store.connection) & workspace.TABLES)
-        assert len(tables(store.connection)) == 65
+        assert len(tables(store.connection)) == 66
         for table in tables(store.connection):
             assert (
                 not {row[2] for row in store.all(f'PRAGMA foreign_key_list("{table}")')}

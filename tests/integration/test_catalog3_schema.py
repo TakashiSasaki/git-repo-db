@@ -83,12 +83,16 @@ def facts():
         )
         put(
             db,
-            "payloads",
-            payload_id=observation,
+            "stored_bytes",
             sha256=hashlib.sha256(owner.encode()).digest(),
             body=owner.encode(),
             byte_length=1,
+        )
+        put(
+            db,
+            "payloads",
             representation="decoded_api",
+            sha256=hashlib.sha256(owner.encode()).digest(),
         )
         put(
             db,
@@ -96,7 +100,8 @@ def facts():
             fetch_occurrence_id=observation,
             fetch_collection_id="collection-" + owner,
             ordinal=0,
-            payload_id=observation,
+            payload_representation="decoded_api",
+            payload_sha256=hashlib.sha256(owner.encode()).digest(),
             request="{}",
             parsed_at_us=TIME_US,
         )
