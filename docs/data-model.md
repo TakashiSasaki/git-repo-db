@@ -1,5 +1,7 @@
 # Catalog3 data model
 
+> **Accepted future design, not yet implemented:** [Transport-independent core / minimal parser provenance ADR](transport-independent-core-adr.md). It fixes the removal of persistent API transport originals and selected-parser DAG requirements from the target core, but **does not** decide per-domain history/current-state lifecycles. The remainder of this document describes active schema 16.
+
 The active DDL is the complete schema assembled by [schema.py](../src/repo_catalog/adapters/sqlite/schema.py), including [catalog3.sql](../src/repo_catalog/resources/catalog3.sql) and [current_resources.sql](../src/repo_catalog/resources/current_resources.sql). Runtime identity is `repo-catalog/catalog3`, schema version **16**, with a SHA-256 of that complete DDL. Fresh catalogs initialize directly from it. Earlier development databases are rejected; there is no migration or compatibility view. The v2 importer was retired. Current changes are documented in [boundary corrections](current-state-boundaries.md), [schema 15 closure](current-state-schema-closure.md), [column liveness](current-state-schema-liveness.md) and [complete inventory](current-state-schema-inventory.md); historical receipts do not establish schema 16 acceptance.
 
 ## Absolute timestamps and durations
