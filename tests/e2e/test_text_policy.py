@@ -35,7 +35,9 @@ def test_text_bounds(catalog, tmp_path):
         entries["nul.txt"]["text_state"] == "nul"
         and entries["invalid.txt"]["text_state"] == "non_utf8"
     )
-    assert run(
+    # Authoritative raw bytes and their eligible text interpretation are now
+    # published together, including history; hydration cannot edit sealed facts.
+    assert pages(
         state,
         "search",
         "code",
@@ -45,8 +47,7 @@ def test_text_bounds(catalog, tmp_path):
         "過去専用",
         "--scope",
         "history",
-        expected=3,
-    )["coverage"]["missing"]
+    )
     past = run(
         state,
         "tree",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 
 from repo_catalog.domain.coverage import validate_claim
@@ -12,6 +13,34 @@ def _rows(cursor: sqlite3.Cursor) -> list[dict]:
     """Read either ordinary tuple rows or sqlite3.Row without changing a connection."""
     columns = tuple(column[0] for column in cursor.description)
     return [dict(zip(columns, row, strict=True)) for row in cursor]
+
+
+def freeze_complete_proof(connection, observed_at_us, details_json):
+    """Bind complete coverage to exact immutable terminal marker identities."""
+    if not details_json:
+        return details_json
+    try:
+        details = json.loads(details_json)
+    except ValueError:
+        return details_json
+    if not isinstance(details, dict):
+        return details_json
+    if "completion_marker_uuidv4s" in details or not details.get(
+        "fetch_collection_ids"
+    ):
+        return details_json
+    markers = []
+    for collection_id in details["fetch_collection_ids"]:
+        rows = connection.execute(
+            "SELECT m.completion_marker_uuidv4,m.observed_at_us FROM completion_markers m WHERE m.fetch_collection_id=? AND m.asserted_state='complete' AND (m.observed_at_us<=? OR (json_extract(m.evidence,'$.status')=304 AND EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.fetch_occurrence_uuidv4=json_extract(m.evidence,'$.fetch_occurrence_uuidv4') AND f.observed_at_us<=?))) ORDER BY m.observed_at_us DESC,m.completion_marker_uuidv4",
+            (collection_id, observed_at_us, observed_at_us),
+        ).fetchall()
+        if not rows:
+            return details_json
+        latest = rows[0][1]
+        markers.extend(row[0] for row in rows if row[1] == latest)
+    details["completion_marker_uuidv4s"] = sorted(markers)
+    return json.dumps(details, sort_keys=True, separators=(",", ":"))
 
 
 def admit_claim(
@@ -42,6 +71,8 @@ def admit_claim(
         raise CatalogError(
             "INVALID_COVERAGE_CLAIM", "Coverage details must be JSON text or NULL"
         )
+    if coverage_state == "complete":
+        details_json = freeze_complete_proof(connection, observed_at_us, details_json)
     cursor = connection.execute(
         """INSERT INTO coverage_claims(
                coverage_scope_id,coverage_state,observed_at_us,details_json

@@ -7,6 +7,7 @@ import uuid
 import pytest
 
 from repo_catalog.adapters.sqlite.cas_integrity import diagnose_corruption
+from repo_catalog.adapters.sqlite.coverage import freeze_complete_proof
 from repo_catalog.adapters.sqlite.exchange import Graph
 from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.payloads import intern_payload
@@ -15,8 +16,12 @@ from repo_catalog.application.exchange_service import ExchangeService
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.domain.models import CatalogError
 from tests.integration.test_catalog3_cas_integrity import corrupt
+from tests.integration.test_catalog3_exchange import (
+    complete_collection,
+    fixture,
+    receive,
+)
 from tests.integration.test_catalog3_exchange import databases as databases
-from tests.integration.test_catalog3_exchange import fixture, receive
 
 
 def source_derived_name(db, expected):
@@ -194,13 +199,14 @@ def test_304_self_authored_evidence_uses_received_original_observation(databases
         (acquisition[1],),
     ).fetchone()[0]
     source.execute(
-        "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,1)",
+        "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,-1)",
         (
             scope,
             acquisition[1],
             json.dumps(
                 {
                     "status": 304,
+                    "fetch_occurrence_uuidv4s": [incoming["fetch"]],
                     "payload": {
                         "representation": acquisition[2],
                         "sha256": acquisition[3].hex(),
@@ -242,13 +248,14 @@ def marker_unit(db, expected):
         (acquisition[1],),
     ).fetchone()[0]
     db.execute(
-        "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,1)",
+        "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,-1)",
         (
             scope,
             acquisition[1],
             json.dumps(
                 {
                     "status": 304,
+                    "fetch_occurrence_uuidv4s": [expected["fetch"]],
                     "payload": {
                         "representation": acquisition[2],
                         "sha256": acquisition[3].hex(),
@@ -314,12 +321,25 @@ def test_complete_claim_keeps_identity_when_unrelated_repository_records_grow(
     expected = fixture(source)
     scope = str(uuid.uuid4())
     source.execute(
-        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES(?,?,'pr-documents')",
-        (scope, expected["repository"]),
+        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,change_request_id,kind) VALUES(?,?,?,'comment')",
+        (scope, expected["repository"], expected["cr"]),
     )
     source.execute(
-        "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(?,'complete',0,NULL)",
-        (scope,),
+        "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(?,'complete',-1,?)",
+        (
+            scope,
+            freeze_complete_proof(
+                source,
+                -1,
+                json.dumps(
+                    {
+                        "fetch_collection_ids": [
+                            complete_collection(source, expected["fetch"])
+                        ]
+                    }
+                ),
+            ),
+        ),
     )
     first = Graph(source).export(expected["repository"])
     assert receive(target, first)["staged_records"] == 0

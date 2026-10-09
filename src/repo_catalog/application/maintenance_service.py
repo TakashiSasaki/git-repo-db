@@ -480,7 +480,7 @@ class MaintenanceService:
 
         payloads = verify_all(s.connection) if full else None
         checks = {
-            "owner_evidence": check_catalog(s),
+            "owner_evidence": check_catalog(s, full=full),
             "sqlite": [
                 r[0]
                 for r in s.all(
@@ -666,83 +666,38 @@ class MaintenanceService:
             raise
 
     def hydrate(self, content_id, repo_selector, token):
-        from repo_catalog.adapters.git.importer import GitImporter
-        from repo_catalog.adapters.git.runner import GitRunner
-        from repo_catalog.application.collection_service import select_repositories
-        from repo_catalog.application.job_service import JobService
+        """Every supported decoded text is published atomically with its result.
 
-        with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
-            content = s.one("SELECT * FROM contents WHERE content_id=?", (content_id,))
-            if not content:
+        Raw object bytes remain durable separately; hydration never mutates a
+        published interpretation. A different decoder requires explicit reparse.
+        """
+        from repo_catalog.application.collection_service import select_repositories
+
+        with FileLock(self.path / "locks/writer.lock"), Store(self.path) as store:
+            token.check()
+            if not store.one(
+                "SELECT 1 FROM contents WHERE content_id=?", (content_id,)
+            ):
                 raise CatalogError("NOT_FOUND", "Content not found")
-            if content["text_state"] != "eligible":
-                raise CatalogError(
-                    "PROFILE_UNSUPPORTED", "Profile does not allow this raw content"
-                )
-            if content["raw_text"] is not None:
-                return Result(
-                    {"content_id": content_id, "state": "already_saved"},
-                    catalog=s.revision(),
-                )
-            repos = select_repositories(s, (repo_selector,) if repo_selector else ())
-            job = JobService(s).create(
-                "hydrate", {"content_id": content_id, "repo": repo_selector}
+            repos = select_repositories(
+                store, (repo_selector,) if repo_selector else ()
             )
-            try:
-                for repo in repos:
-                    candidates = s.all(
-                        "SELECT g.*,b.git_acquisition_id FROM blob_content_map b JOIN git_objects g ON g.git_object_id=b.git_object_id JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE b.content_id=? AND p.repository_uuidv4=? AND r.state='published'",
-                        (content_id, repo["repository_uuidv4"]),
-                    )
-                    if not candidates:
-                        continue
-                    cache = s.one(
-                        "SELECT a.*,l.repository_uuidv4,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
-                        (repo["repository_uuidv4"],),
-                    )
-                    if not cache:
-                        # Explicit re-fetch creates a fresh current observation, without claiming lost OIDs are available.
-                        GitImporter(s, token).sync(repo, job)
-                        cache = s.one(
-                            "SELECT a.*,l.repository_uuidv4,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
-                            (repo["repository_uuidv4"],),
-                        )
-                    with FileLock(
-                        s.path / f"locks/cache-{cache['active_cache_entry_id']}.lock",
-                        inheritable=True,
-                    ) as lock:
-                        runner = GitRunner(token, lock)
-                        for obj in candidates:
-                            try:
-                                GitImporter(s, token).preserve_text(
-                                    s.path / cache["path"],
-                                    obj["object_format"],
-                                    obj["git_object_id"],
-                                    {"git_acquisition_id": obj["git_acquisition_id"]},
-                                    runner,
-                                )
-                            except CatalogError as e:
-                                if e.code == "GIT_ERROR":
-                                    continue
-                                raise
-                            with s.transaction():
-                                s.publish()
-                            JobService(s).update(job, "complete")
-                            return Result(
-                                {
-                                    "job_id": job,
-                                    "content_id": content_id,
-                                    "state": "saved",
-                                },
-                                catalog=s.revision(),
-                            )
+            owners = [r["repository_uuidv4"] for r in repos]
+            facts = store.all(
+                "SELECT * FROM current_git_text_facts WHERE content_id=? AND repository_uuidv4 IN ("
+                + ",".join("?" for _ in owners)
+                + ")",
+                (content_id, *owners),
+            )
+            if not facts or not any(
+                f["text_state"] == "eligible" and f["raw_text"] is not None
+                for f in facts
+            ):
                 raise CatalogError(
-                    "RAW_CONTENT_UNAVAILABLE",
-                    "No configured source can provide the recorded content",
+                    "PROFILE_UNSUPPORTED",
+                    "Selected parser profile does not provide decoded text",
                 )
-            except CatalogError as e:
-                JobService(s).update(
-                    job, "interrupted" if e.code == "CANCELLED" else "failed", e.code
-                )
-                e.details["job_id"] = job
-                raise
+            return Result(
+                {"content_id": content_id, "state": "already_saved"},
+                catalog=store.revision(),
+            )

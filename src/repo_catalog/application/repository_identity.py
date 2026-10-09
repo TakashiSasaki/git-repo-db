@@ -409,6 +409,18 @@ def observe_name(
         if parsed_result_uuidv4
         else None
     )
+    from repo_catalog.adapters.sqlite.json_contracts import validate_record
+
+    validate_record(
+        store.connection,
+        "repository_name_observations",
+        {
+            "repository_uuidv4": repository_uuidv4,
+            "owner_repository_uuidv4": owner[0] if owner else None,
+            "owner_source_registration_uuidv4": owner[1] if owner else None,
+            "provenance_json": json.dumps(provenance or {}, allow_nan=False),
+        },
+    )
     store.execute(
         "INSERT INTO repository_name_observations VALUES(?,?,?,?,?,?,?,?)",
         (

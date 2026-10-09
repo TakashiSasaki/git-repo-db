@@ -5,6 +5,7 @@ import json
 import sqlite3
 import uuid
 
+from repo_catalog.adapters.sqlite.json_contracts import validate_record
 from repo_catalog.domain.models import CatalogError
 
 
@@ -36,6 +37,7 @@ class IdentityRelations:
             raise CatalogError(
                 "INVALID_ARGUMENT", "Identity evidence fields do not match schema"
             )
+        missing = validate_record(self.db, table, record, allow_missing=True)
         raw = json.dumps(record, sort_keys=True, separators=(",", ":"), allow_nan=False)
         digest = hashlib.sha256(raw.encode()).digest()
         self.db.execute("SAVEPOINT identity_admission")
@@ -53,6 +55,10 @@ class IdentityRelations:
                     state = "conflict"
             else:
                 try:
+                    if missing:
+                        self._stage(ident, digest, kind, raw, "JSON_DEPENDENCY_MISSING")
+                        self.db.execute("RELEASE identity_admission")
+                        return "staged"
                     self.db.execute(
                         f"INSERT INTO {table}({','.join(columns)}) VALUES({','.join('?' for _ in columns)})",
                         [record[col] for col in columns],
@@ -61,6 +67,11 @@ class IdentityRelations:
                 except sqlite3.IntegrityError as cause:
                     self._stage(ident, digest, kind, raw, str(cause))
                     state = "staged"
+            if state in ("accepted", "duplicate"):
+                self.db.execute(
+                    "DELETE FROM identity_relation_staging WHERE record_uuidv4=? AND content_sha256=?",
+                    (ident, digest),
+                )
             if kind == "relation" and state in ("accepted", "duplicate"):
                 # No commit or observer-visible activation occurs before every
                 # cancellation that arrived first has been applied.

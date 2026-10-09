@@ -22,6 +22,85 @@ def pr_state(payload):
     return "closed" if merged is False else "unknown"
 
 
+def _collection_boundary(query, collection_id):
+    """Observation boundary excludes mutable progress and unobserved attempts."""
+    return query.s.one(
+        "SELECT max(observed_at_us) FROM ("
+        "SELECT observed_at_us FROM fetch_occurrences WHERE fetch_collection_id=? "
+        "AND coalesce(json_extract(request,'$.operational_only'),0)=0 "
+        "UNION ALL SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=?)",
+        (collection_id, collection_id),
+    )[0]
+
+
+def _latest_collections(query, rows):
+    candidates = []
+    latest = None
+    for row in rows:
+        query.check()
+        boundary = _collection_boundary(query, row["fetch_collection_id"])
+        if boundary is not None and (latest is None or boundary > latest):
+            candidates = [row]
+            latest = boundary
+        elif boundary == latest:
+            candidates.append(row)
+    return candidates
+
+
+def _collection_proof_graph(query):
+    from repo_catalog.adapters.sqlite.exchange import Graph
+
+    graph = getattr(query, "collection_proof_graph", None)
+    if graph is None:
+        graph = Graph(query.s.connection, persist_identities=False)
+        query.collection_proof_graph = graph
+    return graph
+
+
+def _collection_state(query, row):
+    """Qualify immutable collection evidence independently of local job progress."""
+    graph = _collection_proof_graph(query)
+    markers = graph.matching(
+        "completion_markers", ("fetch_collection_id",), (row["fetch_collection_id"],)
+    )
+    boundary = _collection_boundary(query, row["fetch_collection_id"])
+    latest = [marker for marker in markers if marker["observed_at_us"] == boundary]
+    if markers and not latest:
+        return "partial"
+    states = {marker["asserted_state"] for marker in latest}
+    if states and states != {"complete"}:
+        return next(iter(states)) if len(states) == 1 else "conflict"
+    for marker in latest:
+        query.check()
+        key = graph.key("completion_markers", marker)
+        proof = graph.proof_requirements("completion_markers", marker)
+        if not proof:
+            return "unknown"
+        if any(
+            query.s.one(
+                "SELECT 1 FROM exchange_staging WHERE record_key=? AND reason LIKE 'conflict:%'",
+                (dependency,),
+            )
+            for dependency in proof | {key}
+        ):
+            return "conflict"
+        evidence = json.loads(marker["evidence"])
+        acquisitions = list(evidence.get("fetch_occurrence_uuidv4s", []))
+        if evidence.get("status") == 304:
+            acquisitions.append(evidence["fetch_occurrence_uuidv4"])
+        if any(
+            query.s.one(
+                "SELECT 1 FROM fetch_occurrences f JOIN payload_quarantine q ON q.sha256=f.payload_sha256 WHERE f.fetch_occurrence_uuidv4=?",
+                (identifier,),
+            )
+            for identifier in acquisitions
+        ):
+            return "unknown"
+    if latest:
+        return "complete"
+    return row["state"]
+
+
 def _coverage(query, pr, documents_only):
     s = query.s
     if pr["change_request_observation_id"] is None:
@@ -37,14 +116,21 @@ def _coverage(query, pr, documents_only):
             change_request_id=pr["change_request_id"],
         )
     rows = s.execute(
-        "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? AND NOT EXISTS(SELECT 1 FROM fetch_collections newer WHERE newer.change_request_id=c.change_request_id AND newer.kind=c.kind AND ((newer.observed_at_us IS NOT NULL AND (c.observed_at_us IS NULL OR newer.observed_at_us>c.observed_at_us)) OR (newer.observed_at_us IS c.observed_at_us AND newer.rowid>c.rowid))) ORDER BY c.kind",
+        "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.kind",
         (pr["change_request_id"],),
     )
+    by_kind = {}
     for row in rows:
+        by_kind.setdefault(row["kind"], []).append(row)
+    for row in (
+        row
+        for candidates in by_kind.values()
+        for row in _latest_collections(query, candidates)
+    ):
         query.check()
         if documents_only and not document_scope_includes(row["kind"]):
             continue
-        if row["state"] != "complete":
+        if _collection_state(query, row) != "complete":
             query.coverage.add(
                 "pr",
                 "collection_incomplete",
@@ -339,10 +425,12 @@ def _thread_root(query, request, thread):
 
     A resumed child can be newer than a subsequently started root. Failed
     requests without resource data do not supersede saved semantic evidence.
-    Stream newest first so ordinary reads parse only the first candidate page.
+    Preserve every candidate at the latest known observation boundary.
     """
+    candidates = {}
+    latest = None
     for row in query.s.execute(
-        "SELECT root.*,member.kind member_kind,b.body FROM fetch_collections member "
+        "SELECT root.*,member.kind member_kind,o.observed_at_us boundary,b.body FROM fetch_collections member "
         "JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id "
         "JOIN fetch_collections root ON root.change_request_id=member.change_request_id "
         "AND root.repository_uuidv4=member.repository_uuidv4 "
@@ -357,7 +445,7 @@ def _thread_root(query, request, thread):
         "AND json_extract(scope.request_context,'$.thread')=?)) "
         "AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 "
         "AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=o.payload_sha256) "
-        "ORDER BY o.observed_at_us DESC,o.fetch_occurrence_id DESC",
+        "ORDER BY o.observed_at_us DESC,o.fetch_occurrence_uuidv4",
         (request["change_request_id"], thread["provider_resource_id"]),
     ):
         query.check()
@@ -370,9 +458,13 @@ def _thread_root(query, request, thread):
             )
         except (ValueError, KeyError, TypeError):
             continue
-        if isinstance(resource, dict):
-            return row
-    return None
+        if not isinstance(resource, dict):
+            continue
+        if candidates and row["boundary"] != latest:
+            break
+        latest = row["boundary"]
+        candidates[row["fetch_collection_id"]] = row
+    return list(candidates.values())
 
 
 def _thread_listing_complete(query, request, thread):
@@ -382,18 +474,37 @@ def _thread_listing_complete(query, request, thread):
     invalidate a terminal selected thread. The saved root response establishes its
     first comment page; further pages require a sealed child of this exact root.
     """
+    roots = _thread_root(query, request, thread)
+    return bool(roots) and all(
+        _thread_root_listing_complete(query, request, thread, root) for root in roots
+    )
+
+
+def _thread_root_listing_complete(query, request, thread, root):
     s = query.s
-    root = _thread_root(query, request, thread)
-    if root is None:
+    graph = _collection_proof_graph(query)
+    if any(
+        s.one(
+            "SELECT 1 FROM exchange_staging WHERE record_key=? AND reason LIKE 'conflict:%'",
+            (graph.key("completion_markers", marker),),
+        )
+        for marker in graph.matching(
+            "completion_markers",
+            ("fetch_collection_id",),
+            (root["fetch_collection_id"],),
+        )
+    ):
         return False
     # New attempts may retain rejected pages at the same cursor. Use the most
     # recent occurrence containing this thread, never an older successful page.
+    pages = []
+    latest = None
     for page in s.execute(
-        "SELECT o.fetch_occurrence_id,o.request,b.body FROM fetch_occurrences o "
+        "SELECT o.fetch_occurrence_id,o.observed_at_us,o.request,b.body FROM fetch_occurrences o "
         "JOIN stored_bytes b ON b.sha256=o.payload_sha256 "
         "WHERE o.fetch_collection_id=? "
         "AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=o.payload_sha256) "
-        "ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC",
+        "ORDER BY o.observed_at_us DESC,o.ordinal DESC,o.fetch_occurrence_uuidv4",
         (root["fetch_collection_id"],),
     ):
         query.check()
@@ -417,68 +528,73 @@ def _thread_listing_complete(query, request, thread):
         )
         if selected is None:
             continue
-        if payload.get("errors") or json.loads(page["request"]).get(
-            "normalization_error"
-        ):
+        if pages and page["observed_at_us"] != latest:
+            break
+        latest = page["observed_at_us"]
+        pages.append((page, payload, selected))
+    return bool(pages) and all(
+        _thread_page_complete(query, request, thread, root, page, payload, selected)
+        for page, payload, selected in pages
+    )
+
+
+def _thread_page_complete(query, request, thread, root, page, payload, selected):
+    s = query.s
+    if payload.get("errors") or json.loads(page["request"]).get("normalization_error"):
+        return False
+    comments = selected.get("comments")
+    if not isinstance(comments, dict) or not isinstance(comments.get("nodes"), list):
+        return False
+    expected = set()
+    for comment in comments["nodes"]:
+        query.check()
+        provider = comment.get("fullDatabaseId") if isinstance(comment, dict) else None
+        if type(provider) not in (int, str) or not str(provider):
             return False
-        comments = selected.get("comments")
-        if not isinstance(comments, dict) or not isinstance(
-            comments.get("nodes"), list
-        ):
-            return False
-        expected = set()
-        for comment in comments["nodes"]:
-            query.check()
-            provider = (
-                comment.get("fullDatabaseId") if isinstance(comment, dict) else None
-            )
-            if type(provider) not in (int, str) or not str(provider):
-                return False
-            expected.add(str(provider))
-        saved = {
-            row[0]
-            for row in s.execute(
-                "SELECT o.provider_change_request_document_id FROM eligible_document_observations o "
-                "WHERE o.fetch_occurrence_id=? AND o.change_request_id=? "
-                "AND o.kind='review-comment' AND o.review_thread_provider_resource_id=?",
-                (
-                    page["fetch_occurrence_id"],
-                    request["change_request_id"],
-                    thread["provider_resource_id"],
-                ),
-            )
-        }
-        if not expected <= saved:
-            return False
-        info = comments.get("pageInfo")
-        if not isinstance(info, dict) or type(info.get("hasNextPage")) is not bool:
-            return False
-        if not info["hasNextPage"]:
-            return True
-        if not isinstance(info.get("endCursor"), str) or not info["endCursor"]:
-            return False
-        child = s.one(
-            "SELECT p.state,EXISTS(SELECT 1 FROM completion_markers m "
-            "WHERE m.fetch_collection_id=f.fetch_collection_id "
-            "AND m.resume_scope_id=f.resume_scope_id AND m.asserted_state='complete') sealed "
-            "FROM fetch_collections f JOIN resume_scopes scope "
-            "ON scope.resume_scope_id=f.resume_scope_id "
-            "LEFT JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id "
-            "WHERE f.change_request_id=? AND f.repository_uuidv4=? "
-            "AND f.source_id IS ? AND f.kind='thread-comments' "
-            "AND json_extract(scope.request_context,'$.thread')=? "
-            "AND json_extract(scope.request_context,'$.parent_fetch_collection_id')=? "
-            "ORDER BY f.observed_at_us DESC,f.rowid DESC LIMIT 1",
+        expected.add(str(provider))
+    saved = {
+        row[0]
+        for row in s.execute(
+            "SELECT o.provider_change_request_document_id FROM eligible_document_observations o "
+            "WHERE o.fetch_occurrence_id=? AND o.change_request_id=? "
+            "AND o.kind='review-comment' AND o.review_thread_provider_resource_id=?",
             (
+                page["fetch_occurrence_id"],
                 request["change_request_id"],
-                root["repository_uuidv4"],
-                root["source_id"],
                 thread["provider_resource_id"],
-                root["fetch_collection_id"],
             ),
         )
-        return bool(child and child["state"] == "complete" and child["sealed"])
-    return False
+    }
+    if not expected <= saved:
+        return False
+    info = comments.get("pageInfo")
+    if not isinstance(info, dict) or type(info.get("hasNextPage")) is not bool:
+        return False
+    if not info["hasNextPage"]:
+        return True
+    if not isinstance(info.get("endCursor"), str) or not info["endCursor"]:
+        return False
+    children = s.all(
+        "SELECT f.*,p.state "
+        "FROM fetch_collections f JOIN resume_scopes scope "
+        "ON scope.resume_scope_id=f.resume_scope_id "
+        "LEFT JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id "
+        "WHERE f.change_request_id=? AND f.repository_uuidv4=? "
+        "AND f.source_id IS ? AND f.kind='thread-comments' "
+        "AND json_extract(scope.request_context,'$.thread')=? "
+        "AND json_extract(scope.request_context,'$.parent_fetch_collection_id')=?",
+        (
+            request["change_request_id"],
+            root["repository_uuidv4"],
+            root["source_id"],
+            thread["provider_resource_id"],
+            root["fetch_collection_id"],
+        ),
+    )
+    candidates = _latest_collections(query, children)
+    return bool(candidates) and all(
+        _collection_state(query, child) == "complete" for child in candidates
+    )
 
 
 def prepare_pr_coverage(query, command, o):
@@ -711,7 +827,10 @@ def pr_query(query, command, options):
             item = {
                 **base,
                 "payload": payload,
-                "collections": [dict(r) for r in collections],
+                "collections": [
+                    {**dict(r), "state": _collection_state(query, r)}
+                    for r in collections
+                ],
             }
             if command == "pr show":
                 item["code_observation"] = dict(code) if code else None
@@ -730,7 +849,7 @@ def pr_query(query, command, options):
                     [
                         json.loads(r[0])
                         for r in s.all(
-                            "SELECT payload FROM current_code_commits WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
+                            "SELECT c.payload FROM current_code_commits c JOIN fetch_occurrences f USING(fetch_occurrence_id) WHERE c.code_listing_id=? ORDER BY f.ordinal,c.position,c.parsed_result_uuidv4",
                             (code["commit_code_listing_id"],),
                         )
                     ]
@@ -741,7 +860,7 @@ def pr_query(query, command, options):
                     [
                         json.loads(r[0])
                         for r in s.all(
-                            "SELECT payload FROM current_code_file_changes WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
+                            "SELECT c.payload FROM current_code_file_changes c JOIN fetch_occurrences f USING(fetch_occurrence_id) WHERE c.code_listing_id=? ORDER BY f.ordinal,c.position,c.parsed_result_uuidv4",
                             (code["file_code_listing_id"],),
                         )
                     ]
@@ -751,7 +870,7 @@ def pr_query(query, command, options):
                 item["observations"] = [
                     dict(r)
                     for r in s.all(
-                        "SELECT o.change_request_observation_id,o.observed_at_us,o.parsed_result_uuidv4,r.parser_profile_uuidv4 FROM change_request_observations o JOIN usable_parsed_results r USING(parsed_result_uuidv4) WHERE o.change_request_id=? ORDER BY o.change_request_observation_id",
+                        "SELECT o.change_request_observation_id,o.observed_at_us,o.parsed_result_uuidv4,r.parser_profile_uuidv4 FROM change_request_observations o JOIN usable_parsed_results r USING(parsed_result_uuidv4) WHERE o.change_request_id=? ORDER BY o.observed_at_us,o.change_request_observation_uuidv4",
                         (pr["change_request_id"],),
                     )
                 ]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import heapq
 import json
 import math
 import sqlite3
@@ -11,6 +12,7 @@ from repo_catalog.adapters.sqlite.coverage import current_coverages
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application import repository_identity as identity
 from repo_catalog.application.collection_service import select_repositories
+from repo_catalog.application.git_query_context import object_context
 from repo_catalog.domain.models import (
     CancellationToken,
     CatalogError,
@@ -68,6 +70,7 @@ class QueryService:
         with Store(self.path, readonly=True) as s:
             self.s = s
             self.coverage = CoverageReport()
+            self.collection_proof_graph = None
             self.deadline = time.monotonic() + timeout
             self.backend = "scan"
             self.literal_cache = {}
@@ -200,18 +203,55 @@ class QueryService:
                 )
 
     def closure(self, roots):
-        ids = [self.s.git_object_id(r["object_format"], r["oid"]) for r in roots]
-        ids = [x for x in ids if x is not None]
-        if not ids:
-            return set()
-        values = ",".join("(?)" for _ in ids)
-        sql = f"""WITH RECURSIVE edges(a,b) AS (
-            SELECT git_object_id,tree_git_object_id FROM commits UNION ALL SELECT commit_git_object_id,parent_git_object_id FROM commit_parents
-            UNION ALL SELECT tree_git_object_id,child_git_object_id FROM tree_entries WHERE child_git_object_id IS NOT NULL
-            UNION ALL SELECT git_object_id,target_git_object_id FROM tag_objects),
-            reach(git_object_id) AS (VALUES {values} UNION SELECT e.b FROM edges e JOIN reach r ON e.a=r.git_object_id)
-            SELECT git_object_id FROM reach"""
-        return {r[0] for r in self.s.execute(sql, ids)}
+        found = set()
+        for root in roots:
+            ident = self.s.git_object_id(root["object_format"], root["oid"])
+            if ident is None:
+                continue
+            scope = self.git_scope(root)
+            sql = f"""WITH RECURSIVE edges(a,b) AS (
+                SELECT git_object_id,tree_git_object_id FROM {self.git_relation("commits", root)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=?
+                UNION ALL SELECT commit_git_object_id,parent_git_object_id FROM {self.git_relation("commit_parents", root)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=?
+                UNION ALL SELECT tree_git_object_id,child_git_object_id FROM {self.git_relation("tree_entries", root)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND child_git_object_id IS NOT NULL
+                UNION ALL SELECT git_object_id,target_git_object_id FROM {self.git_relation("tag_objects", root)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=?),
+                reach(git_object_id) AS (VALUES (?) UNION SELECT e.b FROM edges e JOIN reach r ON e.a=r.git_object_id)
+                SELECT git_object_id FROM reach"""
+            found.update(r[0] for r in self.s.execute(sql, (*(scope * 4), ident)))
+        return found
+
+    @staticmethod
+    def git_relation(table, context):
+        return (
+            "eligible_git_" if context.get("historical") else "current_git_"
+        ) + table
+
+    @staticmethod
+    def git_scope(context):
+        return context["repository_uuidv4"], context["parsed_result_uuidv4"]
+
+    def git_context(self, repo, options):
+        if options.get("snapshot"):
+            snapshot = self.snapshot(repo, options)
+            return {
+                "repository_uuidv4": repo["repository_uuidv4"],
+                "parsed_result_uuidv4": snapshot["parsed_result_uuidv4"],
+                "historical": True,
+            }
+        selected = self.s.one(
+            "SELECT parsed_result_uuidv4 FROM active_fact_selections WHERE repository_uuidv4=? AND fact_kind='git' AND change_request_id IS NULL AND git_acquisition_id IS NULL",
+            (repo["repository_uuidv4"],),
+        )
+        return {
+            "repository_uuidv4": repo["repository_uuidv4"],
+            "parsed_result_uuidv4": selected[0] if selected else None,
+            "historical": False,
+        }
+
+    def git_content(self, context, object_id):
+        return self.s.one(
+            f"SELECT t.*,c.byte_length FROM {self.git_relation('text_facts', context)} t JOIN contents c USING(content_id) WHERE t.repository_uuidv4=? AND t.parsed_result_uuidv4=? AND t.git_object_id=?",
+            (*self.git_scope(context), object_id),
+        )
 
     def check(self):
         self.token.check()
@@ -282,15 +322,16 @@ class QueryService:
                                 **path_fields(entry["raw_path"]),
                             )
                         continue
-                    if cid in seen:
+                    fact = entry.get("git_text_fact_uuidv4")
+                    if fact in seen:
                         continue
-                    seen.add(cid)
+                    seen.add(fact)
                     c = self.s.one(
-                        "SELECT text_state,raw_text FROM contents WHERE content_id=?",
-                        (cid,),
+                        "SELECT text_state,raw_text FROM eligible_git_text_facts WHERE git_fact_uuidv4=?",
+                        (fact,),
                     )
-                    if c["raw_text"] is None:
-                        if c["text_state"] == "eligible":
+                    if c is None or c["raw_text"] is None:
+                        if c is None or c["text_state"] == "eligible":
                             self.coverage.add("code", "body_not_saved", content_id=cid)
                         else:
                             self.coverage.excluded_by_policy.append(
@@ -317,6 +358,7 @@ class QueryService:
         row = (
             self.s.one(
                 "SELECT s.* FROM snapshots s JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
+                "JOIN effective_repository_parser_profiles e ON e.repository_uuidv4=s.repository_uuidv4 AND e.fact_kind='git' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4 "
                 "WHERE s.snapshot_id=? AND s.repository_uuidv4=? AND s.published=1",
                 (ident, repo["repository_uuidv4"]),
             )
@@ -399,11 +441,13 @@ class QueryService:
                     "name": f"pr/{r['pr_number']}/{r['origin_role']}",
                     "snapshot": None,
                     "role": r["origin_role"],
+                    "git_acquisition_id": r["git_acquisition_id"],
                 }
                 for r in rows
                 if not kinds
                 or ("pr-head" if r["origin_role"] == "head" else "pr-related") in kinds
             ]
+            selected = self.acquired_root_contexts(repo, selected, scope)
             if pr and not selected:
                 self.coverage.add(
                     "pr",
@@ -420,7 +464,7 @@ class QueryService:
                 "SELECT DISTINCT a.*,o.root_origin_id origin_id,o.snapshot_id,o.raw_ref_name,p.provider_change_request_number pr_number,f.kind ref_kind,ca.role origin_role FROM acquisition_roots a LEFT JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id LEFT JOIN change_requests p ON p.change_request_id=o.change_request_id LEFT JOIN ref_observations f ON f.snapshot_id=o.snapshot_id AND f.raw_ref_name=o.raw_ref_name LEFT JOIN eligible_code_observations co ON co.change_request_id=o.change_request_id AND co.change_request_observation_id=o.change_request_observation_id LEFT JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_uuidv4=? AND a.published=1 AND (o.origin_kind IS NOT 'pr_role' OR co.code_observation_id IS NOT NULL) ORDER BY a.acquisition_root_id,o.root_origin_id,ca.role",
                 (repo["repository_uuidv4"],),
             )
-            return [
+            selected = [
                 {
                     "id": r["origin_id"] or r["acquisition_root_id"],
                     "oid": r["oid"],
@@ -430,6 +474,7 @@ class QueryService:
                     else f"pr/{r['pr_number']}/{r['origin_role'] or r['role']}",
                     "snapshot": r["snapshot_id"],
                     "role": r["origin_role"] or r["ref_kind"] or r["role"],
+                    "git_acquisition_id": r["git_acquisition_id"],
                 }
                 for r in rows
                 if (not refs or r["raw_ref_name"] in [x.encode() for x in refs])
@@ -447,6 +492,7 @@ class QueryService:
                     in kinds
                 )
             ]
+            return self.acquired_root_contexts(repo, selected, scope)
         snapshot = self.snapshot(repo, o)
         if not snapshot:
             return []
@@ -475,11 +521,32 @@ class QueryService:
                 "name": r["raw_ref_name"].decode("utf8", "backslashreplace"),
                 "snapshot": snapshot["snapshot_id"],
                 "role": r["kind"],
+                "repository_uuidv4": repo["repository_uuidv4"],
+                "parsed_result_uuidv4": snapshot["parsed_result_uuidv4"],
+                "historical": bool(o.get("snapshot")),
             }
             for r in selected
         ]
 
-    def peel(self, fmt, oid):
+    def acquired_root_contexts(self, repo, roots, scope):
+        selected = []
+        for root in roots:
+            result = self.s.one(
+                "SELECT repository_uuidv4,parsed_result_uuidv4 FROM selected_git_acquisition_results WHERE repository_uuidv4=? AND git_acquisition_id=?",
+                (repo["repository_uuidv4"], root["git_acquisition_id"]),
+            )
+            if result:
+                selected.append({**root, **dict(result), "historical": True})
+            else:
+                self.coverage.add(
+                    "git",
+                    "acquisition_selection_unresolved",
+                    repository_uuidv4=repo["repository_uuidv4"],
+                    git_acquisition_id=root["git_acquisition_id"],
+                )
+        return selected
+
+    def peel(self, fmt, oid, context):
         row = self.s.one(
             "SELECT * FROM git_objects WHERE object_format=? AND oid=?", (fmt, oid)
         )
@@ -489,8 +556,8 @@ class QueryService:
                 raise CatalogError("INTEGRITY_ERROR", "Tag cycle")
             seen.add(row["git_object_id"])
             row = self.s.one(
-                "SELECT g.* FROM tag_objects t JOIN git_objects g ON g.git_object_id=t.target_git_object_id WHERE t.git_object_id=?",
-                (row["git_object_id"],),
+                f"SELECT g.* FROM {self.git_relation('tag_objects', context)} t JOIN git_objects g ON g.git_object_id=t.target_git_object_id WHERE t.repository_uuidv4=? AND t.parsed_result_uuidv4=? AND t.git_object_id=?",
+                (*self.git_scope(context), row["git_object_id"]),
             )
         if row is None:
             self.coverage.add(
@@ -499,47 +566,62 @@ class QueryService:
         return row
 
     def commit_set(self, roots, first_parent=False):
-        ids = []
+        found = set()
         for root in roots:
-            obj = self.peel(root["object_format"], root["oid"])
-            if obj and obj["type"] == "commit":
-                if not self.s.one(
-                    "SELECT 1 FROM commits WHERE git_object_id=?",
-                    (obj["git_object_id"],),
-                ):
-                    self.coverage.add(
-                        "git",
-                        "commit_structure_missing",
-                        git_object_id=obj["git_object_id"],
-                    )
-                ids.append(obj["git_object_id"])
-        if not ids:
-            return set()
-        values = ",".join("(?)" for _ in ids)
-        where = " WHERE p.parent_ordinal=0" if first_parent else ""
-        return {
-            r[0]
-            for r in self.s.all(
-                f"WITH RECURSIVE reach(git_object_id) AS (VALUES {values} UNION SELECT p.parent_git_object_id FROM commit_parents p JOIN reach r ON p.commit_git_object_id=r.git_object_id{where}) SELECT git_object_id FROM reach",
-                ids,
+            obj = self.peel(root["object_format"], root["oid"], root)
+            if not obj or obj["type"] != "commit":
+                continue
+            if not self.s.one(
+                f"SELECT 1 FROM {self.git_relation('commits', root)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND git_object_id=?",
+                (*self.git_scope(root), obj["git_object_id"]),
+            ):
+                self.coverage.add(
+                    "git",
+                    "commit_structure_missing",
+                    git_object_id=obj["git_object_id"],
+                )
+                continue
+            where = " AND p.parent_ordinal=0" if first_parent else ""
+            found.update(
+                (*self.git_scope(root), row[0])
+                for row in self.s.all(
+                    f"WITH RECURSIVE reach(git_object_id) AS (VALUES (?) UNION SELECT p.parent_git_object_id FROM {self.git_relation('commit_parents', root)} p JOIN reach r ON p.commit_git_object_id=r.git_object_id WHERE p.repository_uuidv4=? AND p.parsed_result_uuidv4=?{where}) SELECT git_object_id FROM reach",
+                    (obj["git_object_id"], *self.git_scope(root)),
+                )
             )
-        }
+        return found
 
-    def tree_entries(self, tree, prefix=b""):
+    def git_commits(self, roots):
+        contexts = {}
+        for root in roots:
+            contexts[self.git_scope(root)] = root
+        streams = []
+        for context in contexts.values():
+            streams.append(
+                self.s.execute(
+                    f"SELECT g.*,c.* FROM {self.git_relation('commits', context)} c JOIN git_objects g ON g.git_object_id=c.git_object_id WHERE c.repository_uuidv4=? AND c.parsed_result_uuidv4=? ORDER BY g.oid,c.parsed_result_uuidv4",
+                    self.git_scope(context),
+                )
+            )
+        return heapq.merge(
+            *streams, key=lambda row: (row["oid"], row["parsed_result_uuidv4"])
+        )
+
+    def tree_entries(self, tree, context, prefix=b""):
         # Raw byte frames avoid text coercion and terminate incomplete/cyclic
         # imported trees while preserving the usable recorded entries.
-        frames = [(tree, prefix, frozenset())]
+        frames = [(tree, prefix, "", frozenset())]
         while frames:
             self.token.check()
             if time.monotonic() > self.deadline:
                 raise TimeoutError()
-            ident, raw_prefix, ancestors = frames.pop()
+            ident, raw_prefix, display_prefix, ancestors = frames.pop()
             if ident in ancestors:
                 self.coverage.add("git", "tree_cycle", git_object_id=ident)
                 continue
             rows = self.s.all(
-                "SELECT * FROM tree_entries WHERE tree_git_object_id=? ORDER BY raw_name",
-                (ident,),
+                f"SELECT * FROM {self.git_relation('tree_entries', context)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND tree_git_object_id=? ORDER BY raw_name",
+                (*self.git_scope(context), ident),
             )
             if not rows:
                 obj = self.s.one(
@@ -552,21 +634,30 @@ class QueryService:
             subtrees = []
             for row in rows:
                 raw_path = raw_prefix + row["raw_name"]
+                display_path = display_prefix + row["decoded_name"]
                 if row["mode"] == 16384:
                     subtrees.append(
                         (
                             row["child_git_object_id"],
                             raw_path + b"/",
+                            display_path + "/",
                             ancestors | {ident},
                         )
                     )
                     continue
-                content = self.s.one(
-                    "SELECT c.* FROM blob_content_map b JOIN contents c ON c.content_id=b.content_id WHERE b.git_object_id=?",
-                    (row["child_git_object_id"],),
-                )
+                content = self.git_content(context, row["child_git_object_id"])
                 yield {
                     "raw_path": raw_path,
+                    "path_display": "".join(
+                        character
+                        if character.isprintable()
+                        else f"\\x{ord(character):02x}"
+                        for character in display_path
+                    ),
+                    "parsed_result_uuidv4": context["parsed_result_uuidv4"],
+                    "git_text_fact_uuidv4": content["git_fact_uuidv4"]
+                    if content
+                    else None,
                     "mode": format(row["mode"], "06o"),
                     "oid": f"{row['child_format']}:{row['child_oid'].hex()}",
                     "git_object_id": row["child_git_object_id"],
@@ -581,12 +672,12 @@ class QueryService:
         scope = o.get("scope") or "current"
         if scope == "current":
             for root in sorted(roots, key=lambda r: r["name"]):
-                obj = self.peel(root["object_format"], root["oid"])
+                obj = self.peel(root["object_format"], root["oid"], root)
                 if not obj or obj["type"] != "commit":
                     continue
                 tree = self.s.one(
-                    "SELECT tree_git_object_id FROM commits WHERE git_object_id=?",
-                    (obj["git_object_id"],),
+                    f"SELECT tree_git_object_id FROM {self.git_relation('commits', root)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND git_object_id=?",
+                    (*self.git_scope(root), obj["git_object_id"]),
                 )
                 if tree is None:
                     self.coverage.add(
@@ -595,7 +686,7 @@ class QueryService:
                         git_object_id=obj["git_object_id"],
                     )
                     continue
-                for entry in self.tree_entries(tree[0]):
+                for entry in self.tree_entries(tree[0], root):
                     yield (
                         (root["name"], entry["raw_path"].hex()),
                         {
@@ -608,14 +699,20 @@ class QueryService:
                     )
         else:
             commits = self.commit_set(roots)
-            for obj in self.s.execute(
-                "SELECT g.*,c.tree_git_object_id FROM commits c JOIN git_objects g ON g.git_object_id=c.git_object_id ORDER BY g.oid"
-            ):
-                if obj["git_object_id"] not in commits:
+            contexts = {self.git_scope(root): root for root in roots}
+            for obj in self.git_commits(roots):
+                scope_key = (obj["repository_uuidv4"], obj["parsed_result_uuidv4"])
+                if (*scope_key, obj["git_object_id"]) not in commits:
                     continue
-                for entry in self.tree_entries(obj["tree_git_object_id"]):
+                for entry in self.tree_entries(
+                    obj["tree_git_object_id"], contexts[scope_key]
+                ):
                     yield (
-                        (obj["oid"].hex(), entry["raw_path"].hex()),
+                        (
+                            obj["oid"].hex(),
+                            obj["parsed_result_uuidv4"],
+                            entry["raw_path"].hex(),
+                        ),
                         {
                             "repository_uuidv4": repo["repository_uuidv4"],
                             "commit": f"{obj['object_format']}:{obj['oid'].hex()}",
@@ -817,8 +914,11 @@ class QueryService:
         ):
             repo = self.single_repo(o)
             if command == "commits compare":
-                left = self.commit_set(self.roots(repo, {**o, "refs": [o["left"]]}))
-                right = self.commit_set(self.roots(repo, {**o, "refs": [o["right"]]}))
+                left_roots = self.roots(repo, {**o, "refs": [o["left"]]})
+                right_roots = self.roots(repo, {**o, "refs": [o["right"]]})
+                roots = left_roots + right_roots
+                left = self.commit_set(left_roots)
+                right = self.commit_set(right_roots)
                 ids = {
                     "left-only": left - right,
                     "right-only": right - left,
@@ -828,12 +928,34 @@ class QueryService:
             else:
                 if o.get("commit"):
                     oid = GitOid.parse(o["commit"])
-                    obj = self.peel(oid.algorithm, oid.value)
+                    context = self.git_context(repo, o)
+                    root_object = s.one(
+                        "SELECT git_object_id,type FROM git_objects WHERE object_format=? AND oid=?",
+                        (oid.algorithm, oid.value),
+                    )
+                    if root_object:
+                        context = object_context(
+                            s,
+                            context,
+                            root_object["git_object_id"],
+                            root_object["type"],
+                        )
+                    if context.get("selection_unresolved"):
+                        self.coverage.add(
+                            "git",
+                            "git_interpretation_selection_unresolved",
+                            repository_uuidv4=repo["repository_uuidv4"],
+                            git_object_id=root_object["git_object_id"],
+                        )
+                        return
+                    obj = self.peel(oid.algorithm, oid.value, context)
                     if not obj or not self.public_object(repo, obj["git_object_id"]):
                         raise CatalogError(
                             "NOT_FOUND", "Commit not publicly acquired for this repo"
                         )
-                    roots = [{"object_format": oid.algorithm, "oid": oid.value}]
+                    roots = [
+                        {"object_format": oid.algorithm, "oid": oid.value, **context}
+                    ]
                 else:
                     if not o.get("ref"):
                         raise CatalogError(
@@ -841,28 +963,35 @@ class QueryService:
                         )
                     roots = self.roots(repo, {**o, "refs": [o["ref"]]})
                 ids = self.commit_set(roots, o.get("first_parent", False))
+                if not roots:
+                    return
                 if command == "commits show":
-                    obj = self.peel(roots[0]["object_format"], roots[0]["oid"])
+                    obj = self.peel(
+                        roots[0]["object_format"], roots[0]["oid"], roots[0]
+                    )
                     if not obj or obj["type"] != "commit":
                         raise CatalogError(
                             "NOT_FOUND", "Stored commit structure missing"
                         )
-                    ids = {obj["git_object_id"]}
+                    ids = {(*self.git_scope(roots[0]), obj["git_object_id"])}
                 if command in ("tree list", "file show"):
-                    obj = self.peel(roots[0]["object_format"], roots[0]["oid"])
+                    obj = self.peel(
+                        roots[0]["object_format"], roots[0]["oid"], roots[0]
+                    )
                     if not obj or obj["type"] not in ("tree", "commit"):
                         raise CatalogError(
                             "INVALID_ARGUMENT",
                             "Tree query requires a commit or tree root",
                         )
-                    tree = (
-                        obj["git_object_id"]
-                        if obj["type"] == "tree"
-                        else s.one(
-                            "SELECT tree_git_object_id FROM commits WHERE git_object_id=?",
-                            (obj["git_object_id"],),
-                        )[0]
-                    )
+                    tree = obj["git_object_id"]
+                    if obj["type"] == "commit":
+                        structure = s.one(
+                            f"SELECT tree_git_object_id FROM {self.git_relation('commits', roots[0])} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND git_object_id=?",
+                            (*self.git_scope(roots[0]), obj["git_object_id"]),
+                        )
+                        if structure is None:
+                            return
+                        tree = structure[0]
                     wanted = None
                     if command == "file show":
                         from repo_catalog.application.target_queries import (
@@ -871,7 +1000,7 @@ class QueryService:
 
                         wanted = TargetQueryService._path(o)
                     found = False
-                    for entry in self.tree_entries(tree):
+                    for entry in self.tree_entries(tree, roots[0]):
                         if wanted is not None and entry["raw_path"] != wanted:
                             continue
                         found = True
@@ -883,8 +1012,8 @@ class QueryService:
                         if command == "file show":
                             content = (
                                 s.one(
-                                    "SELECT * FROM contents WHERE content_id=?",
-                                    (entry["content_id"],),
+                                    "SELECT t.*,c.byte_length FROM eligible_git_text_facts t JOIN contents c USING(content_id) WHERE git_fact_uuidv4=?",
+                                    (entry["git_text_fact_uuidv4"],),
                                 )
                                 if entry["content_id"]
                                 else None
@@ -900,27 +1029,28 @@ class QueryService:
                                     content_id=entry["content_id"],
                                     **path_fields(raw),
                                 )
-                        yield [raw.hex()], {**entry, **path_fields(raw)}
+                        yield [raw.hex()], {**path_fields(raw), **entry}
                     if wanted is not None and not found:
                         raise CatalogError(
                             "NOT_FOUND", "Raw path not present in stored tree"
                         )
                     return
-            for r in s.execute(
-                "SELECT g.*,c.* FROM commits c JOIN git_objects g ON g.git_object_id=c.git_object_id ORDER BY g.oid"
-            ):
-                if r["git_object_id"] not in ids:
+            contexts = {self.git_scope(root): root for root in roots}
+            for r in self.git_commits(roots):
+                scope_key = (r["repository_uuidv4"], r["parsed_result_uuidv4"])
+                if (*scope_key, r["git_object_id"]) not in ids:
                     continue
+                context = contexts[scope_key]
                 parents = s.all(
-                    "SELECT g.object_format,g.oid FROM commit_parents p JOIN git_objects g ON g.git_object_id=p.parent_git_object_id WHERE p.commit_git_object_id=? ORDER BY parent_ordinal",
-                    (r["git_object_id"],),
+                    f"SELECT g.object_format,g.oid FROM {self.git_relation('commit_parents', context)} p JOIN git_objects g ON g.git_object_id=p.parent_git_object_id WHERE p.repository_uuidv4=? AND p.parsed_result_uuidv4=? AND p.commit_git_object_id=? ORDER BY parent_ordinal",
+                    (*scope_key, r["git_object_id"]),
                 )
                 tree = s.one(
                     "SELECT * FROM git_objects WHERE git_object_id=?",
                     (r["tree_git_object_id"],),
                 )
                 yield (
-                    [r["oid"].hex()],
+                    [r["oid"].hex(), r["parsed_result_uuidv4"]],
                     {
                         **oid_fields(r),
                         "repository_uuidv4": repo["repository_uuidv4"],
@@ -928,7 +1058,8 @@ class QueryService:
                             f"{p['object_format']}:{p['oid'].hex()}" for p in parents
                         ],
                         "tree": f"{tree['object_format']}:{tree['oid'].hex()}",
-                        "message": r["raw_message"].decode("utf8", "replace"),
+                        "message": r["message_text"],
+                        "parsed_result_uuidv4": r["parsed_result_uuidv4"],
                         "message_b64": base64.b64encode(r["raw_message"]).decode(),
                         "raw_headers_b64": base64.b64encode(r["raw_headers"]).decode(),
                         "metadata": json.loads(r["metadata"]),
@@ -1020,32 +1151,54 @@ class QueryService:
                 literal = self.literal(o)
             for repo in repos:
                 if command == "search commits":
-                    ids = self.commit_set(self.roots(repo, o))
+                    roots = self.roots(repo, o)
+                    ids = self.commit_set(roots)
                     needle = literal.encode("utf8")
-                    for r in s.execute(
-                        "SELECT g.*,c.raw_message FROM commits c JOIN git_objects g ON g.git_object_id=c.git_object_id ORDER BY g.oid"
-                    ):
-                        message = r["raw_message"].decode("utf8", "replace")
+                    for r in self.git_commits(roots):
+                        message = r["message_text"]
                         if (
-                            r["git_object_id"] in ids
-                            and needle in r["raw_message"]
+                            (
+                                r["repository_uuidv4"],
+                                r["parsed_result_uuidv4"],
+                                r["git_object_id"],
+                            )
+                            in ids
+                            and literal in message
                             and self.literal_match(
-                                "commits", r["git_object_id"], message, literal
+                                "commits", r["git_fact_uuidv4"], message, literal
                             )
                         ):
-                            offset = r["raw_message"].index(needle)
+                            offset = r["raw_message"].find(needle)
+                            match_bytes = len(needle)
+                            if offset < 0:
+                                encoding = s.one(
+                                    "SELECT coalesce(json_extract(p.definition_json,'$.settings.git_metadata_encoding'),'utf-8') FROM parsed_results r JOIN parser_profiles p USING(parser_profile_uuidv4) WHERE r.parsed_result_uuidv4=?",
+                                    (r["parsed_result_uuidv4"],),
+                                )[0]
+                                offset = len(
+                                    message[: message.index(literal)].encode(encoding)
+                                )
+                                match_bytes = len(literal.encode(encoding))
                             yield (
-                                [repo["repository_uuidv4"], r["oid"].hex()],
+                                [
+                                    repo["repository_uuidv4"],
+                                    r["oid"].hex(),
+                                    r["parsed_result_uuidv4"],
+                                ],
                                 {
                                     **oid_fields(r),
                                     "repository_uuidv4": repo["repository_uuidv4"],
                                     "message": message,
+                                    "parsed_result_uuidv4": r["parsed_result_uuidv4"],
                                     "message_b64": base64.b64encode(
                                         r["raw_message"]
                                     ).decode(),
                                     "byte_start": offset,
-                                    "byte_end": offset + len(needle),
-                                    "line": r["raw_message"][:offset].count(b"\n") + 1,
+                                    "byte_end": offset + match_bytes,
+                                    "line": message[: message.index(literal)].count(
+                                        "\n"
+                                    )
+                                    + 1,
                                 },
                             )
                     continue
@@ -1071,20 +1224,24 @@ class QueryService:
                         if not entry["content_id"]:
                             continue
                         c = s.one(
-                            "SELECT * FROM contents WHERE content_id=?",
-                            (entry["content_id"],),
+                            "SELECT * FROM eligible_git_text_facts WHERE git_fact_uuidv4=?",
+                            (entry["git_text_fact_uuidv4"],),
                         )
-                        if c["raw_text"] is None:
+                        if c is None or c["raw_text"] is None:
                             continue
                         if not self.literal_match(
-                            "code", c["content_id"], c["raw_text"], literal
+                            "code", c["git_fact_uuidv4"], c["raw_text"], literal
                         ):
                             continue
                         offset = c["raw_text"].index(literal)
+                        encoding = s.one(
+                            "SELECT coalesce(json_extract(p.definition_json,'$.settings.git_text_encoding'),'utf-8') FROM parsed_results r JOIN parser_profiles p USING(parser_profile_uuidv4) WHERE r.parsed_result_uuidv4=?",
+                            (c["parsed_result_uuidv4"],),
+                        )[0]
                         entry.update(
-                            byte_start=len(c["raw_text"][:offset].encode()),
+                            byte_start=len(c["raw_text"][:offset].encode(encoding)),
                             byte_end=len(
-                                c["raw_text"][: offset + len(literal)].encode()
+                                c["raw_text"][: offset + len(literal)].encode(encoding)
                             ),
                             line=c["raw_text"][:offset].count("\n") + 1,
                             snippet=c["raw_text"][
@@ -1093,17 +1250,29 @@ class QueryService:
                         )
                     yield (
                         [repo["repository_uuidv4"], *sortkey],
-                        {**entry, **path_fields(raw)},
+                        {**path_fields(raw), **entry},
                     )
         elif command == "content show":
-            c = s.one("SELECT * FROM contents WHERE content_id=?", (o["content_id"],))
-            if not c:
+            content = s.one(
+                "SELECT * FROM contents WHERE content_id=?", (o["content_id"],)
+            )
+            if not content:
                 raise CatalogError("NOT_FOUND", "Content not found")
-            if c["raw_text"] is None:
+            facts = s.all(
+                "SELECT * FROM current_git_text_facts WHERE content_id=?",
+                (o["content_id"],),
+            )
+            if not any(fact["raw_text"] is not None for fact in facts):
+                states = {fact["text_state"] for fact in facts}
                 raise CatalogError(
                     "RAW_CONTENT_UNAVAILABLE",
                     "Raw bytes are not durably saved",
-                    {"content_id": c["content_id"], "reason": c["text_state"]},
+                    {
+                        "content_id": content["content_id"],
+                        "reason": next(iter(states))
+                        if len(states) == 1
+                        else "current_selection_unresolved",
+                    },
                 )
             offset = o.get("offset", 0)
             length = o.get("length", 65536)
@@ -1112,12 +1281,20 @@ class QueryService:
                     "INVALID_ARGUMENT",
                     "Raw range must be nonnegative and at most 1 MiB",
                 )
-            raw = c["raw_text"].encode()
+            payload = s.one(
+                "SELECT DISTINCT bytes.body FROM current_git_text_facts fact JOIN git_object_payloads payload USING(git_object_id) JOIN stored_bytes bytes ON bytes.sha256=payload.payload_sha256 WHERE fact.content_id=? AND fact.raw_text IS NOT NULL AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=payload.payload_sha256)",
+                (content["content_id"],),
+            )
+            if payload is None:
+                raise CatalogError(
+                    "RAW_CONTENT_UNAVAILABLE", "Raw bytes are not durably saved"
+                )
+            raw = payload[0]
             part = raw[offset : offset + length]
             yield (
-                [c["content_id"]],
+                [content["content_id"]],
                 {
-                    "content_id": c["content_id"],
+                    "content_id": content["content_id"],
                     "offset": offset,
                     "requested_length": length,
                     "returned_length": len(part),
@@ -1128,7 +1305,7 @@ class QueryService:
                         r["algorithm"]: r["digest"].hex()
                         for r in s.all(
                             "SELECT * FROM content_digests WHERE content_id=?",
-                            (c["content_id"],),
+                            (content["content_id"],),
                         )
                     },
                 },

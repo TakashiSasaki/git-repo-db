@@ -6,6 +6,7 @@ import hashlib
 import json
 import uuid
 
+from repo_catalog.adapters.sqlite.json_contracts import validate_record
 from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
@@ -81,7 +82,7 @@ class ApiFacts:
             derivation={"parser": PARSER},
         )
         self.results[occurrence] = ident
-        self.pending_results[ident] = []
+        self.pending_results[ident] = {}
         return ident
 
     def ownership(self, occurrence):
@@ -110,9 +111,8 @@ class ApiFacts:
             )
 
     def choose(self, result, **scope):
-        choices = self.pending_results.setdefault(result, [])
-        if scope not in choices:
-            choices.append(scope)
+        choices = self.pending_results.setdefault(result, {})
+        choices.setdefault(tuple(sorted(scope.items())), scope)
 
     def publish(self):
         """Seal each complete parsing transaction before publishing selections."""
@@ -126,7 +126,7 @@ class ApiFacts:
                 continue
             self.model.publish_result(result)
             if self.select_results:
-                for scope in scopes:
+                for scope in scopes.values():
                     selected = self.model.ensure_scope_profile(
                         self.profile(),
                         repository_uuidv4=owner[0],
@@ -438,6 +438,57 @@ class ApiFacts:
                         "Completion origin disagrees with its observation",
                     )
                 evidence[field] = anchor[field]
+        collection_ids = evidence.get(
+            "fetch_collection_ids", [collection["fetch_collection_id"]]
+        )
+        if (
+            not isinstance(collection_ids, list)
+            or not collection_ids
+            or collection["fetch_collection_id"] not in collection_ids
+        ):
+            raise CatalogError(
+                "INVALID_PROVENANCE", "Completion must name its root collection"
+            )
+        root = self.s.one(
+            "SELECT repository_uuidv4,change_request_id FROM fetch_collections WHERE fetch_collection_id=?",
+            (collection["fetch_collection_id"],),
+        )
+        for selected in collection_ids:
+            child = self.s.one(
+                "SELECT c.repository_uuidv4,c.change_request_id,scope.request_context FROM fetch_collections c JOIN resume_scopes scope USING(resume_scope_id) WHERE c.fetch_collection_id=?",
+                (selected,),
+            )
+            if (
+                child is None
+                or child[0:2] != root[0:2]
+                or (
+                    selected != collection["fetch_collection_id"]
+                    and json.loads(child[2]).get("parent_fetch_collection_id")
+                    != collection["fetch_collection_id"]
+                )
+            ):
+                raise CatalogError(
+                    "INVALID_PROVENANCE",
+                    "Completion child collection has wrong parent or owner",
+                )
+        evidence["fetch_occurrence_uuidv4s"] = sorted(
+            {
+                row[0]
+                for selected in collection_ids
+                for row in self.s.all(
+                    "SELECT fetch_occurrence_uuidv4 FROM fetch_occurrences WHERE fetch_collection_id=?",
+                    (selected,),
+                )
+            }
+        )
+        validate_record(
+            self.s.connection,
+            "completion_markers",
+            {
+                "fetch_collection_id": collection["fetch_collection_id"],
+                "evidence": canonical(evidence),
+            },
+        )
         self.s.execute(
             "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
             (

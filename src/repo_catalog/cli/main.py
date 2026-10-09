@@ -318,13 +318,29 @@ def parser():
     export = exchange.add_parser("export")
     export.add_argument("--repo", required=True)
     export.add_argument("--output", required=True)
+    export.add_argument(
+        "--fetch",
+        action="append",
+        help="Portable fetch occurrence UUID; repeat for an explicit set",
+    )
+    export.add_argument(
+        "--collection",
+        help="Catalog-local collection ID; optionally restrict with --fetch",
+    )
     exchange.add_parser("import").add_argument("--input", required=True)
     exchange.add_parser("staging")
     profiles = commands.add_parser("parser").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
     reparse = profiles.add_parser("reparse")
-    reparse.add_argument("fetch_occurrence_uuidv4")
+    reparse.add_argument(
+        "fetch_occurrence_uuidv4", help="Portable fetch UUID or Git acquisition ID"
+    )
+    reparse.add_argument(
+        "--profile",
+        dest="profile_uuidv4",
+        help="Explicit parser profile UUID for Git reparse",
+    )
     reparse.add_argument("--select", action="store_true")
     for action in (
         "register",
@@ -461,7 +477,12 @@ def dispatch(args, token):
 
         exchange = ExchangeService(path)
         if args.action == "export":
-            return exchange.export_repository(args.repo, args.output)
+            return exchange.export_repository(
+                args.repo,
+                args.output,
+                fetch_occurrence_uuidv4s=args.fetch,
+                fetch_collection_id=args.collection,
+            )
         if args.action == "import":
             return exchange.import_file(args.input)
         return exchange.staging()

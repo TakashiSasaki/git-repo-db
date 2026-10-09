@@ -744,8 +744,8 @@
     "policy": "whole-profile-v1",
     "reports": [
       {
-        "executed_passed": 1014,
-        "sha256": "1d7fa1a054022e32a303302a2730f14227a298ac5821260496dce69dff84b421",
+        "executed_passed": 1161,
+        "sha256": "a1b03e1b86198e039a7a6089bf70bb2e2348c463149e19642523b4e19cfe545a",
         "skipped": 0
       }
     ]
@@ -798,35 +798,43 @@
       }
     ],
     "implementation": {
-      "adapters/git/importer.py": "aae297c55064433dada9663f7cf7d18cafd39e9c4963c51a9b9d4573f8a22b48",
+      "adapters/git/importer.py": "4abf0992493d6c0f441cd52999f8e93f55bd1f4c06e7a67bce228a9d6eb89788",
+      "adapters/git/parsing.py": "a6b23e46ca6f8df11bc13d60811890c3dd31c27130877e469dc510d283a3f902",
       "adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
-      "adapters/github/collector.py": "444298eb3471d3ab97cdcfc229944aa4b8a9ab83b94501f9f549f3de9925ef9d",
+      "adapters/github/collector.py": "bc8d75a1c977ebaeea7aa6cce05d110af2c1aa5e680a5e4794d4bbc22abbfe81",
       "adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
-      "adapters/github/persistence.py": "60a5ed56d8e10b564af6d13eafe5e04b0f6476bd46cc596b0adec1f705a93902",
+      "adapters/github/persistence.py": "c50ea59404c28471616af04ce8e10e23c17e519fb2328b62337505364a7ef920",
       "adapters/github/transport.py": "c7e6fdcd382276555b3e83ae5a710a0c222a34db366fea413c9759bbdefd8aef",
-      "adapters/sqlite/identity_relations.py": "f59ef980a6c61cf8db276c947e4c4246b66d608d64ef9bbfeee535c16a6fa765",
-      "adapters/sqlite/parser_model.py": "3cf979f5bc3d7e56af88c7e046e321960d701a646a710586eb5529ac61366b4f",
+      "adapters/sqlite/coverage.py": "6913211da033ed773a146c674cf25c014b928ed3de403b9044a19a7da183089b",
+      "adapters/sqlite/identity_relations.py": "8bf2c637b61eac126d7c8a2f9f3f058684f55e265db4d711a8e05adf933cd018",
+      "adapters/sqlite/json_contracts.py": "f75b152acce243bb63521f640d0c4fe86164f9d061fea8f5b47e1d415a52f786",
+      "adapters/sqlite/parser_model.py": "241b3f923cd224f8f2964836fa46eb116cd55553dbe153d55b7e363ecd473ad7",
       "adapters/sqlite/payloads.py": "d1be12a37ff4e7001582c0f7d99486eff81feddb800026f9ae3d5577cef7224a",
       "adapters/sqlite/store.py": "c09d21890762b0436e48efcb81859189bb68f57f223d6028c4e3f80575cf2e77",
       "adapters/sqlite/text_bodies.py": "a82e87a56ca071e5ce69717acb6523b78c03cbe5df8cdf82851f8721b61c74f1",
       "application/collection_service.py": "bed6ec377c97cdac720d9887f45c51a77579002e6ef0e8baae2947b8d8b43191",
       "application/job_plans.py": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a",
-      "application/parsing_service.py": "4be129c77031f9d0f078eacf55b13a5b72a907cd4e75fc8db50565173bab8210",
-      "application/repository_identity.py": "d1dd4db8eb657730cff7a36b6c7a583f65329268bb8d88a03974651a6400bd41",
+      "application/parsing_service.py": "eef57d0c0cd2ac771aac6ed3f24ba7082c83ad395a736a38f17328420eac9c63",
+      "application/repository_identity.py": "5e783ac2e3ca3997b2d15d2299c7bd57acee9421485a69d8b35017462dd874b9",
+      "application/source_service.py": "af6e05064e567602c22b94e323dc3ccb86ffee188b85e081d28dccf79b77f2ca",
       "config.py": "7f2ed7cdc9558d0fc272da492b01d75d4ccf1be535543ef60cfa8c67ae8c9b8a",
       "domain/document.py": "69d02e0f9880f9249b3cdeab9fcf1ef8e19a45876498e35a6675e655714ccd0e",
+      "domain/git_object.py": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7",
       "domain/models.py": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b",
-      "domain/payload.py": "69c01eb68e5b0bb65b48c0e0f09ce2d4e107238960df63d73fab12b46d701d0a",
+      "domain/payload.py": "d52bd08d785e016ff17996cfec36223f160e96e529cd73ff9f4f5232727d7e3e",
       "domain/pr_scope.py": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a",
       "domain/time.py": "eb4dc47a917797cdc210daa500a9c7e2a792708554d5f8717fce8ff72075d647"
     },
     "output_schema": {
-      "catalog3": 12,
-      "ddl_sha256": "9d70dec0fc4bc896b404d27e6ae9710593ac91e09ee4ff3755970d1581b4a0ed",
+      "catalog3": 13,
+      "ddl_sha256": "7ce17169bedf10cae7f28decd2fa8239775713d42b515047ee3c6b0ba3a38738",
       "facts": "immutable-result-owned"
     },
     "settings": {
       "format": 1,
+      "git_metadata_encoding": "utf-8",
+      "git_metadata_errors": "backslashreplace",
+      "git_text_encoding": "utf-8",
       "max_text_blob_bytes": 8388608,
       "parser": "repo-catalog-builtin",
       "preservation_profile": "catalog-text-v1",

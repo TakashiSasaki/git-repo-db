@@ -27,7 +27,9 @@ def install():
             old["parser_profile_uuidv4"]
             if old
             else self.register_profile(
-                definition, parser_version="builtin-1", profile_version="catalog3-12"
+                definition,
+                parser_version="builtin-1",
+                profile_version=f"catalog3-{definition['output_schema']['catalog3']}",
             )
         )
         verification = self._row(

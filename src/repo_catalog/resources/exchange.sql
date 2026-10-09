@@ -46,3 +46,15 @@ CREATE TABLE exchange_selection_blocks(
  record_key TEXT NOT NULL,
  PRIMARY KEY(scope_kind,scope_uuidv4,record_key)
 ) STRICT;
+
+-- Completion evidence has independent portable identity. Its sealed fetch set
+-- is checked at exchange admission; UUID constraints apply to direct SQL too.
+CREATE TRIGGER completion_marker_uuid BEFORE INSERT ON completion_markers
+WHEN length(NEW.completion_marker_uuidv4)!=36 OR length(CAST(NEW.completion_marker_uuidv4 AS BLOB))!=36 OR NEW.completion_marker_uuidv4!=lower(NEW.completion_marker_uuidv4)
+ OR NEW.completion_marker_uuidv4 NOT GLOB '????????-????-4???-[89ab]???-????????????'
+ OR replace(NEW.completion_marker_uuidv4,'-','') GLOB '*[^0-9a-f]*'
+BEGIN SELECT RAISE(ABORT,'completion marker requires canonical UUIDv4'); END;
+-- Disputed immutable completeness evidence cannot retain an arrival-order winner.
+CREATE TABLE exchange_blocked_coverage_claims(
+ coverage_claim_id INTEGER PRIMARY KEY REFERENCES coverage_claims(coverage_claim_id)
+) STRICT;

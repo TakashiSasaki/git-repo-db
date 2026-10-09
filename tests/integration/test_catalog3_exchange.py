@@ -8,6 +8,7 @@ import uuid
 
 import pytest
 
+from repo_catalog.adapters.sqlite.coverage import freeze_complete_proof
 from repo_catalog.adapters.sqlite.exchange import Graph
 from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.payloads import intern_payload
@@ -156,6 +157,35 @@ def fixture(
         "observation": observation,
         "cr": cr,
     }
+
+
+def complete_collection(db, fetch_uuid):
+    """Seal explicit immutable proof used by transportable coverage."""
+    fetch = db.execute(
+        "SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences WHERE fetch_occurrence_uuidv4=?",
+        (fetch_uuid,),
+    ).fetchone()
+    scope = db.execute(
+        "SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?",
+        (fetch[0],),
+    ).fetchone()[0]
+    manifest = [
+        row[0]
+        for row in db.execute(
+            "SELECT fetch_occurrence_uuidv4 FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY fetch_occurrence_uuidv4",
+            (fetch[0],),
+        )
+    ]
+    db.execute(
+        "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
+        (
+            scope,
+            fetch[0],
+            json.dumps({"terminal": True, "fetch_occurrence_uuidv4s": manifest}),
+            fetch[1],
+        ),
+    )
+    return fetch[0]
 
 
 def receive(db, unit):
@@ -481,8 +511,21 @@ def test_truncated_unit_cannot_publish_complete_coverage(databases):
         (scope, expected["repository"], expected["cr"]),
     )
     source.execute(
-        "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES(?,'complete',-1)",
-        (scope,),
+        "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(?,'complete',-1,?)",
+        (
+            scope,
+            freeze_complete_proof(
+                source,
+                -1,
+                json.dumps(
+                    {
+                        "fetch_collection_ids": [
+                            complete_collection(source, expected["fetch"])
+                        ]
+                    }
+                ),
+            ),
+        ),
     )
     unit = Graph(source).export(expected["repository"])
     partial = dict(

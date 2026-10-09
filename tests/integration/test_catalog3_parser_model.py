@@ -28,6 +28,10 @@ def model():
         "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES(?,?,'git','{}')",
         (acquisition, repo),
     )
+    db.execute(
+        "INSERT INTO git_acquisition_publications VALUES(?,?,'[]','[]')",
+        (acquisition, repo),
+    )
     profile = register_test_profile(db)
     parser = ParserModel(db)
     parser.ensure_scope_profile(profile, repository_uuidv4=repo, fact_kind="git")

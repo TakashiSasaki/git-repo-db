@@ -9,7 +9,7 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=12),
+    schema_version INTEGER NOT NULL CHECK(schema_version=13),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
@@ -212,7 +212,7 @@ sha256 BLOB PRIMARY KEY CHECK(length(sha256)=32), body BLOB NOT NULL,
     byte_length INTEGER NOT NULL CHECK(byte_length>=0 AND byte_length=length(body))
 ) STRICT;
 CREATE TABLE payloads(
-representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_normalized')),
+representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_normalized','git-object-raw-v1')),
     sha256 BLOB NOT NULL REFERENCES stored_bytes(sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
     PRIMARY KEY(representation,sha256)
 ) STRICT;
@@ -249,6 +249,7 @@ CREATE TABLE resume_cursors(
 resume_scope_id TEXT PRIMARY KEY REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, incremental_scan_id TEXT, next_cursor TEXT, reusable INTEGER NOT NULL CHECK(reusable IN (0,1)), FOREIGN KEY(incremental_scan_id,resume_scope_id) REFERENCES incremental_scans(incremental_scan_id,resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE completion_markers(
+completion_marker_uuidv4 TEXT NOT NULL UNIQUE DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',(random() & 3)+1,1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
 completion_marker_id INTEGER PRIMARY KEY, resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, asserted_state TEXT NOT NULL CHECK(asserted_state IN ('complete','partial','unknown')), evidence TEXT NOT NULL CHECK(json_valid(evidence) AND json_type(evidence)='object'), observed_at_us INTEGER
 ) STRICT;
 CREATE TABLE coverage_scopes(
@@ -272,15 +273,14 @@ coverage_claim_id INTEGER PRIMARY KEY,
 CREATE VIEW current_coverage AS
 SELECT s.coverage_scope_id,s.repository_uuidv4,s.change_request_id,s.kind,
        max(c.observed_at_us) AS observed_at_us,
-       CASE WHEN count(DISTINCT CASE WHEN c.coverage_state!='unknown' THEN c.coverage_state END)>1
-            THEN 'conflict'
-            ELSE coalesce(max(CASE WHEN c.coverage_state!='unknown' THEN c.coverage_state END),'unknown')
-       END AS coverage_state,
+       CASE WHEN count(b.coverage_claim_id)>0 THEN 'conflict'
+            WHEN count(DISTINCT CASE WHEN c.coverage_state!='unknown' THEN c.coverage_state END)>1 THEN 'conflict'
+            ELSE coalesce(max(CASE WHEN c.coverage_state!='unknown' THEN c.coverage_state END),'unknown') END AS coverage_state,
        count(c.coverage_claim_id) AS claim_count
 FROM coverage_scopes s
-LEFT JOIN coverage_claims c
-  ON c.coverage_scope_id=s.coverage_scope_id
+LEFT JOIN coverage_claims c ON c.coverage_scope_id=s.coverage_scope_id
  AND c.observed_at_us=(SELECT max(latest.observed_at_us) FROM coverage_claims latest WHERE latest.coverage_scope_id=s.coverage_scope_id)
+LEFT JOIN exchange_blocked_coverage_claims b ON b.coverage_claim_id=c.coverage_claim_id
 GROUP BY s.coverage_scope_id;
 CREATE TABLE reviews(
  change_request_id TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind='review'),
@@ -315,19 +315,23 @@ CREATE TABLE git_objects(
 git_object_id INTEGER PRIMARY KEY, object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), oid BLOB NOT NULL CHECK((object_format='sha1' AND length(oid)=20) OR (object_format='sha256' AND length(oid)=32)), type TEXT NOT NULL CHECK(type IN ('commit','tree','blob','tag')), size INTEGER NOT NULL CHECK(size>=0), verified INTEGER NOT NULL CHECK(verified IN (0,1)), UNIQUE(object_format,oid)
 ) STRICT;
 CREATE TABLE commits(
-git_object_id INTEGER PRIMARY KEY REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, tree_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, raw_headers BLOB NOT NULL, raw_message BLOB NOT NULL, metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object')
+git_fact_uuidv4 TEXT PRIMARY KEY NOT NULL, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL, git_acquisition_id TEXT NOT NULL,
+git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id), tree_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id), raw_headers BLOB NOT NULL, raw_message BLOB NOT NULL, message_text TEXT NOT NULL, metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'), UNIQUE(parsed_result_uuidv4,git_object_id), UNIQUE(parsed_result_uuidv4,repository_uuidv4,git_object_id), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4), FOREIGN KEY(repository_uuidv4,git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id), FOREIGN KEY(repository_uuidv4,tree_git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id)
 ) STRICT;
 CREATE TABLE commit_parents(
-commit_git_object_id INTEGER NOT NULL REFERENCES commits(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, parent_ordinal INTEGER NOT NULL CHECK(parent_ordinal>=0), parent_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, PRIMARY KEY(commit_git_object_id,parent_ordinal)
+git_fact_uuidv4 TEXT PRIMARY KEY NOT NULL, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL, git_acquisition_id TEXT NOT NULL,
+commit_git_object_id INTEGER NOT NULL, parent_ordinal INTEGER NOT NULL CHECK(parent_ordinal>=0), parent_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id), UNIQUE(parsed_result_uuidv4,commit_git_object_id,parent_ordinal), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4,commit_git_object_id) REFERENCES commits(parsed_result_uuidv4,repository_uuidv4,git_object_id), FOREIGN KEY(repository_uuidv4,parent_git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id)
 ) STRICT;
 CREATE TABLE tree_entries(
-tree_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, raw_name BLOB NOT NULL CHECK(length(raw_name)>0), mode INTEGER NOT NULL CHECK(mode IN (16384,33188,33261,40960,57344)), child_format TEXT NOT NULL CHECK(child_format IN ('sha1','sha256')), child_oid BLOB NOT NULL CHECK((child_format='sha1' AND length(child_oid)=20) OR (child_format='sha256' AND length(child_oid)=32)), child_git_object_id INTEGER REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, PRIMARY KEY(tree_git_object_id,raw_name), CHECK((mode=57344 AND child_git_object_id IS NULL) OR (mode!=57344 AND child_git_object_id IS NOT NULL))
+git_fact_uuidv4 TEXT PRIMARY KEY NOT NULL, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL, git_acquisition_id TEXT NOT NULL,
+tree_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id), raw_name BLOB NOT NULL CHECK(length(raw_name)>0), decoded_name TEXT NOT NULL, mode INTEGER NOT NULL CHECK(mode IN (16384,33188,33261,40960,57344)), child_format TEXT NOT NULL CHECK(child_format IN ('sha1','sha256')), child_oid BLOB NOT NULL CHECK((child_format='sha1' AND length(child_oid)=20) OR (child_format='sha256' AND length(child_oid)=32)), child_git_object_id INTEGER REFERENCES git_objects(git_object_id), UNIQUE(parsed_result_uuidv4,tree_git_object_id,raw_name), CHECK((mode=57344 AND child_git_object_id IS NULL) OR (mode!=57344 AND child_git_object_id IS NOT NULL)), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4), FOREIGN KEY(repository_uuidv4,tree_git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id), FOREIGN KEY(repository_uuidv4,child_git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id)
 ) STRICT;
 CREATE TABLE tag_objects(
-git_object_id INTEGER PRIMARY KEY REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, target_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, raw_payload BLOB NOT NULL
+git_fact_uuidv4 TEXT PRIMARY KEY NOT NULL, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL, git_acquisition_id TEXT NOT NULL,
+git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id), target_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id), raw_payload BLOB NOT NULL, UNIQUE(parsed_result_uuidv4,git_object_id), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4), FOREIGN KEY(repository_uuidv4,git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id), FOREIGN KEY(repository_uuidv4,target_git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id)
 ) STRICT;
 CREATE TABLE contents(
-content_id INTEGER PRIMARY KEY, byte_length INTEGER NOT NULL CHECK(byte_length>=0), raw_text TEXT, text_state TEXT NOT NULL CHECK(text_state IN ('eligible','nul','non_utf8','oversize','unknown')), created_at_us INTEGER, CHECK(raw_text IS NULL OR length(CAST(raw_text AS BLOB))=byte_length)
+content_id INTEGER PRIMARY KEY, byte_length INTEGER NOT NULL CHECK(byte_length>=0), created_at_us INTEGER
 ) STRICT;
 CREATE TABLE content_digests(
 content_id INTEGER NOT NULL REFERENCES contents(content_id) ON UPDATE RESTRICT ON DELETE RESTRICT, representation TEXT NOT NULL CHECK(representation='raw-content-v1'), algorithm TEXT NOT NULL CHECK(algorithm IN ('md5','sha1','sha256')), digest BLOB NOT NULL CHECK((algorithm='md5' AND length(digest)=16) OR (algorithm='sha1' AND length(digest)=20) OR (algorithm='sha256' AND length(digest)=32)), verified_at_us INTEGER, pipeline_version TEXT NOT NULL, PRIMARY KEY(content_id,representation,algorithm)
@@ -344,10 +348,12 @@ snapshot_id TEXT NOT NULL REFERENCES snapshots(snapshot_id) ON UPDATE RESTRICT O
 FOREIGN KEY(snapshot_id,repository_uuidv4,parsed_result_uuidv4) REFERENCES snapshots(snapshot_id,repository_uuidv4,parsed_result_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4)
 ) STRICT;
 CREATE TABLE root_manifests(
-tree_git_object_id INTEGER PRIMARY KEY REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, complete INTEGER NOT NULL CHECK(complete IN (0,1))
+git_fact_uuidv4 TEXT PRIMARY KEY NOT NULL, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL, git_acquisition_id TEXT NOT NULL,
+tree_git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id), complete INTEGER NOT NULL CHECK(complete IN (0,1)), UNIQUE(parsed_result_uuidv4,tree_git_object_id), UNIQUE(parsed_result_uuidv4,repository_uuidv4,tree_git_object_id), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4), FOREIGN KEY(repository_uuidv4,tree_git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id)
 ) STRICT;
 CREATE TABLE root_manifest_entries(
-tree_git_object_id INTEGER NOT NULL REFERENCES root_manifests(tree_git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, raw_path BLOB NOT NULL, mode INTEGER NOT NULL CHECK(mode IN (33188,33261,40960,57344)), git_object_id INTEGER REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), oid BLOB NOT NULL CHECK((object_format='sha1' AND length(oid)=20) OR (object_format='sha256' AND length(oid)=32)), PRIMARY KEY(tree_git_object_id,raw_path), CHECK((mode=57344 AND git_object_id IS NULL) OR (mode!=57344 AND git_object_id IS NOT NULL))
+git_fact_uuidv4 TEXT PRIMARY KEY NOT NULL, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL, git_acquisition_id TEXT NOT NULL,
+tree_git_object_id INTEGER NOT NULL, raw_path BLOB NOT NULL, decoded_path TEXT NOT NULL, mode INTEGER NOT NULL CHECK(mode IN (33188,33261,40960,57344)), git_object_id INTEGER REFERENCES git_objects(git_object_id), object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), oid BLOB NOT NULL CHECK((object_format='sha1' AND length(oid)=20) OR (object_format='sha256' AND length(oid)=32)), UNIQUE(parsed_result_uuidv4,tree_git_object_id,raw_path), CHECK((mode=57344 AND git_object_id IS NULL) OR (mode!=57344 AND git_object_id IS NOT NULL)), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4,tree_git_object_id) REFERENCES root_manifests(parsed_result_uuidv4,repository_uuidv4,tree_git_object_id), FOREIGN KEY(repository_uuidv4,git_object_id,git_acquisition_id) REFERENCES repository_object_sources(repository_uuidv4,git_object_id,git_acquisition_id)
 ) STRICT;
 CREATE TABLE cache_locators(
 cache_locator_id TEXT PRIMARY KEY, repository_uuidv4 TEXT NOT NULL REFERENCES repositories(repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT, path TEXT NOT NULL, access TEXT NOT NULL CHECK(access IN ('source_readonly','target_active')), state TEXT NOT NULL CHECK(state IN ('available','missing','unknown')), UNIQUE(cache_locator_id,repository_uuidv4)
@@ -432,16 +438,10 @@ CREATE INDEX code_observations_fk_2 ON code_observations(change_request_observat
 CREATE TRIGGER collection_progress_immutable BEFORE UPDATE ON collection_progress WHEN NEW.fetch_collection_id IS NOT OLD.fetch_collection_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER collection_progress_no_replace BEFORE INSERT ON collection_progress WHEN EXISTS(SELECT 1 FROM collection_progress WHERE (fetch_collection_id=NEW.fetch_collection_id) OR (fetch_collection_id=NEW.fetch_collection_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX collection_progress_fk_0 ON collection_progress(job_id,attempt);
-CREATE TRIGGER commit_parents_immutable BEFORE UPDATE ON commit_parents WHEN NEW.commit_git_object_id IS NOT OLD.commit_git_object_id OR NEW.parent_ordinal IS NOT OLD.parent_ordinal OR NEW.parent_git_object_id IS NOT OLD.parent_git_object_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER commit_parents_no_replace BEFORE INSERT ON commit_parents WHEN EXISTS(SELECT 1 FROM commit_parents WHERE (commit_git_object_id=NEW.commit_git_object_id AND parent_ordinal=NEW.parent_ordinal) OR (commit_git_object_id=NEW.commit_git_object_id AND parent_ordinal=NEW.parent_ordinal)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER commit_parents_retain BEFORE DELETE ON commit_parents BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX commit_parents_fk_0 ON commit_parents(parent_git_object_id);
-CREATE TRIGGER commits_immutable BEFORE UPDATE ON commits WHEN NEW.git_object_id IS NOT OLD.git_object_id OR NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.raw_headers IS NOT OLD.raw_headers OR NEW.raw_message IS NOT OLD.raw_message OR NEW.metadata IS NOT OLD.metadata BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER commits_no_replace BEFORE INSERT ON commits WHEN EXISTS(SELECT 1 FROM commits WHERE (git_object_id=NEW.git_object_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER commits_retain BEFORE DELETE ON commits BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX commits_fk_0 ON commits(tree_git_object_id);
-CREATE TRIGGER completion_markers_immutable BEFORE UPDATE ON completion_markers WHEN NEW.completion_marker_id IS NOT OLD.completion_marker_id OR NEW.resume_scope_id IS NOT OLD.resume_scope_id OR NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.asserted_state IS NOT OLD.asserted_state OR NEW.evidence IS NOT OLD.evidence OR NEW.observed_at_us IS NOT OLD.observed_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER completion_markers_no_replace BEFORE INSERT ON completion_markers WHEN EXISTS(SELECT 1 FROM completion_markers WHERE (completion_marker_id=NEW.completion_marker_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER completion_markers_immutable BEFORE UPDATE ON completion_markers WHEN NEW.completion_marker_uuidv4 IS NOT OLD.completion_marker_uuidv4 OR NEW.completion_marker_id IS NOT OLD.completion_marker_id OR NEW.resume_scope_id IS NOT OLD.resume_scope_id OR NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.asserted_state IS NOT OLD.asserted_state OR NEW.evidence IS NOT OLD.evidence OR NEW.observed_at_us IS NOT OLD.observed_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER completion_markers_no_replace BEFORE INSERT ON completion_markers WHEN EXISTS(SELECT 1 FROM completion_markers WHERE (completion_marker_id=NEW.completion_marker_id OR completion_marker_uuidv4=NEW.completion_marker_uuidv4)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER completion_markers_retain BEFORE DELETE ON completion_markers BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX completion_markers_fk_0 ON completion_markers(fetch_collection_id);
 CREATE INDEX completion_markers_fk_1 ON completion_markers(resume_scope_id);
@@ -454,9 +454,6 @@ CREATE INDEX content_locations_fk_0 ON content_locations(cache_locator_id);
 -- Only missing eligible text may be filled. The admission must hash supplied local
 -- bytes against all saved raw-content-v1 digests before this UPDATE; SQL checks
 -- the SHA-256 anchor exists, byte length (CHECK), NUL policy and write-once shape.
-CREATE TRIGGER contents_immutable BEFORE UPDATE ON contents WHEN NEW.content_id IS NOT OLD.content_id OR NEW.byte_length IS NOT OLD.byte_length OR NEW.text_state IS NOT OLD.text_state OR NEW.created_at_us IS NOT OLD.created_at_us OR (NEW.raw_text IS NOT OLD.raw_text AND NOT (OLD.raw_text IS NULL AND NEW.raw_text IS NOT NULL AND OLD.text_state='eligible' AND instr(NEW.raw_text,char(0))=0 AND EXISTS(SELECT 1 FROM content_digests WHERE content_id=OLD.content_id AND representation='raw-content-v1' AND algorithm='sha256'))) BEGIN SELECT RAISE(ABORT,'Immutable content or invalid text completion'); END;
-CREATE TRIGGER contents_no_replace BEFORE INSERT ON contents WHEN EXISTS(SELECT 1 FROM contents WHERE (content_id=NEW.content_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER contents_retain BEFORE DELETE ON contents BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE TRIGGER coverage_claims_immutable BEFORE UPDATE ON coverage_claims BEGIN SELECT RAISE(ABORT,'Immutable coverage claim'); END;
 -- An unassigned INTEGER PRIMARY KEY can appear as -1 in BEFORE INSERT, so only
 -- the semantic key is tested here. SQLite enforces explicit ID uniqueness;
@@ -549,13 +546,7 @@ CREATE INDEX resume_scopes_fk_1 ON resume_scopes(source_id);
 CREATE INDEX resume_scopes_fk_2 ON resume_scopes(repository_uuidv4);
 CREATE TRIGGER review_threads_no_replace BEFORE INSERT ON review_threads WHEN EXISTS(SELECT 1 FROM review_threads WHERE change_request_id=NEW.change_request_id AND provider_resource_id=NEW.provider_resource_id) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX review_threads_fk_0 ON review_threads(change_request_id);
-CREATE TRIGGER root_manifest_entries_immutable BEFORE UPDATE ON root_manifest_entries WHEN NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.raw_path IS NOT OLD.raw_path OR NEW.mode IS NOT OLD.mode OR NEW.git_object_id IS NOT OLD.git_object_id OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER root_manifest_entries_no_replace BEFORE INSERT ON root_manifest_entries WHEN EXISTS(SELECT 1 FROM root_manifest_entries WHERE (tree_git_object_id=NEW.tree_git_object_id AND raw_path=NEW.raw_path) OR (tree_git_object_id=NEW.tree_git_object_id AND raw_path=NEW.raw_path)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER root_manifest_entries_retain BEFORE DELETE ON root_manifest_entries BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX root_manifest_entries_fk_0 ON root_manifest_entries(git_object_id);
-CREATE TRIGGER root_manifests_immutable BEFORE UPDATE ON root_manifests WHEN NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.complete<OLD.complete BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER root_manifests_no_replace BEFORE INSERT ON root_manifests WHEN EXISTS(SELECT 1 FROM root_manifests WHERE (tree_git_object_id=NEW.tree_git_object_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER root_manifests_retain BEFORE DELETE ON root_manifests BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE TRIGGER root_origins_immutable BEFORE UPDATE ON root_origins WHEN NEW.root_origin_id IS NOT OLD.root_origin_id OR NEW.acquisition_root_id IS NOT OLD.acquisition_root_id OR NEW.origin_kind IS NOT OLD.origin_kind OR NEW.raw_ref_name IS NOT OLD.raw_ref_name OR NEW.source_ordinal IS NOT OLD.source_ordinal OR NEW.snapshot_id IS NOT OLD.snapshot_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.change_request_observation_id IS NOT OLD.change_request_observation_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER root_origins_no_replace BEFORE INSERT ON root_origins WHEN EXISTS(SELECT 1 FROM root_origins WHERE (root_origin_id=NEW.root_origin_id) OR (acquisition_root_id=NEW.acquisition_root_id AND origin_kind=NEW.origin_kind AND source_ordinal=NEW.source_ordinal)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER root_origins_retain BEFORE DELETE ON root_origins BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -583,16 +574,10 @@ CREATE TRIGGER sources_no_replace BEFORE INSERT ON sources WHEN EXISTS(SELECT 1 
 CREATE INDEX sources_fk_0 ON sources(service_instance_uuidv4);
 CREATE TRIGGER space_reservations_immutable BEFORE UPDATE ON space_reservations WHEN NEW.job_id IS NOT OLD.job_id OR NEW.attempt IS NOT OLD.attempt BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER space_reservations_no_replace BEFORE INSERT ON space_reservations WHEN EXISTS(SELECT 1 FROM space_reservations WHERE (job_id=NEW.job_id AND attempt=NEW.attempt) OR (job_id=NEW.job_id AND attempt=NEW.attempt)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER tag_objects_immutable BEFORE UPDATE ON tag_objects WHEN NEW.git_object_id IS NOT OLD.git_object_id OR NEW.target_git_object_id IS NOT OLD.target_git_object_id OR NEW.raw_payload IS NOT OLD.raw_payload BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER tag_objects_no_replace BEFORE INSERT ON tag_objects WHEN EXISTS(SELECT 1 FROM tag_objects WHERE (git_object_id=NEW.git_object_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER tag_objects_retain BEFORE DELETE ON tag_objects BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX tag_objects_fk_0 ON tag_objects(target_git_object_id);
 CREATE TRIGGER text_bodies_immutable BEFORE UPDATE ON text_bodies WHEN NEW.text_body_id IS NOT OLD.text_body_id OR NEW.body IS NOT OLD.body OR NEW.byte_length IS NOT OLD.byte_length OR NEW.sha256 IS NOT OLD.sha256 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER text_bodies_no_replace BEFORE INSERT ON text_bodies WHEN EXISTS(SELECT 1 FROM text_bodies WHERE (text_body_id=NEW.text_body_id) OR (sha256=NEW.sha256)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER text_bodies_retain BEFORE DELETE ON text_bodies BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE TRIGGER tree_entries_immutable BEFORE UPDATE ON tree_entries WHEN NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.raw_name IS NOT OLD.raw_name OR NEW.mode IS NOT OLD.mode OR NEW.child_format IS NOT OLD.child_format OR NEW.child_oid IS NOT OLD.child_oid OR NEW.child_git_object_id IS NOT OLD.child_git_object_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER tree_entries_no_replace BEFORE INSERT ON tree_entries WHEN EXISTS(SELECT 1 FROM tree_entries WHERE (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name) OR (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER tree_entries_retain BEFORE DELETE ON tree_entries BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX tree_entries_fk_0 ON tree_entries(child_git_object_id);
 CREATE TRIGGER unresolved_payloads_no_replace BEFORE INSERT ON unresolved_payloads WHEN EXISTS(SELECT 1 FROM unresolved_payloads WHERE (unresolved_payload_id=NEW.unresolved_payload_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER unresolved_payloads_retain BEFORE DELETE ON unresolved_payloads BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -608,8 +593,37 @@ CREATE TRIGGER code_commits_insert BEFORE INSERT ON code_observations WHEN NEW.c
 CREATE TRIGGER code_commits_update BEFORE UPDATE ON code_observations WHEN NEW.commit_code_listing_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM code_listings l WHERE l.code_listing_id=NEW.commit_code_listing_id AND l.change_request_id=NEW.change_request_id AND l.kind='commits' AND l.object_format IS NEW.object_format AND l.head_oid IS NEW.head_oid AND l.base_oid IS NEW.base_oid) BEGIN SELECT RAISE(ABORT,'Code listing kind or context mismatch'); END;
 CREATE TRIGGER code_files_insert BEFORE INSERT ON code_observations WHEN NEW.file_code_listing_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM code_listings l WHERE l.code_listing_id=NEW.file_code_listing_id AND l.change_request_id=NEW.change_request_id AND l.kind='files' AND l.object_format IS NEW.object_format AND l.head_oid IS NEW.head_oid AND l.base_oid IS NEW.base_oid) BEGIN SELECT RAISE(ABORT,'Code listing kind or context mismatch'); END;
 CREATE TRIGGER code_files_update BEFORE UPDATE ON code_observations WHEN NEW.file_code_listing_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM code_listings l WHERE l.code_listing_id=NEW.file_code_listing_id AND l.change_request_id=NEW.change_request_id AND l.kind='files' AND l.object_format IS NEW.object_format AND l.head_oid IS NEW.head_oid AND l.base_oid IS NEW.base_oid) BEGIN SELECT RAISE(ABORT,'Code listing kind or context mismatch'); END;
-CREATE TRIGGER code_complete_insert BEFORE INSERT ON code_observations WHEN NEW.state='complete' AND (NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.commit_code_listing_id AND state='complete') OR NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.file_code_listing_id AND state='complete')) BEGIN SELECT RAISE(ABORT,'Complete code requires complete listings'); END;
-CREATE TRIGGER code_complete_update BEFORE UPDATE ON code_observations WHEN NEW.state='complete' AND (NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.commit_code_listing_id AND state='complete') OR NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.file_code_listing_id AND state='complete')) BEGIN SELECT RAISE(ABORT,'Complete code requires complete listings'); END;
+CREATE TRIGGER code_complete_insert BEFORE INSERT ON code_observations
+WHEN NEW.state='complete' AND EXISTS(
+ SELECT 1 FROM code_listings l WHERE l.code_listing_id IN (NEW.commit_code_listing_id,NEW.file_code_listing_id)
+ AND NOT EXISTS(SELECT 1 FROM code_listing_progress p WHERE p.code_listing_id=l.code_listing_id AND p.state='complete')
+ AND NOT EXISTS(
+  SELECT 1 FROM completion_markers m WHERE m.fetch_collection_id=l.fetch_collection_id AND m.resume_scope_id=l.resume_scope_id
+  AND m.asserted_state='complete' AND json_extract(m.evidence,'$.terminal')=1
+  AND json_type(m.evidence,'$.fetch_occurrence_uuidv4s')='array'
+  AND json_array_length(m.evidence,'$.fetch_occurrence_uuidv4s')>0
+  AND m.observed_at_us IS NOT NULL AND m.observed_at_us=(SELECT max(f.observed_at_us) FROM fetch_occurrences f WHERE f.fetch_collection_id=l.fetch_collection_id)
+  AND json_array_length(m.evidence,'$.fetch_occurrence_uuidv4s')=(SELECT count(DISTINCT item.value) FROM json_each(m.evidence,'$.fetch_occurrence_uuidv4s') item)
+  AND json_array_length(m.evidence,'$.fetch_occurrence_uuidv4s')=(SELECT count(*) FROM fetch_occurrences f WHERE f.fetch_collection_id=l.fetch_collection_id)
+  AND NOT EXISTS(SELECT 1 FROM json_each(m.evidence,'$.fetch_occurrence_uuidv4s') item WHERE NOT EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.fetch_collection_id=l.fetch_collection_id AND f.fetch_occurrence_uuidv4=item.value))
+ ))
+BEGIN SELECT RAISE(ABORT,'Complete code requires exact complete listing evidence'); END;
+CREATE TRIGGER code_complete_update BEFORE UPDATE ON code_observations
+WHEN NEW.state='complete' AND EXISTS(
+ SELECT 1 FROM code_listings l WHERE l.code_listing_id IN (NEW.commit_code_listing_id,NEW.file_code_listing_id)
+ AND NOT EXISTS(SELECT 1 FROM code_listing_progress p WHERE p.code_listing_id=l.code_listing_id AND p.state='complete')
+ AND NOT EXISTS(
+  SELECT 1 FROM completion_markers m WHERE m.fetch_collection_id=l.fetch_collection_id AND m.resume_scope_id=l.resume_scope_id
+  AND m.asserted_state='complete' AND json_extract(m.evidence,'$.terminal')=1
+  AND json_type(m.evidence,'$.fetch_occurrence_uuidv4s')='array'
+  AND json_array_length(m.evidence,'$.fetch_occurrence_uuidv4s')>0
+  AND m.observed_at_us IS NOT NULL AND m.observed_at_us=(SELECT max(f.observed_at_us) FROM fetch_occurrences f WHERE f.fetch_collection_id=l.fetch_collection_id)
+  AND json_array_length(m.evidence,'$.fetch_occurrence_uuidv4s')=(SELECT count(DISTINCT item.value) FROM json_each(m.evidence,'$.fetch_occurrence_uuidv4s') item)
+  AND json_array_length(m.evidence,'$.fetch_occurrence_uuidv4s')=(SELECT count(*) FROM fetch_occurrences f WHERE f.fetch_collection_id=l.fetch_collection_id)
+  AND NOT EXISTS(SELECT 1 FROM json_each(m.evidence,'$.fetch_occurrence_uuidv4s') item WHERE NOT EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.fetch_collection_id=l.fetch_collection_id AND f.fetch_occurrence_uuidv4=item.value))
+ ))
+BEGIN SELECT RAISE(ABORT,'Complete code requires exact complete listing evidence'); END;
+
 CREATE TRIGGER listing_no_downgrade BEFORE UPDATE ON code_listing_progress WHEN OLD.state='complete' AND (NEW.state IS NOT OLD.state OR NEW.terminal IS NOT OLD.terminal OR NEW.page_count IS NOT OLD.page_count OR NEW.context_proven IS NOT OLD.context_proven) BEGIN SELECT RAISE(ABORT,'Completed listing is immutable'); END;
 -- Completion seals even an unreferenced listing. Deleting and recreating its
 -- marker must not reopen it; conflict INSERT/REPLACE is separately prohibited.
@@ -636,22 +650,9 @@ CREATE TRIGGER completion_scope_insert BEFORE INSERT ON completion_markers WHEN 
 CREATE TRIGGER completion_scope_update BEFORE UPDATE ON completion_markers WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.resume_scope_id=NEW.resume_scope_id) BEGIN SELECT RAISE(ABORT,'Completion scope mismatch'); END;
 CREATE TRIGGER active_locator_insert BEFORE INSERT ON active_cache_entries WHEN NOT EXISTS(SELECT 1 FROM cache_locators WHERE cache_locator_id=NEW.cache_locator_id AND access='target_active') BEGIN SELECT RAISE(ABORT,'Readonly source cache cannot become active'); END;
 CREATE TRIGGER active_locator_update BEFORE UPDATE ON active_cache_entries WHEN NOT EXISTS(SELECT 1 FROM cache_locators WHERE cache_locator_id=NEW.cache_locator_id AND access='target_active') BEGIN SELECT RAISE(ABORT,'Readonly source cache cannot become active'); END;
-CREATE TRIGGER commit_type_insert BEFORE INSERT ON commits WHEN NOT EXISTS(SELECT 1 FROM git_objects c JOIN git_objects t ON t.git_object_id=NEW.tree_git_object_id WHERE c.git_object_id=NEW.git_object_id AND c.type='commit' AND t.type='tree' AND c.object_format=t.object_format) BEGIN SELECT RAISE(ABORT,'Commit or tree type/format mismatch'); END;
-CREATE TRIGGER commit_type_update BEFORE UPDATE ON commits WHEN NOT EXISTS(SELECT 1 FROM git_objects c JOIN git_objects t ON t.git_object_id=NEW.tree_git_object_id WHERE c.git_object_id=NEW.git_object_id AND c.type='commit' AND t.type='tree' AND c.object_format=t.object_format) BEGIN SELECT RAISE(ABORT,'Commit or tree type/format mismatch'); END;
-CREATE TRIGGER parent_type_insert BEFORE INSERT ON commit_parents WHEN NOT EXISTS(SELECT 1 FROM git_objects c JOIN git_objects p ON p.git_object_id=NEW.parent_git_object_id WHERE c.git_object_id=NEW.commit_git_object_id AND p.type='commit' AND c.object_format=p.object_format) BEGIN SELECT RAISE(ABORT,'Parent type/format mismatch'); END;
-CREATE TRIGGER parent_type_update BEFORE UPDATE ON commit_parents WHEN NOT EXISTS(SELECT 1 FROM git_objects c JOIN git_objects p ON p.git_object_id=NEW.parent_git_object_id WHERE c.git_object_id=NEW.commit_git_object_id AND p.type='commit' AND c.object_format=p.object_format) BEGIN SELECT RAISE(ABORT,'Parent type/format mismatch'); END;
-CREATE TRIGGER tree_type_insert BEFORE INSERT ON tree_entries WHEN NOT EXISTS(SELECT 1 FROM git_objects t WHERE t.git_object_id=NEW.tree_git_object_id AND t.type='tree' AND t.object_format=NEW.child_format) OR (NEW.child_git_object_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects c WHERE c.git_object_id=NEW.child_git_object_id AND c.object_format=NEW.child_format AND c.oid=NEW.child_oid AND c.type=CASE WHEN NEW.mode=16384 THEN 'tree' ELSE 'blob' END)) BEGIN SELECT RAISE(ABORT,'Tree child type/format/OID mismatch'); END;
-CREATE TRIGGER tree_type_update BEFORE UPDATE ON tree_entries WHEN NOT EXISTS(SELECT 1 FROM git_objects t WHERE t.git_object_id=NEW.tree_git_object_id AND t.type='tree' AND t.object_format=NEW.child_format) OR (NEW.child_git_object_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects c WHERE c.git_object_id=NEW.child_git_object_id AND c.object_format=NEW.child_format AND c.oid=NEW.child_oid AND c.type=CASE WHEN NEW.mode=16384 THEN 'tree' ELSE 'blob' END)) BEGIN SELECT RAISE(ABORT,'Tree child type/format/OID mismatch'); END;
-CREATE TRIGGER tag_type_insert BEFORE INSERT ON tag_objects WHEN NOT EXISTS(SELECT 1 FROM git_objects t JOIN git_objects c ON c.git_object_id=NEW.target_git_object_id WHERE t.git_object_id=NEW.git_object_id AND t.type='tag' AND t.object_format=c.object_format) BEGIN SELECT RAISE(ABORT,'Tag type/format mismatch'); END;
-CREATE TRIGGER tag_type_update BEFORE UPDATE ON tag_objects WHEN NOT EXISTS(SELECT 1 FROM git_objects t JOIN git_objects c ON c.git_object_id=NEW.target_git_object_id WHERE t.git_object_id=NEW.git_object_id AND t.type='tag' AND t.object_format=c.object_format) BEGIN SELECT RAISE(ABORT,'Tag type/format mismatch'); END;
 CREATE TRIGGER blob_type_insert BEFORE INSERT ON blob_content_map WHEN NOT EXISTS(SELECT 1 FROM git_objects o JOIN contents c ON c.content_id=NEW.content_id WHERE o.git_object_id=NEW.git_object_id AND o.type='blob' AND o.size=c.byte_length) BEGIN SELECT RAISE(ABORT,'Blob content type/length mismatch'); END;
 CREATE TRIGGER blob_type_update BEFORE UPDATE ON blob_content_map WHEN NOT EXISTS(SELECT 1 FROM git_objects o JOIN contents c ON c.content_id=NEW.content_id WHERE o.git_object_id=NEW.git_object_id AND o.type='blob' AND o.size=c.byte_length) BEGIN SELECT RAISE(ABORT,'Blob content type/length mismatch'); END;
-CREATE TRIGGER manifest_type_insert BEFORE INSERT ON root_manifests WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.tree_git_object_id AND type='tree') BEGIN SELECT RAISE(ABORT,'Manifest requires tree'); END;
-CREATE TRIGGER manifest_type_update BEFORE UPDATE ON root_manifests WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.tree_git_object_id AND type='tree') BEGIN SELECT RAISE(ABORT,'Manifest requires tree'); END;
-CREATE TRIGGER manifest_entry_type_insert BEFORE INSERT ON root_manifest_entries WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.tree_git_object_id AND type='tree' AND object_format=NEW.object_format) OR (NEW.git_object_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.git_object_id AND type='blob' AND oid=NEW.oid AND object_format=NEW.object_format)) BEGIN SELECT RAISE(ABORT,'Manifest type/format/OID mismatch'); END;
-CREATE TRIGGER manifest_entry_type_update BEFORE UPDATE ON root_manifest_entries WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.tree_git_object_id AND type='tree' AND object_format=NEW.object_format) OR (NEW.git_object_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.git_object_id AND type='blob' AND oid=NEW.oid AND object_format=NEW.object_format)) BEGIN SELECT RAISE(ABORT,'Manifest type/format/OID mismatch'); END;
 
-CREATE TRIGGER manifest_entries_sealed_insert BEFORE INSERT ON root_manifest_entries WHEN EXISTS(SELECT 1 FROM root_manifests WHERE tree_git_object_id=NEW.tree_git_object_id AND complete=1) BEGIN SELECT RAISE(ABORT,'Completed manifest is sealed'); END;
 
 CREATE TRIGGER acquisition_cache_owner_insert BEFORE INSERT ON acquisition_progress WHEN NEW.active_cache_entry_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_acquisitions g JOIN active_cache_entries a ON a.active_cache_entry_id=NEW.active_cache_entry_id JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE g.git_acquisition_id=NEW.git_acquisition_id AND g.repository_uuidv4=l.repository_uuidv4 AND l.access='target_active') BEGIN SELECT RAISE(ABORT,'Acquisition cache owner mismatch'); END;
 CREATE TRIGGER obligation_cache_owner_insert BEFORE INSERT ON preservation_obligations WHEN NEW.cache_locator_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_acquisitions g JOIN cache_locators l ON l.cache_locator_id=NEW.cache_locator_id WHERE g.git_acquisition_id=NEW.git_acquisition_id AND g.repository_uuidv4=l.repository_uuidv4 AND l.access='target_active') BEGIN SELECT RAISE(ABORT,'Preservation cache owner mismatch'); END;
@@ -1241,10 +1242,13 @@ CREATE TABLE fact_selection_scopes(
  provider_change_request_document_id TEXT,
  provider_resource_id TEXT,
  fetch_occurrence_uuidv4 TEXT,
+ git_acquisition_id TEXT,
  CHECK((owner_kind='repository' AND repository_uuidv4 IS NOT NULL AND source_registration_uuidv4 IS NULL) OR (owner_kind='source' AND repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NOT NULL AND change_request_id IS NULL)),
  CHECK((kind IS NULL AND provider_change_request_document_id IS NULL) OR (kind IS NOT NULL AND provider_change_request_document_id IS NOT NULL AND change_request_id IS NOT NULL AND fact_kind=kind)),
  CHECK(provider_resource_id IS NULL OR (change_request_id IS NOT NULL AND fact_kind='review-thread' AND kind IS NULL)),
  CHECK(fetch_occurrence_uuidv4 IS NULL OR (repository_uuidv4 IS NOT NULL AND change_request_id IS NOT NULL AND fact_kind IN ('events','code') AND kind IS NULL AND provider_resource_id IS NULL)),
+ CHECK(git_acquisition_id IS NULL OR (repository_uuidv4 IS NOT NULL AND change_request_id IS NULL AND fact_kind='git' AND kind IS NULL AND provider_resource_id IS NULL AND fetch_occurrence_uuidv4 IS NULL)),
+ FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4),
  FOREIGN KEY(fetch_occurrence_uuidv4,repository_uuidv4) REFERENCES fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4),
  UNIQUE(fact_selection_scope_uuidv4,repository_uuidv4),
  UNIQUE(fact_selection_scope_uuidv4,source_registration_uuidv4),
@@ -1252,7 +1256,7 @@ CREATE TABLE fact_selection_scopes(
  FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id),
  FOREIGN KEY(change_request_id,provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id)
 ) STRICT;
-CREATE UNIQUE INDEX fact_selection_scope_identity ON fact_selection_scopes(owner_kind,coalesce(repository_uuidv4,''),coalesce(source_registration_uuidv4,''),coalesce(change_request_id,''),fact_kind,coalesce(kind,''),coalesce(provider_change_request_document_id,''),coalesce(provider_resource_id,''),coalesce(fetch_occurrence_uuidv4,''));
+CREATE UNIQUE INDEX fact_selection_scope_identity ON fact_selection_scopes(owner_kind,coalesce(repository_uuidv4,''),coalesce(source_registration_uuidv4,''),coalesce(change_request_id,''),fact_kind,coalesce(kind,''),coalesce(provider_change_request_document_id,''),coalesce(provider_resource_id,''),coalesce(fetch_occurrence_uuidv4,''),coalesce(git_acquisition_id,''));
 CREATE TABLE fact_selection_decisions(
  fact_selection_decision_uuidv4 TEXT PRIMARY KEY,
  fact_selection_scope_uuidv4 TEXT NOT NULL REFERENCES fact_selection_scopes(fact_selection_scope_uuidv4),
@@ -1279,6 +1283,8 @@ CREATE TABLE fact_selection_predecessors(
 CREATE TABLE fact_selection_publications(
  fact_selection_decision_uuidv4 TEXT PRIMARY KEY REFERENCES fact_selection_decisions(fact_selection_decision_uuidv4)
 ) STRICT;
+CREATE INDEX fact_selection_decision_scope_idx ON fact_selection_decisions(fact_selection_scope_uuidv4);
+CREATE INDEX fact_selection_predecessor_reverse_idx ON fact_selection_predecessors(predecessor_decision_uuidv4);
 CREATE TABLE fact_selection_staging(
  fact_selection_decision_uuidv4 TEXT PRIMARY KEY,
  fact_selection_scope_uuidv4 TEXT NOT NULL,
@@ -1303,7 +1309,8 @@ CREATE VIEW usable_parsed_results AS
 SELECT r.* FROM parsed_results r JOIN parsed_result_publications p USING(parsed_result_uuidv4)
 WHERE NOT EXISTS(SELECT 1 FROM exchange_blocked_results b WHERE b.parsed_result_uuidv4=r.parsed_result_uuidv4)
 AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN fetch_occurrences f ON f.fetch_occurrence_uuidv4=i.fetch_occurrence_uuidv4 JOIN payload_quarantine q ON q.sha256=f.payload_sha256 WHERE i.parsed_result_uuidv4=r.parsed_result_uuidv4)
-AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN source_input_observations f ON f.source_input_uuidv4=i.source_input_uuidv4 JOIN payload_quarantine q ON q.sha256=f.payload_sha256 WHERE i.parsed_result_uuidv4=r.parsed_result_uuidv4);
+AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN source_input_observations f ON f.source_input_uuidv4=i.source_input_uuidv4 JOIN payload_quarantine q ON q.sha256=f.payload_sha256 WHERE i.parsed_result_uuidv4=r.parsed_result_uuidv4)
+AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN repository_object_sources o ON o.git_acquisition_id=i.git_acquisition_id AND o.repository_uuidv4=i.repository_uuidv4 JOIN git_object_payloads b ON b.git_object_id=o.git_object_id JOIN payload_quarantine q ON q.sha256=b.payload_sha256 WHERE i.parsed_result_uuidv4=r.parsed_result_uuidv4);
 CREATE VIEW effective_repository_parser_profiles AS
 SELECT s.repository_uuidv4,s.fact_kind,a.parser_profile_uuidv4,a.selection_decision_uuidv4
 FROM parser_profile_selection_scopes s LEFT JOIN active_parser_profile_selections a USING(selection_scope_uuidv4)
@@ -1371,7 +1378,7 @@ CREATE TRIGGER snapshots_parser_identity BEFORE UPDATE ON snapshots WHEN NEW.par
 CREATE TRIGGER ref_observations_parser_identity BEFORE UPDATE ON ref_observations WHEN NEW.parsed_result_uuidv4 IS NOT OLD.parsed_result_uuidv4 OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 BEGIN SELECT RAISE(ABORT,'immutable ref parsed identity'); END;
 CREATE TRIGGER snapshots_result_sealed BEFORE INSERT ON snapshots WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
 CREATE TRIGGER ref_observations_result_sealed BEFORE INSERT ON ref_observations WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
-CREATE VIEW current_snapshots AS SELECT s.* FROM snapshots s JOIN active_fact_selections f ON f.parsed_result_uuidv4=s.parsed_result_uuidv4 AND f.repository_uuidv4=s.repository_uuidv4 AND f.fact_kind='git' WHERE s.published=1;
+CREATE VIEW current_snapshots AS SELECT s.* FROM snapshots s JOIN active_fact_selections f ON f.parsed_result_uuidv4=s.parsed_result_uuidv4 AND f.repository_uuidv4=s.repository_uuidv4 AND f.fact_kind='git' AND f.git_acquisition_id IS NULL WHERE s.published=1;
 
 CREATE VIEW current_change_request_events AS SELECT d.* FROM eligible_change_request_events d WHERE EXISTS(SELECT 1 FROM active_fact_selections f WHERE f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=d.change_request_id AND f.fact_kind='events' AND (f.fetch_occurrence_uuidv4 IS NULL OR f.fetch_occurrence_uuidv4=d.origin_fetch_occurrence_uuidv4));
 CREATE VIEW current_code_commits AS SELECT d.* FROM eligible_code_commits d JOIN fetch_occurrences o USING(fetch_occurrence_id) JOIN code_listings l USING(code_listing_id) JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=l.change_request_id AND f.fact_kind='code' AND f.fetch_occurrence_uuidv4=o.fetch_occurrence_uuidv4;
@@ -1389,10 +1396,17 @@ UNION ALL SELECT parsed_result_uuidv4,'ref_observations',json_array(snapshot_id,
 UNION ALL SELECT d.parsed_result_uuidv4,'code_commits',json_array(d.code_listing_id,f.fetch_occurrence_uuidv4,d.position) FROM code_commits d JOIN fetch_occurrences f USING(fetch_occurrence_id)
 UNION ALL SELECT d.parsed_result_uuidv4,'code_file_changes',json_array(d.code_listing_id,f.fetch_occurrence_uuidv4,d.position) FROM code_file_changes d JOIN fetch_occurrences f USING(fetch_occurrence_id)
 UNION ALL SELECT parsed_result_uuidv4,'repository_name_observations',json_array(repository_name_observation_uuidv4) FROM repository_name_observations WHERE parsed_result_uuidv4 IS NOT NULL
-UNION ALL SELECT parsed_result_uuidv4,'repository_inventory_observations',json_array(repository_inventory_observation_uuidv4) FROM repository_inventory_observations;
+UNION ALL SELECT parsed_result_uuidv4,'repository_inventory_observations',json_array(repository_inventory_observation_uuidv4) FROM repository_inventory_observations
+UNION ALL SELECT parsed_result_uuidv4,'commits',json_array(git_fact_uuidv4) FROM commits
+UNION ALL SELECT parsed_result_uuidv4,'commit_parents',json_array(git_fact_uuidv4) FROM commit_parents
+UNION ALL SELECT parsed_result_uuidv4,'tree_entries',json_array(git_fact_uuidv4) FROM tree_entries
+UNION ALL SELECT parsed_result_uuidv4,'tag_objects',json_array(git_fact_uuidv4) FROM tag_objects
+UNION ALL SELECT parsed_result_uuidv4,'root_manifests',json_array(git_fact_uuidv4) FROM root_manifests
+UNION ALL SELECT parsed_result_uuidv4,'root_manifest_entries',json_array(git_fact_uuidv4) FROM root_manifest_entries
+UNION ALL SELECT parsed_result_uuidv4,'git_text_facts',json_array(git_fact_uuidv4) FROM git_text_facts;
 CREATE TRIGGER parsed_publication_fact_manifest BEFORE INSERT ON parsed_result_publications
 WHEN json_array_length(NEW.fact_manifest_json)<>(SELECT count(*) FROM parsed_fact_members WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4)
- OR EXISTS(SELECT 1 FROM json_each(NEW.fact_manifest_json) m WHERE NOT EXISTS(SELECT 1 FROM parsed_fact_members f WHERE f.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.table_name=json_extract(m.value,'$.table') AND f.fact_key_json=json_extract(m.value,'$.key')))
+ OR EXISTS(SELECT json_extract(m.value,'$.table'),json_extract(m.value,'$.key') FROM json_each(NEW.fact_manifest_json) m EXCEPT SELECT f.table_name,f.fact_key_json FROM parsed_fact_members f WHERE f.parsed_result_uuidv4=NEW.parsed_result_uuidv4)
  OR json_array_length(NEW.fact_manifest_json)<>(SELECT count(*) FROM (SELECT DISTINCT json_extract(m.value,'$.table'),json_extract(m.value,'$.key') FROM json_each(NEW.fact_manifest_json) m))
 BEGIN SELECT RAISE(ABORT,'parsed output fact manifest incomplete or inconsistent'); END;
 CREATE TRIGGER fact_selection_result_contains_target BEFORE INSERT ON fact_selection_decisions
@@ -1405,7 +1419,8 @@ WHEN NOT EXISTS(
  OR (s.fact_kind IN ('code','events') AND s.fetch_occurrence_uuidv4 IS NOT NULL AND EXISTS(SELECT 1 FROM parsed_result_inputs i WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND i.fetch_occurrence_uuidv4=s.fetch_occurrence_uuidv4))
  OR (s.fact_kind='review-thread' AND EXISTS(SELECT 1 FROM review_thread_observations d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.change_request_id=s.change_request_id AND d.provider_resource_id=s.provider_resource_id))
  OR (s.fact_kind='inventory' AND EXISTS(SELECT 1 FROM inventory_observations d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.source_registration_uuidv4=s.source_registration_uuidv4))
- OR (s.fact_kind='git' AND EXISTS(SELECT 1 FROM snapshots d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.repository_uuidv4=s.repository_uuidv4 AND d.published=1))
+ OR (s.fact_kind='git' AND s.git_acquisition_id IS NULL AND EXISTS(SELECT 1 FROM snapshots d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.repository_uuidv4=s.repository_uuidv4 AND d.published=1))
+ OR (s.fact_kind='git' AND s.git_acquisition_id IS NOT NULL AND EXISTS(SELECT 1 FROM parsed_result_inputs i WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND i.git_acquisition_id=s.git_acquisition_id))
  )) BEGIN SELECT RAISE(ABORT,'selected result does not contain scoped fact'); END;
 CREATE TRIGGER source_input_observations_no_replace_guard BEFORE INSERT ON source_input_observations WHEN EXISTS(SELECT 1 FROM source_input_observations WHERE source_input_uuidv4=NEW.source_input_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
 CREATE TRIGGER parser_profiles_no_replace_guard BEFORE INSERT ON parser_profiles WHEN EXISTS(SELECT 1 FROM parser_profiles WHERE parser_profile_uuidv4=NEW.parser_profile_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;

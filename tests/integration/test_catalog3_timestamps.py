@@ -264,7 +264,9 @@ def test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types(
 ):
     db, resource = timestamp_database
     if resource == "catalog3.sql":
-        insert = "INSERT INTO contents(content_id,byte_length,text_state,created_at_us) VALUES(?,0,'unknown',?)"
+        insert = (
+            "INSERT INTO contents(content_id,byte_length,created_at_us) VALUES(?,0,?)"
+        )
         table, column = "contents", "created_at_us"
     else:
         insert = "INSERT INTO reanalysis_runs(reanalysis_run_id,parser_version,parsed_at_us,evidence) VALUES(?,'timestamp-test',?,'{}')"

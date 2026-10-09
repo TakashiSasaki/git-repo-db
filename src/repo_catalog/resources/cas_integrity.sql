@@ -16,7 +16,7 @@ BEGIN SELECT RAISE(ABORT,'Existing quarantine cannot be replaced'); END;
 -- This is local pending admission, not a replacement object or a second digest.
 CREATE TABLE payload_admission_staging(
     stage_uuidv4 TEXT PRIMARY KEY NOT NULL,
-    representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_normalized')),
+    representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_normalized','git-object-raw-v1')),
     sha256 BLOB NOT NULL CHECK(length(sha256)=32),
     body BLOB NOT NULL,
     context_json TEXT NOT NULL CHECK(json_valid(context_json) AND json_type(context_json)='object'),

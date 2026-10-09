@@ -14,12 +14,29 @@ class ParsingService:
     def __init__(self, store):
         self.s = store
 
-    def reparse(self, fetch_occurrence_uuidv4, *, select=False):
+    def reparse(self, fetch_occurrence_uuidv4, *, select=False, profile_uuid=None):
         """Create a new parsing execution without manufacturing a remote fetch.
 
         ``select`` is an explicit local decision to supersede the currently
         resolved fact heads. It never changes the selected parser profile.
         """
+        if self.s.one(
+            "SELECT 1 FROM git_acquisitions WHERE git_acquisition_id=?",
+            (fetch_occurrence_uuidv4,),
+        ):
+            from repo_catalog.adapters.git.parsing import reparse_git
+
+            return reparse_git(
+                self.s,
+                fetch_occurrence_uuidv4,
+                select=select,
+                profile_uuid=profile_uuid,
+            )
+        if profile_uuid is not None:
+            raise CatalogError(
+                "PARSER_UNSUPPORTED_PROFILE",
+                "GitHub reparse uses the installed profile",
+            )
         row = self.s.one(
             "SELECT o.*,f.kind,f.change_request_id,f.source_id,f.resume_scope_id "
             "FROM fetch_occurrences o JOIN fetch_collections f "

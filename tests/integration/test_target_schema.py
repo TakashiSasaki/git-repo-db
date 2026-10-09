@@ -2,12 +2,13 @@
 
 import hashlib
 import sqlite3
+import uuid
 
 import pytest
 
 from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.schema import schema_sql
-from tests.support.parser_facts import enrich, repository_uuid
+from tests.support.parser_facts import enrich, register_test_profile, repository_uuid
 
 
 def construct(sql=None):
@@ -540,6 +541,19 @@ def test_source_settings_insert_requires_json_object(target, settings):
 
 def test_git_meaning_and_multiple_ref_origins(target):
     db = target
+    # This input remains open while structural facts and roots are built; the
+    # target fixture's previously sealed empty inputs cannot acquire late bytes.
+    acquisition = "meaning-acquisition"
+    repo = repository_uuid("a")
+    put(
+        db,
+        "git_acquisitions",
+        git_acquisition_id=acquisition,
+        repository_uuidv4=repo,
+        object_format="sha1",
+        kind="git",
+        request="{}",
+    )
     for id, kind, oid in ((1, "tree", b"t" * 20), (2, "commit", H), (3, "blob", B)):
         put(
             db,
@@ -551,10 +565,41 @@ def test_git_meaning_and_multiple_ref_origins(target):
             size=1,
             verified=1,
         )
+    for ident in (1, 2, 3):
+        put(
+            db,
+            "repository_object_sources",
+            repository_uuidv4=repo,
+            git_object_id=ident,
+            git_acquisition_id=acquisition,
+        )
+    result = ParserModel(db).create_result(
+        register_test_profile(db),
+        repository_uuidv4=repo,
+        inputs=[{"git_acquisition_id": acquisition}],
+    )
+    put(
+        db,
+        "snapshots",
+        snapshot_id="meaning-snapshot",
+        git_acquisition_id=acquisition,
+        repository_uuidv4=repo,
+        parsed_result_uuidv4=result,
+        published=1,
+        generation=2,
+    )
+    provenance = {
+        "parsed_result_uuidv4": result,
+        "repository_uuidv4": repo,
+        "git_acquisition_id": acquisition,
+    }
     with pytest.raises(sqlite3.IntegrityError):
         put(
             db,
             "commits",
+            **provenance,
+            git_fact_uuidv4=str(uuid.uuid4()),
+            message_text="",
             git_object_id=2,
             tree_git_object_id=3,
             raw_headers=b"",
@@ -564,6 +609,9 @@ def test_git_meaning_and_multiple_ref_origins(target):
     put(
         db,
         "commits",
+        **provenance,
+        git_fact_uuidv4=str(uuid.uuid4()),
+        message_text="",
         git_object_id=2,
         tree_git_object_id=1,
         raw_headers=b"",
@@ -574,6 +622,8 @@ def test_git_meaning_and_multiple_ref_origins(target):
         put(
             db,
             "commit_parents",
+            **provenance,
+            git_fact_uuidv4=str(uuid.uuid4()),
             commit_git_object_id=2,
             parent_ordinal=0,
             parent_git_object_id=3,
@@ -582,7 +632,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
         db,
         "acquisition_roots",
         acquisition_root_id=1,
-        git_acquisition_id="run-a",
+        git_acquisition_id=acquisition,
         repository_uuidv4="a",
         object_format="sha1",
         oid=H,
@@ -593,7 +643,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
         put(
             db,
             "ref_observations",
-            snapshot_id="snapshot-a",
+            snapshot_id="meaning-snapshot",
             raw_ref_name=name,
             kind="head",
             object_format="sha1",
@@ -608,7 +658,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
             origin_kind="ref",
             raw_ref_name=name,
             source_ordinal=ordinal,
-            snapshot_id="snapshot-a",
+            snapshot_id="meaning-snapshot",
             repository_uuidv4="a",
         )
     assert (
@@ -626,7 +676,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
             origin_kind="ref",
             raw_ref_name=b"no-ref",
             source_ordinal=2,
-            snapshot_id="snapshot-a",
+            snapshot_id="meaning-snapshot",
             repository_uuidv4="a",
         )
 
