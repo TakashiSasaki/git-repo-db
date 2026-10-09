@@ -1,0 +1,54 @@
+{
+  "tested_commit": "de22363585419cba4817bc5d1a8e41cd7f837cb2",
+  "tested_tree": "c5556d5194bc3f7876edd4297baeb9c8c6a7dc29",
+  "base_commit": "e94c767",
+  "branch": "refactor/payload-cas",
+  "schema_version": 11,
+  "ordinary_tables": 66,
+  "ordinary": {
+    "passed": 854,
+    "seconds": 96.66
+  },
+  "packaging": {
+    "passed": 2,
+    "seconds": 4.83
+  },
+  "gate": {
+    "executed": 856,
+    "selected_files": 50,
+    "unexecuted_files": [],
+    "excluded_files": []
+  },
+  "scope": "synthetic payload CAS admission foundation",
+  "not_run": [
+    "hosted CI",
+    "real-source acquisition"
+  ],
+  "pending_features": [
+    "portable acquisition identities",
+    "parser/fact ownership",
+    "profile verification and selection DAG",
+    "exchange and durable staging",
+    "local quarantine and explicit repair",
+    "hash-verified backup/restore",
+    "frozen Job inputs"
+  ],
+  "evidence_sha256": {
+    "dependency-setup.json": "6bdf82bb8ace82c1b1d575295bdc7e7f250306b8d5067778256fd88b011e3bcc",
+    "doctor.json": "ffd044a4a2e81ff8f6be0872fe374529a3dfc7d4141a65ac61ecebf7bc1dd26c",
+    "format.json": "e8fe4167fd64fb9ad85c97794311a557ac1b72c3533a19d644c8df24ec75df23",
+    "fts.json": "ddea1f3bb13d72ec8e58e3df78ee3434b38a792a9d4037a08d7d41067ad994fb",
+    "lint.json": "fc904720def5556fc0b09ea2c98c25105719791b9fee6ab5f05cf05024a68115",
+    "packaging.json": "b6a5a389a025602373fd6e83b2ff1d63c93843546fad9cab9fa8b12cdced78ef",
+    "packaging.xml": "33ec6aa6f0a8a1fd2789f23a6f54e7c563f038999eb9dfec738e872934adb530",
+    "plan.json": "fc949c12b73eb039b420cd77ea01c3d47c1bd4e07fef21b14c174214e4a6d4e2",
+    "planning.json": "22ae73dddbf31b7b7792a449a03db0fbc89fe03f4d4727f8fce31f32e0ca31d7",
+    "report-validation.json": "7b10952b5115a48cb45813871536324ed3bd0a1975526da9796a628a6e9285ee",
+    "reports.json": "e490f83259b0b9f7a5f72aefad613eb711db56cb241a29d3f1c26ea0c31e5ad3",
+    "selected-tests.txt": "8f80a2c5fc60b962b6dd6a34d337947cf35138a35131ec8e72fb376aabcb6f33",
+    "tests.json": "8abb048ab61f1193dce19700a979da1e1ce0aa2fa19731e3a55183fd6e121403",
+    "tests.xml": "88a53168043263a74c067a2a1b6b243021546ceb1dfd76ffd9ab283f7ef4ac8e",
+    "validation-manifest.json": "228e35803cda95b1d91701c57a13077a7299e1d9d4a5c169728473cea856662b",
+    "wheelhouse.json": "c1bfdcfda1021568d08428f521ff89ec38cbb7d5ca2049794872624eae2b3ea1"
+  }
+}
