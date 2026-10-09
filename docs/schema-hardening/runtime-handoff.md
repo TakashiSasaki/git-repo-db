@@ -10,6 +10,8 @@ Selected service registrations own API routing regardless of display names; defa
 
 CI discovers ordinary tests, expands shared-helper impacts and validates synthetic JSON as reports. Its input fingerprint and explicit full-versus-selected outcome support final acceptance checks without treating a prose-only green job as runtime proof. Installed wheel and sdist-wheel workflows include real salvage/finalization; separate redundant wheel building is removed. Finalization process-death tests cover paired state and idempotent retries before/after commit, not physical power-cut durability. Source/network guards and first-sync authorization/replay rules remain in force.
 
+Clean implementation `eaa280f30cf33a5e83782d2305db86770bdc649d` passed 1,027 ordinary and 2 installed packaging tests, with all 1,029 selected tests executed exactly once across 55 files. See [stack review correction evidence](../validation/synthetic/2026-10-09-stack-review-fixes.md) and adjacent JSON for the tested tree, input fingerprint, environment, commands, corrections and limits. Publication and hosted CI are separately attributed in the stacked correction PR.
+
 ## Payload CAS admission foundation (schema 11)
 
 Branch `refactor/payload-cas` starts at identity foundation commit

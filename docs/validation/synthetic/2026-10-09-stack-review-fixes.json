@@ -1,0 +1,243 @@
+{
+  "run_id": "2026-10-09-stack-review-fixes",
+  "tested_commit": "eaa280f30cf33a5e83782d2305db86770bdc649d",
+  "tested_tree": "0d80e0ce286c84114f57f1beb00937f3a264065b",
+  "base_commit": "f8c1764c02da45c93437d36465a39ed68952d67d",
+  "branch": "fix/pr-stack-review",
+  "schema_version": 11,
+  "workspace_version": 2,
+  "scope": "cross-stack corrections, disposable synthetic data only",
+  "acceptance_status": "full_acceptance_passed",
+  "acceptance_input_hash": "7acf02e2d44f2580b2588214c8959b3ecbe7b029509d114328c0ee5bfee4b25a",
+  "runtime": {
+    "python": "3.12.14",
+    "abi": "cpython-312-x86_64-linux-gnu",
+    "sqlite": "3.53.1",
+    "os": "Linux",
+    "arch": "x86_64",
+    "git": "git version 2.52.0",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "runner_image": [
+      null,
+      null
+    ]
+  },
+  "lanes": {
+    "tests": {
+      "passed": 1027,
+      "wall_seconds": 96.44258749300025,
+      "workers": 4
+    },
+    "packaging": {
+      "passed": 2,
+      "wall_seconds": 4.07868315900032,
+      "workers": 1
+    }
+  },
+  "coverage": {
+    "executed": 1029,
+    "selected_files": 55,
+    "unexecuted_files": [],
+    "excluded_files": []
+  },
+  "command_wall_seconds": {
+    "tests": 96.44258749300025,
+    "packaging": 4.07868315900032,
+    "lint": 0.016493694000018877,
+    "format": 0.01656528199987406,
+    "fts": 0.025125306000063574,
+    "doctor": 0.08572649000007004,
+    "dependency-setup": 0.011270446000025913,
+    "wheelhouse": 0.0923250339999413,
+    "planning": 0.05730605899998409,
+    "report-validation": 0.06368611499988219
+  },
+  "commands": {
+    "tests": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/e2e/test_backup.py",
+      "tests/e2e/test_cache.py",
+      "tests/e2e/test_cli_contract.py",
+      "tests/e2e/test_cli_more.py",
+      "tests/e2e/test_content.py",
+      "tests/e2e/test_digests.py",
+      "tests/e2e/test_git_sync.py",
+      "tests/e2e/test_github_sync.py",
+      "tests/e2e/test_http_compression.py",
+      "tests/e2e/test_jobs.py",
+      "tests/e2e/test_offline.py",
+      "tests/e2e/test_queries.py",
+      "tests/e2e/test_recovery.py",
+      "tests/e2e/test_repository_identity.py",
+      "tests/e2e/test_search.py",
+      "tests/e2e/test_text_policy.py",
+      "tests/integration/test_application_contract.py",
+      "tests/integration/test_cache.py",
+      "tests/integration/test_catalog3_cache.py",
+      "tests/integration/test_catalog3_coverage.py",
+      "tests/integration/test_catalog3_coverage_ownership.py",
+      "tests/integration/test_catalog3_coverage_queries.py",
+      "tests/integration/test_catalog3_document_identity.py",
+      "tests/integration/test_catalog3_finalization.py",
+      "tests/integration/test_catalog3_git_runtime.py",
+      "tests/integration/test_catalog3_github_runtime.py",
+      "tests/integration/test_catalog3_github_scaling.py",
+      "tests/integration/test_catalog3_import_workspace.py",
+      "tests/integration/test_catalog3_payload_cas.py",
+      "tests/integration/test_catalog3_portable_identity.py",
+      "tests/integration/test_catalog3_pr_scope_coverage.py",
+      "tests/integration/test_catalog3_provider_identity.py",
+      "tests/integration/test_catalog3_queries.py",
+      "tests/integration/test_catalog3_rest_boundaries.py",
+      "tests/integration/test_catalog3_review_coverage.py",
+      "tests/integration/test_catalog3_review_identity.py",
+      "tests/integration/test_catalog3_schema.py",
+      "tests/integration/test_catalog3_store.py",
+      "tests/integration/test_catalog3_time_admission.py",
+      "tests/integration/test_catalog3_timestamps.py",
+      "tests/integration/test_ci_execution.py",
+      "tests/integration/test_database.py",
+      "tests/integration/test_git_objects.py",
+      "tests/integration/test_network_guard.py",
+      "tests/integration/test_runtime_import.py",
+      "tests/integration/test_search_index.py",
+      "tests/integration/test_target_schema.py",
+      "tests/unit/test_ci_plan.py",
+      "tests/unit/test_ci_profile.py",
+      "tests/unit/test_contracts.py",
+      "tests/unit/test_conversion_git_domain.py",
+      "tests/unit/test_conversion_pr_domain.py",
+      "tests/unit/test_import_archive.py",
+      "tests/unit/test_live_smoke_contract.py",
+      "--strict-markers",
+      "-m",
+      "not live and not benchmark",
+      "--junitxml",
+      "artifacts/ci-profile/tests.xml",
+      "--durations=20",
+      "-n",
+      "4"
+    ],
+    "packaging": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/packaging/test_distribution.py",
+      "--strict-markers",
+      "-m",
+      "not live and not benchmark",
+      "--junitxml",
+      "artifacts/ci-profile/packaging.xml",
+      "--durations=20"
+    ],
+    "lint": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "format": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "fts": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "-c",
+      "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
+    ],
+    "doctor": [
+      "uv",
+      "run",
+      "--no-sync",
+      "repo-catalog",
+      "--format",
+      "json",
+      "doctor"
+    ],
+    "dependency-setup": [
+      "uv",
+      "sync",
+      "--locked",
+      "--group",
+      "dev",
+      "--python",
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python"
+    ],
+    "wheelhouse": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/prepare_wheelhouse.py"
+    ],
+    "planning": [
+      "python",
+      "scripts/ci_plan.py",
+      "--full"
+    ],
+    "report-validation": [
+      "python",
+      "scripts/ci_execute.py",
+      "reports"
+    ]
+  },
+  "gate_command": [
+    "python",
+    "scripts/ci_execute.py",
+    "gate"
+  ],
+  "full_acceptance_attempts": 1,
+  "failures": 0,
+  "skips": 0,
+  "duplicates": 0,
+  "guards": {
+    "original_source_hashes_preserved": true,
+    "no_real_acquisition": true,
+    "first_sync_authorization_and_replay_regressions_passed": true
+  },
+  "not_run": [
+    "real-source acquisition",
+    "physical power-loss fault injection",
+    "hosted CI (record separately in the PR after publication)"
+  ],
+  "deferred": [
+    "fixture caching without measured benefit",
+    "portable acquisition identities, parser/selection DAG, exchange, durable conflict staging, quarantine/repair, hash-verified backup/restore, frozen Job inputs (existing feature roadmap)"
+  ],
+  "evidence_sha256": {
+    "dependency-setup.json": "fdb3f48dd3a400bc2ab195c78eb78c3ec69bdfb9d58da9f89931b0640818edb0",
+    "doctor.json": "6c88f4eff1c22a499915445a56a06ab49cc2142ffdac0a2c72817a5b3d14bbc6",
+    "format.json": "166cf4ddaeb3b331edbb760fd7860daa884da9e5db5b38cee860921d9cd5b524",
+    "fts.json": "d7526ee19914ac9d7b9788e3be2c369733c9865924dadc457320784bf6eac776",
+    "lint.json": "4e9ed25aefc648699f2fc3318a67cc7d0c9e9dcb5498f120cc58cb54ce4805c1",
+    "packaging.json": "5085fe3a43dbd33ba9fc622e925d442566bccae85b48fe723385554f3e674b6b",
+    "packaging.xml": "5276aaa11ebf281d734185c8317b73da07fde3e1d76f15aedd829780763cfe9b",
+    "plan.json": "22fa6c50eb98de3d0ff33f542492a0584c45761dd0f2d10fd22b1773ec3f1ec2",
+    "planning.json": "679e5dbbef192722c1b38a2ad537b15bdc14ea984c3028e3b3b933360e93048e",
+    "report-validation.json": "6658cf2149f3c1ad7f5dbc9d24df808785bbeb45e118ed29e48944fc33745133",
+    "reports.json": "5b0150ac0660abaed5a44417e86fd4f60b3f05644d6caddd96b4f344feb7b1b0",
+    "selected-tests.txt": "eec172327a047ce100f7dd067b051d773391ef5e9b7622f503b0fcf08480d1ca",
+    "tests.json": "783cc83206fe04a204b4994b652d63c43875a9cce4d4cab7d20e9512cfb1289f",
+    "tests.xml": "c294bf0091be179507d7a13b45dd246f9fe7e7b92c63fe450c920924845e8e79",
+    "validation-manifest.json": "cee20ccd70856a8eaab552e6f38a25fe5b779e0d81b867e6ea5551a19b707d4c",
+    "wheelhouse.json": "60874c2345c597e4841129481475743e101c6240a0a9b5d0d1d3d40189ae898c"
+  }
+}
