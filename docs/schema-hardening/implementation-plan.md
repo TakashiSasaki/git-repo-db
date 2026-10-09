@@ -2,6 +2,10 @@
 
 Catalog3 is the sole ordinary runtime. Packaged DDL and the runtime identity module are authoritative; [runtime handoff](runtime-handoff.md) records commands, validation and limits. Historical phase plans and design/export schemas remain snapshots.
 
+## Stack review corrections (schema 11)
+
+The corrective branch above PR #9 closes thread/document coverage inconsistencies, service routing and timestamp admission errors, malformed REST evidence loss, repeated salvage hashing and CI selection gaps. Installed salvage and finalization recovery checks complete the affected validation boundaries. Schema versions stay unchanged; the [current handoff](runtime-handoff.md#stack-review-corrections-schema-11) describes the resulting behavior and evidence. Future exchange, quarantine/repair and selection-DAG work below remains separate.
+
 ## Payload CAS admission foundation (schema 11)
 
 Branch `refactor/payload-cas` starts at identity foundation commit

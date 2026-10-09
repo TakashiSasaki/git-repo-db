@@ -44,7 +44,7 @@ raw pathの正本はpath_b64で、UTF-8不正時のpath_utf8はnull、安全表�
 
 PR検索はtitle/body/issue-comment/review/review-commentを区別します。
 PR番号は `--provider-change-request-number`、種別は `--change-request-kind pull_request|merge_request` で指定します。正規化された結果でも `provider_change_request_number` と `change_request_kind` を使い、raw payload 内のprovider固有キーは変更しません。
-`pr thread` は `--repo REPO_ID --provider-change-request-number NUMBER --provider-resource-id PROVIDER_RESOURCE_ID` でChange Requestを先にscopeし、その中のreview threadを選択します。`provider_resource_id` 単独のprovider全体一意性は仮定しません。
+`pr thread` は `--repo REPO_ID --provider-change-request-number NUMBER --provider-resource-id PROVIDER_RESOURCE_ID` でChange Requestを先にscopeし、その中のreview threadを選択します。`provider_resource_id` 単独のprovider全体一意性は仮定しません。選択threadのコメント一覧の終端を保存証拠から確認できない場合は、保存済み本文がすべて存在してもpartialになります。
 `--document-observations current|all`で現在採用している観測と保存済みの全観測を選びます。既定は `current` です。
 `--document-kind` と `--provider-change-request-document-id` で文書自然キーの構成要素を指定でき、`--observation INTEGER` で保存観測を選択します。
 結果は `document_kind`、`provider_change_request_document_id`、`document_observation_id`、`text_body_sha256`、`document_observed_at_us`、`document_current_selected` 等を返します。文書ID・版IDは返さず、旧オプションの互換別名もありません。
@@ -53,7 +53,7 @@ PR番号は `--provider-change-request-number`、種別は `--change-request-kin
 list/searchは`--limit`（既定100、上限1000）と`--cursor`を持ちます。
 ページが続くことと取得範囲がpartialであることは別です。
 PR照会の完全性は、同じ読み取りスナップショット内で要求したrepository・PR番号・種別・bindingの範囲を評価し、返却ページの切り出しから独立させます。`--limit`、返却バイト数、cursorの位置によって完全性の判定は変わりません。未保存の情報が検索条件に一致する可能性があるため、本文・author等の条件だけでは不足を除外しません。
-文書専用の`pr documents`と`search pr`は、`pr-code`、`pr-commits`、`pr-files`等のコードだけの不足を完全性に含めません。commit/path条件を指定した場合はコードも評価します。API観測後にコード取得前で中断した場合や、必要な公開済みGit参照が欠ける場合は、通常照会の`missing`に不足を示します。照会によってclaimを追加・更新することはありません。
+文書専用の`pr documents`と`search pr`は、`pr-code`、`pr-commits`、`pr-files`等のコードだけの不足やtimelineだけの不足を完全性に含めません。commit/path条件を指定した場合はコードも評価します。API観測後にコード取得前で中断した場合や、必要な公開済みGit参照が欠ける場合は、通常照会の`missing`に不足を示します。照会によってclaimを追加・更新することはありません。
 公開更新後のcursorはSTALE_CURSORになります。timeout時は確定できないページを捨て、飛ばしcursorを発行しません。
 `--all`による一括exportはありません。PR list/showとrepos showの入れ子配列は各100件まで表示し、`nested_collections`に保存総数と省略の有無を返します。外側cursorは入れ子配列の続きを示しません。endpointの全件参照にはendpoints listのcursorを使えます。JSONには全フィールドを、tableには主要なscalar列を安全表示します。
 
@@ -87,9 +87,9 @@ repo-catalog --state-dir /tmp/disposable-catalog db backup --output /tmp/disposa
 repo-catalog --state-dir /tmp/disposable-restored db restore --input /tmp/disposable-backup.sqlite3
 ```
 
-backupはSQLite backup APIでDB内の取得履歴・変換原文・診断を含むsnapshotを作り、checksum/configurationを別manifestへ保存します。cache内容はbackupの正本に含めません。restoreは明示した新規または空の`--state-dir`だけへ行い、DB instance IDを変更して元catalogのcursorを無効にします。過去のjobs/leases/reservationsとcacheを稼働状態へ戻しません。
+backupはSQLite backup APIで通常DBの正規化済み事実・取得payloadと履歴・coverageを含むsnapshotを作り、checksum/configurationを別manifestへ保存します。別のimport workspaceにあるtyped archive・変換診断は含めません。cache内容はbackupの正本に含めません。restoreは明示した新規または空の`--state-dir`だけへ行い、DB instance IDを変更して元catalogのcursorを無効にします。過去のjobs/leases/reservationsとcacheを稼働状態へ戻しません。
 
-v2救済は明示した別stateへ、offlineのguard付きworkerで実行します。元DB/cacheの書換えと取得を禁止し、source bytes、ID、nullable値、履歴と診断をcatalog内へ保持します。中断後は同じ引数で再実行します。
+v2救済は明示した別stateへ、offlineのguard付きworkerで実行します。元DB/cacheの書換えと取得を禁止し、source bytes、ID、nullable値、履歴と変換診断を別のimport workspaceへ保持し、正規化済み事実・観測・coverageを通常catalogへ保存します。中断後は同じ引数で再実行します。
 
 ```bash
 repo-catalog --state-dir /tmp/disposable-import import-v2 --source /tmp/disposable-v2/catalog.sqlite3 --source-cache /tmp/disposable-v2/cache --batch-size 100 --max-batches 2

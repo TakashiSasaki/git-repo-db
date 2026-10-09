@@ -32,6 +32,7 @@ def followup(history, path, text="changed\n", event="push"):
         "docs/schema-hardening/column-conversion.csv",
         "docs/schema-hardening/table-conversion.md",
         "docs/validation/real-world/2026-10-06-public-git.json",
+        "docs/validation/synthetic/2026-10-09-payload-cas.json",
     ],
 )
 def test_main_prose_change_does_not_require_unconditional_acceptance(history, path):
@@ -54,6 +55,139 @@ def test_leaf_test_change_collects_current_selected_file(history):
     assert plan["lanes"]["packaging"]["disposition"] == "not_applicable"
     assert plan["preparation"]["wheelhouse"]["disposition"] == "not_applicable"
     assert len(plan["unexecuted_files"]) == 2
+
+
+@pytest.mark.parametrize("directory", ci_plan.REQUIRED_DIRS)
+@pytest.mark.parametrize("rename", [False, True], ids=["add", "rename"])
+@pytest.mark.parametrize(
+    "filename", ["test_added_regression.py", "added_regression_test.py"]
+)
+def test_new_ordinary_tests_are_discovered_in_every_directory(
+    history, directory, rename, filename
+):
+    root, _, head = history
+    path = directory + "/nested/" + filename
+    write(root, path, "def test_synthetic(): assert False\n")
+    if rename:
+        (root / "tests/unit/test_contracts.py").unlink()
+    ctx = context(root, head, commit(root), event="push")
+    for full in (False, True):
+        plan = ci_plan.make_plan(dict(ctx, full=full), root=root)
+        lane = "packaging" if directory == "tests/packaging" else "tests"
+        assert path in plan["lanes"][lane]["test_files"]
+        assert not plan["excluded_files"]
+        assert path in ci_plan.current_acceptance_files(root)
+
+
+def test_live_tests_remain_outside_ordinary_full_acceptance(history):
+    plan = followup(
+        history, "tests/live/test_opt_in.py", "def test_live(): assert False\n"
+    )
+    assert plan["full"]
+    assert "tests/live/test_opt_in.py" not in plan["acceptance_files"]
+    assert not plan["excluded_files"]
+
+
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "from tests.unit.test_contracts import shared",
+        "import tests.unit.test_contracts as helper",
+        "from tests.unit import test_contracts",
+        "from .test_contracts import shared",
+        "from test_contracts import shared",
+        "from tests.unit import *",
+    ],
+)
+def test_changed_imported_test_helper_selects_its_consumers(history, statement):
+    root, _, _ = history
+    helper = "tests/unit/test_contracts.py"
+    consumer = "tests/unit/test_consumer.py"
+    write(root, helper, "shared = 1\ndef test_synthetic(): pass\n")
+    write(root, consumer, statement + "\ndef test_synthetic(): pass\n")
+    before = commit(root)
+    write(root, helper, "renamed = 1\ndef test_synthetic(): pass\n")
+    plan = ci_plan.make_plan(
+        context(root, before, commit(root), event="push"), root=root
+    )
+    assert plan["full"]
+    assert consumer in plan["lanes"]["tests"]["test_files"]
+    assert "Imported test helper: " + helper in plan["fallback_reasons"]
+
+
+def test_explicit_shared_test_rule_takes_precedence_over_leaf_selection(history):
+    root, _, _ = history
+    path = "tests/unit/test_contracts.py"
+    rules = ci_plan.policy(root)
+    rules["shared_inputs"].append(path)
+    write(root, "scripts/ci_dependencies.json", json.dumps(rules))
+    before = commit(root)
+    write(root, path, "def test_synthetic(): pass\n# shared helper changed\n")
+    plan = ci_plan.make_plan(
+        context(root, before, commit(root), event="push"), root=root
+    )
+    assert plan["full"]
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "invalid python source\n",
+        "import importlib\nhelper = importlib.import_module('tests.unit.test_contracts')\n",
+        "from importlib import import_module as load\nhelper = load('tests.unit.test_contracts')\n",
+    ],
+)
+def test_unresolved_test_dependencies_expand_conservatively(history, source):
+    plan = followup(history, "tests/unit/test_contracts.py", source)
+    assert plan["full"]
+    assert plan["fallback_reasons"]
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "pytest_plugins = ['tests.unit.test_contracts']\n",
+        "import importlib\nloader = importlib.import_module\nhelper = loader('tests.unit.test_contracts')\n",
+        "loader = __import__\nhelper = loader('tests.unit.test_contracts')\n",
+        "from builtins import __import__ as load\nhelper = load('tests.unit.test_contracts')\n",
+    ],
+)
+def test_changed_helper_with_plugin_or_aliased_dynamic_consumer_is_not_a_leaf(
+    history, source
+):
+    root, _, _ = history
+    write(root, "tests/conftest.py", source)
+    before = commit(root)
+    plan = followup(
+        (root, before, before),
+        "tests/unit/test_contracts.py",
+        "def test_synthetic(): pass\n# changed helper\n",
+    )
+    assert plan["full"]
+    assert any(
+        "Dynamic test dependency" in reason for reason in plan["fallback_reasons"]
+    )
+
+
+@pytest.mark.parametrize(
+    "contract",
+    ["docs/current-contract.md", "docs/validation/synthetic/current-contract.json"],
+)
+def test_explicit_executable_contract_wins_over_report_selection_and_fingerprint(
+    history, contract
+):
+    root, _, _ = history
+    rules = ci_plan.policy(root)
+    rules["executable_inputs"].append(contract)
+    write(root, "scripts/ci_dependencies.json", json.dumps(rules))
+    write(root, contract, '{"contract":1}\n')
+    before = commit(root)
+    prior = ci_plan.make_plan(
+        dict(context(root, before, before, event="push"), full=True), root=root
+    )
+    plan = followup((root, before, before), contract, '{"contract":2}\n')
+    assert plan["full"]
+    assert plan["acceptance_input_hash"] != prior["acceptance_input_hash"]
 
 
 @pytest.mark.parametrize(
@@ -121,25 +255,22 @@ def test_nul_diff_handles_unicode_shell_metacharacters_and_truncation():
             ci_plan.parse_diff(truncated)
 
 
-def test_acceptance_file_removal_requires_current_policy_update(history):
+def test_acceptance_file_removal_conservatively_runs_remaining_tests(history):
     root, _, head = history
     (root / "tests/unit/test_contracts.py").unlink()
     ctx = context(root, head, commit(root), event="push")
-    with pytest.raises(ValueError, match="missing"):
-        ci_plan.make_plan(ctx, root=root)
-    rules = ci_plan.policy(root)
-    rules["acceptance_files"].remove("tests/unit/test_contracts.py")
-    write(root, "scripts/ci_dependencies.json", json.dumps(rules))
-    ctx = context(root, head, commit(root), event="push")
-    assert ci_plan.make_plan(ctx, root=root)["full"]
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert plan["full"]
+    assert "tests/unit/test_contracts.py" not in plan["acceptance_files"]
+    assert not plan["excluded_files"]
 
 
-def test_duplicate_policy_members_are_rejected(history):
+def test_policy_cannot_silently_omit_an_ordinary_test_directory(history):
     root, _, _ = history
     rules = ci_plan.policy(root)
-    rules["acceptance_files"].append(rules["acceptance_files"][0])
+    rules["acceptance_directories"].remove("tests/unit")
     write(root, "scripts/ci_dependencies.json", json.dumps(rules))
-    with pytest.raises(ValueError, match="Duplicate"):
+    with pytest.raises(ValueError, match="ordinary test directories"):
         ci_plan.policy(root)
 
 

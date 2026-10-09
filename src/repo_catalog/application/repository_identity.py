@@ -150,13 +150,20 @@ def default_github_instance(store):
         )
     if rows:
         return rows[0]["service_instance_uuidv4"]
-    return add_instance(
+    ident = add_instance(
         store,
         "github",
         "github.com",
         "https://github.com",
         store.config["github"]["rest_base_url"],
     )
+    # Capture the configured default routes in this registration. A display
+    # name is neither an endpoint selector nor permission to use global URLs.
+    store.execute(
+        "UPDATE service_instances SET metadata=? WHERE service_instance_uuidv4=?",
+        (json.dumps({"graphql_url": store.config["github"]["graphql_url"]}), ident),
+    )
+    return ident
 
 
 def bind(
@@ -320,25 +327,25 @@ def github_config(store, src):
             raise CatalogError(
                 "PROVIDER_UNSUPPORTED", "This source requires a GitHub instance"
             )
-        if value["api_base_url"]:
-            config["rest_base_url"] = value["api_base_url"]
-        # Default SaaS config remains configurable for synthetic/older states.
-        if value["name"] == "github.com":
-            config["rest_base_url"] = store.config["github"]["rest_base_url"]
-        else:
-            api, web = value["api_base_url"], value["web_base_url"]
-            if not api and not web:
-                raise CatalogError(
-                    "INVALID_ARGUMENT",
-                    "GitHub API source requires an instance base URL",
-                )
-            api = (api or web.rstrip("/") + "/api/v3").rstrip("/")
-            config["rest_base_url"] = api
-            config["graphql_url"] = (
-                api.removesuffix("/v3") + "/graphql"
-                if api.endswith("/api/v3")
-                else api + "/graphql"
+        api, web = value["api_base_url"], value["web_base_url"]
+        if not api and not web:
+            raise CatalogError(
+                "INVALID_ARGUMENT",
+                "GitHub API source requires an instance base URL",
             )
+        if not api:
+            api = (
+                "https://api.github.com"
+                if web.rstrip("/") == "https://github.com"
+                else web.rstrip("/") + "/api/v3"
+            )
+        api = api.rstrip("/")
+        config["rest_base_url"] = api
+        config["graphql_url"] = json.loads(value["metadata"]).get("graphql_url") or (
+            api.removesuffix("/v3") + "/graphql"
+            if api.endswith("/api/v3")
+            else api + "/graphql"
+        )
     config.update(source_settings(src).get("api_settings", {}))
     return config
 

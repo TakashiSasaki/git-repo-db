@@ -354,11 +354,17 @@ def test_thread_body_gap_after_page_is_reported(pr_catalog):
     assert first["coverage"]["missing"] == [
         {
             "kind": "pr",
+            "reason": "thread_listing_incomplete",
+            "change_request_id": "repo:1:pull_request",
+            "provider_resource_id": "thread",
+        },
+        {
+            "kind": "pr",
             "reason": "document_body_missing",
             "change_request_id": "repo:1:pull_request",
             "document_kind": "review-comment",
             "provider_change_request_document_id": "3",
-        }
+        },
     ]
     assert full["data"]["items"][2]["body"] is None
 

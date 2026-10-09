@@ -1,6 +1,7 @@
 """Small changed-file CI planner for the current catalog3 acceptance suite."""
 
 import argparse
+import ast
 import fnmatch
 import hashlib
 import json
@@ -34,13 +35,10 @@ def git(root, *args):
 
 def policy(root=ROOT):
     value = json.loads((root / "scripts/ci_dependencies.json").read_bytes())
-    if value["version"] != 2 or not value["acceptance_files"]:
-        raise ValueError("Unsupported or empty acceptance policy")
-    files = value["acceptance_files"]
-    if len(files) != len(set(files)) or not all(
-        p.startswith("tests/") and p.endswith(".py") for p in files
+    if value["version"] != 3 or value.get("acceptance_directories") != list(
+        REQUIRED_DIRS
     ):
-        raise ValueError("Duplicate/invalid acceptance test files")
+        raise ValueError("Unsupported acceptance policy or ordinary test directories")
     return value
 
 
@@ -147,27 +145,92 @@ def matches(path, patterns):
     return any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns)
 
 
+def is_test_file(path):
+    # Pytest's default python_files patterns, including sibling-style names.
+    return matches(path.rsplit("/", 1)[-1], ("test_*.py", "*_test.py"))
+
+
 def acceptance_files(entries, rules):
     files = sorted(
-        set(rules["acceptance_files"])
-        | {
-            path
-            for path in entries
-            if path.endswith(".py")
-            and path.rsplit("/", 1)[-1].startswith("test_")
-            and matches(path, rules.get("acceptance_patterns", []))
-        }
+        path
+        for path in entries
+        if is_test_file(path)
+        and any(
+            path.startswith(directory + "/")
+            for directory in rules["acceptance_directories"]
+        )
     )
-    if not set(files) <= set(entries):
-        raise ValueError("Acceptance test files are missing; update the current policy")
+    if not files:
+        raise ValueError("No ordinary acceptance test files found")
     return files
+
+
+def imported_test_files(root, entries, files):
+    """Find test modules used as helpers; uncertain imports require full selection."""
+    modules = {path[:-3].replace("/", "."): path for path in files}
+    basenames = {}
+    for module, path in modules.items():
+        basenames.setdefault(module.rsplit(".", 1)[-1], set()).add(path)
+    imported = set()
+    for path in entries:
+        if not path.startswith("tests/") or not path.endswith(".py"):
+            continue
+        try:
+            syntax = ast.parse((root / path).read_bytes(), filename=path)
+        except (SyntaxError, UnicodeError, OSError) as error:
+            raise ValueError("Cannot inspect test dependencies: " + path) from error
+        package = path.split("/")[:-1]
+        for node in ast.walk(syntax):
+            names = []
+            if (
+                isinstance(node, ast.Name)
+                and node.id in ("pytest_plugins", "__import__", "import_module")
+                or isinstance(node, ast.Attribute)
+                and node.attr in ("import_module", "__import__")
+            ):
+                # Pytest plugins and aliased/computed imports can make a test
+                # module a shared input without an ordinary import statement.
+                raise ValueError(
+                    "Dynamic test dependency requires full selection: " + path
+                )
+            if isinstance(node, ast.Import):
+                if any(alias.name == "importlib" for alias in node.names):
+                    raise ValueError(
+                        "Dynamic test dependency requires full selection: " + path
+                    )
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                if node.module in ("importlib", "builtins") and any(
+                    alias.name in ("import_module", "__import__", "*")
+                    for alias in node.names
+                ):
+                    raise ValueError(
+                        "Dynamic test dependency requires full selection: " + path
+                    )
+                if node.level > len(package):
+                    raise ValueError("Unresolved relative test import: " + path)
+                prefix = package[: len(package) - node.level + 1] if node.level else []
+                module = ".".join(prefix + ([node.module] if node.module else []))
+                names = [module] + [module + "." + alias.name for alias in node.names]
+                if any(alias.name == "*" for alias in node.names):
+                    imported.update(
+                        file
+                        for name, file in modules.items()
+                        if name.startswith(module + ".")
+                    )
+            imported.update(modules[name] for name in names if name in modules)
+            # Pytest's prepend import mode can also make sibling test modules
+            # available by basename; ambiguous names conservatively include both.
+            for name in names:
+                imported.update(basenames.get(name, ()))
+    return imported
 
 
 def current_acceptance_files(root=ROOT):
     entries = [
         str(path.relative_to(root))
         for directory in REQUIRED_DIRS
-        for path in (root / directory).glob("**/test_*.py")
+        for path in (root / directory).glob("**/*.py")
     ]
     return acceptance_files(entries, policy(root))
 
@@ -245,8 +308,7 @@ def make_plan(context, root=ROOT, runtime_meta=None):
     excluded = sorted(
         path
         for path in entries
-        if path.endswith(".py")
-        and path.rsplit("/", 1)[-1].startswith("test_")
+        if is_test_file(path)
         and any(path.startswith(directory + "/") for directory in REQUIRED_DIRS)
         and path not in files
     )
@@ -258,16 +320,24 @@ def make_plan(context, root=ROOT, runtime_meta=None):
         comparison, changed = None, []
         reasons.append(str(error))
     paths = sorted({p for row in changed for p in row["paths"]})
+    imported = set()
+    if set(paths) & set(files):
+        try:
+            imported = imported_test_files(root, entries, files)
+        except ValueError as error:
+            reasons.append(str(error))
     selected = set()
     static = smoke = False
     for path in paths:
-        if path in files:
+        if matches(path, rules["shared_inputs"] + rules["executable_inputs"]):
+            reasons.append("Shared/executable input: " + path)
+        elif path in imported:
+            reasons.append("Imported test helper: " + path)
+        elif path in files:
             selected.add(path)
             static = True
         elif matches(path, rules.get("report_inputs", [])):
             pass
-        elif matches(path, rules["shared_inputs"] + rules["executable_inputs"]):
-            reasons.append("Shared/executable input: " + path)
         elif matches(path, rules["prose"]):
             pass
         else:
@@ -309,6 +379,15 @@ def make_plan(context, root=ROOT, runtime_meta=None):
         "runtime": runtime_meta or runtime(),
         "policy_hash": digest({p: entries.get(p) for p in rules["policy_inputs"]}),
         "tree_hash": digest(entries),
+        "acceptance_input_hash": digest(
+            {
+                path: entry
+                for path, entry in entries.items()
+                if path in files
+                or matches(path, rules["shared_inputs"] + rules["executable_inputs"])
+                or not matches(path, rules["prose"] + rules.get("report_inputs", []))
+            }
+        ),
         "comparison_sha": comparison,
         "changed": changed,
         "fallback_reasons": reasons,
@@ -335,7 +414,8 @@ def explain(plan):
     lines = [
         "## Validation plan",
         "",
-        f"Effective SHA `{plan['context']['tested_sha']}`; full acceptance: {plan['full']}.",
+        f"Effective SHA `{plan['context']['tested_sha']}`; full acceptance selected: {plan['full']}.",
+        f"Acceptance input hash: `{plan['acceptance_input_hash']}`.",
         "",
         "| Lane | Disposition | Test files |",
         "|---|---|---:|",

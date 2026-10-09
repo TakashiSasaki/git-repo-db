@@ -14,6 +14,7 @@ from repo_catalog.adapters.github.persistence import (
 from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.domain.models import CatalogError, Waiting
 from repo_catalog.domain.payload import PayloadRef
+from repo_catalog.domain.pr_scope import NON_DOCUMENT_KINDS, document_scope_includes
 from repo_catalog.domain.time import format_iso8601_us, now_us
 
 
@@ -83,11 +84,16 @@ class GitHubCollector:
         return self.s.one(
             "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0"
             + (
-                " AND f.kind NOT IN ('pr-commits','pr-files','timeline')"
+                " AND f.kind NOT IN (" + ",".join("?" for _ in NON_DOCUMENT_KINDS) + ")"
                 if documents_only
                 else ""
             ),
-            (repo["repository_uuidv4"], repo["source_id"], job),
+            (
+                repo["repository_uuidv4"],
+                repo["source_id"],
+                job,
+                *(sorted(NON_DOCUMENT_KINDS) if documents_only else ()),
+            ),
         )[0]
 
     def request_get(self, url, repo=None, **kwargs):
@@ -370,12 +376,7 @@ class GitHubCollector:
                 response, uncommitted = None, False
                 response = self.request_get(url, repo)
                 uncommitted = True
-                try:
-                    values = response.json()
-                except (ValueError, UnicodeError):
-                    raise CatalogError(
-                        "API_SCHEMA", "Malformed JSON collection page"
-                    ) from None
+                values = self.rest_json(response)
                 if not isinstance(values, list):
                     raise CatalogError(
                         "API_SCHEMA", "Collection response must be a list"
@@ -390,6 +391,7 @@ class GitHubCollector:
                         collection, response, {"url": url, "method": "GET"}, next_url
                     )
                     for position, value in enumerate(values):
+                        self.rest_item(value, kind)
                         normalizer(
                             value,
                             collection,
@@ -433,50 +435,139 @@ class GitHubCollector:
                 s.publish()
             return collection["fetch_collection_id"], listing[0] if listing else None
         except CatalogError as error:
-            with s.transaction():
-                if response is not None and uncommitted:
-                    self.facts.fence(job)
-                    occurrence, _, _ = self.facts.page(
-                        collection,
-                        response,
-                        {
-                            "url": url,
-                            "method": "GET",
-                            "normalization_error": error.code,
-                        },
-                        url,
-                        advance=False,
-                    )
-                    payload_key = s.one(
-                        "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
-                        (occurrence,),
-                    )
-                    s.execute(
-                        "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
-                        (
-                            *payload_key,
-                            canonical(
-                                {
-                                    "code": error.code,
-                                    "fetch_collection_id": collection[
-                                        "fetch_collection_id"
-                                    ],
-                                    "fetch_occurrence_id": occurrence,
-                                }
-                            ),
-                        ),
-                    )
-                self.facts.partial(collection, error.code)
-                if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
-                    self.facts.pending_response(collection) or error.code == "API_CAP"
-                ):
-                    # A saved prefix or rejected response needs another acquisition.
-                    # A committed terminal page interrupted before finish does not.
-                    self.collection_coverage(
-                        repo, pr, kind, collection, "partial", reason=error.code
-                    )
-                s.publish()
+            self.partial_rest_collection(
+                repo,
+                pr,
+                kind,
+                job,
+                collection,
+                error,
+                response if uncommitted else None,
+                url,
+            )
             raise
+
+    def partial_rest_collection(
+        self, repo, pr, kind, job, collection, error, response, url
+    ):
+        """Retain rejected input without committing any normalized page prefix."""
+        with self.s.transaction():
+            if response is not None:
+                self.facts.fence(job)
+                occurrence, _, _ = self.facts.page(
+                    collection,
+                    response,
+                    {"url": url, "method": "GET", "normalization_error": error.code},
+                    url,
+                    advance=False,
+                )
+                payload_key = self.s.one(
+                    "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+                    (occurrence,),
+                )
+                self.s.execute(
+                    "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
+                    (
+                        *payload_key,
+                        canonical(
+                            {
+                                "code": error.code,
+                                "fetch_collection_id": collection[
+                                    "fetch_collection_id"
+                                ],
+                                "fetch_occurrence_id": occurrence,
+                            }
+                        ),
+                    ),
+                )
+            self.facts.partial(collection, error.code)
+            if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
+                self.facts.pending_response(collection) or error.code == "API_CAP"
+            ):
+                # A committed terminal page interrupted before finish needs no
+                # new acquisition; a rejected response or saved prefix does.
+                self.collection_coverage(
+                    repo, pr, kind, collection, "partial", reason=error.code
+                )
+            self.s.publish()
+
+    @staticmethod
+    def rest_json(response):
+        try:
+            value = response.json()
+            # SQLite projections retain whole provider objects as JSON. Check
+            # every string, including unknown metadata and keys, before any
+            # projection can fail with UnicodeEncodeError. The raw response is
+            # still admitted unchanged by the rejected-page path.
+            json.dumps(value, ensure_ascii=False, allow_nan=False).encode("utf-8")
+            return value
+        except (ValueError, UnicodeError):
+            raise CatalogError("API_SCHEMA", "Malformed REST JSON") from None
+
+    @staticmethod
+    def rest_item(value, kind):
+        """Validate consumed REST shapes, leaving unknown provider fields raw."""
+        if not isinstance(value, dict):
+            raise CatalogError("API_SCHEMA", "REST item must be an object")
+        if kind in (
+            "pr-list",
+            "pr-detail",
+            "pr-code-check",
+            "issue-comment",
+            "review",
+            "review-comment",
+            "issue-comment-incremental",
+            "review-comment-incremental",
+        ):
+            for field in ("body", "html_url", "url"):
+                if value.get(field) is not None and not isinstance(value[field], str):
+                    raise CatalogError("API_SCHEMA", f"Malformed document {field}")
+            for field in ("user", "author"):
+                author = value.get(field)
+                if author is not None and (
+                    not isinstance(author, dict)
+                    or author.get("login") is not None
+                    and not isinstance(author["login"], str)
+                ):
+                    raise CatalogError("API_SCHEMA", f"Malformed document {field}")
+            if value.get("commit_id") is not None:
+                GitHubCollector.rest_oid(value["commit_id"], "commit_id")
+        if kind in ("pr-list", "pr-detail", "pr-code-check"):
+            GitHubCollector.rest_integer(value.get("number"), "number", minimum=1)
+            if not isinstance(value.get("title"), str):
+                raise CatalogError("API_SCHEMA", "PR title missing or malformed")
+            for field in ("head", "base"):
+                ref = value.get(field)
+                if ref is not None:
+                    if not isinstance(ref, dict):
+                        raise CatalogError("API_SCHEMA", f"Malformed PR {field}")
+                    if ref.get("sha") is not None:
+                        GitHubCollector.rest_oid(ref["sha"], field + ".sha")
+            try:
+                oid_context(value)
+            except CatalogError:
+                raise CatalogError(
+                    "API_SCHEMA", "PR head/base must use the same object format"
+                ) from None
+            for field in ("commits", "changed_files"):
+                if value.get(field) is not None:
+                    GitHubCollector.rest_integer(value[field], field)
+        if kind == "pr-commits":
+            GitHubCollector.rest_oid(value.get("sha"), "sha")
+
+    @staticmethod
+    def rest_oid(value, field):
+        if (
+            not isinstance(value, str)
+            or len(value) not in (40, 64)
+            or any(char not in "0123456789abcdefABCDEF" for char in value)
+        ):
+            raise CatalogError("API_SCHEMA", f"Malformed REST {field}")
+
+    @staticmethod
+    def rest_integer(value, field, *, minimum=0):
+        if type(value) is not int or not minimum <= value < 1 << 63:
+            raise CatalogError("API_SCHEMA", f"Malformed REST {field}")
 
     @staticmethod
     def document_provider_id(value, field="id"):
@@ -494,8 +585,7 @@ class GitHubCollector:
         self, repo, value, collection, occurrence, position, timestamp, *, publish=True
     ):
         s = self.s
-        if type(value.get("number")) is not int or value["number"] <= 0:
-            raise CatalogError("API_SCHEMA", "PR number missing")
+        self.rest_item(value, "pr-detail")
         provider_document_id = self.document_provider_id(value)
         binding = s.one(
             "SELECT repository_binding_id FROM resume_scopes WHERE resume_scope_id=?",
@@ -510,6 +600,10 @@ class GitHubCollector:
             if row
             else f"{repo['repository_uuidv4']}:{value['number']}"
         )
+        if collection.get("change_request_id") not in (None, ident):
+            raise CatalogError(
+                "API_SCHEMA", "PR response does not match the requested PR"
+            )
         if not row:
             s.execute(
                 "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES(?,?,?,'pull_request',?,NULL)",
@@ -683,37 +777,53 @@ class GitHubCollector:
             response = self.request_get(url, repo)
             if response.status_code == 304:
                 raise CatalogError("API_SCHEMA", "304 without saved representation")
-        value = response.json()
-        with self.s.transaction():
-            self.facts.fence(job)
-            occurrence, _, timestamp = self.facts.page(
-                collection, response, {"url": url, "method": "GET"}, None
+        try:
+            value = self.rest_json(response)
+            with self.s.transaction():
+                self.facts.fence(job)
+                occurrence, _, timestamp = self.facts.page(
+                    collection, response, {"url": url, "method": "GET"}, None
+                )
+                self.ensure_pr(repo, value, collection, occurrence, 0, timestamp)
+                if response.headers.get("etag"):
+                    payload_key = self.s.one(
+                        "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+                        (occurrence,),
+                    )
+                    if validator and not imported_validator:
+                        self.s.execute(
+                            "UPDATE validators SET etag=?,payload_representation=?,payload_sha256=?,validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
+                            (
+                                response.headers["etag"],
+                                *payload_key,
+                                timestamp,
+                                collection["resume_scope_id"],
+                            ),
+                        )
+                    else:
+                        self.s.execute(
+                            "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_representation,payload_sha256,validated_at_us) VALUES(?,'representation',?,?,?,?)",
+                            (
+                                collection["resume_scope_id"],
+                                response.headers["etag"],
+                                *payload_key,
+                                timestamp,
+                            ),
+                        )
+                self.facts.finish(collection)
+                self.s.publish()
+        except CatalogError as error:
+            self.partial_rest_collection(
+                repo,
+                pr["change_request_id"],
+                "pr-detail",
+                job,
+                collection,
+                error,
+                response,
+                url,
             )
-            self.ensure_pr(repo, value, collection, occurrence, 0, timestamp)
-            if response.headers.get("etag"):
-                payload_ref = self.facts.payload(response.content)
-                if validator and not imported_validator:
-                    self.s.execute(
-                        "UPDATE validators SET etag=?,payload_representation=?,payload_sha256=?,validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
-                        (
-                            response.headers["etag"],
-                            *payload_ref.parameters(),
-                            timestamp,
-                            collection["resume_scope_id"],
-                        ),
-                    )
-                else:
-                    self.s.execute(
-                        "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_representation,payload_sha256,validated_at_us) VALUES(?,'representation',?,?,?,?)",
-                        (
-                            collection["resume_scope_id"],
-                            response.headers["etag"],
-                            *payload_ref.parameters(),
-                            timestamp,
-                        ),
-                    )
-            self.facts.finish(collection)
-            self.s.publish()
+            raise
         current = self.s.one(
             "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
             (pr["change_request_id"],),
@@ -778,6 +888,7 @@ class GitHubCollector:
                 number = int(parts[-1])
             except ValueError:
                 raise CatalogError("API_SCHEMA", "Invalid comment parent") from None
+            self.rest_integer(number, "comment parent number", minimum=1)
             pr = self.s.one(
                 "SELECT change_request_id FROM change_requests WHERE repository_uuidv4=? AND provider_change_request_number=?",
                 (repo["repository_uuidv4"], number),
@@ -1957,8 +2068,7 @@ class GitHubCollector:
             document_failures = [
                 failure
                 for failure in failures
-                if failure["kind"]
-                not in {"pr-git", "pr-code", "pr-commits", "pr-files", "timeline"}
+                if document_scope_includes(failure["kind"])
             ]
             with s.transaction():
                 for component, missing in (
@@ -1967,15 +2077,7 @@ class GitHubCollector:
                 ):
                     documents_only = component == "pr-documents"
                     observed_incomplete = any(
-                        not documents_only
-                        or kind
-                        not in (
-                            "pr-git",
-                            "pr-code",
-                            "pr-commits",
-                            "pr-files",
-                            "timeline",
-                        )
+                        not documents_only or document_scope_includes(kind)
                         for _, _, kind in self.observed_partial_scopes
                     )
                     if missing and not observed_incomplete:
@@ -2163,6 +2265,7 @@ class GitHubCollector:
         return None
 
     def code_check(self, repo, pr, job, url, observation):
+        # A transport failure adds no new evidence or incomplete saved listing.
         response = self.request_get(url, repo)
         with self.s.transaction():
             self.facts.fence(job)
@@ -2174,12 +2277,28 @@ class GitHubCollector:
                 url,
                 {"observation": observation, "attempt": self.s.expected_attempt},
             )
-            occurrence, _, timestamp = self.facts.page(
-                collection, response, {"url": url, "method": "GET"}, None
+        try:
+            value = self.rest_json(response)
+            with self.s.transaction():
+                self.facts.fence(job)
+                occurrence, _, timestamp = self.facts.page(
+                    collection, response, {"url": url, "method": "GET"}, None
+                )
+                self.ensure_pr(repo, value, collection, occurrence, 0, timestamp)
+                self.facts.finish(collection)
+                self.s.publish()
+        except CatalogError as error:
+            self.partial_rest_collection(
+                repo,
+                pr["change_request_id"],
+                "pr-code-check",
+                job,
+                collection,
+                error,
+                response,
+                url,
             )
-            self.ensure_pr(repo, response.json(), collection, occurrence, 0, timestamp)
-            self.facts.finish(collection)
-            self.s.publish()
+            raise
         response.extensions["catalog_observation_id"] = self.s.one(
             "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
             (pr["change_request_id"],),

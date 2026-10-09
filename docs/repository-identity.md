@@ -6,9 +6,9 @@ GitHub、GitLab、Gitea、Forgejo、Gitolite、plain Git、その他のサービ
 | 実体 | 識別・関係 |
 |---|---|
 | `repositories` | 内部UUIDv4。repoのカタログ上の同一性 |
-| `service_instances` | portable名前空間のUUIDv4、service_kind、一意のname、任意のweb/API base URL |
+| `service_instances` | portable名前空間のUUIDv4、service_kind、重複可能なローカル表示name、任意のweb/API base URL |
 | `repository_bindings` | repoとinstanceの対応。native IDは文字列またはNULL。`UNIQUE(service_instance_uuidv4, provider_repository_id)` |
-| `repository_endpoints` | 内部UUIDv4、repo、Git URL、transport、label、優先指定。`UNIQUE(repository_id,url)` |
+| `repository_endpoints` | 内部UUIDv4、repo、Git URL、transport、label、優先指定。`UNIQUE(repository_uuidv4,url)` |
 | `sources` | 発見・列挙の設定と任意のinstance参照。API tokenは環境変数名で参照 |
 | `source_repositories` | sourceとrepoの多対多関係、最初と最後の発見時刻 |
 | `git_acquisitions` | 取得・解析run。使用endpoint IDとURLを保持 |
@@ -87,7 +87,7 @@ native IDが不明なら`--provider-repo-id`は省略可能です。同じinstan
 既存repoを合併するコマンドはありません。誤った対応を自動的に上書きしません。
 service_kind/base URLの登録はAPI adapterの実装や実接続試験を意味しません。
 
-GitHub API sourceはinstanceとtoken参照を選べます。
+GitHub API sourceはinstanceとtoken参照を選べます。表示名が曖昧な場合はinstance UUIDを指定します。REST/GraphQL接続先は選択した登録のURLと明示的なSource設定から決まり、表示名の変更では変わりません。既定instanceの自動登録時には、その時点の設定済みREST/GraphQL URLを保存します。後からグローバル設定を変更しても既存instanceを別接続先へ向け直しません。
 
 ```bash
 repo-catalog --state-dir /path/to/state instances add github --name corp-github \

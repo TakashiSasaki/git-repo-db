@@ -51,6 +51,37 @@ def test_offset_and_extra_zero_digits_do_not_change_absolute_time(same_instant):
     assert parse_iso8601_us(same_instant) == 1_791_363_600_123_456
 
 
+@pytest.mark.parametrize(
+    "same_instant",
+    [
+        "19700101T000000Z",
+        "1970-W01-4T00:00:00Z",
+        "1970W014T000000Z",
+        "1970-01-01 00:00:00,0000000+00:00",
+        "1970-01-01t00Z",
+        "1970-01-01T00:00+00",
+        "19700101T0000-0000",
+        "1970-01-01T00:00:30+000030",
+        "1969-12-31T23:59:30-00:00:30",
+    ],
+)
+def test_supported_iso_spellings_keep_the_same_instant(same_instant):
+    assert parse_iso8601_us(same_instant) == 0
+
+
+@pytest.mark.parametrize("clock", ["01.5", "01,5", "01:30.5", "0130,5"])
+def test_fractional_hours_and_minutes_are_not_misread_as_fractional_seconds(clock):
+    with pytest.raises(ValueError, match="Fractional hours and minutes"):
+        parse_iso8601_us(f"1970-01-01T{clock}Z")
+
+
+@pytest.mark.parametrize("offset", ["00:60", "0060", "00:00:60", "000060", "24"])
+@pytest.mark.parametrize("sign", ["+", "-"])
+def test_invalid_offset_components_cannot_be_normalized(offset, sign):
+    with pytest.raises(ValueError, match="Invalid timezone offset component"):
+        parse_iso8601_us(f"1970-01-01T00:00:00{sign}{offset}")
+
+
 def test_adjacent_microseconds_remain_distinct():
     first = parse_iso8601_us("2026-10-07T09:00:00.123456Z")
     second = parse_iso8601_us("2026-10-07T09:00:00.123457Z")

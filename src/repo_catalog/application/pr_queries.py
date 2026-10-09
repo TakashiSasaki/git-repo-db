@@ -8,12 +8,7 @@ import json
 
 from repo_catalog.domain.document import DocumentKey
 from repo_catalog.domain.models import CatalogError, GitOid
-
-# Fetch collections and coverage scopes use both the listing names and their
-# PR-prefixed forms. Keep one classification for document-only completeness.
-_CODE_KINDS = frozenset(
-    ("pr-code", "code", "commits", "files", "pr-commits", "pr-files")
-)
+from repo_catalog.domain.pr_scope import document_scope_includes
 
 
 def pr_state(payload):
@@ -47,7 +42,7 @@ def _coverage(query, pr, documents_only):
     )
     for row in rows:
         query.check()
-        if documents_only and row["kind"] in _CODE_KINDS:
+        if documents_only and not document_scope_includes(row["kind"]):
             continue
         if row["state"] != "complete":
             query.coverage.add(
@@ -61,7 +56,7 @@ def _coverage(query, pr, documents_only):
         (pr["change_request_id"],),
     ):
         query.check()
-        if documents_only and row["kind"] in _CODE_KINDS:
+        if documents_only and not document_scope_includes(row["kind"]):
             continue
         if row["coverage_state"] not in ("complete", "not_applicable"):
             query.coverage.add(
@@ -313,17 +308,170 @@ def code_role_gaps(store, pr, code, *, check):
             }
 
 
+def _thread_root(query, request, thread):
+    """Find the latest observed root or selected child's owning root.
+
+    A resumed child can be newer than a subsequently started root. Failed
+    requests without resource data do not supersede saved semantic evidence.
+    Stream newest first so ordinary reads parse only the first candidate page.
+    """
+    for row in query.s.execute(
+        "SELECT root.*,member.kind member_kind,b.body FROM fetch_collections member "
+        "JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id "
+        "JOIN fetch_collections root ON root.change_request_id=member.change_request_id "
+        "AND root.repository_uuidv4=member.repository_uuidv4 "
+        "AND root.source_id IS member.source_id AND root.kind='threads' "
+        "AND root.fetch_collection_id=CASE WHEN member.kind='threads' "
+        "THEN member.fetch_collection_id ELSE "
+        "json_extract(scope.request_context,'$.parent_fetch_collection_id') END "
+        "JOIN fetch_occurrences o ON o.fetch_collection_id=member.fetch_collection_id "
+        "JOIN stored_bytes b ON b.sha256=o.payload_sha256 "
+        "WHERE member.change_request_id=? "
+        "AND (member.kind='threads' OR (member.kind='thread-comments' "
+        "AND json_extract(scope.request_context,'$.thread')=?)) "
+        "AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 "
+        "ORDER BY o.observed_at_us DESC,o.fetch_occurrence_id DESC",
+        (request["change_request_id"], thread["provider_resource_id"]),
+    ):
+        query.check()
+        try:
+            payload = json.loads(row["body"])
+            resource = (
+                payload["data"]["repository"]["pullRequest"]
+                if row["member_kind"] == "threads"
+                else payload["data"]["node"]
+            )
+        except (ValueError, KeyError, TypeError):
+            continue
+        if isinstance(resource, dict):
+            return row
+    return None
+
+
+def _thread_listing_complete(query, request, thread):
+    """Prove this thread's comment boundary in the latest root scan.
+
+    Root progress includes every thread, so an unrelated child's failure must not
+    invalidate a terminal selected thread. The saved root response establishes its
+    first comment page; further pages require a sealed child of this exact root.
+    """
+    s = query.s
+    root = _thread_root(query, request, thread)
+    if root is None:
+        return False
+    # New attempts may retain rejected pages at the same cursor. Use the most
+    # recent occurrence containing this thread, never an older successful page.
+    for page in s.execute(
+        "SELECT o.fetch_occurrence_id,o.request,b.body FROM fetch_occurrences o "
+        "JOIN stored_bytes b ON b.sha256=o.payload_sha256 "
+        "WHERE o.fetch_collection_id=? "
+        "ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC",
+        (root["fetch_collection_id"],),
+    ):
+        query.check()
+        try:
+            payload = json.loads(page["body"])
+            nodes = payload["data"]["repository"]["pullRequest"]["reviewThreads"][
+                "nodes"
+            ]
+        except (ValueError, KeyError, TypeError):
+            continue
+        if not isinstance(nodes, list):
+            continue
+        selected = next(
+            (
+                node
+                for node in nodes
+                if isinstance(node, dict)
+                and node.get("id") == thread["provider_resource_id"]
+            ),
+            None,
+        )
+        if selected is None:
+            continue
+        if payload.get("errors") or json.loads(page["request"]).get(
+            "normalization_error"
+        ):
+            return False
+        comments = selected.get("comments")
+        if not isinstance(comments, dict) or not isinstance(
+            comments.get("nodes"), list
+        ):
+            return False
+        expected = set()
+        for comment in comments["nodes"]:
+            query.check()
+            provider = (
+                comment.get("fullDatabaseId") if isinstance(comment, dict) else None
+            )
+            if type(provider) not in (int, str) or not str(provider):
+                return False
+            expected.add(str(provider))
+        saved = {
+            row[0]
+            for row in s.execute(
+                "SELECT o.provider_change_request_document_id FROM document_observations o "
+                "JOIN review_comments c USING(change_request_id,kind,provider_change_request_document_id) "
+                "WHERE o.fetch_occurrence_id=? AND o.change_request_id=? "
+                "AND o.kind='review-comment' AND c.review_thread_provider_resource_id=?",
+                (
+                    page["fetch_occurrence_id"],
+                    request["change_request_id"],
+                    thread["provider_resource_id"],
+                ),
+            )
+        }
+        if not expected <= saved:
+            return False
+        info = comments.get("pageInfo")
+        if not isinstance(info, dict) or type(info.get("hasNextPage")) is not bool:
+            return False
+        if not info["hasNextPage"]:
+            return True
+        if not isinstance(info.get("endCursor"), str) or not info["endCursor"]:
+            return False
+        child = s.one(
+            "SELECT p.state,EXISTS(SELECT 1 FROM completion_markers m "
+            "WHERE m.fetch_collection_id=f.fetch_collection_id "
+            "AND m.resume_scope_id=f.resume_scope_id AND m.asserted_state='complete') sealed "
+            "FROM fetch_collections f JOIN resume_scopes scope "
+            "ON scope.resume_scope_id=f.resume_scope_id "
+            "LEFT JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id "
+            "WHERE f.change_request_id=? AND f.repository_uuidv4=? "
+            "AND f.source_id IS ? AND f.kind='thread-comments' "
+            "AND json_extract(scope.request_context,'$.thread')=? "
+            "AND json_extract(scope.request_context,'$.parent_fetch_collection_id')=? "
+            "ORDER BY f.observed_at_us DESC,f.rowid DESC LIMIT 1",
+            (
+                request["change_request_id"],
+                root["repository_uuidv4"],
+                root["source_id"],
+                thread["provider_resource_id"],
+                root["fetch_collection_id"],
+            ),
+        )
+        return bool(child and child["state"] == "complete" and child["sealed"])
+    return False
+
+
 def prepare_pr_coverage(query, command, o):
     """Evaluate the full requested scope in the query's read snapshot.
 
     Row projection can stop at either page bound without changing this report.
-    Only PR metadata and missing references are scanned; document result bodies
-    and nested output arrays remain lazy.
+    PR metadata and missing references are scanned, with saved GraphQL page
+    boundaries inspected for a selected thread. Result projection remains lazy.
     """
     s = query.s
     rows = _scope_rows(query, command, o)
     if command == "pr thread":
         request, thread = _selected_thread(query, rows, o)
+        if not _thread_listing_complete(query, request, thread):
+            query.coverage.add(
+                "pr",
+                "thread_listing_incomplete",
+                change_request_id=request["change_request_id"],
+                provider_resource_id=thread["provider_resource_id"],
+            )
         for row in s.execute(
             "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations obs ON obs.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=obs.text_body_sha256 WHERE rc.change_request_id=? AND rc.review_thread_provider_resource_id=? AND b.sha256 IS NULL ORDER BY d.kind,d.provider_change_request_document_id",
             (request["change_request_id"], thread["provider_resource_id"]),

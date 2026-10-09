@@ -465,6 +465,7 @@ class Context(identity.Context):
         self._source_version_digests = {}
         self._body_digests = {}
         self._thread_provider_resource_ids = {}
+        self._payload_key = None
 
     def metadata(self, record, column="metadata"):
         storage, raw = record.value(column)
@@ -820,12 +821,20 @@ class Context(identity.Context):
     def payload_key(self, source_id):
         if source_id is None:
             return None, None
+        # A page can emit one gap for every NULL document body. Reuse its
+        # validated reference without retaining response bytes or an unbounded
+        # identity map. Each prepare (including verification) owns a new cache;
+        # the guarded source is immutable throughout that context's lifetime.
+        if self._payload_key is not None and self._payload_key[0] == source_id:
+            return self._payload_key[1]
         record = self.ref("api_responses", source_id)
         body = self.blob(record, "body")
         sha = self.blob(record, "payload_sha256", length=32)
         if hashlib.sha256(body).digest() != sha:
             raise Invalid("PAYLOAD_DIGEST_MISMATCH", "payload_sha256")
-        return "decoded_api", sha
+        key = ("decoded_api", sha)
+        self._payload_key = (source_id, key)
+        return key
 
     def target_document_row(self, table, row):
         """Project legacy parser tuples directly into the current natural keys.

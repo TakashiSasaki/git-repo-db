@@ -15,6 +15,13 @@ MIN_EPOCH_US = -(1 << 63)
 MAX_EPOCH_US = (1 << 63) - 1
 MICROSECONDS_PER_SECOND = 1_000_000
 _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
+_ISO8601 = re.compile(
+    r"(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8}|"
+    r"[0-9]{4}-W[0-9]{2}(?:-[1-7])?|[0-9]{4}W[0-9]{2}[1-7]?)"
+    r"[Tt ](?P<clock>[0-9]{2}(?:(?::[0-9]{2}){1,2}|[0-9]{2}(?:[0-9]{2})?)?)"
+    r"(?:[.,](?P<fraction>[0-9]+))?"
+    r"(?P<offset>Z|[+-][0-9]{2}(?:(?::[0-9]{2}){1,2}|[0-9]{2}(?:[0-9]{2})?)?)"
+)
 
 
 def validate_epoch_us(value: int) -> int:
@@ -47,6 +54,9 @@ def parse_iso8601_us(value: str) -> int:
 
     Nonzero sub-microsecond digits are rejected instead of silently merging
     distinct observations. Additional zero digits do not change the instant.
+    Calendar/ISO-week dates, basic/extended clocks and whole-second offsets
+    are supported. Fractions are supported only on seconds, never hours,
+    minutes or timezone offsets; invalid components are never normalized.
     """
     if not isinstance(value, str):
         raise TypeError("An ISO 8601 timestamp must be a string")
@@ -59,9 +69,21 @@ def parse_iso8601_us(value: str) -> int:
     # uncommon external forms rather than silently merging distinct instants.
     if re.search(r"[+-]\d{2}(?::?\d{2}){0,2}[.,]\d+$", value):
         raise ValueError("Fractional timezone offsets are not supported")
-    for fraction in re.findall(r"[.,](\d+)", value):
+    match = _ISO8601.fullmatch(value)
+    if match is None:
+        raise ValueError("Unsupported ISO 8601 timestamp syntax")
+    fraction = match["fraction"]
+    if fraction is not None:
+        if len(match["clock"].replace(":", "")) != 6:
+            raise ValueError("Fractional hours and minutes are not supported")
         if any(digit != "0" for digit in fraction[6:]):
             raise ValueError("Timestamp precision exceeds microseconds")
+    if match["offset"] != "Z":
+        digits = match["offset"][1:].replace(":", "")
+        if int(digits[:2]) > 23 or any(
+            int(digits[index : index + 2]) > 59 for index in range(2, len(digits), 2)
+        ):
+            raise ValueError("Invalid timezone offset component")
     return datetime_to_us(datetime.fromisoformat(value))
 
 
