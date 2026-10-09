@@ -1,6 +1,6 @@
 # Stack review correction acceptance — 2026-10-09
 
-Branch `fix/pr-stack-review` starts at PR #9 `f8c1764c02da45c93437d36465a39ed68952d67d`. This corrects the cumulative stack #4 → #5 → #7 → #8 → #9, without changing its ancestry, schema 11 or workspace 2. Tested clean implementation commit: `eaa280f30cf33a5e83782d2305db86770bdc649d`; Git tree: `0d80e0ce286c84114f57f1beb00937f3a264065b`. The subsequent evidence commit changes only this Markdown/JSON pair and the handoff link; its acceptance input fingerprint must match.
+Branch `fix/pr-stack-review` starts at PR #9 `f8c1764c02da45c93437d36465a39ed68952d67d`. This corrects the cumulative stack #4 → #5 → #7 → #8 → #9, without changing its ancestry, schema 11 or workspace 2. Tested clean implementation commit: `eaa280f30cf33a5e83782d2305db86770bdc649d`; Git tree: `0d80e0ce286c84114f57f1beb00937f3a264065b`. Evidence-only commit `5d38f507c346e43e5bbafe902a453018b0d66b72` passed report checks with the same acceptance input fingerprint and zero runtime tests rerun. The later workflow-reference correction below changes that fingerprint and requires separately completed full hosted acceptance.
 
 ## Result and attribution
 
@@ -35,5 +35,7 @@ Only disposable synthetic source catalogs, caches, Git repositories and mock HTT
 Focused development checks preceded the final clean run. Initial focused failures from CLI PATH setup and new recovery/boundary expectations were corrected; the existing code-check transport-failure regression was corrected before final acceptance. Independent review also caught resumed-child ordering, dynamic import aliases and REST Unicode/OID edges; their regressions now pass. Those intermediate checks are not counted as fresh final acceptance.
 
 ## Limits and follow-up
+
+Published as [PR #10](https://github.com/TakashiSasaki/git-repo-db/pull/10), based on #9. Initial hosted [run 37875595982](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37875595982) failed during action resolution, before any test ran: `astral-sh/setup-uv@v10` has no floating major tag. The published `v10.2.0` tag exists and is now used explicitly; the other three `v7` action tags were also checked against their remote refs. This follow-up changes workflow/docs only, not application or tests. Its final hosted full result and exact SHA are recorded in the PR after completion; the earlier local fingerprint is not claimed to cover the changed workflow.
 
 Process termination before/after the actual SQLite COMMIT validates process-death recovery, not physical power-loss durability. Real-source acquisition remains unexecuted. Further fixture caching was deferred: the review did not demonstrate a benefit warranting added fixture state, while the measured duplicate wheel build and repeated payload hashing were removed. Existing roadmap work (portable acquisition identities, parser/selection DAG, exchange, durable conflict staging, quarantine/repair, hash-verified backup/restore and frozen Job inputs) remains separate from these corrections.
