@@ -62,6 +62,46 @@ def add_fact(store, table, **values):
 
 def add_document(store, pr, document_id, body, *, kind="pr-body", thread=None):
     key = (pr, kind, document_id)
+    if kind in ("review", "review-comment"):
+        from repo_catalog.adapters.sqlite.current_resources import CurrentResources
+
+        owner = store.one(
+            "SELECT * FROM change_requests WHERE change_request_id=?", (pr,)
+        )
+        binding = store.one(
+            "SELECT * FROM repository_bindings WHERE repository_binding_id=?",
+            (owner["repository_binding_id"],),
+        )
+        model = ParserModel(store.connection)
+        profile = model.ensure_builtin_profile()
+        model.ensure_scope_profile(
+            profile, repository_uuidv4=owner["repository_uuidv4"], fact_kind=kind
+        )
+        scope = {
+            "repository_uuidv4": owner["repository_uuidv4"],
+            "repository_binding_id": owner["repository_binding_id"],
+            "service_instance_uuidv4": binding["service_instance_uuidv4"],
+            "change_request_id": pr,
+            "endpoint": "synthetic-test",
+        }
+        candidate = {
+            "kind": kind,
+            "provider_change_request_document_id": document_id,
+            **{k: v for k, v in scope.items() if k != "endpoint"},
+            "acquisition_scope": scope,
+            "body": body,
+            "body_status": "present" if body is not None else "missing",
+            "observed_at_us": 0,
+            "parsed_at_us": 0,
+            "parser_profile_uuidv4": profile,
+            "metadata": {},
+            "review_thread_provider_resource_id": thread,
+        }
+        assert (
+            CurrentResources(store).admit(candidate, source="import").status
+            == "accepted"
+        )
+        return key
     store.execute("INSERT INTO documents VALUES(?,?,?)", key)
     if body is not None:
         encoded = body.encode("utf8")
@@ -80,7 +120,6 @@ def add_document(store, pr, document_id, body, *, kind="pr-body", thread=None):
             observed_at_us=0,
             parsed_at_us=0,
             metadata="{}",
-            review_thread_provider_resource_id=thread,
         )
     return key
 
@@ -494,17 +533,13 @@ def test_thread_body_gap_after_page_is_reported(pr_catalog):
             ),
         )
         for number in (1, 2, 3):
-            key = add_document(
+            add_document(
                 store,
                 "repo:1:pull_request",
                 str(number),
                 f"comment {number}" if number != 3 else None,
                 kind="review-comment",
                 thread="thread",
-            )
-            store.execute(
-                "INSERT INTO review_comments VALUES(?,?,?)",
-                key,
             )
         store.publish()
     command = (

@@ -268,6 +268,40 @@ class GitHubFixture:
         prefix = "/repos/fixture/alpha"
         assert path.startswith(prefix)
         suffix = path.removeprefix(prefix)
+        if suffix == "/issues":
+            assert params.get("state") == ["all"] and params.get("sort") == ["updated"]
+            return [
+                {
+                    "id": 20000 + number,
+                    "number": number,
+                    "title": f"ordinary-issue-title {number}",
+                    "body": f"ordinary-issue-body {self.stage}",
+                    "state": state,
+                    "user": {"login": "writer"},
+                    "updated_at": "2026-01-01T00:00:00Z"
+                    if self.stage == "A"
+                    else "2026-02-01T00:00:00Z",
+                }
+                for number, state in ((1, "open"), (2, "closed"))
+            ] + [
+                {
+                    **value,
+                    "pull_request": {"url": self.url + prefix + f"/pulls/{number}"},
+                }
+                for number, value in self.prs.items()
+            ], {}
+        if suffix in ("/issues/1/comments", "/issues/2/comments"):
+            number = int(suffix.split("/")[2])
+            return [
+                {
+                    "id": 20100 + number,
+                    "body": f"ordinary-issue-comment {self.stage} {number}",
+                    "user": {"login": "commenter"},
+                    "updated_at": "2026-01-01T00:00:00Z"
+                    if self.stage == "A"
+                    else "2026-02-01T00:00:00Z",
+                }
+            ], {}
         if suffix == "/pulls":
             assert params.get("state") == ["all"] and params.get("sort") == ["created"]
             if params.get("page") == ["2"]:

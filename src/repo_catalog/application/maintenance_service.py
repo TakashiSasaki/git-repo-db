@@ -444,6 +444,9 @@ class MaintenanceService:
                         "Unexplained corruption in backup copy",
                         report,
                     )
+                quarantined_payload_count = conn.execute(
+                    "SELECT count(*) FROM payload_quarantine"
+                ).fetchone()[0]
             finally:
                 conn.close()
             with database.open("rb") as stream:
@@ -455,6 +458,7 @@ class MaintenanceService:
                 "catalog": s.revision(),
                 "sha256": digest,
                 "configuration": s.config,
+                "quarantined_payload_count": quarantined_payload_count,
             }
             staged_manifest = stage / "manifest.json"
             staged_manifest.write_text(json.dumps(manifest, indent=2))
@@ -570,6 +574,12 @@ class MaintenanceService:
             cfg = validate(manifest["configuration"])
             expected_digest = manifest["sha256"]
             source_catalog = manifest["catalog"]
+            quarantined_payload_count = manifest["quarantined_payload_count"]
+            if (
+                type(quarantined_payload_count) is not int
+                or not 0 <= quarantined_payload_count <= 2**63 - 1
+            ):
+                raise ValueError("Invalid active physical quarantine count")
         except (KeyError, ValueError, TypeError) as error:
             raise CatalogError("BACKUP_INTEGRITY", "Invalid backup manifest") from error
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -604,6 +614,18 @@ class MaintenanceService:
                     raise CatalogError(
                         "BACKUP_INTEGRITY",
                         "Backup manifest identity differs from copied database",
+                    )
+                copied_quarantine_count = s.one(
+                    "SELECT count(*) FROM payload_quarantine"
+                )[0]
+                if copied_quarantine_count != quarantined_payload_count:
+                    raise CatalogError(
+                        "BACKUP_INTEGRITY",
+                        "Backup quarantine count differs from copied database",
+                        {
+                            "expected_quarantined_payload_count": quarantined_payload_count,
+                            "copied_quarantined_payload_count": copied_quarantine_count,
+                        },
                     )
                 report = verify_all(s.connection)
                 if any(

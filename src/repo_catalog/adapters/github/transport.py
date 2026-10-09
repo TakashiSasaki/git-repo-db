@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import os
+import warnings
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlsplit
 
 import httpx
 
 from repo_catalog import __version__
+from repo_catalog.adapters.recording import (
+    DisabledRecorder,
+    RecordingError,
+    safe_exchange_context,
+)
 from repo_catalog.domain.models import CatalogError, Waiting
 from repo_catalog.domain.time import (
     datetime_to_us,
@@ -26,13 +32,22 @@ class EnvCredentials:
 
 class GitHubTransport:
     def __init__(
-        self, config, token, *, client=None, credentials=None, clock_us=now_us
+        self,
+        config,
+        token,
+        *,
+        client=None,
+        credentials=None,
+        clock_us=now_us,
+        recorder=None,
     ):
         """The optional wall clock returns integer Unix epoch microseconds."""
         self.cfg = config
         self.token = token
         self.credentials = credentials or EnvCredentials(config["token_env_var"])
         self.clock_us = clock_us
+        self.recorder = recorder if recorder is not None else DisabledRecorder()
+        self.recording_diagnostics = []
         self.base = config["rest_base_url"].rstrip("/")
         self.graphql = config["graphql_url"]
         self.origins = {self.origin(self.base), self.origin(self.graphql)}
@@ -91,8 +106,10 @@ class GitHubTransport:
         if secret:
             headers["Authorization"] = "Bearer " + secret
         headers.update(kwargs.pop("headers", {}))
+        provider_context = kwargs.pop("record_context", {})
         for attempt in range(self.cfg["max_attempts"]):
             self.token.check()
+            response = None
             try:
                 with self.client.stream(
                     method, url, headers=headers, **kwargs
@@ -107,6 +124,8 @@ class GitHubTransport:
                                 "API response exceeded safe page memory limit",
                             )
                     raw = bytes(body)
+                    original_headers = dict(response.headers)
+                    observed_at_us = validate_epoch_us(self.clock_us())
                     decoded_headers = dict(response.headers)
                     decoded_headers.pop("content-encoding", None)
                     decoded_headers["content-length"] = str(len(raw))
@@ -115,13 +134,68 @@ class GitHubTransport:
                         headers=decoded_headers,
                         content=raw,
                         request=response.request,
+                        extensions=response.extensions,
                     )
-            except (httpx.TimeoutException, httpx.NetworkError):
+            except (httpx.TimeoutException, httpx.NetworkError) as error:
+                self._record_failure(
+                    method,
+                    url,
+                    headers,
+                    kwargs,
+                    attempt,
+                    provider_context,
+                    "API_NETWORK",
+                    error,
+                    response,
+                )
                 if attempt + 1 == self.cfg["max_attempts"]:
                     raise CatalogError(
                         "API_NETWORK", "API transport failed", retryable=True
                     )
                 continue
+            except httpx.RequestError as error:
+                self._record_failure(
+                    method,
+                    url,
+                    headers,
+                    kwargs,
+                    attempt,
+                    provider_context,
+                    "API_PROTOCOL",
+                    error,
+                    response,
+                )
+                raise
+            except CatalogError as error:
+                if error.code in ("API_RESPONSE_LIMIT", "CANCELLED"):
+                    self._record_failure(
+                        method,
+                        url,
+                        headers,
+                        kwargs,
+                        attempt,
+                        provider_context,
+                        error.code,
+                        error,
+                        response,
+                    )
+                raise
+            archive_ref, diagnostics = self._record(
+                method,
+                str(response.request.url),
+                headers,
+                attempt,
+                observed_at_us,
+                raw,
+                provider_context=provider_context,
+                response_status=response.status_code,
+                response_headers=original_headers,
+            )
+            response.extensions.update(
+                catalog_observed_at_us=observed_at_us,
+                repo_catalog_archive_ref=archive_ref,
+                repo_catalog_recording_diagnostics=diagnostics,
+            )
             limited = (
                 response.status_code == 429
                 or response.status_code == 403
@@ -182,6 +256,97 @@ class GitHubTransport:
                     {"status": response.status_code},
                 )
             return response
+
+    def _record_failure(
+        self,
+        method,
+        url,
+        headers,
+        kwargs,
+        attempt,
+        provider_context,
+        code,
+        error,
+        response,
+    ):
+        if response is not None:
+            request_url = str(response.request.url)
+        elif isinstance(error, httpx.RequestError):
+            try:
+                request_url = str(error.request.url)
+            except RuntimeError:
+                request_url = str(
+                    httpx.URL(url).copy_merge_params(kwargs.get("params") or {})
+                )
+        else:
+            request_url = str(
+                httpx.URL(url).copy_merge_params(kwargs.get("params") or {})
+            )
+        self._record(
+            method,
+            request_url,
+            headers,
+            attempt,
+            validate_epoch_us(self.clock_us()),
+            None,
+            provider_context=provider_context,
+            failure_code=code,
+            response_status=response.status_code if response is not None else None,
+            response_headers=dict(response.headers) if response is not None else {},
+        )
+
+    def _record(
+        self,
+        method,
+        url,
+        headers,
+        attempt,
+        observed_at_us,
+        body,
+        **context,
+    ):
+        """Isolate callback failures; transport, parsing and domain errors stay outside."""
+        if isinstance(self.recorder, DisabledRecorder):
+            return None, []
+        try:
+            safe = safe_exchange_context(
+                {
+                    "method": method,
+                    "url": url,
+                    "request_headers": headers,
+                    "attempt": attempt + 1,
+                    "observed_at_us": observed_at_us,
+                    **context,
+                }
+            )
+            try:
+                reference = self.recorder.record_exchange(safe, body)
+            except RecordingError:
+                raise
+            except Exception:
+                # A recorder may use its own IO library or contain a bug. This
+                # boundary owns only supplementary recording; never include
+                # arbitrary exception text that may contain credentials.
+                raise RecordingError(
+                    "ARCHIVE_FAILURE", "Supplementary recorder failed"
+                ) from None
+        except RecordingError as error:
+            diagnostic = {
+                "code": error.code,
+                "observed_at_us": observed_at_us,
+                "attempt": attempt + 1,
+            }
+            # Operational diagnostics are bounded; this is not resource history.
+            self.recording_diagnostics[:] = (self.recording_diagnostics + [diagnostic])[
+                -100:
+            ]
+            warnings.warn(
+                f"Supplementary message recording failed ({error.code}); collection continues",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return None, [diagnostic]
+        return reference, []
 
     def next_url(self, response):
         next_link = response.links.get("next", {}).get("url")

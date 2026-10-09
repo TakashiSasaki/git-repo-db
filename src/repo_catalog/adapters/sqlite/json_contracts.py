@@ -58,9 +58,15 @@ _register(
 change_request_observations.payload document_observations.metadata
 change_request_events.payload code_commits.payload code_file_changes.payload
 review_thread_observations.payload repository_inventory_observations.metadata_json
+issue_resources.metadata review_resources.metadata
 """,
 )
 _register("decoded-headers", "commits.metadata")
+_register(
+    "authored",
+    "issue_resources.acquisition_scope_json review_resources.acquisition_scope_json",
+)
+_register("current-members", "current_collection_pages.members", shape="array")
 _register(
     "operational",
     """
@@ -216,6 +222,114 @@ def _dependency(key, value):
 
 
 def _check_schema(table, column, value, data):
+    if (table, column) == ("current_collection_pages", "members"):
+        keys = set()
+        for item in value:
+            if not isinstance(item, dict):
+                raise JsonContractError(
+                    "Current collection member requires a typed object"
+                )
+            family = item.get("family")
+            if family == "issue":
+                fields = {
+                    "family",
+                    "service_instance_uuidv4",
+                    "kind",
+                    "provider_resource_id",
+                    "state_digest",
+                }
+                kinds = {"issue", "issue-comment"}
+                identity = "provider_resource_id"
+                owner = "service_instance_uuidv4"
+            elif family == "review":
+                fields = {
+                    "family",
+                    "change_request_id",
+                    "kind",
+                    "provider_change_request_document_id",
+                    "state_digest",
+                }
+                kinds = {"review", "review-comment"}
+                identity = "provider_change_request_document_id"
+                owner = "change_request_id"
+            else:
+                raise JsonContractError("Unknown current collection member family")
+            if set(item) != fields or item.get("kind") not in kinds:
+                raise JsonContractError(
+                    "Current collection member has wrong fields or kind"
+                )
+            provider = item[identity]
+            if not isinstance(provider, str) or not re.fullmatch(
+                r"[1-9][0-9]*", provider
+            ):
+                raise JsonContractError(
+                    "Current collection provider identity requires canonical positive decimal text"
+                )
+            _identity(owner, item[owner])
+            if not isinstance(item["state_digest"], str) or not SHA.fullmatch(
+                item["state_digest"]
+            ):
+                raise JsonContractError(
+                    "Current member state digest requires canonical SHA-256"
+                )
+            key = family, item[owner], item["kind"], provider
+            if key in keys:
+                raise JsonContractError(
+                    "Duplicate current collection resource identity"
+                )
+            keys.add(key)
+        return
+    if (table, column) == (
+        "completion_markers",
+        "evidence",
+    ) and "current_page_collections" in value:
+        manifest = value["current_page_collections"]
+        if not isinstance(manifest, list):
+            raise JsonContractError(
+                "Current page collection manifest requires an array"
+            )
+        identities = set()
+        for item in manifest:
+            if not isinstance(item, dict) or set(item) != {
+                "fetch_collection_id",
+                "page_ordinals",
+            }:
+                raise JsonContractError(
+                    "Current page manifest requires exact collection and ordinal fields"
+                )
+            _identity("fetch_collection_id", item["fetch_collection_id"])
+            ordinals = item["page_ordinals"]
+            if (
+                not isinstance(ordinals, list)
+                or not ordinals
+                or any(
+                    type(ordinal) is not int or ordinal != i
+                    for i, ordinal in enumerate(ordinals)
+                )
+            ):
+                raise JsonContractError(
+                    "Current page manifest requires contiguous integer ordinals"
+                )
+            if item["fetch_collection_id"] in identities:
+                raise JsonContractError(
+                    "Duplicate current page collection manifest identity"
+                )
+            identities.add(item["fetch_collection_id"])
+    if (table, column) == ("completion_markers", "evidence") and value.get(
+        "kind"
+    ) == "current-resource-pages-v1":
+        ordinals = value.get("page_ordinals")
+        if (
+            set(value) != {"kind", "page_ordinals", "terminal"}
+            or value.get("terminal") is not True
+            or not isinstance(ordinals, list)
+            or not ordinals
+            or any(type(n) is not int or n != i for i, n in enumerate(ordinals))
+        ):
+            raise JsonContractError(
+                "Current completion requires exact ordered page ordinals and terminal evidence"
+            )
+        return
     if (table, column) == ("git_acquisitions", "roots_manifest"):
         fields = {"name", "name_b64", "oid", "type", "peeled"}
         optional = {"role", "number", "expected"}
@@ -581,6 +695,7 @@ def reference_dependencies(table, data):
         _check_schema(table, column, value, data)
         if schema.category in {
             "authored",
+            "current-members",
             "input-manifest",
             "git-roots",
             "git-object-manifest",
@@ -723,6 +838,67 @@ def validate_record(db, table, data, *, allow_missing=False):
     repository, source = _owner(db, table, data)
     missing = []
     unowned_payloads = []
+    if table == "current_collection_pages" and "members" in data:
+        members = _load(
+            data["members"],
+            JSON_REGISTRY[table, "members"],
+            "Current collection members",
+        )
+        collection = _row(
+            db,
+            "fetch_collections",
+            ("fetch_collection_id",),
+            (data["fetch_collection_id"],),
+        )
+        if collection:
+            scope = _row(
+                db,
+                "resume_scopes",
+                ("resume_scope_id",),
+                (collection["resume_scope_id"],),
+            )
+            binding = (
+                _row(
+                    db,
+                    "repository_bindings",
+                    ("repository_binding_id",),
+                    (scope.get("repository_binding_id"),),
+                )
+                if scope
+                else None
+            )
+            for item in members:
+                if item["family"] == "issue" and (
+                    binding is None
+                    or binding["service_instance_uuidv4"]
+                    != item["service_instance_uuidv4"]
+                ):
+                    raise JsonContractError(
+                        "Current Issue member has a different acquisition service"
+                    )
+                if (
+                    item["family"] == "review"
+                    and collection["change_request_id"] is not None
+                    and item["change_request_id"] != collection["change_request_id"]
+                ):
+                    raise JsonContractError(
+                        "Current review member has a different acquisition parent"
+                    )
+                if item["family"] == "review":
+                    parent = _row(
+                        db,
+                        "change_requests",
+                        ("change_request_id",),
+                        (item["change_request_id"],),
+                    )
+                    if parent is not None and (
+                        binding is None
+                        or parent["repository_binding_id"]
+                        != binding["repository_binding_id"]
+                    ):
+                        raise JsonContractError(
+                            "Current review member has a different acquisition binding"
+                        )
     if table == "git_acquisition_publications" and "object_manifest_json" in data:
         manifest = _load(
             data["object_manifest_json"],
@@ -895,6 +1071,7 @@ def validate_catalog(db):
             if f["category"]
             in {
                 "authored",
+                "current-members",
                 "input-manifest",
                 "git-roots",
                 "git-object-manifest",
@@ -925,6 +1102,8 @@ def _sql_owner(table):
         "resume_scopes": ("NEW.repository_uuidv4", "NULL"),
         "fetch_occurrences": ("NEW.repository_uuidv4", "NULL"),
         "code_observations": ("NEW.repository_uuidv4", "NULL"),
+        "issue_resources": ("NEW.repository_uuidv4", "NULL"),
+        "review_resources": ("NEW.repository_uuidv4", "NULL"),
         "source_input_observations": ("NULL", "NEW.source_registration_uuidv4"),
         "parsed_results": ("NEW.repository_uuidv4", "NEW.source_registration_uuidv4"),
         "repository_name_observations": (
@@ -936,7 +1115,7 @@ def _sql_owner(table):
     }
     if table in direct:
         return direct[table]
-    if table in {"incremental_scans", "completion_markers"}:
+    if table in {"incremental_scans", "completion_markers", "current_collection_pages"}:
         return (
             "(SELECT repository_uuidv4 FROM fetch_collections WHERE fetch_collection_id=NEW.fetch_collection_id)",
             "NULL",
@@ -1017,6 +1196,7 @@ def guard_sql():
     for (table, column), schema in sorted(JSON_REGISTRY.items()):
         if schema.category not in {
             "authored",
+            "current-members",
             "input-manifest",
             "git-roots",
             "git-object-manifest",
@@ -1031,6 +1211,21 @@ def guard_sql():
             # the entire tree for every parent in a quadratic self-join.
             f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE typeof(j.key)='text' GROUP BY j.parent,j.key HAVING count(*)>1)",
         ]
+        if (table, column) == ("current_collection_pages", "members"):
+            ident = "CASE json_extract(m.value,'$.family') WHEN 'issue' THEN json_extract(m.value,'$.provider_resource_id') ELSE json_extract(m.value,'$.provider_change_request_document_id') END"
+            canonical_provider = f"(typeof(({ident}))='text' AND length(({ident}))>0 AND length(CAST(({ident}) AS BLOB))=length(({ident})) AND substr(({ident}),1,1) BETWEEN '1' AND '9' AND ({ident}) NOT GLOB '*[^0-9]*')"
+            member_digest = _sql_hex("json_extract(m.value,'$.state_digest')", 64)
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM json_each({doc}) m WHERE CASE WHEN m.type<>'object' THEN 1 ELSE ((SELECT count(*) FROM json_each(m.value))<>5 OR coalesce(json_type(m.value,'$.family'),'')<>'text' OR coalesce(json_extract(m.value,'$.family'),'') NOT IN ('issue','review') OR NOT {canonical_provider} OR NOT {member_digest} OR (json_extract(m.value,'$.family')='issue' AND (coalesce(json_extract(m.value,'$.kind'),'') NOT IN ('issue','issue-comment') OR coalesce(json_type(m.value,'$.service_instance_uuidv4'),'')<>'text' OR NOT EXISTS(SELECT 1 FROM fetch_collections c JOIN resume_scopes s USING(resume_scope_id) JOIN repository_bindings b ON b.repository_binding_id=s.repository_binding_id WHERE c.fetch_collection_id=NEW.fetch_collection_id AND b.repository_uuidv4=c.repository_uuidv4 AND b.service_instance_uuidv4=json_extract(m.value,'$.service_instance_uuidv4')))) OR (json_extract(m.value,'$.family')='review' AND (coalesce(json_extract(m.value,'$.kind'),'') NOT IN ('review','review-comment') OR coalesce(json_type(m.value,'$.change_request_id'),'')<>'text' OR NOT EXISTS(SELECT 1 FROM fetch_collections c JOIN resume_scopes s USING(resume_scope_id) JOIN change_requests r ON r.change_request_id=json_extract(m.value,'$.change_request_id') AND r.repository_uuidv4=c.repository_uuidv4 AND r.repository_binding_id=s.repository_binding_id WHERE c.fetch_collection_id=NEW.fetch_collection_id) OR EXISTS(SELECT 1 FROM fetch_collections c WHERE c.fetch_collection_id=NEW.fetch_collection_id AND c.change_request_id IS NOT NULL AND c.change_request_id<>json_extract(m.value,'$.change_request_id'))))) END)"
+            )
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM json_each({doc}) m GROUP BY json_extract(m.value,'$.family'),coalesce(json_extract(m.value,'$.service_instance_uuidv4'),json_extract(m.value,'$.change_request_id')),json_extract(m.value,'$.kind'),coalesce(json_extract(m.value,'$.provider_resource_id'),json_extract(m.value,'$.provider_change_request_document_id')) HAVING count(*)>1)"
+            )
+        if (table, column) == ("completion_markers", "evidence"):
+            manifest = f"{doc},'$.current_page_collections'"
+            conditions.append(
+                f"(json_type({manifest}) IS NOT NULL AND (json_type({manifest})<>'array' OR EXISTS(SELECT 1 FROM json_each({manifest}) m WHERE CASE WHEN m.type<>'object' THEN 1 ELSE ((SELECT count(*) FROM json_each(m.value))<>2 OR coalesce(json_type(m.value,'$.fetch_collection_id'),'')<>'text' OR coalesce(json_type(m.value,'$.page_ordinals'),'')<>'array' OR coalesce(json_array_length(m.value,'$.page_ordinals'),0)=0 OR EXISTS(SELECT 1 FROM json_each(m.value,'$.page_ordinals') e WHERE e.type<>'integer' OR e.value<>CAST(e.key AS INTEGER))) END) OR EXISTS(SELECT 1 FROM json_each({manifest}) m GROUP BY CASE WHEN m.type='object' THEN json_extract(m.value,'$.fetch_collection_id') END HAVING count(*)>1)))"
+            )
         if (table, column) == ("git_acquisitions", "roots_manifest"):
             oid_width = "CASE NEW.object_format WHEN 'sha1' THEN 40 WHEN 'sha256' THEN 64 ELSE -1 END"
             invalid = [
@@ -1123,6 +1318,9 @@ def guard_sql():
                 f"(json_type({doc},'$.response') IS NOT NULL AND (json_type({doc},'$.response')<>'object' OR (SELECT count(*) FROM json_each({doc},'$.response'))<>2 OR coalesce(json_type({doc},'$.response.status'),'')<>'integer' OR json_extract({doc},'$.response.status') NOT BETWEEN 100 AND 599 OR coalesce(json_type({doc},'$.response.headers'),'')<>'object' OR EXISTS(SELECT 1 FROM json_each({doc},'$.response.headers') h WHERE h.key<>'etag' OR h.type<>'text')))"
             )
         if (table, column) == ("completion_markers", "evidence"):
+            conditions.append(
+                f"(json_extract({doc},'$.kind')='current-resource-pages-v1' AND ((SELECT count(*) FROM json_each({doc}))<>3 OR coalesce(json_type({doc},'$.terminal'),'')<>'true' OR coalesce(json_type({doc},'$.page_ordinals'),'')<>'array' OR json_array_length({doc},'$.page_ordinals')=0 OR EXISTS(SELECT 1 FROM json_each({doc},'$.page_ordinals') e WHERE e.type<>'integer' OR e.value<>CAST(e.key AS INTEGER))))"
+            )
             conditions.append(
                 f"(json_extract({doc},'$.status')=304 AND (coalesce(json_type({doc},'$.change_request_observation_uuidv4'),'')<>'text' OR coalesce(json_type({doc},'$.parsed_result_uuidv4'),'')<>'text' OR coalesce(json_type({doc},'$.fetch_occurrence_uuidv4'),'')<>'text' OR coalesce(json_type({doc},'$.payload'),'')<>'object'))"
             )

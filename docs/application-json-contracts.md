@@ -1,6 +1,6 @@
 # Application JSON contract inventory
 
-This current schema inventory contains **50 JSON CHECK columns**. It is generated from the composed production SQLite schema and the explicit `json_contracts.JSON_REGISTRY`; the registry rejects unclassified new CHECK-backed JSON columns. This document is current implementation evidence, not a historical validation rewrite.
+This current schema inventory contains **55 JSON CHECK columns**. It is generated from the composed production SQLite schema and the explicit `json_contracts.JSON_REGISTRY`; the registry rejects unclassified new CHECK-backed JSON columns. This document is current implementation evidence, not a historical validation rewrite.
 
 ## Enforceable categories
 
@@ -31,6 +31,7 @@ This current schema inventory contains **50 JSON CHECK columns**. It is generate
 | `commits.metadata` | `decoded-headers` | object; required |
 | `completion_markers.evidence` | `authored` | object; required |
 | `coverage_claims.details_json` | `authored` | object; NULL allowed |
+| `current_collection_pages.members` | `current-members` | array; required |
 | `document_observations.metadata` | `provider` | object; required |
 | `exchange_admissions.local_key_json` | `local-key` | object; required |
 | `exchange_admissions.record_json` | `staging-envelope` | object; required |
@@ -49,6 +50,8 @@ This current schema inventory contains **50 JSON CHECK columns**. It is generate
 | `identity_relations.evidence_json` | `authored` | object; required |
 | `incremental_scans.evidence` | `authored` | object; required |
 | `inventory_observations.scope` | `operational` | object; required |
+| `issue_resources.acquisition_scope_json` | `authored` | object; required |
+| `issue_resources.metadata` | `provider` | object; required |
 | `job_attempts.checkpoint` | `operational` | object; required |
 | `jobs.request` | `operational` | object; required |
 | `local_parser_profile_verification_trust.rationale_json` | `operational` | object; required |
@@ -67,6 +70,8 @@ This current schema inventory contains **50 JSON CHECK columns**. It is generate
 | `repository_inventory_observations.metadata_json` | `provider` | object; required |
 | `repository_name_observations.provenance_json` | `authored` | object; required |
 | `resume_scopes.request_context` | `authored` | object; required |
+| `review_resources.acquisition_scope_json` | `authored` | object; required |
+| `review_resources.metadata` | `provider` | object; required |
 | `review_thread_observations.payload` | `provider` | object; required |
 | `search_documents.metadata` | `operational` | object; required |
 | `service_instances.metadata` | `authored` | object; required |

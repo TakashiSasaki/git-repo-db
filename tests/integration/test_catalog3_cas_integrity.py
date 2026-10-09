@@ -183,6 +183,7 @@ def test_verification_uses_existing_nonblocking_writer_lock(store):
 
 def test_backup_detects_corruption_and_restore_retains_quarantine(store, tmp_path):
     ref = intern_payload(store.connection, b"good")
+    intern_payload(store.connection, b"good", representation="legacy_normalized")
     corrupt(store.connection, ref.sha256, b"bad!")
     backup = tmp_path / "backup.sqlite3"
     result = MaintenanceService(store.path).database(
@@ -193,7 +194,9 @@ def test_backup_detects_corruption_and_restore_retains_quarantine(store, tmp_pat
         "catalog",
         "sha256",
         "configuration",
+        "quarantined_payload_count",
     }
+    assert result.data["manifest"]["quarantined_payload_count"] == 1
     destination = tmp_path / "restored"
     MaintenanceService(destination).restore(backup)
     with Store(destination) as restored:
@@ -203,6 +206,174 @@ def test_backup_detects_corruption_and_restore_retains_quarantine(store, tmp_pat
         repair_payload(restored.connection, ref.sha256, b"good")
         assert verify_all(restored.connection)["corrupt"] == []
     assert is_quarantined(store.connection, ref.sha256)
+
+
+def test_backup_counts_active_physical_quarantine_only(store, tmp_path):
+    db = store.connection
+    bodies = (b"one", b"two", b"repaired")
+    refs = [intern_payload(db, body) for body in bodies]
+    for ref, body in zip(refs, bodies):
+        intern_payload(db, body, representation="legacy_normalized")
+        corrupt(db, ref.sha256, b"bad")
+    verify_all(db)
+    repair_payload(db, refs[2].sha256, b"repaired")
+    stage_verified_payload(db, b"one", refs[0], {}, reason="PAYLOAD_CORRUPTION")
+    (store.path / "quarantine" / "cache-object").mkdir()
+    backup = tmp_path / "backup.sqlite3"
+    result = MaintenanceService(store.path).database(
+        "backup", SimpleNamespace(output=backup)
+    )
+    assert result.data["manifest"]["quarantined_payload_count"] == 2
+    destination = tmp_path / "restored"
+    MaintenanceService(destination).restore(backup)
+    with Store(destination) as restored:
+        assert restored.one("SELECT count(*) FROM payload_quarantine")[0] == 2
+        assert restored.one("SELECT count(*) FROM unresolved_payloads")[0] == 3
+        assert restored.one("SELECT count(*) FROM payloads")[0] == 6
+        assert restored.one("SELECT count(*) FROM payload_admission_staging")[0] == 1
+        assert (
+            restored.one(
+                "SELECT body FROM stored_bytes WHERE sha256=?", (refs[2].sha256,)
+            )[0]
+            == b"repaired"
+        )
+
+
+def test_backup_manifest_zero_excludes_repaired_historical_diagnoses(store, tmp_path):
+    ref = intern_payload(store.connection, b"good")
+    corrupt(store.connection, ref.sha256, b"bad!")
+    verify_all(store.connection)
+    repair_payload(store.connection, ref.sha256, b"good")
+    backup = tmp_path / "backup.sqlite3"
+    result = MaintenanceService(store.path).database(
+        "backup", SimpleNamespace(output=backup)
+    )
+    assert result.data["manifest"]["quarantined_payload_count"] == 0
+    destination = tmp_path / "restored"
+    MaintenanceService(destination).restore(backup)
+    with Store(destination) as restored:
+        assert restored.one("SELECT count(*) FROM payload_quarantine")[0] == 0
+        assert restored.one("SELECT count(*) FROM unresolved_payloads")[0] == 1
+
+
+@pytest.mark.parametrize(
+    "count",
+    [None, True, False, "0", 0.0, 0.5, -1, 2**63, [], {}, float("inf"), float("nan")],
+)
+def test_restore_rejects_invalid_quarantine_count(store, tmp_path, count):
+    backup = tmp_path / "backup.sqlite3"
+    MaintenanceService(store.path).database("backup", SimpleNamespace(output=backup))
+    manifest_path = backup.with_name(backup.name + ".manifest.json")
+    manifest = json.loads(manifest_path.read_text())
+    manifest["quarantined_payload_count"] = count
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(CatalogError, match="Invalid backup manifest") as error:
+        MaintenanceService(tmp_path / "restore").restore(backup)
+    assert error.value.code == "BACKUP_INTEGRITY"
+    assert not (tmp_path / "restore").exists()
+    assert not list(tmp_path.glob(".repo-catalog-restore-*"))
+
+
+def test_restore_requires_quarantine_count(store, tmp_path):
+    backup = tmp_path / "backup.sqlite3"
+    MaintenanceService(store.path).database("backup", SimpleNamespace(output=backup))
+    manifest_path = backup.with_name(backup.name + ".manifest.json")
+    manifest = json.loads(manifest_path.read_text())
+    del manifest["quarantined_payload_count"]
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(CatalogError, match="Invalid backup manifest"):
+        MaintenanceService(tmp_path / "restore").restore(backup)
+    assert not (tmp_path / "restore").exists()
+
+
+@pytest.mark.parametrize("count,active", [(1, 0), (2**63 - 1, 0), (0, 1)])
+def test_restore_valid_integer_count_must_match_copy(store, tmp_path, count, active):
+    if active:
+        ref = intern_payload(store.connection, b"good")
+        corrupt(store.connection, ref.sha256, b"bad!")
+    backup = tmp_path / "backup.sqlite3"
+    MaintenanceService(store.path).database("backup", SimpleNamespace(output=backup))
+    manifest_path = backup.with_name(backup.name + ".manifest.json")
+    manifest = json.loads(manifest_path.read_text())
+    manifest["quarantined_payload_count"] = count
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(CatalogError, match="quarantine count differs") as error:
+        MaintenanceService(tmp_path / "restore").restore(backup)
+    assert error.value.details["expected_quarantined_payload_count"] == count
+    assert error.value.details["copied_quarantined_payload_count"] == active
+    assert not (tmp_path / "restore").exists()
+    assert list(tmp_path.glob(".repo-catalog-restore-*"))
+
+
+def test_restore_count_mismatch_precedes_scan_and_retries_keep_fresh_stages(
+    store, tmp_path, monkeypatch
+):
+    ref = intern_payload(store.connection, b"good")
+    backup = tmp_path / "backup.sqlite3"
+    MaintenanceService(store.path).database("backup", SimpleNamespace(output=backup))
+    with sqlite3.connect(backup, isolation_level=None) as writer:
+        corrupt(writer, ref.sha256, b"bad!")
+    manifest_path = backup.with_name(backup.name + ".manifest.json")
+    manifest = json.loads(manifest_path.read_text())
+    manifest["quarantined_payload_count"] = 1
+    manifest["sha256"] = hashlib.sha256(backup.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest))
+
+    def forbidden_scan(db, *, diagnose=True):
+        pytest.fail("A mismatching count must reject before the diagnostic scan")
+
+    monkeypatch.setattr(maintenance_service, "verify_all", forbidden_scan)
+    stages = []
+    for _ in range(2):
+        with pytest.raises(CatalogError, match="quarantine count differs") as error:
+            MaintenanceService(tmp_path / "restore").restore(backup)
+        stages.append(error.value.details["stage"])
+        with sqlite3.connect(
+            stages[-1] + "/" + store.config["database"]["filename"]
+        ) as copy:
+            assert (
+                copy.execute("SELECT count(*) FROM payload_quarantine").fetchone()[0]
+                == 0
+            )
+            assert (
+                copy.execute("SELECT body FROM stored_bytes").fetchone()[0] == b"bad!"
+            )
+    assert stages[0] != stages[1]
+    assert not (tmp_path / "restore").exists()
+
+
+def test_restore_matching_count_still_rejects_unexplained_copy_corruption(
+    store, tmp_path
+):
+    db = store.connection
+    known = intern_payload(db, b"known")
+    unknown = intern_payload(db, b"unknown")
+    corrupt(db, known.sha256, b"bad")
+    backup = tmp_path / "backup.sqlite3"
+    result = MaintenanceService(store.path).database(
+        "backup", SimpleNamespace(output=backup)
+    )
+    assert result.data["manifest"]["quarantined_payload_count"] == 1
+    with sqlite3.connect(backup, isolation_level=None) as writer:
+        corrupt(writer, unknown.sha256, b"bad")
+    manifest_path = backup.with_name(backup.name + ".manifest.json")
+    manifest = json.loads(manifest_path.read_text())
+    manifest["sha256"] = hashlib.sha256(backup.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(CatalogError, match="Unexplained corruption") as error:
+        MaintenanceService(tmp_path / "restore").restore(backup)
+    assert error.value.code == "BACKUP_INTEGRITY"
+    assert not (tmp_path / "restore").exists()
+    with sqlite3.connect(
+        error.value.details["stage"] + "/" + store.config["database"]["filename"]
+    ) as copy:
+        assert (
+            copy.execute("SELECT count(*) FROM payload_quarantine").fetchone()[0] == 2
+        )
+    with sqlite3.connect(backup) as copy:
+        assert (
+            copy.execute("SELECT count(*) FROM payload_quarantine").fetchone()[0] == 1
+        )
 
 
 def test_backup_copy_new_corruption_blocks_publication_and_keeps_stage(

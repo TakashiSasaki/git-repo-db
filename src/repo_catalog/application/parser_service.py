@@ -14,6 +14,8 @@ class ParserService:
         self.path = Path(state_dir)
 
     def execute(self, action, options):
+        if action in ("inspect-message", "reparse-message"):
+            return self._message(action, options)
         if action == "status":
             with (
                 Store(self.path, readonly=True) as store,
@@ -104,6 +106,12 @@ class ParserService:
                         "Parser request fields do not match the action",
                     ) from exc
                 model.promote_staging()
+                if action in ("select-profile", "trust", "admit-decision"):
+                    from repo_catalog.adapters.sqlite.current_resources import (
+                        CurrentResources,
+                    )
+
+                    CurrentResources(store).promote_staging()
                 response = Result(
                     {"action": action, "result": value}, catalog=store.revision()
                 )
@@ -111,3 +119,74 @@ class ParserService:
                     response.status = "partial"
                     response.coverage.add("parser", "decision_staged")
                 return response
+
+    def _message(self, action, options):
+        """Bounded supplementary inspection never acquires or admits domain state."""
+        from repo_catalog.adapters.recording import LocalArchiveReader, RecordingError
+
+        try:
+            recorded = LocalArchiveReader(self.path / "transport-archive").read(
+                options["archive_reference"], max_body_bytes=options["max_bytes"]
+            )
+        except RecordingError as error:
+            raise CatalogError(error.code, str(error)) from error
+        data = {
+            "archive_reference": options["archive_reference"],
+            "context": recorded.context,
+            "body_bytes": len(recorded.body) if recorded.body is not None else None,
+            "admitted": False,
+        }
+        if action == "reparse-message":
+            from repo_catalog.adapters.github import current_parser
+            from repo_catalog.domain.time import now_us
+
+            try:
+                spec = json.loads(Path(options["context"]).read_text())
+                kind = spec["resource_kind"]
+                context = spec["context"]
+                if not isinstance(context, dict) or not isinstance(
+                    context.get("acquisition_scope"), dict
+                ):
+                    raise ValueError()
+                if (
+                    recorded.body is None
+                    or recorded.context.get("response_status") != 200
+                ):
+                    raise ValueError()
+                payload = json.loads(recorded.body)
+            except (KeyError, ValueError, TypeError, UnicodeError) as error:
+                raise CatalogError(
+                    "INVALID_ARGUMENT",
+                    "Reparse requires a saved successful JSON body and explicit provider context",
+                ) from error
+            functions = {
+                "issue": current_parser.issue,
+                "issue-comment": current_parser.issue_comment,
+                "review": current_parser.review,
+                "review-comment": current_parser.review_comment,
+            }
+            if kind not in functions:
+                raise CatalogError(
+                    "INVALID_ARGUMENT", "Unsupported current resource kind"
+                )
+            values = payload if isinstance(payload, list) else [payload]
+            if len(values) > 1000:
+                raise CatalogError(
+                    "ARCHIVE_LIMIT", "Reparse member count exceeds the read bound"
+                )
+            projections = []
+            for value in values:
+                args = [value, context, recorded.context["observed_at_us"]]
+                if kind == "issue-comment":
+                    if not isinstance(spec.get("parent_provider_resource_id"), str):
+                        raise CatalogError(
+                            "INVALID_ARGUMENT",
+                            "Issue comment reparse requires an explicit parent provider ID",
+                        )
+                    args.append(spec["parent_provider_resource_id"])
+                projection = functions[kind](*args)
+                if projection is not None:
+                    projection["parsed_at_us"] = now_us()
+                    projections.append(projection)
+            data.update(resource_kind=kind, projections=projections, source="replay")
+        return Result(data)

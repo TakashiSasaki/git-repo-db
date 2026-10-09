@@ -76,6 +76,7 @@ LOCAL_COLUMNS = {
     "documents": {"current_document_observation_id"},
 }
 SCOPES = {"parser_profile_selection_scopes", "fact_selection_scopes", "coverage_scopes"}
+CURRENT_RESOURCES = {"issue_resources", "review_resources"}
 SHA = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -152,6 +153,12 @@ class Graph:
             self.foreign[table] = []
             for group in grouped.values():
                 group.sort(key=lambda r: r[1])
+                if any(r[3] not in self.columns[table] for r in group):
+                    # Generated discriminator columns enforce current-family
+                    # parent types in SQL. Shared current admission owns those
+                    # natural references; generated values are never portable
+                    # writable columns.
+                    continue
                 self.foreign[table].append(
                     (
                         group[0][2],
@@ -159,13 +166,20 @@ class Graph:
                         tuple(r[4] for r in group),
                     )
                 )
+            if table in CURRENT_RESOURCES:
+                # Natural-key owner references must remain stable when optional
+                # thread/review associations are discovered or changed.
+                self.foreign[table].sort(
+                    key=lambda fk: fk[0] not in {"service_instances", "change_requests"}
+                )
         self.key_cache = {}
 
     def rows(self, table):
         columns = tuple(self.columns[table])
+        selected = ",".join(f'"{column}"' for column in columns)
         return [
             dict(zip(columns, row))
-            for row in self.db.execute(f'SELECT * FROM "{table}"')
+            for row in self.db.execute(f'SELECT {selected} FROM "{table}"')
         ]
 
     def lookup(self, table, columns, values, *, allow_null=False):
@@ -174,7 +188,10 @@ class Graph:
         ):
             return None
         sql = " AND ".join(f'"{c}" IS ?' for c in columns)
-        row = self.db.execute(f'SELECT * FROM "{table}" WHERE {sql}', values).fetchone()
+        selected = ",".join(f'"{column}"' for column in self.columns[table])
+        row = self.db.execute(
+            f'SELECT {selected} FROM "{table}" WHERE {sql}', values
+        ).fetchone()
         return dict(zip(self.columns[table], row)) if row is not None else None
 
     def local_key(self, table, row):
@@ -223,12 +240,22 @@ class Graph:
                         continue
                     if col not in child_cols or parent not in self.columns:
                         continue
+                    if any(row.get(c) is None for c in child_cols):
+                        continue
                     parent_row = self.lookup(
                         parent, parent_cols, tuple(row[c] for c in child_cols)
                     )
                     if parent_row is not None:
                         value = {
                             "$ref": self.key(parent, parent_row),
+                            "column": parent_cols[child_cols.index(col)],
+                        }
+                        break
+                    if table in CURRENT_RESOURCES:
+                        value = {
+                            "$ref": self.missing_parent_key(
+                                parent, parent_cols, tuple(row[c] for c in child_cols)
+                            ),
                             "column": parent_cols[child_cols.index(col)],
                         }
                         break
@@ -267,9 +294,16 @@ class Graph:
         )
 
     def record(self, table, row):
-        from repo_catalog.adapters.sqlite.json_contracts import validate_record
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            MissingJsonDependencies,
+            validate_record,
+        )
 
-        validate_record(self.db, table, row)
+        try:
+            validate_record(self.db, table, row)
+        except MissingJsonDependencies:
+            if table not in CURRENT_RESOURCES:
+                raise
         if table == "git_object_payloads":
             self.validate_git_payload(row)
         data = {c: encode(v, c) for c, v in row.items()}
@@ -290,7 +324,9 @@ class Graph:
             for col in self.keys[table]:
                 data.pop(col)
         for parent, child_cols, parent_cols in self.foreign[table]:
-            if parent not in self.columns or any(row[c] is None for c in child_cols):
+            if parent not in self.columns or any(
+                row.get(c) is None for c in child_cols
+            ):
                 continue
             if any(c in LOCAL_COLUMNS.get(table, ()) for c in child_cols):
                 continue
@@ -298,10 +334,15 @@ class Graph:
                 parent, parent_cols, tuple(row[c] for c in child_cols)
             )
             if parent_row is None:
-                raise CatalogError(
-                    "INVALID_EXCHANGE", "Catalog has an unresolved foreign key"
+                if table not in CURRENT_RESOURCES:
+                    raise CatalogError(
+                        "INVALID_EXCHANGE", "Catalog has an unresolved foreign key"
+                    )
+                key = self.missing_parent_key(
+                    parent, parent_cols, tuple(row[c] for c in child_cols)
                 )
-            key = self.key(parent, parent_row)
+            else:
+                key = self.key(parent, parent_row)
             for child, pcol in zip(child_cols, parent_cols):
                 if child in data and not (
                     isinstance(data[child], dict) and "$ref" in data[child]
@@ -314,14 +355,256 @@ class Graph:
                 record["requires"] = sorted(requirements)
         return record
 
+    def missing_parent_key(self, table, columns, values):
+        """Encode a legitimate unavailable current parent without inventing it."""
+        identity = dict(zip(columns, values, strict=True))
+        key_columns = self.portable_columns(table)
+        if not all(column in identity for column in key_columns):
+            raise CatalogError("INVALID_EXCHANGE", "Parent identity is incomplete")
+        portable = {}
+        for column in key_columns:
+            value = identity[column]
+            for parent, child_columns, parent_columns in self.foreign[table]:
+                if column not in child_columns or not all(
+                    child in identity for child in child_columns
+                ):
+                    continue
+                target = self.lookup(
+                    parent,
+                    parent_columns,
+                    tuple(identity[child] for child in child_columns),
+                )
+                key = (
+                    self.key(parent, target)
+                    if target is not None
+                    else self.missing_parent_key(
+                        parent,
+                        parent_columns,
+                        tuple(identity[child] for child in child_columns),
+                    )
+                )
+                value = {
+                    "$ref": key,
+                    "column": parent_columns[child_columns.index(column)],
+                }
+                break
+            portable[column] = encode(value, column)
+        return table + ":" + canonical(portable)
+
+    def current_candidate_row(self, candidate):
+        from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
+
+        row = dict(candidate)
+        body = row.pop("body", None)
+        row["text_body_sha256"] = (
+            intern_text_body(self.db, body) if body is not None else None
+        )
+        row["metadata"] = canonical(row["metadata"])
+        row["acquisition_scope_json"] = canonical(row.pop("acquisition_scope"))
+        return row
+
+    def current_page_requirements(self, collection_id, ordinals, *, baseline=True):
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        proof = CurrentCollectionProof(self.db)
+        evidence = proof.evidence(collection_id)
+        if (
+            not isinstance(ordinals, list)
+            or any(
+                type(ordinal) is not int or ordinal != i
+                for i, ordinal in enumerate(ordinals)
+            )
+            or evidence is None
+            or evidence["page_ordinals"] != ordinals
+        ):
+            return None
+        collection = self.lookup(
+            "fetch_collections", ("fetch_collection_id",), (collection_id,)
+        )
+        if collection is None:
+            return None
+        required = {self.key("fetch_collections", collection)}
+        for page in proof.pages(collection_id):
+            required.add(self.key("current_collection_pages", page))
+        for member in proof.members(collection_id):
+            if member["family"] == "issue":
+                target_table = "issue_resources"
+                columns = ("service_instance_uuidv4", "kind", "provider_resource_id")
+            else:
+                target_table = "review_resources"
+                columns = (
+                    "change_request_id",
+                    "kind",
+                    "provider_change_request_document_id",
+                )
+            target = self.lookup(
+                target_table, columns, tuple(member[c] for c in columns)
+            )
+            if target is None:
+                return None
+            required.add(self.key(target_table, target))
+        if baseline:
+            inherited = self.current_baseline_requirements(collection)
+            if inherited is None:
+                return None
+            required.update(inherited)
+        return required
+
+    def current_baseline_requirements(self, collection):
+        """Follow lightweight incremental baselines without recursive history walks."""
+        required, visited = set(), set()
+        while True:
+            scope = self.lookup(
+                "resume_scopes", ("resume_scope_id",), (collection["resume_scope_id"],)
+            )
+            if scope is None:
+                return None
+            context = json.loads(scope["request_context"])
+            marker_uuid = context.get("completion_marker_uuidv4")
+            if not marker_uuid:
+                return required
+            if marker_uuid in visited:
+                return None
+            visited.add(marker_uuid)
+            marker = self.lookup(
+                "completion_markers", ("completion_marker_uuidv4",), (marker_uuid,)
+            )
+            if marker is None:
+                return None
+            previous = self.lookup(
+                "fetch_collections",
+                ("fetch_collection_id",),
+                (marker["fetch_collection_id"],),
+            )
+            if previous is None or any(
+                previous[column] != collection[column]
+                for column in (
+                    "repository_uuidv4",
+                    "change_request_id",
+                    "source_id",
+                    "kind",
+                )
+            ):
+                return None
+            previous_scope = self.lookup(
+                "resume_scopes", ("resume_scope_id",), (previous["resume_scope_id"],)
+            )
+            if previous_scope is None or any(
+                previous_scope[column] != scope[column]
+                for column in (
+                    "repository_binding_id",
+                    "source_id",
+                    "principal_ref",
+                    "api_version",
+                    "parser_version",
+                    "profile_version",
+                    "confidence",
+                )
+            ):
+                return None
+            previous_context = json.loads(previous_scope["request_context"])
+            fixed_context = {
+                key: value
+                for key, value in context.items()
+                if key != "completion_marker_uuidv4"
+            }
+            old_fixed_context = {
+                key: value
+                for key, value in previous_context.items()
+                if key != "completion_marker_uuidv4"
+            }
+            if (
+                not isinstance(context.get("incremental_endpoint"), str)
+                or fixed_context != old_fixed_context
+            ):
+                return None
+            if {
+                page["parser_profile_uuidv4"]
+                for page in self.matching(
+                    "current_collection_pages",
+                    ("fetch_collection_id",),
+                    (collection["fetch_collection_id"],),
+                )
+            } != {
+                page["parser_profile_uuidv4"]
+                for page in self.matching(
+                    "current_collection_pages",
+                    ("fetch_collection_id",),
+                    (previous["fetch_collection_id"],),
+                )
+            }:
+                return None
+            from repo_catalog.adapters.sqlite.current_collections import (
+                CurrentCollectionProof,
+            )
+
+            proof = CurrentCollectionProof(self.db)
+            if not proof.is_complete_marker(marker):
+                return None
+            evidence = json.loads(marker["evidence"])
+            dependencies = self.current_page_requirements(
+                previous["fetch_collection_id"],
+                evidence["page_ordinals"],
+                baseline=False,
+            )
+            if dependencies is None:
+                return None
+            required.add(self.key("completion_markers", marker))
+            required.update(dependencies)
+            collection = previous
+
     def matching(self, table, columns, values):
         if table not in self.columns:
             return []
         where = " AND ".join(f'"{c}" IS ?' for c in columns)
+        selected = ",".join(f'"{column}"' for column in self.columns[table])
         return [
             dict(zip(self.columns[table], row))
-            for row in self.db.execute(f'SELECT * FROM "{table}" WHERE {where}', values)
+            for row in self.db.execute(
+                f'SELECT {selected} FROM "{table}" WHERE {where}', values
+            )
         ]
+
+    def current_parents(self, table, row):
+        """Resolve generated SQL discriminator relationships by natural key."""
+        if table == "issue_resources" and row.get("parent_provider_resource_id"):
+            return [
+                (
+                    table,
+                    self.lookup(
+                        table,
+                        ("service_instance_uuidv4", "kind", "provider_resource_id"),
+                        (
+                            row["service_instance_uuidv4"],
+                            "issue",
+                            row["parent_provider_resource_id"],
+                        ),
+                    ),
+                )
+            ]
+        if table == "review_resources":
+            return [
+                (
+                    table,
+                    self.lookup(
+                        table,
+                        (
+                            "change_request_id",
+                            "kind",
+                            "provider_change_request_document_id",
+                        ),
+                        (row["change_request_id"], kind, row[column]),
+                    ),
+                )
+                for column, kind in (
+                    ("review_provider_resource_id", "review"),
+                    ("in_reply_to_provider_resource_id", "review-comment"),
+                )
+                if row.get(column)
+            ]
+        return []
 
     def code_proof(self, result_uuid, repository_uuid, change_request_id):
         """Exact published code interpretation, sealed listings and Git roles."""
@@ -589,6 +872,20 @@ class Graph:
             if row["asserted_state"] != "complete":
                 return set()
             evidence = json.loads(row["evidence"])
+            if evidence.get("kind") == "current-resource-pages-v1":
+                from repo_catalog.adapters.sqlite.current_collections import (
+                    CurrentCollectionProof,
+                )
+
+                proof = CurrentCollectionProof(self.db)
+                if not proof.is_complete_marker(row):
+                    return None
+                # Identity dependencies certify independently usable domain
+                # members. Their changing bodies are never immutable output
+                # dependencies; the sealed receipt retains the observed digest.
+                return self.current_page_requirements(
+                    row["fetch_collection_id"], evidence["page_ordinals"]
+                )
             manifest = evidence.get("fetch_occurrence_uuidv4s")
             validation = evidence.get("status") == 304
             if (
@@ -607,6 +904,13 @@ class Graph:
                 ("fetch_collection_id",),
                 (row["fetch_collection_id"],),
             )
+            if root_collection is None:
+                return None
+            root_scope = self.lookup(
+                "resume_scopes",
+                ("resume_scope_id",),
+                (root_collection["resume_scope_id"],),
+            )
             for collection_id in collection_ids:
                 collection = require(
                     "fetch_collections", ("fetch_collection_id",), (collection_id,)
@@ -617,6 +921,7 @@ class Graph:
                     != root_collection["repository_uuidv4"]
                     or collection["change_request_id"]
                     != root_collection["change_request_id"]
+                    or collection["source_id"] != root_collection["source_id"]
                 ):
                     return None
                 if collection_id != row["fetch_collection_id"]:
@@ -627,10 +932,26 @@ class Graph:
                     )
                     if (
                         collection["kind"] != "thread-comments"
+                        or context is None
+                        or root_scope is None
                         or json.loads(context["request_context"]).get(
                             "parent_fetch_collection_id"
                         )
                         != row["fetch_collection_id"]
+                        or any(
+                            context[column] != root_scope[column]
+                            for column in (
+                                "repository_binding_id",
+                                "source_id",
+                                "principal_ref",
+                                "api_version",
+                                "parser_version",
+                                "profile_version",
+                                "confidence",
+                            )
+                        )
+                        or json.loads(context["request_context"]).get("permissions")
+                        != json.loads(root_scope["request_context"]).get("permissions")
                     ):
                         return None
             actual_rows = [
@@ -645,6 +966,39 @@ class Graph:
             }:
                 return None
             observations = []
+            page_manifest = evidence.get("current_page_collections", [])
+            if not isinstance(page_manifest, list) or any(
+                not isinstance(item, dict)
+                or set(item) != {"fetch_collection_id", "page_ordinals"}
+                for item in page_manifest
+            ):
+                return None
+            page_ids = [item["fetch_collection_id"] for item in page_manifest]
+            if len(page_ids) != len(set(page_ids)) or set(page_ids) != {
+                collection_id
+                for collection_id in collection_ids
+                if self.matching(
+                    "current_collection_pages",
+                    ("fetch_collection_id",),
+                    (collection_id,),
+                )
+            }:
+                return None
+            for item in page_manifest:
+                page_proof = self.current_page_requirements(
+                    item["fetch_collection_id"], item["page_ordinals"]
+                )
+                if page_proof is None:
+                    return None
+                required.update(page_proof)
+                observations.extend(
+                    page["observed_at_us"]
+                    for page in self.matching(
+                        "current_collection_pages",
+                        ("fetch_collection_id",),
+                        (item["fetch_collection_id"],),
+                    )
+                )
             for occurrence_uuid in manifest:
                 fetch = require(
                     "fetch_occurrences",
@@ -742,6 +1096,8 @@ class Graph:
             return None
         git_kinds = {"structure", "digests", "heads-text", "refs"}
         http_kinds = {
+            "issue": {"issue", "ordinary-issue-comment"},
+            "issue-comment": {"issue-comment", "ordinary-issue-comment"},
             "comment": {"comments", "comment"},
             "review": {"review"},
             "review-comment": {"review-comment", "thread-comments"},
@@ -899,6 +1255,7 @@ class Graph:
             fetch_occurrence_uuidv4s is not None or fetch_collection_id is not None
         )
         included, selected, queue = set(), {}, deque()
+        current_alternatives = []
 
         def add(table, row):
             if row is None or table not in self.columns:
@@ -997,6 +1354,8 @@ class Graph:
         def expand():
             while queue:
                 table, row = queue.popleft()
+                for parent, target in self.current_parents(table, row):
+                    add(parent, target)
                 # Real foreign keys and registered embedded references close
                 # upwards. Selection decisions may retain unavailable results,
                 # preserving an unresolved scope instead of pulling other fetches.
@@ -1082,19 +1441,24 @@ class Graph:
                                 child, child_cols, tuple(row[c] for c in parent_cols)
                             ):
                                 add(child, member)
-                if partial and table == "parsed_results":
-                    for decision in self.matching(
-                        "fact_selection_decisions",
-                        ("parsed_result_uuidv4",),
-                        (row["parsed_result_uuidv4"],),
-                    ):
-                        scope_id = decision["fact_selection_scope_uuidv4"]
-                        for member in self.matching(
+                if partial and table in {
+                    "parsed_results",
+                    "current_collection_pages",
+                    *CURRENT_RESOURCES,
+                }:
+                    if table == "parsed_results":
+                        for decision in self.matching(
                             "fact_selection_decisions",
-                            ("fact_selection_scope_uuidv4",),
-                            (scope_id,),
+                            ("parsed_result_uuidv4",),
+                            (row["parsed_result_uuidv4"],),
                         ):
-                            add("fact_selection_decisions", member)
+                            scope_id = decision["fact_selection_scope_uuidv4"]
+                            for member in self.matching(
+                                "fact_selection_decisions",
+                                ("fact_selection_scope_uuidv4",),
+                                (scope_id,),
+                            ):
+                                add("fact_selection_decisions", member)
                     for decision in self.matching(
                         "parser_profile_selection_decisions",
                         ("parser_profile_uuidv4",),
@@ -1116,7 +1480,99 @@ class Graph:
                         ),
                     )
 
+                # Current-resource collection receipts select present domain
+                # state by typed identity, without traversing archived messages.
+                if table == "fetch_collections" and (
+                    not partial or row["fetch_collection_id"] == fetch_collection_id
+                ):
+                    for page in self.matching(
+                        "current_collection_pages",
+                        ("fetch_collection_id",),
+                        (row["fetch_collection_id"],),
+                    ):
+                        add("current_collection_pages", page)
+                if table == "current_collection_pages":
+                    for member in json.loads(row["members"]):
+                        if member["family"] == "issue":
+                            target_table = "issue_resources"
+                            columns = (
+                                "service_instance_uuidv4",
+                                "kind",
+                                "provider_resource_id",
+                            )
+                        else:
+                            target_table = "review_resources"
+                            columns = (
+                                "change_request_id",
+                                "kind",
+                                "provider_change_request_document_id",
+                            )
+                        add(
+                            target_table,
+                            self.lookup(
+                                target_table,
+                                columns,
+                                tuple(member[c] for c in columns),
+                            ),
+                        )
+                if table == "completion_markers":
+                    evidence = json.loads(row["evidence"])
+                    current_ids = [
+                        item["fetch_collection_id"]
+                        for item in evidence.get("current_page_collections", [])
+                    ]
+                    if evidence.get("kind") == "current-resource-pages-v1":
+                        current_ids.append(row["fetch_collection_id"])
+                    for current_id in current_ids:
+                        for page in self.matching(
+                            "current_collection_pages",
+                            ("fetch_collection_id",),
+                            (current_id,),
+                        ):
+                            add("current_collection_pages", page)
+
         expand()
+        if CURRENT_RESOURCES <= self.columns.keys():
+            from repo_catalog.adapters.sqlite.current_resources import CurrentResources
+
+            # Carry bounded unresolved alternatives alongside the incumbent.
+            # An incumbent whose latest value is disputed cannot turn into an
+            # undisputed winner merely by crossing the exchange boundary.
+            selected_current = {
+                (table, local)
+                for table, local in selected
+                if table in CURRENT_RESOURCES
+            }
+            seen = set()
+            for table, candidate, _ in CurrentResources(self.db).export_candidates(
+                repository_uuidv4
+            ):
+                row = self.current_candidate_row(candidate)
+                if (
+                    partial
+                    and (table, self.local_key(table, row)) not in selected_current
+                ):
+                    continue
+                record = self.record(table, row)
+                digest = record_digest(record)
+                if digest in seen:
+                    continue
+                seen.add(digest)
+                current_alternatives.append(record)
+                # Close required bodies/profiles/owners, including a legitimate
+                # unavailable parent reference which remains staged on receipt.
+                for parent, child_cols, parent_cols in self.foreign[table]:
+                    if not all(row.get(c) is not None for c in child_cols):
+                        continue
+                    add(
+                        parent,
+                        self.lookup(
+                            parent, parent_cols, tuple(row[c] for c in child_cols)
+                        ),
+                    )
+                for parent, target in self.current_parents(table, row):
+                    add(parent, target)
+            expand()
         if partial:
             included_fetches = {
                 row["fetch_occurrence_uuidv4"]
@@ -1132,13 +1588,13 @@ class Graph:
                 for marker in self.matching(
                     "completion_markers", ("fetch_collection_id",), (collection_id,)
                 ):
-                    manifest = json.loads(marker["evidence"]).get(
-                        "fetch_occurrence_uuidv4s", []
-                    )
+                    evidence = json.loads(marker["evidence"])
+                    manifest = evidence.get("fetch_occurrence_uuidv4s", [])
                     if (
                         (
                             manifest
-                            or json.loads(marker["evidence"]).get("status") == 304
+                            or evidence.get("status") == 304
+                            or evidence.get("kind") == "current-resource-pages-v1"
                         )
                         and set(manifest) <= included_fetches
                         and self.proof_requirements("completion_markers", marker)
@@ -1179,6 +1635,16 @@ class Graph:
             ):
                 continue
             records.append(self.record(table, row))
+        ordinary_current_digests = {
+            record_digest(record)
+            for record in records
+            if record["table"] in CURRENT_RESOURCES
+        }
+        records.extend(
+            record
+            for record in current_alternatives
+            if record_digest(record) not in ordinary_current_digests
+        )
         records.sort(key=lambda record: record["key"])
         for record in records:
             if record["table"] == "stored_bytes":
@@ -1241,11 +1707,27 @@ class Graph:
             raise CatalogError(
                 "INVALID_EXCHANGE", "Invalid explicit dependency manifest"
             )
-        if (
-            table not in self.columns
-            or not isinstance(data, dict)
-            or set(data) != self.expected_columns(table)
-        ):
+        if table in CURRENT_RESOURCES and isinstance(data, dict):
+            required = {
+                *self.keys[table],
+                "repository_uuidv4",
+                "repository_binding_id",
+                "service_instance_uuidv4",
+                "text_body_sha256",
+                "observed_at_us",
+                "parsed_at_us",
+                "parser_profile_uuidv4",
+                "metadata",
+                "acquisition_scope_json",
+            }
+            valid_columns = required <= data.keys() <= self.expected_columns(table)
+        else:
+            valid_columns = (
+                table in self.columns
+                and isinstance(data, dict)
+                and set(data) == self.expected_columns(table)
+            )
+        if not valid_columns:
             raise CatalogError("INVALID_EXCHANGE", "Unexpected table or column set")
         if not isinstance(record["key"], str) or not record["key"].startswith(
             table + ":"
@@ -1345,6 +1827,14 @@ class Graph:
                     (key,),
                 ).fetchone()
                 if row is None:
+                    # Current resource keys name mutable identities. Their
+                    # portable mapping is retained independently of immutable
+                    # admission receipts, which must never seal an edit.
+                    row = self.db.execute(
+                        "SELECT table_name,local_key_json FROM exchange_local_identities WHERE record_key=? AND table_name IN ('issue_resources','review_resources')",
+                        (key,),
+                    ).fetchone()
+                if row is None:
                     if record["table"] in {
                         "parser_profile_selection_decisions",
                         "fact_selection_decisions",
@@ -1387,7 +1877,8 @@ class Graph:
         table, key = record["table"], record["key"]
         for dependency in record.get("requires", ()):
             if not self.db.execute(
-                "SELECT 1 FROM exchange_admissions WHERE record_key=?", (dependency,)
+                "SELECT 1 FROM exchange_admissions WHERE record_key=? UNION ALL SELECT 1 FROM exchange_local_identities WHERE record_key=? AND table_name IN ('issue_resources','review_resources')",
+                (dependency, dependency),
             ).fetchone():
                 return "missing_manifest_dependency"
             if self.db.execute(
@@ -1456,6 +1947,24 @@ class Graph:
             except CatalogError as exc:
                 return "invalid:" + exc.code.lower()
         existing = self._existing(table, data)
+        if table in CURRENT_RESOURCES:
+            from repo_catalog.adapters.sqlite.current_resources import CurrentResources
+
+            resources = CurrentResources(self.db)
+            candidate = resources.candidate_from_row(table, data)
+            resources.admit(candidate, source="import")
+            # Accepted, identical, stale and conflicted mutable candidates were
+            # all handled by the shared bounded admission mechanism. No sealed
+            # immutable exchange receipt is created for a mutable state.
+            # The natural identity mapping can precede a legitimate missing
+            # parent. Shared staging retains one bounded semantic candidate,
+            # rather than duplicate wire envelopes for every retry timestamp.
+            local = self.local_key(table, data)
+            self.db.execute(
+                "INSERT OR IGNORE INTO exchange_local_identities VALUES(?,?,?)",
+                (table, local, key),
+            )
+            return None
         if table == "stored_bytes" and existing is not None:
             intern_stored_bytes(self.db, data["body"], data["sha256"])
         if table == "sources":
@@ -1648,6 +2157,32 @@ class Graph:
                 "SELECT content_sha256,record_json FROM exchange_admissions WHERE record_key=?",
                 (record["key"],),
             ).fetchone()
+            if record["table"] in CURRENT_RESOURCES:
+                # Shared state admission determines idempotence and ordering;
+                # changing a natural-key resource is not UUID content conflict.
+                previous = None
+                data, unresolved = self.resolve(record)
+                if not unresolved:
+                    existing = self._existing(record["table"], data)
+                    if (
+                        existing is not None
+                        and record_digest(self.record(record["table"], existing))
+                        == digest
+                    ):
+                        continue
+                    from repo_catalog.adapters.sqlite.current_resources import (
+                        CurrentResources,
+                    )
+                    from repo_catalog.domain.current_state import fingerprint_candidate
+
+                    resources = CurrentResources(self.db)
+                    candidate = resources.candidate_from_row(record["table"], data)
+                    candidate_digest = bytes.fromhex(fingerprint_candidate(candidate))
+                    if any(
+                        stage["content_sha256"] == candidate_digest
+                        for stage in resources._stages(candidate)
+                    ):
+                        continue
             if previous and previous[0] == digest:
                 if record["table"] == "source_repositories":
                     data, unresolved = self.resolve(record)
@@ -1704,6 +2239,8 @@ class Graph:
             "SELECT record_key FROM exchange_staging GROUP BY record_key HAVING COUNT(*)>1"
         ).fetchall()
         for (key,) in competing:
+            if key.split(":", 1)[0] in CURRENT_RESOURCES:
+                continue
             self.db.execute(
                 "UPDATE exchange_staging SET reason='conflict:competing_variants' WHERE record_key=?",
                 (key,),
@@ -1723,6 +2260,13 @@ class Graph:
         changed = True
         while changed:
             changed = False
+            if CURRENT_RESOURCES <= self.columns.keys():
+                from repo_catalog.adapters.sqlite.current_resources import (
+                    CurrentResources,
+                )
+
+                if CurrentResources(self.db).promote_staging():
+                    changed = True
             pending = list(
                 self.db.execute(
                     "SELECT record_key,content_sha256,record_json,reason,repository_uuidv4,origin_catalog_uuidv4 FROM exchange_staging ORDER BY record_key,content_sha256"
@@ -1736,6 +2280,8 @@ class Graph:
                 repository_uuidv4,
                 record_origin,
             ) in pending:
+                if reason.startswith("current_state:"):
+                    continue
                 if reason.startswith(("conflict:", "invalid:")):
                     continue
                 record = json.loads(serialized)
@@ -1751,13 +2297,19 @@ class Graph:
                         changed = True
                 except CatalogError as exc:
                     self.db.execute("ROLLBACK TO exchange_record")
-                    if exc.code not in {
+                    if record["table"] in CURRENT_RESOURCES and (
+                        exc.code.startswith("INVALID_CURRENT_RESOURCE")
+                        or exc.code == "CURRENT_STATE_STAGING_FULL"
+                    ):
+                        reason = "invalid:" + exc.code.lower()
+                    elif exc.code not in {
                         "PAYLOAD_CORRUPTION",
                         "PAYLOAD_HASH_COLLISION",
                         "PAYLOAD_QUARANTINED",
                     }:
                         raise
-                    reason = "conflict:" + exc.code.lower()
+                    else:
+                        reason = "conflict:" + exc.code.lower()
                     if (
                         exc.code == "PAYLOAD_CORRUPTION"
                         and record["table"] == "stored_bytes"
@@ -1849,6 +2401,8 @@ class Graph:
             return self._existing(table, data)
 
         for key, serialized, reason in pending:
+            if reason.startswith("current_state:"):
+                continue
             record = json.loads(serialized)
             if reason.startswith("conflict:"):
                 existing = local_record(record)

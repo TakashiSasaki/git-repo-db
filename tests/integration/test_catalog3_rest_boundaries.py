@@ -5,6 +5,7 @@ import json
 import httpx
 import pytest
 
+from repo_catalog.adapters.github import current_parser
 from repo_catalog.adapters.github.collector import GitHubCollector
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
@@ -75,7 +76,9 @@ def _rejected(store, kind):
         {"id": 344, "body": "bad target", "commit_id": "aa" * 19 + "  "},
     ],
 )
-def test_rest_item_rejection_preserves_page_and_safe_resume(github_runtime, bad_item):
+def test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume(
+    github_runtime, bad_item
+):
     store, repo, _, api = github_runtime
     pr = _pr(store)
     job = _job(store)
@@ -106,29 +109,32 @@ def test_rest_item_rejection_preserves_page_and_safe_resume(github_runtime, bad_
     collector.facts.principal = "fixture"
 
     def collect():
-        return collector.collection(
+        return collector.current_collection(
             repo,
             pr["change_request_id"],
             "review",
             job,
             first_url,
-            collector._document_normalizer(pr["change_request_id"], "review"),
+            current_parser.review,
         )
 
     try:
         with pytest.raises(CatalogError) as raised:
             collect()
         assert raised.value.code == "API_SCHEMA"
-        row = _rejected(store, "review")
-        assert row["body"] == json.dumps(rejected).encode()
-        assert row["cursor"] == row["next_cursor"] == second_url
+        row = store.one(
+            "SELECT f.fetch_collection_id,p.state,p.reason,p.cursor FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind='review'"
+        )
+        assert row["state"] == "partial" and row["reason"] == "API_SCHEMA"
+        assert row["cursor"] == second_url
         assert [
             r[0]
             for r in store.all(
-                "SELECT provider_change_request_document_id FROM documents"
+                "SELECT provider_change_request_document_id FROM review_resources"
             )
         ] == ["341"]
-        assert store.one("SELECT count(*) FROM document_observations")[0] == 1
+        assert store.one("SELECT count(*) FROM document_observations")[0] == 0
+        assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
         JobService(store).update(job, "waiting", "API_SCHEMA")
         JobService(store).resume(job)
         store.expected_attempt = 2
@@ -136,7 +142,8 @@ def test_rest_item_rejection_preserves_page_and_safe_resume(github_runtime, bad_
         collection_id, _ = collect()
         assert collection_id == row["fetch_collection_id"]
         assert requested == ["1", "2", "2"]
-        assert store.one("SELECT count(*) FROM document_observations")[0] == 3
+        assert store.one("SELECT count(*) FROM review_resources")[0] == 3
+        assert store.one("SELECT count(*) FROM document_observations")[0] == 0
         assert (
             store.one(
                 "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
@@ -146,10 +153,10 @@ def test_rest_item_rejection_preserves_page_and_safe_resume(github_runtime, bad_
         )
         assert (
             store.one(
-                "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
+                "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
                 (collection_id,),
             )[0]
-            == 3
+            == 2
         )
         assert not store.all("PRAGMA foreign_key_check")
     finally:

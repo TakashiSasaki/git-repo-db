@@ -451,3 +451,7 @@ Complete ordinary/installed acceptance and final submitted-HEAD hosted CI are
 recorded separately by the integration coordinator; the original failed hosted
 run remains historical evidence.
 
+
+## Schema 14 current resource / optional transport review
+
+Independent review of the PR #12 successor is recorded in [the 43-case current-state receipt](validation/synthetic/2026-10-09-current-state-independent-review.md). The prior audit and receipts above remain historical. Current implementation and final acceptance are recorded in [latest-state-transport-implementation.md](latest-state-transport-implementation.md).

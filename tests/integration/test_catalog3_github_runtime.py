@@ -132,34 +132,62 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     deadline_us = stamp_us + delay_us if delay_us is not None else None
     assert error.details.get("not_before_us") == deadline_us
     rejected_kind = "threads" if boundary == "root" else "thread-comments"
-    rejected = store.one(
-        "SELECT o.next_cursor,o.request,b.body,u.reason "
-        "FROM fetch_occurrences o "
-        "JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id "
-        "JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 "
-        "JOIN unresolved_payloads u ON u.payload_representation=p.representation AND u.payload_sha256=p.sha256 "
-        "WHERE f.kind=? ORDER BY o.fetch_occurrence_id DESC LIMIT 1",
-        (rejected_kind,),
-    )
-    assert json.loads(rejected["body"]) == error_payload
-    assert rejected["next_cursor"] == (None if boundary == "root" else "100")
-    assert expected_code in rejected["reason"]
-    assert json.loads(rejected["request"]).get("operational_only", False) is (
-        expected_code == "RATE_LIMIT"
-    )
-    if expected_code == "RATE_LIMIT":
-        assert current.summary_observed_at_us(repo, job) == (
-            1_000_000 if boundary == "child" else None
+    if boundary == "root":
+        # Independent thread interpretation still requires its original input.
+        rejected = store.one(
+            "SELECT o.next_cursor,o.request,b.body,u.reason "
+            "FROM fetch_occurrences o "
+            "JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id "
+            "JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 "
+            "JOIN unresolved_payloads u ON u.payload_representation=p.representation AND u.payload_sha256=p.sha256 "
+            "WHERE f.kind=? ORDER BY o.fetch_occurrence_id DESC LIMIT 1",
+            (rejected_kind,),
         )
-        assert current.saved_thread_code_input(pr["change_request_id"])[2] == (
-            1_000_000 if boundary == "child" else None
+        assert json.loads(rejected["body"]) == error_payload
+        assert rejected["next_cursor"] is None
+        assert expected_code in rejected["reason"]
+        # An error-only response has no thread resource observation, for both
+        # denied access and rate limits. The raw diagnostic remains retained.
+        assert json.loads(rejected["request"])["operational_only"] is True
+    else:
+        rejected = store.one(
+            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
+            "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
+            "WHERE f.kind='thread-comments'"
         )
+        assert (rejected["state"], rejected["cursor"], rejected["reason"]) == (
+            "partial",
+            "100",
+            expected_code,
+        )
+        # A rejected mutable page has a durable retry boundary, no false
+        # success receipt, and no mandatory HTTP body behind the domain store.
+        assert not store.one(
+            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+            (rejected["fetch_collection_id"],),
+        )
+        assert not store.one(
+            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (rejected["fetch_collection_id"],),
+        )
+        assert (
+            store.one(
+                "SELECT count(*) FROM review_resources WHERE kind='review-comment'"
+            )[0]
+            == 100
+        )
+    assert current.summary_observed_at_us(repo, job) == (
+        1_000_000 if boundary == "child" else None
+    )
+    assert current.saved_thread_code_input(pr["change_request_id"])[2] == (
+        1_000_000 if boundary == "child" else None
+    )
     assert not store.one(
         "SELECT 1 FROM completion_markers c "
         "JOIN fetch_collections f ON f.fetch_collection_id=c.fetch_collection_id "
         "WHERE f.kind IN ('threads','thread-comments')"
     )
-    if boundary == "root" and expected_code == "RATE_LIMIT":
+    if boundary == "root":
         assert not store.one(
             "SELECT 1 FROM current_coverage "
             "WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
@@ -222,7 +250,15 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
     )
     assert store.one("SELECT count(*) FROM change_requests")[0] == 3
     assert store.one("SELECT count(*) FROM review_threads")[0] == 3
-    assert store.one("SELECT count(*) FROM reviews")[0] == 3
+    assert (
+        store.one("SELECT count(*) FROM review_resources WHERE kind='review'")[0] == 3
+    )
+    assert not store.one(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name IN ('reviews','review_comments')"
+    )
+    assert not store.one(
+        "SELECT 1 FROM documents WHERE kind IN ('review','review-comment')"
+    )
     assert store.one("SELECT count(*) FROM change_request_events")[0] == 9
     assert (
         store.one("SELECT count(*) FROM code_listing_progress WHERE state='complete'")[
@@ -941,6 +977,10 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
     old = store.all(
         "SELECT i.safe_watermark_us,f.kind FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
     )
+    old_review = store.one(
+        "SELECT f.observed_at_us,c.observed_at_us completed_at_us FROM fetch_collections f "
+        "JOIN completion_markers c USING(fetch_collection_id) WHERE f.kind='review-comment-incremental'"
+    )
     assert all(type(row["safe_watermark_us"]) is int for row in old)
     first_incremental_request = len(api.requests)
     api.stage = "B"
@@ -954,11 +994,12 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
         == 1
     )
     review = store.one(
-        "SELECT i.safe_watermark_us,i.fetch_collection_id FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id WHERE f.kind='review-comment-incremental' ORDER BY i.scan_started_at_us DESC LIMIT 1"
+        "SELECT f.fetch_collection_id,f.observed_at_us,c.observed_at_us completed_at_us "
+        "FROM fetch_collections f JOIN completion_markers c USING(fetch_collection_id) "
+        "WHERE f.kind='review-comment-incremental' ORDER BY f.observed_at_us DESC LIMIT 1"
     )
-    assert review["safe_watermark_us"] != next(
-        r["safe_watermark_us"] for r in old if r["kind"] == "review-comment-incremental"
-    )
+    assert review["observed_at_us"] > old_review["observed_at_us"]
+    assert review["completed_at_us"] > old_review["completed_at_us"]
     before = len(api.requests)
     sync(store, repo, job=partial.value.details["job_id"])
     assert not any(
@@ -966,10 +1007,10 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
     )
     assert (
         store.one(
-            "SELECT safe_watermark_us FROM incremental_scans WHERE fetch_collection_id=?",
+            "SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=?",
             (review["fetch_collection_id"],),
         )[0]
-        == review["safe_watermark_us"]
+        == review["completed_at_us"]
     )
     since_values = [
         params["since"][0]
@@ -1013,7 +1054,7 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
     )
     assert (
         store.one(
-            "SELECT count(*) FROM documents WHERE kind='review-comment' AND change_request_id='00000000-0000-4000-8000-000000000301:41'"
+            "SELECT count(*) FROM review_resources WHERE kind='review-comment' AND change_request_id='00000000-0000-4000-8000-000000000301:41'"
         )[0]
         == 200
     )
@@ -1021,7 +1062,7 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
     sync(store, repo)
     assert (
         store.one(
-            "SELECT count(*) FROM documents WHERE kind='review-comment' AND change_request_id='00000000-0000-4000-8000-000000000301:41'"
+            "SELECT count(*) FROM review_resources WHERE kind='review-comment' AND change_request_id='00000000-0000-4000-8000-000000000301:41'"
         )[0]
         == 202
     )
@@ -1148,6 +1189,7 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
     monkeypatch.setattr(
         "repo_catalog.adapters.github.persistence.now_us", lambda: stamp
     )
+    collector.http.clock_us = lambda: stamp
 
     def route(method, path, params, body):
         nonlocal stamp
@@ -1244,8 +1286,22 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                     "parent_fetch_collection_id": other_root["fetch_collection_id"],
                 },
             )
-            collector.facts.page(other_child, httpx.Response(200, json={}), {}, None)
-            collector.facts.finish(other_child)
+            from repo_catalog.adapters.sqlite.current_collections import (
+                CurrentCollectionProof,
+            )
+
+            proof = CurrentCollectionProof(store.connection)
+            proof.page(
+                other_child["fetch_collection_id"],
+                0,
+                stamp,
+                None,
+                [],
+                parser_profile_uuidv4=collector.facts.profile(),
+            )
+            collector.facts.finish(
+                other_child, evidence=proof.evidence(other_child["fetch_collection_id"])
+            )
         assert collector.facts.thread_observed_at_us(root) == 300
         JobService(store).update(job, "interrupted")
         JobService(store).resume(job)
@@ -1303,7 +1359,7 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     assert (
         complete_claim["observed_at_us"]
         == store.one(
-            "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind IN ('threads','thread-comments')"
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind IN ('threads','thread-comments')"
         )[0]
     )
     assert child_requests == ["100", "100"]
@@ -1322,7 +1378,9 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     )
 
 
-def test_malformed_rest_page_keeps_payload_and_retries_without_skipping(github_runtime):
+def test_malformed_current_rest_page_keeps_retry_boundary_without_required_archive(
+    github_runtime,
+):
     store, repo, fixture, api = github_runtime
     original = api.route
     requests = 0
@@ -1341,19 +1399,31 @@ def test_malformed_rest_page_keeps_payload_and_retries_without_skipping(github_r
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
     row = store.one(
-        "SELECT f.fetch_collection_id,p.cursor,p.state,b.body FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads a ON a.representation=o.payload_representation AND a.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=a.sha256 WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind='review'"
+        "SELECT f.fetch_collection_id,p.cursor,p.state,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind='review'"
     )
     assert row["state"] == "partial"
-    assert json.loads(row["body"]) == rejected
-    assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 1
+    assert row["reason"] == "API_SCHEMA"
+    assert row["cursor"] is None
+    assert not store.one(
+        "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+        (row["fetch_collection_id"],),
+    )
+    assert not store.one(
+        "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+        (row["fetch_collection_id"],),
+    )
+    assert not store.one(
+        "SELECT 1 FROM review_resources WHERE kind='review' AND change_request_id='00000000-0000-4000-8000-000000000301:41'"
+    )
+    assert not (store.path / "transport-archive").exists()
     sync(store, repo, job=partial.value.details["job_id"])
     assert requests == 2
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
             (row["fetch_collection_id"],),
         )[0]
-        == 2
+        == 1
     )
     assert (
         store.one(
@@ -1440,26 +1510,47 @@ def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
     assert rejected_nodes
-    assert (
-        store.one(
-            "SELECT count(*) FROM unresolved_payloads WHERE reason LIKE '%CANONICAL_DOCUMENT_ID_MISSING%'"
-        )[0]
-        > 0
-    )
+    if child_page:
+        failed_child = store.one(
+            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason FROM collection_progress p "
+            "JOIN fetch_collections f USING(fetch_collection_id) "
+            "WHERE f.kind='thread-comments' AND f.change_request_id='00000000-0000-4000-8000-000000000301:41'"
+        )
+        assert (
+            failed_child["state"],
+            failed_child["cursor"],
+            failed_child["reason"],
+        ) == ("partial", "100", "CANONICAL_DOCUMENT_ID_MISSING")
+        assert not store.one(
+            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+            (failed_child["fetch_collection_id"],),
+        )
+        assert not store.one(
+            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (failed_child["fetch_collection_id"],),
+        )
+    else:
+        assert (
+            store.one(
+                "SELECT count(*) FROM unresolved_payloads WHERE reason LIKE '%CANONICAL_DOCUMENT_ID_MISSING%'"
+            )[0]
+            > 0
+        )
     for node in rejected_nodes:
         assert not store.one(
-            "SELECT 1 FROM documents WHERE provider_change_request_document_id=?",
+            "SELECT 1 FROM review_resources WHERE provider_change_request_document_id=?",
             (node,),
         )
-        assert any(
-            node.encode() in row[0]
-            for row in store.all("SELECT body FROM stored_bytes")
-        )
+        if not child_page:
+            assert any(
+                node.encode() in row[0]
+                for row in store.all("SELECT body FROM stored_bytes")
+            )
     enabled = False
     sync(store, repo, job=partial.value.details["job_id"])
     assert (
         store.one(
-            "SELECT count(*) FROM current_document_observations WHERE kind='review-comment' AND change_request_id='00000000-0000-4000-8000-000000000301:41' AND review_thread_provider_resource_id='THREAD41-0'"
+            "SELECT count(*) FROM eligible_review_resources WHERE kind='review-comment' AND change_request_id='00000000-0000-4000-8000-000000000301:41' AND review_thread_provider_resource_id='THREAD41-0'"
         )[0]
         == api.reply_count
     )
@@ -1539,12 +1630,37 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
     finally:
         collector.http.close()
     assert malformed_response is not None
-    assert any(
-        json.loads(row["body"]) == malformed_response
-        for row in store.all(
-            "SELECT b.body FROM unresolved_payloads u JOIN payloads p ON p.representation=u.payload_representation AND p.sha256=u.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256"
+    if boundary == "nested-child":
+        failed_child = store.one(
+            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason FROM collection_progress p "
+            "JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='thread-comments'"
         )
-    )
+        assert (
+            failed_child["state"],
+            failed_child["cursor"],
+            failed_child["reason"],
+        ) == ("partial", "100", "API_SCHEMA")
+        assert not store.one(
+            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+            (failed_child["fetch_collection_id"],),
+        )
+        assert not store.one(
+            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (failed_child["fetch_collection_id"],),
+        )
+        assert (
+            store.one(
+                "SELECT count(*) FROM eligible_review_resources WHERE kind='review-comment'"
+            )[0]
+            == 100
+        )
+    else:
+        assert any(
+            json.loads(row["body"]) == malformed_response
+            for row in store.all(
+                "SELECT b.body FROM unresolved_payloads u JOIN payloads p ON p.representation=u.payload_representation AND p.sha256=u.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256"
+            )
+        )
     assert (
         store.one(
             "SELECT coverage_state FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"

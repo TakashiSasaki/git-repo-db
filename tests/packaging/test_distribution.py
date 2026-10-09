@@ -140,6 +140,8 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
                 "import repo_catalog.adapters.sqlite.parser_model; "
                 "print(json.dumps({'schema': root.joinpath('catalog3.sql').is_file(), "
                 "'git_facts': root.joinpath('git_facts.sql').is_file(), "
+                "'current_resources': root.joinpath('current_resources.sql').is_file(), "
+                "'current_collections': root.joinpath('current_collections.sql').is_file(), "
                 "'json_contracts': root.joinpath('json_contracts.sql').is_file(), "
                 "'cas': root.joinpath('cas_integrity.sql').is_file(), 'exchange': root.joinpath('exchange.sql').is_file(), 'verification': root.joinpath('builtin_parser_verification.json').is_file()}))",
             ],
@@ -150,6 +152,8 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     assert resources == {
         "schema": True,
         "git_facts": True,
+        "current_resources": True,
+        "current_collections": True,
         "json_contracts": True,
         "cas": True,
         "exchange": True,
@@ -174,6 +178,92 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
                 accepted_codes=(0, 3) if allow_partial else (0,),
             )
         )
+
+    def current_reads(stage):
+        """Installed ordinary reads require only guaranteed catalog data."""
+        assert not (state / "transport-archive").exists()
+        issues = cli("issue", "list", "--repo", repository)["data"]["items"]
+        assert {(row["provider_issue_number"], row["state"]) for row in issues} == {
+            (1, "open"),
+            (2, "closed"),
+        }
+        shown = cli(
+            "issue", "show", "--repo", repository, "--provider-issue-number", "1"
+        )["data"]["items"]
+        assert len(shown) == 1 and shown[0]["body"] == f"ordinary-issue-body {stage}"
+        comments = cli(
+            "issue", "comments", "--repo", repository, "--provider-issue-number", "1"
+        )["data"]["items"]
+        assert len(comments) == 1
+        assert comments[0]["body"] == f"ordinary-issue-comment {stage} 1"
+        issue_matches = cli(
+            "search",
+            "issue",
+            "--repo",
+            repository,
+            "--literal",
+            f"ordinary-issue-comment {stage}",
+        )["data"]["items"]
+        assert len(issue_matches) == 2
+        assert {row["resource_kind"] for row in issue_matches} == {"issue-comment"}
+        reviews = cli(
+            "pr",
+            "documents",
+            "--repo",
+            repository,
+            "--provider-change-request-number",
+            "41",
+            "--document-observations",
+            "all",
+            "--document-kind",
+            "review-comment",
+        )["data"]["items"]
+        assert len(reviews) == 1
+        assert reviews[0]["body"] == f"review-comment-marker {stage}"
+        assert reviews[0]["resource_lifecycle"] == "current"
+        assert reviews[0]["document_observation_id"] is None
+        review_matches = cli(
+            "search",
+            "pr",
+            "--repo",
+            repository,
+            "--document-observations",
+            "all",
+            "--document-kind",
+            "review-comment",
+            "--literal",
+            f"review-comment-marker {stage}",
+        )["data"]["items"]
+        assert len(review_matches) == 3
+        assert all(row["resource_lifecycle"] == "current" for row in review_matches)
+        if stage == "B":
+            assert (
+                cli(
+                    "search",
+                    "issue",
+                    "--repo",
+                    repository,
+                    "--literal",
+                    "ordinary-issue-comment A",
+                )["data"]["items"]
+                == []
+            )
+            assert (
+                cli(
+                    "search",
+                    "pr",
+                    "--repo",
+                    repository,
+                    "--document-observations",
+                    "all",
+                    "--document-kind",
+                    "review-comment",
+                    "--literal",
+                    "review-comment-marker A",
+                )["data"]["items"]
+                == []
+            )
+        return issues, shown, comments, issue_matches, reviews, review_matches
 
     cli(
         "init",
@@ -328,7 +418,17 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         )["data"]["source_id"]
         credentials = {"GH_TOKEN": "fixture-dummy"}
         cli("discover", "--source", github_source, credentials=credentials)
-        cli("sync", "pr", "--repo", repository, credentials=credentials)
+        cli("sync", "all", "--repo", repository, credentials=credentials)
+        current_reads("A")
+        cli("index", "rebuild", "--kind", "issue")
+        cli("index", "rebuild", "--kind", "pr")
+        api.stage = "B"
+        cli("sync", "all", "--repo", repository, credentials=credentials)
+        expected_current_reads = current_reads("B")
+        # The edited body must remain current before and after rebuilding FTS.
+        cli("index", "rebuild", "--kind", "issue")
+        cli("index", "rebuild", "--kind", "pr")
+        assert current_reads("B") == expected_current_reads
         assert not api.errors
 
     # The registry and its schema-discovered completeness gate must resolve
@@ -355,6 +455,27 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     )
 
     with sqlite3.connect(state / "catalog.sqlite3") as db:
+        assert not db.execute(
+            "SELECT name FROM sqlite_schema WHERE type='table' AND name IN ('reviews','review_comments')"
+        ).fetchall()
+        assert db.execute(
+            "SELECT count(*) FROM documents WHERE kind IN ('review','review-comment')"
+        ).fetchone() == (0,)
+        assert db.execute(
+            "SELECT count(*) FROM document_observations WHERE kind IN ('review','review-comment')"
+        ).fetchone() == (0,)
+        assert db.execute(
+            "SELECT kind,count(*) FROM issue_resources GROUP BY kind ORDER BY kind"
+        ).fetchall() == [("issue", 2), ("issue-comment", 2)]
+        assert db.execute(
+            "SELECT kind,count(*) FROM review_resources GROUP BY kind ORDER BY kind"
+        ).fetchall() == [("review", 3), ("review-comment", 3)]
+        current_collection = db.execute(
+            "SELECT c.fetch_collection_id FROM fetch_collections c "
+            "JOIN current_collection_pages p USING(fetch_collection_id) "
+            "WHERE c.kind='ordinary-issue-comment' "
+            "ORDER BY p.observed_at_us DESC LIMIT 1"
+        ).fetchone()[0]
         selected_fetch, collection = db.execute(
             "SELECT o.fetch_occurrence_uuidv4,o.fetch_collection_id "
             "FROM fetch_occurrences o JOIN fetch_collections c USING(fetch_collection_id) "
@@ -368,28 +489,47 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
             )
         }
 
-        # Each acquired page also belongs to the sealed multi-input PR-code
-        # result. Required whole-result membership is portable; other CRs are
-        # unrelated. Derive the fixture's exact closure from persisted inputs.
+        # Acquired pages belong to sealed multi-input PR-code results. The
+        # second sync can reuse unchanged first-sync inputs after a 304, so
+        # shared inputs require both whole results. Derive the transitive
+        # membership closure while excluding unrelated change requests.
         def required_fetches(fetches):
-            placeholders = ",".join("?" for _ in fetches)
-            return set(fetches) | {
-                row[0]
-                for row in db.execute(
-                    "SELECT DISTINCT sibling.fetch_occurrence_uuidv4 "
-                    "FROM parsed_result_inputs selected JOIN parsed_result_inputs sibling "
-                    "USING(parsed_result_uuidv4) "
-                    f"WHERE selected.fetch_occurrence_uuidv4 IN ({placeholders}) "
-                    "AND sibling.fetch_occurrence_uuidv4 IS NOT NULL",
-                    tuple(fetches),
-                )
-            }
+            required = set(fetches)
+            while True:
+                placeholders = ",".join("?" for _ in required)
+                expanded = required | {
+                    row[0]
+                    for row in db.execute(
+                        "SELECT DISTINCT sibling.fetch_occurrence_uuidv4 "
+                        "FROM parsed_result_inputs selected JOIN parsed_result_inputs sibling "
+                        "USING(parsed_result_uuidv4) "
+                        f"WHERE selected.fetch_occurrence_uuidv4 IN ({placeholders}) "
+                        "AND sibling.fetch_occurrence_uuidv4 IS NOT NULL",
+                        tuple(required),
+                    )
+                }
+                if expanded == required:
+                    return required
+                required = expanded
 
         required_fetch = required_fetches({selected_fetch})
         required_collection = required_fetches(expected_collection)
+        unrelated_fetches = {
+            row[0]
+            for row in db.execute(
+                "SELECT o.fetch_occurrence_uuidv4 FROM fetch_occurrences o "
+                "JOIN fetch_collections c USING(fetch_collection_id) "
+                "WHERE c.change_request_id IS NOT NULL AND c.change_request_id!=?",
+                (f"{repository}:41",),
+            )
+        }
+        assert unrelated_fetches
+        assert not required_fetch & unrelated_fetches
+        assert not required_collection & unrelated_fetches
     fetch_unit = tmp_path / "selected-fetch.json"
     collection_unit = tmp_path / "selected-collection.json"
     full_unit = tmp_path / "repository.json"
+    current_unit = tmp_path / "selected-current-collection.json"
     cli(
         "exchange",
         "export",
@@ -411,6 +551,16 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         collection_unit,
     )
     cli("exchange", "export", "--repo", repository, "--output", full_unit)
+    cli(
+        "exchange",
+        "export",
+        "--repo",
+        repository,
+        "--collection",
+        current_collection,
+        "--output",
+        current_unit,
+    )
 
     def exported_fetches(path):
         return {
@@ -422,6 +572,42 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     assert exported_fetches(fetch_unit) == required_fetch
     assert exported_fetches(collection_unit) == required_collection
     assert required_collection < exported_fetches(full_unit)
+    current_records = json.loads(current_unit.read_text())["records"]
+    current_tables = {record["table"] for record in current_records}
+    assert {
+        "issue_resources",
+        "current_collection_pages",
+        "text_bodies",
+    } <= current_tables
+    assert (
+        not {"fetch_occurrences", "parsed_results", "stored_bytes", "payloads"}
+        & current_tables
+    )
+    selected_pages = [
+        record
+        for record in current_records
+        if record["table"] == "current_collection_pages"
+    ]
+    assert selected_pages
+    selected_members = [
+        member
+        for page in selected_pages
+        for member in json.loads(page["values"]["members"])
+    ]
+    assert selected_members
+    assert {member["kind"] for member in selected_members} == {"issue-comment"}
+    assert all(member["family"] == "issue" for member in selected_members)
+    assert {
+        record["values"]["kind"]
+        for record in current_records
+        if record["table"] == "issue_resources"
+    } == {"issue", "issue-comment"}
+    full_records = json.loads(full_unit.read_text())["records"]
+    assert {record["table"] for record in full_records} >= {
+        "issue_resources",
+        "review_resources",
+        "current_collection_pages",
+    }
     sender_state = state
     state = tmp_path / "receiver-state"
     cli(
@@ -433,7 +619,14 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         "--min-free-bytes",
         "0",
     )
-    for unit in (fetch_unit, fetch_unit, collection_unit, full_unit):
+    for unit in (
+        fetch_unit,
+        fetch_unit,
+        collection_unit,
+        current_unit,
+        current_unit,
+        full_unit,
+    ):
         assert (
             cli("exchange", "import", "--input", unit, allow_partial=True)["data"][
                 "rejected_records"
@@ -461,11 +654,38 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
                     f"SELECT git_fact_uuidv4 FROM {table} ORDER BY 1"
                 ).fetchall()
             )
+        for table, keys in (
+            ("issue_resources", "service_instance_uuidv4,kind,provider_resource_id"),
+            (
+                "review_resources",
+                "change_request_id,kind,provider_change_request_document_id",
+            ),
+            ("current_collection_pages", "fetch_collection_id,ordinal"),
+        ):
+            assert (
+                receiver.execute(
+                    f"SELECT {keys} FROM {table} ORDER BY {keys}"
+                ).fetchall()
+                == sender.execute(
+                    f"SELECT {keys} FROM {table} ORDER BY {keys}"
+                ).fetchall()
+            )
+        imported_verifications = receiver.execute(
+            "SELECT DISTINCT v.parser_profile_verification_uuidv4 "
+            "FROM parser_profile_verifications v JOIN review_resources r "
+            "USING(parser_profile_uuidv4) WHERE v.outcome='passed'"
+        ).fetchall()
         assert (
             receiver.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
         )
         assert receiver.execute("PRAGMA foreign_key_check").fetchall() == []
         assert receiver.execute("PRAGMA integrity_check").fetchone() == ("ok",)
+    # Trust remains receiver-local. Explicitly accept the fixture's imported
+    # verified definition before expecting its ordinary current interpretations.
+    assert imported_verifications
+    for (verification,) in imported_verifications:
+        cli("parser", "trust", verification)
+    assert current_reads("B") == expected_current_reads
     state = sender_state
 
     # Validate the installed fresh model and preservation path in both builds.
@@ -474,9 +694,16 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
         assert db.execute("PRAGMA integrity_check").fetchone() == ("ok",)
     backup = tmp_path / "packaged-backup.sqlite3"
-    cli("db", "backup", "--output", backup)
+    manifest = cli("db", "backup", "--output", backup)["data"]["manifest"]
+    assert type(manifest["quarantined_payload_count"]) is int
+    assert manifest["quarantined_payload_count"] == 0
+    assert (
+        json.loads(backup.with_name(backup.name + ".manifest.json").read_text())
+        == manifest
+    )
     state = tmp_path / "restored-state"
     cli("db", "restore", "--input", backup)
+    assert current_reads("B") == expected_current_reads
     assert cli("search", "code", "--literal", "認証")["data"]["items"]
     assert cli("db", "check", "--full")["data"]["checks"]["sqlite"] == ["ok"]
     assert cli("db", "verify-payloads")["status"] == "complete"

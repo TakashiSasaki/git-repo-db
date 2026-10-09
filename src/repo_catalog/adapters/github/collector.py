@@ -5,6 +5,7 @@ import uuid
 from importlib.resources import files
 from urllib.parse import urlencode, urljoin, urlsplit
 
+from repo_catalog.adapters.github import current_parser
 from repo_catalog.adapters.github.identity import database_resource_id
 from repo_catalog.adapters.github.persistence import (
     PARSER,
@@ -28,13 +29,240 @@ class GitHubCollector:
         self.s, self.token = store, token
         self.cfg = config or store.config["github"]
         self.repository_endpoint_id = repository_endpoint_id
-        self.http = transport or GitHubTransport(self.cfg, token)
-        self.owned = transport is None
+        if transport is None:
+            from repo_catalog.adapters.recording import recorder_from_config
+
+            transport = GitHubTransport(
+                self.cfg, token, recorder=recorder_from_config(self.cfg, store.path)
+            )
+            self.owned = True
+        else:
+            self.owned = False
+        self.http = transport
         self.inventory_uncertainty = None
         self.inventory_evidence = []
         self.facts = ApiFacts(store, self.cfg)
         self.thread_collections = {}
         self.observed_partial_scopes = set()
+        self.recording_diagnostics = []
+
+    def current_incremental_url(self, repo, job, kind, endpoint, context):
+        """Freeze a bounded overlapping update scan and resume its original URL."""
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        matches = self.s.all(
+            "SELECT f.fetch_collection_id,f.observed_at_us,r.endpoint,r.request_context,p.job_id,p.state,c.completion_marker_uuidv4,c.asserted_state,c.evidence,c.observed_at_us marker_observed_at_us "
+            "FROM fetch_collections f JOIN resume_scopes r USING(resume_scope_id) JOIN collection_progress p USING(fetch_collection_id) "
+            "LEFT JOIN completion_markers c USING(fetch_collection_id) "
+            "WHERE f.repository_uuidv4=? AND f.kind=? AND r.source_id=? AND r.principal_ref IS ? AND r.api_version=? AND r.parser_version=? AND r.profile_version=? "
+            "AND json_extract(r.request_context,'$.incremental_endpoint')=? ORDER BY f.observed_at_us DESC",
+            (
+                repo["repository_uuidv4"],
+                kind,
+                repo["source_id"],
+                self.facts.principal,
+                self.cfg["rest_api_version"],
+                PARSER,
+                self.s.config["preservation"]["profile"],
+                endpoint,
+            ),
+        )
+        for row in matches:
+            saved_context = json.loads(row["request_context"])
+            if saved_context.get("permissions") != self.facts.permissions:
+                continue
+            if row["job_id"] == job:
+                return row["endpoint"], saved_context
+        proof = CurrentCollectionProof(self.s.connection)
+        for row in matches:
+            if (
+                json.loads(row["request_context"]).get("permissions")
+                != self.facts.permissions
+            ):
+                continue
+            if row["state"] != "complete" or row["asserted_state"] != "complete":
+                continue
+            if any(
+                page["parser_profile_uuidv4"] != self.facts.profile()
+                for page in proof.pages(row["fetch_collection_id"])
+            ):
+                continue
+            marker = {**dict(row), "observed_at_us": row["marker_observed_at_us"]}
+            if proof.is_complete_marker(marker):
+                return endpoint + "&" + urlencode(
+                    {"since": format_iso8601_us(row["observed_at_us"] - 300_000_000)}
+                ), {
+                    **context,
+                    "completion_marker_uuidv4": row["completion_marker_uuidv4"],
+                }
+        return endpoint, context
+
+    def current_collection(self, repo, pr, kind, job, url, parser, *, context=None):
+        """Admit mutable pages with durable bounds/members and no HTTP CAS input."""
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+        from repo_catalog.domain.current_state import fingerprint_candidate
+
+        s = self.s
+        proof = CurrentCollectionProof(s.connection)
+        with s.transaction():
+            self.facts.fence(job)
+            collection = self.facts.begin(repo, pr, kind, job, url, context)
+            candidate_context = self.facts.current_context(
+                repo, pr, url, kind.replace("-incremental", "")
+            )
+        if collection["state"] == "complete":
+            return collection["fetch_collection_id"], None
+        previous = s.one(
+            "SELECT ordinal,next_cursor FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
+            (collection["fetch_collection_id"],),
+        )
+        ordinal = previous["ordinal"] + 1 if previous else 0
+        page_url = previous["next_cursor"] if previous else url
+        seen = set()
+        try:
+            while page_url:
+                self.token.check()
+                if page_url in seen:
+                    raise CatalogError(
+                        "PAGINATION_CYCLE", "Repeated current resource page"
+                    )
+                seen.add(page_url)
+                base_revision = s.revision()
+                response = self.request_get(
+                    page_url,
+                    repo,
+                    record_context={
+                        "provider_request_kind": kind,
+                        "repository": repo["name"],
+                        "collection_scope": canonical(
+                            candidate_context["acquisition_scope"]
+                        ),
+                        "service_instance_uuidv4": candidate_context[
+                            "service_instance_uuidv4"
+                        ],
+                    },
+                )
+                timestamp = response.extensions.get("catalog_observed_at_us", now_us())
+                values = self.rest_json(response)
+                if not isinstance(values, list):
+                    raise CatalogError(
+                        "API_SCHEMA", "Current collection response must be a list"
+                    )
+                next_url = self.http.next_url(response)
+                from repo_catalog.adapters.git.runner import hook
+
+                hook("before_api_page_commit")
+                with s.transaction():
+                    self.facts.fence(job)
+                    members = []
+                    for value in values:
+                        self.rest_item(value, kind)
+                        candidate = parser(value, candidate_context, timestamp)
+                        if candidate is None:
+                            continue
+                        self.facts.admit_current(candidate, base_revision)
+                        issue_family = candidate["kind"] in ("issue", "issue-comment")
+                        key_fields = (
+                            ("service_instance_uuidv4", "provider_resource_id")
+                            if issue_family
+                            else (
+                                "change_request_id",
+                                "provider_change_request_document_id",
+                            )
+                        )
+                        members.append(
+                            {
+                                "family": "issue" if issue_family else "review",
+                                "kind": candidate["kind"],
+                                **{field: candidate[field] for field in key_fields},
+                                "state_digest": fingerprint_candidate(candidate),
+                            }
+                        )
+                    proof.page(
+                        collection["fetch_collection_id"],
+                        ordinal,
+                        timestamp,
+                        next_url,
+                        members,
+                        status=response.status_code,
+                        parser_profile_uuidv4=self.facts.profile(),
+                    )
+                    s.execute(
+                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                        (next_url, collection["fetch_collection_id"]),
+                    )
+                    self.facts.publish()
+                hook("after_api_page_commit")
+                ordinal += 1
+                page_url = next_url
+            with s.transaction():
+                self.facts.fence(job)
+                # A resumed terminal receipt must still account for unresolved
+                # members saved by the earlier attempt; local control flow is
+                # never completeness evidence.
+                if self.current_members_unresolved(collection["fetch_collection_id"]):
+                    raise CatalogError(
+                        "CURRENT_STATE_UNRESOLVED",
+                        "Current collection contains unordered or unresolved resources",
+                    )
+                evidence = proof.evidence(collection["fetch_collection_id"])
+                self.facts.finish(collection, evidence=evidence)
+                self.collection_coverage(repo, pr, kind, collection, "complete")
+                self.facts.publish()
+            return collection["fetch_collection_id"], None
+        except CatalogError as error:
+            with s.transaction():
+                self.facts.fence(job)
+                self.facts.partial(collection, error.code)
+                self.collection_coverage(
+                    repo, pr, kind, collection, "partial", reason=error.code
+                )
+                self.facts.publish()
+            raise
+
+    def current_members_unresolved(self, collection_id):
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        for member in CurrentCollectionProof(self.s.connection).members(collection_id):
+            if member["family"] == "issue":
+                table, keys = (
+                    "issue_resources",
+                    ("service_instance_uuidv4", "kind", "provider_resource_id"),
+                )
+            else:
+                table, keys = (
+                    "review_resources",
+                    (
+                        "change_request_id",
+                        "kind",
+                        "provider_change_request_document_id",
+                    ),
+                )
+            predicate = " AND ".join(f"{field}=?" for field in keys)
+            if (
+                self.s.one(
+                    f"SELECT 1 FROM {table} WHERE {predicate}",
+                    tuple(member[field] for field in keys),
+                )
+                is None
+            ):
+                return True
+            diagnostics = " AND ".join(
+                f"json_extract(record_json,'$.{field}')=?" for field in keys
+            )
+            if self.s.one(
+                "SELECT 1 FROM current_resource_diagnostics WHERE table_name=? AND "
+                + diagnostics,
+                (table, *(member[field] for field in keys)),
+            ):
+                return True
+        return False
 
     def coverage_claim(
         self,
@@ -143,7 +371,7 @@ class GitHubCollector:
 
     def summary_observed_at_us(self, repo, job, *, documents_only=False):
         return self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0"
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences WHERE coalesce(json_extract(request,'$.operational_only'),0)=0 UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
             + (
                 " AND f.kind NOT IN (" + ",".join("?" for _ in NON_DOCUMENT_KINDS) + ")"
                 if documents_only
@@ -164,6 +392,9 @@ class GitHubCollector:
                 raise CatalogError("PAGINATION_CYCLE", "API redirect cycle")
             seen.add(url)
             response = self.http.request("GET", url, **kwargs)
+            self.recording_diagnostics.extend(
+                response.extensions.get("repo_catalog_recording_diagnostics", [])
+            )
             if response.status_code not in (301, 302):
                 return response
             target = urljoin(url, response.headers.get("location", ""))
@@ -686,6 +917,10 @@ class GitHubCollector:
             if row
             else f"{repo['repository_uuidv4']}:{value['number']}"
         )
+        if row is None and s.one(
+            "SELECT 1 FROM change_requests WHERE change_request_id=?", (ident,)
+        ):
+            ident = f"{binding}:{value['number']}"
         if collection.get("change_request_id") not in (None, ident):
             raise CatalogError(
                 "API_SCHEMA", "PR response does not match the requested PR"
@@ -941,8 +1176,8 @@ class GitHubCollector:
                 raise CatalogError("API_SCHEMA", "Invalid comment parent") from None
             self.rest_integer(number, "comment parent number", minimum=1)
             pr = self.s.one(
-                "SELECT change_request_id FROM change_requests WHERE repository_uuidv4=? AND provider_change_request_number=?",
-                (repo["repository_uuidv4"], number),
+                "SELECT change_request_id FROM change_requests WHERE repository_binding_id=(SELECT repository_binding_id FROM resume_scopes WHERE resume_scope_id=?) AND change_request_kind='pull_request' AND provider_change_request_number=?",
+                (scope, number),
             )
             if not pr:
                 payload_key = self.s.one(
@@ -1015,6 +1250,97 @@ class GitHubCollector:
                 )
             self.facts.publish()
 
+    def current_incremental_reviews(self, repo, job, endpoint):
+        parameters = {
+            "per_page": self.cfg["rest_page_size"],
+            "sort": "updated",
+            "direction": "asc",
+        }
+        fixed_endpoint = endpoint + "?" + urlencode(parameters)
+        context = {
+            "kind": "review-comment",
+            "sort": "updated",
+            "direction": "asc",
+            "incremental_endpoint": fixed_endpoint,
+        }
+        url, context = self.current_incremental_url(
+            repo, job, "review-comment-incremental", fixed_endpoint, context
+        )
+
+        def parse(value, candidate_context, timestamp):
+            parent = value.get("pull_request_url") if isinstance(value, dict) else None
+            if not isinstance(parent, str):
+                raise CatalogError("API_SCHEMA", "Review comment parent missing")
+            self.http.validate_url(parent)
+            prefix = urlsplit(endpoint).path.rsplit("/", 2)[0] + "/pulls/"
+            path = urlsplit(parent).path
+            suffix = path.removeprefix(prefix)
+            if (
+                not path.startswith(prefix)
+                or not suffix.isascii()
+                or not suffix.isdecimal()
+                or str(int(suffix)) != suffix
+                or int(suffix) <= 0
+            ):
+                raise CatalogError(
+                    "SCOPE_MISMATCH",
+                    "Review comment parent outside selected repository",
+                )
+            self.rest_integer(int(suffix), "review comment parent number", minimum=1)
+            owner = self.s.one(
+                "SELECT change_request_id FROM change_requests WHERE repository_binding_id=? AND change_request_kind='pull_request' AND provider_change_request_number=?",
+                (candidate_context["repository_binding_id"], int(suffix)),
+            )
+            if owner is None:
+                raise CatalogError(
+                    "COMMENT_PARENT_UNKNOWN",
+                    "Review comment parent has not been acquired",
+                )
+            candidate_context = {
+                **candidate_context,
+                "change_request_id": owner["change_request_id"],
+                "acquisition_scope": {
+                    **candidate_context["acquisition_scope"],
+                    "change_request_id": owner["change_request_id"],
+                },
+            }
+            return current_parser.review_comment(value, candidate_context, timestamp)
+
+        cid, _ = self.current_collection(
+            repo, None, "review-comment-incremental", job, url, parse, context=context
+        )
+        with self.s.transaction():
+            self.facts.fence(job)
+            row = self.s.one(
+                "SELECT resume_scope_id,observed_at_us FROM fetch_collections WHERE fetch_collection_id=?",
+                (cid,),
+            )
+            if (
+                self.s.one(
+                    "SELECT 1 FROM incremental_scans WHERE fetch_collection_id=?",
+                    (cid,),
+                )
+                is None
+            ):
+                self.s.execute(
+                    "INSERT INTO incremental_scans(incremental_scan_id,resume_scope_id,fetch_collection_id,scan_started_at_us,safe_watermark_us,evidence) VALUES(?,?,?,?,?,?)",
+                    (
+                        cid,
+                        row["resume_scope_id"],
+                        cid,
+                        row["observed_at_us"],
+                        row["observed_at_us"],
+                        canonical(
+                            {
+                                "boundary": "successful-terminal-page",
+                                "current_resource_pages": True,
+                            }
+                        ),
+                    ),
+                )
+            self.facts.publish()
+        return cid
+
     def _document_normalizer(self, pr, kind):
         def normalize(value, collection, occurrence, position, timestamp, listing):
             if value.get("id") is None:
@@ -1039,17 +1365,16 @@ class GitHubCollector:
         """Retain raw rejected evidence in the caller's writer transaction."""
         if self.facts.stage_rejected(error):
             return
-        operational_only = False
-        if error.code == "RATE_LIMIT":
-            resource = (
-                ("data", "node")
-                if "thread" in variables
-                else ("data", "repository", "pullRequest")
-            )
-            try:
-                self.graphql_object(response.json(), *resource)
-            except CatalogError:
-                operational_only = True
+        resource = (
+            ("data", "node")
+            if "thread" in variables
+            else ("data", "repository", "pullRequest")
+        )
+        try:
+            self.graphql_object(response.json(), *resource)
+            operational_only = False
+        except (CatalogError, ValueError):
+            operational_only = True
         occurrence, _, _ = self.facts.page(
             collection,
             response,
@@ -1183,6 +1508,9 @@ class GitHubCollector:
             .read_text()
         )
         with self.s.transaction():
+            self.facts.current_context(
+                repo, pr["change_request_id"], self.http.graphql, "review-comment"
+            )
             collection = self.facts.begin(
                 repo,
                 pr["change_request_id"],
@@ -1249,10 +1577,16 @@ class GitHubCollector:
                         page["observed_at_us"],
                     )
                 else:
+                    base_revision = self.s.revision()
                     response = self.http.request(
                         "POST",
                         self.http.graphql,
                         json={"query": root_query, "variables": variables},
+                    )
+                    self.recording_diagnostics.extend(
+                        response.extensions.get(
+                            "repo_catalog_recording_diagnostics", []
+                        )
                     )
                     uncommitted = True
                     payload = response.json()
@@ -1276,20 +1610,71 @@ class GitHubCollector:
                             next_cursor,
                             advance=False,
                         )
+                        current_members = []
                         for index, thread in enumerate(nodes):
-                            review_thread_provider_resource_id = self._thread(
-                                repo, pr, thread, timestamp, occurrence
+                            review_thread_provider_resource_id = thread.get("id")
+                            if (
+                                not isinstance(review_thread_provider_resource_id, str)
+                                or not review_thread_provider_resource_id
+                            ):
+                                raise CatalogError(
+                                    "API_SCHEMA", "Thread identity missing"
+                                )
+                            if not self.s.one(
+                                "SELECT 1 FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+                                (
+                                    pr["change_request_id"],
+                                    review_thread_provider_resource_id,
+                                ),
+                            ):
+                                self.s.execute(
+                                    "INSERT INTO review_threads(change_request_id,provider_resource_id) VALUES(?,?)",
+                                    (
+                                        pr["change_request_id"],
+                                        review_thread_provider_resource_id,
+                                    ),
+                                )
+                            current_members.extend(
+                                self._thread_documents(
+                                    repo,
+                                    pr,
+                                    review_thread_provider_resource_id,
+                                    thread.get("comments"),
+                                    collection,
+                                    occurrence,
+                                    index * 10000,
+                                    timestamp,
+                                    base_revision=base_revision,
+                                    refresh_root=True,
+                                )
                             )
-                            self._thread_documents(
+                        for thread in nodes:
+                            self._thread(
+                                repo,
                                 pr,
-                                review_thread_provider_resource_id,
-                                thread.get("comments"),
-                                collection,
-                                occurrence,
-                                index * 10000,
+                                thread,
                                 timestamp,
-                                refresh_root=True,
+                                occurrence,
+                                observation_complete=not bool(payload.get("errors")),
                             )
+                        from repo_catalog.adapters.sqlite.current_collections import (
+                            CurrentCollectionProof,
+                        )
+
+                        CurrentCollectionProof(self.s.connection).page(
+                            collection["fetch_collection_id"],
+                            self.s.one(
+                                "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
+                                (collection["fetch_collection_id"],),
+                            )[0],
+                            timestamp,
+                            canonical({"cursor": cursor})
+                            if payload.get("errors")
+                            else next_cursor,
+                            current_members,
+                            status=response.status_code,
+                            parser_profile_uuidv4=self.facts.profile(),
+                        )
                         # Root page and pending child boundary commit together. Resume
                         # reads this exact page and never records it as a new response.
                         if not payload.get("errors"):
@@ -1335,6 +1720,14 @@ class GitHubCollector:
                             (canonical(pending), collection["fetch_collection_id"]),
                         )
                     else:
+                        if any(
+                            self.current_members_unresolved(ident)
+                            for ident in self.thread_collection_ids(collection)
+                        ):
+                            raise CatalogError(
+                                "CURRENT_STATE_UNRESOLVED",
+                                "Thread has unresolved current comment members",
+                            )
                         self.facts.finish(
                             collection,
                             evidence={
@@ -1416,12 +1809,31 @@ class GitHubCollector:
             )
         }
 
-    def _thread(self, repo, pr, thread, timestamp, occurrence):
+    def _thread(
+        self, repo, pr, thread, timestamp, occurrence, *, observation_complete=True
+    ):
         if not isinstance(thread.get("id"), str) or not thread["id"]:
             raise CatalogError("API_SCHEMA", "Thread identity missing")
         provider_resource_id = thread["id"]
+        nodes, info, _ = self.graphql_connection(
+            thread.get("comments"), refresh_root=True
+        )
         value = canonical(
-            {key: item for key, item in thread.items() if key != "comments"}
+            {
+                **{key: item for key, item in thread.items() if key != "comments"},
+                "comments": {
+                    "nodes": [
+                        {
+                            "fullDatabaseId": current_parser.resource_id(
+                                item, "fullDatabaseId"
+                            )
+                        }
+                        for item in nodes
+                    ],
+                    "pageInfo": info,
+                    "observation_complete": observation_complete,
+                },
+            }
         )
         if not self.s.one(
             "SELECT 1 FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
@@ -1454,6 +1866,7 @@ class GitHubCollector:
 
     def _thread_documents(
         self,
+        repo,
         pr,
         review_thread_provider_resource_id,
         connection,
@@ -1462,23 +1875,49 @@ class GitHubCollector:
         offset,
         timestamp,
         *,
+        base_revision,
         refresh_root=False,
     ):
+        from repo_catalog.domain.current_state import fingerprint_candidate
+
         nodes, _, _ = self.graphql_connection(connection, refresh_root=refresh_root)
+        if self.facts.replaying:
+            # Validate portable database identifiers while keeping immutable
+            # thread replay free of mutable admission and transport dependencies.
+            for value in nodes:
+                current_parser.review_comment(
+                    value,
+                    {"acquisition_scope": {}},
+                    timestamp,
+                    graphql=True,
+                    thread=review_thread_provider_resource_id,
+                )
+            return []
+        context = self.facts.current_context(
+            repo, pr["change_request_id"], self.http.graphql, "review-comment"
+        )
+        members = []
         for position, value in enumerate(nodes):
-            provider = self.document_provider_id(value, "fullDatabaseId")
-            self.facts.document(
-                pr["change_request_id"],
-                "review-comment",
-                str(provider),
-                "" if value.get("body") is None else value["body"],
+            candidate = current_parser.review_comment(
                 value,
-                collection,
-                occurrence,
-                offset + position,
+                context,
                 timestamp,
+                graphql=True,
                 thread=review_thread_provider_resource_id,
             )
+            self.facts.admit_current(candidate, base_revision)
+            members.append(
+                {
+                    "family": "review",
+                    "change_request_id": pr["change_request_id"],
+                    "kind": "review-comment",
+                    "provider_change_request_document_id": candidate[
+                        "provider_change_request_document_id"
+                    ],
+                    "state_digest": fingerprint_candidate(candidate),
+                }
+            )
+        return members
 
     def _thread_children(
         self,
@@ -1493,6 +1932,11 @@ class GitHubCollector:
         timestamp,
         child_collections,
     ):
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        proof = CurrentCollectionProof(self.s.connection)
         _, info, initial_cursor = self.graphql_connection(
             thread.get("comments"), refresh_root=True
         )
@@ -1515,10 +1959,11 @@ class GitHubCollector:
         if collection["state"] == "complete":
             return
         page = self.s.one(
-            "SELECT next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
+            "SELECT ordinal,next_cursor FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
             (collection["fetch_collection_id"],),
         )
-        cursor = page[0] if page else initial_cursor
+        cursor = page["next_cursor"] if page else initial_cursor
+        ordinal = page["ordinal"] + 1 if page else 0
         seen = set()
         response, uncommitted = None, False
         try:
@@ -1534,10 +1979,19 @@ class GitHubCollector:
                     "commentCursor": cursor,
                     "pageSize": self.cfg["graphql_page_size"],
                 }
+                base_revision = self.s.revision()
                 response = self.http.request(
                     "POST",
                     self.http.graphql,
                     json={"query": query, "variables": variables},
+                    record_context={
+                        "provider_request_kind": "thread-comments",
+                        "repository": repo["name"],
+                        "pr_number": pr["provider_change_request_number"],
+                    },
+                )
+                self.recording_diagnostics.extend(
+                    response.extensions.get("repo_catalog_recording_diagnostics", [])
                 )
                 uncommitted = True
                 payload = response.json()
@@ -1546,25 +2000,35 @@ class GitHubCollector:
                 _, info, next_cursor = self.graphql_connection(comments)
                 with self.s.transaction():
                     self.facts.fence(job)
-                    occurrence, ordinal, timestamp = self.facts.page(
-                        collection,
-                        response,
-                        {
-                            "url": self.http.graphql,
-                            "method": "POST",
-                            "query": query,
-                            "variables": variables,
-                        },
-                        cursor if payload.get("errors") else next_cursor,
+                    timestamp = response.extensions.get(
+                        "catalog_observed_at_us", now_us()
                     )
-                    self._thread_documents(
+                    members = self._thread_documents(
+                        repo,
                         pr,
                         review_thread_provider_resource_id,
                         comments,
                         collection,
-                        occurrence,
+                        None,
                         ordinal * 10000,
                         timestamp,
+                        base_revision=base_revision,
+                    )
+                    proof.page(
+                        collection["fetch_collection_id"],
+                        ordinal,
+                        timestamp,
+                        cursor if payload.get("errors") else next_cursor,
+                        members,
+                        status=response.status_code,
+                        parser_profile_uuidv4=self.facts.profile(),
+                    )
+                    self.s.execute(
+                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                        (
+                            cursor if payload.get("errors") else next_cursor,
+                            collection["fetch_collection_id"],
+                        ),
                     )
                     self.facts.publish()
                 uncommitted = False
@@ -1573,17 +2037,23 @@ class GitHubCollector:
                         "GRAPHQL_PARTIAL", "Thread comments page has errors"
                     )
                 cursor = next_cursor
+                ordinal += 1
             with self.s.transaction():
                 self.facts.fence(job)
-                self.facts.finish(collection)
+                if self.current_members_unresolved(collection["fetch_collection_id"]):
+                    raise CatalogError(
+                        "CURRENT_STATE_UNRESOLVED",
+                        "Thread comments have unresolved current members",
+                    )
+                self.facts.finish(
+                    collection,
+                    evidence=proof.evidence(collection["fetch_collection_id"]),
+                )
                 self.facts.publish()
         except CatalogError as error:
             with self.s.transaction():
                 self.facts.fence(job)
                 if response is not None and uncommitted:
-                    self.failed_graphql_page(
-                        collection, response, variables, query, cursor, error
-                    )
                     self.s.execute(
                         "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
                         (cursor, collection["fetch_collection_id"]),
@@ -1635,6 +2105,162 @@ class GitHubCollector:
             return False
         return roles <= links
 
+    def sync_issues(self, repo, job):
+        """Collect all accessible ordinary Issues and independently refresh children."""
+        s = self.s
+        root = f"{self.http.base}/repos/{repo['name']}"
+        failures, waiting = [], None
+
+        def attempt(kind, operation):
+            nonlocal waiting
+            if waiting is not None and waiting > self.http.clock_us():
+                failures.append({"kind": kind, "reason": "RATE_LIMIT_WAIT"})
+                return None
+            try:
+                return operation()
+            except CatalogError as error:
+                if error.code in ("CANCELLED", "STALE_ATTEMPT"):
+                    raise
+                failures.append({"kind": kind, "reason": error.code})
+                waiting = error.details.get("not_before_us", waiting)
+                return None
+
+        try:
+            response = self.http.request("GET", self.http.base + "/user")
+            self.recording_diagnostics.extend(
+                response.extensions.get("repo_catalog_recording_diagnostics", [])
+            )
+            identity = response.json()
+            principal = identity.get("id") or identity.get("login")
+            if not principal:
+                raise CatalogError("API_SCHEMA", "Principal identity missing")
+            self.facts.principal = str(principal)
+            permissions = response.headers.get("x-oauth-scopes")
+            self.facts.permissions = (
+                sorted(item.strip() for item in permissions.split(",") if item.strip())
+                if permissions is not None
+                else None
+            )
+            size = self.cfg["rest_page_size"]
+            list_endpoint = (
+                root + f"/issues?state=all&sort=updated&direction=asc&per_page={size}"
+            )
+            list_context = {
+                "state": "all",
+                "sort": "updated",
+                "direction": "asc",
+                "incremental_endpoint": list_endpoint,
+            }
+            list_url, list_context = self.current_incremental_url(
+                repo, job, "issue", list_endpoint, list_context
+            )
+            listing = attempt(
+                "issue",
+                lambda: self.current_collection(
+                    repo,
+                    None,
+                    "issue",
+                    job,
+                    list_url,
+                    current_parser.issue,
+                    context=list_context,
+                ),
+            )
+            # Parent updated_at does not order comment edits. Refresh every
+            # stored accessible parent's complete comment list independently,
+            # including closed Issues and parents absent from a failed page.
+            selected_binding = self.facts.current_context(repo, None, root)[
+                "repository_binding_id"
+            ]
+            issues = s.all(
+                "SELECT * FROM issue_resources WHERE repository_binding_id=? AND kind='issue' ORDER BY provider_issue_number",
+                (selected_binding,),
+            )
+            collections = [listing[0]] if listing else []
+            for parent in issues:
+                comment_endpoint = (
+                    root
+                    + f"/issues/{parent['provider_issue_number']}/comments?per_page={size}"
+                )
+                comment_context = {
+                    "provider_issue_id": parent["provider_resource_id"],
+                    "provider_issue_number": parent["provider_issue_number"],
+                    "incremental_endpoint": comment_endpoint,
+                }
+                comment_url, comment_context = self.current_incremental_url(
+                    repo,
+                    job,
+                    "ordinary-issue-comment",
+                    comment_endpoint,
+                    comment_context,
+                )
+
+                def parse_comment(value, context, timestamp, parent=parent):
+                    context = {
+                        **context,
+                        "provider_issue_number": parent["provider_issue_number"],
+                    }
+                    return current_parser.issue_comment(
+                        value, context, timestamp, parent["provider_resource_id"]
+                    )
+
+                collected = attempt(
+                    "ordinary-issue-comment",
+                    lambda parent=parent, parse_comment=parse_comment, comment_url=comment_url, comment_context=comment_context: (
+                        self.current_collection(
+                            repo,
+                            None,
+                            "ordinary-issue-comment",
+                            job,
+                            comment_url,
+                            parse_comment,
+                            context=comment_context,
+                        )
+                    ),
+                )
+                if collected:
+                    collections.append(collected[0])
+            with s.transaction():
+                self.facts.fence(job)
+                observed = s.one(
+                    "SELECT MAX(p.observed_at_us) FROM current_collection_pages p JOIN collection_progress c USING(fetch_collection_id) JOIN fetch_collections f USING(fetch_collection_id) WHERE c.job_id=? AND f.repository_uuidv4=? AND f.kind IN ('issue','ordinary-issue-comment')",
+                    (job, repo["repository_uuidv4"]),
+                )[0]
+                self.coverage_claim(
+                    repo["repository_uuidv4"],
+                    "issue",
+                    "partial" if failures else "complete",
+                    observed,
+                    {
+                        "fetch_collection_ids": sorted(collections),
+                        **({"missing": failures} if failures else {}),
+                    },
+                )
+                self.facts.publish()
+            if failures:
+                raise Waiting(
+                    "ISSUE_PARTIAL",
+                    "Some ordinary Issue collections are incomplete",
+                    {
+                        "missing": failures,
+                        **({"not_before_us": waiting} if waiting is not None else {}),
+                    },
+                    True,
+                )
+            return {
+                "repository_uuidv4": repo["repository_uuidv4"],
+                "state": "complete",
+                "issues": len(issues),
+                **(
+                    {"recording_diagnostics": self.recording_diagnostics}
+                    if self.recording_diagnostics
+                    else {}
+                ),
+            }
+        finally:
+            if self.owned:
+                self.http.close()
+
     def sync(self, repo, job):
         s = self.s
         root = f"{self.http.base}/repos/{repo['name']}"
@@ -1662,6 +2288,11 @@ class GitHubCollector:
 
         try:
             identity_response = self.http.request("GET", self.http.base + "/user")
+            self.recording_diagnostics.extend(
+                identity_response.extensions.get(
+                    "repo_catalog_recording_diagnostics", []
+                )
+            )
             identity = identity_response.json()
             permissions = identity_response.headers.get("x-oauth-scopes")
             self.facts.permissions = (
@@ -1700,7 +2331,6 @@ class GitHubCollector:
             )
             for kind, endpoint, parent in (
                 ("issue-comment", root + "/issues/comments", "issue_url"),
-                ("review-comment", root + "/pulls/comments", "pull_request_url"),
             ):
                 attempt(
                     kind + "-incremental",
@@ -1708,9 +2338,18 @@ class GitHubCollector:
                         self.incremental_comments(repo, job, kind, endpoint, parent)
                     ),
                 )
+            attempt(
+                "review-comment-incremental",
+                lambda: self.current_incremental_reviews(
+                    repo, job, root + "/pulls/comments"
+                ),
+            )
+            selected_binding = self.facts.current_context(repo, None, root)[
+                "repository_binding_id"
+            ]
             prs = s.all(
-                "SELECT p.*,o.change_request_observation_id AS current_change_request_observation_id,o.payload FROM change_requests p LEFT JOIN current_change_request_observations o ON o.change_request_id=p.change_request_id WHERE p.repository_uuidv4=? ORDER BY p.provider_change_request_number",
-                (repo["repository_uuidv4"],),
+                "SELECT p.*,o.change_request_observation_id AS current_change_request_observation_id,o.payload FROM change_requests p LEFT JOIN current_change_request_observations o ON o.change_request_id=p.change_request_id WHERE p.repository_binding_id=? AND p.change_request_kind='pull_request' ORDER BY p.provider_change_request_number",
+                (selected_binding,),
             )
             for pr in prs:
                 self.token.check()
@@ -1735,13 +2374,28 @@ class GitHubCollector:
                 ):
                     attempt(
                         kind,
-                        lambda kind=kind, endpoint=endpoint: self.collection(
-                            repo,
-                            pr["change_request_id"],
-                            kind,
-                            job,
-                            endpoint + f"?per_page={size}",
-                            self._document_normalizer(pr["change_request_id"], kind),
+                        lambda kind=kind, endpoint=endpoint: (
+                            self.collection(
+                                repo,
+                                pr["change_request_id"],
+                                kind,
+                                job,
+                                endpoint + f"?per_page={size}",
+                                self._document_normalizer(
+                                    pr["change_request_id"], kind
+                                ),
+                            )
+                            if kind == "issue-comment"
+                            else self.current_collection(
+                                repo,
+                                pr["change_request_id"],
+                                kind,
+                                job,
+                                endpoint + f"?per_page={size}",
+                                current_parser.review
+                                if kind == "review"
+                                else current_parser.review_comment,
+                            )
                         ),
                     )
 
@@ -1916,10 +2570,10 @@ class GitHubCollector:
                     **merge,
                 }
                 for review in s.all(
-                    "SELECT metadata FROM current_document_observations WHERE kind='review' AND change_request_id=?",
+                    "SELECT target_commit_oid FROM eligible_review_resources WHERE kind='review' AND change_request_id=?",
                     (pr["change_request_id"],),
                 ):
-                    value = json.loads(review[0]).get("commit_id")
+                    value = review[0]
                     if value:
                         role_oids["review-target:" + value] = value
                 role_links = {}
@@ -2306,6 +2960,11 @@ class GitHubCollector:
                 "repository_uuidv4": repo["repository_uuidv4"],
                 "state": "complete",
                 "pull_requests": len(prs),
+                **(
+                    {"recording_diagnostics": self.recording_diagnostics}
+                    if self.recording_diagnostics
+                    else {}
+                ),
             }
         finally:
             if self.owned:

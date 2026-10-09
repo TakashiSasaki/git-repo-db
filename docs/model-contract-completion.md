@@ -1,5 +1,10 @@
 # Remaining data-model contract implementation
 
+This document records the schema 13 / PR #12 checkpoint. Its acceptance numbers
+and certificate are historical. Current schema 14 scope, including superseded
+Issue/review history rules and selected CAS-41 work, is documented in
+[latest-state-transport-implementation.md](latest-state-transport-implementation.md).
+
 This change starts from PR #11, `refactor/integrated-data-model`. The six decisions
 below were partial at that checkpoint. This document maps the production changes
 and their executable checks. The six decisions passed independent regression

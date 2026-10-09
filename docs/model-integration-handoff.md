@@ -1,5 +1,19 @@
 # Integrated data model handoff
 
+## Current schema 14 handoff
+
+Current work starts from PR #12 `a3a4cb7482d42709f79d137b802f1789e3aa45cb`
+on `feat/complete-model-contracts`; the implementation branch is
+`refactor/latest-state-transport`. Shared Issue/review current state, optional
+transport recording and required CAS-41 counts are described in
+[latest-state-transport-implementation.md](latest-state-transport-implementation.md).
+The complete table/key/owner/lifecycle inventory is in
+[latest-state-table-inventory.md](latest-state-table-inventory.md).
+Fresh schema 14 initialization replaces the unreleased development format;
+there is no migration or v2 intake. Final local acceptance passed: 1,311 ordinary tests and 2 isolated wheel/sdist cases, without bootstrap and with zero failures/errors/skips. Exact receipts and scope limits are in [the schema 14 implementation report](latest-state-transport-implementation.md). Submitted HEAD and hosted CI are recorded in the new stacked PR body after publication.
+
+## Historical schema 13 handoff
+
 Current work starts from PR #11 `d76ebc776c9e72f565dc3007c878e2002c5f4e8e`, branch `refactor/integrated-data-model`. The implementation branch is `feat/complete-model-contracts`, stacked directly on PR #11. Earlier branches, commits and PR histories remain preserved. Schema 13 completes the remaining Git fact, authored JSON reference and selective exchange paths in the unreleased fresh format; there is no migration of prior development catalogs.
 
 The previous PR #10-to-#11 integration and its schema 12 acceptance remain historical evidence in [`2026-10-09-integrated-model.json`](validation/synthetic/2026-10-09-integrated-model.json). Current implementation mapping is in [`model-contract-completion.md`](model-contract-completion.md), with the complete JSON field/reference inventory in [`application-json-contracts.md`](application-json-contracts.md). Final submitted HEAD and hosted acceptance belong in the new stacked PR body.

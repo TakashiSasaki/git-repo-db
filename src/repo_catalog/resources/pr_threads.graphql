@@ -8,7 +8,7 @@ query RepoCatalogThreads($owner: String!, $name: String!, $number: Int!, $cursor
         nodes {
           id isResolved isOutdated
           comments(first: $pageSize) {
-            nodes { id fullDatabaseId body url author { login } commit { oid } originalCommit { oid } path line originalLine diffHunk }
+            nodes { id fullDatabaseId body url updatedAt author { login } pullRequestReview { fullDatabaseId } replyTo { fullDatabaseId } position originalPosition commit { oid } originalCommit { oid } path line originalLine diffHunk }
             pageInfo { hasNextPage endCursor }
           }
         }

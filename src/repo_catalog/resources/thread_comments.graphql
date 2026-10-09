@@ -3,7 +3,7 @@ query RepoCatalogThreadComments($thread: ID!, $commentCursor: String, $pageSize:
     ... on PullRequestReviewThread {
       id
       comments(first: $pageSize, after: $commentCursor) {
-        nodes { id fullDatabaseId body url author { login } commit { oid } originalCommit { oid } path line originalLine diffHunk }
+        nodes { id fullDatabaseId body url updatedAt author { login } pullRequestReview { fullDatabaseId } replyTo { fullDatabaseId } position originalPosition commit { oid } originalCommit { oid } path line originalLine diffHunk }
         pageInfo { hasNextPage endCursor }
       }
     }

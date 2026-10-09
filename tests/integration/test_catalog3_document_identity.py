@@ -54,9 +54,7 @@ def catalog(tmp_path):
         yield state, store
 
 
-def observe(
-    store, key, body, position, *, observed_at_us=OBSERVED_AT_US, node=None, thread=None
-):
+def observe(store, key, body, position, *, observed_at_us=OBSERVED_AT_US, node=None):
     """Synthetic explicit input, verified profile, result and selection."""
     if not hasattr(store, "fixture_profile") or not store.one(
         "SELECT 1 FROM parser_profiles WHERE parser_profile_uuidv4=?",
@@ -72,6 +70,7 @@ def observe(
                 for kind in (
                     "pr-title",
                     "pr-body",
+                    "issue-comment",
                     "review",
                     "review-comment",
                     "review-thread",
@@ -146,31 +145,7 @@ def observe(
         occurrence,
         position,
         observed_at_us,
-        thread=thread,
     )
-    if thread is not None:
-        result_id = facts.result(occurrence)
-        repo = store.one(
-            "SELECT repository_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
-            (result_id,),
-        )[0]
-        store.execute(
-            "INSERT INTO review_thread_observations(thread_observation_uuidv4,repository_uuidv4,change_request_id,provider_resource_id,parsed_result_uuidv4,observed_at_us,payload) VALUES(?,?,?,?,?,?,'{}')",
-            (
-                str(uuid.uuid4()),
-                repo,
-                key.change_request_id,
-                thread,
-                result_id,
-                observed_at_us,
-            ),
-        )
-        facts.choose(
-            result_id,
-            fact_kind="review-thread",
-            change_request_id=key.change_request_id,
-            provider_resource_id=thread,
-        )
     facts.publish()
     return result
 
