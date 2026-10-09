@@ -28,7 +28,7 @@ from .common import (
 
 SCHEMA = "import_workspace"
 FORMAT = "repo-catalog/import-workspace"
-VERSION = 1
+VERSION = 2
 TABLES = frozenset(
     {
         "conversion_sources",

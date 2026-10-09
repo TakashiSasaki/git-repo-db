@@ -1,0 +1,63 @@
+{
+  "run_id": "2026-10-07-unix-microseconds",
+  "kind": "synthetic-local-acceptance",
+  "base_sha": "307ab6a8df3bc05a99670495676ef25b7c613289",
+  "branch": "refactor/unix-microsecond-timestamps",
+  "tested_commit": "27ab5e37ae5fefbccfee4e8217c657356961c3ef",
+  "tested_tree": "5a5c0225d98ce2d6d70b068f2f0728ee97ce2fb0",
+  "schema_version": 8,
+  "workspace_schema_version": 2,
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "git": "git version 2.51.1",
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)",
+    "os": "Linux",
+    "arch": "x86_64"
+  },
+  "checks": {
+    "tests": {
+      "passed": 500,
+      "failed": 0,
+      "skipped": 0,
+      "wall_seconds": 110.47018201200262
+    },
+    "packaging": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "wall_seconds": 16.381780451996747
+    }
+  },
+  "gate": {
+    "executed": 502,
+    "selected_files": 44,
+    "unexecuted_files": [],
+    "excluded_files": []
+  },
+  "other_checks": [
+    "Ruff lint",
+    "Ruff format",
+    "prose/JSON validation",
+    "STRICT and FTS5 doctor",
+    "25 compatible uv.lock wheels verified by SHA-256",
+    "independent review"
+  ],
+  "earlier_attempts": [
+    {
+      "commit": "b2a6907e7e905c3a0c2cf966a18d6eecdee7ebe4",
+      "result": "499 passed, 1 failed",
+      "cause": "transaction test still expected schema 7"
+    },
+    {
+      "commit": "92f381a",
+      "result": "500 ordinary passed, 2 packaging failed",
+      "cause": "packaging test still expected schema 7"
+    }
+  ],
+  "limits": [
+    "Synthetic data only; no real source acquisition or activation",
+    "No previous catalog migration or main merge",
+    "GitHub CI is separate and not claimed by this local report"
+  ]
+}

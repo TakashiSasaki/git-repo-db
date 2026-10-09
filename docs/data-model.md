@@ -1,6 +1,18 @@
 # Catalog3 data model
 
-The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **7**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
+The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **8**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
+
+## Absolute timestamps and durations
+
+All normalized persisted absolute times use signed 64-bit `INTEGER` microseconds since `1970-01-01T00:00:00Z`. Every such column has an `_us` suffix, including `observed_at_us`, `parsed_at_us`, `created_at_us`, `first_seen_us`, `last_seen_us`, `safe_watermark_us`, `not_before_us` and `last_used_us`. The ordinary catalog and the import workspace (schema 2) share this convention. Normalized CLI fields and durable operational JSON use the same names and integer units. `0` and negative timestamps are valid; `NULL` represents unknown time where the entity permits it.
+
+The [time boundary helpers](../src/repo_catalog/domain/time.py) obtain current time with `time_ns() // 1000` and convert aware datetimes with integer arithmetic. Dates without a timezone are rejected. ISO inputs with nonzero sub-microsecond digits are rejected instead of silently collapsing distinct instants; extra zero digits in the timestamp fraction are accepted. Fractional-second UTC offsets are rejected in hour-only, compact and colon-separated forms because the Python parser can collapse some such offsets to UTC. NUL characters are invalid anywhere in a timestamp. External Unix seconds convert using decimal arithmetic, flooring sub-microsecond parts. Internal integer inputs reject booleans, floats and strings and must fit signed 64-bit range. SQLite STRICT tables ensure integer storage; application admission validates external input types.
+
+Comparisons, min/max aggregates, retry deadlines and cache age calculations operate on integer microseconds. Provider requests that require dates, such as GitHub `since`, explicitly format the integer boundary as UTC ISO 8601. The full int64 storage range is supported; optional calendar formatting is limited to Python datetime's year range. For example, `2026-10-07T09:00:00.123456Z` is `1791363600123456` µs.
+
+Durations retain explicit unit names such as `timeout_seconds`, `ttl_seconds` and `busy_timeout_ms`. Process-local elapsed-time measurement continues to use a monotonic clock. These durations and monotonic values are not epoch timestamps.
+
+Provider payloads, raw Git objects and archived v2 records preserve their original time strings, units and field names as source evidence. The v2 importer converts valid source times only when projecting normalized facts. An absent or malformed source observation does not acquire the conversion time: nullable facts retain `NULL` with conversion diagnostics where appropriate. Replay retains the original observation instant and does not advance a watermark merely because parsing ran again.
 
 ## Identifier convention
 
@@ -9,7 +21,7 @@ Named surrogate primary keys use `<entity>_id`; this is not a requirement to int
 ```sql
 SELECT d.change_request_id, d.kind, d.provider_change_request_document_id,
        o.document_observation_id, lower(hex(o.text_body_sha256)) AS text_body_sha256,
-       body.body, o.observed_at
+       body.body, o.observed_at_us
 FROM documents d
 JOIN document_observations o
   ON o.document_observation_id = d.current_document_observation_id

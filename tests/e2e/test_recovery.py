@@ -8,7 +8,7 @@ from tests.support.process import start_hooked, wait_unlocked
 def interrupted_job(state):
     with sqlite3.connect(state / "catalog.sqlite3") as c:
         return c.execute(
-            "SELECT j.job_id FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE a.state='running' AND j.kind='sync' ORDER BY j.created_at DESC LIMIT 1"
+            "SELECT j.job_id FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE a.state='running' AND j.kind='sync' ORDER BY j.created_at_us DESC LIMIT 1"
         ).fetchone()[0]
 
 

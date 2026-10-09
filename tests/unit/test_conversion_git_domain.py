@@ -8,9 +8,11 @@ import pytest
 from repo_catalog.adapters.import_v2 import archive, git_domain
 from repo_catalog.adapters.import_v2.common import DESIGN
 from repo_catalog.adapters.sqlite.schema import schema_sql
+from repo_catalog.domain.time import parse_iso8601_us
 from tests.support.import_workspace import memory_workspace
 
 STAMP = "2026-01-02T03:04:05Z"
+STAMP_US = parse_iso8601_us(STAMP)
 
 
 def git_payload(kind, raw):
@@ -234,8 +236,8 @@ def test_stored_git_recipes_preserve_raw_bytes_ids_order_and_all_ref_origins(gra
     )
     assert db.execute("PRAGMA foreign_key_check").fetchall() == []
     assert db.execute(
-        "SELECT source_id,observed_at,refs_observed_at FROM git_acquisitions"
-    ).fetchone()[:] == (None, None, STAMP)
+        "SELECT source_id,observed_at_us,refs_observed_at_us FROM git_acquisitions"
+    ).fetchone()[:] == (None, None, STAMP_US)
 
 
 def test_missing_original_is_not_empty_and_old_verified_is_not_proof(graph):
@@ -252,6 +254,42 @@ def test_missing_original_is_not_empty_and_old_verified_is_not_proof(graph):
         ]
         == 1
     )
+
+
+@pytest.mark.parametrize(
+    "source_stamp,expected_us,diagnostic",
+    [
+        ("1970-01-01T09:00:00+09:00", 0, None),
+        ("1969-12-31T23:59:59.999999Z", -1, None),
+        ("2026-01-02T03:04:05.000001Z", STAMP_US + 1, None),
+        (None, None, "GIT_OBSERVATION_TIME_MISSING"),
+        ("2026-01-02T03:04:05", None, "GIT_INVALID_TIME"),
+        ("2026-01-02T03:04:05.0000001Z", None, "GIT_INVALID_TIME"),
+        ("1970-01-01T00:00:00+00:00:00.000001", None, "GIT_INVALID_TIME"),
+        ("1970-01-01T00:00:00-00.000001", None, "GIT_INVALID_TIME"),
+        ("1970-01-01T00:00:00+00.000001\x00", None, "GIT_INVALID_TIME"),
+        ("invalid-source-time", None, "GIT_INVALID_TIME"),
+    ],
+)
+def test_source_git_observation_time_is_exact_or_unknown_with_evidence(
+    graph, source_stamp, expected_us, diagnostic
+):
+    src, db, _ = graph
+    src.execute("UPDATE collection_runs SET refs_at=?", (source_stamp,))
+    before = tuple(src.iterdump())
+    output = normalize(graph, through="git_acquisitions")["git_acquisitions"]
+    assert tuple(src.iterdump()) == before
+    row = db.execute(
+        "SELECT refs_observed_at_us,typeof(refs_observed_at_us),started_at_us,observed_at_us FROM git_acquisitions"
+    ).fetchone()
+    assert tuple(row) == (
+        expected_us,
+        "null" if expected_us is None else "integer",
+        STAMP_US,
+        None,
+    )
+    assert codes(output) == ({diagnostic} if diagnostic else set())
+    assert output["decisions"][0]["disposition"] == "normalized"
 
 
 @pytest.mark.parametrize(
@@ -536,17 +574,17 @@ def test_pr_origin_requires_exact_saved_observation_and_code_acquisition(
     src.execute("INSERT INTO pr_git_links VALUES(501,'head','sha1',?,22)", (oid,))
     normalize(graph, through="root_manifest_entries")
     db.execute(
-        "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('00000000-0000-4000-8000-000000000101','git','00000000-0000-4000-8000-000000000101',NULL,NULL,'{}',NULL)"
+        "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at_us) VALUES('00000000-0000-4000-8000-000000000101','git','00000000-0000-4000-8000-000000000101',NULL,NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at) VALUES('binding','repo','00000000-0000-4000-8000-000000000101',NULL,'{}',NULL)"
+        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','repo','00000000-0000-4000-8000-000000000101',NULL,'{}',NULL)"
     )
     db.execute(
         "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES('pr','repo','binding','pull_request',7,NULL)"
     )
     db.execute(
-        "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at,published,payload,origin_key,parsed_at,origin_fetch_occurrence_id) VALUES(501,'pr',?,1,'{}','saved',?,NULL)",
-        (STAMP, STAMP),
+        "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at_us,published,payload,origin_key,parsed_at_us,origin_fetch_occurrence_id) VALUES(501,'pr',?,1,'{}','saved',?,NULL)",
+        (STAMP_US, STAMP_US),
     )
     db.execute(
         "INSERT INTO code_observations(code_observation_id,change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details) VALUES(501,'pr',501,NULL,NULL,'partial','sha1',?,NULL,'{}')",

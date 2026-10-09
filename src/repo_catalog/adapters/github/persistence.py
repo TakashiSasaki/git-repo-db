@@ -8,7 +8,8 @@ import uuid
 
 from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
 from repo_catalog.domain.document import DocumentKey
-from repo_catalog.domain.models import CatalogError, now
+from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.time import now_us
 
 PARSER = "catalog3-github/1"
 
@@ -110,12 +111,12 @@ class ApiFacts:
     def begin(self, repo, pr, kind, job, endpoint, context=None, *, reuse=False):
         scope = self.scope(repo, endpoint, context)
         previous = self.s.one(
-            "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.resume_scope_id=? AND f.change_request_id IS ? AND f.kind=? AND p.job_id=? ORDER BY f.observed_at DESC,f.fetch_collection_id DESC LIMIT 1",
+            "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.resume_scope_id=? AND f.change_request_id IS ? AND f.kind=? AND p.job_id=? ORDER BY f.observed_at_us DESC,f.fetch_collection_id DESC LIMIT 1",
             (scope, pr, kind, job),
         )
         if not previous and reuse:
             previous = self.s.one(
-                "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.resume_scope_id=? AND f.change_request_id IS ? AND f.kind=? AND p.state='complete' ORDER BY f.observed_at DESC,f.fetch_collection_id DESC LIMIT 1",
+                "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.resume_scope_id=? AND f.change_request_id IS ? AND f.kind=? AND p.state='complete' ORDER BY f.observed_at_us DESC,f.fetch_collection_id DESC LIMIT 1",
                 (scope, pr, kind),
             )
         if previous:
@@ -127,8 +128,16 @@ class ApiFacts:
             return dict(previous)
         ident = str(uuid.uuid4())
         self.s.execute(
-            "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,source_id,kind,resume_scope_id,observed_at) VALUES(?,?,?,?,?,?,?)",
-            (ident, repo["repository_id"], pr, repo["source_id"], kind, scope, now()),
+            "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,source_id,kind,resume_scope_id,observed_at_us) VALUES(?,?,?,?,?,?,?)",
+            (
+                ident,
+                repo["repository_id"],
+                pr,
+                repo["source_id"],
+                kind,
+                scope,
+                now_us(),
+            ),
         )
         self.s.execute(
             "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'running',NULL,NULL)",
@@ -160,9 +169,9 @@ class ApiFacts:
             "SELECT coalesce(max(ordinal),-1)+1 FROM fetch_occurrences WHERE fetch_collection_id=?",
             (collection["fetch_collection_id"],),
         )[0]
-        timestamp = now()
+        timestamp = now_us()
         ident = self.s.execute(
-            "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,next_cursor,observed_at,parsed_at) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,?)",
             (
                 collection["fetch_collection_id"],
                 ordinal,
@@ -186,12 +195,12 @@ class ApiFacts:
             (collection["fetch_collection_id"],),
         )
         self.s.execute(
-            "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at) VALUES(?,?,'complete',?,?)",
+            "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
             (
                 collection["resume_scope_id"],
                 collection["fetch_collection_id"],
                 canonical(evidence or {"parser": PARSER, "terminal": True}),
-                now(),
+                now_us(),
             ),
         )
 
@@ -214,7 +223,7 @@ class ApiFacts:
         collection,
         occurrence,
         position,
-        observed_at,
+        observed_at_us,
         *,
         thread=None,
     ):
@@ -264,12 +273,12 @@ class ApiFacts:
             occurrence if collection.get("change_request_id") == pr else None
         )
         observation = self.s.execute(
-            "INSERT INTO document_observations(change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at,parsed_at,origin_key,fetch_occurrence_id,metadata) VALUES(?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO document_observations(change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata) VALUES(?,?,?,?,?,?,?,?,?)",
             (
                 *key,
                 digest,
-                observed_at,
-                now(),
+                observed_at_us,
+                now_us(),
                 origin,
                 owner_occurrence,
                 canonical(metadata),

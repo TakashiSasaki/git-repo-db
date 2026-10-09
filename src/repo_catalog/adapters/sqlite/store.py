@@ -13,7 +13,8 @@ from repo_catalog.adapters.sqlite.schema import (
     schema_sql,
 )
 from repo_catalog.config import load
-from repo_catalog.domain.models import CatalogError, now
+from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.time import now_us
 
 
 def statements(sql):
@@ -211,8 +212,8 @@ class Store:
                 (coverage_scope_id, repo, owner if cr else None, kind),
             )
         claim = self.execute(
-            "INSERT INTO coverage_claims(coverage_scope_id,asserted_state,effective_state,details,observed_at,evaluated_at) VALUES(?,?,?,?,?,?)",
-            (coverage_scope_id, state, state, details, now(), now()),
+            "INSERT INTO coverage_claims(coverage_scope_id,asserted_state,effective_state,details,observed_at_us,evaluated_at_us) VALUES(?,?,?,?,?,?)",
+            (coverage_scope_id, state, state, details, now_us(), now_us()),
         ).lastrowid
         self.execute(
             "UPDATE coverage_scopes SET current_coverage_claim_id=? WHERE coverage_scope_id=?",

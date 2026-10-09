@@ -11,7 +11,8 @@ from repo_catalog.adapters.filesystem.capacity import Capacity
 from repo_catalog.adapters.filesystem.locks import FileLock
 from repo_catalog.adapters.git.runner import GitRunner, git_env, hook
 from repo_catalog.application.repository_identity import endpoint
-from repo_catalog.domain.models import CatalogError, now
+from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.time import now_us
 
 
 class GitImporter:
@@ -60,15 +61,15 @@ class GitImporter:
                         (cid, repo["repository_id"], relative),
                     )
                     s.execute(
-                        "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used,bytes) VALUES(?,?,?,'active',?,0)",
-                        (cid, cid, generation, time.time()),
+                        "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES(?,?,?,'active',?,0)",
+                        (cid, cid, generation, now_us()),
                     )
                     cache = s.one(
                         "SELECT c.*,l.repository_id,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
                         (cid,),
                     )
                 s.execute(
-                    "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,repository_endpoint_id,endpoint_url,source_id,kind,started_at,request) VALUES(?,?,?,?,?,?,?,?)",
+                    "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,repository_endpoint_id,endpoint_url,source_id,kind,started_at_us,request) VALUES(?,?,?,?,?,?,?,?)",
                     (
                         rid,
                         repo["repository_id"],
@@ -76,7 +77,7 @@ class GitImporter:
                         selected["url"],
                         repo.get("source_id") if isinstance(repo, dict) else None,
                         kind,
-                        now(),
+                        now_us(),
                         request,
                     ),
                 )
@@ -90,8 +91,8 @@ class GitImporter:
                 )
                 if kind == "git":
                     s.execute(
-                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at) VALUES(?,?,?,0,?,?)",
-                        (rid, rid, repo["repository_id"], generation, now()),
+                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES(?,?,?,0,?,?)",
+                        (rid, rid, repo["repository_id"], generation, now_us()),
                     )
             run = s.one(
                 "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE a.git_acquisition_id=?",
@@ -139,8 +140,8 @@ class GitImporter:
                     (cache["active_cache_entry_id"], job, attempt),
                 ):
                     s.execute(
-                        "INSERT INTO cache_leases(active_cache_entry_id,job_id,attempt,acquired_at) VALUES(?,?,?,?)",
-                        (cache["active_cache_entry_id"], job, attempt, now()),
+                        "INSERT INTO cache_leases(active_cache_entry_id,job_id,attempt,acquired_at_us) VALUES(?,?,?,?)",
+                        (cache["active_cache_entry_id"], job, attempt, now_us()),
                     )
             try:
                 if not path.exists():
@@ -273,14 +274,14 @@ class GitImporter:
                                     retryable=True,
                                 )
                         refs.append(item)
-                    observed_at = now()
+                    observed_at_us = now_us()
                     with s.transaction():
                         s.execute(
-                            "UPDATE git_acquisitions SET roots_manifest=?,refs_observed_at=?,observed_at=? WHERE git_acquisition_id=?",
+                            "UPDATE git_acquisitions SET roots_manifest=?,refs_observed_at_us=?,observed_at_us=? WHERE git_acquisition_id=?",
                             (
                                 json.dumps(refs),
-                                observed_at,
-                                observed_at,
+                                observed_at_us,
+                                observed_at_us,
                                 run["git_acquisition_id"],
                             ),
                         )
@@ -395,8 +396,8 @@ class GitImporter:
                         (run["git_acquisition_id"],),
                     )
                     s.execute(
-                        "UPDATE acquisition_progress SET state='published',ended_at=? WHERE git_acquisition_id=?",
-                        (now(), run["git_acquisition_id"]),
+                        "UPDATE acquisition_progress SET state='published',ended_at_us=? WHERE git_acquisition_id=?",
+                        (now_us(), run["git_acquisition_id"]),
                     )
                     s.execute(
                         "UPDATE acquisition_roots SET published=1 WHERE git_acquisition_id=?",
@@ -408,21 +409,14 @@ class GitImporter:
                             (run["git_acquisition_id"],),
                         )
                         incoming = s.one(
-                            "SELECT refs_observed_at FROM git_acquisitions WHERE git_acquisition_id=?",
+                            "SELECT refs_observed_at_us FROM git_acquisitions WHERE git_acquisition_id=?",
                             (run["git_acquisition_id"],),
                         )[0]
                         current = s.one(
-                            "SELECT a.refs_observed_at FROM repositories r JOIN snapshots x ON x.snapshot_id=r.current_snapshot_id JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id WHERE r.repository_id=?",
+                            "SELECT a.refs_observed_at_us FROM repositories r JOIN snapshots x ON x.snapshot_id=r.current_snapshot_id JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id WHERE r.repository_id=?",
                             (repo["repository_id"],),
                         )
-                        if (
-                            not current
-                            or current[0] is None
-                            or s.one(
-                                "SELECT julianday(?) > julianday(?)",
-                                (incoming, current[0]),
-                            )[0]
-                        ):
+                        if not current or current[0] is None or incoming > current[0]:
                             s.execute(
                                 "UPDATE repositories SET current_snapshot_id=? WHERE repository_id=?",
                                 (run["git_acquisition_id"], repo["repository_id"]),
@@ -443,8 +437,8 @@ class GitImporter:
                         (cache["active_cache_entry_id"], job, attempt),
                     )
                     s.execute(
-                        "UPDATE active_cache_entries SET last_used=? WHERE active_cache_entry_id=?",
-                        (time.time(), cache["active_cache_entry_id"]),
+                        "UPDATE active_cache_entries SET last_used_us=? WHERE active_cache_entry_id=?",
+                        (now_us(), cache["active_cache_entry_id"]),
                     )
                     Capacity(s).release(job)
 
@@ -471,7 +465,7 @@ class GitImporter:
             # differ after salvage; actual Git bytes and digests cannot.
             ignored = {
                 "verified",
-                "verified_at",
+                "verified_at_us",
                 "pipeline_version",
                 "metadata",
                 "complete",
@@ -755,8 +749,8 @@ class GitImporter:
                         break
                 if cid is None:
                     cid = s.execute(
-                        "INSERT INTO contents(byte_length,text_state,created_at) VALUES(?,?,?)",
-                        (size, state, now()),
+                        "INSERT INTO contents(byte_length,text_state,created_at_us) VALUES(?,?,?)",
+                        (size, state, now_us()),
                     ).lastrowid
                 s.execute(
                     "INSERT INTO blob_content_map(git_object_id,content_id,git_acquisition_id) VALUES(?,?,?)",
@@ -770,10 +764,10 @@ class GitImporter:
                         "representation",
                         "algorithm",
                         "digest",
-                        "verified_at",
+                        "verified_at_us",
                         "pipeline_version",
                     ),
-                    (cid, "raw-content-v1", algo, h.digest(), now(), "v1"),
+                    (cid, "raw-content-v1", algo, h.digest(), now_us(), "v1"),
                     ("content_id", "representation", "algorithm"),
                 )
             self.source(obj, repo, run)

@@ -29,7 +29,7 @@ def cache_store(tmp_path):
             "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES('locator','repo','cache/repo/1.git','target_active','available')"
         )
         store.execute(
-            "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used,bytes) VALUES('active','locator',1,'active',0,4096)"
+            "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('active','locator',1,'active',0,4096)"
         )
         path = tmp_path / "cache/repo/1.git"
         path.mkdir(parents=True)
@@ -47,6 +47,25 @@ def seed_job(store, job="job", attempt=1):
             "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES(?,?,'running','{}')",
             (job, attempt),
         )
+
+
+@pytest.mark.parametrize(
+    "elapsed_us,expired", [(-1, False), (999_999, False), (1_000_000, True)]
+)
+def test_cache_ttl_boundary_uses_integer_elapsed_microseconds(
+    cache_store, monkeypatch, elapsed_us, expired
+):
+    store = cache_store
+    last_used_us = 1_791_360_000_123_456
+    store.config["cache"]["ttl_seconds"] = 1
+    store.execute("UPDATE active_cache_entries SET last_used_us=?", (last_used_us,))
+    monkeypatch.setattr(
+        "repo_catalog.adapters.filesystem.cache.now_us",
+        lambda: last_used_us + elapsed_us,
+    )
+    entry = CacheManager(store).collect()[0]
+    assert entry["ttl_expired"] is expired
+    assert entry["action"] == ("candidate" if expired else "retained")
 
 
 def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
@@ -70,7 +89,7 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
     # The schema must reject attempts to enroll preserved source material in GC.
     with pytest.raises(sqlite3.IntegrityError, match="Readonly source cache"):
         store.execute(
-            "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used,bytes) VALUES('unsafe','preserved',2,'active',0,0)"
+            "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('unsafe','preserved',2,'active',0,0)"
         )
     store.execute(
         "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('acquisition','locator',1,1,1,0,0)"
@@ -118,7 +137,7 @@ def test_gc_os_lock_fences_lease_cleanup(cache_store):
     store = cache_store
     seed_job(store)
     store.execute(
-        "INSERT INTO cache_leases(active_cache_entry_id,job_id,attempt,acquired_at) VALUES('active','job',1,'fixture')"
+        "INSERT INTO cache_leases(active_cache_entry_id,job_id,attempt,acquired_at_us) VALUES('active','job',1,0)"
     )
     with FileLock(store.path / "locks/cache-active.lock"):
         entry = CacheManager(store).collect(apply=True)[0]

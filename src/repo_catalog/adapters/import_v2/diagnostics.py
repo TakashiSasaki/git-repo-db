@@ -1,4 +1,6 @@
-from .common import canonical, now, strict_json
+from repo_catalog.domain.time import now_us
+
+from .common import canonical, strict_json
 from .types import BOOLEAN_COLUMNS, JSON_COLUMNS, STATE_VALUES
 
 
@@ -33,8 +35,8 @@ def classify(record, encoding="UTF-8"):
 
 def store(db, run_id, code, severity, details):
     db.execute(
-        "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at,details) VALUES(?,?,?,?,?,?)",
-        (run_id, "I31", code, severity, now(), canonical(details)),
+        "INSERT INTO validation_results(conversion_run_id,invariant_id,code,severity,observed_at_us,details) VALUES(?,?,?,?,?,?)",
+        (run_id, "I31", code, severity, now_us(), canonical(details)),
     )
 
 

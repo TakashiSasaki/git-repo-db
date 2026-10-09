@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import os
-import time
+from email.utils import parsedate_to_datetime
 from urllib.parse import urlsplit
 
 import httpx
 
 from repo_catalog import __version__
 from repo_catalog.domain.models import CatalogError, Waiting
+from repo_catalog.domain.time import (
+    datetime_to_us,
+    now_us,
+    unix_seconds_to_us,
+    validate_epoch_us,
+)
 
 
 class EnvCredentials:
@@ -19,11 +25,14 @@ class EnvCredentials:
 
 
 class GitHubTransport:
-    def __init__(self, config, token, *, client=None, credentials=None, clock=None):
+    def __init__(
+        self, config, token, *, client=None, credentials=None, clock_us=now_us
+    ):
+        """The optional wall clock returns integer Unix epoch microseconds."""
         self.cfg = config
         self.token = token
         self.credentials = credentials or EnvCredentials(config["token_env_var"])
-        self.clock = clock or time.time
+        self.clock_us = clock_us
         self.base = config["rest_base_url"].rstrip("/")
         self.graphql = config["graphql_url"]
         self.origins = {self.origin(self.base), self.origin(self.graphql)}
@@ -124,20 +133,30 @@ class GitHubTransport:
             if limited:
                 retry = response.headers.get("retry-after")
                 reset = response.headers.get("x-ratelimit-reset")
+                current_us = validate_epoch_us(self.clock_us())
                 try:
-                    not_before = (
-                        self.clock() + float(retry)
-                        if retry
-                        else max(self.clock() + 1, float(reset))
-                        if reset
-                        else self.clock() + 60
-                    )
-                except ValueError:
-                    not_before = self.clock() + 60
+                    if retry:
+                        try:
+                            # Retry-After is a duration in seconds, or an HTTP date.
+                            delay_us = unix_seconds_to_us(retry)
+                        except ValueError:
+                            not_before_us = datetime_to_us(parsedate_to_datetime(retry))
+                        else:
+                            not_before_us = current_us + delay_us
+                        not_before_us = max(current_us, not_before_us)
+                    elif reset:
+                        not_before_us = max(
+                            current_us + 1_000_000, unix_seconds_to_us(reset)
+                        )
+                    else:
+                        not_before_us = current_us + 60_000_000
+                    validate_epoch_us(not_before_us)
+                except (TypeError, ValueError, OverflowError):
+                    not_before_us = validate_epoch_us(current_us + 60_000_000)
                 raise Waiting(
                     "RATE_LIMIT",
                     "API rate limit requires a later resume",
-                    {"not_before": not_before},
+                    {"not_before_us": not_before_us},
                     True,
                 )
             if response.status_code >= 500:

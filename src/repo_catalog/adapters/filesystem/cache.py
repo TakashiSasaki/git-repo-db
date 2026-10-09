@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 import shutil
-import time
+from decimal import Decimal
 
 from repo_catalog.adapters.filesystem.capacity import allocated_bytes
 from repo_catalog.adapters.filesystem.locks import FileLock
 from repo_catalog.adapters.git.runner import hook
 from repo_catalog.domain.models import CatalogError, Waiting
+from repo_catalog.domain.time import now_us
 
 
 class CacheManager:
@@ -62,17 +63,19 @@ class CacheManager:
         s = self.s
         results = []
         rows = s.all(
-            "SELECT a.*,l.repository_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' AND a.state IN ('active','evicting') ORDER BY a.last_used,a.active_cache_entry_id"
+            "SELECT a.*,l.repository_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' AND a.state IN ('active','evicting') ORDER BY a.last_used_us,a.active_cache_entry_id"
         )
         from repo_catalog.adapters.filesystem.capacity import Capacity
 
         used = Capacity(s).used()
         cfg = s.config["cache"]
+        # Configured TTL is an elapsed duration, independent of the epoch range.
+        ttl_us = Decimal(str(cfg["ttl_seconds"])) * 1_000_000
         for row in rows:
             path, quarantine = self.paths(row)
             reasons = self.gate(row)
             bytes_used = allocated_bytes(path) + allocated_bytes(quarantine)
-            ttl = time.time() - row["last_used"] >= cfg["ttl_seconds"]
+            ttl = now_us() - row["last_used_us"] >= ttl_us
             candidate = (
                 row["state"] == "evicting"
                 or ttl

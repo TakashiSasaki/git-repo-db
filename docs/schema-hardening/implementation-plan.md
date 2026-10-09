@@ -2,6 +2,12 @@
 
 Catalog3 is the sole ordinary runtime. Packaged DDL and the runtime identity module are authoritative; [runtime handoff](runtime-handoff.md) records commands, validation and limits. Historical phase plans and design/export schemas remain snapshots.
 
+## Timestamp normalization (schema 8)
+
+Starting from PR #4 at `307ab6a8df3bc05a99670495676ef25b7c613289`, branch `refactor/unix-microsecond-timestamps` normalizes all catalog/workspace absolute times to signed 64-bit Unix epoch microseconds with `_us` names. Integer ordering applies to source membership, observations, finalization, retry deadlines and cache TTL; provider requests format dates at the boundary. Preserved source bytes and legacy source schemas remain unchanged. Workspace identity advances to 2. The subsequent coverage stride uses this timestamp contract.
+
+## Prior identity and observation stride
+
 This stride starts at main `1ce7fccdb63ab7de74daf6694d2c7187fcddd835` on `refactor/portable-document-observations`. It advances schema identity **4 -> 6**, retaining `repo-catalog/catalog3`, and implements the user's agreed identity/observation decisions rather than another purely mechanical rename.
 
 Implemented scope:

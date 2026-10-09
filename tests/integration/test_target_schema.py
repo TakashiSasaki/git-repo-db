@@ -16,7 +16,7 @@ def construct(sql=None):
 
 H = b"h" * 20
 B = b"b" * 20
-TIME = "2026-10-05T12:00:00Z"
+TIME = 1791201600000000
 
 
 def put(db, table, **values):
@@ -87,7 +87,7 @@ def build_target(sql=None):
             repository_id=repo,
             published=0,
             generation=1,
-            created_at=TIME,
+            created_at_us=TIME,
         )
         put(
             db,
@@ -103,10 +103,10 @@ def build_target(sql=None):
             "change_request_observations",
             change_request_observation_id=index,
             change_request_id="cr-" + repo,
-            observed_at=TIME,
+            observed_at_us=TIME,
             published=0,
             payload="{}",
-            parsed_at=TIME,
+            parsed_at_us=TIME,
         )
         db.execute(
             "UPDATE snapshots SET published=1 WHERE snapshot_id=?",
@@ -149,8 +149,8 @@ def build_target(sql=None):
             kind="pr-body",
             provider_change_request_document_id="native",
             text_body_sha256=hashlib.sha256(repo.encode()).digest(),
-            observed_at=TIME,
-            parsed_at=TIME,
+            observed_at_us=TIME,
+            parsed_at_us=TIME,
             metadata="{}",
         )
         db.execute(
@@ -173,7 +173,7 @@ def build_target(sql=None):
             provider_resource_id="thread-" + repo,
             change_request_id="cr-" + repo,
             payload="{}",
-            observed_at=TIME,
+            observed_at_us=TIME,
         )
         put(
             db,
@@ -237,8 +237,8 @@ def build_target(sql=None):
         ordinal=0,
         payload_id=1,
         request="{}",
-        observed_at=TIME,
-        parsed_at=TIME,
+        observed_at_us=TIME,
+        parsed_at_us=TIME,
     )
     put(
         db,
@@ -248,8 +248,8 @@ def build_target(sql=None):
         ordinal=0,
         payload_id=1,
         request="{}",
-        observed_at=TIME,
-        parsed_at=TIME,
+        observed_at_us=TIME,
+        parsed_at_us=TIME,
     )
     return db
 
@@ -408,9 +408,9 @@ def test_replace_upsert_and_same_repo_reassignment(target, recursive):
     db = target
     db.execute(f"PRAGMA recursive_triggers={recursive}")
     for sql in (
-        "INSERT OR REPLACE INTO snapshots SELECT snapshot_id,git_acquisition_id,repository_id,0,generation,created_at FROM snapshots WHERE snapshot_id='snapshot-a'",
+        "INSERT OR REPLACE INTO snapshots SELECT snapshot_id,git_acquisition_id,repository_id,0,generation,created_at_us FROM snapshots WHERE snapshot_id='snapshot-a'",
         "INSERT INTO snapshots SELECT * FROM snapshots WHERE snapshot_id='snapshot-a' ON CONFLICT(snapshot_id) DO UPDATE SET published=0",
-        "INSERT OR REPLACE INTO document_observations SELECT 1,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at,parsed_at,origin_key,fetch_occurrence_id,metadata FROM document_observations WHERE document_observation_id=2",
+        "INSERT OR REPLACE INTO document_observations SELECT 1,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata FROM document_observations WHERE document_observation_id=2",
         "INSERT OR REPLACE INTO text_bodies SELECT 99,body,byte_length,sha256 FROM text_bodies WHERE text_body_id=1",
         "INSERT OR REPLACE INTO code_listings SELECT * FROM code_listings WHERE code_listing_id='listing-a-commits'",
     ):
@@ -622,10 +622,10 @@ def test_git_meaning_and_multiple_ref_origins(target):
 def test_body_sharing_preserves_a_b_a_and_times(target):
     db = target
     values = (
-        (11, "a", "observed-A"),
-        (12, "b", "observed-B"),
-        (13, "a", "observed-A-again"),
-        (14, "a", "same-body-new-observation"),
+        (11, "a", TIME + 1),
+        (12, "b", TIME + 2),
+        (13, "a", TIME + 3),
+        (14, "a", TIME + 4),
     )
     for ident, body, timestamp in values:
         put(
@@ -636,12 +636,12 @@ def test_body_sharing_preserves_a_b_a_and_times(target):
             kind="pr-body",
             provider_change_request_document_id="native",
             text_body_sha256=hashlib.sha256(body.encode()).digest(),
-            observed_at=timestamp,
-            parsed_at="later",
+            observed_at_us=timestamp,
+            parsed_at_us=TIME + 100,
             metadata="{}",
         )
     assert db.execute(
-        "SELECT b.body,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.document_observation_id>=11 ORDER BY o.document_observation_id"
+        "SELECT b.body,o.observed_at_us FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.document_observation_id>=11 ORDER BY o.document_observation_id"
     ).fetchall() == [(body, timestamp) for _, body, timestamp in values]
     assert db.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 2
     with pytest.raises(sqlite3.IntegrityError):
@@ -653,7 +653,7 @@ def test_body_sharing_preserves_a_b_a_and_times(target):
             kind="pr-body",
             provider_change_request_document_id="absent",
             text_body_sha256=hashlib.sha256(b"a").digest(),
-            parsed_at="later",
+            parsed_at_us=TIME + 100,
             metadata="{}",
         )
 
@@ -751,13 +751,13 @@ def test_resume_scope_and_immutable_scan(target):
         incremental_scan_id="scan",
         resume_scope_id="scope-a",
         fetch_collection_id="a-commits",
-        scan_started_at=TIME,
-        safe_watermark=TIME,
+        scan_started_at_us=TIME,
+        safe_watermark_us=TIME,
         evidence="{}",
     )
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
-            "UPDATE incremental_scans SET safe_watermark='2099-01-01' WHERE incremental_scan_id='scan'"
+            "UPDATE incremental_scans SET safe_watermark_us=4070908800000000 WHERE incremental_scan_id='scan'"
         )
     with pytest.raises(sqlite3.IntegrityError):
         put(
@@ -777,7 +777,7 @@ def test_resume_scope_and_immutable_scan(target):
         fetch_collection_id="a-commits",
         asserted_state="partial",
         evidence="{}",
-        observed_at=TIME,
+        observed_at_us=TIME,
     )
     put(
         db,
@@ -815,7 +815,7 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
             cache_locator_id="old-cache",
             generation=1,
             state="active",
-            last_used=1.0,
+            last_used_us=1000000,
             bytes=0,
         )
     put(db, "jobs", job_id="job", kind="legacy", request="{}")
@@ -851,8 +851,8 @@ def test_distinct_observation_ids_survive_shared_body(target):
         kind="pr-body",
         provider_change_request_document_id="native",
         text_body_sha256=hashlib.sha256(b"a").digest(),
-        observed_at=TIME,
-        parsed_at=TIME,
+        observed_at_us=TIME,
+        parsed_at_us=TIME,
         metadata="{}",
     )
     assert target.execute(

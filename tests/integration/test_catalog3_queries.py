@@ -3,6 +3,7 @@
 import json
 import sqlite3
 
+from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.adapters.sqlite.target import TargetReader
 from repo_catalog.application.query_service import QueryService
@@ -56,7 +57,7 @@ def test_fresh_catalog3_doctor_and_file_query(catalog):
     state, fixture, repositories = catalog
     run(state, "sync", "git")
     doctor = run(state, "doctor")
-    assert doctor["data"]["schema_version"] == 7
+    assert doctor["data"]["schema_version"] == SCHEMA_VERSION
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         assert (
             db.execute("SELECT format_id FROM database_identity").fetchone()[0]

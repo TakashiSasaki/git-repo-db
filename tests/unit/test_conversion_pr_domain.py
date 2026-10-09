@@ -8,6 +8,7 @@ import pytest
 
 from repo_catalog.adapters.import_v2 import archive, git_domain, identity, pr_domain
 from repo_catalog.adapters.sqlite.schema import schema_sql
+from repo_catalog.domain.time import parse_iso8601_us
 from tests.support.import_workspace import memory_workspace
 from tests.support.integrated_fixture import (
     IDS,
@@ -15,6 +16,8 @@ from tests.support.integrated_fixture import (
     STAMPS,
     make_integrated_source,
 )
+
+STAMPS_US = tuple(parse_iso8601_us(stamp) for stamp in STAMPS)
 
 
 def source_document_key(source, source_id):
@@ -92,8 +95,8 @@ def components(tmp_path, *, mutate=None, encoding="UTF-8", scale=1):
         (b"s" * 32, b"c" * 32, b"{}", b"[]"),
     )
     db.execute(
-        "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at,ended_at,parser_version,state,manifest) VALUES('run','source',?,NULL,'p3-integrated/1','building','{}')",
-        (STAMPS[0],),
+        "INSERT INTO conversion_runs(conversion_run_id,conversion_source_id,started_at_us,ended_at_us,parser_version,state,manifest) VALUES('run','source',?,NULL,'p3-integrated/1','building','{}')",
+        (STAMPS_US[0],),
     )
     run = dict(db.execute("SELECT * FROM conversion_runs").fetchone())
     for table in src.execute(
@@ -138,6 +141,87 @@ def convert(db, src, run):
         prepared[recipe] = output
     assert not db.execute("PRAGMA foreign_key_check").fetchall()
     return prepared
+
+
+@pytest.mark.parametrize(
+    "source_stamp,expected_us,diagnostic",
+    [
+        ("1970-01-01T09:00:00+09:00", 0, None),
+        ("1969-12-31T23:59:59.999999Z", -1, None),
+        ("2026-01-02T03:04:05.123456Z", 1767323045123456, None),
+        ("2026-01-02T03:04:05", None, "PR_INVALID_TIME"),
+        ("2026-01-02T03:04:05.1234567Z", None, "PR_INVALID_TIME"),
+        ("1970-01-01T00:00:00-00:00:00.000001", None, "PR_INVALID_TIME"),
+        ("1970-01-01T00:00:00+00,000001", None, "PR_INVALID_TIME"),
+        ("1970-01-01T00:00:00-00:00:00.000001\x00", None, "PR_INVALID_TIME"),
+        ("invalid-source-time", None, "PR_INVALID_TIME"),
+    ],
+)
+def test_source_pr_time_normalization_retains_raw_time_and_unknown_observations(
+    tmp_path, source_stamp, expected_us, diagnostic
+):
+    def mutate(src):
+        src.execute(
+            "UPDATE pr_observations SET observed_at=? WHERE id=301", (source_stamp,)
+        )
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    try:
+        outputs = convert(db, src, run)
+        row = db.execute(
+            "SELECT observed_at_us,parsed_at_us,published FROM change_request_observations WHERE change_request_observation_id=301"
+        ).fetchone()
+        assert tuple(row) == (expected_us, STAMPS_US[0], 0)
+        assert (
+            src.execute(
+                "SELECT observed_at FROM pr_observations WHERE id=301"
+            ).fetchone()[0]
+            == source_stamp
+        )
+        assert db.execute(
+            "SELECT v.storage_type,v.value_bytes FROM legacy_values v JOIN legacy_records r USING(legacy_record_id) WHERE r.source_table='pr_observations' AND v.column_name='observed_at' AND v.value_bytes=?",
+            (source_stamp.encode(),),
+        ).fetchone()[:] == ("text", source_stamp.encode())
+        found = {
+            row[1] for row in outputs["change_request_observations"]["diagnostics"]
+        }
+        assert found == ({diagnostic} if diagnostic else set())
+    finally:
+        db.close()
+        src.close()
+
+
+@pytest.mark.parametrize(
+    "source_seconds,expected_us",
+    [
+        (0, 0),
+        (-0.000001, -1),
+        (1.123456, 1123456),
+        (1767323045.123456, 1767323045123456),
+        (float("inf"), None),
+        (1e20, None),
+    ],
+)
+def test_source_job_deadline_translates_unix_seconds_without_clock_substitution(
+    tmp_path, source_seconds, expected_us
+):
+    def mutate(src):
+        src.execute("UPDATE jobs SET not_before=?", (source_seconds,))
+
+    db, src, run = components(tmp_path, mutate=mutate)
+    try:
+        records = tuple(archive.rows(src, "jobs"))
+        output = pr_domain.prepare(db, src, run, "jobs", 0, records)
+        apply(db, output, pr_domain)
+        assert all(
+            row[0] == expected_us
+            for row in db.execute("SELECT not_before_us FROM job_attempts")
+        )
+        found = {row[1] for row in output["diagnostics"]}
+        assert ("PR_INVALID_TIME" in found) == (expected_us is None)
+    finally:
+        db.close()
+        src.close()
 
 
 @pytest.mark.parametrize("malformed_first", (False, True))
@@ -302,22 +386,22 @@ def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repa
     assert [
         tuple(r)
         for r in db.execute(
-            "SELECT change_request_observation_id,observed_at,payload,published FROM change_request_observations ORDER BY change_request_observation_id"
+            "SELECT change_request_observation_id,observed_at_us,payload,published FROM change_request_observations ORDER BY change_request_observation_id"
         )
     ] == [
-        (row["id"], row["observed_at"], row["payload"], 0)
+        (row["id"], parse_iso8601_us(row["observed_at"]), row["payload"], 0)
         for row in src.execute("SELECT * FROM pr_observations ORDER BY id")
     ]
     history = list(
         db.execute(
-            "SELECT o.document_observation_id,b.body,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? AND o.kind=? AND o.provider_change_request_document_id=? AND o.document_observation_id<1000 ORDER BY o.document_observation_id",
+            "SELECT o.document_observation_id,b.body,o.observed_at_us FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? AND o.kind=? AND o.provider_change_request_document_id=? AND o.document_observation_id<1000 ORDER BY o.document_observation_id",
             source_document_key(src, IDS["document_a"]),
         )
     )
     assert [tuple(row) for row in history] == [
-        (301, "A", STAMPS[0]),
-        (302, "B", STAMPS[1]),
-        (303, "A", STAMPS[2]),
+        (301, "A", STAMPS_US[0]),
+        (302, "B", STAMPS_US[1]),
+        (303, "A", STAMPS_US[2]),
     ]
     bodies = [
         row[0]
@@ -327,10 +411,10 @@ def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repa
     ]
     assert len(set(bodies)) == 1
     repaired = db.execute(
-        "SELECT b.body,o.observed_at,o.parsed_at,f.next_cursor FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.fetch_occurrence_id WHERE b.body=? ORDER BY o.observed_at",
+        "SELECT b.body,o.observed_at_us,o.parsed_at_us,f.next_cursor FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.fetch_occurrence_id WHERE b.body=? ORDER BY o.observed_at_us",
         (SAVED_EARLY_BODY,),
     ).fetchone()
-    assert tuple(repaired)[:3] == (SAVED_EARLY_BODY, STAMPS[3], STAMPS[0])
+    assert tuple(repaired)[:3] == (SAVED_EARLY_BODY, STAMPS_US[3], STAMPS_US[0])
     assert repaired[3] is not None
     assert all(
         row[0] is None
@@ -441,13 +525,13 @@ def test_saved_page_replay_restores_same_collection_a_b_a_without_body_merge(tmp
     convert(db, src, run)
     history = list(
         db.execute(
-            "SELECT o.document_observation_id,b.body,o.observed_at FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? AND o.kind=? AND o.provider_change_request_document_id=? AND o.origin_key=? ORDER BY o.observed_at",
+            "SELECT o.document_observation_id,b.body,o.observed_at_us FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? AND o.kind=? AND o.provider_change_request_document_id=? AND o.origin_key=? ORDER BY o.observed_at_us",
             (*source_document_key(src, IDS["document_a"]), IDS["comments_a"]),
         )
     )
     assert [r[1] for r in history] == ["A", "B", "A"]
     assert len({r[0] for r in history}) == 3
-    assert [r[2] for r in history] == list(STAMPS[:3])
+    assert [r[2] for r in history] == list(STAMPS_US[:3])
     db.close()
     src.close()
 
@@ -504,12 +588,12 @@ def test_saved_pr_title_body_reconstruct_history_and_original_metadata(tmp_path)
     convert(db, src, run)
     history = list(
         db.execute(
-            "SELECT o.document_observation_id,b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE d.kind='pr-title' ORDER BY o.observed_at"
+            "SELECT o.document_observation_id,b.body,o.observed_at_us,o.metadata FROM documents d JOIN document_observations o ON o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE d.kind='pr-title' ORDER BY o.observed_at_us"
         )
     )
     assert [r[1] for r in history] == ["title A", "title B", "title A"]
     assert len({r[0] for r in history}) == 3
-    assert [r[2] for r in history] == list(STAMPS[:3])
+    assert [r[2] for r in history] == list(STAMPS_US[:3])
     assert [json.loads(r[3])["state"] for r in history] == ["open", "closed", "open"]
     assert (
         db.execute("SELECT count(*) FROM documents WHERE kind='pr-body'").fetchone()[0]
@@ -550,7 +634,7 @@ def test_repeated_saved_document_metadata_has_stable_identity_and_distinct_obser
     assert json.loads(document[3])["updated_at"] == "source-update-0"
     rows = list(
         db.execute(
-            "SELECT metadata FROM document_observations WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=? ORDER BY observed_at",
+            "SELECT metadata FROM document_observations WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=? ORDER BY observed_at_us",
             tuple(document[:3]),
         )
     )
@@ -617,16 +701,16 @@ def test_pending_parent_and_etag_preserve_scope_payload_and_observation_time(tmp
     )
     assert (
         db.execute(
-            "SELECT observed_at FROM document_observations WHERE origin_key LIKE 'pending-comment:%'"
+            "SELECT observed_at_us FROM document_observations WHERE origin_key LIKE 'pending-comment:%'"
         ).fetchone()[0]
-        == STAMPS[3]
+        == STAMPS_US[3]
     )
     validator = db.execute(
-        "SELECT v.etag,v.validated_at,s.principal_ref,s.api_version,s.confidence FROM validators v JOIN resume_scopes s ON s.resume_scope_id=v.resume_scope_id"
+        "SELECT v.etag,v.validated_at_us,s.principal_ref,s.api_version,s.confidence FROM validators v JOIN resume_scopes s ON s.resume_scope_id=v.resume_scope_id"
     ).fetchone()
     assert tuple(validator) == (
         'W/"saved"',
-        STAMPS[2],
+        STAMPS_US[2],
         "synthetic-user",
         "2022-11-28",
         "legacy_unknown",
@@ -710,18 +794,18 @@ def test_graphql_repeated_missing_thread_retains_initial_snapshot_and_later_fact
     db, src, run = components(tmp_path, mutate=mutate)
     output = convert(db, src, run)
     thread = db.execute(
-        "SELECT provider_resource_id,payload,observed_at FROM review_threads WHERE provider_resource_id='THREAD_new'"
+        "SELECT provider_resource_id,payload,observed_at_us FROM review_threads WHERE provider_resource_id='THREAD_new'"
     ).fetchone()
     assert json.loads(thread[1])["isResolved"] is False
-    assert thread[2] == STAMPS[0]
+    assert thread[2] == STAMPS_US[0]
     rows = list(
         db.execute(
-            "SELECT b.body,o.observed_at,o.metadata FROM documents d JOIN document_observations o ON o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE d.provider_change_request_document_id='910' ORDER BY o.observed_at"
+            "SELECT b.body,o.observed_at_us,o.metadata FROM documents d JOIN document_observations o ON o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE d.provider_change_request_document_id='910' ORDER BY o.observed_at_us"
         )
     )
     assert [(r[0], r[1]) for r in rows] == [
-        ("GraphQL A", STAMPS[0]),
-        ("GraphQL B", STAMPS[1]),
+        ("GraphQL A", STAMPS_US[0]),
+        ("GraphQL B", STAMPS_US[1]),
     ]
     assert [json.loads(r[2])["thread_payload"]["isResolved"] for r in rows] == [
         False,
@@ -875,10 +959,10 @@ def test_oversized_saved_page_defers_replay_preserves_payload_occurrence_and_dir
     assert hashlib.sha256(payload[0]).digest() == payload[1] == saved["sha256"]
     assert payload[2] == saved["bytes"]
     occurrence = db.execute(
-        "SELECT observed_at,payload_id FROM fetch_occurrences WHERE fetch_collection_id=?",
+        "SELECT observed_at_us,payload_id FROM fetch_occurrences WHERE fetch_collection_id=?",
         (IDS["commits_complete"],),
     ).fetchone()
-    assert tuple(occurrence) == (STAMPS[0], saved["response"])
+    assert tuple(occurrence) == (STAMPS_US[0], saved["response"])
     # The already acquired normalized item survives even though its page cannot
     # be replayed/proved complete within the decoder budget.
     assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
@@ -934,9 +1018,9 @@ def test_oversized_normalized_pr_metadata_retains_direct_fact_defers_only_reanal
     output = convert(db, src, run)
     assert tuple(
         db.execute(
-            "SELECT payload,observed_at FROM change_request_observations WHERE change_request_observation_id=301"
+            "SELECT payload,observed_at_us FROM change_request_observations WHERE change_request_observation_id=301"
         ).fetchone()
-    ) == (saved["payload"], STAMPS[0])
+    ) == (saved["payload"], STAMPS_US[0])
     assert (
         db.execute("SELECT count(*) FROM change_request_observations").fetchone()[0]
         == 3

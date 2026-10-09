@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
 from tests.support.git_fixture import FixtureRepo
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -172,7 +173,7 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     with sqlite3.connect(state / "catalog.sqlite3") as connection:
         assert connection.execute(
             "SELECT format_id,schema_version,lifecycle FROM database_identity"
-        ).fetchone() == ("repo-catalog/catalog3", 7, "validated")
+        ).fetchone() == ("repo-catalog/catalog3", SCHEMA_VERSION, "validated")
         assert not connection.execute(
             "SELECT name FROM sqlite_schema WHERE name='schema_migrations'"
         ).fetchall()

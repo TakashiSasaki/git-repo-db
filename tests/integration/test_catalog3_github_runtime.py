@@ -3,15 +3,50 @@
 import copy
 import json
 
+import httpx
 import pytest
 
 from repo_catalog.adapters.github.collector import GitHubCollector
+from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.job_service import JobService
 from repo_catalog.config import DEFAULTS, serialize
-from repo_catalog.domain.models import CancellationToken, CatalogError
+from repo_catalog.domain.models import CancellationToken, CatalogError, Waiting
+from repo_catalog.domain.time import parse_iso8601_us
 from tests.support.git_fixture import GitFixture
 from tests.support.github_fixture import GitHubFixture
+
+
+@pytest.mark.parametrize(
+    "headers,expected_us",
+    [
+        ({"retry-after": "2.000001"}, 1_002_000_124),
+        ({"retry-after": "0"}, 1_000_000_123),
+        ({"retry-after": "-2"}, 1_000_000_123),
+        ({"retry-after": "Thu, 01 Jan 1970 00:33:20 GMT"}, 2_000_000_000),
+        ({"x-ratelimit-reset": "2000"}, 2_000_000_000),
+        ({"x-ratelimit-reset": "1"}, 1_001_000_123),
+        ({"retry-after": "NaN"}, 1_060_000_123),
+        ({"x-ratelimit-reset": "Infinity"}, 1_060_000_123),
+        ({}, 1_060_000_123),
+    ],
+)
+def test_rate_limit_boundaries_are_exact_epoch_microseconds(headers, expected_us):
+    def response(request):
+        return httpx.Response(429, headers=headers, json={})
+
+    with httpx.Client(transport=httpx.MockTransport(response)) as client:
+        transport = GitHubTransport(
+            DEFAULTS["github"],
+            CancellationToken(),
+            client=client,
+            clock_us=lambda: 1_000_000_123,
+        )
+        with pytest.raises(Waiting) as raised:
+            transport.request("GET", transport.base + "/user")
+    assert raised.value.code == "RATE_LIMIT"
+    assert raised.value.details == {"not_before_us": expected_us}
+    assert type(raised.value.details["not_before_us"]) is int
 
 
 @pytest.fixture
@@ -31,7 +66,7 @@ def github_runtime(tmp_path, monkeypatch):
         with Store(state, initialize=True) as store:
             with store.transaction():
                 store.execute(
-                    "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at) VALUES('00000000-0000-4000-8000-000000000101','github','fixture',?,?, '{}',NULL)",
+                    "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at_us) VALUES('00000000-0000-4000-8000-000000000101','github','fixture',?,?, '{}',NULL)",
                     (api.url, api.url),
                 )
                 store.execute(
@@ -42,14 +77,14 @@ def github_runtime(tmp_path, monkeypatch):
                     "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture/alpha','endpoint',NULL,'{}')"
                 )
                 store.execute(
-                    "INSERT INTO repository_endpoints(repository_endpoint_id,repository_id,url,transport,label,metadata,created_at) VALUES('endpoint','repo',?,'file',NULL,'{}',NULL)",
+                    "INSERT INTO repository_endpoints(repository_endpoint_id,repository_id,url,transport,label,metadata,created_at_us) VALUES('endpoint','repo',?,'file',NULL,'{}',NULL)",
                     (fixture.alpha.url,),
                 )
                 store.execute(
-                    "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','101','{}',NULL)"
+                    "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','101','{}',NULL)"
                 )
                 store.execute(
-                    "INSERT INTO source_repositories(source_id,repository_id,first_seen,last_seen) VALUES('source','repo',NULL,NULL)"
+                    "INSERT INTO source_repositories(source_id,repository_id,first_seen_us,last_seen_us) VALUES('source','repo',NULL,NULL)"
                 )
             repo = {
                 "repository_id": "repo",
@@ -103,7 +138,7 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
     api.stage = "B"
     sync(store, repo)
     old_page = store.one(
-        "SELECT f.*,o.fetch_occurrence_id fetch_occurrence_id,o.observed_at page_observed_at,p.body FROM fetch_collections f JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads p ON p.payload_id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='issue-comment' ORDER BY o.observed_at LIMIT 1"
+        "SELECT f.*,o.fetch_occurrence_id fetch_occurrence_id,o.observed_at_us page_observed_at_us,p.body FROM fetch_collections f JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads p ON p.payload_id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='issue-comment' ORDER BY o.observed_at_us LIMIT 1"
     )
     current_version = store.one(
         "SELECT current_document_observation_id FROM documents WHERE change_request_id='repo:41' AND kind='issue-comment' AND provider_change_request_document_id='241'"
@@ -124,7 +159,7 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
             dict(old_page),
             old_page["fetch_occurrence_id"],
             0,
-            old_page["page_observed_at"],
+            old_page["page_observed_at_us"],
         )
     assert (
         store.one(
@@ -237,8 +272,10 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
     api.incremental = True
     sync(store, repo)
     old = store.all(
-        "SELECT i.safe_watermark,f.kind FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at"
+        "SELECT i.safe_watermark_us,f.kind FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
     )
+    assert all(type(row["safe_watermark_us"]) is int for row in old)
+    first_incremental_request = len(api.requests)
     api.stage = "B"
     api.failures["/repos/fixture/alpha/issues/comments"] = [503] * 5
     with pytest.raises(CatalogError) as partial:
@@ -250,10 +287,10 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
         == 1
     )
     review = store.one(
-        "SELECT i.safe_watermark,i.fetch_collection_id FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id WHERE f.kind='review-comment-incremental' ORDER BY i.scan_started_at DESC LIMIT 1"
+        "SELECT i.safe_watermark_us,i.fetch_collection_id FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id WHERE f.kind='review-comment-incremental' ORDER BY i.scan_started_at_us DESC LIMIT 1"
     )
-    assert review["safe_watermark"] != next(
-        r["safe_watermark"] for r in old if r["kind"] == "review-comment-incremental"
+    assert review["safe_watermark_us"] != next(
+        r["safe_watermark_us"] for r in old if r["kind"] == "review-comment-incremental"
     )
     before = len(api.requests)
     sync(store, repo, job=partial.value.details["job_id"])
@@ -262,16 +299,30 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
     )
     assert (
         store.one(
-            "SELECT safe_watermark FROM incremental_scans WHERE fetch_collection_id=?",
+            "SELECT safe_watermark_us FROM incremental_scans WHERE fetch_collection_id=?",
             (review["fetch_collection_id"],),
         )[0]
-        == review["safe_watermark"]
+        == review["safe_watermark_us"]
     )
-    assert any(
-        params.get("since")
-        for _, path, params in api.requests
-        if path.endswith("/issues/comments")
+    since_values = [
+        params["since"][0]
+        for _, path, params in api.requests[first_incremental_request:]
+        if path.endswith("/issues/comments") and "since" in params
+    ]
+    assert since_values
+    issue_watermark_us = next(
+        row["safe_watermark_us"]
+        for row in old
+        if row["kind"] == "issue-comment-incremental"
     )
+    assert all(
+        parse_iso8601_us(value) == issue_watermark_us - 300_000_000
+        for value in since_values
+    )
+    raw = store.one(
+        "SELECT metadata FROM document_observations WHERE kind='issue-comment' AND json_extract(metadata,'$.updated_at') IS NOT NULL"
+    )
+    assert json.loads(raw[0])["updated_at"] == "2026-01-01T00:00:00Z"
 
 
 def test_graphql_nested_pagination_and_partial_payload_preservation(github_runtime):
@@ -605,7 +656,8 @@ def test_import_first_sync_conditional_detail_and_saved_complete_listings(
             }
             assert (
                 store.one(
-                    "SELECT count(*) FROM incremental_scans WHERE safe_watermark LIKE '2099%'"
+                    "SELECT count(*) FROM incremental_scans WHERE safe_watermark_us >= ?",
+                    (parse_iso8601_us("2099-01-01T00:00:00Z"),),
                 )[0]
                 == 0
             )

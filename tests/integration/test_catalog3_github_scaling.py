@@ -3,8 +3,9 @@
 from repo_catalog.adapters.github.persistence import ApiFacts
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.maintenance_service import MaintenanceService
+from repo_catalog.domain.time import parse_iso8601_us
 
-TIME = "2026-10-06T00:00:00Z"
+TIME = parse_iso8601_us("2026-10-06T00:00:00Z")
 
 
 def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
@@ -32,15 +33,15 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                 "INSERT INTO resume_scopes(resume_scope_id,repository_id,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
             )
             store.execute(
-                "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,kind,resume_scope_id,observed_at) VALUES('collection','repo','pr','threads','scope',?)",
+                "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('collection','repo','pr','threads','scope',?)",
                 (TIME,),
             )
             occurrence = store.execute(
-                "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,observed_at,parsed_at) VALUES('collection',0,?,'{}',?,?)",
+                "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,observed_at_us,parsed_at_us) VALUES('collection',0,?,'{}',?,?)",
                 (facts.payload(b"{}"), TIME, TIME),
             ).lastrowid
             store.execute(
-                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at) VALUES('pr','thread','{}',?)",
+                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at_us) VALUES('pr','thread','{}',?)",
                 (TIME,),
             )
 

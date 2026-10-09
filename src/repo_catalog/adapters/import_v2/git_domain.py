@@ -48,11 +48,11 @@ COLUMNS = {
         "repository_endpoint_id",
         "endpoint_url",
         "object_format",
-        "refs_observed_at",
+        "refs_observed_at_us",
         "source_id",
         "kind",
-        "started_at",
-        "observed_at",
+        "started_at_us",
+        "observed_at_us",
         "request",
         "roots_manifest",
     ),
@@ -64,7 +64,13 @@ COLUMNS = {
         "size",
         "verified",
     ),
-    "contents": ("content_id", "byte_length", "raw_text", "text_state", "created_at"),
+    "contents": (
+        "content_id",
+        "byte_length",
+        "raw_text",
+        "text_state",
+        "created_at_us",
+    ),
     "commits": (
         "git_object_id",
         "tree_git_object_id",
@@ -91,7 +97,7 @@ COLUMNS = {
         "representation",
         "algorithm",
         "digest",
-        "verified_at",
+        "verified_at_us",
         "pipeline_version",
     ),
     "blob_content_map": ("git_object_id", "content_id", "git_acquisition_id"),
@@ -106,7 +112,7 @@ COLUMNS = {
         "repository_id",
         "published",
         "generation",
-        "created_at",
+        "created_at_us",
     ),
     "ref_observations": (
         "snapshot_id",
@@ -199,6 +205,8 @@ def origin_id(record, root_id, kind):
 
 
 class Context(identity.Context):
+    TIME_ISSUE_PREFIX = "GIT_"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.issues = []
@@ -252,15 +260,6 @@ class Context(identity.Context):
                     raise ValueError()
             except ValueError:
                 raise Invalid("GIT_INVALID_JSON", column) from None
-        return value
-
-    def timestamp(self, record, column):
-        value = self.t(record, column, nullable=True)
-        if value is not None:
-            try:
-                identity.instant(value)
-            except ValueError:
-                raise Invalid("GIT_INVALID_TIME", column) from None
         return value
 
     def oid(self, record, column, fmt, *, nullable=False, hexadecimal=False):
@@ -937,6 +936,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
     output = {"operations": [], "mappings": [], "diagnostics": [], "decisions": []}
     for record in records:
         context.issues = []
+        context.time_issues = []
         legacy_record_id = context.legacy_record_id(record)
         rows = []
         valid = True
@@ -945,6 +945,7 @@ def prepare(db, src, run, recipe, index, records, *, encoding="UTF-8", verifying
         except Invalid as exc:
             valid = False
             context.issues.append((exc.code, "blocking", exc.column))
+        context.issues.extend(context.time_issues)
         for table, row, relation in rows:
             output["operations"].append(
                 {

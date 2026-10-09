@@ -36,7 +36,7 @@ def _coverage(query, pr, documents_only):
             change_request_id=pr["change_request_id"],
         )
     rows = s.all(
-        "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? AND NOT EXISTS(SELECT 1 FROM fetch_collections newer WHERE newer.change_request_id=c.change_request_id AND newer.kind=c.kind AND (coalesce(newer.observed_at,'')>coalesce(c.observed_at,'') OR (newer.observed_at IS c.observed_at AND newer.rowid>c.rowid))) ORDER BY c.kind",
+        "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? AND NOT EXISTS(SELECT 1 FROM fetch_collections newer WHERE newer.change_request_id=c.change_request_id AND newer.kind=c.kind AND ((newer.observed_at_us IS NOT NULL AND (c.observed_at_us IS NULL OR newer.observed_at_us>c.observed_at_us)) OR (newer.observed_at_us IS c.observed_at_us AND newer.rowid>c.rowid))) ORDER BY c.kind",
         (pr["change_request_id"],),
     )
     for row in rows:
@@ -127,7 +127,7 @@ def pr_query(query, command, options):
             "Thread selection requires a positive provider change request number and provider resource ID",
         )
     rows = s.all(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id"
+        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id"
     )
     rows = [
         r
@@ -285,12 +285,12 @@ def pr_query(query, command, options):
             "repository_binding_id": pr["repository_binding_id"],
             "current_selected": pr["current_change_request_observation_id"] is not None,
             "state": state,
-            "observed_at": pr["observed_at"],
+            "observed_at_us": pr["observed_at_us"],
             "url": payload.get("html_url"),
         }
         if command in ("pr list", "pr show"):
             collections = s.all(
-                "SELECT c.*,p.state,p.cursor,p.reason FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.kind,c.observed_at,c.fetch_collection_id",
+                "SELECT c.*,p.state,p.cursor,p.reason FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.kind,c.observed_at_us,c.fetch_collection_id",
                 (pr["change_request_id"],),
             )
             item = {
@@ -336,7 +336,7 @@ def pr_query(query, command, options):
                 item["observations"] = [
                     dict(r)
                     for r in s.all(
-                        "SELECT change_request_observation_id,observed_at FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
+                        "SELECT change_request_observation_id,observed_at_us FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
                         (pr["change_request_id"],),
                     )
                 ]
@@ -363,7 +363,7 @@ def pr_query(query, command, options):
                         **base,
                         "event_id": event["change_request_event_id"],
                         "provider_event_id": event["provider_event_id"],
-                        "observed_at": event["observed_at"],
+                        "observed_at_us": event["observed_at_us"],
                         "payload": json.loads(event["payload"]),
                     },
                 )
@@ -375,7 +375,7 @@ def pr_query(query, command, options):
             ):
                 raise CatalogError("NOT_FOUND", "Document observation not found in PR")
             docs = s.execute(
-                "SELECT d.*,obs.document_observation_id,obs.text_body_sha256,obs.observed_at document_observed_at,obs.parsed_at document_parsed_at,obs.origin_key,obs.fetch_occurrence_id,obs.metadata observation_metadata,b.body FROM documents d JOIN document_observations obs USING(change_request_id,kind,provider_change_request_document_id) JOIN text_bodies b ON b.sha256=obs.text_body_sha256 WHERE d.change_request_id=?"
+                "SELECT d.*,obs.document_observation_id,obs.text_body_sha256,obs.observed_at_us document_observed_at_us,obs.parsed_at_us document_parsed_at_us,obs.origin_key,obs.fetch_occurrence_id,obs.metadata observation_metadata,b.body FROM documents d JOIN document_observations obs USING(change_request_id,kind,provider_change_request_document_id) JOIN text_bodies b ON b.sha256=obs.text_body_sha256 WHERE d.change_request_id=?"
                 + (
                     " AND obs.document_observation_id=d.current_document_observation_id AND d.deleted=0"
                     if selection == "current" and not o.get("observation")
@@ -452,8 +452,8 @@ def pr_query(query, command, options):
                         "provider_change_request_document_id": key.provider_change_request_document_id,
                         "document_observation_id": doc["document_observation_id"],
                         "text_body_sha256": digest,
-                        "document_observed_at": doc["document_observed_at"],
-                        "document_parsed_at": doc["document_parsed_at"],
+                        "document_observed_at_us": doc["document_observed_at_us"],
+                        "document_parsed_at_us": doc["document_parsed_at_us"],
                         "document_current_selected": doc["document_observation_id"]
                         == doc["current_document_observation_id"],
                         "origin_key": doc["origin_key"],

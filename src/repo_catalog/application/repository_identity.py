@@ -8,7 +8,8 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from repo_catalog.domain.models import CatalogError, now
+from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.time import now_us
 
 PROVIDERS = ("github", "gitlab", "gitea", "forgejo", "gitolite", "git", "other")
 
@@ -85,8 +86,8 @@ def add_instance(store, service_kind, name, web_base_url=None, api_base_url=None
         raise CatalogError("IDENTITY_CONFLICT", "Instance name already exists")
     ident = str(uuid.uuid4())
     store.execute(
-        "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at) VALUES(?,?,?,?,?,?,?)",
-        (ident, service_kind, name, web_base_url, api_base_url, "{}", now()),
+        "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at_us) VALUES(?,?,?,?,?,?,?)",
+        (ident, service_kind, name, web_base_url, api_base_url, "{}", now_us()),
     )
     return ident
 
@@ -146,14 +147,14 @@ def bind(store, repository_id, service_instance_uuidv4, provider_repository_id=N
             )
         return
     store.execute(
-        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at) VALUES(?,?,?,?,?,?)",
+        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES(?,?,?,?,?,?)",
         (
             str(uuid.uuid4()),
             repository_id,
             service_instance_uuidv4,
             provider_repository_id,
             "{}",
-            now(),
+            now_us(),
         ),
     )
 
@@ -184,8 +185,8 @@ def add_endpoint(
     else:
         ident = str(uuid.uuid4())
         store.execute(
-            "INSERT INTO repository_endpoints(repository_endpoint_id,repository_id,url,transport,label,metadata,created_at) VALUES(?,?,?,?,?,?,?)",
-            (ident, repository_id, url, transport(url), label, "{}", now()),
+            "INSERT INTO repository_endpoints(repository_endpoint_id,repository_id,url,transport,label,metadata,created_at_us) VALUES(?,?,?,?,?,?,?)",
+            (ident, repository_id, url, transport(url), label, "{}", now_us()),
         )
     if preferred or not store.one(
         "SELECT 1 FROM repositories WHERE repository_id=? AND preferred_repository_endpoint_id IS NOT NULL",
@@ -213,20 +214,20 @@ def endpoint(store, repository_id, repository_endpoint_id=None):
 
 
 def link_source(store, source_id, repository_id):
-    stamp = now()
+    stamp = now_us()
     current = store.one(
-        "SELECT last_seen FROM source_repositories WHERE source_id=? AND repository_id=?",
+        "SELECT last_seen_us FROM source_repositories WHERE source_id=? AND repository_id=?",
         (source_id, repository_id),
     )
     if current:
         # Preserve the imported aggregate if the source recorded a later time.
         store.execute(
-            "UPDATE source_repositories SET last_seen=CASE WHEN last_seen IS NULL OR julianday(last_seen)<julianday(?) THEN ? ELSE last_seen END WHERE source_id=? AND repository_id=?",
+            "UPDATE source_repositories SET last_seen_us=CASE WHEN last_seen_us IS NULL OR last_seen_us<? THEN ? ELSE last_seen_us END WHERE source_id=? AND repository_id=?",
             (stamp, stamp, source_id, repository_id),
         )
     else:
         store.execute(
-            "INSERT INTO source_repositories(source_id,repository_id,first_seen,last_seen) VALUES(?,?,?,?)",
+            "INSERT INTO source_repositories(source_id,repository_id,first_seen_us,last_seen_us) VALUES(?,?,?,?)",
             (source_id, repository_id, stamp, stamp),
         )
 
@@ -239,7 +240,7 @@ def repository_row(store, row):
         (value["preferred_repository_endpoint_id"], value["repository_id"]),
     )
     source = store.one(
-        "SELECT source_id FROM source_repositories WHERE repository_id=? ORDER BY first_seen,source_id LIMIT 1",
+        "SELECT source_id FROM source_repositories WHERE repository_id=? ORDER BY first_seen_us,source_id LIMIT 1",
         (value["repository_id"],),
     )
     binding = store.one(
@@ -310,7 +311,7 @@ def pr_source(store, repository_id, requested_source=None):
     row = store.one(
         "SELECT s.*,b.provider_repository_id,i.web_base_url FROM source_repositories m JOIN sources s ON s.source_id=m.source_id JOIN service_instances i ON i.service_instance_uuidv4=s.service_instance_uuidv4 JOIN repository_bindings b ON b.repository_id=m.repository_id AND b.service_instance_uuidv4=i.service_instance_uuidv4 WHERE m.repository_id=? AND s.discovery_kind='github_inventory'"
         + (" AND s.source_id=?" if requested_source else "")
-        + " ORDER BY m.first_seen,s.source_id LIMIT 1",
+        + " ORDER BY m.first_seen_us,s.source_id LIMIT 1",
         params,
     )
     return row
