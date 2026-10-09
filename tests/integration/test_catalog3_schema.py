@@ -6,14 +6,17 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.schema import schema_sql
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.config import DEFAULTS, serialize
+from tests.support.parser_facts import enrich
 
 TIME_US = 1_791_244_800_000_000
 
 
 def put(db, table, **values):
+    values = enrich(db, table, values)
     db.execute(
         f"INSERT INTO {table}({','.join(values)}) VALUES({','.join('?' for _ in values)})",
         tuple(values.values()),
@@ -139,34 +142,28 @@ def facts():
 
 
 @pytest.mark.parametrize("owner,observation", [("pr-a", 1), ("pr-a", 2)])
-def test_current_pointer_requires_same_owner_completed_observation(
+def test_current_decision_requires_same_owner_completed_observation(
     facts, owner, observation
 ):
+    result, profile, repo = facts.execute(
+        "SELECT o.parsed_result_uuidv4,r.parser_profile_uuidv4,r.repository_uuidv4 FROM change_request_observations o JOIN parsed_results r USING(parsed_result_uuidv4) WHERE o.change_request_observation_id=?",
+        (observation,),
+    ).fetchone()
+    model = ParserModel(facts)
+    model.publish_result(result)
     if observation == 1:
-        facts.execute(
-            "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
-            (observation, owner),
+        model.ensure_scope_profile(
+            profile, repository_uuidv4=repo, fact_kind="change-request"
         )
-        assert (
-            facts.execute(
-                "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
-                (owner,),
-            ).fetchone()[0]
-            == 1
-        )
+        model.select_fact(result, fact_kind="change-request", change_request_id=owner)
+        assert facts.execute(
+            "SELECT change_request_observation_id FROM current_change_request_observations"
+        ).fetchall() == [(1,)]
     else:
         with pytest.raises(sqlite3.IntegrityError):
-            facts.execute(
-                "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
-                (observation, owner),
+            model.select_fact(
+                result, fact_kind="change-request", change_request_id=owner
             )
-        assert (
-            facts.execute(
-                "SELECT current_change_request_observation_id FROM change_requests WHERE change_request_id=?",
-                (owner,),
-            ).fetchone()[0]
-            is None
-        )
 
 
 def test_listing_and_page_must_share_scope_and_owner(facts):
@@ -242,10 +239,13 @@ def test_pending_observation_cannot_become_current(facts):
         payload="{}",
         parsed_at_us=TIME_US,
     )
+    result = facts.execute(
+        "SELECT parsed_result_uuidv4 FROM change_request_observations WHERE change_request_observation_id=3"
+    ).fetchone()[0]
+    model = ParserModel(facts)
+    model.publish_result(result)
     with pytest.raises(sqlite3.IntegrityError):
-        facts.execute(
-            "UPDATE change_requests SET current_change_request_observation_id=3 WHERE change_request_id='pr-a'"
-        )
+        model.select_fact(result, fact_kind="change-request", change_request_id="pr-a")
 
 
 def test_source_seen_range_preserves_order_at_single_microsecond_precision(facts):

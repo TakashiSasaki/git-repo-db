@@ -6,6 +6,7 @@ import hashlib
 import json
 import uuid
 
+from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
 from repo_catalog.domain.document import DocumentKey
@@ -43,6 +44,146 @@ class ApiFacts:
         self.s, self.cfg = store, config
         self.principal = None
         self.permissions = None
+        self.model = ParserModel(store.connection)
+        self.profile_uuid = None
+        self.results = {}
+        self.pending_results = {}
+        self.select_results = True
+        self.response_identities = {}
+        self.rejected_fetch = None
+        self.unselected_results = set()
+
+    def profile(self):
+        if self.profile_uuid is None or not self.s.one(
+            "SELECT 1 FROM parser_profiles WHERE parser_profile_uuidv4=?",
+            (self.profile_uuid,),
+        ):
+            self.profile_uuid = self.model.ensure_builtin_profile()
+        return self.profile_uuid
+
+    def result(self, occurrence):
+        """One local parsing execution, separate from the immutable remote fetch."""
+        cached = self.results.get(occurrence)
+        if cached and self.s.one(
+            "SELECT 1 FROM parsed_results WHERE parsed_result_uuidv4=?", (cached,)
+        ):
+            return cached
+        row = self.s.one(
+            "SELECT fetch_occurrence_uuidv4,repository_uuidv4 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+            (occurrence,),
+        )
+        if row is None:
+            raise CatalogError("PARSER_INPUT_MISSING", "Saved acquisition is required")
+        ident = self.model.create_result(
+            self.profile(),
+            repository_uuidv4=row["repository_uuidv4"],
+            inputs=[{"fetch_occurrence_uuidv4": row["fetch_occurrence_uuidv4"]}],
+            derivation={"parser": PARSER},
+        )
+        self.results[occurrence] = ident
+        self.pending_results[ident] = []
+        return ident
+
+    def ownership(self, occurrence):
+        row = self.s.one(
+            "SELECT repository_uuidv4 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+            (occurrence,),
+        )
+        return row[0], self.result(occurrence)
+
+    def choose_page(self, collection, occurrence):
+        fact_kind = {
+            "timeline": "events",
+            "pr-commits": "code",
+            "pr-files": "code",
+        }.get(collection.get("kind"))
+        if fact_kind:
+            fetch_uuid = self.s.one(
+                "SELECT fetch_occurrence_uuidv4 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
+                (occurrence,),
+            )[0]
+            self.choose(
+                self.result(occurrence),
+                fact_kind=fact_kind,
+                change_request_id=collection["change_request_id"],
+                fetch_occurrence_uuidv4=fetch_uuid,
+            )
+
+    def choose(self, result, **scope):
+        choices = self.pending_results.setdefault(result, [])
+        if scope not in choices:
+            choices.append(scope)
+
+    def publish(self):
+        """Seal each complete parsing transaction before publishing selections."""
+        for result, scopes in list(self.pending_results.items()):
+            owner = self.s.one(
+                "SELECT repository_uuidv4,source_registration_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
+                (result,),
+            )
+            if owner is None:  # A rejected page rolled back this execution.
+                del self.pending_results[result]
+                continue
+            self.model.publish_result(result)
+            if self.select_results:
+                for scope in scopes:
+                    selected = self.model.ensure_scope_profile(
+                        self.profile(),
+                        repository_uuidv4=owner[0],
+                        source_registration_uuidv4=owner[1],
+                        fact_kind=scope["fact_kind"],
+                    )
+                    if selected is None:
+                        self.unselected_results.add(result)
+                        continue
+                    if scope.get("change_request_id") and not self.s.one(
+                        "SELECT 1 FROM effective_change_request_parser_profiles WHERE change_request_id=? AND fact_kind=? AND parser_profile_uuidv4=?",
+                        (
+                            scope["change_request_id"],
+                            scope["fact_kind"],
+                            self.profile(),
+                        ),
+                    ):
+                        self.unselected_results.add(result)
+                        continue
+                    try:
+                        self.model.select_fact(result, **scope)
+                    except CatalogError as error:
+                        if error.code != "SELECTION_UNRESOLVED":
+                            raise
+                        self.unselected_results.add(result)
+            del self.pending_results[result]
+        self.s.publish()
+        self.response_identities.clear()
+
+    def source_input(self, source_registration_uuidv4, response, context):
+        ident = str(uuid.uuid4())
+        timestamp = now_us()
+        try:
+            payload = self.payload(response.content)
+        except CatalogError as error:
+            if error.code in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}:
+                self.rejected_fetch = (
+                    response.content,
+                    {
+                        "source_input_uuidv4": ident,
+                        "source_registration_uuidv4": source_registration_uuidv4,
+                        "observed_at_us": timestamp,
+                        "request_context": context,
+                    },
+                )
+            raise
+        self.s.execute(
+            "INSERT INTO source_input_observations(source_input_uuidv4,source_registration_uuidv4,payload_representation,payload_sha256,request_context_json,observed_at_us) VALUES(?,?,?,?,?,?)",
+            (
+                ident,
+                source_registration_uuidv4,
+                *payload.parameters(),
+                canonical(context),
+                timestamp,
+            ),
+        )
+        return ident, timestamp, payload
 
     def fence(self, job):
         row = self.s.one(
@@ -153,21 +294,66 @@ class ApiFacts:
             "kind": kind,
         }
 
+    def require_payload(self, digest):
+        from repo_catalog.adapters.sqlite.cas_integrity import is_quarantined
+
+        if is_quarantined(self.s.connection, digest):
+            raise CatalogError(
+                "PAYLOAD_CORRUPTION", "Quarantined payload requires explicit repair"
+            )
+
     def payload(self, raw):
         return intern_payload(self.s.connection, raw)
 
+    @staticmethod
+    def response_metadata(response):
+        """Preserve whitelisted historical evidence, independently of validators."""
+        etag = response.headers.get("etag")
+        return {
+            "status": response.status_code,
+            "headers": {"etag": etag} if etag is not None else {},
+        }
+
     def page(self, collection, response, request, next_cursor, *, advance=True):
+        request = {**request, "response": self.response_metadata(response)}
         ordinal = self.s.one(
             "SELECT coalesce(max(ordinal),-1)+1 FROM fetch_occurrences WHERE fetch_collection_id=?",
             (collection["fetch_collection_id"],),
         )[0]
-        timestamp = now_us()
+        response_identity = self.response_identities.get(id(response))
+        if response_identity is None or response_identity[0] is not response:
+            response_identity = (response, str(uuid.uuid4()), now_us())
+            self.response_identities[id(response)] = response_identity
+        fetch_uuid, timestamp = response_identity[1:]
+        repository = self.s.one(
+            "SELECT repository_uuidv4 FROM fetch_collections WHERE fetch_collection_id=?",
+            (collection["fetch_collection_id"],),
+        )[0]
+        try:
+            payload = self.payload(response.content)
+        except CatalogError as error:
+            if error.code in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}:
+                self.rejected_fetch = (
+                    response.content,
+                    {
+                        "fetch_occurrence_uuidv4": fetch_uuid,
+                        "repository_uuidv4": repository,
+                        "fetch_collection_id": collection["fetch_collection_id"],
+                        "ordinal": ordinal,
+                        "observed_at_us": timestamp,
+                        "request": request,
+                        "next_cursor": next_cursor,
+                    },
+                )
+            raise
         ident = self.s.execute(
-            "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_representation,payload_sha256,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,?,?,?,?)",
             (
+                fetch_uuid,
+                repository,
                 collection["fetch_collection_id"],
                 ordinal,
-                *self.payload(response.content).parameters(),
+                *payload.parameters(),
                 canonical(request),
                 next_cursor,
                 timestamp,
@@ -181,6 +367,26 @@ class ApiFacts:
             )
         return ident, ordinal, timestamp
 
+    def stage_rejected(self, error):
+        if (
+            error.code not in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}
+            or self.rejected_fetch is None
+        ):
+            return False
+        from repo_catalog.adapters.sqlite.cas_integrity import stage_verified_payload
+        from repo_catalog.domain.payload import PayloadRef
+
+        body, context = self.rejected_fetch
+        stage_verified_payload(
+            self.s.connection,
+            body,
+            PayloadRef("decoded_api", hashlib.sha256(body).digest()),
+            context,
+            reason=error.code,
+        )
+        self.rejected_fetch = None
+        return True
+
     def finish(self, collection, *, evidence=None, observed_at_us=None):
         if observed_at_us is None:
             observed_at_us = self.observed_at_us(collection)
@@ -188,12 +394,56 @@ class ApiFacts:
             "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
             (collection["fetch_collection_id"],),
         )
+        evidence = dict(evidence or {"parser": PARSER, "terminal": True})
+        if (
+            collection.get("kind") in {"pr-detail", "pr-code-check"}
+            and "change_request_observation_uuidv4" not in evidence
+        ):
+            observations = self.s.all(
+                "SELECT o.change_request_observation_uuidv4,o.parsed_result_uuidv4,f.fetch_occurrence_uuidv4 FROM change_request_observations o JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.origin_fetch_occurrence_id WHERE f.fetch_collection_id=?",
+                (collection["fetch_collection_id"],),
+            )
+            if len(observations) == 1:
+                evidence.update(dict(observations[0]))
+        if evidence.get("change_request_observation_uuidv4"):
+            anchor = self.s.one(
+                "SELECT o.change_request_observation_uuidv4,o.parsed_result_uuidv4,f.fetch_occurrence_uuidv4,f.payload_representation,f.payload_sha256 FROM change_request_observations o JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.origin_fetch_occurrence_id JOIN fetch_collections c ON c.fetch_collection_id=? WHERE o.change_request_observation_uuidv4=? AND o.change_request_id=c.change_request_id AND o.repository_uuidv4=c.repository_uuidv4",
+                (
+                    collection["fetch_collection_id"],
+                    evidence["change_request_observation_uuidv4"],
+                ),
+            )
+            if anchor is None:
+                raise CatalogError(
+                    "INVALID_PROVENANCE",
+                    "Completion observation has a different owner or is unavailable",
+                )
+            from repo_catalog.domain.payload import PayloadRef
+
+            if (
+                "payload" in evidence
+                and evidence["payload"]
+                != PayloadRef(
+                    anchor["payload_representation"], anchor["payload_sha256"]
+                ).as_json()
+            ):
+                raise CatalogError(
+                    "INVALID_PROVENANCE",
+                    "Completion payload differs from its original acquisition",
+                )
+            for field in ("parsed_result_uuidv4", "fetch_occurrence_uuidv4"):
+                if field in evidence and evidence[field] != anchor[field]:
+                    raise CatalogError(
+                        "INVALID_PROVENANCE",
+                        "Completion origin disagrees with its observation",
+                    )
+                evidence[field] = anchor[field]
         self.s.execute(
             "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
             (
                 collection["resume_scope_id"],
                 collection["fetch_collection_id"],
-                canonical(evidence or {"parser": PARSER, "terminal": True}),
+                canonical(evidence),
                 observed_at_us,
             ),
         )
@@ -240,7 +490,7 @@ class ApiFacts:
         )
 
     def origin(self, collection, occurrence, position):
-        return f"api:{collection['fetch_collection_id']}:{occurrence}:{position}"
+        return f"parse:{self.result(occurrence)}:{position}"
 
     def document(
         self,
@@ -281,29 +531,22 @@ class ApiFacts:
         }
         if thread:
             metadata["review_thread_provider_resource_id"] = thread
-        projection = (
-            author.get("login"),
-            value.get("html_url") or value.get("url"),
-            canonical(metadata),
-        )
-        if found:
+        if not found:
             self.s.execute(
-                "UPDATE documents SET author=?,url=?,metadata=?,deleted=0 WHERE "
-                + predicate,
-                (*projection, *key),
-            )
-        else:
-            self.s.execute(
-                "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id,current_document_observation_id,deleted,author,url,metadata) VALUES(?,?,?,NULL,0,?,?,?)",
-                (*key, *projection),
+                "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id) VALUES(?,?,?)",
+                key,
             )
         digest = intern_text_body(self.s.connection, body)
         owner_occurrence = (
             occurrence if collection.get("change_request_id") == pr else None
         )
-        observation = self.s.execute(
-            "INSERT INTO document_observations(change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata) VALUES(?,?,?,?,?,?,?,?,?)",
+        repository, result = self.ownership(occurrence)
+        self.s.execute(
+            "INSERT INTO document_observations(document_observation_uuidv4,repository_uuidv4,parsed_result_uuidv4,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata,author,url,deleted,review_thread_provider_resource_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
+                str(uuid.uuid4()),
+                repository,
+                result,
                 *key,
                 digest,
                 observed_at_us,
@@ -311,11 +554,18 @@ class ApiFacts:
                 origin,
                 owner_occurrence,
                 canonical(metadata),
+                author.get("login"),
+                value.get("html_url") or value.get("url"),
+                0,
+                thread,
             ),
-        ).lastrowid
-        self.s.execute(
-            "UPDATE documents SET current_document_observation_id=? WHERE " + predicate,
-            (observation, *key),
+        )
+        self.choose(
+            result,
+            fact_kind=kind,
+            change_request_id=pr,
+            kind=kind,
+            provider_change_request_document_id=str(provider),
         )
         if collection.get("change_request_id") == pr and not self.s.one(
             "SELECT 1 FROM collection_memberships WHERE fetch_collection_id=? AND "
@@ -326,27 +576,18 @@ class ApiFacts:
                 "INSERT INTO collection_memberships(fetch_collection_id,change_request_id,kind,provider_change_request_document_id,ordinal) VALUES(?,?,?,?,?)",
                 (collection["fetch_collection_id"], *key, position),
             )
-        if kind == "review":
-            if self.s.one("SELECT 1 FROM reviews WHERE " + predicate, key):
-                self.s.execute(
-                    "UPDATE reviews SET payload=? WHERE " + predicate,
-                    (canonical(value), *key),
-                )
-            else:
-                self.s.execute(
-                    "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id,payload) VALUES(?,?,?,?)",
-                    (*key, canonical(value)),
-                )
-        if kind == "review-comment":
-            if self.s.one("SELECT 1 FROM review_comments WHERE " + predicate, key):
-                self.s.execute(
-                    "UPDATE review_comments SET review_thread_provider_resource_id=coalesce(?,review_thread_provider_resource_id),payload=? WHERE "
-                    + predicate,
-                    (thread, canonical(value), *key),
-                )
-            else:
-                self.s.execute(
-                    "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES(?,?,?,?,?)",
-                    (*key, thread, canonical(value)),
-                )
+        if kind == "review" and not self.s.one(
+            "SELECT 1 FROM reviews WHERE " + predicate, key
+        ):
+            self.s.execute(
+                "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id) VALUES(?,?,?)",
+                key,
+            )
+        if kind == "review-comment" and not self.s.one(
+            "SELECT 1 FROM review_comments WHERE " + predicate, key
+        ):
+            self.s.execute(
+                "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id) VALUES(?,?,?)",
+                key,
+            )
         return key

@@ -27,10 +27,10 @@ def initialize(connection):
     connection.execute("PRAGMA recursive_triggers=ON")
     connection.executescript(schema_sql())
     connection.execute(
-        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('00000000-0000-4000-8000-000000000301','synthetic','{}')"
     )
     connection.execute(
-        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('scope','repo','git')"
+        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('scope','00000000-0000-4000-8000-000000000301','git')"
     )
 
 
@@ -82,7 +82,7 @@ def test_same_time_truth_table_matches_view_and_keeps_all_claims(
         assert derive_coverage_state(ordering) == expected
     for state in reversed(states):
         assert admit_claim(catalog, "scope", state, 0) is not None
-    component = current_coverages(catalog, "repo")[0]
+    component = current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0]
     assert component["coverage_state"] == expected
     assert component["observed_at_us"] == (0 if states else None)
     assert component["claim_count"] == len(states)
@@ -125,7 +125,7 @@ def test_latest_time_always_wins_and_conflict_never_falls_back(
     selected = latest_claims(reversed(original))
     assert derive_coverage_state(row["coverage_state"] for row in selected) == expected
     assert [row["coverage_state"] for row in selected] == expected_states
-    component = current_coverages(catalog, "repo")[0]
+    component = current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0]
     assert (component["coverage_state"], component["observed_at_us"]) == (
         expected,
         expected_time,
@@ -154,9 +154,14 @@ def test_duplicate_and_stale_input_are_noops_without_advisory_merge(
     # Neither missing details nor different advisory text alters admissibility.
     assert decide_admission(existing, claim("unknown", 10)) == "insert"
     assert admit_claim(catalog, "scope", "unknown", 10) is not None
-    assert current_coverages(catalog, "repo")[0]["coverage_state"] == "complete"
+    assert (
+        current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0][
+            "coverage_state"
+        ]
+        == "complete"
+    )
     assert admit_claim(catalog, "scope", "partial", 10, '{"new":3}') is not None
-    component = current_coverages(catalog, "repo")[0]
+    component = current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0]
     assert component["coverage_state"] == "conflict"
     assert [row["details_json"] for row in component["claims"]] == [
         first_details,
@@ -203,7 +208,12 @@ def test_export_transports_latest_set_and_repeated_admission_is_idempotent(catal
                 is None
             )
         assert destination.total_changes == before
-        assert current_coverages(destination, "repo")[0]["coverage_state"] == "conflict"
+        assert (
+            current_coverages(destination, "00000000-0000-4000-8000-000000000301")[0][
+                "coverage_state"
+            ]
+            == "conflict"
+        )
         assert [
             {key: value for key, value in row.items() if key != "coverage_claim_id"}
             for row in export_current_claims(destination, "scope")
@@ -215,14 +225,19 @@ def test_export_transports_latest_set_and_repeated_admission_is_idempotent(catal
 
 def test_current_output_filters_kind_without_inventing_an_empty_scope_claim(catalog):
     catalog.execute(
-        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('empty','repo','api')"
+        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('empty','00000000-0000-4000-8000-000000000301','api')"
     )
     admit_claim(catalog, "scope", "partial", 1)
-    assert [row["kind"] for row in current_coverages(catalog, "repo")] == ["api", "git"]
-    assert current_coverages(catalog, "repo", "api") == [
+    assert [
+        row["kind"]
+        for row in current_coverages(catalog, "00000000-0000-4000-8000-000000000301")
+    ] == ["api", "git"]
+    assert current_coverages(
+        catalog, "00000000-0000-4000-8000-000000000301", "api"
+    ) == [
         {
             "coverage_scope_id": "empty",
-            "repository_uuidv4": "repo",
+            "repository_uuidv4": "00000000-0000-4000-8000-000000000301",
             "change_request_id": None,
             "kind": "api",
             "observed_at_us": None,
@@ -231,7 +246,10 @@ def test_current_output_filters_kind_without_inventing_an_empty_scope_claim(cata
             "claims": [],
         }
     ]
-    assert current_coverages(catalog, "repo", "absent") == []
+    assert (
+        current_coverages(catalog, "00000000-0000-4000-8000-000000000301", "absent")
+        == []
+    )
     assert current_coverages(catalog, "absent") == []
     assert export_current_claims(catalog, "empty") == []
 
@@ -239,7 +257,12 @@ def test_current_output_filters_kind_without_inventing_an_empty_scope_claim(cata
 @pytest.mark.parametrize("stamp", [MIN_EPOCH_US, MAX_EPOCH_US])
 def test_admission_preserves_full_int64_observation_time(catalog, stamp):
     admit_claim(catalog, "scope", "unknown", stamp)
-    assert current_coverages(catalog, "repo")[0]["observed_at_us"] == stamp
+    assert (
+        current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0][
+            "observed_at_us"
+        ]
+        == stamp
+    )
 
 
 @pytest.mark.parametrize(
@@ -309,7 +332,12 @@ def test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids(ca
     assert len({row["coverage_claim_id"] for row in selected}) == 2
     assert selected[0]["coverage_claim_id"] == -1
     assert selected[0]["details_json"] == original
-    assert current_coverages(catalog, "repo")[0]["coverage_state"] == "conflict"
+    assert (
+        current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0][
+            "coverage_state"
+        ]
+        == "conflict"
+    )
     newer = admit_claim(catalog, "scope", "unknown", 11)
     assert newer is not None and newer != -1
     before = [tuple(row) for row in catalog.execute("SELECT * FROM coverage_claims")]
@@ -371,7 +399,7 @@ def test_explicit_id_conflict_can_only_be_ignored_without_mutation(
 def test_scope_uniqueness_prevents_split_repository_coverage(catalog):
     with pytest.raises(sqlite3.IntegrityError):
         catalog.execute(
-            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('duplicate','repo','git')"
+            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('duplicate','00000000-0000-4000-8000-000000000301','git')"
         )
 
 
@@ -382,7 +410,12 @@ def test_explicit_negative_claim_id_does_not_block_generated_ids(catalog):
     inserted = admit_claim(catalog, "scope", "partial", 1)
     assert inserted is not None
     assert inserted != -1
-    assert current_coverages(catalog, "repo")[0]["coverage_state"] == "partial"
+    assert (
+        current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0][
+            "coverage_state"
+        ]
+        == "partial"
+    )
 
 
 def test_claim_admission_participates_in_caller_rollback(catalog):
@@ -420,7 +453,9 @@ def test_competing_writers_observe_atomic_duplicate_and_timestamp_admission(
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(write, inputs))
     with sqlite3.connect(path, autocommit=True) as connection:
-        component = current_coverages(connection, "repo")[0]
+        component = current_coverages(
+            connection, "00000000-0000-4000-8000-000000000301"
+        )[0]
         assert component["coverage_state"] == expected_state
         assert component["observed_at_us"] == 1
         if expected_count is not None:

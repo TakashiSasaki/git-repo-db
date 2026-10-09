@@ -240,10 +240,10 @@ class TargetQueryService:
                         (row["repository_uuidv4"],),
                     )
                 ],
-                "name_assertions": [
-                    dict(r)
+                "observed_names": [
+                    r["name"]
                     for r in self.s.execute(
-                        "SELECT * FROM repository_name_assertions WHERE repository_uuidv4=? ORDER BY name",
+                        "SELECT name FROM repository_observed_names WHERE repository_uuidv4=? ORDER BY name",
                         (row["repository_uuidv4"],),
                     )
                 ],
@@ -386,9 +386,9 @@ class TargetQueryService:
             )
         return rows[0]
 
-    def _pr_coverage(self, ident):
+    def _pr_coverage(self, ident, options=None):
         if not self.s.one(
-            "SELECT 1 FROM change_request_observations WHERE change_request_id=? LIMIT 1",
+            "SELECT 1 FROM current_change_request_observations WHERE change_request_id=? LIMIT 1",
             (ident,),
         ):
             self._add_missing(
@@ -401,7 +401,7 @@ class TargetQueryService:
             if row["state"] != "complete":
                 self._add_missing("pr", "code_listing_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT c.*,p.repository_uuidv4 FROM code_observations c JOIN change_requests p USING(change_request_id) WHERE c.change_request_id=? ORDER BY c.code_observation_id",
+            f"SELECT c.*,p.repository_uuidv4 FROM {self._fact_relation('code_observations', options or {})} c JOIN change_requests p USING(change_request_id) WHERE c.change_request_id=? ORDER BY c.code_observation_id",
             (ident,),
         ):
             self._check()
@@ -421,7 +421,7 @@ class TargetQueryService:
             if row["state"] != "complete":
                 self._add_missing("pr", "collection_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) ORDER BY d.kind,d.provider_change_request_document_id",
+            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id FROM documents d WHERE d.change_request_id=? AND NOT EXISTS(SELECT 1 FROM current_document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) ORDER BY d.kind,d.provider_change_request_document_id",
             (ident,),
         ):
             self._add_missing("pr", "document_body_missing", **dict(row))
@@ -432,15 +432,29 @@ class TargetQueryService:
             if row["coverage_state"] not in ("complete", "not_applicable"):
                 self._add_missing("pr", "saved_scope_incomplete", **dict(row))
 
+    @staticmethod
+    def _fact_relation(table, options):
+        """Explicit history retains every usable profile without changing selection."""
+        if options.get("observations", "current") == "all":
+            return (
+                f"(SELECT fact.* FROM {table} fact JOIN usable_parsed_results result "
+                "USING(parsed_result_uuidv4))"
+            )
+        return "current_" + table
+
     def _pr(self, options):
         request = self._pr_identity(options)
         ident = request["change_request_id"]
-        self._pr_coverage(ident)
+        self._pr_coverage(ident, options)
         yield {"record_kind": "change_request", **row_fields(request)}
+
+        def relation(table):
+            return self._fact_relation(table, options)
+
         queries = (
             (
                 "observation",
-                "SELECT * FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
+                f"SELECT * FROM {relation('change_request_observations')} WHERE change_request_id=? ORDER BY change_request_observation_id",
             ),
             (
                 "document",
@@ -448,7 +462,7 @@ class TargetQueryService:
             ),
             (
                 "document_observation",
-                "SELECT o.*,b.body,b.byte_length FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.document_observation_id",
+                f"SELECT o.*,b.body,b.byte_length FROM {relation('document_observations')} o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.document_observation_id",
             ),
             (
                 "review",
@@ -456,7 +470,7 @@ class TargetQueryService:
             ),
             (
                 "review_thread",
-                "SELECT * FROM review_threads WHERE change_request_id=? ORDER BY provider_resource_id",
+                f"SELECT * FROM {relation('review_thread_observations')} WHERE change_request_id=? ORDER BY provider_resource_id",
             ),
             (
                 "review_comment",
@@ -464,11 +478,11 @@ class TargetQueryService:
             ),
             (
                 "event",
-                "SELECT * FROM change_request_events WHERE change_request_id=? ORDER BY change_request_event_id",
+                f"SELECT * FROM {relation('change_request_events')} WHERE change_request_id=? ORDER BY change_request_event_id",
             ),
             (
                 "code_observation",
-                "SELECT * FROM code_observations WHERE change_request_id=? ORDER BY code_observation_id",
+                f"SELECT * FROM {relation('code_observations')} WHERE change_request_id=? ORDER BY code_observation_id",
             ),
             (
                 "code_listing",
@@ -476,15 +490,15 @@ class TargetQueryService:
             ),
             (
                 "code_commit",
-                "SELECT i.* FROM code_commits i JOIN code_listings l ON l.code_listing_id=i.code_listing_id WHERE l.change_request_id=? ORDER BY i.code_listing_id,i.fetch_occurrence_id,i.position",
+                f"SELECT i.* FROM {relation('code_commits')} i JOIN code_listings l ON l.code_listing_id=i.code_listing_id WHERE l.change_request_id=? ORDER BY i.code_listing_id,i.fetch_occurrence_id,i.position",
             ),
             (
                 "code_file_change",
-                "SELECT i.* FROM code_file_changes i JOIN code_listings l ON l.code_listing_id=i.code_listing_id WHERE l.change_request_id=? ORDER BY i.code_listing_id,i.fetch_occurrence_id,i.position",
+                f"SELECT i.* FROM {relation('code_file_changes')} i JOIN code_listings l ON l.code_listing_id=i.code_listing_id WHERE l.change_request_id=? ORDER BY i.code_listing_id,i.fetch_occurrence_id,i.position",
             ),
             (
                 "code_acquisition",
-                "SELECT a.* FROM code_acquisitions a JOIN code_observations o ON o.code_observation_id=a.code_observation_id WHERE o.change_request_id=? ORDER BY a.code_observation_id,a.role",
+                f"SELECT a.* FROM code_acquisitions a JOIN {relation('code_observations')} o ON o.code_observation_id=a.code_observation_id WHERE o.change_request_id=? ORDER BY a.code_observation_id,a.role",
             ),
         )
         for kind, sql in queries:
@@ -569,7 +583,7 @@ class TargetQueryService:
                 (repo, repo),
             ):
                 ident = request["change_request_id"]
-                self._pr_coverage(ident)
+                self._pr_coverage(ident, options)
                 base = {
                     "repository_uuidv4": request["repository_uuidv4"],
                     "change_request_id": ident,
@@ -580,7 +594,7 @@ class TargetQueryService:
                     "repository_binding_id": request["repository_binding_id"],
                 }
                 for row in self.s.execute(
-                    "SELECT * FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
+                    f"SELECT * FROM {self._fact_relation('change_request_observations', options)} WHERE change_request_id=? ORDER BY change_request_observation_id",
                     (ident,),
                 ):
                     self._check()
@@ -599,7 +613,7 @@ class TargetQueryService:
                                 "text": text,
                             }
                 for row in self.s.execute(
-                    "SELECT o.change_request_id,o.kind,o.provider_change_request_document_id,lower(hex(o.text_body_sha256)) text_body_sha256,b.body,o.document_observation_id,o.observed_at_us FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.kind,o.provider_change_request_document_id,o.document_observation_id",
+                    f"SELECT o.change_request_id,o.kind,o.provider_change_request_document_id,lower(hex(o.text_body_sha256)) text_body_sha256,b.body,o.document_observation_id,o.observed_at_us,o.parsed_result_uuidv4 FROM {self._fact_relation('document_observations', options)} o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? ORDER BY o.kind,o.provider_change_request_document_id,o.document_observation_id",
                     (ident,),
                 ):
                     self._check()

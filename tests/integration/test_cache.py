@@ -70,7 +70,7 @@ def test_old_obligations(catalog):
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         db.execute(
-            "UPDATE preservation_obligations SET text_done=0 WHERE git_acquisition_id=(SELECT s.git_acquisition_id FROM snapshots s JOIN repositories r ON r.current_snapshot_id=s.snapshot_id WHERE r.repository_uuidv4=?)",
+            "UPDATE preservation_obligations SET text_done=0 WHERE git_acquisition_id=(SELECT s.git_acquisition_id FROM current_snapshots s WHERE s.repository_uuidv4=?)",
             (repos["alpha"],),
         )
     result = run(state, "cache", "gc", "--apply")

@@ -389,3 +389,37 @@ def pr_applicable(store, repository_uuidv4):
             (repository_uuidv4,),
         )
     )
+
+
+def observe_name(
+    store,
+    repository_uuidv4,
+    name,
+    observed_at_us,
+    *,
+    parsed_result_uuidv4=None,
+    provenance=None,
+):
+    ident = str(uuid.uuid4())
+    owner = (
+        store.one(
+            "SELECT repository_uuidv4,source_registration_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
+            (parsed_result_uuidv4,),
+        )
+        if parsed_result_uuidv4
+        else None
+    )
+    store.execute(
+        "INSERT INTO repository_name_observations VALUES(?,?,?,?,?,?,?,?)",
+        (
+            ident,
+            repository_uuidv4,
+            name,
+            observed_at_us,
+            parsed_result_uuidv4,
+            json.dumps(provenance or {}),
+            owner[0] if owner else None,
+            owner[1] if owner else None,
+        ),
+    )
+    return ident

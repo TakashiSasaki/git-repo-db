@@ -236,7 +236,7 @@ class QueryService:
                 if o.get("source") and o["source"] != source["source_id"]:
                     continue
                 latest = self.s.one(
-                    "SELECT asserted_state FROM inventory_observations WHERE source_id=? ORDER BY observed_at_us DESC LIMIT 1",
+                    "SELECT asserted_state FROM current_inventory_observations WHERE source_id=?",
                     (source["source_id"],),
                 )
                 if not latest or latest[0] != "complete":
@@ -244,6 +244,22 @@ class QueryService:
                         "inventory",
                         "inventory_incomplete",
                         source_id=source["source_id"],
+                    )
+        if command in ("repos list", "repos show"):
+            for repo in self.repos(o):
+                for source in self.s.execute(
+                    "SELECT DISTINCT history.source_registration_uuidv4 "
+                    "FROM repository_inventory_observations history "
+                    "WHERE history.repository_uuidv4=? AND NOT EXISTS(SELECT 1 "
+                    "FROM current_inventory_observations selected "
+                    "WHERE selected.source_registration_uuidv4=history.source_registration_uuidv4)",
+                    (repo["repository_uuidv4"],),
+                ):
+                    self.coverage.add(
+                        "inventory",
+                        "inventory_selection_unresolved",
+                        repository_uuidv4=repo["repository_uuidv4"],
+                        source_registration_uuidv4=source[0],
                     )
         if command.startswith("pr ") or command == "search pr":
             from repo_catalog.application.pr_queries import prepare_pr_coverage
@@ -297,20 +313,31 @@ class QueryService:
         return rows[0]
 
     def snapshot(self, repo, o):
-        ident = o.get("snapshot") or repo["current_snapshot_id"]
+        ident = o.get("snapshot")
         row = (
             self.s.one(
-                "SELECT * FROM snapshots WHERE snapshot_id=? AND repository_uuidv4=? AND published=1",
+                "SELECT s.* FROM snapshots s JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
+                "WHERE s.snapshot_id=? AND s.repository_uuidv4=? AND s.published=1",
                 (ident, repo["repository_uuidv4"]),
             )
             if ident
-            else None
+            else self.s.one(
+                "SELECT * FROM current_snapshots WHERE repository_uuidv4=? AND published=1",
+                (repo["repository_uuidv4"],),
+            )
         )
         if not row:
-            if o.get("snapshot"):
-                raise CatalogError("NOT_FOUND", "Published snapshot not found")
+            if ident:
+                raise CatalogError("NOT_FOUND", "Published usable snapshot not found")
             self.coverage.add(
-                "git", "not_collected", repository_uuidv4=repo["repository_uuidv4"]
+                "git",
+                "current_selection_unresolved"
+                if self.s.one(
+                    "SELECT 1 FROM snapshots WHERE repository_uuidv4=? LIMIT 1",
+                    (repo["repository_uuidv4"],),
+                )
+                else "not_collected",
+                repository_uuidv4=repo["repository_uuidv4"],
             )
         return row
 
@@ -343,9 +370,26 @@ class QueryService:
         ):
             raise CatalogError("INVALID_ARGUMENT", "Current scope permits only heads")
         if pr or any(k.startswith("pr-") for k in kinds):
+            code_view = (
+                "eligible_code_observations"
+                if scope == "recorded"
+                else "current_code_observations"
+            )
             rows = self.s.all(
-                "SELECT DISTINCT a.*,p.provider_change_request_number pr_number,o.change_request_observation_id,ca.role origin_role FROM acquisition_roots a JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id AND o.origin_kind='pr_role' JOIN change_requests p ON p.change_request_id=o.change_request_id JOIN code_observations co ON co.change_request_id=p.change_request_id AND co.change_request_observation_id=o.change_request_observation_id JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_uuidv4=? AND a.published=1 AND (? IS NULL OR p.provider_change_request_number=?) AND ((?='recorded' AND ? IS NULL) OR o.change_request_observation_id=p.current_change_request_observation_id) AND co.code_observation_id=(SELECT max(latest.code_observation_id) FROM code_observations latest WHERE latest.change_request_id=p.change_request_id AND latest.change_request_observation_id=o.change_request_observation_id) ORDER BY a.acquisition_root_id,ca.role",
-                (repo["repository_uuidv4"], pr, pr, scope, pr),
+                "SELECT DISTINCT a.*,p.provider_change_request_number pr_number,"
+                "o.change_request_observation_id,ca.role origin_role FROM acquisition_roots a "
+                "JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id AND o.origin_kind='pr_role' "
+                "JOIN change_requests p ON p.change_request_id=o.change_request_id "
+                f"JOIN {code_view} co ON co.change_request_id=p.change_request_id "
+                "AND co.change_request_observation_id=o.change_request_observation_id "
+                "JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id "
+                "AND ca.acquisition_root_id=a.acquisition_root_id "
+                "WHERE a.repository_uuidv4=? AND a.published=1 "
+                "AND (? IS NULL OR p.provider_change_request_number=?) "
+                "AND (?='recorded' OR EXISTS(SELECT 1 FROM current_change_request_observations selected "
+                "WHERE selected.change_request_observation_id=o.change_request_observation_id)) "
+                "ORDER BY a.acquisition_root_id,ca.role",
+                (repo["repository_uuidv4"], pr, pr, scope),
             )
             selected = [
                 {
@@ -373,7 +417,7 @@ class QueryService:
             return selected
         if scope == "recorded":
             rows = self.s.all(
-                "SELECT DISTINCT a.*,o.root_origin_id origin_id,o.snapshot_id,o.raw_ref_name,p.provider_change_request_number pr_number,f.kind ref_kind,ca.role origin_role FROM acquisition_roots a LEFT JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id LEFT JOIN change_requests p ON p.change_request_id=o.change_request_id LEFT JOIN ref_observations f ON f.snapshot_id=o.snapshot_id AND f.raw_ref_name=o.raw_ref_name LEFT JOIN code_observations co ON co.change_request_id=o.change_request_id AND co.change_request_observation_id=o.change_request_observation_id LEFT JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_uuidv4=? AND a.published=1 ORDER BY a.acquisition_root_id,o.root_origin_id,ca.role",
+                "SELECT DISTINCT a.*,o.root_origin_id origin_id,o.snapshot_id,o.raw_ref_name,p.provider_change_request_number pr_number,f.kind ref_kind,ca.role origin_role FROM acquisition_roots a LEFT JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id LEFT JOIN change_requests p ON p.change_request_id=o.change_request_id LEFT JOIN ref_observations f ON f.snapshot_id=o.snapshot_id AND f.raw_ref_name=o.raw_ref_name LEFT JOIN eligible_code_observations co ON co.change_request_id=o.change_request_id AND co.change_request_observation_id=o.change_request_observation_id LEFT JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_uuidv4=? AND a.published=1 AND (o.origin_kind IS NOT 'pr_role' OR co.code_observation_id IS NOT NULL) ORDER BY a.acquisition_root_id,o.root_origin_id,ca.role",
                 (repo["repository_uuidv4"],),
             )
             return [
@@ -665,7 +709,28 @@ class QueryService:
                 )
         elif command in ("repos list", "repos show"):
             for r in self.repos(o):
-                item = {**dict(r), "metadata": json.loads(r["metadata"])}
+                selected = s.one(
+                    "SELECT snapshot_id FROM current_snapshots WHERE repository_uuidv4=?",
+                    (r["repository_uuidv4"],),
+                )
+                item = {
+                    **dict(r),
+                    "metadata": json.loads(r["metadata"]),
+                    "current_snapshot_id": selected[0] if selected else None,
+                    "inventory_observations": [
+                        {
+                            **dict(observation),
+                            "metadata": json.loads(observation["metadata_json"]),
+                        }
+                        for observation in s.execute(
+                            "SELECT * FROM current_repository_inventory_observations "
+                            "WHERE repository_uuidv4=? ORDER BY source_registration_uuidv4,repository_inventory_observation_uuidv4",
+                            (r["repository_uuidv4"],),
+                        )
+                    ],
+                }
+                for observation in item["inventory_observations"]:
+                    observation.pop("metadata_json")
                 if command == "repos show":
                     item["nested_collections"] = {}
                     for name, table in [
@@ -691,7 +756,7 @@ class QueryService:
         elif command in ("snapshots list", "snapshots show"):
             if command.endswith("show"):
                 row = s.one(
-                    "SELECT * FROM snapshots WHERE snapshot_id=? AND published=1",
+                    "SELECT s.* FROM snapshots s JOIN usable_parsed_results r USING(parsed_result_uuidv4) WHERE s.snapshot_id=? AND s.published=1",
                     (o.get("snapshot"),),
                 )
                 if not row:
@@ -700,7 +765,7 @@ class QueryService:
             else:
                 repo = self.single_repo(o)
                 rows = s.all(
-                    "SELECT * FROM snapshots WHERE repository_uuidv4=? AND published=1 ORDER BY generation",
+                    "SELECT s.* FROM snapshots s JOIN usable_parsed_results r USING(parsed_result_uuidv4) WHERE s.repository_uuidv4=? AND s.published=1 ORDER BY s.generation",
                     (repo["repository_uuidv4"],),
                 )
             for r in rows:

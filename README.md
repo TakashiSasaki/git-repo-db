@@ -70,7 +70,7 @@ repo-catalog --state-dir /path/to/state --format json search hash \
   --algorithm raw-sha256 --digest ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 ```
 
-`current`は最新公開snapshotのheads先端、`history`は選択snapshotのheads/tagsから到達する履歴、`recorded`は過去の公開取得rootも含む範囲です。
+`current`は明示選択された公開snapshotのheads先端、`history`は選択snapshotのheads/tagsから到達する履歴、`recorded`は過去の公開取得rootも含む範囲です。
 PR rootは明示選択します。通常照会はDBの読取りだけで完結し、通信・Git実行・自動migration・原文再取得を行いません。
 
 `catalog-text-v1`は全heads先端のUTF-8 strict・NULなし・8 MiB以下の本文を可逆保存します。
@@ -79,23 +79,25 @@ PR rootは明示選択します。通常照会はDBの読取りだけで完結�
 
 保存された coverage は scope ごとの最新観測時刻にある claim 集合から導出します。保存状態は `complete`、`partial`、`unknown`、`not_applicable` です。同時刻の `unknown` は他の状態を妨げませんが、他の状態が複数あれば `conflict` と表示します。新しい `unknown` から古い `complete` へは戻りません。`coverage`、`status`、snapshot の JSON は各 claim とその `details_json` を個別に返します。重複・古い claim の登録は NO-OP で、既存の claim と詳細を変更しません。
 
-## 保存済み開発 v2 データの救出
+## 解析履歴・交換・完全性
 
-停止済みで sidecar のない v2 DB を、新しい保存先へ import します。元の DB/cache を上書きせず、通信も行いません。schema と importer は installed package に含まれています。
+新規 DB を対象とした統合モデルです。旧 DB の移行機能はありません。通常の current は、明示選択した検証済み parser/profile と不変の選択 DAG から導出します。独立した選択が競合した場合は未解決となり、時刻や受信順で一方を選びません。
 
 ```bash
-repo-catalog --state-dir /path/to/new-state import-v2 \
-  --source /path/to/preserved-v2.sqlite3 --source-cache /path/to/preserved-cache
-repo-catalog --state-dir /path/to/new-state db finalize
-repo-catalog --state-dir /path/to/new-state repos list
-repo-catalog --state-dir /path/to/new-state search pr --literal 認証
+repo-catalog --state-dir /path/to/state parser status
+repo-catalog --state-dir /path/to/state parser reparse FETCH_UUID
+repo-catalog --state-dir /path/to/state exchange export --repo REPO_UUID --output repository.json
+repo-catalog --state-dir /path/to/receiver exchange import --input repository.json
+repo-catalog --state-dir /path/to/receiver exchange staging
+repo-catalog --state-dir /path/to/state db verify-payloads
+repo-catalog --state-dir /path/to/state db repair-payload --sha256 HEX --input verified-bytes.bin
+repo-catalog --state-dir /path/to/state db backup --output catalog-backup.sqlite3
+repo-catalog --state-dir /path/to/new-state db restore --input catalog-backup.sqlite3
 ```
 
-中断後は同じ source と state、batch-size で `import-v2` を再実行します。`--max-batches` で処理を区切れます。typed archive、ID map、変換の帰属付き診断は `import-v2/workspace.sqlite3` に、正規化されたデータと観測履歴は `catalog.sqlite3` に保存します。workspaceはfinalize完了までは必要ですが、その後の通常運用・backup/restoreはworkspaceに依存しません。欠けた本文や不明な current 選択は partial として残し、重要な identity/owner 破損や import 未完了は finalize を拒否します。
+再解析では取得 UID と取得時刻を保持し、新しい解析結果を追加します。通常参照へ切り替える場合は明示的な選択が必要です。交換単位は一つの repository と必要な依存・payload bytes です。Source 全体の inventory、ローカル trust、隔離状態、運用設定は通常の交換へ含めません。
 
-最初の明示的な `sync` では、scope と取得証拠に応じて既存データを再利用・条件付き検証し、不明な cursor や不足した一覧は対象を絞って更新します。import の replay は新しい観測時刻や watermark を作りません。通常照会は元 import workspace の path を必要としません。
-
-機能と検証結果の一覧は [runtime handoff](docs/schema-hardening/runtime-handoff.md) を参照してください。実ユーザーのデータ移行・active catalog 切り替えは別作業です。
+破損した物理 bytes は永続診断と隔離で扱い、明示修復だけが隔離を解除します。バックアップは隔離済み bytes と診断も保持します。復元先は未作成のパスを指定し、失敗した stage は保存します。実装・判断対応・検証結果は [統合 handoff](docs/model-integration-handoff.md)、[独立監査](docs/model-integration-audit.md)、[判断対応表](docs/model-integration-status.md) を参照してください。
 
 ## テスト・再現demo
 

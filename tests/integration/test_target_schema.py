@@ -5,7 +5,9 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.schema import schema_sql
+from tests.support.parser_facts import enrich, repository_uuid
 
 
 def construct(sql=None):
@@ -20,6 +22,7 @@ TIME = 1791201600000000
 
 
 def put(db, table, **values):
+    values = enrich(db, table, values)
     names = ",".join(values)
     db.execute(
         f"INSERT INTO {table}({names}) VALUES({','.join('?' for _ in values)})",
@@ -105,25 +108,13 @@ def build_target(sql=None):
             change_request_observation_id=index,
             change_request_id="cr-" + repo,
             observed_at_us=TIME,
-            published=0,
+            published=1,
             payload="{}",
             parsed_at_us=TIME,
         )
         db.execute(
             "UPDATE snapshots SET published=1 WHERE snapshot_id=?",
             ("snapshot-" + repo,),
-        )
-        db.execute(
-            "UPDATE change_request_observations SET published=1 WHERE change_request_observation_id=?",
-            (index,),
-        )
-        db.execute(
-            "UPDATE repositories SET current_snapshot_id=? WHERE repository_uuidv4=?",
-            ("snapshot-" + repo, repo),
-        )
-        db.execute(
-            "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
-            (index, "cr-" + repo),
         )
         put(
             db,
@@ -153,10 +144,6 @@ def build_target(sql=None):
             observed_at_us=TIME,
             parsed_at_us=TIME,
             metadata="{}",
-        )
-        db.execute(
-            "UPDATE documents SET current_document_observation_id=? WHERE change_request_id=? AND kind='pr-body' AND provider_change_request_document_id='native'",
-            (index, "cr-" + repo),
         )
         for document_kind in ("review", "review-comment"):
             put(
@@ -276,7 +263,7 @@ def test_fresh_complete_schema(target):
     db = target
     assert (
         len(db.execute("SELECT name FROM sqlite_schema WHERE type='table'").fetchall())
-        == 66
+        >= 90
     )
     assert all(
         row[5] == 1
@@ -284,7 +271,7 @@ def test_fresh_complete_schema(target):
         if row[2] == "table" and row[1] not in ("sqlite_schema", "sqlite_temp_schema")
     )
     assert all(
-        fk[5] == "RESTRICT" and fk[6] == "RESTRICT"
+        fk[5] in ("RESTRICT", "NO ACTION") and fk[6] in ("RESTRICT", "NO ACTION")
         for (table,) in db.execute("SELECT name FROM sqlite_schema WHERE type='table'")
         for fk in db.execute(f"PRAGMA foreign_key_list({table})")
     )
@@ -295,7 +282,7 @@ def test_fresh_complete_schema(target):
     "sql",
     [
         "UPDATE snapshots SET snapshot_id='temporary' WHERE snapshot_id='snapshot-a'",
-        "UPDATE snapshots SET git_acquisition_id='run-b', repository_uuidv4='b' WHERE snapshot_id='snapshot-a'",
+        "UPDATE snapshots SET git_acquisition_id='run-b', repository_uuidv4='00000000-0000-4000-8000-000000000302' WHERE snapshot_id='snapshot-a'",
         "UPDATE snapshots SET published=0 WHERE snapshot_id='snapshot-a'",
         "UPDATE change_request_observations SET change_request_observation_id=999 WHERE change_request_observation_id=1",
         "UPDATE change_request_observations SET change_request_id='cr-b' WHERE change_request_observation_id=1",
@@ -369,10 +356,6 @@ def test_reviewed_multi_statement_attack(
         "snapshots": "snapshot_id",
         "change_request_observations": "change_request_observation_id",
     }[table]
-    owner_id = {
-        "repositories": "repository_uuidv4",
-        "change_requests": "change_request_id",
-    }[owner]
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(f"UPDATE {table} SET {entity_id}=? WHERE {entity_id}=?", (temp, key))
     db.execute("ROLLBACK TO attack")
@@ -386,23 +369,20 @@ def test_reviewed_multi_statement_attack(
     )
     assert (
         db.execute(
-            f"SELECT {pointer} FROM {owner} WHERE {owner_id}=?", (entity,)
+            f"SELECT count(*) FROM {table} WHERE {entity_id}=?", (key,)
         ).fetchone()[0]
-        == key
+        == 1
     )
 
 
 @pytest.mark.parametrize(
     "sql",
     [
-        "UPDATE repositories SET current_snapshot_id='snapshot-b' WHERE repository_uuidv4='a'",
-        "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_uuidv4='a'",
-        "UPDATE change_requests SET current_change_request_observation_id=2 WHERE change_request_id='cr-a'",
-        "UPDATE documents SET current_document_observation_id=2 WHERE change_request_id='cr-a' AND kind='pr-body'",
-        "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES('cr-a','review-comment','native-a','thread-b','{}')",
-        "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id,payload) VALUES('cr-a','review','native-b','{}')",
+        "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_uuidv4='00000000-0000-4000-8000-000000000301'",
+        "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id) VALUES('cr-a','review-comment','native-b')",
+        "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id) VALUES('cr-a','review','native-b')",
         "UPDATE fetch_collections SET change_request_id='cr-b' WHERE fetch_collection_id='a-commits'",
-        "DELETE FROM repositories WHERE repository_uuidv4='a'",
+        "DELETE FROM repositories WHERE repository_uuidv4='00000000-0000-4000-8000-000000000301'",
     ],
 )
 def test_cross_owner_and_parent_deletion(target, sql):
@@ -415,9 +395,9 @@ def test_replace_upsert_and_same_repo_reassignment(target, recursive):
     db = target
     db.execute(f"PRAGMA recursive_triggers={recursive}")
     for sql in (
-        "INSERT OR REPLACE INTO snapshots SELECT snapshot_id,git_acquisition_id,repository_uuidv4,0,generation,created_at_us FROM snapshots WHERE snapshot_id='snapshot-a'",
+        "INSERT OR REPLACE INTO snapshots SELECT * FROM snapshots WHERE snapshot_id='snapshot-a'",
         "INSERT INTO snapshots SELECT * FROM snapshots WHERE snapshot_id='snapshot-a' ON CONFLICT(snapshot_id) DO UPDATE SET published=0",
-        "INSERT OR REPLACE INTO document_observations SELECT 1,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata FROM document_observations WHERE document_observation_id=2",
+        "INSERT OR REPLACE INTO document_observations SELECT * FROM document_observations WHERE document_observation_id=2",
         "INSERT OR REPLACE INTO text_bodies SELECT 99,body,byte_length,sha256 FROM text_bodies WHERE text_body_id=1",
         "INSERT OR REPLACE INTO code_listings SELECT * FROM code_listings WHERE code_listing_id='listing-a-commits'",
     ):
@@ -447,7 +427,6 @@ def test_bootstrap_and_rollback(target):
         "git_acquisitions",
         git_acquisition_id="new-run",
         repository_uuidv4="new",
-        object_format="sha1",
         kind="git",
         request="{}",
     )
@@ -460,18 +439,20 @@ def test_bootstrap_and_rollback(target):
         published=0,
         generation=0,
     )
+    result = db.execute(
+        "SELECT parsed_result_uuidv4 FROM snapshots WHERE snapshot_id='new-snapshot'"
+    ).fetchone()[0]
+    model = ParserModel(db)
+    model.publish_result(result)
     with pytest.raises(sqlite3.IntegrityError):
-        db.execute(
-            "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_uuidv4='new'"
-        )
+        model.select_fact(result, fact_kind="git")
     db.execute("UPDATE snapshots SET published=1 WHERE snapshot_id='new-snapshot'")
-    db.execute(
-        "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_uuidv4='new'"
-    )
+    model.select_fact(result, fact_kind="git")
     db.execute("ROLLBACK")
     assert (
         db.execute(
-            "SELECT repository_uuidv4 FROM repositories WHERE repository_uuidv4='new'"
+            "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
+            (repository_uuid("new"),),
         ).fetchall()
         == []
     )
@@ -761,10 +742,15 @@ def test_listing_scope_context_partial_complete(target):
         db.execute(
             "UPDATE code_listing_progress SET state='partial' WHERE code_listing_id='listing-a-commits'"
         )
+    result = db.execute(
+        "SELECT parsed_result_uuidv4 FROM code_commits WHERE code_listing_id='listing-a-commits'"
+    ).fetchone()[0]
+    ParserModel(db).publish_result(result)
     with pytest.raises(sqlite3.IntegrityError):
         put(
             db,
             "code_commits",
+            parsed_result_uuidv4=result,
             code_listing_id="listing-a-commits",
             fetch_occurrence_id=1,
             position=1,

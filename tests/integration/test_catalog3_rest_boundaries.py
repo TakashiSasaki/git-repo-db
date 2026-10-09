@@ -16,9 +16,12 @@ def _pr(store):
         store.execute(
             "INSERT INTO change_requests(change_request_id,repository_uuidv4,"
             "repository_binding_id,change_request_kind,provider_change_request_number) "
-            "VALUES('repo:41','repo','binding','pull_request',41)"
+            "VALUES('00000000-0000-4000-8000-000000000301:41','00000000-0000-4000-8000-000000000301','binding','pull_request',41)"
         )
-    return {"change_request_id": "repo:41", "provider_change_request_number": 41}
+    return {
+        "change_request_id": "00000000-0000-4000-8000-000000000301:41",
+        "provider_change_request_number": 41,
+    }
 
 
 def _job(store):

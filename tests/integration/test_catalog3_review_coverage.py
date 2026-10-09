@@ -13,12 +13,12 @@ from tests.support.github_runtime import sync
 def start_threads(store):
     with store.transaction():
         if not store.one(
-            "SELECT 1 FROM change_requests WHERE change_request_id='repo:41'"
+            "SELECT 1 FROM change_requests WHERE change_request_id='00000000-0000-4000-8000-000000000301:41'"
         ):
             store.execute(
                 "INSERT INTO change_requests(change_request_id,repository_uuidv4,"
                 "repository_binding_id,change_request_kind,provider_change_request_number) "
-                "VALUES('repo:41','repo','binding','pull_request',41)"
+                "VALUES('00000000-0000-4000-8000-000000000301:41','00000000-0000-4000-8000-000000000301','binding','pull_request',41)"
             )
     job = JobService(store).create("sync", {"kind": "pr"})
     store.expected_attempt = 1
@@ -31,7 +31,10 @@ def collect_threads(store, repo, job):
     try:
         return collector.threads(
             repo,
-            {"change_request_id": "repo:41", "provider_change_request_number": 41},
+            {
+                "change_request_id": "00000000-0000-4000-8000-000000000301:41",
+                "provider_change_request_number": 41,
+            },
             job,
         )
     finally:
@@ -42,7 +45,7 @@ def selected_thread(store, *, resource="THREAD41-0", limit=1000):
     return QueryService(store.path).query(
         "pr thread",
         {
-            "repo": "repo",
+            "repo": "00000000-0000-4000-8000-000000000301",
             "provider_change_request_number": 41,
             "provider_resource_id": resource,
         },
@@ -60,7 +63,7 @@ def assert_thread_partial(store, *, count):
         {
             "kind": "pr",
             "reason": "thread_listing_incomplete",
-            "change_request_id": "repo:41",
+            "change_request_id": "00000000-0000-4000-8000-000000000301:41",
             "provider_resource_id": "THREAD41-0",
         }
     ]
@@ -294,10 +297,17 @@ def test_timeline_failure_is_outside_document_scope(github_runtime):
     with store.transaction():
         for kind in ("timeline", "pr-timeline"):
             store.coverage(
-                "repo", kind, "partial", change_request_id="repo:41", observed_at_us=1
+                "00000000-0000-4000-8000-000000000301",
+                kind,
+                "partial",
+                change_request_id="00000000-0000-4000-8000-000000000301:41",
+                observed_at_us=1,
             )
     query = QueryService(store.path)
-    options = {"repo": "repo", "provider_change_request_number": 41}
+    options = {
+        "repo": "00000000-0000-4000-8000-000000000301",
+        "provider_change_request_number": 41,
+    }
     for command in ("pr documents", "search pr"):
         result = query.query(command, {**options, "literal": "body-marker"})
         assert result.status == "complete"

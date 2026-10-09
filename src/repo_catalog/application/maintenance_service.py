@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import shutil
@@ -12,7 +13,13 @@ import uuid
 from pathlib import Path
 
 from repo_catalog import __version__
+from repo_catalog.adapters.filesystem.atomic_publish import (
+    fsync_directory,
+    publish_directory,
+    publish_file,
+)
 from repo_catalog.adapters.filesystem.locks import FileLock
+from repo_catalog.adapters.sqlite.cas_integrity import repair_payload, verify_all
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application import repository_identity as identity
 from repo_catalog.config import DEFAULTS, serialize, validate
@@ -367,85 +374,111 @@ class MaintenanceService:
     def database(self, action, args):
         if action == "restore":
             return self.restore(args.input)
-        if action == "finalize":
-            from repo_catalog.application.finalization import finalize_catalog
-
-            with (
-                FileLock(self.path / "locks/writer.lock"),
-                Store(self.path, allow_building=True) as s,
-            ):
-                report = finalize_catalog(s)
-                return (
-                    report
-                    if isinstance(report, Result)
-                    else Result(report, catalog=s.revision())
-                )
         with (
             FileLock(self.path / "locks/writer.lock"),
             Store(self.path) as s,
         ):
             if action == "check":
                 return self.check(s, args.full)
-            if action == "backup":
-                output = Path(args.output).expanduser().resolve()
-                if (
-                    output.exists()
-                    or output.with_name(output.name + ".manifest.json").exists()
-                    or output == s.db_path
-                ):
-                    raise CatalogError(
-                        "INVALID_ARGUMENT", "Backup output must be a new file"
+            if action == "verify-payloads":
+                report = verify_all(s.connection)
+                result = Result(report, catalog=s.revision())
+                for failure in report["corrupt"]:
+                    result.coverage.add(
+                        "payloads",
+                        "physical_corruption",
+                        sha256=failure["expected_sha256"],
                     )
-                output.parent.mkdir(parents=True, exist_ok=True)
-                stage = output.with_name(output.name + "." + uuid.uuid4().hex + ".tmp")
-                try:
-                    target = sqlite3.connect(stage)
-                    target.execute("PRAGMA foreign_keys=ON")
-                    target.execute("PRAGMA recursive_triggers=ON")
-                    try:
-                        s.connection.backup(target)
-                    finally:
-                        target.close()
-                    conn = sqlite3.connect(stage.as_uri() + "?mode=ro", uri=True)
-                    conn.execute("PRAGMA foreign_keys=ON")
-                    conn.execute("PRAGMA recursive_triggers=ON")
-                    try:
-                        if (
-                            conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok"
-                            or conn.execute("PRAGMA foreign_key_check").fetchall()
-                        ):
-                            raise CatalogError(
-                                "BACKUP_INTEGRITY", "Backup verification failed"
-                            )
-                    finally:
-                        conn.close()
-                    import hashlib
+                if report["corrupt"]:
+                    result.status = "partial"
+                return result
+            if action == "repair-payload":
+                from repo_catalog.domain.payload import PayloadRef
 
-                    digest = hashlib.file_digest(stage.open("rb"), "sha256").hexdigest()
-                    os.rename(stage, output)
-                    manifest = {
-                        "schema_version": s.one(
-                            "SELECT schema_version FROM database_identity"
-                        )[0],
-                        "catalog": s.revision(),
-                        "sha256": digest,
-                        "configuration": s.config,
-                    }
-                    output.with_name(output.name + ".manifest.json").write_text(
-                        json.dumps(manifest, indent=2)
-                    )
-                    return Result(
-                        {"output": str(output), "manifest": manifest},
-                        catalog=s.revision(),
-                    )
-                finally:
-                    if stage.exists():
-                        stage.unlink()
+                reference = PayloadRef.from_json(
+                    {"representation": "decoded_api", "sha256": args.sha256}
+                )
+                data = repair_payload(
+                    s.connection, reference.sha256, Path(args.input).read_bytes()
+                )
+                return Result(data, catalog=s.revision())
+            if action == "backup":
+                return self.backup(s, args.output)
         raise CatalogError("INVALID_ARGUMENT", "Unknown database operation")
 
-    def check(self, s, full=False):
-        from repo_catalog.application.finalization import check_catalog
+    def backup(self, s, output_file):
+        """Verify both source and copy; publish a non-overwriting file pair."""
+        output = Path(output_file).expanduser().resolve()
+        manifest_path = output.with_name(output.name + ".manifest.json")
+        if output.exists() or manifest_path.exists() or output == s.db_path:
+            raise CatalogError(
+                "INVALID_ARGUMENT", "Backup output and manifest must be new files"
+            )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        verify_all(s.connection)
+        stage = Path(
+            tempfile.mkdtemp(prefix=".repo-catalog-backup-", dir=output.parent)
+        )
+        database = stage / "catalog.sqlite3"
+        try:
+            target = sqlite3.connect(database)
+            try:
+                s.connection.backup(target)
+            finally:
+                target.close()
+            conn = sqlite3.connect(
+                database.as_uri() + "?mode=ro", uri=True, autocommit=True
+            )
+            try:
+                if (
+                    conn.execute("PRAGMA integrity_check").fetchall() != [("ok",)]
+                    or conn.execute("PRAGMA foreign_key_check").fetchall()
+                ):
+                    raise CatalogError(
+                        "BACKUP_INTEGRITY", "Backup SQLite verification failed"
+                    )
+                report = verify_all(conn, diagnose=False)
+                if report["unexplained"]:
+                    raise CatalogError(
+                        "BACKUP_INTEGRITY",
+                        "Unexplained corruption in backup copy",
+                        report,
+                    )
+            finally:
+                conn.close()
+            with database.open("rb") as stream:
+                digest = hashlib.file_digest(stream, "sha256").hexdigest()
+            manifest = {
+                "schema_version": s.one("SELECT schema_version FROM database_identity")[
+                    0
+                ],
+                "catalog": s.revision(),
+                "sha256": digest,
+                "configuration": s.config,
+            }
+            staged_manifest = stage / "manifest.json"
+            staged_manifest.write_text(json.dumps(manifest, indent=2))
+            for path in (database, staged_manifest):
+                with path.open("rb") as stream:
+                    os.fsync(stream.fileno())
+            fsync_directory(stage)
+            # A completed pair is usable. If publication is interrupted after
+            # the first link, that incomplete destination is deliberately kept.
+            publish_file(database, output)
+            publish_file(staged_manifest, manifest_path)
+            shutil.rmtree(stage)
+            return Result(
+                {"output": str(output), "manifest": manifest}, catalog=s.revision()
+            )
+        except BaseException as error:
+            if isinstance(error, CatalogError):
+                error.details["stage"] = str(stage)
+            raise
 
+    def check(self, s, full=False):
+        from repo_catalog.application.catalog_validation import check_catalog
+
+        payloads = verify_all(s.connection) if full else None
         checks = {
             "owner_evidence": check_catalog(s),
             "sqlite": [
@@ -458,7 +491,7 @@ class MaintenanceService:
             "dangling_publications": [
                 dict(r)
                 for r in s.all(
-                    "SELECT r.repository_uuidv4 FROM repositories r LEFT JOIN snapshots sn ON sn.snapshot_id=r.current_snapshot_id WHERE r.current_snapshot_id IS NOT NULL AND (sn.snapshot_id IS NULL OR sn.repository_uuidv4!=r.repository_uuidv4 OR sn.published!=1)"
+                    "SELECT sn.repository_uuidv4 FROM current_snapshots sn LEFT JOIN repositories r ON r.repository_uuidv4=sn.repository_uuidv4 WHERE r.repository_uuidv4 IS NULL OR sn.published!=1"
                 )
             ],
             "unfinished_published_runs": [
@@ -474,14 +507,10 @@ class MaintenanceService:
                     "SELECT r.repository_uuidv4 FROM repositories r LEFT JOIN repository_endpoints e ON e.repository_endpoint_id=r.preferred_repository_endpoint_id WHERE r.preferred_repository_endpoint_id IS NOT NULL AND (e.repository_endpoint_id IS NULL OR e.repository_uuidv4!=r.repository_uuidv4)"
                 )
             ],
-            "change_request_current": [
-                dict(r)
-                for r in s.all(
-                    "SELECT p.change_request_id FROM change_requests p LEFT JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.current_change_request_observation_id IS NOT NULL AND (o.change_request_observation_id IS NULL OR o.change_request_id!=p.change_request_id OR o.published!=1)"
-                )
-            ],
             "index": {"status": "passed", "generations": []},
         }
+        if payloads is not None:
+            checks["payloads"] = payloads
         for row in s.all("SELECT * FROM index_generations WHERE state='ready'"):
             try:
                 with s.transaction():
@@ -512,7 +541,6 @@ class MaintenanceService:
                     "dangling_publications",
                     "unfinished_published_runs",
                     "repository_endpoints",
-                    "change_request_current",
                 )
             )
             or checks["index"]["status"] == "failed"
@@ -520,25 +548,30 @@ class MaintenanceService:
             raise CatalogError(
                 "INTEGRITY_ERROR", "Catalog integrity check failed", checks
             )
-        return Result({"checks": checks}, catalog=s.revision())
+        result = Result({"checks": checks}, catalog=s.revision())
+        for failure in payloads["corrupt"] if payloads else ():
+            result.coverage.add(
+                "payloads", "physical_corruption", sha256=failure["expected_sha256"]
+            )
+            result.status = "partial"
+        return result
 
     def restore(self, input_file):
         source = Path(input_file).expanduser().resolve()
         manifest_path = source.with_name(source.name + ".manifest.json")
         if not source.is_file() or not manifest_path.is_file():
             raise CatalogError("NOT_FOUND", "Backup and manifest are required")
-        if self.path.exists() and any(self.path.iterdir()):
-            raise CatalogError(
-                "INVALID_ARGUMENT", "Restore destination must be new or empty"
-            )
-        import hashlib
-
-        manifest = json.loads(manifest_path.read_text())
-        with source.open("rb") as stream:
-            digest = hashlib.file_digest(stream, "sha256").hexdigest()
-        if digest != manifest["sha256"]:
-            raise CatalogError("BACKUP_INTEGRITY", "Backup checksum mismatch")
-        cfg = validate(manifest["configuration"])
+        # An existing path, even an empty directory, is never taken over. The
+        # final race is decided by renameat2(RENAME_NOREPLACE), not this check.
+        if self.path.exists():
+            raise CatalogError("INVALID_ARGUMENT", "Restore destination must not exist")
+        try:
+            manifest = json.loads(manifest_path.read_text())
+            cfg = validate(manifest["configuration"])
+            expected_digest = manifest["sha256"]
+            source_catalog = manifest["catalog"]
+        except (KeyError, ValueError, TypeError) as error:
+            raise CatalogError("BACKUP_INTEGRITY", "Invalid backup manifest") from error
         self.path.parent.mkdir(parents=True, exist_ok=True)
         stage = Path(
             tempfile.mkdtemp(prefix=".repo-catalog-restore-", dir=self.path.parent)
@@ -547,8 +580,41 @@ class MaintenanceService:
             (stage / "catalog.toml").write_text(serialize(cfg))
             for directory in ("cache", "work", "quarantine", "locks", "logs"):
                 (stage / directory).mkdir(mode=0o700)
-            shutil.copyfile(source, stage / cfg["database"]["filename"])
-            with Store(stage) as s:
+            staged_database = (stage / cfg["database"]["filename"]).resolve()
+            if (
+                not staged_database.is_relative_to(stage)
+                or staged_database == stage / "catalog.toml"
+            ):
+                raise CatalogError(
+                    "BACKUP_INTEGRITY", "Backup database path escapes the restore stage"
+                )
+            staged_database.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, staged_database)
+            # Hash the actual copied bytes, never a path checked before copy.
+            with staged_database.open("rb") as stream:
+                digest = hashlib.file_digest(stream, "sha256").hexdigest()
+            if digest != expected_digest:
+                raise CatalogError("BACKUP_INTEGRITY", "Backup checksum mismatch")
+            with FileLock(stage / "locks/writer.lock"), Store(stage) as s:
+                if (
+                    manifest.get("schema_version")
+                    != s.one("SELECT schema_version FROM database_identity")[0]
+                    or source_catalog != s.revision()
+                ):
+                    raise CatalogError(
+                        "BACKUP_INTEGRITY",
+                        "Backup manifest identity differs from copied database",
+                    )
+                report = verify_all(s.connection)
+                if any(
+                    not failure["previously_quarantined"]
+                    for failure in report["corrupt"]
+                ):
+                    raise CatalogError(
+                        "BACKUP_INTEGRITY",
+                        "Unexplained corruption in restored copy",
+                        report,
+                    )
                 self.check(s)
                 with s.transaction():
                     s.execute(
@@ -574,21 +640,30 @@ class MaintenanceService:
                 json.dumps(
                     {
                         "backup": str(source),
-                        "source_catalog": manifest["catalog"],
+                        "source_catalog": source_catalog,
                         "sha256": digest,
                     }
                 )
             )
-            if self.path.exists():
-                self.path.rmdir()
-            os.rename(stage, self.path)
+            for path in (
+                staged_database,
+                stage / "catalog.toml",
+                stage / "restore-origin.json",
+            ):
+                with path.open("rb") as stream:
+                    os.fsync(stream.fileno())
+            fsync_directory(stage)
+            publish_directory(stage, self.path)
             return Result(
-                {"state_dir": str(self.path), "source_catalog": manifest["catalog"]},
+                {"state_dir": str(self.path), "source_catalog": source_catalog},
                 catalog=revision,
             )
-        finally:
-            if stage.exists():
-                shutil.rmtree(stage)
+        except BaseException as error:
+            # Every attempt keeps its own evidence; retries always create a
+            # fresh stage from the backup, including after interruption.
+            if isinstance(error, CatalogError):
+                error.details["stage"] = str(stage)
+            raise
 
     def hydrate(self, content_id, repo_selector, token):
         from repo_catalog.adapters.git.importer import GitImporter

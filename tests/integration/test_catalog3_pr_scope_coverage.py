@@ -2,9 +2,11 @@
 
 import hashlib
 import json
+import uuid
 
 import pytest
 
+from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application import pr_queries
 from repo_catalog.application.maintenance_service import MaintenanceService
@@ -12,14 +14,54 @@ from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from tests.support.cli import run
+from tests.support.parser_facts import enrich
 
 
-def add_document(store, pr, document_id, body, *, kind="pr-body"):
-    key = (pr, kind, document_id)
-    store.execute(
-        "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id,deleted,metadata) VALUES(?,?,?,0,'{}')",
-        key,
+def add_fact(store, table, **values):
+    values = enrich(store.connection, table, values)
+    result = values["parsed_result_uuidv4"]
+    ident = store.execute(
+        f"INSERT INTO {table}({','.join(values)}) VALUES({','.join('?' for _ in values)})",
+        tuple(values.values()),
+    ).lastrowid
+    model = ParserModel(store.connection)
+    scope = {"change_request_id": values.get("change_request_id")}
+    if table == "document_observations":
+        scope.update(
+            fact_kind=values["kind"],
+            kind=values["kind"],
+            provider_change_request_document_id=values[
+                "provider_change_request_document_id"
+            ],
+        )
+    elif table == "review_thread_observations":
+        scope.update(
+            fact_kind="review-thread",
+            provider_resource_id=values["provider_resource_id"],
+        )
+    else:
+        scope["fact_kind"] = {
+            "code_observations": "code",
+            "change_request_observations": "change-request",
+            "snapshots": "git",
+        }[table]
+    profile = store.one(
+        "SELECT parser_profile_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
+        (result,),
+    )[0]
+    model.publish_result(result)
+    model.ensure_scope_profile(
+        profile,
+        repository_uuidv4=values["repository_uuidv4"],
+        fact_kind=scope["fact_kind"],
     )
+    model.select_fact(result, **scope)
+    return ident
+
+
+def add_document(store, pr, document_id, body, *, kind="pr-body", thread=None):
+    key = (pr, kind, document_id)
+    store.execute("INSERT INTO documents VALUES(?,?,?)", key)
     if body is not None:
         encoded = body.encode("utf8")
         digest = hashlib.sha256(encoded).digest()
@@ -27,30 +69,35 @@ def add_document(store, pr, document_id, body, *, kind="pr-body"):
             "INSERT INTO text_bodies(body,byte_length,sha256) VALUES(?,?,?)",
             (body, len(encoded), digest),
         )
-        observation = store.execute(
-            "INSERT INTO document_observations(change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,metadata) VALUES(?,?,?,?,0,0,'{}')",
-            (*key, digest),
-        ).lastrowid
-        store.execute(
-            "UPDATE documents SET current_document_observation_id=? WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
-            (observation, *key),
+        add_fact(
+            store,
+            "document_observations",
+            change_request_id=pr,
+            kind=kind,
+            provider_change_request_document_id=document_id,
+            text_body_sha256=digest,
+            observed_at_us=0,
+            parsed_at_us=0,
+            metadata="{}",
+            review_thread_provider_resource_id=thread,
         )
     return key
 
 
 def add_pr(store, repository, binding, number, *, kind="pull_request"):
-    pr = f"{repository}:{number}:{kind}"
+    pr = f"repo:{number}:{kind}"
     store.execute(
         "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,?,?)",
         (pr, repository, binding, kind, number),
     )
-    observation = store.execute(
-        "INSERT INTO change_request_observations(change_request_id,observed_at_us,published,payload,parsed_at_us) VALUES(?,0,1,?,0)",
-        (pr, json.dumps({"title": "needle", "state": "open", "merged": False})),
-    ).lastrowid
-    store.execute(
-        "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
-        (observation, pr),
+    add_fact(
+        store,
+        "change_request_observations",
+        change_request_id=pr,
+        observed_at_us=0,
+        published=1,
+        payload=json.dumps({"title": "needle", "state": "open", "merged": False}),
+        parsed_at_us=0,
     )
     add_document(store, pr, str(number), f"needle body for {pr}")
     for coverage_kind in ("pr-documents", "pr-code"):
@@ -72,16 +119,21 @@ def pr_catalog(tmp_path):
         with store.transaction():
             namespace = add_instance(store, "github", "synthetic")
             store.execute(
-                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic/repo','{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('00000000-0000-4000-8000-000000000401','synthetic/repo','{}')"
             )
-            bind(store, "repo", namespace, "1")
+            bind(store, "00000000-0000-4000-8000-000000000401", namespace, "1")
             binding = store.one(
-                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='00000000-0000-4000-8000-000000000401'"
             )[0]
             for number in (1, 2, 3):
-                add_pr(store, "repo", binding, number)
+                add_pr(store, "00000000-0000-4000-8000-000000000401", binding, number)
             for kind in ("pr", "pr-documents"):
-                store.coverage("repo", kind, "complete", observed_at_us=0)
+                store.coverage(
+                    "00000000-0000-4000-8000-000000000401",
+                    kind,
+                    "complete",
+                    observed_at_us=0,
+                )
             store.publish()
         yield state, store
         assert not store.all("PRAGMA foreign_key_check")
@@ -92,7 +144,7 @@ def add_gap(store, kind, source, *, number=1, coverage_state="partial"):
     pr = f"repo:{number}:pull_request"
     if source == "claim":
         store.coverage(
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             kind,
             coverage_state,
             change_request_id=pr,
@@ -106,10 +158,10 @@ def add_gap(store, kind, source, *, number=1, coverage_state="partial"):
         "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('query-job',1,'failed',0,'{}')"
     )
     store.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('query-resume','repo','{}','test','test','proven')"
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('query-resume','00000000-0000-4000-8000-000000000401','{}','test','test','proven')"
     )
     store.execute(
-        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('query-collection','repo',?,?,'query-resume',1)",
+        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('query-collection','00000000-0000-4000-8000-000000000401',?,?,'query-resume',1)",
         (pr, kind),
     )
     store.execute(
@@ -125,15 +177,38 @@ def test_document_queries_ignore_code_listing_gaps(pr_catalog, kind, source):
         add_gap(store, kind, source)
         store.publish()
     for command in (
-        ("pr", "documents", "--repo", "repo", "--provider-change-request-number", 1),
-        ("search", "pr", "--repo", "repo", "--literal", "needle"),
+        (
+            "pr",
+            "documents",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--provider-change-request-number",
+            1,
+        ),
+        (
+            "search",
+            "pr",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--literal",
+            "needle",
+        ),
     ):
         result = run(state, *command)
         assert result["coverage"]["complete_for_requested_scope"] is True
         assert result["coverage"]["missing"] == []
         assert result["data"]["items"]
     # The same saved gap is still relevant to the combined PR/code scope.
-    result = run(state, "pr", "list", "--repo", "repo", "--limit", 1, expected=3)
+    result = run(
+        state,
+        "pr",
+        "list",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--limit",
+        1,
+        expected=3,
+    )
     assert result["coverage"]["complete_for_requested_scope"] is False
 
 
@@ -145,8 +220,22 @@ def test_document_queries_retain_document_gaps(pr_catalog, kind, source):
         add_gap(store, kind, source)
         store.publish()
     for command in (
-        ("pr", "documents", "--repo", "repo", "--provider-change-request-number", 1),
-        ("search", "pr", "--repo", "repo", "--literal", "needle"),
+        (
+            "pr",
+            "documents",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--provider-change-request-number",
+            1,
+        ),
+        (
+            "search",
+            "pr",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--literal",
+            "needle",
+        ),
     ):
         result = run(state, *command, expected=3)
         assert result["coverage"]["complete_for_requested_scope"] is False
@@ -167,7 +256,7 @@ def test_code_filter_requires_code_coverage_even_without_results(pr_catalog, sel
         "search",
         "pr",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--literal",
         "needle",
         *selector,
@@ -183,8 +272,15 @@ def test_code_filter_requires_code_coverage_even_without_results(pr_catalog, sel
 @pytest.mark.parametrize(
     "command",
     [
-        ("pr", "list", "--repo", "repo"),
-        ("search", "pr", "--repo", "repo", "--literal", "needle"),
+        ("pr", "list", "--repo", "00000000-0000-4000-8000-000000000401"),
+        (
+            "search",
+            "pr",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--literal",
+            "needle",
+        ),
     ],
 )
 def test_full_requested_scope_coverage_is_identical_on_every_page(pr_catalog, command):
@@ -219,12 +315,38 @@ def test_full_requested_scope_coverage_is_identical_on_every_page(pr_catalog, co
 def test_code_observation_gap_beyond_page_is_reported(pr_catalog):
     state, store = pr_catalog
     with store.transaction():
-        store.execute(
-            "INSERT INTO code_observations(change_request_id,change_request_observation_id,state,details) SELECT change_request_id,current_change_request_observation_id,'partial','{}' FROM change_requests WHERE provider_change_request_number=3"
+        current = store.one(
+            "SELECT change_request_id,change_request_observation_id FROM current_change_request_observations WHERE change_request_id='repo:3:pull_request'"
+        )
+        add_fact(
+            store,
+            "code_observations",
+            change_request_id=current[0],
+            change_request_observation_id=current[1],
+            state="partial",
+            details="{}",
         )
         store.publish()
-    first = run(state, "pr", "list", "--repo", "repo", "--limit", 1, expected=3)
-    full = run(state, "pr", "list", "--repo", "repo", "--limit", 100, expected=3)
+    first = run(
+        state,
+        "pr",
+        "list",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--limit",
+        1,
+        expected=3,
+    )
+    full = run(
+        state,
+        "pr",
+        "list",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--limit",
+        100,
+        expected=3,
+    )
     assert first["coverage"] == full["coverage"]
     assert [gap["reason"] for gap in first["coverage"]["missing"]] == [
         "code_observation_incomplete"
@@ -237,13 +359,14 @@ def test_new_current_api_observation_requires_its_own_code_observation(
 ):
     state, store = pr_catalog
     with store.transaction():
-        observation = store.execute(
-            "INSERT INTO change_request_observations(change_request_id,observed_at_us,published,payload,parsed_at_us) VALUES('repo:3:pull_request',1,1,?,1)",
-            (json.dumps({"state": "open", role: {"sha": "01" * 20}}),),
-        ).lastrowid
-        store.execute(
-            "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id='repo:3:pull_request'",
-            (observation,),
+        observation = add_fact(
+            store,
+            "change_request_observations",
+            change_request_id="repo:3:pull_request",
+            observed_at_us=1,
+            published=1,
+            payload=json.dumps({"state": "open", role: {"sha": "01" * 20}}),
+            parsed_at_us=1,
         )
         store.publish()
     assert (
@@ -252,13 +375,22 @@ def test_new_current_api_observation_requires_its_own_code_observation(
         )[0]
         == "complete"
     )
-    first = run(state, "pr", "list", "--repo", "repo", "--limit", 1, expected=3)
+    first = run(
+        state,
+        "pr",
+        "list",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--limit",
+        1,
+        expected=3,
+    )
     selected = run(
         state,
         "pr",
         "show",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         3,
         expected=3,
@@ -278,7 +410,7 @@ def test_new_current_api_observation_requires_its_own_code_observation(
         "pr",
         "documents",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         3,
     )
@@ -300,16 +432,35 @@ def test_identity_selection_excludes_other_pr_gaps_but_empty_search_retains_them
         store.publish()
     for action in ("show", "documents"):
         result = run(
-            state, "pr", action, "--repo", "repo", "--provider-change-request-number", 1
+            state,
+            "pr",
+            action,
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--provider-change-request-number",
+            1,
         )
         assert result["coverage"]["missing"] == []
     excluded_kind = run(
-        state, "pr", "list", "--repo", "repo", "--change-request-kind", "merge_request"
+        state,
+        "pr",
+        "list",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--change-request-kind",
+        "merge_request",
     )
     assert excluded_kind["data"]["items"] == []
     assert excluded_kind["coverage"]["missing"] == []
     result = run(
-        state, "search", "pr", "--repo", "repo", "--literal", "absent", expected=3
+        state,
+        "search",
+        "pr",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--literal",
+        "absent",
+        expected=3,
     )
     assert result["data"]["items"] == []
     assert result["data"]["page"]["has_more"] is False
@@ -323,7 +474,23 @@ def test_thread_body_gap_after_page_is_reported(pr_catalog):
     state, store = pr_catalog
     with store.transaction():
         store.execute(
-            "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at_us) VALUES('repo:1:pull_request','thread','{}',0)"
+            "INSERT INTO review_threads VALUES('repo:1:pull_request','thread')"
+        )
+        from tests.support.parser_facts import new_result
+
+        result = new_result(store.connection, "00000000-0000-4000-8000-000000000401")
+        add_fact(
+            store,
+            "review_thread_observations",
+            thread_observation_uuidv4=str(uuid.uuid4()),
+            parsed_result_uuidv4=result,
+            repository_uuidv4="00000000-0000-4000-8000-000000000401",
+            change_request_id="repo:1:pull_request",
+            provider_resource_id="thread",
+            observed_at_us=0,
+            payload=json.dumps(
+                {"comments": {"nodes": [{"fullDatabaseId": n} for n in (1, 2, 3)]}}
+            ),
         )
         for number in (1, 2, 3):
             key = add_document(
@@ -332,9 +499,10 @@ def test_thread_body_gap_after_page_is_reported(pr_catalog):
                 str(number),
                 f"comment {number}" if number != 3 else None,
                 kind="review-comment",
+                thread="thread",
             )
             store.execute(
-                "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES(?,?,?,'thread','{}')",
+                "INSERT INTO review_comments VALUES(?,?,?)",
                 key,
             )
         store.publish()
@@ -342,7 +510,7 @@ def test_thread_body_gap_after_page_is_reported(pr_catalog):
         "pr",
         "thread",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         1,
         "--provider-resource-id",
@@ -380,7 +548,7 @@ def test_byte_page_boundary_keeps_later_pr_coverage(pr_catalog):
         "search",
         "pr",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--literal",
         "needle",
         "--limit",
@@ -409,7 +577,14 @@ def test_preflight_does_not_materialize_later_document_results(pr_catalog, monke
         return original(kind, key, body, literal)
 
     monkeypatch.setattr(query, "literal_match", record_match)
-    result = query.query("search pr", {"repo": "repo", "literal": "needle"}, limit=1)
+    result = query.query(
+        "search pr",
+        {
+            "00000000-0000-4000-8000-000000000401": "00000000-0000-4000-8000-000000000401",
+            "literal": "needle",
+        },
+        limit=1,
+    )
     assert result.status == "partial"
     assert len(result.coverage.missing) == 1
     assert matches == [
@@ -427,7 +602,13 @@ def test_preflight_timeout_discards_page_and_issues_no_cursor(pr_catalog, monkey
         query.deadline = -1
 
     monkeypatch.setattr(pr_queries, "_coverage", expire)
-    result = QueryService(state).query("pr list", {"repo": "repo"}, limit=1)
+    result = QueryService(state).query(
+        "pr list",
+        {
+            "00000000-0000-4000-8000-000000000401": "00000000-0000-4000-8000-000000000401"
+        },
+        limit=1,
+    )
     assert result.status == "partial"
     assert result.execution["completed"] is False
     assert result.execution["timed_out"] is True
@@ -448,14 +629,28 @@ def test_preflight_cancellation_remains_an_interruption(pr_catalog, monkeypatch)
 
     monkeypatch.setattr(pr_queries, "_coverage", cancel)
     with pytest.raises(CatalogError) as caught:
-        QueryService(state, token).query("pr list", {"repo": "repo"}, limit=1)
+        QueryService(state, token).query(
+            "pr list",
+            {
+                "00000000-0000-4000-8000-000000000401": "00000000-0000-4000-8000-000000000401"
+            },
+            limit=1,
+        )
     assert caught.value.code == "CANCELLED"
 
 
 def test_pr_cursor_scope_and_publication_guards_survive_preflight(pr_catalog):
     state, store = pr_catalog
     first = run(
-        state, "search", "pr", "--repo", "repo", "--literal", "needle", "--limit", 1
+        state,
+        "search",
+        "pr",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--literal",
+        "needle",
+        "--limit",
+        1,
     )
     cursor = first["data"]["page"]["next_cursor"]
     result = run(
@@ -463,7 +658,7 @@ def test_pr_cursor_scope_and_publication_guards_survive_preflight(pr_catalog):
         "search",
         "pr",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--literal",
         "different",
         "--cursor",
@@ -479,7 +674,7 @@ def test_pr_cursor_scope_and_publication_guards_survive_preflight(pr_catalog):
         "search",
         "pr",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--literal",
         "needle",
         "--cursor",
@@ -504,11 +699,11 @@ def add_complete_code(
         "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('code-job',1,'complete',0,'{}')"
     )
     store.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('code-resume','repo','{}','test','test','proven')"
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('code-resume','00000000-0000-4000-8000-000000000401','{}','test','test','proven')"
     )
     for kind in ("commits", "files"):
         store.execute(
-            "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES(?,'repo','repo:1:pull_request',?,'code-resume',0)",
+            "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES(?,'00000000-0000-4000-8000-000000000401','repo:1:pull_request',?,'code-resume',0)",
             (kind, "pr-" + kind),
         )
         store.execute(
@@ -523,22 +718,30 @@ def add_complete_code(
             "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES(?,'complete',1,0,1)",
             (kind,),
         )
-    code = store.execute(
-        "INSERT INTO code_observations(change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details) SELECT change_request_id,current_change_request_observation_id,'commits','files','complete','sha1',?,?,? FROM change_requests WHERE change_request_id='repo:1:pull_request'",
-        (
-            targets["head"],
-            targets["base"],
-            json.dumps(
-                {
-                    "expected_roles": {"merge": targets["merge"].hex()}
-                    if declared is None
-                    else declared
-                }
-            ),
+    current = store.one(
+        "SELECT change_request_observation_id FROM current_change_request_observations WHERE change_request_id='repo:1:pull_request'"
+    )[0]
+    code = add_fact(
+        store,
+        "code_observations",
+        change_request_id="repo:1:pull_request",
+        change_request_observation_id=current,
+        commit_code_listing_id="commits",
+        file_code_listing_id="files",
+        state="complete",
+        object_format="sha1",
+        head_oid=targets["head"],
+        base_oid=targets["base"],
+        details=json.dumps(
+            {
+                "expected_roles": {"merge": targets["merge"].hex()}
+                if declared is None
+                else declared
+            }
         ),
-    ).lastrowid
+    )
     store.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,kind,observed_at_us,request,roots_manifest) VALUES('code-acquisition','repo','sha1','legacy',0,'{}','[]')"
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,kind,observed_at_us,request,roots_manifest) VALUES('code-acquisition','00000000-0000-4000-8000-000000000401','sha1','legacy',0,'{}','[]')"
     )
     for role, oid in targets.items():
         mode = link_state if role == unavailable_role else "published"
@@ -553,7 +756,7 @@ def add_complete_code(
                     (actual,),
                 )
             root = store.execute(
-                "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,?,'repo',?,?)",
+                "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,?,'00000000-0000-4000-8000-000000000401',?,?)",
                 (actual, role, actual, 0 if mode == "unpublished" else 1),
             ).lastrowid
         store.execute(
@@ -586,7 +789,7 @@ def test_complete_code_requires_saved_published_matching_role_roots(
         "pr",
         "show",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         1,
         expected=3 if unavailable_role else 0,
@@ -611,7 +814,7 @@ def test_complete_code_requires_saved_published_matching_role_roots(
         "pr",
         "documents",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         1,
     )
@@ -631,7 +834,7 @@ def test_imported_role_target_shapes_are_diagnosed_without_crashing(
         "pr",
         "show",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         1,
         expected=3,
