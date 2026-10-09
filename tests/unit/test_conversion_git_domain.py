@@ -8,6 +8,7 @@ import pytest
 from repo_catalog.adapters.import_v2 import archive, git_domain
 from repo_catalog.adapters.import_v2.common import DESIGN
 from repo_catalog.adapters.sqlite.schema import schema_sql
+from tests.support.import_workspace import memory_workspace
 
 STAMP = "2026-01-02T03:04:05Z"
 
@@ -24,6 +25,7 @@ def graph(request):
     for path in sorted((DESIGN / "migrations").glob("*.sql")):
         src.executescript(path.read_text())
     db.executescript(schema_sql())
+    memory_workspace(db)
     src.execute("INSERT INTO sources VALUES('source','local-git','source','{}',NULL)")
     src.execute(
         "INSERT INTO repositories VALUES('repo','source','local','repo','name','/synthetic','{}',NULL)"

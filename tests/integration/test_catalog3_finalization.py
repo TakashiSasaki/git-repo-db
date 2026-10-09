@@ -8,6 +8,7 @@ from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.finalization import check_catalog, finalize_catalog
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.domain.models import CatalogError
+from tests.support.import_workspace import create_workspace
 
 
 def pending(tmp_path, *, complete=True):
@@ -15,6 +16,7 @@ def pending(tmp_path, *, complete=True):
     MaintenanceService(state).init("catalog-text-v1", 67108864, 0)
     s = Store(state)
     s.execute("UPDATE database_identity SET lifecycle='building'")
+    create_workspace(s)
     s.execute(
         "INSERT INTO conversion_sources(conversion_source_id,source_sha256,schema_sha256,format_id,source_db_instance_id,source_catalog,source_migrations) VALUES('src',?,?,'v2','source-instance',?,?)",
         (b"x" * 32, b"y" * 32, b"{}", b"{}"),

@@ -36,6 +36,6 @@ WALは明示設定かつ修正済みruntimeのgateを通した場合のみ有効
 
 通常の初期化・収集・照会・保守は catalog3 の同じ packaged schema を共有します。読み取りは `mode=ro` と通常の SQLite transaction snapshot を使い、変更中の DB に `immutable=1` を指定しません。derived FTS/statistics は format identity を変更せず、照会のたびに全 schema/source archive を hash 検証しません。
 
-v2 救出は専用 guarded child process で typed archive と domain recipe を atomic batch に保存する一つの importer です。歴史的な phase receipt と predecessor compatibility はランタイムの前提ではありません。`db finalize` は保存された current assertion と同じ owner の公開事実を検査し、readiness decision を target 内へ記録します。
+v2 救出は専用 guarded child process を使う一つの importer です。typed archive・対応表・変換診断は別workspace DB、正規化したdomain dataはcatalog DBへ、一つのatomic batchとして保存します。歴史的な phase receipt と predecessor compatibility はランタイムの前提ではありません。`db finalize` は保存された current assertion と同じ owner の公開事実を検査し、readinessをcatalogに、変換の検査記録をworkspaceにcommitします。finalize後の通常runtimeはworkspaceを開きません。
 
-Active catalog3 schema identity is version 6. [Data model](data-model.md) is the current identifier contract: portable UUIDv4 service namespaces, natural document keys and observations pointing directly to SHA-256 text identity. Documents have neither a surrogate ID nor a version table. Composite FK ownership and explicit current-observation selection are retained. There is no old-catalog3 migration or alias layer.
+Active catalog3 schema identity is version 7. [Data model](data-model.md) is the current identifier contract: portable UUIDv4 service namespaces, natural document keys and observations pointing directly to SHA-256 text identity. Documents have neither a surrogate ID nor a version table. Composite FK ownership and explicit current-observation selection are retained. There is no old-catalog3 migration or alias layer.

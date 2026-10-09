@@ -213,7 +213,6 @@ COLUMNS = {
     "unresolved_payloads": (
         "unresolved_payload_id",
         "payload_id",
-        "legacy_record_id",
         "reason",
     ),
     "validators": (
@@ -815,6 +814,10 @@ class Context(identity.Context):
         are transient, reconstructed per batch; durable mappings contain the
         target composite key, not a hidden replacement document ID.
         """
+        if table == "unresolved_payloads":
+            # Source-row attribution remains in workspace mappings/diagnostics.
+            # The catalog keeps the normalized gap, not a dangling workspace FK.
+            return (row[0], row[1], row[3])
         if table == "documents":
             self.remember_source_document(row)
             return (*row[1:4], None, row[5], *row[7:])
