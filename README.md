@@ -93,7 +93,7 @@ PR rootは明示選択します。通常照会はDBの読取りだけで完結�
 
 ```bash
 repo-catalog --state-dir /path/to/state parser status
-repo-catalog --state-dir /path/to/state parser reparse FETCH_UUID
+repo-catalog --state-dir /path/to/state parser reparse GIT_ACQUISITION_UUID
 repo-catalog --state-dir /path/to/state parser inspect-message ARCHIVE_REF --max-bytes 1048576
 repo-catalog --state-dir /path/to/state parser reparse-message ARCHIVE_REF --context projection.json --max-bytes 1048576
 repo-catalog --state-dir /path/to/state exchange export --repo REPO_UUID --output repository.json
@@ -105,7 +105,7 @@ repo-catalog --state-dir /path/to/state db backup --output catalog-backup.sqlite
 repo-catalog --state-dir /path/to/new-state db restore --input catalog-backup.sqlite3
 ```
 
-履歴の再解析では取得 UID と取得時刻を保持し、新しい解析結果を追加します。通常参照へ切り替える場合は明示的な選択が必要です。`reparse-message` は保存通信と明示contextから読取り専用の投影を返し、通常状態を書き込みません。交換単位は一つの repository と必要な依存・本文・完全性証拠です。Source 全体の inventory、ローカル trust、隔離状態、運用設定、任意通信archiveは通常の交換へ含めません。
+Git の再解析では取得 UID と取得時刻を保持し、新しい解析結果を追加します。通常参照へ切り替える場合は明示的な選択が必要です。API 応答の core 再解析は廃止しました。`reparse-message` は保存通信と明示contextから読取り専用の投影を返し、通常状態を書き込みません。交換単位は一つの repository と必要な依存・本文・完全性証拠です。Source 全体の inventory、ローカル trust、隔離状態、運用設定、任意通信archiveは通常の交換へ含めません。
 
 破損した物理 bytes は永続診断と隔離で扱い、明示修復だけが隔離を解除します。バックアップは隔離済み bytes と診断も保持し、manifest に active 物理隔離件数 `quarantined_payload_count` を保存します。復元は件数照合と全bytes検証を行い、正の一致件数も許容します。復元先は未作成のパスを指定し、失敗した stage は保存します。実装・判断対応・検証結果は [統合 handoff](docs/model-integration-handoff.md)、[独立監査](docs/model-integration-audit.md)、[判断対応表](docs/model-integration-status.md) を参照してください。LFSはGit pointer bytes、添付は本文と埋込みURLまで保存し、本体取得やURLの自動巡回は行いません。
 

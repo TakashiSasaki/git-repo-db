@@ -52,9 +52,14 @@ def intern_payload(
     db: sqlite3.Connection,
     body: bytes,
     *,
-    representation="decoded_api",
+    representation,
     expected_sha256=None,
 ) -> PayloadRef:
+    """Register explicitly identified content; never infer its meaning from bytes.
+
+    Retained Git content and temporary legacy API-original paths share physical
+    integrity checks, but callers must declare which logical contract they use.
+    """
     if not isinstance(body, bytes):
         raise CatalogError("INVALID_PAYLOAD", "Payload body must be bytes")
     reference = PayloadRef(

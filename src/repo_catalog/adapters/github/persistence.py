@@ -366,7 +366,7 @@ class ApiFacts:
             )
 
     def payload(self, raw):
-        return intern_payload(self.s.connection, raw)
+        return intern_payload(self.s.connection, raw, representation="decoded_api")
 
     @staticmethod
     def response_metadata(response):

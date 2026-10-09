@@ -89,7 +89,7 @@ def fixture(
         "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,source_id,kind,resume_scope_id) VALUES(?,?,?,?,'comments',?)",
         (collection, repository, cr, source_local, scope),
     )
-    ref = intern_payload(db, body)
+    ref = intern_payload(db, body, representation="decoded_api")
     occurrence = db.execute(
         "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,0,?,?,'{}',-1,0)",
         (fetch, repository, collection, *ref.parameters()),

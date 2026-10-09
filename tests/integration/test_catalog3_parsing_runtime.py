@@ -21,16 +21,6 @@ def _fetch(store, kind):
     )
 
 
-def _current(store):
-    return [
-        tuple(row)
-        for row in store.all(
-            "SELECT change_request_id,kind,provider_change_request_document_id,parsed_result_uuidv4 "
-            "FROM current_document_observations ORDER BY 1,2,3"
-        )
-    ]
-
-
 def test_normal_acquisition_publishes_owned_results_and_multiple_code_inputs(
     github_runtime,
 ):
@@ -65,84 +55,47 @@ def test_normal_acquisition_publishes_owned_results_and_multiple_code_inputs(
     assert store.one("PRAGMA integrity_check")[0] == "ok"
 
 
-def test_reparse_keeps_remote_identity_bytes_time_and_requires_explicit_selection(
-    github_runtime,
-):
-    store, repo, _, _ = github_runtime
-    sync(store, repo)
-    fetch = _fetch(store, "pr-detail")
-    before_fetches = [
-        tuple(row)
-        for row in store.all(
-            "SELECT * FROM fetch_occurrences ORDER BY fetch_occurrence_id"
-        )
-    ]
-    before_payloads = [
-        tuple(row) for row in store.all("SELECT * FROM stored_bytes ORDER BY sha256")
-    ]
-    before_current = _current(store)
-    result = ParsingService(store).reparse(fetch["fetch_occurrence_uuidv4"])
-    assert result["selected"] is False
-    assert _current(store) == before_current
-    rows = store.all(
-        "SELECT observed_at_us,parsed_result_uuidv4 FROM document_observations WHERE parsed_result_uuidv4=?",
-        (result["parsed_result_uuidv4"],),
-    )
-    assert len(rows) == 2 and all(row[0] == fetch["observed_at_us"] for row in rows)
-    selected = ParsingService(store).reparse(
-        fetch["fetch_occurrence_uuidv4"], select=True
-    )
-    assert selected["parsed_result_uuidv4"] != result["parsed_result_uuidv4"]
-    assert store.one(
-        "SELECT 1 FROM current_document_observations WHERE parsed_result_uuidv4=?",
-        (selected["parsed_result_uuidv4"],),
-    )
-    assert [
-        tuple(row)
-        for row in store.all(
-            "SELECT * FROM fetch_occurrences ORDER BY fetch_occurrence_id"
-        )
-    ] == before_fetches
-    assert [
-        tuple(row) for row in store.all("SELECT * FROM stored_bytes ORDER BY sha256")
-    ] == before_payloads
-    columns = {row[1] for row in store.all("PRAGMA table_info(documents)")}
-    assert columns == {
-        "change_request_id",
-        "kind",
-        "provider_change_request_document_id",
-    }
-    assert not store.all("PRAGMA foreign_key_check")
-
-
 @pytest.mark.parametrize(
-    "kind,table,current",
+    "kind",
     [
-        ("threads", "review_thread_observations", "current_review_thread_observations"),
-        ("timeline", "change_request_events", "current_change_request_events"),
-        ("pr-commits", "code_commits", "current_code_commits"),
-        ("pr-files", "code_file_changes", "current_code_file_changes"),
+        "pr-detail",
+        "pr-list",
+        "threads",
+        "timeline",
+        "pr-commits",
+        "pr-files",
+        "issue-comment",
     ],
 )
-def test_reparse_preserves_history_and_one_current_result_per_input(
-    github_runtime, kind, table, current
+@pytest.mark.parametrize("select", [False, True])
+def test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog(
+    github_runtime, monkeypatch, kind, select
 ):
-    store, repo, _, _ = github_runtime
+    store, repo, _, api = github_runtime
     sync(store, repo)
     fetch = _fetch(store, kind)
-    previous = store.one(f"SELECT count(*) FROM {table}")[0]
-    before_current = store.one(f"SELECT count(*) FROM {current}")[0]
-    result = ParsingService(store).reparse(
-        fetch["fetch_occurrence_uuidv4"], select=True
-    )
-    added = store.one(
-        f"SELECT count(*) FROM {table} WHERE parsed_result_uuidv4=?",
-        (result["parsed_result_uuidv4"],),
-    )[0]
-    assert added > 0
-    assert store.one(f"SELECT count(*) FROM {table}")[0] == previous + added
-    assert store.one(f"SELECT count(*) FROM {current}")[0] == before_current
-    assert not store.all("PRAGMA foreign_key_check")
+    assert fetch is not None
+    before = list(store.connection.iterdump())
+    before_requests = len(api.requests)
+    original_one = store.one
+
+    def domain_only_query(sql, parameters=()):
+        assert all(
+            table not in sql
+            for table in ("fetch_occurrences", "stored_bytes", "payloads")
+        )
+        return original_one(sql, parameters)
+
+    monkeypatch.setattr(store, "one", domain_only_query)
+    with pytest.raises(CatalogError, match="API response replay is retired") as error:
+        ParsingService(store).reparse(
+            fetch["fetch_occurrence_uuidv4"],
+            select=select,
+            profile_uuid=str(uuid.uuid4()),
+        )
+    assert error.value.code == "PARSER_UNSUPPORTED_INPUT"
+    assert list(store.connection.iterdump()) == before
+    assert len(api.requests) == before_requests
 
 
 def test_source_inventory_records_separate_owned_raw_inputs(github_runtime):
@@ -174,7 +127,9 @@ def test_source_inventory_records_separate_owned_raw_inputs(github_runtime):
     assert not store.all("PRAGMA foreign_key_check")
 
 
-def test_quarantined_payload_cannot_be_reparsed(github_runtime):
+def test_retired_http_reparse_rejects_quarantined_original_without_diagnosis(
+    github_runtime,
+):
     store, repo, _, _ = github_runtime
     sync(store, repo)
     fetch = _fetch(store, "pr-detail")
@@ -188,7 +143,7 @@ def test_quarantined_payload_cannot_be_reparsed(github_runtime):
             (fetch["payload_sha256"], diag),
         )
     before = store.one("SELECT count(*) FROM parsed_results")[0]
-    with pytest.raises(CatalogError, match="Quarantined"):
+    with pytest.raises(CatalogError, match="API response replay is retired"):
         ParsingService(store).reparse(fetch["fetch_occurrence_uuidv4"])
     assert store.one("SELECT count(*) FROM parsed_results")[0] == before
 

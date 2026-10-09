@@ -42,7 +42,7 @@ def history(db, *, count=3):
     )
     for ordinal in range(1, count):
         fetch_uuid = uid()
-        ref = intern_payload(db, f"F{ordinal}".encode())
+        ref = intern_payload(db, f"F{ordinal}".encode(), representation="decoded_api")
         local = db.execute(
             "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,'{}',?,0)",
             (
@@ -294,7 +294,9 @@ def test_selective_export_bounded_and_ignores_unrelated_corruption(databases):
     source, target = databases
     expected, collection, fetches, _, _ = history(source)
     for ordinal in range(3, 503):
-        ref = intern_payload(source, f"unrelated-{ordinal}".encode())
+        ref = intern_payload(
+            source, f"unrelated-{ordinal}".encode(), representation="decoded_api"
+        )
         source.execute(
             "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,'{}',?,0)",
             (

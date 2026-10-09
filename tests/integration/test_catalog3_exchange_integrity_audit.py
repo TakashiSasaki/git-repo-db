@@ -33,7 +33,11 @@ def source_derived_name(db, expected):
             "capabilities": [{"owner_kind": "source", "fact_kind": "inventory"}],
         }
     )
-    ref = intern_payload(db, b'{"source-wide-secret":"other-repository-inventory"}')
+    ref = intern_payload(
+        db,
+        b'{"source-wide-secret":"other-repository-inventory"}',
+        representation="decoded_api",
+    )
     input_uuid = str(uuid.uuid4())
     db.execute(
         "INSERT INTO source_input_observations(source_input_uuidv4,source_registration_uuidv4,payload_representation,payload_sha256,request_context_json,observed_at_us) VALUES(?,?,?,?, '{}',1)",
@@ -74,7 +78,9 @@ def test_local_quarantine_diagnostics_and_staging_do_not_cross_exchange(database
     source, target = databases
     expected = fixture(source)
     unrelated = fixture(source, source_local="other-source")
-    isolated = intern_payload(source, b"unrelated damaged bytes")
+    isolated = intern_payload(
+        source, b"unrelated damaged bytes", representation="decoded_api"
+    )
     corrupt(source, isolated.sha256, b"changed bytes")
     diagnose_corruption(source, isolated.sha256)
     unit = Graph(source).export(expected["repository"])

@@ -115,7 +115,9 @@ def observe(store, key, body, position, *, observed_at_us=OBSERVED_AT_US, node=N
                 observed_at_us,
             ),
         )
-        payload = intern_payload(store.connection, body.encode("utf-8"))
+        payload = intern_payload(
+            store.connection, body.encode("utf-8"), representation="decoded_api"
+        )
         occurrence = store.execute(
             "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,0,?,?,'{}',?,?)",
             (

@@ -7,6 +7,7 @@ import pytest
 from repo_catalog.adapters.git.importer import GitImporter
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.job_service import JobService
+from repo_catalog.application.parsing_service import ParsingService
 from repo_catalog.application.repository_identity import add_endpoint
 from repo_catalog.config import DEFAULTS, serialize
 from repo_catalog.domain.models import CancellationToken, CatalogError
@@ -41,6 +42,54 @@ def collect(store, repo, token=None, job=None):
     result = GitImporter(store, token or CancellationToken()).sync(repo, job)
     JobService(store).update(job, "complete")
     return result
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("select", [False, True])
+def test_core_reparse_retains_git_content_and_acquisition_without_http_inputs(
+    tmp_path, fmt, select
+):
+    fixture = FixtureRepo(tmp_path / "remote.git", fmt)
+    fixture.commit("A", {b"body.txt": b"exact Git bytes\r\n"})
+    fixture.ref("refs/heads/main", "A")
+    with runtime(tmp_path) as store:
+        repo = register(store, fixture.url)
+        acquired = collect(store, repo)
+        acquisition = acquired["git_acquisition_id"]
+        before = {
+            table: [tuple(row) for row in store.all(f"SELECT * FROM {table}")]
+            for table in (
+                "git_acquisitions",
+                "git_acquisition_publications",
+                "stored_bytes",
+                "payloads",
+                "git_object_payloads",
+                "repository_object_sources",
+            )
+        }
+        previous = store.one("SELECT snapshot_id FROM current_snapshots")[0]
+        result = ParsingService(store).reparse(acquisition, select=select)
+        assert result["git_acquisition_id"] == acquisition
+        assert result["selected"] is select
+        assert store.one("SELECT snapshot_id FROM current_snapshots")[0] == (
+            result["snapshot_id"] if select else previous
+        )
+        assert store.one(
+            "SELECT 1 FROM commits WHERE parsed_result_uuidv4=?",
+            (result["parsed_result_uuidv4"],),
+        )
+        assert store.one(
+            "SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=?",
+            (result["parsed_result_uuidv4"],),
+        )
+        for table, rows in before.items():
+            assert [tuple(row) for row in store.all(f"SELECT * FROM {table}")] == rows
+        assert not store.one("SELECT 1 FROM fetch_occurrences")
+        assert not store.one(
+            "SELECT 1 FROM payloads WHERE representation='decoded_api'"
+        )
+        assert not store.all("PRAGMA foreign_key_check")
+        assert store.one("PRAGMA integrity_check")[0] == "ok"
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
