@@ -265,9 +265,17 @@ def test_unknown_reference_category_and_local_ids_cannot_bypass(facts):
             insert_name(db, owner, provenance)
 
 
-def test_duplicate_json_keys_are_rejected_by_python_and_sql(facts):
+@pytest.mark.parametrize(
+    "ambiguous",
+    [
+        '{"note":1,"note":2}',
+        '{"nested":[{"note":1,"note":1}]}',
+        '{"nested":[{"0":1,"0":2}]}',
+        '{"nested":{"note":1,"\\u006eote":1}}',
+    ],
+)
+def test_duplicate_json_keys_are_rejected_by_python_and_sql(facts, ambiguous):
     db, owner, _ = facts
-    ambiguous = '{"note":1,"note":2}'
     with pytest.raises(JsonContractError, match="Duplicate"):
         validate_record(
             db,
@@ -279,6 +287,20 @@ def test_duplicate_json_keys_are_rejected_by_python_and_sql(facts):
             "INSERT INTO repository_name_observations(repository_name_observation_uuidv4,repository_uuidv4,name,provenance_json) VALUES(?,?,'dup',?)",
             (str(uuid.uuid4()), owner["repository"], ambiguous),
         )
+
+
+def test_same_keys_and_array_indices_in_distinct_containers_are_valid(facts):
+    db, owner, _ = facts
+    provenance = {"nested": [{"0": 1}, {"0": 1}], "arrays": [[1, 1], [1, 1]]}
+    assert (
+        validate_record(db, "repository_name_observations", record(owner, provenance))
+        == []
+    )
+    ident = insert_name(db, owner, provenance)
+    assert db.execute(
+        "SELECT provenance_json FROM repository_name_observations WHERE repository_name_observation_uuidv4=?",
+        (ident,),
+    ).fetchone() == (json.dumps(provenance),)
 
 
 def test_future_selection_uuid_is_declaration_only_at_git_derivation_root(facts):

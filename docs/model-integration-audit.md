@@ -366,9 +366,11 @@ command without a bootstrap override:
 uv run --no-sync pytest tests/integration/test_catalog3_remaining_adversarial.py -q --tb=short --junitxml=artifacts/independent-final.xml > artifacts/independent-final.log 2>&1
 ```
 
-The final independent receipt is **53 passed in 31.90 seconds**, exit status 0,
-with no failures, fixture errors or skips. The exact result is preserved in
-`artifacts/independent-final.xml` and `artifacts/independent-final.log`.
+The first independent receipt was **53 passed in 31.90 seconds**, exit status 0,
+with no failures, fixture errors or skips. That receipt belongs to the
+implementation preceding the hosted performance follow-up below. The artifact
+paths `artifacts/independent-final.xml` and `artifacts/independent-final.log` now
+contain the refreshed receipt recorded at the end of that follow-up.
 
 The final source review and executable counterexamples identify no further
 substantive gap in the six targeted contracts. This conclusion applies to the
@@ -376,4 +378,76 @@ reviewed fresh Catalog3 implementation and the independent cases above; complete
 ordinary/installed acceptance, submitted HEAD and hosted CI are separately
 recorded by the integration coordinator. No hosted-CI conclusion is inferred
 from an earlier checkpoint receipt or development bootstrap run.
+
+### Hosted pagination performance follow-up — 2026-10-09
+
+The first submitted feature HEAD
+`e8a2cb40789e0db76784de6062d8496b3c17e169` was tested through merge HEAD
+`89f6fe529dfbd4d74e5b349f3c05cbac1cdc2a85` in
+[hosted CI run 37893200411](https://github.com/TakashiSasaki/git-repo-db/actions/runs/37893200411).
+The run reported **1156 passed and one timeout in 368.63 seconds**. The sole
+failure was the unchanged `test_nested_pagination`: acquiring 101 review threads
+with 101 replies each (10,201 document identities) exceeded the CLI harness's
+60-second deadline. The later packaging stage was not executed in that failed
+run. This receipt supersedes any assumption that local passing results alone
+established hosted acceptance for that HEAD.
+
+The integration coordinator's exact-workload profile took **49.498 seconds**;
+the component author's separate profile took **49.91 seconds**. These are
+diagnostic timings, not final acceptance evidence. SQLite execution dominated
+the profiles. Publication repeatedly scanned the complete fact-member union,
+fact selection could not use its existing natural-identity expression index,
+and per-result scope deduplication repeatedly searched an expanding list. The
+authored JSON duplicate-key guard also self-joined two `json_tree` traversals to
+identify object parents, causing quadratic work for large authored documents.
+
+The reviewer independently checked preservation of the optimized contracts:
+
+- The duplicate-key guard groups text keys by their exact parent directly.
+  SQLite object keys are text, array keys are integers and the root key is NULL.
+  Sixteen old/new clause comparisons agreed on identical and unequal duplicates,
+  nested objects/arrays, numeric and empty object names, Unicode-escaped
+  equivalent names, NUL-bearing names, separate containers and repeated array
+  values. These checks ran on SQLite 3.53.1; the component author separately
+  confirmed the same cases on SQLite 3.45.0. Provider JSON remains opaque.
+- The publication membership guard computes declared members `EXCEPT` actual
+  members of the exact result. It retains both the actual row-count check and
+  the distinct-declared-member count check, so duplicate/subset manifests cannot
+  seal incomplete output. Twelve old/new probes over complete production DDL
+  agreed, including exact/reversed positives, duplicate/subset, foreign-result,
+  wrong-table, NULL, missing and primitive-member negatives. FK and integrity
+  checks remained clean.
+- Fact-scope lookup uses the existing owner/natural-identity expression index
+  with the original null-safe predicates retained as residual filters. The
+  residual checks preserve the distinction between NULL and real empty text.
+  Decision-scope and reverse-predecessor indexes accelerate the existing DAG
+  queries without changing their contents or eligibility rules.
+- Per-result pending scopes use an insertion-ordered dictionary keyed by the
+  exact sorted scope items. Deduplication and first-observed order remain the
+  same; the dictionary is removed after publication or rollback. There is no
+  cache across catalog states, and profile verification, publication sealing,
+  selection forks, staging, conflict and quarantine checks still execute.
+
+The unchanged nested-pagination E2E passed in the component's focused check in
+**10.22 seconds** after these edits. Its 60-second deadline and 10,201-document
+assertion were preserved.
+
+The integration coordinator then obtained **1161 passing cases in 180.37
+seconds** in the captured-definition development run and regenerated the
+whole-profile certificate from its successful capability evidence. The reviewer
+independently confirmed that the captured definition, current runtime definition
+and packaged certificate definition are equal, covering all **26 implementation
+modules and 11 capabilities**. Their canonical definition SHA-256 is
+`56b1fc366fe7fcdac08d452bb36a9c21eb469446a80563650fd53b3adf87c506`;
+the complete production DDL SHA-256 is
+`7ce17169bedf10cae7f28decd2fa8239775713d42b515047ee3c6b0ba3a38738`.
+
+The reviewer reran the same ordinary command above without a bootstrap override:
+**53 passed in 34.27 seconds**, exit status 0, no failures, fixture errors or
+skips. The refreshed JUnit/log receipt is in `artifacts/independent-final.xml`
+and `artifacts/independent-final.log`. The optimized implementation preserves
+the reviewed contracts and resolves the reproduced workload bottlenecks.
+Complete ordinary/installed acceptance and final submitted-HEAD hosted CI are
+recorded separately by the integration coordinator; the original failed hosted
+run remains historical evidence.
 

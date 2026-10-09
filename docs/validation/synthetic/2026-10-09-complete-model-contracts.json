@@ -33,14 +33,14 @@
   "complete_packaged_ddl": {
     "status": "passed",
     "schema_version": 13,
-    "ddl_sha256": "316a1a9af512663afef9c3a0c8567bcaafd58fe53d40752d5c609f0e55e8867b",
+    "ddl_sha256": "7ce17169bedf10cae7f28decd2fa8239775713d42b515047ee3c6b0ba3a38738",
     "foreign_keys": true,
     "recursive_triggers": true,
     "schema_object_counts": {
       "table": 102,
       "view": 45,
       "trigger": 470,
-      "index": 98
+      "index": 100
     },
     "schema_objects": {
       "table": [
@@ -705,6 +705,8 @@
         "document_observations_occurrence_fk",
         "document_observations_origin_lookup",
         "document_parsed_result_idx",
+        "fact_selection_decision_scope_idx",
+        "fact_selection_predecessor_reverse_idx",
         "fact_selection_scope_identity",
         "fetch_collections_fk_0",
         "fetch_collections_fk_1",
@@ -853,6 +855,8 @@
       "document_observations_occurrence_fk",
       "document_observations_origin_lookup",
       "document_parsed_result_idx",
+      "fact_selection_decision_scope_idx",
+      "fact_selection_predecessor_reverse_idx",
       "fact_selection_scope_identity",
       "fetch_collections_fk_0",
       "fetch_collections_fk_1",
@@ -1490,7 +1494,7 @@
       "repo-catalog/catalog3",
       13,
       "validated",
-      "316A1A9AF512663AFEF9C3A0C8567BCAAFD58FE53D40752D5C609F0E55E8867B"
+      "7CE17169BEDF10CAE7F28DECD2FA8239775713D42B515047EE3C6B0BA3A38738"
     ],
     "foreign_key_check": [],
     "integrity_check": [
@@ -1507,15 +1511,15 @@
     "ordinary": {
       "status": "passed",
       "command": "uv run --no-sync pytest tests/unit tests/integration tests/e2e -q -n 4 --tb=short --junitxml=artifacts/ordinary-final.xml",
-      "collected": 1157,
-      "executed": 1157,
-      "passed": 1157,
+      "collected": 1161,
+      "executed": 1161,
+      "passed": 1161,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "wall_seconds": 215.859,
+      "wall_seconds": 183.162,
       "test_only_bootstrap": false,
-      "junit_sha256": "a59450e88d334e8e97c3aa65e335c19f6494811540a20814acaf14114eec081c"
+      "junit_sha256": "4628ec415383fab8ca77d5a28436b30f436b547eadeaff6c9fe4b136ed7c4b68"
     },
     "packaging": {
       "status": "passed",
@@ -1526,9 +1530,9 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "wall_seconds": 30.782,
+      "wall_seconds": 37.626,
       "test_only_bootstrap": false,
-      "junit_sha256": "1a95b6a804c60c2f0915b79ae61094fcc5c8ac9d48641bdcfb45a8bf09732608"
+      "junit_sha256": "18fa07be29608629b5ca268be513f581e301a211d0ef2385346558eedcaff7d8"
     },
     "independent": {
       "status": "passed",
@@ -1539,30 +1543,30 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "wall_seconds": 31.896,
+      "wall_seconds": 34.274,
       "test_only_bootstrap": false,
-      "junit_sha256": "6cb21b9338ca30d5dbae57f1c98f383246fb9ae1e6df9dbe177ad4c960af4f81"
+      "junit_sha256": "aa875f17ac41e3879d2170b4b873f70295edbde169673f8537bc26c036608bcd"
     },
     "certificate_generation": {
       "status": "passed",
       "command": "REPO_CATALOG_TEST_BOOTSTRAP=1 uv run --no-sync pytest tests/unit tests/integration tests/e2e -q -n 4 --tb=short --junitxml=artifacts/complete-bootstrap.xml",
-      "collected": 1157,
-      "executed": 1157,
-      "passed": 1157,
+      "collected": 1161,
+      "executed": 1161,
+      "passed": 1161,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "wall_seconds": 189.908,
+      "wall_seconds": 180.368,
       "test_only_bootstrap": true,
-      "junit_sha256": "8be72a3062dedd40ebb024902004bb01a9466c7b243938a8191b84b9252788ee"
+      "junit_sha256": "a1b03e1b86198e039a7a6089bf70bb2e2348c463149e19642523b4e19cfe545a"
     },
     "excluded_tests": [
       "tests/live/test_smoke.py::test_selected_repository"
     ],
-    "unique_acceptance_executed": 1159,
+    "unique_acceptance_executed": 1163,
     "acceptance_totals": {
-      "collected": 1160,
-      "executed": 1159,
+      "collected": 1164,
+      "executed": 1163,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
@@ -1573,6 +1577,26 @@
     "format": "passed: uv run --no-sync ruff format --check .",
     "diff": "passed: git diff --check",
     "reports": "passed: python scripts/ci_execute.py reports",
+    "initial_hosted_failure": {
+      "run_id": 37893200411,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/37893200411",
+      "feature_sha": "e8a2cb40789e0db76784de6062d8496b3c17e169",
+      "tested_sha": "89f6fe529dfbd4d74e5b349f3c05cbac1cdc2a85",
+      "runtime": {
+        "python": "3.12.15",
+        "sqlite": "3.45.1"
+      },
+      "ordinary": {
+        "executed": 1157,
+        "passed": 1156,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "packaging": "not executed after ordinary failure",
+      "cause": "101-thread x 101-reply pagination exceeded unchanged 60-second subprocess deadline",
+      "correction": "Linear duplicate-key traversal, set comparison for exact published fact membership, insertion-ordered scope deduplication and indexed exact fact-scope/DAG lookup; correctness constraints and E2E deadline preserved"
+    },
     "github_actions": {
       "status": "recorded-on-submitted-pull-request",
       "reason": "Exact final HEAD, tested merge/tree and hosted artifact receipt are recorded in the PR body after publication; no evidence-only follow-up commit."
@@ -1580,14 +1604,14 @@
   },
   "parser_verification": {
     "artifact": "src/repo_catalog/resources/builtin_parser_verification.json",
-    "artifact_sha256": "31e207dbc3ac84004cde4ecf050abaaa45f164c352ee77d24123bbf0104d07ab",
-    "definition_snapshot_sha256": "e07639740667cdee19a40a123389eeb65f3fd650c12fb475062671fcd2a282cb",
+    "artifact_sha256": "a6e79d6d7ff5e95e870a1496b13a93adfd2c70859c96d6aedb18a8edb77dda28",
+    "definition_snapshot_sha256": "68af5789db72b4d6f09167bf13b27b91471da0d1d32196b4108550657abd8ad6",
     "bound_modules": 26,
     "capabilities": 11,
     "reports": [
       {
-        "executed_passed": 1157,
-        "sha256": "8be72a3062dedd40ebb024902004bb01a9466c7b243938a8191b84b9252788ee",
+        "executed_passed": 1161,
+        "sha256": "a1b03e1b86198e039a7a6089bf70bb2e2348c463149e19642523b4e19cfe545a",
         "skipped": 0
       }
     ],

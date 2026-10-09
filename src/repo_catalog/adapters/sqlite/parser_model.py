@@ -589,9 +589,29 @@ class ParserModel:
             fetch_occurrence_uuidv4,
             git_acquisition_id,
         )
+        columns = (
+            "repository_uuidv4",
+            "source_registration_uuidv4",
+            "change_request_id",
+            "fact_kind",
+            "kind",
+            "provider_change_request_document_id",
+            "provider_resource_id",
+            "fetch_occurrence_uuidv4",
+            "git_acquisition_id",
+        )
+        # Match the portable identity index while retaining exact NULL/empty
+        # distinctions in the residual predicates.
+        indexed = " AND ".join(
+            f"{column}=?"
+            if column == "fact_kind"
+            else f"coalesce({column},'')=coalesce(?,'')"
+            for column in columns
+        )
+        exact = " AND ".join(f"{column} IS ?" for column in columns)
         target = self._row(
-            "SELECT * FROM fact_selection_scopes WHERE repository_uuidv4 IS ? AND source_registration_uuidv4 IS ? AND change_request_id IS ? AND fact_kind=? AND kind IS ? AND provider_change_request_document_id IS ? AND provider_resource_id IS ? AND fetch_occurrence_uuidv4 IS ? AND git_acquisition_id IS ?",
-            params,
+            f"SELECT * FROM fact_selection_scopes WHERE owner_kind=? AND {indexed} AND {exact}",
+            (result["owner_kind"], *params, *params),
         )
         if not target:
             sid = _uuid()

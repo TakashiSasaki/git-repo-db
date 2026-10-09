@@ -1026,7 +1026,10 @@ def guard_sql():
         doc = f"NEW.{column}"
         repository, source = _sql_owner(table)
         conditions = [
-            f"EXISTS(SELECT 1 FROM json_tree({doc}) j JOIN json_tree({doc}) parent ON parent.id=j.parent WHERE parent.type='object' GROUP BY j.parent,j.key HAVING count(*)>1)",
+            # Object keys are TEXT; array indices are INTEGER. Filtering keys
+            # therefore preserves nested duplicate detection without rewalking
+            # the entire tree for every parent in a quadratic self-join.
+            f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE typeof(j.key)='text' GROUP BY j.parent,j.key HAVING count(*)>1)",
         ]
         if (table, column) == ("git_acquisitions", "roots_manifest"):
             oid_width = "CASE NEW.object_format WHEN 'sha1' THEN 40 WHEN 'sha256' THEN 64 ELSE -1 END"

@@ -1283,6 +1283,8 @@ CREATE TABLE fact_selection_predecessors(
 CREATE TABLE fact_selection_publications(
  fact_selection_decision_uuidv4 TEXT PRIMARY KEY REFERENCES fact_selection_decisions(fact_selection_decision_uuidv4)
 ) STRICT;
+CREATE INDEX fact_selection_decision_scope_idx ON fact_selection_decisions(fact_selection_scope_uuidv4);
+CREATE INDEX fact_selection_predecessor_reverse_idx ON fact_selection_predecessors(predecessor_decision_uuidv4);
 CREATE TABLE fact_selection_staging(
  fact_selection_decision_uuidv4 TEXT PRIMARY KEY,
  fact_selection_scope_uuidv4 TEXT NOT NULL,
@@ -1404,7 +1406,7 @@ UNION ALL SELECT parsed_result_uuidv4,'root_manifest_entries',json_array(git_fac
 UNION ALL SELECT parsed_result_uuidv4,'git_text_facts',json_array(git_fact_uuidv4) FROM git_text_facts;
 CREATE TRIGGER parsed_publication_fact_manifest BEFORE INSERT ON parsed_result_publications
 WHEN json_array_length(NEW.fact_manifest_json)<>(SELECT count(*) FROM parsed_fact_members WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4)
- OR EXISTS(SELECT 1 FROM json_each(NEW.fact_manifest_json) m WHERE NOT EXISTS(SELECT 1 FROM parsed_fact_members f WHERE f.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.table_name=json_extract(m.value,'$.table') AND f.fact_key_json=json_extract(m.value,'$.key')))
+ OR EXISTS(SELECT json_extract(m.value,'$.table'),json_extract(m.value,'$.key') FROM json_each(NEW.fact_manifest_json) m EXCEPT SELECT f.table_name,f.fact_key_json FROM parsed_fact_members f WHERE f.parsed_result_uuidv4=NEW.parsed_result_uuidv4)
  OR json_array_length(NEW.fact_manifest_json)<>(SELECT count(*) FROM (SELECT DISTINCT json_extract(m.value,'$.table'),json_extract(m.value,'$.key') FROM json_each(NEW.fact_manifest_json) m))
 BEGIN SELECT RAISE(ABORT,'parsed output fact manifest incomplete or inconsistent'); END;
 CREATE TRIGGER fact_selection_result_contains_target BEFORE INSERT ON fact_selection_decisions

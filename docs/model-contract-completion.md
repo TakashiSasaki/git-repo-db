@@ -166,12 +166,12 @@ successful full bootstrap run and its unchanged implementation/schema snapshot.
 
 | Executed gate | Result |
 |---|---|
-| Ordinary unit/integration/end-to-end suite | 1,157 passed in 215.87s; zero failures, errors or skips |
-| Isolated installed wheel and sdist-derived wheel | 2 passed in 30.79s; zero failures, errors or skips |
-| Fresh initialization and complete composed DDL | Schema 13; 102 tables, 45 views, 470 triggers and 98 named indexes; every view queried and trigger-target DML/index access compiled |
+| Ordinary unit/integration/end-to-end suite | 1,161 passed in 183.17s; zero failures, errors or skips |
+| Isolated installed wheel and sdist-derived wheel | 2 passed in 38.19s; zero failures, errors or skips |
+| Fresh initialization and complete composed DDL | Schema 13; 102 tables, 45 views, 470 triggers and 100 named indexes; every view queried and trigger-target DML/index access compiled |
 | SQLite/established identity contracts | Empty FK check, integrity `ok`; canonical owner UUIDs, natural documents, exact UTF-8 SHA-256, signed int64/unknown times and five-column coverage/latest candidate checks passed |
 | JSON inventory | 50 classified fields; packaged guard/registry equality and authored-record audit passed |
-| Parser certificate regeneration | 1,157 bootstrap cases passed in 190.37s; exact definition binds 26 implementation modules, schema 13 composed DDL and all 11 capabilities |
+| Parser certificate regeneration | 1,161 bootstrap cases passed in 180.37s; exact definition binds 26 implementation modules, schema 13 composed DDL and all 11 capabilities |
 
 The installed fixture's fetch and collection selection retains nine required
 fetches from the sealed PR-code result and excludes 22 unrelated fetches. Repeated
@@ -184,11 +184,19 @@ Exact commands, JUnit hashes, environment, DDL fingerprint/object names,
 independent review evidence and final static/report checks are recorded in
 [`2026-10-09-complete-model-contracts.json`](validation/synthetic/2026-10-09-complete-model-contracts.json).
 The final ordinary JUnit hash is
-`a59450e88d334e8e97c3aa65e335c19f6494811540a20814acaf14114eec081c`;
+`4628ec415383fab8ca77d5a28436b30f436b547eadeaff6c9fe4b136ed7c4b68`;
 the installed-package JUnit hash is
-`1a95b6a804c60c2f0915b79ae61094fcc5c8ac9d48641bdcfb45a8bf09732608`.
+`18fa07be29608629b5ca268be513f581e301a211d0ef2385346558eedcaff7d8`.
 Submitted HEAD and hosted CI evidence belong in the PR body after publication.
 
 Live authenticated acquisition, physical power-loss tests and non-Linux atomic
 restore remain unexecuted. D2 remains intentionally absent, CAS-41 unselected,
 and CAS-76/CAS-77 deferred.
+
+The initial hosted pagination timeout exposed quadratic publication and scope
+lookup work. Exact manifest set comparison, indexed null-safe scope/DAG lookup,
+ordered scope deduplication and single-tree JSON duplicate detection preserve
+the contracts. The unchanged 101-thread × 101-reply E2E passed in 10.22s in
+focused development testing; final full ordinary acceptance includes that same
+60-second deadline. The initial failed hosted receipt is retained in the audit
+and machine-readable evidence.

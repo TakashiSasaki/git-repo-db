@@ -82,7 +82,7 @@ class ApiFacts:
             derivation={"parser": PARSER},
         )
         self.results[occurrence] = ident
-        self.pending_results[ident] = []
+        self.pending_results[ident] = {}
         return ident
 
     def ownership(self, occurrence):
@@ -111,9 +111,8 @@ class ApiFacts:
             )
 
     def choose(self, result, **scope):
-        choices = self.pending_results.setdefault(result, [])
-        if scope not in choices:
-            choices.append(scope)
+        choices = self.pending_results.setdefault(result, {})
+        choices.setdefault(tuple(sorted(scope.items())), scope)
 
     def publish(self):
         """Seal each complete parsing transaction before publishing selections."""
@@ -127,7 +126,7 @@ class ApiFacts:
                 continue
             self.model.publish_result(result)
             if self.select_results:
-                for scope in scopes:
+                for scope in scopes.values():
                     selected = self.model.ensure_scope_profile(
                         self.profile(),
                         repository_uuidv4=owner[0],

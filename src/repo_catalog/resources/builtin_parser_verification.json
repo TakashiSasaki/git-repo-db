@@ -744,8 +744,8 @@
     "policy": "whole-profile-v1",
     "reports": [
       {
-        "executed_passed": 1157,
-        "sha256": "8be72a3062dedd40ebb024902004bb01a9466c7b243938a8191b84b9252788ee",
+        "executed_passed": 1161,
+        "sha256": "a1b03e1b86198e039a7a6089bf70bb2e2348c463149e19642523b4e19cfe545a",
         "skipped": 0
       }
     ]
@@ -803,12 +803,12 @@
       "adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
       "adapters/github/collector.py": "bc8d75a1c977ebaeea7aa6cce05d110af2c1aa5e680a5e4794d4bbc22abbfe81",
       "adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
-      "adapters/github/persistence.py": "9d4d7fbf1b270a9d37db1ddd5a199997dfc6276e68d122ad3c8ede82d4f42545",
+      "adapters/github/persistence.py": "c50ea59404c28471616af04ce8e10e23c17e519fb2328b62337505364a7ef920",
       "adapters/github/transport.py": "c7e6fdcd382276555b3e83ae5a710a0c222a34db366fea413c9759bbdefd8aef",
       "adapters/sqlite/coverage.py": "6913211da033ed773a146c674cf25c014b928ed3de403b9044a19a7da183089b",
       "adapters/sqlite/identity_relations.py": "8bf2c637b61eac126d7c8a2f9f3f058684f55e265db4d711a8e05adf933cd018",
-      "adapters/sqlite/json_contracts.py": "874221ce5c8372dfc777f3e3a7de82e6537cd8c5375c197eca389c2f11e8a584",
-      "adapters/sqlite/parser_model.py": "572a05a0445269897df3404529177e385640ea72ea5730b824fa9f78dc7b30ea",
+      "adapters/sqlite/json_contracts.py": "f75b152acce243bb63521f640d0c4fe86164f9d061fea8f5b47e1d415a52f786",
+      "adapters/sqlite/parser_model.py": "241b3f923cd224f8f2964836fa46eb116cd55553dbe153d55b7e363ecd473ad7",
       "adapters/sqlite/payloads.py": "d1be12a37ff4e7001582c0f7d99486eff81feddb800026f9ae3d5577cef7224a",
       "adapters/sqlite/store.py": "c09d21890762b0436e48efcb81859189bb68f57f223d6028c4e3f80575cf2e77",
       "adapters/sqlite/text_bodies.py": "a82e87a56ca071e5ce69717acb6523b78c03cbe5df8cdf82851f8721b61c74f1",
@@ -827,7 +827,7 @@
     },
     "output_schema": {
       "catalog3": 13,
-      "ddl_sha256": "316a1a9af512663afef9c3a0c8567bcaafd58fe53d40752d5c609f0e55e8867b",
+      "ddl_sha256": "7ce17169bedf10cae7f28decd2fa8239775713d42b515047ee3c6b0ba3a38738",
       "facts": "immutable-result-owned"
     },
     "settings": {

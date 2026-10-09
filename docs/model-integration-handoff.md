@@ -103,19 +103,19 @@ Final local acceptance uses the genuine packaged parser artifact without bootstr
 The machine-readable receipt records commands, JUnit hashes, excluded tests,
 DDL inventory, environment and certificate provenance in
 [`2026-10-09-complete-model-contracts.json`](validation/synthetic/2026-10-09-complete-model-contracts.json).
-Of 1,160 collected available tests, 1,159 ordinary/package tests executed and passed;
+Of 1,164 collected available tests, 1,163 ordinary/package tests executed and passed;
 the opt-in live test was explicitly excluded. Independent cases overlap the ordinary
 suite and are not added to that total.
 
 | Gate | Final evidence |
 |---|---|
-| Ordinary unit/integration/end-to-end suite | 1,157 passed; 215.859s JUnit duration (215.87s command output); failures/errors/skips 0; no bootstrap. JUnit SHA-256 `a59450e88d334e8e97c3aa65e335c19f6494811540a20814acaf14114eec081c`. |
-| Isolated installed wheel and sdist-derived wheel | 2 passed; 30.782s JUnit duration (30.79s command output); failures/errors/skips 0; no bootstrap. JUnit SHA-256 `1a95b6a804c60c2f0915b79ae61094fcc5c8ac9d48641bdcfb45a8bf09732608`. Both installed variants perform populated Git reparse, JSON full audit, selective/repeated/full exchange and backup/restore outside the source checkout. |
-| Fresh initialization/complete packaged DDL | Schema 13; 102 tables, 45 views, 470 triggers, 98 named indexes. All views queried, all named indexes accessed, every trigger target DML compiled. FK check empty; integrity `ok`. DDL SHA-256 `316a1a9af512663afef9c3a0c8567bcaafd58fe53d40752d5c609f0e55e8867b`. Installation/compilation is not a claim that every trigger branch was behaviorally exercised. |
+| Ordinary unit/integration/end-to-end suite | 1,161 passed; 183.162s JUnit duration (183.17s command output); failures/errors/skips 0; no bootstrap. JUnit SHA-256 `4628ec415383fab8ca77d5a28436b30f436b547eadeaff6c9fe4b136ed7c4b68`. |
+| Isolated installed wheel and sdist-derived wheel | 2 passed; 37.626s JUnit duration (38.19s command output); failures/errors/skips 0; no bootstrap. JUnit SHA-256 `18fa07be29608629b5ca268be513f581e301a211d0ef2385346558eedcaff7d8`. Both installed variants perform populated Git reparse, JSON full audit, selective/repeated/full exchange and backup/restore outside the source checkout. |
+| Fresh initialization/complete packaged DDL | Schema 13; 102 tables, 45 views, 470 triggers, 100 named indexes. All views queried, all named indexes accessed, every trigger target DML compiled. FK check empty; integrity `ok`. DDL SHA-256 `7ce17169bedf10cae7f28decd2fa8239775713d42b515047ee3c6b0ba3a38738`. Installation/compilation is not a claim that every trigger branch was behaviorally exercised. |
 | UUID/document/time/coverage and JSON inventory contracts | Acceptance helper passed canonical UUIDv4 including NUL-byte guards, natural document/text identities, signed int64 negative/zero/NULL time and exactly five coverage claim columns with latest unknown/conflict probes. All 50 JSON fields classified; installed generated guards equal the registry. |
-| Independent review regressions | R1–R14 reproduced and corrected; final 53-case adversarial run passed without bootstrap, 31.896s JUnit duration; failures/errors/skips 0. SQL/admission/raw-identity/reader/coverage counterexamples and regressions are in `model-integration-audit.md`. |
+| Independent review regressions | R1–R14 reproduced and corrected; final 53-case adversarial run passed without bootstrap, 34.274s JUnit duration; failures/errors/skips 0. SQL/admission/raw-identity/reader/coverage counterexamples and regressions are in `model-integration-audit.md`. |
 | Ruff lint/format, whitespace and report validation | `uv run --no-sync ruff check .`, `uv run --no-sync ruff format --check .` (186 Python files), `git diff --check`, and `python scripts/ci_execute.py reports` passed. |
-| Parser verification artifact | Exact definition binds 26 implementation modules, explicit decoding settings, complete packaged DDL and all 11 capabilities. Regenerated from a successful 1,157-case bootstrap report (190.37s command output); final ordinary/package acceptance separately passed without bootstrap. Artifact SHA-256 `31e207dbc3ac84004cde4ecf050abaaa45f164c352ee77d24123bbf0104d07ab`; generator snapshot equals the current definition and its report hash matches the successful JUnit. |
+| Parser verification artifact | Exact definition binds 26 implementation modules, explicit decoding settings, complete packaged DDL and all 11 capabilities. Regenerated from a successful 1,161-case bootstrap report (180.37s command output); final ordinary/package acceptance separately passed without bootstrap. Artifact SHA-256 `a6e79d6d7ff5e95e870a1496b13a93adfd2c70859c96d6aedb18a8edb77dda28`; generator snapshot equals the current definition and its report hash matches the successful JUnit. |
 | Environment | Python 3.12.14; SQLite 3.53.1; Git 2.52.0; uv 0.12.19; Linux 6.18.44 x86_64, glibc 2.41. |
 | Submitted commit/hosted CI | The new stacked PR body records the exact published HEAD, PR #11 base, tested merge/tree, hosted run URL and downloaded acceptance receipt after publication. The accepted commit is not changed to add a self-referential CI record. |
 
@@ -126,6 +126,12 @@ behavioral trigger branches; full behavioral acceptance is supplied by the
 ordinary suites. Live authenticated acquisition, physical hardware power-loss
 testing and non-Linux atomic restore remain unexecuted scopes unless new executed
 evidence explicitly establishes them.
+
+The first hosted run exposed a large nested-pagination timeout; its actual
+1,156-pass/one-timeout receipt and unexecuted packaging stage remain recorded in
+the audit and final JSON. Exact publication set comparison, single-tree duplicate
+checks, ordered per-result scope deduplication and indexed exact identity/DAG
+queries preserve all constraints and the unchanged 60-second E2E deadline.
 
 ## Historical schema 12 acceptance
 
