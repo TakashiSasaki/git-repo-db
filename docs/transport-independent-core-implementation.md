@@ -16,7 +16,7 @@ Changed schema objects: the three current tables, their capability FKs/generated
 
 | Remaining objects and paths | Contract required before removal |
 | --- | --- |
-| `source_input_observations`, `repository_inventory_observations`; `collector.inventory_request/inventory_result`, `SourceService.discover` | Normalized inventory publication/ownership and retained provider-field inventory. The existing query exposes opaque provider metadata. |
+| `source_input_observations`, `repository_inventory_observations`; `collector.inventory_request/inventory_result`, `CollectionService.discover` | Normalized inventory publication/ownership and retained provider-field inventory. The existing query exposes opaque provider metadata. |
 | `fetch_occurrences`, `change_request_observations`, `document_observations`, `change_request_events`, `review_thread_observations`, `code_observations`, `code_commits`, `code_file_changes`; `ApiFacts.page/result/ownership/publish`, PR/detail/document/thread/code acquisition | Domain batch/publication identity and atomic completion, historical lifecycle/resolution and retained fields. Saved fetch inputs currently protect sealed immutable output membership. |
 | Historical `completion_markers`, `collection_memberships`, code listings and exchange aggregate proof | Normalized historical member/terminal proof and exchange validation. PR-list exchange rereads saved JSON to check exact member closure; dropping this would weaken correctness. |
 | `validators` and PR detail 304 replay; legacy HTTP CAS `payloads`/`stored_bytes`, unresolved/quarantine records | Conditional HTTP cache/restart contract and raw-content retention/GC. Preserve current behavior until that contract is decided. Domain Git objects and exact text remain required. |
