@@ -108,7 +108,7 @@ def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_pa
     with Store(state, readonly=True) as store:
         assert (
             store.one(
-                "SELECT repository_id FROM repositories WHERE repository_id=?",
+                "SELECT repository_uuidv4 FROM repositories WHERE repository_uuidv4=?",
                 (IDS["repo"],),
             )[0]
             == IDS["repo"]
@@ -121,7 +121,7 @@ def test_import_resume_preserves_exact_source_and_enters_ordinary_runtime(tmp_pa
                 "SELECT settings FROM sources WHERE source_id=?", (IDS["other_source"],)
             )[0]
         )
-        assert settings["repository_id"] == IDS["repo"]
+        assert settings["repository_uuidv4"] == IDS["repo"]
         assert settings["provider_repository_id"] == "401"
         assert "repo_id" not in settings and "provider_repo_id" not in settings
 

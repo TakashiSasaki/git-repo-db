@@ -18,17 +18,17 @@ def store(tmp_path):
     with Store(state) as saved:
         with saved.transaction():
             namespace = add_instance(saved, "github", "synthetic")
-            for repository_id in ("repo", "shared-id"):
+            for repository_uuidv4 in ("repo", "shared-id"):
                 saved.execute(
-                    "INSERT INTO repositories(repository_id,name,metadata) VALUES(?,?,'{}')",
-                    (repository_id, repository_id),
+                    "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,?,'{}')",
+                    (repository_uuidv4, repository_uuidv4),
                 )
             bind(saved, "repo", namespace, "1")
             binding = saved.one(
-                "SELECT repository_binding_id FROM repository_bindings WHERE repository_id='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
             )[0]
             saved.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('shared-id','repo',?,'pull_request',1)",
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('shared-id','repo',?,'pull_request',1)",
                 (binding,),
             )
         yield saved
@@ -43,18 +43,18 @@ def test_repository_and_pr_claims_with_equal_ids_keep_their_explicit_owners(stor
     )
     repository_scope = current_coverages(store.connection, "shared-id")[0]
     pr_scope = current_coverages(store.connection, "repo")[0]
-    assert repository_scope["repository_id"] == "shared-id"
+    assert repository_scope["repository_uuidv4"] == "shared-id"
     assert repository_scope["change_request_id"] is None
     assert repository_scope["coverage_state"] == "complete"
     assert repository_scope["claims"][0]["coverage_claim_id"] == repository_claim
-    assert pr_scope["repository_id"] == "repo"
+    assert pr_scope["repository_uuidv4"] == "repo"
     assert pr_scope["change_request_id"] == "shared-id"
     assert pr_scope["coverage_state"] == "partial"
     assert pr_scope["claims"][0]["coverage_claim_id"] == pr_claim
 
 
 @pytest.mark.parametrize(
-    "repository_id,change_request_id",
+    "repository_uuidv4,change_request_id",
     [
         ("shared-id", "shared-id"),
         ("repo", "absent-pr"),
@@ -63,13 +63,13 @@ def test_repository_and_pr_claims_with_equal_ids_keep_their_explicit_owners(stor
     ],
 )
 def test_unknown_or_cross_repository_coverage_owner_is_rejected_before_writing(
-    store, repository_id, change_request_id
+    store, repository_uuidv4, change_request_id
 ):
     before = store.connection.total_changes
     with store.transaction():
         with pytest.raises(CatalogError) as error:
             store.coverage(
-                repository_id,
+                repository_uuidv4,
                 "git",
                 "complete",
                 change_request_id=change_request_id,
@@ -146,7 +146,7 @@ def test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection(st
     assert store.one("PRAGMA recursive_triggers")[0] == 1
     with store.transaction():
         store.execute(
-            "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,kind) VALUES('scope','repo','git')"
+            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('scope','repo','git')"
         )
         original = '{ "source": "explicit negative ID" }'
         store.execute(

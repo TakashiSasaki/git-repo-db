@@ -41,6 +41,7 @@ def build_target(sql=None):
     put(
         db,
         "sources",
+        source_registration_uuidv4="00000000-0000-4000-8000-000000000201",
         source_id="source",
         service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
         discovery_kind="github_inventory",
@@ -48,12 +49,12 @@ def build_target(sql=None):
         settings="{}",
     )
     for index, repo in enumerate(("a", "b"), 1):
-        put(db, "repositories", repository_id=repo, name=repo, metadata="{}")
+        put(db, "repositories", repository_uuidv4=repo, name=repo, metadata="{}")
         put(
             db,
             "repository_bindings",
             repository_binding_id="binding-" + repo,
-            repository_id=repo,
+            repository_uuidv4=repo,
             service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
             provider_repository_id=repo,
             metadata="{}",
@@ -62,7 +63,7 @@ def build_target(sql=None):
             db,
             "repository_endpoints",
             repository_endpoint_id="endpoint-" + repo,
-            repository_id=repo,
+            repository_uuidv4=repo,
             url="file:///fixture/" + repo,
             transport="file",
             metadata="{}",
@@ -71,7 +72,7 @@ def build_target(sql=None):
             db,
             "git_acquisitions",
             git_acquisition_id="run-" + repo,
-            repository_id=repo,
+            repository_uuidv4=repo,
             repository_endpoint_id="endpoint-" + repo,
             endpoint_url="file:///fixture/" + repo,
             object_format="sha1",
@@ -84,7 +85,7 @@ def build_target(sql=None):
             "snapshots",
             snapshot_id="snapshot-" + repo,
             git_acquisition_id="run-" + repo,
-            repository_id=repo,
+            repository_uuidv4=repo,
             published=0,
             generation=1,
             created_at_us=TIME,
@@ -93,7 +94,7 @@ def build_target(sql=None):
             db,
             "change_requests",
             change_request_id="cr-" + repo,
-            repository_id=repo,
+            repository_uuidv4=repo,
             repository_binding_id="binding-" + repo,
             change_request_kind="pull_request",
             provider_change_request_number=1,
@@ -117,7 +118,7 @@ def build_target(sql=None):
             (index,),
         )
         db.execute(
-            "UPDATE repositories SET current_snapshot_id=? WHERE repository_id=?",
+            "UPDATE repositories SET current_snapshot_id=? WHERE repository_uuidv4=?",
             ("snapshot-" + repo, repo),
         )
         db.execute(
@@ -179,7 +180,7 @@ def build_target(sql=None):
             db,
             "resume_scopes",
             resume_scope_id="scope-" + repo,
-            repository_id=repo,
+            repository_uuidv4=repo,
             repository_binding_id="binding-" + repo,
             source_id="source",
             request_context="{}",
@@ -193,7 +194,7 @@ def build_target(sql=None):
                 db,
                 "fetch_collections",
                 fetch_collection_id=collection,
-                repository_id=repo,
+                repository_uuidv4=repo,
                 change_request_id="cr-" + repo,
                 source_id="source",
                 resume_scope_id="scope-" + repo,
@@ -288,7 +289,7 @@ def test_fresh_complete_schema(target):
     "sql",
     [
         "UPDATE snapshots SET snapshot_id='temporary' WHERE snapshot_id='snapshot-a'",
-        "UPDATE snapshots SET git_acquisition_id='run-b', repository_id='b' WHERE snapshot_id='snapshot-a'",
+        "UPDATE snapshots SET git_acquisition_id='run-b', repository_uuidv4='b' WHERE snapshot_id='snapshot-a'",
         "UPDATE snapshots SET published=0 WHERE snapshot_id='snapshot-a'",
         "UPDATE change_request_observations SET change_request_observation_id=999 WHERE change_request_observation_id=1",
         "UPDATE change_request_observations SET change_request_id='cr-b' WHERE change_request_observation_id=1",
@@ -363,7 +364,7 @@ def test_reviewed_multi_statement_attack(
         "change_request_observations": "change_request_observation_id",
     }[table]
     owner_id = {
-        "repositories": "repository_id",
+        "repositories": "repository_uuidv4",
         "change_requests": "change_request_id",
     }[owner]
     with pytest.raises(sqlite3.IntegrityError):
@@ -388,14 +389,14 @@ def test_reviewed_multi_statement_attack(
 @pytest.mark.parametrize(
     "sql",
     [
-        "UPDATE repositories SET current_snapshot_id='snapshot-b' WHERE repository_id='a'",
-        "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_id='a'",
+        "UPDATE repositories SET current_snapshot_id='snapshot-b' WHERE repository_uuidv4='a'",
+        "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_uuidv4='a'",
         "UPDATE change_requests SET current_change_request_observation_id=2 WHERE change_request_id='cr-a'",
         "UPDATE documents SET current_document_observation_id=2 WHERE change_request_id='cr-a' AND kind='pr-body'",
         "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id,review_thread_provider_resource_id,payload) VALUES('cr-a','review-comment','native-a','thread-b','{}')",
         "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id,payload) VALUES('cr-a','review','native-b','{}')",
         "UPDATE fetch_collections SET change_request_id='cr-b' WHERE fetch_collection_id='a-commits'",
-        "DELETE FROM repositories WHERE repository_id='a'",
+        "DELETE FROM repositories WHERE repository_uuidv4='a'",
     ],
 )
 def test_cross_owner_and_parent_deletion(target, sql):
@@ -408,7 +409,7 @@ def test_replace_upsert_and_same_repo_reassignment(target, recursive):
     db = target
     db.execute(f"PRAGMA recursive_triggers={recursive}")
     for sql in (
-        "INSERT OR REPLACE INTO snapshots SELECT snapshot_id,git_acquisition_id,repository_id,0,generation,created_at_us FROM snapshots WHERE snapshot_id='snapshot-a'",
+        "INSERT OR REPLACE INTO snapshots SELECT snapshot_id,git_acquisition_id,repository_uuidv4,0,generation,created_at_us FROM snapshots WHERE snapshot_id='snapshot-a'",
         "INSERT INTO snapshots SELECT * FROM snapshots WHERE snapshot_id='snapshot-a' ON CONFLICT(snapshot_id) DO UPDATE SET published=0",
         "INSERT OR REPLACE INTO document_observations SELECT 1,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata FROM document_observations WHERE document_observation_id=2",
         "INSERT OR REPLACE INTO text_bodies SELECT 99,body,byte_length,sha256 FROM text_bodies WHERE text_body_id=1",
@@ -420,7 +421,7 @@ def test_replace_upsert_and_same_repo_reassignment(target, recursive):
         db,
         "git_acquisitions",
         git_acquisition_id="other-run-a",
-        repository_id="a",
+        repository_uuidv4="a",
         object_format="sha1",
         kind="git",
         request="{}",
@@ -434,12 +435,12 @@ def test_replace_upsert_and_same_repo_reassignment(target, recursive):
 def test_bootstrap_and_rollback(target):
     db = target
     db.execute("BEGIN")
-    put(db, "repositories", repository_id="new", name="new", metadata="{}")
+    put(db, "repositories", repository_uuidv4="new", name="new", metadata="{}")
     put(
         db,
         "git_acquisitions",
         git_acquisition_id="new-run",
-        repository_id="new",
+        repository_uuidv4="new",
         object_format="sha1",
         kind="git",
         request="{}",
@@ -449,22 +450,22 @@ def test_bootstrap_and_rollback(target):
         "snapshots",
         snapshot_id="new-snapshot",
         git_acquisition_id="new-run",
-        repository_id="new",
+        repository_uuidv4="new",
         published=0,
         generation=0,
     )
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
-            "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_id='new'"
+            "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_uuidv4='new'"
         )
     db.execute("UPDATE snapshots SET published=1 WHERE snapshot_id='new-snapshot'")
     db.execute(
-        "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_id='new'"
+        "UPDATE repositories SET current_snapshot_id='new-snapshot' WHERE repository_uuidv4='new'"
     )
     db.execute("ROLLBACK")
     assert (
         db.execute(
-            "SELECT repository_id FROM repositories WHERE repository_id='new'"
+            "SELECT repository_uuidv4 FROM repositories WHERE repository_uuidv4='new'"
         ).fetchall()
         == []
     )
@@ -571,7 +572,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
         "acquisition_roots",
         acquisition_root_id=1,
         git_acquisition_id="run-a",
-        repository_id="a",
+        repository_uuidv4="a",
         object_format="sha1",
         oid=H,
         role="head",
@@ -597,7 +598,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
             raw_ref_name=name,
             source_ordinal=ordinal,
             snapshot_id="snapshot-a",
-            repository_id="a",
+            repository_uuidv4="a",
         )
     assert (
         db.execute(
@@ -615,7 +616,7 @@ def test_git_meaning_and_multiple_ref_origins(target):
             raw_ref_name=b"no-ref",
             source_ordinal=2,
             snapshot_id="snapshot-a",
-            repository_id="a",
+            repository_uuidv4="a",
         )
 
 
@@ -802,7 +803,7 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
         db,
         "cache_locators",
         cache_locator_id="old-cache",
-        repository_id="a",
+        repository_uuidv4="a",
         path="/synthetic/sealed-cache",
         access="source_readonly",
         state="available",

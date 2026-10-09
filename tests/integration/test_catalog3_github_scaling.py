@@ -21,19 +21,19 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                 "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES('00000000-0000-4000-8000-000000000101','github','synthetic','{}')"
             )
             store.execute(
-                "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','synthetic','{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic','{}')"
             )
             store.execute(
-                "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','repo','{}')"
+                "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','repo','{}')"
             )
             store.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo','binding','pull_request',1)"
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo','binding','pull_request',1)"
             )
             store.execute(
-                "INSERT INTO resume_scopes(resume_scope_id,repository_id,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
+                "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
             )
             store.execute(
-                "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('collection','repo','pr','threads','scope',?)",
+                "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('collection','repo','pr','threads','scope',?)",
                 (TIME,),
             )
             occurrence = store.execute(

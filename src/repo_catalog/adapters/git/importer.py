@@ -33,46 +33,46 @@ class GitImporter:
         kind = "pr" if pr_roots else "git"
         request = json.dumps({"roots": pr_roots or []}, sort_keys=True)
         run = s.one(
-            "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_id=? AND a.kind=? AND a.request=? ORDER BY p.generation DESC LIMIT 1",
-            (job, repo["repository_id"], kind, request),
+            "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_uuidv4=? AND a.kind=? AND a.request=? ORDER BY p.generation DESC LIMIT 1",
+            (job, repo["repository_uuidv4"], kind, request),
         )
         selected = endpoint(
             s,
-            repo["repository_id"],
+            repo["repository_uuidv4"],
             (run["repository_endpoint_id"] if run else None) or repository_endpoint_id,
         )
         attempt = s.one("SELECT current_attempt FROM jobs WHERE job_id=?", (job,))[0]
         if not run:
             generation = s.one(
-                "SELECT coalesce(max(p.generation),0)+1 FROM acquisition_progress p JOIN git_acquisitions a ON a.git_acquisition_id=p.git_acquisition_id WHERE a.repository_id=?",
-                (repo["repository_id"],),
+                "SELECT coalesce(max(p.generation),0)+1 FROM acquisition_progress p JOIN git_acquisitions a ON a.git_acquisition_id=p.git_acquisition_id WHERE a.repository_uuidv4=?",
+                (repo["repository_uuidv4"],),
             )[0]
             cache = s.one(
-                "SELECT c.*,l.repository_id,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_id=? AND l.access='target_active' AND l.state='available' AND c.state='active' ORDER BY c.generation DESC LIMIT 1",
-                (repo["repository_id"],),
+                "SELECT c.*,l.repository_uuidv4,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_uuidv4=? AND l.access='target_active' AND l.state='available' AND c.state='active' ORDER BY c.generation DESC LIMIT 1",
+                (repo["repository_uuidv4"],),
             )
             rid = str(uuid.uuid4())
             with s.transaction():
                 if not cache:
                     cid = str(uuid.uuid4())
-                    relative = f"cache/{repo['repository_id']}/{generation}.git"
+                    relative = f"cache/{repo['repository_uuidv4']}/{generation}.git"
                     s.execute(
-                        "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES(?,?,?,'target_active','available')",
-                        (cid, repo["repository_id"], relative),
+                        "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES(?,?,?,'target_active','available')",
+                        (cid, repo["repository_uuidv4"], relative),
                     )
                     s.execute(
                         "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES(?,?,?,'active',?,0)",
                         (cid, cid, generation, now_us()),
                     )
                     cache = s.one(
-                        "SELECT c.*,l.repository_id,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
+                        "SELECT c.*,l.repository_uuidv4,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
                         (cid,),
                     )
                 s.execute(
-                    "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,repository_endpoint_id,endpoint_url,source_id,kind,started_at_us,request) VALUES(?,?,?,?,?,?,?,?)",
+                    "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,repository_endpoint_id,endpoint_url,source_id,kind,started_at_us,request) VALUES(?,?,?,?,?,?,?,?)",
                     (
                         rid,
-                        repo["repository_id"],
+                        repo["repository_uuidv4"],
                         selected["repository_endpoint_id"],
                         selected["url"],
                         repo.get("source_id") if isinstance(repo, dict) else None,
@@ -91,8 +91,8 @@ class GitImporter:
                 )
                 if kind == "git":
                     s.execute(
-                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES(?,?,?,0,?,?)",
-                        (rid, rid, repo["repository_id"], generation, now_us()),
+                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES(?,?,?,0,?,?)",
+                        (rid, rid, repo["repository_uuidv4"], generation, now_us()),
                     )
             run = s.one(
                 "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE a.git_acquisition_id=?",
@@ -108,7 +108,7 @@ class GitImporter:
                 )
         repo = {**dict(repo), "url": run["endpoint_url"]}
         cache = s.one(
-            "SELECT c.*,l.repository_id,l.path,l.access,l.state AS locator_state FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
+            "SELECT c.*,l.repository_uuidv4,l.path,l.access,l.state AS locator_state FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
             (run["active_cache_entry_id"],),
         )
         path = (s.path / cache["path"]).resolve()
@@ -324,12 +324,12 @@ class GitImporter:
                                 root[0]
                                 if root
                                 else s.execute(
-                                    "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_id,expected_oid,published) VALUES(?,?,?,'traversal',?,?,0)",
+                                    "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES(?,?,?,'traversal',?,?,0)",
                                     (
                                         run["git_acquisition_id"],
                                         fmt,
                                         root_oid,
-                                        repo["repository_id"],
+                                        repo["repository_uuidv4"],
                                         bytes.fromhex(r["expected"])
                                         if r.get("expected")
                                         else None,
@@ -338,13 +338,13 @@ class GitImporter:
                             )
                             if kind == "git":
                                 s.execute(
-                                    "INSERT INTO root_origins(acquisition_root_id,origin_kind,raw_ref_name,source_ordinal,snapshot_id,repository_id) VALUES(?,'ref',?,?,?,?)",
+                                    "INSERT INTO root_origins(acquisition_root_id,origin_kind,raw_ref_name,source_ordinal,snapshot_id,repository_uuidv4) VALUES(?,'ref',?,?,?,?)",
                                     (
                                         acquisition_root_id,
                                         raw_name,
                                         ordinal,
                                         run["git_acquisition_id"],
-                                        repo["repository_id"],
+                                        repo["repository_uuidv4"],
                                     ),
                                 )
                 if kind != "pr" or not self.reusable_direct_roots(repo, fmt, pr_roots):
@@ -413,19 +413,19 @@ class GitImporter:
                             (run["git_acquisition_id"],),
                         )[0]
                         current = s.one(
-                            "SELECT a.refs_observed_at_us FROM repositories r JOIN snapshots x ON x.snapshot_id=r.current_snapshot_id JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id WHERE r.repository_id=?",
-                            (repo["repository_id"],),
+                            "SELECT a.refs_observed_at_us FROM repositories r JOIN snapshots x ON x.snapshot_id=r.current_snapshot_id JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id WHERE r.repository_uuidv4=?",
+                            (repo["repository_uuidv4"],),
                         )
                         if not current or current[0] is None or incoming > current[0]:
                             s.execute(
-                                "UPDATE repositories SET current_snapshot_id=? WHERE repository_id=?",
-                                (run["git_acquisition_id"], repo["repository_id"]),
+                                "UPDATE repositories SET current_snapshot_id=? WHERE repository_uuidv4=?",
+                                (run["git_acquisition_id"], repo["repository_uuidv4"]),
                             )
                         # Fixed-root resume preserves its original remote observation.
                         # A PR-only acquisition cannot establish repository-wide refs.
                         for component in ("structure", "digests", "heads-text", "refs"):
                             s.coverage(
-                                repo["repository_id"],
+                                repo["repository_uuidv4"],
                                 component,
                                 "complete",
                                 {"git_acquisition_id": run["git_acquisition_id"]},
@@ -448,7 +448,7 @@ class GitImporter:
     @staticmethod
     def result(repo, run, kind):
         return {
-            "repository_id": repo["repository_id"],
+            "repository_uuidv4": repo["repository_uuidv4"],
             "git_acquisition_id": run["git_acquisition_id"],
             "snapshot_id": run["git_acquisition_id"] if kind == "git" else None,
             "state": "complete",
@@ -497,8 +497,8 @@ class GitImporter:
             if root["role"] == "head" or root["ref"] != root.get("expected"):
                 return False
             if not self.s.one(
-                "SELECT 1 FROM git_objects g JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repository_id=? AND r.state='published' LIMIT 1",
-                (fmt, bytes.fromhex(root["ref"]), repo["repository_id"]),
+                "SELECT 1 FROM git_objects g JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repository_uuidv4=? AND r.state='published' LIMIT 1",
+                (fmt, bytes.fromhex(root["ref"]), repo["repository_uuidv4"]),
             ):
                 return False
         return bool(roots)
@@ -707,9 +707,9 @@ class GitImporter:
     def source(self, obj, repo, run):
         self.ensure(
             "repository_object_sources",
-            ("repository_id", "git_object_id", "git_acquisition_id"),
-            (repo["repository_id"], obj, run["git_acquisition_id"]),
-            ("repository_id", "git_object_id", "git_acquisition_id"),
+            ("repository_uuidv4", "git_object_id", "git_acquisition_id"),
+            (repo["repository_uuidv4"], obj, run["git_acquisition_id"]),
+            ("repository_uuidv4", "git_object_id", "git_acquisition_id"),
         )
 
     def save_blob(self, fmt, oid, size, hashes, state, repo, run):

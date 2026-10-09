@@ -26,11 +26,11 @@ SOURCE_TABLES = {
     "repository_preferences": "repositories",
 }
 KEYS = {
-    "repository_name_assertions": ("repository_id", "name"),
-    "source_repositories": ("source_id", "repository_id"),
+    "repository_name_assertions": ("repository_uuidv4", "name"),
+    "source_repositories": ("source_id", "repository_uuidv4"),
     "service_instances": ("service_instance_uuidv4",),
     "sources": ("source_id",),
-    "repositories": ("repository_id",),
+    "repositories": ("repository_uuidv4",),
     "repository_bindings": ("repository_binding_id",),
     "repository_endpoints": ("repository_endpoint_id",),
 }
@@ -50,9 +50,10 @@ COLUMNS = {
         "discovery_kind",
         "name",
         "settings",
+        "source_registration_uuidv4",
     ),
     "repositories": (
-        "repository_id",
+        "repository_uuidv4",
         "name",
         "preferred_repository_endpoint_id",
         "current_snapshot_id",
@@ -60,7 +61,7 @@ COLUMNS = {
     ),
     "repository_bindings": (
         "repository_binding_id",
-        "repository_id",
+        "repository_uuidv4",
         "service_instance_uuidv4",
         "provider_repository_id",
         "metadata",
@@ -68,17 +69,17 @@ COLUMNS = {
     ),
     "repository_endpoints": (
         "repository_endpoint_id",
-        "repository_id",
+        "repository_uuidv4",
         "url",
         "transport",
         "label",
         "metadata",
         "created_at_us",
     ),
-    "repository_name_assertions": ("repository_id", "name", "observed_at_us"),
+    "repository_name_assertions": ("repository_uuidv4", "name", "observed_at_us"),
     "source_repositories": (
         "source_id",
-        "repository_id",
+        "repository_uuidv4",
         "first_seen_us",
         "last_seen_us",
     ),
@@ -254,13 +255,6 @@ class Context:
             ):
                 raise Invalid("IDENTITY_UNKNOWN_KIND", "kind")
             name = t(record, "name", nonempty=True)
-            if (
-                self.src.execute(
-                    "SELECT count(*) FROM service_instances WHERE name=?", (name,)
-                ).fetchone()[0]
-                != 1
-            ):
-                raise Invalid("IDENTITY_INSTANCE_NAME_CONFLICT", "name")
             return [
                 ident,
                 kind,
@@ -288,7 +282,7 @@ class Context:
             # Raw settings remain in legacy_values; current source registration
             # consumes only the catalog3 identity names in its target projection.
             for old, new in (
-                ("repo_id", "repository_id"),
+                ("repo_id", "repository_uuidv4"),
                 ("provider_repo_id", "provider_repository_id"),
             ):
                 if (
@@ -307,6 +301,7 @@ class Context:
                 {"local-git": "manual_git", "github": "github_inventory"}[kind],
                 t(record, "name"),
                 settings,
+                self.source_registration(ident) if allocate else None,
             ]
         if recipe == "repositories":
             return [
@@ -393,6 +388,19 @@ class Context:
                 raise Invalid("IDENTITY_REVERSED_BOUNDS", "last_seen")
             return [source, repo, first, last]
         raise ConversionError("UNKNOWN_IDENTITY_RECIPE")
+
+    def source_registration(self, local_id):
+        # v2 has no portable Source UUID. Allocate once with its target row;
+        # target + workspace mapping commit atomically, and replay reuses it.
+        row = self.db.execute(
+            "SELECT source_registration_uuidv4 FROM sources WHERE source_id=?",
+            (local_id,),
+        ).fetchone()
+        if row:
+            return row[0]
+        if self.verifying:
+            raise ConversionError("IDENTITY_MAPPING_MISSING")
+        return str(uuid.uuid4())
 
     def legacy_issues(self, record):
         """v2 normalized facts win; contradictory old projections remain explicit."""

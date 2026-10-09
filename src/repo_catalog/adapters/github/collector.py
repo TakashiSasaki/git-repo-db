@@ -36,7 +36,7 @@ class GitHubCollector:
 
     def coverage_claim(
         self,
-        repository_id,
+        repository_uuidv4,
         kind,
         state,
         observed_at_us,
@@ -47,7 +47,7 @@ class GitHubCollector:
         if observed_at_us is None:
             return
         self.s.coverage(
-            repository_id,
+            repository_uuidv4,
             kind,
             state,
             details_json,
@@ -56,8 +56,8 @@ class GitHubCollector:
         )
         if state == "partial":
             current = self.s.one(
-                "SELECT observed_at_us,coverage_state FROM current_coverage WHERE repository_id=? AND change_request_id IS ? AND kind=?",
-                (repository_id, change_request_id, kind),
+                "SELECT observed_at_us,coverage_state FROM current_coverage WHERE repository_uuidv4=? AND change_request_id IS ? AND kind=?",
+                (repository_uuidv4, change_request_id, kind),
             )
             if (
                 current
@@ -65,12 +65,12 @@ class GitHubCollector:
                 and current["coverage_state"] in ("partial", "conflict")
             ):
                 self.observed_partial_scopes.add(
-                    (repository_id, change_request_id, kind)
+                    (repository_uuidv4, change_request_id, kind)
                 )
 
     def collection_coverage(self, repo, pr, kind, collection, state, *, reason=None):
         self.coverage_claim(
-            repo["repository_id"],
+            repo["repository_uuidv4"],
             kind,
             state,
             self.facts.observed_at_us(collection),
@@ -80,13 +80,13 @@ class GitHubCollector:
 
     def summary_observed_at_us(self, repo, job, *, documents_only=False):
         return self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0"
+            "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0"
             + (
                 " AND f.kind NOT IN ('pr-commits','pr-files','timeline')"
                 if documents_only
                 else ""
             ),
-            (repo["repository_id"], repo["source_id"], job),
+            (repo["repository_uuidv4"], repo["source_id"], job),
         )[0]
 
     def request_get(self, url, repo=None, **kwargs):
@@ -132,16 +132,16 @@ class GitHubCollector:
                 )
             with self.s.transaction():
                 self.s.execute(
-                    "UPDATE repositories SET name=? WHERE repository_id=?",
-                    (name, repo["repository_id"]),
+                    "UPDATE repositories SET name=? WHERE repository_uuidv4=?",
+                    (name, repo["repository_uuidv4"]),
                 )
                 if not self.s.one(
-                    "SELECT 1 FROM repository_name_assertions WHERE repository_id=? AND name=?",
-                    (repo["repository_id"], name),
+                    "SELECT 1 FROM repository_name_assertions WHERE repository_uuidv4=? AND name=?",
+                    (repo["repository_uuidv4"], name),
                 ):
                     self.s.execute(
-                        "INSERT INTO repository_name_assertions(repository_id,name,observed_at_us) VALUES(?,?,?)",
-                        (repo["repository_id"], name, now_us()),
+                        "INSERT INTO repository_name_assertions(repository_uuidv4,name,observed_at_us) VALUES(?,?,?)",
+                        (repo["repository_uuidv4"], name, now_us()),
                     )
                 self.s.publish()
             url = target
@@ -507,14 +507,14 @@ class GitHubCollector:
         ident = (
             row["change_request_id"]
             if row
-            else f"{repo['repository_id']}:{value['number']}"
+            else f"{repo['repository_uuidv4']}:{value['number']}"
         )
         if not row:
             s.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES(?,?,?,'pull_request',?,NULL)",
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES(?,?,?,'pull_request',?,NULL)",
                 (
                     ident,
-                    repo["repository_id"],
+                    repo["repository_uuidv4"],
                     binding,
                     value["number"],
                 ),
@@ -739,9 +739,9 @@ class GitHubCollector:
         # Resume keeps its originally bounded request and original scan start;
         # resumption itself must never move a child watermark.
         existing = self.s.one(
-            "SELECT f.fetch_collection_id,f.observed_at_us,s.endpoint FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN resume_scopes s ON s.resume_scope_id=f.resume_scope_id WHERE f.repository_id=? AND f.kind=? AND p.job_id=? AND s.source_id=? AND s.principal_ref=? AND s.api_version=? AND s.parser_version=? AND s.profile_version=? AND s.confidence='proven' ORDER BY f.observed_at_us DESC LIMIT 1",
+            "SELECT f.fetch_collection_id,f.observed_at_us,s.endpoint FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN resume_scopes s ON s.resume_scope_id=f.resume_scope_id WHERE f.repository_uuidv4=? AND f.kind=? AND p.job_id=? AND s.source_id=? AND s.principal_ref=? AND s.api_version=? AND s.parser_version=? AND s.profile_version=? AND s.confidence='proven' ORDER BY f.observed_at_us DESC LIMIT 1",
             (
-                repo["repository_id"],
+                repo["repository_uuidv4"],
                 kind + "-incremental",
                 job,
                 repo["source_id"],
@@ -774,8 +774,8 @@ class GitHubCollector:
             except ValueError:
                 raise CatalogError("API_SCHEMA", "Invalid comment parent") from None
             pr = self.s.one(
-                "SELECT change_request_id FROM change_requests WHERE repository_id=? AND provider_change_request_number=?",
-                (repo["repository_id"], number),
+                "SELECT change_request_id FROM change_requests WHERE repository_uuidv4=? AND provider_change_request_number=?",
+                (repo["repository_uuidv4"], number),
             )
             if not pr:
                 payload_id = self.s.one(
@@ -1162,7 +1162,7 @@ class GitHubCollector:
                     else:
                         self.facts.finish(collection, observed_at_us=observed_at_us())
                         self.coverage_claim(
-                            repo["repository_id"],
+                            repo["repository_uuidv4"],
                             "threads",
                             "complete",
                             observed_at_us(),
@@ -1200,7 +1200,7 @@ class GitHubCollector:
                     )
                 ):
                     self.coverage_claim(
-                        repo["repository_id"],
+                        repo["repository_uuidv4"],
                         "threads",
                         "partial",
                         observed_at_us(),
@@ -1501,8 +1501,8 @@ class GitHubCollector:
                     ),
                 )
             prs = s.all(
-                "SELECT p.*,o.payload FROM change_requests p LEFT JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.repository_id=? ORDER BY p.provider_change_request_number",
-                (repo["repository_id"],),
+                "SELECT p.*,o.payload FROM change_requests p LEFT JOIN change_request_observations o ON o.change_request_observation_id=p.current_change_request_observation_id WHERE p.repository_uuidv4=? ORDER BY p.provider_change_request_number",
+                (repo["repository_uuidv4"],),
             )
             for pr in prs:
                 self.token.check()
@@ -1739,7 +1739,7 @@ class GitHubCollector:
                            JOIN preservation_obligations p ON p.git_acquisition_id=g.git_acquisition_id
                            JOIN acquisition_progress a ON a.git_acquisition_id=g.git_acquisition_id
                            JOIN git_objects o ON o.object_format=r.object_format AND o.oid=r.oid
-                           WHERE r.repository_id=? AND r.object_format=? AND r.oid=?
+                           WHERE r.repository_uuidv4=? AND r.object_format=? AND r.oid=?
                              AND r.published=1 AND p.published=1 AND a.state='published'
                              AND o.type='commit' AND o.verified=1
                              AND (r.expected_oid IS NULL OR r.expected_oid=r.oid)
@@ -1749,7 +1749,7 @@ class GitHubCollector:
                                    AND lower(json_extract(j.value,'$.expected'))=lower(hex(r.oid)))))
                            ORDER BY (r.git_acquisition_id IS ?) DESC,r.acquisition_root_id DESC LIMIT 1""",
                         (
-                            repo["repository_id"],
+                            repo["repository_uuidv4"],
                             algorithm,
                             bytes.fromhex(expected),
                             role,
@@ -1814,8 +1814,8 @@ class GitHubCollector:
                     )
                     code_failures = code_input_failures + failures[oldfail:]
                     prior_code_coverage = s.one(
-                        "SELECT observed_at_us FROM current_coverage WHERE repository_id=? AND change_request_id=? AND kind='pr-code'",
-                        (repo["repository_id"], pr["change_request_id"]),
+                        "SELECT observed_at_us FROM current_coverage WHERE repository_uuidv4=? AND change_request_id=? AND kind='pr-code'",
+                        (repo["repository_uuidv4"], pr["change_request_id"]),
                     )
                     observed_incomplete_merge = (
                         merge_observed_at_us is not None
@@ -1832,7 +1832,7 @@ class GitHubCollector:
                         or bool(missing_roles)
                         or observed_incomplete_merge
                         or any(
-                            (repo["repository_id"], pr["change_request_id"], kind)
+                            (repo["repository_uuidv4"], pr["change_request_id"], kind)
                             in self.observed_partial_scopes
                             for kind in ("pr-commits", "pr-files", "review", "threads")
                         )
@@ -1912,7 +1912,7 @@ class GitHubCollector:
                             (rootrow["acquisition_root_id"], current),
                         ):
                             s.execute(
-                                "INSERT INTO root_origins(acquisition_root_id,origin_kind,source_ordinal,change_request_id,change_request_observation_id,repository_id) VALUES(?,'pr_role',?,?,?,?)",
+                                "INSERT INTO root_origins(acquisition_root_id,origin_kind,source_ordinal,change_request_id,change_request_observation_id,repository_uuidv4) VALUES(?,'pr_role',?,?,?,?)",
                                 (
                                     rootrow["acquisition_root_id"],
                                     s.one(
@@ -1921,13 +1921,13 @@ class GitHubCollector:
                                     )[0],
                                     pr["change_request_id"],
                                     current,
-                                    repo["repository_id"],
+                                    repo["repository_uuidv4"],
                                 ),
                             )
                     code_observed_at_us = s.one(
-                        "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_id=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads')",
+                        "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads')",
                         (
-                            repo["repository_id"],
+                            repo["repository_uuidv4"],
                             pr["change_request_id"],
                             repo["source_id"],
                             job,
@@ -1939,7 +1939,7 @@ class GitHubCollector:
                         or observed_incomplete_code
                     ):
                         self.coverage_claim(
-                            repo["repository_id"],
+                            repo["repository_uuidv4"],
                             "pr-code",
                             state,
                             code_observed_at_us,
@@ -1978,7 +1978,7 @@ class GitHubCollector:
                         # not a newer assessment of the saved repository coverage.
                         continue
                     self.coverage_claim(
-                        repo["repository_id"],
+                        repo["repository_uuidv4"],
                         component,
                         "partial" if missing else "complete",
                         self.summary_observed_at_us(
@@ -1998,7 +1998,7 @@ class GitHubCollector:
                     True,
                 )
             return {
-                "repository_id": repo["repository_id"],
+                "repository_uuidv4": repo["repository_uuidv4"],
                 "state": "complete",
                 "pull_requests": len(prs),
             }
@@ -2013,9 +2013,9 @@ class GitHubCollector:
             (runtime_scope,),
         )[0]
         candidates = self.s.all(
-            "SELECT v.*,sc.request_context,sc.principal_ref FROM validators v JOIN resume_scopes sc ON sc.resume_scope_id=v.resume_scope_id WHERE sc.repository_id=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.endpoint=? AND sc.api_version=? AND sc.confidence='legacy_unknown' AND sc.parser_version='v1' ORDER BY v.validated_at_us DESC",
+            "SELECT v.*,sc.request_context,sc.principal_ref FROM validators v JOIN resume_scopes sc ON sc.resume_scope_id=v.resume_scope_id WHERE sc.repository_uuidv4=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.endpoint=? AND sc.api_version=? AND sc.confidence='legacy_unknown' AND sc.parser_version='v1' ORDER BY v.validated_at_us DESC",
             (
-                repo["repository_id"],
+                repo["repository_uuidv4"],
                 binding,
                 repo["source_id"],
                 url,
@@ -2063,14 +2063,14 @@ class GitHubCollector:
             (pr,),
         )[0]
         rows = self.s.all(
-            "SELECT l.*,sc.endpoint,sc.principal_ref,sc.request_context,sc.profile_version,p.page_count FROM code_listings l JOIN code_listing_progress p ON p.code_listing_id=l.code_listing_id JOIN resume_scopes sc ON sc.resume_scope_id=l.resume_scope_id WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? AND p.state='complete' AND p.terminal=1 AND p.context_proven=1 AND sc.repository_id=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.api_version=? AND sc.parser_version='v1' AND sc.confidence='legacy_unknown'",
+            "SELECT l.*,sc.endpoint,sc.principal_ref,sc.request_context,sc.profile_version,p.page_count FROM code_listings l JOIN code_listing_progress p ON p.code_listing_id=l.code_listing_id JOIN resume_scopes sc ON sc.resume_scope_id=l.resume_scope_id WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? AND p.state='complete' AND p.terminal=1 AND p.context_proven=1 AND sc.repository_uuidv4=? AND sc.repository_binding_id=? AND sc.source_id=? AND sc.api_version=? AND sc.parser_version='v1' AND sc.confidence='legacy_unknown'",
             (
                 pr,
                 kind,
                 algorithm,
                 head,
                 base,
-                repo["repository_id"],
+                repo["repository_uuidv4"],
                 binding,
                 repo["source_id"],
                 self.cfg["rest_api_version"],
@@ -2099,7 +2099,7 @@ class GitHubCollector:
             if (
                 listing["profile_version"]
                 not in ("legacy_unknown", self.s.config["preservation"]["profile"])
-                or prior_context.get("repository_id") != repo["repository_id"]
+                or prior_context.get("repository_uuidv4") != repo["repository_uuidv4"]
                 or prior_context.get("accept", "application/vnd.github+json")
                 != "application/vnd.github+json"
                 or prior_context.get("api_version", self.cfg["rest_api_version"])

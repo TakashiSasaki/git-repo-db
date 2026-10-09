@@ -1,0 +1,24 @@
+{
+  "tested_commit": "e3e6f34ab0397db7d7b86ffa446fe3b5da693ba5",
+  "tested_tree": "6f0b0c87952f126a56a6814ee829ae8ea04aa1d8",
+  "ordinary": {
+    "passed": 837,
+    "seconds": 93.68
+  },
+  "packaging": {
+    "passed": 2,
+    "seconds": 3.45
+  },
+  "gate": {
+    "executed": 839,
+    "selected_files": 49,
+    "unexecuted_files": [],
+    "excluded_files": []
+  },
+  "scope": "synthetic identity foundation",
+  "not_run": [
+    "hosted CI",
+    "real-source acquisition"
+  ],
+  "raw_design_attachments_published": false
+}

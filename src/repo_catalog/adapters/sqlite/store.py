@@ -196,7 +196,7 @@ class Store:
 
     def coverage(
         self,
-        repository_id,
+        repository_uuidv4,
         kind,
         coverage_state,
         details_json=None,
@@ -222,7 +222,8 @@ class Store:
         with transaction:
             if (
                 self.one(
-                    "SELECT 1 FROM repositories WHERE repository_id=?", (repository_id,)
+                    "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
+                    (repository_uuidv4,),
                 )
                 is None
             ):
@@ -232,8 +233,8 @@ class Store:
             if (
                 change_request_id is not None
                 and self.one(
-                    "SELECT 1 FROM change_requests WHERE change_request_id=? AND repository_id=?",
-                    (change_request_id, repository_id),
+                    "SELECT 1 FROM change_requests WHERE change_request_id=? AND repository_uuidv4=?",
+                    (change_request_id, repository_uuidv4),
                 )
                 is None
             ):
@@ -242,14 +243,14 @@ class Store:
                     "Coverage change request must belong to the specified repository",
                 )
             scope = self.one(
-                "SELECT coverage_scope_id FROM coverage_scopes WHERE repository_id=? AND change_request_id IS ? AND kind=?",
-                (repository_id, change_request_id, kind),
+                "SELECT coverage_scope_id FROM coverage_scopes WHERE repository_uuidv4=? AND change_request_id IS ? AND kind=?",
+                (repository_uuidv4, change_request_id, kind),
             )
             scope_id = scope[0] if scope else str(uuid.uuid4())
             if scope is None:
                 self.execute(
-                    "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,change_request_id,kind) VALUES(?,?,?,?)",
-                    (scope_id, repository_id, change_request_id, kind),
+                    "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,change_request_id,kind) VALUES(?,?,?,?)",
+                    (scope_id, repository_uuidv4, change_request_id, kind),
                 )
             return admit_claim(
                 self.connection, scope_id, coverage_state, observed_at_us, details_json

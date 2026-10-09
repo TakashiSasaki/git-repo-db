@@ -499,7 +499,7 @@ def commit(db, src, run, receipt, item, fault=no_fault):
                     ]:
                         raise ConversionError("IMPORT_BEFORE_IMAGE_MISMATCH")
                     db.execute(
-                        "UPDATE repositories SET preferred_repository_endpoint_id=? WHERE repository_id=?",
+                        "UPDATE repositories SET preferred_repository_endpoint_id=? WHERE repository_uuidv4=?",
                         (row[2], row[0]),
                     )
                 elif operation == "manifest_completion" and table == "root_manifests":

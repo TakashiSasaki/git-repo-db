@@ -96,7 +96,7 @@ COLUMNS = {
     "payloads": ("payload_id", "sha256", "body", "byte_length", "representation"),
     "change_requests": (
         "change_request_id",
-        "repository_id",
+        "repository_uuidv4",
         "repository_binding_id",
         "change_request_kind",
         "provider_change_request_number",
@@ -104,7 +104,7 @@ COLUMNS = {
     ),
     "resume_scopes": (
         "resume_scope_id",
-        "repository_id",
+        "repository_uuidv4",
         "repository_binding_id",
         "source_id",
         "principal_ref",
@@ -117,7 +117,7 @@ COLUMNS = {
     ),
     "fetch_collections": (
         "fetch_collection_id",
-        "repository_id",
+        "repository_uuidv4",
         "change_request_id",
         "source_id",
         "kind",
@@ -648,7 +648,7 @@ class Context(identity.Context):
         # unrelated, potentially deep provider evidence in Python.
         if "repo_id" in scope:
             scope_text = self.src.execute(
-                "SELECT json_set(json_remove(?, '$.repo_id'), '$.repository_id', ?)",
+                "SELECT json_set(json_remove(?, '$.repo_id'), '$.repository_uuidv4', ?)",
                 (scope_text, repo),
             ).fetchone()[0]
         return (

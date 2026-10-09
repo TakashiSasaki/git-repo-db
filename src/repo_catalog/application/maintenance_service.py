@@ -236,8 +236,8 @@ class MaintenanceService:
                         single_repository,
                     )
 
-                    settings["repository_id"] = single_repository(s, repo)[
-                        "repository_id"
+                    settings["repository_uuidv4"] = single_repository(s, repo)[
+                        "repository_uuidv4"
                     ]
                 if provider_repository_id is not None:
                     if not str(provider_repository_id).strip():
@@ -247,18 +247,28 @@ class MaintenanceService:
                         )
                     settings["provider_repository_id"] = str(provider_repository_id)
                 s.execute(
-                    "INSERT INTO sources(source_id,discovery_kind,name,settings,service_instance_uuidv4) VALUES(?,?,?,?,?)",
+                    "INSERT INTO sources(source_id,discovery_kind,name,settings,service_instance_uuidv4,source_registration_uuidv4) VALUES(?,?,?,?,?,?)",
                     (
                         ident,
                         "github_inventory" if kind == "github" else "manual_git",
                         name,
                         json.dumps(settings),
                         service_instance_uuidv4,
+                        str(uuid.uuid4()),
                     ),
                 )
                 s.publish()
             return Result(
-                {"source_id": ident, "kind": kind, "name": name}, catalog=s.revision()
+                {
+                    "source_id": ident,
+                    "source_registration_uuidv4": s.one(
+                        "SELECT source_registration_uuidv4 FROM sources WHERE source_id=?",
+                        (ident,),
+                    )[0],
+                    "kind": kind,
+                    "name": name,
+                },
+                catalog=s.revision(),
             )
 
     def instance_add(self, kind, name, web_base_url=None, api_base_url=None):
@@ -273,17 +283,20 @@ class MaintenanceService:
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
-                repository_id = single_repository(s, repo)["repository_id"]
+                repository_uuidv4 = single_repository(s, repo)["repository_uuidv4"]
                 service_instance_uuidv4 = identity.instance(s, instance)[
                     "service_instance_uuidv4"
                 ]
                 identity.bind(
-                    s, repository_id, service_instance_uuidv4, provider_repository_id
+                    s,
+                    repository_uuidv4,
+                    service_instance_uuidv4,
+                    provider_repository_id,
                 )
                 s.publish()
             return Result(
                 {
-                    "repository_id": repository_id,
+                    "repository_uuidv4": repository_uuidv4,
                     "service_instance_uuidv4": service_instance_uuidv4,
                     "provider_repository_id": provider_repository_id,
                 },
@@ -295,11 +308,16 @@ class MaintenanceService:
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
-                repository_id = single_repository(s, repo)["repository_id"]
-                ident = identity.add_endpoint(s, repository_id, url, label, preferred)
+                repository_uuidv4 = single_repository(s, repo)["repository_uuidv4"]
+                ident = identity.add_endpoint(
+                    s, repository_uuidv4, url, label, preferred
+                )
                 s.publish()
             return Result(
-                {"repository_id": repository_id, "repository_endpoint_id": ident},
+                {
+                    "repository_uuidv4": repository_uuidv4,
+                    "repository_endpoint_id": ident,
+                },
                 catalog=s.revision(),
             )
 
@@ -308,12 +326,12 @@ class MaintenanceService:
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
-                repository_id = single_repository(s, repo)["repository_id"]
-                identity.prefer_endpoint(s, repository_id, repository_endpoint_id)
+                repository_uuidv4 = single_repository(s, repo)["repository_uuidv4"]
+                identity.prefer_endpoint(s, repository_uuidv4, repository_endpoint_id)
                 s.publish()
             return Result(
                 {
-                    "repository_id": repository_id,
+                    "repository_uuidv4": repository_uuidv4,
                     "repository_endpoint_id": repository_endpoint_id,
                 },
                 catalog=s.revision(),
@@ -440,7 +458,7 @@ class MaintenanceService:
             "dangling_publications": [
                 dict(r)
                 for r in s.all(
-                    "SELECT r.repository_id FROM repositories r LEFT JOIN snapshots sn ON sn.snapshot_id=r.current_snapshot_id WHERE r.current_snapshot_id IS NOT NULL AND (sn.snapshot_id IS NULL OR sn.repository_id!=r.repository_id OR sn.published!=1)"
+                    "SELECT r.repository_uuidv4 FROM repositories r LEFT JOIN snapshots sn ON sn.snapshot_id=r.current_snapshot_id WHERE r.current_snapshot_id IS NOT NULL AND (sn.snapshot_id IS NULL OR sn.repository_uuidv4!=r.repository_uuidv4 OR sn.published!=1)"
                 )
             ],
             "unfinished_published_runs": [
@@ -453,7 +471,7 @@ class MaintenanceService:
             "repository_endpoints": [
                 dict(r)
                 for r in s.all(
-                    "SELECT r.repository_id FROM repositories r LEFT JOIN repository_endpoints e ON e.repository_endpoint_id=r.preferred_repository_endpoint_id WHERE r.preferred_repository_endpoint_id IS NOT NULL AND (e.repository_endpoint_id IS NULL OR e.repository_id!=r.repository_id)"
+                    "SELECT r.repository_uuidv4 FROM repositories r LEFT JOIN repository_endpoints e ON e.repository_endpoint_id=r.preferred_repository_endpoint_id WHERE r.preferred_repository_endpoint_id IS NOT NULL AND (e.repository_endpoint_id IS NULL OR e.repository_uuidv4!=r.repository_uuidv4)"
                 )
             ],
             "change_request_current": [
@@ -598,21 +616,21 @@ class MaintenanceService:
             try:
                 for repo in repos:
                     candidates = s.all(
-                        "SELECT g.*,b.git_acquisition_id FROM blob_content_map b JOIN git_objects g ON g.git_object_id=b.git_object_id JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE b.content_id=? AND p.repository_id=? AND r.state='published'",
-                        (content_id, repo["repository_id"]),
+                        "SELECT g.*,b.git_acquisition_id FROM blob_content_map b JOIN git_objects g ON g.git_object_id=b.git_object_id JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE b.content_id=? AND p.repository_uuidv4=? AND r.state='published'",
+                        (content_id, repo["repository_uuidv4"]),
                     )
                     if not candidates:
                         continue
                     cache = s.one(
-                        "SELECT a.*,l.repository_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
-                        (repo["repository_id"],),
+                        "SELECT a.*,l.repository_uuidv4,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
+                        (repo["repository_uuidv4"],),
                     )
                     if not cache:
                         # Explicit re-fetch creates a fresh current observation, without claiming lost OIDs are available.
                         GitImporter(s, token).sync(repo, job)
                         cache = s.one(
-                            "SELECT a.*,l.repository_id,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
-                            (repo["repository_id"],),
+                            "SELECT a.*,l.repository_uuidv4,l.path FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=? AND a.state='active' AND l.access='target_active' AND l.state='available' ORDER BY a.generation DESC LIMIT 1",
+                            (repo["repository_uuidv4"],),
                         )
                     with FileLock(
                         s.path / f"locks/cache-{cache['active_cache_entry_id']}.lock",

@@ -97,7 +97,7 @@ def export_current_claims(
 
 
 def current_coverages(
-    connection: sqlite3.Connection, repository_id: str, kind: str | None = None
+    connection: sqlite3.Connection, repository_uuidv4: str, kind: str | None = None
 ) -> list[dict]:
     """Expand each current scope with its distinct advisory-bearing claims.
 
@@ -115,9 +115,9 @@ def current_coverages(
                LEFT JOIN coverage_claims c
                  ON c.coverage_scope_id=v.coverage_scope_id
                     AND c.observed_at_us=v.observed_at_us
-               WHERE v.repository_id=? AND (? IS NULL OR v.kind=?)
+               WHERE v.repository_uuidv4=? AND (? IS NULL OR v.kind=?)
                ORDER BY v.kind,v.change_request_id,v.coverage_scope_id,c.coverage_state""",
-            (repository_id, kind, kind),
+            (repository_uuidv4, kind, kind),
         )
     )
     scopes = {}

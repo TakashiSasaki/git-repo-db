@@ -31,17 +31,17 @@ def test_query_observes_sqlite_wal_snapshot_and_derived_schema(tmp_path):
     with sqlite3.connect(database, autocommit=True) as writer:
         writer.execute("PRAGMA journal_mode=WAL")
         writer.execute(
-            "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','before',NULL,NULL,'{}')"
+            "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','before',NULL,NULL,'{}')"
         )
         writer.execute(
-            "CREATE VIEW optional_query_projection AS SELECT repository_id FROM repositories"
+            "CREATE VIEW optional_query_projection AS SELECT repository_uuidv4 FROM repositories"
         )
         writer.execute("ANALYZE")
         with Store(state, readonly=True) as reader, reader.transaction(read=True):
             assert reader.one("SELECT name FROM repositories")[0] == "before"
             writer.execute("BEGIN IMMEDIATE")
             writer.execute(
-                "UPDATE repositories SET name='after' WHERE repository_id='repo'"
+                "UPDATE repositories SET name='after' WHERE repository_uuidv4='repo'"
             )
             writer.execute("COMMIT")
             assert reader.one("SELECT name FROM repositories")[0] == "before"
@@ -94,7 +94,7 @@ def test_backup_restore_explicit_empty_destination(catalog, tmp_path):
             "SELECT content_id FROM contents ORDER BY content_id LIMIT 1"
         ).fetchone()[0]
         db.execute(
-            "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES('preserved-source',?,'/synthetic/sealed-cache','source_readonly','available')",
+            "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('preserved-source',?,'/synthetic/sealed-cache','source_readonly','available')",
             (repositories["alpha"],),
         )
         db.execute(

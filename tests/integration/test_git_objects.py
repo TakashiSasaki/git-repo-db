@@ -48,7 +48,7 @@ def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
     monkeypatch.setattr(GitImporter, "import_objects", no_transfer)
     with Store(state) as store:
         repo = store.one(
-            "SELECT * FROM repositories WHERE repository_id=?", (repos["alpha"],)
+            "SELECT * FROM repositories WHERE repository_uuidv4=?", (repos["alpha"],)
         )
         job = JobService(store).create("sync", {})
         root = {
@@ -147,7 +147,7 @@ def test_incomplete_closure(catalog):
 
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         path = db.execute(
-            "SELECT l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_id=? AND l.access='target_active' AND c.state='active'",
+            "SELECT l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_uuidv4=? AND l.access='target_active' AND c.state='active'",
             (repos["alpha"],),
         ).fetchone()[0]
     (state / path / "objects/pack/missing.promisor").touch()

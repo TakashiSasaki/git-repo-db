@@ -27,10 +27,10 @@ def pending(tmp_path, *, complete=True):
         (json.dumps({"complete": complete}),),
     )
     s.execute(
-        "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','repo','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','repo','{}')"
     )
     s.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,refs_observed_at_us,kind,request) VALUES('acq','repo','sha1',1767225600000000,'legacy','{}')"
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,refs_observed_at_us,kind,request) VALUES('acq','repo','sha1',1767225600000000,'legacy','{}')"
     )
     return s
 
@@ -58,13 +58,13 @@ def archived(store, table, values, encoding="utf-8"):
 def test_saved_pointer_beats_largest_id_or_newest_timestamp_and_is_idempotent(tmp_path):
     with pending(tmp_path) as store:
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('saved','acq','repo',1,1,1767225600000000)"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES('saved','acq','repo',1,1,1767225600000000)"
         )
         store.execute(
-            "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,refs_observed_at_us,kind,request) VALUES('later-acq','repo','sha1',1769904000000000,'legacy','{}')"
+            "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,refs_observed_at_us,kind,request) VALUES('later-acq','repo','sha1',1769904000000000,'legacy','{}')"
         )
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('zz-largest','later-acq','repo',1,100,1769904000000000)"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES('zz-largest','later-acq','repo',1,100,1769904000000000)"
         )
         archived(store, "repositories", {"id": "repo", "current_snapshot": "saved"})
         result = finalize_catalog(store)
@@ -87,7 +87,7 @@ def test_missing_selection_or_unpublished_fact_stays_unset_without_blocking_cata
 ):
     with pending(tmp_path) as store:
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('incomplete','acq','repo',0,1,1767225600000000)"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES('incomplete','acq','repo',0,1,1767225600000000)"
         )
         archived(
             store, "repositories", {"id": "repo", "current_snapshot": "incomplete"}
@@ -139,7 +139,7 @@ def test_saved_selection_decodes_retained_source_text_encoding(tmp_path):
             (json.dumps({"complete": True, "encoding": "UTF-16le"}),),
         )
         store.execute(
-            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('選択','acq','repo',1,1,1767225600000000)"
+            "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES('選択','acq','repo',1,1,1767225600000000)"
         )
         archived(
             store,
@@ -181,7 +181,7 @@ def document_source(store, observations):
     bind(store, "repo", service, "42")
     binding = store.one("SELECT repository_binding_id FROM repository_bindings")[0]
     store.execute(
-        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo',?,'pull_request',1)",
+        "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo',?,'pull_request',1)",
         (binding,),
     )
     key = ("pr", "pr-body", "123")

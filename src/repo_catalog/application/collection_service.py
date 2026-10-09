@@ -23,11 +23,11 @@ def select_repositories(s, selectors=(), source=None):
     rows = s.all(
         "SELECT * FROM repositories"
         + (
-            " WHERE EXISTS(SELECT 1 FROM source_repositories m WHERE m.repository_id=repositories.repository_id AND m.source_id=?)"
+            " WHERE EXISTS(SELECT 1 FROM source_repositories m WHERE m.repository_uuidv4=repositories.repository_uuidv4 AND m.source_id=?)"
             if source
             else ""
         )
-        + " ORDER BY repository_id",
+        + " ORDER BY repository_uuidv4",
         (source,) if source else (),
     )
     rows = [identity.repository_row(s, row) for row in rows]
@@ -43,10 +43,10 @@ def select_repositories(s, selectors=(), source=None):
             dict(r)
             for r in rows
             if selector
-            in (r["repository_id"], r["name"], f"{r['provider_host']}/{r['name']}")
+            in (r["repository_uuidv4"], r["name"], f"{r['provider_host']}/{r['name']}")
             or s.one(
-                "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.service_instance_uuidv4=b.service_instance_uuidv4 WHERE b.repository_id=? AND ?=i.name||'/'||?",
-                (r["repository_id"], selector, r["name"]),
+                "SELECT 1 FROM repository_bindings b JOIN service_instances i ON i.service_instance_uuidv4=b.service_instance_uuidv4 WHERE b.repository_uuidv4=? AND ?=i.name||'/'||?",
+                (r["repository_uuidv4"], selector, r["name"]),
             )
         ]
         if not matches:
@@ -57,7 +57,7 @@ def select_repositories(s, selectors=(), source=None):
             raise CatalogError("INVALID_ARGUMENT", "Ambiguous repository selector")
         if matches[0] not in selected:
             selected.append(matches[0])
-    return sorted(selected, key=lambda r: r["repository_id"])
+    return sorted(selected, key=lambda r: r["repository_uuidv4"])
 
 
 def single_repository(store, selector):
@@ -74,6 +74,31 @@ class CollectionService:
 
     def discover(self, source=None):
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
+            if source is not None:
+                selected_source = identity.source(s, source)
+                identity.source_settings(selected_source)
+                source = selected_source["source_id"]
+            else:
+                candidates = s.all("SELECT * FROM sources")
+                unusable = []
+                for candidate in candidates:
+                    try:
+                        identity.source_settings(candidate)
+                    except CatalogError as cause:
+                        unusable.append(
+                            {
+                                "source_registration_uuidv4": candidate[
+                                    "source_registration_uuidv4"
+                                ],
+                                "reason": cause.code,
+                            }
+                        )
+                if len(unusable) == len(candidates):
+                    raise CatalogError(
+                        "NO_USABLE_SOURCE",
+                        "No configured acquisition source",
+                        {"sources": unusable},
+                    )
             job = JobService(s).create("discover", {"source": source})
             return self._discover(s, job, source)
 
@@ -86,9 +111,21 @@ class CollectionService:
             raise CatalogError("NOT_FOUND", "Source not found")
         items = []
         coverage = CoverageReport()
+        skipped = []
+        acquisition_failed = False
         for src in sources:
             self.token.check()
-            settings = json.loads(src["settings"])
+            try:
+                settings = identity.source_settings(src)
+            except CatalogError as cause:
+                skipped.append(
+                    {
+                        "source_registration_uuidv4": src["source_registration_uuidv4"],
+                        "reason": cause.code,
+                    }
+                )
+                coverage.add("inventory", cause.code, source_id=src["source_id"])
+                continue
             run = str(uuid.uuid4())
             observed_at_us = now_us()
             inventory_scope = dict(settings)
@@ -115,6 +152,7 @@ class CollectionService:
                     repos = collector.inventory(src, job)
                     uncertainty = collector.inventory_uncertainty
                 if uncertainty:
+                    acquisition_failed = True
                     coverage.add("inventory", uncertainty, source_id=src["source_id"])
                 with s.transaction():
                     for repo in repos:
@@ -123,10 +161,10 @@ class CollectionService:
                             if src["discovery_kind"] == "github_inventory"
                             else settings.get("provider_repository_id")
                         )
-                        target = settings.get("repository_id")
+                        target = settings.get("repository_uuidv4")
                         existing = (
                             s.one(
-                                "SELECT repository_id FROM repositories WHERE repository_id=?",
+                                "SELECT repository_uuidv4 FROM repositories WHERE repository_uuidv4=?",
                                 (target,),
                             )
                             if target
@@ -139,7 +177,7 @@ class CollectionService:
                             )
                         if src["service_instance_uuidv4"] and provider_repository_id:
                             binding = s.one(
-                                "SELECT repository_id FROM repository_bindings WHERE service_instance_uuidv4=? AND provider_repository_id=?",
+                                "SELECT repository_uuidv4 FROM repository_bindings WHERE service_instance_uuidv4=? AND provider_repository_id=?",
                                 (
                                     src["service_instance_uuidv4"],
                                     provider_repository_id,
@@ -152,23 +190,23 @@ class CollectionService:
                                         "Source and provider identity refer to different repositories",
                                     )
                                 existing = s.one(
-                                    "SELECT repository_id FROM repositories WHERE repository_id=?",
+                                    "SELECT repository_uuidv4 FROM repositories WHERE repository_uuidv4=?",
                                     (binding[0],),
                                 )
                         if not existing and src["discovery_kind"] == "manual_git":
                             existing = s.one(
-                                "SELECT repository_id FROM source_repositories WHERE source_id=?",
+                                "SELECT repository_uuidv4 FROM source_repositories WHERE source_id=?",
                                 (src["source_id"],),
                             )
                         ident = existing[0] if existing else str(uuid.uuid4())
                         if not existing:
                             s.execute(
-                                "INSERT INTO repositories(repository_id,name,metadata) VALUES(?,?,?)",
+                                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,?,?)",
                                 (ident, repo["name"], json.dumps(repo["metadata"])),
                             )
                         elif src["discovery_kind"] == "github_inventory":
                             s.execute(
-                                "UPDATE repositories SET name=?,metadata=? WHERE repository_id=?",
+                                "UPDATE repositories SET name=?,metadata=? WHERE repository_uuidv4=?",
                                 (repo["name"], json.dumps(repo["metadata"]), ident),
                             )
                         if src["service_instance_uuidv4"]:
@@ -181,14 +219,14 @@ class CollectionService:
                         identity.link_source(s, src["source_id"], ident)
                         identity.add_endpoint(s, ident, repo["url"])
                         if not s.one(
-                            "SELECT 1 FROM repository_name_assertions WHERE repository_id=? AND name=?",
+                            "SELECT 1 FROM repository_name_assertions WHERE repository_uuidv4=? AND name=?",
                             (ident, repo["name"]),
                         ):
                             s.execute(
-                                "INSERT INTO repository_name_assertions(repository_id,name,observed_at_us) VALUES(?,?,?)",
+                                "INSERT INTO repository_name_assertions(repository_uuidv4,name,observed_at_us) VALUES(?,?,?)",
                                 (ident, repo["name"], observed_at_us),
                             )
-                        items.append({"repository_id": ident, "name": repo["name"]})
+                        items.append({"repository_uuidv4": ident, "name": repo["name"]})
                     s.execute(
                         "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at_us,reason) VALUES(?,?,?,?,?,?)",
                         (
@@ -202,6 +240,7 @@ class CollectionService:
                     )
                     s.publish()
             except CatalogError as e:
+                acquisition_failed = True
                 coverage.add("inventory", e.code, source_id=src["source_id"])
                 with s.transaction():
                     s.execute(
@@ -216,10 +255,17 @@ class CollectionService:
                         ),
                     )
         JobService(s).update(
-            job, "complete" if coverage.complete_for_requested_scope else "waiting"
+            job,
+            "complete" if not acquisition_failed else "waiting",
+            result={
+                "status": "complete"
+                if coverage.complete_for_requested_scope
+                else "partial",
+                "skipped_sources": skipped,
+            },
         )
         return Result(
-            {"job_id": job, "repositories": items},
+            {"job_id": job, "repositories": items, "skipped_sources": skipped},
             coverage,
             "complete" if coverage.complete_for_requested_scope else "partial",
             s.revision(),
@@ -227,10 +273,14 @@ class CollectionService:
 
     def sync(self, request):
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
+            if request.source is not None:
+                identity.source_settings(identity.source(s, request.source))
             data = {
                 "kind": request.kind,
                 "repositories": list(request.repositories),
-                "source": request.source,
+                "source": identity.source(s, request.source)["source_id"]
+                if request.source is not None
+                else None,
                 "repository_endpoint_id": request.repository_endpoint_id,
             }
             job = JobService(s).create("sync", data)
@@ -278,11 +328,14 @@ class CollectionService:
                     source = s.one(
                         "SELECT * FROM sources WHERE source_id=?", (request["source"],)
                     )
-                    settings = json.loads(source["settings"])
+                    settings = identity.source_settings(source)
                     if source["discovery_kind"] == "manual_git":
                         source_endpoint = s.one(
-                            "SELECT repository_endpoint_id FROM repository_endpoints WHERE repository_id=? AND url=?",
-                            (repo["repository_id"], identity.git_url(settings["url"])),
+                            "SELECT repository_endpoint_id FROM repository_endpoints WHERE repository_uuidv4=? AND url=?",
+                            (
+                                repo["repository_uuidv4"],
+                                identity.git_url(settings["url"]),
+                            ),
                         )
                         if not source_endpoint:
                             raise CatalogError(
@@ -296,12 +349,12 @@ class CollectionService:
                     try:
                         if kind == "git":
                             done = s.one(
-                                "SELECT x.snapshot_id FROM snapshots x JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_id=? AND a.kind='git' AND p.state='published' AND x.published=1",
-                                (job, repo["repository_id"]),
+                                "SELECT x.snapshot_id FROM snapshots x JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_uuidv4=? AND a.kind='git' AND p.state='published' AND x.published=1",
+                                (job, repo["repository_uuidv4"]),
                             )
                             item = (
                                 {
-                                    "repository_id": repo["repository_id"],
+                                    "repository_uuidv4": repo["repository_uuidv4"],
                                     "snapshot_id": done[0],
                                     "state": "complete",
                                 }
@@ -314,10 +367,10 @@ class CollectionService:
                             )
                         else:
                             src = identity.pr_source(
-                                s, repo["repository_id"], request.get("source")
+                                s, repo["repository_uuidv4"], request.get("source")
                             )
                             if not src:
-                                if identity.pr_applicable(s, repo["repository_id"]):
+                                if identity.pr_applicable(s, repo["repository_uuidv4"]):
                                     raise CatalogError(
                                         "PROVIDER_UNSUPPORTED",
                                         "PR/MR API collection requires a supported API source",
@@ -325,7 +378,7 @@ class CollectionService:
                                 items.append(
                                     {
                                         "kind": kind,
-                                        "repository_id": repo["repository_id"],
+                                        "repository_uuidv4": repo["repository_uuidv4"],
                                         "state": "not_applicable",
                                     }
                                 )
@@ -349,11 +402,13 @@ class CollectionService:
                     except CatalogError as e:
                         if e.code == "CANCELLED":
                             raise
-                        coverage.add(kind, e.code, repository_id=repo["repository_id"])
+                        coverage.add(
+                            kind, e.code, repository_uuidv4=repo["repository_uuidv4"]
+                        )
                         items.append(
                             {
                                 "kind": kind,
-                                "repository_id": repo["repository_id"],
+                                "repository_uuidv4": repo["repository_uuidv4"],
                                 "state": "partial",
                                 "error": e.code,
                             }

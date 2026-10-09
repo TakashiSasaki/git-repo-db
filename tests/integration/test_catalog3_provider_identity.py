@@ -99,7 +99,7 @@ def test_thread_cli_and_query_require_parent_and_support_kind_scope(catalog):
             "SELECT repository_binding_id FROM change_requests WHERE change_request_id='pr1'"
         )[0]
         store.execute(
-            "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('mr1','repo1',?,'merge_request',1)",
+            "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('mr1','repo1',?,'merge_request',1)",
             (binding,),
         )
     opts = dict(

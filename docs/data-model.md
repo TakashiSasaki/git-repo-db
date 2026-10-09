@@ -1,6 +1,6 @@
 # Catalog3 data model
 
-The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **9**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
+The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **10**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
 
 ## Absolute timestamps and durations
 
@@ -31,7 +31,7 @@ JOIN document_observations o
 JOIN text_bodies body ON body.sha256 = o.text_body_sha256;
 ```
 
-Namespaces stay distinct: `source_id` identifies acquisition/discovery sources; `conversion_source_id` identifies import provenance only inside the separate workspace. `resume_scope_id` describes request/restart context; `coverage_scope_id` describes completeness. `cache_locator_id` identifies a storage location; `active_cache_entry_id` identifies a managed runtime generation. `documents` has no catalog-local document ID or serialized replacement ID. `search_document_id` identifies a disposable search input, not a document entity.
+Namespaces stay distinct: `source_id` is a catalog-local acquisition/discovery handle; `source_registration_uuidv4` is a separate immutable CSPRNG UUIDv4 preserved by backup/restore; `conversion_source_id` identifies import provenance only inside the separate workspace. `resume_scope_id` describes request/restart context; `coverage_scope_id` describes completeness. `cache_locator_id` identifies a storage location; `active_cache_entry_id` identifies a managed runtime generation. `documents` has no catalog-local document ID or serialized replacement ID. `search_document_id` identifies a disposable search input, not a document entity.
 
 `database_identity.singleton` selects the one identity row, not an entity. Composite association/progress keys retain entity IDs plus scalar ordinals, roles or names. `job_attempts.attempt` and `jobs.current_attempt` are attempt ordinals. `provider_change_request_number` is a provider request number scoped by binding and `change_request_kind`. `index_generations.target_max_search_document_id` is a fixed build cutoff, not a foreign key. `search_documents.source_key` is a derived text key interpreted by search kind (content row, Git object row or text-body SHA-256).
 
@@ -40,7 +40,7 @@ Namespaces stay distinct: `source_id` identifies acquisition/discovery sources; 
 | Tables | Meaning and relationships |
 | --- | --- |
 | `service_instances`, `sources` | Service identity and explicit discovery configuration; sources reference `service_instance_uuidv4`. |
-| `repositories`, `repository_bindings`, `repository_endpoints` | Repository identity is independent of provider IDs and URLs. Bindings uniquely scope `provider_repository_id` by `service_instance_uuidv4`; endpoints belong to a `repository_id`. |
+| `repositories`, `repository_bindings`, `repository_endpoints` | Repository identity is independent of provider IDs and URLs. Bindings uniquely scope `provider_repository_id` by `service_instance_uuidv4`; endpoints belong to a `repository_uuidv4`. |
 | `source_repositories`, `repository_name_assertions`, `inventory_observations` | Source membership, observed names and inventory coverage/history. |
 | `git_acquisitions`, `snapshots`, `acquisition_roots`, `root_origins`, `ref_observations` | Acquisition records endpoint/source/context. Published snapshots and roots share the same repository owner. Shared traversal roots retain separate raw ref and PR-role origins. |
 | `jobs`, `job_attempts`, `acquisition_progress`, `collection_progress`, `space_reservations` | Runtime work, attempt fencing, atomic progress and capacity reservations. |
@@ -48,6 +48,10 @@ Namespaces stay distinct: `source_id` identifies acquisition/discovery sources; 
 Current pointers and composite FKs enforce same-owner relationships. Publication checks require suitable facts; current selection also respects justified observation ordering. Repository IDs are internal UUIDs for fresh registrations; imported source identifiers remain preserved. Native `provider_repository_id`, `provider_change_request_document_id`, `provider_resource_id` and `provider_event_id` are provider-originated identifiers, not catalog row IDs. Provider-specific Node IDs remain in raw payload evidence but are not modeled as a generic normalized `provider_node_id` column.
 
 ## Portable identity decisions
+
+Service display names are not unique. Name selection requires exactly one match; explicit service UUIDs are authoritative. An ambiguous implicit `github.com` selection requires `--instance UUID`. Source selectors accept a local ID or registration UUID, with `local:` and `registration:` prefixes to resolve cross-kind ambiguity. Display names do not select sources. Source service membership, discovery kind and registration UUID are immutable; name and operational settings remain local attributes. `settings=NULL` means unconfigured, while configured settings must be a JSON object and satisfy acquisition-specific checks.
+
+Schema 10 begins the identity refactor with repository key naming and Source/service identity. Portable observation, parser, selection, CAS and exchange integration remains subsequent work.
 
 `service_instance_uuidv4` is a portable namespace generated with `uuid.uuid4()` from a cryptographically secure random source. The DDL accepts canonical lowercase RFC UUIDv4 text with the RFC variant; UUIDv5, other versions and arbitrary strings are rejected. Validation can establish representation/version/variant, not prove the entropy source of an imported UUID. Salvage preserves valid source UUIDv4 values and archives/rejects invalid service identity rather than fabricating a replacement.
 
@@ -69,7 +73,7 @@ These decisions constrain the current model and future exchange. A multi-catalog
 
 ## Change requests, documents and API history
 
-`change_requests` belongs to a `repository_binding_id` and `repository_id`. Its portable identity is the repository portable identity plus `(change_request_kind, provider_change_request_number)`. Published `change_request_observations` retain exact payloads, observation times and `origin_fetch_occurrence_id`. `code_observations` connects a `change_request_observation_id` to `commit_code_listing_id` and `file_code_listing_id`; `code_acquisitions` links role OIDs to `acquisition_root_id`.
+`change_requests` belongs to a `repository_binding_id` and `repository_uuidv4`. Its portable identity is the repository portable identity plus `(change_request_kind, provider_change_request_number)`. Published `change_request_observations` retain exact payloads, observation times and `origin_fetch_occurrence_id`. `code_observations` connects a `change_request_observation_id` to `commit_code_listing_id` and `file_code_listing_id`; `code_acquisitions` links role OIDs to `acquisition_root_id`.
 
 `documents` is identified directly by `(change_request_id, kind, provider_change_request_document_id)`. There is no `document_id`, `change_request_document_id` or `document_versions` table. The parent change request must be resolved when interpreting the composite key across catalogs; no independent document-ID allocation is required. `reviews`, `review_comments` and `collection_memberships` use the same document key. The former `reviews.review_id` was another name for the synthetic document ID and is removed, not retained as a hidden substitute. `review_threads` likewise has no synthetic `review_thread_id`; its natural key is `(change_request_id, provider_resource_id)`, and review comments reference that scoped key.
 
@@ -83,7 +87,7 @@ Each `document_observations` row directly references `text_body_sha256 -> text_b
 
 ## Coverage claims and current state
 
-`coverage_scopes` identifies one repository or change-request component by its owner and `kind`. Partial unique indexes enforce one scope per `(repository_id, kind)` for repository scopes and per `(change_request_id, kind)` for change-request scopes; the latter retains same-repository ownership. A scope has no current-claim pointer.
+`coverage_scopes` identifies one repository or change-request component by its owner and `kind`. Partial unique indexes enforce one scope per `(repository_uuidv4, kind)` for repository scopes and per `(change_request_id, kind)` for change-request scopes; the latter retains same-repository ownership. A scope has no current-claim pointer.
 
 Writer calls identify the repository explicitly and optionally name a change request belonging to it. A local repository ID may equal another repository's change-request ID; ID equality never selects an owner type. Claim IDs may be negative. Automatic allocation after an explicit negative ID retains the same immutable admission rules.
 

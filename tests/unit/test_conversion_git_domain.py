@@ -41,10 +41,10 @@ def graph(request):
         (STAMP, STAMP, STAMP),
     )
     db.execute(
-        "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('source',NULL,'manual_git','source','{}')"
+        "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name,settings) VALUES('source','00000000-0000-4000-8000-000000000201',NULL,'manual_git','source','{}')"
     )
     db.execute(
-        "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','name',NULL,NULL,'{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','name',NULL,NULL,'{}')"
     )
     body, missing_oid = b"hello\n", git_payload("blob", b"binary\xff")
     blob_oid = git_payload("blob", body)
@@ -577,10 +577,10 @@ def test_pr_origin_requires_exact_saved_observation_and_code_acquisition(
         "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,web_base_url,api_base_url,metadata,created_at_us) VALUES('00000000-0000-4000-8000-000000000101','git','00000000-0000-4000-8000-000000000101',NULL,NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','repo','00000000-0000-4000-8000-000000000101',NULL,'{}',NULL)"
+        "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','repo','00000000-0000-4000-8000-000000000101',NULL,'{}',NULL)"
     )
     db.execute(
-        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES('pr','repo','binding','pull_request',7,NULL)"
+        "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number,current_change_request_observation_id) VALUES('pr','repo','binding','pull_request',7,NULL)"
     )
     db.execute(
         "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at_us,published,payload,origin_key,parsed_at_us,origin_fetch_occurrence_id) VALUES(501,'pr',?,1,'{}','saved',?,NULL)",
@@ -600,7 +600,7 @@ def test_pr_origin_requires_exact_saved_observation_and_code_acquisition(
         row = output["operations"][0]["row"]
         assert row[1:] == (22, "pr_role", None, 501, None, "pr", 501, "repo")
         db.execute(
-            "INSERT INTO root_origins(root_origin_id,acquisition_root_id,origin_kind,raw_ref_name,source_ordinal,snapshot_id,change_request_id,change_request_observation_id,repository_id) VALUES(?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO root_origins(root_origin_id,acquisition_root_id,origin_kind,raw_ref_name,source_ordinal,snapshot_id,change_request_id,change_request_observation_id,repository_uuidv4) VALUES(?,?,?,?,?,?,?,?,?)",
             row,
         )
         assert codes(output) == set()

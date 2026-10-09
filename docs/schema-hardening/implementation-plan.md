@@ -2,6 +2,22 @@
 
 Catalog3 is the sole ordinary runtime. Packaged DDL and the runtime identity module are authoritative; [runtime handoff](runtime-handoff.md) records commands, validation and limits. Historical phase plans and design/export schemas remain snapshots.
 
+## Identity foundation (schema 10)
+
+PR #7 at `d6ee309a6845cf915f821aa1f1910b46b536a614` is the base for branch
+`refactor/identity-foundation`. This stride changes repository key naming,
+introduces portable Source registration UUIDs, removes service-name uniqueness,
+and adds explicit Source/service selection and unconfigured-source handling.
+DDL, ordinary callers, guarded salvage, queries and tests are updated together.
+There is no earlier-catalog3 compatibility migration.
+
+Remaining implementation proceeds through CAS physical/logical storage,
+acquisition/parsed-result/fact separation, verified profile and current-selection
+DAGs, staged single-repository exchange, frozen Source/Job inputs and crash-safe
+quarantine/backup/restore. The existing five-column coverage contract and signed
+64-bit epoch-microsecond timestamps remain acceptance requirements. Intermediate
+strides do not imply that the entire design is implemented.
+
 ## Design-review corrections
 
 The correction work started from reviewed PR #6 `cd900e252f1320e0cc304fc200317d7190af0143` and includes the subsequent PR #5 timestamp guard at `9abfdc0eb439a823246e306e7773b775cfaa75e7`. Initial work branch: `fix/coverage-review-findings`. Read-only verification subsequently found that PR #7, `refactor/coverage-model-v2` at `304ea4acc5ea224ead8e7e9774aca7851035b553`, superseded closed PR #6. Branch `fix/coverage-review-pr7` reconciles both implementations without rewriting either history. The nine findings and related rate-limit, 304 replay and explicit-null corrections are implemented at substantive commit `604de8db0e957da28ea33f1e74110bc609d4cf63`. Completed local acceptance is **819 ordinary + 2 packaging**, with all 821 selected checks executed exactly once; the recovered results and their independent reconciliation are linked from the runtime handoff. Existing PR #5 and PR #7 track publication and separately attributed hosted CI.

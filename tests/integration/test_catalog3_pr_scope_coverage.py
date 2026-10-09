@@ -41,7 +41,7 @@ def add_document(store, pr, document_id, body, *, kind="pr-body"):
 def add_pr(store, repository, binding, number, *, kind="pull_request"):
     pr = f"{repository}:{number}:{kind}"
     store.execute(
-        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,?,?)",
+        "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,?,?)",
         (pr, repository, binding, kind, number),
     )
     observation = store.execute(
@@ -72,11 +72,11 @@ def pr_catalog(tmp_path):
         with store.transaction():
             namespace = add_instance(store, "github", "synthetic")
             store.execute(
-                "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','synthetic/repo','{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic/repo','{}')"
             )
             bind(store, "repo", namespace, "1")
             binding = store.one(
-                "SELECT repository_binding_id FROM repository_bindings WHERE repository_id='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
             )[0]
             for number in (1, 2, 3):
                 add_pr(store, "repo", binding, number)
@@ -106,10 +106,10 @@ def add_gap(store, kind, source, *, number=1, coverage_state="partial"):
         "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('query-job',1,'failed',0,'{}')"
     )
     store.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_id,request_context,parser_version,profile_version,confidence) VALUES('query-resume','repo','{}','test','test','proven')"
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('query-resume','repo','{}','test','test','proven')"
     )
     store.execute(
-        "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('query-collection','repo',?,?,'query-resume',1)",
+        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('query-collection','repo',?,?,'query-resume',1)",
         (pr, kind),
     )
     store.execute(
@@ -498,11 +498,11 @@ def add_complete_code(
         "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('code-job',1,'complete',0,'{}')"
     )
     store.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_id,request_context,parser_version,profile_version,confidence) VALUES('code-resume','repo','{}','test','test','proven')"
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('code-resume','repo','{}','test','test','proven')"
     )
     for kind in ("commits", "files"):
         store.execute(
-            "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,kind,resume_scope_id,observed_at_us) VALUES(?,'repo','repo:1:pull_request',?,'code-resume',0)",
+            "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES(?,'repo','repo:1:pull_request',?,'code-resume',0)",
             (kind, "pr-" + kind),
         )
         store.execute(
@@ -532,7 +532,7 @@ def add_complete_code(
         ),
     ).lastrowid
     store.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,kind,observed_at_us,request,roots_manifest) VALUES('code-acquisition','repo','sha1','legacy',0,'{}','[]')"
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,kind,observed_at_us,request,roots_manifest) VALUES('code-acquisition','repo','sha1','legacy',0,'{}','[]')"
     )
     for role, oid in targets.items():
         mode = link_state if role == unavailable_role else "published"
@@ -547,7 +547,7 @@ def add_complete_code(
                     (actual,),
                 )
             root = store.execute(
-                "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_id,expected_oid,published) VALUES('code-acquisition','sha1',?,?,'repo',?,?)",
+                "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,?,'repo',?,?)",
                 (actual, role, actual, 0 if mode == "unpublished" else 1),
             ).lastrowid
         store.execute(

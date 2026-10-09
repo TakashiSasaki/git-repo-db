@@ -33,12 +33,12 @@ def facts():
         metadata="{}",
     )
     for owner, observation in (("a", 1), ("b", 2)):
-        put(db, "repositories", repository_id=owner, name=owner, metadata="{}")
+        put(db, "repositories", repository_uuidv4=owner, name=owner, metadata="{}")
         put(
             db,
             "repository_bindings",
             repository_binding_id="binding-" + owner,
-            repository_id=owner,
+            repository_uuidv4=owner,
             service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
             provider_repository_id=owner,
             metadata="{}",
@@ -47,7 +47,7 @@ def facts():
             db,
             "change_requests",
             change_request_id="pr-" + owner,
-            repository_id=owner,
+            repository_uuidv4=owner,
             repository_binding_id="binding-" + owner,
             change_request_kind="pull_request",
             provider_change_request_number=1,
@@ -65,7 +65,7 @@ def facts():
             db,
             "resume_scopes",
             resume_scope_id="scope-" + owner,
-            repository_id=owner,
+            repository_uuidv4=owner,
             repository_binding_id="binding-" + owner,
             request_context="{}",
             parser_version="synthetic",
@@ -76,7 +76,7 @@ def facts():
             db,
             "fetch_collections",
             fetch_collection_id="collection-" + owner,
-            repository_id=owner,
+            repository_uuidv4=owner,
             change_request_id="pr-" + owner,
             kind="files",
             resume_scope_id="scope-" + owner,
@@ -247,6 +247,7 @@ def test_source_seen_range_preserves_order_at_single_microsecond_precision(facts
     put(
         facts,
         "sources",
+        source_registration_uuidv4="00000000-0000-4000-8000-000000000201",
         source_id="source",
         discovery_kind="manual_git",
         name="synthetic",
@@ -256,7 +257,7 @@ def test_source_seen_range_preserves_order_at_single_microsecond_precision(facts
         facts,
         "source_repositories",
         source_id="source",
-        repository_id="a",
+        repository_uuidv4="a",
         first_seen_us=TIME_US,
         last_seen_us=TIME_US + 1,
     )
@@ -271,7 +272,7 @@ def test_source_seen_range_preserves_order_at_single_microsecond_precision(facts
             facts,
             "source_repositories",
             source_id="source",
-            repository_id="b",
+            repository_uuidv4="b",
             first_seen_us=TIME_US + 1,
             last_seen_us=TIME_US,
         )

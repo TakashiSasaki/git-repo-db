@@ -26,23 +26,23 @@ def coverage_catalog(tmp_path):
         with store.transaction():
             namespace = add_instance(store, "github", "synthetic")
             store.execute(
-                "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','synthetic/repo','{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic/repo','{}')"
             )
             bind(store, "repo", namespace, "1")
             binding = store.one(
-                "SELECT repository_binding_id FROM repository_bindings WHERE repository_id='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
             )[0]
             store.execute(
-                "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,object_format,refs_observed_at_us,kind,observed_at_us,request,roots_manifest) VALUES('acquisition','repo','sha1',0,'git',0,'{}','[]')"
+                "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,refs_observed_at_us,kind,observed_at_us,request,roots_manifest) VALUES('acquisition','repo','sha1',0,'git',0,'{}','[]')"
             )
             store.execute(
-                "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_id,published,generation,created_at_us) VALUES('snapshot','acquisition','repo',1,1,0)"
+                "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES('snapshot','acquisition','repo',1,1,0)"
             )
             store.execute(
-                "UPDATE repositories SET current_snapshot_id='snapshot' WHERE repository_id='repo'"
+                "UPDATE repositories SET current_snapshot_id='snapshot' WHERE repository_uuidv4='repo'"
             )
             store.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo',?,'pull_request',1)",
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo',?,'pull_request',1)",
                 (binding,),
             )
             store.execute(
@@ -122,7 +122,7 @@ def test_cli_empty_scope_has_no_fabricated_claim_time_or_details(coverage_catalo
     state, store = coverage_catalog
     with store.transaction():
         store.execute(
-            "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,kind) VALUES('empty-scope','repo','empty')"
+            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('empty-scope','repo','empty')"
         )
     result = run(state, "status", "--repo", "repo", "--kind", "empty")
     current = result["data"]["items"][0]["components"][0]
@@ -235,13 +235,13 @@ def test_document_only_queries_ignore_code_only_coverage(coverage_catalog):
 def test_pr_query_coverage_is_independent_of_page_limit(coverage_catalog):
     state, store = coverage_catalog
     binding = store.one(
-        "SELECT repository_binding_id FROM repository_bindings WHERE repository_id='repo'"
+        "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
     )[0]
     with store.transaction():
         for number in (2, 3):
             change_request_id = f"pr-{number}"
             store.execute(
-                "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',?)",
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',?)",
                 (change_request_id, "repo", binding, number),
             )
             store.execute(
@@ -285,7 +285,7 @@ def test_coverage_owner_namespaces_are_explicit(coverage_catalog):
     _state, store = coverage_catalog
     with store.transaction():
         store.execute(
-            "INSERT INTO repositories(repository_id,name,metadata) VALUES('pr','collision-repository','{}')"
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('pr','collision-repository','{}')"
         )
         repository_claim = store.coverage(
             "pr", "collision", "complete", observed_at_us=1
@@ -309,7 +309,7 @@ def test_coverage_owner_namespaces_are_explicit(coverage_catalog):
 
     assert repository_claim is not None and request_claim is not None
     rows = store.all(
-        "SELECT repository_id,change_request_id,kind FROM coverage_scopes WHERE kind='collision' ORDER BY repository_id"
+        "SELECT repository_uuidv4,change_request_id,kind FROM coverage_scopes WHERE kind='collision' ORDER BY repository_uuidv4"
     )
     assert [tuple(row) for row in rows] == [
         ("pr", None, "collision"),
@@ -415,7 +415,7 @@ def test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_curr
             (targets["head"],),
         )
         root = store.execute(
-            "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_id,expected_oid,published) VALUES('code-acquisition','sha1',?,'head','repo',?,1)",
+            "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,'head','repo',?,1)",
             (targets["head"], targets["head"]),
         ).lastrowid
         store.execute(
