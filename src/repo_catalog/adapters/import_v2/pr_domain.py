@@ -93,7 +93,8 @@ COLUMNS = {
         "observed_at_us",
         "reason",
     ),
-    "payloads": ("payload_id", "sha256", "body", "byte_length", "representation"),
+    "stored_bytes": ("sha256", "body", "byte_length"),
+    "payloads": ("representation", "sha256"),
     "change_requests": (
         "change_request_id",
         "repository_uuidv4",
@@ -136,7 +137,8 @@ COLUMNS = {
         "fetch_occurrence_id",
         "fetch_collection_id",
         "ordinal",
-        "payload_id",
+        "payload_representation",
+        "payload_sha256",
         "request",
         "next_cursor",
         "observed_at_us",
@@ -212,14 +214,16 @@ COLUMNS = {
     ),
     "unresolved_payloads": (
         "unresolved_payload_id",
-        "payload_id",
+        "payload_representation",
+        "payload_sha256",
         "reason",
     ),
     "validators": (
         "resume_scope_id",
         "validator_key",
         "etag",
-        "payload_id",
+        "payload_representation",
+        "payload_sha256",
         "validated_at_us",
     ),
     "incremental_scans": (
@@ -318,7 +322,8 @@ KEYS = {
     "code_acquisitions": ("code_observation_id", "role"),
     "jobs": ("job_id",),
     "inventory_observations": ("inventory_observation_id",),
-    "payloads": ("payload_id",),
+    "stored_bytes": ("sha256",),
+    "payloads": ("representation", "sha256"),
     "change_requests": ("change_request_id",),
     "resume_scopes": ("resume_scope_id",),
     "fetch_collections": ("fetch_collection_id",),
@@ -812,6 +817,16 @@ class Context(identity.Context):
         self._body_digests[ident] = digest
         return ident, body, len(raw), digest
 
+    def payload_key(self, source_id):
+        if source_id is None:
+            return None, None
+        record = self.ref("api_responses", source_id)
+        body = self.blob(record, "body")
+        sha = self.blob(record, "payload_sha256", length=32)
+        if hashlib.sha256(body).digest() != sha:
+            raise Invalid("PAYLOAD_DIGEST_MISMATCH", "payload_sha256")
+        return "decoded_api", sha
+
     def target_document_row(self, table, row):
         """Project legacy parser tuples directly into the current natural keys.
 
@@ -822,7 +837,9 @@ class Context(identity.Context):
         if table == "unresolved_payloads":
             # Source-row attribution remains in workspace mappings/diagnostics.
             # The catalog keeps the normalized gap, not a dangling workspace FK.
-            return (row[0], row[1], row[3])
+            return (row[0], *self.payload_key(row[1]), row[3])
+        if table in ("fetch_occurrences", "validators"):
+            return (*row[:3], *self.payload_key(row[3]), *row[4:])
         if table == "documents":
             self.remember_source_document(row)
             return (*row[1:4], None, row[5], *row[7:])
@@ -1337,10 +1354,8 @@ class Context(identity.Context):
             )
             if hashlib.sha256(body).digest() != sha:
                 raise Invalid("PAYLOAD_DIGEST_MISMATCH", "payload_sha256")
-            emit(
-                recipe,
-                (i(record, "id", minimum=1), sha, body, len(body), "decoded_api"),
-            )
+            emit("stored_bytes", (sha, body, len(body)), relation="split")
+            emit(recipe, ("decoded_api", sha))
         elif recipe == "change_requests":
             emit(recipe, self.pr_row(record))
         elif recipe == "resume_scopes":

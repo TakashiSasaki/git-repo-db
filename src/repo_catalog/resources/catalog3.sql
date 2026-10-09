@@ -9,7 +9,7 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=10),
+    schema_version INTEGER NOT NULL CHECK(schema_version=11),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
@@ -205,11 +205,18 @@ fetch_collection_id TEXT PRIMARY KEY REFERENCES fetch_collections(fetch_collecti
 CREATE TABLE resume_scopes(
 resume_scope_id TEXT PRIMARY KEY, repository_uuidv4 TEXT NOT NULL REFERENCES repositories(repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT, repository_binding_id TEXT, source_id TEXT REFERENCES sources(source_id) ON UPDATE RESTRICT ON DELETE RESTRICT, principal_ref TEXT, api_version TEXT, endpoint TEXT, request_context TEXT NOT NULL CHECK(json_valid(request_context) AND json_type(request_context)='object'), parser_version TEXT NOT NULL, profile_version TEXT NOT NULL, confidence TEXT NOT NULL CHECK(confidence IN ('proven','legacy_unknown')), UNIQUE(resume_scope_id,repository_uuidv4), FOREIGN KEY(repository_binding_id,repository_uuidv4) REFERENCES repository_bindings(repository_binding_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
+CREATE TABLE stored_bytes(
+sha256 BLOB PRIMARY KEY CHECK(length(sha256)=32), body BLOB NOT NULL,
+    byte_length INTEGER NOT NULL CHECK(byte_length>=0 AND byte_length=length(body))
+) STRICT;
 CREATE TABLE payloads(
-payload_id INTEGER PRIMARY KEY, sha256 BLOB NOT NULL CHECK(length(sha256)=32), body BLOB NOT NULL, byte_length INTEGER NOT NULL CHECK(byte_length=length(body)), representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_normalized'))
+representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_normalized')),
+    sha256 BLOB NOT NULL REFERENCES stored_bytes(sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    PRIMARY KEY(representation,sha256)
 ) STRICT;
 CREATE TABLE fetch_occurrences(
-fetch_occurrence_id INTEGER PRIMARY KEY, fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, ordinal INTEGER NOT NULL CHECK(ordinal>=0), payload_id INTEGER NOT NULL REFERENCES payloads(payload_id) ON UPDATE RESTRICT ON DELETE RESTRICT, request TEXT NOT NULL CHECK(json_valid(request) AND json_type(request)='object'), next_cursor TEXT, observed_at_us INTEGER, parsed_at_us INTEGER NOT NULL, UNIQUE(fetch_occurrence_id,fetch_collection_id)
+fetch_occurrence_id INTEGER PRIMARY KEY, fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, ordinal INTEGER NOT NULL CHECK(ordinal>=0), payload_representation TEXT NOT NULL, payload_sha256 BLOB NOT NULL, request TEXT NOT NULL CHECK(json_valid(request) AND json_type(request)='object'), next_cursor TEXT, observed_at_us INTEGER, parsed_at_us INTEGER NOT NULL, UNIQUE(fetch_occurrence_id,fetch_collection_id),
+    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE collection_memberships(
     fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -221,10 +228,13 @@ CREATE TABLE collection_memberships(
     FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE unresolved_payloads(
-unresolved_payload_id INTEGER PRIMARY KEY, payload_id INTEGER REFERENCES payloads(payload_id) ON UPDATE RESTRICT ON DELETE RESTRICT, reason TEXT NOT NULL CHECK(length(reason)>0)
+unresolved_payload_id INTEGER PRIMARY KEY, payload_representation TEXT, payload_sha256 BLOB, reason TEXT NOT NULL CHECK(length(reason)>0),
+    CHECK((payload_representation IS NULL)=(payload_sha256 IS NULL)),
+    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE validators(
-resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, validator_key TEXT NOT NULL, etag TEXT NOT NULL, payload_id INTEGER NOT NULL REFERENCES payloads(payload_id) ON UPDATE RESTRICT ON DELETE RESTRICT, validated_at_us INTEGER, PRIMARY KEY(resume_scope_id,validator_key)
+resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, validator_key TEXT NOT NULL, etag TEXT NOT NULL, payload_representation TEXT NOT NULL, payload_sha256 BLOB NOT NULL, validated_at_us INTEGER, PRIMARY KEY(resume_scope_id,validator_key),
+    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE incremental_scans(
 incremental_scan_id TEXT PRIMARY KEY, resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, scan_started_at_us INTEGER, safe_watermark_us INTEGER, evidence TEXT NOT NULL CHECK(json_valid(evidence) AND json_type(evidence)='object'), UNIQUE(incremental_scan_id,resume_scope_id)
@@ -463,10 +473,10 @@ CREATE INDEX fetch_collections_fk_0 ON fetch_collections(change_request_id,repos
 CREATE INDEX fetch_collections_fk_1 ON fetch_collections(resume_scope_id);
 CREATE INDEX fetch_collections_fk_2 ON fetch_collections(source_id);
 CREATE INDEX fetch_collections_fk_3 ON fetch_collections(repository_uuidv4);
-CREATE TRIGGER fetch_occurrences_immutable BEFORE UPDATE ON fetch_occurrences WHEN NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.ordinal IS NOT OLD.ordinal OR NEW.payload_id IS NOT OLD.payload_id OR NEW.request IS NOT OLD.request OR NEW.next_cursor IS NOT OLD.next_cursor OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.parsed_at_us IS NOT OLD.parsed_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER fetch_occurrences_immutable BEFORE UPDATE ON fetch_occurrences WHEN NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.ordinal IS NOT OLD.ordinal OR NEW.payload_representation IS NOT OLD.payload_representation OR NEW.payload_sha256 IS NOT OLD.payload_sha256 OR NEW.request IS NOT OLD.request OR NEW.next_cursor IS NOT OLD.next_cursor OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.parsed_at_us IS NOT OLD.parsed_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER fetch_occurrences_no_replace BEFORE INSERT ON fetch_occurrences WHEN EXISTS(SELECT 1 FROM fetch_occurrences WHERE (fetch_occurrence_id=NEW.fetch_occurrence_id) OR (fetch_occurrence_id=NEW.fetch_occurrence_id AND fetch_collection_id=NEW.fetch_collection_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER fetch_occurrences_retain BEFORE DELETE ON fetch_occurrences BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX fetch_occurrences_fk_0 ON fetch_occurrences(payload_id);
+CREATE INDEX fetch_occurrences_fk_0 ON fetch_occurrences(payload_representation,payload_sha256);
 CREATE INDEX fetch_occurrences_fk_1 ON fetch_occurrences(fetch_collection_id);
 CREATE TRIGGER git_acquisitions_immutable BEFORE UPDATE ON git_acquisitions WHEN NEW.git_acquisition_id IS NOT OLD.git_acquisition_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.repository_endpoint_id IS NOT OLD.repository_endpoint_id OR NEW.endpoint_url IS NOT OLD.endpoint_url OR (OLD.object_format IS NOT NULL AND NEW.object_format IS NOT OLD.object_format) OR (OLD.refs_observed_at_us IS NOT NULL AND NEW.refs_observed_at_us IS NOT OLD.refs_observed_at_us) OR NEW.source_id IS NOT OLD.source_id OR NEW.kind IS NOT OLD.kind OR NEW.started_at_us IS NOT OLD.started_at_us OR (OLD.observed_at_us IS NOT NULL AND NEW.observed_at_us IS NOT OLD.observed_at_us) OR NEW.request IS NOT OLD.request OR (OLD.roots_manifest IS NOT NULL AND NEW.roots_manifest IS NOT OLD.roots_manifest) BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER git_acquisitions_no_replace BEFORE INSERT ON git_acquisitions WHEN EXISTS(SELECT 1 FROM git_acquisitions WHERE (git_acquisition_id=NEW.git_acquisition_id) OR (git_acquisition_id=NEW.git_acquisition_id AND repository_uuidv4=NEW.repository_uuidv4) OR (git_acquisition_id=NEW.git_acquisition_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
@@ -498,9 +508,13 @@ CREATE TRIGGER job_attempts_no_replace BEFORE INSERT ON job_attempts WHEN EXISTS
 CREATE TRIGGER jobs_immutable BEFORE UPDATE ON jobs WHEN NEW.job_id IS NOT OLD.job_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER jobs_no_replace BEFORE INSERT ON jobs WHEN EXISTS(SELECT 1 FROM jobs WHERE (job_id=NEW.job_id) OR (job_id=NEW.job_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX jobs_fk_0 ON jobs(job_id,current_attempt);
-CREATE TRIGGER payloads_immutable BEFORE UPDATE ON payloads WHEN NEW.payload_id IS NOT OLD.payload_id OR NEW.sha256 IS NOT OLD.sha256 OR NEW.body IS NOT OLD.body OR NEW.byte_length IS NOT OLD.byte_length OR NEW.representation IS NOT OLD.representation BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER payloads_no_replace BEFORE INSERT ON payloads WHEN EXISTS(SELECT 1 FROM payloads WHERE (payload_id=NEW.payload_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER payloads_retain BEFORE DELETE ON payloads BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
+CREATE TRIGGER stored_bytes_immutable BEFORE UPDATE ON stored_bytes BEGIN SELECT RAISE(ABORT,'Immutable stored bytes'); END;
+CREATE TRIGGER stored_bytes_no_replace BEFORE INSERT ON stored_bytes WHEN EXISTS(SELECT 1 FROM stored_bytes WHERE sha256=NEW.sha256) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited'); END;
+CREATE TRIGGER stored_bytes_retain BEFORE DELETE ON stored_bytes BEGIN SELECT RAISE(ABORT,'Retain acquired bytes'); END;
+CREATE TRIGGER payloads_immutable BEFORE UPDATE ON payloads BEGIN SELECT RAISE(ABORT,'Immutable payload identity'); END;
+CREATE TRIGGER payloads_no_replace BEFORE INSERT ON payloads WHEN EXISTS(SELECT 1 FROM payloads WHERE representation=NEW.representation AND sha256=NEW.sha256) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited'); END;
+CREATE TRIGGER payloads_retain BEFORE DELETE ON payloads BEGIN SELECT RAISE(ABORT,'Retain acquired payloads'); END;
+CREATE INDEX payloads_stored_bytes_fk ON payloads(sha256);
 CREATE TRIGGER preservation_obligations_immutable BEFORE UPDATE ON preservation_obligations WHEN NEW.git_acquisition_id IS NOT OLD.git_acquisition_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER preservation_obligations_no_replace BEFORE INSERT ON preservation_obligations WHEN EXISTS(SELECT 1 FROM preservation_obligations WHERE (git_acquisition_id=NEW.git_acquisition_id) OR (git_acquisition_id=NEW.git_acquisition_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX preservation_obligations_fk_0 ON preservation_obligations(cache_locator_id);
@@ -580,13 +594,13 @@ CREATE TRIGGER tree_entries_immutable BEFORE UPDATE ON tree_entries WHEN NEW.tre
 CREATE TRIGGER tree_entries_no_replace BEFORE INSERT ON tree_entries WHEN EXISTS(SELECT 1 FROM tree_entries WHERE (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name) OR (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER tree_entries_retain BEFORE DELETE ON tree_entries BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX tree_entries_fk_0 ON tree_entries(child_git_object_id);
-CREATE TRIGGER unresolved_payloads_immutable BEFORE UPDATE ON unresolved_payloads WHEN NEW.unresolved_payload_id IS NOT OLD.unresolved_payload_id OR NEW.payload_id IS NOT OLD.payload_id OR NEW.reason IS NOT OLD.reason BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER unresolved_payloads_immutable BEFORE UPDATE ON unresolved_payloads WHEN NEW.unresolved_payload_id IS NOT OLD.unresolved_payload_id OR NEW.payload_representation IS NOT OLD.payload_representation OR NEW.payload_sha256 IS NOT OLD.payload_sha256 OR NEW.reason IS NOT OLD.reason BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER unresolved_payloads_no_replace BEFORE INSERT ON unresolved_payloads WHEN EXISTS(SELECT 1 FROM unresolved_payloads WHERE (unresolved_payload_id=NEW.unresolved_payload_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER unresolved_payloads_retain BEFORE DELETE ON unresolved_payloads BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX unresolved_payloads_fk_1 ON unresolved_payloads(payload_id);
+CREATE INDEX unresolved_payloads_fk_1 ON unresolved_payloads(payload_representation,payload_sha256);
 CREATE TRIGGER validators_immutable BEFORE UPDATE ON validators WHEN NEW.resume_scope_id IS NOT OLD.resume_scope_id OR NEW.validator_key IS NOT OLD.validator_key BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER validators_no_replace BEFORE INSERT ON validators WHEN EXISTS(SELECT 1 FROM validators WHERE (resume_scope_id=NEW.resume_scope_id AND validator_key=NEW.validator_key) OR (resume_scope_id=NEW.resume_scope_id AND validator_key=NEW.validator_key)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE INDEX validators_fk_0 ON validators(payload_id);
+CREATE INDEX validators_fk_0 ON validators(payload_representation,payload_sha256);
 CREATE TRIGGER snapshot_current_insert BEFORE INSERT ON repositories WHEN NEW.current_snapshot_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM snapshots WHERE snapshot_id=NEW.current_snapshot_id AND repository_uuidv4=NEW.repository_uuidv4 AND published=1) BEGIN SELECT RAISE(ABORT,'Current snapshot requires published fact'); END;
 CREATE TRIGGER snapshot_current_update BEFORE UPDATE ON repositories WHEN NEW.current_snapshot_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM snapshots WHERE snapshot_id=NEW.current_snapshot_id AND repository_uuidv4=NEW.repository_uuidv4 AND published=1) BEGIN SELECT RAISE(ABORT,'Current snapshot requires published fact'); END;
 CREATE TRIGGER cr_current_insert BEFORE INSERT ON change_requests WHEN NEW.current_change_request_observation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM change_request_observations WHERE change_request_observation_id=NEW.current_change_request_observation_id AND change_request_id=NEW.change_request_id AND published=1) BEGIN SELECT RAISE(ABORT,'Current observation requires published fact'); END;

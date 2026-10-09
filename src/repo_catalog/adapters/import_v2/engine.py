@@ -4,6 +4,7 @@ Normalized facts live in the destination; archives, mappings, diagnostics and
 source/output proofs live in a separate workspace. Each batch commits both together.
 """
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -463,6 +464,10 @@ def commit(db, src, run, receipt, item, fault=no_fault):
         else:
             for op in output["operations"]:
                 table, row, operation = op["table"], op["row"], op["operation"]
+                if table == "stored_bytes":
+                    sha, body, byte_length = row
+                    if hashlib.sha256(body).digest() != sha or len(body) != byte_length:
+                        raise ConversionError("PAYLOAD_DIGEST_MISMATCH")
                 if table == "text_bodies":
                     _, body, byte_length, sha = row
                     if (

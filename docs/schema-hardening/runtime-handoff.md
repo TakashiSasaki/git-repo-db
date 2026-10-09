@@ -2,6 +2,27 @@
 
 The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 10**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
 
+## Payload CAS admission foundation (schema 11)
+
+Branch `refactor/payload-cas` starts at identity foundation commit
+`e94c767`. Physical bytes now use `stored_bytes.sha256`; logical payloads use
+`(representation, sha256)`. Acquisition history, validators, diagnostics,
+REST/GraphQL replay and guarded salvage use the composite reference. Old source
+response IDs remain source/workspace evidence, not ordinary payload identities.
+Current ordinary tables: 66; import workspace schema: 2.
+
+Incoming declared hashes are checked before storage; existing bytes are compared
+before reuse. Logical/physical registration is atomic. Corrupt storage and a
+simulated genuine hash collision have different admission errors, and neither
+replaces the existing bytes. Tests inject logical-insert failure and verify that
+unrelated caller work survives while partial payload registration rolls back.
+
+This stride does not yet provide durable conflict staging, local quarantine,
+repair or hash-scanned backup/restore. Parser/result/selection DAG integration,
+portable acquisition IDs, repository UUID admission, exchange and frozen Job
+inputs also remain outstanding. Validation is recorded in
+[payload CAS evidence](../validation/synthetic/2026-10-09-payload-cas.md).
+
 ## Identity foundation (schema 10)
 
 Base: PR #7 `d6ee309a6845cf915f821aa1f1910b46b536a614`.

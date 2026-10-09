@@ -132,11 +132,11 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     assert error.details.get("not_before_us") == deadline_us
     rejected_kind = "threads" if boundary == "root" else "thread-comments"
     rejected = store.one(
-        "SELECT o.next_cursor,o.request,p.body,u.reason "
+        "SELECT o.next_cursor,o.request,b.body,u.reason "
         "FROM fetch_occurrences o "
         "JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id "
-        "JOIN payloads p ON p.payload_id=o.payload_id "
-        "JOIN unresolved_payloads u ON u.payload_id=p.payload_id "
+        "JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 "
+        "JOIN unresolved_payloads u ON u.payload_representation=p.representation AND u.payload_sha256=p.sha256 "
         "WHERE f.kind=? ORDER BY o.fetch_occurrence_id DESC LIMIT 1",
         (rejected_kind,),
     )
@@ -304,7 +304,7 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
     api.stage = "B"
     sync(store, repo)
     old_page = store.one(
-        "SELECT f.*,o.fetch_occurrence_id fetch_occurrence_id,o.observed_at_us page_observed_at_us,p.body FROM fetch_collections f JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads p ON p.payload_id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='issue-comment' ORDER BY o.observed_at_us LIMIT 1"
+        "SELECT f.*,o.fetch_occurrence_id fetch_occurrence_id,o.observed_at_us page_observed_at_us,b.body FROM fetch_collections f JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE f.change_request_id='repo:41' AND f.kind='issue-comment' ORDER BY o.observed_at_us LIMIT 1"
     )
     current_version = store.one(
         "SELECT current_document_observation_id FROM documents WHERE change_request_id='repo:41' AND kind='issue-comment' AND provider_change_request_document_id='241'"
@@ -1727,7 +1727,7 @@ def test_malformed_rest_page_keeps_payload_and_retries_without_skipping(github_r
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
     row = store.one(
-        "SELECT f.fetch_collection_id,p.cursor,p.state,a.body FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads a ON a.payload_id=o.payload_id WHERE f.change_request_id='repo:41' AND f.kind='review'"
+        "SELECT f.fetch_collection_id,p.cursor,p.state,b.body FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads a ON a.representation=o.payload_representation AND a.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=a.sha256 WHERE f.change_request_id='repo:41' AND f.kind='review'"
     )
     assert row["state"] == "partial"
     assert json.loads(row["body"]) == rejected
@@ -1835,7 +1835,8 @@ def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias
             (node,),
         )
         assert any(
-            node.encode() in row[0] for row in store.all("SELECT body FROM payloads")
+            node.encode() in row[0]
+            for row in store.all("SELECT body FROM stored_bytes")
         )
     enabled = False
     sync(store, repo, job=partial.value.details["job_id"])
@@ -1921,7 +1922,7 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
     assert any(
         json.loads(row["body"]) == malformed_response
         for row in store.all(
-            "SELECT p.body FROM unresolved_payloads u JOIN payloads p ON p.payload_id=u.payload_id"
+            "SELECT b.body FROM unresolved_payloads u JOIN payloads p ON p.representation=u.payload_representation AND p.sha256=u.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256"
         )
     )
     assert (

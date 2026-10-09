@@ -37,8 +37,8 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                 (TIME,),
             )
             occurrence = store.execute(
-                "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,observed_at_us,parsed_at_us) VALUES('collection',0,?,'{}',?,?)",
-                (facts.payload(b"{}"), TIME, TIME),
+                "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES('collection',0,?,?,'{}',?,?)",
+                (*facts.payload(b"{}").parameters(), TIME, TIME),
             ).lastrowid
             store.execute(
                 "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at_us) VALUES('pr','thread','{}',?)",

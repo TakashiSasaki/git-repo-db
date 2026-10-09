@@ -6,6 +6,7 @@ import hashlib
 import json
 import uuid
 
+from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
 from repo_catalog.domain.document import DocumentKey
 from repo_catalog.domain.models import CatalogError
@@ -153,16 +154,7 @@ class ApiFacts:
         }
 
     def payload(self, raw):
-        digest = hashlib.sha256(raw).digest()
-        row = self.s.one(
-            "SELECT payload_id FROM payloads WHERE sha256=? AND body=?", (digest, raw)
-        )
-        if row:
-            return row[0]
-        return self.s.execute(
-            "INSERT INTO payloads(sha256,body,byte_length,representation) VALUES(?,?,?,'decoded_api')",
-            (digest, raw, len(raw)),
-        ).lastrowid
+        return intern_payload(self.s.connection, raw)
 
     def page(self, collection, response, request, next_cursor, *, advance=True):
         ordinal = self.s.one(
@@ -171,11 +163,11 @@ class ApiFacts:
         )[0]
         timestamp = now_us()
         ident = self.s.execute(
-            "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_id,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_representation,payload_sha256,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,?,?)",
             (
                 collection["fetch_collection_id"],
                 ordinal,
-                self.payload(response.content),
+                *self.payload(response.content).parameters(),
                 canonical(request),
                 next_cursor,
                 timestamp,

@@ -373,16 +373,18 @@ def test_attribution_defers_malformed_graphql_tail_until_no_prefix_match(
     src.close()
 
 
-def test_pr_history_exact_payload_ids_distinct_observations_shared_body_and_repair(
+def test_pr_history_exact_payload_bytes_distinct_observations_shared_body_and_repair(
     tmp_path,
 ):
     db, src, run = components(tmp_path)
     before = src.execute("SELECT id,body FROM api_responses ORDER BY id").fetchall()
     output = convert(db, src, run)
-    assert [(r["id"], r["body"]) for r in before] == [
-        (r["payload_id"], r["body"])
-        for r in db.execute("SELECT payload_id,body FROM payloads ORDER BY payload_id")
-    ]
+    assert {r["body"] for r in before} == {
+        r["body"] for r in db.execute("SELECT body FROM stored_bytes")
+    }
+    assert {
+        tuple(r) for r in db.execute("SELECT representation,sha256 FROM payloads")
+    } == {("decoded_api", hashlib.sha256(r["body"]).digest()) for r in before}
     assert [
         tuple(r)
         for r in db.execute(
@@ -552,7 +554,7 @@ def test_malformed_saved_page_is_preserved_and_cannot_seal_listing(tmp_path):
     output = convert(db, src, run)
     assert (
         db.execute(
-            "SELECT count(*) FROM payloads WHERE body=?", (b'{"not":"a-list"}',)
+            "SELECT count(*) FROM stored_bytes WHERE body=?", (b'{"not":"a-list"}',)
         ).fetchone()[0]
         == 1
     )
@@ -952,17 +954,17 @@ def test_oversized_saved_page_defers_replay_preserves_payload_occurrence_and_dir
     db, src, run = components(tmp_path, mutate=mutate)
     output = convert(db, src, run)
     payload = db.execute(
-        "SELECT body,sha256,byte_length FROM payloads WHERE payload_id=?",
-        (saved["response"],),
+        "SELECT body,sha256,byte_length FROM stored_bytes WHERE sha256=?",
+        (saved["sha256"],),
     ).fetchone()
     assert len(payload[0]) == saved["bytes"]
     assert hashlib.sha256(payload[0]).digest() == payload[1] == saved["sha256"]
     assert payload[2] == saved["bytes"]
     occurrence = db.execute(
-        "SELECT observed_at_us,payload_id FROM fetch_occurrences WHERE fetch_collection_id=?",
+        "SELECT observed_at_us,payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_collection_id=?",
         (IDS["commits_complete"],),
     ).fetchone()
-    assert tuple(occurrence) == (STAMPS_US[0], saved["response"])
+    assert tuple(occurrence) == (STAMPS_US[0], "decoded_api", saved["sha256"])
     # The already acquired normalized item survives even though its page cannot
     # be replayed/proved complete within the decoder budget.
     assert db.execute("SELECT count(*) FROM code_commits").fetchone()[0] == 2
@@ -1072,7 +1074,8 @@ def test_small_deep_saved_json_is_attributed_without_decoder_crash(tmp_path):
     output = convert(db, src, run)
     assert (
         db.execute(
-            "SELECT body FROM payloads WHERE payload_id=?", (saved["response"],)
+            "SELECT body FROM stored_bytes WHERE sha256=?",
+            (hashlib.sha256(saved["body"]).digest(),),
         ).fetchone()[0]
         == saved["body"]
     )

@@ -1,6 +1,6 @@
 # Catalog3 data model
 
-The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **10**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
+The active DDL is [the packaged catalog3 schema](../src/repo_catalog/resources/catalog3.sql). [Runtime identity](../src/repo_catalog/adapters/sqlite/schema.py) is `repo-catalog/catalog3`, schema version **11**, with a SHA-256 of that DDL. Fresh catalogs initialize directly from it. Earlier catalog3 development databases are rejected; there is no migration or compatibility view. The packaged v2 schema describes salvage input only.
 
 ## Absolute timestamps and durations
 
@@ -83,7 +83,21 @@ Each `document_observations` row directly references `text_body_sha256 -> text_b
 
 `documents.current_document_observation_id` selects a same-document observed fact, enforced by the composite FK and ownership trigger. It is not recomputed as the largest ID. If selection is unresolved, current queries report partial coverage rather than silently choosing a candidate; all stored observations remain accessible. Normalized document identity does not use a secondary provider Node-ID alias; any such provider value remains in the raw payload evidence.
 
-`payloads` deduplicates saved API bytes, while `fetch_collections`, `fetch_occurrences` and `collection_memberships` preserve separate requests/pages/membership. `resume_scopes`, `validators`, `incremental_scans`, `resume_cursors` and `completion_markers` retain request context and safe restart boundaries. `code_listings`, `code_listing_progress`, `code_commits` and `code_file_changes` use `code_listing_id`, `fetch_collection_id` and `fetch_occurrence_id`; completion seals membership. `unresolved_payloads` retains attributable parsing gaps. Resume/replay does not create new remote observations or advance watermarks.
+`stored_bytes(sha256, body, byte_length)` stores each exact byte sequence once under
+its 32-byte SHA-256. `payloads(representation, sha256)` separately registers the
+logical representation; neither table has a local integer payload key. Different
+representations can share physical bytes. Acquisition, validator and gap records
+use composite logical-payload FKs. Writers verify declared hashes and compare
+existing bytes before reuse; physical and logical admission is atomic. Existing
+bytes are never silently overwritten. Portable payload JSON uses exactly
+`representation` and a 64-character lowercase hexadecimal `sha256`; new inventory
+and 304 evidence stores that reference. Provider evidence remains unchanged.
+
+This is the admission foundation. Durable conflict staging, corruption quarantine,
+explicit repair, full hash verification during backup/restore and comprehensive
+owner validation of exchanged evidence remain to be integrated.
+
+The tables `fetch_collections`, `fetch_occurrences` and `collection_memberships` preserve separate requests/pages/membership. `resume_scopes`, `validators`, `incremental_scans`, `resume_cursors` and `completion_markers` retain request context and safe restart boundaries. `code_listings`, `code_listing_progress`, `code_commits` and `code_file_changes` use `code_listing_id`, `fetch_collection_id` and `fetch_occurrence_id`; completion seals membership. `unresolved_payloads` retains attributable parsing gaps. Resume/replay does not create new remote observations or advance watermarks.
 
 ## Coverage claims and current state
 

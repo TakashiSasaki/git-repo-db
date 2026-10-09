@@ -223,12 +223,16 @@ def build_target(sql=None):
             )
     put(
         db,
-        "payloads",
-        payload_id=1,
+        "stored_bytes",
         sha256=hashlib.sha256(b"[]").digest(),
         body=b"[]",
         byte_length=2,
+    )
+    put(
+        db,
+        "payloads",
         representation="decoded_api",
+        sha256=hashlib.sha256(b"[]").digest(),
     )
     put(
         db,
@@ -236,7 +240,8 @@ def build_target(sql=None):
         fetch_occurrence_id=1,
         fetch_collection_id="a-commits",
         ordinal=0,
-        payload_id=1,
+        payload_representation="decoded_api",
+        payload_sha256=hashlib.sha256(b"[]").digest(),
         request="{}",
         observed_at_us=TIME,
         parsed_at_us=TIME,
@@ -247,7 +252,8 @@ def build_target(sql=None):
         fetch_occurrence_id=2,
         fetch_collection_id="a-files",
         ordinal=0,
-        payload_id=1,
+        payload_representation="decoded_api",
+        payload_sha256=hashlib.sha256(b"[]").digest(),
         request="{}",
         observed_at_us=TIME,
         parsed_at_us=TIME,
@@ -270,7 +276,7 @@ def test_fresh_complete_schema(target):
     db = target
     assert (
         len(db.execute("SELECT name FROM sqlite_schema WHERE type='table'").fetchall())
-        == 65
+        == 66
     )
     assert all(
         row[5] == 1
