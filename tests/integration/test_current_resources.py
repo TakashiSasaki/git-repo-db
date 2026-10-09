@@ -7,7 +7,6 @@ import uuid
 import pytest
 
 from repo_catalog.adapters.sqlite.current_resources import CurrentResources
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.schema import (
     DDL_SHA256,
     FORMAT_ID,
@@ -44,50 +43,19 @@ def resources(tmp_path):
         "INSERT INTO change_requests VALUES(?,?,?,'pull_request',1)",
         (change, repo, binding),
     )
-    capabilities = [
-        {"owner_kind": "repository", "fact_kind": kind}
-        for kind in ("issue", "ordinary-issue-comment", "review", "review-comment")
-    ]
-    definition = {
-        "implementation": {"fixture": "current-resources"},
-        "settings": {},
-        "output_schema": {},
-        "capabilities": capabilities,
-    }
-    model = ParserModel(db)
-    profile = model.register_profile(definition)
-    verification = model.verify_profile(
-        profile,
-        criteria={"synthetic": True},
-        evidence={
-            "definition": definition,
-            "capabilities": [
-                {
-                    **capability,
-                    "outcome": "passed",
-                    "checks": ["synthetic admission fixture"],
-                }
-                for capability in capabilities
-            ],
-        },
-    )
-    model.trust_verification(verification, rationale={"synthetic": True})
-    for capability in capabilities:
-        model.ensure_scope_profile(
-            profile, repository_uuidv4=repo, fact_kind=capability["fact_kind"]
-        )
+    parser_module = "tests.synthetic.current_resources"
     context = {
         "service_instance_uuidv4": service,
         "repository_uuidv4": repo,
         "repository_binding_id": binding,
     }
     adapter = CurrentResources(db)
-    yield adapter, context, profile, change, path
+    yield adapter, context, parser_module, change, path
     db.close()
 
 
 def issue(resources, **changes):
-    _, context, profile, _, _ = resources
+    _, context, parser_module, _, _ = resources
     return {
         **context,
         "kind": "issue",
@@ -100,7 +68,8 @@ def issue(resources, **changes):
         "provider_clock_scope": "github-issue-updated-at",
         "observed_at_us": 0,
         "parsed_at_us": 1,
-        "parser_profile_uuidv4": profile,
+        "parser_module": parser_module,
+        "parser_version": "1",
         "metadata": {"labels": ["synthetic"], "nested": {"known": True}},
         "acquisition_scope": {**context, "endpoint": "issues"},
         **changes,
@@ -113,7 +82,7 @@ def current(adapter, table="issue_resources"):
 
 
 def test_shared_physical_storage_replaces_marker_and_review_history(resources):
-    adapter, context, profile, change, _ = resources
+    adapter, context, parser_module, change, _ = resources
     assert adapter.admit(issue(resources), source="import").status == "accepted"
     comment = issue(
         resources,
@@ -136,7 +105,8 @@ def test_shared_physical_storage_replaces_marker_and_review_history(resources):
         "submitted_at_us": 0,
         "observed_at_us": -1,
         "parsed_at_us": 1,
-        "parser_profile_uuidv4": profile,
+        "parser_module": parser_module,
+        "parser_version": "1",
         "acquisition_scope": {
             **context,
             "change_request_id": change,
@@ -344,7 +314,7 @@ def test_missing_parent_survives_restart_then_promotes(resources):
 
 
 def test_issue_membership_transfer_preserves_natural_identity_and_children(resources):
-    adapter, context, profile, _, _ = resources
+    adapter, context, parser_module, _, _ = resources
     adapter.admit(issue(resources), source="import")
     comment = issue(
         resources,
@@ -365,12 +335,6 @@ def test_issue_membership_transfer_preserves_natural_identity_and_children(resou
     adapter.c.execute(
         "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata) VALUES(?,?,?,'22','{}')",
         (binding, repo, context["service_instance_uuidv4"]),
-    )
-    ParserModel(adapter.c).ensure_scope_profile(
-        profile, repository_uuidv4=repo, fact_kind="issue"
-    )
-    ParserModel(adapter.c).ensure_scope_profile(
-        profile, repository_uuidv4=repo, fact_kind="ordinary-issue-comment"
     )
     moved = issue(
         resources,
@@ -481,7 +445,7 @@ def test_tied_live_response_requires_matching_prerequest_fence(resources):
 
 
 def test_provider_clock_scope_cannot_be_invented_for_reviews(resources):
-    adapter, context, profile, change, _ = resources
+    adapter, context, parser_module, change, _ = resources
     candidate = {
         **context,
         "kind": "review",
@@ -490,7 +454,8 @@ def test_provider_clock_scope_cannot_be_invented_for_reviews(resources):
         "body": "pending review",
         "observed_at_us": 0,
         "parsed_at_us": 1,
-        "parser_profile_uuidv4": profile,
+        "parser_module": parser_module,
+        "parser_version": "1",
         "provider_updated_at_us": 100,
         "provider_clock_scope": "invented-submission-clock",
         "acquisition_scope": {

@@ -12,7 +12,6 @@ from repo_catalog.adapters.sqlite.json_contracts import (
     JsonContractError,
     validate_catalog,
 )
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.domain.models import CatalogError
 from tests.integration.test_catalog3_current_exchange import receiver as _receiver
 from tests.integration.test_catalog3_current_queries import (
@@ -206,12 +205,6 @@ def _move_parent(adapter, context, profile, parent):
             destination["service_instance_uuidv4"],
         ),
     )
-    for kind in ("issue", "ordinary-issue-comment"):
-        ParserModel(adapter.c).ensure_scope_profile(
-            profile,
-            repository_uuidv4=destination["repository_uuidv4"],
-            fact_kind=kind,
-        )
     moved = {
         **parent,
         **destination,
@@ -304,11 +297,6 @@ def test_transfer_fork_repeated_exchange_preserves_capture_and_child_clock(
     try:
         for _ in range(2):
             receive(target, unit)
-        verification = target.execute(
-            "SELECT parser_profile_verification_uuidv4 FROM parser_profile_verifications WHERE parser_profile_uuidv4=?",
-            (profile,),
-        ).fetchone()[0]
-        ParserModel(target).trust_verification(verification)
         assert _visible(target, "issue-comment") == 0
         assert _state(target, "issue-comment")["field_evidence"]['["body"]'][
             "provider_updated_at_us"
@@ -325,7 +313,6 @@ def test_transfer_fork_repeated_exchange_preserves_capture_and_child_clock(
                     for proof in record["field_evidence"].values()
                 )
         receive(onward, Graph(target).export(destination["repository_uuidv4"]))
-        ParserModel(onward).trust_verification(verification)
         for db in (target, onward):
             assert _visible(db, "issue-comment") == 0
             assert (
@@ -370,11 +357,6 @@ def test_different_comment_parent_claim_survives_exchange(resources, reverse):
     target = _receiver()
     try:
         receive(target, unit)
-        verification = target.execute(
-            "SELECT parser_profile_verification_uuidv4 FROM parser_profile_verifications WHERE parser_profile_uuidv4=?",
-            (profile,),
-        ).fetchone()[0]
-        ParserModel(target).trust_verification(verification)
         assert _visible(target, "issue-comment") == 0
         variants = CurrentResources(target).export_candidates(
             context["repository_uuidv4"]
@@ -496,11 +478,6 @@ def test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling(
     target = _receiver()
     try:
         receive(target, initial)
-        verification = target.execute(
-            "SELECT parser_profile_verification_uuidv4 FROM parser_profile_verifications WHERE parser_profile_uuidv4=?",
-            (profile,),
-        ).fetchone()[0]
-        ParserModel(target).trust_verification(verification)
         receive(target, malformed)
         assert target.execute("SELECT count(*) FROM issue_resources").fetchone()[0] == 2
         assert _visible(target, "issue") == 2

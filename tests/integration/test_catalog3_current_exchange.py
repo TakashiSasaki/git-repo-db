@@ -10,7 +10,6 @@ import pytest
 from repo_catalog.adapters.sqlite.coverage import admit_claim, freeze_complete_proof
 from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
 from repo_catalog.adapters.sqlite.exchange import Graph
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.schema import DDL_SHA256, SCHEMA_VERSION, schema_sql
 from repo_catalog.application.repository_identity import bind
 from repo_catalog.domain.current_state import fingerprint_candidate
@@ -56,7 +55,8 @@ def collection(catalog, candidate, *, observed=0, pages=1, context=None):
             observed + ordinal,
             "next" if ordinal < pages - 1 else None,
             [member] if ordinal == 0 else [],
-            parser_profile_uuidv4=candidate["parser_profile_uuidv4"],
+            parser_module=candidate["parser_module"],
+            parser_version=candidate["parser_version"],
         )
     db.execute(
         "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
@@ -111,11 +111,8 @@ def test_current_edits_reversed_repeat_and_archive_free_selection(
         ).fetchone() == (0,)
         assert target.execute(
             "SELECT count(*) FROM eligible_issue_resources"
-        ).fetchone() == (0,)
-        ParserModel(target).trust_verification(source.verification)
-        assert target.execute(
-            "SELECT count(*) FROM eligible_issue_resources"
         ).fetchone() == (1,)
+        assert target.execute("SELECT count(*) FROM parser_profiles").fetchone() == (0,)
         assert target.execute("PRAGMA foreign_key_check").fetchall() == []
     finally:
         target.close()
@@ -184,7 +181,13 @@ def test_current_completeness_freezes_terminal_pages_and_max_time(current_catalo
         assert json.loads(frozen)["completion_marker_uuidv4s"]
         with pytest.raises(sqlite3.IntegrityError, match="sealed"):
             CurrentCollectionProof(db).page(
-                ident, 2, 1, None, [], parser_profile_uuidv4=catalog.profile
+                ident,
+                2,
+                1,
+                None,
+                [],
+                parser_module=catalog.parser_module,
+                parser_version=catalog.parser_version,
             )
         unit = Graph(db).export(catalog.repository, fetch_collection_id=ident)
         assert receive(target, unit)["staged_records"] == 0
@@ -199,60 +202,49 @@ def test_current_completeness_freezes_terminal_pages_and_max_time(current_catalo
         target.close()
 
 
-def test_receipt_keeps_exact_parser_after_current_profile_replacement(current_catalog):
+def test_receipt_keeps_actual_parser_after_current_module_version_changes(
+    current_catalog,
+):
     catalog = current_catalog
     candidate = catalog.candidate("issue", "10", "same body")
     catalog.admit(candidate)
     ident = collection(catalog, candidate)
-    definition = json.loads(
-        catalog.store.one(
-            "SELECT definition_json FROM parser_profiles WHERE parser_profile_uuidv4=?",
-            (catalog.profile,),
-        )[0]
-    )
-    definition["implementation"] = {"synthetic_receipt_profile_test": 2}
-    with catalog.store.transaction():
-        profile = catalog.model.register_profile(definition)
-        verification = catalog.model.verify_profile(
-            profile,
-            criteria={"suite": "receipt-profile"},
-            evidence={
-                "definition": definition,
-                "capabilities": [
-                    {**capability, "outcome": "passed", "checks": ["receipt-profile"]}
-                    for capability in definition["capabilities"]
-                ],
-            },
-        )
-        catalog.model.trust_verification(verification)
-        catalog.model.select_profile(
-            profile,
-            verification,
-            repository_uuidv4=catalog.repository,
-            fact_kind="issue",
-        )
-        catalog.store.publish()
     assert (
         catalog.admit(
-            {**candidate, "parser_profile_uuidv4": profile, "provider_updated_at_us": 2}
+            {
+                **candidate,
+                "body": "newly parsed body",
+                "parser_module": "tests.synthetic.next_issue_parser",
+                "parser_version": "2",
+                "provider_updated_at_us": 2,
+            }
         ).status
         == "accepted"
     )
-    assert (
+    assert tuple(
         catalog.store.one(
-            "SELECT parser_profile_uuidv4 FROM current_collection_pages WHERE fetch_collection_id=?",
+            "SELECT parser_module,parser_version FROM current_collection_pages "
+            "WHERE fetch_collection_id=?",
             (ident,),
-        )[0]
-        == catalog.profile
-    )
+        )
+    ) == (catalog.parser_module, catalog.parser_version)
     unit = Graph(catalog.store.connection).export(
         catalog.repository, fetch_collection_id=ident
     )
-    assert {
-        record["values"]["parser_profile_uuidv4"]
+    assert not any(
+        record["table"].startswith("parser_profile") for record in unit["records"]
+    )
+    page = next(
+        record
         for record in unit["records"]
-        if record["table"] == "parser_profiles"
-    } == {catalog.profile, profile}
+        if record["table"] == "current_collection_pages"
+    )
+    row = next(
+        record for record in unit["records"] if record["table"] == "issue_resources"
+    )
+    assert page["values"]["parser_version"] == "1"
+    assert row["values"]["parser_version"] == "2"
+    assert row["values"]["parser_module"] == "tests.synthetic.next_issue_parser"
 
 
 def test_current_comment_parent_arrives_after_restart(current_catalog, tmp_path):

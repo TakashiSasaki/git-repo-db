@@ -12,7 +12,6 @@ from repo_catalog.adapters.github.collector import GitHubCollector
 from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
 from repo_catalog.adapters.sqlite.current_resources import CurrentResources
 from repo_catalog.adapters.sqlite.index import rebuild
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.maintenance_service import MaintenanceService
@@ -28,13 +27,12 @@ from tests.support.github_runtime import github_runtime as github_runtime
 class CurrentCatalog:
     state: object
     store: Store
-    model: ParserModel
     repository: str
     service: str
     binding: str
     request: str
-    profile: str
-    verification: str
+    parser_module: str
+    parser_version: str
 
     def candidate(self, kind, provider, body, **fields):
         scope = {
@@ -56,7 +54,8 @@ class CurrentCatalog:
             }.get(kind),
             "observed_at_us": 1,
             "parsed_at_us": 2,
-            "parser_profile_uuidv4": self.profile,
+            "parser_module": self.parser_module,
+            "parser_version": self.parser_version,
             "metadata": {},
         }
         candidate.pop("endpoint")
@@ -89,7 +88,6 @@ def current_catalog(tmp_path):
     state = tmp_path / "current-query-catalog"
     MaintenanceService(state).init("catalog-text-v1", 67_108_864, 0)
     with Store(state) as store:
-        model = ParserModel(store.connection)
         repository, request = str(uuid.uuid4()), str(uuid.uuid4())
         with store.transaction():
             service = add_instance(store, "github", "current-query-test")
@@ -106,52 +104,17 @@ def current_catalog(tmp_path):
                 "INSERT INTO change_requests VALUES(?,?,?,'pull_request',1)",
                 (request, repository, binding),
             )
-            definition = {
-                "implementation": {"synthetic_current_reader_test": 1},
-                "settings": {},
-                "output_schema": {"current_resource_test": 1},
-                "capabilities": [
-                    {"owner_kind": "repository", "fact_kind": kind}
-                    for kind in (
-                        "issue",
-                        "ordinary-issue-comment",
-                        "review",
-                        "review-comment",
-                    )
-                ],
-            }
-            profile = model.register_profile(definition)
-            verification = model.verify_profile(
-                profile,
-                criteria={"test": "current-reader-fixture"},
-                evidence={
-                    "definition": definition,
-                    "capabilities": [
-                        {**capability, "outcome": "passed", "checks": ["fixture"]}
-                        for capability in definition["capabilities"]
-                    ],
-                },
-            )
-            model.trust_verification(verification)
-            for capability in definition["capabilities"]:
-                model.select_profile(
-                    profile,
-                    verification,
-                    repository_uuidv4=repository,
-                    fact_kind=capability["fact_kind"],
-                )
             store.coverage(repository, "issue", "complete", observed_at_us=1)
             store.publish()
         yield CurrentCatalog(
             state,
             store,
-            model,
             repository,
             service,
             binding,
             request,
-            profile,
-            verification,
+            "tests.synthetic.current_queries",
+            "1",
         )
         assert not store.all("PRAGMA foreign_key_check")
         assert store.one("PRAGMA integrity_check")[0] == "ok"
@@ -292,7 +255,9 @@ def test_current_review_reads_keep_dismissed_reviews_and_no_edit_history(
     assert catalog.store.one("SELECT count(*) FROM parsed_results")[0] == 0
 
 
-def test_unordered_conflict_and_local_trust_block_current_search(current_catalog):
+def test_unordered_conflict_blocks_current_search_without_parser_selection(
+    current_catalog,
+):
     catalog = current_catalog
     issue = catalog.candidate(
         "issue", "1", "first value", title="first title", state="open"
@@ -314,10 +279,12 @@ def test_unordered_conflict_and_local_trust_block_current_search(current_catalog
         catalog.query("issue show", provider_issue_number=1).data["items"][0]["body"]
         == resolved["body"]
     )
-    with catalog.store.transaction():
-        catalog.model.trust_verification(catalog.verification, False)
-        catalog.store.publish()
-    assert catalog.query("search issue", literal="resolved value").data["items"] == []
+    assert catalog.store.one("SELECT count(*) FROM parser_profiles")[0] == 0
+    assert (
+        catalog.store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0]
+        == 0
+    )
+    assert catalog.query("search issue", literal="resolved value").data["items"]
 
 
 def test_issue_search_cursor_orders_parent_and_all_child_matches(current_catalog):
@@ -452,7 +419,13 @@ def test_partial_current_page_is_a_new_boundary_without_archive_or_marker(
                 (identifier, catalog.repository, catalog.request, identifier),
             )
         proof.page(
-            "old-complete", 0, 1, None, [], parser_profile_uuidv4=catalog.profile
+            "old-complete",
+            0,
+            1,
+            None,
+            [],
+            parser_module=catalog.parser_module,
+            parser_version=catalog.parser_version,
         )
         catalog.store.execute(
             "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES('old-complete','old-complete','complete',?,1)",
@@ -464,7 +437,8 @@ def test_partial_current_page_is_a_new_boundary_without_archive_or_marker(
             2,
             "continuation",
             [],
-            parser_profile_uuidv4=catalog.profile,
+            parser_module=catalog.parser_module,
+            parser_version=catalog.parser_version,
         )
     query = SimpleNamespace(s=catalog.store, check=lambda: None)
     old = {"fetch_collection_id": "old-complete", "state": "complete"}
@@ -508,3 +482,14 @@ def test_real_issue_collection_reports_complete_normal_queries(github_runtime):
         assert result.coverage.complete_for_requested_scope
         assert result.coverage.missing == []
         assert len(result.data["items"]) == expected
+
+
+@pytest.mark.parametrize(
+    "command", ["issue list", "issue show", "issue comments", "search issue"]
+)
+def test_current_issue_queries_reject_obsolete_parser_profile_selector(
+    current_catalog, command
+):
+    with pytest.raises(CatalogError) as failure:
+        current_catalog.query(command, parser_profile=str(uuid.uuid4()))
+    assert failure.value.code == "INVALID_ARGUMENT"

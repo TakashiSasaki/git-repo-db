@@ -12,11 +12,9 @@ from repo_catalog.adapters.github import current_parser
 from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
 from repo_catalog.adapters.sqlite.current_resources import CurrentResources
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
 from repo_catalog.application.maintenance_service import MaintenanceService
-from repo_catalog.application.parser_service import ParserService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.config import DEFAULTS
@@ -27,10 +25,9 @@ from repo_catalog.domain.models import CancellationToken
 class ReviewCatalog:
     state: object
     store: Store
-    model: ParserModel
     owners: list[dict]
-    profile: str
-    verification: str
+    parser_module: str
+    parser_version: str
 
     def scope(self, owner, *, review=False):
         fields = {
@@ -61,7 +58,8 @@ class ReviewCatalog:
             text_body_sha256=intern_text_body(self.store.connection, "preserved body"),
             observed_at_us=0,
             parsed_at_us=0,
-            parser_profile_uuidv4=self.profile,
+            parser_module=self.parser_module,
+            parser_version=self.parser_version,
             metadata="{}",
             acquisition_scope_json=json.dumps(self.scope(context, review=review)),
         )
@@ -112,7 +110,6 @@ def reviewed_catalog(tmp_path):
     state = tmp_path / "independent-review-state"
     MaintenanceService(state).init("catalog-text-v1", 32 * 1024 * 1024, 0)
     with Store(state) as store:
-        model = ParserModel(store.connection)
         with store.transaction():
             owners = []
             for number in range(3):
@@ -147,47 +144,9 @@ def reviewed_catalog(tmp_path):
                         "change_request_id": request,
                     }
                 )
-            capabilities = [
-                {"owner_kind": "repository", "fact_kind": kind}
-                for kind in (
-                    "issue",
-                    "ordinary-issue-comment",
-                    "review",
-                    "review-comment",
-                )
-            ]
-            definition = {
-                "implementation": {"independent-test": "typed current resources"},
-                "settings": {},
-                "output_schema": {},
-                "capabilities": capabilities,
-            }
-            profile = model.register_profile(definition)
-            verification = model.verify_profile(
-                profile,
-                criteria={"independent": True},
-                evidence={
-                    "definition": definition,
-                    "capabilities": [
-                        {
-                            **capability,
-                            "outcome": "passed",
-                            "checks": ["synthetic fixture"],
-                        }
-                        for capability in capabilities
-                    ],
-                },
-            )
-            model.trust_verification(verification)
-            for repository in {owner["repository_uuidv4"] for owner in owners}:
-                for capability in capabilities:
-                    model.select_profile(
-                        profile,
-                        verification,
-                        repository_uuidv4=repository,
-                        fact_kind=capability["fact_kind"],
-                    )
-        yield ReviewCatalog(state, store, model, owners, profile, verification)
+        yield ReviewCatalog(
+            state, store, owners, "tests.synthetic.independent_review", "1"
+        )
         assert not store.all("PRAGMA foreign_key_check")
         assert store.one("PRAGMA integrity_check")[0] == "ok"
 
@@ -256,11 +215,12 @@ def test_repo_wide_receipt_rejects_member_from_another_binding(reviewed_catalog)
     collection = catalog.collection(parent=False)
     with pytest.raises(sqlite3.IntegrityError):
         catalog.store.execute(
-            "INSERT INTO current_collection_pages VALUES(?,0,0,NULL,?,200,?)",
+            "INSERT INTO current_collection_pages VALUES(?,0,0,NULL,?,200,?,?)",
             (
                 collection,
                 json.dumps([review_member(catalog, owner=2)]),
-                catalog.profile,
+                catalog.parser_module,
+                catalog.parser_version,
             ),
         )
 
@@ -301,8 +261,8 @@ def test_current_receipts_reject_malformed_members_via_direct_sql(
         )
     with pytest.raises(sqlite3.IntegrityError):
         catalog.store.execute(
-            "INSERT INTO current_collection_pages VALUES(?,0,0,NULL,?,200,?)",
-            (collection, encoded, catalog.profile),
+            "INSERT INTO current_collection_pages VALUES(?,0,0,NULL,?,200,?,?)",
+            (collection, encoded, catalog.parser_module, catalog.parser_version),
         )
 
 
@@ -318,7 +278,8 @@ def test_member_receipt_survives_later_current_body_edit(reviewed_catalog):
             0,
             None,
             [review_member(catalog)],
-            parser_profile_uuidv4=catalog.profile,
+            parser_module=catalog.parser_module,
+            parser_version=catalog.parser_version,
         )
     original = proof.pages(collection)
     with catalog.store.transaction():
@@ -382,30 +343,32 @@ def test_sparse_update_preserves_exact_body_and_nested_known_fields(reviewed_cat
     assert catalog.store.one("SELECT count(*) FROM document_observations")[0] == 0
 
 
-def test_untrusted_other_parser_cannot_evict_or_expose_trusted_incumbent(
+def test_actual_parser_attribution_needs_no_profile_selection_or_trust(
     reviewed_catalog,
 ):
     catalog = reviewed_catalog
     resources = CurrentResources(catalog.store)
-    initial = candidate(catalog, "trusted body", updated=10)
+    initial = candidate(catalog, "first module body", updated=10)
     assert resources.admit(initial, source="import").status == "accepted"
-    definition = {
-        "implementation": {"independent-test": "untrusted alternative"},
-        "settings": {},
-        "output_schema": {},
-        "capabilities": [{"owner_kind": "repository", "fact_kind": "issue"}],
-    }
-    with catalog.store.transaction():
-        other = catalog.model.register_profile(definition)
     result = resources.admit(
-        candidate(catalog, "untrusted body", updated=20, parser_profile_uuidv4=other),
+        candidate(
+            catalog,
+            "second module body",
+            updated=20,
+            parser_module="tests.synthetic.other_issue_parser",
+            parser_version="0.1",
+        ),
         source="import",
     )
-    assert result.status == "missing_dependency"
+    assert result.status == "accepted"
     assert [row["body"] for row in visible_issues(catalog).data["items"]] == [
-        "trusted body"
+        "second module body"
     ]
-    assert visible_issues(catalog, parser_profile=other).data["items"] == []
+    assert catalog.store.one("SELECT count(*) FROM parser_profiles")[0] == 0
+    assert (
+        catalog.store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0]
+        == 0
+    )
 
 
 def test_tied_provider_clock_has_no_incumbent_public_winner(reviewed_catalog):
@@ -517,12 +480,15 @@ def test_unexpected_recorder_failure_is_reported_without_blocking_current_admiss
     context = {
         **catalog.owners[0],
         "acquisition_scope": catalog.scope(catalog.owners[0]),
-        "parser_profile_uuidv4": catalog.profile,
+        "parser_module": "forged.external.module",
+        "parser_version": "forged-version",
     }
     context.pop("change_request_id")
     projection = current_parser.issue(
         response.json()[0], context, response.extensions["catalog_observed_at_us"]
     )
+    assert projection["parser_module"] == current_parser.__name__
+    assert projection["parser_version"] == "1"
     projection["parsed_at_us"] = 0
     assert (
         CurrentResources(catalog.store).admit(projection, source="import").status
@@ -569,64 +535,46 @@ def test_issue_parent_constraints_resist_direct_sql_bypass(reviewed_catalog, att
         catalog.insert(incoming)
 
 
-def test_explicit_profile_selection_promotes_waiting_newer_current_state(
-    reviewed_catalog, tmp_path
+@pytest.mark.parametrize("parser_version", ["0", "2", "999999999999"])
+def test_parser_version_does_not_break_equal_provider_clock_conflict(
+    reviewed_catalog, parser_version
 ):
     catalog = reviewed_catalog
     resources = CurrentResources(catalog.store)
-    assert (
-        resources.admit(
-            candidate(catalog, "first parser", updated=10), source="import"
-        ).status
-        == "accepted"
+    first = candidate(catalog, "first interpretation", updated=10)
+    assert resources.admit(first, source="import").status == "accepted"
+    alternate = candidate(
+        catalog,
+        "second interpretation",
+        updated=10,
+        parser_module="tests.synthetic.next_issue_parser",
+        parser_version=parser_version,
     )
-    definition = {
-        "implementation": {"independent-test": "explicit replacement parser"},
-        "settings": {},
-        "output_schema": {},
-        "capabilities": [{"owner_kind": "repository", "fact_kind": "issue"}],
-    }
-    with catalog.store.transaction():
-        profile = catalog.model.register_profile(definition)
-        verification = catalog.model.verify_profile(
-            profile,
-            criteria={"synthetic": True},
-            evidence={
-                "definition": definition,
-                "capabilities": [
-                    {
-                        **definition["capabilities"][0],
-                        "outcome": "passed",
-                        "checks": ["synthetic explicit-profile test"],
-                    }
-                ],
-            },
-        )
-        catalog.model.trust_verification(verification)
+    assert resources.admit(alternate, source="import").status == "conflict"
+    assert visible_issues(catalog).data["items"] == []
+    staged = json.loads(
+        catalog.store.one("SELECT record_json FROM current_resource_diagnostics")[0]
+    )
+    assert staged["parser_module"] == alternate["parser_module"]
+    assert staged["parser_version"] == parser_version
     assert (
         resources.admit(
-            candidate(
-                catalog, "replacement parser", updated=20, parser_profile_uuidv4=profile
-            ),
+            {**first, "provider_updated_at_us": 20, "parser_version": "0"},
             source="import",
         ).status
-        == "missing_dependency"
+        == "identical"
     )
-    request = tmp_path / "select-current-profile.json"
-    request.write_text(
-        json.dumps(
-            {
-                "profile_uuid": profile,
-                "verification_uuid": verification,
-                "repository_uuidv4": catalog.owners[0]["repository_uuidv4"],
-                "fact_kind": "issue",
-            }
-        )
-    )
-    ParserService(catalog.state).execute("select-profile", {"input": str(request)})
     assert [row["body"] for row in visible_issues(catalog).data["items"]] == [
-        "replacement parser"
+        "first interpretation"
     ]
-    assert (
-        catalog.store.one("SELECT count(*) FROM current_resource_diagnostics")[0] == 0
-    )
+
+
+@pytest.mark.parametrize("kind", ["issue", "review", "review-comment"])
+@pytest.mark.parametrize("field", ["parser_module", "parser_version"])
+@pytest.mark.parametrize("value", [None, "", "module\x00hidden"])
+def test_current_row_provenance_resists_direct_sql_bypass(
+    reviewed_catalog, kind, field, value
+):
+    catalog = reviewed_catalog
+    with pytest.raises(sqlite3.IntegrityError), catalog.store.transaction():
+        catalog.insert(catalog.row(kind, "7", **{field: value}))

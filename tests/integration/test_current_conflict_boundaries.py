@@ -8,7 +8,6 @@ import pytest
 from repo_catalog.adapters.sqlite.current_resources import CurrentResources
 from repo_catalog.adapters.sqlite.exchange import Graph
 from repo_catalog.adapters.sqlite.json_contracts import validate_catalog
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from tests.integration.test_catalog3_current_exchange import receiver as _receiver
 from tests.integration.test_catalog3_current_queries import (
     current_catalog as current_catalog,
@@ -103,8 +102,6 @@ def test_incumbent_refresh_crosses_actual_exchange(current_catalog, kind, revers
             if reverse:
                 unit["records"].reverse()
             receive(target, unit)
-            if index == 0:
-                ParserModel(target).trust_verification(catalog.verification)
             if index in (1, 2):
                 assert _visible(target, kind) == 0
         # The resolved sender snapshot contains only A@20. That does not prove
@@ -178,10 +175,6 @@ def _transferred_fork(resources):
         "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata) VALUES(?,?,?,'22','{}')",
         (binding, destination, context["service_instance_uuidv4"]),
     )
-    for kind in ("issue", "ordinary-issue-comment"):
-        ParserModel(db).ensure_scope_profile(
-            profile, repository_uuidv4=destination, fact_kind=kind
-        )
     owner = {
         **context,
         "repository_uuidv4": destination,
@@ -239,11 +232,6 @@ def test_destination_only_exchange_never_turns_transferred_fork_into_winner(
         if reverse:
             unit["records"].reverse()
         receive(target, unit)
-        verification = target.execute(
-            "SELECT parser_profile_verification_uuidv4 FROM parser_profile_verifications WHERE parser_profile_uuidv4=?",
-            (profile,),
-        ).fetchone()[0]
-        ParserModel(target).trust_verification(verification)
         assert _visible(target, "issue-comment") == 0
         assert (
             target.execute(
@@ -298,7 +286,6 @@ def test_exchange_omits_checks_from_current_and_staged_candidates(
     target = _receiver()
     try:
         receive(target, initial)
-        ParserModel(target).trust_verification(catalog.verification)
         receiver = CurrentResources(target)
         checked = {**first, "observed_at_us": 888, "parsed_at_us": 889}
         revision, scope = receiver.capture_context(checked["acquisition_scope"])

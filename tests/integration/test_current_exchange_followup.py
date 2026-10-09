@@ -6,8 +6,8 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.current_resources import CurrentResources
 from repo_catalog.adapters.sqlite.exchange import Graph
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.exchange_service import ExchangeService
 from repo_catalog.application.maintenance_service import MaintenanceService
@@ -67,7 +67,6 @@ def test_competing_current_variants_keep_typed_staging_on_later_receipt(
     db = receiver()
     try:
         receive(db, initial)
-        ParserModel(db).trust_verification(catalog.verification)
         assert receive(db, conflicted)["staged_records"] == 3
         db = reopen(db, tmp_path / "competing-current.sqlite3")
         # A repeat used to relabel plain candidates as immutable envelopes and
@@ -128,7 +127,6 @@ def test_semantically_duplicate_candidate_admits_stronger_provider_evidence(
     db = receiver()
     try:
         receive(db, initial)
-        ParserModel(db).trust_verification(catalog.verification)
         assert receive(db, unordered)["staged_records"] == 1
         assert receive(db, unordered)["received_records"] == 0
         db = reopen(db, tmp_path / "freshness-current.sqlite3")
@@ -265,7 +263,6 @@ def test_new_clock_proves_previously_unordered_alternative_is_stale(
     db = receiver()
     try:
         receive(db, initial)
-        ParserModel(db).trust_verification(catalog.verification)
         assert receive(db, unordered)["staged_records"] == 1
         db = reopen(db, tmp_path / "stale-evidence-current.sqlite3")
         assert (
@@ -307,5 +304,62 @@ def test_new_clock_proves_previously_unordered_alternative_is_stale(
         assert db.execute(
             f"SELECT count(*) FROM {table_for(kind)} WHERE kind=?", (kind,)
         ).fetchone() == (1,)
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize("kind", ["issue", "issue-comment", "review", "review-comment"])
+def test_each_family_exports_inherited_body_parser_independently_of_row_parser(
+    current_catalog, kind
+):
+    catalog = current_catalog
+    first = candidate(
+        catalog, kind, "10", "inherited body", provider_updated_at_us=None
+    )
+    first.update(parser_module="tests.synthetic.body_parser", parser_version="9")
+    assert catalog.admit(first).status == "accepted"
+    resources = CurrentResources(catalog.store)
+    sparse = {
+        **first,
+        "author": "new author",
+        "observed_at_us": 50,
+        "parser_module": "tests.synthetic.author_parser",
+        "parser_version": "0",
+    }
+    sparse.pop("body")
+    revision, scope = resources.capture_context(sparse["acquisition_scope"])
+    assert (
+        resources.admit(
+            sparse, source="live", base_revision=revision, scope_context=scope
+        ).status
+        == "accepted"
+    )
+    unit = Graph(catalog.store.connection).export(catalog.repository)
+    assert not any(
+        record["table"].startswith("parser_profile") for record in unit["records"]
+    )
+    db = receiver()
+    try:
+        assert receive(db, unit)["staged_records"] == 0
+        target = CurrentResources(db)
+        raw = target._one(f"SELECT * FROM {table_for(kind)} WHERE kind=?", (kind,))
+        row = target.candidate_from_row(table_for(kind), raw)
+        assert row["body"] == "inherited body"
+        assert (
+            row["field_evidence"]['["body"]']["parser_module"]
+            == "tests.synthetic.body_parser"
+        )
+        assert row["field_evidence"]['["body"]']["parser_version"] == "9"
+        assert (
+            row["field_evidence"]['["author"]']["parser_module"]
+            == "tests.synthetic.author_parser"
+        )
+        assert row["field_evidence"]['["author"]']["parser_version"] == "0"
+        assert (
+            db.execute(
+                f"SELECT count(*) FROM eligible_{table_for(kind)} WHERE kind=?", (kind,)
+            ).fetchone()[0]
+            == 1
+        )
     finally:
         db.close()

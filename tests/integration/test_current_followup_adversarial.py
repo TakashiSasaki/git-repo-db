@@ -14,7 +14,6 @@ import pytest
 from repo_catalog.adapters.sqlite.current_resources import CurrentResources
 from repo_catalog.adapters.sqlite.exchange import Graph
 from repo_catalog.adapters.sqlite.json_contracts import JsonContractError
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.domain.models import CatalogError
 from tests.integration.test_catalog3_current_exchange import receiver
 from tests.integration.test_catalog3_current_queries import (
@@ -41,7 +40,8 @@ def proof(candidate, **changes):
         "provider_clock_scope",
         "observed_at_us",
         "parsed_at_us",
-        "parser_profile_uuidv4",
+        "parser_module",
+        "parser_version",
         "acquisition_scope",
     )
     return {**{name: candidate.get(name) for name in names}, **changes}
@@ -204,11 +204,24 @@ def test_sparse_live_title_cannot_certify_unseen_disputed_body(resources):
 def test_mixed_field_evidence_survives_full_graph_exchange(current_catalog, reverse):
     catalog = current_catalog
     older = catalog.candidate(
-        "issue", "10", "old body", title="old title", provider_updated_at_us=10
+        "issue",
+        "10",
+        "old body",
+        title="old title",
+        provider_updated_at_us=10,
+        parser_module="tests.synthetic.body_parser",
+        parser_version="9",
     )
     catalog.admit(older)
     sparse = partial(
-        {**older, "title": "new title", "provider_updated_at_us": 20}, "body"
+        {
+            **older,
+            "title": "new title",
+            "provider_updated_at_us": 20,
+            "parser_module": "tests.synthetic.title_parser",
+            "parser_version": "0",
+        },
+        "body",
     )
     catalog.admit(sparse)
     unit = Graph(catalog.store.connection).export(catalog.repository)
@@ -218,11 +231,20 @@ def test_mixed_field_evidence_survives_full_graph_exchange(current_catalog, reve
     db.row_factory = sqlite3.Row
     try:
         assert receive(db, unit)["staged_records"] == 0
-        ParserModel(db).trust_verification(catalog.verification)
         adapter = CurrentResources(db)
         row = current(adapter)
         assert row["field_evidence"][path("body")]["provider_updated_at_us"] == 10
         assert row["field_evidence"][path("title")]["provider_updated_at_us"] == 20
+        assert (
+            row["field_evidence"][path("body")]["parser_module"]
+            == "tests.synthetic.body_parser"
+        )
+        assert row["field_evidence"][path("body")]["parser_version"] == "9"
+        assert (
+            row["field_evidence"][path("title")]["parser_module"]
+            == "tests.synthetic.title_parser"
+        )
+        assert row["field_evidence"][path("title")]["parser_version"] == "0"
         complete = {**sparse, "body": "new body"}
         assert adapter.admit(complete, source="import").status == "accepted"
         assert current(adapter)["body"] == "new body"
@@ -288,7 +310,6 @@ def test_graph_same_content_field_refresh_with_other_unordered_variant(current_c
     db = receiver()
     try:
         receive(db, first_unit)
-        ParserModel(db).trust_verification(catalog.verification)
         assert receive(db, unordered)["staged_records"] == 2
         stronger = copy.deepcopy(states["B"])
         stronger["field_evidence"][path("body")]["provider_updated_at_us"] = 20
@@ -460,7 +481,6 @@ def test_sender_last_check_does_not_advance_receiver_local_live_check(current_ca
     db.row_factory = sqlite3.Row
     try:
         receive(db, initial)
-        ParserModel(db).trust_verification(catalog.verification)
         adapter = CurrentResources(db)
         local = {**first, "observed_at_us": 100}
         revision, scope = adapter.capture_context(local["acquisition_scope"])
@@ -568,7 +588,6 @@ def test_graph_leaf_only_evidence_cannot_replace_newer_scalar(current_catalog):
     db.row_factory = sqlite3.Row
     try:
         receive(db, original)
-        ParserModel(db).trust_verification(catalog.verification)
         attack = copy.deepcopy(original)
         state = next(
             record["values"]
@@ -687,23 +706,15 @@ def test_sql_field_evidence_preserves_signed_int64_limits_zero_and_negative(
 
 
 @pytest.mark.parametrize("boundary", ["admission", "sql"])
-def test_field_proof_profile_requires_resources_declared_capability(
-    resources, boundary
+@pytest.mark.parametrize("field", ["parser_module", "parser_version"])
+@pytest.mark.parametrize("value", [None, "", "module\x00hidden"])
+def test_field_proof_requires_actual_nonempty_parser_attribution(
+    resources, boundary, field, value
 ):
     adapter = resources[0]
     candidate = issue(resources)
     adapter.admit(candidate, source="import")
-    irrelevant_profile = ParserModel(adapter.c).register_profile(
-        {
-            "implementation": {"fixture": "unrelated capability"},
-            "settings": {},
-            "output_schema": {},
-            "capabilities": [{"owner_kind": "repository", "fact_kind": "review"}],
-        }
-    )
-    evidence = {
-        path("body"): proof(candidate, parser_profile_uuidv4=irrelevant_profile)
-    }
+    evidence = {path("body"): proof(candidate, **{field: value})}
     if boundary == "sql":
         with pytest.raises(sqlite3.IntegrityError):
             adapter.c.execute(
@@ -713,3 +724,22 @@ def test_field_proof_profile_requires_resources_declared_capability(
     else:
         with pytest.raises((CatalogError, JsonContractError)):
             adapter.admit({**candidate, "field_evidence": evidence}, source="import")
+
+
+def test_field_proof_accepts_a_distinct_actual_module_without_profile_authority(
+    resources,
+):
+    adapter = resources[0]
+    candidate = issue(resources)
+    candidate["field_evidence"] = {
+        path("body"): proof(
+            candidate, parser_module="tests.synthetic.body_parser", parser_version="7"
+        )
+    }
+    assert adapter.admit(candidate, source="import").status == "accepted"
+    body = current(adapter)["field_evidence"][path("body")]
+    assert (body["parser_module"], body["parser_version"]) == (
+        "tests.synthetic.body_parser",
+        "7",
+    )
+    assert adapter.c.execute("SELECT count(*) FROM parser_profiles").fetchone()[0] == 0
