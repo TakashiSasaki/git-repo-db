@@ -71,13 +71,28 @@ NATURAL = {
     "coverage_claims": ("coverage_scope_id", "observed_at_us", "coverage_state"),
 }
 LOCAL_COLUMNS = {
-    "repositories": {"preferred_repository_endpoint_id", "current_snapshot_id"},
-    "change_requests": {"current_change_request_observation_id"},
-    "documents": {"current_document_observation_id"},
+    "repositories": {"preferred_repository_endpoint_id"},
 }
 SCOPES = {"parser_profile_selection_scopes", "fact_selection_scopes", "coverage_scopes"}
 CURRENT_RESOURCES = {"issue_resources", "review_resources"}
 SHA = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def staging_owner(table_name, reason):
+    """Dispatch typed plain current candidates separately from wire envelopes.
+
+    Both formats use the existing intake table. Table ownership identifies
+    mutable resource envelopes; the current reason namespace identifies plain
+    admission candidates. Portable record-key spelling has no role here.
+    """
+    current = table_name in CURRENT_RESOURCES
+    if reason.startswith("current_state:"):
+        if not current:
+            raise CatalogError(
+                "INVALID_EXCHANGE_STAGING", "Invalid current staging owner"
+            )
+        return "current_candidate"
+    return "current_record" if current else "immutable_record"
 
 
 def canonical(value):
@@ -401,6 +416,8 @@ class Graph:
         )
         row["metadata"] = canonical(row["metadata"])
         row["acquisition_scope_json"] = canonical(row.pop("acquisition_scope"))
+        if "field_evidence" in row:
+            row["field_evidence_json"] = canonical(row.pop("field_evidence"))
         return row
 
     def current_page_requirements(self, collection_id, ordinals, *, baseline=True):
@@ -1572,6 +1589,15 @@ class Graph:
                     )
                 for parent, target in self.current_parents(table, row):
                     add(parent, target)
+                for dependency in reference_dependencies(table, row):
+                    add(
+                        dependency["table"],
+                        self.lookup(
+                            dependency["table"],
+                            dependency["columns"],
+                            dependency["values"],
+                        ),
+                    )
             expand()
         if partial:
             included_fetches = {
@@ -2163,25 +2189,31 @@ class Graph:
                 previous = None
                 data, unresolved = self.resolve(record)
                 if not unresolved:
+                    from repo_catalog.adapters.sqlite.current_resources import (
+                        CurrentResources,
+                    )
+
+                    resources = CurrentResources(self.db)
+                    candidate = resources.candidate_from_row(record["table"], data)
                     existing = self._existing(record["table"], data)
                     if (
                         existing is not None
                         and record_digest(self.record(record["table"], existing))
                         == digest
                     ):
+                        if resources._stages(candidate):
+                            # Exact current evidence still participates in
+                            # re-evaluating alternatives that gained clocks or
+                            # dependencies since this incumbent was admitted.
+                            resources.admit(candidate, source="import")
                         continue
-                    from repo_catalog.adapters.sqlite.current_resources import (
-                        CurrentResources,
-                    )
-                    from repo_catalog.domain.current_state import fingerprint_candidate
-
-                    resources = CurrentResources(self.db)
-                    candidate = resources.candidate_from_row(record["table"], data)
-                    candidate_digest = bytes.fromhex(fingerprint_candidate(candidate))
                     if any(
-                        stage["content_sha256"] == candidate_digest
+                        json.loads(stage["record_json"]) == candidate
                         for stage in resources._stages(candidate)
                     ):
+                        # Exact repeated evidence is idempotent. A semantic
+                        # fingerprint alone cannot discard a newly known clock
+                        # or richer field-presence/acquisition evidence.
                         continue
             if previous and previous[0] == digest:
                 if record["table"] == "source_repositories":
@@ -2236,14 +2268,14 @@ class Graph:
         # Two competing unadmitted variants have no evidence-based winner.
         # Keep both; sorting, arrival order and UUID magnitude cannot choose.
         competing = self.db.execute(
-            "SELECT record_key FROM exchange_staging GROUP BY record_key HAVING COUNT(*)>1"
+            "SELECT record_key,table_name FROM exchange_staging GROUP BY record_key,table_name HAVING COUNT(*)>1"
         ).fetchall()
-        for (key,) in competing:
-            if key.split(":", 1)[0] in CURRENT_RESOURCES:
+        for key, table in competing:
+            if staging_owner(table, "") != "immutable_record":
                 continue
             self.db.execute(
-                "UPDATE exchange_staging SET reason='conflict:competing_variants' WHERE record_key=?",
-                (key,),
+                "UPDATE exchange_staging SET reason='conflict:competing_variants' WHERE record_key=? AND table_name=?",
+                (key, table),
             )
         admitted = self.promote(unit["origin_catalog_uuidv4"])
         count = self.db.execute("SELECT COUNT(*) FROM exchange_staging").fetchone()[0]
@@ -2269,7 +2301,7 @@ class Graph:
                     changed = True
             pending = list(
                 self.db.execute(
-                    "SELECT record_key,content_sha256,record_json,reason,repository_uuidv4,origin_catalog_uuidv4 FROM exchange_staging ORDER BY record_key,content_sha256"
+                    "SELECT record_key,content_sha256,record_json,reason,repository_uuidv4,origin_catalog_uuidv4,table_name FROM exchange_staging ORDER BY record_key,content_sha256"
                 )
             )
             for (
@@ -2279,8 +2311,9 @@ class Graph:
                 reason,
                 repository_uuidv4,
                 record_origin,
+                table,
             ) in pending:
-                if reason.startswith("current_state:"):
+                if staging_owner(table, reason) == "current_candidate":
                     continue
                 if reason.startswith(("conflict:", "invalid:")):
                     continue
@@ -2365,7 +2398,7 @@ class Graph:
         blocked = set()
         pending = list(
             self.db.execute(
-                "SELECT record_key,record_json,reason FROM exchange_staging"
+                "SELECT record_key,record_json,reason,table_name FROM exchange_staging"
             )
         )
 
@@ -2400,8 +2433,8 @@ class Graph:
                     data[c] = decode(v)
             return self._existing(table, data)
 
-        for key, serialized, reason in pending:
-            if reason.startswith("current_state:"):
+        for key, serialized, reason, table in pending:
+            if staging_owner(table, reason) == "current_candidate":
                 continue
             record = json.loads(serialized)
             if reason.startswith("conflict:"):

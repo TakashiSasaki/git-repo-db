@@ -63,6 +63,7 @@ PR番号は `--provider-change-request-number`、種別は `--change-request-kin
 `--document-observations current|all` はPR title/body/PR会話issue-commentの現在採用観測と保存済み全観測を選びます。既定は `current` です。review/review-commentはどちらの指定でも各リソースの最新受理状態です。レビュー編集前の本文は通常検索に出しません。
 `--document-kind` と `--provider-change-request-document-id` で文書自然キーの構成要素を指定でき、`--observation INTEGER` で保存観測を選択します。
 PR履歴文書の結果は `document_kind`、`provider_change_request_document_id`、`document_observation_id`、`text_body_sha256`、`document_observed_at_us`、`document_current_selected` 等を返します。current-stateの結果はprovider更新/観測/最終確認/解析時刻とparser/profile帰属を持ち、履歴観測の代替IDを捏造しません。Issue系は `resource_kind`、`provider_resource_id`、`provider_issue_number` を使います。詳細は[application JSON契約](application-json-contracts.md)を参照してください。
+`last_checked_at_us` は受信側で事前revision/scopeが一致した正常live取得の最終確認です。初回・編集・同内容確認で更新し、import/replayでは進みません。部分取得の未提供値は元の根拠を保持し、後着した古い完全応答が未知の項目を補完できます。Issue移動後の現在repo/番号と元の取得scopeは別に保持します。項目別根拠の保存契約は[データモデル](data-model.md#shared-latest-state-resources)を参照してください。
 取得開始前や観測間の未観測編集、非公開/削除済みで取得不能な履歴は保証しません。
 
 list/searchは`--limit`（既定100、上限1000）と`--cursor`を持ちます。
@@ -102,7 +103,7 @@ repo-catalog --state-dir /tmp/disposable-catalog db backup --output /tmp/disposa
 repo-catalog --state-dir /tmp/disposable-restored db restore --input /tmp/disposable-backup.sqlite3
 ```
 
-schema 14を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
+schema 15を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
 
 backupはSQLite backup APIでdomainの現在状態・必要な本文・PR/Git/スレッド履歴・coverageを含むsnapshotを作り、checksum/configuration/identityと `quarantined_payload_count` を隣接manifestへ保存します。件数はactive物理隔離行数の非負JSON整数（bool除外、最大 `9223372036854775807`）です。restoreは未作成の `--state-dir` だけへ行い、checksum/identityの後、診断前に件数を照合して全bytesを検証します。正の一致件数を許容し、件数不一致や未説明の破損は失敗stageを保持して拒否します。cacheと任意通信archiveはbackupへ含めません。DB instance IDを変更して元catalogのcursorを無効にし、過去のjobs/leases/reservationsを稼働状態へ戻しません。[運用](operations.md)に制限を記載しています。
 
@@ -119,7 +120,9 @@ repo-catalog --state-dir /tmp/disposable-catalog parser reparse-message ARCHIVE_
 
 全repository交換と履歴用 `--fetch FETCH_UUID` / `--collection COLLECTION_UUID` の選択を維持します。current-stateも必要な親・本文・scope/completion証拠を伴って選択します。任意archiveを必須依存へ含めず、親の後着、同一再import、順序不明の差分は共通受理/stagingへ渡します。
 
-`github.record_messages` はbooleanで既定falseです。有効時のarchiveは `STATE_DIR/transport-archive/` に保存します。recording障害は診断として見え、domain状態の照会やcoverageとは別です。`inspect-message` はcanonical UUIDv4の参照を一つ読み、`reparse-message` は保存された成功JSONを現在resource parserへ渡して投影を返します。両方とも通信とdomain書込みを行わず、reparseも新しい観測を作りません。`--max-bytes` は既定1 MiB、0から32 MiBまでです。reparseは最大1000メンバーで、context JSONには `resource_kind` と所有者・acquisition_scopeを含む `context` が必要です。Issueコメントには `parent_provider_resource_id` も明示します。archiveがない場合は補助読取りエラーになりますが、独立に保存された現在状態は利用できます。[通信記録仕様](latest-state-transport.md)と[実装対応表](latest-state-transport-implementation.md)を参照してください。
+同内容の再importでも新しいclock等の根拠を再評価し、順序を証明できれば保留競合を解消します。複数のcurrent競合はその分類のまま保持します。移動済みIssueコメントの元取得scopeは、移動元repo/Sourceの登録を受信側へ要求せずsnapshotとして保存します。
+
+`github.record_messages` はbooleanで既定falseです。有効時のarchiveは `STATE_DIR/transport-archive/` に保存します。recording障害は許可された32文字以下のコードへ制限し、transport診断は最新100件を保持します。警告表示はbest-effortで、warnings-as-errorsでも有効な収集を続けます。domain状態の照会やcoverageとは別です。`inspect-message` はcanonical UUIDv4の参照を一つ読み、`reparse-message` は保存された成功JSONを現在resource parserへ渡して投影を返します。両方とも通信とdomain書込みを行わず、reparseも新しい観測を作りません。`--max-bytes` は既定1 MiB、0から32 MiBまでです。reparseは最大1000メンバーで、context JSONには `resource_kind` と所有者・acquisition_scopeを含む `context` が必要です。Issueコメントには `parent_provider_resource_id` も明示します。archiveがない場合は補助読取りエラーになりますが、独立に保存された現在状態は利用できます。[通信記録仕様](latest-state-transport.md)と[実装対応表](latest-state-transport-implementation.md)を参照してください。
 
 ## catalog3診断読み取り
 
@@ -130,6 +133,8 @@ repo-catalog --format json target --database /tmp/disposable-catalog/catalog.sql
 repo-catalog --format json target --database /tmp/disposable-catalog/catalog.sqlite3 pr --repo REPO_ID --provider-change-request-number 7
 ```
 
-`target`はrepository IDの完全一致を要求し、`--limit`と`--offset`で保存履歴行を個別にページ化します。PRの`record_kind`はidentity、観測、文書、文書観測、review/thread/comment/event、code listing履歴を区別します。通常照会は現在のコード観測を評価し、`target`の診断照会は保存された過去のコード観測にも同じ取得対象の欠落チェックを行います。診断結果だけでruntime readinessやcurrent pointerを変更しません。
+`target`はrepository IDの完全一致を要求し、`--limit`と`--offset`で保存履歴行を個別にページ化します。PRの`record_kind`はidentity、観測、文書、文書観測、review/thread/comment/event、code listing履歴を区別します。通常照会は現在のコード観測を評価し、`target`の診断照会は保存された過去のコード観測にも同じ取得対象の欠落チェックを行います。診断結果だけでruntime readinessや現在の選択を変更しません。
 
 歴史的なimport/finalization手順や検証receiptは過去の資料です。現行CLIの操作はこの契約と `--help` を参照してください。
+
+schema 15の変更範囲は[対応記録](current-state-schema-closure.md)、[列の用途](current-state-schema-liveness.md)と[完全schema一覧](current-state-schema-inventory.md)に記載します。

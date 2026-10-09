@@ -1,5 +1,12 @@
 # Latest resource state and optional transport archive
 
+Current schema 15 corrections and acceptance are described in
+[current-state-schema-closure.md](current-state-schema-closure.md). The schema 14
+implementation and successful checkpoint below remain historical evidence for
+PR #13, not acceptance of the follow-up.
+
+## PR #13 schema 14 checkpoint
+
 This change starts from PR #12, `feat/complete-model-contracts`, commit
 `a3a4cb7482d42709f79d137b802f1789e3aa45cb`. The implementation branch is
 `refactor/latest-state-transport`. Schema 14 is a fresh incompatible development

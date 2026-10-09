@@ -1,5 +1,8 @@
 # Latest-state table and schema-object inventory
 
+This is the PR #12-to-#13 schema 14 checkpoint. The current schema 15
+before/after object and column inventory is [current-state-schema-inventory.md](current-state-schema-inventory.md).
+
 Baseline: PR #12 (`a3a4cb7482d42709f79d137b802f1789e3aa45cb`), schema 13. Current fresh schema 14. This is structural inventory, not behavioral acceptance.
 
 Composed DDL SHA-256: `13d835b5b141c9d8647f0318c8b2bd1d1590df341baa28f98f755f274753a531`. Current objects: 103 tables, 48 views, 496 triggers, 108 indexs.

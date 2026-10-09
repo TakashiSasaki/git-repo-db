@@ -39,13 +39,17 @@ cache/lease/予約/旧running processを有効な復元状態とみなしませ�
 
 `quarantined_payload_count` は必須の非負JSON整数で、bool・文字列・小数・負数・`9223372036854775807`を超える値を拒否します。数えるのは検証済みコピーのactive `payload_quarantine` 行だけです。同じphysical objectの複数representation、修復済みの診断履歴、staging、cache隔離directoryは数えません。正の一致件数は正常に扱い、既知の隔離bytesと診断を保持します。件数が一致しても未説明の破損を許容しません。archiveの欠落・故障をこの件数へ含めません。
 
-catalog3 の新規初期化は schema version **14** のcomplete packaged DDLから直接行います。旧開発DBとそのbackupは拒否し、migrationや互換viewは設けません。v2 importerとfinalizeは廃止済みで、D2は `not_applicable / retired` です。歴史的なreceiptと不明identityの捏造禁止は維持します。
+catalog3 の新規初期化は schema version **15** のcomplete packaged DDLから直接行います。旧開発DBとそのbackupは拒否し、migrationや互換viewは設けません。v2 importerとfinalizeは廃止済みで、D2は `not_applicable / retired` です。歴史的なreceiptと不明identityの捏造禁止は維持します。
 
 通常Issue/コメントとレビュー/レビューコメントは各リソースの最新受理状態を保存します。PRタイトル・本文・PR会話コメント、Git、独立スレッドの履歴は保持します。通常の現在状態と必要な完全性証拠はcatalogだけで再起動・照会・再索引・交換・backup/restoreできます。
 
+部分取得で未提供の値には元のclockと取得scopeを保持します。後着した古い完全応答は未知の項目だけを補完でき、実際の同時刻矛盾は未解決として確認します。Issue移動後も、子コメントには現在所属と元の取得元の両方が残ります。受信先に移動元repo/Sourceがなくても、その取得snapshotを保持して交換できます。
+
+照会の `last_checked_at_us` はこのcatalogで正常なlive取得を確認した時刻です。事前revision/scopeの一致を確認した初回・編集・同内容取得で単調に更新します。provider更新時刻や項目ごとの取得時刻とは用途が異なり、importや再解析では進みません。最新状態だけを照会していても、以前の共有本文は自動GCされません。容量計画では[実測された本文保持量と列用途](current-state-schema-liveness.md)も考慮してください。
+
 ## 任意の通信記録
 
-`catalog.toml` の `[github]` にある `record_messages` はbooleanで、既定はfalseです。有効時はstate配下の `transport-archive/` にHTTP content-decoding後の正確な応答bytesと許可リストのmetadataを保存します。資格情報headerを記録せず、期待されるarchive障害は可視診断として報告して有効なdomain保存を続けます。記録の有効/無効はcollection coverageを変えません。
+`catalog.toml` の `[github]` にある `record_messages` はbooleanで、既定はfalseです。有効時はstate配下の `transport-archive/` にHTTP content-decoding後の正確な応答bytesと許可リストのmetadataを保存します。資格情報headerを記録しません。recorder障害は許可された32文字以下のコードだけを使い、観測時刻・試行番号とともにtransport内で最新100件を保持します。未知のコードや予期しない例外は `ARCHIVE_FAILURE` とし、例外本文を診断へ出しません。警告表示はbest-effortで、warnings-as-errorsや表示hookの故障でも有効なdomain保存を続けます。取消し・HTTP・解析・DBの失敗は通常どおり伝播します。記録の有効/無効はcollection coverageを変えません。
 
 ```toml
 [github]
@@ -64,4 +68,4 @@ catalog backupは補助archiveを含めず、多storeのforensic backupや保存
 
 定期運用ではsync、jobs resume、cache gc --applyをcron/systemd等から呼べます。
 この開発では実ユーザーのスケジュールを登録しません。実運用の対象・周期・要求予算はpilot後に決めてください。
-LFSはGit pointer bytes、添付はsource本文と埋込みURLを保存します。本体取得・URLの自動巡回は行いません。archiveの保存期間・自動削除、包括的な削除伝播、全履歴本文・diff索引、意味検索、Web GUI、非Linux restore、CAS-76/CAS-77は保留範囲です。現在の実装・検証・制限は[実装対応表](latest-state-transport-implementation.md)と[統合handoff](model-integration-handoff.md)を参照してください。
+LFSはGit pointer bytes、添付はsource本文と埋込みURLを保存します。本体取得・URLの自動巡回は行いません。archiveの保存期間・自動削除、包括的な削除伝播、全履歴本文・diff索引、意味検索、Web GUI、非Linux restore、CAS-76/CAS-77は保留範囲です。現在の実装・検証・制限は[構造改善の対応記録](current-state-schema-closure.md)、[完全schema一覧](current-state-schema-inventory.md)、[実装対応表](latest-state-transport-implementation.md)と[統合handoff](model-integration-handoff.md)を参照してください。

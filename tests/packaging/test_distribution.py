@@ -685,7 +685,19 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     assert imported_verifications
     for (verification,) in imported_verifications:
         cli("parser", "trust", verification)
-    assert current_reads("B") == expected_current_reads
+    # Exchange preserves provider observations, but the sender's live checks
+    # cannot claim a receiver-local check. Compare every other returned field
+    # exactly; backup/restore below retains the original catalog's check times.
+    assert all(
+        type(row["last_checked_at_us"]) is int
+        for group in expected_current_reads
+        for row in group
+    )
+    expected_imported_reads = tuple(
+        [{**row, "last_checked_at_us": None} for row in group]
+        for group in expected_current_reads
+    )
+    assert current_reads("B") == expected_imported_reads
     state = sender_state
 
     # Validate the installed fresh model and preservation path in both builds.

@@ -11,6 +11,7 @@ from repo_catalog import __version__
 from repo_catalog.adapters.recording import (
     DisabledRecorder,
     RecordingError,
+    recording_error_code,
     safe_exchange_context,
 )
 from repo_catalog.domain.models import CatalogError, Waiting
@@ -323,7 +324,9 @@ class GitHubTransport:
                 reference = self.recorder.record_exchange(safe, body)
             except RecordingError:
                 raise
-            except Exception:
+            except Exception as error:
+                if isinstance(error, CatalogError) and error.code == "CANCELLED":
+                    raise
                 # A recorder may use its own IO library or contain a bug. This
                 # boundary owns only supplementary recording; never include
                 # arbitrary exception text that may contain credentials.
@@ -331,8 +334,11 @@ class GitHubTransport:
                     "ARCHIVE_FAILURE", "Supplementary recorder failed"
                 ) from None
         except RecordingError as error:
+            # Recheck at the callback boundary: a custom recorder can mutate an
+            # exception's public code after its construction.
+            code = recording_error_code(error.code)
             diagnostic = {
-                "code": error.code,
+                "code": code,
                 "observed_at_us": observed_at_us,
                 "attempt": attempt + 1,
             }
@@ -340,11 +346,17 @@ class GitHubTransport:
             self.recording_diagnostics[:] = (self.recording_diagnostics + [diagnostic])[
                 -100:
             ]
-            warnings.warn(
-                f"Supplementary message recording failed ({error.code}); collection continues",
-                RuntimeWarning,
-                stacklevel=2,
-            )
+            try:
+                warnings.warn(
+                    f"Supplementary message recording failed ({code}); collection continues",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            except Exception:
+                # Error filters and warning-output hooks must not turn optional
+                # capture diagnostics into acquisition failures. The bounded
+                # diagnostic remains available even when warning emission fails.
+                pass
             return None, [diagnostic]
         return reference, []
 
