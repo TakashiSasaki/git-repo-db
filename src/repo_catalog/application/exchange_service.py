@@ -13,12 +13,23 @@ class ExchangeService:
     def __init__(self, state_dir):
         self.path = Path(state_dir)
 
-    def export_repository(self, repository_uuidv4, output_path):
+    def export_repository(
+        self,
+        repository_uuidv4,
+        output_path,
+        *,
+        fetch_occurrence_uuidv4s=None,
+        fetch_collection_id=None,
+    ):
         destination = Path(output_path)
         with FileLock(self.path / "locks" / "writer.lock"), Store(self.path) as store:
             try:
                 with store.transaction():
-                    unit = Graph(store.connection).export(repository_uuidv4)
+                    unit = Graph(store.connection).export(
+                        repository_uuidv4,
+                        fetch_occurrence_uuidv4s=fetch_occurrence_uuidv4s,
+                        fetch_collection_id=fetch_collection_id,
+                    )
             except CatalogError as exc:
                 if exc.code == "PAYLOAD_CORRUPTION" and exc.details.get("sha256"):
                     from repo_catalog.adapters.sqlite.cas_integrity import (

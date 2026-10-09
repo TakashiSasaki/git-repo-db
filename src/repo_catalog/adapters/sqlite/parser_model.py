@@ -12,6 +12,7 @@ import sqlite3
 import uuid
 from importlib.resources import files
 
+from repo_catalog.adapters.sqlite.json_contracts import validate_record
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import now_us
 
@@ -52,8 +53,12 @@ BUILTIN_MODULES = (
     "adapters/github/persistence.py",
     "adapters/github/collector.py",
     "adapters/git/importer.py",
+    "adapters/git/parsing.py",
+    "adapters/sqlite/json_contracts.py",
+    "adapters/sqlite/coverage.py",
     "application/parsing_service.py",
     "application/collection_service.py",
+    "application/source_service.py",
     "application/repository_identity.py",
     "adapters/sqlite/identity_relations.py",
     "application/job_plans.py",
@@ -65,6 +70,7 @@ BUILTIN_MODULES = (
     "adapters/sqlite/store.py",
     "domain/time.py",
     "domain/document.py",
+    "domain/git_object.py",
     "domain/pr_scope.py",
     "domain/payload.py",
     "domain/models.py",
@@ -72,7 +78,7 @@ BUILTIN_MODULES = (
 
 
 def builtin_definition():
-    from repo_catalog.adapters.sqlite.schema import DDL_SHA256
+    from repo_catalog.adapters.sqlite.schema import DDL_SHA256, SCHEMA_VERSION
 
     root = files("repo_catalog")
     implementation = {}
@@ -87,9 +93,12 @@ def builtin_definition():
             "preservation_profile": "catalog-text-v1",
             "text_policy_id": "utf8-literal-v1",
             "max_text_blob_bytes": 8388608,
+            "git_text_encoding": "utf-8",
+            "git_metadata_encoding": "utf-8",
+            "git_metadata_errors": "backslashreplace",
         },
         "output_schema": {
-            "catalog3": 12,
+            "catalog3": SCHEMA_VERSION,
             "facts": "immutable-result-owned",
             "ddl_sha256": DDL_SHA256.hex(),
         },
@@ -146,6 +155,7 @@ class ParserModel:
         if len(set(pairs)) != len(pairs):
             raise CatalogError("PROFILE_DEFINITION", "Duplicate capability")
         encoded = canonical(definition)
+        validate_record(self.c, "parser_profiles", {"definition_json": encoded})
         old = self._row(
             "SELECT * FROM parser_profiles WHERE parser_profile_uuidv4=?", (ident,)
         )
@@ -188,6 +198,14 @@ class ParserModel:
         if profile is None:
             raise CatalogError("PROFILE_MISSING", "Profile not registered")
         definition = json.loads(profile["definition_json"])
+        validate_record(
+            self.c,
+            "parser_profile_verifications",
+            {
+                "criteria_json": canonical(criteria),
+                "evidence_json": canonical(evidence),
+            },
+        )
         if outcome == "passed":
             required = {
                 (c["owner_kind"], c["fact_kind"]) for c in definition["capabilities"]
@@ -280,7 +298,9 @@ class ParserModel:
             old["parser_profile_uuidv4"]
             if old
             else self.register_profile(
-                definition, parser_version="builtin-1", profile_version="catalog3-12"
+                definition,
+                parser_version="builtin-1",
+                profile_version=f"catalog3-{definition['output_schema']['catalog3']}",
             )
         )
         verification = self._row(
@@ -331,6 +351,16 @@ class ParserModel:
             raise CatalogError("PARSER_INPUT", "Nonempty typed input manifest required")
         ident = _uuid(result_uuid)
         owner = "repository" if repository_uuidv4 else "source"
+        validate_record(
+            self.c,
+            "parsed_results",
+            {
+                "repository_uuidv4": repository_uuidv4,
+                "source_registration_uuidv4": source_registration_uuidv4,
+                "input_manifest_json": canonical(inputs),
+                "derivation_json": canonical(derivation or {}),
+            },
+        )
         self.c.execute(
             "INSERT INTO parsed_results(parsed_result_uuidv4,parser_profile_uuidv4,owner_kind,repository_uuidv4,source_registration_uuidv4,parsed_at_us,input_manifest_json,derivation_json) VALUES(?,?,?,?,?,?,?,?)",
             (
@@ -374,6 +404,11 @@ class ParserModel:
                 (result_uuid,),
             )
         ]
+        validate_record(
+            self.c,
+            "parsed_result_publications",
+            {"fact_manifest_json": canonical(manifest)},
+        )
         self.c.execute(
             "INSERT INTO parsed_result_publications SELECT parsed_result_uuidv4,json_array_length(input_manifest_json),?,? FROM parsed_results WHERE parsed_result_uuidv4=?",
             (canonical(manifest), now_us(), result_uuid),
@@ -532,6 +567,7 @@ class ParserModel:
         provider_change_request_document_id=None,
         provider_resource_id=None,
         fetch_occurrence_uuidv4=None,
+        git_acquisition_id=None,
         predecessors=None,
         decision_uuid=None,
         issuer="local",
@@ -551,15 +587,16 @@ class ParserModel:
             provider_change_request_document_id,
             provider_resource_id,
             fetch_occurrence_uuidv4,
+            git_acquisition_id,
         )
         target = self._row(
-            "SELECT * FROM fact_selection_scopes WHERE repository_uuidv4 IS ? AND source_registration_uuidv4 IS ? AND change_request_id IS ? AND fact_kind=? AND kind IS ? AND provider_change_request_document_id IS ? AND provider_resource_id IS ? AND fetch_occurrence_uuidv4 IS ?",
+            "SELECT * FROM fact_selection_scopes WHERE repository_uuidv4 IS ? AND source_registration_uuidv4 IS ? AND change_request_id IS ? AND fact_kind=? AND kind IS ? AND provider_change_request_document_id IS ? AND provider_resource_id IS ? AND fetch_occurrence_uuidv4 IS ? AND git_acquisition_id IS ?",
             params,
         )
         if not target:
             sid = _uuid()
             self.c.execute(
-                "INSERT INTO fact_selection_scopes VALUES(?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO fact_selection_scopes VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                 (sid, result["owner_kind"], *params),
             )
         else:

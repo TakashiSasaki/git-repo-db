@@ -310,7 +310,10 @@ def test_parsed_input_rejects_null_bypass_and_foreign_repository(
     model, owner_kind, repo, source, fetch
 ):
     db, ids, _, _ = model
-    parsed = result(db, ids, inputs=[{"fetch_occurrence_uuidv4": ids[fetch]}])
+    if fetch == "fetch2":
+        with pytest.raises(sqlite3.IntegrityError, match="JSON reference"):
+            result(db, ids, inputs=[{"fetch_occurrence_uuidv4": ids[fetch]}])
+    parsed = result(db, ids)
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
             "INSERT INTO parsed_result_inputs VALUES(?,0,?,?,?,?,NULL,NULL)",
@@ -446,13 +449,28 @@ def test_source_result_cannot_take_another_source_input(model):
         (source_input, ids["source2"]),
     )
     parsed = uid()
+    with pytest.raises(sqlite3.IntegrityError, match="JSON reference"):
+        db.execute(
+            "INSERT INTO parsed_results VALUES(?,?,'source',NULL,?,0,?,'{}')",
+            (
+                parsed,
+                ids["profile"],
+                ids["source"],
+                encoded([{"source_input_uuidv4": source_input}]),
+            ),
+        )
+    own_input = uid()
+    db.execute(
+        "INSERT INTO source_input_observations VALUES(?,?,NULL,NULL,'{}',-1)",
+        (own_input, ids["source"]),
+    )
     db.execute(
         "INSERT INTO parsed_results VALUES(?,?,'source',NULL,?,0,?,'{}')",
         (
             parsed,
             ids["profile"],
             ids["source"],
-            encoded([{"source_input_uuidv4": source_input}]),
+            encoded([{"source_input_uuidv4": own_input}]),
         ),
     )
     with pytest.raises(sqlite3.IntegrityError):
@@ -608,13 +626,18 @@ def test_generated_repository_names_enforce_generator_ownership(model, attack):
         target_repo = ids["other"] if attack == "other-repository" else ids["repo"]
     else:
         parsed = uid()
+        source_input = uid()
+        db.execute(
+            "INSERT INTO source_input_observations VALUES(?,?,NULL,NULL,'{}',-1)",
+            (source_input, ids["source"]),
+        )
         db.execute(
             "INSERT INTO parsed_results VALUES(?,?,'source',NULL,?,0,?,'{}')",
             (
                 parsed,
                 ids["profile"],
                 ids["source"],
-                encoded([{"source_input_uuidv4": uid()}]),
+                encoded([{"source_input_uuidv4": source_input}]),
             ),
         )
         owner_repo = None

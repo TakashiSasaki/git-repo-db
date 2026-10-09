@@ -25,11 +25,11 @@ def refresh_documents(store, kind, token):
     """Reconstruct disposable search inputs from catalog originals, including imports."""
     if kind == "code":
         rows = store.execute(
-            "SELECT content_id source_key,raw_text body FROM contents WHERE raw_text IS NOT NULL ORDER BY content_id"
+            "SELECT git_fact_uuidv4 source_key,raw_text body FROM current_git_text_facts WHERE raw_text IS NOT NULL ORDER BY git_fact_uuidv4"
         )
     elif kind == "commits":
         rows = store.execute(
-            "SELECT git_object_id source_key,raw_message body FROM commits ORDER BY git_object_id"
+            "SELECT git_fact_uuidv4 source_key,message_text body FROM current_git_commits ORDER BY git_fact_uuidv4"
         )
     else:
         rows = store.execute(
@@ -86,8 +86,13 @@ def rebuild(store, kind, token=None):
     for current in ("code", "pr", "commits") if kind == "all" else (kind,):
         token.check()
         refresh_documents(s, current, token)
+        selected = {
+            "code": "source_key IN (SELECT git_fact_uuidv4 FROM current_git_text_facts WHERE raw_text IS NOT NULL)",
+            "commits": "source_key IN (SELECT git_fact_uuidv4 FROM current_git_commits)",
+            "pr": "1",
+        }[current]
         maximum = s.one(
-            "SELECT coalesce(max(search_document_id),0) FROM search_documents WHERE kind=?",
+            f"SELECT coalesce(max(search_document_id),0) FROM search_documents WHERE kind=? AND {selected}",
             (current,),
         )[0]
         with s.transaction():
@@ -109,7 +114,7 @@ def rebuild(store, kind, token=None):
             batch = []
             batch_bytes = 0
             for document in s.execute(
-                "SELECT * FROM search_documents WHERE kind=? AND search_document_id>? AND search_document_id<=? ORDER BY search_document_id LIMIT 200",
+                f"SELECT * FROM search_documents WHERE kind=? AND {selected} AND search_document_id>? AND search_document_id<=? ORDER BY search_document_id LIMIT 200",
                 (current, last, maximum),
             ):
                 document_bytes = len(document["body"].encode("utf8"))
@@ -147,7 +152,7 @@ def rebuild(store, kind, token=None):
                 last = batch[-1]["search_document_id"]
         with s.transaction():
             expected = s.one(
-                "SELECT count(*) FROM search_documents WHERE kind=? AND search_document_id<=?",
+                f"SELECT count(*) FROM search_documents WHERE kind=? AND {selected} AND search_document_id<=?",
                 (current, maximum),
             )[0]
             if count != expected:

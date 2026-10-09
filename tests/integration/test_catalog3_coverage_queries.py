@@ -1,6 +1,7 @@
 """Current coverage reaches offline CLI projections without historical fallback."""
 
 import json
+import sqlite3
 
 import pytest
 
@@ -464,28 +465,14 @@ def test_diagnostic_queries_preserve_complete_label_role_gap_checks(
 
 
 @pytest.mark.parametrize("declared", [["head"], {"merge": {"oid": "unparsed"}}])
-def test_diagnostic_role_metadata_is_validated_without_keys_type_assumptions(
+def test_diagnostic_role_target_shapes_are_rejected_before_admission(
     pr_catalog, declared
 ):
-    state, store = pr_catalog
-    with store.transaction():
-        add_complete_code(store, declared=declared)
-        store.publish()
-    result = run(
-        state,
-        "target",
-        "--database",
-        state / "catalog.sqlite3",
-        "pr",
-        "--repo",
-        "00000000-0000-4000-8000-000000000401",
-        "--provider-change-request-number",
-        1,
-        expected=3,
-    )
-    assert [gap["reason"] for gap in result["coverage"]["missing"]] == [
-        "code_role_targets_unresolved"
-    ]
+    _, store = pr_catalog
+    with pytest.raises(sqlite3.IntegrityError, match="JSON reference"):
+        with store.transaction():
+            add_complete_code(store, declared=declared)
+    assert store.one("SELECT count(*) FROM code_observations")[0] == 0
 
 
 def test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_current(

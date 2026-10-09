@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sqlite3
 import uuid
 
 import pytest
@@ -822,23 +823,18 @@ def test_complete_code_requires_saved_published_matching_role_roots(
 
 
 @pytest.mark.parametrize("declared", [["head"], {"merge": {"oid": "unparsed"}}])
-def test_imported_role_target_shapes_are_diagnosed_without_crashing(
+def test_imported_role_target_shapes_are_rejected_before_admission(
     pr_catalog, declared
 ):
     state, store = pr_catalog
-    with store.transaction():
+    with (
+        pytest.raises(sqlite3.IntegrityError, match="JSON reference"),
+        store.transaction(),
+    ):
         add_complete_code(store, declared=declared)
-        store.publish()
-    result = run(
-        state,
-        "pr",
-        "show",
-        "--repo",
-        "00000000-0000-4000-8000-000000000401",
-        "--provider-change-request-number",
-        1,
-        expected=3,
+    assert (
+        store.one(
+            "SELECT count(*) FROM code_observations WHERE json_type(details,'$.expected_roles') IS NOT NULL AND json_type(details,'$.expected_roles')<>'object'"
+        )[0]
+        == 0
     )
-    assert [gap["reason"] for gap in result["coverage"]["missing"]] == [
-        "code_role_targets_unresolved"
-    ]

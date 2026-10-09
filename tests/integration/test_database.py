@@ -66,8 +66,8 @@ def test_full_rollback(state):
         with pytest.raises(sqlite3.OperationalError):
             with s.transaction():
                 s.execute(
-                    "INSERT INTO contents(byte_length,raw_text,text_state,created_at_us) VALUES(?,?,?,?)",
-                    (1048576, "x" * 1048576, "eligible", 0),
+                    "INSERT INTO stored_bytes(sha256,body,byte_length) VALUES(?,?,?)",
+                    (b"x" * 32, b"x" * 1048576, 1048576),
                 )
                 s.publish()
         assert s.revision() == old and not s.connection.in_transaction

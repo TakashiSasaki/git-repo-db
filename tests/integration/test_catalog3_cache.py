@@ -77,9 +77,7 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
         "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('preserved','10000000-0000-4000-8000-000000000001',?,'source_readonly','available')",
         (str(source),),
     )
-    store.execute(
-        "INSERT INTO contents(content_id,byte_length,text_state) VALUES(1,14,'unknown')"
-    )
+    store.execute("INSERT INTO contents(content_id,byte_length) VALUES(1,14)")
     store.execute(
         "INSERT INTO content_locations(content_id,kind,locator,cache_locator_id,state) VALUES(1,'cache','active-content','locator','available')"
     )

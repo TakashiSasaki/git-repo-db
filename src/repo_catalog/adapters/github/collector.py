@@ -76,9 +76,70 @@ class GitHubCollector:
             kind,
             state,
             self.facts.observed_at_us(collection),
-            {"reason": reason} if reason else None,
+            {
+                "fetch_collection_ids": [collection["fetch_collection_id"]],
+                **({"reason": reason} if reason else {}),
+            },
             change_request_id=pr,
         )
+
+    def summary_collection_ids(self, repo, job, *, documents_only=False):
+        """The exact collections assessed by this job's repository summary."""
+        collections = {
+            row[0]
+            for row in self.s.all(
+                "SELECT DISTINCT f.fetch_collection_id FROM fetch_collections f "
+                "JOIN collection_progress p USING(fetch_collection_id) "
+                "WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
+                + (
+                    " AND f.kind NOT IN ("
+                    + ",".join("?" for _ in NON_DOCUMENT_KINDS)
+                    + ")"
+                    if documents_only
+                    else ""
+                )
+                + " ORDER BY f.fetch_collection_id",
+                (
+                    repo["repository_uuidv4"],
+                    repo["source_id"],
+                    job,
+                    *(sorted(NON_DOCUMENT_KINDS) if documents_only else ()),
+                ),
+            )
+        }
+        if not documents_only:
+            # Reused sealed code listings retain their original acquisition
+            # identity and collection. The assessment names those exact roots,
+            # rather than treating the later job's pages as their replacement.
+            collections.update(
+                row[0]
+                for row in self.s.all(
+                    "SELECT DISTINCT l.fetch_collection_id FROM current_code_observations o JOIN code_listings l ON l.code_listing_id IN (o.commit_code_listing_id,o.file_code_listing_id) WHERE o.repository_uuidv4=? AND o.state='complete'",
+                    (repo["repository_uuidv4"],),
+                )
+            )
+        return sorted(collections)
+
+    def thread_collection_ids(self, collection):
+        """Include the root and its exact children across interrupted resumes."""
+        return [
+            row[0]
+            for row in self.s.all(
+                """SELECT member.fetch_collection_id
+                   FROM fetch_collections root JOIN fetch_collections member
+                     ON member.repository_uuidv4=root.repository_uuidv4
+                    AND member.change_request_id IS root.change_request_id
+                    AND member.source_id IS root.source_id
+                   JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id
+                   WHERE root.fetch_collection_id=? AND (
+                       member.fetch_collection_id=root.fetch_collection_id OR
+                       (member.kind='thread-comments' AND
+                        json_extract(scope.request_context,'$.parent_fetch_collection_id')
+                            =root.fetch_collection_id))
+                   ORDER BY member.fetch_collection_id""",
+                (collection["fetch_collection_id"],),
+            )
+        ]
 
     def summary_observed_at_us(self, repo, job, *, documents_only=False):
         return self.s.one(
@@ -1274,12 +1335,26 @@ class GitHubCollector:
                             (canonical(pending), collection["fetch_collection_id"]),
                         )
                     else:
-                        self.facts.finish(collection, observed_at_us=observed_at_us())
+                        self.facts.finish(
+                            collection,
+                            evidence={
+                                "terminal": True,
+                                "fetch_collection_ids": self.thread_collection_ids(
+                                    collection
+                                ),
+                            },
+                            observed_at_us=observed_at_us(),
+                        )
                         self.coverage_claim(
                             repo["repository_uuidv4"],
                             "threads",
                             "complete",
                             observed_at_us(),
+                            {
+                                "fetch_collection_ids": self.thread_collection_ids(
+                                    collection
+                                )
+                            },
                             change_request_id=pr["change_request_id"],
                         )
                     self.facts.publish()
@@ -1318,7 +1393,12 @@ class GitHubCollector:
                         "threads",
                         "partial",
                         observed_at_us(),
-                        {"reason": error.code},
+                        {
+                            "reason": error.code,
+                            "fetch_collection_ids": self.thread_collection_ids(
+                                collection
+                            ),
+                        },
                         change_request_id=pr["change_request_id"],
                     )
                 self.facts.publish()
@@ -2106,7 +2186,7 @@ class GitHubCollector:
                                 ),
                             )
                     code_observed_at_us = s.one(
-                        "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads')",
+                        "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads','thread-comments')",
                         (
                             repo["repository_uuidv4"],
                             pr["change_request_id"],
@@ -2124,7 +2204,29 @@ class GitHubCollector:
                             "pr-code",
                             state,
                             code_observed_at_us,
-                            {"missing": code_failures} if code_failures else None,
+                            {
+                                "parsed_result_uuidv4": result,
+                                "fetch_collection_ids": [
+                                    row[0]
+                                    for row in s.all(
+                                        "SELECT DISTINCT f.fetch_collection_id FROM parsed_result_inputs i "
+                                        "JOIN fetch_occurrences o USING(fetch_occurrence_uuidv4) "
+                                        "JOIN fetch_collections f USING(fetch_collection_id) "
+                                        "WHERE i.parsed_result_uuidv4=? AND f.kind IN "
+                                        "('pr-detail','pr-code-check','pr-commits','pr-files','review','threads','thread-comments') "
+                                        "ORDER BY f.fetch_collection_id",
+                                        (result,),
+                                    )
+                                ],
+                                "git_acquisition_ids": sorted(
+                                    {
+                                        item["git_acquisition_id"]
+                                        for item in inputs
+                                        if "git_acquisition_id" in item
+                                    }
+                                ),
+                                **({"missing": code_failures} if code_failures else {}),
+                            },
                             change_request_id=pr["change_request_id"],
                         )
                     self.facts.publish()
@@ -2156,7 +2258,30 @@ class GitHubCollector:
                         self.summary_observed_at_us(
                             repo, job, documents_only=documents_only
                         ),
-                        {"missing": missing} if missing else None,
+                        {
+                            "fetch_collection_ids": self.summary_collection_ids(
+                                repo, job, documents_only=documents_only
+                            ),
+                            "change_request_ids": sorted(
+                                pr["change_request_id"] for pr in prs
+                            ),
+                            **(
+                                {
+                                    "parsed_result_uuidv4s": [
+                                        row[0]
+                                        for row in s.all(
+                                            "SELECT DISTINCT parsed_result_uuidv4 FROM current_code_observations "
+                                            "WHERE repository_uuidv4=? AND state='complete' "
+                                            "ORDER BY parsed_result_uuidv4",
+                                            (repo["repository_uuidv4"],),
+                                        )
+                                    ]
+                                }
+                                if not documents_only
+                                else {}
+                            ),
+                            **({"missing": missing} if missing else {}),
+                        },
                     )
                 self.facts.publish()
             if self.facts.unselected_results:

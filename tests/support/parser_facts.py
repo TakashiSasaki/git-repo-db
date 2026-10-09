@@ -63,6 +63,33 @@ def new_result(db, repo, *, inputs=None):
         else:
             uid = acquisition[0]
         inputs = [{"git_acquisition_id": uid}]
+    # Structural high-level fixtures use explicit empty Git inputs. Publish their
+    # exact empty membership, while leaving nonempty acquisitions to byte-aware
+    # fixtures so late members cannot be silently sealed away.
+    for item in inputs:
+        acquisition_id = item.get("git_acquisition_id")
+        if (
+            acquisition_id
+            and not db.execute(
+                "SELECT 1 FROM repository_object_sources WHERE git_acquisition_id=? UNION ALL SELECT 1 FROM acquisition_roots WHERE git_acquisition_id=?",
+                (acquisition_id, acquisition_id),
+            ).fetchone()
+        ):
+            owner = db.execute(
+                "SELECT repository_uuidv4 FROM git_acquisitions WHERE git_acquisition_id=?",
+                (acquisition_id,),
+            ).fetchone()
+            if (
+                owner
+                and not db.execute(
+                    "SELECT 1 FROM git_acquisition_publications WHERE git_acquisition_id=?",
+                    (acquisition_id,),
+                ).fetchone()
+            ):
+                db.execute(
+                    "INSERT INTO git_acquisition_publications VALUES(?,?,'[]','[]')",
+                    (acquisition_id, owner[0]),
+                )
     return ParserModel(db).create_result(
         register_test_profile(db), repository_uuidv4=repo, inputs=inputs
     )

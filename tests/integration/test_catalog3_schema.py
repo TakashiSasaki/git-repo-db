@@ -181,6 +181,9 @@ def test_listing_and_page_must_share_scope_and_owner(facts):
         put(
             facts,
             "code_file_changes",
+            parsed_result_uuidv4=facts.execute(
+                "SELECT parsed_result_uuidv4 FROM code_file_changes LIMIT 1"
+            ).fetchone()[0],
             code_listing_id="files",
             fetch_occurrence_id=2,
             position=1,

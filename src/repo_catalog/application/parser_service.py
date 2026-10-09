@@ -54,7 +54,9 @@ class ParserService:
 
                 # Reparse owns the atomic fact/input publication transaction.
                 value = ParsingService(store).reparse(
-                    options["fetch_occurrence_uuidv4"], select=options["select"]
+                    options["fetch_occurrence_uuidv4"],
+                    select=options["select"],
+                    profile_uuid=options.get("profile_uuidv4"),
                 )
                 with store.transaction():
                     ParserModel(store.connection).promote_staging()

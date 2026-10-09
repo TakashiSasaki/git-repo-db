@@ -10,6 +10,7 @@ import sqlite3
 import time
 
 from repo_catalog.adapters.sqlite.target import TargetReader
+from repo_catalog.application.git_query_context import object_context
 from repo_catalog.application.pr_queries import code_role_gaps
 from repo_catalog.domain.models import (
     CancellationToken,
@@ -170,22 +171,31 @@ class TargetQueryService:
         elif command in ("commit", "tree", "file"):
             repo = self._repo(options)
             obj = self._commit_object(repo, options.get("commit"))
+            context = object_context(
+                self.s,
+                self._git_context(repo, options),
+                obj["git_object_id"],
+                obj["type"],
+            )
             commit = self.s.one(
-                "SELECT * FROM commits WHERE git_object_id=?", (obj["git_object_id"],)
+                f"SELECT * FROM {self._git_relation('commits', context)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND git_object_id=?",
+                (repo, context["parsed_result_uuidv4"], obj["git_object_id"]),
             )
             if commit is None:
                 self._add_missing(
                     "git",
-                    "commit_structure_missing",
+                    "git_interpretation_selection_unresolved"
+                    if context.get("selection_unresolved")
+                    else "commit_structure_missing",
                     git_object_id=obj["git_object_id"],
                 )
                 yield object_fields(obj)
             elif command == "commit":
-                yield self._commit_details(obj, commit)
+                yield self._commit_details(obj, commit, context)
             else:
                 raw_path = self._path(options) if command == "file" else None
                 found = False
-                for entry in self._tree(commit["tree_git_object_id"]):
+                for entry in self._tree(commit["tree_git_object_id"], context):
                     if raw_path is not None and entry["raw_path"] != raw_path:
                         continue
                     found = True
@@ -269,7 +279,30 @@ class TargetQueryService:
             )
         return row
 
-    def _commit_details(self, obj, commit):
+    def _git_context(self, repo, options):
+        if options.get("snapshot"):
+            selected = self.s.one(
+                "SELECT s.parsed_result_uuidv4 FROM snapshots s JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_repository_parser_profiles e ON e.repository_uuidv4=s.repository_uuidv4 AND e.fact_kind='git' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4 WHERE s.repository_uuidv4=? AND s.snapshot_id=? AND s.published=1",
+                (repo, options["snapshot"]),
+            )
+            if not selected:
+                raise CatalogError("NOT_FOUND", "Published eligible snapshot not found")
+        else:
+            selected = self.s.one(
+                "SELECT parsed_result_uuidv4 FROM active_fact_selections WHERE repository_uuidv4=? AND fact_kind='git' AND change_request_id IS NULL AND git_acquisition_id IS NULL",
+                (repo,),
+            )
+        return {
+            "repository_uuidv4": repo,
+            "parsed_result_uuidv4": selected[0] if selected else None,
+            "historical": bool(options.get("snapshot")),
+        }
+
+    @staticmethod
+    def _git_relation(table, context):
+        return ("eligible_git_" if context["historical"] else "current_git_") + table
+
+    def _commit_details(self, obj, commit, context):
         tree = self.s.one(
             "SELECT * FROM git_objects WHERE git_object_id=?",
             (commit["tree_git_object_id"],),
@@ -277,8 +310,12 @@ class TargetQueryService:
         parents = [
             {"ordinal": r["parent_ordinal"], **object_fields(r)}
             for r in self.s.execute(
-                "SELECT p.parent_ordinal,g.* FROM commit_parents p JOIN git_objects g ON g.git_object_id=p.parent_git_object_id WHERE p.commit_git_object_id=? ORDER BY p.parent_ordinal",
-                (obj["git_object_id"],),
+                f"SELECT p.parent_ordinal,g.* FROM {self._git_relation('commit_parents', context)} p JOIN git_objects g ON g.git_object_id=p.parent_git_object_id WHERE p.repository_uuidv4=? AND p.parsed_result_uuidv4=? AND p.commit_git_object_id=? ORDER BY p.parent_ordinal",
+                (
+                    context["repository_uuidv4"],
+                    context["parsed_result_uuidv4"],
+                    obj["git_object_id"],
+                ),
             )
         ]
         return {
@@ -287,7 +324,8 @@ class TargetQueryService:
             "parents": parents,
             "raw_headers": commit["raw_headers"],
             "raw_message": commit["raw_message"],
-            "message_display": commit["raw_message"].decode("utf8", "backslashreplace"),
+            "message_display": commit["message_text"],
+            "parsed_result_uuidv4": commit["parsed_result_uuidv4"],
             "metadata": json.loads(commit["metadata"]),
         }
 
@@ -304,19 +342,19 @@ class TargetQueryService:
         except (ValueError, binascii.Error):
             raise CatalogError("INVALID_ARGUMENT", "Malformed base64 path") from None
 
-    def _tree(self, tree):
+    def _tree(self, tree, context):
         # Explicit frames preserve arbitrary raw names and reject cycles without
         # relying on textual SQLite concatenation or running Git.
-        frames = [(tree, b"", frozenset())]
+        frames = [(tree, b"", "", frozenset())]
         while frames:
             self._check()
-            ident, prefix, ancestors = frames.pop()
+            ident, prefix, display_prefix, ancestors = frames.pop()
             if ident in ancestors:
                 self._add_missing("git", "tree_cycle", git_object_id=ident)
                 continue
             rows = self.s.all(
-                "SELECT * FROM tree_entries WHERE tree_git_object_id=? ORDER BY raw_name",
-                (ident,),
+                f"SELECT * FROM {self._git_relation('tree_entries', context)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND tree_git_object_id=? ORDER BY raw_name",
+                (context["repository_uuidv4"], context["parsed_result_uuidv4"], ident),
             )
             if not rows:
                 obj = self.s.one(
@@ -330,18 +368,35 @@ class TargetQueryService:
             for row in rows:
                 self._check()
                 path = prefix + row["raw_name"]
+                display_path = display_prefix + row["decoded_name"]
                 if row["mode"] == 16384:
                     subtrees.append(
-                        (row["child_git_object_id"], path + b"/", ancestors | {ident})
+                        (
+                            row["child_git_object_id"],
+                            path + b"/",
+                            display_path + "/",
+                            ancestors | {ident},
+                        )
                     )
                     continue
                 content = self.s.one(
-                    "SELECT c.* FROM blob_content_map b JOIN contents c ON c.content_id=b.content_id WHERE b.git_object_id=?",
-                    (row["child_git_object_id"],),
+                    f"SELECT t.*,c.byte_length FROM {self._git_relation('text_facts', context)} t JOIN contents c USING(content_id) WHERE t.repository_uuidv4=? AND t.parsed_result_uuidv4=? AND t.git_object_id=?",
+                    (
+                        context["repository_uuidv4"],
+                        context["parsed_result_uuidv4"],
+                        row["child_git_object_id"],
+                    ),
                 )
                 digests = self._digests(content["content_id"]) if content else []
                 yield {
                     "raw_path": path,
+                    "path_display": "".join(
+                        character
+                        if character.isprintable()
+                        else f"\\x{ord(character):02x}"
+                        for character in display_path
+                    ),
+                    "parsed_result_uuidv4": context["parsed_result_uuidv4"],
                     "mode": format(row["mode"], "06o"),
                     "git_object_id": row["child_git_object_id"],
                     "oid": f"{row['child_format']}:{row['child_oid'].hex()}",
@@ -523,60 +578,63 @@ class TargetQueryService:
                 "INVALID_ARGUMENT",
                 "Search needs nonempty --literal and --kind code, commits or pr",
             )
-        if kind == "code":
-            # Scan originals, not archived search_documents or rebuilt FTS.
-            rows = self.s.execute(
-                "SELECT DISTINCT r.repository_uuidv4,g.git_object_id,g.object_format,g.oid,g.type,g.size,g.verified,c.content_id content_id,c.raw_text,c.text_state FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN blob_content_map b ON b.git_object_id=g.git_object_id LEFT JOIN contents c ON c.content_id=b.content_id WHERE g.type='blob' AND (? IS NULL OR r.repository_uuidv4=?) ORDER BY r.repository_uuidv4,g.git_object_id",
-                (repo, repo),
-            )
-            for row in rows:
-                self._check()
-                if row["raw_text"] is None:
-                    self._add_missing(
-                        "code",
-                        "body_not_saved",
-                        repository_uuidv4=row["repository_uuidv4"],
-                        git_object_id=row["git_object_id"],
-                        content_id=row["content_id"],
-                        text_state=row["text_state"],
-                    )
-                elif literal in row["raw_text"]:
-                    yield {
-                        "repository_uuidv4": row["repository_uuidv4"],
-                        **object_fields(row),
-                        "content_id": row["content_id"],
-                        "text": row["raw_text"],
-                        "digests": self._digests(row["content_id"]),
-                    }
-        elif kind == "commits":
+        if kind in ("code", "commits"):
+            object_type = "blob" if kind == "code" else "commit"
+            table = "text_facts" if kind == "code" else "commits"
+            contexts = {}
             for row in self.s.execute(
-                "SELECT DISTINCT r.repository_uuidv4,g.*,c.raw_message FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN commits c ON c.git_object_id=g.git_object_id WHERE g.type='commit' AND (? IS NULL OR r.repository_uuidv4=?) ORDER BY r.repository_uuidv4,g.git_object_id",
-                (repo, repo),
+                "SELECT DISTINCT r.repository_uuidv4,g.*,b.content_id FROM repository_object_sources r JOIN git_objects g USING(git_object_id) LEFT JOIN blob_content_map b USING(git_object_id) WHERE g.type=? AND (? IS NULL OR r.repository_uuidv4=?) ORDER BY r.repository_uuidv4,g.git_object_id",
+                (object_type, repo, repo),
             ):
                 self._check()
-                if row["raw_message"] is None:
+                repository = row["repository_uuidv4"]
+                if repository not in contexts:
+                    contexts[repository] = self._git_context(repository, {})
+                context = object_context(
+                    self.s, contexts[repository], row["git_object_id"], object_type
+                )
+                fact = self.s.one(
+                    f"SELECT * FROM {self._git_relation(table, context)} WHERE repository_uuidv4=? AND parsed_result_uuidv4=? AND git_object_id=?",
+                    (repository, context["parsed_result_uuidv4"], row["git_object_id"]),
+                )
+                if fact is None:
                     self._add_missing(
-                        "commits",
-                        "commit_structure_missing",
+                        kind,
+                        "git_interpretation_selection_unresolved"
+                        if context.get("selection_unresolved")
+                        else "body_not_saved"
+                        if kind == "code"
+                        else "commit_structure_missing",
+                        repository_uuidv4=repository,
                         git_object_id=row["git_object_id"],
                     )
                     continue
-                try:
-                    text = row["raw_message"].decode("utf8", "strict")
-                except UnicodeDecodeError:
+                text = fact["raw_text"] if kind == "code" else fact["message_text"]
+                if text is None:
                     self._add_missing(
-                        "commits",
-                        "message_non_utf8",
+                        kind,
+                        "body_not_saved",
+                        repository_uuidv4=repository,
                         git_object_id=row["git_object_id"],
+                        content_id=row["content_id"],
+                        text_state=fact["text_state"],
                     )
                     continue
                 if literal in text:
-                    yield {
-                        "repository_uuidv4": row["repository_uuidv4"],
+                    item = {
+                        "repository_uuidv4": repository,
                         **object_fields(row),
                         "text": text,
-                        "raw_message": row["raw_message"],
+                        "parsed_result_uuidv4": fact["parsed_result_uuidv4"],
                     }
+                    if kind == "code":
+                        item.update(
+                            content_id=fact["content_id"],
+                            digests=self._digests(fact["content_id"]),
+                        )
+                    else:
+                        item["raw_message"] = fact["raw_message"]
+                    yield item
         else:
             for request in self.s.execute(
                 "SELECT * FROM change_requests WHERE (? IS NULL OR repository_uuidv4=?) ORDER BY repository_uuidv4,change_request_id",

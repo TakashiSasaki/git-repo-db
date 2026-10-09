@@ -348,12 +348,22 @@ def test_terminal_page_resume_has_one_original_coverage_observation(
         )
         assert len(api.requests) == before
         assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 1
-        assert [
-            tuple(row)
-            for row in store.all(
-                "SELECT coverage_state,observed_at_us,details_json FROM coverage_claims"
-            )
-        ] == [("complete", page["observed_at_us"], None)]
+        claims = store.all(
+            "SELECT coverage_state,observed_at_us,details_json FROM coverage_claims"
+        )
+        assert len(claims) == 1
+        assert tuple(claims[0])[:2] == ("complete", page["observed_at_us"])
+        proof = json.loads(claims[0]["details_json"])
+        assert proof["fetch_collection_ids"] == [page["fetch_collection_id"]]
+        marker = store.one(
+            "SELECT completion_marker_uuidv4,evidence FROM completion_markers"
+        )
+        assert proof["completion_marker_uuidv4s"] == [
+            marker["completion_marker_uuidv4"]
+        ]
+        assert json.loads(marker["evidence"])["fetch_occurrence_uuidv4s"] == [
+            page["fetch_occurrence_uuidv4"]
+        ]
         assert (
             store.one("SELECT observed_at_us FROM completion_markers")[0]
             == page["observed_at_us"]

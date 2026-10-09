@@ -212,7 +212,7 @@ independent reparse scenarios remain. The old 'reparse is a no-op' assertion is
 replaced with the required separate parsed result and unchanged remote fetch
 identity/time/current selection.
 
-## Remaining architectural and validation limits
+## Remaining architectural and validation limits (historical PR #11 checkpoint)
 
 - Low-level Git structural/text projections (`commits.metadata`, tree rows and
   `contents`) remain shared object data. Snapshot/ref/code observations are
@@ -243,4 +243,137 @@ Source-wide inventory exclusion follows the single-repository exchange contract.
 The final integration run exposed a stale `repositories.metadata.private` dependency after removing parser output from shared registration rows. Restoring that shared projection would let unrelated interpretations compete for one value. `repository_inventory_observations` now stores one immutable member interpretation per Source-owned parsed result, with owner/membership checks, portable observation UUID and sealed output-manifest membership. `current_repository_inventory_observations` derives eligibility from the Source inventory selection. Ordinary repository output returns a provenance-bearing list instead of merging different Sources. Source-wide exchange exclusion continues to apply.
 
 Reproduction and regression: `tests/e2e/test_github_sync.py::test_private_inventory`, `tests/integration/test_catalog3_job_plans.py`, and reader/profile/CLI suites. The focused private-inventory/profile/CLI run passed 19 cases. Final complete acceptance is recorded in the validation evidence.
+
+## Independent remaining-contract review — 2026-10-09
+
+This new review starts from PR #11, commit
+`d76ebc776c9e72f565dc3007c878e2002c5f4e8e`, on
+`feat/complete-model-contracts`. A1–A12 and the remaining-limit section above are
+historical checkpoint evidence; their original findings and test receipts are
+preserved. The current implementation is reviewed independently of its authors
+against D29/D36, CAS-3/CAS-9 and CAS-46/CAS-49. Decision classification remains in
+the separately maintained status matrix.
+
+The reviewer executed the complete production DDL with foreign keys and
+recursive triggers enabled, attacked SQL and actual exchange admission, and
+exercised ordinary readers over disposable Git repositories. The review also
+read the implementation of parser execution/selection, the JSON registry and
+generated guards, selective closure, completeness proofs, quarantine,
+maintenance and indexes. Implementation summaries were not used as acceptance
+evidence.
+
+### Reproduced defects and current fixes
+
+The regressions in this table are in
+`tests/integration/test_catalog3_remaining_adversarial.py`. R1–R13 were observed
+by this reviewer against the working implementation before their corresponding
+fixes. R14 was independently reproduced by the integration coordinator and then
+covered by this reviewer's executable SQL/registry regressions.
+
+| Finding | Observed failure | Current fix and executable regression |
+|---|---|---|
+| R1 — Arbitrary completeness envelope | A complete claim with only an unrelated repository record in `requires` could be admitted without acquisition proof. | Proof is derived from exact owned evidence, and envelope equality is checked on receipt. `test_unrelated_present_record_cannot_prove_complete_coverage`. |
+| R2 — Git format guard lost during fact split | A result-owned SHA-1 commit could point to a SHA-256 tree while all ownership FKs passed. | Commit/parent/tag/tree/manifest format guards were restored. `test_git_commit_cannot_bind_tree_from_another_object_format`. |
+| R3 — Source ownership differed between scalar and array references | A nested repository-reference array in Source-owned evidence accepted a repository outside the Source membership; the equivalent scalar reference was rejected. | Scalar and list references use the same SQL ownership predicate. `test_source_owned_nested_json_rejects_outside_repository_membership` covers both encodings. |
+| R4 — A subset marker proved a larger collection | A collection containing F0 and F1 accepted a completion marker naming only F0, which exported as complete proof. | Markers seal the exact actual root/child collection fetch set and terminal boundary. `test_collection_subset_manifest_does_not_prove_complete_collection`. |
+| R5 — Published Git input could gain objects | A new `repository_object_sources` member could be appended after publication, changing the acquired input represented by an immutable result. | Exact `git_acquisition_publications` object/root manifests seal input membership before result publication. `test_published_git_input_cannot_acquire_late_object`. |
+| R6 — Delayed raw Git reception became permanently invalid | When globally shared bytes existed before the owner-specific raw mapping/membership arrived, JSON payload ownership was treated as impossible rather than missing. The publication could not promote after the remaining unit arrived. | Typed natural Git dependencies and owner-specific mapping/membership dependencies stage until complete; publication requires the acquisition seal and raw inputs. `test_missing_raw_git_bytes_keeps_result_unpublished_until_arrival` includes a database close/reopen before promotion. |
+| R7 — Structured payload representation crashed admission | A payload reference with `representation=[]` or `{}` raised an uncaught `TypeError` during set membership. | Representation type is checked before membership lookup; malformed values produce `INVALID_JSON_REFERENCE`. `test_nested_payload_wrong_representation_type_is_a_contract_error`. |
+| R8 — HTTP detail completion claimed code/broader completion | An exact terminal `pr-detail` marker alone transported complete `pr-code` with zero code observations or Git inputs. The same proof did not establish repository PR/document coverage breadth. | `code_proof` requires a published complete code result, exact listing inputs and acquired Git roles; aggregate proof requires a complete PR listing and scope-specific per-request evidence. `test_terminal_pr_detail_cannot_prove_broader_coverage_without_scope_evidence` checks code, repository PR and document scopes, including a forged HTTP-only receipt envelope. |
+| R9 — Captured Git root members had no concrete schema | `git_acquisitions.roots_manifest='[null]'` passed ordinary production SQL and JSON-registry admission, although offline parsing expects structured ref declarations. Primitive strings and an object with only an invalid OID also passed. | Captured roots require typed ref fields, canonical raw/display names, format-specific OIDs and consistent optional PR fields. Captured declarations do not require raw objects to exist before acquisition completes. `test_git_root_declarations_require_structured_reference_members` covers three malformed member forms through registry and SQL gates. |
+| R10 — Duplicate marker membership bypassed the new complete-code SQL gate | A commits listing containing F0 and F1, a terminal marker naming `[F0,F0]`, an exact files marker and no local listing progress admitted a complete code observation. Array length matched actual count, but F1 was omitted. | The canonical complete-code triggers require distinct manifest members, exact owned collection membership, a nonempty terminal set and the exact known collection observation boundary. `test_complete_code_requires_exact_terminal_listing_sql_evidence` covers the exact positive and subset, empty, unrelated, duplicate, nonterminal, stale-time and unknown-time attacks. |
+| R11 — Consumed code-detail types were not enforced | Registry admission accepted `expected_roles=[]`, a role mapped to `not-a-git-oid`, and a string in `api_head_base_stable`, although code readers/proof evaluation interpret these fields as structured declarations and flags. | Optional consumed fields now have a concrete SQL/Python schema: supported canonical role/OID maps, role-name arrays, booleans and typed limits/merge declarations. `test_code_detail_consumers_reject_malformed_authored_types` tests five malformed forms through both admission gates. |
+| R12 — Saved GraphQL variables crashed offline replay | Ordinary SQL admitted a saved thread-comment request with `variables=[]`; actual `ParsingService.reparse` raised `AttributeError: 'list' object has no attribute 'get'`. A string `operational_only='false'` also had the wrong truth-value semantics. | Acquisition context requires object variables, typed consumed variable fields and boolean operational flags. `test_fetch_request_consumers_reject_malformed_authored_types` tests malformed containers and the nonboolean flag through registry and SQL. The original actual replay reproduction used a disposable production Store with a synthetic development profile to bypass only the stale-certificate gate, and performed no network request. |
+| R13 — Reader marker fallback selected older completion | The initial portable `_collection_state` fallback returned complete for an authentic terminal marker at -1 followed by a partial marker at 0; it also returned complete with an explicit local partial state. Filtering only complete markers hid newer contradictory evidence. | Reader qualification evaluates the latest immutable marker candidate set across all states, checks exact acquisition proof/conflict/quarantine barriers, and preserves incomplete or conflicting latest evidence. `test_immutable_collection_state_never_falls_back_from_newer_or_tied_incomplete` covers later partial, later unknown and tied complete/partial markers without sender-local progress. |
+| R14 — Canonical hex guards accepted a hidden NUL suffix | Direct production SQL admitted `expected_roles.head='a'*38 + NUL + 'a'` and a parser implementation digest with 62 hex characters, NUL and one hidden hex character. Their encoded byte widths were correct, but SQLite text length/GLOB stopped at NUL. | Every generated canonical hex predicate requires both exact text and encoded byte width plus lowercase hex syntax. `test_code_git_oid_cannot_hide_nonhex_suffix_after_nul` covers expected roles, merge and review-target role declarations at SHA-1/SHA-256 widths; `test_parser_definition_digest_cannot_hide_nonhex_suffix_after_nul` covers both byte-width-preserving and full-prefix hidden suffix forms. The component suite separately covers captured ref OIDs/peeled/expected and payload digests. |
+
+The final reader/CLI inspection also identified two application integration gaps.
+The CLI could not pass an alternate profile UUID to Git reparse, despite the
+application service supporting it. Explicit Git object reads and target search
+also consulted only the current repository snapshot, hiding PR-only acquired
+facts. The CLI now exposes the explicit profile option. Readers resolve a unique
+eligible acquisition-selected interpretation when the explicit object is absent
+from current snapshot facts; multiple candidates remain unresolved and an
+unselected reparse never substitutes for a selection. Component regressions
+include `test_pr_only_acquisition_has_explicit_selected_git_reads` and the
+alternate-profile CLI checks. These findings are distinguished from the executed
+SQL/exchange/reader counterexamples R1–R13.
+
+The component author's real collector-to-empty-receiver positive test also
+exposed an operational-state dependency: incoming listing facts required an
+initialized local listing-progress row, and incoming complete code observations
+required that excluded local progress to be complete. Receipt now creates only a
+receiver-local partial listing boundary; it does not install sender progress or
+invent local completion. Complete code qualifies through immutable exact
+terminal collection evidence, while published result output membership seals
+the received facts. The direct independent SQL test above proves the exact
+marker path succeeds without any `code_listing_progress` rows and that truncated
+or unrelated proof cannot substitute. The real acquisition/304 round-trip is
+checked by `test_production_github_complete_proofs_cover_the_asserted_scope`.
+
+That production positive also compares ordinary source/receiver PR output after
+explicit receiver-local verification trust. The component author extended it to
+a paginated **101-reply review thread** and compared both status and portable
+thread items after full exchange. This exposed a second operational-state
+dependency in ordinary PR coverage: collection completeness and a paginated
+thread child still required excluded `collection_progress`. Readers now qualify
+immutable exact markers independently of local progress, retain all equal-time
+candidates, reject disputed/quarantined proof, and never fall back from a newer
+incomplete marker. Portable output ordering uses observation time and permanent
+identities or page ordinal/position rather than receiver-local surrogate IDs.
+The positive thread/PR comparison is component evidence; the reviewer separately
+executed the marker-state counterexamples in R13. Complete ordinary and
+installed acceptance is recorded separately by the integration coordinator.
+
+The final marker-UUID guard also applies A4's established encoded-byte-length
+rule to the newly introduced portable marker identity. A UUID prefix followed by
+`NUL` and hidden suffix must be rejected. The new independent
+`test_completion_marker_uuid_cannot_hide_noncanonical_suffix_after_nul` checks
+that ordinary SQL gate; this is the established canonical-identity contract,
+not a newly selected design decision.
+
+### Additional independent counterexamples and evidence
+
+The same reviewer module checks NULL/cross-owner Git fact admission, malformed
+nested verification references, disputed acquisition manifests, corruption
+quarantine in ordinary file/search readers, invalidation of the specifically
+selected verification, and immutable Git fact UUID collisions in both receipt
+orders. The collision tests preserve immutable history while suppressing
+dependent selected results. The raw-arrival tests preserve original result
+identity and verify FK/integrity after reopened staged promotion. These checks
+do not infer completeness or current selection from timestamps, UUID ordering or
+the presence of unrelated records.
+
+The reviewer module now contains **53 cases**. Before certificate regeneration,
+the then-23-case no-bootstrap run produced **21 passed and 2 fixture errors in
+9.44 seconds**. Both errors were `BUILTIN_VERIFICATION_STALE` during ordinary
+discovery, correctly enforcing the stale packaged parser certificate. The
+subsequently expanded three-scope HTTP-proof regression passed all three cases.
+The nine new complete-code/marker-UUID SQL cases passed in **3.41 seconds**,
+including the exact positive without local listing progress. The eight concrete
+code-detail/request-schema cases passed in **3.27 seconds**; the three immutable
+reader-state cases passed in **1.20 seconds**. The eight canonical hex/NUL cases
+passed without bootstrap in **3.37 seconds**, with JUnit evidence in
+`artifacts/independent-hex-development.xml`. Ruff check and formatting passed for
+the reviewer module. These receipts are focused development evidence, not final
+runtime acceptance.
+
+After genuine certificate regeneration from passing capability evidence for the
+exact implementation/DDL, the reviewer independently executed the following
+command without a bootstrap override:
+
+```sh
+uv run --no-sync pytest tests/integration/test_catalog3_remaining_adversarial.py -q --tb=short --junitxml=artifacts/independent-final.xml > artifacts/independent-final.log 2>&1
+```
+
+The final independent receipt is **53 passed in 31.90 seconds**, exit status 0,
+with no failures, fixture errors or skips. The exact result is preserved in
+`artifacts/independent-final.xml` and `artifacts/independent-final.log`.
+
+The final source review and executable counterexamples identify no further
+substantive gap in the six targeted contracts. This conclusion applies to the
+reviewed fresh Catalog3 implementation and the independent cases above; complete
+ordinary/installed acceptance, submitted HEAD and hosted CI are separately
+recorded by the integration coordinator. No hosted-CI conclusion is inferred
+from an earlier checkpoint receipt or development bootstrap run.
 

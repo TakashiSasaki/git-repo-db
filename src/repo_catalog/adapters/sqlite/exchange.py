@@ -13,7 +13,7 @@ import json
 import re
 import sqlite3
 import uuid
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from repo_catalog.adapters.sqlite.payloads import intern_stored_bytes
 from repo_catalog.domain.models import CatalogError
@@ -47,6 +47,7 @@ EXCLUDED = {
     "parser_profile_selection_staging",
     "fact_selection_staging",
     "identity_relation_staging",
+    "exchange_blocked_coverage_claims",
 }
 GLOBAL = {
     "service_instances",
@@ -60,16 +61,6 @@ GLOBAL = {
     "parser_profile_capabilities",
     "parser_profile_verifications",
     "parser_profile_verification_invalidations",
-}
-GIT_CHILDREN = {
-    "commits": "git_object_id",
-    "commit_parents": "commit_git_object_id",
-    "tree_entries": "tree_git_object_id",
-    "tag_objects": "git_object_id",
-    "blob_content_map": "git_object_id",
-    "content_digests": "content_id",
-    "root_manifests": "tree_git_object_id",
-    "root_manifest_entries": "tree_git_object_id",
 }
 NATURAL = {
     "sources": ("source_registration_uuidv4",),
@@ -93,9 +84,9 @@ def canonical(value):
 
 
 def record_digest(record):
-    # Dependency manifests and mutable membership interval aggregates are
-    # transport projections, not immutable identity/fact content.
-    content = {k: v for k, v in record.items() if k != "requires"}
+    # Completeness dependency manifests bind immutable evidence exactly.
+    # Only mutable Source membership intervals are transport aggregates.
+    content = dict(record)
     if record["table"] == "source_repositories":
         content["values"] = {
             k: v
@@ -135,8 +126,9 @@ def decode(value):
 
 
 class Graph:
-    def __init__(self, db):
+    def __init__(self, db, *, persist_identities=True):
         self.db = db
+        self.persist_identities = persist_identities
         self.columns, self.keys, self.foreign = {}, {}, {}
         names = [
             r[0]
@@ -227,6 +219,8 @@ class Graph:
                 value = str(uuid.uuid4())
             else:
                 for parent, child_cols, parent_cols in self.foreign[table]:
+                    if any(c in LOCAL_COLUMNS.get(table, ()) for c in child_cols):
+                        continue
                     if col not in child_cols or parent not in self.columns:
                         continue
                     parent_row = self.lookup(
@@ -240,13 +234,44 @@ class Graph:
                         break
             values[col] = encode(value, col)
         key = table + ":" + canonical(values)
-        self.db.execute(
-            "INSERT INTO exchange_local_identities VALUES(?,?,?)", (table, local, key)
-        )
+        if self.persist_identities:
+            self.db.execute(
+                "INSERT INTO exchange_local_identities VALUES(?,?,?)",
+                (table, local, key),
+            )
         self.key_cache[cache_key] = key
         return key
 
+    def validate_git_payload(self, row):
+        from repo_catalog.domain.git_object import validate_git_object
+
+        obj = self.lookup("git_objects", ("git_object_id",), (row["git_object_id"],))
+        stored = self.lookup("stored_bytes", ("sha256",), (row["payload_sha256"],))
+        if obj is None or stored is None:
+            raise CatalogError(
+                "INVALID_EXCHANGE", "Raw Git object dependencies are unavailable"
+            )
+        if hashlib.sha256(stored["body"]).digest() != row["payload_sha256"]:
+            raise CatalogError(
+                "PAYLOAD_CORRUPTION",
+                "Cannot exchange corrupt physical bytes",
+                {"sha256": row["payload_sha256"].hex()},
+            )
+        validate_git_object(
+            obj["object_format"],
+            obj["oid"],
+            obj["type"],
+            obj["size"],
+            stored["body"],
+            row["payload_sha256"],
+        )
+
     def record(self, table, row):
+        from repo_catalog.adapters.sqlite.json_contracts import validate_record
+
+        validate_record(self.db, table, row)
+        if table == "git_object_payloads":
+            self.validate_git_payload(row)
         data = {c: encode(v, c) for c, v in row.items()}
         for col in LOCAL_COLUMNS.get(table, ()):
             if col in data:
@@ -264,10 +289,6 @@ class Graph:
         if table in SCOPES:
             for col in self.keys[table]:
                 data.pop(col)
-        if table == "root_manifests":
-            # A receiver must verify/rebuild its own derived tree listing.
-            # Retain entries, without exporting an unsupported completeness claim.
-            data["complete"] = 0
         for parent, child_cols, parent_cols in self.foreign[table]:
             if parent not in self.columns or any(row[c] is None for c in child_cols):
                 continue
@@ -287,30 +308,601 @@ class Graph:
                 ):
                     data[child] = {"$ref": key, "column": pcol}
         record = {"key": self.key(table, row), "table": table, "values": data}
+        if table in {"completion_markers", "coverage_claims"}:
+            requirements = self.proof_requirements(table, row)
+            if requirements is not None:
+                record["requires"] = sorted(requirements)
+        return record
+
+    def matching(self, table, columns, values):
+        if table not in self.columns:
+            return []
+        where = " AND ".join(f'"{c}" IS ?' for c in columns)
+        return [
+            dict(zip(self.columns[table], row))
+            for row in self.db.execute(f'SELECT * FROM "{table}" WHERE {where}', values)
+        ]
+
+    def code_proof(self, result_uuid, repository_uuid, change_request_id):
+        """Exact published code interpretation, sealed listings and Git roles."""
+        result = self.lookup(
+            "parsed_results", ("parsed_result_uuidv4",), (result_uuid,)
+        )
+        publication = self.lookup(
+            "parsed_result_publications", ("parsed_result_uuidv4",), (result_uuid,)
+        )
+        if (
+            result is None
+            or publication is None
+            or result["repository_uuidv4"] != repository_uuid
+        ):
+            return None
+        observations = self.matching(
+            "code_observations",
+            ("parsed_result_uuidv4", "change_request_id", "state"),
+            (result_uuid, change_request_id, "complete"),
+        )
+        if len(observations) != 1:
+            return None
+        observation = observations[0]
+        details = json.loads(observation["details"])
+        roles = details.get("expected_roles")
+        if (
+            details.get("api_head_base_stable") is not True
+            or details.get("code_inputs_complete") is not True
+            or details.get("missing_roles")
+            or not isinstance(roles, dict)
+            or not {"head", "base"} <= roles.keys()
+        ):
+            return None
+        required = {
+            self.key("parsed_result_publications", publication),
+            self.key("code_observations", observation),
+        }
+        collections, acquisitions = set(), set()
+        inputs = self.matching(
+            "parsed_result_inputs", ("parsed_result_uuidv4",), (result_uuid,)
+        )
+        input_acquisitions = {
+            item["git_acquisition_id"] for item in inputs if item["git_acquisition_id"]
+        }
+        input_fetches = {
+            item["fetch_occurrence_uuidv4"]
+            for item in inputs
+            if item["fetch_occurrence_uuidv4"]
+        }
+        for listing_id, listing_kind in (
+            (observation["commit_code_listing_id"], "commits"),
+            (observation["file_code_listing_id"], "files"),
+        ):
+            listing = self.lookup("code_listings", ("code_listing_id",), (listing_id,))
+            if (
+                listing is None
+                or listing["change_request_id"] != change_request_id
+                or listing["kind"] != listing_kind
+            ):
+                return None
+            collections.add(listing["fetch_collection_id"])
+            required.add(self.key("code_listings", listing))
+            fetches = self.matching(
+                "fetch_occurrences",
+                ("fetch_collection_id",),
+                (listing["fetch_collection_id"],),
+            )
+            if (
+                not fetches
+                or not {item["fetch_occurrence_uuidv4"] for item in fetches}
+                <= input_fetches
+            ):
+                return None
+        links = self.matching(
+            "code_acquisitions",
+            ("code_observation_id",),
+            (observation["code_observation_id"],),
+        )
+        if set(roles) != {link["role"] for link in links}:
+            return None
+        for link in links:
+            root = self.lookup(
+                "acquisition_roots",
+                ("acquisition_root_id",),
+                (link["acquisition_root_id"],),
+            )
+            if (
+                root is None
+                or root["published"] != 1
+                or root["repository_uuidv4"] != repository_uuid
+                or root["git_acquisition_id"] not in input_acquisitions
+                or link["object_format"] != root["object_format"]
+                or link["oid"] != root["oid"]
+                or roles[link["role"]] != link["oid"].hex()
+            ):
+                return None
+            if link["role"] in {"head", "base"} and (
+                link["object_format"] != observation["object_format"]
+                or link["oid"] != observation[link["role"] + "_oid"]
+            ):
+                return None
+            acquisition_pub = self.lookup(
+                "git_acquisition_publications",
+                ("git_acquisition_id",),
+                (root["git_acquisition_id"],),
+            )
+            if acquisition_pub is None:
+                return None
+            acquisitions.add(root["git_acquisition_id"])
+            required.update(
+                {
+                    self.key("code_acquisitions", link),
+                    self.key("acquisition_roots", root),
+                    self.key("git_acquisition_publications", acquisition_pub),
+                }
+            )
+        return {
+            "requires": required,
+            "collections": collections,
+            "acquisitions": acquisitions,
+            "observation": observation,
+        }
+
+    def aggregate_proof(self, scope, details, collection_rows):
+        """A repository PR assessment proves a complete listing and every item."""
+        requests = details.get("change_request_ids")
+        if (
+            not isinstance(requests, list)
+            or len(set(requests)) != len(requests)
+            or scope["change_request_id"] is not None
+        ):
+            return None
+        listings = [
+            item
+            for item in collection_rows
+            if item["kind"] == "pr-list" and item["change_request_id"] is None
+        ]
+        if not listings:
+            return None
+        required, listed_requests = set(), set()
+        for listing in listings:
+            for fetch in self.matching(
+                "fetch_occurrences",
+                ("fetch_collection_id",),
+                (listing["fetch_collection_id"],),
+            ):
+                raw = self.lookup(
+                    "stored_bytes", ("sha256",), (fetch["payload_sha256"],)
+                )
+                if raw is None:
+                    return None
+                try:
+                    page = json.loads(raw["body"])
+                except (ValueError, UnicodeError):
+                    return None
+                if not isinstance(page, list):
+                    return None
+                for provider_record in page:
+                    if (
+                        not isinstance(provider_record, dict)
+                        or type(provider_record.get("number")) is not int
+                    ):
+                        return None
+                    observations = [
+                        item
+                        for item in self.matching(
+                            "change_request_observations",
+                            ("origin_fetch_occurrence_id",),
+                            (fetch["fetch_occurrence_id"],),
+                        )
+                        if json.loads(item["payload"]) == provider_record
+                    ]
+                    if len(observations) != 1:
+                        return None
+                    observation = observations[0]
+                    publication = self.lookup(
+                        "parsed_result_publications",
+                        ("parsed_result_uuidv4",),
+                        (observation["parsed_result_uuidv4"],),
+                    )
+                    if publication is None:
+                        return None
+                    listed_requests.add(observation["change_request_id"])
+                    required.update(
+                        {
+                            self.key("change_request_observations", observation),
+                            self.key("parsed_result_publications", publication),
+                        }
+                    )
+        if not listed_requests <= set(requests):
+            return None
+        kinds = defaultdict(set)
+        for collection in collection_rows:
+            if collection["change_request_id"] is not None:
+                kinds[collection["change_request_id"]].add(collection["kind"])
+        required_kinds = {
+            "pr-detail",
+            "issue-comment",
+            "review",
+            "review-comment",
+            "threads",
+        }
+        if scope["kind"] == "pr":
+            required_kinds |= {"timeline", "pr-commits", "pr-files"}
+        code_results = details.get("parsed_result_uuidv4s", [])
+        if scope["kind"] == "pr" and (
+            len(code_results) != len(requests)
+            or len(set(code_results)) != len(code_results)
+        ):
+            return None
+        if scope["kind"] == "pr-documents" and code_results:
+            return None
+        code_by_request = defaultdict(list)
+        for result_uuid in code_results:
+            for observation in self.matching(
+                "code_observations",
+                ("parsed_result_uuidv4", "state"),
+                (result_uuid, "complete"),
+            ):
+                code_by_request[observation["change_request_id"]].append(result_uuid)
+        for request_id in requests:
+            request = self.lookup(
+                "change_requests", ("change_request_id",), (request_id,)
+            )
+            if (
+                request is None
+                or request["repository_uuidv4"] != scope["repository_uuidv4"]
+                or not required_kinds <= kinds[request_id]
+            ):
+                return None
+            required.add(self.key("change_requests", request))
+            if scope["kind"] == "pr":
+                if len(code_by_request[request_id]) != 1:
+                    return None
+                code = self.code_proof(
+                    code_by_request[request_id][0],
+                    scope["repository_uuidv4"],
+                    request_id,
+                )
+                if code is None or not code["collections"] <= {
+                    item["fetch_collection_id"] for item in collection_rows
+                }:
+                    return None
+                required.update(code["requires"])
+        return required
+
+    def proof_requirements(self, table, row):
+        """Derive proof from immutable portable evidence, never envelope hints.
+
+        A complete collection marker seals its exact acquisition UUID set. A
+        coverage claim identifies exact collection/Git roots in its advisory
+        JSON; absence of that evidence keeps the claim local. Extra repository
+        records and later unrelated acquisitions cannot change this proof.
+        """
+        required = set()
+
+        def require(target_table, columns, values):
+            target = self.lookup(target_table, columns, values)
+            if target is None:
+                return None
+            required.add(self.key(target_table, target))
+            return target
+
         if table == "completion_markers":
-            required = set()
-            for occurrence in self.rows("fetch_occurrences"):
-                if occurrence["fetch_collection_id"] == row["fetch_collection_id"]:
-                    required.add(self.key("fetch_occurrences", occurrence))
+            if row["asserted_state"] != "complete":
+                return set()
             evidence = json.loads(row["evidence"])
+            manifest = evidence.get("fetch_occurrence_uuidv4s")
+            validation = evidence.get("status") == 304
+            if (
+                not isinstance(manifest, list)
+                or (not manifest and not validation)
+                or len(set(manifest)) != len(manifest)
+            ):
+                return None
+            collection_ids = evidence.get(
+                "fetch_collection_ids", [row["fetch_collection_id"]]
+            )
+            if row["fetch_collection_id"] not in collection_ids:
+                return None
+            root_collection = self.lookup(
+                "fetch_collections",
+                ("fetch_collection_id",),
+                (row["fetch_collection_id"],),
+            )
+            for collection_id in collection_ids:
+                collection = require(
+                    "fetch_collections", ("fetch_collection_id",), (collection_id,)
+                )
+                if (
+                    collection is None
+                    or collection["repository_uuidv4"]
+                    != root_collection["repository_uuidv4"]
+                    or collection["change_request_id"]
+                    != root_collection["change_request_id"]
+                ):
+                    return None
+                if collection_id != row["fetch_collection_id"]:
+                    context = self.lookup(
+                        "resume_scopes",
+                        ("resume_scope_id",),
+                        (collection["resume_scope_id"],),
+                    )
+                    if (
+                        collection["kind"] != "thread-comments"
+                        or json.loads(context["request_context"]).get(
+                            "parent_fetch_collection_id"
+                        )
+                        != row["fetch_collection_id"]
+                    ):
+                        return None
+            actual_rows = [
+                item
+                for collection_id in collection_ids
+                for item in self.matching(
+                    "fetch_occurrences", ("fetch_collection_id",), (collection_id,)
+                )
+            ]
+            if set(manifest) != {
+                item["fetch_occurrence_uuidv4"] for item in actual_rows
+            }:
+                return None
+            observations = []
+            for occurrence_uuid in manifest:
+                fetch = require(
+                    "fetch_occurrences",
+                    ("fetch_occurrence_uuidv4",),
+                    (occurrence_uuid,),
+                )
+                if fetch is None or fetch["fetch_collection_id"] not in collection_ids:
+                    return None
+                observations.append(fetch["observed_at_us"])
+            if not validation and (
+                not any(t is not None for t in observations)
+                or row["observed_at_us"]
+                != max(t for t in observations if t is not None)
+            ):
+                return None
+            if not validation and evidence.get("terminal") is not True:
+                return None
             observation_uuid = evidence.get("change_request_observation_uuidv4")
             if observation_uuid:
-                observation = self.lookup(
+                observation = require(
                     "change_request_observations",
                     ("change_request_observation_uuidv4",),
                     (observation_uuid,),
                 )
-                if observation:
-                    required.add(self.key("change_request_observations", observation))
-            record["requires"] = sorted(required)
-        return record
+                if observation is None:
+                    return None
+                if (
+                    require(
+                        "parsed_result_publications",
+                        ("parsed_result_uuidv4",),
+                        (observation["parsed_result_uuidv4"],),
+                    )
+                    is None
+                ):
+                    return None
+            if validation:
+                if not observation_uuid or row["observed_at_us"] is None:
+                    return None
+                original_fetch = require(
+                    "fetch_occurrences",
+                    ("fetch_occurrence_uuidv4",),
+                    (evidence.get("fetch_occurrence_uuidv4"),),
+                )
+                if (
+                    original_fetch is None
+                    or original_fetch["repository_uuidv4"]
+                    != root_collection["repository_uuidv4"]
+                    or observation["repository_uuidv4"]
+                    != root_collection["repository_uuidv4"]
+                    or observation["change_request_id"]
+                    != root_collection["change_request_id"]
+                    or evidence.get("parsed_result_uuidv4")
+                    != observation["parsed_result_uuidv4"]
+                    or observation["origin_fetch_occurrence_id"]
+                    != original_fetch["fetch_occurrence_id"]
+                    or evidence.get("payload")
+                    != {
+                        "representation": original_fetch["payload_representation"],
+                        "sha256": original_fetch["payload_sha256"].hex(),
+                    }
+                ):
+                    return None
+            return required
+        if row["coverage_state"] != "complete":
+            return set()
+        scope = self.lookup(
+            "coverage_scopes", ("coverage_scope_id",), (row["coverage_scope_id"],)
+        )
+        details = json.loads(row["details_json"] or "{}")
+        collections = details.get("fetch_collection_ids", [])
+        acquisitions = details.get("git_acquisition_ids", [])
+        if details.get("git_acquisition_id"):
+            acquisitions = [*acquisitions, details["git_acquisition_id"]]
+        if not collections and not acquisitions:
+            return None
+        times = []
+        marker_uuids = details.get("completion_marker_uuidv4s", [])
+        if collections and not marker_uuids:
+            return None
+        proof_markers = []
+        for marker_uuid in marker_uuids:
+            marker = require(
+                "completion_markers", ("completion_marker_uuidv4",), (marker_uuid,)
+            )
+            if marker is None or marker["asserted_state"] != "complete":
+                return None
+            proof = self.proof_requirements("completion_markers", marker)
+            if not proof:
+                return None
+            required.update(proof)
+            proof_markers.append(marker)
+        if {marker["fetch_collection_id"] for marker in proof_markers} != set(
+            collections
+        ):
+            return None
+        git_kinds = {"structure", "digests", "heads-text", "refs"}
+        http_kinds = {
+            "comment": {"comments", "comment"},
+            "review": {"review"},
+            "review-comment": {"review-comment", "thread-comments"},
+            "events": {"timeline"},
+            "timeline": {"timeline"},
+            "threads": {"threads", "thread-comments"},
+            "pr-detail": {"pr-detail"},
+            "pr-list": {"pr-list"},
+            "pr-commits": {"pr-commits"},
+            "pr-files": {"pr-files"},
+            "pr-code-check": {"pr-code-check"},
+            "pr-code": {
+                "pr-detail",
+                "pr-code-check",
+                "pr-commits",
+                "pr-files",
+                "review",
+                "threads",
+                "thread-comments",
+            },
+        }
+        collection_rows = []
+        for collection_id in collections:
+            collection = require(
+                "fetch_collections", ("fetch_collection_id",), (collection_id,)
+            )
+            if (
+                collection is None
+                or collection["repository_uuidv4"] != scope["repository_uuidv4"]
+                or (
+                    scope["change_request_id"] is not None
+                    and collection["change_request_id"] != scope["change_request_id"]
+                )
+            ):
+                return None
+            collection_rows.append(collection)
+            kind = scope["kind"]
+            if kind in git_kinds:
+                return None
+            if kind == "pr-documents":
+                if collection["kind"] in {
+                    "pr-commits",
+                    "pr-files",
+                    "timeline",
+                }:
+                    return None
+            elif kind not in {"pr", "pr-code"} and collection[
+                "kind"
+            ] not in http_kinds.get(kind, {kind}):
+                return None
+        for marker in proof_markers:
+            evidence = json.loads(marker["evidence"])
+            if evidence.get("status") == 304:
+                fetch = self.lookup(
+                    "fetch_occurrences",
+                    ("fetch_occurrence_uuidv4",),
+                    (evidence["fetch_occurrence_uuidv4"],),
+                )
+                times.append(fetch["observed_at_us"])
+            else:
+                times.append(marker["observed_at_us"])
+        for acquisition_id in acquisitions:
+            acquisition = require(
+                "git_acquisitions", ("git_acquisition_id",), (acquisition_id,)
+            )
+            if (
+                acquisition is None
+                or acquisition["repository_uuidv4"] != scope["repository_uuidv4"]
+            ):
+                return None
+            if scope["kind"] in git_kinds:
+                times.append(acquisition["observed_at_us"])
 
-    def export(self, repository_uuidv4):
-        rows = {table: self.rows(table) for table in self.columns}
-        included = set()
-        selected = {}
+                if (
+                    acquisition["kind"] != "git"
+                    or scope["change_request_id"] is not None
+                    or not details.get("parsed_result_uuidv4")
+                ):
+                    return None
+                snapshots = self.matching(
+                    "snapshots",
+                    ("git_acquisition_id", "parsed_result_uuidv4", "published"),
+                    (acquisition_id, details["parsed_result_uuidv4"], 1),
+                )
+                if not snapshots:
+                    return None
+                for snapshot in snapshots:
+                    required.add(self.key("snapshots", snapshot))
+            elif scope["kind"] not in {"pr", "pr-code"}:
+                return None
+        result_uuid = details.get("parsed_result_uuidv4")
+        if result_uuid:
+            publication = require(
+                "parsed_result_publications", ("parsed_result_uuidv4",), (result_uuid,)
+            )
+            result = self.lookup(
+                "parsed_results", ("parsed_result_uuidv4",), (result_uuid,)
+            )
+            if (
+                publication is None
+                or result is None
+                or result["repository_uuidv4"] != scope["repository_uuidv4"]
+            ):
+                return None
+            result_inputs = self.matching(
+                "parsed_result_inputs", ("parsed_result_uuidv4",), (result_uuid,)
+            )
+            if acquisitions and not set(acquisitions) <= {
+                item["git_acquisition_id"] for item in result_inputs
+            }:
+                return None
+        if scope["kind"] == "pr-code":
+            if not result_uuid or scope["change_request_id"] is None:
+                return None
+            code = self.code_proof(
+                result_uuid, scope["repository_uuidv4"], scope["change_request_id"]
+            )
+            if (
+                code is None
+                or not code["collections"] <= set(collections)
+                or code["acquisitions"] != set(acquisitions)
+            ):
+                return None
+            required.update(code["requires"])
+        if scope["kind"] in {"pr", "pr-documents"}:
+            aggregate = self.aggregate_proof(scope, details, collection_rows)
+            if aggregate is None:
+                return None
+            required.update(aggregate)
+        if (
+            not times
+            or any(t is None for t in times)
+            or max(times) != row["observed_at_us"]
+        ):
+            return None
+        return required
+
+    def export(
+        self,
+        repository_uuidv4,
+        *,
+        fetch_occurrence_uuidv4s=None,
+        fetch_collection_id=None,
+    ):
+        """Export a repository or an explicit acquisition set and its ancestors.
+
+        Collection IDs select local catalog rows; fetch UUIDs are permanent
+        portable identities. Only result-owned membership and explicit decision
+        DAGs expand downwards. Shared repository/document/collection identities
+        never pull sibling acquisition history into a selective unit.
+        """
+        from repo_catalog.adapters.sqlite.json_contracts import reference_dependencies
+
+        partial = (
+            fetch_occurrence_uuidv4s is not None or fetch_collection_id is not None
+        )
+        included, selected, queue = set(), {}, deque()
 
         def add(table, row):
+            if row is None or table not in self.columns:
+                return False
             if (
                 row.get("owner_kind") == "source"
                 and table != "parser_profile_capabilities"
@@ -322,11 +914,12 @@ class Graph:
             ):
                 return False
             if row.get("parsed_result_uuidv4") and table != "parsed_results":
-                owner = self.db.execute(
-                    "SELECT owner_kind FROM parsed_results WHERE parsed_result_uuidv4=?",
+                result = self.lookup(
+                    "parsed_results",
+                    ("parsed_result_uuidv4",),
                     (row["parsed_result_uuidv4"],),
-                ).fetchone()
-                if owner and owner[0] == "source":
+                )
+                if result and result["owner_kind"] == "source":
                     return False
             if table == "coverage_scopes" and row.get("kind", "").startswith(
                 "inventory"
@@ -337,83 +930,255 @@ class Graph:
                 return False
             included.add(identifier)
             selected[identifier] = row
+            queue.append((table, row))
             return True
 
-        for table, values in rows.items():
-            for row in values:
-                if row.get("repository_uuidv4") == repository_uuidv4:
-                    add(table, row)
-        if not any(t == "repositories" for t, _ in included):
+        repository = self.lookup(
+            "repositories", ("repository_uuidv4",), (repository_uuidv4,)
+        )
+        if repository is None:
             raise CatalogError("NOT_FOUND", "Repository UUID is not registered")
-        changed = True
-        while changed:
-            changed = False
-            # Close every actual FK upward, preserving the original fetch and
-            # original response bytes for 304 validation evidence.
-            for (table, _), row in list(selected.items()):
+        add("repositories", repository)
+        selected_fetches = set()
+        collection = None
+        if fetch_collection_id is not None:
+            collection = self.lookup(
+                "fetch_collections", ("fetch_collection_id",), (fetch_collection_id,)
+            )
+            if (
+                collection is None
+                or collection["repository_uuidv4"] != repository_uuidv4
+            ):
+                raise CatalogError(
+                    "NOT_FOUND", "Collection is not owned by the selected repository"
+                )
+            add("fetch_collections", collection)
+        if partial:
+            identifiers = fetch_occurrence_uuidv4s
+            if identifiers is None:
+                identifiers = [
+                    row["fetch_occurrence_uuidv4"]
+                    for row in self.matching(
+                        "fetch_occurrences",
+                        ("fetch_collection_id",),
+                        (fetch_collection_id,),
+                    )
+                ]
+            if not identifiers and collection is None:
+                raise CatalogError(
+                    "INVALID_EXCHANGE_SELECTION", "Fetch selection must not be empty"
+                )
+            for identifier in sorted(set(identifiers)):
+                fetch = self.lookup(
+                    "fetch_occurrences", ("fetch_occurrence_uuidv4",), (identifier,)
+                )
+                if (
+                    fetch is None
+                    or fetch["repository_uuidv4"] != repository_uuidv4
+                    or (
+                        collection
+                        and fetch["fetch_collection_id"] != fetch_collection_id
+                    )
+                ):
+                    raise CatalogError(
+                        "NOT_FOUND",
+                        "Fetch is not owned by the selected repository/collection",
+                    )
+                selected_fetches.add(identifier)
+                add("fetch_occurrences", fetch)
+        else:
+            for table in self.columns:
+                if "repository_uuidv4" in self.columns[table]:
+                    for row in self.matching(
+                        table, ("repository_uuidv4",), (repository_uuidv4,)
+                    ):
+                        add(table, row)
+
+        def expand():
+            while queue:
+                table, row = queue.popleft()
+                # Real foreign keys and registered embedded references close
+                # upwards. Selection decisions may retain unavailable results,
+                # preserving an unresolved scope instead of pulling other fetches.
                 for parent, child_cols, parent_cols in self.foreign[table]:
-                    if parent not in rows or any(
+                    if parent not in self.columns or any(
                         c in LOCAL_COLUMNS.get(table, ()) for c in child_cols
                     ):
                         continue
                     target = self.lookup(
                         parent, parent_cols, tuple(row[c] for c in child_cols)
                     )
-                    if target is not None:
-                        changed |= add(parent, target)
-            # Child history belongs to the selected owner; shared identities do
-            # not expand to other owners or source-wide acquisition histories.
-            for table, values in rows.items():
-                for row in values:
-                    for parent, child_cols, parent_cols in self.foreign[table]:
-                        if parent not in rows or (
-                            parent in GLOBAL
-                            and table not in GIT_CHILDREN
-                            and table
-                            not in {
+                    if (
+                        partial
+                        and table == "fact_selection_decisions"
+                        and parent in {"parsed_result_publications", "parsed_results"}
+                        and target
+                        and (
+                            "parsed_results",
+                            canonical(
+                                {"parsed_result_uuidv4": target["parsed_result_uuidv4"]}
+                            ),
+                        )
+                        not in included
+                    ):
+                        continue
+                    add(parent, target)
+                for dependency in reference_dependencies(table, row):
+                    if partial and table == "coverage_claims":
+                        continue
+                    add(
+                        dependency["table"],
+                        self.lookup(
+                            dependency["table"],
+                            dependency["columns"],
+                            dependency["values"],
+                        ),
+                    )
+                # Explicit child membership, not arbitrary descendants of shared
+                # owners. Queries are keyed by selected parents, avoiding scans
+                # through unrelated repository histories.
+                for child, foreign in self.foreign.items():
+                    for parent, child_cols, parent_cols in foreign:
+                        if parent != table:
+                            continue
+                        permitted = (
+                            table == "parsed_results"
+                            and "parsed_result_uuidv4" in child_cols
+                            or table == "fetch_occurrences"
+                            and child == "parsed_result_inputs"
+                            or table == "git_acquisitions"
+                            and child
+                            in {
+                                "acquisition_roots",
+                                "repository_object_sources",
+                                "git_acquisition_publications",
+                                "parsed_result_inputs",
+                            }
+                            or table == "acquisition_roots"
+                            and child == "root_origins"
+                            or table == "git_objects"
+                            and child == "git_object_payloads"
+                            or table == "contents"
+                            and child == "content_digests"
+                            or table == "parser_profiles"
+                            and child
+                            in {
                                 "parser_profile_capabilities",
                                 "parser_profile_verifications",
-                                "parser_profile_verification_invalidations",
                             }
-                        ):
-                            continue
-                        if (
-                            table in GIT_CHILDREN
-                            and GIT_CHILDREN[table] not in child_cols
-                        ):
-                            continue
-                        target = self.lookup(
-                            parent, parent_cols, tuple(row[c] for c in child_cols)
+                            or table == "parser_profile_verifications"
+                            and child == "parser_profile_verification_invalidations"
+                            or table
+                            in {
+                                "parser_profile_selection_decisions",
+                                "fact_selection_decisions",
+                            }
+                            and child.endswith(("_predecessors", "_publications"))
                         )
-                        if (
-                            target is not None
-                            and (parent, self.local_key(parent, target)) in included
+                        if not partial and table not in GLOBAL:
+                            permitted = True
+                        if permitted:
+                            for member in self.matching(
+                                child, child_cols, tuple(row[c] for c in parent_cols)
+                            ):
+                                add(child, member)
+                if partial and table == "parsed_results":
+                    for decision in self.matching(
+                        "fact_selection_decisions",
+                        ("parsed_result_uuidv4",),
+                        (row["parsed_result_uuidv4"],),
+                    ):
+                        scope_id = decision["fact_selection_scope_uuidv4"]
+                        for member in self.matching(
+                            "fact_selection_decisions",
+                            ("fact_selection_scope_uuidv4",),
+                            (scope_id,),
                         ):
-                            changed |= add(table, row)
-                            break
-        records = [self.record(table, row) for (table, _), row in selected.items()]
-        # A complete claim is transported only with acquisition proof and
-        # the full selected closure. The five-column stored model is unchanged.
-        # Its exchange manifest prevents truncated reception inventing complete.
-        proof = any(
-            record["table"]
-            in {"fetch_occurrences", "git_acquisitions", "parsed_result_publications"}
-            for record in records
-        )
-        requirements = sorted(
-            record["key"] for record in records if record["table"] != "coverage_claims"
-        )
-        safe_records = []
-        for record in records:
-            if (
-                record["table"] == "coverage_claims"
-                and record["values"]["coverage_state"] == "complete"
+                            add("fact_selection_decisions", member)
+                    for decision in self.matching(
+                        "parser_profile_selection_decisions",
+                        ("parser_profile_uuidv4",),
+                        (row["parser_profile_uuidv4"],),
+                    ):
+                        for member in self.matching(
+                            "parser_profile_selection_decisions",
+                            ("selection_scope_uuidv4",),
+                            (decision["selection_scope_uuidv4"],),
+                        ):
+                            add("parser_profile_selection_decisions", member)
+                if table == "fetch_collections" and row.get("source_id"):
+                    add(
+                        "source_repositories",
+                        self.lookup(
+                            "source_repositories",
+                            ("source_id", "repository_uuidv4"),
+                            (row["source_id"], repository_uuidv4),
+                        ),
+                    )
+
+        expand()
+        if partial:
+            included_fetches = {
+                row["fetch_occurrence_uuidv4"]
+                for (table, _), row in selected.items()
+                if table == "fetch_occurrences"
+            }
+            collection_ids = {
+                row["fetch_collection_id"]
+                for (table, _), row in selected.items()
+                if table == "fetch_collections"
+            }
+            for collection_id in collection_ids:
+                for marker in self.matching(
+                    "completion_markers", ("fetch_collection_id",), (collection_id,)
+                ):
+                    manifest = json.loads(marker["evidence"]).get(
+                        "fetch_occurrence_uuidv4s", []
+                    )
+                    if (
+                        (
+                            manifest
+                            or json.loads(marker["evidence"]).get("status") == 304
+                        )
+                        and set(manifest) <= included_fetches
+                        and self.proof_requirements("completion_markers", marker)
+                    ):
+                        add("completion_markers", marker)
+            expand()
+            for scope in self.matching(
+                "coverage_scopes", ("repository_uuidv4",), (repository_uuidv4,)
             ):
-                if not proof:
-                    continue
-                record["requires"] = requirements
-            safe_records.append(record)
-        records = safe_records
+                for claim in self.matching(
+                    "coverage_claims",
+                    ("coverage_scope_id",),
+                    (scope["coverage_scope_id"],),
+                ):
+                    requirements = self.proof_requirements("coverage_claims", claim)
+                    if (
+                        claim["coverage_state"] == "complete"
+                        and requirements
+                        and requirements
+                        <= {
+                            self.key(table, row) for (table, _), row in selected.items()
+                        }
+                    ):
+                        add("coverage_claims", claim)
+            expand()
+        records = []
+        for (table, _), row in selected.items():
+            if (
+                table == "completion_markers"
+                and row["asserted_state"] == "complete"
+                and self.proof_requirements(table, row) is None
+            ):
+                continue
+            if (
+                table == "coverage_claims"
+                and row["coverage_state"] == "complete"
+                and self.proof_requirements(table, row) is None
+            ):
+                continue
+            records.append(self.record(table, row))
         records.sort(key=lambda record: record["key"])
         for record in records:
             if record["table"] == "stored_bytes":
@@ -428,14 +1193,9 @@ class Graph:
                         "Cannot exchange corrupt physical bytes",
                         {"sha256": digest.hex()},
                     )
-                if (
-                    self.db.execute(
-                        "SELECT 1 FROM sqlite_schema WHERE name='payload_quarantine'"
-                    ).fetchone()
-                    and self.db.execute(
-                        "SELECT 1 FROM payload_quarantine WHERE sha256=?", (digest,)
-                    ).fetchone()
-                ):
+                if self.db.execute(
+                    "SELECT 1 FROM payload_quarantine WHERE sha256=?", (digest,)
+                ).fetchone():
                     raise CatalogError(
                         "PAYLOAD_QUARANTINED",
                         "Cannot exchange quarantined physical bytes",
@@ -669,6 +1429,32 @@ class Graph:
                     "sha256": anchor[3].hex(),
                 }:
                     return "invalid:completion_payload"
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            JsonContractError,
+            MissingJsonDependencies,
+            validate_record,
+        )
+
+        try:
+            validate_record(self.db, table, data)
+        except MissingJsonDependencies:
+            return "missing_json_dependency"
+        except JsonContractError as exc:
+            return "invalid:json_reference:" + str(exc)
+        if table in {"completion_markers", "coverage_claims"}:
+            requirements = self.proof_requirements(table, data)
+            is_complete = (
+                data.get("coverage_state", data.get("asserted_state")) == "complete"
+            )
+            if is_complete and requirements is None:
+                return "missing_completeness_proof"
+            if is_complete and set(record.get("requires", ())) != requirements:
+                return "invalid:completeness_manifest"
+        if table == "git_object_payloads":
+            try:
+                self.validate_git_payload(data)
+            except CatalogError as exc:
+                return "invalid:" + exc.code.lower()
         existing = self._existing(table, data)
         if table == "stored_bytes" and existing is not None:
             intern_stored_bytes(self.db, data["body"], data["sha256"])
@@ -743,6 +1529,14 @@ class Graph:
                 if len(pk) == 1 and pk[0] not in data:
                     data[pk[0]] = cursor.lastrowid
             existing = data
+        if table == "code_listings":
+            # Admission needs a receiver-local writable listing boundary. It
+            # carries no sender completion, page count or operational state;
+            # exact fact publication supplies the portable immutable seal.
+            self.db.execute(
+                "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) SELECT ?,'partial',0,0,0 WHERE NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=?)",
+                (existing["code_listing_id"], existing["code_listing_id"]),
+            )
         local = self.local_key(table, existing)
         serialized = canonical(record)
         digest = record_digest(record)
@@ -1015,6 +1809,7 @@ class Graph:
         """
         self.db.execute("DELETE FROM exchange_blocked_results")
         self.db.execute("DELETE FROM exchange_selection_blocks")
+        self.db.execute("DELETE FROM exchange_blocked_coverage_claims")
         blocked = set()
         pending = list(
             self.db.execute(
@@ -1092,46 +1887,69 @@ class Graph:
                             "INSERT OR IGNORE INTO exchange_selection_blocks VALUES(?,?,?)",
                             (kind, scope[col], key),
                         )
+        from repo_catalog.adapters.sqlite.json_contracts import reference_dependencies
+
+        # Build dependency edges once, then propagate with a queue. Shared
+        # ancestry does not require repeatedly rescanning the complete graph.
+        dependents = defaultdict(set)
         rows = {table: self.rows(table) for table in self.columns}
-        changed = True
-        while changed:
-            changed = False
-            for table, values in rows.items():
-                for row in values:
-                    local = (table, self.local_key(table, row))
-                    if local not in blocked:
-                        for parent, child_cols, parent_cols in self.foreign[table]:
-                            if parent not in rows:
-                                continue
-                            target = self.lookup(
-                                parent, parent_cols, tuple(row[c] for c in child_cols)
-                            )
-                            if (
-                                target is not None
-                                and (parent, self.local_key(parent, target)) in blocked
-                            ):
-                                blocked.add(local)
-                                changed = True
-                                break
-                    if local in blocked and row.get("parsed_result_uuidv4"):
-                        result = self.lookup(
-                            "parsed_results",
-                            ("parsed_result_uuidv4",),
-                            (row["parsed_result_uuidv4"],),
+        for table, values in rows.items():
+            for row in values:
+                local = (table, self.local_key(table, row))
+                for parent, child_cols, parent_cols in self.foreign[table]:
+                    if parent not in rows:
+                        continue
+                    target = self.lookup(
+                        parent, parent_cols, tuple(row[c] for c in child_cols)
+                    )
+                    if target is not None:
+                        dependents[(parent, self.local_key(parent, target))].add(local)
+                for dependency in reference_dependencies(table, row):
+                    parent = dependency["table"]
+                    target = self.lookup(
+                        parent, dependency["columns"], dependency["values"]
+                    )
+                    if target is not None:
+                        dependents[(parent, self.local_key(parent, target))].add(local)
+                if row.get("parsed_result_uuidv4") and table != "parsed_results":
+                    result = self.lookup(
+                        "parsed_results",
+                        ("parsed_result_uuidv4",),
+                        (row["parsed_result_uuidv4"],),
+                    )
+                    if result is not None:
+                        dependents[local].add(
+                            ("parsed_results", self.local_key("parsed_results", result))
                         )
-                        if result is not None:
-                            result_key = (
-                                "parsed_results",
-                                self.local_key("parsed_results", result),
+                if table == "git_acquisition_publications":
+                    acquisition = self.lookup(
+                        "git_acquisitions",
+                        ("git_acquisition_id",),
+                        (row["git_acquisition_id"],),
+                    )
+                    if acquisition is not None:
+                        dependents[local].add(
+                            (
+                                "git_acquisitions",
+                                self.local_key("git_acquisitions", acquisition),
                             )
-                            if result_key not in blocked:
-                                blocked.add(result_key)
-                                changed = True
+                        )
+        queue = deque(blocked)
+        while queue:
+            for dependent in dependents[queue.popleft()]:
+                if dependent not in blocked:
+                    blocked.add(dependent)
+                    queue.append(dependent)
         for table, key in blocked:
             values = json.loads(key)
             row = self.lookup(
                 table, tuple(values), tuple(decode(v) for v in values.values())
             )
+            if table == "coverage_claims":
+                self.db.execute(
+                    "INSERT OR IGNORE INTO exchange_blocked_coverage_claims VALUES(?)",
+                    (row["coverage_claim_id"],),
+                )
             if table == "parsed_results":
                 self.db.execute(
                     "INSERT OR IGNORE INTO exchange_blocked_results VALUES(?)",

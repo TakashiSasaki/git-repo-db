@@ -234,7 +234,12 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
             )[0]
             is None
         )
-        assert store.one("SELECT count(*) FROM fact_selection_decisions")[0] == 2
+        assert (
+            store.one(
+                "SELECT count(*) FROM fact_selection_decisions d JOIN fact_selection_scopes s USING(fact_selection_scope_uuidv4) WHERE s.git_acquisition_id IS NULL"
+            )[0]
+            == 2
+        )
         assert store.one("SELECT count(*) FROM coverage_claims")[0] == 4
         assert {
             (row["coverage_state"], row["observed_at_us"])
@@ -260,7 +265,7 @@ def test_unverified_imported_oid_needs_actual_bytes_before_admission(tmp_path):
             )[0]
             == 1
         )
-        assert store.one("SELECT raw_text FROM contents")[0] == "abc"
+        assert store.one("SELECT raw_text FROM current_git_text_facts")[0] == "abc"
 
 
 def test_unknown_provider_binding_admits_one_proven_identity(tmp_path):
