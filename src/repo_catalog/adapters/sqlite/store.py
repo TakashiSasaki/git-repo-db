@@ -114,7 +114,7 @@ class Store:
             self.connection.close()
             raise CatalogError(
                 "SCHEMA_ERROR",
-                "Catalog3 is required; salvage v2 into a new state directory with import-v2",
+                "Current catalog format is required; initialize a new state directory",
             ) from cause
         except BaseException:
             self.connection.close()
@@ -134,7 +134,7 @@ class Store:
         ):
             raise CatalogError(
                 "SCHEMA_ERROR",
-                "Unsupported catalog format; reimport preserved v2 input into a new catalog",
+                "Unsupported catalog format; initialize a new catalog",
             )
         # Derived FTS/statistics do not affect identity. Structural verification is
         # explicit doctor/db-check work, not a full schema/archive audit per query.
@@ -143,7 +143,7 @@ class Store:
         ):
             raise CatalogError(
                 "TARGET_NOT_READY",
-                "Complete import and run db finalize before ordinary use",
+                "Catalog publication is incomplete",
                 {"lifecycle": row["lifecycle"]},
             )
 
@@ -191,7 +191,7 @@ class Store:
     def migrate(self):
         raise CatalogError(
             "SCHEMA_ERROR",
-            "Catalog3 initializes directly; use import-v2 for offline salvage",
+            "Catalogs initialize directly; schema migration is not supported",
         )
 
     def coverage(

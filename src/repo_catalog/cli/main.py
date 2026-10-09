@@ -42,6 +42,10 @@ def parser():
             select = child.add_mutually_exclusive_group(required=True)
             select.add_argument("--path")
             select.add_argument("--path-b64")
+        if action in ("pr", "search"):
+            child.add_argument(
+                "--observations", choices=("current", "all"), default="current"
+            )
         if action == "pr":
             child.add_argument(
                 "--provider-change-request-number", required=True, type=int
@@ -62,14 +66,12 @@ def parser():
     init.add_argument("--cache-max-bytes", required=True, type=int)
     init.add_argument("--min-free-bytes", required=True, type=int)
     commands.add_parser("doctor")
-    importer = commands.add_parser("import-v2")
-    importer.add_argument("--source", required=True)
-    importer.add_argument("--source-cache", action="append", default=[])
-    importer.add_argument("--batch-size", type=int, default=100)
-    importer.add_argument("--max-batches", type=int)
     sources = commands.add_parser("sources").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
+    configure = sources.add_parser("configure")
+    configure.add_argument("--source", required=True)
+    configure.add_argument("--input", required=True)
     source = sources.add_parser("add")
     source.add_argument("kind", choices=("github", "local-git", "git-url"))
     source.add_argument("--owner")
@@ -195,6 +197,7 @@ def parser():
                     )
                 child.add_argument("--provider-change-request-document-id")
                 child.add_argument("--document-kind")
+                child.add_argument("--parser-profile")
                 child.add_argument("--observation", type=int)
                 child.add_argument(
                     "--document-observations",
@@ -245,6 +248,7 @@ def parser():
             child.add_argument("--digest", required=True)
             child.add_argument("--byte-length", type=int)
         if kind == "pr":
+            child.add_argument("--parser-profile")
             child.add_argument("--provider-change-request-document-id")
             child.add_argument("--observation", type=int)
             child.add_argument(
@@ -289,8 +293,11 @@ def parser():
     db = commands.add_parser("db").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
-    db.add_parser("finalize")
     db.add_parser("check").add_argument("--full", action="store_true")
+    db.add_parser("verify-payloads")
+    repair = db.add_parser("repair-payload")
+    repair.add_argument("--sha256", required=True)
+    repair.add_argument("--input", required=True)
     db.add_parser("backup").add_argument("--output", required=True)
     db.add_parser("restore").add_argument("--input", required=True)
     index = commands.add_parser("index").add_subparsers(
@@ -299,6 +306,41 @@ def parser():
     index.add_parser("rebuild").add_argument(
         "--kind", choices=("code", "pr", "commits", "all"), default="all"
     )
+    identities = commands.add_parser("identity").add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    for action in ("relation", "cancellation"):
+        identities.add_parser(action).add_argument("--input", required=True)
+    identities.add_parser("status")
+    exchange = commands.add_parser("exchange").add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    export = exchange.add_parser("export")
+    export.add_argument("--repo", required=True)
+    export.add_argument("--output", required=True)
+    exchange.add_parser("import").add_argument("--input", required=True)
+    exchange.add_parser("staging")
+    profiles = commands.add_parser("parser").add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    reparse = profiles.add_parser("reparse")
+    reparse.add_argument("fetch_occurrence_uuidv4")
+    reparse.add_argument("--select", action="store_true")
+    for action in (
+        "register",
+        "verify",
+        "select-profile",
+        "select-fact",
+        "admit-decision",
+    ):
+        profiles.add_parser(action).add_argument("--input", required=True)
+    trust = profiles.add_parser("trust")
+    trust.add_argument("verification_uuidv4")
+    trust.add_argument("--revoke", action="store_true")
+    invalidate = profiles.add_parser("invalidate")
+    invalidate.add_argument("verification_uuidv4")
+    invalidate.add_argument("--reason", required=True)
+    profiles.add_parser("status")
     return p
 
 
@@ -324,28 +366,6 @@ def dispatch(args, token):
             offset=args.offset,
             timeout=args.timeout_seconds,
         )
-    if args.command == "import-v2":
-        from repo_catalog.application.import_service import import_catalog
-        from repo_catalog.domain.models import CoverageReport, Result
-
-        if not args.state_dir:
-            raise CatalogError(
-                "INVALID_ARGUMENT", "import-v2 requires an explicit new --state-dir"
-            )
-        report = import_catalog(
-            args.source,
-            state_path(args.state_dir),
-            source_caches=args.source_cache,
-            batch_size=args.batch_size,
-            max_batches=args.max_batches,
-            token=token,
-        )
-        coverage = CoverageReport()
-        if not report.get("complete"):
-            coverage.add("import", "import_incomplete")
-        return Result(
-            report, coverage, status="complete" if report.get("complete") else "partial"
-        )
     if args.command == "db" and args.action == "restore" and not args.state_dir:
         raise CatalogError(
             "INVALID_ARGUMENT", "Restore requires an explicit new --state-dir"
@@ -357,6 +377,10 @@ def dispatch(args, token):
     if args.command == "doctor":
         return maintenance.doctor()
     if args.command == "sources":
+        if args.action == "configure":
+            from repo_catalog.application.source_service import configure_source
+
+            return configure_source(path, args.source, args.input)
         overrides = {}
         for value in args.clone_url_override:
             key, sep, url = value.partition("=")
@@ -428,6 +452,23 @@ def dispatch(args, token):
             return Result(
                 {"job_id": args.job_id, "state": "cancelled"}, catalog=s.revision()
             )
+    if args.command == "identity":
+        from repo_catalog.application.identity_service import identity_action
+
+        return identity_action(path, args.action, getattr(args, "input", None))
+    if args.command == "exchange":
+        from repo_catalog.application.exchange_service import ExchangeService
+
+        exchange = ExchangeService(path)
+        if args.action == "export":
+            return exchange.export_repository(args.repo, args.output)
+        if args.action == "import":
+            return exchange.import_file(args.input)
+        return exchange.staging()
+    if args.command == "parser":
+        from repo_catalog.application.parser_service import ParserService
+
+        return ParserService(path).execute(args.action, vars(args))
     if args.command == "db":
         return maintenance.database(args.action, args)
     if args.command == "cache" and args.action == "gc":

@@ -18,17 +18,20 @@ def store(tmp_path):
     with Store(state) as saved:
         with saved.transaction():
             namespace = add_instance(saved, "github", "synthetic")
-            for repository_uuidv4 in ("repo", "shared-id"):
+            for repository_uuidv4 in (
+                "00000000-0000-4000-8000-000000000301",
+                "00000000-0000-4000-8000-000000000302",
+            ):
                 saved.execute(
                     "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,?,'{}')",
                     (repository_uuidv4, repository_uuidv4),
                 )
-            bind(saved, "repo", namespace, "1")
+            bind(saved, "00000000-0000-4000-8000-000000000301", namespace, "1")
             binding = saved.one(
-                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='00000000-0000-4000-8000-000000000301'"
             )[0]
             saved.execute(
-                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('shared-id','repo',?,'pull_request',1)",
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('00000000-0000-4000-8000-000000000302','00000000-0000-4000-8000-000000000301',?,'pull_request',1)",
                 (binding,),
             )
         yield saved
@@ -37,18 +40,30 @@ def store(tmp_path):
 
 
 def test_repository_and_pr_claims_with_equal_ids_keep_their_explicit_owners(store):
-    repository_claim = store.coverage("shared-id", "git", "complete", observed_at_us=1)
-    pr_claim = store.coverage(
-        "repo", "git", "partial", change_request_id="shared-id", observed_at_us=1
+    repository_claim = store.coverage(
+        "00000000-0000-4000-8000-000000000302", "git", "complete", observed_at_us=1
     )
-    repository_scope = current_coverages(store.connection, "shared-id")[0]
-    pr_scope = current_coverages(store.connection, "repo")[0]
-    assert repository_scope["repository_uuidv4"] == "shared-id"
+    pr_claim = store.coverage(
+        "00000000-0000-4000-8000-000000000301",
+        "git",
+        "partial",
+        change_request_id="00000000-0000-4000-8000-000000000302",
+        observed_at_us=1,
+    )
+    repository_scope = current_coverages(
+        store.connection, "00000000-0000-4000-8000-000000000302"
+    )[0]
+    pr_scope = current_coverages(
+        store.connection, "00000000-0000-4000-8000-000000000301"
+    )[0]
+    assert (
+        repository_scope["repository_uuidv4"] == "00000000-0000-4000-8000-000000000302"
+    )
     assert repository_scope["change_request_id"] is None
     assert repository_scope["coverage_state"] == "complete"
     assert repository_scope["claims"][0]["coverage_claim_id"] == repository_claim
-    assert pr_scope["repository_uuidv4"] == "repo"
-    assert pr_scope["change_request_id"] == "shared-id"
+    assert pr_scope["repository_uuidv4"] == "00000000-0000-4000-8000-000000000301"
+    assert pr_scope["change_request_id"] == "00000000-0000-4000-8000-000000000302"
     assert pr_scope["coverage_state"] == "partial"
     assert pr_scope["claims"][0]["coverage_claim_id"] == pr_claim
 
@@ -56,9 +71,12 @@ def test_repository_and_pr_claims_with_equal_ids_keep_their_explicit_owners(stor
 @pytest.mark.parametrize(
     "repository_uuidv4,change_request_id",
     [
-        ("shared-id", "shared-id"),
-        ("repo", "absent-pr"),
-        ("absent-repository", "shared-id"),
+        (
+            "00000000-0000-4000-8000-000000000302",
+            "00000000-0000-4000-8000-000000000302",
+        ),
+        ("00000000-0000-4000-8000-000000000301", "absent-pr"),
+        ("absent-repository", "00000000-0000-4000-8000-000000000302"),
         ("absent-repository", None),
     ],
 )
@@ -86,32 +104,32 @@ def test_explicit_owner_admission_preserves_original_details_and_caller_rollback
     original = '{ "observed": "first", "spacing": true }'
     with store.transaction():
         first = store.coverage(
-            "repo",
+            "00000000-0000-4000-8000-000000000301",
             "git",
             "complete",
             original,
-            change_request_id="shared-id",
+            change_request_id="00000000-0000-4000-8000-000000000302",
             observed_at_us=10,
         )
         before = store.connection.total_changes
         assert (
             store.coverage(
-                "repo",
+                "00000000-0000-4000-8000-000000000301",
                 "git",
                 "complete",
                 '{"ignored":true}',
-                change_request_id="shared-id",
+                change_request_id="00000000-0000-4000-8000-000000000302",
                 observed_at_us=10,
             )
             is None
         )
         assert (
             store.coverage(
-                "repo",
+                "00000000-0000-4000-8000-000000000301",
                 "git",
                 "partial",
                 '{"stale":true}',
-                change_request_id="shared-id",
+                change_request_id="00000000-0000-4000-8000-000000000302",
                 observed_at_us=9,
             )
             is None
@@ -127,33 +145,43 @@ def test_explicit_owner_admission_preserves_original_details_and_caller_rollback
     before_rollback = [tuple(row) for row in store.all("SELECT * FROM coverage_claims")]
     with pytest.raises(RuntimeError, match="rollback"):
         with store.transaction():
-            store.coverage("shared-id", "git", "complete", observed_at_us=10)
             store.coverage(
-                "repo",
+                "00000000-0000-4000-8000-000000000302",
+                "git",
+                "complete",
+                observed_at_us=10,
+            )
+            store.coverage(
+                "00000000-0000-4000-8000-000000000301",
                 "git",
                 "partial",
-                change_request_id="shared-id",
+                change_request_id="00000000-0000-4000-8000-000000000302",
                 observed_at_us=10,
             )
             raise RuntimeError("rollback")
     assert [
         tuple(row) for row in store.all("SELECT * FROM coverage_claims")
     ] == before_rollback
-    assert current_coverages(store.connection, "shared-id") == []
+    assert (
+        current_coverages(store.connection, "00000000-0000-4000-8000-000000000302")
+        == []
+    )
 
 
 def test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection(store):
     assert store.one("PRAGMA recursive_triggers")[0] == 1
     with store.transaction():
         store.execute(
-            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('scope','repo','git')"
+            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('scope','00000000-0000-4000-8000-000000000301','git')"
         )
         original = '{ "source": "explicit negative ID" }'
         store.execute(
             "INSERT INTO coverage_claims(coverage_claim_id,coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(-1,'scope','complete',1,?)",
             (original,),
         )
-        second = store.coverage("repo", "git", "partial", observed_at_us=1)
+        second = store.coverage(
+            "00000000-0000-4000-8000-000000000301", "git", "partial", observed_at_us=1
+        )
         assert second is not None and second != -1
         with pytest.raises(sqlite3.IntegrityError):
             store.execute(
@@ -166,5 +194,8 @@ def test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection(st
             == original
         )
     assert (
-        current_coverages(store.connection, "repo")[0]["coverage_state"] == "conflict"
+        current_coverages(store.connection, "00000000-0000-4000-8000-000000000301")[0][
+            "coverage_state"
+        ]
+        == "conflict"
     )

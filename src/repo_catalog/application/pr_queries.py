@@ -24,7 +24,7 @@ def pr_state(payload):
 
 def _coverage(query, pr, documents_only):
     s = query.s
-    if pr["current_change_request_observation_id"] is None:
+    if pr["change_request_observation_id"] is None:
         query.coverage.add(
             "pr",
             "current_selection_unresolved",
@@ -66,7 +66,7 @@ def _coverage(query, pr, documents_only):
             )
 
     for row in s.execute(
-        "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) has_observation FROM documents d WHERE d.change_request_id=? AND d.current_document_observation_id IS NULL",
+        "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) has_observation FROM documents d LEFT JOIN current_document_observations selected USING(change_request_id,kind,provider_change_request_document_id) WHERE d.change_request_id=? AND selected.document_observation_id IS NULL",
         (pr["change_request_id"],),
     ):
         query.check()
@@ -147,7 +147,7 @@ def _scope_rows(query, command, o):
         conditions.append(f"p.{column}=?")
         values.append(value)
     rows = s.execute(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_uuidv4=p.repository_uuidv4 LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) WHERE "
+        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id,obs.change_request_observation_uuidv4,obs.parsed_result_uuidv4,profile.parser_profile_uuidv4 FROM change_requests p JOIN repositories r ON r.repository_uuidv4=p.repository_uuidv4 LEFT JOIN current_change_request_observations obs ON obs.change_request_id=p.change_request_id LEFT JOIN parsed_results profile ON profile.parsed_result_uuidv4=obs.parsed_result_uuidv4 WHERE "
         + " AND ".join(conditions)
         + " ORDER BY p.repository_uuidv4,p.provider_change_request_number,p.change_request_id",
         values,
@@ -168,12 +168,23 @@ def _scope_rows(query, command, o):
 def _selected_thread(query, rows, o):
     request = next(iter(rows))
     thread = query.s.one(
-        "SELECT * FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+        "SELECT * FROM current_review_thread_observations WHERE change_request_id=? AND provider_resource_id=?",
         (request["change_request_id"], o["provider_resource_id"]),
     )
     if not thread:
-        raise CatalogError(
-            "NOT_FOUND", "Review thread not found in selected change request"
+        identity = query.s.one(
+            "SELECT * FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
+            (request["change_request_id"], o["provider_resource_id"]),
+        )
+        if identity is None:
+            raise CatalogError(
+                "NOT_FOUND", "Review thread not found in selected change request"
+            )
+        query.coverage.add(
+            "pr",
+            "thread_current_selection_unresolved",
+            change_request_id=request["change_request_id"],
+            provider_resource_id=o["provider_resource_id"],
         )
     return request, thread
 
@@ -203,7 +214,7 @@ def _matches_pr_filters(query, pr, payload, state, o):
         return False
     if o.get("reviewer"):
         for row in query.s.execute(
-            "SELECT payload FROM reviews WHERE change_request_id=?",
+            "SELECT metadata FROM current_document_observations WHERE change_request_id=? AND kind='review' AND deleted=0",
             (pr["change_request_id"],),
         ):
             query.check()
@@ -216,7 +227,7 @@ def _matches_pr_filters(query, pr, payload, state, o):
 
 def _code_observation(query, pr):
     return query.s.one(
-        "SELECT * FROM code_observations WHERE change_request_id=? AND change_request_observation_id=? ORDER BY code_observation_id DESC LIMIT 1",
+        "SELECT * FROM current_code_observations WHERE change_request_id=? AND change_request_observation_id=?",
         (pr["change_request_id"], pr["change_request_observation_id"]),
     )
 
@@ -250,6 +261,21 @@ def _code_coverage(query, pr, payload):
     else:
         for gap in code_role_gaps(query.s, pr, code, check=query.check):
             query.coverage.add("pr", **gap)
+    if code is not None:
+        for scope in query.s.execute(
+            "SELECT scope.fact_selection_scope_uuidv4 FROM fact_selection_scopes scope "
+            "JOIN fetch_occurrences input ON input.fetch_occurrence_uuidv4=scope.fetch_occurrence_uuidv4 "
+            "JOIN code_listings listing ON listing.fetch_collection_id=input.fetch_collection_id "
+            "LEFT JOIN active_fact_selections active USING(fact_selection_scope_uuidv4) "
+            "WHERE scope.change_request_id=? AND scope.fact_kind='code' "
+            "AND listing.code_listing_id IN (?,?) AND active.fact_selection_decision_uuidv4 IS NULL",
+            (
+                pr["change_request_id"],
+                code["commit_code_listing_id"],
+                code["file_code_listing_id"],
+            ),
+        ):
+            query.coverage.add("pr", "code_page_selection_unresolved", **dict(scope))
 
 
 def code_role_gaps(store, pr, code, *, check):
@@ -309,7 +335,7 @@ def code_role_gaps(store, pr, code, *, check):
 
 
 def _thread_root(query, request, thread):
-    """Find the latest observed root or selected child's owning root.
+    """Read acquisition-boundary evidence; this never selects normalized facts.
 
     A resumed child can be newer than a subsequently started root. Failed
     requests without resource data do not supersede saved semantic evidence.
@@ -330,6 +356,7 @@ def _thread_root(query, request, thread):
         "AND (member.kind='threads' OR (member.kind='thread-comments' "
         "AND json_extract(scope.request_context,'$.thread')=?)) "
         "AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 "
+        "AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=o.payload_sha256) "
         "ORDER BY o.observed_at_us DESC,o.fetch_occurrence_id DESC",
         (request["change_request_id"], thread["provider_resource_id"]),
     ):
@@ -365,6 +392,7 @@ def _thread_listing_complete(query, request, thread):
         "SELECT o.fetch_occurrence_id,o.request,b.body FROM fetch_occurrences o "
         "JOIN stored_bytes b ON b.sha256=o.payload_sha256 "
         "WHERE o.fetch_collection_id=? "
+        "AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=o.payload_sha256) "
         "ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC",
         (root["fetch_collection_id"],),
     ):
@@ -410,10 +438,9 @@ def _thread_listing_complete(query, request, thread):
         saved = {
             row[0]
             for row in s.execute(
-                "SELECT o.provider_change_request_document_id FROM document_observations o "
-                "JOIN review_comments c USING(change_request_id,kind,provider_change_request_document_id) "
+                "SELECT o.provider_change_request_document_id FROM eligible_document_observations o "
                 "WHERE o.fetch_occurrence_id=? AND o.change_request_id=? "
-                "AND o.kind='review-comment' AND c.review_thread_provider_resource_id=?",
+                "AND o.kind='review-comment' AND o.review_thread_provider_resource_id=?",
                 (
                     page["fetch_occurrence_id"],
                     request["change_request_id"],
@@ -465,6 +492,8 @@ def prepare_pr_coverage(query, command, o):
     rows = _scope_rows(query, command, o)
     if command == "pr thread":
         request, thread = _selected_thread(query, rows, o)
+        if thread is None:
+            return
         if not _thread_listing_complete(query, request, thread):
             query.coverage.add(
                 "pr",
@@ -472,19 +501,45 @@ def prepare_pr_coverage(query, command, o):
                 change_request_id=request["change_request_id"],
                 provider_resource_id=thread["provider_resource_id"],
             )
-        for row in s.execute(
-            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations obs ON obs.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=obs.text_body_sha256 WHERE rc.change_request_id=? AND rc.review_thread_provider_resource_id=? AND b.sha256 IS NULL ORDER BY d.kind,d.provider_change_request_document_id",
-            (request["change_request_id"], thread["provider_resource_id"]),
-        ):
-            query.check()
+        missing = {
+            row[0]
+            for row in s.execute(
+                "SELECT d.provider_change_request_document_id FROM documents d "
+                "WHERE d.change_request_id=? AND d.kind='review-comment' "
+                "AND EXISTS(SELECT 1 FROM eligible_document_observations history "
+                "WHERE history.change_request_id=d.change_request_id AND history.kind=d.kind "
+                "AND history.provider_change_request_document_id=d.provider_change_request_document_id "
+                "AND history.review_thread_provider_resource_id=?) "
+                "AND NOT EXISTS(SELECT 1 FROM current_document_observations selected "
+                "WHERE selected.change_request_id=d.change_request_id AND selected.kind=d.kind "
+                "AND selected.provider_change_request_document_id=d.provider_change_request_document_id)",
+                (request["change_request_id"], thread["provider_resource_id"]),
+            )
+        }
+        comments = json.loads(thread["payload"]).get("comments")
+        if isinstance(comments, dict) and isinstance(comments.get("nodes"), list):
+            for comment in comments["nodes"]:
+                query.check()
+                provider = (
+                    comment.get("fullDatabaseId") if isinstance(comment, dict) else None
+                )
+                if type(provider) not in (int, str):
+                    continue
+                if s.one(
+                    "SELECT 1 FROM documents d WHERE change_request_id=? AND kind='review-comment' "
+                    "AND provider_change_request_document_id=? AND NOT EXISTS(SELECT 1 FROM "
+                    "current_document_observations selected WHERE selected.change_request_id=d.change_request_id "
+                    "AND selected.kind=d.kind AND selected.provider_change_request_document_id=d.provider_change_request_document_id)",
+                    (request["change_request_id"], str(provider)),
+                ):
+                    missing.add(str(provider))
+        for provider in sorted(missing):
             query.coverage.add(
                 "pr",
                 "document_body_missing",
-                change_request_id=row["change_request_id"],
-                document_kind=row["kind"],
-                provider_change_request_document_id=row[
-                    "provider_change_request_document_id"
-                ],
+                change_request_id=request["change_request_id"],
+                document_kind="review-comment",
+                provider_change_request_document_id=provider,
             )
         return
     _, _, documents_only = _query_filters(query, command, o)
@@ -509,6 +564,17 @@ def prepare_pr_coverage(query, command, o):
     for pr in rows:
         query.check()
         _coverage(query, pr, documents_only)
+        if command == "pr timeline":
+            for scope in s.execute(
+                "SELECT scope.fact_selection_scope_uuidv4 FROM fact_selection_scopes scope "
+                "LEFT JOIN active_fact_selections active USING(fact_selection_scope_uuidv4) "
+                "WHERE scope.change_request_id=? AND scope.fact_kind='events' "
+                "AND active.fact_selection_decision_uuidv4 IS NULL",
+                (pr["change_request_id"],),
+            ):
+                query.coverage.add(
+                    "pr", "event_page_selection_unresolved", **dict(scope)
+                )
         if documents_only:
             continue
         payload = json.loads(pr["payload"] or "{}")
@@ -520,9 +586,46 @@ def pr_query(query, command, options):
     rows = _scope_rows(query, command, o)
     if command == "pr thread":
         request, thread = _selected_thread(query, rows, o)
-        for row in s.execute(
-            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,o.document_observation_id,b.body,rc.payload FROM review_comments rc JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN document_observations o ON o.document_observation_id=d.current_document_observation_id LEFT JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE rc.change_request_id=? AND rc.review_thread_provider_resource_id=? ORDER BY d.kind,d.provider_change_request_document_id",
-            (request["change_request_id"], thread["provider_resource_id"]),
+        if thread is None:
+            return
+        documents = list(
+            s.execute(
+                "SELECT o.change_request_id,o.kind,o.provider_change_request_document_id,o.document_observation_id,o.parsed_result_uuidv4,b.body,o.metadata payload FROM current_document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.change_request_id=? AND o.review_thread_provider_resource_id=? AND o.deleted=0 ORDER BY o.kind,o.provider_change_request_document_id",
+                (request["change_request_id"], thread["provider_resource_id"]),
+            )
+        )
+        saved = {row["provider_change_request_document_id"] for row in documents}
+        comments = json.loads(thread["payload"]).get("comments")
+        if isinstance(comments, dict) and isinstance(comments.get("nodes"), list):
+            for comment in comments["nodes"]:
+                provider = (
+                    comment.get("fullDatabaseId") if isinstance(comment, dict) else None
+                )
+                if type(provider) not in (int, str) or str(provider) in saved:
+                    continue
+                key = (request["change_request_id"], "review-comment", str(provider))
+                if s.one(
+                    "SELECT 1 FROM documents WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
+                    key,
+                ):
+                    documents.append(
+                        {
+                            "change_request_id": key[0],
+                            "kind": key[1],
+                            "provider_change_request_document_id": key[2],
+                            "document_observation_id": None,
+                            "parsed_result_uuidv4": None,
+                            "body": None,
+                            "payload": "{}",
+                        }
+                    )
+                    saved.add(str(provider))
+        for row in sorted(
+            documents,
+            key=lambda item: (
+                item["kind"],
+                item["provider_change_request_document_id"],
+            ),
         ):
             query.check()
             key = DocumentKey(
@@ -537,6 +640,8 @@ def pr_query(query, command, options):
                     "document_kind": key.kind,
                     "provider_change_request_document_id": key.provider_change_request_document_id,
                     "document_observation_id": row["document_observation_id"],
+                    "parsed_result_uuidv4": row["parsed_result_uuidv4"],
+                    "thread_parsed_result_uuidv4": thread["parsed_result_uuidv4"],
                     "body": row["body"],
                     "review_thread_provider_resource_id": thread[
                         "provider_resource_id"
@@ -557,14 +662,14 @@ def pr_query(query, command, options):
         if o.get("commit"):
             oid = GitOid.parse(o["commit"])
             if not code or not s.one(
-                "SELECT 1 FROM code_commits WHERE code_listing_id=? AND object_format=? AND oid=?",
+                "SELECT 1 FROM current_code_commits WHERE code_listing_id=? AND object_format=? AND oid=?",
                 (code["commit_code_listing_id"], oid.algorithm, oid.value),
             ):
                 continue
         if path is not None:
             changes = (
                 s.all(
-                    "SELECT raw_path FROM code_file_changes WHERE code_listing_id=?",
+                    "SELECT raw_path FROM current_code_file_changes WHERE code_listing_id=?",
                     (code["file_code_listing_id"],),
                 )
                 if code
@@ -588,7 +693,12 @@ def pr_query(query, command, options):
             "pr_id": pr["change_request_id"],
             "change_request_id": pr["change_request_id"],
             "repository_binding_id": pr["repository_binding_id"],
-            "current_selected": pr["current_change_request_observation_id"] is not None,
+            "current_selected": pr["change_request_observation_id"] is not None,
+            "change_request_observation_uuidv4": pr[
+                "change_request_observation_uuidv4"
+            ],
+            "change_request_parsed_result_uuidv4": pr["parsed_result_uuidv4"],
+            "change_request_parser_profile_uuidv4": pr["parser_profile_uuidv4"],
             "state": state,
             "observed_at_us": pr["observed_at_us"],
             "url": payload.get("html_url"),
@@ -620,7 +730,7 @@ def pr_query(query, command, options):
                     [
                         json.loads(r[0])
                         for r in s.all(
-                            "SELECT payload FROM code_commits WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
+                            "SELECT payload FROM current_code_commits WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
                             (code["commit_code_listing_id"],),
                         )
                     ]
@@ -631,7 +741,7 @@ def pr_query(query, command, options):
                     [
                         json.loads(r[0])
                         for r in s.all(
-                            "SELECT payload FROM code_file_changes WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
+                            "SELECT payload FROM current_code_file_changes WHERE code_listing_id=? ORDER BY fetch_occurrence_id,position",
                             (code["file_code_listing_id"],),
                         )
                     ]
@@ -641,7 +751,7 @@ def pr_query(query, command, options):
                 item["observations"] = [
                     dict(r)
                     for r in s.all(
-                        "SELECT change_request_observation_id,observed_at_us FROM change_request_observations WHERE change_request_id=? ORDER BY change_request_observation_id",
+                        "SELECT o.change_request_observation_id,o.observed_at_us,o.parsed_result_uuidv4,r.parser_profile_uuidv4 FROM change_request_observations o JOIN usable_parsed_results r USING(parsed_result_uuidv4) WHERE o.change_request_id=? ORDER BY o.change_request_observation_id",
                         (pr["change_request_id"],),
                     )
                 ]
@@ -655,7 +765,7 @@ def pr_query(query, command, options):
             )
         elif command == "pr timeline":
             for event in s.all(
-                "SELECT * FROM change_request_events WHERE change_request_id=? ORDER BY ordinal,change_request_event_id",
+                "SELECT * FROM current_change_request_events WHERE change_request_id=? ORDER BY ordinal,change_request_event_id",
                 (pr["change_request_id"],),
             ):
                 yield (
@@ -667,6 +777,10 @@ def pr_query(query, command, options):
                     {
                         **base,
                         "event_id": event["change_request_event_id"],
+                        "change_request_event_uuidv4": event[
+                            "change_request_event_uuidv4"
+                        ],
+                        "parsed_result_uuidv4": event["parsed_result_uuidv4"],
                         "provider_event_id": event["provider_event_id"],
                         "observed_at_us": event["observed_at_us"],
                         "payload": json.loads(event["payload"]),
@@ -679,15 +793,24 @@ def pr_query(query, command, options):
                 (o["observation"], pr["change_request_id"]),
             ):
                 raise CatalogError("NOT_FOUND", "Document observation not found in PR")
+            current = selection == "current" and not o.get("observation")
+            table = (
+                "current_document_observations" if current else "document_observations"
+            )
             docs = s.execute(
-                "SELECT d.*,obs.document_observation_id,obs.text_body_sha256,obs.observed_at_us document_observed_at_us,obs.parsed_at_us document_parsed_at_us,obs.origin_key,obs.fetch_occurrence_id,obs.metadata observation_metadata,b.body FROM documents d JOIN document_observations obs USING(change_request_id,kind,provider_change_request_document_id) JOIN text_bodies b ON b.sha256=obs.text_body_sha256 WHERE d.change_request_id=?"
-                + (
-                    " AND obs.document_observation_id=d.current_document_observation_id AND d.deleted=0"
-                    if selection == "current" and not o.get("observation")
-                    else ""
-                )
-                + " ORDER BY d.kind,d.provider_change_request_document_id,obs.document_observation_id",
-                (pr["change_request_id"],),
+                f"SELECT obs.*,obs.observed_at_us document_observed_at_us,"
+                "obs.parsed_at_us document_parsed_at_us,obs.metadata observation_metadata,"
+                "r.parser_profile_uuidv4,b.body,"
+                "EXISTS(SELECT 1 FROM current_document_observations c "
+                "WHERE c.document_observation_id=obs.document_observation_id) current_selected "
+                f"FROM {table} obs JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
+                "JOIN text_bodies b ON b.sha256=obs.text_body_sha256 "
+                "WHERE obs.change_request_id=?"
+                + (" AND obs.deleted=0" if current else "")
+                + (" AND r.parser_profile_uuidv4=?" if o.get("parser_profile") else "")
+                + " ORDER BY obs.kind,obs.provider_change_request_document_id,obs.document_observation_id",
+                (pr["change_request_id"],)
+                + ((o["parser_profile"],) if o.get("parser_profile") else ()),
             )
             for doc in docs:
                 query.check()
@@ -710,27 +833,31 @@ def pr_query(query, command, options):
                     doc["provider_change_request_document_id"],
                 )
                 meta = json.loads(doc["observation_metadata"])
-                comment = s.one(
-                    "SELECT review_thread_provider_resource_id,payload FROM review_comments WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
-                    key,
-                )
-                review_thread_provider_resource_id = (
-                    comment["review_thread_provider_resource_id"]
-                    if comment
-                    else meta.get("review_thread_provider_resource_id")
-                )
-                thread = (
-                    s.one(
-                        "SELECT payload FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
-                        (
-                            doc["change_request_id"],
-                            review_thread_provider_resource_id,
-                        ),
-                    )
-                    if review_thread_provider_resource_id
-                    else None
-                )
-                thread_payload = json.loads(thread[0]) if thread else {}
+                review_thread_provider_resource_id = doc[
+                    "review_thread_provider_resource_id"
+                ]
+                thread = None
+                if review_thread_provider_resource_id:
+                    if current:
+                        thread = s.one(
+                            "SELECT payload,parsed_result_uuidv4 FROM current_review_thread_observations WHERE change_request_id=? AND provider_resource_id=?",
+                            (
+                                doc["change_request_id"],
+                                review_thread_provider_resource_id,
+                            ),
+                        )
+                    else:
+                        # Historical projections do not attach a current thread
+                        # interpretation from an unrelated parsing execution.
+                        thread = s.one(
+                            "SELECT payload,parsed_result_uuidv4 FROM review_thread_observations WHERE change_request_id=? AND provider_resource_id=? AND parsed_result_uuidv4=?",
+                            (
+                                doc["change_request_id"],
+                                review_thread_provider_resource_id,
+                                doc["parsed_result_uuidv4"],
+                            ),
+                        )
+                thread_payload = json.loads(thread["payload"]) if thread else {}
                 if any(
                     o.get(option, "any") != "any"
                     and thread_payload.get(field) is not (o[option] == "true")
@@ -757,11 +884,15 @@ def pr_query(query, command, options):
                         "document_kind": key.kind,
                         "provider_change_request_document_id": key.provider_change_request_document_id,
                         "document_observation_id": doc["document_observation_id"],
+                        "document_observation_uuidv4": doc[
+                            "document_observation_uuidv4"
+                        ],
                         "text_body_sha256": digest,
                         "document_observed_at_us": doc["document_observed_at_us"],
                         "document_parsed_at_us": doc["document_parsed_at_us"],
-                        "document_current_selected": doc["document_observation_id"]
-                        == doc["current_document_observation_id"],
+                        "document_current_selected": bool(doc["current_selected"]),
+                        "parsed_result_uuidv4": doc["parsed_result_uuidv4"],
+                        "parser_profile_uuidv4": doc["parser_profile_uuidv4"],
                         "origin_key": doc["origin_key"],
                         "fetch_occurrence_id": doc["fetch_occurrence_id"],
                         "author": doc["author"],
@@ -769,9 +900,12 @@ def pr_query(query, command, options):
                         "body": doc["body"],
                         "metadata": meta,
                         "thread": thread_payload or None,
+                        "thread_parsed_result_uuidv4": thread["parsed_result_uuidv4"]
+                        if thread
+                        else None,
                         **(
-                            {"review_position": json.loads(comment["payload"])}
-                            if comment
+                            {"review_position": meta}
+                            if doc["kind"] == "review-comment"
                             else {}
                         ),
                     },

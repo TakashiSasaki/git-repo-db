@@ -9,7 +9,7 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=11),
+    schema_version INTEGER NOT NULL CHECK(schema_version=12),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
@@ -29,17 +29,18 @@ service_instance_uuidv4 TEXT PRIMARY KEY CHECK(
     created_at_us INTEGER
 ) STRICT;
 CREATE TABLE sources(
+
 source_id TEXT PRIMARY KEY, source_registration_uuidv4 TEXT NOT NULL UNIQUE CHECK(length(source_registration_uuidv4)=36 AND length(CAST(source_registration_uuidv4 AS BLOB))=36 AND substr(source_registration_uuidv4,9,1)='-' AND substr(source_registration_uuidv4,14,1)='-' AND substr(source_registration_uuidv4,19,1)='-' AND substr(source_registration_uuidv4,24,1)='-' AND length(replace(source_registration_uuidv4,'-',''))=32 AND replace(source_registration_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(source_registration_uuidv4,15,1)='4' AND substr(source_registration_uuidv4,20,1) IN ('8','9','a','b')), service_instance_uuidv4 TEXT REFERENCES service_instances(service_instance_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT,
     discovery_kind TEXT NOT NULL CHECK(discovery_kind IN ('manual_git','github_inventory')),
     name TEXT NOT NULL,
-    settings TEXT CHECK(settings IS NULL OR (json_valid(settings) AND json_type(settings)='object'))
+    settings TEXT CHECK(settings IS NULL OR (json_valid(settings) AND json_type(settings)='object')),
+UNIQUE(source_id,source_registration_uuidv4)
 ) STRICT;
 CREATE TABLE repositories(
 repository_uuidv4 TEXT PRIMARY KEY, name TEXT NOT NULL,
-    preferred_repository_endpoint_id TEXT, current_snapshot_id TEXT,
+    preferred_repository_endpoint_id TEXT,
     metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
-    FOREIGN KEY(preferred_repository_endpoint_id,repository_uuidv4) REFERENCES repository_endpoints(repository_endpoint_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED,
-    FOREIGN KEY(current_snapshot_id,repository_uuidv4) REFERENCES snapshots(snapshot_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
+    FOREIGN KEY(preferred_repository_endpoint_id,repository_uuidv4) REFERENCES repository_endpoints(repository_endpoint_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
 ) STRICT;
 CREATE TABLE repository_bindings(
 repository_binding_id TEXT PRIMARY KEY,
@@ -69,27 +70,32 @@ git_acquisition_id TEXT PRIMARY KEY,
     FOREIGN KEY(repository_endpoint_id,repository_uuidv4) REFERENCES repository_endpoints(repository_endpoint_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE snapshots(
-snapshot_id TEXT PRIMARY KEY, git_acquisition_id TEXT NOT NULL UNIQUE,
+parsed_result_uuidv4 TEXT NOT NULL,
+snapshot_id TEXT PRIMARY KEY, git_acquisition_id TEXT NOT NULL,
     repository_uuidv4 TEXT NOT NULL, published INTEGER NOT NULL CHECK(published IN (0,1)),
     generation INTEGER NOT NULL CHECK(generation>=0), created_at_us INTEGER,
     UNIQUE(snapshot_id,repository_uuidv4),
-    FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT
+    FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT,
+UNIQUE(snapshot_id,repository_uuidv4,parsed_result_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4)
 ) STRICT;
 CREATE TABLE change_requests(
 change_request_id TEXT PRIMARY KEY, repository_uuidv4 TEXT NOT NULL, repository_binding_id TEXT NOT NULL,
     change_request_kind TEXT NOT NULL CHECK(change_request_kind IN ('pull_request','merge_request')),
-    provider_change_request_number INTEGER NOT NULL CHECK(provider_change_request_number>0), current_change_request_observation_id INTEGER,
+    provider_change_request_number INTEGER NOT NULL CHECK(provider_change_request_number>0),
     UNIQUE(repository_binding_id,change_request_kind,provider_change_request_number), UNIQUE(change_request_id,repository_uuidv4),
-    FOREIGN KEY(repository_binding_id,repository_uuidv4) REFERENCES repository_bindings(repository_binding_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    FOREIGN KEY(current_change_request_observation_id,change_request_id) REFERENCES change_request_observations(change_request_observation_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
+    FOREIGN KEY(repository_binding_id,repository_uuidv4) REFERENCES repository_bindings(repository_binding_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE change_request_observations(
+change_request_observation_uuidv4 TEXT NOT NULL UNIQUE, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
+
 change_request_observation_id INTEGER PRIMARY KEY,
     change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     observed_at_us INTEGER, published INTEGER NOT NULL CHECK(published IN (0,1)),
     payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'),
     origin_key TEXT, parsed_at_us INTEGER NOT NULL, origin_fetch_occurrence_id INTEGER REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    UNIQUE(change_request_observation_id,change_request_id)
+    UNIQUE(change_request_observation_id,change_request_id),
+FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4),
+UNIQUE(parsed_result_uuidv4,change_request_id)
 ) STRICT;
 CREATE TABLE text_bodies(
 text_body_id INTEGER PRIMARY KEY, body TEXT NOT NULL,
@@ -97,18 +103,15 @@ text_body_id INTEGER PRIMARY KEY, body TEXT NOT NULL,
     sha256 BLOB NOT NULL CHECK(length(sha256)=32), UNIQUE(sha256)
 ) STRICT;
 CREATE TABLE documents(
-    change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    kind TEXT NOT NULL CHECK(length(kind)>0),
-    provider_change_request_document_id TEXT NOT NULL CHECK(length(provider_change_request_document_id)>0),
-    current_document_observation_id INTEGER,
-    deleted INTEGER NOT NULL CHECK(deleted IN (0,1)),
-    author TEXT, url TEXT,
-    metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
-    PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
-    FOREIGN KEY(current_document_observation_id,change_request_id,kind,provider_change_request_document_id) REFERENCES document_observations(document_observation_id,change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
+ change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id),
+ kind TEXT NOT NULL CHECK(length(kind)>0),
+ provider_change_request_document_id TEXT NOT NULL CHECK(length(provider_change_request_document_id)>0),
+ PRIMARY KEY(change_request_id,kind,provider_change_request_document_id)
 ) STRICT;
 
-CREATE TABLE document_observations(
+CREATE TABLE document_observations(author TEXT, url TEXT, deleted INTEGER NOT NULL DEFAULT 0 CHECK(deleted IN (0,1)), review_thread_provider_resource_id TEXT,
+document_observation_uuidv4 TEXT NOT NULL UNIQUE, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
+
     document_observation_id INTEGER PRIMARY KEY,
     change_request_id TEXT NOT NULL,
     kind TEXT NOT NULL,
@@ -119,30 +122,28 @@ CREATE TABLE document_observations(
     fetch_occurrence_id INTEGER REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
     UNIQUE(document_observation_id,change_request_id,kind,provider_change_request_document_id),
-    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4),
+UNIQUE(parsed_result_uuidv4,change_request_id,kind,provider_change_request_document_id), FOREIGN KEY(change_request_id,review_thread_provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id)
 ) STRICT;
 CREATE TABLE review_threads(
-    change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    provider_resource_id TEXT NOT NULL CHECK(length(provider_resource_id)>0),
-    payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), observed_at_us INTEGER,
-    PRIMARY KEY(change_request_id,provider_resource_id)
+ change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id),
+ provider_resource_id TEXT NOT NULL CHECK(length(provider_resource_id)>0),
+ PRIMARY KEY(change_request_id,provider_resource_id)
 ) STRICT;
 CREATE TABLE review_comments(
-    change_request_id TEXT NOT NULL,
-    kind TEXT NOT NULL,
-    provider_change_request_document_id TEXT NOT NULL,
-    review_thread_provider_resource_id TEXT,
-    payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'),
-    PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
-    CHECK(kind='review-comment'),
-    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    FOREIGN KEY(change_request_id,review_thread_provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+ change_request_id TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind='review-comment'),
+ provider_change_request_document_id TEXT NOT NULL,
+ PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
+ FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id)
 ) STRICT;
 CREATE TABLE fetch_collections(
+
 fetch_collection_id TEXT PRIMARY KEY, repository_uuidv4 TEXT NOT NULL REFERENCES repositories(repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT, change_request_id TEXT,
     source_id TEXT REFERENCES sources(source_id) ON UPDATE RESTRICT ON DELETE RESTRICT, kind TEXT NOT NULL, resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, observed_at_us INTEGER,
     UNIQUE(fetch_collection_id,change_request_id),
-    FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT
+    FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT,
+UNIQUE(fetch_collection_id,repository_uuidv4)
 ) STRICT;
 CREATE TABLE code_listings(
 code_listing_id TEXT PRIMARY KEY, change_request_id TEXT NOT NULL,
@@ -151,7 +152,8 @@ code_listing_id TEXT PRIMARY KEY, change_request_id TEXT NOT NULL,
     UNIQUE(fetch_collection_id,kind), UNIQUE(code_listing_id,change_request_id),
     FOREIGN KEY(fetch_collection_id,change_request_id) REFERENCES fetch_collections(fetch_collection_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
-CREATE TABLE code_observations(
+CREATE TABLE code_observations(code_observation_uuidv4 TEXT NOT NULL UNIQUE, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
+
 code_observation_id INTEGER PRIMARY KEY, change_request_id TEXT NOT NULL, change_request_observation_id INTEGER NOT NULL,
     commit_code_listing_id TEXT, file_code_listing_id TEXT,
     state TEXT NOT NULL CHECK(state IN ('pending','partial','complete','unknown')),
@@ -159,7 +161,8 @@ code_observation_id INTEGER PRIMARY KEY, change_request_id TEXT NOT NULL, change
     CHECK(state!='complete' OR (commit_code_listing_id IS NOT NULL AND file_code_listing_id IS NOT NULL)),
     FOREIGN KEY(change_request_observation_id,change_request_id) REFERENCES change_request_observations(change_request_observation_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     FOREIGN KEY(commit_code_listing_id,change_request_id) REFERENCES code_listings(code_listing_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-    FOREIGN KEY(file_code_listing_id,change_request_id) REFERENCES code_listings(code_listing_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+    FOREIGN KEY(file_code_listing_id,change_request_id) REFERENCES code_listings(code_listing_id,change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4)
 ) STRICT;
 CREATE TABLE acquisition_roots(
 acquisition_root_id INTEGER PRIMARY KEY, git_acquisition_id TEXT NOT NULL REFERENCES git_acquisitions(git_acquisition_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -187,11 +190,10 @@ CREATE TABLE source_repositories(
 source_id TEXT NOT NULL REFERENCES sources(source_id) ON UPDATE RESTRICT ON DELETE RESTRICT, repository_uuidv4 TEXT NOT NULL REFERENCES repositories(repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT, first_seen_us INTEGER, last_seen_us INTEGER, PRIMARY KEY(source_id,repository_uuidv4),
     CHECK(first_seen_us IS NULL OR last_seen_us IS NULL OR first_seen_us<=last_seen_us)
 ) STRICT;
-CREATE TABLE repository_name_assertions(
-repository_uuidv4 TEXT NOT NULL REFERENCES repositories(repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT, name TEXT NOT NULL, observed_at_us INTEGER, PRIMARY KEY(repository_uuidv4,name)
-) STRICT;
-CREATE TABLE inventory_observations(
-inventory_observation_id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES sources(source_id) ON UPDATE RESTRICT ON DELETE RESTRICT, asserted_state TEXT NOT NULL CHECK(asserted_state IN ('complete','partial','unknown')), scope TEXT NOT NULL CHECK(json_valid(scope) AND json_type(scope)='object'), observed_at_us INTEGER, reason TEXT
+CREATE TABLE inventory_observations(parsed_result_uuidv4 TEXT NOT NULL, source_registration_uuidv4 TEXT NOT NULL,
+
+inventory_observation_id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES sources(source_id) ON UPDATE RESTRICT ON DELETE RESTRICT, asserted_state TEXT NOT NULL CHECK(asserted_state IN ('complete','partial','unknown')), scope TEXT NOT NULL CHECK(json_valid(scope) AND json_type(scope)='object'), observed_at_us INTEGER, reason TEXT,
+FOREIGN KEY(parsed_result_uuidv4,source_registration_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,source_registration_uuidv4), FOREIGN KEY(source_id,source_registration_uuidv4) REFERENCES sources(source_id,source_registration_uuidv4)
 ) STRICT;
 CREATE TABLE jobs(
 job_id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('discover','sync','hydrate','index','legacy')), request TEXT NOT NULL CHECK(json_valid(request) AND json_type(request)='object'), current_attempt INTEGER, created_at_us INTEGER, FOREIGN KEY(job_id,current_attempt) REFERENCES job_attempts(job_id,attempt) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED
@@ -214,9 +216,11 @@ representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_norm
     sha256 BLOB NOT NULL REFERENCES stored_bytes(sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
     PRIMARY KEY(representation,sha256)
 ) STRICT;
-CREATE TABLE fetch_occurrences(
+CREATE TABLE fetch_occurrences(fetch_occurrence_uuidv4 TEXT NOT NULL UNIQUE, repository_uuidv4 TEXT NOT NULL,
+
 fetch_occurrence_id INTEGER PRIMARY KEY, fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT, ordinal INTEGER NOT NULL CHECK(ordinal>=0), payload_representation TEXT NOT NULL, payload_sha256 BLOB NOT NULL, request TEXT NOT NULL CHECK(json_valid(request) AND json_type(request)='object'), next_cursor TEXT, observed_at_us INTEGER, parsed_at_us INTEGER NOT NULL, UNIQUE(fetch_occurrence_id,fetch_collection_id),
-    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT
+    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
+UNIQUE(fetch_occurrence_uuidv4,repository_uuidv4), UNIQUE(fetch_occurrence_id,repository_uuidv4), FOREIGN KEY(fetch_collection_id,repository_uuidv4) REFERENCES fetch_collections(fetch_collection_id,repository_uuidv4)
 ) STRICT;
 CREATE TABLE collection_memberships(
     fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -227,10 +231,12 @@ CREATE TABLE collection_memberships(
     PRIMARY KEY(fetch_collection_id,change_request_id,kind,provider_change_request_document_id),
     FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
-CREATE TABLE unresolved_payloads(
+CREATE TABLE unresolved_payloads(stored_sha256 BLOB REFERENCES stored_bytes(sha256), detected_at_us INTEGER, diagnostic_json TEXT CHECK(diagnostic_json IS NULL OR (json_valid(diagnostic_json) AND json_type(diagnostic_json)='object')),
+
 unresolved_payload_id INTEGER PRIMARY KEY, payload_representation TEXT, payload_sha256 BLOB, reason TEXT NOT NULL CHECK(length(reason)>0),
     CHECK((payload_representation IS NULL)=(payload_sha256 IS NULL)),
-    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT
+    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
+CHECK((stored_sha256 IS NULL AND detected_at_us IS NULL AND diagnostic_json IS NULL) OR (stored_sha256 IS NOT NULL AND payload_representation IS NULL AND payload_sha256 IS NULL AND reason='physical_corruption' AND detected_at_us IS NOT NULL AND diagnostic_json IS NOT NULL))
 ) STRICT;
 CREATE TABLE validators(
 resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, validator_key TEXT NOT NULL, etag TEXT NOT NULL, payload_representation TEXT NOT NULL, payload_sha256 BLOB NOT NULL, validated_at_us INTEGER, PRIMARY KEY(resume_scope_id,validator_key),
@@ -277,25 +283,30 @@ LEFT JOIN coverage_claims c
  AND c.observed_at_us=(SELECT max(latest.observed_at_us) FROM coverage_claims latest WHERE latest.coverage_scope_id=s.coverage_scope_id)
 GROUP BY s.coverage_scope_id;
 CREATE TABLE reviews(
-    change_request_id TEXT NOT NULL,
-    kind TEXT NOT NULL,
-    provider_change_request_document_id TEXT NOT NULL,
-    payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'),
-    PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
-    CHECK(kind='review'),
-    FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+ change_request_id TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind='review'),
+ provider_change_request_document_id TEXT NOT NULL,
+ PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
+ FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id)
 ) STRICT;
 CREATE TABLE change_request_events(
-change_request_event_id INTEGER PRIMARY KEY, change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT, origin_key TEXT NOT NULL, ordinal INTEGER NOT NULL CHECK(ordinal>=0), provider_event_id TEXT, payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), observed_at_us INTEGER
+origin_fetch_occurrence_uuidv4 TEXT,change_request_event_uuidv4 TEXT NOT NULL UNIQUE, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
+
+change_request_event_id INTEGER PRIMARY KEY, change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id) ON UPDATE RESTRICT ON DELETE RESTRICT, origin_key TEXT NOT NULL, ordinal INTEGER NOT NULL CHECK(ordinal>=0), provider_event_id TEXT, payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), observed_at_us INTEGER,
+FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4),
+FOREIGN KEY(origin_fetch_occurrence_uuidv4,repository_uuidv4) REFERENCES fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4)
 ) STRICT;
 CREATE TABLE code_listing_progress(
 code_listing_id TEXT PRIMARY KEY REFERENCES code_listings(code_listing_id) ON UPDATE RESTRICT ON DELETE RESTRICT, state TEXT NOT NULL CHECK(state IN ('partial','complete','unknown')), terminal INTEGER NOT NULL CHECK(terminal IN (0,1)), page_count INTEGER NOT NULL CHECK(page_count>=0), context_proven INTEGER NOT NULL CHECK(context_proven IN (0,1)), CHECK(state!='complete' OR (terminal=1 AND context_proven=1))
 ) STRICT;
-CREATE TABLE code_commits(
-code_listing_id TEXT NOT NULL REFERENCES code_listings(code_listing_id) ON UPDATE RESTRICT ON DELETE RESTRICT, fetch_occurrence_id INTEGER NOT NULL REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT, position INTEGER NOT NULL CHECK(position>=0), object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), oid BLOB NOT NULL CHECK((object_format='sha1' AND length(oid)=20) OR (object_format='sha256' AND length(oid)=32)), payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), PRIMARY KEY(code_listing_id,fetch_occurrence_id,position)
+CREATE TABLE code_commits(parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
+
+code_listing_id TEXT NOT NULL REFERENCES code_listings(code_listing_id) ON UPDATE RESTRICT ON DELETE RESTRICT, fetch_occurrence_id INTEGER NOT NULL REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT, position INTEGER NOT NULL CHECK(position>=0), object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), oid BLOB NOT NULL CHECK((object_format='sha1' AND length(oid)=20) OR (object_format='sha256' AND length(oid)=32)), payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), PRIMARY KEY(code_listing_id,fetch_occurrence_id,position,parsed_result_uuidv4),
+FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(fetch_occurrence_id,repository_uuidv4) REFERENCES fetch_occurrences(fetch_occurrence_id,repository_uuidv4)
 ) STRICT;
-CREATE TABLE code_file_changes(
-code_listing_id TEXT NOT NULL REFERENCES code_listings(code_listing_id) ON UPDATE RESTRICT ON DELETE RESTRICT, fetch_occurrence_id INTEGER NOT NULL REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT, position INTEGER NOT NULL CHECK(position>=0), raw_path BLOB NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), PRIMARY KEY(code_listing_id,fetch_occurrence_id,position)
+CREATE TABLE code_file_changes(parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
+
+code_listing_id TEXT NOT NULL REFERENCES code_listings(code_listing_id) ON UPDATE RESTRICT ON DELETE RESTRICT, fetch_occurrence_id INTEGER NOT NULL REFERENCES fetch_occurrences(fetch_occurrence_id) ON UPDATE RESTRICT ON DELETE RESTRICT, position INTEGER NOT NULL CHECK(position>=0), raw_path BLOB NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'), PRIMARY KEY(code_listing_id,fetch_occurrence_id,position,parsed_result_uuidv4),
+FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4), FOREIGN KEY(fetch_occurrence_id,repository_uuidv4) REFERENCES fetch_occurrences(fetch_occurrence_id,repository_uuidv4)
 ) STRICT;
 CREATE TABLE code_acquisitions(
 code_observation_id INTEGER NOT NULL REFERENCES code_observations(code_observation_id) ON UPDATE RESTRICT ON DELETE RESTRICT, role TEXT NOT NULL CHECK(length(role)>0), object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), oid BLOB NOT NULL CHECK((object_format='sha1' AND length(oid)=20) OR (object_format='sha256' AND length(oid)=32)), acquisition_root_id INTEGER REFERENCES acquisition_roots(acquisition_root_id) ON UPDATE RESTRICT ON DELETE RESTRICT, PRIMARY KEY(code_observation_id,role)
@@ -328,7 +339,9 @@ CREATE TABLE repository_object_sources(
 repository_uuidv4 TEXT NOT NULL REFERENCES repositories(repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT, git_object_id INTEGER NOT NULL REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, git_acquisition_id TEXT NOT NULL, PRIMARY KEY(repository_uuidv4,git_object_id,git_acquisition_id), FOREIGN KEY(git_acquisition_id,repository_uuidv4) REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 CREATE TABLE ref_observations(
-snapshot_id TEXT NOT NULL REFERENCES snapshots(snapshot_id) ON UPDATE RESTRICT ON DELETE RESTRICT, raw_ref_name BLOB NOT NULL CHECK(length(raw_ref_name)>0), kind TEXT NOT NULL CHECK(kind IN ('head','tag','other')), object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), target_oid BLOB NOT NULL CHECK((object_format='sha1' AND length(target_oid)=20) OR (object_format='sha256' AND length(target_oid)=32)), peeled_oid BLOB, target_type TEXT CHECK(target_type IN ('commit','tree','blob','tag')), PRIMARY KEY(snapshot_id,raw_ref_name), CHECK(peeled_oid IS NULL OR length(peeled_oid)=length(target_oid))
+parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
+snapshot_id TEXT NOT NULL REFERENCES snapshots(snapshot_id) ON UPDATE RESTRICT ON DELETE RESTRICT, raw_ref_name BLOB NOT NULL CHECK(length(raw_ref_name)>0), kind TEXT NOT NULL CHECK(kind IN ('head','tag','other')), object_format TEXT NOT NULL CHECK(object_format IN ('sha1','sha256')), target_oid BLOB NOT NULL CHECK((object_format='sha1' AND length(target_oid)=20) OR (object_format='sha256' AND length(target_oid)=32)), peeled_oid BLOB, target_type TEXT CHECK(target_type IN ('commit','tree','blob','tag')), PRIMARY KEY(snapshot_id,raw_ref_name), CHECK(peeled_oid IS NULL OR length(peeled_oid)=length(target_oid)),
+FOREIGN KEY(snapshot_id,repository_uuidv4,parsed_result_uuidv4) REFERENCES snapshots(snapshot_id,repository_uuidv4,parsed_result_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4)
 ) STRICT;
 CREATE TABLE root_manifests(
 tree_git_object_id INTEGER PRIMARY KEY REFERENCES git_objects(git_object_id) ON UPDATE RESTRICT ON DELETE RESTRICT, complete INTEGER NOT NULL CHECK(complete IN (0,1))
@@ -384,29 +397,24 @@ CREATE INDEX cache_leases_fk_0 ON cache_leases(job_id,attempt);
 CREATE TRIGGER cache_locators_immutable BEFORE UPDATE ON cache_locators WHEN NEW.cache_locator_id IS NOT OLD.cache_locator_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.access IS NOT OLD.access BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER cache_locators_no_replace BEFORE INSERT ON cache_locators WHEN EXISTS(SELECT 1 FROM cache_locators WHERE (cache_locator_id=NEW.cache_locator_id) OR (cache_locator_id=NEW.cache_locator_id AND repository_uuidv4=NEW.repository_uuidv4) OR (cache_locator_id=NEW.cache_locator_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX cache_locators_fk_0 ON cache_locators(repository_uuidv4);
-CREATE TRIGGER change_request_events_immutable BEFORE UPDATE ON change_request_events WHEN NEW.change_request_event_id IS NOT OLD.change_request_event_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.origin_key IS NOT OLD.origin_key OR NEW.ordinal IS NOT OLD.ordinal OR NEW.provider_event_id IS NOT OLD.provider_event_id OR NEW.payload IS NOT OLD.payload OR NEW.observed_at_us IS NOT OLD.observed_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER change_request_events_no_replace BEFORE INSERT ON change_request_events WHEN EXISTS(SELECT 1 FROM change_request_events WHERE (change_request_event_id=NEW.change_request_event_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER change_request_events_retain BEFORE DELETE ON change_request_events BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX change_request_events_fk_0 ON change_request_events(change_request_id);
-CREATE TRIGGER change_request_observations_immutable BEFORE UPDATE ON change_request_observations WHEN NEW.change_request_observation_id IS NOT OLD.change_request_observation_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.payload IS NOT OLD.payload OR NEW.origin_key IS NOT OLD.origin_key OR NEW.parsed_at_us IS NOT OLD.parsed_at_us OR NEW.origin_fetch_occurrence_id IS NOT OLD.origin_fetch_occurrence_id OR (OLD.published=1 AND NEW.published!=1) BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER change_request_observations_no_replace BEFORE INSERT ON change_request_observations WHEN EXISTS(SELECT 1 FROM change_request_observations WHERE (change_request_observation_id=NEW.change_request_observation_id) OR (change_request_observation_id=NEW.change_request_observation_id AND change_request_id=NEW.change_request_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER change_request_observations_retain BEFORE DELETE ON change_request_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX change_request_observations_fk_0 ON change_request_observations(origin_fetch_occurrence_id);
 CREATE INDEX change_request_observations_fk_1 ON change_request_observations(change_request_id);
 CREATE TRIGGER change_requests_immutable BEFORE UPDATE ON change_requests WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.repository_binding_id IS NOT OLD.repository_binding_id OR NEW.change_request_kind IS NOT OLD.change_request_kind OR NEW.provider_change_request_number IS NOT OLD.provider_change_request_number BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER change_requests_no_replace BEFORE INSERT ON change_requests WHEN EXISTS(SELECT 1 FROM change_requests WHERE (change_request_id=NEW.change_request_id) OR (change_request_id=NEW.change_request_id AND repository_uuidv4=NEW.repository_uuidv4) OR (repository_binding_id=NEW.repository_binding_id AND change_request_kind=NEW.change_request_kind AND provider_change_request_number=NEW.provider_change_request_number) OR (change_request_id=NEW.change_request_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE INDEX change_requests_fk_0 ON change_requests(current_change_request_observation_id,change_request_id);
 CREATE INDEX change_requests_fk_1 ON change_requests(repository_binding_id,repository_uuidv4);
 CREATE TRIGGER code_acquisitions_immutable BEFORE UPDATE ON code_acquisitions WHEN NEW.code_observation_id IS NOT OLD.code_observation_id OR NEW.role IS NOT OLD.role OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid OR NEW.acquisition_root_id IS NOT OLD.acquisition_root_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER code_acquisitions_no_replace BEFORE INSERT ON code_acquisitions WHEN EXISTS(SELECT 1 FROM code_acquisitions WHERE (code_observation_id=NEW.code_observation_id AND role=NEW.role) OR (code_observation_id=NEW.code_observation_id AND role=NEW.role)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER code_acquisitions_retain BEFORE DELETE ON code_acquisitions BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX code_acquisitions_fk_0 ON code_acquisitions(acquisition_root_id);
-CREATE TRIGGER code_commits_immutable BEFORE UPDATE ON code_commits WHEN NEW.code_listing_id IS NOT OLD.code_listing_id OR NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.position IS NOT OLD.position OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid OR NEW.payload IS NOT OLD.payload BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER code_commits_no_replace BEFORE INSERT ON code_commits WHEN EXISTS(SELECT 1 FROM code_commits WHERE (code_listing_id=NEW.code_listing_id AND fetch_occurrence_id=NEW.fetch_occurrence_id AND position=NEW.position) OR (code_listing_id=NEW.code_listing_id AND fetch_occurrence_id=NEW.fetch_occurrence_id AND position=NEW.position)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER code_commits_no_replace BEFORE INSERT ON code_commits WHEN EXISTS(SELECT 1 FROM code_commits WHERE code_listing_id=NEW.code_listing_id AND fetch_occurrence_id=NEW.fetch_occurrence_id AND position=NEW.position AND parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable fact duplicate'); END;
 CREATE TRIGGER code_commits_retain BEFORE DELETE ON code_commits BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX code_commits_fk_0 ON code_commits(fetch_occurrence_id);
-CREATE TRIGGER code_file_changes_immutable BEFORE UPDATE ON code_file_changes WHEN NEW.code_listing_id IS NOT OLD.code_listing_id OR NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.position IS NOT OLD.position OR NEW.raw_path IS NOT OLD.raw_path OR NEW.payload IS NOT OLD.payload BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER code_file_changes_no_replace BEFORE INSERT ON code_file_changes WHEN EXISTS(SELECT 1 FROM code_file_changes WHERE (code_listing_id=NEW.code_listing_id AND fetch_occurrence_id=NEW.fetch_occurrence_id AND position=NEW.position) OR (code_listing_id=NEW.code_listing_id AND fetch_occurrence_id=NEW.fetch_occurrence_id AND position=NEW.position)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER code_file_changes_no_replace BEFORE INSERT ON code_file_changes WHEN EXISTS(SELECT 1 FROM code_file_changes WHERE code_listing_id=NEW.code_listing_id AND fetch_occurrence_id=NEW.fetch_occurrence_id AND position=NEW.position AND parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable fact duplicate'); END;
 CREATE TRIGGER code_file_changes_retain BEFORE DELETE ON code_file_changes BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX code_file_changes_fk_0 ON code_file_changes(fetch_occurrence_id);
 CREATE TRIGGER code_listing_progress_immutable BEFORE UPDATE ON code_listing_progress WHEN NEW.code_listing_id IS NOT OLD.code_listing_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
@@ -416,7 +424,6 @@ CREATE TRIGGER code_listings_no_replace BEFORE INSERT ON code_listings WHEN EXIS
 CREATE TRIGGER code_listings_retain BEFORE DELETE ON code_listings BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX code_listings_fk_0 ON code_listings(fetch_collection_id,change_request_id);
 CREATE INDEX code_listings_fk_1 ON code_listings(resume_scope_id);
-CREATE TRIGGER code_observations_immutable BEFORE UPDATE ON code_observations WHEN NEW.code_observation_id IS NOT OLD.code_observation_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.change_request_observation_id IS NOT OLD.change_request_observation_id OR NEW.commit_code_listing_id IS NOT OLD.commit_code_listing_id OR NEW.file_code_listing_id IS NOT OLD.file_code_listing_id OR NEW.state IS NOT OLD.state OR NEW.object_format IS NOT OLD.object_format OR NEW.head_oid IS NOT OLD.head_oid OR NEW.base_oid IS NOT OLD.base_oid OR NEW.details IS NOT OLD.details BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER code_observations_no_replace BEFORE INSERT ON code_observations WHEN EXISTS(SELECT 1 FROM code_observations WHERE (code_observation_id=NEW.code_observation_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER code_observations_retain BEFORE DELETE ON code_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX code_observations_fk_0 ON code_observations(file_code_listing_id,change_request_id);
@@ -473,7 +480,6 @@ CREATE INDEX fetch_collections_fk_0 ON fetch_collections(change_request_id,repos
 CREATE INDEX fetch_collections_fk_1 ON fetch_collections(resume_scope_id);
 CREATE INDEX fetch_collections_fk_2 ON fetch_collections(source_id);
 CREATE INDEX fetch_collections_fk_3 ON fetch_collections(repository_uuidv4);
-CREATE TRIGGER fetch_occurrences_immutable BEFORE UPDATE ON fetch_occurrences WHEN NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.ordinal IS NOT OLD.ordinal OR NEW.payload_representation IS NOT OLD.payload_representation OR NEW.payload_sha256 IS NOT OLD.payload_sha256 OR NEW.request IS NOT OLD.request OR NEW.next_cursor IS NOT OLD.next_cursor OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.parsed_at_us IS NOT OLD.parsed_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER fetch_occurrences_no_replace BEFORE INSERT ON fetch_occurrences WHEN EXISTS(SELECT 1 FROM fetch_occurrences WHERE (fetch_occurrence_id=NEW.fetch_occurrence_id) OR (fetch_occurrence_id=NEW.fetch_occurrence_id AND fetch_collection_id=NEW.fetch_collection_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER fetch_occurrences_retain BEFORE DELETE ON fetch_occurrences BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX fetch_occurrences_fk_0 ON fetch_occurrences(payload_representation,payload_sha256);
@@ -499,13 +505,12 @@ CREATE TRIGGER index_generations_no_replace BEFORE INSERT ON index_generations W
 CREATE TRIGGER index_membership_immutable BEFORE UPDATE ON index_membership WHEN NEW.index_generation_id IS NOT OLD.index_generation_id OR NEW.search_document_id IS NOT OLD.search_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER index_membership_no_replace BEFORE INSERT ON index_membership WHEN EXISTS(SELECT 1 FROM index_membership WHERE (index_generation_id=NEW.index_generation_id AND search_document_id=NEW.search_document_id) OR (index_generation_id=NEW.index_generation_id AND search_document_id=NEW.search_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX index_membership_fk_0 ON index_membership(search_document_id);
-CREATE TRIGGER inventory_observations_immutable BEFORE UPDATE ON inventory_observations WHEN NEW.inventory_observation_id IS NOT OLD.inventory_observation_id OR NEW.source_id IS NOT OLD.source_id OR NEW.asserted_state IS NOT OLD.asserted_state OR NEW.scope IS NOT OLD.scope OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.reason IS NOT OLD.reason BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER inventory_observations_no_replace BEFORE INSERT ON inventory_observations WHEN EXISTS(SELECT 1 FROM inventory_observations WHERE (inventory_observation_id=NEW.inventory_observation_id) OR (inventory_observation_id=NEW.inventory_observation_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER inventory_observations_retain BEFORE DELETE ON inventory_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX inventory_observations_fk_0 ON inventory_observations(source_id);
 CREATE TRIGGER job_attempts_immutable BEFORE UPDATE ON job_attempts WHEN NEW.job_id IS NOT OLD.job_id OR NEW.attempt IS NOT OLD.attempt BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER job_attempts_no_replace BEFORE INSERT ON job_attempts WHEN EXISTS(SELECT 1 FROM job_attempts WHERE (job_id=NEW.job_id AND attempt=NEW.attempt) OR (job_id=NEW.job_id AND attempt=NEW.attempt)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER jobs_immutable BEFORE UPDATE ON jobs WHEN NEW.job_id IS NOT OLD.job_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
+CREATE TRIGGER jobs_immutable BEFORE UPDATE ON jobs WHEN NEW.job_id IS NOT OLD.job_id OR NEW.kind IS NOT OLD.kind OR NEW.request IS NOT OLD.request OR NEW.created_at_us IS NOT OLD.created_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER jobs_no_replace BEFORE INSERT ON jobs WHEN EXISTS(SELECT 1 FROM jobs WHERE (job_id=NEW.job_id) OR (job_id=NEW.job_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX jobs_fk_0 ON jobs(job_id,current_attempt);
 CREATE TRIGGER stored_bytes_immutable BEFORE UPDATE ON stored_bytes BEGIN SELECT RAISE(ABORT,'Immutable stored bytes'); END;
@@ -523,15 +528,11 @@ CREATE TRIGGER ref_observations_no_replace BEFORE INSERT ON ref_observations WHE
 CREATE TRIGGER ref_observations_retain BEFORE DELETE ON ref_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE TRIGGER repositories_immutable BEFORE UPDATE ON repositories WHEN NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER repositories_no_replace BEFORE INSERT ON repositories WHEN EXISTS(SELECT 1 FROM repositories WHERE (repository_uuidv4=NEW.repository_uuidv4) OR (repository_uuidv4=NEW.repository_uuidv4)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE INDEX repositories_fk_0 ON repositories(current_snapshot_id,repository_uuidv4);
 CREATE INDEX repositories_fk_1 ON repositories(preferred_repository_endpoint_id,repository_uuidv4);
 CREATE TRIGGER repository_bindings_immutable BEFORE UPDATE ON repository_bindings WHEN NEW.repository_binding_id IS NOT OLD.repository_binding_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.service_instance_uuidv4 IS NOT OLD.service_instance_uuidv4 OR (OLD.provider_repository_id IS NOT NULL AND NEW.provider_repository_id IS NOT OLD.provider_repository_id) BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER repository_bindings_no_replace BEFORE INSERT ON repository_bindings WHEN EXISTS(SELECT 1 FROM repository_bindings WHERE (repository_binding_id=NEW.repository_binding_id) OR (repository_binding_id=NEW.repository_binding_id AND repository_uuidv4=NEW.repository_uuidv4) OR (service_instance_uuidv4=NEW.service_instance_uuidv4 AND provider_repository_id=NEW.provider_repository_id) OR (repository_uuidv4=NEW.repository_uuidv4 AND service_instance_uuidv4=NEW.service_instance_uuidv4) OR (repository_binding_id=NEW.repository_binding_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER repository_endpoints_immutable BEFORE UPDATE ON repository_endpoints WHEN NEW.repository_endpoint_id IS NOT OLD.repository_endpoint_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER repository_endpoints_no_replace BEFORE INSERT ON repository_endpoints WHEN EXISTS(SELECT 1 FROM repository_endpoints WHERE (repository_endpoint_id=NEW.repository_endpoint_id) OR (repository_endpoint_id=NEW.repository_endpoint_id AND repository_uuidv4=NEW.repository_uuidv4) OR (repository_uuidv4=NEW.repository_uuidv4 AND url=NEW.url) OR (repository_endpoint_id=NEW.repository_endpoint_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER repository_name_assertions_immutable BEFORE UPDATE ON repository_name_assertions WHEN NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.name IS NOT OLD.name OR NEW.observed_at_us IS NOT OLD.observed_at_us BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER repository_name_assertions_no_replace BEFORE INSERT ON repository_name_assertions WHEN EXISTS(SELECT 1 FROM repository_name_assertions WHERE (repository_uuidv4=NEW.repository_uuidv4 AND name=NEW.name) OR (repository_uuidv4=NEW.repository_uuidv4 AND name=NEW.name)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER repository_name_assertions_retain BEFORE DELETE ON repository_name_assertions BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE TRIGGER repository_object_sources_immutable BEFORE UPDATE ON repository_object_sources WHEN NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.git_object_id IS NOT OLD.git_object_id OR NEW.git_acquisition_id IS NOT OLD.git_acquisition_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER repository_object_sources_no_replace BEFORE INSERT ON repository_object_sources WHEN EXISTS(SELECT 1 FROM repository_object_sources WHERE (repository_uuidv4=NEW.repository_uuidv4 AND git_object_id=NEW.git_object_id AND git_acquisition_id=NEW.git_acquisition_id) OR (repository_uuidv4=NEW.repository_uuidv4 AND git_object_id=NEW.git_object_id AND git_acquisition_id=NEW.git_acquisition_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER repository_object_sources_retain BEFORE DELETE ON repository_object_sources BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -546,7 +547,6 @@ CREATE TRIGGER resume_scopes_retain BEFORE DELETE ON resume_scopes BEGIN SELECT 
 CREATE INDEX resume_scopes_fk_0 ON resume_scopes(repository_binding_id,repository_uuidv4);
 CREATE INDEX resume_scopes_fk_1 ON resume_scopes(source_id);
 CREATE INDEX resume_scopes_fk_2 ON resume_scopes(repository_uuidv4);
-CREATE TRIGGER review_threads_immutable BEFORE UPDATE ON review_threads WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.provider_resource_id IS NOT OLD.provider_resource_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER review_threads_no_replace BEFORE INSERT ON review_threads WHEN EXISTS(SELECT 1 FROM review_threads WHERE change_request_id=NEW.change_request_id AND provider_resource_id=NEW.provider_resource_id) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX review_threads_fk_0 ON review_threads(change_request_id);
 CREATE TRIGGER root_manifest_entries_immutable BEFORE UPDATE ON root_manifest_entries WHEN NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.raw_path IS NOT OLD.raw_path OR NEW.mode IS NOT OLD.mode OR NEW.git_object_id IS NOT OLD.git_object_id OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
@@ -568,7 +568,7 @@ CREATE TRIGGER search_documents_no_replace BEFORE INSERT ON search_documents WHE
 CREATE TRIGGER service_instances_immutable BEFORE UPDATE ON service_instances WHEN NEW.service_instance_uuidv4 IS NOT OLD.service_instance_uuidv4 BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER service_instances_no_replace BEFORE INSERT ON service_instances WHEN EXISTS(SELECT 1 FROM service_instances WHERE (service_instance_uuidv4=NEW.service_instance_uuidv4) OR (service_instance_uuidv4=NEW.service_instance_uuidv4)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER snapshots_immutable BEFORE UPDATE ON snapshots WHEN NEW.snapshot_id IS NOT OLD.snapshot_id OR NEW.git_acquisition_id IS NOT OLD.git_acquisition_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.generation IS NOT OLD.generation OR NEW.created_at_us IS NOT OLD.created_at_us OR (OLD.published=1 AND NEW.published!=1) BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
-CREATE TRIGGER snapshots_no_replace BEFORE INSERT ON snapshots WHEN EXISTS(SELECT 1 FROM snapshots WHERE (snapshot_id=NEW.snapshot_id) OR (snapshot_id=NEW.snapshot_id AND repository_uuidv4=NEW.repository_uuidv4) OR (git_acquisition_id=NEW.git_acquisition_id) OR (snapshot_id=NEW.snapshot_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
+CREATE TRIGGER snapshots_no_replace BEFORE INSERT ON snapshots WHEN EXISTS(SELECT 1 FROM snapshots WHERE (snapshot_id=NEW.snapshot_id) OR (snapshot_id=NEW.snapshot_id AND repository_uuidv4=NEW.repository_uuidv4) OR (snapshot_id=NEW.snapshot_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER snapshots_retain BEFORE DELETE ON snapshots BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX snapshots_fk_0 ON snapshots(git_acquisition_id,repository_uuidv4);
 -- Pair membership is retained; times are aggregate known min/max, not event rows.
@@ -594,17 +594,12 @@ CREATE TRIGGER tree_entries_immutable BEFORE UPDATE ON tree_entries WHEN NEW.tre
 CREATE TRIGGER tree_entries_no_replace BEFORE INSERT ON tree_entries WHEN EXISTS(SELECT 1 FROM tree_entries WHERE (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name) OR (tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER tree_entries_retain BEFORE DELETE ON tree_entries BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX tree_entries_fk_0 ON tree_entries(child_git_object_id);
-CREATE TRIGGER unresolved_payloads_immutable BEFORE UPDATE ON unresolved_payloads WHEN NEW.unresolved_payload_id IS NOT OLD.unresolved_payload_id OR NEW.payload_representation IS NOT OLD.payload_representation OR NEW.payload_sha256 IS NOT OLD.payload_sha256 OR NEW.reason IS NOT OLD.reason BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER unresolved_payloads_no_replace BEFORE INSERT ON unresolved_payloads WHEN EXISTS(SELECT 1 FROM unresolved_payloads WHERE (unresolved_payload_id=NEW.unresolved_payload_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER unresolved_payloads_retain BEFORE DELETE ON unresolved_payloads BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE INDEX unresolved_payloads_fk_1 ON unresolved_payloads(payload_representation,payload_sha256);
 CREATE TRIGGER validators_immutable BEFORE UPDATE ON validators WHEN NEW.resume_scope_id IS NOT OLD.resume_scope_id OR NEW.validator_key IS NOT OLD.validator_key BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER validators_no_replace BEFORE INSERT ON validators WHEN EXISTS(SELECT 1 FROM validators WHERE (resume_scope_id=NEW.resume_scope_id AND validator_key=NEW.validator_key) OR (resume_scope_id=NEW.resume_scope_id AND validator_key=NEW.validator_key)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX validators_fk_0 ON validators(payload_representation,payload_sha256);
-CREATE TRIGGER snapshot_current_insert BEFORE INSERT ON repositories WHEN NEW.current_snapshot_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM snapshots WHERE snapshot_id=NEW.current_snapshot_id AND repository_uuidv4=NEW.repository_uuidv4 AND published=1) BEGIN SELECT RAISE(ABORT,'Current snapshot requires published fact'); END;
-CREATE TRIGGER snapshot_current_update BEFORE UPDATE ON repositories WHEN NEW.current_snapshot_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM snapshots WHERE snapshot_id=NEW.current_snapshot_id AND repository_uuidv4=NEW.repository_uuidv4 AND published=1) BEGIN SELECT RAISE(ABORT,'Current snapshot requires published fact'); END;
-CREATE TRIGGER cr_current_insert BEFORE INSERT ON change_requests WHEN NEW.current_change_request_observation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM change_request_observations WHERE change_request_observation_id=NEW.current_change_request_observation_id AND change_request_id=NEW.change_request_id AND published=1) BEGIN SELECT RAISE(ABORT,'Current observation requires published fact'); END;
-CREATE TRIGGER cr_current_update BEFORE UPDATE ON change_requests WHEN NEW.current_change_request_observation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM change_request_observations WHERE change_request_observation_id=NEW.current_change_request_observation_id AND change_request_id=NEW.change_request_id AND published=1) BEGIN SELECT RAISE(ABORT,'Current observation requires published fact'); END;
 CREATE TRIGGER listing_scope_insert BEFORE INSERT ON code_listings WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.change_request_id=NEW.change_request_id AND f.resume_scope_id=NEW.resume_scope_id) BEGIN SELECT RAISE(ABORT,'Listing collection, CR and scope mismatch'); END;
 CREATE TRIGGER listing_scope_update BEFORE UPDATE ON code_listings WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.change_request_id=NEW.change_request_id AND f.resume_scope_id=NEW.resume_scope_id) BEGIN SELECT RAISE(ABORT,'Listing collection, CR and scope mismatch'); END;
 CREATE TRIGGER fetch_scope_insert BEFORE INSERT ON fetch_collections WHEN NOT EXISTS(SELECT 1 FROM resume_scopes s WHERE s.resume_scope_id=NEW.resume_scope_id AND s.repository_uuidv4=NEW.repository_uuidv4 AND s.source_id IS NEW.source_id) BEGIN SELECT RAISE(ABORT,'Collection scope mismatch'); END;
@@ -621,12 +616,12 @@ CREATE TRIGGER listing_no_downgrade BEFORE UPDATE ON code_listing_progress WHEN 
 CREATE TRIGGER listing_complete_retain BEFORE DELETE ON code_listing_progress WHEN OLD.state='complete' BEGIN SELECT RAISE(ABORT,'Complete listing marker cannot be deleted'); END;
 CREATE TRIGGER code_commits_context_insert BEFORE INSERT ON code_commits WHEN NOT EXISTS(SELECT 1 FROM code_listings l JOIN fetch_occurrences o ON o.fetch_collection_id=l.fetch_collection_id WHERE l.code_listing_id=NEW.code_listing_id AND l.kind='commits' AND o.fetch_occurrence_id=NEW.fetch_occurrence_id AND l.object_format=NEW.object_format) BEGIN SELECT RAISE(ABORT,'Listing item kind or page mismatch'); END;
 CREATE TRIGGER code_commits_context_update BEFORE UPDATE ON code_commits WHEN NOT EXISTS(SELECT 1 FROM code_listings l JOIN fetch_occurrences o ON o.fetch_collection_id=l.fetch_collection_id WHERE l.code_listing_id=NEW.code_listing_id AND l.kind='commits' AND o.fetch_occurrence_id=NEW.fetch_occurrence_id AND l.object_format=NEW.object_format) BEGIN SELECT RAISE(ABORT,'Listing item kind or page mismatch'); END;
-CREATE TRIGGER code_commits_sealed_insert BEFORE INSERT ON code_commits WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id AND state='partial') BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
-CREATE TRIGGER code_commits_sealed_update BEFORE UPDATE ON code_commits WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id AND state='partial') BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
+CREATE TRIGGER code_commits_sealed_insert BEFORE INSERT ON code_commits WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id) BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
+CREATE TRIGGER code_commits_sealed_update BEFORE UPDATE ON code_commits WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id) BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
 CREATE TRIGGER code_file_changes_context_insert BEFORE INSERT ON code_file_changes WHEN NOT EXISTS(SELECT 1 FROM code_listings l JOIN fetch_occurrences o ON o.fetch_collection_id=l.fetch_collection_id WHERE l.code_listing_id=NEW.code_listing_id AND l.kind='files' AND o.fetch_occurrence_id=NEW.fetch_occurrence_id) BEGIN SELECT RAISE(ABORT,'Listing item kind or page mismatch'); END;
 CREATE TRIGGER code_file_changes_context_update BEFORE UPDATE ON code_file_changes WHEN NOT EXISTS(SELECT 1 FROM code_listings l JOIN fetch_occurrences o ON o.fetch_collection_id=l.fetch_collection_id WHERE l.code_listing_id=NEW.code_listing_id AND l.kind='files' AND o.fetch_occurrence_id=NEW.fetch_occurrence_id) BEGIN SELECT RAISE(ABORT,'Listing item kind or page mismatch'); END;
-CREATE TRIGGER code_file_changes_sealed_insert BEFORE INSERT ON code_file_changes WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id AND state='partial') BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
-CREATE TRIGGER code_file_changes_sealed_update BEFORE UPDATE ON code_file_changes WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id AND state='partial') BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
+CREATE TRIGGER code_file_changes_sealed_insert BEFORE INSERT ON code_file_changes WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id) BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
+CREATE TRIGGER code_file_changes_sealed_update BEFORE UPDATE ON code_file_changes WHEN NOT EXISTS(SELECT 1 FROM code_listing_progress WHERE code_listing_id=NEW.code_listing_id) BEGIN SELECT RAISE(ABORT,'Listing items require initialized partial progress'); END;
 CREATE TRIGGER code_acquisition_owner_insert BEFORE INSERT ON code_acquisitions WHEN NEW.acquisition_root_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM acquisition_roots r JOIN code_observations o ON o.code_observation_id=NEW.code_observation_id JOIN change_requests c ON c.change_request_id=o.change_request_id WHERE r.acquisition_root_id=NEW.acquisition_root_id AND r.repository_uuidv4=c.repository_uuidv4 AND (r.role=NEW.role OR (r.role='traversal' AND EXISTS(SELECT 1 FROM git_acquisitions g,json_each(g.roots_manifest) j WHERE g.git_acquisition_id=r.git_acquisition_id AND json_extract(j.value,'$.role')=NEW.role AND lower(json_extract(j.value,'$.expected'))=lower(hex(NEW.oid))))) AND r.object_format=NEW.object_format AND r.oid=NEW.oid AND (r.expected_oid IS NULL OR r.expected_oid=NEW.oid)) BEGIN SELECT RAISE(ABORT,'Code acquisition owner, role or OID mismatch'); END;
 CREATE TRIGGER code_acquisition_owner_update BEFORE UPDATE ON code_acquisitions WHEN NEW.acquisition_root_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM acquisition_roots r JOIN code_observations o ON o.code_observation_id=NEW.code_observation_id JOIN change_requests c ON c.change_request_id=o.change_request_id WHERE r.acquisition_root_id=NEW.acquisition_root_id AND r.repository_uuidv4=c.repository_uuidv4 AND (r.role=NEW.role OR (r.role='traversal' AND EXISTS(SELECT 1 FROM git_acquisitions g,json_each(g.roots_manifest) j WHERE g.git_acquisition_id=r.git_acquisition_id AND json_extract(j.value,'$.role')=NEW.role AND lower(json_extract(j.value,'$.expected'))=lower(hex(NEW.oid))))) AND r.object_format=NEW.object_format AND r.oid=NEW.oid AND (r.expected_oid IS NULL OR r.expected_oid=NEW.oid)) BEGIN SELECT RAISE(ABORT,'Code acquisition owner, role or OID mismatch'); END;
 CREATE TRIGGER origin_ref_insert BEFORE INSERT ON root_origins WHEN NEW.origin_kind='ref' AND NOT EXISTS(SELECT 1 FROM acquisition_roots r JOIN snapshots s ON s.git_acquisition_id=r.git_acquisition_id JOIN ref_observations f ON f.snapshot_id=s.snapshot_id WHERE r.acquisition_root_id=NEW.acquisition_root_id AND s.snapshot_id=NEW.snapshot_id AND f.raw_ref_name=NEW.raw_ref_name AND f.object_format=r.object_format AND COALESCE(f.peeled_oid,f.target_oid)=r.oid) BEGIN SELECT RAISE(ABORT,'Ref origin must match acquisition and OID'); END;
@@ -665,31 +660,791 @@ CREATE TRIGGER acquisition_cache_owner_update BEFORE UPDATE ON acquisition_progr
 CREATE TRIGGER obligation_cache_owner_update BEFORE UPDATE ON preservation_obligations WHEN NEW.cache_locator_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_acquisitions g JOIN cache_locators l ON l.cache_locator_id=NEW.cache_locator_id WHERE g.git_acquisition_id=NEW.git_acquisition_id AND g.repository_uuidv4=l.repository_uuidv4 AND l.access='target_active') BEGIN SELECT RAISE(ABORT,'Preservation cache owner mismatch'); END;
 
 -- Natural-key documents, immutable observations and direct content identity.
-CREATE TRIGGER documents_immutable BEFORE UPDATE ON documents WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER documents_no_replace BEFORE INSERT ON documents WHEN EXISTS(SELECT 1 FROM documents WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER documents_retain BEFORE DELETE ON documents BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE TRIGGER reviews_immutable BEFORE UPDATE ON reviews WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER reviews_no_replace BEFORE INSERT ON reviews WHEN EXISTS(SELECT 1 FROM reviews WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER reviews_retain BEFORE DELETE ON reviews BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE TRIGGER review_comments_immutable BEFORE UPDATE ON review_comments WHEN NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER review_comments_no_replace BEFORE INSERT ON review_comments WHEN EXISTS(SELECT 1 FROM review_comments WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER review_comments_retain BEFORE DELETE ON review_comments BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE TRIGGER collection_memberships_immutable BEFORE UPDATE ON collection_memberships WHEN NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id OR NEW.ordinal IS NOT OLD.ordinal BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER collection_memberships_no_replace BEFORE INSERT ON collection_memberships WHEN EXISTS(SELECT 1 FROM collection_memberships WHERE (fetch_collection_id=NEW.fetch_collection_id AND change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER collection_memberships_retain BEFORE DELETE ON collection_memberships BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE TRIGGER document_observations_immutable BEFORE UPDATE ON document_observations WHEN NEW.document_observation_id IS NOT OLD.document_observation_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id OR NEW.text_body_sha256 IS NOT OLD.text_body_sha256 OR NEW.observed_at_us IS NOT OLD.observed_at_us OR NEW.parsed_at_us IS NOT OLD.parsed_at_us OR NEW.origin_key IS NOT OLD.origin_key OR NEW.fetch_occurrence_id IS NOT OLD.fetch_occurrence_id OR NEW.metadata IS NOT OLD.metadata BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER document_observations_no_replace BEFORE INSERT ON document_observations WHEN EXISTS(SELECT 1 FROM document_observations WHERE (document_observation_id=NEW.document_observation_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER document_observations_retain BEFORE DELETE ON document_observations BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX documents_current_observation_fk ON documents(current_document_observation_id,change_request_id,kind,provider_change_request_document_id);
 CREATE INDEX document_observations_document_fk ON document_observations(change_request_id,kind,provider_change_request_document_id);
 CREATE INDEX document_observations_origin_lookup ON document_observations(change_request_id,kind,provider_change_request_document_id,origin_key);
 CREATE INDEX document_observations_body_fk ON document_observations(text_body_sha256);
 CREATE INDEX document_observations_occurrence_fk ON document_observations(fetch_occurrence_id);
-CREATE INDEX review_comments_thread_fk ON review_comments(change_request_id,review_thread_provider_resource_id);
 CREATE INDEX collection_memberships_document_fk ON collection_memberships(change_request_id,kind,provider_change_request_document_id);
-CREATE TRIGGER document_current_insert BEFORE INSERT ON documents WHEN NEW.current_document_observation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM document_observations o WHERE o.document_observation_id=NEW.current_document_observation_id AND o.change_request_id=NEW.change_request_id AND o.kind=NEW.kind AND o.provider_change_request_document_id=NEW.provider_change_request_document_id AND o.observed_at_us IS NOT NULL) BEGIN SELECT RAISE(ABORT,'Current document requires a same-document observed fact'); END;
 CREATE TRIGGER membership_owner_insert BEFORE INSERT ON collection_memberships WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Membership must belong to same CR'); END;
 CREATE TRIGGER document_origin_insert BEFORE INSERT ON document_observations WHEN NEW.fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE o.fetch_occurrence_id=NEW.fetch_occurrence_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Document occurrence belongs to another CR'); END;
-CREATE TRIGGER document_current_update BEFORE UPDATE ON documents WHEN NEW.current_document_observation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM document_observations o WHERE o.document_observation_id=NEW.current_document_observation_id AND o.change_request_id=NEW.change_request_id AND o.kind=NEW.kind AND o.provider_change_request_document_id=NEW.provider_change_request_document_id AND o.observed_at_us IS NOT NULL) BEGIN SELECT RAISE(ABORT,'Current document requires a same-document observed fact'); END;
 CREATE TRIGGER membership_owner_update BEFORE UPDATE ON collection_memberships WHEN NOT EXISTS(SELECT 1 FROM fetch_collections f WHERE f.fetch_collection_id=NEW.fetch_collection_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Membership must belong to same CR'); END;
 CREATE TRIGGER document_origin_update BEFORE UPDATE ON document_observations WHEN NEW.fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE o.fetch_occurrence_id=NEW.fetch_occurrence_id AND f.change_request_id=NEW.change_request_id) BEGIN SELECT RAISE(ABORT,'Document occurrence belongs to another CR'); END;
+CREATE TRIGGER change_request_observations_immutable BEFORE UPDATE ON change_request_observations BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER document_observations_immutable BEFORE UPDATE ON document_observations BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER code_observations_immutable BEFORE UPDATE ON code_observations BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER change_request_events_immutable BEFORE UPDATE ON change_request_events BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER code_commits_immutable BEFORE UPDATE ON code_commits BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER code_file_changes_immutable BEFORE UPDATE ON code_file_changes BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER inventory_observations_immutable BEFORE UPDATE ON inventory_observations BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER fetch_occurrences_immutable BEFORE UPDATE ON fetch_occurrences BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER documents_immutable BEFORE UPDATE ON documents BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER review_threads_immutable BEFORE UPDATE ON review_threads BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER reviews_immutable BEFORE UPDATE ON reviews BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER review_comments_immutable BEFORE UPDATE ON review_comments BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+CREATE TRIGGER unresolved_payloads_immutable BEFORE UPDATE ON unresolved_payloads BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
+
+CREATE TABLE parser_profile_selection_publications(
+ selection_decision_uuidv4 TEXT PRIMARY KEY REFERENCES parser_profile_selection_decisions(selection_decision_uuidv4)
+) STRICT;
+CREATE TABLE source_input_observations (
+ source_input_uuidv4 TEXT PRIMARY KEY,
+ source_registration_uuidv4 TEXT NOT NULL
+   REFERENCES sources(source_registration_uuidv4),
+ payload_representation TEXT,
+ payload_sha256 BLOB,
+ request_context_json TEXT NOT NULL
+   CHECK(json_valid(request_context_json) AND json_type(request_context_json)='object'),
+ observed_at_us INTEGER,
+ UNIQUE(source_input_uuidv4,source_registration_uuidv4),
+ CHECK ((payload_representation IS NULL) = (payload_sha256 IS NULL)),
+ FOREIGN KEY(payload_representation,payload_sha256)
+   REFERENCES payloads(representation,sha256)
+) STRICT;
+
+-- D27 A, D35 B. "definition_json" includes all declared capabilities,
+-- implementation fingerprint and output schema. UUID is identity, NOT digest.
+CREATE TABLE parser_profiles (
+ parser_profile_uuidv4 TEXT PRIMARY KEY,
+ parser_version TEXT NOT NULL,
+ profile_version TEXT NOT NULL,
+ definition_json TEXT NOT NULL CHECK(
+    json_valid(definition_json)
+    AND json_type(definition_json)='object'
+    AND coalesce(json_type(definition_json,'$.capabilities'),'')='array' AND json_array_length(definition_json,'$.capabilities')>0
+ AND coalesce(json_type(definition_json,'$.implementation'),'')='object' AND coalesce(json_type(definition_json,'$.settings'),'')='object' AND coalesce(json_type(definition_json,'$.output_schema'),'')='object'
+ )
+) STRICT;
+
+-- This is the *declared* supported scope, not a partial-verification table.
+-- Admission must check it exactly matches the immutable definition_json list.
+CREATE TABLE parser_profile_capabilities (
+ parser_profile_uuidv4 TEXT NOT NULL REFERENCES parser_profiles(parser_profile_uuidv4),
+ owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','source')),
+ fact_kind TEXT NOT NULL CHECK(length(fact_kind)>0),
+ PRIMARY KEY(parser_profile_uuidv4,owner_kind,fact_kind)
+) STRICT;
+
+-- Each normalized capability must occur in the profile's immutable manifest.
+CREATE TRIGGER parser_profile_capability_must_be_declared
+ BEFORE INSERT ON parser_profile_capabilities
+ WHEN NOT EXISTS (
+  SELECT 1 FROM parser_profiles p, json_each(p.definition_json,'$.capabilities') c
+   WHERE p.parser_profile_uuidv4=NEW.parser_profile_uuidv4
+     AND json_extract(c.value,'$.owner_kind')=NEW.owner_kind
+     AND json_extract(c.value,'$.fact_kind')=NEW.fact_kind
+ )
+ BEGIN SELECT RAISE(ABORT,'capability not in immutable profile definition'); END;
+
+-- D33 A/D35 B: verification is for THE ENTIRE declared profile definition.
+CREATE TABLE parser_profile_verifications (
+ parser_profile_verification_uuidv4 TEXT PRIMARY KEY,
+ parser_profile_uuidv4 TEXT NOT NULL REFERENCES parser_profiles(parser_profile_uuidv4),
+ outcome TEXT NOT NULL CHECK(outcome IN ('passed','failed','incomplete')),
+ criteria_json TEXT NOT NULL CHECK(json_valid(criteria_json) AND json_type(criteria_json)='object'),
+ evidence_json TEXT NOT NULL CHECK(json_valid(evidence_json) AND json_type(evidence_json)='object'),
+ verified_at_us INTEGER,
+ UNIQUE(parser_profile_verification_uuidv4,parser_profile_uuidv4,outcome)
+) STRICT;
+-- Full-definition verification requires a complete capability manifest.
+-- Whether tests actually cover every declared capability is a verifier admission check.
+CREATE TRIGGER parser_profile_verification_requires_full_manifest
+ BEFORE INSERT ON parser_profile_verifications
+ WHEN NEW.outcome='passed' AND EXISTS (
+    SELECT 1 FROM parser_profiles p
+     WHERE p.parser_profile_uuidv4=NEW.parser_profile_uuidv4
+       AND (SELECT COUNT(*) FROM json_each(p.definition_json,'$.capabilities'))
+           <> (SELECT COUNT(*) FROM parser_profile_capabilities c
+                WHERE c.parser_profile_uuidv4=NEW.parser_profile_uuidv4)
+ )
+ BEGIN SELECT RAISE(ABORT,'profile definition capabilities not fully declared'); END;
+
+CREATE TABLE parser_profile_verification_invalidations (
+ invalidation_uuidv4 TEXT PRIMARY KEY,
+ parser_profile_verification_uuidv4 TEXT NOT NULL
+   REFERENCES parser_profile_verifications(parser_profile_verification_uuidv4),
+ reason TEXT NOT NULL CHECK(length(reason)>0),
+ invalidated_at_us INTEGER
+) STRICT;
+
+-- Local policy, intentionally NOT exchanged as portable verification truth.
+-- This is operational *trust*, not mutable verification evidence.
+CREATE TABLE local_parser_profile_verification_trust (
+ parser_profile_verification_uuidv4 TEXT PRIMARY KEY
+   REFERENCES parser_profile_verifications(parser_profile_verification_uuidv4),
+ trusted INTEGER NOT NULL CHECK(trusted IN (0,1)),
+ adjudicated_at_us INTEGER,
+ rationale_json TEXT NOT NULL CHECK(json_valid(rationale_json) AND json_type(rationale_json)='object')
+) STRICT;
+
+-- D25 A/D27 A/D31 A/D36 A. Exact one owner.
+CREATE TABLE parsed_results (
+ parsed_result_uuidv4 TEXT PRIMARY KEY,
+ parser_profile_uuidv4 TEXT NOT NULL REFERENCES parser_profiles(parser_profile_uuidv4),
+ owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','source')),
+ repository_uuidv4 TEXT REFERENCES repositories(repository_uuidv4),
+ source_registration_uuidv4 TEXT REFERENCES sources(source_registration_uuidv4),
+ parsed_at_us INTEGER,
+ input_manifest_json TEXT NOT NULL CHECK(json_valid(input_manifest_json) AND json_type(input_manifest_json)='array' AND json_array_length(input_manifest_json)>0),
+ derivation_json TEXT NOT NULL CHECK(json_valid(derivation_json) AND json_type(derivation_json)='object'),
+ CHECK (
+    (owner_kind='repository' AND repository_uuidv4 IS NOT NULL AND source_registration_uuidv4 IS NULL)
+    OR (owner_kind='source' AND repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NOT NULL)
+ ),
+ UNIQUE(parsed_result_uuidv4,repository_uuidv4),
+ UNIQUE(parsed_result_uuidv4,source_registration_uuidv4)
+) STRICT;
+
+-- D28 A/D36 A. Composite FK prevents both result/input owner mismatch
+-- and references to an input of another repository/source.
+-- Three types here: repository HTTP fetch, repository Git acquisition,
+-- and source-wide raw input. Other input kinds need explicit typed FKs.
+CREATE TABLE parsed_result_inputs (
+ parsed_result_uuidv4 TEXT NOT NULL,
+ input_ordinal INTEGER NOT NULL CHECK(input_ordinal>=0),
+ owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','source')),
+ repository_uuidv4 TEXT,
+ source_registration_uuidv4 TEXT,
+ fetch_occurrence_uuidv4 TEXT,
+ git_acquisition_id TEXT,
+ source_input_uuidv4 TEXT,
+ PRIMARY KEY(parsed_result_uuidv4,input_ordinal),
+ CHECK (
+    (owner_kind='repository' AND repository_uuidv4 IS NOT NULL
+      AND source_registration_uuidv4 IS NULL AND source_input_uuidv4 IS NULL
+      AND ((fetch_occurrence_uuidv4 IS NOT NULL AND git_acquisition_id IS NULL)
+        OR (fetch_occurrence_uuidv4 IS NULL AND git_acquisition_id IS NOT NULL)))
+    OR
+    (owner_kind='source' AND source_registration_uuidv4 IS NOT NULL
+      AND repository_uuidv4 IS NULL AND source_input_uuidv4 IS NOT NULL
+      AND fetch_occurrence_uuidv4 IS NULL AND git_acquisition_id IS NULL)
+ ),
+ FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4)
+    REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4),
+ FOREIGN KEY(parsed_result_uuidv4,source_registration_uuidv4)
+    REFERENCES parsed_results(parsed_result_uuidv4,source_registration_uuidv4),
+ FOREIGN KEY(fetch_occurrence_uuidv4,repository_uuidv4)
+    REFERENCES fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4),
+ FOREIGN KEY(git_acquisition_id,repository_uuidv4)
+    REFERENCES git_acquisitions(git_acquisition_id,repository_uuidv4),
+ FOREIGN KEY(source_input_uuidv4,source_registration_uuidv4)
+    REFERENCES source_input_observations(source_input_uuidv4,source_registration_uuidv4)
+) STRICT;
+CREATE UNIQUE INDEX parsed_input_fetch_once
+ ON parsed_result_inputs(parsed_result_uuidv4,fetch_occurrence_uuidv4)
+ WHERE fetch_occurrence_uuidv4 IS NOT NULL;
+CREATE UNIQUE INDEX parsed_input_git_once
+ ON parsed_result_inputs(parsed_result_uuidv4,git_acquisition_id)
+ WHERE git_acquisition_id IS NOT NULL;
+CREATE UNIQUE INDEX parsed_input_source_once
+ ON parsed_result_inputs(parsed_result_uuidv4,source_input_uuidv4)
+ WHERE source_input_uuidv4 IS NOT NULL;
+
+-- D29 A/D36 A: generated fact observations have direct FK to result.
+-- Shared identity documents and shared text bodies have no parsed-result FK.
+-- Production rebuild preserves existing non-parser fact metadata and keys.
+
+
+
+
+
+-- Publication of a parsed result is distinct from a semantic complete claim.
+-- Admission verifies the declared input manifest outside SQL. SQL enforces
+-- at least one fully admitted input and the declared count at publication.
+CREATE TABLE parsed_result_publications (
+ parsed_result_uuidv4 TEXT PRIMARY KEY REFERENCES parsed_results(parsed_result_uuidv4),
+ declared_input_count INTEGER NOT NULL CHECK(declared_input_count>0),
+ fact_manifest_json TEXT NOT NULL CHECK(json_valid(fact_manifest_json) AND json_type(fact_manifest_json)='array'),
+ published_at_us INTEGER
+) STRICT;
+CREATE TRIGGER parsed_result_input_sealed_on_publication
+ BEFORE INSERT ON parsed_result_inputs
+ WHEN EXISTS (SELECT 1 FROM parsed_result_publications
+               WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4)
+ BEGIN SELECT RAISE(ABORT,'published parsed input set is sealed'); END;
+
+CREATE TRIGGER parsed_result_publish_requires_inputs
+ BEFORE INSERT ON parsed_result_publications
+ WHEN (SELECT COUNT(*) FROM parsed_result_inputs
+       WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4)
+      <> NEW.declared_input_count
+ BEGIN SELECT RAISE(ABORT,'parsed input manifest is not complete'); END;
+
+-- A parsed fact must be of a kind declared by its parser profile.
+-- This is additional to composite ownership FKs (D36 A).
+CREATE TRIGGER parsed_document_fact_capability
+ BEFORE INSERT ON document_observations
+ WHEN NOT EXISTS (
+   SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c
+     ON c.parser_profile_uuidv4=p.parser_profile_uuidv4
+    AND c.owner_kind='repository' AND c.fact_kind=NEW.kind
+    WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4
+ ) BEGIN SELECT RAISE(ABORT,'parser profile cannot emit this document kind'); END;
+CREATE TRIGGER parsed_change_request_fact_capability
+ BEFORE INSERT ON change_request_observations
+ WHEN NOT EXISTS (
+   SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c
+     ON c.parser_profile_uuidv4=p.parser_profile_uuidv4
+    AND c.owner_kind='repository' AND c.fact_kind='change-request'
+    WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4
+ ) BEGIN SELECT RAISE(ABORT,'parser profile cannot emit change-request facts'); END;
+CREATE TRIGGER parsed_code_fact_capability
+ BEFORE INSERT ON code_observations
+ WHEN NOT EXISTS (
+   SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c
+     ON c.parser_profile_uuidv4=p.parser_profile_uuidv4
+    AND c.owner_kind='repository' AND c.fact_kind='code'
+    WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4
+ ) BEGIN SELECT RAISE(ABORT,'parser profile cannot emit code facts'); END;
+CREATE TRIGGER parsed_inventory_fact_capability
+ BEFORE INSERT ON inventory_observations
+ WHEN NOT EXISTS (
+   SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c
+     ON c.parser_profile_uuidv4=p.parser_profile_uuidv4
+    AND c.owner_kind='source' AND c.fact_kind='inventory'
+    WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4
+ ) BEGIN SELECT RAISE(ABORT,'parser profile cannot emit source inventory facts'); END;
+
+-- D30 A/D32 A/D38 A: profile selection scopes for repository, CR, source.
+CREATE TABLE parser_profile_selection_scopes (
+ selection_scope_uuidv4 TEXT PRIMARY KEY,
+ owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','source')),
+ repository_uuidv4 TEXT REFERENCES repositories(repository_uuidv4),
+ source_registration_uuidv4 TEXT REFERENCES sources(source_registration_uuidv4),
+ change_request_id TEXT,
+ fact_kind TEXT NOT NULL CHECK(length(fact_kind)>0),
+ CHECK (
+   (owner_kind='repository' AND repository_uuidv4 IS NOT NULL AND source_registration_uuidv4 IS NULL)
+   OR (owner_kind='source' AND repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NOT NULL AND change_request_id IS NULL)
+ ),
+ UNIQUE(selection_scope_uuidv4,owner_kind,fact_kind),
+ FOREIGN KEY(change_request_id,repository_uuidv4)
+   REFERENCES change_requests(change_request_id,repository_uuidv4)
+) STRICT;
+CREATE UNIQUE INDEX parser_scope_repository_unique
+ ON parser_profile_selection_scopes(repository_uuidv4,fact_kind)
+ WHERE owner_kind='repository' AND change_request_id IS NULL;
+CREATE UNIQUE INDEX parser_scope_change_request_unique
+ ON parser_profile_selection_scopes(change_request_id,fact_kind)
+ WHERE owner_kind='repository' AND change_request_id IS NOT NULL;
+CREATE UNIQUE INDEX parser_scope_source_unique
+ ON parser_profile_selection_scopes(source_registration_uuidv4,fact_kind)
+ WHERE owner_kind='source';
+
+-- D34 A: selection references exact V1, not whatever later V2 passes.
+-- outcome constant makes FK enforce that recorded verification is passed;
+-- trust and non-invalidation are checked separately by views.
+CREATE TABLE parser_profile_selection_decisions (
+ selection_decision_uuidv4 TEXT PRIMARY KEY,
+ selection_scope_uuidv4 TEXT NOT NULL,
+ owner_kind TEXT NOT NULL,
+ fact_kind TEXT NOT NULL,
+ parser_profile_uuidv4 TEXT NOT NULL,
+ parser_profile_verification_uuidv4 TEXT NOT NULL,
+ required_verification_outcome TEXT NOT NULL DEFAULT 'passed'
+   CHECK(required_verification_outcome='passed'),
+ predecessor_manifest_json TEXT NOT NULL CHECK(json_valid(predecessor_manifest_json) AND json_type(predecessor_manifest_json)='array'),
+ issuer TEXT NOT NULL CHECK(length(issuer)>0),
+ decided_at_us INTEGER,
+ UNIQUE(selection_decision_uuidv4,selection_scope_uuidv4),
+ FOREIGN KEY(selection_scope_uuidv4,owner_kind,fact_kind)
+   REFERENCES parser_profile_selection_scopes(selection_scope_uuidv4,owner_kind,fact_kind),
+ FOREIGN KEY(parser_profile_uuidv4,owner_kind,fact_kind)
+   REFERENCES parser_profile_capabilities(parser_profile_uuidv4,owner_kind,fact_kind),
+ FOREIGN KEY(parser_profile_verification_uuidv4,parser_profile_uuidv4,required_verification_outcome)
+   REFERENCES parser_profile_verifications(parser_profile_verification_uuidv4,parser_profile_uuidv4,outcome)
+) STRICT;
+CREATE TABLE parser_profile_selection_predecessors (
+ selection_decision_uuidv4 TEXT NOT NULL,
+ predecessor_decision_uuidv4 TEXT NOT NULL,
+ selection_scope_uuidv4 TEXT NOT NULL,
+ PRIMARY KEY(selection_decision_uuidv4,predecessor_decision_uuidv4),
+ CHECK(selection_decision_uuidv4<>predecessor_decision_uuidv4),
+ FOREIGN KEY(selection_decision_uuidv4,selection_scope_uuidv4)
+  REFERENCES parser_profile_selection_decisions(selection_decision_uuidv4,selection_scope_uuidv4),
+ FOREIGN KEY(predecessor_decision_uuidv4,selection_scope_uuidv4)
+  REFERENCES parser_profile_selection_decisions(selection_decision_uuidv4,selection_scope_uuidv4)
+) STRICT;
+CREATE TRIGGER parser_profile_predecessor_no_cycle
+ BEFORE INSERT ON parser_profile_selection_predecessors
+ BEGIN
+   SELECT RAISE(ABORT,'parser profile selection DAG cycle')
+   WHERE EXISTS (
+     WITH RECURSIVE ancestors(uid) AS (
+       SELECT NEW.predecessor_decision_uuidv4
+       UNION
+       SELECT p.predecessor_decision_uuidv4
+         FROM parser_profile_selection_predecessors p
+         JOIN ancestors a ON p.selection_decision_uuidv4=a.uid
+     )
+     SELECT 1 FROM ancestors WHERE uid=NEW.selection_decision_uuidv4
+   );
+ END;
+
+-- D8/D9: missing dependency is durable, but not promoted as valid FK row.
+-- Writers validate/publish from this staging table atomically after arrival.
+CREATE TABLE parser_profile_selection_staging (
+ selection_decision_uuidv4 TEXT PRIMARY KEY,
+ selection_scope_uuidv4 TEXT NOT NULL,
+ record_json TEXT NOT NULL CHECK(json_valid(record_json) AND json_type(record_json)='object'),
+ unresolved_reason TEXT NOT NULL,
+ received_at_us INTEGER
+) STRICT;
+
+-- A unique DAG head is necessary but not enough: trust/invalidation count.
+CREATE VIEW active_parser_profile_selections AS
+WITH heads AS (
+ SELECT d.*
+   FROM parser_profile_selection_decisions d
+   JOIN parser_profile_selection_publications pub USING(selection_decision_uuidv4)
+  WHERE NOT EXISTS (
+     SELECT 1 FROM parser_profile_selection_predecessors p JOIN parser_profile_selection_publications ppub ON ppub.selection_decision_uuidv4=p.selection_decision_uuidv4
+      WHERE p.predecessor_decision_uuidv4=d.selection_decision_uuidv4
+  )
+), counts AS (
+ SELECT selection_scope_uuidv4,COUNT(*) AS head_count
+   FROM heads GROUP BY selection_scope_uuidv4
+)
+SELECT h.selection_scope_uuidv4,h.selection_decision_uuidv4,
+       h.parser_profile_uuidv4,h.parser_profile_verification_uuidv4
+  FROM heads h JOIN counts c USING(selection_scope_uuidv4)
+  JOIN local_parser_profile_verification_trust t
+    ON t.parser_profile_verification_uuidv4=h.parser_profile_verification_uuidv4
+ WHERE c.head_count=1 AND t.trusted=1
+   AND NOT EXISTS(SELECT 1 FROM exchange_selection_blocks b WHERE b.scope_kind='profile' AND b.scope_uuidv4=h.selection_scope_uuidv4)
+   AND NOT EXISTS (
+     SELECT 1 FROM parser_profile_verification_invalidations i
+      WHERE i.parser_profile_verification_uuidv4=h.parser_profile_verification_uuidv4
+   )
+   AND NOT EXISTS(SELECT 1 FROM parser_profile_selection_decisions ud WHERE ud.selection_scope_uuidv4=h.selection_scope_uuidv4 AND NOT EXISTS(SELECT 1 FROM parser_profile_selection_publications up WHERE up.selection_decision_uuidv4=ud.selection_decision_uuidv4))
+   AND NOT EXISTS (
+     SELECT 1 FROM parser_profile_selection_staging st
+      WHERE st.selection_scope_uuidv4=h.selection_scope_uuidv4
+   );
+
+-- D32 A: a present but unresolved CR-specific scope BLOCKS repository fallback.
+CREATE VIEW effective_change_request_parser_profiles AS
+WITH keys AS (
+ SELECT cr.change_request_id,rs.fact_kind
+ FROM change_requests cr
+ JOIN parser_profile_selection_scopes rs
+   ON rs.repository_uuidv4=cr.repository_uuidv4
+  AND rs.owner_kind='repository' AND rs.change_request_id IS NULL
+ UNION
+ SELECT cs.change_request_id,cs.fact_kind
+ FROM parser_profile_selection_scopes cs
+ WHERE cs.owner_kind='repository' AND cs.change_request_id IS NOT NULL
+)
+SELECT k.change_request_id,k.fact_kind,
+       CASE WHEN cs.selection_scope_uuidv4 IS NOT NULL
+            THEN ca.parser_profile_uuidv4 ELSE ra.parser_profile_uuidv4 END AS parser_profile_uuidv4,
+       CASE WHEN cs.selection_scope_uuidv4 IS NOT NULL
+            THEN ca.selection_decision_uuidv4 ELSE ra.selection_decision_uuidv4 END AS selection_decision_uuidv4,
+       CASE WHEN cs.selection_scope_uuidv4 IS NOT NULL THEN 'change_request'
+            ELSE 'repository' END AS chosen_scope_kind
+  FROM keys k
+  JOIN change_requests cr ON cr.change_request_id=k.change_request_id
+  LEFT JOIN parser_profile_selection_scopes rs
+    ON rs.repository_uuidv4=cr.repository_uuidv4
+   AND rs.fact_kind=k.fact_kind AND rs.owner_kind='repository' AND rs.change_request_id IS NULL
+  LEFT JOIN active_parser_profile_selections ra
+    ON ra.selection_scope_uuidv4=rs.selection_scope_uuidv4
+  LEFT JOIN parser_profile_selection_scopes cs
+    ON cs.change_request_id=k.change_request_id
+   AND cs.fact_kind=k.fact_kind AND cs.owner_kind='repository'
+  LEFT JOIN active_parser_profile_selections ca
+    ON ca.selection_scope_uuidv4=cs.selection_scope_uuidv4;
+
+CREATE VIEW effective_source_parser_profiles AS
+SELECT ss.source_registration_uuidv4,ss.fact_kind,
+       a.parser_profile_uuidv4,a.selection_decision_uuidv4
+  FROM parser_profile_selection_scopes ss
+  LEFT JOIN active_parser_profile_selections a
+    ON a.selection_scope_uuidv4=ss.selection_scope_uuidv4
+ WHERE ss.owner_kind='source';
+
+-- Candidate filtering ONLY: fact-current DAG resolution remains independent.
+CREATE VIEW eligible_document_observations AS
+SELECT d.document_observation_id,d.document_observation_uuidv4,
+       d.change_request_id,d.repository_uuidv4,d.kind,
+       d.provider_change_request_document_id,d.parsed_result_uuidv4
+ FROM document_observations d
+ JOIN parsed_result_publications pub ON pub.parsed_result_uuidv4=d.parsed_result_uuidv4
+ JOIN parsed_results p ON p.parsed_result_uuidv4=d.parsed_result_uuidv4
+ JOIN effective_change_request_parser_profiles e
+   ON e.change_request_id=d.change_request_id
+  AND e.fact_kind=d.kind
+  AND e.parser_profile_uuidv4=p.parser_profile_uuidv4;
+
+-- A published result must use a profile that declares its owner type.
+CREATE TRIGGER parsed_result_publication_owner_capability
+ BEFORE INSERT ON parsed_result_publications
+ WHEN NOT EXISTS (
+    SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c
+      ON c.parser_profile_uuidv4=p.parser_profile_uuidv4
+     AND c.owner_kind=p.owner_kind
+     WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4
+ ) BEGIN SELECT RAISE(ABORT,'parser profile does not support parsed result owner type'); END;
+
+-- FK indexes for frequent ownership joins and DAG head/verification resolution.
+CREATE INDEX parsed_results_repository_owner_idx
+ ON parsed_results(repository_uuidv4) WHERE repository_uuidv4 IS NOT NULL;
+CREATE INDEX parsed_results_source_owner_idx
+ ON parsed_results(source_registration_uuidv4) WHERE source_registration_uuidv4 IS NOT NULL;
+CREATE INDEX parsed_results_profile_idx ON parsed_results(parser_profile_uuidv4);
+CREATE INDEX parsed_inputs_fetch_idx ON parsed_result_inputs(fetch_occurrence_uuidv4);
+CREATE INDEX parsed_inputs_source_idx ON parsed_result_inputs(source_input_uuidv4);
+CREATE INDEX parsed_inputs_git_idx ON parsed_result_inputs(git_acquisition_id);
+CREATE INDEX verification_profile_idx ON parser_profile_verifications(parser_profile_uuidv4);
+CREATE INDEX verification_invalidation_idx ON parser_profile_verification_invalidations(parser_profile_verification_uuidv4);
+CREATE INDEX selection_decision_scope_idx ON parser_profile_selection_decisions(selection_scope_uuidv4);
+CREATE INDEX selection_predecessor_reverse_idx ON parser_profile_selection_predecessors(predecessor_decision_uuidv4);
+CREATE INDEX document_parsed_result_idx ON document_observations(parsed_result_uuidv4);
+
+-- Protect independent, immutable evidence/decisions against mutation/deletion.
+-- Existing catalog retention guards remain in force for its existing entities.
+CREATE TRIGGER source_input_observations_reject_update BEFORE UPDATE ON source_input_observations
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER source_input_observations_reject_delete BEFORE DELETE ON source_input_observations
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parser_profiles_reject_update BEFORE UPDATE ON parser_profiles
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parser_profiles_reject_delete BEFORE DELETE ON parser_profiles
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parser_profile_capabilities_reject_update BEFORE UPDATE ON parser_profile_capabilities
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parser_profile_capabilities_reject_delete BEFORE DELETE ON parser_profile_capabilities
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parser_profile_verifications_reject_update BEFORE UPDATE ON parser_profile_verifications
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parser_profile_verifications_reject_delete BEFORE DELETE ON parser_profile_verifications
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parser_profile_verification_invalidations_reject_update BEFORE UPDATE ON parser_profile_verification_invalidations
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parser_profile_verification_invalidations_reject_delete BEFORE DELETE ON parser_profile_verification_invalidations
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parsed_results_reject_update BEFORE UPDATE ON parsed_results
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parsed_results_reject_delete BEFORE DELETE ON parsed_results
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parsed_result_inputs_reject_update BEFORE UPDATE ON parsed_result_inputs
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parsed_result_inputs_reject_delete BEFORE DELETE ON parsed_result_inputs
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+
+
+
+
+
+
+
+
+CREATE TRIGGER parser_profile_selection_scopes_reject_update BEFORE UPDATE ON parser_profile_selection_scopes
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parser_profile_selection_scopes_reject_delete BEFORE DELETE ON parser_profile_selection_scopes
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parser_profile_selection_decisions_reject_update BEFORE UPDATE ON parser_profile_selection_decisions
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parser_profile_selection_decisions_reject_delete BEFORE DELETE ON parser_profile_selection_decisions
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parser_profile_selection_predecessors_reject_update BEFORE UPDATE ON parser_profile_selection_predecessors
+BEGIN SELECT RAISE(ABORT,'immutable evidence/decision'); END;
+CREATE TRIGGER parser_profile_selection_predecessors_reject_delete BEFORE DELETE ON parser_profile_selection_predecessors
+BEGIN SELECT RAISE(ABORT,'retained evidence/decision'); END;
+CREATE TRIGGER parsed_result_publications_reject_update BEFORE UPDATE ON parsed_result_publications BEGIN SELECT RAISE(ABORT,'immutable publication'); END;
+CREATE TRIGGER parsed_result_publications_reject_delete BEFORE DELETE ON parsed_result_publications BEGIN SELECT RAISE(ABORT,'retained publication'); END;
+CREATE TRIGGER source_input_observations_uuid4_validate BEFORE INSERT ON source_input_observations WHEN NOT (length(NEW.source_input_uuidv4)=36 AND length(CAST(NEW.source_input_uuidv4 AS BLOB))=36 AND substr(NEW.source_input_uuidv4,9,1)='-' AND substr(NEW.source_input_uuidv4,14,1)='-' AND substr(NEW.source_input_uuidv4,19,1)='-' AND substr(NEW.source_input_uuidv4,24,1)='-' AND length(replace(NEW.source_input_uuidv4,'-',''))=32 AND replace(NEW.source_input_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.source_input_uuidv4,15,1)='4' AND substr(NEW.source_input_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER parser_profiles_uuid4_validate BEFORE INSERT ON parser_profiles WHEN NOT (length(NEW.parser_profile_uuidv4)=36 AND length(CAST(NEW.parser_profile_uuidv4 AS BLOB))=36 AND substr(NEW.parser_profile_uuidv4,9,1)='-' AND substr(NEW.parser_profile_uuidv4,14,1)='-' AND substr(NEW.parser_profile_uuidv4,19,1)='-' AND substr(NEW.parser_profile_uuidv4,24,1)='-' AND length(replace(NEW.parser_profile_uuidv4,'-',''))=32 AND replace(NEW.parser_profile_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.parser_profile_uuidv4,15,1)='4' AND substr(NEW.parser_profile_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER parser_profile_verifications_uuid4_validate BEFORE INSERT ON parser_profile_verifications WHEN NOT (length(NEW.parser_profile_verification_uuidv4)=36 AND length(CAST(NEW.parser_profile_verification_uuidv4 AS BLOB))=36 AND substr(NEW.parser_profile_verification_uuidv4,9,1)='-' AND substr(NEW.parser_profile_verification_uuidv4,14,1)='-' AND substr(NEW.parser_profile_verification_uuidv4,19,1)='-' AND substr(NEW.parser_profile_verification_uuidv4,24,1)='-' AND length(replace(NEW.parser_profile_verification_uuidv4,'-',''))=32 AND replace(NEW.parser_profile_verification_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.parser_profile_verification_uuidv4,15,1)='4' AND substr(NEW.parser_profile_verification_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER parser_profile_verification_invalidations_uuid4_validate BEFORE INSERT ON parser_profile_verification_invalidations WHEN NOT (length(NEW.invalidation_uuidv4)=36 AND length(CAST(NEW.invalidation_uuidv4 AS BLOB))=36 AND substr(NEW.invalidation_uuidv4,9,1)='-' AND substr(NEW.invalidation_uuidv4,14,1)='-' AND substr(NEW.invalidation_uuidv4,19,1)='-' AND substr(NEW.invalidation_uuidv4,24,1)='-' AND length(replace(NEW.invalidation_uuidv4,'-',''))=32 AND replace(NEW.invalidation_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.invalidation_uuidv4,15,1)='4' AND substr(NEW.invalidation_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER parsed_results_uuid4_validate BEFORE INSERT ON parsed_results WHEN NOT (length(NEW.parsed_result_uuidv4)=36 AND length(CAST(NEW.parsed_result_uuidv4 AS BLOB))=36 AND substr(NEW.parsed_result_uuidv4,9,1)='-' AND substr(NEW.parsed_result_uuidv4,14,1)='-' AND substr(NEW.parsed_result_uuidv4,19,1)='-' AND substr(NEW.parsed_result_uuidv4,24,1)='-' AND length(replace(NEW.parsed_result_uuidv4,'-',''))=32 AND replace(NEW.parsed_result_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.parsed_result_uuidv4,15,1)='4' AND substr(NEW.parsed_result_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+
+
+
+CREATE TRIGGER parser_profile_selection_scopes_uuid4_validate BEFORE INSERT ON parser_profile_selection_scopes WHEN NOT (length(NEW.selection_scope_uuidv4)=36 AND length(CAST(NEW.selection_scope_uuidv4 AS BLOB))=36 AND substr(NEW.selection_scope_uuidv4,9,1)='-' AND substr(NEW.selection_scope_uuidv4,14,1)='-' AND substr(NEW.selection_scope_uuidv4,19,1)='-' AND substr(NEW.selection_scope_uuidv4,24,1)='-' AND length(replace(NEW.selection_scope_uuidv4,'-',''))=32 AND replace(NEW.selection_scope_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.selection_scope_uuidv4,15,1)='4' AND substr(NEW.selection_scope_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER parser_profile_selection_decisions_uuid4_validate BEFORE INSERT ON parser_profile_selection_decisions WHEN NOT (length(NEW.selection_decision_uuidv4)=36 AND length(CAST(NEW.selection_decision_uuidv4 AS BLOB))=36 AND substr(NEW.selection_decision_uuidv4,9,1)='-' AND substr(NEW.selection_decision_uuidv4,14,1)='-' AND substr(NEW.selection_decision_uuidv4,19,1)='-' AND substr(NEW.selection_decision_uuidv4,24,1)='-' AND length(replace(NEW.selection_decision_uuidv4,'-',''))=32 AND replace(NEW.selection_decision_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.selection_decision_uuidv4,15,1)='4' AND substr(NEW.selection_decision_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER parser_profile_selection_staging_uuid4_validate BEFORE INSERT ON parser_profile_selection_staging WHEN NOT (length(NEW.selection_decision_uuidv4)=36 AND length(CAST(NEW.selection_decision_uuidv4 AS BLOB))=36 AND substr(NEW.selection_decision_uuidv4,9,1)='-' AND substr(NEW.selection_decision_uuidv4,14,1)='-' AND substr(NEW.selection_decision_uuidv4,19,1)='-' AND substr(NEW.selection_decision_uuidv4,24,1)='-' AND length(replace(NEW.selection_decision_uuidv4,'-',''))=32 AND replace(NEW.selection_decision_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.selection_decision_uuidv4,15,1)='4' AND substr(NEW.selection_decision_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER repositories_portable_uuid4 BEFORE INSERT ON repositories WHEN NOT (length(NEW.repository_uuidv4)=36 AND length(CAST(NEW.repository_uuidv4 AS BLOB))=36 AND substr(NEW.repository_uuidv4,9,1)='-' AND substr(NEW.repository_uuidv4,14,1)='-' AND substr(NEW.repository_uuidv4,19,1)='-' AND substr(NEW.repository_uuidv4,24,1)='-' AND length(replace(NEW.repository_uuidv4,'-',''))=32 AND replace(NEW.repository_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.repository_uuidv4,15,1)='4' AND substr(NEW.repository_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER fetch_occurrences_portable_uuid4 BEFORE INSERT ON fetch_occurrences WHEN NOT (length(NEW.fetch_occurrence_uuidv4)=36 AND length(CAST(NEW.fetch_occurrence_uuidv4 AS BLOB))=36 AND substr(NEW.fetch_occurrence_uuidv4,9,1)='-' AND substr(NEW.fetch_occurrence_uuidv4,14,1)='-' AND substr(NEW.fetch_occurrence_uuidv4,19,1)='-' AND substr(NEW.fetch_occurrence_uuidv4,24,1)='-' AND length(replace(NEW.fetch_occurrence_uuidv4,'-',''))=32 AND replace(NEW.fetch_occurrence_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.fetch_occurrence_uuidv4,15,1)='4' AND substr(NEW.fetch_occurrence_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER change_request_observations_portable_uuid4 BEFORE INSERT ON change_request_observations WHEN NOT (length(NEW.change_request_observation_uuidv4)=36 AND length(CAST(NEW.change_request_observation_uuidv4 AS BLOB))=36 AND substr(NEW.change_request_observation_uuidv4,9,1)='-' AND substr(NEW.change_request_observation_uuidv4,14,1)='-' AND substr(NEW.change_request_observation_uuidv4,19,1)='-' AND substr(NEW.change_request_observation_uuidv4,24,1)='-' AND length(replace(NEW.change_request_observation_uuidv4,'-',''))=32 AND replace(NEW.change_request_observation_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.change_request_observation_uuidv4,15,1)='4' AND substr(NEW.change_request_observation_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER document_observations_portable_uuid4 BEFORE INSERT ON document_observations WHEN NOT (length(NEW.document_observation_uuidv4)=36 AND length(CAST(NEW.document_observation_uuidv4 AS BLOB))=36 AND substr(NEW.document_observation_uuidv4,9,1)='-' AND substr(NEW.document_observation_uuidv4,14,1)='-' AND substr(NEW.document_observation_uuidv4,19,1)='-' AND substr(NEW.document_observation_uuidv4,24,1)='-' AND length(replace(NEW.document_observation_uuidv4,'-',''))=32 AND replace(NEW.document_observation_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.document_observation_uuidv4,15,1)='4' AND substr(NEW.document_observation_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER code_observations_portable_uuid4 BEFORE INSERT ON code_observations WHEN NOT (length(NEW.code_observation_uuidv4)=36 AND length(CAST(NEW.code_observation_uuidv4 AS BLOB))=36 AND substr(NEW.code_observation_uuidv4,9,1)='-' AND substr(NEW.code_observation_uuidv4,14,1)='-' AND substr(NEW.code_observation_uuidv4,19,1)='-' AND substr(NEW.code_observation_uuidv4,24,1)='-' AND length(replace(NEW.code_observation_uuidv4,'-',''))=32 AND replace(NEW.code_observation_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.code_observation_uuidv4,15,1)='4' AND substr(NEW.code_observation_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER change_request_events_portable_uuid4 BEFORE INSERT ON change_request_events WHEN NOT (length(NEW.change_request_event_uuidv4)=36 AND length(CAST(NEW.change_request_event_uuidv4 AS BLOB))=36 AND substr(NEW.change_request_event_uuidv4,9,1)='-' AND substr(NEW.change_request_event_uuidv4,14,1)='-' AND substr(NEW.change_request_event_uuidv4,19,1)='-' AND substr(NEW.change_request_event_uuidv4,24,1)='-' AND length(replace(NEW.change_request_event_uuidv4,'-',''))=32 AND replace(NEW.change_request_event_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.change_request_event_uuidv4,15,1)='4' AND substr(NEW.change_request_event_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER inventory_observations_portable_uuid4 BEFORE INSERT ON inventory_observations WHEN NOT (length(NEW.inventory_observation_id)=36 AND length(CAST(NEW.inventory_observation_id AS BLOB))=36 AND substr(NEW.inventory_observation_id,9,1)='-' AND substr(NEW.inventory_observation_id,14,1)='-' AND substr(NEW.inventory_observation_id,19,1)='-' AND substr(NEW.inventory_observation_id,24,1)='-' AND length(replace(NEW.inventory_observation_id,'-',''))=32 AND replace(NEW.inventory_observation_id,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.inventory_observation_id,15,1)='4' AND substr(NEW.inventory_observation_id,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+
+-- Immutable manifests close late edge/input/fact additions at their admission boundary.
+CREATE TRIGGER parsed_input_manifest_match BEFORE INSERT ON parsed_result_inputs
+WHEN NOT EXISTS (
+ SELECT 1 FROM parsed_results p, json_each(p.input_manifest_json) m
+ WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND CAST(m.key AS INTEGER)=NEW.input_ordinal
+ AND json_extract(m.value,'$.fetch_occurrence_uuidv4') IS NEW.fetch_occurrence_uuidv4
+ AND json_extract(m.value,'$.git_acquisition_id') IS NEW.git_acquisition_id
+ AND json_extract(m.value,'$.source_input_uuidv4') IS NEW.source_input_uuidv4
+) BEGIN SELECT RAISE(ABORT,'input differs from immutable manifest'); END;
+CREATE TRIGGER parsed_publication_manifest_count BEFORE INSERT ON parsed_result_publications
+WHEN NEW.declared_input_count<>(SELECT json_array_length(input_manifest_json) FROM parsed_results WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4)
+BEGIN SELECT RAISE(ABORT,'publication differs from immutable input manifest'); END;
+CREATE TRIGGER parser_profile_capability_sealed BEFORE INSERT ON parser_profile_capabilities
+WHEN EXISTS(SELECT 1 FROM parser_profile_verifications WHERE parser_profile_uuidv4=NEW.parser_profile_uuidv4)
+BEGIN SELECT RAISE(ABORT,'verified profile capabilities sealed'); END;
+CREATE TRIGGER parser_verification_evidence_complete BEFORE INSERT ON parser_profile_verifications
+WHEN NEW.outcome='passed' AND (
+ coalesce(json_type(NEW.evidence_json,'$.capabilities'),'')<>'array'
+ OR coalesce(json_type(NEW.evidence_json,'$.definition'),'')<>'object'
+ OR json_extract(NEW.evidence_json,'$.definition') <> (SELECT json(definition_json) FROM parser_profiles WHERE parser_profile_uuidv4=NEW.parser_profile_uuidv4)
+ OR (SELECT count(*) FROM json_each(NEW.evidence_json,'$.capabilities'))<>(SELECT count(*) FROM parser_profile_capabilities WHERE parser_profile_uuidv4=NEW.parser_profile_uuidv4)
+ OR EXISTS(SELECT 1 FROM parser_profile_capabilities c WHERE c.parser_profile_uuidv4=NEW.parser_profile_uuidv4 AND NOT EXISTS(SELECT 1 FROM json_each(NEW.evidence_json,'$.capabilities') e WHERE json_extract(e.value,'$.owner_kind')=c.owner_kind AND json_extract(e.value,'$.fact_kind')=c.fact_kind AND json_extract(e.value,'$.outcome')='passed' AND coalesce(json_type(e.value,'$.checks'),'')='array' AND json_array_length(e.value,'$.checks')>0))
+) BEGIN SELECT RAISE(ABORT,'passed verification requires evidence for entire definition'); END;
+CREATE TRIGGER parser_selection_edge_manifest BEFORE INSERT ON parser_profile_selection_predecessors
+WHEN EXISTS(SELECT 1 FROM parser_profile_selection_publications WHERE selection_decision_uuidv4=NEW.selection_decision_uuidv4)
+ OR NOT EXISTS(SELECT 1 FROM parser_profile_selection_decisions d,json_each(d.predecessor_manifest_json) m WHERE d.selection_decision_uuidv4=NEW.selection_decision_uuidv4 AND m.value=NEW.predecessor_decision_uuidv4)
+BEGIN SELECT RAISE(ABORT,'selection predecessor manifest is sealed or inconsistent'); END;
+CREATE TRIGGER parser_selection_publish_manifest BEFORE INSERT ON parser_profile_selection_publications
+WHEN (SELECT count(*) FROM parser_profile_selection_predecessors WHERE selection_decision_uuidv4=NEW.selection_decision_uuidv4)<>(SELECT json_array_length(predecessor_manifest_json) FROM parser_profile_selection_decisions WHERE selection_decision_uuidv4=NEW.selection_decision_uuidv4)
+ OR EXISTS(SELECT 1 FROM parser_profile_selection_predecessors e WHERE e.selection_decision_uuidv4=NEW.selection_decision_uuidv4 AND NOT EXISTS(SELECT 1 FROM parser_profile_selection_publications p WHERE p.selection_decision_uuidv4=e.predecessor_decision_uuidv4))
+BEGIN SELECT RAISE(ABORT,'selection dependencies are not fully sealed'); END;
+CREATE TRIGGER parser_selection_publication_immutable BEFORE UPDATE ON parser_profile_selection_publications BEGIN SELECT RAISE(ABORT,'immutable selection publication'); END;
+CREATE TRIGGER parser_selection_publication_retained BEFORE DELETE ON parser_profile_selection_publications BEGIN SELECT RAISE(ABORT,'retained selection publication'); END;
+
+CREATE TABLE review_thread_observations(
+ thread_observation_uuidv4 TEXT PRIMARY KEY,
+ repository_uuidv4 TEXT NOT NULL,
+ change_request_id TEXT NOT NULL,
+ provider_resource_id TEXT NOT NULL,
+ parsed_result_uuidv4 TEXT NOT NULL,
+ observed_at_us INTEGER,
+ payload TEXT NOT NULL CHECK(json_valid(payload) AND json_type(payload)='object'),
+ UNIQUE(parsed_result_uuidv4,change_request_id,provider_resource_id),
+ FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4),
+ FOREIGN KEY(change_request_id,provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id),
+ FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4)
+) STRICT;
+
+CREATE TABLE fact_selection_scopes(
+ fact_selection_scope_uuidv4 TEXT PRIMARY KEY,
+ owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','source')),
+ repository_uuidv4 TEXT REFERENCES repositories(repository_uuidv4),
+ source_registration_uuidv4 TEXT REFERENCES sources(source_registration_uuidv4),
+ change_request_id TEXT,
+ fact_kind TEXT NOT NULL CHECK(length(fact_kind)>0),
+ kind TEXT,
+ provider_change_request_document_id TEXT,
+ provider_resource_id TEXT,
+ fetch_occurrence_uuidv4 TEXT,
+ CHECK((owner_kind='repository' AND repository_uuidv4 IS NOT NULL AND source_registration_uuidv4 IS NULL) OR (owner_kind='source' AND repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NOT NULL AND change_request_id IS NULL)),
+ CHECK((kind IS NULL AND provider_change_request_document_id IS NULL) OR (kind IS NOT NULL AND provider_change_request_document_id IS NOT NULL AND change_request_id IS NOT NULL AND fact_kind=kind)),
+ CHECK(provider_resource_id IS NULL OR (change_request_id IS NOT NULL AND fact_kind='review-thread' AND kind IS NULL)),
+ CHECK(fetch_occurrence_uuidv4 IS NULL OR (repository_uuidv4 IS NOT NULL AND change_request_id IS NOT NULL AND fact_kind IN ('events','code') AND kind IS NULL AND provider_resource_id IS NULL)),
+ FOREIGN KEY(fetch_occurrence_uuidv4,repository_uuidv4) REFERENCES fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4),
+ UNIQUE(fact_selection_scope_uuidv4,repository_uuidv4),
+ UNIQUE(fact_selection_scope_uuidv4,source_registration_uuidv4),
+ FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4),
+ FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id),
+ FOREIGN KEY(change_request_id,provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id)
+) STRICT;
+CREATE UNIQUE INDEX fact_selection_scope_identity ON fact_selection_scopes(owner_kind,coalesce(repository_uuidv4,''),coalesce(source_registration_uuidv4,''),coalesce(change_request_id,''),fact_kind,coalesce(kind,''),coalesce(provider_change_request_document_id,''),coalesce(provider_resource_id,''),coalesce(fetch_occurrence_uuidv4,''));
+CREATE TABLE fact_selection_decisions(
+ fact_selection_decision_uuidv4 TEXT PRIMARY KEY,
+ fact_selection_scope_uuidv4 TEXT NOT NULL REFERENCES fact_selection_scopes(fact_selection_scope_uuidv4),
+ parsed_result_uuidv4 TEXT NOT NULL REFERENCES parsed_result_publications(parsed_result_uuidv4),
+ repository_uuidv4 TEXT, source_registration_uuidv4 TEXT,
+ predecessor_manifest_json TEXT NOT NULL CHECK(json_valid(predecessor_manifest_json) AND json_type(predecessor_manifest_json)='array'),
+ issuer TEXT NOT NULL CHECK(length(issuer)>0), decided_at_us INTEGER,
+ CHECK((repository_uuidv4 IS NOT NULL AND source_registration_uuidv4 IS NULL) OR (repository_uuidv4 IS NULL AND source_registration_uuidv4 IS NOT NULL)),
+ UNIQUE(fact_selection_decision_uuidv4,fact_selection_scope_uuidv4),
+ FOREIGN KEY(fact_selection_scope_uuidv4,repository_uuidv4) REFERENCES fact_selection_scopes(fact_selection_scope_uuidv4,repository_uuidv4),
+ FOREIGN KEY(fact_selection_scope_uuidv4,source_registration_uuidv4) REFERENCES fact_selection_scopes(fact_selection_scope_uuidv4,source_registration_uuidv4),
+ FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4),
+ FOREIGN KEY(parsed_result_uuidv4,source_registration_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,source_registration_uuidv4)
+) STRICT;
+CREATE TABLE fact_selection_predecessors(
+ fact_selection_decision_uuidv4 TEXT NOT NULL,
+ predecessor_decision_uuidv4 TEXT NOT NULL,
+ fact_selection_scope_uuidv4 TEXT NOT NULL,
+ PRIMARY KEY(fact_selection_decision_uuidv4,predecessor_decision_uuidv4),
+ CHECK(fact_selection_decision_uuidv4<>predecessor_decision_uuidv4),
+ FOREIGN KEY(fact_selection_decision_uuidv4,fact_selection_scope_uuidv4) REFERENCES fact_selection_decisions(fact_selection_decision_uuidv4,fact_selection_scope_uuidv4),
+ FOREIGN KEY(predecessor_decision_uuidv4,fact_selection_scope_uuidv4) REFERENCES fact_selection_decisions(fact_selection_decision_uuidv4,fact_selection_scope_uuidv4)
+) STRICT;
+CREATE TABLE fact_selection_publications(
+ fact_selection_decision_uuidv4 TEXT PRIMARY KEY REFERENCES fact_selection_decisions(fact_selection_decision_uuidv4)
+) STRICT;
+CREATE TABLE fact_selection_staging(
+ fact_selection_decision_uuidv4 TEXT PRIMARY KEY,
+ fact_selection_scope_uuidv4 TEXT NOT NULL,
+ record_json TEXT NOT NULL CHECK(json_valid(record_json) AND json_type(record_json)='object'),
+ unresolved_reason TEXT NOT NULL,
+ received_at_us INTEGER
+) STRICT;
+CREATE TRIGGER fact_selection_edge_manifest BEFORE INSERT ON fact_selection_predecessors
+WHEN EXISTS(SELECT 1 FROM fact_selection_publications WHERE fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4)
+ OR NOT EXISTS(SELECT 1 FROM fact_selection_decisions d,json_each(d.predecessor_manifest_json) m WHERE d.fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4 AND m.value=NEW.predecessor_decision_uuidv4)
+BEGIN SELECT RAISE(ABORT,'fact predecessor manifest is sealed or inconsistent'); END;
+CREATE TRIGGER fact_selection_edge_cycle BEFORE INSERT ON fact_selection_predecessors BEGIN
+ SELECT RAISE(ABORT,'fact selection DAG cycle') WHERE EXISTS(WITH RECURSIVE ancestors(uid) AS (SELECT NEW.predecessor_decision_uuidv4 UNION SELECT e.predecessor_decision_uuidv4 FROM fact_selection_predecessors e JOIN ancestors a ON e.fact_selection_decision_uuidv4=a.uid) SELECT 1 FROM ancestors WHERE uid=NEW.fact_selection_decision_uuidv4);
+END;
+CREATE TRIGGER fact_selection_publish_manifest BEFORE INSERT ON fact_selection_publications
+WHEN (SELECT count(*) FROM fact_selection_predecessors WHERE fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4)<>(SELECT json_array_length(predecessor_manifest_json) FROM fact_selection_decisions WHERE fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4)
+ OR EXISTS(SELECT 1 FROM fact_selection_predecessors e WHERE e.fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4 AND NOT EXISTS(SELECT 1 FROM fact_selection_publications p WHERE p.fact_selection_decision_uuidv4=e.predecessor_decision_uuidv4))
+BEGIN SELECT RAISE(ABORT,'fact decision dependencies are not fully sealed'); END;
+
+-- No digest recomputation on reads: local quarantine propagates along typed inputs.
+CREATE VIEW usable_parsed_results AS
+SELECT r.* FROM parsed_results r JOIN parsed_result_publications p USING(parsed_result_uuidv4)
+WHERE NOT EXISTS(SELECT 1 FROM exchange_blocked_results b WHERE b.parsed_result_uuidv4=r.parsed_result_uuidv4)
+AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN fetch_occurrences f ON f.fetch_occurrence_uuidv4=i.fetch_occurrence_uuidv4 JOIN payload_quarantine q ON q.sha256=f.payload_sha256 WHERE i.parsed_result_uuidv4=r.parsed_result_uuidv4)
+AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN source_input_observations f ON f.source_input_uuidv4=i.source_input_uuidv4 JOIN payload_quarantine q ON q.sha256=f.payload_sha256 WHERE i.parsed_result_uuidv4=r.parsed_result_uuidv4);
+CREATE VIEW effective_repository_parser_profiles AS
+SELECT s.repository_uuidv4,s.fact_kind,a.parser_profile_uuidv4,a.selection_decision_uuidv4
+FROM parser_profile_selection_scopes s LEFT JOIN active_parser_profile_selections a USING(selection_scope_uuidv4)
+WHERE s.owner_kind='repository' AND s.change_request_id IS NULL;
+CREATE VIEW active_fact_selections AS
+WITH heads AS (
+ SELECT d.* FROM fact_selection_decisions d JOIN fact_selection_publications p USING(fact_selection_decision_uuidv4)
+ WHERE NOT EXISTS(SELECT 1 FROM fact_selection_predecessors e JOIN fact_selection_publications ep ON ep.fact_selection_decision_uuidv4=e.fact_selection_decision_uuidv4 WHERE e.predecessor_decision_uuidv4=d.fact_selection_decision_uuidv4)
+), counts AS (SELECT fact_selection_scope_uuidv4,count(*) n FROM heads GROUP BY fact_selection_scope_uuidv4)
+SELECT s.*,h.fact_selection_decision_uuidv4,h.parsed_result_uuidv4
+FROM heads h JOIN counts c USING(fact_selection_scope_uuidv4) JOIN fact_selection_scopes s USING(fact_selection_scope_uuidv4)
+JOIN usable_parsed_results r USING(parsed_result_uuidv4)
+WHERE c.n=1
+AND NOT EXISTS(SELECT 1 FROM exchange_selection_blocks b WHERE b.scope_kind='fact' AND b.scope_uuidv4=s.fact_selection_scope_uuidv4)
+AND NOT EXISTS(SELECT 1 FROM exchange_blocked_results b WHERE b.parsed_result_uuidv4=h.parsed_result_uuidv4)
+AND NOT EXISTS(SELECT 1 FROM fact_selection_staging st WHERE st.fact_selection_scope_uuidv4=s.fact_selection_scope_uuidv4)
+AND NOT EXISTS(SELECT 1 FROM fact_selection_decisions d WHERE d.fact_selection_scope_uuidv4=s.fact_selection_scope_uuidv4 AND NOT EXISTS(SELECT 1 FROM fact_selection_publications p WHERE p.fact_selection_decision_uuidv4=d.fact_selection_decision_uuidv4))
+AND ((s.change_request_id IS NOT NULL AND EXISTS(SELECT 1 FROM effective_change_request_parser_profiles e WHERE e.change_request_id=s.change_request_id AND e.fact_kind=s.fact_kind AND e.parser_profile_uuidv4=r.parser_profile_uuidv4))
+ OR (s.owner_kind='repository' AND s.change_request_id IS NULL AND EXISTS(SELECT 1 FROM effective_repository_parser_profiles e WHERE e.repository_uuidv4=s.repository_uuidv4 AND e.fact_kind=s.fact_kind AND e.parser_profile_uuidv4=r.parser_profile_uuidv4))
+ OR (s.owner_kind='source' AND EXISTS(SELECT 1 FROM effective_source_parser_profiles e WHERE e.source_registration_uuidv4=s.source_registration_uuidv4 AND e.fact_kind=s.fact_kind AND e.parser_profile_uuidv4=r.parser_profile_uuidv4)));
+DROP VIEW eligible_document_observations;
+CREATE VIEW eligible_document_observations AS SELECT d.* FROM document_observations d JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_change_request_parser_profiles e ON e.change_request_id=d.change_request_id AND e.fact_kind=d.kind AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW eligible_change_request_observations AS SELECT d.* FROM change_request_observations d JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_change_request_parser_profiles e ON e.change_request_id=d.change_request_id AND e.fact_kind='change-request' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW eligible_code_observations AS SELECT d.* FROM code_observations d JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_change_request_parser_profiles e ON e.change_request_id=d.change_request_id AND e.fact_kind='code' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW eligible_change_request_events AS SELECT d.* FROM change_request_events d JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_change_request_parser_profiles e ON e.change_request_id=d.change_request_id AND e.fact_kind='events' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW eligible_code_commits AS SELECT d.* FROM code_commits d JOIN code_listings l USING(code_listing_id) JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_change_request_parser_profiles e ON e.change_request_id=l.change_request_id AND e.fact_kind='code' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW eligible_code_file_changes AS SELECT d.* FROM code_file_changes d JOIN code_listings l USING(code_listing_id) JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_change_request_parser_profiles e ON e.change_request_id=l.change_request_id AND e.fact_kind='code' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW eligible_review_thread_observations AS SELECT d.* FROM review_thread_observations d JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_change_request_parser_profiles e ON e.change_request_id=d.change_request_id AND e.fact_kind='review-thread' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW eligible_inventory_observations AS SELECT d.* FROM inventory_observations d JOIN usable_parsed_results r USING(parsed_result_uuidv4) JOIN effective_source_parser_profiles e ON e.source_registration_uuidv4=d.source_registration_uuidv4 AND e.fact_kind='inventory' AND e.parser_profile_uuidv4=r.parser_profile_uuidv4;
+CREATE VIEW current_document_observations AS SELECT d.* FROM eligible_document_observations d JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=d.change_request_id AND f.kind=d.kind AND f.provider_change_request_document_id=d.provider_change_request_document_id;
+CREATE VIEW current_change_request_observations AS SELECT d.* FROM eligible_change_request_observations d JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=d.change_request_id AND f.fact_kind='change-request';
+CREATE VIEW current_code_observations AS SELECT d.* FROM eligible_code_observations d JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=d.change_request_id AND f.fact_kind='code' AND f.fetch_occurrence_uuidv4 IS NULL;
+CREATE VIEW current_inventory_observations AS SELECT d.* FROM eligible_inventory_observations d JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.source_registration_uuidv4=d.source_registration_uuidv4 AND f.fact_kind='inventory';
+CREATE VIEW current_review_thread_observations AS SELECT d.* FROM eligible_review_thread_observations d JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=d.change_request_id AND f.provider_resource_id=d.provider_resource_id AND f.fact_kind='review-thread';
+CREATE TRIGGER review_thread_observations_reject_update BEFORE UPDATE ON review_thread_observations BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER review_thread_observations_reject_delete BEFORE DELETE ON review_thread_observations BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_scopes_reject_update BEFORE UPDATE ON fact_selection_scopes BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_scopes_reject_delete BEFORE DELETE ON fact_selection_scopes BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_decisions_reject_update BEFORE UPDATE ON fact_selection_decisions BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_decisions_reject_delete BEFORE DELETE ON fact_selection_decisions BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_predecessors_reject_update BEFORE UPDATE ON fact_selection_predecessors BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_predecessors_reject_delete BEFORE DELETE ON fact_selection_predecessors BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_publications_reject_update BEFORE UPDATE ON fact_selection_publications BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER fact_selection_publications_reject_delete BEFORE DELETE ON fact_selection_publications BEGIN SELECT RAISE(ABORT,'immutable retained parser fact'); END;
+CREATE TRIGGER review_thread_observations_capability BEFORE INSERT ON review_thread_observations WHEN NOT EXISTS(SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c USING(parser_profile_uuidv4) WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND c.owner_kind='repository' AND c.fact_kind='review-thread') BEGIN SELECT RAISE(ABORT,'profile cannot emit this fact kind'); END;
+CREATE TRIGGER change_request_events_capability BEFORE INSERT ON change_request_events WHEN NOT EXISTS(SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c USING(parser_profile_uuidv4) WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND c.owner_kind='repository' AND c.fact_kind='events') BEGIN SELECT RAISE(ABORT,'profile cannot emit this fact kind'); END;
+CREATE TRIGGER code_commits_capability BEFORE INSERT ON code_commits WHEN NOT EXISTS(SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c USING(parser_profile_uuidv4) WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND c.owner_kind='repository' AND c.fact_kind='code') BEGIN SELECT RAISE(ABORT,'profile cannot emit this fact kind'); END;
+CREATE TRIGGER code_file_changes_capability BEFORE INSERT ON code_file_changes WHEN NOT EXISTS(SELECT 1 FROM parsed_results p JOIN parser_profile_capabilities c USING(parser_profile_uuidv4) WHERE p.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND c.owner_kind='repository' AND c.fact_kind='code') BEGIN SELECT RAISE(ABORT,'profile cannot emit this fact kind'); END;
+CREATE TRIGGER change_request_observations_result_sealed BEFORE INSERT ON change_request_observations WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER document_observations_result_sealed BEFORE INSERT ON document_observations WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER code_observations_result_sealed BEFORE INSERT ON code_observations WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER change_request_events_result_sealed BEFORE INSERT ON change_request_events WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER code_commits_result_sealed BEFORE INSERT ON code_commits WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER code_file_changes_result_sealed BEFORE INSERT ON code_file_changes WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER inventory_observations_result_sealed BEFORE INSERT ON inventory_observations WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER review_thread_observations_result_sealed BEFORE INSERT ON review_thread_observations WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER review_thread_observations_uuid4 BEFORE INSERT ON review_thread_observations WHEN NOT (length(NEW.thread_observation_uuidv4)=36 AND length(CAST(NEW.thread_observation_uuidv4 AS BLOB))=36 AND substr(NEW.thread_observation_uuidv4,9,1)='-' AND substr(NEW.thread_observation_uuidv4,14,1)='-' AND substr(NEW.thread_observation_uuidv4,19,1)='-' AND substr(NEW.thread_observation_uuidv4,24,1)='-' AND length(replace(NEW.thread_observation_uuidv4,'-',''))=32 AND replace(NEW.thread_observation_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.thread_observation_uuidv4,15,1)='4' AND substr(NEW.thread_observation_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER fact_selection_scopes_uuid4 BEFORE INSERT ON fact_selection_scopes WHEN NOT (length(NEW.fact_selection_scope_uuidv4)=36 AND length(CAST(NEW.fact_selection_scope_uuidv4 AS BLOB))=36 AND substr(NEW.fact_selection_scope_uuidv4,9,1)='-' AND substr(NEW.fact_selection_scope_uuidv4,14,1)='-' AND substr(NEW.fact_selection_scope_uuidv4,19,1)='-' AND substr(NEW.fact_selection_scope_uuidv4,24,1)='-' AND length(replace(NEW.fact_selection_scope_uuidv4,'-',''))=32 AND replace(NEW.fact_selection_scope_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.fact_selection_scope_uuidv4,15,1)='4' AND substr(NEW.fact_selection_scope_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER fact_selection_decisions_uuid4 BEFORE INSERT ON fact_selection_decisions WHEN NOT (length(NEW.fact_selection_decision_uuidv4)=36 AND length(CAST(NEW.fact_selection_decision_uuidv4 AS BLOB))=36 AND substr(NEW.fact_selection_decision_uuidv4,9,1)='-' AND substr(NEW.fact_selection_decision_uuidv4,14,1)='-' AND substr(NEW.fact_selection_decision_uuidv4,19,1)='-' AND substr(NEW.fact_selection_decision_uuidv4,24,1)='-' AND length(replace(NEW.fact_selection_decision_uuidv4,'-',''))=32 AND replace(NEW.fact_selection_decision_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.fact_selection_decision_uuidv4,15,1)='4' AND substr(NEW.fact_selection_decision_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+CREATE TRIGGER fact_selection_staging_uuid4 BEFORE INSERT ON fact_selection_staging WHEN NOT (length(NEW.fact_selection_decision_uuidv4)=36 AND length(CAST(NEW.fact_selection_decision_uuidv4 AS BLOB))=36 AND substr(NEW.fact_selection_decision_uuidv4,9,1)='-' AND substr(NEW.fact_selection_decision_uuidv4,14,1)='-' AND substr(NEW.fact_selection_decision_uuidv4,19,1)='-' AND substr(NEW.fact_selection_decision_uuidv4,24,1)='-' AND length(replace(NEW.fact_selection_decision_uuidv4,'-',''))=32 AND replace(NEW.fact_selection_decision_uuidv4,'-','') NOT GLOB '*[^0-9a-f]*' AND substr(NEW.fact_selection_decision_uuidv4,15,1)='4' AND substr(NEW.fact_selection_decision_uuidv4,20,1) IN ('8','9','a','b')) BEGIN SELECT RAISE(ABORT,'invalid RFC UUIDv4'); END;
+
+CREATE TRIGGER parser_profile_definition_manifest BEFORE INSERT ON parser_profiles WHEN EXISTS(SELECT 1 FROM json_each(NEW.definition_json,'$.capabilities') c WHERE coalesce(json_type(c.value),'')<>'object' OR coalesce(json_extract(c.value,'$.owner_kind'),'') NOT IN ('repository','source') OR coalesce(json_type(c.value,'$.fact_kind'),'')<>'text' OR length(json_extract(c.value,'$.fact_kind'))=0) OR (SELECT count(*) FROM json_each(NEW.definition_json,'$.capabilities'))<>(SELECT count(*) FROM (SELECT DISTINCT json_extract(c.value,'$.owner_kind'),json_extract(c.value,'$.fact_kind') FROM json_each(NEW.definition_json,'$.capabilities') c)) BEGIN SELECT RAISE(ABORT,'invalid duplicate profile capability'); END;
+
+CREATE TRIGGER snapshots_parser_identity BEFORE UPDATE ON snapshots WHEN NEW.parsed_result_uuidv4 IS NOT OLD.parsed_result_uuidv4 BEGIN SELECT RAISE(ABORT,'immutable snapshot parsed identity'); END;
+CREATE TRIGGER ref_observations_parser_identity BEFORE UPDATE ON ref_observations WHEN NEW.parsed_result_uuidv4 IS NOT OLD.parsed_result_uuidv4 OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 BEGIN SELECT RAISE(ABORT,'immutable ref parsed identity'); END;
+CREATE TRIGGER snapshots_result_sealed BEFORE INSERT ON snapshots WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE TRIGGER ref_observations_result_sealed BEFORE INSERT ON ref_observations WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'published parsed fact set is sealed'); END;
+CREATE VIEW current_snapshots AS SELECT s.* FROM snapshots s JOIN active_fact_selections f ON f.parsed_result_uuidv4=s.parsed_result_uuidv4 AND f.repository_uuidv4=s.repository_uuidv4 AND f.fact_kind='git' WHERE s.published=1;
+
+CREATE VIEW current_change_request_events AS SELECT d.* FROM eligible_change_request_events d WHERE EXISTS(SELECT 1 FROM active_fact_selections f WHERE f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=d.change_request_id AND f.fact_kind='events' AND (f.fetch_occurrence_uuidv4 IS NULL OR f.fetch_occurrence_uuidv4=d.origin_fetch_occurrence_uuidv4));
+CREATE VIEW current_code_commits AS SELECT d.* FROM eligible_code_commits d JOIN fetch_occurrences o USING(fetch_occurrence_id) JOIN code_listings l USING(code_listing_id) JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=l.change_request_id AND f.fact_kind='code' AND f.fetch_occurrence_uuidv4=o.fetch_occurrence_uuidv4;
+CREATE VIEW current_code_file_changes AS SELECT d.* FROM eligible_code_file_changes d JOIN fetch_occurrences o USING(fetch_occurrence_id) JOIN code_listings l USING(code_listing_id) JOIN active_fact_selections f ON f.parsed_result_uuidv4=d.parsed_result_uuidv4 AND f.change_request_id=l.change_request_id AND f.fact_kind='code' AND f.fetch_occurrence_uuidv4=o.fetch_occurrence_uuidv4;
+
+CREATE VIEW parsed_fact_members AS
+SELECT parsed_result_uuidv4,'change_request_observations' AS table_name,json_array(change_request_observation_uuidv4) AS fact_key_json FROM change_request_observations
+UNION ALL SELECT parsed_result_uuidv4,'document_observations',json_array(document_observation_uuidv4) FROM document_observations
+UNION ALL SELECT parsed_result_uuidv4,'code_observations',json_array(code_observation_uuidv4) FROM code_observations
+UNION ALL SELECT parsed_result_uuidv4,'change_request_events',json_array(change_request_event_uuidv4) FROM change_request_events
+UNION ALL SELECT parsed_result_uuidv4,'review_thread_observations',json_array(thread_observation_uuidv4) FROM review_thread_observations
+UNION ALL SELECT parsed_result_uuidv4,'inventory_observations',json_array(inventory_observation_id) FROM inventory_observations
+UNION ALL SELECT parsed_result_uuidv4,'snapshots',json_array(snapshot_id) FROM snapshots
+UNION ALL SELECT parsed_result_uuidv4,'ref_observations',json_array(snapshot_id,hex(raw_ref_name)) FROM ref_observations
+UNION ALL SELECT d.parsed_result_uuidv4,'code_commits',json_array(d.code_listing_id,f.fetch_occurrence_uuidv4,d.position) FROM code_commits d JOIN fetch_occurrences f USING(fetch_occurrence_id)
+UNION ALL SELECT d.parsed_result_uuidv4,'code_file_changes',json_array(d.code_listing_id,f.fetch_occurrence_uuidv4,d.position) FROM code_file_changes d JOIN fetch_occurrences f USING(fetch_occurrence_id)
+UNION ALL SELECT parsed_result_uuidv4,'repository_name_observations',json_array(repository_name_observation_uuidv4) FROM repository_name_observations WHERE parsed_result_uuidv4 IS NOT NULL
+UNION ALL SELECT parsed_result_uuidv4,'repository_inventory_observations',json_array(repository_inventory_observation_uuidv4) FROM repository_inventory_observations;
+CREATE TRIGGER parsed_publication_fact_manifest BEFORE INSERT ON parsed_result_publications
+WHEN json_array_length(NEW.fact_manifest_json)<>(SELECT count(*) FROM parsed_fact_members WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4)
+ OR EXISTS(SELECT 1 FROM json_each(NEW.fact_manifest_json) m WHERE NOT EXISTS(SELECT 1 FROM parsed_fact_members f WHERE f.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.table_name=json_extract(m.value,'$.table') AND f.fact_key_json=json_extract(m.value,'$.key')))
+ OR json_array_length(NEW.fact_manifest_json)<>(SELECT count(*) FROM (SELECT DISTINCT json_extract(m.value,'$.table'),json_extract(m.value,'$.key') FROM json_each(NEW.fact_manifest_json) m))
+BEGIN SELECT RAISE(ABORT,'parsed output fact manifest incomplete or inconsistent'); END;
+CREATE TRIGGER fact_selection_result_contains_target BEFORE INSERT ON fact_selection_decisions
+WHEN NOT EXISTS(
+ SELECT 1 FROM fact_selection_scopes s WHERE s.fact_selection_scope_uuidv4=NEW.fact_selection_scope_uuidv4 AND (
+ (s.kind IS NOT NULL AND EXISTS(SELECT 1 FROM document_observations d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.change_request_id=s.change_request_id AND d.kind=s.kind AND d.provider_change_request_document_id=s.provider_change_request_document_id))
+ OR (s.fact_kind='change-request' AND EXISTS(SELECT 1 FROM change_request_observations d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.change_request_id=s.change_request_id AND d.published=1))
+ OR (s.fact_kind='code' AND s.fetch_occurrence_uuidv4 IS NULL AND EXISTS(SELECT 1 FROM code_observations d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.change_request_id=s.change_request_id))
+ OR (s.fact_kind='events' AND s.fetch_occurrence_uuidv4 IS NULL AND EXISTS(SELECT 1 FROM change_request_events d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.change_request_id=s.change_request_id))
+ OR (s.fact_kind IN ('code','events') AND s.fetch_occurrence_uuidv4 IS NOT NULL AND EXISTS(SELECT 1 FROM parsed_result_inputs i WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND i.fetch_occurrence_uuidv4=s.fetch_occurrence_uuidv4))
+ OR (s.fact_kind='review-thread' AND EXISTS(SELECT 1 FROM review_thread_observations d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.change_request_id=s.change_request_id AND d.provider_resource_id=s.provider_resource_id))
+ OR (s.fact_kind='inventory' AND EXISTS(SELECT 1 FROM inventory_observations d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.source_registration_uuidv4=s.source_registration_uuidv4))
+ OR (s.fact_kind='git' AND EXISTS(SELECT 1 FROM snapshots d WHERE d.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND d.repository_uuidv4=s.repository_uuidv4 AND d.published=1))
+ )) BEGIN SELECT RAISE(ABORT,'selected result does not contain scoped fact'); END;
+CREATE TRIGGER source_input_observations_no_replace_guard BEFORE INSERT ON source_input_observations WHEN EXISTS(SELECT 1 FROM source_input_observations WHERE source_input_uuidv4=NEW.source_input_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profiles_no_replace_guard BEFORE INSERT ON parser_profiles WHEN EXISTS(SELECT 1 FROM parser_profiles WHERE parser_profile_uuidv4=NEW.parser_profile_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profile_capabilities_no_replace_guard BEFORE INSERT ON parser_profile_capabilities WHEN EXISTS(SELECT 1 FROM parser_profile_capabilities WHERE parser_profile_uuidv4=NEW.parser_profile_uuidv4 AND owner_kind=NEW.owner_kind AND fact_kind=NEW.fact_kind) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profile_verifications_no_replace_guard BEFORE INSERT ON parser_profile_verifications WHEN EXISTS(SELECT 1 FROM parser_profile_verifications WHERE parser_profile_verification_uuidv4=NEW.parser_profile_verification_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profile_verification_invalidations_no_replace_guard BEFORE INSERT ON parser_profile_verification_invalidations WHEN EXISTS(SELECT 1 FROM parser_profile_verification_invalidations WHERE invalidation_uuidv4=NEW.invalidation_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parsed_results_no_replace_guard BEFORE INSERT ON parsed_results WHEN EXISTS(SELECT 1 FROM parsed_results WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parsed_result_inputs_no_replace_guard BEFORE INSERT ON parsed_result_inputs WHEN EXISTS(SELECT 1 FROM parsed_result_inputs WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND input_ordinal=NEW.input_ordinal) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parsed_result_publications_no_replace_guard BEFORE INSERT ON parsed_result_publications WHEN EXISTS(SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=NEW.parsed_result_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profile_selection_scopes_no_replace_guard BEFORE INSERT ON parser_profile_selection_scopes WHEN EXISTS(SELECT 1 FROM parser_profile_selection_scopes WHERE selection_scope_uuidv4=NEW.selection_scope_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profile_selection_decisions_no_replace_guard BEFORE INSERT ON parser_profile_selection_decisions WHEN EXISTS(SELECT 1 FROM parser_profile_selection_decisions WHERE selection_decision_uuidv4=NEW.selection_decision_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profile_selection_predecessors_no_replace_guard BEFORE INSERT ON parser_profile_selection_predecessors WHEN EXISTS(SELECT 1 FROM parser_profile_selection_predecessors WHERE selection_decision_uuidv4=NEW.selection_decision_uuidv4 AND predecessor_decision_uuidv4=NEW.predecessor_decision_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER parser_profile_selection_publications_no_replace_guard BEFORE INSERT ON parser_profile_selection_publications WHEN EXISTS(SELECT 1 FROM parser_profile_selection_publications WHERE selection_decision_uuidv4=NEW.selection_decision_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER fact_selection_scopes_no_replace_guard BEFORE INSERT ON fact_selection_scopes WHEN EXISTS(SELECT 1 FROM fact_selection_scopes WHERE fact_selection_scope_uuidv4=NEW.fact_selection_scope_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER fact_selection_decisions_no_replace_guard BEFORE INSERT ON fact_selection_decisions WHEN EXISTS(SELECT 1 FROM fact_selection_decisions WHERE fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER fact_selection_predecessors_no_replace_guard BEFORE INSERT ON fact_selection_predecessors WHEN EXISTS(SELECT 1 FROM fact_selection_predecessors WHERE fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4 AND predecessor_decision_uuidv4=NEW.predecessor_decision_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER fact_selection_publications_no_replace_guard BEFORE INSERT ON fact_selection_publications WHEN EXISTS(SELECT 1 FROM fact_selection_publications WHERE fact_selection_decision_uuidv4=NEW.fact_selection_decision_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER review_thread_observations_no_replace_guard BEFORE INSERT ON review_thread_observations WHEN EXISTS(SELECT 1 FROM review_thread_observations WHERE thread_observation_uuidv4=NEW.thread_observation_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable identity conflict; REPLACE forbidden'); END;
+CREATE TRIGGER fetch_occurrences_portable_conflict BEFORE INSERT ON fetch_occurrences WHEN EXISTS(SELECT 1 FROM fetch_occurrences WHERE fetch_occurrence_uuidv4=NEW.fetch_occurrence_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable portable identity conflict'); END;
+CREATE TRIGGER change_request_observations_portable_conflict BEFORE INSERT ON change_request_observations WHEN EXISTS(SELECT 1 FROM change_request_observations WHERE change_request_observation_uuidv4=NEW.change_request_observation_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable portable identity conflict'); END;
+CREATE TRIGGER document_observations_portable_conflict BEFORE INSERT ON document_observations WHEN EXISTS(SELECT 1 FROM document_observations WHERE document_observation_uuidv4=NEW.document_observation_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable portable identity conflict'); END;
+CREATE TRIGGER code_observations_portable_conflict BEFORE INSERT ON code_observations WHEN EXISTS(SELECT 1 FROM code_observations WHERE code_observation_uuidv4=NEW.code_observation_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable portable identity conflict'); END;
+CREATE TRIGGER change_request_events_portable_conflict BEFORE INSERT ON change_request_events WHEN EXISTS(SELECT 1 FROM change_request_events WHERE change_request_event_uuidv4=NEW.change_request_event_uuidv4) BEGIN SELECT RAISE(ABORT,'immutable portable identity conflict'); END;
+
+CREATE TRIGGER parsed_results_typed_manifest BEFORE INSERT ON parsed_results
+WHEN EXISTS(SELECT 1 FROM json_each(NEW.input_manifest_json) m WHERE coalesce(json_type(m.value),'')<>'object' OR (SELECT count(*) FROM json_each(m.value))<>1 OR EXISTS(SELECT 1 FROM json_each(m.value) v WHERE v.key NOT IN ('fetch_occurrence_uuidv4','git_acquisition_id','source_input_uuidv4') OR v.type<>'text'))
+BEGIN SELECT RAISE(ABORT,'input manifest requires exact typed input identities'); END;
+CREATE TRIGGER event_origin_in_result BEFORE INSERT ON change_request_events
+WHEN NEW.origin_fetch_occurrence_uuidv4 IS NOT NULL AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND i.fetch_occurrence_uuidv4=NEW.origin_fetch_occurrence_uuidv4)
+BEGIN SELECT RAISE(ABORT,'event input absent from parsed result'); END;
+CREATE TRIGGER document_origin_in_result BEFORE INSERT ON document_observations
+WHEN NEW.fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN fetch_occurrences f USING(fetch_occurrence_uuidv4) WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.fetch_occurrence_id=NEW.fetch_occurrence_id)
+BEGIN SELECT RAISE(ABORT,'document input absent from parsed result'); END;
+CREATE TRIGGER change_request_origin_in_result BEFORE INSERT ON change_request_observations
+WHEN NEW.origin_fetch_occurrence_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN fetch_occurrences f USING(fetch_occurrence_uuidv4) WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.fetch_occurrence_id=NEW.origin_fetch_occurrence_id)
+BEGIN SELECT RAISE(ABORT,'change request input absent from parsed result'); END;
+CREATE TRIGGER commit_origin_in_result BEFORE INSERT ON code_commits
+WHEN NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN fetch_occurrences f USING(fetch_occurrence_uuidv4) WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.fetch_occurrence_id=NEW.fetch_occurrence_id)
+BEGIN SELECT RAISE(ABORT,'code input absent from parsed result'); END;
+CREATE TRIGGER file_origin_in_result BEFORE INSERT ON code_file_changes
+WHEN NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN fetch_occurrences f USING(fetch_occurrence_uuidv4) WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.fetch_occurrence_id=NEW.fetch_occurrence_id)
+BEGIN SELECT RAISE(ABORT,'code input absent from parsed result'); END;

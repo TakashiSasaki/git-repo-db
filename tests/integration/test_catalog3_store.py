@@ -137,7 +137,7 @@ def test_runtime_refuses_v2_without_modifying_it(tmp_path):
         source.commit()
         source.execute("PRAGMA journal_mode=WAL")
     before = path.read_bytes()
-    with pytest.raises(CatalogError, match="Catalog3 is required"):
+    with pytest.raises(CatalogError, match="Current catalog format is required"):
         Store(tmp_path / "state")
     assert path.read_bytes() == before
 

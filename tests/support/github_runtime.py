@@ -39,20 +39,20 @@ def github_runtime(tmp_path, monkeypatch):
                     (json.dumps({"owner": "fixture"}),),
                 )
                 store.execute(
-                    "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture/alpha','endpoint',NULL,'{}')"
+                    "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,metadata) VALUES('00000000-0000-4000-8000-000000000301','fixture/alpha','endpoint','{}')"
                 )
                 store.execute(
-                    "INSERT INTO repository_endpoints(repository_endpoint_id,repository_uuidv4,url,transport,label,metadata,created_at_us) VALUES('endpoint','repo',?,'file',NULL,'{}',NULL)",
+                    "INSERT INTO repository_endpoints(repository_endpoint_id,repository_uuidv4,url,transport,label,metadata,created_at_us) VALUES('endpoint','00000000-0000-4000-8000-000000000301',?,'file',NULL,'{}',NULL)",
                     (fixture.alpha.url,),
                 )
                 store.execute(
-                    "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','101','{}',NULL)"
+                    "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','00000000-0000-4000-8000-000000000301','00000000-0000-4000-8000-000000000101','101','{}',NULL)"
                 )
                 store.execute(
-                    "INSERT INTO source_repositories(source_id,repository_uuidv4,first_seen_us,last_seen_us) VALUES('source','repo',NULL,NULL)"
+                    "INSERT INTO source_repositories(source_id,repository_uuidv4,first_seen_us,last_seen_us) VALUES('source','00000000-0000-4000-8000-000000000301',NULL,NULL)"
                 )
             repo = {
-                "repository_uuidv4": "repo",
+                "repository_uuidv4": "00000000-0000-4000-8000-000000000301",
                 "name": "fixture/alpha",
                 "source_id": "source",
                 "provider_repository_id": "101",

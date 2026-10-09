@@ -21,28 +21,27 @@ def test_new_graphql_comments_have_bounded_sqlite_work(tmp_path):
                 "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES('00000000-0000-4000-8000-000000000101','github','synthetic','{}')"
             )
             store.execute(
-                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic','{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('00000000-0000-4000-8000-000000000301','synthetic','{}')"
             )
             store.execute(
-                "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','repo','{}')"
+                "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata) VALUES('binding','00000000-0000-4000-8000-000000000301','00000000-0000-4000-8000-000000000101','00000000-0000-4000-8000-000000000301','{}')"
             )
             store.execute(
-                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo','binding','pull_request',1)"
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','00000000-0000-4000-8000-000000000301','binding','pull_request',1)"
             )
             store.execute(
-                "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
+                "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,repository_binding_id,request_context,parser_version,profile_version,confidence) VALUES('scope','00000000-0000-4000-8000-000000000301','binding','{}','catalog3-github/1','catalog-text-v1','proven')"
             )
             store.execute(
-                "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('collection','repo','pr','threads','scope',?)",
+                "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('collection','00000000-0000-4000-8000-000000000301','pr','threads','scope',?)",
                 (TIME,),
             )
             occurrence = store.execute(
-                "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES('collection',0,?,?,'{}',?,?)",
+                "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES('00000000-0000-4000-8000-000000000401','00000000-0000-4000-8000-000000000301','collection',0,?,?,'{}',?,?)",
                 (*facts.payload(b"{}").parameters(), TIME, TIME),
             ).lastrowid
             store.execute(
-                "INSERT INTO review_threads(change_request_id,provider_resource_id,payload,observed_at_us) VALUES('pr','thread','{}',?)",
-                (TIME,),
+                "INSERT INTO review_threads(change_request_id,provider_resource_id) VALUES('pr','thread')",
             )
 
             def insert_comments(start, end):

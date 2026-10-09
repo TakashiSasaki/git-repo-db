@@ -20,18 +20,18 @@ def cache_store(tmp_path):
         (tmp_path / directory).mkdir()
     with Store(tmp_path, initialize=True) as store:
         store.execute(
-            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','repo','{}')"
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','{}')"
         )
         store.execute(
-            "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('acquisition','repo','git','{}')"
+            "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','git','{}')"
         )
         store.execute(
-            "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('locator','repo','cache/repo/1.git','target_active','available')"
+            "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('locator','10000000-0000-4000-8000-000000000001','cache/10000000-0000-4000-8000-000000000001/1.git','target_active','available')"
         )
         store.execute(
             "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('active','locator',1,'active',0,4096)"
         )
-        path = tmp_path / "cache/repo/1.git"
+        path = tmp_path / "cache/10000000-0000-4000-8000-000000000001/1.git"
         path.mkdir(parents=True)
         (path / "HEAD").write_bytes(b"ref: refs/heads/main\n")
         yield store
@@ -74,7 +74,7 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
     source.mkdir()
     (source / "HEAD").write_bytes(b"preserved bytes")
     store.execute(
-        "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('preserved','repo',?,'source_readonly','available')",
+        "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('preserved','10000000-0000-4000-8000-000000000001',?,'source_readonly','available')",
         (str(source),),
     )
     store.execute(
@@ -92,11 +92,13 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
             "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('unsafe','preserved',2,'active',0,0)"
         )
     store.execute(
-        "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('acquisition','locator',1,1,1,0,0)"
+        "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('20000000-0000-4000-8000-000000000001','locator',1,1,1,0,0)"
     )
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "retained"
-    assert entry["blocked_by"] == ["pending_obligations:acquisition"]
+    assert entry["blocked_by"] == [
+        "pending_obligations:20000000-0000-4000-8000-000000000001"
+    ]
     store.execute("UPDATE preservation_obligations SET text_done=1,published=1")
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "evicted"
@@ -173,9 +175,9 @@ def test_gc_quarantine_recovery(cache_store, monkeypatch):
 def test_gc_rejects_quarantine_escape(cache_store):
     row = {
         "active_cache_entry_id": "../escape",
-        "repository_uuidv4": "repo",
+        "repository_uuidv4": "10000000-0000-4000-8000-000000000001",
         "generation": 1,
-        "path": "cache/repo/1.git",
+        "path": "cache/10000000-0000-4000-8000-000000000001/1.git",
     }
     with pytest.raises(CatalogError) as raised:
         CacheManager(cache_store).paths(row)
@@ -221,16 +223,16 @@ def test_acquisition_and_obligation_cannot_use_another_owner_cache(cache_store):
     store = cache_store
     seed_job(store)
     store.execute(
-        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('other','other','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000002','{}')"
     )
     store.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('other-acquisition','other','git','{}')"
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('20000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000002','git','{}')"
     )
     with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
         store.execute(
-            "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES('other-acquisition','job',1,'planned',1,'active')"
+            "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES('20000000-0000-4000-8000-000000000002','job',1,'planned',1,'active')"
         )
     with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
         store.execute(
-            "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('other-acquisition','locator',0,0,0,0,0)"
+            "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('20000000-0000-4000-8000-000000000002','locator',0,0,0,0,0)"
         )

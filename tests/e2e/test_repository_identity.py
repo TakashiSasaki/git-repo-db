@@ -189,15 +189,15 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
         )
         request_count = len(api_a.requests) + len(api_b.requests)
         unsupported = run(
-            state, "sync", "pr", "--repo", a, "--source", second, env=env, expected=3
+            state, "sync", "pr", "--repo", a, "--source", second, env=env, expected=5
         )
-        assert unsupported["data"]["results"][0]["error"] == "PROVIDER_UNSUPPORTED"
+        assert unsupported["error"]["code"] == "PROVIDER_UNSUPPORTED"
         assert len(api_a.requests) + len(api_b.requests) == request_count
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         assert db.execute("SELECT count(*) FROM review_threads").fetchone()[0] == 6
         assert (
             db.execute(
-                "SELECT count(*) FROM review_comments c JOIN documents d USING(change_request_id,kind,provider_change_request_document_id) LEFT JOIN review_threads t ON t.change_request_id=c.change_request_id AND t.provider_resource_id=c.review_thread_provider_resource_id WHERE c.review_thread_provider_resource_id IS NOT NULL AND t.provider_resource_id IS NULL"
+                "SELECT count(*) FROM current_document_observations c LEFT JOIN review_threads t ON t.change_request_id=c.change_request_id AND t.provider_resource_id=c.review_thread_provider_resource_id WHERE c.kind='review-comment' AND c.review_thread_provider_resource_id IS NOT NULL AND t.provider_resource_id IS NULL"
             ).fetchone()[0]
             == 0
         )
@@ -349,8 +349,8 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
         assert db.execute("SELECT count(*) FROM git_acquisitions").fetchone()[0] == 0
     assert (
         run(
-            state, "sync", "git", "--repo", repos["beta"], "--endpoint", ep, expected=3
-        )["data"]["results"][0]["error"]
+            state, "sync", "git", "--repo", repos["beta"], "--endpoint", ep, expected=4
+        )["error"]["code"]
         == "NOT_FOUND"
     )
     with sqlite3.connect(state / "catalog.sqlite3") as db:

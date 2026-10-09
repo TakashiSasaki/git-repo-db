@@ -31,26 +31,26 @@ def test_query_observes_sqlite_wal_snapshot_and_derived_schema(tmp_path):
     with sqlite3.connect(database, autocommit=True) as writer:
         writer.execute("PRAGMA journal_mode=WAL")
         writer.execute(
-            "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','before',NULL,NULL,'{}')"
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('00000000-0000-4000-8000-000000000001','before','{}')"
         )
         writer.execute(
             "CREATE VIEW optional_query_projection AS SELECT repository_uuidv4 FROM repositories"
         )
         writer.execute("ANALYZE")
         with Store(state, readonly=True) as reader, reader.transaction(read=True):
-            assert reader.one("SELECT name FROM repositories")[0] == "before"
+            assert reader.one("SELECT count(*) FROM repositories")[0] == 1
             writer.execute("BEGIN IMMEDIATE")
             writer.execute(
-                "UPDATE repositories SET name='after' WHERE repository_uuidv4='repo'"
+                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('00000000-0000-4000-8000-000000000002','after','{}')"
             )
             writer.execute("COMMIT")
-            assert reader.one("SELECT name FROM repositories")[0] == "before"
+            assert reader.one("SELECT count(*) FROM repositories")[0] == 1
             # A new ordinary query reads committed WAL bytes; it does not run a
             # schema hash audit or assume that the changing file is immutable.
             result = QueryService(state).query("repos list")
-            assert result.data["items"][0]["name"] == "after"
+            assert {r["name"] for r in result.data["items"]} == {"before", "after"}
         with TargetReader(database) as diagnostic:
-            assert diagnostic.one("SELECT name FROM repositories")[0] == "after"
+            assert diagnostic.one("SELECT count(*) FROM repositories")[0] == 2
 
 
 def test_fresh_catalog3_doctor_and_file_query(catalog):
@@ -84,7 +84,9 @@ def test_fresh_catalog3_doctor_and_file_query(catalog):
     run(state, "cache", "status")
 
 
-def test_backup_restore_explicit_empty_destination(catalog, tmp_path):
+def test_backup_restore_requires_absent_destination_without_removing_empty_dir(
+    catalog, tmp_path
+):
     state, fixture, repositories = catalog
     run(state, "sync", "git")
     with sqlite3.connect(state / "catalog.sqlite3") as db:
@@ -103,8 +105,12 @@ def test_backup_restore_explicit_empty_destination(catalog, tmp_path):
         )
     output = tmp_path / "backup.sqlite3"
     original = run(state, "db", "backup", "--output", output)
+    preserved = tmp_path / "existing-empty"
+    preserved.mkdir()
+    rejected = run(preserved, "db", "restore", "--input", output, expected=2)
+    assert rejected["error"]["code"] == "INVALID_ARGUMENT"
+    assert preserved.is_dir() and not list(preserved.iterdir())
     destination = tmp_path / "restore"
-    destination.mkdir()
     restored = run(destination, "db", "restore", "--input", output)
     assert (
         restored["catalog"]["db_instance_id"] != original["catalog"]["db_instance_id"]

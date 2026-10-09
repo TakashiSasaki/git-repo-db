@@ -30,7 +30,7 @@ def test_no_normalized_node_or_local_thread_id(catalog):
 
 def thread(store, owner, resource):
     store.execute(
-        "INSERT INTO review_threads(change_request_id,provider_resource_id,payload) VALUES(?,?,'{}')",
+        "INSERT INTO review_threads(change_request_id,provider_resource_id) VALUES(?,?)",
         (owner, resource),
     )
 
@@ -54,17 +54,12 @@ def test_comment_thread_fk_requires_same_change_request(catalog):
     _, store = catalog
     key = DocumentKey("pr1", "review-comment", "99")
     with store.transaction():
-        observe(store, key, "comment", 0)
         thread(store, "pr2", "remote-thread")
-    with pytest.raises(sqlite3.IntegrityError):
-        store.execute(
-            "UPDATE review_comments SET review_thread_provider_resource_id='remote-thread'"
-        )
+    with pytest.raises(sqlite3.IntegrityError), store.transaction():
+        observe(store, key, "comment", 0, thread="remote-thread")
     with store.transaction():
         thread(store, "pr1", "remote-thread")
-        store.execute(
-            "UPDATE review_comments SET review_thread_provider_resource_id='remote-thread'"
-        )
+        observe(store, key, "comment", 0, thread="remote-thread")
     assert not store.all("PRAGMA foreign_key_check")
 
 
@@ -91,19 +86,22 @@ def test_thread_cli_and_query_require_parent_and_support_kind_scope(catalog):
     with store.transaction():
         for parent in ("pr1", "pr2"):
             thread(store, parent, "shared-thread")
-            observe(store, DocumentKey(parent, "review-comment", "100"), parent, 0)
-        store.execute(
-            "UPDATE review_comments SET review_thread_provider_resource_id='shared-thread'"
-        )
+            observe(
+                store,
+                DocumentKey(parent, "review-comment", "100"),
+                parent,
+                0,
+                thread="shared-thread",
+            )
         binding = store.one(
             "SELECT repository_binding_id FROM change_requests WHERE change_request_id='pr1'"
         )[0]
         store.execute(
-            "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('mr1','repo1',?,'merge_request',1)",
+            "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('mr1','10000000-0000-4000-8000-000000000001',?,'merge_request',1)",
             (binding,),
         )
     opts = dict(
-        repo="repo1",
+        repo="10000000-0000-4000-8000-000000000001",
         provider_change_request_number=1,
         provider_resource_id="shared-thread",
     )
@@ -117,14 +115,18 @@ def test_thread_cli_and_query_require_parent_and_support_kind_scope(catalog):
     assert rows[0]["review_thread_provider_resource_id"] == "shared-thread"
     with pytest.raises(CatalogError, match="requires"):
         query.query(
-            "pr thread", {"repo": "repo1", "provider_resource_id": "shared-thread"}
+            "pr thread",
+            {
+                "repo": "10000000-0000-4000-8000-000000000001",
+                "provider_resource_id": "shared-thread",
+            },
         )
     args = parser().parse_args(
         [
             "pr",
             "thread",
             "--repo",
-            "repo1",
+            "10000000-0000-4000-8000-000000000001",
             "--provider-change-request-number",
             "1",
             "--change-request-kind",

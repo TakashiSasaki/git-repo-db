@@ -3,6 +3,7 @@
 import hashlib
 import sqlite3
 
+from repo_catalog.adapters.sqlite.cas_integrity import is_quarantined
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.payload import PayloadRef
 
@@ -19,6 +20,12 @@ def intern_stored_bytes(db: sqlite3.Connection, body: bytes, expected_sha256: by
         "SELECT body,byte_length FROM stored_bytes WHERE sha256=?", (expected_sha256,)
     ).fetchone()
     if stored is not None:
+        if is_quarantined(db, expected_sha256):
+            raise CatalogError(
+                "PAYLOAD_CORRUPTION",
+                "Stored bytes are quarantined; explicit repair required",
+                {"sha256": expected_sha256.hex()},
+            )
         if stored[0] != body or stored[1] != len(body):
             if (
                 hashlib.sha256(stored[0]).digest() != expected_sha256
@@ -27,9 +34,12 @@ def intern_stored_bytes(db: sqlite3.Connection, body: bytes, expected_sha256: by
                 raise CatalogError(
                     "PAYLOAD_CORRUPTION",
                     "Stored bytes are corrupt; explicit repair required",
+                    {"sha256": expected_sha256.hex()},
                 )
             raise CatalogError(
-                "PAYLOAD_HASH_COLLISION", "Different valid bytes have the same SHA-256"
+                "PAYLOAD_HASH_COLLISION",
+                "Different valid bytes have the same SHA-256",
+                {"sha256": expected_sha256.hex()},
             )
         return
     db.execute(

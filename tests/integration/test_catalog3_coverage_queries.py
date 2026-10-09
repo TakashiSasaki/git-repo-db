@@ -10,6 +10,7 @@ from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.domain.models import CatalogError
 from tests.integration.test_catalog3_pr_scope_coverage import (
     add_complete_code,
+    add_fact,
 )
 from tests.integration.test_catalog3_pr_scope_coverage import (
     pr_catalog as pr_catalog,
@@ -26,34 +27,48 @@ def coverage_catalog(tmp_path):
         with store.transaction():
             namespace = add_instance(store, "github", "synthetic")
             store.execute(
-                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic/repo','{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('00000000-0000-4000-8000-000000000401','synthetic/repo','{}')"
             )
-            bind(store, "repo", namespace, "1")
+            bind(store, "00000000-0000-4000-8000-000000000401", namespace, "1")
             binding = store.one(
-                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='00000000-0000-4000-8000-000000000401'"
             )[0]
             store.execute(
-                "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,refs_observed_at_us,kind,observed_at_us,request,roots_manifest) VALUES('acquisition','repo','sha1',0,'git',0,'{}','[]')"
+                "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,refs_observed_at_us,kind,observed_at_us,request,roots_manifest) VALUES('acquisition','00000000-0000-4000-8000-000000000401','sha1',0,'git',0,'{}','[]')"
+            )
+            add_fact(
+                store,
+                "snapshots",
+                snapshot_id="snapshot",
+                git_acquisition_id="acquisition",
+                repository_uuidv4="00000000-0000-4000-8000-000000000401",
+                published=1,
+                generation=1,
+                created_at_us=0,
             )
             store.execute(
-                "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES('snapshot','acquisition','repo',1,1,0)"
-            )
-            store.execute(
-                "UPDATE repositories SET current_snapshot_id='snapshot' WHERE repository_uuidv4='repo'"
-            )
-            store.execute(
-                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','repo',?,'pull_request',1)",
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','00000000-0000-4000-8000-000000000401',?,'pull_request',1)",
                 (binding,),
             )
-            store.execute(
-                "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at_us,published,payload,parsed_at_us) VALUES(1,'pr',0,1,?,0)",
-                (json.dumps({"title": "needle", "state": "open", "merged": False}),),
-            )
-            store.execute(
-                "UPDATE change_requests SET current_change_request_observation_id=1 WHERE change_request_id='pr'"
+            add_fact(
+                store,
+                "change_request_observations",
+                change_request_observation_id=1,
+                change_request_id="pr",
+                observed_at_us=0,
+                published=1,
+                payload=json.dumps(
+                    {"title": "needle", "state": "open", "merged": False}
+                ),
+                parsed_at_us=0,
             )
             for kind in ("pr", "pr-documents"):
-                store.coverage("repo", kind, "complete", observed_at_us=-1)
+                store.coverage(
+                    "00000000-0000-4000-8000-000000000401",
+                    kind,
+                    "complete",
+                    observed_at_us=-1,
+                )
         yield state, store
         assert not store.all("PRAGMA foreign_key_check")
 
@@ -61,10 +76,10 @@ def coverage_catalog(tmp_path):
 @pytest.mark.parametrize(
     "command",
     [
-        ("coverage", "--repo", "repo", "--kind", "git"),
-        ("status", "--repo", "repo", "--kind", "git"),
+        ("coverage", "--repo", "00000000-0000-4000-8000-000000000401", "--kind", "git"),
+        ("status", "--repo", "00000000-0000-4000-8000-000000000401", "--kind", "git"),
         ("snapshots", "show", "--snapshot", "snapshot"),
-        ("snapshots", "list", "--repo", "repo"),
+        ("snapshots", "list", "--repo", "00000000-0000-4000-8000-000000000401"),
     ],
 )
 def test_cli_current_conflict_preserves_separate_latest_claim_details(
@@ -74,10 +89,26 @@ def test_cli_current_conflict_preserves_separate_latest_claim_details(
     complete_details = '{"producer":"first","complete_only":true}'
     partial_details = '{"producer":"second","partial_only":true}'
     with store.transaction():
-        store.coverage("repo", "git", "complete", observed_at_us=0)
-        store.coverage("repo", "git", "complete", complete_details, observed_at_us=1)
-        store.coverage("repo", "git", "partial", partial_details, observed_at_us=1)
-        store.coverage("repo", "git", "unknown", observed_at_us=1)
+        store.coverage(
+            "00000000-0000-4000-8000-000000000401", "git", "complete", observed_at_us=0
+        )
+        store.coverage(
+            "00000000-0000-4000-8000-000000000401",
+            "git",
+            "complete",
+            complete_details,
+            observed_at_us=1,
+        )
+        store.coverage(
+            "00000000-0000-4000-8000-000000000401",
+            "git",
+            "partial",
+            partial_details,
+            observed_at_us=1,
+        )
+        store.coverage(
+            "00000000-0000-4000-8000-000000000401", "git", "unknown", observed_at_us=1
+        )
     result = run(state, *command)
     item = result["data"]["items"][0]
     components = item["coverage" if command[0] == "snapshots" else "components"]
@@ -106,9 +137,24 @@ def test_cli_current_conflict_preserves_separate_latest_claim_details(
 def test_cli_latest_unknown_does_not_fall_back_to_saved_complete(coverage_catalog):
     state, store = coverage_catalog
     with store.transaction():
-        store.coverage("repo", "git", "complete", {"old": True}, observed_at_us=-1)
-        store.coverage("repo", "git", "unknown", observed_at_us=0)
-    result = run(state, "coverage", "--repo", "repo", "--kind", "git")
+        store.coverage(
+            "00000000-0000-4000-8000-000000000401",
+            "git",
+            "complete",
+            {"old": True},
+            observed_at_us=-1,
+        )
+        store.coverage(
+            "00000000-0000-4000-8000-000000000401", "git", "unknown", observed_at_us=0
+        )
+    result = run(
+        state,
+        "coverage",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--kind",
+        "git",
+    )
     current = result["data"]["items"][0]["components"][0]
     assert current["coverage_state"] == "unknown"
     assert current["observed_at_us"] == 0
@@ -122,9 +168,16 @@ def test_cli_empty_scope_has_no_fabricated_claim_time_or_details(coverage_catalo
     state, store = coverage_catalog
     with store.transaction():
         store.execute(
-            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('empty-scope','repo','empty')"
+            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('empty-scope','00000000-0000-4000-8000-000000000401','empty')"
         )
-    result = run(state, "status", "--repo", "repo", "--kind", "empty")
+    result = run(
+        state,
+        "status",
+        "--repo",
+        "00000000-0000-4000-8000-000000000401",
+        "--kind",
+        "empty",
+    )
     current = result["data"]["items"][0]["components"][0]
     assert current["coverage_state"] == "unknown"
     assert current["observed_at_us"] is None
@@ -149,7 +202,7 @@ def test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage(
     with store.transaction():
         for coverage_state in old_states:
             store.coverage(
-                "repo",
+                "00000000-0000-4000-8000-000000000401",
                 "pr-documents",
                 coverage_state,
                 observed_at_us=0,
@@ -157,7 +210,7 @@ def test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage(
             )
         for coverage_state in latest_states:
             store.coverage(
-                "repo",
+                "00000000-0000-4000-8000-000000000401",
                 "pr-documents",
                 coverage_state,
                 observed_at_us=1,
@@ -167,15 +220,29 @@ def test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage(
         "SELECT coverage_scope_id FROM coverage_scopes WHERE change_request_id='pr' AND kind='pr-documents'"
     )[0]
     commands = [
-        ("pr", "show", "--repo", "repo", "--provider-change-request-number", 1),
-        ("pr", "documents", "--repo", "repo", "--provider-change-request-number", 1),
+        (
+            "pr",
+            "show",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--provider-change-request-number",
+            1,
+        ),
+        (
+            "pr",
+            "documents",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--provider-change-request-number",
+            1,
+        ),
         (
             "target",
             "--database",
             state / "catalog.sqlite3",
             "pr",
             "--repo",
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             "--provider-change-request-number",
             1,
         ),
@@ -185,7 +252,7 @@ def test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage(
             state / "catalog.sqlite3",
             "search",
             "--repo",
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             "--kind",
             "pr",
             "--literal",
@@ -211,7 +278,7 @@ def test_document_only_queries_ignore_code_only_coverage(coverage_catalog):
     with store.transaction():
         for kind in ("pr-commits", "pr-files", "pr-code"):
             store.coverage(
-                "repo",
+                "00000000-0000-4000-8000-000000000401",
                 kind,
                 "partial",
                 {"code_only": True},
@@ -219,8 +286,22 @@ def test_document_only_queries_ignore_code_only_coverage(coverage_catalog):
                 change_request_id="pr",
             )
     for command in (
-        ("pr", "documents", "--repo", "repo", "--provider-change-request-number", 1),
-        ("search", "pr", "--repo", "repo", "--literal", "needle"),
+        (
+            "pr",
+            "documents",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--provider-change-request-number",
+            1,
+        ),
+        (
+            "search",
+            "pr",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--literal",
+            "needle",
+        ),
     ):
         result = run(state, *command)
         assert result["status"] == "complete", command
@@ -235,31 +316,34 @@ def test_document_only_queries_ignore_code_only_coverage(coverage_catalog):
 def test_pr_query_coverage_is_independent_of_page_limit(coverage_catalog):
     state, store = coverage_catalog
     binding = store.one(
-        "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
+        "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='00000000-0000-4000-8000-000000000401'"
     )[0]
     with store.transaction():
         for number in (2, 3):
             change_request_id = f"pr-{number}"
             store.execute(
                 "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',?)",
-                (change_request_id, "repo", binding, number),
-            )
-            store.execute(
-                "INSERT INTO change_request_observations(change_request_observation_id,change_request_id,observed_at_us,published,payload,parsed_at_us) VALUES(?,?,0,1,?,0)",
                 (
-                    number,
                     change_request_id,
-                    json.dumps(
-                        {"title": f"pr {number}", "state": "open", "merged": False}
-                    ),
+                    "00000000-0000-4000-8000-000000000401",
+                    binding,
+                    number,
                 ),
             )
-            store.execute(
-                "UPDATE change_requests SET current_change_request_observation_id=? WHERE change_request_id=?",
-                (number, change_request_id),
+            add_fact(
+                store,
+                "change_request_observations",
+                change_request_observation_id=number,
+                change_request_id=change_request_id,
+                observed_at_us=0,
+                published=1,
+                payload=json.dumps(
+                    {"title": f"pr {number}", "state": "open", "merged": False}
+                ),
+                parsed_at_us=0,
             )
         store.coverage(
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             "pr-documents",
             "unknown",
             observed_at_us=1,
@@ -272,7 +356,7 @@ def test_pr_query_coverage_is_independent_of_page_limit(coverage_catalog):
             "pr",
             "list",
             "--repo",
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             "--limit",
             limit,
             expected=3,
@@ -285,13 +369,16 @@ def test_coverage_owner_namespaces_are_explicit(coverage_catalog):
     _state, store = coverage_catalog
     with store.transaction():
         store.execute(
-            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('pr','collision-repository','{}')"
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('00000000-0000-4000-8000-000000000402','collision-repository','{}')"
         )
         repository_claim = store.coverage(
-            "pr", "collision", "complete", observed_at_us=1
+            "00000000-0000-4000-8000-000000000402",
+            "collision",
+            "complete",
+            observed_at_us=1,
         )
         request_claim = store.coverage(
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             "collision",
             "partial",
             observed_at_us=1,
@@ -299,7 +386,7 @@ def test_coverage_owner_namespaces_are_explicit(coverage_catalog):
         )
         with pytest.raises(CatalogError) as error:
             store.coverage(
-                "pr",
+                "00000000-0000-4000-8000-000000000402",
                 "wrong-owner",
                 "complete",
                 observed_at_us=1,
@@ -312,8 +399,8 @@ def test_coverage_owner_namespaces_are_explicit(coverage_catalog):
         "SELECT repository_uuidv4,change_request_id,kind FROM coverage_scopes WHERE kind='collision' ORDER BY repository_uuidv4"
     )
     assert [tuple(row) for row in rows] == [
-        ("pr", None, "collision"),
-        ("repo", "pr", "collision"),
+        ("00000000-0000-4000-8000-000000000401", "pr", "collision"),
+        ("00000000-0000-4000-8000-000000000402", None, "collision"),
     ]
 
 
@@ -336,14 +423,21 @@ def test_diagnostic_queries_preserve_complete_label_role_gap_checks(
         add_complete_code(store, role, link_state)
         store.publish()
     commands = (
-        ("pr", "show", "--repo", "repo", "--provider-change-request-number", 1),
+        (
+            "pr",
+            "show",
+            "--repo",
+            "00000000-0000-4000-8000-000000000401",
+            "--provider-change-request-number",
+            1,
+        ),
         (
             "target",
             "--database",
             state / "catalog.sqlite3",
             "pr",
             "--repo",
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             "--provider-change-request-number",
             1,
         ),
@@ -353,7 +447,7 @@ def test_diagnostic_queries_preserve_complete_label_role_gap_checks(
             state / "catalog.sqlite3",
             "search",
             "--repo",
-            "repo",
+            "00000000-0000-4000-8000-000000000401",
             "--kind",
             "pr",
             "--literal",
@@ -384,7 +478,7 @@ def test_diagnostic_role_metadata_is_validated_without_keys_type_assumptions(
         state / "catalog.sqlite3",
         "pr",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         1,
         expected=3,
@@ -402,10 +496,19 @@ def test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_curr
         old_code, targets = add_complete_code(store, "head", "absent")
         # Preserve a later complete interpretation without modifying the older
         # complete-labelled observation whose acquisition was never saved.
-        new_code = store.execute(
-            "INSERT INTO code_observations(change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details) SELECT change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details FROM code_observations WHERE code_observation_id=?",
-            (old_code,),
-        ).lastrowid
+        saved = dict(
+            store.one(
+                "SELECT * FROM code_observations WHERE code_observation_id=?",
+                (old_code,),
+            )
+        )
+        for column in (
+            "code_observation_id",
+            "code_observation_uuidv4",
+            "parsed_result_uuidv4",
+        ):
+            saved.pop(column)
+        new_code = add_fact(store, "code_observations", **saved)
         store.execute(
             "INSERT INTO code_acquisitions(code_observation_id,role,object_format,oid,acquisition_root_id) SELECT ?,role,object_format,oid,acquisition_root_id FROM code_acquisitions WHERE code_observation_id=?",
             (new_code, old_code),
@@ -415,7 +518,7 @@ def test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_curr
             (targets["head"],),
         )
         root = store.execute(
-            "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,'head','repo',?,1)",
+            "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,'head','00000000-0000-4000-8000-000000000401',?,1)",
             (targets["head"], targets["head"]),
         ).lastrowid
         store.execute(
@@ -424,23 +527,27 @@ def test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_curr
         )
         store.publish()
     ordinary = run(
-        state, "pr", "show", "--repo", "repo", "--provider-change-request-number", 1
-    )
-    assert ordinary["coverage"]["missing"] == []
-    diagnostic = run(
         state,
-        "target",
-        "--database",
-        state / "catalog.sqlite3",
         "pr",
+        "show",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--provider-change-request-number",
         1,
-        "--limit",
-        1,
-        expected=3,
     )
+    assert ordinary["coverage"]["missing"] == []
+    from repo_catalog.application.target_queries import TargetQueryService
+
+    diagnostic = TargetQueryService(state / "catalog.sqlite3").query(
+        "pr",
+        {
+            "repo": "00000000-0000-4000-8000-000000000401",
+            "provider_change_request_number": 1,
+            "observations": "all",
+        },
+        limit=1,
+    )
+    diagnostic = {"coverage": {"missing": diagnostic.coverage.missing}}
     assert [
         gap["code_observation_id"] for gap in diagnostic["coverage"]["missing"]
     ] == [old_code]
@@ -461,7 +568,7 @@ def test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope(
         "search",
         "pr",
         "--repo",
-        "repo",
+        "00000000-0000-4000-8000-000000000401",
         "--literal",
         "needle",
         "--path",

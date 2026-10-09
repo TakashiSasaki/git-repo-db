@@ -10,6 +10,7 @@ import uuid
 from repo_catalog.adapters.filesystem.capacity import Capacity
 from repo_catalog.adapters.filesystem.locks import FileLock
 from repo_catalog.adapters.git.runner import GitRunner, git_env, hook
+from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.application.repository_identity import endpoint
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import now_us
@@ -18,6 +19,7 @@ from repo_catalog.domain.time import now_us
 class GitImporter:
     def __init__(self, store, token):
         self.s, self.token = store, token
+        self.model = ParserModel(store.connection)
 
     def sync(
         self,
@@ -90,9 +92,40 @@ class GitImporter:
                     (rid, cache["cache_locator_id"]),
                 )
                 if kind == "git":
+                    profile = self.model.ensure_builtin_profile()
+                    predecessors = [
+                        row[0]
+                        for row in s.all(
+                            "SELECT d.fact_selection_decision_uuidv4 FROM fact_selection_decisions d JOIN fact_selection_publications p USING(fact_selection_decision_uuidv4) JOIN fact_selection_scopes f USING(fact_selection_scope_uuidv4) WHERE f.repository_uuidv4=? AND f.fact_kind='git' AND NOT EXISTS(SELECT 1 FROM fact_selection_predecessors e JOIN fact_selection_publications ep ON ep.fact_selection_decision_uuidv4=e.fact_selection_decision_uuidv4 WHERE e.predecessor_decision_uuidv4=d.fact_selection_decision_uuidv4)",
+                            (repo["repository_uuidv4"],),
+                        )
+                    ]
+                    if len(predecessors) > 1:
+                        raise CatalogError(
+                            "SELECTION_UNRESOLVED",
+                            "Resolve Git snapshot selection before starting a new selection",
+                        )
+                    parsed_result = self.model.create_result(
+                        profile,
+                        repository_uuidv4=repo["repository_uuidv4"],
+                        inputs=[{"git_acquisition_id": rid}],
+                        derivation={
+                            "kind": "git",
+                            "decoder": "git-object-v1",
+                            "selection_decision_uuidv4": str(uuid.uuid4()),
+                            "selection_predecessors": predecessors,
+                        },
+                    )
                     s.execute(
-                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,published,generation,created_at_us) VALUES(?,?,?,0,?,?)",
-                        (rid, rid, repo["repository_uuidv4"], generation, now_us()),
+                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,parsed_result_uuidv4,published,generation,created_at_us) VALUES(?,?,?,?,0,?,?)",
+                        (
+                            rid,
+                            rid,
+                            repo["repository_uuidv4"],
+                            parsed_result,
+                            generation,
+                            now_us(),
+                        ),
                     )
             run = s.one(
                 "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE a.git_acquisition_id=?",
@@ -302,8 +335,13 @@ class GitImporter:
                                     else "tag"
                                 )
                                 s.execute(
-                                    "INSERT INTO ref_observations(snapshot_id,raw_ref_name,kind,object_format,target_oid,peeled_oid,target_type) VALUES(?,?,?,?,?,?,?)",
+                                    "INSERT INTO ref_observations(repository_uuidv4,parsed_result_uuidv4,snapshot_id,raw_ref_name,kind,object_format,target_oid,peeled_oid,target_type) VALUES(?,?,?,?,?,?,?,?,?)",
                                     (
+                                        repo["repository_uuidv4"],
+                                        s.one(
+                                            "SELECT parsed_result_uuidv4 FROM snapshots WHERE snapshot_id=?",
+                                            (run["git_acquisition_id"],),
+                                        )[0],
                                         run["git_acquisition_id"],
                                         raw_name,
                                         refkind,
@@ -412,14 +450,29 @@ class GitImporter:
                             "SELECT refs_observed_at_us FROM git_acquisitions WHERE git_acquisition_id=?",
                             (run["git_acquisition_id"],),
                         )[0]
-                        current = s.one(
-                            "SELECT a.refs_observed_at_us FROM repositories r JOIN snapshots x ON x.snapshot_id=r.current_snapshot_id JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id WHERE r.repository_uuidv4=?",
-                            (repo["repository_uuidv4"],),
+                        snapshot = s.one(
+                            "SELECT parsed_result_uuidv4 FROM snapshots WHERE snapshot_id=?",
+                            (run["git_acquisition_id"],),
                         )
-                        if not current or current[0] is None or incoming > current[0]:
-                            s.execute(
-                                "UPDATE repositories SET current_snapshot_id=? WHERE repository_uuidv4=?",
-                                (run["git_acquisition_id"], repo["repository_uuidv4"]),
+                        profile = self.model.ensure_builtin_profile()
+                        self.model.publish_result(snapshot[0])
+                        selected_profile = self.model.ensure_scope_profile(
+                            profile,
+                            repository_uuidv4=repo["repository_uuidv4"],
+                            fact_kind="git",
+                        )
+                        planned = json.loads(
+                            s.one(
+                                "SELECT derivation_json FROM parsed_results WHERE parsed_result_uuidv4=?",
+                                (snapshot[0],),
+                            )[0]
+                        )
+                        if selected_profile is not None:
+                            self.model.select_fact(
+                                snapshot[0],
+                                fact_kind="git",
+                                predecessors=planned["selection_predecessors"],
+                                decision_uuid=planned["selection_decision_uuidv4"],
                             )
                         # Fixed-root resume preserves its original remote observation.
                         # A PR-only acquisition cannot establish repository-wide refs.

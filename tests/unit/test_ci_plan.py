@@ -198,7 +198,7 @@ def test_explicit_executable_contract_wins_over_report_selection_and_fingerprint
         "scripts/ci_plan.py",
         "uv.lock",
         "src/repo_catalog/resources/catalog3.sql",
-        "src/repo_catalog/resources/import_v2/conversion-contract.json",
+        "src/repo_catalog/resources/schemas/cli-v1.schema.json",
         "docs/schema-hardening/new-current-contract.json",
         "docs/new-runtime-contract.sql",
         "docs/new-runtime-contract.csv",

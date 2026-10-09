@@ -88,13 +88,22 @@ def test_old_run_history_publish(catalog, tmp_path):
         any(reason.startswith("pending_obligations:") for reason in entry["blocked_by"])
         for entry in dry["data"]["entries"]
     )
-    run(state, "jobs", "resume", oldjob)
+    run(state, "jobs", "resume", oldjob, expected=3)
     assert (
         run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
             "current_snapshot_id"
         ]
-        == newer
+        is None
     )
+    # Independent frozen decisions branch; later receipt cannot choose either
+    # acquisition by time. Both facts remain available as explicit history.
+    with sqlite3.connect(state / "catalog.sqlite3") as db:
+        assert (
+            db.execute(
+                "SELECT count(*) FROM snapshots WHERE snapshot_id=?", (newer,)
+            ).fetchone()[0]
+            == 1
+        )
     assert pages(
         state,
         "search",

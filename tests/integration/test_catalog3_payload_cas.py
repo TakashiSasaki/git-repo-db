@@ -2,6 +2,7 @@
 
 import hashlib
 import sqlite3
+import uuid
 
 import pytest
 
@@ -43,19 +44,19 @@ def test_distinct_byte_encodings_remain_distinct(db):
 
 def test_independent_fetches_keep_separate_occurrences_for_shared_bytes(db):
     db.execute(
-        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','repo','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('cccccccc-cccc-4ccc-8ccc-cccccccccccc','cccccccc-cccc-4ccc-8ccc-cccccccccccc','{}')"
     )
     db.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('scope','repo','{}','parser','profile','proven')"
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('scope','cccccccc-cccc-4ccc-8ccc-cccccccccccc','{}','parser','profile','proven')"
     )
     db.execute(
-        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,resume_scope_id) VALUES('collection','repo','fixture','scope')"
+        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,resume_scope_id) VALUES('collection','cccccccc-cccc-4ccc-8ccc-cccccccccccc','fixture','scope')"
     )
     for ordinal, timestamp in enumerate((-1, 0)):
         ref = intern_payload(db, b"same response")
         db.execute(
-            "INSERT INTO fetch_occurrences(fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES('collection',?,?,?,'{}',?,1)",
-            (ordinal, *ref.parameters(), timestamp),
+            "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','collection',?,?,?,'{}',?,1)",
+            (str(uuid.uuid4()), ordinal, *ref.parameters(), timestamp),
         )
     assert db.execute(
         "SELECT count(DISTINCT fetch_occurrence_id),count(DISTINCT payload_sha256) FROM fetch_occurrences"
@@ -81,7 +82,7 @@ def test_physical_and_logical_admission_is_atomic_inside_caller_transaction(db):
     )
     db.execute("BEGIN IMMEDIATE")
     db.execute(
-        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('unrelated','unrelated','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('dddddddd-dddd-4ddd-8ddd-dddddddddddd','dddddddd-dddd-4ddd-8ddd-dddddddddddd','{}')"
     )
     with pytest.raises(sqlite3.IntegrityError, match="injected failure"):
         intern_payload(db, b"response")

@@ -239,11 +239,14 @@ def test_private_inventory(catalog):
     with GitHubFixture(fixture) as api:
         _, repo, env = configure(state, api, fixture)
         item = run(state, "repos", "show", "--repo", repo)["data"]["items"][0]
-        assert (
-            item["metadata"]["private"]
-            and item["metadata"]["archived"]
-            and item["metadata"]["fork"]
-        )
+        assert item["metadata"] == {}
+        observations = item["inventory_observations"]
+        assert len(observations) == 1
+        assert observations[0]["source_registration_uuidv4"]
+        assert observations[0]["parsed_result_uuidv4"]
+        assert observations[0]["repository_uuidv4"] == repo
+        metadata = observations[0]["metadata"]
+        assert metadata["private"] and metadata["archived"] and metadata["fork"]
 
 
 def test_unknown_inventory_scope_retains_known_repositories(catalog):

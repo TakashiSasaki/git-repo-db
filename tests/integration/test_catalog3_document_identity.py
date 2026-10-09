@@ -9,8 +9,10 @@ import pytest
 from repo_catalog.adapters.github.persistence import ApiFacts
 from repo_catalog.adapters.sqlite import text_bodies
 from repo_catalog.adapters.sqlite.index import rebuild
+from repo_catalog.adapters.sqlite.parser_model import ParserModel
+from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.store import Store
-from repo_catalog.application.finalization import check_catalog
+from repo_catalog.application.catalog_validation import check_catalog
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
@@ -30,31 +32,147 @@ def catalog(tmp_path):
             for number in (1, 2):
                 store.execute(
                     "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,?,'{}')",
-                    (f"repo{number}", f"synthetic/repo{number}"),
+                    (
+                        f"10000000-0000-4000-8000-{number:012d}",
+                        f"synthetic/repo{number}",
+                    ),
                 )
-                bind(store, f"repo{number}", namespace, str(number))
+                bind(
+                    store,
+                    f"10000000-0000-4000-8000-{number:012d}",
+                    namespace,
+                    str(number),
+                )
                 binding = store.one(
                     "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4=?",
-                    (f"repo{number}",),
+                    (f"10000000-0000-4000-8000-{number:012d}",),
                 )[0]
                 store.execute(
                     "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',1)",
-                    (f"pr{number}", f"repo{number}", binding),
+                    (f"pr{number}", f"10000000-0000-4000-8000-{number:012d}", binding),
                 )
         yield state, store
 
 
-def observe(store, key, body, position, *, observed_at_us=OBSERVED_AT_US, node=None):
-    """Synthetic admitted observations; no Git or network acquisition."""
-    return ApiFacts(store, store.config["github"]).document(
+def observe(
+    store, key, body, position, *, observed_at_us=OBSERVED_AT_US, node=None, thread=None
+):
+    """Synthetic explicit input, verified profile, result and selection."""
+    if not hasattr(store, "fixture_profile") or not store.one(
+        "SELECT 1 FROM parser_profiles WHERE parser_profile_uuidv4=?",
+        (store.fixture_profile,),
+    ):
+        model = ParserModel(store.connection)
+        definition = {
+            "implementation": {"fixture": "document-contract"},
+            "settings": {},
+            "output_schema": {},
+            "capabilities": [
+                {"owner_kind": "repository", "fact_kind": kind}
+                for kind in (
+                    "pr-title",
+                    "pr-body",
+                    "review",
+                    "review-comment",
+                    "review-thread",
+                )
+            ],
+        }
+        profile = model.register_profile(definition)
+        verification = model.verify_profile(
+            profile,
+            criteria={"fixture": True},
+            evidence={
+                "definition": definition,
+                "capabilities": [
+                    {**item, "outcome": "passed", "checks": ["synthetic-fixture"]}
+                    for item in definition["capabilities"]
+                ],
+            },
+        )
+        model.trust_verification(verification)
+        store.fixture_profile = profile
+        store.fixture_acquisitions = {}
+    cache_key = (*key, position, observed_at_us)
+    saved = store.fixture_acquisitions.get(cache_key)
+    if saved is None:
+        repo = store.one(
+            "SELECT repository_uuidv4 FROM change_requests WHERE change_request_id=?",
+            (key.change_request_id,),
+        )[0]
+        scope, collection_id = str(uuid.uuid4()), str(uuid.uuid4())
+        store.execute(
+            "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES(?,?,'{}','fixture','fixture','proven')",
+            (scope, repo),
+        )
+        store.execute(
+            "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES(?,?,?,?,?,?)",
+            (
+                collection_id,
+                repo,
+                key.change_request_id,
+                key.kind,
+                scope,
+                observed_at_us,
+            ),
+        )
+        payload = intern_payload(store.connection, body.encode("utf-8"))
+        occurrence = store.execute(
+            "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,0,?,?,'{}',?,?)",
+            (
+                str(uuid.uuid4()),
+                repo,
+                collection_id,
+                *payload.parameters(),
+                observed_at_us,
+                observed_at_us,
+            ),
+        ).lastrowid
+        collection = {
+            "fetch_collection_id": collection_id,
+            "change_request_id": key.change_request_id,
+            "kind": key.kind,
+        }
+        facts = ApiFacts(store, store.config["github"])
+        facts.profile_uuid = store.fixture_profile
+        saved = facts, collection, occurrence
+        store.fixture_acquisitions[cache_key] = saved
+    facts, collection, occurrence = saved
+    result = facts.document(
         *key,
         body,
         {"id": key.provider_change_request_document_id, "node_id": node, "body": body},
-        {"fetch_collection_id": "synthetic-origin", "change_request_id": None},
-        1,
+        collection,
+        occurrence,
         position,
         observed_at_us,
+        thread=thread,
     )
+    if thread is not None:
+        result_id = facts.result(occurrence)
+        repo = store.one(
+            "SELECT repository_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
+            (result_id,),
+        )[0]
+        store.execute(
+            "INSERT INTO review_thread_observations(thread_observation_uuidv4,repository_uuidv4,change_request_id,provider_resource_id,parsed_result_uuidv4,observed_at_us,payload) VALUES(?,?,?,?,?,?,'{}')",
+            (
+                str(uuid.uuid4()),
+                repo,
+                key.change_request_id,
+                thread,
+                result_id,
+                observed_at_us,
+            ),
+        )
+        facts.choose(
+            result_id,
+            fact_kind="review-thread",
+            change_request_id=key.change_request_id,
+            provider_resource_id=thread,
+        )
+    facts.publish()
+    return result
 
 
 def test_no_document_local_id_or_version_and_direct_digest_fk(catalog):
@@ -99,12 +217,12 @@ def test_service_uuidv4_namespaces_do_not_merge_by_url(catalog):
             parsed = uuid.UUID(value)
             assert parsed.version == 4 and parsed.variant == uuid.RFC_4122
             assert str(parsed) == value
-        bind(store, "repo1", a, "00123")
-        bind(store, "repo2", b, "00123")
+        bind(store, "10000000-0000-4000-8000-000000000001", a, "00123")
+        bind(store, "10000000-0000-4000-8000-000000000002", b, "00123")
         with pytest.raises(CatalogError, match="already bound"):
-            bind(store, "repo2", a, "00123")
+            bind(store, "10000000-0000-4000-8000-000000000002", a, "00123")
         # Provider values are not silently normalized to integers.
-        bind(store, "repo2", a, "123")
+        bind(store, "10000000-0000-4000-8000-000000000002", a, "123")
         assert {
             row[0]
             for row in store.all(
@@ -166,19 +284,28 @@ def test_direct_observations_keep_a_a_b_a_and_replay_does_not_move_current(catal
     assert len(rows) == 4 and len({row[0] for row in rows}) == 4
     assert rows[0][1] == rows[1][1] == rows[3][1] != rows[2][1]
     assert [row[2] for row in rows] == [OBSERVED_AT_US + i for i in range(4)]
-    current = store.one("SELECT current_document_observation_id FROM documents")[0]
+    current = store.one(
+        "SELECT document_observation_id FROM current_document_observations"
+    )[0]
     assert current == rows[3][0]
     with store.transaction():
         observe(store, key, "A marker", 0)
     assert store.one("SELECT count(*) FROM document_observations")[0] == 4
     assert (
-        store.one("SELECT current_document_observation_id FROM documents")[0] == current
+        store.one("SELECT document_observation_id FROM current_document_observations")[
+            0
+        ]
+        == current
     )
     assert store.one("SELECT count(*) FROM text_bodies")[0] == 2
     # Indexed and scan lookup select the same distinct observations. FTS inputs
     # share bodies, but must not coalesce occurrences or select a stale state.
     query = QueryService(state)
-    options = {"repo": "repo1", "literal": "A marker", "document_observations": "all"}
+    options = {
+        "repo": "10000000-0000-4000-8000-000000000001",
+        "literal": "A marker",
+        "document_observations": "all",
+    }
     before = query.query("search pr", options).data["items"]
     assert len(before) == 3
     rebuild(store, "pr")
@@ -186,7 +313,11 @@ def test_direct_observations_keep_a_a_b_a_and_replay_does_not_move_current(catal
     assert after == before
     assert store.one("SELECT count(*) FROM search_documents WHERE kind='pr'")[0] == 2
     latest = query.query(
-        "pr documents", {"repo": "repo1", "provider_change_request_number": 1}
+        "pr documents",
+        {
+            "repo": "10000000-0000-4000-8000-000000000001",
+            "provider_change_request_number": 1,
+        },
     ).data["items"]
     assert len(latest) == 1 and latest[0]["document_observation_id"] == current
     assert "document_id" not in latest[0] and "document_version_id" not in latest[0]
@@ -200,12 +331,15 @@ def test_current_observation_must_belong_to_exact_document(catalog):
         observe(store, title, "title", 0)
         observe(store, body, "body", 1)
     wrong = store.one(
-        "SELECT current_document_observation_id FROM documents WHERE kind='pr-title'"
+        "SELECT parsed_result_uuidv4 FROM current_document_observations WHERE kind='pr-title'"
     )[0]
-    with pytest.raises(sqlite3.IntegrityError, match="same-document"):
-        store.execute(
-            "UPDATE documents SET current_document_observation_id=? WHERE kind='pr-body'",
-            (wrong,),
+    with pytest.raises(sqlite3.IntegrityError):
+        ParserModel(store.connection).select_fact(
+            wrong,
+            fact_kind="pr-body",
+            change_request_id="pr1",
+            kind="pr-body",
+            provider_change_request_document_id="123",
         )
     with pytest.raises(sqlite3.IntegrityError):
         store.execute(
@@ -269,9 +403,23 @@ def test_unresolved_current_is_partial_not_implicit_maximum_observation(catalog)
     state, store = catalog
     with store.transaction():
         observe(store, DocumentKey("pr1", "pr-body", "123"), "A", 0)
-        store.execute("UPDATE documents SET current_document_observation_id=NULL")
+        result_id = store.one("SELECT parsed_result_uuidv4 FROM document_observations")[
+            0
+        ]
+        ParserModel(store.connection).select_fact(
+            result_id,
+            fact_kind="pr-body",
+            change_request_id="pr1",
+            kind="pr-body",
+            provider_change_request_document_id="123",
+            predecessors=[],
+        )
     result = QueryService(state).query(
-        "pr documents", {"repo": "repo1", "provider_change_request_number": 1}
+        "pr documents",
+        {
+            "repo": "10000000-0000-4000-8000-000000000001",
+            "provider_change_request_number": 1,
+        },
     )
     assert result.data["items"] == []
     assert any(
@@ -281,7 +429,7 @@ def test_unresolved_current_is_partial_not_implicit_maximum_observation(catalog)
     history = QueryService(state).query(
         "pr documents",
         {
-            "repo": "repo1",
+            "repo": "10000000-0000-4000-8000-000000000001",
             "provider_change_request_number": 1,
             "document_observations": "all",
         },

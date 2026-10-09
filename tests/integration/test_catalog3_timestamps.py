@@ -228,7 +228,7 @@ def test_current_clock_keeps_integer_microseconds(monkeypatch, nanoseconds, expe
     assert type(now_us()) is int
 
 
-@pytest.fixture(params=["catalog3.sql", "import_v2/workspace.sql"])
+@pytest.fixture(params=["catalog3.sql"])
 def timestamp_database(request):
     with sqlite3.connect(":memory:") as db:
         sql = files("repo_catalog").joinpath("resources", request.param).read_text()
