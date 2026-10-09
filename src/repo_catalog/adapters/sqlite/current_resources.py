@@ -45,7 +45,8 @@ _COMMON = {
     "observed_at_us",
     "last_checked_at_us",
     "parsed_at_us",
-    "parser_profile_uuidv4",
+    "parser_module",
+    "parser_version",
     "metadata",
     "acquisition_scope",
     "field_evidence",
@@ -86,8 +87,6 @@ _GENERATED = {
     "parent_kind",
     "parent_review_kind",
     "reply_kind",
-    "owner_kind",
-    "fact_kind",
 }
 _MAX_STAGED_VARIANTS = 16
 _CLOCK_SCOPES = {
@@ -106,7 +105,6 @@ _STRUCTURAL_FIELDS = {
     "parent_provider_resource_id",
     "change_request_id",
     "provider_change_request_document_id",
-    "parser_profile_uuidv4",
 }
 
 
@@ -376,29 +374,6 @@ class CurrentResources:
             ),
         )
 
-    def _selected(self, candidate):
-        kind = candidate["kind"]
-        if kind in ("issue", "issue-comment"):
-            fact_kind = "ordinary-issue-comment" if kind == "issue-comment" else kind
-            row = self._one(
-                "SELECT 1 FROM effective_repository_parser_profiles WHERE repository_uuidv4=? AND fact_kind=? AND parser_profile_uuidv4=?",
-                (
-                    candidate["repository_uuidv4"],
-                    fact_kind,
-                    candidate["parser_profile_uuidv4"],
-                ),
-            )
-        else:
-            row = self._one(
-                "SELECT 1 FROM effective_change_request_parser_profiles WHERE change_request_id=? AND fact_kind=? AND parser_profile_uuidv4=?",
-                (
-                    candidate["change_request_id"],
-                    kind,
-                    candidate["parser_profile_uuidv4"],
-                ),
-            )
-        return row is not None
-
     def _validate(self, candidate):
         table, key, _ = self._table_key(candidate)
         allowed = _COMMON | (_ISSUE if table == "issue_resources" else _REVIEW)
@@ -433,6 +408,17 @@ class CurrentResources:
         for name, value in candidate.items():
             if name.endswith("_us") and value is not None:
                 validate_epoch_us(value)
+        for name in ("parser_module", "parser_version"):
+            if name in candidate and (
+                not isinstance(candidate[name], str)
+                or not candidate[name]
+                or "\0" in candidate[name]
+            ):
+                raise CatalogError(
+                    "INVALID_CURRENT_RESOURCE",
+                    "Parser attribution requires nonempty text",
+                    {"field": name},
+                )
         if "deleted" in candidate and type(candidate["deleted"]) not in (int, bool):
             raise CatalogError("INVALID_CURRENT_RESOURCE", "Deleted must be boolean")
         if "metadata" in candidate and not isinstance(candidate["metadata"], dict):
@@ -479,7 +465,8 @@ class CurrentResources:
             "service_instance_uuidv4",
             "observed_at_us",
             "parsed_at_us",
-            "parser_profile_uuidv4",
+            "parser_module",
+            "parser_version",
             "acquisition_scope",
         }
         if candidate["kind"] in ("issue", "issue-comment"):
@@ -503,19 +490,6 @@ class CurrentResources:
                 "INVALID_CURRENT_RESOURCE_OWNER",
                 "Binding does not match current resource owner",
             )
-        capability = (
-            "ordinary-issue-comment"
-            if candidate["kind"] == "issue-comment"
-            else candidate["kind"]
-        )
-        if (
-            self._one(
-                "SELECT 1 FROM parser_profile_capabilities WHERE parser_profile_uuidv4=? AND owner_kind='repository' AND fact_kind=?",
-                (candidate["parser_profile_uuidv4"], capability),
-            )
-            is None
-        ):
-            return "missing parser profile capability"
         if candidate["kind"] == "issue-comment":
             parent = self._one(
                 "SELECT * FROM issue_resources WHERE service_instance_uuidv4=? AND kind='issue' AND provider_resource_id=?",
@@ -743,7 +717,8 @@ class CurrentResources:
                 "provider_clock_scope",
                 "observed_at_us",
                 "parsed_at_us",
-                "parser_profile_uuidv4",
+                "parser_module",
+                "parser_version",
                 "acquisition_scope",
             )
         }
@@ -775,6 +750,8 @@ class CurrentResources:
                 "provider_clock_scope",
                 "observed_at_us",
                 "parsed_at_us",
+                "parser_module",
+                "parser_version",
                 "last_checked_at_us",
                 "acquisition_scope",
             }
@@ -925,21 +902,6 @@ class CurrentResources:
         if missing:
             self._stage(complete, "missing_dependency")
             return AdmissionResult("missing_dependency", key, digest, missing)
-        if not self._selected(complete) and (
-            source == "live"
-            or (
-                previous
-                and previous["parser_profile_uuidv4"]
-                != complete["parser_profile_uuidv4"]
-            )
-        ):
-            self._stage(complete, "profile_pending")
-            return AdmissionResult(
-                "missing_dependency",
-                key,
-                digest,
-                "parser profile is not selected and trusted",
-            )
         revision = self._one(
             "SELECT db_instance_id,publication_seq FROM database_identity WHERE singleton=1"
         )
@@ -1017,11 +979,19 @@ class CurrentResources:
                 "provider_clock_scope",
                 "observed_at_us",
                 "parsed_at_us",
+                "parser_module",
+                "parser_version",
                 "acquisition_scope",
             ):
                 candidate[name] = previous[name]
         if equal and previous:
-            for name in ("observed_at_us", "parsed_at_us", "acquisition_scope"):
+            for name in (
+                "observed_at_us",
+                "parsed_at_us",
+                "parser_module",
+                "parser_version",
+                "acquisition_scope",
+            ):
                 if (
                     not authoritative
                     or incoming["acquisition_scope"] == previous["acquisition_scope"]
@@ -1064,16 +1034,12 @@ class CurrentResources:
         while True:
             changed = False
             stages = self._all(
-                "SELECT * FROM exchange_staging WHERE table_name IN ('issue_resources','review_resources') AND reason IN ('current_state:missing_dependency','current_state:profile_pending')"
+                "SELECT * FROM exchange_staging WHERE table_name IN ('issue_resources','review_resources') AND reason='current_state:missing_dependency'"
             )
             for stage in stages:
                 candidate = self._project_child_membership(
                     json.loads(stage["record_json"])
                 )
-                if stage[
-                    "reason"
-                ] == "current_state:profile_pending" and not self._selected(candidate):
-                    continue
                 self.c.execute("SAVEPOINT current_resource_promotion")
                 try:
                     if self._missing(candidate):

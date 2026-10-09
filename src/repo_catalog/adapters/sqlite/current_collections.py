@@ -27,7 +27,8 @@ class CurrentCollectionProof:
         members,
         status=200,
         *,
-        parser_profile_uuidv4,
+        parser_module,
+        parser_version,
     ):
         """Persist one interpreted page without requiring response bytes.
 
@@ -43,7 +44,8 @@ class CurrentCollectionProof:
             "next_cursor": next_cursor,
             "members": json.dumps(members, sort_keys=True, separators=(",", ":")),
             "status": status,
-            "parser_profile_uuidv4": parser_profile_uuidv4,
+            "parser_module": parser_module,
+            "parser_version": parser_version,
         }
         if (
             type(ordinal) is not int

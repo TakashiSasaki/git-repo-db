@@ -1,3 +1,5 @@
+> Schema 17 current Issue/review resources and collection receipts use actual parser module/version evidence without profile gates. Historical PR/thread/inventory/Git publication remains unchanged. See [implemented scope and blockers](transport-independent-core-implementation.md).
+
 # Catalog3 data model
 
 > **Accepted future design, not yet implemented:** [Transport-independent core / minimal parser provenance ADR](transport-independent-core-adr.md). It fixes the removal of persistent API transport originals and selected-parser DAG requirements from the target core, but **does not** decide per-domain history/current-state lifecycles. The remainder of this document describes active schema 16.

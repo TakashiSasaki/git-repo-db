@@ -170,7 +170,8 @@ def build_target(sql=None):
                 "body_status": "present",
                 "observed_at_us": TIME,
                 "parsed_at_us": TIME,
-                "parser_profile_uuidv4": register_test_profile(db),
+                "parser_module": "synthetic.target-schema",
+                "parser_version": "1",
                 "metadata": "{}",
                 "acquisition_scope_json": json.dumps(
                     {

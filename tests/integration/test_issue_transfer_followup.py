@@ -8,7 +8,6 @@ import pytest
 
 from repo_catalog.adapters.sqlite.exchange import Graph
 from repo_catalog.adapters.sqlite.json_contracts import validate_catalog
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.adapters.sqlite.schema import (
     DDL_SHA256,
     FORMAT_ID,
@@ -32,7 +31,7 @@ def _source(db, service, repository):
 
 
 def _transfer(resources):
-    adapter, context, profile, _, _ = resources
+    adapter, context, _, _, _ = resources
     db = adapter.c
     old_source = _source(
         db, context["service_instance_uuidv4"], context["repository_uuidv4"]
@@ -78,11 +77,6 @@ def _transfer(resources):
         (binding, destination, context["service_instance_uuidv4"]),
     )
     destination_source = _source(db, context["service_instance_uuidv4"], destination)
-    model = ParserModel(db)
-    for kind in ("issue", "ordinary-issue-comment"):
-        model.ensure_scope_profile(
-            profile, repository_uuidv4=destination, fact_kind=kind
-        )
     destination_context = {
         **context,
         "repository_uuidv4": destination,

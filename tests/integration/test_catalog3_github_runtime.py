@@ -1297,7 +1297,8 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                 stamp,
                 None,
                 [],
-                parser_profile_uuidv4=collector.facts.profile(),
+                parser_module="repo_catalog.adapters.github.current_parser",
+                parser_version="1",
             )
             collector.facts.finish(
                 other_child, evidence=proof.evidence(other_child["fetch_collection_id"])

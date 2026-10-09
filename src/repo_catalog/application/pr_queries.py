@@ -673,7 +673,9 @@ def _current_review_fields(row):
     return {
         "resource_lifecycle": "current",
         "body_status": row["body_status"],
-        "parser_profile_uuidv4": row["parser_profile_uuidv4"],
+        "parser_module": row["parser_module"],
+        "parser_version": row["parser_version"],
+        "field_evidence": json.loads(row["field_evidence_json"]),
         "provider_updated_at_us": row["provider_updated_at_us"],
         "observed_at_us": row["observed_at_us"],
         "parsed_at_us": row["parsed_at_us"],
@@ -697,37 +699,37 @@ def _document_rows(query, pr, options):
         "document_observations", "current"
     ) == "current" and not options.get("observation")
     table = "current_document_observations" if current else "document_observations"
-    history = s.execute(
-        f"SELECT obs.*,NULL review_thread_provider_resource_id,obs.observed_at_us document_observed_at_us,"
-        "obs.parsed_at_us document_parsed_at_us,obs.metadata observation_metadata,"
-        "r.parser_profile_uuidv4,b.body,'history' resource_lifecycle,"
-        "EXISTS(SELECT 1 FROM current_document_observations c "
-        "WHERE c.document_observation_id=obs.document_observation_id) current_selected "
-        f"FROM {table} obs JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
-        "JOIN text_bodies b ON b.sha256=obs.text_body_sha256 "
-        "WHERE obs.change_request_id=?"
-        + (" AND obs.deleted=0" if current else "")
-        + (" AND r.parser_profile_uuidv4=?" if options.get("parser_profile") else "")
-        + " ORDER BY obs.kind,obs.provider_change_request_document_id,obs.document_observation_id",
-        (pr["change_request_id"],)
-        + ((options["parser_profile"],) if options.get("parser_profile") else ()),
-    )
-
-    def reviews():
-        # Historical document selectors do not invent mutable resource versions.
-        if options.get("observation"):
-            return
-        for row in s.execute(
-            "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_review_resources r LEFT JOIN text_bodies b "
-            "ON b.sha256=r.text_body_sha256 WHERE r.change_request_id=? AND r.deleted=0"
+    history = ()
+    if options.get("document_kind") not in ("review", "review-comment"):
+        history = s.execute(
+            f"SELECT obs.*,NULL review_thread_provider_resource_id,obs.observed_at_us document_observed_at_us,"
+            "obs.parsed_at_us document_parsed_at_us,obs.metadata observation_metadata,"
+            "r.parser_profile_uuidv4,b.body,'history' resource_lifecycle,"
+            "EXISTS(SELECT 1 FROM current_document_observations c "
+            "WHERE c.document_observation_id=obs.document_observation_id) current_selected "
+            f"FROM {table} obs JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
+            "JOIN text_bodies b ON b.sha256=obs.text_body_sha256 "
+            "WHERE obs.change_request_id=?"
+            + (" AND obs.deleted=0" if current else "")
             + (
                 " AND r.parser_profile_uuidv4=?"
                 if options.get("parser_profile")
                 else ""
             )
-            + " ORDER BY r.kind,r.provider_change_request_document_id",
+            + " ORDER BY obs.kind,obs.provider_change_request_document_id,obs.document_observation_id",
             (pr["change_request_id"],)
             + ((options["parser_profile"],) if options.get("parser_profile") else ()),
+        )
+
+    def reviews():
+        # Historical document selectors do not invent mutable resource versions.
+        if options.get("observation") or options.get("parser_profile"):
+            return
+        for row in s.execute(
+            "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_review_resources r LEFT JOIN text_bodies b "
+            "ON b.sha256=r.text_body_sha256 WHERE r.change_request_id=? AND r.deleted=0"
+            + " ORDER BY r.kind,r.provider_change_request_document_id",
+            (pr["change_request_id"],),
         ):
             verify_text_body(
                 row["body"], row["text_body_sha256"], row["body_byte_length"]
@@ -1014,7 +1016,6 @@ def pr_query(query, command, options):
                         "document_parsed_at_us": doc["document_parsed_at_us"],
                         "document_current_selected": bool(doc["current_selected"]),
                         "parsed_result_uuidv4": doc["parsed_result_uuidv4"],
-                        "parser_profile_uuidv4": doc["parser_profile_uuidv4"],
                         "origin_key": doc["origin_key"],
                         "fetch_occurrence_id": doc["fetch_occurrence_id"],
                         "author": doc["author"],
@@ -1028,7 +1029,10 @@ def pr_query(query, command, options):
                         **(
                             _current_review_fields(doc)
                             if doc["resource_lifecycle"] == "current"
-                            else {"resource_lifecycle": "history"}
+                            else {
+                                "resource_lifecycle": "history",
+                                "parser_profile_uuidv4": doc["parser_profile_uuidv4"],
+                            }
                         ),
                         **(
                             {"review_position": meta}

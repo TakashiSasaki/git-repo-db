@@ -10,6 +10,11 @@ from repo_catalog.domain.models import CatalogError
 
 
 def _scope(query, command, options):
+    if options.get("parser_profile"):
+        raise CatalogError(
+            "INVALID_ARGUMENT",
+            "Current Issue resources use module/version attribution; parser profiles select historical facts",
+        )
     repositories = [r["repository_uuidv4"] for r in query.repos(options)]
     if command in ("issue show", "issue comments"):
         query.single_repo(options)
@@ -93,7 +98,9 @@ def _fields(row, repository):
         "observed_at_us": row["observed_at_us"],
         "last_checked_at_us": row["last_checked_at_us"],
         "parsed_at_us": row["parsed_at_us"],
-        "parser_profile_uuidv4": row["parser_profile_uuidv4"],
+        "parser_module": row["parser_module"],
+        "parser_version": row["parser_version"],
+        "field_evidence": json.loads(row["field_evidence_json"]),
         "metadata": json.loads(row["metadata"]),
         "resource_lifecycle": "current",
     }
@@ -200,10 +207,6 @@ def issue_query(query, command, options):
 
 def _project(query, row, repository, options, literal):
     if options.get("document_author") and row["author"] != options["document_author"]:
-        return
-    if options.get("parser_profile") and (
-        row["parser_profile_uuidv4"] != options["parser_profile"]
-    ):
         return
     key = [
         row["repository_uuidv4"],

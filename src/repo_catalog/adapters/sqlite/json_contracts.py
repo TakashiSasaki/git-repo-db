@@ -64,10 +64,9 @@ issue_resources.metadata review_resources.metadata
 )
 _register("decoded-headers", "commits.metadata")
 _register(
-    "authored",
-    "review_resources.acquisition_scope_json",
+    "current-acquisition",
+    "issue_resources.acquisition_scope_json review_resources.acquisition_scope_json",
 )
-_register("current-acquisition", "issue_resources.acquisition_scope_json")
 _register(
     "current-field-evidence",
     "issue_resources.field_evidence_json review_resources.field_evidence_json",
@@ -238,8 +237,21 @@ _EVIDENCE_KEYS = {
     "provider_clock_scope",
     "observed_at_us",
     "parsed_at_us",
-    "parser_profile_uuidv4",
+    "parser_module",
+    "parser_version",
     "acquisition_scope",
+}
+_CURRENT_FORBIDDEN_REFERENCE_KEYS = {
+    "parser_profile_uuidv4",
+    "parser_profile_verification_uuidv4",
+    "parsed_result_uuidv4",
+    "parsed_result_uuidv4s",
+    "fetch_occurrence_uuidv4",
+    "fetch_occurrence_uuidv4s",
+    "source_input_uuidv4",
+    "payload",
+    "selection_decision_uuidv4",
+    "selection_predecessors",
 }
 _EVIDENCE_FIELDS = {
     "body",
@@ -287,8 +299,25 @@ def _acquisition_shape(scope, service):
     endpoint = scope.get("endpoint")
     if not isinstance(endpoint, str) or not endpoint or "\x00" in endpoint:
         raise JsonContractError("Acquisition endpoint requires nonempty text")
+
     # Validate every authored identity, including captured identifiers that are
     # snapshots rather than transport dependencies after an Issue transfer.
+    def check_context(value):
+        if isinstance(value, dict):
+            if value.keys() & _CURRENT_FORBIDDEN_REFERENCE_KEYS:
+                raise JsonContractError(
+                    "Current capture cannot require transport originals or parser selection"
+                )
+            for item in value.values():
+                check_context(item)
+        elif isinstance(value, list):
+            for item in value:
+                check_context(item)
+
+    check_context(scope)
+    for name in ("parser_module", "parser_version"):
+        if name in scope:
+            _identity(name, scope[name])
     _walk(scope)
 
 
@@ -299,13 +328,26 @@ def _detached_acquisition(data, scope):
 
 
 def _check_schema(table, column, value, data):
-    if (table, column) == ("issue_resources", "acquisition_scope_json"):
+    if (
+        table in {"issue_resources", "review_resources"}
+        and column == "acquisition_scope_json"
+    ):
         _acquisition_shape(value, data.get("service_instance_uuidv4"))
         if not _detached_acquisition(data, value) and any(
             value.get(name) != data.get(name)
             for name in ("repository_uuidv4", "repository_binding_id")
         ):
             raise JsonContractError("Acquisition scope differs from typed owner")
+        if table == "review_resources" and value.get("change_request_id") != data.get(
+            "change_request_id"
+        ):
+            raise JsonContractError(
+                "Review acquisition scope differs from typed parent"
+            )
+        if table == "issue_resources" and "change_request_id" in value:
+            raise JsonContractError(
+                "Ordinary Issue capture cannot claim a change request"
+            )
         return
     if column == "field_evidence_json":
         allowed = (
@@ -391,7 +433,8 @@ def _check_schema(table, column, value, data):
                 raise JsonContractError(
                     "Review field evidence cannot claim an update clock"
                 )
-            _identity("parser_profile_uuidv4", evidence["parser_profile_uuidv4"])
+            for name in ("parser_module", "parser_version"):
+                _identity(name, evidence[name])
             _acquisition_shape(
                 evidence["acquisition_scope"], data.get("service_instance_uuidv4")
             )
@@ -412,9 +455,9 @@ def _check_schema(table, column, value, data):
                 raise JsonContractError(
                     "Ordinary Issue field capture cannot claim a change request"
                 )
-            if (
-                "parser_profile_uuidv4" in scope
-                and scope["parser_profile_uuidv4"] != evidence["parser_profile_uuidv4"]
+            if any(
+                name in scope and scope[name] != evidence[name]
+                for name in ("parser_module", "parser_version")
             ):
                 raise JsonContractError(
                     "Field parser attribution differs from captured parser"
@@ -1111,18 +1154,12 @@ def validate_field_evidence(db, evidence, candidate):
     )
     _check_schema(table, "field_evidence_json", evidence, candidate)
     pending = []
-    fact_kind = (
-        "ordinary-issue-comment"
-        if candidate["kind"] == "issue-comment"
-        else candidate["kind"]
-    )
-    captures, profiles = {}, set()
+    captures = {}
     for entry in evidence.values():
         scope = entry["acquisition_scope"]
         captures.setdefault(
             json.dumps(scope, sort_keys=True, ensure_ascii=False), scope
         )
-        profiles.add(entry["parser_profile_uuidv4"])
     for scope in captures.values():
         pending.extend(
             validate_acquisition_scope(
@@ -1132,33 +1169,6 @@ def validate_field_evidence(db, evidence, candidate):
                 allow_snapshot=True,
             )
         )
-    for profile_id in profiles:
-        profile = _row(db, "parser_profiles", ("parser_profile_uuidv4",), (profile_id,))
-        if profile is None:
-            pending.append(
-                {
-                    "table": "parser_profiles",
-                    "columns": ("parser_profile_uuidv4",),
-                    "values": (profile_id,),
-                }
-            )
-            continue
-        declared = json.loads(profile["definition_json"]).get("capabilities", [])
-        if {"owner_kind": "repository", "fact_kind": fact_kind} not in declared:
-            raise JsonContractError(
-                "Field parser profile does not declare resource capability"
-            )
-        if not db.execute(
-            "SELECT 1 FROM parser_profile_capabilities WHERE parser_profile_uuidv4=? AND owner_kind='repository' AND fact_kind=?",
-            (profile_id, fact_kind),
-        ).fetchone():
-            pending.append(
-                {
-                    "table": "parser_profile_capabilities",
-                    "columns": ("parser_profile_uuidv4", "owner_kind", "fact_kind"),
-                    "values": (profile_id, "repository", fact_kind),
-                }
-            )
     return pending
 
 
@@ -1197,11 +1207,14 @@ def validate_record(db, table, data, *, allow_missing=False):
     repository, source = _owner(db, table, data)
     missing = []
     unowned_payloads = []
-    if table == "issue_resources" and "acquisition_scope_json" in data:
+    if (
+        table in {"issue_resources", "review_resources"}
+        and "acquisition_scope_json" in data
+    ):
         scope = _load(
             data["acquisition_scope_json"],
             JSON_REGISTRY[table, "acquisition_scope_json"],
-            "Issue acquisition scope",
+            "Current acquisition scope",
         )
         detached = _detached_acquisition(data, scope)
         missing.extend(
@@ -1228,6 +1241,8 @@ def validate_record(db, table, data, *, allow_missing=False):
         )
         missing.extend(validate_field_evidence(db, evidence, data))
     if table == "current_collection_pages" and "members" in data:
+        for name in ("parser_module", "parser_version"):
+            _identity(name, data.get(name))
         members = _load(
             data["members"],
             JSON_REGISTRY[table, "members"],
@@ -1584,8 +1599,16 @@ def _sql_capture_conditions(doc, service):
     binding = f"json_extract({doc},'$.repository_binding_id')"
     captured_service = f"json_extract({doc},'$.service_instance_uuidv4')"
     source = f"json_extract({doc},'$.source_registration_uuidv4')"
+    forbidden = ",".join(
+        f"'{key}'" for key in sorted(_CURRENT_FORBIDDEN_REFERENCE_KEYS)
+    )
     return [
         f"coalesce(json_type({doc}),'')<>'object'",
+        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key IN ({forbidden}))",
+        *[
+            f"(json_type({doc},'$.{name}') IS NOT NULL AND (json_type({doc},'$.{name}')<>'text' OR length(json_extract({doc},'$.{name}'))=0 OR instr(json_extract({doc},'$.{name}'),char(0))>0))"
+            for name in ("parser_module", "parser_version")
+        ],
         f"coalesce(json_type({doc},'$.repository_uuidv4'),'')<>'text' OR NOT {_sql_uuid(repository)}",
         f"coalesce(json_type({doc},'$.service_instance_uuidv4'),'')<>'text' OR NOT {_sql_uuid(captured_service)} OR {captured_service} IS NOT {service}",
         f"coalesce(json_type({doc},'$.repository_binding_id'),'')<>'text' OR length({binding})=0 OR instr({binding},char(0))>0",
@@ -1599,15 +1622,21 @@ def _sql_capture_conditions(doc, service):
 
 def _sql_snapshot_conditions(doc, repository, source):
     """Validate one distinct capture snapshot, without traversing its owners."""
-    allowed = set(REFERENCE_TARGETS) | set(REFERENCE_LISTS)
+    targets = {
+        key: value
+        for key, value in REFERENCE_TARGETS.items()
+        if key not in _CURRENT_FORBIDDEN_REFERENCE_KEYS
+    }
+    lists = {
+        key: value
+        for key, value in REFERENCE_LISTS.items()
+        if key not in _CURRENT_FORBIDDEN_REFERENCE_KEYS
+    }
+    allowed = set(targets) | set(lists)
     known = ",".join(f"'{key}'" for key in sorted(allowed))
     local = ",".join(f"'{key}'" for key in sorted(LOCAL_REFERENCE_KEYS))
-    uuid_keys = ",".join(
-        f"'{key}'" for key in sorted(REFERENCE_TARGETS) if "uuidv4" in key
-    )
-    text_keys = ",".join(
-        f"'{key}'" for key in sorted(REFERENCE_TARGETS) if "uuidv4" not in key
-    )
+    uuid_keys = ",".join(f"'{key}'" for key in sorted(targets) if "uuidv4" in key)
+    text_keys = ",".join(f"'{key}'" for key in sorted(targets) if "uuidv4" not in key)
     conditions = [
         f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE typeof(j.key)='text' GROUP BY j.parent,j.key HAVING count(*)>1)",
         f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key IN ({local}) OR ((j.key GLOB '*_uuidv4' OR j.key GLOB '*_uuidv4s' OR j.key GLOB '*_sha256' OR j.key IN ('sha256','representation','references')) AND j.key NOT IN ({known}) AND NOT EXISTS(SELECT 1 FROM json_tree({doc}) p WHERE p.id=j.parent AND p.key='payload')))",
@@ -1615,8 +1644,8 @@ def _sql_snapshot_conditions(doc, repository, source):
     ]
     # These encodings were never non-owning scalar capture identifiers. Preserve
     # their authored shape and owner checks if present in an explicit context.
-    for key, target_key in sorted(REFERENCE_LISTS.items()):
-        target, identity = REFERENCE_TARGETS[target_key]
+    for key, target_key in sorted(lists.items()):
+        target, identity = targets[target_key]
         target_repository, target_source = _sql_target_owner(target)
         owner = _sql_owner_predicate(
             repository, source, target_repository, target_source
@@ -1629,14 +1658,8 @@ def _sql_snapshot_conditions(doc, repository, source):
         conditions.append(
             f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='{key}' AND (j.type<>'array' OR EXISTS(SELECT 1 FROM json_each(j.value) e WHERE e.type<>'text' OR NOT {canonical} OR NOT EXISTS(SELECT 1 FROM {target} t WHERE t.{identity}=e.value AND {owner}))))"
         )
-    payload_shape = (
-        "coalesce(json_type(j.value,'$.representation'),'')<>'text' OR coalesce(json_type(j.value,'$.sha256'),'')<>'text' OR (SELECT count(*) FROM json_each(j.value))<>2 OR json_extract(j.value,'$.representation') NOT IN ('decoded_api','legacy_normalized','git-object-raw-v1') OR NOT "
-        + _sql_hex("json_extract(j.value,'$.sha256')", 64)
-    )
-    payload_owner = f"({repository} IS NULL OR EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.repository_uuidv4={repository} AND f.payload_representation=p.representation AND f.payload_sha256=p.sha256) OR EXISTS(SELECT 1 FROM git_object_payloads g JOIN repository_object_sources o USING(git_object_id) JOIN git_acquisitions a USING(git_acquisition_id) WHERE a.repository_uuidv4={repository} AND g.payload_representation=p.representation AND g.payload_sha256=p.sha256)) AND ({source} IS NULL OR EXISTS(SELECT 1 FROM source_input_observations i WHERE i.source_registration_uuidv4={source} AND i.payload_representation=p.representation AND i.payload_sha256=p.sha256))"
-    conditions.append(
-        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='payload' AND (j.type<>'object' OR {payload_shape} OR NOT EXISTS(SELECT 1 FROM payloads p WHERE p.representation=json_extract(j.value,'$.representation') AND lower(hex(p.sha256))=json_extract(j.value,'$.sha256') AND {payload_owner})))"
-    )
+    # Current captures reject payload/profile/interpretation references rather
+    # than emitting unreachable checks against the legacy stores.
     return conditions
 
 
@@ -1671,6 +1694,11 @@ def guard_sql():
             conditions.extend(
                 _sql_capture_conditions(doc, "NEW.service_instance_uuidv4")
             )
+            conditions.append(
+                f"json_extract({doc},'$.change_request_id') IS NOT NEW.change_request_id"
+                if table == "review_resources"
+                else f"json_type({doc},'$.change_request_id') IS NOT NULL"
+            )
         if schema.category == "current-field-evidence":
             conditions = [
                 f"EXISTS(SELECT 1 FROM json_each({doc}) e GROUP BY e.key HAVING count(*)>1)"
@@ -1701,8 +1729,10 @@ def guard_sql():
                 "coalesce(json_type(e.value,'$.provider_clock_scope'),'') NOT IN ('text','null')",
                 "(json_type(e.value,'$.provider_clock_scope')='text' AND json_extract(e.value,'$.provider_clock_scope') IS NOT CASE NEW.kind WHEN 'issue' THEN 'github-issue-updated-at' WHEN 'issue-comment' THEN 'github-issue-comment-updated-at' WHEN 'review-comment' THEN 'github-review-comment-updated-at' END)",
                 "(NEW.kind='review' AND json_type(e.value,'$.provider_updated_at_us')<>'null')",
-                "coalesce(json_type(e.value,'$.parser_profile_uuidv4'),'')<>'text'",
-                f"NOT {_sql_uuid("json_extract(e.value,'$.parser_profile_uuidv4')")}",
+                *[
+                    f"coalesce(json_type(e.value,'$.{name}'),'')<>'text' OR length(json_extract(e.value,'$.{name}'))=0 OR instr(json_extract(e.value,'$.{name}'),char(0))>0"
+                    for name in ("parser_module", "parser_version")
+                ],
                 "coalesce(json_type(e.value,'$.acquisition_scope'),'')<>'object'",
             ]
             capture_invalid = _sql_capture_conditions(
@@ -1724,12 +1754,9 @@ def guard_sql():
                 capture_invalid.append(
                     "json_type(capture.scope,'$.change_request_id') IS NOT NULL"
                 )
-            invalid.append(
-                "(json_type(e.value,'$.acquisition_scope.parser_profile_uuidv4') IS NOT NULL AND json_extract(e.value,'$.acquisition_scope.parser_profile_uuidv4') IS NOT json_extract(e.value,'$.parser_profile_uuidv4'))"
-            )
-            fact_kind = "CASE NEW.kind WHEN 'issue-comment' THEN 'ordinary-issue-comment' ELSE NEW.kind END"
-            conditions.append(
-                f"EXISTS(SELECT 1 FROM (SELECT DISTINCT json_extract(e.value,'$.parser_profile_uuidv4') AS profile FROM json_each({doc}) e) evidence WHERE NOT EXISTS(SELECT 1 FROM parser_profile_capabilities p WHERE p.parser_profile_uuidv4=evidence.profile AND p.owner_kind='repository' AND p.fact_kind=({fact_kind})))"
+            invalid.extend(
+                f"(json_type(e.value,'$.acquisition_scope.{name}') IS NOT NULL AND json_extract(e.value,'$.acquisition_scope.{name}') IS NOT json_extract(e.value,'$.{name}'))"
+                for name in ("parser_module", "parser_version")
             )
             conditions.append(
                 f"EXISTS(SELECT 1 FROM (SELECT DISTINCT json_extract(e.value,'$.acquisition_scope') AS scope FROM json_each({doc}) e) capture WHERE "
@@ -1861,7 +1888,20 @@ def guard_sql():
             conditions.append(
                 f"(json_extract({doc},'$.status')=304 AND (coalesce(json_type({doc},'$.change_request_observation_uuidv4'),'')<>'text' OR coalesce(json_type({doc},'$.parsed_result_uuidv4'),'')<>'text' OR coalesce(json_type({doc},'$.fetch_occurrence_uuidv4'),'')<>'text' OR coalesce(json_type({doc},'$.payload'),'')<>'object'))"
             )
-        allowed = set(REFERENCE_TARGETS) | set(REFERENCE_LISTS)
+        targets = REFERENCE_TARGETS
+        lists = REFERENCE_LISTS
+        if schema.category == "current-acquisition":
+            targets = {
+                key: value
+                for key, value in targets.items()
+                if key not in _CURRENT_FORBIDDEN_REFERENCE_KEYS
+            }
+            lists = {
+                key: value
+                for key, value in lists.items()
+                if key not in _CURRENT_FORBIDDEN_REFERENCE_KEYS
+            }
+        allowed = set(targets) | set(lists)
         known = ",".join(f"'{k}'" for k in sorted(allowed))
         local = ",".join(f"'{k}'" for k in sorted(LOCAL_REFERENCE_KEYS))
         digest_exemption = (
@@ -1876,7 +1916,7 @@ def guard_sql():
             conditions.append(
                 f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE (j.key='sha256' OR j.key GLOB '*_sha256') AND NOT EXISTS(SELECT 1 FROM json_tree({doc}) p WHERE p.id=j.parent AND p.key='payload') AND (j.type<>'text' OR NOT {_sql_hex('j.value', 64)}))"
             )
-        for key, (target, identity) in sorted(REFERENCE_TARGETS.items()):
+        for key, (target, identity) in sorted(targets.items()):
             declaration = ""
             if schema.category == "current-acquisition" and key in _CAPTURE_KEYS:
                 declaration += f" AND NOT (j.path='$' AND NEW.kind='issue-comment' AND json_extract({doc},'$.repository_uuidv4')<>NEW.repository_uuidv4)"
@@ -1903,8 +1943,8 @@ def guard_sql():
             conditions.append(
                 f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='{key}'{declaration} AND NOT EXISTS(SELECT 1 FROM {target} t WHERE t.{identity}=j.value AND {owner}))"
             )
-        for key, target_key in sorted(REFERENCE_LISTS.items()):
-            target, identity = REFERENCE_TARGETS[target_key]
+        for key, target_key in sorted(lists.items()):
+            target, identity = targets[target_key]
             target_repository, target_source = _sql_target_owner(target)
             canonical = (
                 _sql_uuid("e.value")
@@ -1917,14 +1957,15 @@ def guard_sql():
             conditions.append(
                 f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='{key}' AND (j.type<>'array' OR EXISTS(SELECT 1 FROM json_each(j.value) e WHERE e.type<>'text' OR NOT {canonical} OR NOT EXISTS(SELECT 1 FROM {target} t WHERE t.{identity}=e.value AND {owner}))))"
             )
-        payload_shape = (
-            "coalesce(json_type(j.value,'$.representation'),'')<>'text' OR coalesce(json_type(j.value,'$.sha256'),'')<>'text' OR (SELECT count(*) FROM json_each(j.value))<>2 OR json_extract(j.value,'$.representation') NOT IN ('decoded_api','legacy_normalized','git-object-raw-v1') OR NOT "
-            + _sql_hex("json_extract(j.value,'$.sha256')", 64)
-        )
-        payload_owner = f"({repository} IS NULL OR EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.repository_uuidv4={repository} AND f.payload_representation=p.representation AND f.payload_sha256=p.sha256) OR EXISTS(SELECT 1 FROM git_object_payloads g JOIN repository_object_sources o USING(git_object_id) JOIN git_acquisitions a USING(git_acquisition_id) WHERE a.repository_uuidv4={repository} AND g.payload_representation=p.representation AND g.payload_sha256=p.sha256)) AND ({source} IS NULL OR EXISTS(SELECT 1 FROM source_input_observations i WHERE i.source_registration_uuidv4={source} AND i.payload_representation=p.representation AND i.payload_sha256=p.sha256))"
-        conditions.append(
-            f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='payload' AND (j.type<>'object' OR {payload_shape} OR NOT EXISTS(SELECT 1 FROM payloads p WHERE p.representation=json_extract(j.value,'$.representation') AND lower(hex(p.sha256))=json_extract(j.value,'$.sha256') AND {payload_owner})))"
-        )
+        if schema.category != "current-acquisition":
+            payload_shape = (
+                "coalesce(json_type(j.value,'$.representation'),'')<>'text' OR coalesce(json_type(j.value,'$.sha256'),'')<>'text' OR (SELECT count(*) FROM json_each(j.value))<>2 OR json_extract(j.value,'$.representation') NOT IN ('decoded_api','legacy_normalized','git-object-raw-v1') OR NOT "
+                + _sql_hex("json_extract(j.value,'$.sha256')", 64)
+            )
+            payload_owner = f"({repository} IS NULL OR EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.repository_uuidv4={repository} AND f.payload_representation=p.representation AND f.payload_sha256=p.sha256) OR EXISTS(SELECT 1 FROM git_object_payloads g JOIN repository_object_sources o USING(git_object_id) JOIN git_acquisitions a USING(git_acquisition_id) WHERE a.repository_uuidv4={repository} AND g.payload_representation=p.representation AND g.payload_sha256=p.sha256)) AND ({source} IS NULL OR EXISTS(SELECT 1 FROM source_input_observations i WHERE i.source_registration_uuidv4={source} AND i.payload_representation=p.representation AND i.payload_sha256=p.sha256))"
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='payload' AND (j.type<>'object' OR {payload_shape} OR NOT EXISTS(SELECT 1 FROM payloads p WHERE p.representation=json_extract(j.value,'$.representation') AND lower(hex(p.sha256))=json_extract(j.value,'$.sha256') AND {payload_owner})))"
+            )
         for operation in ("INSERT", "UPDATE"):
             effective = (
                 f"json_remove({doc},'$.head','$.base')"

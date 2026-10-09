@@ -52,13 +52,14 @@ def current_review_comment(store, owner, resource, body, *, thread_id=None):
         "change_request_id": owner,
         "endpoint": "synthetic-provider-identity",
     }
-    model = ParserModel(store.connection)
-    profile = register_test_profile(store.connection)
-    for kind in ("review-comment", "review-thread"):
-        model.ensure_scope_profile(
-            profile, repository_uuidv4=binding["repository_uuidv4"], fact_kind=kind
-        )
     if thread_id is not None:
+        model = ParserModel(store.connection)
+        profile = register_test_profile(store.connection)
+        model.ensure_scope_profile(
+            profile,
+            repository_uuidv4=binding["repository_uuidv4"],
+            fact_kind="review-thread",
+        )
         result = new_result(store.connection, binding["repository_uuidv4"])
         store.execute(
             "INSERT INTO review_thread_observations(thread_observation_uuidv4,"
@@ -90,7 +91,8 @@ def current_review_comment(store, owner, resource, body, *, thread_id=None):
             "provider_clock_scope": "github-review-comment-updated-at",
             "observed_at_us": 0,
             "parsed_at_us": 0,
-            "parser_profile_uuidv4": profile,
+            "parser_module": __name__,
+            "parser_version": "1",
             "review_thread_provider_resource_id": thread_id,
             "acquisition_scope": scope,
         },

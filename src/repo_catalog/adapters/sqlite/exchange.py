@@ -540,14 +540,14 @@ class Graph:
             ):
                 return None
             if {
-                page["parser_profile_uuidv4"]
+                (page["parser_module"], page["parser_version"])
                 for page in self.matching(
                     "current_collection_pages",
                     ("fetch_collection_id",),
                     (collection["fetch_collection_id"],),
                 )
             } != {
-                page["parser_profile_uuidv4"]
+                (page["parser_module"], page["parser_version"])
                 for page in self.matching(
                     "current_collection_pages",
                     ("fetch_collection_id",),
@@ -1460,24 +1460,19 @@ class Graph:
                                 child, child_cols, tuple(row[c] for c in parent_cols)
                             ):
                                 add(child, member)
-                if partial and table in {
-                    "parsed_results",
-                    "current_collection_pages",
-                    *CURRENT_RESOURCES,
-                }:
-                    if table == "parsed_results":
-                        for decision in self.matching(
+                if partial and table == "parsed_results":
+                    for decision in self.matching(
+                        "fact_selection_decisions",
+                        ("parsed_result_uuidv4",),
+                        (row["parsed_result_uuidv4"],),
+                    ):
+                        scope_id = decision["fact_selection_scope_uuidv4"]
+                        for member in self.matching(
                             "fact_selection_decisions",
-                            ("parsed_result_uuidv4",),
-                            (row["parsed_result_uuidv4"],),
+                            ("fact_selection_scope_uuidv4",),
+                            (scope_id,),
                         ):
-                            scope_id = decision["fact_selection_scope_uuidv4"]
-                            for member in self.matching(
-                                "fact_selection_decisions",
-                                ("fact_selection_scope_uuidv4",),
-                                (scope_id,),
-                            ):
-                                add("fact_selection_decisions", member)
+                            add("fact_selection_decisions", member)
                     for decision in self.matching(
                         "parser_profile_selection_decisions",
                         ("parser_profile_uuidv4",),
@@ -1578,7 +1573,7 @@ class Graph:
                     continue
                 seen.add(digest)
                 current_alternatives.append(record)
-                # Close required bodies/profiles/owners, including a legitimate
+                # Close required domain bodies and owners, including a legitimate
                 # unavailable parent reference which remains staged on receipt.
                 for parent, child_cols, parent_cols in self.foreign[table]:
                     if not all(row.get(c) is not None for c in child_cols):
@@ -1746,7 +1741,8 @@ class Graph:
                 "text_body_sha256",
                 "observed_at_us",
                 "parsed_at_us",
-                "parser_profile_uuidv4",
+                "parser_module",
+                "parser_version",
                 "metadata",
                 "acquisition_scope_json",
             }

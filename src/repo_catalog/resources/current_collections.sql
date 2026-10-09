@@ -8,14 +8,10 @@ CREATE TABLE current_collection_pages(
  next_cursor TEXT,
  members TEXT NOT NULL CHECK(json_valid(members) AND json_type(members)='array'),
  status INTEGER NOT NULL CHECK(status>=200 AND status<300),
- parser_profile_uuidv4 TEXT NOT NULL REFERENCES parser_profiles(parser_profile_uuidv4),
+ parser_module TEXT NOT NULL CHECK(length(parser_module)>0 AND instr(parser_module,char(0))=0),
+ parser_version TEXT NOT NULL CHECK(length(parser_version)>0 AND instr(parser_version,char(0))=0),
  PRIMARY KEY(fetch_collection_id,ordinal)
 ) STRICT;
-CREATE INDEX current_collection_pages_profile ON current_collection_pages(parser_profile_uuidv4);
-CREATE TRIGGER current_collection_pages_profile_capability BEFORE INSERT ON current_collection_pages
-WHEN NOT EXISTS(SELECT 1 FROM fetch_collections c JOIN parser_profile_capabilities p ON p.parser_profile_uuidv4=NEW.parser_profile_uuidv4 AND p.owner_kind='repository' AND p.fact_kind=CASE c.kind WHEN 'threads' THEN 'review-comment' WHEN 'thread-comments' THEN 'review-comment' WHEN 'review-comment-incremental' THEN 'review-comment' ELSE c.kind END WHERE c.fetch_collection_id=NEW.fetch_collection_id)
- OR EXISTS(SELECT 1 FROM json_each(NEW.members) m WHERE CASE WHEN m.type='object' THEN NOT EXISTS(SELECT 1 FROM parser_profile_capabilities p WHERE p.parser_profile_uuidv4=NEW.parser_profile_uuidv4 AND p.owner_kind='repository' AND p.fact_kind=CASE json_extract(m.value,'$.kind') WHEN 'issue-comment' THEN 'ordinary-issue-comment' ELSE json_extract(m.value,'$.kind') END) ELSE 0 END)
-BEGIN SELECT RAISE(ABORT,'Current page parser lacks required capability'); END;
 CREATE TRIGGER current_collection_pages_immutable BEFORE UPDATE ON current_collection_pages
 BEGIN SELECT RAISE(ABORT,'Current collection page receipt is immutable'); END;
 CREATE TRIGGER current_collection_pages_retain BEFORE DELETE ON current_collection_pages
