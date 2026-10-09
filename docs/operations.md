@@ -39,7 +39,7 @@ cache/lease/予約/旧running processを有効な復元状態とみなしませ�
 
 `quarantined_payload_count` は必須の非負JSON整数で、bool・文字列・小数・負数・`9223372036854775807`を超える値を拒否します。数えるのは検証済みコピーのactive `payload_quarantine` 行だけです。同じphysical objectの複数representation、修復済みの診断履歴、staging、cache隔離directoryは数えません。正の一致件数は正常に扱い、既知の隔離bytesと診断を保持します。件数が一致しても未説明の破損を許容しません。archiveの欠落・故障をこの件数へ含めません。
 
-catalog3 の新規初期化は schema version **15** のcomplete packaged DDLから直接行います。旧開発DBとそのbackupは拒否し、migrationや互換viewは設けません。v2 importerとfinalizeは廃止済みで、D2は `not_applicable / retired` です。歴史的なreceiptと不明identityの捏造禁止は維持します。
+catalog3 の新規初期化は schema version **16** のcomplete packaged DDLから直接行います。旧開発DBとそのbackupは拒否し、migrationや互換viewは設けません。v2 importerとfinalizeは廃止済みで、D2は `not_applicable / retired` です。歴史的なreceiptと不明identityの捏造禁止は維持します。
 
 通常Issue/コメントとレビュー/レビューコメントは各リソースの最新受理状態を保存します。PRタイトル・本文・PR会話コメント、Git、独立スレッドの履歴は保持します。通常の現在状態と必要な完全性証拠はcatalogだけで再起動・照会・再索引・交換・backup/restoreできます。
 

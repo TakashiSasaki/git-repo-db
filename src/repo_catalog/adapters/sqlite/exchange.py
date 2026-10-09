@@ -322,6 +322,8 @@ class Graph:
         if table == "git_object_payloads":
             self.validate_git_payload(row)
         data = {c: encode(v, c) for c, v in row.items()}
+        if table in CURRENT_RESOURCES:
+            data.pop("last_checked_at_us", None)
         for col in LOCAL_COLUMNS.get(table, ()):
             if col in data:
                 data[col] = None
@@ -1704,6 +1706,8 @@ class Graph:
 
     def expected_columns(self, table):
         columns = set(self.columns[table])
+        if table in CURRENT_RESOURCES:
+            columns.discard("last_checked_at_us")
         pk = self.keys[table]
         if (
             len(pk) == 1

@@ -880,8 +880,8 @@
     "policy": "whole-profile-v1",
     "reports": [
       {
-        "executed_passed": 287,
-        "sha256": "a16b82fb22e3608c279efe17517576ffb309cc484481e5883f44dfe51606d258",
+        "executed_passed": 434,
+        "sha256": "a4695432e8f4b1c8c51d9ac278c46a791565834bf15e5717572c42d6baf3d477",
         "skipped": 0
       }
     ]
@@ -953,10 +953,10 @@
       "adapters/recording.py": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c",
       "adapters/sqlite/coverage.py": "6913211da033ed773a146c674cf25c014b928ed3de403b9044a19a7da183089b",
       "adapters/sqlite/current_collections.py": "5f50e9403ee96814827e081c3ee4cbd994a50ccd1a8aaf5f9d4267e2334ad3d1",
-      "adapters/sqlite/current_resources.py": "49fea2f4120ea5180bd21e1eea0bdd3b87e8d1830358d108b15f10ee28e10cb5",
-      "adapters/sqlite/exchange.py": "74125ebefa093674c9187ba57659f452470a9813c95f871c1b52725081af2ec2",
+      "adapters/sqlite/current_resources.py": "bd417ca77536a26378767663b5127444ad8ffe97ee968c0ae329f394ac5f5a79",
+      "adapters/sqlite/exchange.py": "67e3e15542e23d67b7ea5f570cc40d8fda3807e5993f98d00f39e553947fe151",
       "adapters/sqlite/identity_relations.py": "8bf2c637b61eac126d7c8a2f9f3f058684f55e265db4d711a8e05adf933cd018",
-      "adapters/sqlite/json_contracts.py": "e23cc058f08dad1712ef11f8c4f4643f2cedf24fd329cd36d11ccd73f149e1f1",
+      "adapters/sqlite/json_contracts.py": "be3b581149e51d8976b50562797c527f80ebf2e1ff7dd3e51c534e4141b09f71",
       "adapters/sqlite/parser_model.py": "ef06efbcc8b3f0244a888d6ebbc6420837c6d9bccdfc10d33dfcff0af4922276",
       "adapters/sqlite/payloads.py": "d1be12a37ff4e7001582c0f7d99486eff81feddb800026f9ae3d5577cef7224a",
       "adapters/sqlite/store.py": "c09d21890762b0436e48efcb81859189bb68f57f223d6028c4e3f80575cf2e77",
@@ -979,8 +979,8 @@
       "resources/thread_comments.graphql": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4"
     },
     "output_schema": {
-      "catalog3": 15,
-      "ddl_sha256": "20ec2e5c3b2fe7a064aa4e9a122d6b452d0f6b1a5be00113ce1dbd948f8f3826",
+      "catalog3": 16,
+      "ddl_sha256": "d29295ce86ee60c67d0abb1b88bf5e8d94d9da5bb0b60b5d1e2e56fc02640aed",
       "facts": "scoped-immutable-and-current-resources-v1"
     },
     "settings": {
