@@ -22,7 +22,7 @@ def configure(state, api, fixture):
     )["data"]["source_id"]
     env = {"GH_TOKEN": "fixture-dummy"}
     repo = run(state, "discover", "--source", sid, env=env)["data"]["repositories"][0][
-        "repository_id"
+        "repository_uuidv4"
     ]
     return sid, repo, env
 
@@ -253,7 +253,7 @@ def test_unknown_inventory_scope_retains_known_repositories(catalog):
         api.inventory_verified = False
         partial = run(state, "discover", "--source", sid, env=env, expected=3)
         assert partial["data"]["repositories"] == [
-            {"repository_id": repo, "name": "fixture/alpha"}
+            {"repository_uuidv4": repo, "name": "fixture/alpha"}
         ]
         assert (
             partial["coverage"]["missing"][0]["reason"] == "INVENTORY_SCOPE_UNVERIFIED"

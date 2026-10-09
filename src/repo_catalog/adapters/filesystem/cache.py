@@ -16,7 +16,7 @@ class CacheManager:
         self.s = store
 
     def paths(self, row):
-        expected = f"cache/{row['repository_id']}/{row['generation']}.git"
+        expected = f"cache/{row['repository_uuidv4']}/{row['generation']}.git"
         if row["path"] != expected:
             raise CatalogError(
                 "UNMANAGED_CACHE_PATH", "Cache path is not a managed generation"
@@ -63,7 +63,7 @@ class CacheManager:
         s = self.s
         results = []
         rows = s.all(
-            "SELECT a.*,l.repository_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' AND a.state IN ('active','evicting') ORDER BY a.last_used_us,a.active_cache_entry_id"
+            "SELECT a.*,l.repository_uuidv4,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' AND a.state IN ('active','evicting') ORDER BY a.last_used_us,a.active_cache_entry_id"
         )
         from repo_catalog.adapters.filesystem.capacity import Capacity
 
@@ -87,7 +87,7 @@ class CacheManager:
                     s.path / f"locks/cache-{row['active_cache_entry_id']}.lock"
                 ):
                     latest = s.one(
-                        "SELECT a.*,l.repository_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE a.active_cache_entry_id=? AND l.access='target_active'",
+                        "SELECT a.*,l.repository_uuidv4,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE a.active_cache_entry_id=? AND l.access='target_active'",
                         (row["active_cache_entry_id"],),
                     )
                     if latest is None:

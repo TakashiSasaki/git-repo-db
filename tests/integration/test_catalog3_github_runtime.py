@@ -71,7 +71,7 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     pr = {"change_request_id": "repo:41", "provider_change_request_number": 41}
     with store.transaction():
         store.execute(
-            "INSERT INTO change_requests(change_request_id,repository_id,"
+            "INSERT INTO change_requests(change_request_id,repository_uuidv4,"
             "repository_binding_id,change_request_kind,provider_change_request_number) "
             "VALUES('repo:41','repo','binding','pull_request',41)"
         )
@@ -224,24 +224,24 @@ def github_runtime(tmp_path, monkeypatch):
                     (api.url, api.url),
                 )
                 store.execute(
-                    "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('source','00000000-0000-4000-8000-000000000101','github_inventory','fixture',?)",
+                    "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name,settings) VALUES('source','00000000-0000-4000-8000-000000000201','00000000-0000-4000-8000-000000000101','github_inventory','fixture',?)",
                     (json.dumps({"owner": "fixture"}),),
                 )
                 store.execute(
-                    "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture/alpha','endpoint',NULL,'{}')"
+                    "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture/alpha','endpoint',NULL,'{}')"
                 )
                 store.execute(
-                    "INSERT INTO repository_endpoints(repository_endpoint_id,repository_id,url,transport,label,metadata,created_at_us) VALUES('endpoint','repo',?,'file',NULL,'{}',NULL)",
+                    "INSERT INTO repository_endpoints(repository_endpoint_id,repository_uuidv4,url,transport,label,metadata,created_at_us) VALUES('endpoint','repo',?,'file',NULL,'{}',NULL)",
                     (fixture.alpha.url,),
                 )
                 store.execute(
-                    "INSERT INTO repository_bindings(repository_binding_id,repository_id,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','101','{}',NULL)"
+                    "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('binding','repo','00000000-0000-4000-8000-000000000101','101','{}',NULL)"
                 )
                 store.execute(
-                    "INSERT INTO source_repositories(source_id,repository_id,first_seen_us,last_seen_us) VALUES('source','repo',NULL,NULL)"
+                    "INSERT INTO source_repositories(source_id,repository_uuidv4,first_seen_us,last_seen_us) VALUES('source','repo',NULL,NULL)"
                 )
             repo = {
-                "repository_id": "repo",
+                "repository_uuidv4": "repo",
                 "name": "fixture/alpha",
                 "source_id": "source",
                 "provider_repository_id": "101",
@@ -254,7 +254,7 @@ def github_runtime(tmp_path, monkeypatch):
 def sync(store, repo, *, job=None):
     if job is None:
         job = JobService(store).create(
-            "sync", {"kind": "pr", "repositories": [repo["repository_id"]]}
+            "sync", {"kind": "pr", "repositories": [repo["repository_uuidv4"]]}
         )
     else:
         JobService(store).resume(job)
@@ -277,7 +277,7 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
     sync(store, repo)
     assert (
         store.one(
-            "SELECT count(*) FROM coverage_scopes WHERE repository_id='repo' AND change_request_id IS NULL AND kind IN ('refs','structure','digests','heads-text')"
+            "SELECT count(*) FROM coverage_scopes WHERE repository_uuidv4='repo' AND change_request_id IS NULL AND kind IN ('refs','structure','digests','heads-text')"
         )[0]
         == 0
     )
@@ -498,7 +498,7 @@ def test_git_ref_mismatch_cannot_publish_complete_code(
     )
     for pr, kind in (("repo:41", "pr-code"), (None, "pr")):
         coverage = store.one(
-            "SELECT coverage_state,observed_at_us FROM current_coverage WHERE repository_id='repo' AND change_request_id IS ? AND kind=?",
+            "SELECT coverage_state,observed_at_us FROM current_coverage WHERE repository_uuidv4='repo' AND change_request_id IS ? AND kind=?",
             (pr, kind),
         )
         assert coverage["coverage_state"] == "partial"
@@ -1319,7 +1319,7 @@ def test_import_first_sync_conditional_detail_and_saved_complete_listings(
                 == 1
             )
             repo = {
-                "repository_id": ids["repo"],
+                "repository_uuidv4": ids["repo"],
                 "name": "fixture/alpha",
                 "source_id": ids["source"],
                 "provider_repository_id": "101",
@@ -1525,7 +1525,7 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
     store, repo, fixture, api = github_runtime
     pr = {"change_request_id": "repo:41", "provider_change_request_number": 41}
     store.execute(
-        "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('repo:41','repo','binding','pull_request',41)"
+        "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('repo:41','repo','binding','pull_request',41)"
     )
     job = JobService(store).create("sync", {"kind": "pr"})
     collector = GitHubCollector(store, CancellationToken())
@@ -1868,7 +1868,7 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
     pr = {"change_request_id": "repo:41", "provider_change_request_number": 41}
     with store.transaction():
         store.execute(
-            "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('repo:41','repo','binding','pull_request',41)"
+            "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('repo:41','repo','binding','pull_request',41)"
         )
     if boundary == "nested-child":
         api.reply_count = 101
@@ -1982,7 +1982,7 @@ def test_imported_listing_resume_preserves_authorization_time_and_identity(
         with Store(state, allow_building=True) as store:
             finalize_catalog(store)
             repo = {
-                "repository_id": ids["repo"],
+                "repository_uuidv4": ids["repo"],
                 "name": "fixture/alpha",
                 "source_id": ids["source"],
                 "provider_repository_id": "101",
@@ -2136,7 +2136,7 @@ def test_git_ref_race_records_partial_code_and_repository_coverage(github_runtim
         "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='repo:41' AND kind='pr-code'"
     )
     repository = store.one(
-        "SELECT coverage_state,observed_at_us FROM current_coverage WHERE repository_id='repo' AND change_request_id IS NULL AND kind='pr'"
+        "SELECT coverage_state,observed_at_us FROM current_coverage WHERE repository_uuidv4='repo' AND change_request_id IS NULL AND kind='pr'"
     )
     assert pr_code["coverage_state"] == "partial"
     assert repository["coverage_state"] == "partial"

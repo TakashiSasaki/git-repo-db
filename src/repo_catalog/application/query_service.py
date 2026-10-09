@@ -9,6 +9,7 @@ from pathlib import Path
 
 from repo_catalog.adapters.sqlite.coverage import current_coverages
 from repo_catalog.adapters.sqlite.store import Store
+from repo_catalog.application import repository_identity as identity
 from repo_catalog.application.collection_service import select_repositories
 from repo_catalog.domain.models import (
     CancellationToken,
@@ -58,7 +59,7 @@ class QueryService:
         )
 
     def query(self, command, options=None, *, limit=100, cursor=None, timeout=30):
-        opts = options or {}
+        opts = dict(options or {})
         if not 1 <= limit <= 1000 or not math.isfinite(timeout) or timeout <= 0:
             raise CatalogError(
                 "INVALID_ARGUMENT", "Limit must be 1..1000 and timeout positive"
@@ -74,6 +75,8 @@ class QueryService:
                 lambda: self.token.cancelled or time.monotonic() > self.deadline, 1000
             )
             with s.transaction(read=True):
+                if opts.get("source") is not None:
+                    opts["source"] = identity.source(s, opts["source"])["source_id"]
                 revision = s.revision()
                 key = fingerprint({"command": command, "options": opts})
                 last = None
@@ -297,8 +300,8 @@ class QueryService:
         ident = o.get("snapshot") or repo["current_snapshot_id"]
         row = (
             self.s.one(
-                "SELECT * FROM snapshots WHERE snapshot_id=? AND repository_id=? AND published=1",
-                (ident, repo["repository_id"]),
+                "SELECT * FROM snapshots WHERE snapshot_id=? AND repository_uuidv4=? AND published=1",
+                (ident, repo["repository_uuidv4"]),
             )
             if ident
             else None
@@ -307,7 +310,7 @@ class QueryService:
             if o.get("snapshot"):
                 raise CatalogError("NOT_FOUND", "Published snapshot not found")
             self.coverage.add(
-                "git", "not_collected", repository_id=repo["repository_id"]
+                "git", "not_collected", repository_uuidv4=repo["repository_uuidv4"]
             )
         return row
 
@@ -341,8 +344,8 @@ class QueryService:
             raise CatalogError("INVALID_ARGUMENT", "Current scope permits only heads")
         if pr or any(k.startswith("pr-") for k in kinds):
             rows = self.s.all(
-                "SELECT DISTINCT a.*,p.provider_change_request_number pr_number,o.change_request_observation_id,ca.role origin_role FROM acquisition_roots a JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id AND o.origin_kind='pr_role' JOIN change_requests p ON p.change_request_id=o.change_request_id JOIN code_observations co ON co.change_request_id=p.change_request_id AND co.change_request_observation_id=o.change_request_observation_id JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_id=? AND a.published=1 AND (? IS NULL OR p.provider_change_request_number=?) AND ((?='recorded' AND ? IS NULL) OR o.change_request_observation_id=p.current_change_request_observation_id) AND co.code_observation_id=(SELECT max(latest.code_observation_id) FROM code_observations latest WHERE latest.change_request_id=p.change_request_id AND latest.change_request_observation_id=o.change_request_observation_id) ORDER BY a.acquisition_root_id,ca.role",
-                (repo["repository_id"], pr, pr, scope, pr),
+                "SELECT DISTINCT a.*,p.provider_change_request_number pr_number,o.change_request_observation_id,ca.role origin_role FROM acquisition_roots a JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id AND o.origin_kind='pr_role' JOIN change_requests p ON p.change_request_id=o.change_request_id JOIN code_observations co ON co.change_request_id=p.change_request_id AND co.change_request_observation_id=o.change_request_observation_id JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_uuidv4=? AND a.published=1 AND (? IS NULL OR p.provider_change_request_number=?) AND ((?='recorded' AND ? IS NULL) OR o.change_request_observation_id=p.current_change_request_observation_id) AND co.code_observation_id=(SELECT max(latest.code_observation_id) FROM code_observations latest WHERE latest.change_request_id=p.change_request_id AND latest.change_request_observation_id=o.change_request_observation_id) ORDER BY a.acquisition_root_id,ca.role",
+                (repo["repository_uuidv4"], pr, pr, scope, pr),
             )
             selected = [
                 {
@@ -361,7 +364,7 @@ class QueryService:
                 self.coverage.add(
                     "pr",
                     "pr_root_unavailable",
-                    repository_id=repo["repository_id"],
+                    repository_uuidv4=repo["repository_uuidv4"],
                     number=pr,
                 )
             normal = [k for k in kinds if not k.startswith("pr-")]
@@ -370,8 +373,8 @@ class QueryService:
             return selected
         if scope == "recorded":
             rows = self.s.all(
-                "SELECT DISTINCT a.*,o.root_origin_id origin_id,o.snapshot_id,o.raw_ref_name,p.provider_change_request_number pr_number,f.kind ref_kind,ca.role origin_role FROM acquisition_roots a LEFT JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id LEFT JOIN change_requests p ON p.change_request_id=o.change_request_id LEFT JOIN ref_observations f ON f.snapshot_id=o.snapshot_id AND f.raw_ref_name=o.raw_ref_name LEFT JOIN code_observations co ON co.change_request_id=o.change_request_id AND co.change_request_observation_id=o.change_request_observation_id LEFT JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_id=? AND a.published=1 ORDER BY a.acquisition_root_id,o.root_origin_id,ca.role",
-                (repo["repository_id"],),
+                "SELECT DISTINCT a.*,o.root_origin_id origin_id,o.snapshot_id,o.raw_ref_name,p.provider_change_request_number pr_number,f.kind ref_kind,ca.role origin_role FROM acquisition_roots a LEFT JOIN root_origins o ON o.acquisition_root_id=a.acquisition_root_id LEFT JOIN change_requests p ON p.change_request_id=o.change_request_id LEFT JOIN ref_observations f ON f.snapshot_id=o.snapshot_id AND f.raw_ref_name=o.raw_ref_name LEFT JOIN code_observations co ON co.change_request_id=o.change_request_id AND co.change_request_observation_id=o.change_request_observation_id LEFT JOIN code_acquisitions ca ON ca.code_observation_id=co.code_observation_id AND ca.acquisition_root_id=a.acquisition_root_id WHERE a.repository_uuidv4=? AND a.published=1 ORDER BY a.acquisition_root_id,o.root_origin_id,ca.role",
+                (repo["repository_uuidv4"],),
             )
             return [
                 {
@@ -552,7 +555,7 @@ class QueryService:
                     yield (
                         (root["name"], entry["raw_path"].hex()),
                         {
-                            "repository_id": repo["repository_id"],
+                            "repository_uuidv4": repo["repository_uuidv4"],
                             "snapshot_id": root["snapshot"],
                             "ref": root["name"],
                             "commit": f"{obj['object_format']}:{obj['oid'].hex()}",
@@ -570,7 +573,7 @@ class QueryService:
                     yield (
                         (obj["oid"].hex(), entry["raw_path"].hex()),
                         {
-                            "repository_id": repo["repository_id"],
+                            "repository_uuidv4": repo["repository_uuidv4"],
                             "commit": f"{obj['object_format']}:{obj['oid'].hex()}",
                             **entry,
                         },
@@ -578,14 +581,14 @@ class QueryService:
 
     def public_object(self, repo, obj):
         sources = self.s.all(
-            "SELECT p.git_acquisition_id,r.state FROM repository_object_sources p LEFT JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE p.repository_id=? AND p.git_object_id=? ORDER BY p.git_acquisition_id",
-            (repo["repository_id"], obj),
+            "SELECT p.git_acquisition_id,r.state FROM repository_object_sources p LEFT JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE p.repository_uuidv4=? AND p.git_object_id=? ORDER BY p.git_acquisition_id",
+            (repo["repository_uuidv4"], obj),
         )
         if sources and not any(row["state"] == "published" for row in sources):
             self.coverage.add(
                 "git",
                 "acquisition_not_published",
-                repository_id=repo["repository_id"],
+                repository_uuidv4=repo["repository_uuidv4"],
                 git_object_id=obj,
             )
         return bool(sources)
@@ -653,8 +656,8 @@ class QueryService:
         elif command == "endpoints list":
             repo = self.single_repo(o)
             for row in s.all(
-                "SELECT * FROM repository_endpoints WHERE repository_id=? ORDER BY repository_endpoint_id",
-                (repo["repository_id"],),
+                "SELECT * FROM repository_endpoints WHERE repository_uuidv4=? ORDER BY repository_endpoint_id",
+                (repo["repository_uuidv4"],),
             ):
                 yield (
                     [row["repository_endpoint_id"]],
@@ -671,12 +674,12 @@ class QueryService:
                         ("sources", "source_repositories"),
                     ]:
                         total = s.one(
-                            f"SELECT count(*) FROM {table} WHERE repository_id=?",
-                            (r["repository_id"],),
+                            f"SELECT count(*) FROM {table} WHERE repository_uuidv4=?",
+                            (r["repository_uuidv4"],),
                         )[0]
                         rows = s.all(
-                            f"SELECT * FROM {table} WHERE repository_id=? ORDER BY 1 LIMIT 100",
-                            (r["repository_id"],),
+                            f"SELECT * FROM {table} WHERE repository_uuidv4=? ORDER BY 1 LIMIT 100",
+                            (r["repository_uuidv4"],),
                         )
                         item[name] = [dict(row) for row in rows]
                         item["nested_collections"][name] = {
@@ -684,7 +687,7 @@ class QueryService:
                             "total": total,
                             "has_more": total > len(rows),
                         }
-                yield [r["repository_id"]], item
+                yield [r["repository_uuidv4"]], item
         elif command in ("snapshots list", "snapshots show"):
             if command.endswith("show"):
                 row = s.one(
@@ -697,12 +700,12 @@ class QueryService:
             else:
                 repo = self.single_repo(o)
                 rows = s.all(
-                    "SELECT * FROM snapshots WHERE repository_id=? AND published=1 ORDER BY generation",
-                    (repo["repository_id"],),
+                    "SELECT * FROM snapshots WHERE repository_uuidv4=? AND published=1 ORDER BY generation",
+                    (repo["repository_uuidv4"],),
                 )
             for r in rows:
                 yield (
-                    [r["repository_id"], r["generation"]],
+                    [r["repository_uuidv4"], r["generation"]],
                     {
                         **dict(r),
                         "run": dict(
@@ -711,7 +714,9 @@ class QueryService:
                                 (r["git_acquisition_id"],),
                             )
                         ),
-                        "coverage": current_coverages(s.connection, r["repository_id"]),
+                        "coverage": current_coverages(
+                            s.connection, r["repository_uuidv4"]
+                        ),
                     },
                 )
         elif command == "refs list":
@@ -853,7 +858,7 @@ class QueryService:
                     [r["oid"].hex()],
                     {
                         **oid_fields(r),
-                        "repository_id": repo["repository_id"],
+                        "repository_uuidv4": repo["repository_uuidv4"],
                         "parents": [
                             f"{p['object_format']}:{p['oid'].hex()}" for p in parents
                         ],
@@ -868,7 +873,7 @@ class QueryService:
             repos = self.repos(o)
             if command == "search hash":
                 scoped = {
-                    repo["repository_id"]: self.closure(self.roots(repo, o))
+                    repo["repository_uuidv4"]: self.closure(self.roots(repo, o))
                     for repo in repos
                 }
                 algo = o["algorithm"].removeprefix("raw-")
@@ -882,7 +887,7 @@ class QueryService:
                     "SELECT c.* FROM contents c JOIN content_digests d ON d.content_id=c.content_id WHERE d.algorithm=? AND d.digest=? ORDER BY c.content_id",
                     (algo, digest),
                 )
-                allowed = {r["repository_id"] for r in repos}
+                allowed = {r["repository_uuidv4"] for r in repos}
                 for c in rows:
                     if (
                         o.get("byte_length") is not None
@@ -890,15 +895,15 @@ class QueryService:
                     ):
                         continue
                     sources = s.all(
-                        "SELECT DISTINCT p.repository_id,p.git_acquisition_id,r.state acquisition_state,g.object_format,g.oid FROM repository_object_sources p LEFT JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id JOIN git_objects g ON g.git_object_id=p.git_object_id JOIN blob_content_map b ON b.git_object_id=g.git_object_id WHERE b.content_id=? ORDER BY p.repository_id,p.git_acquisition_id",
+                        "SELECT DISTINCT p.repository_uuidv4,p.git_acquisition_id,r.state acquisition_state,g.object_format,g.oid FROM repository_object_sources p LEFT JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id JOIN git_objects g ON g.git_object_id=p.git_object_id JOIN blob_content_map b ON b.git_object_id=g.git_object_id WHERE b.content_id=? ORDER BY p.repository_uuidv4,p.git_acquisition_id",
                         (c["content_id"],),
                     )
                     sources = [
                         {**dict(r), "oid": f"{r['object_format']}:{r['oid'].hex()}"}
                         for r in sources
-                        if r["repository_id"] in allowed
+                        if r["repository_uuidv4"] in allowed
                         and self.s.git_object_id(r["object_format"], r["oid"])
-                        in scoped[r["repository_id"]]
+                        in scoped[r["repository_uuidv4"]]
                     ]
                     if sources:
                         if not any(
@@ -965,10 +970,10 @@ class QueryService:
                         ):
                             offset = r["raw_message"].index(needle)
                             yield (
-                                [repo["repository_id"], r["oid"].hex()],
+                                [repo["repository_uuidv4"], r["oid"].hex()],
                                 {
                                     **oid_fields(r),
-                                    "repository_id": repo["repository_id"],
+                                    "repository_uuidv4": repo["repository_uuidv4"],
                                     "message": message,
                                     "message_b64": base64.b64encode(
                                         r["raw_message"]
@@ -1022,7 +1027,7 @@ class QueryService:
                             ],
                         )
                     yield (
-                        [repo["repository_id"], *sortkey],
+                        [repo["repository_uuidv4"], *sortkey],
                         {**entry, **path_fields(raw)},
                     )
         elif command == "content show":
@@ -1085,12 +1090,12 @@ class QueryService:
             for repo in self.repos(o):
                 snapshot = self.snapshot(repo, o)
                 components = current_coverages(
-                    s.connection, repo["repository_id"], o.get("kind")
+                    s.connection, repo["repository_uuidv4"], o.get("kind")
                 )
                 yield (
-                    [repo["repository_id"]],
+                    [repo["repository_uuidv4"]],
                     {
-                        "repository_id": repo["repository_id"],
+                        "repository_uuidv4": repo["repository_uuidv4"],
                         "snapshot_id": snapshot["snapshot_id"] if snapshot else None,
                         "components": components,
                     },
@@ -1099,7 +1104,7 @@ class QueryService:
             yield from self.pr_query(command, o)
         elif command == "cache status":
             for r in s.all(
-                "SELECT a.*,l.repository_id,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' ORDER BY a.active_cache_entry_id"
+                "SELECT a.*,l.repository_uuidv4,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' ORDER BY a.active_cache_entry_id"
             ):
                 from repo_catalog.adapters.filesystem.cache import CacheManager
                 from repo_catalog.adapters.filesystem.capacity import (

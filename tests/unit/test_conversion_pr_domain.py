@@ -47,7 +47,7 @@ def apply(db, output, module):
             )
         elif operation["operation"] == "preference":
             db.execute(
-                "UPDATE repositories SET preferred_repository_endpoint_id=? WHERE repository_id=?",
+                "UPDATE repositories SET preferred_repository_endpoint_id=? WHERE repository_uuidv4=?",
                 (row[2], row[0]),
             )
         elif operation["operation"] == "manifest_completion":
@@ -1169,7 +1169,7 @@ def test_large_scope_request_details_preserve_direct_rows_edges_and_completion(
             (collection,),
         ).fetchone()[0]
         expected = json.loads(saved[collection])
-        expected["repository_id"] = expected.pop("repo_id")
+        expected["repository_uuidv4"] = expected.pop("repo_id")
         assert json.loads(context) == expected
         archived = db.execute(
             "SELECT v.value_bytes FROM legacy_values v JOIN legacy_records r ON r.legacy_record_id=v.legacy_record_id WHERE r.source_table='collections' AND r.source_key=? AND v.column_name='scope'",

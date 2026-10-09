@@ -64,7 +64,7 @@ class JobService:
             )
         return row["kind"], json.loads(row["request"])
 
-    def update(self, job, state, reason=None, not_before_us=None):
+    def update(self, job, state, reason=None, not_before_us=None, *, result=None):
         if not_before_us is not None:
             validate_epoch_us(not_before_us)
         timestamp = validate_epoch_us(self.clock_us())
@@ -73,6 +73,12 @@ class JobService:
                 "UPDATE job_attempts SET state=?,reason=?,not_before_us=?,updated_at_us=? WHERE job_id=? AND attempt=(SELECT current_attempt FROM jobs WHERE job_id=?)",
                 (state, reason, not_before_us, timestamp, job, job),
             )
+            if result is not None:
+                self.store.execute(
+                    "UPDATE job_attempts SET checkpoint=json_set(checkpoint,'$.result',json(?)) "
+                    "WHERE job_id=? AND attempt=(SELECT current_attempt FROM jobs WHERE job_id=?)",
+                    (json.dumps(result, allow_nan=False), job, job),
+                )
 
     def cancel(self, job):
         row = self.store.one(

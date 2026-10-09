@@ -43,9 +43,10 @@ def test_remounted_paths_share_explicit_repo_identity(catalog, tmp_path):
         repo,
     )["data"]["source_id"]
     discovered = run(state, "discover", "--source", source)["data"]["repositories"]
-    assert discovered[0]["repository_id"] == repo
+    assert discovered[0]["repository_uuidv4"] == repo
     assert [
-        r["repository_id"] for r in pages(state, "repos", "list", "--source", source)
+        r["repository_uuidv4"]
+        for r in pages(state, "repos", "list", "--source", source)
     ] == [repo]
     eps = pages(state, "endpoints", "list", "--repo", repo)
     net = next(e for e in eps if e["url"] == network.as_uri())
@@ -62,7 +63,7 @@ def test_remounted_paths_share_explicit_repo_identity(catalog, tmp_path):
     second = run(state, "sync", "git", "--source", source)["data"]["results"][0]
     assert (
         second["repository_endpoint_id"] == net["repository_endpoint_id"]
-        and second["repository_id"] == repo
+        and second["repository_uuidv4"] == repo
     )
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         after = [
@@ -72,7 +73,7 @@ def test_remounted_paths_share_explicit_repo_identity(catalog, tmp_path):
         assert after == before
         assert (
             db.execute(
-                "SELECT count(*) FROM source_repositories WHERE repository_id=?",
+                "SELECT count(*) FROM source_repositories WHERE repository_uuidv4=?",
                 (repo,),
             ).fetchone()[0]
             == 2
@@ -95,7 +96,7 @@ def test_remounted_paths_share_explicit_repo_identity(catalog, tmp_path):
         network,
     )["data"]["source_id"]
     other = run(state, "discover", "--source", unrelated)["data"]["repositories"][0][
-        "repository_id"
+        "repository_uuidv4"
     ]
     assert other != repo
 
@@ -137,7 +138,7 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
             env = {token_env: "fixture-dummy"}
             repo = run(state, "discover", "--source", source, env=env)["data"][
                 "repositories"
-            ][0]["repository_id"]
+            ][0]["repository_uuidv4"]
             registered.append((repo, source))
             run(state, "sync", "pr", "--source", source, env=env)
         a, b = registered[0][0], registered[1][0]
@@ -146,7 +147,7 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
         assert (
             run(state, "repos", "show", "--repo", "gh-a/fixture/alpha")["data"][
                 "items"
-            ][0]["repository_id"]
+            ][0]["repository_uuidv4"]
             == a
         )
         # A second API source uses its own token reference but the same Repo ID.
@@ -168,7 +169,7 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
         assert (
             run(state, "discover", "--source", second, env=env)["data"]["repositories"][
                 0
-            ]["repository_id"]
+            ]["repository_uuidv4"]
             == a
         )
         run(state, "sync", "pr", "--source", second, env=env)
@@ -202,7 +203,8 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
         )
         assert (
             db.execute(
-                "SELECT count(*) FROM source_repositories WHERE repository_id=?", (a,)
+                "SELECT count(*) FROM source_repositories WHERE repository_uuidv4=?",
+                (a,),
             ).fetchone()[0]
             == 2
         )
@@ -266,7 +268,7 @@ def test_instance_scoped_native_ids_and_conflicts(catalog):
     )
     assert (
         run(state, "repos", "show", "--repo", "gl-a/alpha")["data"]["items"][0][
-            "repository_id"
+            "repository_uuidv4"
         ]
         == repos["alpha"]
     )
@@ -305,7 +307,7 @@ def test_instance_scoped_native_ids_and_conflicts(catalog):
     )["data"]["source_id"]
     assert (
         run(state, "discover", "--source", source)["data"]["repositories"][0][
-            "repository_id"
+            "repository_uuidv4"
         ]
         == repos["alpha"]
     )
@@ -373,7 +375,7 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
     job = interrupted_job(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         original = db.execute(
-            "SELECT preferred_repository_endpoint_id FROM repositories WHERE repository_id=?",
+            "SELECT preferred_repository_endpoint_id FROM repositories WHERE repository_uuidv4=?",
             (repos["alpha"],),
         ).fetchone()[0]
     run(state, "endpoints", "prefer", "--repo", repos["alpha"], "--endpoint", original)
@@ -389,7 +391,7 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
         ).fetchone() == (ep, alt.as_uri())
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(
-                "UPDATE git_acquisitions SET repository_id=? WHERE git_acquisition_id IN (SELECT git_acquisition_id FROM acquisition_progress WHERE job_id=?)",
+                "UPDATE git_acquisitions SET repository_uuidv4=? WHERE git_acquisition_id IN (SELECT git_acquisition_id FROM acquisition_progress WHERE job_id=?)",
                 (repos["beta"], job),
             )
     run(state, "db", "check", "--full")

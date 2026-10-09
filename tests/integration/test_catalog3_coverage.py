@@ -27,10 +27,10 @@ def initialize(connection):
     connection.execute("PRAGMA recursive_triggers=ON")
     connection.executescript(schema_sql())
     connection.execute(
-        "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','synthetic','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','synthetic','{}')"
     )
     connection.execute(
-        "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,kind) VALUES('scope','repo','git')"
+        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('scope','repo','git')"
     )
 
 
@@ -215,14 +215,14 @@ def test_export_transports_latest_set_and_repeated_admission_is_idempotent(catal
 
 def test_current_output_filters_kind_without_inventing_an_empty_scope_claim(catalog):
     catalog.execute(
-        "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,kind) VALUES('empty','repo','api')"
+        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('empty','repo','api')"
     )
     admit_claim(catalog, "scope", "partial", 1)
     assert [row["kind"] for row in current_coverages(catalog, "repo")] == ["api", "git"]
     assert current_coverages(catalog, "repo", "api") == [
         {
             "coverage_scope_id": "empty",
-            "repository_id": "repo",
+            "repository_uuidv4": "repo",
             "change_request_id": None,
             "kind": "api",
             "observed_at_us": None,
@@ -371,7 +371,7 @@ def test_explicit_id_conflict_can_only_be_ignored_without_mutation(
 def test_scope_uniqueness_prevents_split_repository_coverage(catalog):
     with pytest.raises(sqlite3.IntegrityError):
         catalog.execute(
-            "INSERT INTO coverage_scopes(coverage_scope_id,repository_id,kind) VALUES('duplicate','repo','git')"
+            "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('duplicate','repo','git')"
         )
 
 

@@ -119,7 +119,7 @@ def _scope_rows(query, command, o):
     cannot be restricted to rows that happen to survive content filters.
     """
     s = query.s
-    allowed = {r["repository_id"] for r in query.repos(o)}
+    allowed = {r["repository_uuidv4"] for r in query.repos(o)}
     if command not in ("pr list", "search pr", "pr thread"):
         query.single_repo(o)
     selected_kind = o.get("change_request_kind")
@@ -136,7 +136,7 @@ def _scope_rows(query, command, o):
             "Thread selection requires a positive provider change request number and provider resource ID",
         )
     conditions = [
-        "p.repository_id IN (" + ",".join("?" for _ in allowed) + ")"
+        "p.repository_uuidv4 IN (" + ",".join("?" for _ in allowed) + ")"
         if allowed
         else "0"
     ]
@@ -152,9 +152,9 @@ def _scope_rows(query, command, o):
         conditions.append(f"p.{column}=?")
         values.append(value)
     rows = s.execute(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_id=p.repository_id LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) WHERE "
+        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id change_request_observation_id FROM change_requests p JOIN repositories r ON r.repository_uuidv4=p.repository_uuidv4 LEFT JOIN change_request_observations obs ON obs.change_request_observation_id=coalesce(p.current_change_request_observation_id, (SELECT max(change_request_observation_id) FROM change_request_observations WHERE change_request_id=p.change_request_id)) WHERE "
         + " AND ".join(conditions)
-        + " ORDER BY p.repository_id,p.provider_change_request_number,p.change_request_id",
+        + " ORDER BY p.repository_uuidv4,p.provider_change_request_number,p.change_request_id",
         values,
     )
     if o.get("provider_change_request_number") is not None:
@@ -297,8 +297,8 @@ def code_role_gaps(store, pr, code, *, check):
     links = {
         (row["role"], row["object_format"], row["oid"])
         for row in store.execute(
-            "SELECT a.role,a.object_format,a.oid FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id JOIN git_objects o ON o.object_format=a.object_format AND o.oid=a.oid WHERE a.code_observation_id=? AND r.repository_id=? AND r.published=1 AND r.object_format=a.object_format AND r.oid=a.oid AND (r.expected_oid IS NULL OR r.expected_oid=a.oid) AND o.type='commit' AND o.verified=1",
-            (code["code_observation_id"], pr["repository_id"]),
+            "SELECT a.role,a.object_format,a.oid FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id JOIN git_objects o ON o.object_format=a.object_format AND o.oid=a.oid WHERE a.code_observation_id=? AND r.repository_uuidv4=? AND r.published=1 AND r.object_format=a.object_format AND r.oid=a.oid AND (r.expected_oid IS NULL OR r.expected_oid=a.oid) AND o.type='commit' AND o.verified=1",
+            (code["code_observation_id"], pr["repository_uuidv4"]),
         )
     }
     for role, oid in sorted(required.items()):
@@ -344,18 +344,18 @@ def prepare_pr_coverage(query, command, o):
 
     for repo in query.repos(o):
         query.check()
-        if not pr_applicable(s, repo["repository_id"]):
+        if not pr_applicable(s, repo["repository_uuidv4"]):
             continue
         summary_kind = "pr-documents" if documents_only else "pr"
         summary = s.one(
-            "SELECT coverage_state FROM current_coverage WHERE repository_id=? AND change_request_id IS NULL AND kind=?",
-            (repo["repository_id"], summary_kind),
+            "SELECT coverage_state FROM current_coverage WHERE repository_uuidv4=? AND change_request_id IS NULL AND kind=?",
+            (repo["repository_uuidv4"], summary_kind),
         )
         if summary is None or summary[0] not in ("complete", "not_applicable"):
             query.coverage.add(
                 "pr",
                 "collection_incomplete",
-                repository_id=repo["repository_id"],
+                repository_uuidv4=repo["repository_uuidv4"],
                 scope_kind=summary_kind,
             )
     for pr in rows:
@@ -433,7 +433,7 @@ def pr_query(query, command, options):
             ):
                 continue
         base = {
-            "repository_id": pr["repository_id"],
+            "repository_uuidv4": pr["repository_uuidv4"],
             "repository": pr["name"],
             "provider_change_request_number": pr["provider_change_request_number"],
             "change_request_kind": pr["change_request_kind"],
@@ -499,7 +499,7 @@ def pr_query(query, command, options):
                 ]
             yield (
                 [
-                    pr["repository_id"],
+                    pr["repository_uuidv4"],
                     pr["provider_change_request_number"],
                     pr["change_request_id"],
                 ],
@@ -512,7 +512,7 @@ def pr_query(query, command, options):
             ):
                 yield (
                     [
-                        pr["repository_id"],
+                        pr["repository_uuidv4"],
                         pr["provider_change_request_number"],
                         event["change_request_event_id"],
                     ],
@@ -599,7 +599,7 @@ def pr_query(query, command, options):
                     continue
                 yield (
                     [
-                        pr["repository_id"],
+                        pr["repository_uuidv4"],
                         pr["provider_change_request_number"],
                         *key,
                         doc["document_observation_id"],

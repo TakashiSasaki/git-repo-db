@@ -27,10 +27,10 @@ def runtime(tmp_path):
 def register(store, url):
     with store.transaction():
         store.execute(
-            "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture',NULL,NULL,'{}')"
+            "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture',NULL,NULL,'{}')"
         )
         add_endpoint(store, "repo", url)
-    return {"repository_id": "repo", "name": "fixture"}
+    return {"repository_uuidv4": "repo", "name": "fixture"}
 
 
 def collect(store, repo, token=None, job=None):
@@ -68,7 +68,7 @@ def test_catalog3_git_preserves_roots_bytes_parents_and_new_observations(tmp_pat
         sid = first["snapshot_id"]
         assert (
             store.one(
-                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+                "SELECT current_snapshot_id FROM repositories WHERE repository_uuidv4='repo'"
             )[0]
             == sid
         )
@@ -122,7 +122,7 @@ def test_catalog3_git_preserves_roots_bytes_parents_and_new_observations(tmp_pat
         ]
         assert (
             store.one(
-                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+                "SELECT current_snapshot_id FROM repositories WHERE repository_uuidv4='repo'"
             )[0]
             == second["snapshot_id"]
         )
@@ -151,7 +151,7 @@ def test_interrupted_fixed_refs_resume_without_new_remote_observation(
         observed = run["refs_observed_at_us"]
         assert (
             store.one(
-                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+                "SELECT current_snapshot_id FROM repositories WHERE repository_uuidv4='repo'"
             )[0]
             is None
         )
@@ -225,7 +225,7 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
         )
         assert (
             store.one(
-                "SELECT current_snapshot_id FROM repositories WHERE repository_id='repo'"
+                "SELECT current_snapshot_id FROM repositories WHERE repository_uuidv4='repo'"
             )[0]
             == newest
         )
@@ -263,20 +263,20 @@ def test_unknown_provider_binding_admits_one_proven_identity(tmp_path):
     with runtime(tmp_path) as store:
         with store.transaction():
             store.execute(
-                "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture',NULL,NULL,'{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('repo','fixture',NULL,NULL,'{}')"
             )
             store.execute(
-                "INSERT INTO repositories(repository_id,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('other','other',NULL,NULL,'{}')"
+                "INSERT INTO repositories(repository_uuidv4,name,preferred_repository_endpoint_id,current_snapshot_id,metadata) VALUES('other','other',NULL,NULL,'{}')"
             )
             service = add_instance(store, "github", "fixture-github")
             bind(store, "repo", service)
             binding = store.one(
-                "SELECT repository_binding_id FROM repository_bindings WHERE repository_id='repo'"
+                "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4='repo'"
             )[0]
             bind(store, "repo", service, "42")
             assert tuple(
                 store.one(
-                    "SELECT repository_binding_id,provider_repository_id FROM repository_bindings WHERE repository_id='repo'"
+                    "SELECT repository_binding_id,provider_repository_id FROM repository_bindings WHERE repository_uuidv4='repo'"
                 )
             ) == (binding, "42")
             with pytest.raises(CatalogError, match="different identity"):

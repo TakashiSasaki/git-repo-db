@@ -158,7 +158,9 @@ class TargetQueryService:
         repo = options.get("repo")
         if not repo:
             raise CatalogError("INVALID_ARGUMENT", "An explicit --repo ID is required")
-        if not self.s.one("SELECT 1 FROM repositories WHERE repository_id=?", (repo,)):
+        if not self.s.one(
+            "SELECT 1 FROM repositories WHERE repository_uuidv4=?", (repo,)
+        ):
             raise CatalogError("NOT_FOUND", "Target repository not found")
         return repo
 
@@ -218,7 +220,7 @@ class TargetQueryService:
         if repo:
             self._repo(options)
         for row in self.s.execute(
-            "SELECT * FROM repositories WHERE (? IS NULL OR repository_id=?) ORDER BY repository_id",
+            "SELECT * FROM repositories WHERE (? IS NULL OR repository_uuidv4=?) ORDER BY repository_uuidv4",
             (repo, repo),
         ):
             self._check()
@@ -227,29 +229,29 @@ class TargetQueryService:
                 "bindings": [
                     row_fields(r)
                     for r in self.s.execute(
-                        "SELECT * FROM repository_bindings WHERE repository_id=? ORDER BY repository_binding_id",
-                        (row["repository_id"],),
+                        "SELECT * FROM repository_bindings WHERE repository_uuidv4=? ORDER BY repository_binding_id",
+                        (row["repository_uuidv4"],),
                     )
                 ],
                 "endpoints": [
                     row_fields(r)
                     for r in self.s.execute(
-                        "SELECT * FROM repository_endpoints WHERE repository_id=? ORDER BY repository_endpoint_id",
-                        (row["repository_id"],),
+                        "SELECT * FROM repository_endpoints WHERE repository_uuidv4=? ORDER BY repository_endpoint_id",
+                        (row["repository_uuidv4"],),
                     )
                 ],
                 "name_assertions": [
                     dict(r)
                     for r in self.s.execute(
-                        "SELECT * FROM repository_name_assertions WHERE repository_id=? ORDER BY name",
-                        (row["repository_id"],),
+                        "SELECT * FROM repository_name_assertions WHERE repository_uuidv4=? ORDER BY name",
+                        (row["repository_uuidv4"],),
                     )
                 ],
                 "sources": [
                     dict(r)
                     for r in self.s.execute(
-                        "SELECT * FROM source_repositories WHERE repository_id=? ORDER BY source_id",
-                        (row["repository_id"],),
+                        "SELECT * FROM source_repositories WHERE repository_uuidv4=? ORDER BY source_id",
+                        (row["repository_uuidv4"],),
                     )
                 ],
             }
@@ -257,7 +259,7 @@ class TargetQueryService:
     def _commit_object(self, repo, value):
         oid = GitOid.parse(value or "")
         row = self.s.one(
-            "SELECT g.* FROM git_objects g WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND (EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.repository_id=? AND r.git_object_id=g.git_object_id) OR EXISTS(SELECT 1 FROM acquisition_roots r WHERE r.repository_id=? AND r.object_format=g.object_format AND r.oid=g.oid))",
+            "SELECT g.* FROM git_objects g WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND (EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.repository_uuidv4=? AND r.git_object_id=g.git_object_id) OR EXISTS(SELECT 1 FROM acquisition_roots r WHERE r.repository_uuidv4=? AND r.object_format=g.object_format AND r.oid=g.oid))",
             (oid.algorithm, oid.value, repo, repo),
         )
         if not row:
@@ -373,7 +375,7 @@ class TargetQueryService:
         if kind not in ("pull_request", "merge_request"):
             raise CatalogError("INVALID_ARGUMENT", "Unknown request kind")
         rows = self.s.all(
-            "SELECT * FROM change_requests WHERE repository_id=? AND provider_change_request_number=? AND change_request_kind=? AND (? IS NULL OR repository_binding_id=?) ORDER BY change_request_id",
+            "SELECT * FROM change_requests WHERE repository_uuidv4=? AND provider_change_request_number=? AND change_request_kind=? AND (? IS NULL OR repository_binding_id=?) ORDER BY change_request_id",
             (repo, number, kind, options.get("binding"), options.get("binding")),
         )
         if not rows:
@@ -399,7 +401,7 @@ class TargetQueryService:
             if row["state"] != "complete":
                 self._add_missing("pr", "code_listing_incomplete", **dict(row))
         for row in self.s.execute(
-            "SELECT c.*,p.repository_id FROM code_observations c JOIN change_requests p USING(change_request_id) WHERE c.change_request_id=? ORDER BY c.code_observation_id",
+            "SELECT c.*,p.repository_uuidv4 FROM code_observations c JOIN change_requests p USING(change_request_id) WHERE c.change_request_id=? ORDER BY c.code_observation_id",
             (ident,),
         ):
             self._check()
@@ -510,7 +512,7 @@ class TargetQueryService:
         if kind == "code":
             # Scan originals, not archived search_documents or rebuilt FTS.
             rows = self.s.execute(
-                "SELECT DISTINCT r.repository_id,g.git_object_id,g.object_format,g.oid,g.type,g.size,g.verified,c.content_id content_id,c.raw_text,c.text_state FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN blob_content_map b ON b.git_object_id=g.git_object_id LEFT JOIN contents c ON c.content_id=b.content_id WHERE g.type='blob' AND (? IS NULL OR r.repository_id=?) ORDER BY r.repository_id,g.git_object_id",
+                "SELECT DISTINCT r.repository_uuidv4,g.git_object_id,g.object_format,g.oid,g.type,g.size,g.verified,c.content_id content_id,c.raw_text,c.text_state FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN blob_content_map b ON b.git_object_id=g.git_object_id LEFT JOIN contents c ON c.content_id=b.content_id WHERE g.type='blob' AND (? IS NULL OR r.repository_uuidv4=?) ORDER BY r.repository_uuidv4,g.git_object_id",
                 (repo, repo),
             )
             for row in rows:
@@ -519,14 +521,14 @@ class TargetQueryService:
                     self._add_missing(
                         "code",
                         "body_not_saved",
-                        repository_id=row["repository_id"],
+                        repository_uuidv4=row["repository_uuidv4"],
                         git_object_id=row["git_object_id"],
                         content_id=row["content_id"],
                         text_state=row["text_state"],
                     )
                 elif literal in row["raw_text"]:
                     yield {
-                        "repository_id": row["repository_id"],
+                        "repository_uuidv4": row["repository_uuidv4"],
                         **object_fields(row),
                         "content_id": row["content_id"],
                         "text": row["raw_text"],
@@ -534,7 +536,7 @@ class TargetQueryService:
                     }
         elif kind == "commits":
             for row in self.s.execute(
-                "SELECT DISTINCT r.repository_id,g.*,c.raw_message FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN commits c ON c.git_object_id=g.git_object_id WHERE g.type='commit' AND (? IS NULL OR r.repository_id=?) ORDER BY r.repository_id,g.git_object_id",
+                "SELECT DISTINCT r.repository_uuidv4,g.*,c.raw_message FROM repository_object_sources r JOIN git_objects g ON g.git_object_id=r.git_object_id LEFT JOIN commits c ON c.git_object_id=g.git_object_id WHERE g.type='commit' AND (? IS NULL OR r.repository_uuidv4=?) ORDER BY r.repository_uuidv4,g.git_object_id",
                 (repo, repo),
             ):
                 self._check()
@@ -556,20 +558,20 @@ class TargetQueryService:
                     continue
                 if literal in text:
                     yield {
-                        "repository_id": row["repository_id"],
+                        "repository_uuidv4": row["repository_uuidv4"],
                         **object_fields(row),
                         "text": text,
                         "raw_message": row["raw_message"],
                     }
         else:
             for request in self.s.execute(
-                "SELECT * FROM change_requests WHERE (? IS NULL OR repository_id=?) ORDER BY repository_id,change_request_id",
+                "SELECT * FROM change_requests WHERE (? IS NULL OR repository_uuidv4=?) ORDER BY repository_uuidv4,change_request_id",
                 (repo, repo),
             ):
                 ident = request["change_request_id"]
                 self._pr_coverage(ident)
                 base = {
-                    "repository_id": request["repository_id"],
+                    "repository_uuidv4": request["repository_uuidv4"],
                     "change_request_id": ident,
                     "provider_change_request_number": request[
                         "provider_change_request_number"

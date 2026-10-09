@@ -20,13 +20,13 @@ def cache_store(tmp_path):
         (tmp_path / directory).mkdir()
     with Store(tmp_path, initialize=True) as store:
         store.execute(
-            "INSERT INTO repositories(repository_id,name,metadata) VALUES('repo','repo','{}')"
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('repo','repo','{}')"
         )
         store.execute(
-            "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,kind,request) VALUES('acquisition','repo','git','{}')"
+            "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('acquisition','repo','git','{}')"
         )
         store.execute(
-            "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES('locator','repo','cache/repo/1.git','target_active','available')"
+            "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('locator','repo','cache/repo/1.git','target_active','available')"
         )
         store.execute(
             "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('active','locator',1,'active',0,4096)"
@@ -74,7 +74,7 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
     source.mkdir()
     (source / "HEAD").write_bytes(b"preserved bytes")
     store.execute(
-        "INSERT INTO cache_locators(cache_locator_id,repository_id,path,access,state) VALUES('preserved','repo',?,'source_readonly','available')",
+        "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('preserved','repo',?,'source_readonly','available')",
         (str(source),),
     )
     store.execute(
@@ -173,7 +173,7 @@ def test_gc_quarantine_recovery(cache_store, monkeypatch):
 def test_gc_rejects_quarantine_escape(cache_store):
     row = {
         "active_cache_entry_id": "../escape",
-        "repository_id": "repo",
+        "repository_uuidv4": "repo",
         "generation": 1,
         "path": "cache/repo/1.git",
     }
@@ -221,10 +221,10 @@ def test_acquisition_and_obligation_cannot_use_another_owner_cache(cache_store):
     store = cache_store
     seed_job(store)
     store.execute(
-        "INSERT INTO repositories(repository_id,name,metadata) VALUES('other','other','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('other','other','{}')"
     )
     store.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_id,kind,request) VALUES('other-acquisition','other','git','{}')"
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('other-acquisition','other','git','{}')"
     )
     with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
         store.execute(

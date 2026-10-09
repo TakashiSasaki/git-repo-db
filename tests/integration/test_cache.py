@@ -51,7 +51,7 @@ def test_locks_fencing(catalog):
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         cache = db.execute(
-            "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=?",
+            "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=?",
             (repos["alpha"],),
         ).fetchone()[0]
     with FileLock(state / f"locks/cache-{cache}.lock"):
@@ -70,7 +70,7 @@ def test_old_obligations(catalog):
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         db.execute(
-            "UPDATE preservation_obligations SET text_done=0 WHERE git_acquisition_id=(SELECT s.git_acquisition_id FROM snapshots s JOIN repositories r ON r.current_snapshot_id=s.snapshot_id WHERE r.repository_id=?)",
+            "UPDATE preservation_obligations SET text_done=0 WHERE git_acquisition_id=(SELECT s.git_acquisition_id FROM snapshots s JOIN repositories r ON r.current_snapshot_id=s.snapshot_id WHERE r.repository_uuidv4=?)",
             (repos["alpha"],),
         )
     result = run(state, "cache", "gc", "--apply")
@@ -124,7 +124,7 @@ def test_orphan_git_holds_lock(catalog, tmp_path):
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         cache = db.execute(
-            "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_id=?",
+            "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=?",
             (repos["alpha"],),
         ).fetchone()[0]
     lockfile = state / f"locks/cache-{cache}.lock"

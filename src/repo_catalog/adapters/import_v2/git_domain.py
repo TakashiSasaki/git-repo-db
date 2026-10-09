@@ -44,7 +44,7 @@ SOURCE_TABLES = {
 COLUMNS = {
     "git_acquisitions": (
         "git_acquisition_id",
-        "repository_id",
+        "repository_uuidv4",
         "repository_endpoint_id",
         "endpoint_url",
         "object_format",
@@ -102,14 +102,14 @@ COLUMNS = {
     ),
     "blob_content_map": ("git_object_id", "content_id", "git_acquisition_id"),
     "repository_object_sources": (
-        "repository_id",
+        "repository_uuidv4",
         "git_object_id",
         "git_acquisition_id",
     ),
     "snapshots": (
         "snapshot_id",
         "git_acquisition_id",
-        "repository_id",
+        "repository_uuidv4",
         "published",
         "generation",
         "created_at_us",
@@ -129,7 +129,7 @@ COLUMNS = {
         "object_format",
         "oid",
         "role",
-        "repository_id",
+        "repository_uuidv4",
         "expected_oid",
         "published",
     ),
@@ -151,7 +151,7 @@ COLUMNS = {
         "snapshot_id",
         "change_request_id",
         "change_request_observation_id",
-        "repository_id",
+        "repository_uuidv4",
     ),
 }
 KEYS = {
@@ -162,7 +162,7 @@ KEYS = {
     "content_digests": ("content_id", "representation", "algorithm"),
     "blob_content_map": ("git_object_id",),
     "repository_object_sources": (
-        "repository_id",
+        "repository_uuidv4",
         "git_object_id",
         "git_acquisition_id",
     ),
@@ -326,7 +326,7 @@ class Context(identity.Context):
         if repo is not None and owner != repo:
             raise Invalid("GIT_OWNER_MISMATCH", column)
         target = self.target("git_acquisitions", ident)
-        if target["repository_id"] != owner:
+        if target["repository_uuidv4"] != owner:
             raise Invalid("GIT_OWNER_MISMATCH", column)
         return ident, owner
 
@@ -529,7 +529,7 @@ class Context(identity.Context):
             endpoint = self.t(record, "endpoint_id", nullable=True, nonempty=True)
             if (
                 endpoint is not None
-                and self.target("repository_endpoints", endpoint)["repository_id"]
+                and self.target("repository_endpoints", endpoint)["repository_uuidv4"]
                 != repo
             ):
                 raise Invalid("GIT_OWNER_MISMATCH", "endpoint_id")
@@ -813,7 +813,7 @@ class Context(identity.Context):
         number = self.integer(source_root, "pr_number", nullable=True)
         claimed_observation = self.integer(source_root, "observation_id", nullable=True)
         if (
-            owner["repository_id"] != root["repository_id"]
+            owner["repository_uuidv4"] != root["repository_uuidv4"]
             or code["change_request_id"] != pr_id
             or code["change_request_observation_id"] != observation
             or number is not None
@@ -828,7 +828,7 @@ class Context(identity.Context):
         ).fetchone()
         if linked is None or linked[0] != root_id:
             raise Invalid("GIT_UNSAFE_DEPENDENCY", "code_acquisitions")
-        return root_id, code_id, pr_id, observation, root["repository_id"]
+        return root_id, code_id, pr_id, observation, root["repository_uuidv4"]
 
     def origins(self, recipe, record):
         rows = []
@@ -922,7 +922,7 @@ class Context(identity.Context):
                             None,
                             None,
                             None,
-                            root["repository_id"],
+                            root["repository_uuidv4"],
                         ),
                         "split",
                     )

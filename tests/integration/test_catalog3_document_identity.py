@@ -29,16 +29,16 @@ def catalog(tmp_path):
             namespace = add_instance(store, "github", "synthetic")
             for number in (1, 2):
                 store.execute(
-                    "INSERT INTO repositories(repository_id,name,metadata) VALUES(?,?,'{}')",
+                    "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,?,'{}')",
                     (f"repo{number}", f"synthetic/repo{number}"),
                 )
                 bind(store, f"repo{number}", namespace, str(number))
                 binding = store.one(
-                    "SELECT repository_binding_id FROM repository_bindings WHERE repository_id=?",
+                    "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4=?",
                     (f"repo{number}",),
                 )[0]
                 store.execute(
-                    "INSERT INTO change_requests(change_request_id,repository_id,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',1)",
+                    "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',1)",
                     (f"pr{number}", f"repo{number}", binding),
                 )
         yield state, store

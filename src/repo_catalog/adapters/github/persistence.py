@@ -61,8 +61,8 @@ class ApiFacts:
 
     def scope(self, repo, endpoint, context=None):
         binding = self.s.one(
-            "SELECT b.repository_binding_id FROM repository_bindings b JOIN sources s ON s.service_instance_uuidv4=b.service_instance_uuidv4 WHERE b.repository_id=? AND s.source_id=?",
-            (repo["repository_id"], repo["source_id"]),
+            "SELECT b.repository_binding_id FROM repository_bindings b JOIN sources s ON s.service_instance_uuidv4=b.service_instance_uuidv4 WHERE b.repository_uuidv4=? AND s.source_id=?",
+            (repo["repository_uuidv4"], repo["source_id"]),
         )
         if not binding:
             raise CatalogError(
@@ -78,7 +78,7 @@ class ApiFacts:
         if self.permissions is not None:
             context["permissions"] = self.permissions
         row = [
-            repo["repository_id"],
+            repo["repository_uuidv4"],
             binding[0],
             repo["source_id"],
             self.principal,
@@ -93,7 +93,7 @@ class ApiFacts:
             row[-2] = canonical(row[-2])
         ident = "api:" + hashlib.sha256(canonical(row).encode()).hexdigest()
         existing = self.s.all(
-            "SELECT resume_scope_id,request_context FROM resume_scopes WHERE repository_id=? AND repository_binding_id=? AND source_id=? AND principal_ref IS ? AND api_version IS ? AND endpoint IS ? AND parser_version=? AND profile_version=? AND confidence='proven'",
+            "SELECT resume_scope_id,request_context FROM resume_scopes WHERE repository_uuidv4=? AND repository_binding_id=? AND source_id=? AND principal_ref IS ? AND api_version IS ? AND endpoint IS ? AND parser_version=? AND profile_version=? AND confidence='proven'",
             (*row[:6], row[7], row[8]),
         )
         for scope in existing:
@@ -103,7 +103,7 @@ class ApiFacts:
             "SELECT 1 FROM resume_scopes WHERE resume_scope_id=?", (ident,)
         ):
             self.s.execute(
-                "INSERT INTO resume_scopes(resume_scope_id,repository_id,repository_binding_id,source_id,principal_ref,api_version,endpoint,request_context,parser_version,profile_version,confidence) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,repository_binding_id,source_id,principal_ref,api_version,endpoint,request_context,parser_version,profile_version,confidence) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                 (ident, *row),
             )
         return ident
@@ -128,10 +128,10 @@ class ApiFacts:
             return dict(previous)
         ident = str(uuid.uuid4())
         self.s.execute(
-            "INSERT INTO fetch_collections(fetch_collection_id,repository_id,change_request_id,source_id,kind,resume_scope_id,observed_at_us) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,source_id,kind,resume_scope_id,observed_at_us) VALUES(?,?,?,?,?,?,?)",
             (
                 ident,
-                repo["repository_id"],
+                repo["repository_uuidv4"],
                 pr,
                 repo["source_id"],
                 kind,
@@ -219,7 +219,7 @@ class ApiFacts:
             """SELECT MAX(o.observed_at_us)
                FROM fetch_collections root
                JOIN fetch_collections member
-                 ON member.repository_id=root.repository_id
+                 ON member.repository_uuidv4=root.repository_uuidv4
                 AND member.change_request_id IS root.change_request_id
                 AND member.source_id IS root.source_id
                JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id

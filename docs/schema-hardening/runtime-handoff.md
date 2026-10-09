@@ -1,6 +1,32 @@
 # Catalog3 runtime handoff
 
-The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 9**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 10**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+
+## Identity foundation (schema 10)
+
+Base: PR #7 `d6ee309a6845cf915f821aa1f1910b46b536a614`.
+Branch: `refactor/identity-foundation`.
+
+Repository PKs/FKs, application fields and self-authored JSON use
+`repository_uuidv4`; raw provider/legacy evidence retains its original names and
+bytes. Fresh repository generation remains CSPRNG UUIDv4. Sources gain a distinct
+immutable `source_registration_uuidv4`, allocated once in normal registration or
+v2 salvage and preserved by resume/backup/restore. Service names are non-unique;
+ambiguous names/defaults require an explicit UUID. Source selectors accept local
+ID or registration UUID, including `local:` and `registration:` prefixes.
+
+NULL Source settings mean unconfigured. Single-source acquisition and discovery
+with no configured sources reject before Job creation. Mixed discovery skips
+unconfigured sources without remote inventory/coverage claims and atomically
+saves skip diagnostics/result status with attempt completion. Query source
+selection also resolves registration UUIDs. Acquisition failures retain resume.
+
+This stride retains five-column coverage, Unix microseconds, 65 ordinary tables,
+workspace schema 2 and guarded v2 salvage. Full legacy repository UUID admission,
+CAS storage, parser/fact selection, inter-catalog exchange and frozen Job/source
+inputs remain subsequent work. No original user design attachments are included
+in this branch. Validation is recorded in
+[identity foundation evidence](../validation/synthetic/2026-10-09-identity-foundation.md).
 
 ## Coverage claim derivation (schema 9)
 

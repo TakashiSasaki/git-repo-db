@@ -230,10 +230,10 @@ def _finalize_catalog(store):
                 "repositories",
                 "current_snapshot",
                 "repositories",
-                "repository_id",
+                "repository_uuidv4",
                 "current_snapshot_id",
                 "snapshots",
-                "repository_id",
+                "repository_uuidv4",
                 True,
             ),
             (
@@ -290,7 +290,7 @@ def _finalize_catalog(store):
                 if valid and facts == "snapshots":
                     valid = (
                         store.one(
-                            "SELECT 1 FROM git_acquisitions WHERE git_acquisition_id=? AND repository_id=? AND object_format IS NOT NULL AND refs_observed_at_us IS NOT NULL",
+                            "SELECT 1 FROM git_acquisitions WHERE git_acquisition_id=? AND repository_uuidv4=? AND object_format IS NOT NULL AND refs_observed_at_us IS NOT NULL",
                             (candidate["git_acquisition_id"], owner),
                         )
                         is not None
