@@ -103,7 +103,7 @@ repo-catalog --state-dir /tmp/disposable-catalog db backup --output /tmp/disposa
 repo-catalog --state-dir /tmp/disposable-restored db restore --input /tmp/disposable-backup.sqlite3
 ```
 
-schema 15を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
+schema 16を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
 
 backupはSQLite backup APIでdomainの現在状態・必要な本文・PR/Git/スレッド履歴・coverageを含むsnapshotを作り、checksum/configuration/identityと `quarantined_payload_count` を隣接manifestへ保存します。件数はactive物理隔離行数の非負JSON整数（bool除外、最大 `9223372036854775807`）です。restoreは未作成の `--state-dir` だけへ行い、checksum/identityの後、診断前に件数を照合して全bytesを検証します。正の一致件数を許容し、件数不一致や未説明の破損は失敗stageを保持して拒否します。cacheと任意通信archiveはbackupへ含めません。DB instance IDを変更して元catalogのcursorを無効にし、過去のjobs/leases/reservationsを稼働状態へ戻しません。[運用](operations.md)に制限を記載しています。
 
@@ -137,4 +137,4 @@ repo-catalog --format json target --database /tmp/disposable-catalog/catalog.sql
 
 歴史的なimport/finalization手順や検証receiptは過去の資料です。現行CLIの操作はこの契約と `--help` を参照してください。
 
-schema 15の変更範囲は[対応記録](current-state-schema-closure.md)、[列の用途](current-state-schema-liveness.md)と[完全schema一覧](current-state-schema-inventory.md)に記載します。
+schema 16の変更範囲は[境界事例の対応記録](current-state-boundaries.md)と[完全schema一覧](current-state-boundaries-inventory.json)に記載します。schema 15までの[列の用途](current-state-schema-liveness.md)と[対応記録](current-state-schema-closure.md)も保持します。

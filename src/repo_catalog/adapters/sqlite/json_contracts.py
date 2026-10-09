@@ -275,14 +275,13 @@ _REVIEW_EVIDENCE_FIELDS = _EVIDENCE_FIELDS - {"title"}
 def _acquisition_shape(scope, service):
     if not isinstance(scope, dict):
         raise JsonContractError("Acquisition scope must be an object")
-    for name in (
+    required = {
         "repository_uuidv4",
         "repository_binding_id",
         "service_instance_uuidv4",
-    ):
-        _identity(name, scope.get(name))
-    if "source_registration_uuidv4" in scope:
-        _identity("source_registration_uuidv4", scope["source_registration_uuidv4"])
+    }
+    if not required <= scope.keys():
+        raise JsonContractError("Acquisition scope requires typed owner identities")
     if scope["service_instance_uuidv4"] != service:
         raise JsonContractError("Acquisition service differs from resource service")
     endpoint = scope.get("endpoint")
@@ -314,6 +313,7 @@ def _check_schema(table, column, value, data):
             if table == "issue_resources"
             else _REVIEW_EVIDENCE_FIELDS
         )
+        checked_evidence = set()
         for encoded_path, evidence in value.items():
             try:
                 path = json.loads(encoded_path)
@@ -357,6 +357,13 @@ def _check_schema(table, column, value, data):
                     )
             elif path[0] not in data:
                 raise JsonContractError("Current field evidence refers to absent field")
+            # A complete response commonly repeats one proof for many fields.
+            # Validate each path independently and each exact proof once in
+            # this synchronous call, with no cache across rows or transactions.
+            encoded_evidence = json.dumps(evidence, sort_keys=True, ensure_ascii=False)
+            if encoded_evidence in checked_evidence:
+                continue
+            checked_evidence.add(encoded_evidence)
             for name in ("provider_updated_at_us", "observed_at_us", "parsed_at_us"):
                 if evidence[name] is not None:
                     try:
@@ -812,11 +819,12 @@ def _walk(value, *, declaration=False, digests=False, path=()):
                     f"Local identity {key} is forbidden in portable authored JSON"
                 )
             if key in REFERENCE_TARGETS:
-                _identity(key, item)
                 if not (
                     declaration and path == () and key == "selection_decision_uuidv4"
                 ):
                     dependencies.append(_dependency(key, item))
+                else:
+                    _identity(key, item)
             elif key in REFERENCE_LISTS:
                 if not isinstance(item, list):
                     raise JsonContractError(f"{key} requires an identity array")

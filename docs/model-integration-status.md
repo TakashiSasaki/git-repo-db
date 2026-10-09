@@ -1,13 +1,19 @@
 # Design decision implementation status
 
 Baseline: PR #10 (`1c69a868f65b9637a7b8cf00d2c68a4ba05b2faa`).
-Current implementation: schema **15**, branch `fix/current-state-schema-closure`,
-stacked on PR #13 HEAD `db3a5ecfbf95b4c1318198aa308ca6dc749876a1`.
+Current implementation: schema **16**, branch `fix/current-state-conflict-boundaries`,
+stacked on PR #14 HEAD `3f76d4873d14604b918198ac06c1660d0fa9e1b9`.
+[Boundary corrections](current-state-boundaries.md) and the [schema 16 inventory](current-state-boundaries-inventory.json) record incumbent proof retention, transferred conflict exchange, receiver-local wire exclusions and duplicate FK cleanup. The schema 15 receipts below remain historical evidence.
 `implemented` describes code and scoped evidence, not release certification.
 The prior schema 14 checkpoint passed 1,311 ordinary and two installed tests;
 that is historical evidence for its exact tree, not schema 15 acceptance.
 
-The current boundary corrections and evidence are in
+Final schema 16 local acceptance passed 1,509 ordinary cases and both isolated
+installed variants without bootstrap, failures, errors or skips; independent
+review passed 59 overlapping cases. The [exact boundary receipt](validation/synthetic/2026-10-09-current-state-boundaries.md)
+separates local evidence from the submitted HEAD's hosted acceptance.
+
+The earlier schema 15 boundary corrections and evidence are in
 [current-state-schema-closure.md](current-state-schema-closure.md), with
 [column liveness](current-state-schema-liveness.md) and
 [before/after inventory](current-state-schema-inventory.md).

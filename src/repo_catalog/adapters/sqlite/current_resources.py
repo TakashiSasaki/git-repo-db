@@ -165,6 +165,12 @@ def _canonical(value):
     )
 
 
+def _equal_field(left, right):
+    # Python treats True == 1, while these are distinct JSON values. The tuple
+    # marker for a metadata object is also distinct from an empty JSON array.
+    return type(left) is type(right) and _canonical(left) == _canonical(right)
+
+
 def _merge_projection(previous, incoming):
     result = dict(previous)
     for name, value in incoming.items():
@@ -275,18 +281,55 @@ class CurrentResources:
             (self._stage_key(candidate),),
         )
 
+    def _project_child_membership(self, candidate):
+        """Derive transferred comment membership without rewriting its capture.
+
+        Intake can predate the parent transfer. A different parent identity is
+        an independent relation claim, never a redundant membership snapshot.
+        """
+        if candidate["kind"] != "issue-comment":
+            return candidate
+        table, key, where = self._table_key(candidate)
+        incumbent = self._one(f"SELECT * FROM {table} WHERE {where}", tuple(key))
+        if incumbent is None or incumbent[
+            "parent_provider_resource_id"
+        ] != candidate.get("parent_provider_resource_id"):
+            return candidate
+        parent = self._one(
+            "SELECT repository_uuidv4,repository_binding_id,provider_issue_number FROM issue_resources WHERE service_instance_uuidv4=? AND kind='issue' AND provider_resource_id=?",
+            (
+                candidate["service_instance_uuidv4"],
+                candidate.get("parent_provider_resource_id"),
+            ),
+        )
+        return {**candidate, **parent} if parent else candidate
+
     def _stage(self, candidate, reason):
+        candidate = dict(candidate)
+        candidate.pop("last_checked_at_us", None)
         table, key, _ = self._table_key(candidate)
         record_key = self._stage_key(candidate)
         # One slot per distinct semantic value; repeat captures cannot grow a
         # local observation history. Retain up to sixteen unresolved alternatives.
         content_hash = bytes.fromhex(fingerprint_candidate(candidate))
         existing = self._one(
-            "SELECT record_json FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+            "SELECT record_json,content_sha256 FROM exchange_staging WHERE record_key=? AND content_sha256=?",
             (record_key, content_hash),
         )
+        if existing is None and candidate["kind"] == "issue-comment":
+            existing = next(
+                (
+                    stage
+                    for stage in self._stages(candidate)
+                    if fingerprint_candidate(
+                        self._project_child_membership(json.loads(stage["record_json"]))
+                    )
+                    == content_hash.hex()
+                ),
+                None,
+            )
         if existing:
-            old = json.loads(existing["record_json"])
+            old = self._project_child_membership(json.loads(existing["record_json"]))
             merged = dict(candidate if self._stronger_evidence(candidate, old) else old)
             evidence = dict(old.get("field_evidence", {}))
             for path, proof in candidate.get("field_evidence", {}).items():
@@ -295,10 +338,15 @@ class CurrentResources:
                 ):
                     evidence[path] = proof
             merged["field_evidence"] = evidence
-            if merged != old:
+            if merged != old or existing["content_sha256"] != content_hash:
                 self.c.execute(
-                    "UPDATE exchange_staging SET record_json=? WHERE record_key=? AND content_sha256=?",
-                    (_canonical(merged), record_key, content_hash),
+                    "UPDATE exchange_staging SET record_json=?,content_sha256=? WHERE record_key=? AND content_sha256=?",
+                    (
+                        _canonical(merged),
+                        content_hash,
+                        record_key,
+                        existing["content_sha256"],
+                    ),
                 )
             if reason == "conflict":
                 self.c.execute(
@@ -422,7 +470,6 @@ class CurrentResources:
                 "Review submission time is not an update clock",
             )
         _canonical(candidate)
-        fingerprint_candidate(candidate)
         return table, key
 
     def _missing(self, candidate, *, source="import"):
@@ -676,6 +723,8 @@ class CurrentResources:
             raise ValueError("Unknown current resource admission source")
         incoming = dict(candidate)
         self._validate(incoming)
+        if "deleted" in incoming:
+            incoming["deleted"] = int(incoming["deleted"])
         with self._transaction():
             return self._admit(
                 incoming,
@@ -745,7 +794,7 @@ class CurrentResources:
             value, proof = values[path], supplied[path]
             old_proof = evidence.get(path)
             old_value = old_values.get(path)
-            equal = old_proof is not None and old_value == value
+            equal = old_proof is not None and _equal_field(old_value, value)
             order = self._clock_order(proof, old_proof or {})
             # A scalar replacing an object also replaces all known descendants;
             # it must justify ordering against each, not just the object marker.
@@ -810,7 +859,7 @@ class CurrentResources:
                 if order != 1 and (ancestor not in authoritative_paths or order == -1):
                     return False
                 continue
-            if current_values.get(path) != other_values.get(path) and (
+            if not _equal_field(current_values.get(path), other_values.get(path)) and (
                 self._clock_order(proof, other_proof) == -1
                 or path not in authoritative_paths
                 and self._clock_order(proof, other_proof) != 1
@@ -825,6 +874,46 @@ class CurrentResources:
             or self._clock_order(candidate, alternative) == 1
         )
 
+    def _retain_equal_evidence(self, table, incoming, previous):
+        """Save proofs of incumbent values even when another value is disputed.
+
+        This never adopts a different value, clears intake or advances a local
+        successful-check time. Only explicitly supplied, equal paths gain proof.
+        """
+        if previous is None:
+            return previous
+        values, old_values = _field_values(incoming), _field_values(previous)
+        supplied = self._observation_evidence(incoming)
+        evidence = dict(previous["field_evidence"])
+        refreshed = dict(previous)
+        for path, proof in supplied.items():
+            if (
+                path in old_values
+                and _equal_field(values[path], old_values[path])
+                and (
+                    path not in evidence
+                    or self._stronger_evidence(proof, evidence[path])
+                )
+            ):
+                evidence[path] = proof
+        refreshed["field_evidence"] = evidence
+        if (
+            all(
+                path in old_values and _equal_field(old_values[path], values[path])
+                for path in supplied
+            )
+            and all(
+                incoming.get(name, previous.get(name)) == previous.get(name)
+                for name in _STRUCTURAL_FIELDS
+            )
+            and self._stronger_evidence(incoming, previous)
+        ):
+            refreshed["provider_updated_at_us"] = incoming["provider_updated_at_us"]
+            refreshed["provider_clock_scope"] = incoming["provider_clock_scope"]
+        if refreshed != previous:
+            self._write(table, refreshed, previous)
+        return refreshed
+
     def _admit(self, incoming, *, source, base_revision, scope_context):
         table, key, where = self._table_key(incoming)
         stored = self._one(f"SELECT * FROM {table} WHERE {where}", tuple(key))
@@ -834,7 +923,6 @@ class CurrentResources:
         digest = fingerprint_candidate(incoming)
         missing = self._missing(complete, source=source)
         if missing:
-            complete["field_evidence"] = self._observation_evidence(incoming)
             self._stage(complete, "missing_dependency")
             return AdmissionResult("missing_dependency", key, digest, missing)
         if not self._selected(complete) and (
@@ -845,7 +933,6 @@ class CurrentResources:
                 != complete["parser_profile_uuidv4"]
             )
         ):
-            complete["field_evidence"] = self._observation_evidence(incoming)
             self._stage(complete, "profile_pending")
             return AdmissionResult(
                 "missing_dependency",
@@ -881,14 +968,21 @@ class CurrentResources:
         alternative = self._complete(incoming, None)
         alternative["field_evidence"] = self._observation_evidence(incoming)
         if conflict:
+            self._retain_equal_evidence(table, incoming, previous)
             self._stage(alternative, "conflict")
             return AdmissionResult(
                 "conflict", key, digest, "supplied fields have no proven order"
             )
         # Refresh the same semantic alternative's evidence even if another
         # candidate remains unordered. Known clocks can also disprove a fork.
+        alternative_hash = fingerprint_candidate(alternative)
         if any(
-            stage["content_sha256"] == bytes.fromhex(fingerprint_candidate(alternative))
+            stage["content_sha256"].hex() == alternative_hash
+            or incoming["kind"] == "issue-comment"
+            and fingerprint_candidate(
+                self._project_child_membership(json.loads(stage["record_json"]))
+            )
+            == alternative_hash
             for stage in self._stages(alternative)
         ):
             self._stage(alternative, "conflict")
@@ -897,7 +991,7 @@ class CurrentResources:
         for stage in stages:
             if stage["reason"] != "current_state:conflict":
                 continue
-            other = json.loads(stage["record_json"])
+            other = self._project_child_membership(json.loads(stage["record_json"]))
             if not self._dominates(
                 candidate,
                 other,
@@ -905,16 +999,15 @@ class CurrentResources:
             ):
                 unresolved.append(stage)
         if unresolved:
-            if previous is None or semantic_content(alternative) != semantic_content(
-                previous
-            ):
+            previous = self._retain_equal_evidence(table, incoming, previous)
+            if previous is None or not self._dominates(previous, alternative):
                 self._stage(alternative, "conflict")
             return AdmissionResult(
                 "conflict", key, digest, "cannot order all staged alternatives"
             )
-        equal = previous is not None and semantic_content(
-            candidate
-        ) == semantic_content(previous)
+        equal = previous is not None and _canonical(
+            semantic_content(candidate)
+        ) == _canonical(semantic_content(previous))
         # Resource-level evidence describes the newest accepted response, while
         # each field preserves its own freshness. Older complete responses may
         # add knowledge without rolling the aggregate clock backwards.
@@ -949,7 +1042,7 @@ class CurrentResources:
                 candidate["last_checked_at_us"] = (
                     checked if prior is None else max(prior, checked)
                 )
-        if previous is None or candidate != previous:
+        if previous is None or _canonical(candidate) != _canonical(previous):
             self._write(table, candidate, previous)
         self.c.execute(
             "DELETE FROM exchange_staging WHERE record_key=? AND reason IN ('current_state:conflict','current_state:missing_dependency')",
@@ -974,7 +1067,9 @@ class CurrentResources:
                 "SELECT * FROM exchange_staging WHERE table_name IN ('issue_resources','review_resources') AND reason IN ('current_state:missing_dependency','current_state:profile_pending')"
             )
             for stage in stages:
-                candidate = json.loads(stage["record_json"])
+                candidate = self._project_child_membership(
+                    json.loads(stage["record_json"])
+                )
                 if stage[
                     "reason"
                 ] == "current_state:profile_pending" and not self._selected(candidate):
@@ -1013,6 +1108,33 @@ class CurrentResources:
 
     def export_candidates(self, repository_uuidv4):
         result = []
+        seen = set()
+
+        def add_stage(stage, owner=None):
+            identity = (stage["record_key"], stage["content_sha256"])
+            if identity in seen:
+                return
+            seen.add(identity)
+            candidate = self._project_child_membership(json.loads(stage["record_json"]))
+            table, key, where = self._table_key(candidate)
+            owner = owner or self._one(
+                f"SELECT repository_uuidv4 FROM {table} WHERE {where}", tuple(key)
+            )
+            if owner and candidate["repository_uuidv4"] != owner["repository_uuidv4"]:
+                raise CatalogError(
+                    "CURRENT_STATE_CROSS_REPOSITORY_CONFLICT",
+                    "One-repository exchange cannot represent disputed resource ownership",
+                    {
+                        "key": list(key),
+                        "current_repository_uuidv4": owner["repository_uuidv4"],
+                        "candidate_repository_uuidv4": candidate["repository_uuidv4"],
+                    },
+                )
+            if candidate["repository_uuidv4"] == repository_uuidv4:
+                result.append(
+                    (table, candidate, stage["reason"] == "current_state:conflict")
+                )
+
         for table in ("issue_resources", "review_resources"):
             for row in self._all(
                 f"SELECT * FROM {table} WHERE repository_uuidv4=?", (repository_uuidv4,)
@@ -1023,15 +1145,11 @@ class CurrentResources:
                     for s in self._stages(candidate)
                 )
                 result.append((table, candidate, conflicted))
+                for stage in self._stages(candidate):
+                    add_stage(stage, candidate)
         for stage in self._all(
             "SELECT * FROM exchange_staging WHERE repository_uuidv4=? AND table_name IN ('issue_resources','review_resources') AND reason LIKE 'current_state:%'",
             (repository_uuidv4,),
         ):
-            result.append(
-                (
-                    stage["table_name"],
-                    json.loads(stage["record_json"]),
-                    stage["reason"] == "current_state:conflict",
-                )
-            )
+            add_stage(stage)
         return result

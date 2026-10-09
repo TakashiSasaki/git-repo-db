@@ -472,8 +472,12 @@ def test_sender_last_check_does_not_advance_receiver_local_live_check(current_ca
             for record in advanced["records"]
             if record["table"] == "issue_resources"
         )
+        assert "last_checked_at_us" not in state
+        assert receive(db, initial)["staged_records"] == 0
         state["last_checked_at_us"] = 999999
-        assert receive(db, advanced)["staged_records"] == 0
+        with pytest.raises(CatalogError) as failure:
+            receive(db, advanced)
+        assert failure.value.code == "INVALID_EXCHANGE"
         assert current(adapter)["last_checked_at_us"] == 100
     finally:
         db.close()

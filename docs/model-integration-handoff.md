@@ -1,6 +1,14 @@
 # Integrated data model handoff
 
-## Current schema 15 handoff
+## Current schema 16 handoff
+
+Start from PR #14 HEAD `3f76d4873d14604b918198ac06c1660d0fa9e1b9` on
+`fix/current-state-schema-closure`; use `fix/current-state-conflict-boundaries`
+for this stacked follow-up. [Boundary corrections](current-state-boundaries.md)
+record R1/R2, conservative cross-repository conflict refusal, wire exclusions,
+pagination measurements and schema 16 FK cleanup. [The complete inventory](current-state-boundaries-inventory.json) and [retention measurement](validation/synthetic/2026-10-09-current-state-boundaries-retention.json) are reproducible disposable receipts. Fresh schema 16 rejects earlier development catalogs; no migration, merge, release or body GC is included. Exact final local and hosted acceptance are recorded in the follow-up receipt and submitted PR body.
+
+## Historical schema 15 handoff
 
 Start from PR #13 HEAD `db3a5ecfbf95b4c1318198aa308ca6dc749876a1` on
 `refactor/latest-state-transport`. The follow-up branch is

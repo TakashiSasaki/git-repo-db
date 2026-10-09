@@ -39,7 +39,7 @@ WALは明示設定かつ修正済みruntimeのgateを通した場合のみ有効
 
 旧v2 importerとfinalizeは廃止済みです。初期化は新規catalogを直接作成し、通常操作は変換workspaceを開きません。D2は `not_applicable / retired` ですが、不明なidentityや観測時刻を捏造しない契約は維持します。歴史的なreceiptは現行ランタイムの前提ではありません。
 
-Active catalog3 schema identity is version **15**. [Data model](data-model.md) and [schema composition](../src/repo_catalog/adapters/sqlite/schema.py) define portable UUIDv4 service namespaces, natural resource keys, SHA-256 text identity and signed integer epoch microseconds. Historical documents have no surrogate ID or version table. Composite FK ownership and explicit historical selection remain enforced. There is no development-database migration or compatibility layer.
+Active catalog3 schema identity is version **16**. [Data model](data-model.md) and [schema composition](../src/repo_catalog/adapters/sqlite/schema.py) define portable UUIDv4 service namespaces, natural resource keys, SHA-256 text identity and signed integer epoch microseconds. Historical documents have no surrogate ID or version table. Composite FK ownership and explicit historical selection remain enforced. There is no development-database migration or compatibility layer.
 
 ## 現在状態と通信記録の境界
 

@@ -1,0 +1,74 @@
+{
+  "runtime": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1"
+  },
+  "ddl_sha256": "d29295ce86ee60c67d0abb1b88bf5e8d94d9da5bb0b60b5d1e2e56fc02640aed",
+  "ordered_edits": {
+    "current_issue_rows": 1,
+    "immutable_document_rows": 0,
+    "text_body_rows": 20,
+    "exact_text_bytes": 20400,
+    "bodies_without_native_fk_references": 19,
+    "bytes_without_native_fk_references": 19380,
+    "unreferenced_by_fk_but_needed_by_staged_candidates": 0,
+    "page_count": 895,
+    "page_size": 4096,
+    "current_field_entries": 7,
+    "current_evidence_bytes": 3009,
+    "text_body_btree_bytes": 36864
+  },
+  "identical_refresh": {
+    "current_issue_rows": 1,
+    "immutable_document_rows": 0,
+    "text_body_rows": 20,
+    "exact_text_bytes": 20400,
+    "bodies_without_native_fk_references": 19,
+    "bytes_without_native_fk_references": 19380,
+    "unreferenced_by_fk_but_needed_by_staged_candidates": 0,
+    "page_count": 895,
+    "page_size": 4096,
+    "current_field_entries": 7,
+    "current_evidence_bytes": 3009,
+    "text_body_btree_bytes": 36864
+  },
+  "identical_import_total_changes": 20,
+  "identical_live_total_changes": 40,
+  "staged_before_export": {
+    "current_issue_rows": 1,
+    "immutable_document_rows": 0,
+    "text_body_rows": 20,
+    "exact_text_bytes": 20400,
+    "bodies_without_native_fk_references": 19,
+    "bytes_without_native_fk_references": 19380,
+    "unreferenced_by_fk_but_needed_by_staged_candidates": 0,
+    "page_count": 896,
+    "page_size": 4096,
+    "current_field_entries": 7,
+    "current_evidence_bytes": 3009,
+    "text_body_btree_bytes": 36864
+  },
+  "staged_after_export": {
+    "current_issue_rows": 1,
+    "immutable_document_rows": 0,
+    "text_body_rows": 21,
+    "exact_text_bytes": 21420,
+    "bodies_without_native_fk_references": 20,
+    "bytes_without_native_fk_references": 20400,
+    "unreferenced_by_fk_but_needed_by_staged_candidates": 1,
+    "page_count": 900,
+    "page_size": 4096,
+    "current_field_entries": 7,
+    "current_evidence_bytes": 3009,
+    "text_body_btree_bytes": 36864
+  },
+  "exchange_text_bodies": 2,
+  "foreign_key_check": [],
+  "integrity_check": "ok",
+  "source_sha256": {
+    "src/repo_catalog/adapters/sqlite/current_resources.py": "bd417ca77536a26378767663b5127444ad8ffe97ee968c0ae329f394ac5f5a79",
+    "src/repo_catalog/adapters/sqlite/text_bodies.py": "a82e87a56ca071e5ce69717acb6523b78c03cbe5df8cdf82851f8721b61c74f1",
+    "src/repo_catalog/adapters/sqlite/exchange.py": "67e3e15542e23d67b7ea5f570cc40d8fda3807e5993f98d00f39e553947fe151"
+  },
+  "reproduction_script": "\"\"\"Disposable current body references; no deletion policy or retained data.\"\"\"\nimport hashlib,json,platform,sqlite3,tempfile\nfrom pathlib import Path\nfrom repo_catalog.adapters.sqlite.exchange import Graph\nfrom repo_catalog.adapters.sqlite.json_contracts import validate_catalog\nfrom repo_catalog.adapters.sqlite.schema import DDL_SHA256\nfrom tests.integration.test_current_resources import resources,issue\n\ndef snapshot(db):\n    rows=db.execute(\"SELECT sha256,body,byte_length FROM text_bodies b WHERE NOT EXISTS(SELECT 1 FROM issue_resources r WHERE r.text_body_sha256=b.sha256) AND NOT EXISTS(SELECT 1 FROM review_resources r WHERE r.text_body_sha256=b.sha256) AND NOT EXISTS(SELECT 1 FROM document_observations r WHERE r.text_body_sha256=b.sha256)\").fetchall()\n    staged={hashlib.sha256(json.loads(r[0])['body'].encode()).digest() for r in db.execute(\"SELECT record_json FROM current_resource_diagnostics\") if json.loads(r[0]).get('body') is not None}\n    return {'current_issue_rows':db.execute('SELECT count(*) FROM issue_resources').fetchone()[0], 'immutable_document_rows':db.execute('SELECT count(*) FROM document_observations').fetchone()[0], 'text_body_rows':db.execute('SELECT count(*) FROM text_bodies').fetchone()[0], 'exact_text_bytes':db.execute('SELECT coalesce(sum(byte_length),0) FROM text_bodies').fetchone()[0], 'bodies_without_native_fk_references':len(rows), 'bytes_without_native_fk_references':sum(r[2] for r in rows), 'unreferenced_by_fk_but_needed_by_staged_candidates':sum(r[0] in staged for r in rows), 'page_count':db.execute('PRAGMA page_count').fetchone()[0], 'page_size':db.execute('PRAGMA page_size').fetchone()[0], 'current_field_entries':len(json.loads(db.execute('SELECT field_evidence_json FROM issue_resources').fetchone()[0])), 'current_evidence_bytes':len(db.execute('SELECT field_evidence_json FROM issue_resources').fetchone()[0].encode()), 'text_body_btree_bytes':db.execute(\"SELECT sum(pgsize) FROM dbstat WHERE name IN ('text_bodies','sqlite_autoindex_text_bodies_1')\").fetchone()[0]}\n\nwith tempfile.TemporaryDirectory(prefix='catalog3-boundary-retention-') as directory:\n    fixture=resources.__wrapped__(Path(directory)); setup=next(fixture); adapter=setup[0]; db=adapter.c\n    for version in range(1,21):\n        latest=issue(setup,body=f'fixture version {version:03d} '+'x'*1000,provider_updated_at_us=version,observed_at_us=version)\n        adapter.admit(latest,source='import')\n    ordered=snapshot(db)\n    before=db.total_changes\n    for _ in range(20): adapter.admit(latest,source='import')\n    import_delta=db.total_changes-before\n    before=db.total_changes\n    for observed in range(21,41):\n        check={**latest,'observed_at_us':observed}\n        revision,scope=adapter.capture_context(check['acquisition_scope'])\n        adapter.admit(check,source='live',base_revision=revision,scope_context=scope)\n    live_delta=db.total_changes-before\n    refreshed=snapshot(db)\n    alternative={**latest,'body':'unordered candidate '+'z'*1000,'provider_updated_at_us':None}\n    assert adapter.admit(alternative,source='import').status=='conflict'\n    staged_before_export=snapshot(db)\n    unit=Graph(db).export(setup[1]['repository_uuidv4'])\n    staged_after_export=snapshot(db)\n    validate_catalog(db)\n    foreign=[list(row) for row in db.execute('PRAGMA foreign_key_check')]\n    integrity=db.execute('PRAGMA integrity_check').fetchone()[0]\n    assert not foreign and integrity=='ok'\n    assert ordered['text_body_rows']==refreshed['text_body_rows']==20\n    assert ordered['bodies_without_native_fk_references']==19\n    assert staged_after_export['unreferenced_by_fk_but_needed_by_staged_candidates']==1\n    report={'runtime':{'python':platform.python_version(),'sqlite':sqlite3.sqlite_version},'ddl_sha256':DDL_SHA256.hex(),'ordered_edits':ordered,'identical_refresh':refreshed,'identical_import_total_changes':import_delta,'identical_live_total_changes':live_delta,'staged_before_export':staged_before_export,'staged_after_export':staged_after_export,'exchange_text_bodies':sum(row['table']=='text_bodies' for row in unit['records']),'foreign_key_check':foreign,'integrity_check':integrity,'source_sha256':{path:hashlib.sha256(Path(path).read_bytes()).hexdigest() for path in ['src/repo_catalog/adapters/sqlite/current_resources.py','src/repo_catalog/adapters/sqlite/text_bodies.py','src/repo_catalog/adapters/sqlite/exchange.py']},'reproduction_script':Path(__file__).read_text()}\n    Path('docs/validation/synthetic/2026-10-09-current-state-boundaries-retention.json').write_text(json.dumps(report,indent=2)+'\\n')\n    print(json.dumps({k:v for k,v in report.items() if k not in {'reproduction_script','source_sha256'}},indent=2))\n    try: next(fixture)\n    except StopIteration: pass\n"
+}
