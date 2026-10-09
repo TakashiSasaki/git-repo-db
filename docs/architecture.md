@@ -1,5 +1,7 @@
 # アーキテクチャ
 
+> **次期スキーマの確定方針（未実装）:** [通信原本非依存のコアDBとParser由来情報の簡素化](transport-independent-core-adr.md)を参照してください。API通信原本のコア永続保存・再解析依存とParser選択DAGを廃止する方針を固定しています。リソースの履歴／現行状態のライフサイクルは未決定です。以下は引き続き現行Schema 16の説明です。
+
 依存方向は`cli → application → domain/ports`です。Git/GitHub/SQLite/filesystem adapterはapplicationから利用します。
 CLIはargparse、presentation、終了コード、SIGINTの変換を担当します。
 applicationは収集、照会、job、保守を担当し、terminalやHTTP handlerへ依存しません。
