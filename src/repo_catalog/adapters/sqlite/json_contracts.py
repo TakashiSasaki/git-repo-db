@@ -15,6 +15,7 @@ import uuid
 from dataclasses import dataclass
 
 from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.time import validate_epoch_us
 
 
 @dataclass(frozen=True)
@@ -64,7 +65,12 @@ issue_resources.metadata review_resources.metadata
 _register("decoded-headers", "commits.metadata")
 _register(
     "authored",
-    "issue_resources.acquisition_scope_json review_resources.acquisition_scope_json",
+    "review_resources.acquisition_scope_json",
+)
+_register("current-acquisition", "issue_resources.acquisition_scope_json")
+_register(
+    "current-field-evidence",
+    "issue_resources.field_evidence_json review_resources.field_evidence_json",
 )
 _register("current-members", "current_collection_pages.members", shape="array")
 _register(
@@ -221,7 +227,192 @@ def _dependency(key, value):
     return {"table": table, "columns": (column,), "values": (value,)}
 
 
+_CAPTURE_KEYS = {
+    "repository_uuidv4",
+    "repository_binding_id",
+    "service_instance_uuidv4",
+    "source_registration_uuidv4",
+}
+_EVIDENCE_KEYS = {
+    "provider_updated_at_us",
+    "provider_clock_scope",
+    "observed_at_us",
+    "parsed_at_us",
+    "parser_profile_uuidv4",
+    "acquisition_scope",
+}
+_EVIDENCE_FIELDS = {
+    "body",
+    "title",
+    "state",
+    "author",
+    "url",
+    "deleted",
+    "metadata",
+    "submitted_at_us",
+    "target_commit_oid",
+    "original_commit_oid",
+    "original_position",
+    "current_position",
+    "raw_path",
+    "diff_hunk",
+    "review_provider_resource_id",
+    "in_reply_to_provider_resource_id",
+    "review_thread_provider_resource_id",
+}
+_ISSUE_EVIDENCE_FIELDS = {
+    "body",
+    "title",
+    "state",
+    "author",
+    "url",
+    "deleted",
+    "metadata",
+}
+_REVIEW_EVIDENCE_FIELDS = _EVIDENCE_FIELDS - {"title"}
+
+
+def _acquisition_shape(scope, service):
+    if not isinstance(scope, dict):
+        raise JsonContractError("Acquisition scope must be an object")
+    for name in (
+        "repository_uuidv4",
+        "repository_binding_id",
+        "service_instance_uuidv4",
+    ):
+        _identity(name, scope.get(name))
+    if "source_registration_uuidv4" in scope:
+        _identity("source_registration_uuidv4", scope["source_registration_uuidv4"])
+    if scope["service_instance_uuidv4"] != service:
+        raise JsonContractError("Acquisition service differs from resource service")
+    endpoint = scope.get("endpoint")
+    if not isinstance(endpoint, str) or not endpoint or "\x00" in endpoint:
+        raise JsonContractError("Acquisition endpoint requires nonempty text")
+    # Validate every authored identity, including captured identifiers that are
+    # snapshots rather than transport dependencies after an Issue transfer.
+    _walk(scope)
+
+
+def _detached_acquisition(data, scope):
+    return data.get("kind") == "issue-comment" and scope.get(
+        "repository_uuidv4"
+    ) != data.get("repository_uuidv4")
+
+
 def _check_schema(table, column, value, data):
+    if (table, column) == ("issue_resources", "acquisition_scope_json"):
+        _acquisition_shape(value, data.get("service_instance_uuidv4"))
+        if not _detached_acquisition(data, value) and any(
+            value.get(name) != data.get(name)
+            for name in ("repository_uuidv4", "repository_binding_id")
+        ):
+            raise JsonContractError("Acquisition scope differs from typed owner")
+        return
+    if column == "field_evidence_json":
+        allowed = (
+            _ISSUE_EVIDENCE_FIELDS
+            if table == "issue_resources"
+            else _REVIEW_EVIDENCE_FIELDS
+        )
+        for encoded_path, evidence in value.items():
+            try:
+                path = json.loads(encoded_path)
+            except (ValueError, TypeError):
+                raise JsonContractError("Invalid current field evidence path") from None
+            if (
+                not isinstance(path, list)
+                or not path
+                or any(not isinstance(part, str) for part in path)
+                or path[0] not in allowed
+                or (len(path) > 1 and path[0] != "metadata")
+                or json.dumps(path, ensure_ascii=False, separators=(",", ":"))
+                != encoded_path
+                or not isinstance(evidence, dict)
+                or evidence.keys() != _EVIDENCE_KEYS
+            ):
+                raise JsonContractError("Invalid current field evidence entry")
+            if path[0] == "metadata":
+                item = data.get("metadata", {})
+                if isinstance(item, str):
+                    item = _load(
+                        item, JSON_REGISTRY[table, "metadata"], "Current metadata"
+                    )
+                for depth, part in enumerate(path[1:], 1):
+                    ancestor = json.dumps(
+                        path[:depth], ensure_ascii=False, separators=(",", ":")
+                    )
+                    if ancestor not in value:
+                        raise JsonContractError(
+                            "Metadata field evidence requires object ancestor proofs"
+                        )
+                    if not isinstance(item, dict) or part not in item:
+                        raise JsonContractError(
+                            "Current field evidence refers to absent metadata"
+                        )
+                    item = item[part]
+            elif path[0] == "body":
+                if not {"body", "body_status", "text_body_sha256"} & data.keys():
+                    raise JsonContractError(
+                        "Current field evidence refers to absent body"
+                    )
+            elif path[0] not in data:
+                raise JsonContractError("Current field evidence refers to absent field")
+            for name in ("provider_updated_at_us", "observed_at_us", "parsed_at_us"):
+                if evidence[name] is not None:
+                    try:
+                        validate_epoch_us(evidence[name])
+                    except (TypeError, ValueError) as exc:
+                        raise JsonContractError(
+                            "Current field evidence requires signed int64 timestamps"
+                        ) from exc
+            if evidence["observed_at_us"] is None or evidence["parsed_at_us"] is None:
+                raise JsonContractError("Current field evidence requires capture times")
+            clock = evidence["provider_clock_scope"]
+            expected = {
+                "issue": "github-issue-updated-at",
+                "issue-comment": "github-issue-comment-updated-at",
+                "review-comment": "github-review-comment-updated-at",
+            }.get(data.get("kind"))
+            if clock is not None and clock != expected:
+                raise JsonContractError(
+                    "Current field evidence has invalid provider clock"
+                )
+            if (
+                data.get("kind") == "review"
+                and evidence["provider_updated_at_us"] is not None
+            ):
+                raise JsonContractError(
+                    "Review field evidence cannot claim an update clock"
+                )
+            _identity("parser_profile_uuidv4", evidence["parser_profile_uuidv4"])
+            _acquisition_shape(
+                evidence["acquisition_scope"], data.get("service_instance_uuidv4")
+            )
+            scope = evidence["acquisition_scope"]
+            if table == "review_resources":
+                if any(
+                    scope.get(name) != data.get(name)
+                    for name in (
+                        "repository_uuidv4",
+                        "repository_binding_id",
+                        "change_request_id",
+                    )
+                ):
+                    raise JsonContractError(
+                        "Review field capture differs from typed owner"
+                    )
+            elif "change_request_id" in scope:
+                raise JsonContractError(
+                    "Ordinary Issue field capture cannot claim a change request"
+                )
+            if (
+                "parser_profile_uuidv4" in scope
+                and scope["parser_profile_uuidv4"] != evidence["parser_profile_uuidv4"]
+            ):
+                raise JsonContractError(
+                    "Field parser attribution differs from captured parser"
+                )
+        return
     if (table, column) == ("current_collection_pages", "members"):
         keys = set()
         for item in value:
@@ -693,8 +884,25 @@ def reference_dependencies(table, data):
         if value is None:
             continue
         _check_schema(table, column, value, data)
+        if schema.category == "current-field-evidence":
+            # Each capture is a historical context snapshot, not an ownership
+            # assertion or a request to export another repository's records.
+            dependencies.extend(
+                _walk(
+                    {
+                        path: {
+                            k: v
+                            for k, v in evidence.items()
+                            if k != "acquisition_scope"
+                        }
+                        for path, evidence in value.items()
+                    }
+                )
+            )
+            continue
         if schema.category in {
             "authored",
+            "current-acquisition",
             "current-members",
             "input-manifest",
             "git-roots",
@@ -719,6 +927,10 @@ def reference_dependencies(table, data):
                 if (table, column) == ("resume_scopes", "request_context")
                 else value
             )
+            if schema.category == "current-acquisition" and _detached_acquisition(
+                data, value
+            ):
+                authored = {k: v for k, v in authored.items() if k not in _CAPTURE_KEYS}
             dependencies.extend(
                 _walk(
                     authored,
@@ -803,6 +1015,145 @@ def _owner(db, table, data):
     return None, None
 
 
+def validate_acquisition_scope(
+    db,
+    scope,
+    *,
+    service_instance_uuidv4,
+    repository_uuidv4=None,
+    repository_binding_id=None,
+    allow_snapshot=False,
+):
+    """Check a capture against known registrations without fabricating owners.
+
+    A detached historical capture may lack its original repository on a
+    per-repository receiver. Existing registrations still have to agree.
+    Live acquisition requires every captured registration and membership.
+    """
+    _acquisition_shape(scope, service_instance_uuidv4)
+    if (
+        repository_uuidv4 is not None
+        and scope["repository_uuidv4"] != repository_uuidv4
+    ):
+        raise JsonContractError("Acquisition repository differs from current owner")
+    if (
+        repository_binding_id is not None
+        and scope["repository_binding_id"] != repository_binding_id
+    ):
+        raise JsonContractError("Acquisition binding differs from current owner")
+    captured_repository = scope["repository_uuidv4"]
+    repository = _row(
+        db, "repositories", ("repository_uuidv4",), (captured_repository,)
+    )
+    binding = _row(
+        db,
+        "repository_bindings",
+        ("repository_binding_id",),
+        (scope["repository_binding_id"],),
+    )
+    missing = []
+    if binding is not None:
+        if (
+            binding["repository_uuidv4"] != captured_repository
+            or binding["service_instance_uuidv4"] != service_instance_uuidv4
+        ):
+            raise JsonContractError(
+                "Captured binding has different repository or service"
+            )
+    elif not allow_snapshot or repository is not None:
+        missing.append(
+            {
+                "table": "repository_bindings",
+                "columns": ("repository_binding_id",),
+                "values": (scope["repository_binding_id"],),
+            }
+        )
+    source_id = scope.get("source_registration_uuidv4")
+    if source_id:
+        source = _row(db, "sources", ("source_registration_uuidv4",), (source_id,))
+        if source is None:
+            if not allow_snapshot:
+                missing.append(
+                    {
+                        "table": "sources",
+                        "columns": ("source_registration_uuidv4",),
+                        "values": (source_id,),
+                    }
+                )
+        elif source["service_instance_uuidv4"] not in (None, service_instance_uuidv4):
+            raise JsonContractError("Captured Source has different service")
+        elif (repository is not None or not allow_snapshot) and not db.execute(
+            "SELECT 1 FROM source_repositories WHERE source_id=? AND repository_uuidv4=?",
+            (source["source_id"], captured_repository),
+        ).fetchone():
+            raise JsonContractError(
+                "Captured Source does not own captured repository membership"
+            )
+    return missing
+
+
+def validate_field_evidence(db, evidence, candidate):
+    """Validate the bounded current-value attribution map, never a history."""
+    if not isinstance(evidence, dict):
+        raise JsonContractError("Current field evidence must be an object")
+    table = (
+        "issue_resources"
+        if candidate["kind"] in {"issue", "issue-comment"}
+        else "review_resources"
+    )
+    _check_schema(table, "field_evidence_json", evidence, candidate)
+    pending = []
+    fact_kind = (
+        "ordinary-issue-comment"
+        if candidate["kind"] == "issue-comment"
+        else candidate["kind"]
+    )
+    captures, profiles = {}, set()
+    for entry in evidence.values():
+        scope = entry["acquisition_scope"]
+        captures.setdefault(
+            json.dumps(scope, sort_keys=True, ensure_ascii=False), scope
+        )
+        profiles.add(entry["parser_profile_uuidv4"])
+    for scope in captures.values():
+        pending.extend(
+            validate_acquisition_scope(
+                db,
+                scope,
+                service_instance_uuidv4=candidate["service_instance_uuidv4"],
+                allow_snapshot=True,
+            )
+        )
+    for profile_id in profiles:
+        profile = _row(db, "parser_profiles", ("parser_profile_uuidv4",), (profile_id,))
+        if profile is None:
+            pending.append(
+                {
+                    "table": "parser_profiles",
+                    "columns": ("parser_profile_uuidv4",),
+                    "values": (profile_id,),
+                }
+            )
+            continue
+        declared = json.loads(profile["definition_json"]).get("capabilities", [])
+        if {"owner_kind": "repository", "fact_kind": fact_kind} not in declared:
+            raise JsonContractError(
+                "Field parser profile does not declare resource capability"
+            )
+        if not db.execute(
+            "SELECT 1 FROM parser_profile_capabilities WHERE parser_profile_uuidv4=? AND owner_kind='repository' AND fact_kind=?",
+            (profile_id, fact_kind),
+        ).fetchone():
+            pending.append(
+                {
+                    "table": "parser_profile_capabilities",
+                    "columns": ("parser_profile_uuidv4", "owner_kind", "fact_kind"),
+                    "values": (profile_id, "repository", fact_kind),
+                }
+            )
+    return pending
+
+
 def _owned_payload(db, representation, digest, repository, source):
     if repository:
         if db.execute(
@@ -838,6 +1189,36 @@ def validate_record(db, table, data, *, allow_missing=False):
     repository, source = _owner(db, table, data)
     missing = []
     unowned_payloads = []
+    if table == "issue_resources" and "acquisition_scope_json" in data:
+        scope = _load(
+            data["acquisition_scope_json"],
+            JSON_REGISTRY[table, "acquisition_scope_json"],
+            "Issue acquisition scope",
+        )
+        detached = _detached_acquisition(data, scope)
+        missing.extend(
+            validate_acquisition_scope(
+                db,
+                scope,
+                service_instance_uuidv4=data["service_instance_uuidv4"],
+                repository_uuidv4=None if detached else data["repository_uuidv4"],
+                repository_binding_id=None
+                if detached
+                else data["repository_binding_id"],
+                allow_snapshot=detached,
+            )
+        )
+        repository = scope["repository_uuidv4"]
+    if (
+        table in {"issue_resources", "review_resources"}
+        and "field_evidence_json" in data
+    ):
+        evidence = _load(
+            data["field_evidence_json"],
+            JSON_REGISTRY[table, "field_evidence_json"],
+            "Current field evidence",
+        )
+        missing.extend(validate_field_evidence(db, evidence, data))
     if table == "current_collection_pages" and "members" in data:
         members = _load(
             data["members"],
@@ -1071,6 +1452,8 @@ def validate_catalog(db):
             if f["category"]
             in {
                 "authored",
+                "current-acquisition",
+                "current-field-evidence",
                 "current-members",
                 "input-manifest",
                 "git-roots",
@@ -1188,6 +1571,67 @@ def _sql_code_role(role, oid_width):
     return f"({role} IN ('head','base','merge','test-merge') OR (substr({role},1,14)='review-target:' AND {suffix}))"
 
 
+def _sql_capture_conditions(doc, service):
+    repository = f"json_extract({doc},'$.repository_uuidv4')"
+    binding = f"json_extract({doc},'$.repository_binding_id')"
+    captured_service = f"json_extract({doc},'$.service_instance_uuidv4')"
+    source = f"json_extract({doc},'$.source_registration_uuidv4')"
+    return [
+        f"coalesce(json_type({doc}),'')<>'object'",
+        f"coalesce(json_type({doc},'$.repository_uuidv4'),'')<>'text' OR NOT {_sql_uuid(repository)}",
+        f"coalesce(json_type({doc},'$.service_instance_uuidv4'),'')<>'text' OR NOT {_sql_uuid(captured_service)} OR {captured_service} IS NOT {service}",
+        f"coalesce(json_type({doc},'$.repository_binding_id'),'')<>'text' OR length({binding})=0 OR instr({binding},char(0))>0",
+        f"coalesce(json_type({doc},'$.endpoint'),'')<>'text' OR length(json_extract({doc},'$.endpoint'))=0 OR instr(json_extract({doc},'$.endpoint'),char(0))>0",
+        f"(json_type({doc},'$.source_registration_uuidv4') IS NOT NULL AND (json_type({doc},'$.source_registration_uuidv4')<>'text' OR NOT {_sql_uuid(source)}))",
+        f"EXISTS(SELECT 1 FROM repository_bindings b WHERE b.repository_binding_id={binding} AND (b.repository_uuidv4 IS NOT {repository} OR b.service_instance_uuidv4 IS NOT {service}))",
+        f"(EXISTS(SELECT 1 FROM repositories r WHERE r.repository_uuidv4={repository}) AND NOT EXISTS(SELECT 1 FROM repository_bindings b WHERE b.repository_binding_id={binding} AND b.repository_uuidv4={repository} AND b.service_instance_uuidv4={service}))",
+        f"EXISTS(SELECT 1 FROM sources s WHERE s.source_registration_uuidv4={source} AND ((s.service_instance_uuidv4 IS NOT NULL AND s.service_instance_uuidv4 IS NOT {service}) OR (EXISTS(SELECT 1 FROM repositories r WHERE r.repository_uuidv4={repository}) AND NOT EXISTS(SELECT 1 FROM source_repositories m WHERE m.source_id=s.source_id AND m.repository_uuidv4={repository}))))",
+    ]
+
+
+def _sql_snapshot_conditions(doc, repository, source):
+    """Validate one distinct capture snapshot, without traversing its owners."""
+    allowed = set(REFERENCE_TARGETS) | set(REFERENCE_LISTS)
+    known = ",".join(f"'{key}'" for key in sorted(allowed))
+    local = ",".join(f"'{key}'" for key in sorted(LOCAL_REFERENCE_KEYS))
+    uuid_keys = ",".join(
+        f"'{key}'" for key in sorted(REFERENCE_TARGETS) if "uuidv4" in key
+    )
+    text_keys = ",".join(
+        f"'{key}'" for key in sorted(REFERENCE_TARGETS) if "uuidv4" not in key
+    )
+    conditions = [
+        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE typeof(j.key)='text' GROUP BY j.parent,j.key HAVING count(*)>1)",
+        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key IN ({local}) OR ((j.key GLOB '*_uuidv4' OR j.key GLOB '*_uuidv4s' OR j.key GLOB '*_sha256' OR j.key IN ('sha256','representation','references')) AND j.key NOT IN ({known}) AND NOT EXISTS(SELECT 1 FROM json_tree({doc}) p WHERE p.id=j.parent AND p.key='payload')))",
+        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE (j.key IN ({uuid_keys}) AND (j.type<>'text' OR NOT {_sql_uuid('j.value')})) OR (j.key IN ({text_keys}) AND (j.type<>'text' OR length(j.value)=0 OR instr(j.value,char(0))>0)))",
+    ]
+    # These encodings were never non-owning scalar capture identifiers. Preserve
+    # their authored shape and owner checks if present in an explicit context.
+    for key, target_key in sorted(REFERENCE_LISTS.items()):
+        target, identity = REFERENCE_TARGETS[target_key]
+        target_repository, target_source = _sql_target_owner(target)
+        owner = _sql_owner_predicate(
+            repository, source, target_repository, target_source
+        )
+        canonical = (
+            _sql_uuid("e.value")
+            if "uuidv4" in target_key
+            else "(length(e.value)>0 AND instr(e.value,char(0))=0)"
+        )
+        conditions.append(
+            f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='{key}' AND (j.type<>'array' OR EXISTS(SELECT 1 FROM json_each(j.value) e WHERE e.type<>'text' OR NOT {canonical} OR NOT EXISTS(SELECT 1 FROM {target} t WHERE t.{identity}=e.value AND {owner}))))"
+        )
+    payload_shape = (
+        "coalesce(json_type(j.value,'$.representation'),'')<>'text' OR coalesce(json_type(j.value,'$.sha256'),'')<>'text' OR (SELECT count(*) FROM json_each(j.value))<>2 OR json_extract(j.value,'$.representation') NOT IN ('decoded_api','legacy_normalized','git-object-raw-v1') OR NOT "
+        + _sql_hex("json_extract(j.value,'$.sha256')", 64)
+    )
+    payload_owner = f"({repository} IS NULL OR EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.repository_uuidv4={repository} AND f.payload_representation=p.representation AND f.payload_sha256=p.sha256) OR EXISTS(SELECT 1 FROM git_object_payloads g JOIN repository_object_sources o USING(git_object_id) JOIN git_acquisitions a USING(git_acquisition_id) WHERE a.repository_uuidv4={repository} AND g.payload_representation=p.representation AND g.payload_sha256=p.sha256)) AND ({source} IS NULL OR EXISTS(SELECT 1 FROM source_input_observations i WHERE i.source_registration_uuidv4={source} AND i.payload_representation=p.representation AND i.payload_sha256=p.sha256))"
+    conditions.append(
+        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key='payload' AND (j.type<>'object' OR {payload_shape} OR NOT EXISTS(SELECT 1 FROM payloads p WHERE p.representation=json_extract(j.value,'$.representation') AND lower(hex(p.sha256))=json_extract(j.value,'$.sha256') AND {payload_owner})))"
+    )
+    return conditions
+
+
 def guard_sql():
     """Generate standalone SQLite guards, requiring no connection callbacks."""
     output = [
@@ -1196,6 +1640,8 @@ def guard_sql():
     for (table, column), schema in sorted(JSON_REGISTRY.items()):
         if schema.category not in {
             "authored",
+            "current-acquisition",
+            "current-field-evidence",
             "current-members",
             "input-manifest",
             "git-roots",
@@ -1205,12 +1651,95 @@ def guard_sql():
             continue
         doc = f"NEW.{column}"
         repository, source = _sql_owner(table)
+        if schema.category == "current-acquisition":
+            repository = f"json_extract({doc},'$.repository_uuidv4')"
         conditions = [
             # Object keys are TEXT; array indices are INTEGER. Filtering keys
             # therefore preserves nested duplicate detection without rewalking
             # the entire tree for every parent in a quadratic self-join.
             f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE typeof(j.key)='text' GROUP BY j.parent,j.key HAVING count(*)>1)",
         ]
+        if schema.category == "current-acquisition":
+            conditions.extend(
+                _sql_capture_conditions(doc, "NEW.service_instance_uuidv4")
+            )
+        if schema.category == "current-field-evidence":
+            conditions = [
+                f"EXISTS(SELECT 1 FROM json_each({doc}) e GROUP BY e.key HAVING count(*)>1)"
+            ]
+            allowed = (
+                _ISSUE_EVIDENCE_FIELDS
+                if table == "issue_resources"
+                else _REVIEW_EVIDENCE_FIELDS
+            )
+            fields = ",".join(f"'{name}'" for name in sorted(allowed))
+            keys = ",".join(f"'{name}'" for name in sorted(_EVIDENCE_KEYS))
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE CASE WHEN NOT json_valid(e.key) THEN 1 WHEN json_type(e.key)<>'array' THEN 1 ELSE (json_array_length(e.key)=0 OR json(e.key)<>e.key OR (json_array_length(e.key)=1 AND json_array(json_extract(e.key,'$[0]'))<>e.key) OR EXISTS(SELECT 1 FROM json_each(e.key) p WHERE p.type<>'text') OR json_extract(e.key,'$[0]') NOT IN ({fields}) OR (json_array_length(e.key)>1 AND json_extract(e.key,'$[0]')<>'metadata')) END)"
+            )
+            conditions.append(
+                f"EXISTS(WITH RECURSIVE metadata_paths(path,value,type) AS (SELECT json_array('metadata'),NEW.metadata,'object' UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type FROM metadata_paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{{}}' END) j WHERE p.type='object') SELECT 1 FROM json_each({doc}) e WHERE json_extract(e.key,'$[0]')='metadata' AND NOT EXISTS(SELECT 1 FROM metadata_paths p WHERE p.path=e.key))"
+            )
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM json_each({doc}) e JOIN json_each(e.key) depth WHERE json_extract(e.key,'$[0]')='metadata' AND CAST(depth.key AS INTEGER)>0 AND NOT EXISTS(SELECT 1 FROM json_each({doc}) ancestor WHERE ancestor.key=(SELECT json_group_array(prefix.value) FROM json_each(e.key) prefix WHERE CAST(prefix.key AS INTEGER)<CAST(depth.key AS INTEGER))))"
+            )
+            invalid = [
+                f"(SELECT count(*) FROM json_each(e.value))<>{len(_EVIDENCE_KEYS)}",
+                f"EXISTS(SELECT 1 FROM json_each(e.value) p WHERE p.key NOT IN ({keys}))",
+                "coalesce(json_type(e.value,'$.observed_at_us'),'')<>'integer' OR typeof(json_extract(e.value,'$.observed_at_us'))<>'integer'",
+                "coalesce(json_type(e.value,'$.parsed_at_us'),'')<>'integer' OR typeof(json_extract(e.value,'$.parsed_at_us'))<>'integer'",
+                "coalesce(json_type(e.value,'$.provider_updated_at_us'),'') NOT IN ('integer','null')",
+                "(json_type(e.value,'$.provider_updated_at_us')='integer' AND typeof(json_extract(e.value,'$.provider_updated_at_us'))<>'integer')",
+                "coalesce(json_type(e.value,'$.provider_clock_scope'),'') NOT IN ('text','null')",
+                "(json_type(e.value,'$.provider_clock_scope')='text' AND json_extract(e.value,'$.provider_clock_scope') IS NOT CASE NEW.kind WHEN 'issue' THEN 'github-issue-updated-at' WHEN 'issue-comment' THEN 'github-issue-comment-updated-at' WHEN 'review-comment' THEN 'github-review-comment-updated-at' END)",
+                "(NEW.kind='review' AND json_type(e.value,'$.provider_updated_at_us')<>'null')",
+                "coalesce(json_type(e.value,'$.parser_profile_uuidv4'),'')<>'text'",
+                f"NOT {_sql_uuid("json_extract(e.value,'$.parser_profile_uuidv4')")}",
+                "coalesce(json_type(e.value,'$.acquisition_scope'),'')<>'object'",
+            ]
+            capture_invalid = _sql_capture_conditions(
+                "capture.scope", "NEW.service_instance_uuidv4"
+            )
+            capture_invalid.extend(
+                _sql_snapshot_conditions("capture.scope", repository, source)
+            )
+            if table == "review_resources":
+                capture_invalid.extend(
+                    f"json_extract(capture.scope,'$.{name}') IS NOT NEW.{name}"
+                    for name in (
+                        "repository_uuidv4",
+                        "repository_binding_id",
+                        "change_request_id",
+                    )
+                )
+            else:
+                capture_invalid.append(
+                    "json_type(capture.scope,'$.change_request_id') IS NOT NULL"
+                )
+            invalid.append(
+                "(json_type(e.value,'$.acquisition_scope.parser_profile_uuidv4') IS NOT NULL AND json_extract(e.value,'$.acquisition_scope.parser_profile_uuidv4') IS NOT json_extract(e.value,'$.parser_profile_uuidv4'))"
+            )
+            fact_kind = "CASE NEW.kind WHEN 'issue-comment' THEN 'ordinary-issue-comment' ELSE NEW.kind END"
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM (SELECT DISTINCT json_extract(e.value,'$.parser_profile_uuidv4') AS profile FROM json_each({doc}) e) evidence WHERE NOT EXISTS(SELECT 1 FROM parser_profile_capabilities p WHERE p.parser_profile_uuidv4=evidence.profile AND p.owner_kind='repository' AND p.fact_kind=({fact_kind})))"
+            )
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM (SELECT DISTINCT json_extract(e.value,'$.acquisition_scope') AS scope FROM json_each({doc}) e) capture WHERE "
+                + " OR ".join(capture_invalid)
+                + ")"
+            )
+            conditions.append(
+                f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE CASE WHEN e.type<>'object' THEN 1 ELSE ("
+                + " OR ".join(invalid)
+                + ") END)"
+            )
+            for operation in ("INSERT", "UPDATE"):
+                output.append(
+                    f"CREATE TRIGGER json_{table}_{column}_{operation.lower()} BEFORE {operation} ON {table}\nWHEN {doc} IS NOT NULL AND CASE WHEN NOT json_valid({doc}) THEN 1 WHEN json_type({doc})<>'{schema.shape}' THEN 1 ELSE (\n "
+                    + "\n OR ".join(conditions)
+                    + f"\n) END BEGIN SELECT RAISE(ABORT,'JSON reference schema, dependency or ownership violation: {table}.{column}'); END;\n"
+                )
+            continue
         if (table, column) == ("current_collection_pages", "members"):
             ident = "CASE json_extract(m.value,'$.family') WHEN 'issue' THEN json_extract(m.value,'$.provider_resource_id') ELSE json_extract(m.value,'$.provider_change_request_document_id') END"
             canonical_provider = f"(typeof(({ident}))='text' AND length(({ident}))>0 AND length(CAST(({ident}) AS BLOB))=length(({ident})) AND substr(({ident}),1,1) BETWEEN '1' AND '9' AND ({ident}) NOT GLOB '*[^0-9]*')"
@@ -1341,6 +1870,8 @@ def guard_sql():
             )
         for key, (target, identity) in sorted(REFERENCE_TARGETS.items()):
             declaration = ""
+            if schema.category == "current-acquisition" and key in _CAPTURE_KEYS:
+                declaration += f" AND NOT (j.path='$' AND NEW.kind='issue-comment' AND json_extract({doc},'$.repository_uuidv4')<>NEW.repository_uuidv4)"
             if (table, column, key) == (
                 "parsed_results",
                 "derivation_json",

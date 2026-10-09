@@ -880,8 +880,8 @@
     "policy": "whole-profile-v1",
     "reports": [
       {
-        "executed_passed": 1311,
-        "sha256": "b6d51a5dbaa714b19af27787779b4ee4fe03258a103c77c7a1bc3d5662f4c569",
+        "executed_passed": 287,
+        "sha256": "a16b82fb22e3608c279efe17517576ffb309cc484481e5883f44dfe51606d258",
         "skipped": 0
       }
     ]
@@ -945,18 +945,18 @@
       "adapters/git/importer.py": "4abf0992493d6c0f441cd52999f8e93f55bd1f4c06e7a67bce228a9d6eb89788",
       "adapters/git/parsing.py": "a6b23e46ca6f8df11bc13d60811890c3dd31c27130877e469dc510d283a3f902",
       "adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
-      "adapters/github/collector.py": "780137a02c72938fbf895bf25700560bf5561eea4d660b78d0505c1555d70ea8",
+      "adapters/github/collector.py": "e1cad8dd5ec9e6f67bc0d3f03433269cd52de2a727db687f825dd560a8392451",
       "adapters/github/current_parser.py": "b8b80ad2cbc5879825bdbd8b77c4e7d234d41ed8cc036d49b962e27d70bcc932",
       "adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
       "adapters/github/persistence.py": "db095a41ddbb52403d5aa7b4b094411498fcc5805674b86ea7137e803f00b267",
-      "adapters/github/transport.py": "998043034a809a230ab391cdb77d6e425ff72243e4939b17dd47beddd45ab565",
-      "adapters/recording.py": "0c9e54aa10095746d61d164270afed5d10d50a1f9dcd24eb4cb18833f65794d5",
+      "adapters/github/transport.py": "b970b41099c8e4edb101db67e58047cee8c6132810b13bfc2fca0bc1c2acf714",
+      "adapters/recording.py": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c",
       "adapters/sqlite/coverage.py": "6913211da033ed773a146c674cf25c014b928ed3de403b9044a19a7da183089b",
       "adapters/sqlite/current_collections.py": "5f50e9403ee96814827e081c3ee4cbd994a50ccd1a8aaf5f9d4267e2334ad3d1",
-      "adapters/sqlite/current_resources.py": "07aad2d8f8c524324db6206cdd2d257b4ca6327022997db19dafc90b0d926ae3",
-      "adapters/sqlite/exchange.py": "5a9591c9cc25321cb7c2abdbf7c9649d664878d911a9a8b7f517a40c878c0b35",
+      "adapters/sqlite/current_resources.py": "49fea2f4120ea5180bd21e1eea0bdd3b87e8d1830358d108b15f10ee28e10cb5",
+      "adapters/sqlite/exchange.py": "74125ebefa093674c9187ba57659f452470a9813c95f871c1b52725081af2ec2",
       "adapters/sqlite/identity_relations.py": "8bf2c637b61eac126d7c8a2f9f3f058684f55e265db4d711a8e05adf933cd018",
-      "adapters/sqlite/json_contracts.py": "e1952711af1abe832f19756e85d5bda8e3e10608e98a1720f623a92143de0e22",
+      "adapters/sqlite/json_contracts.py": "e23cc058f08dad1712ef11f8c4f4643f2cedf24fd329cd36d11ccd73f149e1f1",
       "adapters/sqlite/parser_model.py": "ef06efbcc8b3f0244a888d6ebbc6420837c6d9bccdfc10d33dfcff0af4922276",
       "adapters/sqlite/payloads.py": "d1be12a37ff4e7001582c0f7d99486eff81feddb800026f9ae3d5577cef7224a",
       "adapters/sqlite/store.py": "c09d21890762b0436e48efcb81859189bb68f57f223d6028c4e3f80575cf2e77",
@@ -968,7 +968,7 @@
       "application/repository_identity.py": "5e783ac2e3ca3997b2d15d2299c7bd57acee9421485a69d8b35017462dd874b9",
       "application/source_service.py": "af6e05064e567602c22b94e323dc3ccb86ffee188b85e081d28dccf79b77f2ca",
       "config.py": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785",
-      "domain/current_state.py": "af7d67ee7b54d9eaec366078ac0ca50c7507ab1c5484be03168f8540bb0f16f6",
+      "domain/current_state.py": "8fa18818b0701797461975b70968c74e5532791cbf362a7326ab9cec8a761480",
       "domain/document.py": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548",
       "domain/git_object.py": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7",
       "domain/models.py": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b",
@@ -979,8 +979,8 @@
       "resources/thread_comments.graphql": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4"
     },
     "output_schema": {
-      "catalog3": 14,
-      "ddl_sha256": "13d835b5b141c9d8647f0318c8b2bd1d1590df341baa28f98f755f274753a531",
+      "catalog3": 15,
+      "ddl_sha256": "20ec2e5c3b2fe7a064aa4e9a122d6b452d0f6b1a5be00113ce1dbd948f8f3826",
       "facts": "scoped-immutable-and-current-resources-v1"
     },
     "settings": {

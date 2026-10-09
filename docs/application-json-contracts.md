@@ -1,12 +1,15 @@
 # Application JSON contract inventory
 
-This current schema inventory contains **55 JSON CHECK columns**. It is generated from the composed production SQLite schema and the explicit `json_contracts.JSON_REGISTRY`; the registry rejects unclassified new CHECK-backed JSON columns. This document is current implementation evidence, not a historical validation rewrite.
+This schema **15** inventory contains **57 JSON CHECK columns**. It is generated from the composed production SQLite schema and the explicit `json_contracts.JSON_REGISTRY`; the registry rejects unclassified new CHECK-backed JSON columns. [Current closure](current-state-schema-closure.md), [column liveness](current-state-schema-liveness.md) and [complete schema inventory](current-state-schema-inventory.md) describe the follow-up. Historical validation receipts remain separate.
 
 ## Enforceable categories
 
 | Category | Contract |
 |---|---|
 | `authored` | Recursive typed target/owner/dependency validation; SQL guards; exact payload identities. |
+| `current-acquisition` | Issue capture scope with canonical typed identifiers, endpoint and service checks. A transferred comment may retain detached repository/binding/Source identifiers as a validated snapshot; available registrations must agree, but the old registrations are not required exchange dependencies. |
+| `current-field-evidence` | One proof per retained mutable scalar/body/metadata path; canonical path and clock/time/profile/capture schema, no absent-field proofs or previous values. Exact profile dependencies remain portable; original capture scopes are snapshots. |
+| `current-members` | Typed current-page resource identities/digests, unique member keys and collection binding/owner checks; immutable page and terminal evidence. |
 | `provider` | Opaque provider projection; object JSON only. Application reference names have no meaning here. |
 | `operational` | Receiver-local configuration/checkpoints/diagnostics; object JSON; existing operational writer/registration contracts. Excluded from portable evidence. |
 | `decoded-headers` | Result-owned decoded Git strings; JSON object values are header/message text, not catalog references. |
@@ -50,7 +53,8 @@ This current schema inventory contains **55 JSON CHECK columns**. It is generate
 | `identity_relations.evidence_json` | `authored` | object; required |
 | `incremental_scans.evidence` | `authored` | object; required |
 | `inventory_observations.scope` | `operational` | object; required |
-| `issue_resources.acquisition_scope_json` | `authored` | object; required |
+| `issue_resources.acquisition_scope_json` | `current-acquisition` | object; required |
+| `issue_resources.field_evidence_json` | `current-field-evidence` | object; required |
 | `issue_resources.metadata` | `provider` | object; required |
 | `job_attempts.checkpoint` | `operational` | object; required |
 | `jobs.request` | `operational` | object; required |
@@ -71,6 +75,7 @@ This current schema inventory contains **55 JSON CHECK columns**. It is generate
 | `repository_name_observations.provenance_json` | `authored` | object; required |
 | `resume_scopes.request_context` | `authored` | object; required |
 | `review_resources.acquisition_scope_json` | `authored` | object; required |
+| `review_resources.field_evidence_json` | `current-field-evidence` | object; required |
 | `review_resources.metadata` | `provider` | object; required |
 | `review_thread_observations.payload` | `provider` | object; required |
 | `search_documents.metadata` | `operational` | object; required |
@@ -123,6 +128,25 @@ Application-consumed code detail fields have concrete optional schemas: expected
 
 The `head` and `base` members in `resume_scopes.request_context` are unmodified provider excerpts and remain opaque. Other members, including `parent_fetch_collection_id`, use authored reference rules. Provider projection columns are explicitly opaque throughout export/import and preserve their content; raw provider response bytes stay unchanged in CAS.
 
+Current field proofs use canonical JSON-array path keys, such as `["body"]` or
+`["metadata","reactions","total_count"]`. Each entry contains exactly
+`provider_updated_at_us`, `provider_clock_scope`, `observed_at_us`,
+`parsed_at_us`, `parser_profile_uuidv4` and `acquisition_scope`. The body and its
+availability status share one proof. Missing fields keep their prior proof;
+explicit NULL and empty text remain known values. An older full projection may
+fill an unknown field without overwriting a newer known field. The map holds
+current attribution only, with size proportional to retained fields/metadata
+paths; it does not grow a version history on each refresh.
+
+Captured identifiers inside current-field proofs, and the detached portion of an
+Issue comment's `current-acquisition` scope, are declarations of original capture
+context. Canonical identity/service checks and consistency with existing
+repository/binding/Source registrations remain enforced. They do not cause a
+destination repository export to include the old repository or Source-wide
+inventory. This exception is specific to the capture schemas; ordinary authored
+references still require their typed dependencies. `last_checked_at_us` is
+outside the proof map and remains a receiver-local authoritative-live check.
+
 ## JSON without a JSON CHECK column, and non-database envelopes
 
 | Structure | Classification and validation |
@@ -134,14 +158,14 @@ The `head` and `base` members in `resume_scopes.request_context` are unmodified 
 | `parsed_fact_members.fact_key_json` | SQL-generated read-only manifest members derived from actual fact keys; publication checks exact membership. |
 | Exchange unit / record `$refs`, `$bytes`, dependency manifests | Explicit `Graph` envelope schema and typed table/FK remapping; canonical hashes, real owners, repository boundary, exact publication and coverage proof checks. Import and staged promotion rerun JSON registry admission after remapping. |
 | Parser verification package artifact | Exact full definition, capability evidence and report digests; checked by `verify_builtin_parser.py` and runtime full-profile verification. |
-| Backup manifest | Local backup file/schema/digest envelope; maintenance validates exact format, retained DB hash and complete DDL before atomic restore. CAS-41 remains unselected. |
+| Backup manifest | Local backup file/schema/digest envelope; maintenance validates exact format, retained DB hash and complete DDL before atomic restore. CAS-41 requires the verified copy's active physical `quarantined_payload_count`, strictly checked before restore diagnosis. |
 | Source settings input / frozen job plan | Local acquisition configuration. `source_service`, `repository_identity` and `job_plans` validate supported settings, Source registration, saved plan ownership and credential references. Frozen Source registrations/settings are protected by the job plan FK table and checked before execution. |
 | Query/page cursor and CLI JSON responses | Output/pagination protocol, not admitted portable evidence. Query cursor decoding checks its existing request identity and catalog revision. |
 
 ## Production boundaries and executable evidence
 
-Packaged `resources/json_contracts.sql` is generated by `guard_sql()` and installed last by the single schema composer. It uses standalone SQL, without a connection-specific callback. INSERT/UPDATE guards validate authored shapes, duplicates, canonical references, nested target existence and owner/membership boundaries. Existing typed FKs and publication/DAG/Git manifest guards remain authoritative for native manifests.
+Packaged `resources/json_contracts.sql` is generated by `guard_sql()` and installed last by the single schema composer. It uses standalone SQL, without a connection-specific callback. INSERT/UPDATE guards validate authored shapes, duplicates, canonical references, nested target existence and owner/membership boundaries. Current-acquisition and field-evidence guards additionally enforce capture relationships and actual current-value paths. Existing typed FKs and publication/DAG/Git manifest guards remain authoritative for native manifests.
 
 `ParserModel` validates profile definitions, verification criteria/evidence, result derivation and input/output manifests at application writer boundaries. `ApiFacts.finish` validates exact completion evidence, original 304 observation/result/fetch/payload and named root/child collection membership. Name observation and identity-evidence writers use the same registry. Exchange validates export, includes typed JSON dependency closure, and validates again on import/promotion after local-ID remapping. An explicit full catalog validation audits all admitted authored records; quick validation checks exhaustive schema classification.
 
-`tests/integration/test_catalog3_json_contracts.py` covers canonical/nested/foreign/wrong-kind references, logical payload identity and owner acquisition, duplicate properties/reference set semantics, missing multiple targets, opaque provider data, future declarations, reopened promotion and record permutations. Independent attacks in `test_catalog3_remaining_adversarial.py` cover Source membership arrays, nested verification, delayed Git raw membership and embedded NUL encodings in Git OIDs and parser-definition digests. Installed distribution tests verify the registry, SQL resource/generator equality and populated catalog audit. No prior test is removed: old invalid-header fixtures now assert early rejection and retain actual child-row SQL ownership attacks. Four malformed code-role reader fixtures across ordinary and diagnostic queries now assert rejection before admission; their malformed forms remain covered, without creating unsupported invalid current facts. Valid missing-acquisition diagnostics remain covered separately.
+`tests/integration/test_catalog3_json_contracts.py` covers canonical/nested/foreign/wrong-kind references, logical payload identity and owner acquisition, duplicate properties/reference set semantics, missing multiple targets, opaque provider data, future declarations, reopened promotion and record permutations. Independent attacks in `test_catalog3_remaining_adversarial.py` cover Source membership arrays, nested verification, delayed Git raw membership and embedded NUL encodings in Git OIDs and parser-definition digests. Current projection/transfer follow-up tests cover inherited clocks, detached snapshots and invalid proof paths. Installed distribution tests check the registry, SQL resource/generator equality and populated catalog audit. Invalid-header and code-role reader fixtures assert early rejection while retaining child-row ownership attacks and valid missing-acquisition diagnostics. Final schema 15 acceptance is recorded separately by the integration workflow.

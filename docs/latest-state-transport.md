@@ -65,9 +65,11 @@ arguments and GraphQL request bodies are not archived.
 
 ## Failure behavior and observation context
 
-Expected recorder failures use `RecordingError`. The transport emits a visible
-`RuntimeWarning` and retains a bounded diagnostic list containing only error
-code, observation time and attempt. Otherwise valid responses continue to the
+Expected recorder failures use `RecordingError`. The transport retains a sanitized diagnostic before best-effort
+`RuntimeWarning` emission. Warning-as-error filters and failing warning output
+do not invalidate the response. Both transport and collection aggregation keep
+the last 100 entries, containing only an allowlisted code (at most 32 characters),
+observation time and attempt. Unknown callback codes become `ARCHIVE_FAILURE`. Otherwise valid responses continue to the
 provider parser. Unexpected exceptions raised by the recorder callback become
 the generic `ARCHIVE_FAILURE` diagnostic without exposing exception text.
 Cancellation and transport, parsing, catalog persistence and still-required
@@ -114,6 +116,8 @@ current-state rows. Corruption of a domain text body or required immutable input
 remains a catalog integrity failure.
 
 Focused synthetic regression evidence lives in
-`tests/unit/test_transport_recording.py`, including disabled/unavailable modes,
+`tests/unit/test_transport_recording.py`,
+`tests/unit/test_recording_followup.py` and
+`tests/integration/test_recording_followup.py`, including disabled/unavailable modes,
 decoded-byte identity, credential filtering, retry/failure recording, bounded
 reading and corrupt/missing archive behavior.

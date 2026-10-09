@@ -385,6 +385,12 @@ class GitHubCollector:
             ),
         )[0]
 
+    def _retain_recording_diagnostics(self, response):
+        self.recording_diagnostics.extend(
+            response.extensions.get("repo_catalog_recording_diagnostics", [])
+        )
+        del self.recording_diagnostics[:-100]
+
     def request_get(self, url, repo=None, **kwargs):
         seen = set()
         while True:
@@ -392,9 +398,7 @@ class GitHubCollector:
                 raise CatalogError("PAGINATION_CYCLE", "API redirect cycle")
             seen.add(url)
             response = self.http.request("GET", url, **kwargs)
-            self.recording_diagnostics.extend(
-                response.extensions.get("repo_catalog_recording_diagnostics", [])
-            )
+            self._retain_recording_diagnostics(response)
             if response.status_code not in (301, 302):
                 return response
             target = urljoin(url, response.headers.get("location", ""))
@@ -1583,11 +1587,7 @@ class GitHubCollector:
                         self.http.graphql,
                         json={"query": root_query, "variables": variables},
                     )
-                    self.recording_diagnostics.extend(
-                        response.extensions.get(
-                            "repo_catalog_recording_diagnostics", []
-                        )
-                    )
+                    self._retain_recording_diagnostics(response)
                     uncommitted = True
                     payload = response.json()
                     self.graphql_errors(payload, "data", "repository", "pullRequest")
@@ -1990,9 +1990,7 @@ class GitHubCollector:
                         "pr_number": pr["provider_change_request_number"],
                     },
                 )
-                self.recording_diagnostics.extend(
-                    response.extensions.get("repo_catalog_recording_diagnostics", [])
-                )
+                self._retain_recording_diagnostics(response)
                 uncommitted = True
                 payload = response.json()
                 self.graphql_errors(payload, "data", "node")
@@ -2127,9 +2125,7 @@ class GitHubCollector:
 
         try:
             response = self.http.request("GET", self.http.base + "/user")
-            self.recording_diagnostics.extend(
-                response.extensions.get("repo_catalog_recording_diagnostics", [])
-            )
+            self._retain_recording_diagnostics(response)
             identity = response.json()
             principal = identity.get("id") or identity.get("login")
             if not principal:
@@ -2288,11 +2284,7 @@ class GitHubCollector:
 
         try:
             identity_response = self.http.request("GET", self.http.base + "/user")
-            self.recording_diagnostics.extend(
-                identity_response.extensions.get(
-                    "repo_catalog_recording_diagnostics", []
-                )
-            )
+            self._retain_recording_diagnostics(identity_response)
             identity = identity_response.json()
             permissions = identity_response.headers.get("x-oauth-scopes")
             self.facts.permissions = (

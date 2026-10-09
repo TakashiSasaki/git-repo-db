@@ -1,6 +1,20 @@
 # Integrated data model handoff
 
-## Current schema 14 handoff
+## Current schema 15 handoff
+
+Start from PR #13 HEAD `db3a5ecfbf95b4c1318198aa308ca6dc749876a1` on
+`refactor/latest-state-transport`. The follow-up branch is
+`fix/current-state-schema-closure`, stacked on that verified checkpoint.
+[Current schema closure](current-state-schema-closure.md) describes per-field
+knowledge/evidence, typed staging, original transfer provenance, receiver-local
+checks and nonfatal optional recording. [Column liveness](current-state-schema-liveness.md)
+and [before/after inventory](current-state-schema-inventory.md) explain retained
+columns and actual removals. Schema 15 initializes fresh; earlier unreleased
+catalogs/backups are rejected. Final local acceptance is recorded in
+[the follow-up receipt](validation/synthetic/2026-10-09-current-state-schema-closure.md);
+exact submitted HEAD and hosted acceptance are recorded in the PR body.
+
+## Historical schema 14 handoff
 
 Current work starts from PR #12 `a3a4cb7482d42709f79d137b802f1789e3aa45cb`
 on `feat/complete-model-contracts`; the implementation branch is
@@ -111,7 +125,7 @@ uv run --no-sync pytest tests/packaging
 
 The generator rejects a changed implementation/schema snapshot or failed report. The final two commands deliberately run without the bootstrap flag.
 
-## Current schema 13 acceptance
+## Historical schema 13 acceptance
 
 Final local acceptance uses the genuine packaged parser artifact without bootstrap.
 The machine-readable receipt records commands, JUnit hashes, excluded tests,

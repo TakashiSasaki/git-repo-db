@@ -59,6 +59,8 @@ _CONTEXT_FIELDS = {
     "parent_kind",
     "parent_review_kind",
     "reply_kind",
+    "field_evidence",
+    "field_evidence_json",
 }
 
 

@@ -2,7 +2,7 @@
 
 任意のGit取得先とGitHubのPR・通常IssueをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PRタイトル/本文/会話コメントの観測履歴を永続化します。通常Issueとそのコメント、レビュー概要とレビューコメントは、各リソースの最新受理状態を保存します。
-通常ランタイムは catalog3、現在の schema version は **14** です。entity ID と FK は `repository_uuidv4`、`git_object_id`、`document_observation_id` のように意味を明示します。絶対時刻は Unix epoch マイクロ秒の INTEGER で保持し、`observed_at_us` のように単位を付けます。[現行データモデル](docs/data-model.md)と[組立て済み packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)が正本です。旧開発 DB と v2 importer は対応しません。Linux のローカル filesystem を対象とし、Python の要件は package metadata に記載しています。変更範囲・実測検証・残る制限は[実装対応表](docs/latest-state-transport-implementation.md)と[統合 handoff](docs/model-integration-handoff.md)を参照してください。過去の検証記録は schema 14 の最終受入を意味しません。
+通常ランタイムは catalog3、現在の schema version は **15** です。entity ID と FK は `repository_uuidv4`、`git_object_id`、`document_observation_id` のように意味を明示します。絶対時刻は Unix epoch マイクロ秒の INTEGER で保持し、`observed_at_us` のように単位を付けます。[現行データモデル](docs/data-model.md)と[組立て済み packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)が正本です。旧開発 DB と v2 importer は対応しません。Linux のローカル filesystem を対象とし、Python の要件は package metadata に記載しています。変更範囲・実測検証・残る制限は[構造改善の対応記録](docs/current-state-schema-closure.md)、[実装対応表](docs/latest-state-transport-implementation.md)と[統合 handoff](docs/model-integration-handoff.md)を参照してください。過去の検証記録は schema 15 の最終受入を意味しません。
 
 ## 開発・導入
 
@@ -52,13 +52,14 @@ GitHubは` sources add github --owner OWNER`で登録します。APIの認証は
 GitHub sourceの`--clone-url-override REPO_ID=URL`は、明示的なテスト設定や既存ローカル取得元への接続に使えます。
 
 catalog3 はRepo IDとサービスの `service_instance_uuidv4` 名前空間、native ID、取得URL、sourceを分離します。PR履歴文書は自然キーで識別し、観測から本文のSHA-256を直接参照します。通常Issue/コメントは `issue_resources`、レビュー/レビューコメントは `review_resources` の各共有物理テーブルを使い、最新状態から正確な本文を参照します。Issueの恒久IDと現在の所属repo・番号は別です。
+部分応答で未提供の値には、それを実際に観測した時刻・取得元の根拠を保持します。古い完全応答が後着しても未観測の項目を補完でき、同時刻に実際に観測した異なる値は競合として残します。Issue移動時はコメントの現在所属を更新し、過去の取得元とendpointを保持します。最終確認時刻は受信側の正常なlive取得だけで更新し、importや再解析で新しい確認を装いません。
 SSHとHTTPS、ローカルとネットワークのマウントpathを同じRepo IDの取得先として明示登録できます。
 Sourceにはローカルな `source_id` と恒久的な `source_registration_uuidv4` があります。`--source` はどちらでも指定でき、曖昧な場合は `local:ID` / `registration:UUID` で区別します。service名の重複は許容しますが、同名が複数あれば `--instance UUID` を指定してください。
 
 GitLab/Gitea/GitoliteなどのGitデータは` sources add git-url`で登録できます。GitLab/Giteaの自動列挙・MR/PR API adapterは後続範囲です。
 登録例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
 
-HTTPメッセージの補助記録は `catalog.toml` の `github.record_messages = false` が既定です。有効時は `transport-archive/` に記録し、期待される記録障害を診断として表示して有効な収集を続けます。通常Issue/レビューの照会・検索・交換・復元は、このarchiveを必要としません。記録表現、秘密情報の除外、読取り制限は[通信記録](docs/latest-state-transport.md)を参照してください。
+HTTPメッセージの補助記録は `catalog.toml` の `github.record_messages = false` が既定です。有効時は `transport-archive/` に記録します。記録障害のコードは許可された値へ制限し、transport診断は最新100件まで保持します。警告表示の失敗やwarnings-as-errorsでも有効な収集を続けます。通常Issue/レビューの照会・検索・交換・復元は、このarchiveを必要としません。記録表現、秘密情報の除外、読取り制限は[通信記録](docs/latest-state-transport.md)を参照してください。
 
 ## 照会
 
@@ -122,4 +123,4 @@ uv run --no-sync python scripts/demo.py \
 実アカウントを不要にし、親pytestと子Pythonプロセスの外部通信を遮断します。Gitはfile transportに限定します。
 demoは新規/空directoryにfixtureを生成し、収集、更新、clone実回収、offline照会、再索引、backup/別state復元を検証します。
 
-詳細は[CLI仕様](docs/cli.md)、[アーキテクチャ](docs/architecture.md)、[データモデル](docs/data-model.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)、[実装状況](docs/implementation-status.md)を参照してください。
+詳細は[CLI仕様](docs/cli.md)、[アーキテクチャ](docs/architecture.md)、[データモデル](docs/data-model.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[schema 15の完全一覧](docs/current-state-schema-inventory.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)、[実装状況](docs/implementation-status.md)を参照してください。

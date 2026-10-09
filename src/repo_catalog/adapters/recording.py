@@ -22,6 +22,17 @@ from repo_catalog.domain.time import validate_epoch_us
 MAX_BODY_BYTES = 32 * 1024 * 1024
 MAX_METADATA_BYTES = 64 * 1024
 BODY_REPRESENTATION = "http-content-decoded-v1"
+_ERROR_CODES = frozenset(
+    {
+        "ARCHIVE_ARGUMENT",
+        "ARCHIVE_CORRUPT",
+        "ARCHIVE_FAILURE",
+        "ARCHIVE_FORMAT",
+        "ARCHIVE_IO",
+        "ARCHIVE_LIMIT",
+        "ARCHIVE_MISSING",
+    }
+)
 _REQUEST_HEADERS = frozenset(
     {
         "accept",
@@ -64,12 +75,19 @@ _HINTS = frozenset(
 )
 
 
+def recording_error_code(code):
+    """Keep arbitrary recorder-supplied text out of operational diagnostics."""
+    if type(code) is str and len(code) <= 32 and code in _ERROR_CODES:
+        return code
+    return "ARCHIVE_FAILURE"
+
+
 class RecordingError(Exception):
     """Expected capture/read failure that cannot invalidate domain data."""
 
     def __init__(self, code, message):
         super().__init__(message)
-        self.code = code
+        self.code = recording_error_code(code)
 
 
 class MessageRecorder(Protocol):

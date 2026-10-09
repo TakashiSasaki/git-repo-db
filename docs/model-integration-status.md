@@ -1,20 +1,32 @@
 # Design decision implementation status
 
 Baseline: PR #10 (`1c69a868f65b9637a7b8cf00d2c68a4ba05b2faa`).
-Current implementation: schema **14**, branch `refactor/latest-state-transport`, stacked on PR #12 HEAD `a3a4cb7482d42709f79d137b802f1789e3aa45cb`. The baseline column and historical receipts remain unchanged.
-`implemented` describes code and scoped contract evidence, not release certification. `partial` names a remaining supported-flow gap. `not_applicable / retired` records an intentionally removed feature. The latest-state task supersedes mandatory normalized histories only for ordinary Issues/comments and reviews/review-comments. PR identity/title/body/conversation history, Git and independent thread histories retain their contracts. Final schema 14 local acceptance passed: **1,311 ordinary + 2 isolated wheel/sdist tests**, no bootstrap and zero failures/errors/skips. DDL/FK/integrity, 55-field JSON registry and static checks passed. Exact submitted HEAD/tree and hosted CI belong in the PR body; old successful receipts remain historical checkpoints.
+Current implementation: schema **15**, branch `fix/current-state-schema-closure`,
+stacked on PR #13 HEAD `db3a5ecfbf95b4c1318198aa308ca6dc749876a1`.
+`implemented` describes code and scoped evidence, not release certification.
+The prior schema 14 checkpoint passed 1,311 ordinary and two installed tests;
+that is historical evidence for its exact tree, not schema 15 acceptance.
 
-The authoritative scoped reconciliation is [latest-state-transport-implementation.md](latest-state-transport-implementation.md); [latest-state-transport.md](latest-state-transport.md) specifies optional recording. The 113 older identifiers below are retained for traceability and do not cover every new current-state boundary.
+The current boundary corrections and evidence are in
+[current-state-schema-closure.md](current-state-schema-closure.md), with
+[column liveness](current-state-schema-liveness.md) and
+[before/after inventory](current-state-schema-inventory.md).
+Optional recording is specified in [latest-state-transport.md](latest-state-transport.md).
+The 113 older identifiers below retain their baseline traceability; unchanged
+historical receipts are preserved. Final schema 15 local acceptance passed
+1,452 ordinary cases and both isolated installed variants without bootstrap,
+failures, errors or skips. [The exact local receipt](validation/synthetic/2026-10-09-current-state-schema-closure.md)
+and the submitted PR body distinguish local and hosted evidence.
 
 ## Later decisions and current implementation scope
 
 | Scope | User decision | Implementation | Verification status |
 |---|---|---|---|
-| Ordinary Issues/comments | Latest accepted state per resource; one shared physical store; Issue identity independent of repository membership | `issue_resources`, common admission, standard `sync issue/all`, offline `issue list/show/comments`, `search issue` | Focused evidence is tracked in the implementation report; final ordinary and installed acceptance passed (1,311 + 2), no bootstrap. |
-| Reviews/comments | Latest accepted state per resource in one shared store | `review_resources`; redundant marker/history paths removed; independent review/reply/thread and stable code references retained | Focused current/review/query regressions; final ordinary and installed acceptance passed (1,311 + 2), no bootstrap. |
-| Supplementary HTTP archives | Recording supported but not required for ordinary current-state use | Transport recorder/reader ports; `github.record_messages=false`; visible expected recording failures; bounded read-only inspect/reparse | `tests/unit/test_transport_recording.py`; final ordinary and installed acceptance passed (1,311 + 2), no bootstrap. |
-| Collection/exchange | Required scope/member/terminal evidence independent of optional archives | Immutable current-resource page receipts; full/selective single-repository exchange; shared update/conflict/dependency admission | Current collection/exchange tests; final ordinary and installed acceptance passed (1,311 + 2), no bootstrap. |
-| CAS-41 | Required active physical quarantine count in backup manifests | Copied verified count; strict nonnegative int64 JSON integer; compare before restore diagnostic scan; full-byte checks retained | 39 focused maintenance/CAS/e2e checks passed on Python 3.12.14 / SQLite 3.53.1 without bootstrap; final ordinary and installed acceptance passed (1,311 + 2), no bootstrap. |
+| Ordinary Issues/comments | Latest accepted state per resource; one shared physical store; Issue identity independent of repository membership | `issue_resources`, common admission, standard `sync issue/all`, offline `issue list/show/comments`, `search issue` | Focused evidence is tracked in the implementation report; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
+| Reviews/comments | Latest accepted state per resource in one shared store | `review_resources`; redundant marker/history paths removed; independent review/reply/thread and stable code references retained | Focused current/review/query regressions; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
+| Supplementary HTTP archives | Recording supported but not required for ordinary current-state use | Transport recorder/reader ports; `github.record_messages=false`; visible expected recording failures; bounded read-only inspect/reparse | `tests/unit/test_transport_recording.py`; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
+| Collection/exchange | Required scope/member/terminal evidence independent of optional archives | Immutable current-resource page receipts; full/selective single-repository exchange; shared update/conflict/dependency admission | Current collection/exchange tests; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
+| CAS-41 | Required active physical quarantine count in backup manifests | Copied verified count; strict nonnegative int64 JSON integer; compare before restore diagnostic scan; full-byte checks retained | 39 focused maintenance/CAS/e2e checks passed on Python 3.12.14 / SQLite 3.53.1 without bootstrap; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
 | D2 | `not_applicable / retired` | No legacy importer or identity fabrication | Retirement is deliberate; historical receipts preserved. |
 | LFS/attachments | Pointer bytes / source text and embedded URLs only | No object-body download or automatic URL fetching | Existing Git/text preservation scope; body acquisition deferred. |
 
@@ -129,12 +141,12 @@ All code paths below are relative to `src/repo_catalog/`; tests are relative to 
 | CAS-38 | Backup DB plus required adjacent manifest | partial | implemented | Nonoverwriting adjacent DB+manifest pair; incomplete pair is invalid and preserved (C). |
 | CAS-39 | Full source hash scan before backup | unimplemented | implemented | Backup scans source first and records newly detected quarantine before copying (C). |
 | CAS-40 | Full copy hash scan before publication | unimplemented | implemented | Backup copy scans all bytes and rejects unexplained new corruption before manifest publication (C). |
-| CAS-41 | Quarantine count in backup manifest | pending | implemented | Required `quarantined_payload_count`, strict JSON int 0..2^63-1 excluding bool. Count verified-copy active physical rows; compare after checksum/identity before diagnosis. Positive counts allowed; mismatches/unexplained corruption reject and retain stage (C). Focused 39 checks passed; final ordinary and installed acceptance passed (1,311 + 2), no bootstrap. |
+| CAS-41 | Quarantine count in backup manifest | pending | implemented | Required `quarantined_payload_count`, strict JSON int 0..2^63-1 excluding bool. Count verified-copy active physical rows; compare after checksum/identity before diagnosis. Positive counts allowed; mismatches/unexplained corruption reject and retain stage (C). Focused 39 checks passed; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
 | CAS-42 | 304 exchange includes original body evidence | unimplemented | implemented | 304 exchange includes original observation, result, fetch and body dependencies; truncated original stays staged, foreign-owner original rejected (X). |
 | CAS-43 | Dedup bytes within each exchange unit | unimplemented | implemented | Each physical byte object occurs once within a unit; separate repository units each include their dependency bytes (X). |
 | CAS-44 | Include original acquisition owner context | unimplemented | implemented | 304 dependency closure contains original fetch plus owner/binding/Source context and payload; receiver remaps local IDs (X). |
 | CAS-45 | Do not install received validator cache | unimplemented | implemented | Immutable fetch and 304 evidence retain exact response ETag/status, including rejected acquisition staging; unrelated secret-bearing headers are excluded. Received validator-cache rows are never installed (W, X). |
-| CAS-46 | Partial collection dependency closure | unimplemented | implemented | Historical fetch/collection selectors retain required FK/JSON/304/DAG/result/acquisition closure (S, X, N). Current collection selection adds required current rows/parents/bodies/proofs without pulling optional archive history (LS, LC); final schema14 isolated wheel/sdist verification passed. |
+| CAS-46 | Partial collection dependency closure | unimplemented | implemented | Historical fetch/collection selectors retain required FK/JSON/304/DAG/result/acquisition closure (S, X, N). Current collection selection adds required current rows/parents/bodies/proofs without pulling optional archive history (LS, LC); schema 14 installed checkpoint passed; current evidence is linked above. |
 | CAS-47 | One repository per exchange unit | unimplemented | implemented | Exchange unit root is one repository UUID; references cannot expand to unrelated repository acquisitions (X). |
 | CAS-48 | Shared source context without other repositories | unimplemented | implemented | Referenced Source/service context included with target repository relation only; receiving operational settings remain independent (X, A). |
 | CAS-49 | No unsupported completeness in partial exchange | unimplemented | implemented | Historical completion retains exact markers/fetch membership/code/Git inputs/publications (S, R, N). Current completion uses immutable scoped page/member/terminal receipts independent of supplemental bytes; missing proof cannot become complete. Receiver conflicts remain unresolved and latest partial/unknown/conflict never falls back to older complete claims (LC, R). |

@@ -612,13 +612,14 @@ def test_production_github_complete_proofs_cover_the_asserted_scope(
         assert len(receiver_code) == 3
 
     def portable_query(value):
+        """Compare domain state without local handles or receiver-local checks."""
         if isinstance(value, list):
             return [portable_query(item) for item in value]
         if isinstance(value, dict):
             return {
                 key: portable_query(item)
                 for key, item in value.items()
-                if key != "source_id"
+                if key not in {"source_id", "last_checked_at_us"}
                 and not (key.endswith("_id") and type(item) is int)
             }
         return value
@@ -642,6 +643,17 @@ def test_production_github_complete_proofs_cover_the_asserted_scope(
         "source": source_thread.coverage.missing,
         "receiver": received_thread.coverage.missing,
     }
+    # A successful live check belongs to the catalog that performed it.
+    # Imported thread bodies and capture evidence remain portable; importing
+    # them cannot assert that this receiver contacted the provider.
+    assert all(
+        type(item["last_checked_at_us"]) is int
+        and item["last_checked_at_us"] >= item["observed_at_us"]
+        for item in source_thread.data["items"]
+    )
+    assert all(
+        item["last_checked_at_us"] is None for item in received_thread.data["items"]
+    )
     assert portable_query(received_thread.data["items"]) == portable_query(
         source_thread.data["items"]
     )

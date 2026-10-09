@@ -933,13 +933,11 @@ def pr_query(query, command, options):
                     },
                 )
         else:
-            selection = o.get("document_observations", "current")
             if o.get("observation") and not s.one(
                 "SELECT 1 FROM document_observations WHERE document_observation_id=? AND change_request_id=?",
                 (o["observation"], pr["change_request_id"]),
             ):
                 raise CatalogError("NOT_FOUND", "Document observation not found in PR")
-            current = selection == "current" and not o.get("observation")
             docs = _document_rows(query, pr, o)
             for doc in docs:
                 query.check()
@@ -967,25 +965,15 @@ def pr_query(query, command, options):
                 ]
                 thread = None
                 if review_thread_provider_resource_id:
-                    if current or doc["resource_lifecycle"] == "current":
-                        thread = s.one(
-                            "SELECT payload,parsed_result_uuidv4 FROM current_review_thread_observations WHERE change_request_id=? AND provider_resource_id=?",
-                            (
-                                doc["change_request_id"],
-                                review_thread_provider_resource_id,
-                            ),
-                        )
-                    else:
-                        # Historical projections do not attach a current thread
-                        # interpretation from an unrelated parsing execution.
-                        thread = s.one(
-                            "SELECT payload,parsed_result_uuidv4 FROM review_thread_observations WHERE change_request_id=? AND provider_resource_id=? AND parsed_result_uuidv4=?",
-                            (
-                                doc["change_request_id"],
-                                review_thread_provider_resource_id,
-                                doc["parsed_result_uuidv4"],
-                            ),
-                        )
+                    # Only current review resources carry a thread reference;
+                    # retained PR documents have no review-thread association.
+                    thread = s.one(
+                        "SELECT payload,parsed_result_uuidv4 FROM current_review_thread_observations WHERE change_request_id=? AND provider_resource_id=?",
+                        (
+                            doc["change_request_id"],
+                            review_thread_provider_resource_id,
+                        ),
+                    )
                 thread_payload = json.loads(thread["payload"]) if thread else {}
                 if any(
                     o.get(option, "any") != "any"
