@@ -7,14 +7,17 @@ JSON modeのstdoutは結果専用です。public schemaは同梱`resources/schem
 | 分類 | コマンド |
 |---|---|
 | 初期化・診断 | init、doctor |
-| 収集元・収集 | sources add、discover、sync git/pr/all |
+| 収集元・収集 | sources add、discover、sync git/pr/issue/all |
 | サービス・接続 | instances add/list/show、endpoints add/list/prefer、repos bind |
 | job | jobs list/show/resume/cancel |
-| DB・旧形式救済 | import-v2、db finalize/check/backup/restore |
+| DB | db check/verify-payloads/repair-payload/backup/restore |
 | cache・索引 | cache status/gc、index rebuild |
 | Git照会 | repos list/show、snapshots list/show、refs list、tree list、file show、commits list/show/compare |
-| 検索 | search path/code/commits/hash/pr |
+| 検索 | search path/code/commits/hash/pr/issue |
 | PR照会 | pr list/show/documents/thread/timeline |
+| 通常Issue照会 | issue list/show/comments |
+| parser・補助通信 | parser status/register/verify/trust/invalidate/select-profile/select-fact/reparse/admit-decision/inspect-message/reparse-message |
+| 交換 | exchange export/import/staging |
 | 原文 | content show/hydrate |
 | 状態 | coverage、status |
 | 独立target照会 | target repos/commit/tree/file/pr/search |
@@ -30,8 +33,20 @@ OIDは`sha1:<40 hex>`または`sha256:<64 hex>`、refは完全名を指定しま
 GitHub API sourceは`--instance INSTANCE`と`--token-env-var ENV_NAME`を指定でき、秘密値は保存しません。
 `repos list/show --source SOURCE_ID`は追加sourceから見つかった既存repoも対象にします。
 `endpoints add --repo REPO_ID --url URL [--label LABEL] [--preferred]`、`endpoints prefer --repo REPO_ID --endpoint ENDPOINT_ID`で取得先を管理します。
-`sync git/pr/all --repo REPO_ID --endpoint ENDPOINT_ID`はそのrepoの取得先を明示し、複数repo指定との組合せを拒否します。
+`sync git/pr/issue/all --repo REPO_ID --endpoint ENDPOINT_ID`はそのrepoの取得先を明示し、複数repo指定との組合せを拒否します。
 操作例は[リポジトリ識別と取得先](repository-identity.md)を参照してください。
+
+`sync issue` は通常Issueのopen/closedと各コメント、`sync all` はGit・PR・通常Issueを収集します。Issues APIに含まれるPRは通常Issueから除外し、PR会話コメントには従来の履歴保存を適用します。
+
+```bash
+repo-catalog --state-dir /tmp/disposable-catalog sync issue --repo REPO_ID
+repo-catalog --state-dir /tmp/disposable-catalog issue list --repo REPO_ID --state closed
+repo-catalog --state-dir /tmp/disposable-catalog issue show --repo REPO_ID --provider-issue-number 7
+repo-catalog --state-dir /tmp/disposable-catalog issue comments --repo REPO_ID --provider-issue-number 7
+repo-catalog --state-dir /tmp/disposable-catalog search issue --repo REPO_ID --literal 'saved text'
+```
+
+Issue show/commentsは一つのrepoと `--provider-issue-number` または `--provider-resource-id` を指定します。番号がbinding間で曖昧な場合は `--binding BINDING_UUID` で区別します。`--source`、`--state all|open|closed`、`--author`、`--document-author`、`--parser-profile` で選択を絞れます。Issueの恒久識別はserviceとprovider IDで、現在のrepo番号とは別です。各Issue/commentの最新受理本文を返し、競合・未到着親・profile不適格をpartialとして公開します。
 
 `current`は全heads先端、`history`は選択snapshotのheads/tagsから到達する履歴、`recorded`は過去の公開rootも含みます。
 PR rootはhistory/recordedで`--pr`または`--ref-kind pr-head|pr-related`により明示します。
@@ -45,9 +60,9 @@ raw pathの正本はpath_b64で、UTF-8不正時のpath_utf8はnull、安全表�
 PR検索はtitle/body/issue-comment/review/review-commentを区別します。
 PR番号は `--provider-change-request-number`、種別は `--change-request-kind pull_request|merge_request` で指定します。正規化された結果でも `provider_change_request_number` と `change_request_kind` を使い、raw payload 内のprovider固有キーは変更しません。
 `pr thread` は `--repo REPO_ID --provider-change-request-number NUMBER --provider-resource-id PROVIDER_RESOURCE_ID` でChange Requestを先にscopeし、その中のreview threadを選択します。`provider_resource_id` 単独のprovider全体一意性は仮定しません。選択threadのコメント一覧の終端を保存証拠から確認できない場合は、保存済み本文がすべて存在してもpartialになります。
-`--document-observations current|all`で現在採用している観測と保存済みの全観測を選びます。既定は `current` です。
+`--document-observations current|all` はPR title/body/PR会話issue-commentの現在採用観測と保存済み全観測を選びます。既定は `current` です。review/review-commentはどちらの指定でも各リソースの最新受理状態です。レビュー編集前の本文は通常検索に出しません。
 `--document-kind` と `--provider-change-request-document-id` で文書自然キーの構成要素を指定でき、`--observation INTEGER` で保存観測を選択します。
-結果は `document_kind`、`provider_change_request_document_id`、`document_observation_id`、`text_body_sha256`、`document_observed_at_us`、`document_current_selected` 等を返します。文書ID・版IDは返さず、旧オプションの互換別名もありません。
+PR履歴文書の結果は `document_kind`、`provider_change_request_document_id`、`document_observation_id`、`text_body_sha256`、`document_observed_at_us`、`document_current_selected` 等を返します。current-stateの結果はprovider更新/観測/最終確認/解析時刻とparser/profile帰属を持ち、履歴観測の代替IDを捏造しません。Issue系は `resource_kind`、`provider_resource_id`、`provider_issue_number` を使います。詳細は[application JSON契約](application-json-contracts.md)を参照してください。
 取得開始前や観測間の未観測編集、非公開/削除済みで取得不能な履歴は保証しません。
 
 list/searchは`--limit`（既定100、上限1000）と`--cursor`を持ちます。
@@ -70,7 +85,7 @@ PR照会の完全性は、同じ読み取りスナップショット内で要求
 content showは保存rawのみ、既定64 KiB、最大1 MiBの範囲をbase64で返します。
 hydrateは明示的な再取得で、保存profile対象外や取得元から失われた原文は復元できません。
 
-## catalog3の通常運用と旧形式救済
+## catalog3の通常運用
 
 `init`は同梱catalog3 DDLから直接作成します。通常の収集・照会・検索・保守はcatalog3だけを扱い、旧形式のmigrationを実行しません。read-only照会は通常のSQLiteロックとトランザクションsnapshotを使い、更新中のDBやWALをimmutableとして扱いません。照会は取得・Git実行・索引修復を行わず、派生FTSやANALYZEの存在でschema全体のhashを毎回比較しません。
 
@@ -87,30 +102,34 @@ repo-catalog --state-dir /tmp/disposable-catalog db backup --output /tmp/disposa
 repo-catalog --state-dir /tmp/disposable-restored db restore --input /tmp/disposable-backup.sqlite3
 ```
 
-backupはSQLite backup APIで通常DBの正規化済み事実・取得payloadと履歴・coverageを含むsnapshotを作り、checksum/configurationを別manifestへ保存します。別のimport workspaceにあるtyped archive・変換診断は含めません。cache内容はbackupの正本に含めません。restoreは明示した新規または空の`--state-dir`だけへ行い、DB instance IDを変更して元catalogのcursorを無効にします。過去のjobs/leases/reservationsとcacheを稼働状態へ戻しません。
+schema 14を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
 
-v2救済は明示した別stateへ、offlineのguard付きworkerで実行します。元DB/cacheの書換えと取得を禁止し、source bytes、ID、nullable値、履歴と変換診断を別のimport workspaceへ保持し、正規化済み事実・観測・coverageを通常catalogへ保存します。中断後は同じ引数で再実行します。
+backupはSQLite backup APIでdomainの現在状態・必要な本文・PR/Git/スレッド履歴・coverageを含むsnapshotを作り、checksum/configuration/identityと `quarantined_payload_count` を隣接manifestへ保存します。件数はactive物理隔離行数の非負JSON整数（bool除外、最大 `9223372036854775807`）です。restoreは未作成の `--state-dir` だけへ行い、checksum/identityの後、診断前に件数を照合して全bytesを検証します。正の一致件数を許容し、件数不一致や未説明の破損は失敗stageを保持して拒否します。cacheと任意通信archiveはbackupへ含めません。DB instance IDを変更して元catalogのcursorを無効にし、過去のjobs/leases/reservationsを稼働状態へ戻しません。[運用](operations.md)に制限を記載しています。
+
+## 交換と補助通信の読取り
 
 ```bash
-repo-catalog --state-dir /tmp/disposable-import import-v2 --source /tmp/disposable-v2/catalog.sqlite3 --source-cache /tmp/disposable-v2/cache --batch-size 100 --max-batches 2
-repo-catalog --state-dir /tmp/disposable-import import-v2 --source /tmp/disposable-v2/catalog.sqlite3 --source-cache /tmp/disposable-v2/cache --batch-size 100
-repo-catalog --state-dir /tmp/disposable-import db finalize
-repo-catalog --state-dir /tmp/disposable-import repos list
+repo-catalog --state-dir /tmp/disposable-catalog exchange export --repo REPO_ID --output repository.json
+repo-catalog --state-dir /tmp/disposable-catalog exchange export --repo REPO_ID --collection COLLECTION_UUID --output selected.json
+repo-catalog --state-dir /tmp/disposable-receiver exchange import --input repository.json
+repo-catalog --state-dir /tmp/disposable-receiver exchange staging
+repo-catalog --state-dir /tmp/disposable-catalog parser inspect-message ARCHIVE_REF --max-bytes 1048576
+repo-catalog --state-dir /tmp/disposable-catalog parser reparse-message ARCHIVE_REF --context projection.json --max-bytes 1048576
 ```
 
-不完全なimportとcriticalなidentity/owner破損はfinalizeを拒否します。保存されたcurrent選択を同じownerの適切な完了済み観測へ結び付けられない場合は未解決として残し、現在照会はpartialを返します。取り込んだ過去のprocess状態をresumeで再稼働しません。欠落原文・partial pageの有用な記録は取得済み範囲として照会できます。
+全repository交換と履歴用 `--fetch FETCH_UUID` / `--collection COLLECTION_UUID` の選択を維持します。current-stateも必要な親・本文・scope/completion証拠を伴って選択します。任意archiveを必須依存へ含めず、親の後着、同一再import、順序不明の差分は共通受理/stagingへ渡します。
+
+`github.record_messages` はbooleanで既定falseです。有効時のarchiveは `STATE_DIR/transport-archive/` に保存します。recording障害は診断として見え、domain状態の照会やcoverageとは別です。`inspect-message` はcanonical UUIDv4の参照を一つ読み、`reparse-message` は保存された成功JSONを現在resource parserへ渡して投影を返します。両方とも通信とdomain書込みを行わず、reparseも新しい観測を作りません。`--max-bytes` は既定1 MiB、0から32 MiBまでです。reparseは最大1000メンバーで、context JSONには `resource_kind` と所有者・acquisition_scopeを含む `context` が必要です。Issueコメントには `parent_provider_resource_id` も明示します。archiveがない場合は補助読取りエラーになりますが、独立に保存された現在状態は利用できます。[通信記録仕様](latest-state-transport.md)と[実装対応表](latest-state-transport-implementation.md)を参照してください。
 
 ## catalog3診断読み取り
 
-`target --database PATH`は未finalizeのcatalogを調べる診断入口です。`building`には`--allow-building`が必要でpartialを返し、`rejected`は読めません。通常のSQLite read-only接続とsnapshotを使い、初期化・migration・取得・索引更新を行いません。通常操作と同じSQLite bindingの能力を使います。
+`target --database PATH` は明示したcatalogを調べる診断入口です。`building`には`--allow-building`が必要でpartialを返し、`rejected`は読めません。通常のSQLite read-only接続とsnapshotを使い、初期化・migration・取得・索引更新を行いません。通常操作と同じSQLite bindingの能力を使います。
 
 ```bash
-repo-catalog --format json target --database /tmp/disposable-import/catalog.sqlite3 --allow-building repos
-repo-catalog --format json target --database /tmp/disposable-import/catalog.sqlite3 --allow-building pr --repo REPO_ID --provider-change-request-number 7
+repo-catalog --format json target --database /tmp/disposable-catalog/catalog.sqlite3 repos
+repo-catalog --format json target --database /tmp/disposable-catalog/catalog.sqlite3 pr --repo REPO_ID --provider-change-request-number 7
 ```
 
 `target`はrepository IDの完全一致を要求し、`--limit`と`--offset`で保存履歴行を個別にページ化します。PRの`record_kind`はidentity、観測、文書、文書観測、review/thread/comment/event、code listing履歴を区別します。通常照会は現在のコード観測を評価し、`target`の診断照会は保存された過去のコード観測にも同じ取得対象の欠落チェックを行います。診断結果だけでruntime readinessやcurrent pointerを変更しません。
 
-### Import/finalization workspace
-
-`import-v2` はstate配下の `import-v2/workspace.sqlite3` を自動作成し、同じ引数での再実行時に再利用します。別途一時pathを指定する必要はありません。これはimportの旧値・対応表・進捗・診断専用で、通常catalogのテーブルではありません。`db finalize` 成功後はworkspaceなしで通常運用でき、`db backup` には含めません。未完了時の削除や、二つのDBの片方だけの移動はしないでください。workspaceと原資料の自動削除は行いません。
+歴史的なimport/finalization手順や検証receiptは過去の資料です。現行CLIの操作はこの契約と `--help` を参照してください。

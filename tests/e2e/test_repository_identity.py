@@ -197,7 +197,7 @@ def test_github_instances_and_sources_keep_api_identity_separate(catalog):
         assert db.execute("SELECT count(*) FROM review_threads").fetchone()[0] == 6
         assert (
             db.execute(
-                "SELECT count(*) FROM current_document_observations c LEFT JOIN review_threads t ON t.change_request_id=c.change_request_id AND t.provider_resource_id=c.review_thread_provider_resource_id WHERE c.kind='review-comment' AND c.review_thread_provider_resource_id IS NOT NULL AND t.provider_resource_id IS NULL"
+                "SELECT count(*) FROM eligible_review_resources c LEFT JOIN review_threads t ON t.change_request_id=c.change_request_id AND t.provider_resource_id=c.review_thread_provider_resource_id WHERE c.kind='review-comment' AND c.review_thread_provider_resource_id IS NOT NULL AND t.provider_resource_id IS NULL"
             ).fetchone()[0]
             == 0
         )

@@ -327,7 +327,7 @@ def test_nested_pagination(catalog):
             )
             assert (
                 db.execute(
-                    "SELECT count(*) FROM documents WHERE change_request_id=? AND kind='review-comment'",
+                    "SELECT count(*) FROM review_resources WHERE change_request_id=? AND kind='review-comment'",
                     (repo + ":41",),
                 ).fetchone()[0]
                 == 10201

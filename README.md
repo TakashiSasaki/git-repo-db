@@ -1,8 +1,8 @@
 # repo-catalog
 
-任意のGit取得先とGitHubのPRをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
-Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PR文書と観測履歴を永続化します。
-通常ランタイムは catalog3 です。 現在の schema version は **11** で、entity ID と FK は `repository_uuidv4`、`git_object_id`、`document_observation_id` のように意味を明示します。保存する絶対時刻は Unix epoch からのマイクロ秒を INTEGER で保持し、`observed_at_us` のように単位を付けます。[現行データモデル](docs/data-model.md)と packaged DDL が正本です。旧 catalog3 開発 DB は対応しません。Linux のローカル filesystem で検証し、Python の必要構文・API は package metadata に記載しています。検証した環境・範囲は[実行引き継ぎ](docs/schema-hardening/runtime-handoff.md)に記録しています。
+任意のGit取得先とGitHubのPR・通常IssueをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
+Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PRタイトル/本文/会話コメントの観測履歴を永続化します。通常Issueとそのコメント、レビュー概要とレビューコメントは、各リソースの最新受理状態を保存します。
+通常ランタイムは catalog3、現在の schema version は **14** です。entity ID と FK は `repository_uuidv4`、`git_object_id`、`document_observation_id` のように意味を明示します。絶対時刻は Unix epoch マイクロ秒の INTEGER で保持し、`observed_at_us` のように単位を付けます。[現行データモデル](docs/data-model.md)と[組立て済み packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)が正本です。旧開発 DB と v2 importer は対応しません。Linux のローカル filesystem を対象とし、Python の要件は package metadata に記載しています。変更範囲・実測検証・残る制限は[実装対応表](docs/latest-state-transport-implementation.md)と[統合 handoff](docs/model-integration-handoff.md)を参照してください。過去の検証記録は schema 14 の最終受入を意味しません。
 
 ## 開発・導入
 
@@ -48,15 +48,17 @@ repo-catalog --state-dir /path/to/state sync git
 
 GitHubは` sources add github --owner OWNER`で登録します。APIの認証は既定の`GH_TOKEN`、または`catalog.toml`の`github.token_env_var`で指定した環境変数を利用します。Gitの認証は既存のSSH/credential helper/クラウドGit proxyを利用し、API認証とは独立です。資格情報は環境設定等で供給し、設定ファイル・URL・コマンド引数へ埋め込まないでください。
 
-認証ユーザーの所有repoはprivate/fork/archivedを含め列挙し、PRは全状態を対象にします。少数対象のpilotは`--include-repo NAME`を繰り返して明示対象だけに限定できます。
+認証ユーザーの所有repoはprivate/fork/archivedを含め列挙し、PRは全状態、通常Issueはopen/closedの両方を対象にします。`sync issue` は通常Issueとコメントを収集し、`sync all` はGit・PR・通常Issueを収集します。少数対象のpilotは`--include-repo NAME`を繰り返して明示対象だけに限定できます。
 GitHub sourceの`--clone-url-override REPO_ID=URL`は、明示的なテスト設定や既存ローカル取得元への接続に使えます。
 
-catalog3 はRepo IDとサービスの `service_instance_uuidv4` 名前空間、native ID、取得URL、sourceを分離します。文書は自然キーで識別し、観測から本文のSHA-256を直接参照します。文書用のローカルIDと中間の版テーブルは持ちません。
+catalog3 はRepo IDとサービスの `service_instance_uuidv4` 名前空間、native ID、取得URL、sourceを分離します。PR履歴文書は自然キーで識別し、観測から本文のSHA-256を直接参照します。通常Issue/コメントは `issue_resources`、レビュー/レビューコメントは `review_resources` の各共有物理テーブルを使い、最新状態から正確な本文を参照します。Issueの恒久IDと現在の所属repo・番号は別です。
 SSHとHTTPS、ローカルとネットワークのマウントpathを同じRepo IDの取得先として明示登録できます。
 Sourceにはローカルな `source_id` と恒久的な `source_registration_uuidv4` があります。`--source` はどちらでも指定でき、曖昧な場合は `local:ID` / `registration:UUID` で区別します。service名の重複は許容しますが、同名が複数あれば `--instance UUID` を指定してください。
 
 GitLab/Gitea/GitoliteなどのGitデータは` sources add git-url`で登録できます。GitLab/Giteaの自動列挙・MR/PR API adapterは後続範囲です。
-保存済み開発 v2 データは、新規 state へオフライン import します。登録例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
+登録例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
+
+HTTPメッセージの補助記録は `catalog.toml` の `github.record_messages = false` が既定です。有効時は `transport-archive/` に記録し、期待される記録障害を診断として表示して有効な収集を続けます。通常Issue/レビューの照会・検索・交換・復元は、このarchiveを必要としません。記録表現、秘密情報の除外、読取り制限は[通信記録](docs/latest-state-transport.md)を参照してください。
 
 ## 照会
 
@@ -66,12 +68,17 @@ repo-catalog --state-dir /path/to/state refs list --repo REPO_ID
 repo-catalog --state-dir /path/to/state tree list --repo REPO_ID --ref refs/heads/main
 repo-catalog --state-dir /path/to/state search code --literal 認証
 repo-catalog --state-dir /path/to/state search pr --literal 認証 --document-observations all
+repo-catalog --state-dir /path/to/state issue list --repo REPO_ID
+repo-catalog --state-dir /path/to/state issue show --repo REPO_ID --provider-issue-number 7
+repo-catalog --state-dir /path/to/state issue comments --repo REPO_ID --provider-issue-number 7
+repo-catalog --state-dir /path/to/state search issue --literal 認証
 repo-catalog --state-dir /path/to/state --format json search hash \
   --algorithm raw-sha256 --digest ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 ```
 
 `current`は明示選択された公開snapshotのheads先端、`history`は選択snapshotのheads/tagsから到達する履歴、`recorded`は過去の公開取得rootも含む範囲です。
 PR rootは明示選択します。通常照会はDBの読取りだけで完結し、通信・Git実行・自動migration・原文再取得を行いません。
+`--document-observations all` はPRタイトル/本文/会話コメントの保存履歴を選びます。レビュー系には常に各リソースの最新受理状態を使い、編集前の本文を通常検索へ出しません。順序を証明できない更新は競合として公開し、受信順で最新値を決めません。
 
 `catalog-text-v1`は全heads先端のUTF-8 strict・NULなし・8 MiB以下の本文を可逆保存します。
 全取得対象Blobのdigestはbinaryや巨大Blobも含め記録しますが、全履歴・全binaryの原文保存ではありません。
@@ -81,11 +88,13 @@ PR rootは明示選択します。通常照会はDBの読取りだけで完結�
 
 ## 解析履歴・交換・完全性
 
-新規 DB を対象とした統合モデルです。旧 DB の移行機能はありません。通常の current は、明示選択した検証済み parser/profile と不変の選択 DAG から導出します。独立した選択が競合した場合は未解決となり、時刻や受信順で一方を選びません。
+新規 DB を対象とした統合モデルです。PR/Git/独立スレッドの履歴は、明示選択した検証済み parser/profile と不変の選択 DAG から導出します。通常Issue/レビューの可変現在状態も選択済みprofileへの帰属を確認しますが、不変解析結果の出力メンバーにはしません。独立した選択や順序不明の更新が競合した場合は未解決として扱います。
 
 ```bash
 repo-catalog --state-dir /path/to/state parser status
 repo-catalog --state-dir /path/to/state parser reparse FETCH_UUID
+repo-catalog --state-dir /path/to/state parser inspect-message ARCHIVE_REF --max-bytes 1048576
+repo-catalog --state-dir /path/to/state parser reparse-message ARCHIVE_REF --context projection.json --max-bytes 1048576
 repo-catalog --state-dir /path/to/state exchange export --repo REPO_UUID --output repository.json
 repo-catalog --state-dir /path/to/receiver exchange import --input repository.json
 repo-catalog --state-dir /path/to/receiver exchange staging
@@ -95,9 +104,9 @@ repo-catalog --state-dir /path/to/state db backup --output catalog-backup.sqlite
 repo-catalog --state-dir /path/to/new-state db restore --input catalog-backup.sqlite3
 ```
 
-再解析では取得 UID と取得時刻を保持し、新しい解析結果を追加します。通常参照へ切り替える場合は明示的な選択が必要です。交換単位は一つの repository と必要な依存・payload bytes です。Source 全体の inventory、ローカル trust、隔離状態、運用設定は通常の交換へ含めません。
+履歴の再解析では取得 UID と取得時刻を保持し、新しい解析結果を追加します。通常参照へ切り替える場合は明示的な選択が必要です。`reparse-message` は保存通信と明示contextから読取り専用の投影を返し、通常状態を書き込みません。交換単位は一つの repository と必要な依存・本文・完全性証拠です。Source 全体の inventory、ローカル trust、隔離状態、運用設定、任意通信archiveは通常の交換へ含めません。
 
-破損した物理 bytes は永続診断と隔離で扱い、明示修復だけが隔離を解除します。バックアップは隔離済み bytes と診断も保持します。復元先は未作成のパスを指定し、失敗した stage は保存します。実装・判断対応・検証結果は [統合 handoff](docs/model-integration-handoff.md)、[独立監査](docs/model-integration-audit.md)、[判断対応表](docs/model-integration-status.md) を参照してください。
+破損した物理 bytes は永続診断と隔離で扱い、明示修復だけが隔離を解除します。バックアップは隔離済み bytes と診断も保持し、manifest に active 物理隔離件数 `quarantined_payload_count` を保存します。復元は件数照合と全bytes検証を行い、正の一致件数も許容します。復元先は未作成のパスを指定し、失敗した stage は保存します。実装・判断対応・検証結果は [統合 handoff](docs/model-integration-handoff.md)、[独立監査](docs/model-integration-audit.md)、[判断対応表](docs/model-integration-status.md) を参照してください。LFSはGit pointer bytes、添付は本文と埋込みURLまで保存し、本体取得やURLの自動巡回は行いません。
 
 ## テスト・再現demo
 

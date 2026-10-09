@@ -53,6 +53,85 @@ class ApiFacts:
         self.response_identities = {}
         self.rejected_fetch = None
         self.unselected_results = set()
+        self.replaying = False
+
+    def current_context(self, repo, pr, endpoint, kind=None):
+        """Typed provider owner and acquisition scope, without retained HTTP input."""
+        binding = self.s.one(
+            "SELECT b.repository_binding_id,b.service_instance_uuidv4,s.source_registration_uuidv4 FROM repository_bindings b JOIN sources s ON s.service_instance_uuidv4=b.service_instance_uuidv4 WHERE b.repository_uuidv4=? AND s.source_id=? AND b.provider_repository_id=?",
+            (
+                repo["repository_uuidv4"],
+                repo["source_id"],
+                repo["provider_repository_id"],
+            ),
+        )
+        if binding is None:
+            raise CatalogError("SCOPE_MISMATCH", "Current resource binding is missing")
+        if kind is not None and not self.replaying:
+            fact_kind = "ordinary-issue-comment" if kind == "issue-comment" else kind
+            if (
+                self.model.ensure_scope_profile(
+                    self.profile(),
+                    repository_uuidv4=repo["repository_uuidv4"],
+                    fact_kind=fact_kind,
+                )
+                is None
+            ):
+                raise CatalogError(
+                    "PARSER_SELECTION_UNRESOLVED",
+                    "Current resource parser profile selection is unresolved",
+                )
+        scope = {
+            "repository_uuidv4": repo["repository_uuidv4"],
+            "repository_binding_id": binding["repository_binding_id"],
+            "service_instance_uuidv4": binding["service_instance_uuidv4"],
+            "endpoint": endpoint,
+            "source_registration_uuidv4": binding["source_registration_uuidv4"],
+            "principal_ref": self.principal,
+            "api_version": self.cfg["rest_api_version"],
+            "parser_profile_uuidv4": self.profile(),
+            "preservation_profile": self.s.config["preservation"]["profile"],
+            **({"change_request_id": pr} if pr is not None else {}),
+        }
+        return {
+            **{
+                key: scope[key]
+                for key in (
+                    "repository_uuidv4",
+                    "repository_binding_id",
+                    "service_instance_uuidv4",
+                )
+            },
+            **({"change_request_id": pr} if pr is not None else {}),
+            "acquisition_scope": scope,
+            "parser_profile_uuidv4": self.profile(),
+        }
+
+    def admit_current(self, candidate, base_revision):
+        from repo_catalog.adapters.sqlite.current_resources import CurrentResources
+        from repo_catalog.domain.current_state import (
+            AdmissionResult,
+            fingerprint_candidate,
+            resource_key,
+        )
+
+        if self.replaying:
+            # Reinterpreting an immutable thread input is not a new remote
+            # observation and has no implicit mutable admission authority.
+            return AdmissionResult(
+                "inspection", resource_key(candidate), fingerprint_candidate(candidate)
+            )
+
+        candidate = {**candidate, "parsed_at_us": now_us()}
+        resources = CurrentResources(self.s)
+        result = resources.admit(
+            candidate,
+            source="live",
+            base_revision=base_revision,
+            scope_context=candidate["acquisition_scope"],
+        )
+        resources.promote_staging()
+        return result
 
     def profile(self):
         if self.profile_uuid is None or not self.s.one(
@@ -322,7 +401,11 @@ class ApiFacts:
         )[0]
         response_identity = self.response_identities.get(id(response))
         if response_identity is None or response_identity[0] is not response:
-            response_identity = (response, str(uuid.uuid4()), now_us())
+            response_identity = (
+                response,
+                str(uuid.uuid4()),
+                response.extensions.get("catalog_observed_at_us", now_us()),
+            )
             self.response_identities[id(response)] = response_identity
         fetch_uuid, timestamp = response_identity[1:]
         repository = self.s.one(
@@ -395,6 +478,29 @@ class ApiFacts:
             (collection["fetch_collection_id"],),
         )
         evidence = dict(evidence or {"parser": PARSER, "terminal": True})
+        if evidence.get("kind") == "current-resource-pages-v1":
+            from repo_catalog.adapters.sqlite.current_collections import (
+                CurrentCollectionProof,
+            )
+
+            proof = CurrentCollectionProof(self.s.connection).evidence(
+                collection["fetch_collection_id"]
+            )
+            if proof != evidence:
+                raise CatalogError(
+                    "INVALID_PROVENANCE",
+                    "Current collection has no valid terminal proof",
+                )
+            self.s.execute(
+                "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,?)",
+                (
+                    collection["resume_scope_id"],
+                    collection["fetch_collection_id"],
+                    canonical(evidence),
+                    observed_at_us,
+                ),
+            )
+            return
         if (
             collection.get("kind") in {"pr-detail", "pr-code-check"}
             and "change_request_observation_uuidv4" not in evidence
@@ -481,6 +587,27 @@ class ApiFacts:
                 )
             }
         )
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        current_pages = []
+        for selected in collection_ids:
+            proof = CurrentCollectionProof(self.s.connection)
+            if proof.pages(selected):
+                metadata = proof.evidence(selected)
+                if metadata is None:
+                    raise CatalogError(
+                        "INVALID_PROVENANCE", "Current child collection is not terminal"
+                    )
+                current_pages.append(
+                    {
+                        "fetch_collection_id": selected,
+                        "page_ordinals": metadata["page_ordinals"],
+                    }
+                )
+        if current_pages:
+            evidence["current_page_collections"] = current_pages
         validate_record(
             self.s.connection,
             "completion_markers",
@@ -502,8 +629,8 @@ class ApiFacts:
     def observed_at_us(self, collection):
         """Latest actual saved response; starting or replaying a scan adds no time."""
         return self.s.one(
-            "SELECT MAX(observed_at_us) FROM fetch_occurrences WHERE fetch_collection_id=? AND coalesce(json_extract(request,'$.operational_only'),0)=0",
-            (collection["fetch_collection_id"],),
+            "SELECT MAX(observed_at_us) FROM (SELECT observed_at_us FROM fetch_occurrences WHERE fetch_collection_id=? AND coalesce(json_extract(request,'$.operational_only'),0)=0 UNION ALL SELECT observed_at_us FROM current_collection_pages WHERE fetch_collection_id=?)",
+            (collection["fetch_collection_id"], collection["fetch_collection_id"]),
         )[0]
 
     def thread_observed_at_us(self, collection):
@@ -516,7 +643,9 @@ class ApiFacts:
                 AND member.change_request_id IS root.change_request_id
                 AND member.source_id IS root.source_id
                JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id
-               JOIN fetch_occurrences o ON o.fetch_collection_id=member.fetch_collection_id
+               JOIN (SELECT fetch_collection_id,observed_at_us,request FROM fetch_occurrences
+                     UNION ALL SELECT fetch_collection_id,observed_at_us,'{}' request FROM current_collection_pages) o
+                 ON o.fetch_collection_id=member.fetch_collection_id
                WHERE root.fetch_collection_id=?
                  AND coalesce(json_extract(o.request,'$.operational_only'),0)=0
                  AND (member.fetch_collection_id=root.fetch_collection_id
@@ -529,8 +658,8 @@ class ApiFacts:
     def pending_response(self, collection):
         """Whether acquisition still requires a response, not just local completion."""
         page = self.s.one(
-            "SELECT next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY ordinal DESC,fetch_occurrence_id DESC LIMIT 1",
-            (collection["fetch_collection_id"],),
+            "SELECT next_cursor FROM (SELECT ordinal,next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? UNION ALL SELECT ordinal,next_cursor FROM current_collection_pages WHERE fetch_collection_id=?) ORDER BY ordinal DESC LIMIT 1",
+            (collection["fetch_collection_id"], collection["fetch_collection_id"]),
         )
         return page is None or page["next_cursor"] is not None
 
@@ -554,9 +683,12 @@ class ApiFacts:
         occurrence,
         position,
         observed_at_us,
-        *,
-        thread=None,
     ):
+        if kind in ("review", "review-comment"):
+            raise CatalogError(
+                "MUTABLE_RESOURCE",
+                "Review resources use the shared current-state store",
+            )
         if not isinstance(body, str):
             raise CatalogError("API_SCHEMA", "Expected document text")
         key = DocumentKey(pr, kind, str(provider))
@@ -580,8 +712,6 @@ class ApiFacts:
             for field, item in value.items()
             if field not in ("body", "title", "user", "author")
         }
-        if thread:
-            metadata["review_thread_provider_resource_id"] = thread
         if not found:
             self.s.execute(
                 "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id) VALUES(?,?,?)",
@@ -593,7 +723,7 @@ class ApiFacts:
         )
         repository, result = self.ownership(occurrence)
         self.s.execute(
-            "INSERT INTO document_observations(document_observation_uuidv4,repository_uuidv4,parsed_result_uuidv4,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata,author,url,deleted,review_thread_provider_resource_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO document_observations(document_observation_uuidv4,repository_uuidv4,parsed_result_uuidv4,change_request_id,kind,provider_change_request_document_id,text_body_sha256,observed_at_us,parsed_at_us,origin_key,fetch_occurrence_id,metadata,author,url,deleted) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 str(uuid.uuid4()),
                 repository,
@@ -608,7 +738,6 @@ class ApiFacts:
                 author.get("login"),
                 value.get("html_url") or value.get("url"),
                 0,
-                thread,
             ),
         )
         self.choose(
@@ -626,19 +755,5 @@ class ApiFacts:
             self.s.execute(
                 "INSERT INTO collection_memberships(fetch_collection_id,change_request_id,kind,provider_change_request_document_id,ordinal) VALUES(?,?,?,?,?)",
                 (collection["fetch_collection_id"], *key, position),
-            )
-        if kind == "review" and not self.s.one(
-            "SELECT 1 FROM reviews WHERE " + predicate, key
-        ):
-            self.s.execute(
-                "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id) VALUES(?,?,?)",
-                key,
-            )
-        if kind == "review-comment" and not self.s.one(
-            "SELECT 1 FROM review_comments WHERE " + predicate, key
-        ):
-            self.s.execute(
-                "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id) VALUES(?,?,?)",
-                key,
             )
         return key

@@ -141,6 +141,42 @@ def baseline_contracts(db):
     require(
         "document_versions" not in table_names, "Document version table was introduced"
     )
+    require(
+        not table_names.intersection({"reviews", "review_comments"}),
+        "Retired review marker tables remain",
+    )
+    current_keys = {}
+    for table, expected in (
+        (
+            "issue_resources",
+            ["service_instance_uuidv4", "kind", "provider_resource_id"],
+        ),
+        (
+            "review_resources",
+            ["change_request_id", "kind", "provider_change_request_document_id"],
+        ),
+    ):
+        info = db.execute(f"PRAGMA table_info({quoted(table)})").fetchall()
+        key = [r[1] for r in sorted(info, key=lambda r: r[5]) if r[5]]
+        require(key == expected, f"Current resource identity changed: {table}")
+        require(
+            "parsed_result_uuidv4" not in {r[1] for r in info},
+            "Mutable resource became an immutable result member",
+        )
+        current_keys[table] = key
+    page_parents = {
+        r[2] for r in db.execute("PRAGMA foreign_key_list(current_collection_pages)")
+    }
+    require(
+        page_parents == {"fetch_collections", "parser_profiles"},
+        "Current collection proof must retain exact context/profile without mutable body dependencies",
+    )
+    for kind in ("review", "review-comment"):
+        rejected(
+            db,
+            "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id) VALUES('pr-a',?,'1')",
+            (kind,),
+        )
     for table in table_names:
         columns = {r[1] for r in db.execute(f"PRAGMA table_info({quoted(table)})")}
         require(
@@ -264,6 +300,9 @@ def baseline_contracts(db):
         "invalid_uuid_probes": len(bad_uuid_values) * 3,
         "document_primary_key": natural_key,
         "document_surrogates_absent": True,
+        "current_resource_primary_keys": current_keys,
+        "review_markers_and_immutable_review_documents_absent": True,
+        "current_page_required_parent_tables": sorted(page_parents),
         "distinct_document_tuples": len(document_keys),
         "exact_utf8_text_sha256": body_hashes,
         "timestamp_storage_values": storage_times,

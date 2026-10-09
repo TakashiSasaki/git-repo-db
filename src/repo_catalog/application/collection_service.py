@@ -458,7 +458,7 @@ class CollectionService:
                         "repository_endpoint_id"
                     ]
                     target["endpoint_url"] = endpoint["url"]
-                if request.kind in ("pr", "all"):
+                if request.kind in ("pr", "issue", "all"):
                     src = identity.pr_source(s, repo["repository_uuidv4"], source_id)
                     if src is not None:
                         try:
@@ -483,7 +483,7 @@ class CollectionService:
                 sources[explicit["source_registration_uuidv4"]] = (
                     job_plans.freeze_source(s, explicit)
                 )
-            if request.kind == "pr" and skipped_sources and not sources:
+            if request.kind in ("pr", "issue") and skipped_sources and not sources:
                 raise CatalogError(
                     "NO_USABLE_SOURCE",
                     "No configured acquisition source",
@@ -548,7 +548,9 @@ class CollectionService:
                             "ENDPOINT_CHANGED", "Frozen endpoint changed"
                         )
                 for kind in (
-                    ("git", "pr") if request["kind"] == "all" else (request["kind"],)
+                    ("git", "issue", "pr")
+                    if request["kind"] == "all"
+                    else (request["kind"],)
                 ):
                     self.token.check()
                     try:
@@ -574,12 +576,12 @@ class CollectionService:
                             if target.get("api_source_skip"):
                                 reason = target["api_source_skip"]
                                 coverage.add(
-                                    "pr",
+                                    kind,
                                     reason["reason"],
                                     repository_uuidv4=repo["repository_uuidv4"],
                                 )
                                 items.append(
-                                    {"kind": "pr", "state": "skipped", **reason}
+                                    {"kind": kind, "state": "skipped", **reason}
                                 )
                                 continue
                             src = target.get("api_source")
@@ -608,12 +610,17 @@ class CollectionService:
                                 "source_id": src["source_id"],
                                 "provider_repository_id": src["provider_repository_id"],
                             }
-                            item = GitHubCollector(
+                            collector = GitHubCollector(
                                 s,
                                 self.token,
                                 config=src["github_config"],
                                 repository_endpoint_id=repository_endpoint_id,
-                            ).sync(api_repo, job)
+                            )
+                            item = (
+                                collector.sync_issues(api_repo, job)
+                                if kind == "issue"
+                                else collector.sync(api_repo, job)
+                            )
                         if (
                             kind == "git"
                             and item.get("snapshot_id")

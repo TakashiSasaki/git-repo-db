@@ -88,7 +88,7 @@ def parser():
     discover = commands.add_parser("discover")
     discover.add_argument("--source")
     sync = commands.add_parser("sync")
-    sync.add_argument("kind", choices=("git", "pr", "all"))
+    sync.add_argument("kind", choices=("git", "pr", "issue", "all"))
     repo_selector(sync)
     sync.add_argument("--source")
     sync.add_argument("--endpoint", dest="repository_endpoint_id")
@@ -204,15 +204,30 @@ def parser():
                     choices=("current", "all"),
                     default="current",
                 )
+    issues = commands.add_parser("issue").add_subparsers(
+        dest="action", required=True, parser_class=Parser
+    )
+    for action in ("list", "show", "comments"):
+        child = issues.add_parser(action)
+        page_options(child)
+        repo_selector(child)
+        child.add_argument("--source")
+        child.add_argument("--binding")
+        child.add_argument("--parser-profile")
+        child.add_argument("--provider-resource-id")
+        child.add_argument("--provider-issue-number", type=int)
+        child.add_argument("--state", choices=("all", "open", "closed"), default="all")
+        child.add_argument("--author")
+        child.add_argument("--document-author")
     search = commands.add_parser("search").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
-    for kind in ("path", "code", "commits", "hash", "pr"):
+    for kind in ("path", "code", "commits", "hash", "pr", "issue"):
         child = search.add_parser(kind)
         repo_selector(child)
         page_options(child)
         child.add_argument("--source")
-        if kind != "pr":
+        if kind not in ("pr", "issue"):
             child.add_argument(
                 "--scope",
                 choices=("current", "history", "recorded"),
@@ -228,7 +243,7 @@ def parser():
                 choices=("head", "tag", "pr-head", "pr-related"),
             )
             select.add_argument("--pr", type=int)
-        if kind in ("code", "commits", "pr"):
+        if kind in ("code", "commits", "pr", "issue"):
             child.add_argument("--literal", required=True)
         if kind in ("path", "pr"):
             path = child.add_mutually_exclusive_group()
@@ -247,6 +262,16 @@ def parser():
             )
             child.add_argument("--digest", required=True)
             child.add_argument("--byte-length", type=int)
+        if kind == "issue":
+            child.add_argument("--binding")
+            child.add_argument("--parser-profile")
+            child.add_argument("--provider-resource-id")
+            child.add_argument("--provider-issue-number", type=int)
+            child.add_argument(
+                "--state", choices=("all", "open", "closed"), default="all"
+            )
+            child.add_argument("--author")
+            child.add_argument("--document-author")
         if kind == "pr":
             child.add_argument("--parser-profile")
             child.add_argument("--provider-change-request-document-id")
@@ -304,7 +329,7 @@ def parser():
         dest="action", required=True, parser_class=Parser
     )
     index.add_parser("rebuild").add_argument(
-        "--kind", choices=("code", "pr", "commits", "all"), default="all"
+        "--kind", choices=("code", "pr", "issue", "commits", "all"), default="all"
     )
     identities = commands.add_parser("identity").add_subparsers(
         dest="action", required=True, parser_class=Parser
@@ -357,6 +382,16 @@ def parser():
     invalidate.add_argument("verification_uuidv4")
     invalidate.add_argument("--reason", required=True)
     profiles.add_parser("status")
+    for action in ("inspect-message", "reparse-message"):
+        child = profiles.add_parser(action)
+        child.add_argument("archive_reference")
+        child.add_argument("--max-bytes", type=int, default=1048576)
+        if action == "reparse-message":
+            child.add_argument(
+                "--context",
+                required=True,
+                help="Explicit synthetic provider projection context JSON",
+            )
     return p
 
 

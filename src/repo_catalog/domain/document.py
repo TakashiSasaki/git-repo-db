@@ -19,3 +19,25 @@ def text_body_sha256(body: str) -> bytes:
     if not isinstance(body, str):
         raise TypeError("A text body must be a string")
     return hashlib.sha256(body.encode("utf-8")).digest()
+
+
+def verify_text_body(body, digest, byte_length):
+    """Validate accessed domain text, including a declared absent body.
+
+    Reads do not repair damage or treat a missing body as an HTTP archive gap.
+    """
+    from repo_catalog.domain.models import CatalogError
+
+    if body is None and digest is None and byte_length is None:
+        return
+    try:
+        valid = (
+            text_body_sha256(body) == digest and len(body.encode("utf8")) == byte_length
+        )
+    except (TypeError, UnicodeError):
+        valid = False
+    if not valid:
+        raise CatalogError(
+            "TEXT_BODY_IDENTITY_CONFLICT",
+            "Stored domain body does not match its identity",
+        )

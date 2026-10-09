@@ -1,5 +1,7 @@
+import hashlib
 import sqlite3
 
+from repo_catalog.domain.document import verify_text_body
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from repo_catalog.domain.time import now_us
 
@@ -22,7 +24,11 @@ def fts_available(store):
 
 
 def refresh_documents(store, kind, token):
-    """Reconstruct disposable search inputs from catalog originals, including imports."""
+    """Reconstruct disposable inputs from eligible domain text, including imports.
+
+    Shared text storage can retain superseded bodies. It is not a search scope:
+    only retained PR histories and admitted current resources supply inputs.
+    """
     if kind == "code":
         rows = store.execute(
             "SELECT git_fact_uuidv4 source_key,raw_text body FROM current_git_text_facts WHERE raw_text IS NOT NULL ORDER BY git_fact_uuidv4"
@@ -31,10 +37,23 @@ def refresh_documents(store, kind, token):
         rows = store.execute(
             "SELECT git_fact_uuidv4 source_key,message_text body FROM current_git_commits ORDER BY git_fact_uuidv4"
         )
-    else:
+    elif kind == "pr":
         rows = store.execute(
-            "SELECT lower(hex(sha256)) source_key,body FROM text_bodies ORDER BY sha256"
+            "SELECT lower(hex(b.sha256)) source_key,b.body,b.byte_length FROM text_bodies b "
+            "WHERE b.sha256 IN (SELECT o.text_body_sha256 FROM document_observations o "
+            "JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
+            "UNION SELECT text_body_sha256 FROM eligible_review_resources WHERE deleted=0) "
+            "ORDER BY b.sha256"
         )
+    elif kind == "issue":
+        rows = store.execute(
+            "SELECT lower(hex(b.sha256)) source_key,b.body,b.byte_length FROM text_bodies b "
+            "WHERE b.sha256 IN (SELECT text_body_sha256 FROM eligible_issue_resources "
+            "WHERE deleted=0) UNION SELECT NULL source_key,title body,NULL byte_length "
+            "FROM eligible_issue_resources WHERE deleted=0 AND title IS NOT NULL"
+        )
+    else:
+        raise CatalogError("INVALID_ARGUMENT", "Unknown index kind")
     batch = []
     batch_bytes = 0
     for row in rows:
@@ -44,12 +63,15 @@ def refresh_documents(store, kind, token):
             if isinstance(row["body"], bytes)
             else row["body"]
         )
+        if kind in ("pr", "issue") and row["source_key"] is not None:
+            verify_text_body(body, bytes.fromhex(row["source_key"]), row["byte_length"])
         row_bytes = len(body.encode("utf8"))
         if batch and (len(batch) == 200 or batch_bytes + row_bytes > 8_388_608):
             _save_documents(store, kind, batch)
             batch = []
             batch_bytes = 0
-        batch.append((str(row["source_key"]), body))
+        key = row["source_key"] or hashlib.sha256(body.encode("utf8")).hexdigest()
+        batch.append((str(key), body))
         batch_bytes += row_bytes
     if batch:
         _save_documents(store, kind, batch)
@@ -83,14 +105,16 @@ def rebuild(store, kind, token=None):
             "FTS5 trigram is unavailable or disabled; scan queries remain usable",
         )
     results = []
-    for current in ("code", "pr", "commits") if kind == "all" else (kind,):
+    for current in ("code", "pr", "issue", "commits") if kind == "all" else (kind,):
         token.check()
         refresh_documents(s, current, token)
         selected = {
             "code": "source_key IN (SELECT git_fact_uuidv4 FROM current_git_text_facts WHERE raw_text IS NOT NULL)",
             "commits": "source_key IN (SELECT git_fact_uuidv4 FROM current_git_commits)",
-            "pr": "1",
+            "pr": "source_key IN (SELECT lower(hex(o.text_body_sha256)) FROM document_observations o JOIN usable_parsed_results r USING(parsed_result_uuidv4) UNION SELECT lower(hex(text_body_sha256)) FROM eligible_review_resources WHERE deleted=0)",
+            "issue": "source_key IN (SELECT lower(hex(text_body_sha256)) FROM eligible_issue_resources WHERE deleted=0) OR EXISTS (SELECT 1 FROM eligible_issue_resources i WHERE i.deleted=0 AND i.title=search_documents.body)",
         }[current]
+        selected = "(" + selected + ")"
         maximum = s.one(
             f"SELECT coalesce(max(search_document_id),0) FROM search_documents WHERE kind=? AND {selected}",
             (current,),
@@ -185,6 +209,16 @@ def rebuild(store, kind, token=None):
                     )
             except sqlite3.OperationalError:
                 pass
+        # Obsolete current-resource bodies can remain in shared domain storage,
+        # but need not survive as duplicate disposable search inputs. Keep any
+        # row still referenced by a generation whose DDL lock was unavailable.
+        with s.transaction():
+            s.execute(
+                f"DELETE FROM search_documents WHERE kind=? AND NOT {selected} "
+                "AND NOT EXISTS(SELECT 1 FROM index_membership m "
+                "WHERE m.search_document_id=search_documents.search_document_id)",
+                (current,),
+            )
         results.append(
             {"kind": current, "generation": ident, "documents": count, "state": "ready"}
         )

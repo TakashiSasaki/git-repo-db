@@ -335,6 +335,13 @@ def test_derived_fts_and_analyze_do_not_change_catalog_identity(tmp_path):
 
 
 def test_runtime_identifiers_make_fk_domains_and_roles_explicit():
+    # Current review associations name their provider role explicitly. Each is
+    # a typed natural-key reference, scoped by its owning change request.
+    natural_associations = {
+        ("review_resources", "review_provider_resource_id"): "parent_review_kind",
+        ("review_resources", "in_reply_to_provider_resource_id"): "reply_kind",
+    }
+    seen = set()
     with sqlite3.connect(":memory:") as db:
         db.executescript(schema_sql())
         tables = db.execute(
@@ -346,9 +353,25 @@ def test_runtime_identifiers_make_fk_domains_and_roles_explicit():
             for fk in db.execute(f"PRAGMA foreign_key_list({table})"):
                 local, referenced = fk[3], fk[4]
                 if referenced.endswith("_id"):
+                    if (table, local) in natural_associations:
+                        assert fk[2] == "review_resources"
+                        assert referenced == "provider_change_request_document_id"
+                        parts = {
+                            (part[3], part[4])
+                            for part in db.execute(f"PRAGMA foreign_key_list({table})")
+                            if part[0] == fk[0]
+                        }
+                        assert parts == {
+                            ("change_request_id", "change_request_id"),
+                            (natural_associations[(table, local)], "kind"),
+                            (local, referenced),
+                        }
+                        seen.add((table, local))
+                        continue
                     assert local == referenced or local.endswith("_" + referenced), (
                         table,
                         local,
                         fk[2],
                         referenced,
                     )
+    assert seen == natural_associations.keys()

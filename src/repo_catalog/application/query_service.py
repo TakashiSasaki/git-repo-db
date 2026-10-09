@@ -268,6 +268,8 @@ class QueryService:
                 "search hash",
                 "search commits",
                 "search pr",
+                "search issue",
+                "issue list",
             )
             and not o.get("repo")
             and not o.get("repos")
@@ -305,6 +307,10 @@ class QueryService:
             from repo_catalog.application.pr_queries import prepare_pr_coverage
 
             prepare_pr_coverage(self, command, o)
+        if command.startswith("issue ") or command == "search issue":
+            from repo_catalog.application.issue_queries import prepare_issue_coverage
+
+            prepare_issue_coverage(self, command, o)
         if command == "search code":
             seen = set()
             for repo in self.repos(o):
@@ -1344,6 +1350,10 @@ class QueryService:
                 )
         elif command.startswith("pr ") or command == "search pr":
             yield from self.pr_query(command, o)
+        elif command.startswith("issue ") or command == "search issue":
+            from repo_catalog.application.issue_queries import issue_query
+
+            yield from issue_query(self, command, o)
         elif command == "cache status":
             for r in s.all(
                 "SELECT a.*,l.repository_uuidv4,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' ORDER BY a.active_cache_entry_id"

@@ -38,6 +38,7 @@ DEFAULTS = {
         "connect_timeout_seconds": 10,
         "read_timeout_seconds": 60,
         "max_attempts": 5,
+        "record_messages": False,
     },
     "search": {
         "backend": "auto",
@@ -78,6 +79,8 @@ def validate(config):
         raise CatalogError("CONFIG_ERROR", "Invalid cache budgets or watermarks")
     if config["database"]["journal_mode"] not in ("delete", "wal"):
         raise CatalogError("CONFIG_ERROR", "Unknown journal mode")
+    if type(config["github"].get("record_messages", False)) is not bool:
+        raise CatalogError("CONFIG_ERROR", "github.record_messages must be a boolean")
     if (
         config["preservation"]["max_text_blob_bytes"] != 8388608
         or config["preservation"]["text_policy_id"] != "utf8-literal-v1"

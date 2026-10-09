@@ -23,7 +23,7 @@ erDiagram
     SERVICE_INSTANCES o|--o{ SOURCES : configures
 ```
 
-CSPRNGから生成した正規小文字UUIDv4を `service_instance_uuidv4` として保持します。UUIDv5や任意文字列は受け入れません。UUIDの形式検査だけで原発行時の乱数源を証明できるわけではありません。異なるUUIDはURLが同じでも自動統合せず、export/import設計上も同じ名前空間を維持します（カタログ間交換機能そのものは未実装）。provider IDがあるrepositoryのportable identityは `(service_instance_uuidv4, provider_repository_id)` です。
+CSPRNGから生成した正規小文字UUIDv4を `service_instance_uuidv4` として保持します。UUIDv5や任意文字列は受け入れません。UUIDの形式検査だけで原発行時の乱数源を証明できるわけではありません。異なるUUIDはURLが同じでも自動統合せず、実装済みの単一repository export/importでも同じ名前空間を維持します。provider IDがあるrepositoryのportable identityは `(service_instance_uuidv4, provider_repository_id)` です。
 
 instance UUIDにより、同じhost上の別port/base pathや別オンプレ環境のnative IDを区別します。
 URL、DNS alias、同じcommit、同じ内容はrepo統合の根拠にしません。forkや独立mirrorは別Repo IDで登録できます。
@@ -103,8 +103,12 @@ GitHub互換APIのinstance分離はloopback fixtureで検証しています。�
 GitLab/Gitea/Forgejoの自動列挙・MR/PR収集adapterは未実装です。共通データモデルは binding/request-kind ごとの番号空間を持ちます。Git-onlyはPRを`not_applicable`、対応サービスのbindingがあるのに利用可能なAPI sourceがない場合は`PROVIDER_UNSUPPORTED`/partialを返します。
 1つのRepo IDに複数GitHub instanceを結び付けた場合も、サービスごとのPR番号空間の分離は後続範囲なのでPR収集は`PROVIDER_UNSUPPORTED`とします。Gitの複数取得先は利用できます。
 
-## 保存済み v2 の import
+## Issue・レビューの識別と交換
 
-現在の製品ランタイムは catalog3 だけです。旧 decoder は packaged import support に分離されています。保存した v2 DB/cache から別の新規 state へ `import-v2` を行い、`db finalize` で重要な identity/owner と保存された current 選択を検査します。通常の初期化・照会・収集は古い migration を実行しません。
+schema 14 の通常Issueは `(service_instance_uuidv4, provider_resource_id)` で恒久的に識別します。`issue_resources` の物理キーには `kind` も含め、Issueとコメントの同じ数値IDを区別します。現在の `repository_uuidv4`、binding、`provider_issue_number` は所属情報で、Issue移管時も恒久IDを取り替えません。コメントは同じserviceの型付きIssue親を参照します。
 
-内部 ID、provider-native ID、endpoint/source の関係、元の observation 時刻、raw bytes は保持します。不明な値や矛盾は typed archive と帰属付き診断に残し、架空の identity や再観測を作りません。実データに対する dry run と切り替えは、この合成検証とは別の作業です。
+レビュー概要とレビューコメントは `review_resources` の `(change_request_id, kind, provider_change_request_document_id)` で識別します。review所属・reply先・独立thread所属を別々に保持し、PR・repository・binding・serviceの整合性を検査します。REST `id` とGraphQL `fullDatabaseId` を正規の正整数10進文字列として照合し、Node IDを代替キーにしません。threadのprovider IDは従来どおりPR内にscopeされたopaque値です。
+
+交換では一つのrepositoryと必要な親・本文・完全性証拠を運び、同じ現在状態キーの正当な更新は可変状態の受理規則へ渡します。不変UUIDの衝突保護は他の履歴へ維持します。未到着の親や順序不明の競合をstagingへ残し、受信順でwinnerを作りません。Source-wide inventory、receiver-local trust/configuration、任意通信archiveは交換しません。詳細は[データモデル](data-model.md)と[実装対応表](latest-state-transport-implementation.md)を参照してください。
+
+旧v2 importerとfinalizeは廃止済みです。D2は `not_applicable / retired` とし、歴史的なreceiptは保存します。不明なID・親・観測時刻を捏造しない契約は現行の収集・交換にも適用します。

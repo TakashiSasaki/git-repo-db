@@ -52,10 +52,7 @@ class ParsingService:
             "pr-detail",
             "pr-code-check",
             "issue-comment",
-            "review",
-            "review-comment",
             "issue-comment-incremental",
-            "review-comment-incremental",
             "timeline",
             "threads",
             "thread-comments",
@@ -99,6 +96,7 @@ class ParsingService:
             self.s, CancellationToken(), transport=_OfflineTransport()
         )
         collector.facts.select_results = select
+        collector.facts.replaying = True
         occurrence = row["fetch_occurrence_id"]
         timestamp = row["observed_at_us"]
         position_base = row["ordinal"] * 10000
@@ -131,6 +129,7 @@ class ParsingService:
                             repo, pr, thread, timestamp, occurrence
                         )
                         collector._thread_documents(
+                            repo,
                             pr,
                             thread_id,
                             thread.get("comments"),
@@ -138,6 +137,7 @@ class ParsingService:
                             occurrence,
                             index * 10000,
                             timestamp,
+                            base_revision=None,
                             refresh_root=True,
                         )
                 else:
@@ -156,6 +156,7 @@ class ParsingService:
                             "API_SCHEMA", "Saved thread context is missing"
                         )
                     collector._thread_documents(
+                        repo,
                         {"change_request_id": row["change_request_id"]},
                         thread_id,
                         node.get("comments"),
@@ -163,6 +164,7 @@ class ParsingService:
                         occurrence,
                         position_base,
                         timestamp,
+                        base_revision=None,
                     )
             else:
                 if not isinstance(values, list):

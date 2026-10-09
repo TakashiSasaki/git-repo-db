@@ -12,6 +12,7 @@ import time
 from repo_catalog.adapters.sqlite.target import TargetReader
 from repo_catalog.application.git_query_context import object_context
 from repo_catalog.application.pr_queries import code_role_gaps
+from repo_catalog.domain.document import verify_text_body
 from repo_catalog.domain.models import (
     CancellationToken,
     CatalogError,
@@ -24,7 +25,15 @@ from repo_catalog.domain.models import (
 
 def row_fields(row):
     result = dict(row)
-    for key in ("metadata", "payload", "details", "request", "settings", "scope"):
+    for key in (
+        "metadata",
+        "payload",
+        "details",
+        "request",
+        "settings",
+        "scope",
+        "acquisition_scope_json",
+    ):
         if isinstance(result.get(key), str):
             result[key] = json.loads(result[key])
     return result
@@ -481,6 +490,15 @@ class TargetQueryService:
         ):
             self._add_missing("pr", "document_body_missing", **dict(row))
         for row in self.s.execute(
+            "SELECT r.change_request_id,r.kind document_kind,r.provider_change_request_document_id "
+            "FROM review_resources r WHERE r.change_request_id=? AND r.deleted=0 "
+            "AND NOT EXISTS(SELECT 1 FROM eligible_review_resources e "
+            "WHERE e.change_request_id=r.change_request_id AND e.kind=r.kind "
+            "AND e.provider_change_request_document_id=r.provider_change_request_document_id)",
+            (ident,),
+        ):
+            self._add_missing("pr", "current_resource_unresolved", **dict(row))
+        for row in self.s.execute(
             "SELECT coverage_scope_id,coverage_state FROM current_coverage WHERE change_request_id=? ORDER BY coverage_scope_id",
             (ident,),
         ):
@@ -521,7 +539,9 @@ class TargetQueryService:
             ),
             (
                 "review",
-                "SELECT * FROM reviews WHERE change_request_id=? ORDER BY kind,provider_change_request_document_id",
+                "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_review_resources r LEFT JOIN text_bodies b "
+                "ON b.sha256=r.text_body_sha256 WHERE r.change_request_id=? "
+                "AND r.kind='review' AND r.deleted=0 ORDER BY r.provider_change_request_document_id",
             ),
             (
                 "review_thread",
@@ -529,7 +549,9 @@ class TargetQueryService:
             ),
             (
                 "review_comment",
-                "SELECT * FROM review_comments WHERE change_request_id=? ORDER BY kind,provider_change_request_document_id",
+                "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_review_resources r LEFT JOIN text_bodies b "
+                "ON b.sha256=r.text_body_sha256 WHERE r.change_request_id=? "
+                "AND r.kind='review-comment' AND r.deleted=0 ORDER BY r.provider_change_request_document_id",
             ),
             (
                 "event",
@@ -560,8 +582,13 @@ class TargetQueryService:
             for row in self.s.execute(sql, (ident,)):
                 self._check()
                 item = row_fields(row)
-                if "raw_path" in item:
+                if isinstance(item.get("raw_path"), bytes):
                     item.update(path_fields(item.pop("raw_path")))
+                if kind in ("review", "review_comment"):
+                    verify_text_body(
+                        row["body"], row["text_body_sha256"], row["body_byte_length"]
+                    )
+                    item["resource_lifecycle"] = "current"
                 yield {"record_kind": kind, **item}
 
     def _search(self, options):
@@ -572,11 +599,11 @@ class TargetQueryService:
         if (
             not isinstance(literal, str)
             or not literal
-            or kind not in ("code", "commits", "pr")
+            or kind not in ("code", "commits", "pr", "issue")
         ):
             raise CatalogError(
                 "INVALID_ARGUMENT",
-                "Search needs nonempty --literal and --kind code, commits or pr",
+                "Search needs nonempty --literal and --kind code, commits, pr or issue",
             )
         if kind in ("code", "commits"):
             object_type = "blob" if kind == "code" else "commit"
@@ -635,6 +662,26 @@ class TargetQueryService:
                     else:
                         item["raw_message"] = fact["raw_message"]
                     yield item
+        elif kind == "issue":
+            for row in self.s.execute(
+                "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_issue_resources r LEFT JOIN text_bodies b "
+                "ON b.sha256=r.text_body_sha256 WHERE (? IS NULL OR r.repository_uuidv4=?) "
+                "AND r.deleted=0 ORDER BY r.repository_uuidv4,r.kind,r.provider_resource_id",
+                (repo, repo),
+            ):
+                self._check()
+                verify_text_body(
+                    row["body"], row["text_body_sha256"], row["body_byte_length"]
+                )
+                for field in ("title", "body"):
+                    text = row[field]
+                    if isinstance(text, str) and literal in text:
+                        yield {
+                            "record_kind": "current_resource",
+                            **row_fields(row),
+                            "field": field,
+                            "text": text,
+                        }
         else:
             for request in self.s.execute(
                 "SELECT * FROM change_requests WHERE (? IS NULL OR repository_uuidv4=?) ORDER BY repository_uuidv4,change_request_id",
@@ -677,3 +724,19 @@ class TargetQueryService:
                     self._check()
                     if literal in row["body"]:
                         yield {**base, "record_kind": "document", **dict(row)}
+                for row in self.s.execute(
+                    "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_review_resources r LEFT JOIN text_bodies b "
+                    "ON b.sha256=r.text_body_sha256 WHERE r.change_request_id=? "
+                    "AND r.deleted=0 ORDER BY r.kind,r.provider_change_request_document_id",
+                    (ident,),
+                ):
+                    self._check()
+                    verify_text_body(
+                        row["body"], row["text_body_sha256"], row["body_byte_length"]
+                    )
+                    if isinstance(row["body"], str) and literal in row["body"]:
+                        yield {
+                            **base,
+                            "record_kind": "current_resource",
+                            **row_fields(row),
+                        }

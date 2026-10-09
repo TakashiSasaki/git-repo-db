@@ -67,6 +67,7 @@ def test_offline_reindex(catalog):
     assert {r["kind"] for r in result["data"]["generations"]} == {
         "code",
         "pr",
+        "issue",
         "commits",
     }
     assert pages(state, "search", "code", "--literal", "observed_in") == before

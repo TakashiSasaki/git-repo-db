@@ -9,7 +9,7 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=13),
+    schema_version INTEGER NOT NULL CHECK(schema_version=14),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
@@ -104,17 +104,17 @@ text_body_id INTEGER PRIMARY KEY, body TEXT NOT NULL,
 ) STRICT;
 CREATE TABLE documents(
  change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id),
- kind TEXT NOT NULL CHECK(length(kind)>0),
+ kind TEXT NOT NULL CHECK(length(kind)>0 AND kind NOT IN ('review','review-comment')),
  provider_change_request_document_id TEXT NOT NULL CHECK(length(provider_change_request_document_id)>0),
  PRIMARY KEY(change_request_id,kind,provider_change_request_document_id)
 ) STRICT;
 
-CREATE TABLE document_observations(author TEXT, url TEXT, deleted INTEGER NOT NULL DEFAULT 0 CHECK(deleted IN (0,1)), review_thread_provider_resource_id TEXT,
+CREATE TABLE document_observations(author TEXT, url TEXT, deleted INTEGER NOT NULL DEFAULT 0 CHECK(deleted IN (0,1)),
 document_observation_uuidv4 TEXT NOT NULL UNIQUE, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
 
     document_observation_id INTEGER PRIMARY KEY,
     change_request_id TEXT NOT NULL,
-    kind TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK(kind NOT IN ('review','review-comment')),
     provider_change_request_document_id TEXT NOT NULL,
     text_body_sha256 BLOB NOT NULL REFERENCES text_bodies(sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
     observed_at_us INTEGER, parsed_at_us INTEGER NOT NULL,
@@ -124,18 +124,12 @@ document_observation_uuidv4 TEXT NOT NULL UNIQUE, parsed_result_uuidv4 TEXT NOT 
     UNIQUE(document_observation_id,change_request_id,kind,provider_change_request_document_id),
     FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
 FOREIGN KEY(change_request_id,repository_uuidv4) REFERENCES change_requests(change_request_id,repository_uuidv4), FOREIGN KEY(parsed_result_uuidv4,repository_uuidv4) REFERENCES parsed_results(parsed_result_uuidv4,repository_uuidv4),
-UNIQUE(parsed_result_uuidv4,change_request_id,kind,provider_change_request_document_id), FOREIGN KEY(change_request_id,review_thread_provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id)
+UNIQUE(parsed_result_uuidv4,change_request_id,kind,provider_change_request_document_id)
 ) STRICT;
 CREATE TABLE review_threads(
  change_request_id TEXT NOT NULL REFERENCES change_requests(change_request_id),
  provider_resource_id TEXT NOT NULL CHECK(length(provider_resource_id)>0),
  PRIMARY KEY(change_request_id,provider_resource_id)
-) STRICT;
-CREATE TABLE review_comments(
- change_request_id TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind='review-comment'),
- provider_change_request_document_id TEXT NOT NULL,
- PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
- FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id)
 ) STRICT;
 CREATE TABLE fetch_collections(
 
@@ -282,12 +276,6 @@ LEFT JOIN coverage_claims c ON c.coverage_scope_id=s.coverage_scope_id
  AND c.observed_at_us=(SELECT max(latest.observed_at_us) FROM coverage_claims latest WHERE latest.coverage_scope_id=s.coverage_scope_id)
 LEFT JOIN exchange_blocked_coverage_claims b ON b.coverage_claim_id=c.coverage_claim_id
 GROUP BY s.coverage_scope_id;
-CREATE TABLE reviews(
- change_request_id TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind='review'),
- provider_change_request_document_id TEXT NOT NULL,
- PRIMARY KEY(change_request_id,kind,provider_change_request_document_id),
- FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id)
-) STRICT;
 CREATE TABLE change_request_events(
 origin_fetch_occurrence_uuidv4 TEXT,change_request_event_uuidv4 TEXT NOT NULL UNIQUE, parsed_result_uuidv4 TEXT NOT NULL, repository_uuidv4 TEXT NOT NULL,
 
@@ -374,10 +362,10 @@ CREATE TABLE preservation_obligations(
 git_acquisition_id TEXT PRIMARY KEY REFERENCES git_acquisitions(git_acquisition_id) ON UPDATE RESTRICT ON DELETE RESTRICT, cache_locator_id TEXT REFERENCES cache_locators(cache_locator_id) ON UPDATE RESTRICT ON DELETE RESTRICT, roots_fixed INTEGER NOT NULL CHECK(roots_fixed IN (0,1)), structure_done INTEGER NOT NULL CHECK(structure_done IN (0,1)), digest_done INTEGER NOT NULL CHECK(digest_done IN (0,1)), text_done INTEGER NOT NULL CHECK(text_done IN (0,1)), published INTEGER NOT NULL CHECK(published IN (0,1))
 ) STRICT;
 CREATE TABLE search_documents(
-search_document_id INTEGER PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('code','pr','commits')), source_key TEXT NOT NULL, body TEXT NOT NULL, metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'), UNIQUE(kind,source_key)
+search_document_id INTEGER PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('code','pr','commits','issue')), source_key TEXT NOT NULL, body TEXT NOT NULL, metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'), UNIQUE(kind,source_key)
 ) STRICT;
 CREATE TABLE index_generations(
-index_generation_id INTEGER PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('code','pr','commits')), state TEXT NOT NULL CHECK(state IN ('building','ready','retired','removed','unavailable','failed')), table_name TEXT NOT NULL CHECK(length(table_name)>0 AND table_name NOT GLOB '*[^a-z0-9_]*'), target_max_search_document_id INTEGER NOT NULL CHECK(target_max_search_document_id>=0), created_at_us INTEGER
+index_generation_id INTEGER PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('code','pr','commits','issue')), state TEXT NOT NULL CHECK(state IN ('building','ready','retired','removed','unavailable','failed')), table_name TEXT NOT NULL CHECK(length(table_name)>0 AND table_name NOT GLOB '*[^a-z0-9_]*'), target_max_search_document_id INTEGER NOT NULL CHECK(target_max_search_document_id>=0), created_at_us INTEGER
 ) STRICT;
 CREATE TABLE index_membership(
 index_generation_id INTEGER NOT NULL REFERENCES index_generations(index_generation_id) ON UPDATE RESTRICT ON DELETE RESTRICT, search_document_id INTEGER NOT NULL REFERENCES search_documents(search_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT, input_version TEXT NOT NULL, PRIMARY KEY(index_generation_id,search_document_id)
@@ -663,10 +651,6 @@ CREATE TRIGGER obligation_cache_owner_update BEFORE UPDATE ON preservation_oblig
 -- Natural-key documents, immutable observations and direct content identity.
 CREATE TRIGGER documents_no_replace BEFORE INSERT ON documents WHEN EXISTS(SELECT 1 FROM documents WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER documents_retain BEFORE DELETE ON documents BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE TRIGGER reviews_no_replace BEFORE INSERT ON reviews WHEN EXISTS(SELECT 1 FROM reviews WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER reviews_retain BEFORE DELETE ON reviews BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE TRIGGER review_comments_no_replace BEFORE INSERT ON review_comments WHEN EXISTS(SELECT 1 FROM review_comments WHERE (change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
-CREATE TRIGGER review_comments_retain BEFORE DELETE ON review_comments BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
 CREATE TRIGGER collection_memberships_immutable BEFORE UPDATE ON collection_memberships WHEN NEW.fetch_collection_id IS NOT OLD.fetch_collection_id OR NEW.change_request_id IS NOT OLD.change_request_id OR NEW.kind IS NOT OLD.kind OR NEW.provider_change_request_document_id IS NOT OLD.provider_change_request_document_id OR NEW.ordinal IS NOT OLD.ordinal BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER collection_memberships_no_replace BEFORE INSERT ON collection_memberships WHEN EXISTS(SELECT 1 FROM collection_memberships WHERE (fetch_collection_id=NEW.fetch_collection_id AND change_request_id=NEW.change_request_id AND kind=NEW.kind AND provider_change_request_document_id=NEW.provider_change_request_document_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER collection_memberships_retain BEFORE DELETE ON collection_memberships BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
@@ -691,8 +675,6 @@ CREATE TRIGGER inventory_observations_immutable BEFORE UPDATE ON inventory_obser
 CREATE TRIGGER fetch_occurrences_immutable BEFORE UPDATE ON fetch_occurrences BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
 CREATE TRIGGER documents_immutable BEFORE UPDATE ON documents BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
 CREATE TRIGGER review_threads_immutable BEFORE UPDATE ON review_threads BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
-CREATE TRIGGER reviews_immutable BEFORE UPDATE ON reviews BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
-CREATE TRIGGER review_comments_immutable BEFORE UPDATE ON review_comments BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
 CREATE TRIGGER unresolved_payloads_immutable BEFORE UPDATE ON unresolved_payloads BEGIN SELECT RAISE(ABORT,'immutable evidence or identity'); END;
 
 CREATE TABLE parser_profile_selection_publications(

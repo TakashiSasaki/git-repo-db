@@ -11,7 +11,7 @@ def test_generation_switch(catalog):
     assert pages(state, "search", "code", "--literal", "observed_in") == before
     with Store(state, readonly=True) as s:
         assert (
-            s.one("SELECT count(*) FROM index_generations WHERE state='ready'")[0] == 3
+            s.one("SELECT count(*) FROM index_generations WHERE state='ready'")[0] == 4
         )
         for gen in s.all("SELECT * FROM index_generations WHERE state='ready'"):
             assert (

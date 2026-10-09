@@ -1,6 +1,7 @@
 """Catalog3 structural contracts in isolated synthetic SQLite databases."""
 
 import hashlib
+import json
 import sqlite3
 import uuid
 
@@ -32,7 +33,7 @@ def put(db, table, **values):
 
 
 def build_target(sql=None):
-    """Seed a synthetic fixture using the complete DDL, optionally a review blob."""
+    """Seed immutable PR/Git facts and shared current reviews with complete DDL."""
     db = construct(sql)
     put(
         db,
@@ -146,16 +147,6 @@ def build_target(sql=None):
             parsed_at_us=TIME,
             metadata="{}",
         )
-        for document_kind in ("review", "review-comment"):
-            put(
-                db,
-                "documents",
-                change_request_id="cr-" + repo,
-                kind=document_kind,
-                provider_change_request_document_id="native-" + repo,
-                deleted=0,
-                metadata="{}",
-            )
         put(
             db,
             "review_threads",
@@ -164,6 +155,37 @@ def build_target(sql=None):
             payload="{}",
             observed_at_us=TIME,
         )
+        for kind, provider_id in (
+            ("review", str(100 + index)),
+            ("review-comment", str(200 + index)),
+        ):
+            values = {
+                "change_request_id": "cr-" + repo,
+                "kind": kind,
+                "provider_change_request_document_id": provider_id,
+                "repository_uuidv4": repository_uuid(repo),
+                "repository_binding_id": "binding-" + repo,
+                "service_instance_uuidv4": "00000000-0000-4000-8000-000000000101",
+                "text_body_sha256": hashlib.sha256(repo.encode()).digest(),
+                "body_status": "present",
+                "observed_at_us": TIME,
+                "parsed_at_us": TIME,
+                "parser_profile_uuidv4": register_test_profile(db),
+                "metadata": "{}",
+                "acquisition_scope_json": json.dumps(
+                    {
+                        "service_instance_uuidv4": "00000000-0000-4000-8000-000000000101",
+                        "repository_uuidv4": repository_uuid(repo),
+                        "repository_binding_id": "binding-" + repo,
+                        "change_request_id": "cr-" + repo,
+                        "endpoint": "synthetic-current-review",
+                    }
+                ),
+            }
+            if kind == "review-comment":
+                values["review_provider_resource_id"] = str(100 + index)
+                values["review_thread_provider_resource_id"] = "thread-" + repo
+            put(db, "review_resources", **values)
         put(
             db,
             "resume_scopes",
@@ -380,8 +402,10 @@ def test_reviewed_multi_statement_attack(
     "sql",
     [
         "UPDATE repositories SET preferred_repository_endpoint_id='endpoint-b' WHERE repository_uuidv4='00000000-0000-4000-8000-000000000301'",
-        "INSERT INTO review_comments(change_request_id,kind,provider_change_request_document_id) VALUES('cr-a','review-comment','native-b')",
-        "INSERT INTO reviews(change_request_id,kind,provider_change_request_document_id) VALUES('cr-a','review','native-b')",
+        "UPDATE review_resources SET repository_uuidv4='00000000-0000-4000-8000-000000000302',repository_binding_id='binding-b' WHERE change_request_id='cr-a' AND kind='review'",
+        "UPDATE review_resources SET review_provider_resource_id='102' WHERE change_request_id='cr-a' AND kind='review-comment'",
+        "UPDATE review_resources SET review_thread_provider_resource_id='thread-b' WHERE change_request_id='cr-a' AND kind='review-comment'",
+        "UPDATE review_resources SET in_reply_to_provider_resource_id='202' WHERE change_request_id='cr-a' AND kind='review-comment'",
         "UPDATE fetch_collections SET change_request_id='cr-b' WHERE fetch_collection_id='a-commits'",
         "DELETE FROM repositories WHERE repository_uuidv4='00000000-0000-4000-8000-000000000301'",
     ],
