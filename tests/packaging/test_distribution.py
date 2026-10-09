@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import sqlite3
@@ -9,6 +10,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
 from tests.support.git_fixture import FixtureRepo
+from tests.support.legacy_v2 import initialize
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -38,6 +40,10 @@ def distributions(tmp_path_factory):
         "UV_PYTHON": sys.executable,
         "UV_CACHE_DIR": os.environ.get("UV_CACHE_DIR", "/workspace/.cache/uv"),
     }
+    # The installed CLI and its guarded worker must resolve the distribution,
+    # even when the outer test runner uses a checkout PYTHONPATH.
+    env.pop("PYTHONPATH", None)
+    env.pop("PYTHONHOME", None)
     wheelhouse = Path(
         os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
     ).resolve()
@@ -203,3 +209,46 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         )
     )
     assert len(data["data"]["items"]) == 1
+
+    # Exercise packaged salvage resources in these already isolated installs;
+    # a separate --target wheel build cannot add another distribution variant.
+    legacy, cache = initialize(tmp_path / "legacy")
+    preserved_cache = cache / "synthetic-evidence"
+    preserved_cache.write_bytes(b"packaged salvage original cache\x00\xff")
+    repository_id = "00000000-0000-4000-8000-000000000123"
+    display_name = "synthetic/packaged salvage 日本語"
+    with sqlite3.connect(legacy) as db:
+        db.execute(
+            "INSERT INTO sources VALUES('packaged-source','local-git',?, ?,NULL)",
+            ("packaged salvage", '{"url":"file:///synthetic/packaged.git"}'),
+        )
+        db.execute(
+            "INSERT INTO repositories VALUES(?,'packaged-source','local','synthetic-repo',?,?,?,NULL)",
+            (repository_id, display_name, "file:///synthetic/packaged.git", "{}"),
+        )
+        db.execute(
+            "INSERT INTO source_repositories VALUES('packaged-source',?,?,?)",
+            (repository_id, "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"),
+        )
+    preserved = {
+        path: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in (legacy, preserved_cache)
+    }
+    state = tmp_path / "salvaged-state"
+    imported = cli("import-v2", "--source", legacy, "--source-cache", cache)["data"]
+    assert imported["complete"] and imported["lifecycle"] == "building"
+    with sqlite3.connect(state / "catalog.sqlite3") as db:
+        assert db.execute(
+            "SELECT format_id,lifecycle FROM database_identity"
+        ).fetchone() == ("repo-catalog/catalog3", "building")
+    with sqlite3.connect(state / "import-v2/workspace.sqlite3") as db:
+        assert db.execute("SELECT count(*) FROM conversion_runs").fetchone()[0] == 1
+    assert cli("db", "finalize")["data"]["lifecycle"] == "validated"
+    repositories = cli("repos", "list", "--repo", repository_id)["data"]["items"]
+    assert len(repositories) == 1
+    assert repositories[0]["repository_uuidv4"] == repository_id
+    assert repositories[0]["name"] == display_name
+    assert cli("db", "check", "--full")["data"]["checks"]["sqlite"] == ["ok"]
+    assert preserved == {
+        path: hashlib.sha256(path.read_bytes()).hexdigest() for path in preserved
+    }

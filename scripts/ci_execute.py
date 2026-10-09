@@ -1,6 +1,7 @@
 """Execute current selections and report exactly what ran, failed or remained untested."""
 
 import argparse
+import glob
 import json
 import math
 import os
@@ -146,12 +147,23 @@ def run_current(output, name):
 
 
 def reports(root=ROOT):
-    """Check readable, nonempty prose without importing the application."""
-    checked = []
+    """Check readable, nonempty reports and JSON objects without application imports."""
+    checked = set()
     rules = ci_plan.policy(root)
     for pattern in rules["prose"] + rules.get("report_inputs", []):
-        for path in sorted(root.glob(pattern)):
+        # Use the planner's matcher, where '*' can span directories, to avoid
+        # classifying nested evidence as report-only without validating it.
+        search = root
+        for part in Path(pattern).parts:
+            if glob.has_magic(part):
+                break
+            search /= part
+        candidates = search.rglob("*") if search.is_dir() else [search]
+        for path in sorted(candidates):
             if not path.is_file():
+                continue
+            relative = str(path.relative_to(root))
+            if relative in checked or not ci_plan.matches(relative, [pattern]):
                 continue
             if path.is_symlink() or root.resolve() not in path.resolve().parents:
                 raise ValueError("Report/prose must be a regular repository file")
@@ -167,8 +179,8 @@ def reports(root=ROOT):
                 )
                 if not isinstance(value, dict) or not value:
                     raise ValueError("Report must be a nonempty JSON object")
-            checked.append(str(path.relative_to(root)))
-    return {"checked": sorted(set(checked)), "outcome": "passed"}
+            checked.add(relative)
+    return {"checked": sorted(checked), "outcome": "passed"}
 
 
 def successful_profile(path, context, expected_runtime):
@@ -203,6 +215,7 @@ def gate(path, root=ROOT):
         "version",
         "policy_hash",
         "tree_hash",
+        "acceptance_input_hash",
         "runtime",
         "full",
         "acceptance_files",
@@ -288,6 +301,10 @@ def gate(path, root=ROOT):
         "context": plan["context"],
         "runtime": plan["runtime"],
         "full_acceptance": plan["full"],
+        "acceptance_status": "full_acceptance_passed"
+        if plan["full"]
+        else "selected_checks_only",
+        "acceptance_input_hash": plan["acceptance_input_hash"],
         "coverage": {
             "executed": len(selected),
             "selected_files": sum(
@@ -303,7 +320,18 @@ def gate(path, root=ROOT):
         },
     }
     save(manifest_path, result)
-    summary = f"## Validation outcome\n\nSelected checks passed. Full acceptance: {result['full_acceptance']}. Executed tests: {len(selected)}. Unexecuted acceptance files: {len(plan['unexecuted_files'])}.\n"
+    status = (
+        "Full acceptance passed for the tested inputs."
+        if result["full_acceptance"]
+        else "Selected checks only; merge acceptance is not established by this run."
+    )
+    summary = (
+        f"## Validation outcome\n\n**{status}**\n\n"
+        f"Executed tests: {len(selected)}. Unexecuted acceptance files: {len(plan['unexecuted_files'])}.\n\n"
+        f"Acceptance input hash: `{result['acceptance_input_hash']}`. "
+        "Final integration requires a completed full acceptance with matching inputs; "
+        "an earlier failed, cancelled or in-progress run is insufficient.\n"
+    )
     (output / "validation-summary.md").write_text(summary)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as handle:

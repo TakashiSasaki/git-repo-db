@@ -1,6 +1,7 @@
 """Separate scratch lifetime, pairing and multi-database commit/recovery."""
 
 import hashlib
+import json
 import os
 import shutil
 import sqlite3
@@ -16,7 +17,7 @@ from repo_catalog.application.finalization import finalize_catalog
 from repo_catalog.application.import_service import import_catalog
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.domain.models import CatalogError
-from tests.support.integrated_fixture import make_integrated_source
+from tests.support.integrated_fixture import IDS, make_integrated_source
 from tests.support.legacy_v2 import initialize
 
 
@@ -234,3 +235,142 @@ worker.main()
     assert hash_file(source) == before
     with Store(state, allow_building=True) as store:
         assert finalize_catalog(store)["lifecycle"] == "validated"
+
+
+@pytest.mark.parametrize("point", ["before_commit", "after_commit"])
+def test_finalization_process_death_preserves_paired_readiness_and_retries_once(
+    tmp_path, point
+):
+    source, cache = make_integrated_source(tmp_path / "source")
+    preserved = {
+        path: hash_file(path) for path in (source, cache / "synthetic-evidence")
+    }
+    state = tmp_path / "target"
+    assert import_catalog(source, state, source_caches=[cache])["complete"]
+
+    def snapshot(store):
+        queries = {
+            "identity": "SELECT db_instance_id,lifecycle,publication_seq FROM database_identity",
+            "runs": "SELECT conversion_run_id,state,manifest FROM conversion_runs ORDER BY conversion_run_id",
+            "receipts": "SELECT conversion_run_id,observed_at_us,details FROM validation_results WHERE code='RUNTIME_FINALIZATION' ORDER BY conversion_run_id",
+            "repositories": "SELECT repository_uuidv4,current_snapshot_id FROM repositories ORDER BY repository_uuidv4",
+            "prs": "SELECT change_request_id,current_change_request_observation_id FROM change_requests ORDER BY change_request_id",
+            "published": "SELECT change_request_observation_id,published FROM change_request_observations ORDER BY change_request_observation_id",
+            "documents": "SELECT kind,provider_change_request_document_id,current_document_observation_id FROM documents ORDER BY kind,provider_change_request_document_id",
+            "observation_count": "SELECT count(*) FROM document_observations",
+            "batch_count": "SELECT count(*) FROM conversion_batches",
+        }
+        with workspace.attached(store.connection, store.db_path):
+            for schema in ("main", workspace.SCHEMA):
+                assert store.one(f"PRAGMA {schema}.integrity_check")[0] == "ok"
+                assert not store.all(f"PRAGMA {schema}.foreign_key_check")
+            return {
+                name: [tuple(row) for row in store.all(query)]
+                for name, query in queries.items()
+            }
+
+    with Store(state, allow_building=True) as store:
+        before = snapshot(store)
+    assert before["identity"][0][1:] == ("building", 0)
+    assert before["runs"][0][1] == "paused"
+    assert before["receipts"] == []
+    assert all(row[-1] is None for row in before["documents"])
+
+    # Kill the process at the actual transaction COMMIT without adding a
+    # production fault API. Both variants reach all pending finalization writes;
+    # they differ only in whether SQLite has committed the attached transaction.
+    script = """
+import os,sys
+from repo_catalog.adapters.sqlite.store import Store
+from repo_catalog.application.finalization import finalize_catalog
+original=Store.execute
+def crashing(self,sql,args=()):
+    if sql != 'COMMIT':
+        return original(self,sql,args)
+    assert self.connection.in_transaction
+    assert self.one('SELECT lifecycle,publication_seq FROM database_identity')[:] == ('validated',1)
+    assert self.one('SELECT state FROM conversion_runs')[0] == 'validated'
+    assert self.one("SELECT count(*) FROM validation_results WHERE code='RUNTIME_FINALIZATION'")[0] == 1
+    assert self.one('SELECT count(*) FROM documents WHERE current_document_observation_id IS NOT NULL')[0] == 4
+    if sys.argv[2] == 'after_commit':
+        original(self,sql,args)
+        assert not self.connection.in_transaction
+    os._exit(77)
+Store.execute=crashing
+with Store(sys.argv[1],allow_building=True) as store:
+    finalize_catalog(store)
+"""
+    child = subprocess.run(
+        [sys.executable, "-c", script, str(state), point],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert child.returncode == 77, child.stderr
+    if point == "before_commit":
+        assert (state / "catalog.sqlite3-journal").is_file()
+        assert (state / "import-v2/workspace.sqlite3-journal").is_file()
+
+    # Open normally: SQLite, not test-side journal cleanup, recovers each file.
+    with Store(state, allow_building=True) as store:
+        recovered = snapshot(store)
+        if point == "before_commit":
+            assert recovered == before
+        else:
+            assert recovered["identity"][0][1:] == ("validated", 1)
+            assert recovered["runs"][0][1] == "validated"
+            assert len(recovered["receipts"]) == 1
+        first_retry = finalize_catalog(store)
+        after = snapshot(store)
+        assert first_retry["catalog"]["publication_seq"] == 1
+        assert after["identity"][0] == (before["identity"][0][0], "validated", 1)
+        assert after["runs"][0][1] == "validated"
+        assert after["observation_count"] == before["observation_count"]
+        assert after["batch_count"] == before["batch_count"]
+        assert dict(after["repositories"]) == {
+            IDS["repo"]: IDS["run"],
+            IDS["mirror"]: None,
+            IDS["local_repo"]: None,
+        }
+        assert after["prs"] == [(IDS["pr"], 303)]
+        assert after["published"] == [(301, 1), (302, 1), (303, 1)]
+        assert after["documents"] == [
+            ("issue-comment", "901", 303),
+            ("issue-comment", "902", None),
+            ("issue-comment", "903", 304),
+            ("pr-body", "701", None),
+            ("pr-title", "701", None),
+            ("review", "1001", 305),
+            ("review-comment", "1002", 306),
+        ]
+        assert len(after["receipts"]) == 1
+        receipt = json.loads(after["receipts"][0][2])
+        assert {
+            (item["owner_id"], item["candidate_id"])
+            for item in receipt["restored"]
+            if item["table"] == "repositories"
+        } == {row for row in after["repositories"] if row[1] is not None}
+        assert {
+            (item["owner_id"], item["candidate_id"])
+            for item in receipt["restored"]
+            if item["table"] == "change_requests"
+        } == set(after["prs"])
+        assert {
+            (
+                item["document_key"]["change_request_id"],
+                item["document_key"]["kind"],
+                item["document_key"]["provider_change_request_document_id"],
+                item["candidate_id"],
+            )
+            for item in receipt["restored"]
+            if item["table"] == "documents"
+        } == {(IDS["pr"], *row) for row in after["documents"] if row[-1] is not None}
+        assert len(receipt["restored"]) == 6
+        assert len(receipt["unresolved"]) == 2
+        if point == "after_commit":
+            assert after == recovered
+        else:
+            assert receipt["restored"] == first_retry["restored"]
+        assert finalize_catalog(store)["catalog"] == first_retry["catalog"]
+        assert snapshot(store) == after
+    assert preserved == {path: hash_file(path) for path in preserved}

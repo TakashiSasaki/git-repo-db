@@ -179,61 +179,6 @@ print(json.dumps(results))
     assert source.read_bytes() == b"synthetic preserved input" and not outside.exists()
 
 
-def test_installed_wheel_imports_without_checkout_documents(tmp_path):
-    source, cache = initialize(tmp_path / "legacy")
-    repository = Path(__file__).resolve().parents[2]
-    distribution = tmp_path / "dist"
-    subprocess.run(
-        [
-            "uv",
-            "build",
-            "--wheel",
-            "--no-build-isolation",
-            "--out-dir",
-            str(distribution),
-        ],
-        cwd=repository,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    wheel = next(distribution.glob("*.whl"))
-    site = tmp_path / "site"
-    subprocess.run(
-        ["uv", "pip", "install", "--no-deps", "--target", str(site), str(wheel)],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    state = tmp_path / "installed-state"
-    script = "import sys; sys.path.insert(0,sys.argv.pop(1)); from repo_catalog.application.import_service import import_catalog; import json; print(json.dumps(import_catalog(sys.argv[1],sys.argv[2],source_caches=[sys.argv[3]])))"
-    environment = os.environ.copy()
-    environment["PYTHONPATH"] = str(site)
-    child = subprocess.run(
-        [
-            sys.executable,
-            "-I",
-            "-c",
-            script,
-            str(site),
-            str(source),
-            str(state),
-            str(cache),
-        ],
-        cwd=tmp_path,
-        env=environment,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert json.loads(child.stdout)["complete"] is True
-    with inspect_import(state) as db:
-        assert db.execute(
-            "SELECT format_id,lifecycle FROM database_identity"
-        ).fetchone() == ("repo-catalog/catalog3", "building")
-        assert db.execute("SELECT count(*) FROM conversion_runs").fetchone()[0] == 1
-
-
 @pytest.mark.parametrize("crash_point", ["before_commit", "after_commit"])
 def test_process_death_rolls_back_whole_batch_then_resumes(tmp_path, crash_point):
     source, cache = initialize(tmp_path / "legacy")

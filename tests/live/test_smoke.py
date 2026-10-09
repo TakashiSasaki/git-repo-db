@@ -53,7 +53,7 @@ def test_selected_repository(tmp_path):
     discovery = cli("discover", "--source", source["data"]["source_id"])
     results.append(discovery)
     assert len(discovery["data"]["repositories"]) == 1
-    repo = discovery["data"]["repositories"][0]["repo_id"]
+    repo = discovery["data"]["repositories"][0]["repository_uuidv4"]
     results.append(cli("sync", "all", "--repo", repo))
     results.append(cli("refs", "list", "--repo", repo))
     results.append(cli("pr", "list", "--repo", repo))

@@ -308,6 +308,120 @@ def test_scaled_attribution_validates_each_saved_item_once_per_current_page(
     src.close()
 
 
+@pytest.mark.parametrize("scale", (10, 100))
+def test_scaled_null_body_page_reuses_validated_payload_reference(
+    tmp_path, monkeypatch, scale
+):
+    saved = {}
+
+    def mutate(src):
+        response = src.execute(
+            "SELECT response_id FROM collection_pages WHERE collection_id=? AND ordinal=0",
+            (IDS["comments_a"],),
+        ).fetchone()[0]
+        values = json.loads(
+            src.execute(
+                "SELECT body FROM api_responses WHERE id=?", (response,)
+            ).fetchone()[0]
+        )
+        for value in values:
+            value["body"] = None
+            value["padding"] = "x" * 4096
+        raw = json.dumps(values).encode()
+        digest = hashlib.sha256(raw).digest()
+        src.execute(
+            "UPDATE api_responses SET body=?,payload_sha256=? WHERE id=?",
+            (raw, digest, response),
+        )
+        saved.update(response=response, raw=raw, digest=digest, items=len(values))
+
+    db, src, run = components(tmp_path, mutate=mutate, scale=scale)
+    try:
+        convert(db, src, run)
+        records = tuple(
+            record
+            for record in archive.rows(src, "collection_pages")
+            if record.value("collection_id")[1].decode() == IDS["comments_a"]
+        )
+        assert len(records) == 1
+        assert saved["items"] == scale + 1
+        calls = {"reads": 0, "hashes": 0}
+        original_ref, original_hash = pr_domain.Context.ref, hashlib.sha256
+
+        def counted_ref(self, source_table, *key):
+            if source_table == "api_responses" and key == (saved["response"],):
+                calls["reads"] += 1
+            return original_ref(self, source_table, *key)
+
+        def counted_hash(data=b"", *args, **kwargs):
+            if data == saved["raw"]:
+                calls["hashes"] += 1
+            return original_hash(data, *args, **kwargs)
+
+        monkeypatch.setattr(pr_domain.Context, "ref", counted_ref)
+        monkeypatch.setattr(hashlib, "sha256", counted_hash)
+        prepared = None
+        for verifying in (False, True):
+            calls.update(reads=0, hashes=0)
+            output = pr_domain.prepare(
+                db, src, run, "saved_document_repair", 0, records, verifying=verifying
+            )
+            # Reading/validating the page and its logical reference stays
+            # bounded regardless of the number/size of its NULL-body items.
+            # Verification must perform its own checks on the source page.
+            assert 0 < calls["reads"] <= 3
+            assert 0 < calls["hashes"] <= 3
+            gaps = [
+                op["row"]
+                for op in output["operations"]
+                if op["table"] == "unresolved_payloads"
+            ]
+            assert len(gaps) == len({row[0] for row in gaps}) == saved["items"]
+            assert all(row[1:3] == ("decoded_api", saved["digest"]) for row in gaps)
+            # Diagnostics are attributed/deduplicated per source page; every
+            # individual missing-body occurrence remains a distinct gap row.
+            assert [d[1:3] for d in output["diagnostics"]] == [
+                ["PR_NULL_SAVED_BODY", "info"]
+            ]
+            if verifying:
+                assert output == prepared
+            else:
+                prepared = output
+        assert (
+            db.execute(
+                "SELECT count(*) FROM unresolved_payloads WHERE payload_representation='decoded_api' AND payload_sha256=?",
+                (saved["digest"],),
+            ).fetchone()[0]
+            == saved["items"]
+        )
+    finally:
+        db.close()
+        src.close()
+
+
+def test_payload_reference_verification_rechecks_declared_digest(tmp_path):
+    db, src, run = components(tmp_path)
+    try:
+        response, digest = src.execute(
+            "SELECT id,payload_sha256 FROM api_responses ORDER BY id LIMIT 1"
+        ).fetchone()
+        context = pr_domain.Context(db, src, run)
+        assert context.payload_key(response) == ("decoded_api", digest)
+        # A new verification context cannot inherit a previously validated
+        # source reference. Corruption must still fail declared-hash admission.
+        src.execute(
+            "UPDATE api_responses SET payload_sha256=? WHERE id=?",
+            (b"!" * 32, response),
+        )
+        verification = pr_domain.Context(db, src, run, verifying=True)
+        with pytest.raises(pr_domain.Invalid) as rejected:
+            verification.payload_key(response)
+        assert rejected.value.code == "PR_PAYLOAD_DIGEST_MISMATCH"
+    finally:
+        db.close()
+        src.close()
+
+
 @pytest.mark.parametrize(
     ("malformed", "error"),
     ((7, AttributeError), ({"id": "THREAD_bad", "comments": {"nodes": 7}}, TypeError)),

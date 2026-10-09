@@ -32,7 +32,7 @@ def repository(root):
     command(root, "config", "user.name", "Synthetic Fixture")
     command(root, "config", "user.email", "fixture@example.invalid")
     rules = ci_plan.policy()
-    rules["acceptance_files"] = [
+    files = [
         "tests/unit/test_contracts.py",
         "tests/integration/test_runtime_flow.py",
         "tests/packaging/test_distribution.py",
@@ -40,7 +40,7 @@ def repository(root):
     for path in rules["policy_inputs"]:
         write(root, path)
     write(root, "scripts/ci_dependencies.json", json.dumps(rules))
-    for path in rules["acceptance_files"]:
+    for path in files:
         write(root, path, "def test_synthetic(): pass\n")
     write(root, "README.md", "# Synthetic fixture\n")
     write(root, "src/repo_catalog/example.py", "# Synthetic source\n")

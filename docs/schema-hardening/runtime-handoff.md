@@ -1,6 +1,14 @@
 # Catalog3 runtime handoff
 
-The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 10**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+The ordinary runtime uses [packaged catalog3 DDL](../../src/repo_catalog/resources/catalog3.sql) and [runtime identity](../../src/repo_catalog/adapters/sqlite/schema.py): `repo-catalog/catalog3`, **schema version 11**. Earlier catalog3 databases/backups are rejected; there is no earlier-catalog3 migration, compatibility alias or dual runtime path. The packaged v2 salvage importer is retained.
+
+## Stack review corrections (schema 11)
+
+Branch `fix/pr-stack-review` starts at PR #9 head `f8c1764c02da45c93437d36465a39ed68952d67d`; schema 11 and workspace 2 are unchanged. Thread queries require saved terminal evidence for the selected thread, ordered by substantive observations across root/child resumes. Error-only operational failures do not replace earlier observations. Document-only acquisition and query scopes share their code/timeline exclusions.
+
+Selected service registrations own API routing regardless of display names; default REST/GraphQL settings are captured at registration, with explicit Source overrides supported. Timestamp admission rejects unsupported clock fractions and malformed offset components. Malformed REST inputs retain exact received bytes, attributed diagnostics and the last safe retry boundary. Salvage caches only a bounded validated payload reference instead of hashing a whole page once per missing document.
+
+CI discovers ordinary tests, expands shared-helper impacts and validates synthetic JSON as reports. Its input fingerprint and explicit full-versus-selected outcome support final acceptance checks without treating a prose-only green job as runtime proof. Installed wheel and sdist-wheel workflows include real salvage/finalization; separate redundant wheel building is removed. Finalization process-death tests cover paired state and idempotent retries before/after commit, not physical power-cut durability. Source/network guards and first-sync authorization/replay rules remain in force.
 
 ## Payload CAS admission foundation (schema 11)
 
@@ -129,7 +137,7 @@ repo-catalog --state-dir /tmp/catalog3-fresh db backup --output /tmp/new-catalog
 repo-catalog --state-dir /tmp/catalog3-restored db restore --input /tmp/new-catalog3-backup.sqlite3
 ```
 
-Keep the backup and adjacent `.manifest.json` together. Git cache contents are excluded. Restore uses a new location/database instance and clears operational state. CLI row projections expose the new identifiers, including `repository_id`, `repository_endpoint_id`, `snapshot_id`, `git_acquisition_id`, `code_observation_id` and `active_cache_entry_id`.
+Keep the backup and adjacent `.manifest.json` together. Git cache contents are excluded. Restore uses a new location/database instance and clears operational state. CLI row projections expose the new identifiers, including `repository_uuidv4`, `repository_endpoint_id`, `snapshot_id`, `git_acquisition_id`, `code_observation_id` and `active_cache_entry_id`.
 
 A synthetic fixture builder is checkout-only; installed import uses packaged resources:
 

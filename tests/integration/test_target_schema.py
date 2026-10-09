@@ -520,8 +520,6 @@ def test_oid_type_numeric_boolean_null(target, fields):
 @pytest.mark.parametrize(
     "sql",
     [
-        "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('bad','00000000-0000-4000-8000-000000000101','github_inventory','bad','[]')",
-        "INSERT INTO sources(source_id,service_instance_uuidv4,discovery_kind,name,settings) VALUES('bad','00000000-0000-4000-8000-000000000101','github_inventory','bad','invalid-json')",
         "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES('listing-a-commits','invented',0,0,0)",
         "UPDATE code_listing_progress SET page_count=-1 WHERE code_listing_id='listing-a-commits'",
         "UPDATE code_listing_progress SET state='complete' WHERE code_listing_id='listing-a-commits'",
@@ -531,6 +529,32 @@ def test_oid_type_numeric_boolean_null(target, fields):
 def test_json_and_listing_state(target, sql):
     with pytest.raises(sqlite3.IntegrityError):
         target.execute(sql)
+
+
+@pytest.mark.parametrize("settings", ["[]", "invalid-json"])
+def test_source_settings_insert_requires_json_object(target, settings):
+    values = {
+        "service_instance_uuidv4": "00000000-0000-4000-8000-000000000101",
+        "discovery_kind": "github_inventory",
+        "name": "settings-check",
+    }
+    put(
+        target,
+        "sources",
+        source_id="valid-settings",
+        source_registration_uuidv4="00000000-0000-4000-8000-000000000202",
+        settings="{}",
+        **values,
+    )
+    with pytest.raises(sqlite3.IntegrityError, match="CHECK constraint failed"):
+        put(
+            target,
+            "sources",
+            source_id="invalid-settings",
+            source_registration_uuidv4="00000000-0000-4000-8000-000000000203",
+            settings=settings,
+            **values,
+        )
 
 
 def test_git_meaning_and_multiple_ref_origins(target):
