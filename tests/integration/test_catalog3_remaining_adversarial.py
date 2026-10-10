@@ -401,10 +401,36 @@ def test_git_decoder_candidates_never_choose_receipt_parser_or_uuid_winner(
 ):
     db, _ = databases
     git_acquisition(db)
-    obj, content, _ = git_blob(db, b"caf\xe9")
-    choices = [("utf-8", "caf�", "1"), ("latin-1", "café", "999")]
+    obj, content, _ = git_blob(db, "café".encode("utf-8"))
+    choices = [("utf-8", "café", "1"), ("latin-1", "cafÃ©", "999")]
     for encoding, text, version in reversed(choices) if reverse else choices:
-        key = hashlib.sha256(encoding.encode()).hexdigest()
+        settings = dict(
+            parser_module=__name__,
+            parser_version=version,
+            text_encoding=encoding,
+            max_text_blob_bytes=1024,
+            metadata_encoding=encoding,
+            metadata_errors="replace",
+        )
+        key = hashlib.sha256(
+            json.dumps(settings, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        with pytest.raises(sqlite3.IntegrityError, match="contradicts raw bytes"):
+            insert(
+                db,
+                "git_text_facts",
+                git_fact_uuidv4=str(uuid.uuid4()),
+                git_object_id=obj,
+                content_id=content,
+                decoder_key=key,
+                **settings,
+                text_state="eligible",
+                raw_text="invented decoding",
+            )
+        assert not db.execute(
+            "SELECT 1 FROM git_text_facts WHERE git_object_id=? AND decoder_key=?",
+            (obj, key),
+        ).fetchone()
         insert(
             db,
             "git_text_facts",
@@ -424,12 +450,22 @@ def test_git_decoder_candidates_never_choose_receipt_parser_or_uuid_winner(
     result = decoded_fact(reader(db), obj, "blob")
     assert result["fact"] is None and result["decoder_conflict"]
     assert len(result["candidates"]) == 2
-    for encoding, text, _ in choices:
+    for encoding, text, version in choices:
+        settings = dict(
+            parser_module=__name__,
+            parser_version=version,
+            text_encoding=encoding,
+            max_text_blob_bytes=1024,
+            metadata_encoding=encoding,
+            metadata_errors="replace",
+        )
         explicit = decoded_fact(
             reader(db),
             obj,
             "blob",
-            decoder_key=hashlib.sha256(encoding.encode()).hexdigest(),
+            decoder_key=hashlib.sha256(
+                json.dumps(settings, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest(),
         )
         assert not explicit["decoder_conflict"] and explicit["fact"]["raw_text"] == text
 

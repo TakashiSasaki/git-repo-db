@@ -28,5 +28,7 @@ def test_bounded_raw(catalog):
         expected=2,
     )
     binary = pages(state, "search", "path", "--path", "binary.bin")[0]["content_id"]
-    run(state, "content", "show", "--content-id", binary, expected=4)
+    raw = run(state, "content", "show", "--content-id", binary)["data"]["items"][0]
+    assert base64.b64decode(raw["data_b64"]) == b"\0\xff" + b"X" * 65534
+    assert raw["byte_length"] == 2097154 and raw["has_more"]
     run(state, "content", "hydrate", "--content-id", binary, expected=2)

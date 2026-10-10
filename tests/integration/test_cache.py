@@ -7,6 +7,7 @@ import sys
 import time
 
 from repo_catalog.adapters.filesystem.locks import FileLock
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from tests.e2e.test_cache import expire
 from tests.support.cli import run
 from tests.support.process import wait_unlocked
@@ -69,6 +70,7 @@ def test_old_obligations(catalog):
     run(state, "sync", "git")
     expire(state)
     with sqlite3.connect(state / "catalog.sqlite3") as db:
+        register_git_object_sql_function(db)
         db.execute(
             "UPDATE preservation_obligations SET text_done=0 WHERE git_acquisition_id=(SELECT s.git_acquisition_id FROM current_snapshots s WHERE s.repository_uuidv4=?)",
             (repos["alpha"],),
@@ -133,6 +135,7 @@ def test_orphan_git_holds_lock(catalog, tmp_path):
 import json,subprocess,time,sys
 from pathlib import Path
 from repo_catalog.adapters.filesystem.locks import FileLock
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 with FileLock(sys.argv[1],inheritable=True) as lock:
     child=subprocess.Popen(['git','-c','alias.hold=!sleep 60','hold'],pass_fds=(lock.fd,),start_new_session=True)
     Path(sys.argv[2]).write_text(json.dumps({'pid':child.pid}))

@@ -40,6 +40,12 @@ def test_commit_literal_checks_original_bytes(catalog):
         assert len(hits) == 1 and hits[0]["oid"] == "sha1:" + oid
         assert hits[0]["byte_start"] == 1 and hits[0]["byte_end"] == 10
         assert base64.b64decode(hits[0]["message_b64"]) == message
+        escaped = pages(
+            state, "search", "commits", "--repo", repos["alpha"], "--literal", r"\xff"
+        )
+        assert len(escaped) == 1 and escaped[0]["oid"] == "sha1:" + oid
+        # Decoder-rendered escape text has no corresponding raw-byte span.
+        assert escaped[0]["byte_start"] is None and escaped[0]["byte_end"] is None
 
 
 def test_root_scopes(catalog):

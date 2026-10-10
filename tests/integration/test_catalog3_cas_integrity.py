@@ -339,10 +339,24 @@ def test_forged_canonical_git_oid_cannot_authorize_repair(store):
         "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES('sha1',?,'blob',?,1)",
         (bytes(oid), len(body)),
     ).lastrowid
+    with pytest.raises(sqlite3.IntegrityError, match="identity mismatch"):
+        db.execute(
+            "INSERT INTO git_object_payloads VALUES(?,?,?)",
+            (object_id, "git-object-raw-v1", reference.sha256),
+        )
+    assert not db.execute(
+        "SELECT 1 FROM git_object_payloads WHERE git_object_id=?", (object_id,)
+    ).fetchone()
+    # Model a damaged retained catalog independently of the admission guard.
+    guard = db.execute(
+        "SELECT sql FROM sqlite_schema WHERE name='git_object_payloads_identity'"
+    ).fetchone()[0]
+    db.execute("DROP TRIGGER git_object_payloads_identity")
     db.execute(
         "INSERT INTO git_object_payloads VALUES(?,?,?)",
         (object_id, "git-object-raw-v1", reference.sha256),
     )
+    db.execute(guard)
     corrupt(db, reference.sha256, b"damaged API proof")
     diagnose_corruption(db, reference.sha256)
     before = list(db.iterdump())

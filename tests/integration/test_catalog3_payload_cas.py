@@ -6,6 +6,7 @@ import uuid
 
 import pytest
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.schema import schema_sql
 from repo_catalog.domain.models import CatalogError
@@ -16,6 +17,7 @@ from tests.support.git_payloads import register_git_blob
 @pytest.fixture
 def db():
     connection = sqlite3.connect(":memory:", isolation_level=None)
+    register_git_object_sql_function(connection)
     connection.executescript(schema_sql())
     yield connection
     assert connection.execute("PRAGMA foreign_key_check").fetchall() == []

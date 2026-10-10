@@ -331,6 +331,14 @@ class QueryService:
             )
         if any(not ref.startswith("refs/") for ref in refs):
             raise CatalogError("INVALID_ARGUMENT", "Full ref names are required")
+        if options.get("snapshot") and (
+            scope == "recorded" or pr or any(k.startswith("pr-") for k in kinds)
+        ):
+            raise CatalogError(
+                "INVALID_ARGUMENT", "Snapshot and PR or recorded selectors conflict"
+            )
+        if pr or options.get("snapshot"):
+            self.single_repo(options)
         if scope == "current" and (
             pr
             or any(k != "head" for k in kinds)
@@ -368,6 +376,8 @@ class QueryService:
                 )
                 if kinds and kind not in kinds:
                     continue
+                if scope != "recorded" and not kind.startswith("pr-"):
+                    continue
                 if scope != "recorded" and row["code_assessment_id"]:
                     current = self.s.one(
                         "SELECT a.code_assessment_id FROM code_assessments a JOIN eligible_change_request_state s USING(change_request_id) WHERE a.code_assessment_id=? AND a.object_format IS s.object_format AND a.head_oid IS s.head_oid AND a.base_oid IS s.base_oid",
@@ -395,15 +405,11 @@ class QueryService:
                         else f"pr/{row['provider_change_request_number']}/{role}",
                     }
                 )
+            normal_kinds = [kind for kind in kinds if not kind.startswith("pr-")]
+            if scope != "recorded" and normal_kinds:
+                result.extend(self.roots(repo, {**options, "ref_kinds": normal_kinds}))
             return result
-        snapshots = (
-            [self.snapshot(repo, options)]
-            if scope == "current" or options.get("snapshot")
-            else self.s.all(
-                "SELECT * FROM snapshots WHERE repository_uuidv4=? ORDER BY generation,snapshot_id",
-                (repo["repository_uuidv4"],),
-            )
-        )
+        snapshots = [self.snapshot(repo, options)]
         result = []
         for snapshot in snapshots:
             if not snapshot:
@@ -433,6 +439,9 @@ class QueryService:
                         "name": row["raw_ref_name"].decode("utf8", "backslashreplace"),
                     }
                 )
+        missing_refs = set(refs) - {root["name"] for root in result}
+        if missing_refs and snapshots[0] is not None:
+            raise CatalogError("NOT_FOUND", "Ref not found in selected snapshot")
         return result
 
     def peel(self, fmt, oid, context):
@@ -649,6 +658,12 @@ class QueryService:
                 if row["mode"] != 57344
                 else None
             )
+            if child and not self.public_object(
+                {"repository_uuidv4": context["repository_uuidv4"]},
+                child["git_object_id"],
+                context,
+            ):
+                child = None
             if row["mode"] == 16384:
                 if child:
                     yield from self.tree_entries(
@@ -670,12 +685,14 @@ class QueryService:
                 else {"fact": None, "decoder_conflict": False, "candidates": []}
             )
             fact = body["fact"]
-            if child and not self.public_object(
-                {"repository_uuidv4": context["repository_uuidv4"]},
-                child["git_object_id"],
-                context,
-            ):
-                fact = None
+            content = (
+                self.s.one(
+                    "SELECT content_id FROM blob_content_map WHERE git_object_id=?",
+                    (child["git_object_id"],),
+                )
+                if child and child["type"] == "blob"
+                else None
+            )
             yield {
                 "raw_path": raw,
                 "path_display": None
@@ -688,7 +705,9 @@ class QueryService:
                 "object_format": row["child_format"],
                 "oid": row["child_format"] + ":" + row["child_oid"].hex(),
                 "git_object_id": child["git_object_id"] if child else None,
-                "content_id": fact["content_id"] if fact else None,
+                "content_id": content[0] if content else None,
+                "raw_available": bool(child and child["type"] == "blob"),
+                "byte_length": child["size"] if child else None,
                 "git_text_fact_uuidv4": fact.get("git_fact_uuidv4") if fact else None,
                 "text": fact["raw_text"] if fact else None,
                 "text_state": fact["text_state"] if fact else "unknown",
@@ -696,31 +715,54 @@ class QueryService:
             }
 
     def occurrences(self, repo, options):
-        for root in self.roots(repo, options):
-            obj = self.peel(root["object_format"], root["oid"], root)
-            if not obj:
-                continue
+        roots = self.roots(repo, options)
+        instances = []
+        if (options.get("scope") or "current") == "current":
+            for root in roots:
+                obj = self.peel(root["object_format"], root["oid"], root)
+                if obj:
+                    instances.append((obj, root, str(root["id"])))
+        else:
+            acquisitions = {}
+            for root in roots:
+                acquisitions.setdefault(root["git_acquisition_id"], []).append(root)
+            for acquisition, captured_roots in acquisitions.items():
+                context = captured_roots[0]
+                for object_id in sorted(self.commit_set(captured_roots)):
+                    obj = self.s.one(
+                        "SELECT * FROM available_git_objects WHERE git_object_id=?",
+                        (object_id,),
+                    )
+                    instances.append((obj, context, f"{acquisition}:{object_id}"))
+                for root in captured_roots:
+                    obj = self.peel(root["object_format"], root["oid"], root)
+                    if obj and obj["type"] == "tree":
+                        instances.append((obj, root, str(root["id"])))
+        for obj, context, occurrence in instances:
             tree = obj["git_object_id"]
+            commit_oid = None
             if obj["type"] == "commit":
+                commit_oid = obj["object_format"] + ":" + obj["oid"].hex()
                 row = self.s.one("SELECT * FROM commits WHERE git_object_id=?", (tree,))
                 target = self.s.one(
                     "SELECT git_object_id FROM available_git_objects WHERE object_format=? AND oid=?",
                     (row["tree_format"], row["tree_oid"]),
                 )
-                if not target:
+                if not target or not self.public_object(repo, target[0], context):
                     self.coverage.add("git", "commit_tree_unavailable")
                     continue
                 tree = target[0]
             elif obj["type"] != "tree":
                 continue
-            for entry in self.tree_entries(tree, root):
+            for entry in self.tree_entries(tree, context):
                 yield (
-                    [str(root["id"]), entry["raw_path"].hex()],
+                    [occurrence, entry["raw_path"].hex()],
                     {
                         **entry,
-                        "root": root["name"],
-                        "snapshot_id": root.get("snapshot_id"),
-                        "git_acquisition_id": root.get("git_acquisition_id"),
+                        "root": context["name"],
+                        "commit": commit_oid,
+                        "snapshot_id": context.get("snapshot_id"),
+                        "git_acquisition_id": context.get("git_acquisition_id"),
                         "repository_uuidv4": repo["repository_uuidv4"],
                     },
                 )
@@ -796,7 +838,10 @@ class QueryService:
                 )
         elif command in {"repos list", "repos show"}:
             for repo in self.repos(options):
-                snapshot = self.snapshot(repo, options)
+                snapshot = s.one(
+                    "SELECT snapshot_id FROM current_snapshots WHERE repository_uuidv4=?",
+                    (repo["repository_uuidv4"],),
+                )
                 fields = {
                     **dict(repo),
                     "metadata": json.loads(repo["metadata"]),
@@ -1222,8 +1267,38 @@ class QueryService:
             for row in decoded["candidates"]
             if context.get("decoder_key") in (None, row["decoder_key"])
         ]
-        field = "text_encoding" if kind == "blob" else "metadata_encoding"
-        offsets = [self._literal_offsets(text, literal, row[field]) for row in selected]
+        if kind == "commit":
+            raw = self.s.one(
+                "SELECT raw_message FROM commits WHERE git_object_id=?", (object_id,)
+            )
+        else:
+            raw = self.s.one(
+                "SELECT b.body FROM git_object_payloads p JOIN stored_bytes b ON b.sha256=p.payload_sha256 WHERE p.git_object_id=?",
+                (object_id,),
+            )
+        start = text.index(literal)
+        display = {
+            "byte_start": None,
+            "byte_end": None,
+            "line": text[:start].count("\n") + 1,
+            "snippet": text[max(0, start - 40) : start + len(literal) + 80],
+        }
+        offsets = []
+        for row in selected:
+            encoding = row["text_encoding" if kind == "blob" else "metadata_encoding"]
+            errors = "strict" if kind == "blob" else row["metadata_errors"]
+            value = dict(display)
+            try:
+                needle = literal.encode(encoding)
+                offset = raw[0].find(needle) if raw else -1
+                if (
+                    offset >= 0
+                    and raw[0][:offset].decode(encoding, errors) == text[:start]
+                ):
+                    value.update(byte_start=offset, byte_end=offset + len(needle))
+            except UnicodeError:
+                pass
+            offsets.append(value)
         signatures = {json.dumps(value, sort_keys=True) for value in offsets}
         if len(signatures) == 1:
             return offsets[0]
@@ -1234,23 +1309,7 @@ class QueryService:
                 git_object_id=object_id,
                 candidates=decoded["candidates"],
             )
-        start = text.index(literal)
-        return {
-            "byte_start": None,
-            "byte_end": None,
-            "line": text[:start].count("\n") + 1,
-            "snippet": text[max(0, start - 40) : start + len(literal) + 80],
-        }
-
-    @staticmethod
-    def _literal_offsets(text, literal, encoding):
-        start = text.index(literal)
-        return {
-            "byte_start": len(text[:start].encode(encoding)),
-            "byte_end": len(text[: start + len(literal)].encode(encoding)),
-            "line": text[:start].count("\n") + 1,
-            "snippet": text[max(0, start - 40) : start + len(literal) + 80],
-        }
+        return display
 
     def pr_query(self, command, options):
         from repo_catalog.application.pr_queries import pr_query
