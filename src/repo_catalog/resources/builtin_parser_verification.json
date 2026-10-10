@@ -640,8 +640,8 @@
     "policy": "whole-profile-v1",
     "reports": [
       {
-        "executed_passed": 1604,
-        "sha256": "42bd4f81fb8f3514df9d0e662f585b33179d01b909b577fc0769ee9c7cf9180e",
+        "executed_passed": 1614,
+        "sha256": "beb59e1ab7f068a2629d76da9190cdabbd7a65acb5274fb1a8bbc46ebc380a31",
         "skipped": 0
       }
     ]
@@ -724,7 +724,7 @@
     },
     "output_schema": {
       "catalog3": 17,
-      "ddl_sha256": "f913f4f9503e7fd82c70b89e349965bc337f5e481858ae699f65bf6d3dede7fc",
+      "ddl_sha256": "50f26b9cded3f9896a53b4820caaaf45c119736e83f85fb8b7663ede66b646d0",
       "facts": "scoped-immutable-and-current-resources-v1"
     },
     "settings": {
