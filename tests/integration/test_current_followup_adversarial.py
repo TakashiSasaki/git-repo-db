@@ -638,19 +638,17 @@ def test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic(
     target = receiver()
     try:
         outcome = receive(target, unit)
-        assert outcome["staged_records"] == 1
+        assert outcome["rejected_records"] == 1
+        assert outcome["staged_records"] == 0
         assert target.execute(
             "SELECT provider_resource_id FROM issue_resources"
         ).fetchall() == [("11",)]
         assert target.execute(
             "SELECT b.body FROM issue_resources r JOIN text_bodies b ON b.sha256=r.text_body_sha256"
         ).fetchone() == ("independent valid body",)
-        staged = target.execute(
-            "SELECT table_name,reason,record_json FROM exchange_staging"
-        ).fetchone()
-        assert staged[0] == "issue_resources"
-        assert staged[1] == "invalid:domain_json"
-        assert json.loads(staged[2])["values"]["provider_resource_id"] == "10"
+        # Malformed modeled values are rejected before intake persistence;
+        # the bounded rejection count records failure without storing them.
+        assert target.execute("SELECT * FROM exchange_staging").fetchall() == []
         assert target.execute("PRAGMA foreign_key_check").fetchall() == []
         assert target.execute("PRAGMA integrity_check").fetchone() == ("ok",)
     finally:

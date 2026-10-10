@@ -382,7 +382,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             old = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark_us FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
+                    "SELECT f.kind,f.observed_at_us FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE m.asserted_state='complete' ORDER BY f.observed_at_us"
                 )
             )
         api.stage = "B"
@@ -391,7 +391,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             new = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark_us FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
+                    "SELECT f.kind,f.observed_at_us FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE m.asserted_state='complete' ORDER BY f.observed_at_us"
                 )
             )
         issue = "issue-comment-incremental"

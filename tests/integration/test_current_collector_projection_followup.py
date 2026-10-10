@@ -118,6 +118,7 @@ def collect(collector, repo, pr, api, api_kind, values):
             "data": {
                 "repository": {
                     "pullRequest": {
+                        "number": pr["provider_change_request_number"],
                         "mergeCommit": None,
                         "potentialMergeCommit": None,
                         "reviewThreads": terminal(

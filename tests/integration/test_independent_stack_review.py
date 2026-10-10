@@ -45,3 +45,23 @@ def test_current_review_comment_is_not_complete_when_review_parent_is_conflicted
         and gap["reason"] == "current_resource_unresolved"
         for gap in result.coverage.missing
     )
+    assert all(
+        item["provider_change_request_document_id"]
+        != child["provider_change_request_document_id"]
+        for item in result.data["items"]
+    )
+    selected = QueryService(store.path).query(
+        "pr thread",
+        {
+            "repo": repo["repository_uuidv4"],
+            "provider_change_request_number": 41,
+            "provider_resource_id": child["review_thread_provider_resource_id"],
+        },
+    )
+    assert selected.status == "partial"
+    assert any(
+        gap.get("provider_change_request_document_id")
+        == child["provider_change_request_document_id"]
+        and gap["reason"] == "current_resource_unresolved"
+        for gap in selected.coverage.missing
+    )

@@ -21,6 +21,56 @@ from tests.support.github_runtime import sync
 from tests.support.sqlite_contracts import assert_absent_tables
 
 
+def test_incremental_reuse_keeps_collection_start_before_terminal_observation(
+    github_runtime,
+):
+    from repo_catalog.domain.time import format_iso8601_us, now_us
+
+    store, repo, _, api = github_runtime
+    endpoint = api.url + "/repos/fixture/alpha/issues?per_page=100"
+    timestamp = now_us() + 600_000_000
+    config = copy.deepcopy(store.config["github"])
+    token = CancellationToken()
+    with httpx.Client(
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, json=[]))
+    ) as client:
+        transport = GitHubTransport(
+            config, token, client=client, clock_us=lambda: timestamp
+        )
+        collector = GitHubCollector(store, token, transport=transport, config=config)
+        job = JobService(store).create("sync", {"kind": "pr"})
+        store.expected_attempt = 1
+        context = {"incremental_endpoint": endpoint}
+        collection, _ = collector.current_collection(
+            repo, None, "issue", job, endpoint, current_parser.issue, context=context
+        )
+        created = store.one(
+            "SELECT observed_at_us FROM fetch_collections WHERE fetch_collection_id=?",
+            (collection,),
+        )[0]
+        assert created < timestamp
+        assert (
+            store.one(
+                "SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=?",
+                (collection,),
+            )[0]
+            == timestamp
+        )
+        resumed_url, reused = collector.current_incremental_url(
+            repo, "different-job", "issue", endpoint, context
+        )
+        assert resumed_url == endpoint + "&since=" + format_iso8601_us(
+            created - 300_000_000
+        ).replace(":", "%3A")
+        assert (
+            reused["completion_marker_uuidv4"]
+            == store.one(
+                "SELECT completion_marker_uuidv4 FROM completion_markers WHERE fetch_collection_id=?",
+                (collection,),
+            )[0]
+        )
+
+
 def current_query(state, repository, kind, *, search=False):
     options = {"repo": repository, "document_kind": kind}
     if search:
@@ -279,7 +329,7 @@ def test_current_rows_or_child_pages_cannot_prove_family_listing(
                     "thread-comments",
                     job,
                     scope["endpoint"],
-                    {"thread": "known-thread"},
+                    {"provider_resource_id": "known-thread"},
                 )
                 proof = CurrentCollectionProof(store.connection)
                 proof.page(

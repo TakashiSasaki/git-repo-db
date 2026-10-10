@@ -109,7 +109,26 @@ def _acquisition_shape(scope, service):
     for name in ("parser_module", "parser_version"):
         if name in scope:
             _identity(name, scope[name])
-    _walk(scope)
+
+
+def _capture_token(scope):
+    """Keep actual JSON types distinct when sharing one structural check."""
+
+    def keys(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if not isinstance(key, str):
+                    raise JsonContractError("Capture keys require text")
+                keys(child)
+        elif isinstance(value, list):
+            for child in value:
+                keys(child)
+
+    keys(scope)
+    try:
+        return json.dumps(scope, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    except (TypeError, ValueError) as cause:
+        raise JsonContractError("Capture requires JSON values") from cause
 
 
 def _detached_acquisition(data, scope):
@@ -147,6 +166,26 @@ def validate_acquisition_scope(
     Live acquisition requires every captured registration and membership.
     """
     _acquisition_shape(scope, service_instance_uuidv4)
+    return _acquisition_dependencies(
+        db,
+        scope,
+        service_instance_uuidv4=service_instance_uuidv4,
+        repository_uuidv4=repository_uuidv4,
+        repository_binding_id=repository_binding_id,
+        allow_snapshot=allow_snapshot,
+    )
+
+
+def _acquisition_dependencies(
+    db,
+    scope,
+    *,
+    service_instance_uuidv4,
+    repository_uuidv4=None,
+    repository_binding_id=None,
+    allow_snapshot=False,
+):
+    """Check live identities after the caller checked the exact capture shape."""
     if (
         repository_uuidv4 is not None
         and scope["repository_uuidv4"] != repository_uuidv4
@@ -775,6 +814,7 @@ def _check_schema(table, column, value, data, *, check_owner=True):
         return
     if column == "field_evidence_json":
         allowed = _allowed_fields(table)
+        checked_captures = set()
         for encoded_path, evidence in value.items():
             try:
                 path = json.loads(encoded_path)
@@ -836,12 +876,15 @@ def _check_schema(table, column, value, data, *, check_owner=True):
             for name in ("parser_module", "parser_version"):
                 _identity(name, evidence[name])
             scope = evidence["acquisition_scope"]
-            _acquisition_shape(
-                scope,
-                data.get("service_instance_uuidv4")
-                if check_owner
-                else scope.get("service_instance_uuidv4"),
-            )
+            token = _capture_token(scope)
+            if token not in checked_captures:
+                _acquisition_shape(
+                    scope,
+                    data.get("service_instance_uuidv4")
+                    if check_owner
+                    else scope.get("service_instance_uuidv4"),
+                )
+                checked_captures.add(token)
             if (
                 check_owner
                 and table != "issue_resources"
@@ -969,7 +1012,7 @@ def validate_field_evidence(db, evidence, candidate):
         if token not in seen:
             seen.add(token)
             pending.extend(
-                validate_acquisition_scope(
+                _acquisition_dependencies(
                     db,
                     scope,
                     service_instance_uuidv4=candidate["service_instance_uuidv4"],

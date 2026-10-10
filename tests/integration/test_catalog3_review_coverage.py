@@ -314,6 +314,47 @@ def test_child_completion_from_another_root_does_not_prove_selected_thread(
     assert_thread_partial(store, count=101)
 
 
+def test_later_sibling_partial_resume_preserves_selected_scope_only(github_runtime):
+    store, repo, _, api = github_runtime
+    api.reply_count = 101
+    api.thread_count = 2
+    original = api.route
+    sibling_has_data = False
+
+    def route(method, path, params, body):
+        if method == "POST" and body["variables"].get("thread") == "THREAD41-1":
+            payload = (
+                original(method, path, params, body)[0]
+                if sibling_has_data
+                else {"data": None}
+            )
+            payload["errors"] = [{"message": "unavailable"}]
+            return payload, {}
+        return original(method, path, params, body)
+
+    api.route = route
+    job = start_threads(store)
+    with pytest.raises(CatalogError):
+        collect_threads(store, repo, job)
+    assert selected_thread(store).status == "complete"
+    sibling_has_data = True
+    with pytest.raises(CatalogError):
+        collect_threads(store, repo, job)
+    selected = selected_thread(store)
+    assert selected.status == "complete", selected.coverage
+    assert len(selected.data["items"]) == 101
+    assert selected_thread(store, resource="THREAD41-1").status == "partial"
+    whole = QueryService(store.path).query(
+        "pr threads",
+        {
+            "repo": repo["repository_uuidv4"],
+            "provider_change_request_number": 41,
+        },
+    )
+    assert whole.status == "partial"
+    assert not whole.coverage.complete_for_requested_scope
+
+
 def test_timeline_failure_is_outside_document_scope(github_runtime):
     store, repo, _, api = github_runtime
     api.failures["/repos/fixture/alpha/issues/41/timeline"] = [404]

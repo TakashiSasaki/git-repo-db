@@ -76,6 +76,108 @@ def _collection_state(query, row):
     return "complete"
 
 
+def _thread_listing_state(query, roots, thread):
+    """Qualify the selected thread's exact root and child observation.
+
+    A sibling's unfinished replies do not invalidate this thread. Conversely,
+    a resumed child observation can supersede a newer root capture without a
+    new root request, so root completion times alone cannot select the scope.
+    """
+    from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
+
+    proof = CurrentCollectionProof(query.s.connection)
+    graph = _collection_proof_graph(query)
+    candidates, latest = [], None
+    for root in roots:
+        ident = root["fetch_collection_id"]
+        boundary = query.s.one(
+            "SELECT max(observed_at_us) FROM (SELECT observed_at_us FROM current_collection_pages WHERE fetch_collection_id=? UNION ALL SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=? AND asserted_state<>'complete')",
+            (ident, ident),
+        )[0]
+        requirement = query.s.one(
+            "SELECT * FROM thread_collection_requirements WHERE fetch_collection_id=? AND provider_resource_id=?",
+            (ident, thread),
+        )
+        child = (
+            query.s.one(
+                "SELECT * FROM fetch_collections WHERE fetch_collection_id=?",
+                (requirement["child_fetch_collection_id"],),
+            )
+            if requirement
+            else None
+        )
+        if child:
+            child_boundary = _collection_boundary(query, child["fetch_collection_id"])
+            if child_boundary is not None:
+                boundary = (
+                    max(boundary, child_boundary)
+                    if boundary is not None
+                    else child_boundary
+                )
+        if boundary is None:
+            continue
+        candidate = (root, requirement, child)
+        if latest is None or boundary > latest:
+            candidates, latest = [candidate], boundary
+        elif boundary == latest:
+            candidates.append(candidate)
+    if not candidates:
+        return "unknown"
+    for root, requirement, child in candidates:
+        ident = root["fetch_collection_id"]
+        evidence = proof.evidence(ident)
+        if evidence is None or requirement is None or child is None:
+            return "partial"
+        root_observed = proof.observed_at_us(ident)
+        if query.s.one(
+            "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state<>'complete' AND observed_at_us>=?",
+            (ident, root_observed),
+        ):
+            return "partial"
+        required = graph.current_page_requirements(ident, evidence["page_ordinals"])
+        if (
+            thread
+            not in {
+                member["provider_resource_id"]
+                for member in proof.members(ident)
+                if member["family"] == "thread"
+            }
+            or required is None
+            or any(
+                query.s.one(
+                    "SELECT 1 FROM exchange_staging WHERE record_key=? AND reason LIKE 'conflict:%'",
+                    (key,),
+                )
+                for key in required
+            )
+        ):
+            return "partial"
+        context = json.loads(child["scope_json"]).get("request_context", {})
+        if (
+            child["kind"] != "thread-comments"
+            or any(
+                child[key] != root[key]
+                for key in ("repository_uuidv4", "change_request_id")
+            )
+            or context.get("parent_fetch_collection_id") != ident
+            or context.get("provider_resource_id") != thread
+            or context.get("parent_observed_at_us")
+            != requirement["required_observed_at_us"]
+            or any(
+                context.get(key)
+                != (
+                    requirement[key].hex()
+                    if isinstance(requirement[key], bytes)
+                    else requirement[key]
+                )
+                for key in ("object_format", "head_oid", "base_oid")
+            )
+            or _collection_state(query, child) != "complete"
+        ):
+            return "partial"
+    return "complete"
+
+
 def _scope_rows(query, command, options):
     repositories = [r["repository_uuidv4"] for r in query.repos(options)]
     if command in {
@@ -372,10 +474,7 @@ def prepare_pr_coverage(query, command, options):
                 "SELECT * FROM fetch_collections WHERE change_request_id=? AND kind='threads'",
                 (pr["change_request_id"],),
             )
-            latest = _latest_collections(query, roots)
-            if not latest or any(
-                _collection_state(query, row) != "complete" for row in latest
-            ):
+            if _thread_listing_state(query, roots, thread) != "complete":
                 query.coverage.add(
                     "pr",
                     "thread_listing_incomplete",
@@ -383,12 +482,14 @@ def prepare_pr_coverage(query, command, options):
                     provider_resource_id=thread,
                 )
             for row in query.s.execute(
-                "SELECT r.provider_change_request_document_id FROM review_resources r WHERE r.change_request_id=? AND r.kind='review-comment' AND r.review_thread_provider_resource_id=? AND r.deleted=0 AND (r.body_status IN ('missing','inaccessible') OR NOT EXISTS(SELECT 1 FROM eligible_review_resources e WHERE e.change_request_id=r.change_request_id AND e.kind=r.kind AND e.provider_change_request_document_id=r.provider_change_request_document_id)) ORDER BY r.provider_change_request_document_id",
+                "SELECT r.provider_change_request_document_id,r.body_status FROM review_resources r WHERE r.change_request_id=? AND r.kind='review-comment' AND r.review_thread_provider_resource_id=? AND r.deleted=0 AND (r.body_status IN ('missing','inaccessible') OR NOT EXISTS(SELECT 1 FROM eligible_review_resources e WHERE e.change_request_id=r.change_request_id AND e.kind=r.kind AND e.provider_change_request_document_id=r.provider_change_request_document_id)) ORDER BY r.provider_change_request_document_id",
                 (pr["change_request_id"], thread),
             ):
                 query.coverage.add(
                     "pr",
-                    "document_body_missing",
+                    "document_body_missing"
+                    if row["body_status"] in {"missing", "inaccessible"}
+                    else "current_resource_unresolved",
                     change_request_id=pr["change_request_id"],
                     document_kind="review-comment",
                     provider_change_request_document_id=row[0],
@@ -492,7 +593,7 @@ def prepare_pr_coverage(query, command, options):
         if command in {"pr documents", "search pr"}:
             for table in ("document_state", "review_resources"):
                 for row in query.s.execute(
-                    f"SELECT kind,provider_change_request_document_id FROM {table} WHERE change_request_id=? AND deleted=0 AND body_status IN ('missing','inaccessible') ORDER BY kind,provider_change_request_document_id",
+                    f"SELECT kind,provider_change_request_document_id,body_status FROM {table} r WHERE change_request_id=? AND deleted=0 AND (body_status IN ('missing','inaccessible') OR NOT EXISTS(SELECT 1 FROM eligible_{table} e WHERE e.change_request_id=r.change_request_id AND e.kind=r.kind AND e.provider_change_request_document_id=r.provider_change_request_document_id)) ORDER BY kind,provider_change_request_document_id",
                     (pr["change_request_id"],),
                 ):
                     if (
@@ -501,7 +602,9 @@ def prepare_pr_coverage(query, command, options):
                     ):
                         query.coverage.add(
                             "pr",
-                            "document_body_missing",
+                            "document_body_missing"
+                            if row["body_status"] in {"missing", "inaccessible"}
+                            else "current_resource_unresolved",
                             change_request_id=pr["change_request_id"],
                             document_kind=row["kind"],
                             provider_change_request_document_id=row[
@@ -529,7 +632,9 @@ def prepare_pr_coverage(query, command, options):
                     "code_assessment_incomplete",
                     code_assessment_id=code["code_assessment_id"],
                 )
-            elif code:
+            elif code and command not in {"pr documents", "search pr"}:
+                # Document selection consumes exact head/base listing evidence,
+                # but does not read the physical Git objects behind code roles.
                 for gap in code_role_gaps(query.s, pr, code, check=query.check):
                     query.coverage.add(
                         "pr", change_request_id=pr["change_request_id"], **gap
@@ -537,12 +642,16 @@ def prepare_pr_coverage(query, command, options):
 
 
 def _matches(state, options):
-    wanted = options.get("state", "all")
+    wanted = options.get("state")
+    if wanted is None:
+        wanted = "all"
     if wanted not in {"all", "open", "closed", "merged"}:
         raise CatalogError("INVALID_ARGUMENT", "Invalid PR state")
     if wanted != "all" and pr_state(state) != wanted:
         return False
-    draft = options.get("draft", "any")
+    draft = options.get("draft")
+    if draft is None:
+        draft = "any"
     if draft != "any" and bool(state.get("draft")) != (draft in {"yes", "true"}):
         return False
     return not options.get("author") or state.get("author") == options["author"]
@@ -556,8 +665,8 @@ def pr_query(query, command, options):
         if state is not None and not _matches(state, options):
             continue
         if state is None and (
-            options.get("state", "all") != "all"
-            or options.get("draft", "any") != "any"
+            (options.get("state") or "all") != "all"
+            or (options.get("draft") or "any") != "any"
             or options.get("author")
         ):
             continue
