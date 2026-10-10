@@ -70,7 +70,10 @@ def _common(value, context, observed_at_us, *, graphql=False, update_clock=True)
             and not isinstance(author["login"], str)
         ):
             raise CatalogError("API_SCHEMA", "Malformed GitHub author")
-        result["author"] = author.get("login") if author else None
+        if author is None:
+            result["author"] = None
+        elif "login" in author:
+            result["author"] = author["login"]
     if update_clock:
         _time(
             value,
