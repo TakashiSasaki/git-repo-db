@@ -33,14 +33,13 @@ For substantial architectural changes, follow this default sequence:
 
 Ordinary bug fixes that do not change settled architecture may use a direct corrective PR. Never create a new policy simply to make a test pass. Keep PR handoffs factual about implemented, partially implemented and blocked work; preserve meaningful tests rather than deleting surviving behavioral coverage.
 
-
 ## Transport-independent implementation boundary
 
 The [transport-independent core ADR](docs/transport-independent-core-adr.md) remains the accepted target. Schema 18 preserves transport-independent current Issue/review acquisition, admission, field evidence, collection receipts, ordinary readers, exchange and maintenance with actual parser module/version attribution; no profile/certificate/trust/selection dependency applies to these rows. See [implementation and blockers](docs/transport-independent-core-implementation.md). Historical PR, independent thread, Source inventory and Git parser publication/selection remain the existing baseline: their replacement domain publication, lifecycle, completeness and field contracts are deferred. Do not invent replacements or claim full ADR implementation.
 
 The [Phase 1 retirement decision](docs/phase1-api-original-retirement.md) supersedes older API-original preservation requirements only within R1–R7. Retrospective API parsing, including external `reparse-message` projections, and the current-resource `replay` admission mode are retired. `parser reparse` accepts only retained Git acquisitions; bounded `inspect-message` remains a diagnostic reader. Fully rejected API responses have no core raw-byte admission staging or parsing-gap record. Accepted partial GraphQL roots, including envelopes with errors, remain historical publication/restart inputs at the documented Phase-2 boundary; optional external transport recording is separate. Shared CAS admission requires an explicit representation; retained Git bytes and accepted historical API publication/proof paths keep their separate meanings and common integrity checks. See the [implementation inventory and remaining boundaries](docs/phase1-api-original-retirement-implementation.md); provider JSON projections remain pending the field-inventory decision.
 
-## Current schema 18 current-state and transport contracts
+## Active schema 18: current resources and transport contracts
 
 The following are **as-implemented requirements for existing paths**, not new permanent decisions about resource lifecycles or historical observation selection. Preserve them while those paths remain active; an accepted later ADR may replace them with independently validated behavior.
 
