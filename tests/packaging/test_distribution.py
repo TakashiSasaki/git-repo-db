@@ -431,9 +431,20 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         )["data"]["items"][0]["body"]
         == "ordinary-issue-body B"
     )
-    assert cli("search", "code", "--literal", "認証", state_dir=receiver)["data"][
-        "items"
-    ]
+    scoped = cli(
+        "search", "code", "--repo", repository, "--literal", "認証", state_dir=receiver
+    )
+    assert scoped["coverage"]["complete_for_requested_scope"]
+    assert scoped["data"]["items"]
+    whole_inventory = cli(
+        "search", "code", "--literal", "認証", state_dir=receiver, accepted_codes=(2,)
+    )
+    assert whole_inventory["status"] == "partial"
+    assert whole_inventory["data"]["items"] == scoped["data"]["items"]
+    assert whole_inventory["coverage"]["missing"]
+    assert {
+        (gap["kind"], gap["reason"]) for gap in whole_inventory["coverage"]["missing"]
+    } == {("inventory", "inventory_incomplete")}
     cli("db", "check", "--full", state_dir=receiver)
     backup = tmp_path / "backup.sqlite3"
     cli("db", "backup", "--output", backup)

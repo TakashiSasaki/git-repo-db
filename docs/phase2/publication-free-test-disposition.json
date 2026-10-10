@@ -1712,6 +1712,22 @@
         ],
         "reason": "A1 closed modeled staging forbids archival of conclusively invalid current capture JSON. Replace the obsolete invalid-pending-row expectation with an explicit rejected candidate and no pending archive, without weakening independent resource validity.",
         "surviving_assertion": "Both malformed repository/binding and malformed Source-registration capture variants are rejected exactly once; original incumbent A and independently valid sibling remain eligible, no invalid intake or current conflict diagnosis survives, exact incumbent body remains A, and full catalog validation succeeds."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation"
+        ],
+        "surviving_assertion": "Both original selector parameters still reject before any job, Source association, scoped inventory assessment or Coverage claim. The removed inventory_observations table is explicitly absent; actual current/evidence tables remain empty.",
+        "reason": "Only obsolete positive inventory_observations storage assertions are retired; every original behavioral parameter and operational result/identity assertion is preserved through direct current Source pairs and truthful scoped assessment."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation"
+        ],
+        "surviving_assertion": "Unconfigured Source remains operationally skipped with portable registration diagnostic. Only configured manual Source has one complete singleton scope assessment and known positive pair. Job attempt is complete with partial requested result; registration selector still returns one actual repository. No remote observation or Coverage claim is invented.",
+        "reason": "Only obsolete positive inventory_observations storage assertions are retired; every original behavioral parameter and operational result/identity assertion is preserved through direct current Source pairs and truthful scoped assessment."
       }
     ]
   },
