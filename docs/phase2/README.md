@@ -248,7 +248,7 @@ The [integrated probe](prototypes/candidate_probe.py) checks exact schema shape,
 empty/missing/duplicate/skipped fragments, member tamper/digests, same-owner family
 and cross-owner failures, selective/late members, exact required children,
 file-close/reopen restart, field presence, incomparable candidates and Git SHA-1/
-SHA-256 bytes. Its [receipt](prototypes/candidate-evidence.json) states remaining
+SHA-256 bytes. Its [current recheck receipt](prototypes/candidate-recheck-evidence.json) states remaining
 publication/current/Source/code/Git validator limits. The independent completeness
 [model and results](prototypes/completeness-results.json), production publication
 [characterization](prototypes/characterize_publication.py), acquisition

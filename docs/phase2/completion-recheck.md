@@ -31,10 +31,13 @@ snapshots remain historical inputs, not the active Schema 19 fingerprint.
 Passing the earlier checks did not establish that the investigation was complete.
 Independent reviewers found these additional gaps:
 
-1. **SQL reader inventory.** Both AST inventories recognized `execute`,
-   `executemany` and `executescript` but omitted SQL supplied to `Store.one` and
-   `Store.all`. That hid actual Issue eligibility, Source and decoder readers.
-   The audit now includes these helper call sites, with regression coverage.
+1. **SQL reader inventory.** The dependency AST inventory omitted SQL supplied
+   to `Store.one` and `Store.all`, hiding actual Issue eligibility, Source and
+   decoder readers. The field inventory already recognized these two helpers;
+   both inventories missed some locally declared SQL-forwarding methods such as
+   `_one`, `_all`, `_row` and `_rows`. The audit now includes those helper call
+   sites with regression coverage, without treating an unrelated file `write`
+   or builtin `all` call as SQL.
    Compilation and static references remain labeled separately from runtime
    reachability; dynamic SQL still requires the traced production paths.
 2. **Typed current-field groups.** The 57 JSON columns were enumerated, but the
