@@ -1,0 +1,31 @@
+{
+  "profile_version": 1,
+  "name": "doctor",
+  "series": "doctor",
+  "mode": "sequential",
+  "workers": 1,
+  "runtime": {
+    "python": "3.12.15",
+    "sqlite": "3.45.1",
+    "cpu_count": 4,
+    "affinity": 4,
+    "cpu_quota": null,
+    "commit_sha": "d889c5335f89574ba9ab1132b0f1fb011f55a68c",
+    "run_id": "38056834301",
+    "run_attempt": "1",
+    "feature_sha": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+    "tracked_changes": false
+  },
+  "started_at": "2026-10-10T13:43:56.877070+00:00",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "repo-catalog",
+    "--format",
+    "json",
+    "doctor"
+  ],
+  "wall_seconds": 0.13290550899999687,
+  "exit_code": 0
+}

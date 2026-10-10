@@ -1,0 +1,805 @@
+[
+  {
+    "artifact": "/workspace/review-artifacts/final-integrated/final-fafc1b2/own-23-sqlite353.xml",
+    "sha256": "fef33787e874de644b253282d33767622fcd2412f9c0d5d971fd0ec7aee9f69a",
+    "actual_cases": 23,
+    "status_counts": {
+      "passed": 23
+    },
+    "nodes": [
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_normal_acquisition_current_drift_reverse_transfer_index_reopen_and_receipt_loss"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_incomplete_scope_keeps_direct_document_and_independent_transfer"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_current_sparse_explicit_null_negative_clock_fences_and_receiver_local_check"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_source_partial_assessment_and_operational_state_loss_do_not_delete_positive_pairs"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_real_git_capture_decoder_ambiguity_invalid_first_exchange_and_reopen[sha1]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_real_git_capture_decoder_ambiguity_invalid_first_exchange_and_reopen[sha256]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_ref_capture_type_and_peeled_tuple_cannot_gain_current_scope_from_real_object_bytes"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_intrinsic_partial_tree_missing_target_and_atomic_failure[sha1]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_intrinsic_partial_tree_missing_target_and_atomic_failure[sha256]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_shared_git_physical_digest_quarantine_repair_backup_restore_and_no_overwrite"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_sql_decoder_value_must_not_become_ordinary_fact_without_byte_validation"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_coverage_clock_candidate_set_partial_stale_unknown_conflict_and_recovery"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_outer_commit_failure_rolls_back_resource_evidence_text_and_revision"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_issue_transfer_detached_capture_reverse_import_onward_and_late_old_membership"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[text]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-message]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-metadata]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[name]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[minimal]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[foreign-capture-parent]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[metadata]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[acquisition_scope]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_pending_ref_capture_onward_two_receivers_then_exact_late_ref"
+      }
+    ]
+  },
+  {
+    "artifact": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/own-native-4-sqlite353.xml",
+    "sha256": "e3b5e78e4e822fcefa09860537e4ffaac49434757b70bc76c9d00fa9219adeb0",
+    "actual_cases": 4,
+    "status_counts": {
+      "passed": 4
+    },
+    "nodes": [
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[minimal]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[foreign-capture-parent]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[metadata]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[acquisition_scope]"
+      }
+    ]
+  },
+  {
+    "artifact": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/own-23-sqlite345.xml",
+    "sha256": "f960ebc551690cff859eddc9dcb17bd3cbbc03f05b97f358d1aa468482db1618",
+    "actual_cases": 23,
+    "status_counts": {
+      "failure": 1,
+      "passed": 22
+    },
+    "nodes": [
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_normal_acquisition_current_drift_reverse_transfer_index_reopen_and_receipt_loss"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_incomplete_scope_keeps_direct_document_and_independent_transfer"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_current_sparse_explicit_null_negative_clock_fences_and_receiver_local_check"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_source_partial_assessment_and_operational_state_loss_do_not_delete_positive_pairs"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_real_git_capture_decoder_ambiguity_invalid_first_exchange_and_reopen[sha1]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_real_git_capture_decoder_ambiguity_invalid_first_exchange_and_reopen[sha256]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_ref_capture_type_and_peeled_tuple_cannot_gain_current_scope_from_real_object_bytes"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_intrinsic_partial_tree_missing_target_and_atomic_failure[sha1]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_intrinsic_partial_tree_missing_target_and_atomic_failure[sha256]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_shared_git_physical_digest_quarantine_repair_backup_restore_and_no_overwrite"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_sql_decoder_value_must_not_become_ordinary_fact_without_byte_validation"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_coverage_clock_candidate_set_partial_stale_unknown_conflict_and_recovery"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_outer_commit_failure_rolls_back_resource_evidence_text_and_revision"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_issue_transfer_detached_capture_reverse_import_onward_and_late_old_membership"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[text]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-message]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-metadata]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[name]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[minimal]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[foreign-capture-parent]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[metadata]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[acquisition_scope]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_pending_ref_capture_onward_two_receivers_then_exact_late_ref"
+      }
+    ]
+  },
+  {
+    "artifact": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/own-23-sqlite345-fts5.xml",
+    "sha256": "dfbb222f32d72748d9b392b4393b198b1ebc476ce819f2fd20d90fb556f9b296",
+    "actual_cases": 23,
+    "status_counts": {
+      "passed": 23
+    },
+    "nodes": [
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_normal_acquisition_current_drift_reverse_transfer_index_reopen_and_receipt_loss"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_incomplete_scope_keeps_direct_document_and_independent_transfer"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_current_sparse_explicit_null_negative_clock_fences_and_receiver_local_check"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_source_partial_assessment_and_operational_state_loss_do_not_delete_positive_pairs"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_real_git_capture_decoder_ambiguity_invalid_first_exchange_and_reopen[sha1]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_real_git_capture_decoder_ambiguity_invalid_first_exchange_and_reopen[sha256]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_ref_capture_type_and_peeled_tuple_cannot_gain_current_scope_from_real_object_bytes"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_intrinsic_partial_tree_missing_target_and_atomic_failure[sha1]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_intrinsic_partial_tree_missing_target_and_atomic_failure[sha256]"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_shared_git_physical_digest_quarantine_repair_backup_restore_and_no_overwrite"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_sql_decoder_value_must_not_become_ordinary_fact_without_byte_validation"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_coverage_clock_candidate_set_partial_stale_unknown_conflict_and_recovery"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_outer_commit_failure_rolls_back_resource_evidence_text_and_revision"
+      },
+      {
+        "file": "test_final_integrated.py",
+        "name": "test_issue_transfer_detached_capture_reverse_import_onward_and_late_old_membership"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[text]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-message]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-metadata]"
+      },
+      {
+        "file": "test_decoder_families.py",
+        "name": "test_all_decoder_families_native_and_ordinary_readers_reject_false_value[name]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[minimal]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_native_pending_current_candidate_is_closed_before_catalog_export[foreign-capture-parent]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[metadata]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_decoded_current_candidate_key_cannot_hide_opaque_nested_extension[acquisition_scope]"
+      },
+      {
+        "file": "test_final_followups.py",
+        "name": "test_pending_ref_capture_onward_two_receivers_then_exact_late_ref"
+      }
+    ]
+  },
+  {
+    "artifact": "/workspace/review-artifacts/final-integrated/final-fafc1b2/timestamps-115-sqlite345.xml",
+    "sha256": "6954bc35d68feb2be0821d99d184a6f2c3dd3f25c449950f91556b4af9299efb",
+    "actual_cases": 115,
+    "status_counts": {
+      "passed": 115
+    },
+    "nodes": [
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_exact_calendar_conversion_and_roundtrip[1970-01-01T00:00:00.000000Z-0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_exact_calendar_conversion_and_roundtrip[1969-12-31T23:59:59.999999Z--1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_exact_calendar_conversion_and_roundtrip[1970-01-01T00:00:00.000001Z-1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_exact_calendar_conversion_and_roundtrip[2026-10-07T09:00:00.123456Z-1791363600123456]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_exact_calendar_conversion_and_roundtrip[0001-01-01T00:00:00.000001Z--62135596799999999]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_exact_calendar_conversion_and_roundtrip[9999-12-31T23:59:59.999999Z-253402300799999999]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_offset_and_extra_zero_digits_do_not_change_absolute_time[2026-10-07T09:00:00.123456Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_offset_and_extra_zero_digits_do_not_change_absolute_time[2026-10-07T18:00:00.123456+09:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_offset_and_extra_zero_digits_do_not_change_absolute_time[2026-10-07T03:30:00.123456-05:30]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_offset_and_extra_zero_digits_do_not_change_absolute_time[2026-10-07T09:00:00.123456000Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[19700101T000000Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[1970-W01-4T00:00:00Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[1970W014T000000Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[1970-01-01 00:00:00,0000000+00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[1970-01-01t00Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[1970-01-01T00:00+00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[19700101T0000-0000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[1970-01-01T00:00:30+000030]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_supported_iso_spellings_keep_the_same_instant[1969-12-31T23:59:30-00:00:30]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_fractional_hours_and_minutes_are_not_misread_as_fractional_seconds[01.5]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_fractional_hours_and_minutes_are_not_misread_as_fractional_seconds[01,5]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_fractional_hours_and_minutes_are_not_misread_as_fractional_seconds[01:30.5]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_fractional_hours_and_minutes_are_not_misread_as_fractional_seconds[0130,5]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[+-00:60]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[+-0060]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[+-00:00:60]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[+-000060]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[+-24]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[--00:60]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[--0060]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[--00:00:60]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[--000060]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_invalid_offset_components_cannot_be_normalized[--24]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_adjacent_microseconds_remain_distinct"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[2026-10-07]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[2026-10-07T09:00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[2026-10-07T09:00:00.123456]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[2026-10-07T09:00:00.1234567Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[2026-10-07T09:00:00.123456001Z]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[1970-01-01T00:00:00+00:00:00.000001]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[1970-01-01T00:00:00-00:00:00.000001]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[1970-01-01T00:00:00+00:00:00.000000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_iso_boundary_rejects_missing_timezone_or_unrepresentable_time[not-a-timestamp]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_datetime_boundary_requires_timezone"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001-+-00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001-+-0000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001-+-00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001-+-000000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001-+-00:00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001---00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001---0000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001---00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001---000000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[.000001---00:00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001-+-00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001-+-0000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001-+-00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001-+-000000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001-+-00:00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001---00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001---0000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001---00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001---000000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_fractional_offset_spellings_are_explicitly_rejected[,000001---00:00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_nul_cannot_bypass_fractional_offset_validation[+-00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_nul_cannot_bypass_fractional_offset_validation[+-00:00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_nul_cannot_bypass_fractional_offset_validation[--00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_nul_cannot_bypass_fractional_offset_validation[--00:00:00]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_accepts_the_entire_signed_int64_range[-9223372036854775808]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_accepts_the_entire_signed_int64_range[-1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_accepts_the_entire_signed_int64_range[0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_accepts_the_entire_signed_int64_range[1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_accepts_the_entire_signed_int64_range[9223372036854775807]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_rejects_int64_overflow[-9223372036854775809]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_rejects_int64_overflow[9223372036854775808]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_does_not_coerce_non_integer_values[True]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_does_not_coerce_non_integer_values[False]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_does_not_coerce_non_integer_values[None]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_does_not_coerce_non_integer_values[0.0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_does_not_coerce_non_integer_values[1.5]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_does_not_coerce_non_integer_values[0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_internal_timestamp_does_not_coerce_non_integer_values[value6]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_calendar_formatting_rejects_valid_storage_times_outside_datetime_range[-9223372036854775808]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_calendar_formatting_rejects_valid_storage_times_outside_datetime_range[9223372036854775807]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[0-0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[-1--1000000]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[1e-06-1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[-1e-06--1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[1.234567-1234567]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[1791363600.123456-1791363600123456]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[seconds6-1791363600123456]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[0.0000009-0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[-0.0000001--1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[1791363600.123455999999999999999999999999-1791363600123455]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[-1791363600.123456000000000000000000000001--1791363600123457]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[-1e-999999999999999999--1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[9223372036854.775807-9223372036854775807]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_conversion_is_exact_and_floors_submicroseconds[-9223372036854.775808--9223372036854775808]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[nan]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[inf]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[-inf]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[NaN]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[not-seconds]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[1e999999999999999999]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[9223372036854.775808]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_rejects_invalid_nonfinite_or_out_of_range_values[-9223372036854.775809]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_seconds_are_independent_of_ambient_decimal_precision"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_boundaries_reject_incorrect_input_types[True]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_boundaries_reject_incorrect_input_types[None]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_external_boundaries_reject_incorrect_input_types[0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_current_clock_keeps_integer_microseconds[0-0]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_current_clock_keeps_integer_microseconds[-1--1]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_current_clock_keeps_integer_microseconds[1791363600123456999-1791363600123456]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_all_persisted_absolute_time_columns_have_units_and_integer_types[catalog3.sql]"
+      },
+      {
+        "file": "test_catalog3_timestamps.py",
+        "name": "test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types[catalog3.sql]"
+      }
+    ]
+  }
+]

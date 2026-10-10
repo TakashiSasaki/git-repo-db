@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/review-artifacts/architecture/final-fafc1b2/direct_inventory.py", line 73, in <module>
+    assert resolved == checked, "Generated exact collected-node receipt differs from tracked receipt"
+           ^^^^^^^^^^^^^^^^^^^
+AssertionError: Generated exact collected-node receipt differs from tracked receipt

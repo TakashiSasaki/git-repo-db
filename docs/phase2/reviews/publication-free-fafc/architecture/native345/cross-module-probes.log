@@ -1,0 +1,40 @@
+computed_git_and_nul_guard passed
+selected_stage_closure passed
+{
+  "computed_git_and_nul_guard": [
+    {
+      "format": "sha1",
+      "canonical_predicate": "valid sequence accepted; duplicate rejected",
+      "NUL_row": "CHECK constraint failed: length(raw_name)>0 AND instr(raw_name,X'00')=0",
+      "operational_deletion": "availability unchanged",
+      "digest_algorithms": [
+        "md5",
+        "sha1",
+        "sha256"
+      ]
+    },
+    {
+      "format": "sha256",
+      "canonical_predicate": "valid sequence accepted; duplicate rejected",
+      "NUL_row": "CHECK constraint failed: length(raw_name)>0 AND instr(raw_name,X'00')=0",
+      "operational_deletion": "availability unchanged",
+      "digest_algorithms": [
+        "md5",
+        "sha1",
+        "sha256"
+      ]
+    }
+  ],
+  "selected_stage_closure": {
+    "unrelated_genuine_pending_collections": 200,
+    "selected_export_unchanged": true,
+    "query_plan": [
+      [
+        3,
+        0,
+        0,
+        "SEARCH exchange_staging USING INDEX exchange_staging_record_owner (record_key=? AND repository_uuidv4=?)"
+      ]
+    ]
+  }
+}

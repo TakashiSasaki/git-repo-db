@@ -1,0 +1,11 @@
+Reviewer instrumentation, not a correctness-suite failure:
+The first inline provenance snippet attempted:
+    from repo_catalog.adapters.sqlite.schema import DDL
+and exited 1 with:
+    ImportError: cannot import name 'DDL' from 'repo_catalog.adapters.sqlite.schema'
+The packaged schema module exposes schema_sql() and DDL_SHA256 instead.
+That snippet failed before creating node lists. The immediately following
+disposition audit therefore exited 1 for its missing baseline input. Its full
+trace is preserved in disposition-audit.txt. record_binding.py uses the actual
+DDL_SHA256 and completed exit 0, followed sequentially by a successful audit
+whose log is disposition-audit-v2.txt. No production files were edited.

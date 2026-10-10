@@ -1,0 +1,17 @@
+{
+  "sha": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "plan_tested_sha": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "raw_file": "/workspace/git-repo-db/artifacts/publication-free/collection-4c738ef66d61/ordinary-collected-nodes.txt",
+  "raw_sha256": "88ce59a32b14839d01f2d7d9363583621d6ced3bb3e1ac8282877fc197d84852",
+  "baseline_count": 1950,
+  "explicit_count": 487,
+  "same_ids_count": 1463,
+  "removed_or_renamed_functions": 193,
+  "ordinary_count": 2128,
+  "package_count": 2,
+  "collection_exact": true,
+  "mapped_replacements_all_selected": true,
+  "excluded_files": [],
+  "unexecuted_files": [],
+  "limitation": "Collection and disposition accounting are not evidence of behavior equivalence or execution"
+}

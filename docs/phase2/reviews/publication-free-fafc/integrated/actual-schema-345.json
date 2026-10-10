@@ -1,0 +1,25 @@
+{
+  "commit": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "tree": "6f566cb3e91e25facda60671c40108e0a9f8965b",
+  "module": "/workspace/reviews/publication-free-final-verifier-fafc1b2/src/repo_catalog/__init__.py",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "sqlite": "3.45.1",
+  "ddl": "bf6deb09471a361918ab9d9e97ca1ba204060ffc78420972775a914357912f26",
+  "actual_map_matches": true,
+  "counts": {
+    "tables": 84,
+    "columns": 617,
+    "generated_columns": 3,
+    "foreign_keys": 190,
+    "views": 20,
+    "triggers": 556,
+    "indexes": 55
+  },
+  "checks": [
+    "all actual views compile",
+    "foreign_key_check empty",
+    "integrity_check ok",
+    "generated guard SQL exact"
+  ],
+  "limitation": "Structural inventory and preparation do not certify semantic correctness"
+}

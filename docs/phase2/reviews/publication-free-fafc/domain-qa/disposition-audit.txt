@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/workspace/reviews/publication-free-domain-qa-corrected/scripts/audit_publication_free_test_dispositions.py", line 194, in <module>
+    main()
+  File "/workspace/reviews/publication-free-domain-qa-corrected/scripts/audit_publication_free_test_dispositions.py", line 179, in main
+    report = resolve(
+             ^^^^^^^^
+  File "/workspace/reviews/publication-free-domain-qa-corrected/scripts/audit_publication_free_test_dispositions.py", line 32, in resolve
+    baseline, current = read_nodes(baseline_path), read_nodes(current_path)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/reviews/publication-free-domain-qa-corrected/scripts/audit_publication_free_test_dispositions.py", line 21, in read_nodes
+    nodes = path.read_text().splitlines()
+            ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/baseline-ordinary-nodes.txt'

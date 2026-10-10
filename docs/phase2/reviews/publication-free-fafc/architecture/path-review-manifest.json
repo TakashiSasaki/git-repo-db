@@ -1,0 +1,1252 @@
+{
+  "baseline": "6ca31eb95d2dca91adcf20af88fbb54387595375",
+  "candidate": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "changed_path_count": 246,
+  "changed_since_b86_count": 78,
+  "changed_paths": [
+    {
+      "path": "AGENTS.md",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "README.md",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "docs/architecture.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/cli.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/data-model.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/implementation-status.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/operations.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/phase1-api-original-retirement-implementation.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/phase2/README.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/phase2/publication-free-implementation.md",
+      "changed_since_b86": true,
+      "review_depth": "original/b86 complete reads retained; final handoff correction diff read fully; exact current generated counts and portability statements verified"
+    },
+    {
+      "path": "docs/phase2/publication-free-preimplementation-review.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/phase2/publication-free-schema-map.json",
+      "changed_since_b86": true,
+      "review_depth": "regenerated exact entire composed map equals checked map on both SQLite versions; all native objects independently inventoried"
+    },
+    {
+      "path": "docs/phase2/publication-free-test-disposition.json",
+      "changed_since_b86": true,
+      "review_depth": "full existing retirement rationale review retained; exact final 1950-node counterpart reconciliation and added/retired mapping changes inspected; blanket assertion sufficiency not claimed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-independent-35-results.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-independent-35-results.xml",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-new-exploratory-fixture-errors.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-new-v2-results.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-new-v2-results.xml",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/corrected-artifact-sha256.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/corrected-new-probes.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/corrected-review.md",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/test_independent_acquisition.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/test_independent_invariants.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/architecture/b86-review.md",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/architecture/portable-identity-tests.log",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/architecture/portable-identity-tests.xml",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/git-authorization-scale-b86ff2c96d7558379b2230489e1494630b073ef7.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/git_authorization_scale.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/metadata.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-26.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-crossmod-fixture-v2-code.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-crossmod-fixture-v3.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-crossmod-v1.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/receipt.md",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected-coverage-scale-b86ff2c96d7558379b2230489e1494630b073ef7.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected-pending-scale-b86ff2c96d7558379b2230489e1494630b073ef7.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected_coverage_scale.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected_pending_scale.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_code_proof.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_crossmod.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_crossmod.v1.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_crossmod.v2.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_independent_domain_qa.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-artifact-sha256.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-decoder-families.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-decoder-families.xml",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-decoder-sql-query.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-initial-review.md",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-late-ref.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-own-counterexamples.txt",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-own-counterexamples.xml",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-replay-after-receipt-loss.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/decoder_sql_repro.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/late_ref_repro.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/test_decoder_families.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/test_final_integrated.b86-frozen.py",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/hosted-b86-complete.log.gz",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/hosted-b86-failed.log.gz",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/hosted-ci-profile.zip",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-interrupted-ordinary.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-packaging-full.log",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-packaging.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-packaging.xml",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-plan.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-tests-full.log",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/manifest.json",
+      "changed_since_b86": true,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/full-diff-cafa8a8b143fe095b79f282690a6edf98e6f660e.patch.gz",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/git-authorization-scale-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/git_authorization_scale.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/manifest.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/metadata-final-initial-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-code-list.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-conflicts.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-crash.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-fakeoid.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-final.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-fixture-v2.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-invalidheaders.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-invalidnames.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-late.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/receipt-cafa8a8.md",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/schema-map-actual-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/selected-pending-scale-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/selected_pending_scale.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/test_independent_domain_qa.cafa8a8b143fe095b79f282690a6edf98e6f660e.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/frozen-probes-v1/test_independent_acquisition.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/frozen-probes-v1/test_independent_invariants.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/initial-frozen-results.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/initial-frozen-results.xml",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/initial-review.md",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/repro_scope_replica.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/scope-replica-result.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/artifact-sha256.txt",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/audit-runtime.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/counterexamples-results.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/counterexamples.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/initial-review.md",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/native-schema-dependencies.json.gz",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/positive-results.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/positive_probes.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/source-sql-call-inventory.json.gz",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/unmapped-retired-functions.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/intrinsic_tree_spoof.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/intrinsic_tree_spoof.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/receipt.md",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/selected_coverage_scale.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/selected_coverage_scale.py",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/manifest.json",
+      "changed_since_b86": false,
+      "review_depth": "archived historical receipt/artifact presence recorded; not independently executed or accepted as proof of this final review; contents not comprehensively reviewed"
+    },
+    {
+      "path": "docs/testing.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "docs/transport-independent-core-implementation.md",
+      "changed_since_b86": false,
+      "review_depth": "active architecture/handoff/owner instruction or documentation diff reviewed; historical narratives distinguished from acceptance"
+    },
+    {
+      "path": "scripts/audit_publication_free.py",
+      "changed_since_b86": true,
+      "review_depth": "correction diff inspected; real composed-map generation executed and independently corroborated with reviewer-owned direct PRAGMA inventory"
+    },
+    {
+      "path": "scripts/audit_publication_free_test_dispositions.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "scripts/ci_dependencies.json",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "scripts/verify_builtin_parser.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/adapters/filesystem/cache.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/importer.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/parsing.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/collector.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/current_parser.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/persistence.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/cas_integrity.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/coverage.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_api.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_collections.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_resources.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/exchange.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/git_intrinsic.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/identity_relations.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/index.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/json_contracts.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/parser_model.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/payloads.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/schema.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/store.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/target.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/transactions.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/application/catalog_validation.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/application/collection_service.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange_service.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/git_query_context.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/application/issue_queries.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/maintenance_service.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/parser_service.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/parsing_service.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/pr_queries.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/query_service.py",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/application/repository_identity.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/source_service.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/application/target_queries.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/cli/main.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/domain/git_decoding.py",
+      "changed_since_b86": true,
+      "review_depth": "new module read in full; settings/byte decoding semantics inspected; real and malformed SHA1/SHA256 decoder candidates executed independently"
+    },
+    {
+      "path": "src/repo_catalog/domain/git_intrinsic.py",
+      "changed_since_b86": false,
+      "review_depth": "architecture consumer/correction diff and relevant full-source review, with whole-source SQL inventory; runtime limited to executed synthetic probes"
+    },
+    {
+      "path": "src/repo_catalog/domain/payload.py",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/resources/builtin_parser_verification.json",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/resources/catalog3.sql",
+      "changed_since_b86": false,
+      "review_depth": "full composed table/column/PK/FK/view/trigger/index and generated-contract inventory; architecture constraint/diff review; every view/mutation prepared"
+    },
+    {
+      "path": "src/repo_catalog/resources/current_api.sql",
+      "changed_since_b86": false,
+      "review_depth": "full composed table/column/PK/FK/view/trigger/index and generated-contract inventory; architecture constraint/diff review; every view/mutation prepared"
+    },
+    {
+      "path": "src/repo_catalog/resources/current_collections.sql",
+      "changed_since_b86": false,
+      "review_depth": "full composed table/column/PK/FK/view/trigger/index and generated-contract inventory; architecture constraint/diff review; every view/mutation prepared"
+    },
+    {
+      "path": "src/repo_catalog/resources/current_resources.sql",
+      "changed_since_b86": false,
+      "review_depth": "full composed table/column/PK/FK/view/trigger/index and generated-contract inventory; architecture constraint/diff review; every view/mutation prepared"
+    },
+    {
+      "path": "src/repo_catalog/resources/exchange.sql",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/resources/git_domain.sql",
+      "changed_since_b86": false,
+      "review_depth": "full composed table/column/PK/FK/view/trigger/index and generated-contract inventory; architecture constraint/diff review; every view/mutation prepared"
+    },
+    {
+      "path": "src/repo_catalog/resources/git_facts.sql",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/resources/identity_relations.sql",
+      "changed_since_b86": false,
+      "review_depth": "full composed table/column/PK/FK/view/trigger/index and generated-contract inventory; architecture constraint/diff review; every view/mutation prepared"
+    },
+    {
+      "path": "src/repo_catalog/resources/json_contracts.sql",
+      "changed_since_b86": true,
+      "review_depth": "prior architectural source/boundary review retained; final correction diff and relevant full validators/readers inspected; native/static preparation and explicitly named independent executions completed"
+    },
+    {
+      "path": "src/repo_catalog/resources/pr_threads.graphql",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "src/repo_catalog/resources/schemas/cli-v1.schema.json",
+      "changed_since_b86": false,
+      "review_depth": "integrated diff/static inventory checked; full runtime/behavioral review outside this scope"
+    },
+    {
+      "path": "tests/conftest.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/e2e/test_cli_contract.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/e2e/test_cli_more.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/e2e/test_github_sync.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/e2e/test_recovery.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_adversarial_model.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_cache.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_catalog3_cas_integrity.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_coverage_queries.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_current_collection.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_current_exchange.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_current_queries.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_document_identity.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_exchange.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_exchange_integrity_audit.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_catalog3_git_fact_contracts.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_catalog3_git_readers.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_git_runtime.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_github_runtime.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_job_plans.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_catalog3_json_contracts.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_model_cli.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_parser_model.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_parsing_runtime.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_payload_cas.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_portable_identity.py",
+      "changed_since_b86": true,
+      "review_depth": "final correction diff and surviving Source/skip/no-job assertions reviewed; all 18 cases executed on SQLite3.53.1"
+    },
+    {
+      "path": "tests/integration/test_catalog3_pr_git_readers.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_pr_scope_coverage.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_profile_queries.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_provider_identity.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_remaining_adversarial.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_rest_boundaries.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_review_coverage.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_schema.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_selective_exchange.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_store.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_catalog3_timestamps.py",
+      "changed_since_b86": true,
+      "review_depth": "final fixture and retired branch diff reviewed; all 115 cases executed on SQLite3.53.1"
+    },
+    {
+      "path": "tests/integration/test_current_boundaries_independent.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_current_collection_rejection_clocks.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_current_collector_projection_followup.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_current_exchange_followup.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_current_followup_adversarial.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_current_projection_followup.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_current_resources.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_current_review_query_coverage.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_current_state_independent_review.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_database.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_exchange_followup_boundaries.py",
+      "changed_since_b86": true,
+      "review_depth": "AST/node collection and disposition inventory checked; full body/execution delegated to separate scope/final gate; production correction diff and representative indexed selected export/receipt deletion boundaries inspected and independently executed"
+    },
+    {
+      "path": "tests/integration/test_git_canonical_availability.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_git_decoder_byte_validation.py",
+      "changed_since_b86": true,
+      "review_depth": "AST/node collection and disposition inventory checked; whole body/full execution outside this scope; independent reviewer-owned native/computed/full-check decoder probes executed on both SQLite versions"
+    },
+    {
+      "path": "tests/integration/test_git_direct_objects.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_git_objects.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_issue_transfer_followup.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_parser_provenance.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_phase1_exchange_retirement.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_phase1_exchange_scaling.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_phase1_retirement.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_phase2_collection_integrity.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_phase2_exchange_scaling.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_phase2_publication_scaling.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_publication_free_acquisition.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_publication_free_architecture_corrections.py",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/integration/test_publication_free_current_api.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_publication_free_pending_contract.py",
+      "changed_since_b86": true,
+      "review_depth": "new test body read in full; all 63 cases executed on SQLite3.45.1; independent reviewer-owned negative/positive candidate variants executed on both SQLite versions"
+    },
+    {
+      "path": "tests/integration/test_publication_free_transactions.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_target_schema.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_transport_independent_core.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/integration/test_transport_independent_guards.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/packaging/test_distribution.py",
+      "changed_since_b86": true,
+      "review_depth": "static inventory and correction diff presence checked; installed distribution execution not performed by this reviewer"
+    },
+    {
+      "path": "tests/support/domain_facts.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/support/git_publication_free_node_replacements.json",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/support/github_fixture.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/support/network_guard/sitecustomize.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/support/parser_bootstrap.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/support/parser_facts.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/support/publication_free_baseline_nodes.txt",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/support/publication_free_node_dispositions.json",
+      "changed_since_b86": true,
+      "review_depth": "all generated semantic receipt fields, 487 explicit replacement mappings and 1463 survivors checked against actual final collection; ordered-byte hash difference explained"
+    },
+    {
+      "path": "tests/support/schema20_contract_replacements.json",
+      "changed_since_b86": false,
+      "review_depth": "behavioral or exact-disposition body/diff inspection; execution only for explicitly listed selected nodes"
+    },
+    {
+      "path": "tests/support/sqlite_contracts.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    },
+    {
+      "path": "tests/unit/test_phase2_dependency_audit.py",
+      "changed_since_b86": false,
+      "review_depth": "exact AST/collected-node disposition and static SQL inventory reviewed; full behavioral body review and execution deferred to required other scopes/final ordinary gate"
+    }
+  ],
+  "unchanged_explicitly_reviewed": [
+    "AGENTS.md",
+    "docs/phase2/AGENTS.md",
+    "docs/phase2/decision-register.md",
+    "docs/phase2/no-independent-publication-adr.md",
+    "docs/phase2/publication-free-design.md",
+    "docs/phase2/publication-free-implementation-prompt.md",
+    "scripts/audit_phase2_dependencies.py",
+    "src/repo_catalog/adapters/sqlite/schema.py",
+    "src/repo_catalog/adapters/sqlite/store.py",
+    "src/repo_catalog/adapters/sqlite/transactions.py",
+    "tests/integration/test_catalog3_portable_identity.py"
+  ],
+  "limits": "Review depth is stated per path. Whole-checkout SQL/AST inventories and collected-node equality are not comprehensive runtime or assertion-sufficiency proof."
+}

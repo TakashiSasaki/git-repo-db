@@ -1,6 +1,6 @@
 # Publication-independent implementation — Schema 20
 
-This is the implementation handoff for the owner-approved [reconstruction](publication-free-design.md), [decision](no-independent-publication-adr.md) and [implementation instruction](publication-free-implementation-prompt.md). The current branch implements the integrated replacement; independent post-implementation review and exact final acceptance are required before it can be called review-complete. See the new validation/review receipts when available. Schema 19 reports remain historical evidence.
+This is the implementation handoff for the owner-approved [reconstruction](publication-free-design.md), [decision](no-independent-publication-adr.md) and [implementation instruction](publication-free-implementation-prompt.md). The current branch implements the integrated replacement; independent post-implementation review and exact final acceptance are required before it can be called review-complete. The [fafc checkpoint](reviews/publication-free-fafc/README.md) records four scoped reviews and failed complete hosted gates; subsequent source corrections and final verification remain required. Schema 19 reports remain historical evidence.
 
 ## Baseline and dependency graph
 

@@ -1,0 +1,1030 @@
+{
+  "candidate": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "tree": "6f566cb3e91e25facda60671c40108e0a9f8965b",
+  "baseline": "0bd5704caca2f6e3723bef22531b065cd4d7bad0",
+  "changed_paths": 253,
+  "correction_paths": 78,
+  "paths": [
+    {
+      "path": "AGENTS.md",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "README.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/architecture.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/cli.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/data-model.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/implementation-status.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/operations.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/phase1-api-original-retirement-implementation.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/phase2/AGENTS.md",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "docs/phase2/README.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/phase2/decision-register-before-no-publication.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/phase2/decision-register.md",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "docs/phase2/no-independent-publication-adr.md",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "docs/phase2/proposal-before-no-publication.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/phase2/publication-free-design.md",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "docs/phase2/publication-free-implementation-prompt.md",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "docs/phase2/publication-free-implementation.md",
+      "depth": "full current handoff read"
+    },
+    {
+      "path": "docs/phase2/publication-free-preimplementation-review.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/phase2/publication-free-schema-map.json",
+      "depth": "entire machine inventory compared to independently composed actual DDL on both native runtimes; semantic certification not inferred"
+    },
+    {
+      "path": "docs/phase2/publication-free-test-disposition.json",
+      "depth": "exact node map and raw collection accounting audited; five new retained-node fixture ports inspected; not all replacement assertions manually audited"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-independent-35-results.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-independent-35-results.xml",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-new-exploratory-fixture-errors.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-new-v2-results.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/b86-new-v2-results.xml",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/corrected-artifact-sha256.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/corrected-new-probes.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/corrected-review.md",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/test_independent_acquisition.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/acquisition/test_independent_invariants.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/architecture/b86-review.md",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/architecture/portable-identity-tests.log",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/architecture/portable-identity-tests.xml",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/git-authorization-scale-b86ff2c96d7558379b2230489e1494630b073ef7.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/git_authorization_scale.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/metadata.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-26.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-crossmod-fixture-v2-code.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-crossmod-fixture-v3.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/pytest-crossmod-v1.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/receipt.md",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected-coverage-scale-b86ff2c96d7558379b2230489e1494630b073ef7.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected-pending-scale-b86ff2c96d7558379b2230489e1494630b073ef7.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected_coverage_scale.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/selected_pending_scale.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_code_proof.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_crossmod.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_crossmod.v1.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_corrected_crossmod.v2.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/domain-qa/test_independent_domain_qa.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-artifact-sha256.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-decoder-families.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-decoder-families.xml",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-decoder-sql-query.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-initial-review.md",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-late-ref.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-own-counterexamples.txt",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-own-counterexamples.xml",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/b86-replay-after-receipt-loss.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/decoder_sql_repro.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/late_ref_repro.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/test_decoder_families.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/final-integrated/test_final_integrated.b86-frozen.py",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/hosted-b86-complete.log.gz",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/hosted-b86-failed.log.gz",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/hosted-ci-profile.zip",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-interrupted-ordinary.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-packaging-full.log",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-packaging.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-packaging.xml",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-plan.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/local-tests-full.log",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-b86/manifest.json",
+      "depth": "preserved historical evidence; relevant receipt, full result counts and failing nodes inspected externally; not every copied artifact line manually read"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/full-diff-cafa8a8b143fe095b79f282690a6edf98e6f660e.patch.gz",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/git-authorization-scale-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/git_authorization_scale.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/manifest.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/metadata-final-initial-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-code-list.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-conflicts.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-crash.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-fakeoid.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-final.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-fixture-v2.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-invalidheaders.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-invalidnames.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8-late.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/pytest-cafa8a8.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/receipt-cafa8a8.md",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/schema-map-actual-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/selected-pending-scale-cafa8a8b143fe095b79f282690a6edf98e6f660e.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/selected_pending_scale.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-domain-initial/test_independent_domain_qa.cafa8a8b143fe095b79f282690a6edf98e6f660e.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/frozen-probes-v1/test_independent_acquisition.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/frozen-probes-v1/test_independent_invariants.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/initial-frozen-results.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/initial-frozen-results.xml",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/initial-review.md",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/repro_scope_replica.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/acquisition/scope-replica-result.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/artifact-sha256.txt",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/audit-runtime.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/counterexamples-results.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/counterexamples.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/initial-review.md",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/native-schema-dependencies.json.gz",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/positive-results.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/positive_probes.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/source-sql-call-inventory.json.gz",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/architecture/unmapped-retired-functions.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/intrinsic_tree_spoof.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/intrinsic_tree_spoof.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/receipt.md",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/selected_coverage_scale.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/git-exchange-cas/selected_coverage_scale.py",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/phase2/reviews/publication-free-initial/manifest.json",
+      "depth": "archived historical evidence; receipts/selected originals inspected separately, programs not rerun as scope4 work"
+    },
+    {
+      "path": "docs/testing.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "docs/transport-independent-core-implementation.md",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "scripts/audit_publication_free.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "scripts/audit_publication_free_test_dispositions.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "scripts/ci_dependencies.json",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "scripts/verify_builtin_parser.py",
+      "depth": "changed-path inventory only; not full manual content review"
+    },
+    {
+      "path": "src/repo_catalog/adapters/filesystem/cache.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/importer.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/parsing.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/collector.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/current_parser.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/persistence.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/cas_integrity.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/coverage.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_api.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_collections.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_resources.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/exchange.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/git_intrinsic.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/identity_relations.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/index.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/json_contracts.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/parser_model.py",
+      "depth": "deletion/retirement or changed-path inventory only; not full manual source review"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/payloads.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/schema.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/store.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/target.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/transactions.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "src/repo_catalog/application/catalog_validation.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/application/collection_service.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/exchange_service.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/git_query_context.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/application/issue_queries.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/maintenance_service.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/parser_service.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/parsing_service.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/pr_queries.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/query_service.py",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/application/repository_identity.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/source_service.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/application/target_queries.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "src/repo_catalog/cli/main.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/domain/git_decoding.py",
+      "depth": "full corrected current-file read; independently executed relevant behavior"
+    },
+    {
+      "path": "src/repo_catalog/domain/git_intrinsic.py",
+      "depth": "full current-file read, relevant contract/consumer inspection"
+    },
+    {
+      "path": "src/repo_catalog/domain/payload.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "src/repo_catalog/resources/builtin_parser_verification.json",
+      "depth": "deletion/retirement or changed-path inventory only; not full manual source review"
+    },
+    {
+      "path": "src/repo_catalog/resources/catalog3.sql",
+      "depth": "actual composed schema inventory/preparation and selected semantic constraints; not every generated SQL line manually read"
+    },
+    {
+      "path": "src/repo_catalog/resources/current_api.sql",
+      "depth": "actual composed schema inventory/preparation and selected semantic constraints; not every generated SQL line manually read"
+    },
+    {
+      "path": "src/repo_catalog/resources/current_collections.sql",
+      "depth": "actual composed schema inventory/preparation and selected semantic constraints; not every generated SQL line manually read"
+    },
+    {
+      "path": "src/repo_catalog/resources/current_resources.sql",
+      "depth": "actual composed schema inventory/preparation and selected semantic constraints; not every generated SQL line manually read"
+    },
+    {
+      "path": "src/repo_catalog/resources/exchange.sql",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/resources/git_domain.sql",
+      "depth": "actual composed schema inventory/preparation and selected semantic constraints; not every generated SQL line manually read"
+    },
+    {
+      "path": "src/repo_catalog/resources/git_facts.sql",
+      "depth": "corrected source delta and affected actual methods/predicates/callers read; original reviewed scope retained"
+    },
+    {
+      "path": "src/repo_catalog/resources/identity_relations.sql",
+      "depth": "actual composed schema inventory/preparation and selected semantic constraints; not every generated SQL line manually read"
+    },
+    {
+      "path": "src/repo_catalog/resources/json_contracts.sql",
+      "depth": "generated correction inspected through actual generator; exact generated equality, native DDL/view preparation and selected populated guards executed; not every generated line manually read"
+    },
+    {
+      "path": "src/repo_catalog/resources/pr_threads.graphql",
+      "depth": "deletion/retirement or changed-path inventory only; not full manual source review"
+    },
+    {
+      "path": "src/repo_catalog/resources/schemas/cli-v1.schema.json",
+      "depth": "deletion/retirement or changed-path inventory only; not full manual source review"
+    },
+    {
+      "path": "tests/conftest.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/e2e/test_cli_contract.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/e2e/test_cli_more.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/e2e/test_github_sync.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/e2e/test_recovery.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_adversarial_model.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_cache.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_cas_integrity.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_coverage_queries.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_current_collection.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_current_exchange.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_current_queries.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_document_identity.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_exchange.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_exchange_integrity_audit.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_git_fact_contracts.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_git_readers.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_git_runtime.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_github_runtime.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_job_plans.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_json_contracts.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_model_cli.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_parser_model.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_parsing_runtime.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_payload_cas.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_portable_identity.py",
+      "depth": "full corrected current-file read; independently executed relevant behavior"
+    },
+    {
+      "path": "tests/integration/test_catalog3_pr_git_readers.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_pr_scope_coverage.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_profile_queries.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_provider_identity.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_remaining_adversarial.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_rest_boundaries.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_review_coverage.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_schema.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_selective_exchange.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_store.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_catalog3_timestamps.py",
+      "depth": "full corrected current-file read; independently executed relevant behavior"
+    },
+    {
+      "path": "tests/integration/test_current_boundaries_independent.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_collection_rejection_clocks.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_collector_projection_followup.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_exchange_followup.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_followup_adversarial.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_projection_followup.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_resources.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_review_query_coverage.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_current_state_independent_review.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_database.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_exchange_followup_boundaries.py",
+      "depth": "new authored regression source/delta read as support; independent probes are separate execution evidence"
+    },
+    {
+      "path": "tests/integration/test_git_canonical_availability.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_git_decoder_byte_validation.py",
+      "depth": "new authored regression source/delta read as support; independent probes are separate execution evidence"
+    },
+    {
+      "path": "tests/integration/test_git_direct_objects.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_git_objects.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_issue_transfer_followup.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_parser_provenance.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_phase1_exchange_retirement.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_phase1_exchange_scaling.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_phase1_retirement.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_phase2_collection_integrity.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_phase2_exchange_scaling.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_phase2_publication_scaling.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_publication_free_acquisition.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_publication_free_architecture_corrections.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_publication_free_current_api.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_publication_free_pending_contract.py",
+      "depth": "new authored regression source/delta read as support; independent probes are separate execution evidence"
+    },
+    {
+      "path": "tests/integration/test_publication_free_transactions.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_target_schema.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_transport_independent_core.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/integration/test_transport_independent_guards.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/packaging/test_distribution.py",
+      "depth": "full corrected current-file read; independently executed relevant behavior"
+    },
+    {
+      "path": "tests/support/domain_facts.py",
+      "depth": "focused current methods/consumer paths and integrated change inspection; not full-file claim"
+    },
+    {
+      "path": "tests/support/git_publication_free_node_replacements.json",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/support/github_fixture.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/support/network_guard/sitecustomize.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/support/parser_bootstrap.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/support/parser_facts.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/support/publication_free_baseline_nodes.txt",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/support/publication_free_node_dispositions.json",
+      "depth": "exact node map and raw collection accounting audited; five new retained-node fixture ports inspected; not all replacement assertions manually audited"
+    },
+    {
+      "path": "tests/support/schema20_contract_replacements.json",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/support/sqlite_contracts.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    },
+    {
+      "path": "tests/unit/test_phase2_dependency_audit.py",
+      "depth": "changed-path and exact ordinary disposition inventory; most assertion bodies not manually reviewed or independently executed by scope4"
+    }
+  ],
+  "extra_reviewed_unchanged": [
+    ".github/workflows/tests.yml",
+    "scripts/ci_plan.py",
+    "scripts/ci_execute.py",
+    "scripts/ci_profile.py",
+    "tests/support/github_runtime.py",
+    "tests/support/git_fixture.py"
+  ],
+  "limits": "The complete integrated/correction diff is preserved. This scope does not claim every removed historical/generated line, every changed assertion, every native guard, every live collector caller or every growth/I/O workload was manually or dynamically audited. Separate independent scopes 1/2/3 and complete final gates are required; same node IDs alone do not prove semantic equivalence."
+}

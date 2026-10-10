@@ -1,0 +1,50 @@
+{
+  "/workspace/git-repo-db/artifacts/publication-free/baseline-ordinary-collected-nodes.txt": {
+    "count": 1950,
+    "sha": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
+    "same_set": false,
+    "same_order": false,
+    "only_own": 535,
+    "only_artifact": 357
+  },
+  "/workspace/git-repo-db/artifacts/publication-free/ordinary-collected-nodes.txt": {
+    "count": 1906,
+    "sha": "695b516e6d1e43c1b10f6d0513cac430bffdcb23f681bdece292e18579e62f80",
+    "same_set": false,
+    "same_order": false,
+    "only_own": 270,
+    "only_artifact": 48
+  },
+  "/workspace/git-repo-db/artifacts/publication-free/final-candidate-collection/ordinary-collected-nodes.txt": {
+    "count": 2115,
+    "sha": "e343b415e9cea3959fec6b212a83a4d6b282294ddf44439ce6f6686a8cfe61fc",
+    "same_set": false,
+    "same_order": false,
+    "only_own": 13,
+    "only_artifact": 0
+  },
+  "/workspace/git-repo-db/artifacts/publication-free/collection-6db3fb0/ordinary-collected-nodes.txt": {
+    "count": 2115,
+    "sha": "e343b415e9cea3959fec6b212a83a4d6b282294ddf44439ce6f6686a8cfe61fc",
+    "same_set": false,
+    "same_order": false,
+    "only_own": 13,
+    "only_artifact": 0
+  },
+  "/workspace/git-repo-db/artifacts/publication-free/collection-4c738ef66d61/ordinary-collected-nodes.txt": {
+    "count": 2128,
+    "sha": "88ce59a32b14839d01f2d7d9363583621d6ced3bb3e1ac8282877fc197d84852",
+    "same_set": true,
+    "same_order": false,
+    "only_own": 0,
+    "only_artifact": 0
+  },
+  "/workspace/git-repo-db/artifacts/publication-free/ordinary-collected-latest.txt": {
+    "count": 2002,
+    "sha": "a120050ce70322bb26677249cccfa139ad1ae49847ee6db746a6a92005c1aca9",
+    "same_set": false,
+    "same_order": false,
+    "only_own": 126,
+    "only_artifact": 0
+  }
+}

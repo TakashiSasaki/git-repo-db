@@ -1,0 +1,34 @@
+{
+  "sha": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "tree": "6f566cb3e91e25facda60671c40108e0a9f8965b",
+  "source": "/workspace/reviews/publication-free-architecture-final-fafc1b2/src/repo_catalog/__init__.py",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "DDL": "bf6deb09471a361918ab9d9e97ca1ba204060ffc78420972775a914357912f26",
+  "model": "not exposed",
+  "effort": "not exposed",
+  "source_clean": true,
+  "pytest": [
+    {
+      "artifact": "behavioral-ports.xml",
+      "tests": 138,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "artifact": "representative-tests.xml",
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "artifact": "native345/pending-contract-tests.xml",
+      "tests": 63,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ]
+}

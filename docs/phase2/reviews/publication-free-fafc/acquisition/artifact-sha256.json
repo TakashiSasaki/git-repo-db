@@ -1,0 +1,15 @@
+{
+  "review.md": "c3b4b78eaa4fde3f91098b923c6319a58aefa1063746d590979527af4a0d7880",
+  "binding.json": "f5f31bec1513ecc26a3981ed6771916517ae42babdb7505dd9640818c06e30c3",
+  "probes/test_independent_acquisition.py": "31e0c15293750501076835171e31e37cfc9ad0d89185b8516d8c8a10966aec12",
+  "probes/test_independent_invariants.py": "1b159d16be95514b89c31b04796b5cdb53a96a66761493d3e29f3abd8bfc5ddc",
+  "probes/corrected-new-probes.py": "8e442e78ca4e267d9a2fb53bcb9b5ea6d784a03891db0f938ab2a08d2f780d2e",
+  "test_native_pending_guards.py": "18654898a7cafff6050f53c71c3d4419bb88b1f7ed57f85028fbc4170d9d2531",
+  "fafc-50-results.txt": "e88224d2e65c9b7e55b4f0b789f82591a4ebfdc68f2207134837562f49691df7",
+  "fafc-50-results.xml": "e6337029a77b395858698a37a6708b32ba5a37dd8c266026993d42cfaf1cb083",
+  "native-pending-results.txt": "17a01df988ad015ca63c09b1ff4fc113dc62d53fdf66e546bd962a2d8a5a807a",
+  "native-pending-results.xml": "d5b622879682a5d0ddf2e8a9289358e871786029e107ba1a694d8b1ecc05d9f5",
+  "fresh-native345-composed.sql": "56fe2bff3b44a4866a31f112839e78c08e49c4f29f3502660edd9447c7fa5751",
+  "fresh-native345-compilation.txt": "d543eaf01a39bacfdf2e7020b85d5c18dacb14812a973dca877214e89560a284",
+  "reviewed-current-guard-delta.diff": "119d9b442bcc1f7282f54cd4a5d91851e88232cd655555d7d9c93ad61a7ea402"
+}
