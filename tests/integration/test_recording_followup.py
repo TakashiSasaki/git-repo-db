@@ -169,7 +169,10 @@ def test_recorder_failure_preserves_actual_parser_and_storage_errors(
     api.route = route
     token = CancellationToken()
     transport = GitHubTransport(
-        store.config["github"], token, recorder=BrokenRecorder(OSError(SECRET))
+        store.config["github"],
+        token,
+        recorder=BrokenRecorder(OSError(SECRET)),
+        clock_us=lambda: 200,
     )
     collector = GitHubCollector(store, token, transport=transport)
     try:
@@ -191,6 +194,35 @@ def test_recorder_failure_preserves_actual_parser_and_storage_errors(
         assert transport.recording_diagnostics[0]["code"] == "ARCHIVE_FAILURE"
         assert store.one("SELECT count(*) FROM issue_resources")[0] == 0
         assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 0
-        assert store.one("SELECT count(*) FROM completion_markers")[0] == 0
+        if failure == "parser":
+            marker = store.one(
+                "SELECT m.asserted_state,m.observed_at_us,m.evidence,"
+                "m.resume_scope_id=f.resume_scope_id AS same_scope "
+                "FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) "
+                "WHERE f.repository_uuidv4=? AND f.source_id=? AND f.kind='issue'",
+                (repo["repository_uuidv4"], repo["source_id"]),
+            )
+            assert (
+                marker["asserted_state"],
+                marker["observed_at_us"],
+                marker["same_scope"],
+            ) == ("partial", 200, 1)
+            assert json.loads(marker["evidence"]) == {"reason": "API_SCHEMA"}
+            assert store.one("SELECT count(*) FROM completion_markers")[0] == 1
+            assert tuple(
+                store.one(
+                    "SELECT coverage_state,observed_at_us FROM current_coverage WHERE kind='issue'"
+                )
+            ) == ("partial", 200)
+        else:
+            assert store.one("SELECT count(*) FROM completion_markers")[0] == 0
+        for table in (
+            "fetch_occurrences",
+            "stored_bytes",
+            "payloads",
+            "payload_admission_staging",
+            "current_resource_diagnostics",
+        ):
+            assert store.one(f"SELECT count(*) FROM {table}")[0] == 0
     finally:
         transport.close()

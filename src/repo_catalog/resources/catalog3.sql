@@ -9,7 +9,7 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=18),
+    schema_version INTEGER NOT NULL CHECK(schema_version=19),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
@@ -1444,3 +1444,13 @@ BEGIN SELECT RAISE(ABORT,'code input absent from parsed result'); END;
 CREATE TRIGGER file_origin_in_result BEFORE INSERT ON code_file_changes
 WHEN NOT EXISTS(SELECT 1 FROM parsed_result_inputs i JOIN fetch_occurrences f USING(fetch_occurrence_uuidv4) WHERE i.parsed_result_uuidv4=NEW.parsed_result_uuidv4 AND f.fetch_occurrence_id=NEW.fetch_occurrence_id)
 BEGIN SELECT RAISE(ABORT,'code input absent from parsed result'); END;
+
+-- Publication seals enumerate only one result's exact outputs. The existing
+-- subject/listing keys are not result-led for these families; without these
+-- indexes every seal scans unrelated historical observations and interpretations.
+CREATE INDEX code_observations_parsed_result_idx ON code_observations(parsed_result_uuidv4);
+CREATE INDEX change_request_events_parsed_result_idx ON change_request_events(parsed_result_uuidv4);
+CREATE INDEX snapshots_parsed_result_idx ON snapshots(parsed_result_uuidv4);
+CREATE INDEX ref_observations_parsed_result_idx ON ref_observations(parsed_result_uuidv4);
+CREATE INDEX code_commits_parsed_result_idx ON code_commits(parsed_result_uuidv4);
+CREATE INDEX code_file_changes_parsed_result_idx ON code_file_changes(parsed_result_uuidv4);

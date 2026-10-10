@@ -12,7 +12,7 @@ from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
 from repo_catalog.domain.document import DocumentKey
 from repo_catalog.domain.models import CatalogError
-from repo_catalog.domain.time import now_us
+from repo_catalog.domain.time import now_us, validate_epoch_us
 
 PARSER = "catalog3-github/1"
 
@@ -344,7 +344,14 @@ class ApiFacts:
     @staticmethod
     def response_time(response):
         """Reuse the actual live response clock even if its transaction failed."""
-        return response.extensions.setdefault("catalog_observed_at_us", now_us())
+        try:
+            return validate_epoch_us(
+                response.extensions.setdefault("catalog_observed_at_us", now_us())
+            )
+        except (TypeError, ValueError):
+            raise CatalogError(
+                "API_SCHEMA", "Invalid live response observation timestamp"
+            ) from None
 
     @staticmethod
     def response_metadata(response):

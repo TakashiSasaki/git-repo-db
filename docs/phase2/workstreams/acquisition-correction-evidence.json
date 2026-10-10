@@ -1,0 +1,38 @@
+{
+  "kind": "scoped-development-correction",
+  "base_commit": "c4cc5fa1dd5c35f79e8a5b660ea6db752ed440a2",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "source_sha256": {
+    "src/repo_catalog/adapters/github/collector.py": "192e7045bdeb51353c9406ec1ab18925e5ad24e984c871f1fc7e43a34aab1249",
+    "src/repo_catalog/adapters/github/persistence.py": "9ba4167af90cc7c4a91e1d9acfea6ebff03a1818dbb0f4b5bb067361531f53b6",
+    "tests/integration/test_current_collection_rejection_clocks.py": "690b7221398b453bfd03f041936856cd4b02c4a70816224e9d9240ad253d0f65",
+    "docs/phase2/prototypes/test_acquisition_characterization.py": "041c897ec11c800422c197a46aa49741abef584ff7a201b001b51c50ef47dd9d"
+  },
+  "commands": [
+    {
+      "command": "REPO_CATALOG_TEST_BOOTSTRAP=1 uv run --no-sync python -m pytest tests/integration/test_current_collection_rejection_clocks.py docs/phase2/prototypes/test_acquisition_characterization.py -q --junitxml=/tmp/p2-acquisition-fix-final-focus.xml",
+      "passed": 28,
+      "seconds": 14.61,
+      "bootstrap": true
+    },
+    {
+      "command": "REPO_CATALOG_TEST_BOOTSTRAP=1 uv run --no-sync python -m pytest tests/integration/test_catalog3_github_runtime.py tests/integration/test_current_collector_projection_followup.py tests/integration/test_catalog3_current_collection.py tests/integration/test_catalog3_review_coverage.py tests/integration/test_phase1_retirement.py tests/integration/test_current_collection_rejection_clocks.py tests/integration/test_catalog3_job_plans.py -q -n 4 --junitxml=/tmp/p2-acquisition-fix-final-broad-development.xml",
+      "passed": 182,
+      "seconds": 40.11,
+      "bootstrap": true
+    }
+  ],
+  "schema": {
+    "version": 18,
+    "ddl_sha256": "16110944d4b6a0942657644fe80383394210af1218a3e7111e331a1651fa211e",
+    "fresh_initialize": true,
+    "foreign_key_check": [],
+    "integrity_check": "ok"
+  },
+  "limitations": [
+    "Full ordinary acceptance, certificate regeneration, installed packages and hosted CI are root integration tasks.",
+    "Bootstrap receipts are development evidence, not ordinary acceptance.",
+    "No authenticated provider or retained catalog used."
+  ]
+}
