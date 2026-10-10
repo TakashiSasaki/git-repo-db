@@ -1,0 +1,35 @@
+{
+  "source": "cafa8a8b143fe095b79f282690a6edf98e6f660e",
+  "tree": "477726d0f1fe7cb6f939a1fa577b35ab9e5ba96b",
+  "cwd": "/workspace/reviews/publication-free-domain-qa",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "repo_catalog": "/workspace/reviews/publication-free-domain-qa/src/repo_catalog/__init__.py",
+  "state": "/workspace/review-artifacts/domain-qa/authorization-scale-exdez359",
+  "measurements": [
+    {
+      "selected_git_objects": 32,
+      "wire_records": 160,
+      "table_record_visits": 3760,
+      "authorized_records": 128
+    },
+    {
+      "selected_git_objects": 128,
+      "wire_records": 640,
+      "table_record_visits": 58048,
+      "authorized_records": 512
+    },
+    {
+      "selected_git_objects": 512,
+      "wire_records": 2560,
+      "table_record_visits": 920320,
+      "authorized_records": 2048
+    },
+    {
+      "selected_git_objects": 1024,
+      "wire_records": 5120,
+      "table_record_visits": 3675648,
+      "authorized_records": 4096
+    }
+  ]
+}

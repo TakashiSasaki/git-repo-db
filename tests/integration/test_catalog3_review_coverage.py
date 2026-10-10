@@ -177,7 +177,7 @@ def test_new_observed_root_gap_supersedes_older_terminal_thread(
         payload, headers = original(method, path, params, body)
         if method == "POST":
             if response_shape == "malformed":
-                payload["data"]["repository"]["pullRequest"] = {}
+                payload["data"]["repository"]["pullRequest"] = {"number": 41}
             else:
                 payload["errors"] = [{"message": "partial"}]
         return payload, headers

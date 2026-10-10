@@ -28,6 +28,7 @@ BEGIN SELECT RAISE(ABORT,'Complete collection requires a typed enumeration proof
 CREATE TRIGGER current_collection_completion_valid BEFORE INSERT ON completion_markers
 WHEN json_extract(NEW.evidence,'$.kind')='current-resource-pages-v1' AND (
  NEW.asserted_state<>'complete'
+ OR EXISTS(SELECT 1 FROM fetch_collections WHERE fetch_collection_id=NEW.fetch_collection_id AND kind='threads')
  OR json_type(NEW.evidence,'$.terminal') IS NOT 'true'
  OR json_type(NEW.evidence,'$.page_ordinals') IS NOT 'array'
  OR (SELECT count(*) FROM json_each(NEW.evidence))<>3
@@ -42,6 +43,7 @@ BEGIN SELECT RAISE(ABORT,'Invalid current collection completeness proof'); END;
 CREATE TRIGGER current_collection_tree_completion_valid BEFORE INSERT ON completion_markers
 WHEN json_extract(NEW.evidence,'$.kind')='current-resource-tree-v1' AND (
  NEW.asserted_state<>'complete' OR json_type(NEW.evidence,'$.terminal') IS NOT 'true'
+ OR NOT EXISTS(SELECT 1 FROM fetch_collections WHERE fetch_collection_id=NEW.fetch_collection_id AND kind='threads')
  OR json_type(NEW.evidence,'$.page_ordinals') IS NOT 'array' OR json_type(NEW.evidence,'$.fetch_collection_ids') IS NOT 'array'
  OR (SELECT count(*) FROM json_each(NEW.evidence))<>4
  OR NOT EXISTS(SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=NEW.fetch_collection_id)
@@ -49,6 +51,8 @@ WHEN json_extract(NEW.evidence,'$.kind')='current-resource-tree-v1' AND (
  OR EXISTS(SELECT 1 FROM json_each(NEW.evidence,'$.page_ordinals') e WHERE e.type<>'integer' OR e.value<>CAST(e.key AS INTEGER) OR NOT EXISTS(SELECT 1 FROM current_collection_pages p WHERE p.fetch_collection_id=NEW.fetch_collection_id AND p.ordinal=e.value))
  OR EXISTS(SELECT 1 FROM current_collection_pages p WHERE p.fetch_collection_id=NEW.fetch_collection_id AND ((p.ordinal=(SELECT max(ordinal) FROM current_collection_pages WHERE fetch_collection_id=NEW.fetch_collection_id) AND p.has_next=1) OR (p.ordinal<(SELECT max(ordinal) FROM current_collection_pages WHERE fetch_collection_id=NEW.fetch_collection_id) AND p.has_next=0)))
  OR json_array_length(NEW.evidence,'$.fetch_collection_ids')<>(SELECT count(*) FROM thread_collection_requirements WHERE fetch_collection_id=NEW.fetch_collection_id)
+ OR EXISTS(SELECT 1 FROM current_collection_pages p,json_each(p.members) m WHERE p.fetch_collection_id=NEW.fetch_collection_id AND json_extract(m.value,'$.family')='thread' AND NOT EXISTS(SELECT 1 FROM thread_collection_requirements r WHERE r.fetch_collection_id=NEW.fetch_collection_id AND r.provider_resource_id=json_extract(m.value,'$.provider_resource_id')))
+ OR EXISTS(SELECT 1 FROM thread_collection_requirements r WHERE r.fetch_collection_id=NEW.fetch_collection_id AND NOT EXISTS(SELECT 1 FROM current_collection_pages p,json_each(p.members) m WHERE p.fetch_collection_id=NEW.fetch_collection_id AND json_extract(m.value,'$.family')='thread' AND json_extract(m.value,'$.provider_resource_id')=r.provider_resource_id))
  OR EXISTS(SELECT 1 FROM json_each(NEW.evidence,'$.fetch_collection_ids') e GROUP BY e.value HAVING count(*)>1)
  OR EXISTS(SELECT 1 FROM thread_collection_requirements r WHERE r.fetch_collection_id=NEW.fetch_collection_id AND (r.child_fetch_collection_id IS NULL OR NOT EXISTS(SELECT 1 FROM json_each(NEW.evidence,'$.fetch_collection_ids') e WHERE e.value=r.child_fetch_collection_id) OR NOT EXISTS(SELECT 1 FROM completion_markers m WHERE m.fetch_collection_id=r.child_fetch_collection_id AND m.asserted_state='complete' AND json_extract(m.evidence,'$.kind')='current-resource-pages-v1')))
  OR NEW.observed_at_us IS NOT (SELECT max(observed_at_us) FROM current_collection_pages WHERE fetch_collection_id=NEW.fetch_collection_id OR fetch_collection_id IN (SELECT child_fetch_collection_id FROM thread_collection_requirements WHERE fetch_collection_id=NEW.fetch_collection_id))

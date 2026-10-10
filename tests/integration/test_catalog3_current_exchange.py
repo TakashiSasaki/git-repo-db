@@ -7,6 +7,7 @@ import uuid
 
 import pytest
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.coverage import admit_claim, freeze_complete_proof
 from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
 from repo_catalog.adapters.sqlite.exchange import Graph
@@ -32,6 +33,7 @@ def receive(db, unit):
 
 def receiver():
     db = sqlite3.connect(":memory:", isolation_level=None)
+    register_git_object_sql_function(db)
     db.executescript(schema_sql())
     db.execute(
         "INSERT INTO database_identity VALUES(1,'repo-catalog/catalog3',?,?,0,?,'validated')",
@@ -59,7 +61,7 @@ def collection(catalog, candidate, *, observed=0, pages=1, context=None):
                     "endpoint": "synthetic",
                     "service_instance_uuidv4": catalog.service,
                     "repository_binding_id": catalog.binding,
-                    **(context or {}),
+                    "request_context": context or {},
                 }
             ),
         ),

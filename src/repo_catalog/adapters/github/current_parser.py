@@ -409,6 +409,7 @@ def pull_request(value, context, observed_at_us):
     metadata = modeled_metadata(
         value,
         (
+            "node_id",
             "author_association",
             "active_lock_reason",
             "mergeable",

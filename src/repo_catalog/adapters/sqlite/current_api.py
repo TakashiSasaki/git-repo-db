@@ -14,6 +14,7 @@ from typing import NamedTuple
 from repo_catalog.adapters.sqlite.current_resources import (
     CurrentResources,
     _canonical,
+    _equal_field,
     _field_values,
 )
 from repo_catalog.adapters.sqlite.text_bodies import intern_text_body
@@ -236,6 +237,19 @@ class CurrentApiState(CurrentResources):
             from repo_catalog.adapters.sqlite.json_contracts import _check_schema
 
             _check_schema(table, "metadata", candidate["metadata"], candidate)
+        if "acquisition_scope" in candidate:
+            from repo_catalog.adapters.sqlite.json_contracts import _acquisition_shape
+
+            _acquisition_shape(
+                candidate["acquisition_scope"], candidate.get("service_instance_uuidv4")
+            )
+            if (
+                candidate["acquisition_scope"].get("change_request_id")
+                != candidate["change_request_id"]
+            ):
+                raise CatalogError(
+                    "INVALID_CURRENT_RESOURCE_SCOPE", "Capture parent mismatch"
+                )
         _canonical(candidate)
         return table, key
 
@@ -628,6 +642,11 @@ class CurrentApiState(CurrentResources):
     ):
         from repo_catalog.domain.time import now_us
 
+        from .json_contracts import _check_schema, validate_capture_shape
+
+        validate_capture_shape(scope)
+        if metadata is not None:
+            _check_schema("source_repositories", "metadata_json", metadata, {})
         validate_epoch_us(observed_at_us)
         if first_seen_us is not None:
             validate_epoch_us(first_seen_us)
@@ -755,6 +774,11 @@ class CurrentApiState(CurrentResources):
                 else min(old["first_seen_us"], earliest)
             )
             supplied = engine._observation_evidence(incoming)
+            old_values = _field_values(previous) if previous is not None else {}
+            unchanged_current = previous is not None and all(
+                path in old_values and _equal_field(value, old_values[path])
+                for path, value in _field_values(incoming).items()
+            )
             if not conflict:
                 conflict = any(
                     not engine._dominates(
@@ -764,7 +788,7 @@ class CurrentApiState(CurrentResources):
                     )
                     for stage in stages
                 )
-            if conflict:
+            if conflict and not unchanged_current:
                 alternative = engine._complete(incoming, None)
                 alternative["field_evidence"] = supplied
                 alternative["first_seen_us"] = (
@@ -837,11 +861,12 @@ class CurrentApiState(CurrentResources):
                     "UPDATE source_repositories SET first_seen_us=?,last_seen_us=?,name=?,metadata_json=?,scope_json=?,parser_module=?,parser_version=?,field_evidence_json=? WHERE source_id=? AND repository_uuidv4=?",
                     values,
                 )
-            self.c.execute(
-                "DELETE FROM exchange_staging WHERE record_key=? AND reason='current_state:conflict'",
-                (key,),
-            )
-            return "accepted"
+            if not conflict:
+                self.c.execute(
+                    "DELETE FROM exchange_staging WHERE record_key=? AND reason='current_state:conflict'",
+                    (key,),
+                )
+            return "conflict" if conflict else "accepted"
 
     def assess_source_inventory(
         self,
@@ -856,7 +881,13 @@ class CurrentApiState(CurrentResources):
         parser_module,
         parser_version,
     ):
+        from repo_catalog.adapters.sqlite.json_contracts import validate_record
+
         validate_epoch_us(observed_at_us)
+        if type(terminal) is not bool:
+            raise CatalogError(
+                "INVALID_COLLECTION_PROOF", "Terminal evidence must be boolean"
+            )
         if state == "complete" and not terminal:
             raise CatalogError(
                 "INVALID_COLLECTION_PROOF",
@@ -864,6 +895,17 @@ class CurrentApiState(CurrentResources):
             )
         scope_key = hashlib.sha256(_canonical(scope).encode()).hexdigest()
         with self._transaction():
+            validate_record(
+                self.c,
+                "source_inventory_assessments",
+                {
+                    "source_id": source_id,
+                    "scope_json": _canonical(scope),
+                    "state": state,
+                    "terminal": int(terminal),
+                    "members_json": _canonical(members),
+                },
+            )
             self.c.execute(
                 "INSERT INTO source_inventory_assessments(source_id,scope_key,scope_json,observed_at_us,state,terminal,members_json,parser_module,parser_version,reason) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(source_id,scope_key,observed_at_us,state) DO NOTHING",
                 (

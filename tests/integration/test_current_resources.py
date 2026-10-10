@@ -71,7 +71,10 @@ def issue(resources, **changes):
         "parsed_at_us": 1,
         "parser_module": parser_module,
         "parser_version": "1",
-        "metadata": {"labels": ["synthetic"], "nested": {"known": True}},
+        "metadata": {
+            "labels": [{"name": "synthetic"}],
+            "milestone": {"title": "retained"},
+        },
         "acquisition_scope": {**context, "endpoint": "issues"},
         **changes,
     }
@@ -283,13 +286,16 @@ def test_partial_and_provider_null_are_distinct_from_empty_and_missing(resources
     adapter, *_ = resources
     adapter.admit(issue(resources), source="import")
     partial = issue(
-        resources, provider_updated_at_us=20, metadata={"nested": {"new": True}}
+        resources, provider_updated_at_us=20, metadata={"milestone": {"state": "open"}}
     )
     for field in ("body", "title"):
         partial.pop(field)
     assert adapter.admit(partial, source="import").status == "accepted"
     assert current(adapter)["body"].endswith("\x00suffix")
-    assert current(adapter)["metadata"]["nested"] == {"known": True, "new": True}
+    assert current(adapter)["metadata"]["milestone"] == {
+        "title": "retained",
+        "state": "open",
+    }
     null = {**partial, "body_status": "provider-null", "provider_updated_at_us": 30}
     assert adapter.admit(null, source="import").status == "accepted"
     assert current(adapter)["body"] is None

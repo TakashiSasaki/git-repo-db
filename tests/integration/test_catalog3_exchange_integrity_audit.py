@@ -11,6 +11,7 @@ from repo_catalog.adapters.git.parsing import (
     install_git_object,
     validate_git_acquisition,
 )
+from repo_catalog.adapters.sqlite.current_resources import CurrentResources
 from repo_catalog.adapters.sqlite.exchange import Graph
 from repo_catalog.domain.models import CatalogError
 from tests.integration.test_catalog3_exchange import databases as databases
@@ -19,6 +20,93 @@ from tests.integration.test_catalog3_exchange import (
     receive,
     uid,
 )
+
+
+def test_api_terminal_marker_cannot_qualify_git_coverage(databases):
+    source, target = databases
+    expected = fixture(source)
+    scope = {
+        "repository_uuidv4": expected["repository"],
+        "repository_binding_id": expected["binding"],
+        "service_instance_uuidv4": expected["service"],
+        "source_registration_uuidv4": expected["source"],
+        "endpoint": "synthetic-issues",
+    }
+    issue = {
+        "kind": "issue",
+        "repository_uuidv4": expected["repository"],
+        "repository_binding_id": expected["binding"],
+        "service_instance_uuidv4": expected["service"],
+        "provider_resource_id": "500",
+        "provider_issue_number": 500,
+        "body": "independently valid issue",
+        "title": "Issue",
+        "observed_at_us": 2,
+        "parsed_at_us": 2,
+        "parser_module": "synthetic",
+        "parser_version": "v1",
+        "acquisition_scope": scope,
+    }
+    assert CurrentResources(source).admit(issue).status == "accepted"
+    collection, marker, coverage = uid(), uid(), uid()
+    source.execute(
+        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,scope_json) VALUES(?,?,'issue',?)",
+        (collection, expected["repository"], json.dumps(scope)),
+    )
+    from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
+
+    proof = CurrentCollectionProof(source)
+    proof.page(
+        collection, 0, 2, None, [], parser_module="synthetic", parser_version="v1"
+    )
+    source.execute(
+        "INSERT INTO completion_markers(completion_marker_uuidv4,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,2)",
+        (marker, collection, json.dumps(proof.evidence(collection))),
+    )
+    source.execute(
+        "INSERT INTO coverage_scopes VALUES(?,?,NULL,'git')",
+        (coverage, expected["repository"]),
+    )
+    source.execute(
+        "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(?,'complete',2,?)",
+        (coverage, json.dumps({"completion_marker_uuidv4s": [marker]})),
+    )
+    graph = Graph(source)
+    claim = graph.rows("coverage_claims")[0]
+    assert graph.proof_requirements("coverage_claims", claim) is None
+    unit = graph.export(expected["repository"])
+    assert not any(record["table"] == "coverage_claims" for record in unit["records"])
+    assert receive(target, unit)["staged_records"] == 0
+    assert target.execute(
+        "SELECT coverage_state FROM current_coverage WHERE kind='git'"
+    ).fetchone() == ("unknown",)
+    assert target.execute(
+        "SELECT count(*) FROM eligible_issue_resources WHERE provider_resource_id='500'"
+    ).fetchone() == (1,)
+
+
+@pytest.mark.parametrize("column", ["acquisition_scope_json", "field_evidence_json"])
+def test_unmodeled_capture_replica_rejected_before_missing_parent_staging(
+    databases, column
+):
+    source, target = databases
+    owner = fixture(source)
+    unit = Graph(source).export(owner["repository"])
+    record = copy.deepcopy(
+        next(item for item in unit["records"] if item["table"] == "document_state")
+    )
+    value = json.loads(record["values"][column])
+    if column == "field_evidence_json":
+        scope = next(iter(value.values()))["acquisition_scope"]
+    else:
+        scope = value
+    scope["raw_api_response"] = {"data": {"body": "unmodeled original response"}}
+    record["values"][column] = json.dumps(value)
+    result = Graph(target).receive({**unit, "records": [record]})
+    assert result["rejected_records"] == 1
+    assert result["received_records"] == 0
+    assert target.execute("SELECT count(*) FROM exchange_staging").fetchone() == (0,)
+    assert target.execute("SELECT count(*) FROM text_bodies").fetchone() == (0,)
 
 
 def git_fixture(db, *, repository=None, suffix="", decoder_settings=None):
@@ -92,6 +180,85 @@ def git_fixture(db, *, repository=None, suffix="", decoder_settings=None):
         "tree": tree_oid,
         "commit": commit_oid,
     }
+
+
+def test_complete_code_assessment_reconstructs_listing_proof_before_origin(databases):
+    from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
+    from tests.integration.test_catalog3_exchange import candidate, complete_collection
+
+    source, target = databases
+    owner = fixture(source)
+    git = git_fixture(source, repository=owner["repository"])
+    listings = {}
+    for kind, collection_kind in (("commits", "pr-commits"), ("files", "pr-files")):
+        listing, collection = uid(), uid()
+        scope = candidate(owner)["acquisition_scope"]
+        scope["request_context"] = {
+            "head": {"sha": git["commit"].hex()},
+            "base": {"sha": git["commit"].hex()},
+        }
+        source.execute(
+            "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,scope_json) VALUES(?,?,?,?,?)",
+            (
+                collection,
+                owner["repository"],
+                owner["cr"],
+                collection_kind,
+                json.dumps(scope),
+            ),
+        )
+        source.execute(
+            "INSERT INTO code_listings(code_listing_id,change_request_id,fetch_collection_id,kind,object_format,head_oid,base_oid) VALUES(?,?,?,?,'sha1',?,?)",
+            (listing, owner["cr"], collection, kind, git["commit"], git["commit"]),
+        )
+        CurrentCollectionProof(source).page(
+            collection, 0, 3, None, [], parser_module="synthetic", parser_version="v1"
+        )
+        complete_collection(source, collection)
+        source.execute(
+            "INSERT INTO code_listing_progress VALUES(?,'complete',1,1,1)", (listing,)
+        )
+        listings[kind] = listing
+    assessment = uid()
+    source.execute(
+        "INSERT INTO code_assessments(code_assessment_id,change_request_id,repository_uuidv4,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,observed_at_us,parser_module,parser_version,details_json) VALUES(?,?,?,?,?,'complete','sha1',?,?,3,'synthetic','v1',?)",
+        (
+            assessment,
+            owner["cr"],
+            owner["repository"],
+            listings["commits"],
+            listings["files"],
+            git["commit"],
+            git["commit"],
+            json.dumps({"race": False, "code_inputs_complete": True, "missing": []}),
+        ),
+    )
+    root = source.execute(
+        "SELECT acquisition_root_id FROM acquisition_roots WHERE git_acquisition_id=?",
+        (git["acquisition"],),
+    ).fetchone()[0]
+    source.execute(
+        "INSERT INTO root_origins(acquisition_root_id,repository_uuidv4,origin_kind,source_ordinal,change_request_id,code_assessment_id) VALUES(?,?,'pr_role',0,?,?)",
+        (root, owner["repository"], owner["cr"], assessment),
+    )
+    unit = Graph(source).export(owner["repository"])
+    assert not any(
+        record["table"] == "code_listing_progress" for record in unit["records"]
+    )
+    assert receive(target, unit)["staged_records"] == 0
+    assert (
+        target.execute(
+            "SELECT state,terminal,page_count,context_proven FROM code_listing_progress ORDER BY code_listing_id"
+        ).fetchall()
+        == [("complete", 1, 1, 1)] * 2
+    )
+    assert target.execute("SELECT state FROM code_assessments").fetchone() == (
+        "complete",
+    )
+    assert target.execute(
+        "SELECT count(*) FROM root_origins WHERE origin_kind='pr_role'"
+    ).fetchone() == (1,)
+    assert receive(target, unit)["received_records"] == 0
 
 
 def test_git_roundtrip_recomputes_complete_intrinsic_rows(databases):
@@ -216,10 +383,9 @@ def test_forged_sender_decoder_value_does_not_claim_git_bytes(databases):
     fact = next(r for r in unit["records"] if r["table"] == "git_text_facts")
     fact["values"]["raw_text"] = "forged derived text"
     result = receive(target, unit)
-    assert result["staged_records"] == 1
-    assert target.execute("SELECT reason FROM exchange_staging").fetchone() == (
-        "invalid:git_decoder_value",
-    )
+    assert result["rejected_records"] == 1
+    assert result["staged_records"] == 0
+    assert target.execute("SELECT 1 FROM exchange_staging").fetchone() is None
     assert target.execute("SELECT count(*) FROM available_git_objects").fetchone() == (
         3,
     )

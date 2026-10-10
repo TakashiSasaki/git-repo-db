@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 20 items / 17 deselected / 3 selected
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_git_late_physical_arrival_and_pending_onward PASSED [ 33%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_fake_original_label_and_foreign_repository_record_rejected PASSED [ 66%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_inconsistent_ref_capture_cannot_qualify_available_snapshot FAILED [100%]
+
+=================================== FAILURES ===================================
+_______ test_inconsistent_ref_capture_cannot_qualify_available_snapshot ________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:383: in test_inconsistent_ref_capture_cannot_qualify_available_snapshot
+    assert not store.one("SELECT 1 FROM available_snapshots WHERE snapshot_id=?",(acq,)), "inconsistent capture became available"
+E   AssertionError: inconsistent capture became available
+E   assert not <sqlite3.Row object at 0x7f6f8831bc70>
+E    +  where <sqlite3.Row object at 0x7f6f8831bc70> = one('SELECT 1 FROM available_snapshots WHERE snapshot_id=?', ('49a5ad63-9081-4694-884b-3c56935397ba',))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f6f885d4a40>.one
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_inconsistent_ref_capture_cannot_qualify_available_snapshot
+================== 1 failed, 2 passed, 17 deselected in 5.22s ==================

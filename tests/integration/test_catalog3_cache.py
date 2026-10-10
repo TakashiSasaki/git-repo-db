@@ -90,14 +90,14 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
             "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('unsafe','preserved',2,'active',0,0)"
         )
     store.execute(
-        "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('20000000-0000-4000-8000-000000000001','locator',1,1,1,0,0)"
+        "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES('20000000-0000-4000-8000-000000000001','locator',1,1,1,0,0)"
     )
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "retained"
     assert entry["blocked_by"] == [
         "pending_obligations:20000000-0000-4000-8000-000000000001"
     ]
-    store.execute("UPDATE preservation_obligations SET text_done=1,published=1")
+    store.execute("UPDATE preservation_obligations SET text_done=1,complete=1")
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "evicted"
     assert (
@@ -232,5 +232,5 @@ def test_acquisition_and_obligation_cannot_use_another_owner_cache(cache_store):
         )
     with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
         store.execute(
-            "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES('20000000-0000-4000-8000-000000000002','locator',0,0,0,0,0)"
+            "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES('20000000-0000-4000-8000-000000000002','locator',0,0,0,0,0)"
         )

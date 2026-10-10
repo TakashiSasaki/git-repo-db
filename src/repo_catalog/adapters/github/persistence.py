@@ -61,6 +61,7 @@ class ApiFacts:
             "endpoint": endpoint,
             "source_registration_uuidv4": binding["source_registration_uuidv4"],
             "principal_ref": self.principal,
+            "observed_permissions": self.permissions,
             "api_version": self.cfg["rest_api_version"],
             "preservation_profile": self.s.config["preservation"]["profile"],
             **({"change_request_id": pr} if pr is not None else {}),

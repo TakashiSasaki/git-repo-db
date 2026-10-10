@@ -94,6 +94,24 @@ LOCAL_COLUMNS = {
 }
 SCOPES = {"coverage_scopes"}
 SHA = re.compile(r"[0-9a-f]{64}\Z")
+PR_COLLECTION_KINDS = {
+    "pr-list",
+    "pr-detail",
+    "pr-code-check",
+    "issue-comment",
+    "issue-comment-incremental",
+    "review",
+    "review-comment",
+    "review-comment-incremental",
+    "threads",
+    "thread-comments",
+    "timeline",
+    "pr-commits",
+    "pr-files",
+    "pr-title",
+    "pr-body",
+}
+GIT_COVERAGE_KINDS = {"git", "refs", "structure", "digests", "heads-text"}
 
 
 def canonical(value):
@@ -145,7 +163,13 @@ def decode(value):
 
 class Graph:
     def __init__(self, db, *, persist_identities=True):
+        from repo_catalog.adapters.sqlite.cas_integrity import (
+            register_git_object_sql_function,
+        )
+
+        register_git_object_sql_function(db)
         self.db, self.persist_identities = db, persist_identities
+        self.rejected_records = 0
         self.columns, self.keys, self.foreign = {}, {}, {}
         names = {
             r[0]
@@ -588,6 +612,14 @@ class Graph:
                 ("fetch_collection_id",),
                 (collection_id,),
             )
+            thread_members = {
+                member["provider_resource_id"]
+                for page in pages
+                for member in json.loads(page["members"])
+                if member.get("family") == "thread"
+            }
+            if thread_members - {item["provider_resource_id"] for item in obligations}:
+                return None
             for obligation in obligations:
                 required.add(
                     self.key(
@@ -638,9 +670,88 @@ class Graph:
         if scope is None:
             return None
         required.add(self.key("coverage_scopes", scope))
+        if scope["kind"] in GIT_COVERAGE_KINDS:
+            if details.get("completion_marker_uuidv4s"):
+                return None
+            snapshot = self.lookup(
+                "snapshots", ("snapshot_id",), (details.get("snapshot_id"),)
+            )
+            if (
+                snapshot is None
+                or snapshot["repository_uuidv4"] != scope["repository_uuidv4"]
+                or not snapshot["complete"]
+                or scope.get("change_request_id") is not None
+                or details.get("git_acquisition_id", snapshot["git_acquisition_id"])
+                != snapshot["git_acquisition_id"]
+            ):
+                return None
+            acquisition = self.lookup(
+                "git_acquisitions",
+                ("git_acquisition_id",),
+                (snapshot["git_acquisition_id"],),
+            )
+            if (
+                acquisition is None
+                or acquisition["kind"] != "git"
+                or acquisition["refs_observed_at_us"] is None
+                or acquisition["refs_observed_at_us"] > row["observed_at_us"]
+            ):
+                return None
+            from repo_catalog.adapters.git.parsing import validate_git_acquisition
+
+            try:
+                validate_git_acquisition(self.db, acquisition["git_acquisition_id"])
+            except (CatalogError, sqlite3.IntegrityError):
+                return None
+            required.update(
+                {
+                    self.key("snapshots", snapshot),
+                    self.key("git_acquisitions", acquisition),
+                }
+            )
+            for table in (
+                "ref_observations",
+                "acquisition_roots",
+                "repository_object_sources",
+            ):
+                column = (
+                    "snapshot_id"
+                    if table == "ref_observations"
+                    else "git_acquisition_id"
+                )
+                value = (
+                    snapshot["snapshot_id"]
+                    if table == "ref_observations"
+                    else acquisition["git_acquisition_id"]
+                )
+                for subject in self.matching(table, (column,), (value,)):
+                    required.add(self.key(table, subject))
+                    if (
+                        table == "repository_object_sources"
+                        and scope["kind"] == "heads-text"
+                    ):
+                        obj = self.lookup(
+                            "git_objects",
+                            ("git_object_id",),
+                            (subject["git_object_id"],),
+                        )
+                        if obj is not None and obj["type"] == "blob":
+                            candidates = self.matching(
+                                "git_text_facts",
+                                ("git_object_id",),
+                                (obj["git_object_id"],),
+                            )
+                            if not candidates:
+                                return None
+                            required.update(
+                                self.key("git_text_facts", fact) for fact in candidates
+                            )
+            return required
         marker_ids = details.get("completion_marker_uuidv4s")
         if not isinstance(marker_ids, list) or not marker_ids:
             return None
+        subject_kinds = set()
+        empty_pr_roster = False
         for identifier in marker_ids:
             marker = self.lookup(
                 "completion_markers", ("completion_marker_uuidv4",), (identifier,)
@@ -659,11 +770,54 @@ class Graph:
                 and collection.get("change_request_id") != scope["change_request_id"]
             ):
                 return None
+            kind = scope["kind"]
+            allowed = (
+                {"issue", "issues", "ordinary-issue-comment"}
+                if kind == "issue"
+                else PR_COLLECTION_KINDS
+                if kind == "pr"
+                else PR_COLLECTION_KINDS - {"pr-commits", "pr-files", "pr-code-check"}
+                if kind == "pr-documents"
+                else {
+                    "pr-commits",
+                    "pr-files",
+                    "pr-code-check",
+                    "pr-detail",
+                    "pr-list",
+                    "review",
+                    "review-comment",
+                    "threads",
+                    "thread-comments",
+                }
+                if kind in {"pr-code", "pr-code-listings"}
+                else {kind}
+                if kind in PR_COLLECTION_KINDS | {"ordinary-issue-comment"}
+                else set()
+            )
+            if collection["kind"] not in allowed:
+                return None
+            subject_kinds.add(collection["kind"])
+            if collection["kind"] == "pr-list":
+                empty_pr_roster |= not any(
+                    member.get("family") == "change-request"
+                    for page in self.matching(
+                        "current_collection_pages",
+                        ("fetch_collection_id",),
+                        (collection["fetch_collection_id"],),
+                    )
+                    for member in json.loads(page["members"])
+                )
             proof = self.proof_requirements("completion_markers", marker, visited)
             if proof is None:
                 return None
             required.update(proof)
             required.add(self.key("completion_markers", marker))
+        if (
+            scope["kind"] in {"pr-code", "pr-code-listings"}
+            and not empty_pr_roster
+            and not {"pr-commits", "pr-files"} <= subject_kinds
+        ):
+            return None
         return required
 
     def _parents(self, table, row):
@@ -903,24 +1057,19 @@ class Graph:
                 )
             }
             if marker_ids:
-                scopes = self.matching(
-                    "coverage_scopes",
-                    ("repository_uuidv4", "change_request_id"),
-                    (repository_uuidv4, root["change_request_id"]),
-                )
-                for scope in scopes:
-                    claims = self.matching(
-                        "coverage_claims",
-                        ("coverage_scope_id",),
-                        (scope["coverage_scope_id"],),
-                    )
-                    for claim in claims:
-                        if marker_ids.intersection(
-                            json.loads(claim["details_json"] or "{}").get(
-                                "completion_marker_uuidv4s", ()
-                            )
-                        ):
-                            add("coverage_claims", claim)
+                fields = tuple(self.columns["coverage_claims"])
+                for marker in sorted(marker_ids):
+                    for values in self.db.execute(
+                        "SELECT "
+                        + ",".join("c." + field for field in fields)
+                        + " FROM coverage_claim_markers m"
+                        + " JOIN coverage_claims c USING(coverage_claim_id)"
+                        + " JOIN coverage_scopes s USING(coverage_scope_id)"
+                        + " WHERE m.completion_marker_uuidv4=?"
+                        + " AND s.repository_uuidv4=? AND s.change_request_id IS ?",
+                        (marker, repository_uuidv4, root["change_request_id"]),
+                    ):
+                        add("coverage_claims", dict(zip(fields, values, strict=True)))
         elif git_acquisition_id is not None:
             root = self.lookup(
                 "git_acquisitions", ("git_acquisition_id",), (git_acquisition_id,)
@@ -1083,20 +1232,68 @@ class Graph:
         records.extend(self.record(table, row) for table, row in extra)
         # Retain genuine unresolved wire records for onward delivery. API
         # candidates already come from the bounded shared admission export.
-        for stage in self.db.execute(
-            "SELECT record_json,reason,table_name FROM exchange_staging WHERE repository_uuidv4=? AND reason NOT LIKE 'current_state:%'",
-            (repository_uuidv4,),
-        ):
-            record = json.loads(stage[0])
-            if record["table"] in self.columns and (
-                not partial or record["key"] in {r["key"] for r in records}
+        if partial:
+
+            def typed_references(record):
+                for value in record["values"].values():
+                    if isinstance(value, dict) and "$ref" in value:
+                        yield value["$ref"]
+
+                from repo_catalog.adapters.sqlite.json_contracts import JSON_REGISTRY
+
+                def nested(value):
+                    if isinstance(value, dict):
+                        if set(value) == {"$ref", "column"}:
+                            yield value["$ref"]
+                        else:
+                            for item in value.values():
+                                yield from nested(item)
+                    elif isinstance(value, list):
+                        for item in value:
+                            yield from nested(item)
+
+                for column, value in record["values"].items():
+                    if (record["table"], column) in JSON_REGISTRY and isinstance(
+                        value, str
+                    ):
+                        yield from nested(json.loads(value))
+
+            pending = deque(
+                key
+                for record in records
+                for key in (
+                    record["key"],
+                    *typed_references(record),
+                    *record.get("requires", ()),
+                )
+            )
+            visited = set()
+            while pending:
+                key = pending.popleft()
+                if key in visited:
+                    continue
+                visited.add(key)
+                for stage in self.db.execute(
+                    "SELECT record_json FROM exchange_staging WHERE record_key=? AND repository_uuidv4=? AND reason NOT LIKE 'current_state:%'",
+                    (key, repository_uuidv4),
+                ):
+                    record = json.loads(stage[0])
+                    if record["table"] in self.columns:
+                        records.append(record)
+                        pending.extend(typed_references(record))
+        else:
+            for stage in self.db.execute(
+                "SELECT record_json FROM exchange_staging WHERE repository_uuidv4=? AND reason NOT LIKE 'current_state:%'",
+                (repository_uuidv4,),
             ):
-                records.append(record)
+                record = json.loads(stage[0])
+                if record["table"] in self.columns:
+                    records.append(record)
         unique = {(record["key"], record_digest(record)): record for record in records}
         records = sorted(
             unique.values(), key=lambda r: (r["table"], r["key"], record_digest(r))
         )
-        authorized = self._git_authorizations(records)
+        authorized = self._git_authorizations(records, include_staging=False)
         records = [
             r
             for r in records
@@ -1206,16 +1403,92 @@ class Graph:
                     "PAYLOAD_DIGEST_MISMATCH",
                     "Domain bytes do not match their exact SHA-256",
                 )
+        self._validate_unresolved_json(table, data)
 
-    def _git_authorizations(self, records):
+    def _validate_unresolved_json(self, table, data):
+        """Check modeled shapes before a missing parent can enter intake.
+
+        Portable identities may omit attributes of an unresolved parent. Do
+        not infer those attributes from an older capture: transferred Issue
+        comments retain that capture. Admission checks actual resolved owners.
+        """
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            JSON_REGISTRY,
+            REFERENCE_LISTS,
+            REFERENCE_TARGETS,
+            _check_schema,
+            _load,
+        )
+
+        def scalar(value):
+            if not isinstance(value, dict) or "$ref" not in value:
+                return decode(value)
+            parent, encoded = value["$ref"].split(":", 1)
+            column = value["column"]
+            if self.columns[parent][column] == "INTEGER":
+                return 1  # Only a shape placeholder, never a retained local ID.
+            try:
+                identity = json.loads(encoded)
+            except ValueError:
+                raise CatalogError(
+                    "INVALID_EXCHANGE", "Invalid portable parent key"
+                ) from None
+            found = identity.get(column)
+            return scalar(found) if found is not None else None
+
+        values = {column: scalar(value) for column, value in data.items()}
+
+        def json_scalar(name, value):
+            if isinstance(value, dict) and "$ref" in value:
+                target = REFERENCE_TARGETS.get(name)
+                if (
+                    not target
+                    or target[0] not in self.columns
+                    or self.columns[target[0]].get(target[1]) != "INTEGER"
+                    or set(value) != {"$ref", "column"}
+                    or value["column"] != target[1]
+                    or not isinstance(value["$ref"], str)
+                    or not value["$ref"].startswith(target[0] + ":")
+                ):
+                    raise CatalogError(
+                        "INVALID_EXCHANGE", "Invalid modeled JSON reference"
+                    )
+                return scalar(value)
+            if isinstance(value, dict):
+                return {key: json_scalar(key, child) for key, child in value.items()}
+            if isinstance(value, list):
+                return [
+                    json_scalar(REFERENCE_LISTS.get(name, ""), child) for child in value
+                ]
+            return value
+
+        for (owner, column), schema in JSON_REGISTRY.items():
+            if owner != table or values.get(column) is None:
+                continue
+            parsed = _load(values[column], schema, table + "." + column)
+            if schema.category in {
+                "authored",
+                "git-roots",
+                "current-members",
+                "inventory-members",
+            }:
+                parsed = json_scalar("", parsed)
+            _check_schema(table, column, parsed, values, check_owner=False)
+
+    def _git_authorizations(self, records, *, include_staging=True):
         """Real typed Git byte consumers authorize content, never `requires`."""
         from repo_catalog.domain.git_object import validate_git_object
 
         by_key = {r["key"]: r for r in records}
         # Already staged mappings permit reversed delivery of their raw bytes.
-        for stage in self.db.execute(
-            "SELECT record_json FROM exchange_staging WHERE table_name IN ('git_objects','git_object_payloads','repository_object_sources','payloads','stored_bytes') AND reason NOT LIKE 'conflict:%'"
-        ):
+        stages = (
+            self.db.execute(
+                "SELECT record_json FROM exchange_staging WHERE table_name IN ('git_objects','git_object_payloads','repository_object_sources','payloads','stored_bytes') AND reason NOT LIKE 'conflict:%'"
+            )
+            if include_staging
+            else ()
+        )
+        for stage in stages:
             try:
                 record = json.loads(stage[0])
                 by_key.setdefault(record["key"], record)
@@ -1233,6 +1506,15 @@ class Graph:
                 else None
             )
 
+        # A single pass builds the actual typed association set. Checking each
+        # object's consumer must not repeatedly traverse every selected record.
+        associated_objects = {
+            record["values"]["git_object_id"]["$ref"]
+            for record in by_key.values()
+            if record["table"] == "repository_object_sources"
+            and isinstance(record["values"].get("git_object_id"), dict)
+            and "$ref" in record["values"]["git_object_id"]
+        }
         authorized = set()
         for mapping in list(by_key.values()):
             if mapping["table"] != "git_object_payloads":
@@ -1256,12 +1538,7 @@ class Graph:
             object_values = obj["values"]
             # A genuine typed repository association is needed. The sender's
             # arbitrary dependency hints cannot authorize orphan content.
-            associated = any(
-                r["table"] == "repository_object_sources"
-                and isinstance(r["values"].get("git_object_id"), dict)
-                and r["values"]["git_object_id"].get("$ref") == obj["key"]
-                for r in by_key.values()
-            )
+            associated = obj["key"] in associated_objects
             local_obj = self._resolve_key(obj["key"])
             if local_obj is not None:
                 associated |= bool(
@@ -1304,6 +1581,71 @@ class Graph:
             "INSERT INTO exchange_admissions VALUES(?,?,?,?) ON CONFLICT(record_key) DO UPDATE SET table_name=excluded.table_name,local_key_json=excluded.local_key_json,content_sha256=excluded.content_sha256",
             (record["key"], record["table"], local, record_digest(record)),
         )
+
+    def _restore_code_progress(self, listing):
+        """Reconstruct a disposable listing assessment from its exact receipt."""
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        collection = self.lookup(
+            "fetch_collections",
+            ("fetch_collection_id",),
+            (listing["fetch_collection_id"],),
+        )
+        if collection is None:
+            return False
+        context = json.loads(collection["scope_json"]).get("request_context", {})
+        expected_kind = "pr-commits" if listing["kind"] == "commits" else "pr-files"
+        targets_match = (
+            collection["kind"] == expected_kind
+            and collection["change_request_id"] == listing["change_request_id"]
+            and all(
+                context.get(name, {}).get("sha")
+                == (listing[name + "_oid"].hex() if listing[name + "_oid"] else None)
+                for name in ("head", "base")
+            )
+        )
+        proof = CurrentCollectionProof(self.db)
+        pages = proof.pages(collection["fetch_collection_id"])
+        markers = self.matching(
+            "completion_markers",
+            ("fetch_collection_id",),
+            (collection["fetch_collection_id"],),
+        )
+        complete = targets_match and any(
+            marker["asserted_state"] == "complete"
+            and self.proof_requirements("completion_markers", marker) is not None
+            for marker in markers
+        )
+        terminal = bool(pages and not pages[-1]["has_next"])
+        previous = self.db.execute(
+            "SELECT state FROM code_listing_progress WHERE code_listing_id=?",
+            (listing["code_listing_id"],),
+        ).fetchone()
+        if previous is None:
+            self.db.execute(
+                "INSERT INTO code_listing_progress VALUES(?,?,?,?,?)",
+                (
+                    listing["code_listing_id"],
+                    "complete" if complete else "partial",
+                    int(terminal),
+                    len(pages),
+                    int(targets_match),
+                ),
+            )
+        elif previous[0] != "complete":
+            self.db.execute(
+                "UPDATE code_listing_progress SET state=?,terminal=?,page_count=?,context_proven=? WHERE code_listing_id=?",
+                (
+                    "complete" if complete else "partial",
+                    int(terminal),
+                    len(pages),
+                    int(targets_match),
+                    listing["code_listing_id"],
+                ),
+            )
+        return complete
 
     def _admit(self, record, origin_catalog_uuidv4, repository_uuidv4):
         table = record["table"]
@@ -1348,6 +1690,13 @@ class Graph:
             return "missing_json_dependency"
         except CatalogError:
             return "invalid:domain_json"
+        if table == "code_assessments" and data["state"] == "complete":
+            for column in ("commit_code_listing_id", "file_code_listing_id"):
+                listing = self.lookup(
+                    "code_listings", ("code_listing_id",), (data[column],)
+                )
+                if listing is None or not self._restore_code_progress(listing):
+                    return "missing_code_listing_proof"
         if table in {"completion_markers", "coverage_claims"}:
             proof = self.proof_requirements(table, data)
             complete = (
@@ -1459,6 +1808,13 @@ class Graph:
                     data[self.keys[table][0]] = cursor.lastrowid
         if table == "git_object_payloads":
             self._install_git(data, repository_uuidv4)
+        if table in {"code_listings", "completion_markers", "current_collection_pages"}:
+            for listing in self.matching(
+                "code_listings",
+                ("fetch_collection_id",),
+                (data["fetch_collection_id"],),
+            ):
+                self._restore_code_progress(listing)
         if requested_complete:
             from repo_catalog.adapters.git.parsing import validate_git_acquisition
 
@@ -1507,6 +1863,9 @@ class Graph:
         )
 
     def receive(self, unit):
+        from repo_catalog.adapters.sqlite.json_contracts import JsonContractError
+
+        self.rejected_records = 0
         if (
             not isinstance(unit, dict)
             or set(unit)
@@ -1527,17 +1886,25 @@ class Graph:
                     "INVALID_EXCHANGE", "Owner requires canonical UUIDv4"
                 ) from cause
         rejected = set()
+        invalid_values = 0
+        records = []
         for record in unit["records"]:
             try:
                 self.validate_record(record)
+            except JsonContractError:
+                # A malformed modeled value rejects this candidate. It cannot
+                # hide a valid sibling or remain in original-bearing intake.
+                invalid_values += 1
+                continue
             except CatalogError as error:
                 if error.code != "PAYLOAD_DIGEST_MISMATCH":
                     raise
                 rejected.add(record["key"])
+            records.append(record)
         owner = "repositories:" + canonical(
             {"repository_uuidv4": unit["repository_uuidv4"]}
         )
-        for record in unit["records"]:
+        for record in records:
             ref = record["values"].get("repository_uuidv4")
             if (
                 record["table"] == "repositories"
@@ -1549,8 +1916,8 @@ class Graph:
                 raise CatalogError(
                     "INVALID_EXCHANGE", "Foreign repository record in envelope"
                 )
-        authorized = self._git_authorizations(unit["records"])
-        for record in unit["records"]:
+        authorized = self._git_authorizations(records)
+        for record in records:
             if (
                 record["table"]
                 in {"stored_bytes", "payloads", "git_objects", "git_object_payloads"}
@@ -1563,7 +1930,7 @@ class Graph:
         changed = True
         while changed:
             changed = False
-            for record in unit["records"]:
+            for record in records:
                 if record["key"] not in rejected and any(
                     isinstance(v, dict) and v.get("$ref") in rejected
                     for v in record["values"].values()
@@ -1571,7 +1938,7 @@ class Graph:
                     rejected.add(record["key"])
                     changed = True
         received = 0
-        for record in unit["records"]:
+        for record in records:
             if record["key"] in rejected:
                 continue
             digest = record_digest(record)
@@ -1638,7 +2005,7 @@ class Graph:
         for key, table in self.db.execute(
             "SELECT record_key,table_name FROM exchange_staging WHERE reason NOT LIKE 'current_state:%' GROUP BY record_key,table_name HAVING count(*)>1"
         ).fetchall():
-            if table not in CURRENT_RESOURCES:
+            if table not in CURRENT_RESOURCES | GIT_FACTS:
                 self.db.execute(
                     "UPDATE exchange_staging SET reason='conflict:competing_variants' WHERE record_key=?",
                     (key,),
@@ -1646,7 +2013,7 @@ class Graph:
         admitted = self.promote(unit["origin_catalog_uuidv4"])
         return {
             "received_records": received,
-            "rejected_records": len(rejected),
+            "rejected_records": invalid_values + len(rejected) + self.rejected_records,
             "admitted_records": admitted,
             "staged_records": self.db.execute(
                 "SELECT count(*) FROM exchange_staging"
@@ -1657,6 +2024,12 @@ class Graph:
     def promote(self, origin_catalog_uuidv4=None):
         from repo_catalog.adapters.sqlite.current_resources import CurrentResources
 
+        # Decoder value claims have a canonical byte-backed validation result.
+        # A demonstrably false value cannot monopolize its typed decoder subject
+        # or survive as a saved interpretation archive.
+        self.db.execute(
+            "UPDATE exchange_staging SET reason='missing_dependency' WHERE table_name IN ('git_commit_facts','git_text_facts','git_name_facts') AND reason='conflict:competing_variants'"
+        )
         promoted = 0
         while True:
             changed = False
@@ -1680,6 +2053,14 @@ class Graph:
                     if reason:
                         self.db.execute("ROLLBACK TO exchange_record")
                         self.db.execute("RELEASE exchange_record")
+                        if reason == "invalid:git_decoder_value":
+                            self.db.execute(
+                                "DELETE FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+                                (key, digest),
+                            )
+                            self.rejected_records += 1
+                            changed = True
+                            continue
                         self.db.execute(
                             "UPDATE exchange_staging SET reason=? WHERE record_key=? AND content_sha256=?",
                             (reason, key, digest),

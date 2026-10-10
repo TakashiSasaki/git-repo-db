@@ -433,6 +433,18 @@ class CurrentResources:
             raise CatalogError(
                 "INVALID_CURRENT_RESOURCE", "Acquisition scope must be an object"
             )
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            _acquisition_shape,
+            _check_schema,
+        )
+
+        if "acquisition_scope" in candidate:
+            _acquisition_shape(
+                candidate["acquisition_scope"], candidate.get("service_instance_uuidv4")
+            )
+        if "metadata" in candidate:
+            table, _, _ = self._table_key(candidate)
+            _check_schema(table, "metadata", candidate["metadata"], candidate)
         if "field_evidence" in candidate:
             from repo_catalog.adapters.sqlite.json_contracts import (
                 validate_field_evidence,

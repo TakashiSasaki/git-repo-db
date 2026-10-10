@@ -127,7 +127,7 @@ def parser():
         "file": ("show",),
         "commits": ("list", "show", "compare"),
         "jobs": ("list", "show", "resume", "cancel"),
-        "pr": ("list", "show", "documents", "thread", "timeline"),
+        "pr": ("list", "show", "documents", "thread", "timeline", "code"),
     }.items():
         group = commands.add_parser(category).add_subparsers(
             dest="action", required=True, parser_class=Parser

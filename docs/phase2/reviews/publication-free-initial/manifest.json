@@ -1,0 +1,43 @@
+{
+  "purpose": "Immutable copies of actual initial independent review evidence; failed initial candidate, not final acceptance",
+  "source_commit": "41dbe5550afaac248971d13994ae4a8c37274197",
+  "source_tree": "1a518382d4aefdbea1441cf0ae9965b7025b40bd",
+  "model": "not exposed",
+  "effort": "not exposed",
+  "files": {
+    "architecture/initial-review.md": "71f559a9418523d2c688e66f17a347689c93296ae7850cfcc2119a8b66eb59a8",
+    "architecture/counterexamples.py": "7e9527ca65bc64a67022a60587f6d91712e5aba9ebe78e3e2a50985bf16ed951",
+    "architecture/counterexamples-results.json": "ca26364fcbb7fdbc262a95b236c400cf3fecbc26211b4915e36c3c5dc2ecce3c",
+    "architecture/positive_probes.py": "eecc67c388b44a566cec39a384e4d94316891c3141404561d349cc5ff19086e7",
+    "architecture/positive-results.json": "d60e9be27ebeb8d17384edf2eda0663c3fe8632d6abe5fdde6405def4f06a0cd",
+    "architecture/unmapped-retired-functions.json": "e2eeb27ccffee0d91ee5f7aee821ae89eef1eee44010889fbf4ad7a60d7d12ac",
+    "architecture/audit-runtime.json": "0d35bf3b4abdd417c6cdc2f3fecadc827fe39cb5359fcad18429071e321d1fc1",
+    "architecture/artifact-sha256.txt": "2cc6eaa489db79d79b9d0d7c643e695188e70d413cff64b67d90a1f42ac173d3",
+    "acquisition/initial-review.md": "6deb6cc50efa1b262bb88e5fcf8aa016c972bac725ed22d7e97215ecc2764ec3",
+    "acquisition/initial-frozen-results.txt": "a4ad7dede754c941c303b8404dd09b7afb7c8ac09d7e5c43e4f3daed13a04778",
+    "acquisition/initial-frozen-results.xml": "7ade83e2b8c8379018e2f6a65952fa2d69a225a16f3ae8dfd6df1b86236f8f53",
+    "acquisition/scope-replica-result.json": "05a4d60abc74b4e9a6157b0ee31dbc03b3a7a921e509bf24740fd52153fbbd30",
+    "acquisition/repro_scope_replica.py": "75e8d7d46be9d48516f0d90fe6a505031c6e20dbfc390f30e37c3ea16c212fe4",
+    "acquisition/frozen-probes-v1/test_independent_acquisition.py": "31e0c15293750501076835171e31e37cfc9ad0d89185b8516d8c8a10966aec12",
+    "acquisition/frozen-probes-v1/test_independent_invariants.py": "5338cbc2b0257678ea834e3a2b84ec7a664ee3ced67a092a8ed38f7b7038284d",
+    "git-exchange-cas/receipt.md": "f2543f1f15ba98b752755e8ead6558d7a7793025abeb5779f40954b60db73cbc",
+    "git-exchange-cas/selected_coverage_scale.py": "0e88f98aaadbdce109e72f8771726f55b3ca60b5118a15b328b97994fd787df7",
+    "git-exchange-cas/selected_coverage_scale.json": "bb92fa81160775c3c9f0eb672e4953a5567b06ef048a64429b0f73a4b35d9153",
+    "git-exchange-cas/intrinsic_tree_spoof.py": "6176b34c80a84f6c718d7fefe78297d2f3654af867ea0161522b2d21a4b55015",
+    "git-exchange-cas/intrinsic_tree_spoof.json": "38dd800e8d493e4ac313ee6a47aefb8db0a2e2f762f28dc7e9daec6c13e94538",
+    "architecture/native-schema-dependencies.json.gz": "c0c239e5290d6c1ecbfb69e3d3a4feff491fb9a814c043a022d90b10501cef6e",
+    "architecture/source-sql-call-inventory.json.gz": "b465755db52f53e0c9daf1e988cc3f1a61e8f84552c406446e1f533d02209299"
+  },
+  "compressed_originals": {
+    "architecture/native-schema-dependencies.json": {
+      "sha256": "a354365fef44d099cdc325ce143c7ce762a49402beade491cce875420a66aab6",
+      "bytes": 1640548,
+      "gzip_file": "architecture/native-schema-dependencies.json.gz"
+    },
+    "architecture/source-sql-call-inventory.json": {
+      "sha256": "fd7caba295bfa1c6abf8fb82c3e4d071d8c09453921264ba6ebaa10c00360494",
+      "bytes": 9563110,
+      "gzip_file": "architecture/source-sql-call-inventory.json.gz"
+    }
+  }
+}

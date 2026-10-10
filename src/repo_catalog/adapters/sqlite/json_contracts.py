@@ -11,6 +11,7 @@ import json
 import re
 import uuid
 from dataclasses import dataclass
+from functools import lru_cache
 
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import validate_epoch_us
@@ -91,8 +92,7 @@ def _dependency(key, value):
 
 
 def _acquisition_shape(scope, service):
-    if not isinstance(scope, dict):
-        raise JsonContractError("Acquisition scope must be an object")
+    validate_capture_shape(scope)
     required = {
         "repository_uuidv4",
         "repository_binding_id",
@@ -106,21 +106,6 @@ def _acquisition_shape(scope, service):
     if not isinstance(endpoint, str) or not endpoint or "\x00" in endpoint:
         raise JsonContractError("Acquisition endpoint requires nonempty text")
 
-    # Validate every authored identity, including captured identifiers that are
-    # snapshots rather than transport dependencies after an Issue transfer.
-    def check_context(value):
-        if isinstance(value, dict):
-            if value.keys() & _CURRENT_FORBIDDEN_REFERENCE_KEYS:
-                raise JsonContractError(
-                    "Current capture cannot require transport originals or parser selection"
-                )
-            for item in value.values():
-                check_context(item)
-        elif isinstance(value, list):
-            for item in value:
-                check_context(item)
-
-    check_context(scope)
     for name in ("parser_module", "parser_version"):
         if name in scope:
             _identity(name, scope[name])
@@ -275,6 +260,7 @@ def _sql_capture_conditions(doc, service):
         f"'{key}'" for key in sorted(_CURRENT_FORBIDDEN_REFERENCE_KEYS)
     )
     conditions = [
+        *_sql_scope_conditions(doc),
         f"coalesce(json_type({doc}),'')<>'object'",
         f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE j.key IN ({forbidden}))",
         *[
@@ -545,9 +531,20 @@ def _walk(value, **options):
     )
 
 
-def _check_schema(table, column, value, data):
+def _check_schema(table, column, value, data, *, check_owner=True):
+    if table == "exchange_staging" and column == "record_json":
+        _validate_staging_record(value, data)
+    if (table, column) in _EVIDENCE_SCHEMAS:
+        _check_metadata(_EVIDENCE_SCHEMAS[table, column], value)
     if (table, column) in _METADATA_SCHEMAS:
         _check_metadata(_METADATA_SCHEMAS[table, column], value)
+    if (table, column) in _SCOPE_COLUMNS:
+        validate_capture_shape(value)
+    if (table, column) == ("source_inventory_assessments", "members_json"):
+        for member in value:
+            _identity("repository_uuidv4", member)
+        if len(set(value)) != len(value):
+            raise JsonContractError("Duplicate Source inventory member")
     if (table, column) == ("git_acquisitions", "roots_manifest"):
         fields = {"name", "name_b64", "oid", "type", "peeled"}
         optional = {"role", "number", "expected"}
@@ -622,6 +619,21 @@ def _check_schema(table, column, value, data):
                     )
         return
     if (table, column) == ("code_assessments", "details_json"):
+        if value.keys() - {
+            "race",
+            "code_inputs_complete",
+            "missing",
+            "expected_roles",
+            "api_head_base_stable",
+            "missing_roles",
+            "provider_limits",
+            "merge",
+        }:
+            raise JsonContractError("Unknown code assessment evidence fields")
+        if "race" in value and type(value["race"]) is not bool:
+            raise JsonContractError("Code race evidence requires boolean")
+        if "missing" in value:
+            _check_metadata(_MISSING, value["missing"])
         object_format = data.get("object_format")
         width = (
             {"sha1": 40, "sha256": 64}.get(object_format)
@@ -698,14 +710,25 @@ def _check_schema(table, column, value, data):
                 "Collection request context and variables require objects"
             )
     if column == "acquisition_scope_json":
-        _acquisition_shape(value, data.get("service_instance_uuidv4"))
-        if not _detached_acquisition(data, value) and any(
-            value.get(name) != data.get(name)
-            for name in ("repository_uuidv4", "repository_binding_id")
+        _acquisition_shape(
+            value,
+            data.get("service_instance_uuidv4")
+            if check_owner
+            else value.get("service_instance_uuidv4"),
+        )
+        if (
+            check_owner
+            and not _detached_acquisition(data, value)
+            and any(
+                value.get(name) != data.get(name)
+                for name in ("repository_uuidv4", "repository_binding_id")
+            )
         ):
             raise JsonContractError("Capture differs from typed owner")
-        if table != "issue_resources" and value.get("change_request_id") != data.get(
-            "change_request_id"
+        if (
+            check_owner
+            and table != "issue_resources"
+            and value.get("change_request_id") != data.get("change_request_id")
         ):
             raise JsonContractError("Capture differs from typed parent")
         if table == "issue_resources" and "change_request_id" in value:
@@ -747,6 +770,7 @@ def _check_schema(table, column, value, data):
             scope = evidence["acquisition_scope"]
             if not isinstance(scope, dict) or "source_registration_uuidv4" not in scope:
                 raise JsonContractError("Source capture requires typed Source identity")
+            validate_capture_shape(scope)
             _walk(scope)
         return
     if column == "field_evidence_json":
@@ -812,13 +836,22 @@ def _check_schema(table, column, value, data):
             for name in ("parser_module", "parser_version"):
                 _identity(name, evidence[name])
             scope = evidence["acquisition_scope"]
-            _acquisition_shape(scope, data.get("service_instance_uuidv4"))
-            if table != "issue_resources" and any(
-                scope.get(name) != data.get(name)
-                for name in (
-                    "repository_uuidv4",
-                    "repository_binding_id",
-                    "change_request_id",
+            _acquisition_shape(
+                scope,
+                data.get("service_instance_uuidv4")
+                if check_owner
+                else scope.get("service_instance_uuidv4"),
+            )
+            if (
+                check_owner
+                and table != "issue_resources"
+                and any(
+                    scope.get(name) != data.get(name)
+                    for name in (
+                        "repository_uuidv4",
+                        "repository_binding_id",
+                        "change_request_id",
+                    )
                 )
             ):
                 raise JsonContractError("Field capture differs from typed owner")
@@ -975,6 +1008,45 @@ def validate_record(db, table, data, *, allow_missing=False):
             is None
         ):
             missing.append(dependency)
+    if table == "source_inventory_assessments":
+        owner = _row(db, "sources", ("source_id",), (data["source_id"],))
+        scope = _load(data["scope_json"], JsonSchema("authored"), "Source scope")
+        if (
+            owner is None
+            or scope.get("source_registration_uuidv4")
+            != owner["source_registration_uuidv4"]
+            or (
+                owner["service_instance_uuidv4"] is not None
+                and scope.get("service_instance_uuidv4")
+                != owner["service_instance_uuidv4"]
+            )
+        ):
+            raise JsonContractError(
+                "Source inventory scope differs from registered Source"
+            )
+        if data["state"] == "complete":
+            if data["terminal"] != 1:
+                raise JsonContractError(
+                    "Complete inventory requires observed termination"
+                )
+        members = _load(
+            data["members_json"],
+            JsonSchema("inventory-members", "array"),
+            "Source members",
+        )
+        for member in members:
+            if (
+                _row(
+                    db,
+                    "source_repositories",
+                    ("source_id", "repository_uuidv4"),
+                    (data["source_id"], member),
+                )
+                is None
+            ):
+                raise JsonContractError(
+                    "Inventory member lacks its known positive Source pair"
+                )
     if (
         table == "current_collection_pages"
         and "fetch_collection_id" in data
@@ -1124,6 +1196,26 @@ def guard_sql():
                     _METADATA_SCHEMAS[table, column], doc, f"json_type({doc})"
                 )
             )
+        if (table, column) in _EVIDENCE_SCHEMAS:
+            conditions.append(
+                _metadata_conditions(
+                    _EVIDENCE_SCHEMAS[table, column], doc, f"json_type({doc})"
+                )
+            )
+        if table == "exchange_staging" and column == "record_json":
+            conditions.extend(_staging_conditions(doc))
+        if (table, column) in _SCOPE_COLUMNS:
+            conditions.extend(_sql_scope_conditions(doc))
+        if (table, column) == ("source_inventory_assessments", "scope_json"):
+            conditions += [
+                f"NOT EXISTS(SELECT 1 FROM sources s WHERE s.source_id=NEW.source_id AND s.source_registration_uuidv4=json_extract({doc},'$.source_registration_uuidv4') AND (s.service_instance_uuidv4 IS NULL OR s.service_instance_uuidv4=json_extract({doc},'$.service_instance_uuidv4')))",
+                "(NEW.state='complete' AND NEW.terminal<>1)",
+            ]
+        if schema.category == "inventory-members":
+            conditions += [
+                f"EXISTS(SELECT 1 FROM json_each({doc}) m WHERE m.type<>'text' OR NOT {_sql_uuid('m.value')} OR NOT EXISTS(SELECT 1 FROM source_repositories r WHERE r.source_id=NEW.source_id AND r.repository_uuidv4=m.value))",
+                f"EXISTS(SELECT 1 FROM json_each({doc}) m GROUP BY m.value HAVING count(*)>1)",
+            ]
         if schema.category == "current-acquisition":
             conditions += _sql_capture_conditions(doc, "NEW.service_instance_uuidv4")
             conditions.append(
@@ -1143,7 +1235,7 @@ def guard_sql():
                 f"EXISTS(SELECT 1 FROM json_each({doc}) e GROUP BY e.key HAVING count(*)>1)"
             ]
             conditions += [
-                f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE CASE WHEN NOT json_valid(e.key) THEN 1 WHEN json_type(e.key)<>'array' THEN 1 ELSE (json_array_length(e.key)=0 OR json(e.key)<>e.key OR EXISTS(SELECT 1 FROM json_each(e.key) p WHERE p.type<>'text') OR json_extract(e.key,'$[0]') NOT IN ({fields}) OR (json_array_length(e.key)>1 AND json_extract(e.key,'$[0]')<>'metadata')) END)",
+                f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE CASE WHEN NOT json_valid(e.key) THEN 1 WHEN json_type(e.key)<>'array' THEN 1 ELSE (json_array_length(e.key)=0 OR (SELECT json_group_array(p.value) FROM json_each(e.key) p)<>e.key OR EXISTS(SELECT 1 FROM json_each(e.key) p WHERE p.type<>'text') OR json_extract(e.key,'$[0]') NOT IN ({fields}) OR (json_array_length(e.key)>1 AND json_extract(e.key,'$[0]')<>'metadata')) END)",
                 f"EXISTS(WITH RECURSIVE paths(path,value,type) AS (SELECT json_array('metadata'),NEW.metadata,'object' UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type FROM paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{{}}' END) j WHERE p.type='object') SELECT 1 FROM json_each({doc}) e WHERE json_extract(e.key,'$[0]')='metadata' AND NOT EXISTS(SELECT 1 FROM paths p WHERE p.path=e.key))",
                 f"EXISTS(SELECT 1 FROM json_each({doc}) e JOIN json_each(e.key) depth WHERE json_extract(e.key,'$[0]')='metadata' AND CAST(depth.key AS INTEGER)>0 AND NOT EXISTS(SELECT 1 FROM json_each({doc}) a WHERE a.key=(SELECT json_group_array(p.value) FROM json_each(e.key) p WHERE CAST(p.key AS INTEGER)<CAST(depth.key AS INTEGER))))",
             ]
@@ -1281,6 +1373,198 @@ def guard_sql():
 _TEXT = {"string"}
 _NUMBER = {"integer"}
 _FLAG = {"boolean"}
+_MISSING = [{"kind": _TEXT, "reason": _TEXT, "role": _TEXT, "roles": [_TEXT]}]
+_EVIDENCE_SCHEMAS = {
+    ("coverage_claims", "details_json"): {
+        "fetch_collection_ids": [_TEXT],
+        "completion_marker_uuidv4s": [_TEXT],
+        "code_assessment_ids": [_TEXT],
+        "git_acquisition_id": _TEXT,
+        "snapshot_id": _TEXT,
+        "reason": _TEXT,
+        "missing": _MISSING,
+    },
+}
+
+# Captures describe a specific request/visibility/parent/target question. Every
+# object slot has an interpreted shape; none is an extension/provider envelope.
+_SCOPE_CONTEXT = {
+    **{
+        name: _TEXT
+        for name in (
+            "provider_repository_id",
+            "provider_issue_id",
+            "owner",
+            "name",
+            "kind",
+            "state",
+            "sort",
+            "direction",
+            "incremental_endpoint",
+            "query_kind",
+            "provider_resource_id",
+            "parent_fetch_collection_id",
+            "completion_marker_uuidv4",
+            "object_format",
+            "head_oid",
+            "base_oid",
+        )
+    },
+    **{
+        name: _NUMBER
+        for name in (
+            "rest_page_size",
+            "graphql_page_size",
+            "number",
+            "provider_issue_number",
+            "reported_count",
+            "parent_observed_at_us",
+        )
+    },
+    "permissions": [_TEXT],
+    "head": {"sha": _TEXT},
+    "base": {"sha": _TEXT},
+}
+_CAPTURE_SCOPE = {
+    **{
+        name: _TEXT
+        for name in (
+            "repository_uuidv4",
+            "repository_binding_id",
+            "service_instance_uuidv4",
+            "source_registration_uuidv4",
+            "change_request_id",
+            "endpoint",
+            "principal_ref",
+            "api_version",
+            "preservation_profile",
+            "parser_module",
+            "parser_version",
+            "owner",
+            "visibility",
+            "query_kind",
+            "kind",
+        )
+    },
+    "observed_permissions": [_TEXT],
+    "selected_repositories": [_TEXT],
+    "request_context": _SCOPE_CONTEXT,
+}
+_SCOPE_COLUMNS = {
+    ("fetch_collections", "scope_json"),
+    ("source_repositories", "scope_json"),
+    ("source_inventory_assessments", "scope_json"),
+}
+_SCOPE_ENUMS = {
+    "$.kind": {"manual_git"},
+    "$.visibility": {"all", "public", "private", "internal"},
+    "$.query_kind": {
+        "owner-repositories",
+        "selected-repositories",
+        "organization-repositories",
+        "verified-repository-redirect",
+    },
+    "$.request_context.query_kind": {"review-thread-root"},
+    "$.request_context.object_format": {"sha1", "sha256"},
+    "$.request_context.state": {"all", "open", "closed"},
+    "$.request_context.sort": {"updated", "created"},
+    "$.request_context.direction": {"asc", "desc"},
+}
+
+
+def validate_capture_shape(scope):
+    if not isinstance(scope, dict):
+        raise JsonContractError("Capture scope requires a modeled object")
+    _check_metadata(_CAPTURE_SCOPE, scope)
+    if "request_context" in scope and not isinstance(scope["request_context"], dict):
+        raise JsonContractError("Request context requires a modeled object")
+    _walk(scope)
+
+    def visit(value):
+        if isinstance(value, dict):
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+        elif isinstance(value, str) and (not value or "\0" in value):
+            raise JsonContractError(
+                "Capture text requires a nonempty interpreted value"
+            )
+        elif type(value) is int:
+            validate_epoch_us(value)
+
+    visit(scope)
+    for path, allowed in _SCOPE_ENUMS.items():
+        value = scope
+        for key in path[2:].split("."):
+            value = value.get(key) if isinstance(value, dict) else None
+        if value is not None and value not in allowed:
+            raise JsonContractError("Unsupported capture query context")
+    context = scope.get("request_context", {})
+    for key in (
+        "rest_page_size",
+        "graphql_page_size",
+        "number",
+        "provider_issue_number",
+    ):
+        if context.get(key) is not None and context[key] <= 0:
+            raise JsonContractError("Capture count requires a positive integer")
+    if context.get("reported_count") is not None and context["reported_count"] < 0:
+        raise JsonContractError("Reported count cannot be negative")
+    for key in ("provider_repository_id", "provider_issue_id"):
+        if context.get(key) is not None and not (
+            re.fullmatch(r"[0-9]+", context[key]) and context[key].strip("0")
+        ):
+            raise JsonContractError(
+                "Capture provider identity requires exact positive decimal text"
+            )
+    width = {"sha1": 40, "sha256": 64}.get(context.get("object_format"))
+    for oid in [
+        context.get("head_oid"),
+        context.get("base_oid"),
+        *[(context.get(role) or {}).get("sha") for role in ("head", "base")],
+    ]:
+        if oid is not None and (
+            len(oid) not in ({width} if width else {40, 64})
+            or re.fullmatch(r"[0-9a-f]+", oid) is None
+        ):
+            raise JsonContractError("Capture target requires a canonical Git OID")
+
+
+def _sql_scope_conditions(doc):
+    conditions = [
+        _metadata_conditions(_CAPTURE_SCOPE, doc, f"json_type({doc})"),
+        f"(json_type({doc},'$.request_context') IS NOT NULL AND json_type({doc},'$.request_context')<>'object')",
+        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE (j.type='text' AND (length(j.value)=0 OR instr(j.value,char(0))>0)) OR (j.type='integer' AND typeof(j.value)<>'integer'))",
+    ]
+    for path, values in _SCOPE_ENUMS.items():
+        allowed = ",".join("'" + value + "'" for value in sorted(values))
+        conditions.append(
+            f"(json_type({doc},'{path}') NOT IN ('null') AND json_extract({doc},'{path}') NOT IN ({allowed}))"
+        )
+    for key in (
+        "rest_page_size",
+        "graphql_page_size",
+        "number",
+        "provider_issue_number",
+    ):
+        conditions.append(f"json_extract({doc},'$.request_context.{key}')<=0")
+    conditions.append(f"json_extract({doc},'$.request_context.reported_count')<0")
+    for key in ("provider_repository_id", "provider_issue_id"):
+        value = f"json_extract({doc},'$.request_context.{key}')"
+        conditions.append(
+            f"(json_type({doc},'$.request_context.{key}')='text' AND ({value} GLOB '*[^0-9]*' OR length(ltrim({value},'0'))=0))"
+        )
+    for key in ("head_oid", "base_oid", "head.sha", "base.sha"):
+        value = f"json_extract({doc},'$.request_context.{key}')"
+        expected = f"CASE json_extract({doc},'$.request_context.object_format') WHEN 'sha1' THEN 40 WHEN 'sha256' THEN 64 ELSE length({value}) END"
+        conditions.append(
+            f"(json_type({doc},'$.request_context.{key}')='text' AND (length({value}) NOT IN (40,64) OR NOT {_sql_hex(value, expected)}))"
+        )
+    return conditions
+
+
 _ACTOR = {"id": _NUMBER, "login": _TEXT, "type": _TEXT, "html_url": _TEXT}
 _LABEL = {
     "id": _NUMBER,
@@ -1332,6 +1616,7 @@ _SHARED_METADATA = {
 }
 _PR_METADATA = {
     **_SHARED_METADATA,
+    "node_id": _TEXT,
     **{
         name: _TEXT
         for name in ("author_association", "active_lock_reason", "mergeable_state")
@@ -1489,6 +1774,31 @@ _CODE_COMMIT_METADATA = {
     "parents": [{"sha": _TEXT}],
 }
 _METADATA_SCHEMAS = {
+    ("issue_resources", "metadata"): {
+        **_SHARED_METADATA,
+        **{
+            name: _TEXT
+            for name in (
+                "state_reason",
+                "created_at",
+                "closed_at",
+                "active_lock_reason",
+            )
+        },
+        "locked": _FLAG,
+        "comments": _NUMBER,
+    },
+    ("review_resources", "metadata"): {
+        "node_id": _TEXT,
+        "_links": {name: {"href": _TEXT} for name in ("self", "html", "pull_request")},
+        **{
+            name: _TEXT for name in ("side", "start_side", "subject_type", "created_at")
+        },
+        **{
+            name: _NUMBER
+            for name in ("line", "original_line", "start_line", "original_start_line")
+        },
+    },
     ("change_request_state", "metadata"): _PR_METADATA,
     ("document_state", "metadata"): {
         **_SHARED_METADATA,
@@ -1600,6 +1910,15 @@ def _special_conditions(table, column, doc):
             + ") END)"
         )
     if (table, column) == ("code_assessments", "details_json"):
+        conditions += [
+            f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE e.key NOT IN ('race','code_inputs_complete','missing','expected_roles','api_head_base_stable','missing_roles','provider_limits','merge'))",
+            f"(json_type({doc},'$.race') IS NOT NULL AND json_type({doc},'$.race') NOT IN ('true','false'))",
+            _metadata_conditions(
+                _MISSING,
+                f"json_extract({doc},'$.missing')",
+                f"json_type({doc},'$.missing')",
+            ),
+        ]
         width = "(CASE NEW.object_format WHEN 'sha1' THEN 40 WHEN 'sha256' THEN 64 ELSE -1 END)"
         for field in ("api_head_base_stable", "code_inputs_complete"):
             conditions.append(
@@ -1634,6 +1953,7 @@ def _source_evidence_conditions(doc):
         for key in sorted(_CURRENT_FORBIDDEN_REFERENCE_KEYS | LOCAL_REFERENCE_KEYS)
     )
     invalid = [
+        *_sql_scope_conditions("json_extract(e.value,'$.acquisition_scope')"),
         f"(SELECT count(*) FROM json_each(e.value))<>{len(_EVIDENCE_KEYS)}",
         f"EXISTS(SELECT 1 FROM json_each(e.value) p WHERE p.key NOT IN ({keys}))",
         "coalesce(json_type(e.value,'$.provider_updated_at_us'),'')<>'null' OR coalesce(json_type(e.value,'$.provider_clock_scope'),'')<>'null'",
@@ -1648,10 +1968,269 @@ def _source_evidence_conditions(doc):
         f"EXISTS(SELECT 1 FROM json_tree(e.value,'$.acquisition_scope') j WHERE j.key IN ({forbidden}))",
     ]
     return [
-        f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE CASE WHEN NOT json_valid(e.key) THEN 1 WHEN json_type(e.key)<>'array' THEN 1 ELSE (json_array_length(e.key)=0 OR json(e.key)<>e.key OR json_extract(e.key,'$[0]') NOT IN ('name','metadata') OR (json_array_length(e.key)>1 AND json_extract(e.key,'$[0]')<>'metadata') OR EXISTS(SELECT 1 FROM json_each(e.key) p WHERE p.type<>'text')) END)",
+        f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE CASE WHEN NOT json_valid(e.key) THEN 1 WHEN json_type(e.key)<>'array' THEN 1 ELSE (json_array_length(e.key)=0 OR (SELECT json_group_array(p.value) FROM json_each(e.key) p)<>e.key OR json_extract(e.key,'$[0]') NOT IN ('name','metadata') OR (json_array_length(e.key)>1 AND json_extract(e.key,'$[0]')<>'metadata') OR EXISTS(SELECT 1 FROM json_each(e.key) p WHERE p.type<>'text')) END)",
         f"EXISTS(SELECT 1 FROM json_each({doc}) e WHERE CASE WHEN e.type<>'object' THEN 1 ELSE ("
         + " OR ".join(invalid)
         + ") END)",
         f"EXISTS(WITH RECURSIVE paths(path,value,type) AS (SELECT json_array('metadata'),NEW.metadata_json,'object' UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type FROM paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{{}}' END) j WHERE p.type='object') SELECT 1 FROM json_each({doc}) e WHERE json_extract(e.key,'$[0]')='metadata' AND NOT EXISTS(SELECT 1 FROM paths p WHERE p.path=e.key))",
         f"EXISTS(SELECT 1 FROM json_each({doc}) e JOIN json_each(e.key) depth WHERE json_extract(e.key,'$[0]')='metadata' AND CAST(depth.key AS INTEGER)>0 AND NOT EXISTS(SELECT 1 FROM json_each({doc}) a WHERE a.key=(SELECT json_group_array(p.value) FROM json_each(e.key) p WHERE CAST(p.key AS INTEGER)<CAST(depth.key AS INTEGER))))",
+    ]
+
+
+@lru_cache(maxsize=1)
+def _wire_graph():
+    """Read the composed domain table contract without requiring any parents."""
+    import sqlite3
+
+    from .exchange import Graph
+    from .schema import schema_sql
+
+    db = sqlite3.connect(":memory:")
+    db.executescript(schema_sql())
+    return Graph(db, persist_identities=False)
+
+
+def _candidate_spec(table):
+    from .current_api import _CONTEXT, _FIELDS
+    from .current_resources import _COMMON, _ISSUE, _REVIEW
+
+    if table == "issue_resources":
+        fields = _COMMON | _ISSUE
+    elif table == "review_resources":
+        fields = (_COMMON | _REVIEW) - {"title"}
+    elif table == "source_repositories":
+        fields = {
+            "kind",
+            "source_id",
+            "repository_uuidv4",
+            "first_seen_us",
+            "last_seen_us",
+            "name",
+            "metadata",
+            "acquisition_scope",
+            "field_evidence",
+            "parser_module",
+            "parser_version",
+            "observed_at_us",
+            "parsed_at_us",
+            "provider_updated_at_us",
+            "provider_clock_scope",
+        }
+    else:
+        fields = _CONTEXT | _FIELDS[table]
+    spec = {name: _TEXT for name in fields - {"field_evidence"}}
+    for name in fields:
+        if name.endswith("_at_us") or name in {
+            "first_seen_us",
+            "last_seen_us",
+            "provider_issue_number",
+            "submitted_at_us",
+            "original_position",
+            "current_position",
+            "line",
+            "start_line",
+            "original_line",
+            "original_start_line",
+        }:
+            spec[name] = _NUMBER
+        elif name in {"deleted", "draft", "merged", "locked", "resolved", "outdated"}:
+            spec[name] = {"boolean", "integer"}
+    spec["metadata"] = _METADATA_SCHEMAS[
+        table, "metadata_json" if table == "source_repositories" else "metadata"
+    ]
+    spec["acquisition_scope"] = _CAPTURE_SCOPE
+    return spec
+
+
+_STAGED_KINDS = {
+    "issue_resources": {"issue", "issue-comment"},
+    "review_resources": {"review", "review-comment"},
+    "change_request_state": {"change-request"},
+    "document_state": {"pr-title", "pr-body", "issue-comment"},
+    "review_thread_state": {"review-thread"},
+    "source_repositories": {"source-repository"},
+}
+
+
+def _validate_staging_record(value, data):
+    table = data.get("table_name")
+    if data.get("reason", "").startswith("current_state:"):
+        if table not in _STAGED_KINDS or not isinstance(value, dict):
+            raise JsonContractError("Invalid staged current resource family")
+        if value.get("kind") not in _STAGED_KINDS[table]:
+            raise JsonContractError("Staged current kind differs from table")
+        _check_metadata(
+            _candidate_spec(table),
+            {k: v for k, v in value.items() if k != "field_evidence"},
+        )
+        for field in {"deleted", "draft", "merged", "locked", "resolved", "outdated"}:
+            if value.get(field) is not None and value[field] not in (False, True):
+                raise JsonContractError("Staged current flag requires boolean or 0/1")
+        if "acquisition_scope" in value:
+            validate_capture_shape(value["acquisition_scope"])
+        evidence = value.get("field_evidence", {})
+        if not isinstance(evidence, dict):
+            raise JsonContractError("Staged field evidence requires object")
+        for key, origin in evidence.items():
+            try:
+                path = json.loads(key)
+            except (ValueError, TypeError):
+                raise JsonContractError("Invalid staged field path") from None
+            if (
+                not isinstance(path, list)
+                or not path
+                or any(not isinstance(part, str) for part in path)
+                or path[0] not in _allowed_fields(table)
+                or (len(path) > 1 and path[0] != "metadata")
+                or json.dumps(path, ensure_ascii=False, separators=(",", ":")) != key
+            ):
+                raise JsonContractError("Invalid staged field path")
+            _check_metadata(_ORIGIN_SPEC, origin)
+            if set(origin) != _EVIDENCE_KEYS:
+                raise JsonContractError("Staged field evidence has incomplete origin")
+            validate_capture_shape(origin["acquisition_scope"])
+        return
+    if not isinstance(value, dict) or value.get("table") != table:
+        raise JsonContractError("Staged envelope differs from typed table")
+    try:
+        _wire_graph().validate_record(value)
+    except CatalogError as cause:
+        raise JsonContractError("Invalid staged domain envelope") from cause
+
+
+_ORIGIN_SPEC = {
+    "provider_updated_at_us": _NUMBER,
+    "provider_clock_scope": _TEXT,
+    "observed_at_us": _NUMBER,
+    "parsed_at_us": _NUMBER,
+    "parser_module": _TEXT,
+    "parser_version": _TEXT,
+    "acquisition_scope": _CAPTURE_SCOPE,
+}
+
+
+def _staged_evidence_conditions(doc, fields):
+    names = ",".join("'" + name + "'" for name in sorted(fields))
+    origin = _metadata_conditions(_ORIGIN_SPEC, "se.value", "se.type")
+    scope = "json_extract(se.value,'$.acquisition_scope')"
+    invalid = [
+        origin,
+        f"(SELECT count(*) FROM json_each(se.value))<>{len(_EVIDENCE_KEYS)}",
+        *_sql_scope_conditions(scope),
+    ]
+    return [
+        f"(json_type({doc}) IS NOT NULL AND json_type({doc})<>'object')",
+        f"EXISTS(SELECT 1 FROM json_each({doc}) se WHERE CASE WHEN NOT json_valid(se.key) THEN 1 WHEN json_type(se.key)<>'array' THEN 1 ELSE (json_array_length(se.key)=0 OR (SELECT json_group_array(p.value) FROM json_each(se.key) p)<>se.key OR EXISTS(SELECT 1 FROM json_each(se.key) p WHERE p.type<>'text') OR json_extract(se.key,'$[0]') NOT IN ({names}) OR (json_array_length(se.key)>1 AND json_extract(se.key,'$[0]')<>'metadata')) END)",
+        f"EXISTS(SELECT 1 FROM json_each({doc}) se WHERE CASE WHEN se.type<>'object' THEN 1 ELSE ("
+        + " OR ".join(invalid)
+        + ") END)",
+    ]
+
+
+def _staged_json_conditions(table, column, doc):
+    schema = JSON_REGISTRY[table, column]
+    conditions = [
+        f"json_type({doc})<>'{schema.shape}'",
+        f"EXISTS(SELECT 1 FROM json_tree({doc}) j WHERE typeof(j.key)='text' GROUP BY j.parent,j.key HAVING count(*)>1)",
+    ]
+    if (table, column) in _METADATA_SCHEMAS:
+        conditions.append(
+            _metadata_conditions(
+                _METADATA_SCHEMAS[table, column], doc, f"json_type({doc})"
+            )
+        )
+    if (table, column) in _EVIDENCE_SCHEMAS:
+        conditions.append(
+            _metadata_conditions(
+                _EVIDENCE_SCHEMAS[table, column], doc, f"json_type({doc})"
+            )
+        )
+    if (table, column) in _SCOPE_COLUMNS or schema.category == "current-acquisition":
+        conditions.extend(_sql_scope_conditions(doc))
+    if schema.category == "current-field-evidence":
+        conditions.extend(_staged_evidence_conditions(doc, _allowed_fields(table)))
+    if table == "code_assessments" and column == "details_json":
+        conditions += [
+            condition.replace(
+                "NEW.object_format",
+                "json_extract(NEW.record_json,'$.values.object_format')",
+            )
+            for condition in _special_conditions(table, column, doc)
+        ]
+    return conditions
+
+
+def _staging_conditions(doc):
+    graph = _wire_graph()
+    names = ",".join("'" + name + "'" for name in sorted(graph.columns))
+    current_cases = []
+    for table, kinds in sorted(_STAGED_KINDS.items()):
+        candidate = _candidate_spec(table)
+        body = f"json_remove({doc},'$.field_evidence')"
+        invalid = [
+            _metadata_conditions(candidate, body, f"json_type({body})"),
+            f"coalesce(json_extract({doc},'$.kind'),'') NOT IN ("
+            + ",".join("'" + kind + "'" for kind in sorted(kinds))
+            + ")",
+            *_sql_scope_conditions(f"json_extract({doc},'$.acquisition_scope')"),
+            *_staged_evidence_conditions(
+                f"json_extract({doc},'$.field_evidence')", _allowed_fields(table)
+            ),
+        ]
+        invalid += [
+            f"(json_type({doc},'$.{field}')='integer' AND json_extract({doc},'$.{field}') NOT IN (0,1))"
+            for field in sorted(
+                {"deleted", "draft", "merged", "locked", "resolved", "outdated"}
+            )
+            if field in candidate
+        ]
+        current_cases.append("WHEN '" + table + "' THEN (" + " OR ".join(invalid) + ")")
+    wire_cases = []
+    for table in sorted(graph.columns):
+        columns = graph.expected_columns(table)
+        fields = ",".join("'" + name + "'" for name in sorted(columns))
+        values = f"json_extract({doc},'$.values')"
+        invalid = [
+            f"(SELECT count(*) FROM json_each({values}))<>{len(columns)}",
+            f"EXISTS(SELECT 1 FROM json_each({values}) sv WHERE sv.key NOT IN ({fields}))",
+        ]
+        object_cases = []
+        for column in sorted(columns):
+            allowed = []
+            for parent, child_cols, parent_cols in graph.foreign[table]:
+                if column in child_cols:
+                    parent_col = parent_cols[child_cols.index(column)]
+                    allowed.append(
+                        f"((SELECT count(*) FROM json_each(sv.value))=2 AND json_type(sv.value,'$.\"$ref\"')='text' AND substr(json_extract(sv.value,'$.\"$ref\"'),1,{len(parent) + 1})='{parent}:' AND json_extract(sv.value,'$.column')='{parent_col}')"
+                    )
+            if graph.columns[table][column] == "BLOB":
+                allowed += [
+                    "((SELECT count(*) FROM json_each(sv.value))=1 AND json_type(sv.value,'$.\"$bytes\"')='text')",
+                    "((SELECT count(*) FROM json_each(sv.value))=1 AND json_type(sv.value,'$.\"$sha256\"')='text' AND length(json_extract(sv.value,'$.\"$sha256\"'))=64 AND json_extract(sv.value,'$.\"$sha256\"') NOT GLOB '*[^0-9a-f]*')",
+                ]
+            object_cases.append(
+                "WHEN '" + column + "' THEN NOT (" + " OR ".join(allowed or ["0"]) + ")"
+            )
+            if (table, column) in JSON_REGISTRY:
+                inner = f"json_extract({doc},'$.values.{column}')"
+                check = _staged_json_conditions(table, column, inner)
+                invalid.append(
+                    f"(json_type({doc},'$.values.{column}')<>'null' AND CASE WHEN json_type({doc},'$.values.{column}')<>'text' OR NOT json_valid({inner}) THEN 1 ELSE ("
+                    + " OR ".join(check)
+                    + ") END)"
+                )
+        invalid.append(
+            f"EXISTS(SELECT 1 FROM json_each({values}) sv WHERE sv.type='array' OR (sv.type='object' AND CASE sv.key "
+            + " ".join(object_cases)
+            + " ELSE 1 END))"
+        )
+        wire_cases.append("WHEN '" + table + "' THEN (" + " OR ".join(invalid) + ")")
+    return [
+        f"NEW.table_name NOT IN ({names})",
+        "CASE WHEN NEW.reason LIKE 'current_state:%' THEN CASE NEW.table_name "
+        + " ".join(current_cases)
+        + " ELSE 1 END ELSE ("
+        + f"json_extract({doc},'$.table') IS NOT NEW.table_name OR coalesce(json_type({doc},'$.key'),'')<>'text' OR substr(json_extract({doc},'$.key'),1,length(NEW.table_name)+1)<>NEW.table_name||':' OR coalesce(json_type({doc},'$.values'),'')<>'object' OR EXISTS(SELECT 1 FROM json_each({doc}) sk WHERE sk.key NOT IN ('key','table','values','requires')) OR (SELECT count(*) FROM json_each({doc})) NOT IN (3,4) OR (json_type({doc},'$.requires') IS NOT NULL AND (NEW.table_name NOT IN ('completion_markers','coverage_claims') OR json_type({doc},'$.requires')<>'array' OR EXISTS(SELECT 1 FROM json_each({doc},'$.requires') r WHERE r.type<>'text') OR EXISTS(SELECT 1 FROM json_each({doc},'$.requires') r GROUP BY r.value HAVING count(*)>1))) OR CASE NEW.table_name "
+        + " ".join(wire_cases)
+        + " ELSE 1 END) END",
     ]

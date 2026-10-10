@@ -396,9 +396,7 @@ def test_git_ref_mismatch_cannot_publish_complete_code(
         )
         is previously_saved
     )
-    code = store.one(
-        "SELECT * FROM code_assessments WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_assessment_id DESC LIMIT 1"
-    )
+    code = current_code(store)
     assert code["state"] == "partial"
     assert code["head_oid"].hex() == new_head
     assert (
@@ -1054,7 +1052,11 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                 "pageInfo": {"hasNextPage": False, "endCursor": None},
             }
         return {
-            "data": {"repository": {"pullRequest": {"reviewThreads": connection}}}
+            "data": {
+                "repository": {
+                    "pullRequest": {"number": 41, "reviewThreads": connection}
+                }
+            }
         }, {}
 
     api.route = route
@@ -1096,7 +1098,7 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                 "threads",
                 job,
                 collector.http.graphql,
-                {"query": "unrelated-root"},
+                {"query_kind": "review-thread-root", "graphql_page_size": 1},
             )
             other_child = collector.facts.begin(
                 repo,
@@ -1105,8 +1107,8 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                 job,
                 collector.http.graphql,
                 {
-                    "thread": "unrelated-child",
-                    "query": "child",
+                    "provider_resource_id": "unrelated-child",
+                    "parent_observed_at_us": stamp,
                     "parent_fetch_collection_id": other_root["fetch_collection_id"],
                 },
             )
@@ -1135,7 +1137,9 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
         claim = store.one(
             "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
         )
-        assert tuple(claim) == ("complete", 300)
+        # The interrupted capture and resumed completion both observed 300.
+        # Equal-clock differing completeness remains an explicit conflict.
+        assert tuple(claim) == ("conflict", 300)
         assert (
             store.one(
                 "SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=?",

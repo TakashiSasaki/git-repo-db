@@ -62,7 +62,7 @@ def candidate(expected, kind="change-request", body=None, *, updated=1):
             "source_registration_uuidv4": expected["source"],
             "change_request_id": expected["cr"],
             "endpoint": "synthetic",
-            "context": {},
+            "request_context": {},
         },
     }
     if kind == "change-request":

@@ -7,8 +7,12 @@ import sqlite3
 import pytest
 
 from repo_catalog.adapters.sqlite.current_api import CurrentApiState
-from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
+from repo_catalog.adapters.sqlite.current_collections import (
+    TREE_PROOF_KIND,
+    CurrentCollectionProof,
+)
 from repo_catalog.adapters.sqlite.exchange import Graph
+from repo_catalog.domain.current_state import fingerprint_candidate
 from tests.integration.test_catalog3_exchange import (
     candidate,
     catalog,
@@ -45,13 +49,13 @@ def new_collection(db, expected, kind="comments", context=None):
     return collection
 
 
-def page(db, collection, ordinal=0, cursor=None, timestamp=100):
+def page(db, collection, ordinal=0, cursor=None, timestamp=100, *, members=None):
     CurrentCollectionProof(db).page(
         collection,
         ordinal,
         timestamp,
         cursor,
-        [],
+        members or [],
         parser_module="synthetic.current",
         parser_version="1",
     )
@@ -127,7 +131,29 @@ def test_empty_terminal_enumeration_is_valid_without_raw_api_bytes(kind):
         expected = fixture(db)
         collection = new_collection(db, expected, kind)
         page(db, collection)
-        assert CurrentCollectionProof(db).is_complete_marker(marker(db, collection))
+        proof = CurrentCollectionProof(db)
+        value = marker(db, collection)
+        if kind == "threads":
+            # A root thread enumeration requires tree evidence even when the
+            # actual terminal roster and required-child set are both empty.
+            assert not proof.is_complete_marker(value)
+            value = marker(
+                db,
+                collection,
+                evidence=json.dumps(
+                    {
+                        **proof.evidence(collection),
+                        "kind": TREE_PROOF_KIND,
+                        "fetch_collection_ids": [],
+                    }
+                ),
+            )
+            assert db.execute(
+                "SELECT count(*) FROM thread_collection_requirements "
+                "WHERE fetch_collection_id=?",
+                (collection,),
+            ).fetchone() == (0,)
+        assert proof.is_complete_marker(value)
         assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (0,)
     finally:
         db.close()
@@ -153,7 +179,24 @@ def thread_requirement(db, expected, *, timestamp=100):
         "INSERT INTO thread_collection_requirements(fetch_collection_id,provider_resource_id,child_fetch_collection_id,required_observed_at_us) VALUES(?,?,?,?)",
         (root, thread, child, timestamp),
     )
-    page(db, root, timestamp=timestamp)
+    observed_thread = {
+        "kind": "review-thread",
+        "change_request_id": expected["cr"],
+        "provider_resource_id": thread,
+    }
+    page(
+        db,
+        root,
+        timestamp=timestamp,
+        members=[
+            {
+                "family": "thread",
+                "change_request_id": expected["cr"],
+                "provider_resource_id": thread,
+                "state_digest": fingerprint_candidate(observed_thread),
+            }
+        ],
+    )
     return root, child
 
 
@@ -169,7 +212,7 @@ def test_normalized_thread_child_requires_its_own_terminal_evidence(child_receip
         proof = CurrentCollectionProof(db)
         evidence = {
             **proof.evidence(root),
-            "kind": "current-resource-tree-v1",
+            "kind": TREE_PROOF_KIND,
             "fetch_collection_ids": [child],
         }
         value = marker(

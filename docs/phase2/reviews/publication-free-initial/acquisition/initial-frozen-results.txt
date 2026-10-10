@@ -1,0 +1,88 @@
+FFFFFFF..................FFFF......                                      [100%]
+=================================== FAILURES ===================================
+_____________ test_capped_commits_still_collect_independent_files ______________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py:56: in test_capped_commits_still_collect_independent_files
+    assert any(path.endswith('/files') for path in seen), seen
+E   AssertionError: ['/repos/fixture/alpha/pulls/1/commits']
+E   assert False
+E    +  where False = any(<generator object test_capped_commits_still_collect_independent_files.<locals>.<genexpr> at 0x7f95b1e51b10>)
+_____________ test_partial_listing_ids_recoverable_for_assessment ______________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py:76: in test_partial_listing_ids_recoverable_for_assessment
+    assert assessment['commit_code_listing_id']==partial[0], dict(assessment)
+E   AssertionError: {'code_assessment_id': 'code:2c10c5b80c6e28ef46eac7149bb0a987bc90cbd48176d22a126b54c5bedc7b92', 'change_request_id': '...000-000000000301:41', 'repository_uuidv4': '00000000-0000-4000-8000-000000000301', 'commit_code_listing_id': None, ...}
+E   assert None == '1463efaa-4fa2-4944-b658-8a26d4494cc9'
+_______________ test_field_capture_records_observed_permissions ________________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py:84: in test_field_capture_records_observed_permissions
+    assert context['acquisition_scope'].get('observed_permissions') == collector.facts.permissions
+E   AssertionError: assert None == ['repo', 'read:org']
+E    +  where None = <built-in method get of dict object at 0x7f95b1bcfe80>('observed_permissions')
+E    +    where <built-in method get of dict object at 0x7f95b1bcfe80> = {'repository_uuidv4': '00000000-0000-4000-8000-000000000301', 'repository_binding_id': 'binding', 'service_instance_uuidv4': '00000000-0000-4000-8000-000000000101', 'endpoint': 'http://127.0.0.1:40159/repos/fixture/alpha/pulls/1', ...}.get
+E    +  and   ['repo', 'read:org'] = <repo_catalog.adapters.github.persistence.ApiFacts object at 0x7f95b1c01190>.permissions
+E    +    where <repo_catalog.adapters.github.persistence.ApiFacts object at 0x7f95b1c01190> = <repo_catalog.adapters.github.collector.GitHubCollector object at 0x7f95b1dcc800>.facts
+___________________ test_sparse_rest_detail_preserves_title ____________________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py:93: in test_sparse_rest_detail_preserves_title
+    collector.detail(repo, parent, job, api.url+'/repos/fixture/alpha/pulls/1')
+src/repo_catalog/adapters/github/collector.py:1005: in detail
+    _, members = self.ensure_pr(
+src/repo_catalog/adapters/github/collector.py:938: in ensure_pr
+    self.rest_item(value, "pr-detail")
+src/repo_catalog/adapters/github/collector.py:251: in rest_item
+    raise CatalogError("API_SCHEMA", "PR title missing or malformed")
+E   repo_catalog.domain.models.CatalogError: PR title missing or malformed
+_______ test_redirect_live_response_refreshes_fence_before_final_request _______
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py:113: in test_redirect_live_response_refreshes_fence_before_final_request
+    collector.detail(repo, parent, job, api.url+'/repos/fixture/alpha/pulls/1')
+src/repo_catalog/adapters/github/collector.py:1012: in detail
+    raise CatalogError(
+E   repo_catalog.domain.models.CatalogError: Detail contains unresolved current state
+___________________ test_graphql_foreign_root_id_is_rejected ___________________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py:123: in test_graphql_foreign_root_id_is_rejected
+    with pytest.raises(CatalogError) as failure:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CatalogError
+___________ test_older_code_assessment_cannot_replace_newer_complete ___________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py:147: in test_older_code_assessment_cannot_replace_newer_complete
+    assert tuple(latest) == ('complete',300), tuple(latest)
+E   AssertionError: ('partial', 175)
+E   assert ('partial', 175) == ('complete', 300)
+E     
+E     At index 0 diff: 'partial' != 'complete'
+E     Use -v to get more diff
+_________________ test_escaped_field_alias_is_rejected_by_sql __________________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py:223: in test_escaped_field_alias_is_rejected_by_sql
+    with pytest.raises(sqlite3.IntegrityError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE IntegrityError
+__________ test_code_check_304_cache_loss_fetches_real_representation __________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py:238: in test_code_check_304_cache_loss_fetches_real_representation
+    value=collector.code_check(repo,parent,job,api.url+'/pulls/1')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/github/collector.py:2549: in code_check
+    value = self.rest_json(response)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/github/collector.py:218: in rest_json
+    raise CatalogError("API_SCHEMA", "Malformed API JSON") from None
+E   repo_catalog.domain.models.CatalogError: Malformed API JSON
+__________ test_capture_cannot_hide_provider_response_replica[False] ___________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py:253: in test_capture_cannot_hide_provider_response_replica
+    with pytest.raises(CatalogError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CatalogError
+___________ test_capture_cannot_hide_provider_response_replica[True] ___________
+../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py:253: in test_capture_cannot_hide_provider_response_replica
+    with pytest.raises(CatalogError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CatalogError
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py::test_capped_commits_still_collect_independent_files
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py::test_partial_listing_ids_recoverable_for_assessment
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py::test_field_capture_records_observed_permissions
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py::test_sparse_rest_detail_preserves_title
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py::test_redirect_live_response_refreshes_fence_before_final_request
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py::test_graphql_foreign_root_id_is_rejected
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_acquisition.py::test_older_code_assessment_cannot_replace_newer_complete
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py::test_escaped_field_alias_is_rejected_by_sql
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py::test_code_check_304_cache_loss_fetches_real_representation
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py::test_capture_cannot_hide_provider_response_replica[False]
+FAILED ../../review-artifacts/acquisition/frozen-probes-v1/test_independent_invariants.py::test_capture_cannot_hide_provider_response_replica[True]
+11 failed, 24 passed in 55.32s

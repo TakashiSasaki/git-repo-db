@@ -98,7 +98,7 @@ def test_older_body_fills_newer_title_and_clock_does_not_roll_back(resources, re
         resources,
         title="older title",
         body="older observed body",
-        metadata={"nested": {"older": True}},
+        metadata={"milestone": {"title": "older"}},
         provider_updated_at_us=10,
         observed_at_us=11,
     )
@@ -106,7 +106,7 @@ def test_older_body_fills_newer_title_and_clock_does_not_roll_back(resources, re
         issue(
             resources,
             title="newer title",
-            metadata={"nested": {"newer": True}},
+            metadata={"milestone": {"state": "open"}},
             provider_updated_at_us=20,
             observed_at_us=21,
         ),
@@ -119,14 +119,14 @@ def test_older_body_fills_newer_title_and_clock_does_not_roll_back(resources, re
     assert row["title"] == "newer title"
     assert row["provider_updated_at_us"] == 20
     assert row["field_evidence"][path("body")]["provider_updated_at_us"] == 10
-    assert row["metadata"] == {"nested": {"older": True, "newer": True}}
+    assert row["metadata"] == {"milestone": {"title": "older", "state": "open"}}
 
 
 @pytest.mark.parametrize("reverse", [False, True])
 def test_same_clock_nested_contradictions_remain_hidden(resources, reverse):
     adapter = resources[0]
     states = [
-        issue(resources, metadata={"nested": {"value": value}})
+        issue(resources, metadata={"milestone": {"title": value}})
         for value in ("one", "two")
     ]
     if reverse:
@@ -142,24 +142,24 @@ def test_same_clock_nested_contradictions_remain_hidden(resources, reverse):
 def test_newer_scalar_resolves_tied_nested_object_alternatives(resources):
     adapter = resources[0]
     adapter.admit(
-        issue(resources, metadata={"nested": {"value": "one"}}), source="import"
+        issue(resources, metadata={"milestone": {"title": "one"}}), source="import"
     )
     assert (
         adapter.admit(
-            issue(resources, metadata={"nested": {"value": "two"}}), source="import"
+            issue(resources, metadata={"milestone": {"title": "two"}}), source="import"
         ).status
         == "conflict"
     )
     assert (
         adapter.admit(
-            issue(resources, metadata={"nested": None}, provider_updated_at_us=20),
+            issue(resources, metadata={"milestone": None}, provider_updated_at_us=20),
             source="import",
         ).status
         == "accepted"
     )
     row = current(adapter)
-    assert row["metadata"] == {"nested": None}
-    assert path("metadata", "nested", "value") not in row["field_evidence"]
+    assert row["metadata"] == {"milestone": None}
+    assert path("metadata", "milestone", "title") not in row["field_evidence"]
     assert (
         adapter.c.execute(
             "SELECT count(*) FROM current_resource_diagnostics"
@@ -556,22 +556,22 @@ def test_leaf_only_evidence_cannot_replace_a_newer_or_unordered_scalar(
     resources, clock
 ):
     adapter = resources[0]
-    initial = issue(
-        resources, metadata={"nested": "known scalar"}, provider_updated_at_us=30
-    )
+    initial = issue(resources, metadata={"milestone": None}, provider_updated_at_us=30)
     adapter.admit(initial, source="import")
     incoming = issue(
         resources,
-        metadata={"nested": {"child": "replacement"}},
+        metadata={"milestone": {"title": "replacement"}},
         provider_updated_at_us=clock,
     )
-    incoming["field_evidence"] = {path("metadata", "nested", "child"): proof(incoming)}
+    incoming["field_evidence"] = {
+        path("metadata", "milestone", "title"): proof(incoming)
+    }
     try:
         admitted = adapter.admit(incoming, source="import")
     except (CatalogError, JsonContractError):
         return
     assert admitted.status in {"conflict", "stale", "identical"}
-    assert current(adapter)["metadata"] == {"nested": "known scalar"}
+    assert current(adapter)["metadata"] == {"milestone": None}
 
 
 def test_graph_leaf_only_evidence_cannot_replace_newer_scalar(current_catalog):
@@ -580,7 +580,7 @@ def test_graph_leaf_only_evidence_cannot_replace_newer_scalar(current_catalog):
         "issue",
         "10",
         "body",
-        metadata={"nested": "known scalar"},
+        metadata={"milestone": None},
         provider_updated_at_us=30,
     )
     catalog.admit(initial)
@@ -595,17 +595,17 @@ def test_graph_leaf_only_evidence_cannot_replace_newer_scalar(current_catalog):
             for record in attack["records"]
             if record["table"] == "issue_resources"
         )
-        state["metadata"] = json.dumps({"nested": {"child": "replacement"}})
+        state["metadata"] = json.dumps({"milestone": {"title": "replacement"}})
         state["provider_updated_at_us"] = 20
         state["field_evidence_json"] = json.dumps(
             {
-                path("metadata", "nested", "child"): proof(
+                path("metadata", "milestone", "title"): proof(
                     initial, provider_updated_at_us=20
                 )
             }
         )
         receive(db, attack)
-        assert current(CurrentResources(db))["metadata"] == {"nested": "known scalar"}
+        assert current(CurrentResources(db))["metadata"] == {"milestone": None}
     finally:
         db.close()
 
@@ -659,9 +659,9 @@ def test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic(
 
 def test_sql_field_evidence_requires_known_metadata_object_ancestors(resources):
     adapter = resources[0]
-    candidate = issue(resources, metadata={"nested": {"child": "value"}})
+    candidate = issue(resources, metadata={"milestone": {"title": "value"}})
     adapter.admit(candidate, source="import")
-    incomplete = {path("metadata", "nested", "child"): proof(candidate)}
+    incomplete = {path("metadata", "milestone", "title"): proof(candidate)}
     with pytest.raises(sqlite3.IntegrityError):
         adapter.c.execute(
             "UPDATE issue_resources SET field_evidence_json=?",

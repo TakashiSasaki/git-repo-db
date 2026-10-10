@@ -111,13 +111,28 @@ class CurrentCollectionProof:
         except (ValueError, TypeError):
             return False
         collection = marker["fetch_collection_id"]
+        owner = self.db.execute(
+            "SELECT kind FROM fetch_collections WHERE fetch_collection_id=?",
+            (collection,),
+        ).fetchone()
+        if owner is None or (owner[0] == "threads") != (
+            evidence.get("kind") == TREE_PROOF_KIND
+        ):
+            return False
         expected = self.evidence(collection)
         if evidence.get("kind") == TREE_PROOF_KIND:
             requirements = self.db.execute(
-                "SELECT child_fetch_collection_id FROM thread_collection_requirements WHERE fetch_collection_id=? ORDER BY provider_resource_id",
+                "SELECT child_fetch_collection_id,provider_resource_id FROM thread_collection_requirements WHERE fetch_collection_id=? ORDER BY provider_resource_id",
                 (collection,),
             ).fetchall()
             children = [row[0] for row in requirements]
+            observed_threads = {
+                item["provider_resource_id"]
+                for item in self.members(collection)
+                if item["family"] == "thread"
+            }
+            if observed_threads != {row[1] for row in requirements}:
+                return False
             if expected is None or any(child is None for child in children):
                 return False
             for child in children:

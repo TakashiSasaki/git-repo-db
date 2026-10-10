@@ -36,7 +36,7 @@ def test_constraints_and_transaction_atomicity(state):
                 )
         with pytest.raises(sqlite3.OperationalError), s.transaction():
             s.execute("CREATE TABLE rolled_back(x TEXT) STRICT")
-            s.execute("UPDATE database_identity SET publication_seq=999")
+            s.execute("UPDATE database_identity SET local_revision=999")
             s.execute("THIS IS NOT SQL")
         assert s.one("SELECT name FROM sqlite_master WHERE name='rolled_back'") is None
         assert (
@@ -44,7 +44,7 @@ def test_constraints_and_transaction_atomicity(state):
         )
         assert s.revision() == original
     with Store(state, readonly=True) as s, pytest.raises(sqlite3.OperationalError):
-        s.publish()
+        s.advance_local_revision()
 
 
 def test_writer_and_capacity(state):
@@ -69,5 +69,5 @@ def test_full_rollback(state):
                     "INSERT INTO stored_bytes(sha256,body,byte_length) VALUES(?,?,?)",
                     (b"x" * 32, b"x" * 1048576, 1048576),
                 )
-                s.publish()
+                s.advance_local_revision()
         assert s.revision() == old and not s.connection.in_transaction

@@ -123,7 +123,12 @@ def test_current_json_triggers_have_no_legacy_store_dependencies(detached_catalo
         "SELECT name,sql FROM sqlite_schema WHERE type='trigger' "
         "AND (name LIKE 'json_issue_resources_%' OR name LIKE 'json_review_resources_%')"
     ).fetchall()
-    assert len(triggers) == 8
+    assert {trigger["name"] for trigger in triggers} == {
+        f"json_{table}_{column}_{operation}"
+        for table in ("issue_resources", "review_resources")
+        for column in ("metadata", "acquisition_scope_json", "field_evidence_json")
+        for operation in ("insert", "update")
+    }
     for trigger in triggers:
         for table in LEGACY_STORES:
             assert not re.search(r"\b" + table + r"\b", trigger["sql"]), (

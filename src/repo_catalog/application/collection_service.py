@@ -267,7 +267,13 @@ class CollectionService:
                     }
                 )
             except CatalogError as error:
-                acquisition_failed = True
+                skipped_before_acquisition = collector is None and error.code in (
+                    "SOURCE_CREDENTIAL_UNAVAILABLE",
+                    "SOURCE_UNCONFIGURED",
+                    "SOURCE_INVALID_SETTINGS",
+                    "SOURCE_IDENTITY_CHANGED",
+                )
+                acquisition_failed |= not skipped_before_acquisition
                 if collector is not None:
                     try:
                         self._assess_inventory(s, src, collector, members, error.code)
@@ -280,7 +286,7 @@ class CollectionService:
                 source_outcomes.append(
                     {
                         "source_registration_uuidv4": src["source_registration_uuidv4"],
-                        "state": "failed",
+                        "state": "skipped" if skipped_before_acquisition else "failed",
                         "reason": error.code,
                     }
                 )

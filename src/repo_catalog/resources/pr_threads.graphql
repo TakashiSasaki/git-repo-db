@@ -1,7 +1,7 @@
 query RepoCatalogThreads($owner: String!, $name: String!, $number: Int!, $cursor: String, $pageSize: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
-      id
+      id number
       mergeCommit { oid }
       potentialMergeCommit { oid }
       reviewThreads(first: $pageSize, after: $cursor) {

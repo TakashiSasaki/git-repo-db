@@ -1,5 +1,5 @@
 {
-  "status": "ordinary suite execution in progress; exact frozen-tree acceptance pending",
+  "status": "initial frozen checkpoint 41dbe555 reviewed; fixture corrections and final frozen-tree acceptance pending",
   "mechanism_only_retirements": [
     {
       "retired_node": "tests/integration/test_catalog3_parser_model.py::test_independent_reparse_retains_input_and_produces_separate_output",
@@ -85,7 +85,7 @@
         "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history",
         "tests/integration/test_catalog3_current_queries.py::test_current_issue_queries_reject_obsolete_parser_profile_selector"
       ],
-      "surviving_assertion": "API history/profile selectors reject explicitly; live A\u2192B\u2192A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
+      "surviving_assertion": "API history/profile selectors reject explicitly; live A→B→A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
       "retired_collected_nodes": [
         "tests/integration/test_catalog3_profile_queries.py::test_normal_reads_use_selected_profile_and_history_is_explicit"
       ]
@@ -188,7 +188,7 @@
         "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history",
         "tests/integration/test_catalog3_current_queries.py::test_current_issue_queries_reject_obsolete_parser_profile_selector"
       ],
-      "surviving_assertion": "API history/profile selectors reject explicitly; live A\u2192B\u2192A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
+      "surviving_assertion": "API history/profile selectors reject explicitly; live A→B→A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
       "retired_collected_nodes": [
         "tests/integration/test_catalog3_profile_queries.py::test_target_diagnostics_require_explicit_history_for_other_profiles"
       ]
@@ -226,7 +226,7 @@
         "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history",
         "tests/integration/test_catalog3_current_queries.py::test_current_issue_queries_reject_obsolete_parser_profile_selector"
       ],
-      "surviving_assertion": "API history/profile selectors reject explicitly; live A\u2192B\u2192A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
+      "surviving_assertion": "API history/profile selectors reject explicitly; live A→B→A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
       "retired_collected_nodes": [
         "tests/integration/test_catalog3_profile_queries.py::test_cli_history_and_profile_filters_are_explicit"
       ]
@@ -551,7 +551,6 @@
       "surviving_assertion": "Actual required parent absence keeps direct document pending, then adding that parent promotes without creating a new document identity."
     }
   ],
-  "replacement_families": {},
   "limitations": "Every listed replacement is an actual function, not a skipped legacy fixture. Mechanism-only removals deliberately do not emulate retired API history, parser certificates, result seals, or local Source settings/Source-wide assessment Exchange. Current behavior ports preserve independent resources, typed owner/parent/field evidence, CAS integrity, full-scope query coverage, cursor guards and real bounded SQLite work. Frozen-tree full execution remains required.",
   "schema_contract_rewrites": "tests/support/schema20_contract_replacements.json: all 240 independently collected original schema/provider/document/JSON/adversarial nodes mapped to exact collected typed-domain replacements.",
   "baseline": {
@@ -570,5 +569,1190 @@
       "path": "tests/support/parser_facts.py",
       "reason": "Unused after six schema suites, PR coverage and Git tests moved to direct resource/object fixtures. Its only behavior was fabricating profiles/results, fake empty acquisition seals and inherited result fields."
     }
-  ]
+  ],
+  "exchange_contract_rewrites": {
+    "baseline_source": "independently collected matching HEAD ordinary nodes",
+    "baseline_collected_count": 83,
+    "current_unique_replacement_node_count": 36,
+    "entries": [
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_complete_round_trip_remaps_local_ids_and_preserves_portable_ids",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_domain_roundtrip_latest_only_repeated_reverse[False]",
+          "tests/integration/test_catalog3_exchange.py::test_domain_roundtrip_latest_only_repeated_reverse[True]"
+        ],
+        "reason": "Portable provider identities and receiver-local IDs now transfer typed current resources without parser-result admission."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_missing_dependencies_survive_reopen_and_promote_without_new_ids",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_selective_exchange.py::test_reopen_missing_dependency_intake_then_onward_export"
+        ],
+        "reason": "Missing typed repository/binding dependencies survive restart, promote, and forward with stable IDs."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_mismatched_sha_is_rejected_without_retaining_any_bytes",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_corrupt_text_rejected_without_staging_byte_copy"
+        ],
+        "reason": "Exact normalized text SHA validation rejects corrupt bytes and descendants before storage/staging."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_same_uuid_different_fact_is_staged_original_preserved",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_single_immutable_variant_does_not_choose_winner"
+        ],
+        "reason": "Conflicting immutable binding identity holds all unadmitted variants instead of choosing arrival order."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_source_wide_local_policy_and_second_repository_are_not_exported",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_local_source_policy_and_unselected_repository_do_not_transfer"
+        ],
+        "reason": "Same Source second-repository resources and sender settings stay outside the selected repository wire."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_sources_reconfigure_locally_without_import_overwrite",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_local_source_policy_and_unselected_repository_do_not_transfer"
+        ],
+        "reason": "Receiver Source ID/settings/name remain receiver-owned while portable registration resolves imported captures."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_competing_unadmitted_variants_are_both_held",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_single_immutable_variant_does_not_choose_winner"
+        ],
+        "reason": "Both immutable alternatives remain unresolved; neither can provide current dependency authority."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_existing_corrupt_bytes_get_diagnosed_without_automatic_repair",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_valid_git_reacquisition_stages_bytes_and_object_context_without_repair"
+        ],
+        "reason": "Shared CAS retains real corruption/quarantine evidence and requires explicit repair; this physical invariant remains independently tested."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_application_export_import_reopens_fresh_catalogs",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review]"
+        ],
+        "reason": "Production ExchangeService exports and imports a fresh real collector catalog, with direct provider fields, current coverage and FK/integrity validation."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_scope_mapping_forwarding_and_independent_dag_heads",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_git_runtime.py::test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation",
+          "tests/integration/test_catalog3_selective_exchange.py::test_reopen_missing_dependency_intake_then_onward_export"
+        ],
+        "reason": "Generic parser/profile DAG heads retired. Actual frozen Git snapshot predecessor semantics and portable onward dependency closure remain."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_conflicting_fact_never_leaves_first_arrival_as_current",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "Latest-only unordered current alternatives remain conflicted after selective transfer instead of first-arrival eligibility."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_truncated_unit_cannot_publish_complete_coverage",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope",
+          "tests/integration/test_catalog3_selective_exchange.py::test_valid_member_usable_before_terminal_evidence"
+        ],
+        "reason": "Resources/objects remain usable while missing exact terminal/ref evidence cannot qualify complete scope."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_unsubstantiated_complete_claim_is_not_exported",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_current_completeness_freezes_terminal_pages_and_max_time"
+        ],
+        "reason": "An advisory complete claim without actual normalized receipt proof is omitted; genuine exact marker-backed scope is portable."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange.py::test_source_membership_interval_growth_is_not_immutable_collision",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_source_pair_current_attributes_repeat_conflict_and_forward"
+        ],
+        "reason": "Positive Source pair first/last evidence aggregates without immutable collisions; field alternatives stay bounded and repeat/onward safe."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_source_derived_name_never_leaks_source_wide_evidence_or_dangles",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_local_source_policy_and_unselected_repository_do_not_transfer",
+          "tests/integration/test_catalog3_exchange.py::test_source_pair_current_attributes_repeat_conflict_and_forward"
+        ],
+        "reason": "Source-derived name now belongs directly to one current pair with actual field provenance; Source roster history is excluded."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_local_quarantine_diagnostics_and_staging_do_not_cross_exchange",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_local_operational_or_quarantine_record_cannot_enter_domain_wire[exchange_staging]",
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_local_operational_or_quarantine_record_cannot_enter_domain_wire[payload_quarantine]"
+        ],
+        "reason": "Local physical diagnostics and intake rows are closed out of the repository wire vocabulary."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_forged_local_quarantine_record_rejects_entire_unit",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_local_operational_or_quarantine_record_cannot_enter_domain_wire[payload_quarantine]"
+        ],
+        "reason": "Forged quarantine table records reject the whole unit before any domain rows enter receiver."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_export_corruption_failure_persists_local_diagnosis_without_output",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_backup_detects_corruption_and_restore_retains_quarantine"
+        ],
+        "reason": "Export/backup physical verification still reports real corruption without automatically repairing shared bytes; physical integrity suite owns this assertion."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_required_bytes_repeat_in_each_repository_unit_and_deduplicate_on_receive",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_required_shared_git_bytes_repeat_per_owner_and_deduplicate"
+        ],
+        "reason": "Each actual repository Git consumer transfers its required canonical bytes; receiver globally deduplicates physical/object identities."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_record_order_permutation_preserves_observation_and_selection_sets",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_domain_roundtrip_latest_only_repeated_reverse[False]",
+          "tests/integration/test_catalog3_exchange.py::test_domain_roundtrip_latest_only_repeated_reverse[True]",
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_roundtrip_recomputes_complete_intrinsic_rows"
+        ],
+        "reason": "Publication/selection sets retired. Reversed record and old/new units preserve latest resources and normalized canonical Git relations."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_304_self_authored_evidence_uses_received_original_observation",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_receipt_keeps_actual_parser_after_current_module_version_changes"
+        ],
+        "reason": "API-original 304 linkage retired with originals. Direct immutable collection receipt keeps actual earlier producer and stable identities across newer current values."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_304_marker_cannot_complete_before_its_original_payload_and_observation",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_foreign_owner_is_rejected_before_intake",
+          "tests/integration/test_catalog3_selective_exchange.py::test_valid_member_usable_before_terminal_evidence"
+        ],
+        "reason": "Transport-original 304 prerequisite retired. Typed exact owner/terminal domain proofs remain receiver checked."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_304_marker_rejects_an_original_observation_from_another_repository",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_foreign_owner_is_rejected_before_intake",
+          "tests/integration/test_catalog3_selective_exchange.py::test_valid_member_usable_before_terminal_evidence"
+        ],
+        "reason": "Transport-original 304 prerequisite retired. Typed exact owner/terminal domain proofs remain receiver checked."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_exchange_integrity_audit.py::test_complete_claim_keeps_identity_when_unrelated_repository_records_grow",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_current_completeness_freezes_terminal_pages_and_max_time",
+          "tests/integration/test_phase1_exchange_scaling.py::test_selected_collection_work_independent_of_same_repository_history"
+        ],
+        "reason": "Exact marker-backed portable coverage and indexed capture closure remain stable as actual same-repository history grows."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_f0_f1_f2_arrival_reopen_repeat_and_full_convergence[order0]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope",
+          "tests/integration/test_catalog3_selective_exchange.py::test_reopen_missing_dependency_intake_then_onward_export"
+        ],
+        "reason": "Parser/input generations retired. Real current-domain and Git partial units retain restart/repeat/late/onward convergence."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_f0_f1_f2_arrival_reopen_repeat_and_full_convergence[order1]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope",
+          "tests/integration/test_catalog3_selective_exchange.py::test_reopen_missing_dependency_intake_then_onward_export"
+        ],
+        "reason": "Parser/input generations retired. Real current-domain and Git partial units retain restart/repeat/late/onward convergence."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_collection_and_explicit_fetch_subset_exact_proof",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_includes_actual_members_without_siblings"
+        ],
+        "reason": "Transport occurrence subset selector retired; exact selected collection includes only direct stable members, parents and terminal proof."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_selective_304_closes_original_without_sibling_fetch",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_includes_actual_members_without_siblings"
+        ],
+        "reason": "Original-body 304 closure retired. Direct selected typed collection closure excludes sibling captures."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_selected_result_closes_all_inputs_and_output_publication",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_roundtrip_recomputes_complete_intrinsic_rows",
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "Generic parsed-result input/output publication closure retired. Actual canonical object installation is atomic, current alternatives remain explicit."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_selective_export_bounded_and_ignores_unrelated_corruption",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_phase1_exchange_scaling.py::test_selected_collection_work_independent_of_same_repository_history",
+          "tests/integration/test_phase1_exchange_scaling.py::test_selected_member_volume_has_linear_vm_work"
+        ],
+        "reason": "Measured indexed selected closure against actual same-repository 1,000/5,000 collection/code/Git captures and selected 20/200/1,000 members."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_exact_manifest_cannot_be_replaced_by_unrelated_owner",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_mixed_receipt_manifest_resists_direct_sql_bypass[manifest1]",
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_foreign_owner_is_rejected_before_intake"
+        ],
+        "reason": "Generic publication manifests retired. Typed owner scope and normalized current receipt completeness cannot be replaced by unrelated owners."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_empty_304_collection_selects_boundary_and_exact_original",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_current_completeness_freezes_terminal_pages_and_max_time"
+        ],
+        "reason": "Empty original-based 304 boundary retired. Exact immutable terminal pages and observation times qualify domain scope."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_conflicting_completion_marker_blocks_coverage_in_both_orders[False]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_unordered_conflict_survives_reexport_and_newer_resolves",
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "Actual current conflicts remain visible after transfer; generic selection/profile conflicts retired."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_conflicting_completion_marker_blocks_coverage_in_both_orders[True]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_unordered_conflict_survives_reexport_and_newer_resolves",
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "Actual current conflicts remain visible after transfer; generic selection/profile conflicts retired."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_partial_dag_preserves_external_heads_as_unresolved",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope",
+          "tests/integration/test_catalog3_git_runtime.py::test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation"
+        ],
+        "reason": "Parser/fact DAG heads retired. Actual snapshot capture closure and predecessor/current-ref semantics retain unresolved partial behavior."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_production_github_complete_proofs_cover_the_asserted_scope[1]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review-comment]"
+        ],
+        "reason": "Real GitHub collector complete typed receipts, aggregate scope and ordinary current Review behavior survive production ExchangeService round trip."
+      },
+      {
+        "baseline_node": "tests/integration/test_catalog3_selective_exchange.py::test_production_github_complete_proofs_cover_the_asserted_scope[101]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review-comment]"
+        ],
+        "reason": "Real GitHub collector complete typed receipts, aggregate scope and ordinary current Review behavior survive production ExchangeService round trip."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_original_only_units_do_not_enter_storage_or_json_envelopes[decoded_api]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "API-original tables/representations cannot enter core; arbitrary requires cannot authorize unconsumed physical bytes, including Git-labelled bytes."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_original_only_units_do_not_enter_storage_or_json_envelopes[legacy_normalized]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "API-original tables/representations cannot enter core; arbitrary requires cannot authorize unconsumed physical bytes, including Git-labelled bytes."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_original_only_units_do_not_enter_storage_or_json_envelopes[git-object-raw-v1]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "API-original tables/representations cannot enter core; arbitrary requires cannot authorize unconsumed physical bytes, including Git-labelled bytes."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_original_encoder_and_explicit_fetch_selector_have_no_side_effects",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original occurrence encoder/selector retired; only typed collection/acquisition roots are accepted."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_full_and_collection_export_omit_unreferenced_originals",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_includes_actual_members_without_siblings",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Full and selected units retain direct domain text, excluding unreferenced original payloads."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_disconnected_empty_parser_publication_cannot_confer_archive_retention",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_delayed_required_bytes_satisfy_retained_domain_staging",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope",
+          "tests/integration/test_catalog3_selective_exchange.py::test_reopen_missing_dependency_intake_then_onward_export"
+        ],
+        "reason": "Real typed missing dependencies promote after late arrival; API-original intake is absent."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_direct_admission_and_pending_promotion_do_not_restore_original_intake[False]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_missing_parent_stays_pending_then_promotes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_accepted_api_edit_not_archived_in_admission_envelope"
+        ],
+        "reason": "Direct shared current admission and restart promotion cannot recreate accepted-original/edit-history envelopes."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_direct_admission_and_pending_promotion_do_not_restore_original_intake[True]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_missing_parent_stays_pending_then_promotes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_accepted_api_edit_not_archived_in_admission_envelope"
+        ],
+        "reason": "Direct shared current admission and restart promotion cannot recreate accepted-original/edit-history envelopes."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_partial_reason_marker_cannot_authorize_originals",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_advisory_requires_cannot_attach_unrelated_original_to_valid_proof",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_malformed_publication_manifest_cannot_authorize_originals[manifest0]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_malformed_publication_manifest_cannot_authorize_originals[manifest1]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_malformed_publication_manifest_cannot_authorize_originals[manifest2]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_publication_for_missing_fact_cannot_retain_its_input",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_incomplete_terminal_proof_cannot_retain_input_body",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_domain_fact_rejected_by_catalog_constraint_cannot_retain_input",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_pending_metadata_reference_cannot_turn_domain_row_into_original_carrier",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_known_source_wide_parent_cannot_authorize_pending_api_bytes",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_generic_request_payload_reference_cannot_authorize_unrelated_original[False]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_generic_request_payload_reference_cannot_authorize_unrelated_original[True]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_forged_git_object_cannot_authorize_original_retention[False-False]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair",
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes"
+        ],
+        "reason": "Claimed Git label/forged OID cannot authorize physical retention or repair; actual raw OID verification remains independent of transport hints."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_forged_git_object_cannot_authorize_original_retention[False-True]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair",
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes"
+        ],
+        "reason": "Claimed Git label/forged OID cannot authorize physical retention or repair; actual raw OID verification remains independent of transport hints."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_forged_git_object_cannot_authorize_original_retention[True-False]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair",
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes"
+        ],
+        "reason": "Claimed Git label/forged OID cannot authorize physical retention or repair; actual raw OID verification remains independent of transport hints."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_forged_git_object_cannot_authorize_original_retention[True-True]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair",
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes"
+        ],
+        "reason": "Claimed Git label/forged OID cannot authorize physical retention or repair; actual raw OID verification remains independent of transport hints."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_failed_api_original_envelopes_are_not_retry_staging[invalid:payload_corruption]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_failed_api_original_envelopes_are_not_retry_staging[conflict:payload_corruption]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_failed_api_original_envelopes_are_not_retry_staging[constraint:body]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_corrupt_api_proof_intake_never_retains_rejected_original_envelope[False-False]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_corrupt_api_proof_intake_never_retains_rejected_original_envelope[False-True]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_corrupt_api_proof_intake_never_retains_rejected_original_envelope[True-False]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_corrupt_api_proof_intake_never_retains_rejected_original_envelope[True-True]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange.py::test_arbitrary_dependency_hint_does_not_authorize_bytes",
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission",
+          "tests/integration/test_phase1_exchange_retirement.py::test_retired_transport_tables_and_original_representation_absent"
+        ],
+        "reason": "Original-only response/envelope admission and publication/request-original seals are retired. Closed typed wire fields and real Git consumers prevent any arbitrary hint, detached Source parent, reason or malformed manifest from retaining API originals."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_shared_git_consumer_preserves_rejected_domain_content_staging[False-sha1]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha1]",
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha256]"
+        ],
+        "reason": "Actual retained Git consumers across SHA formats retain verified CAS staging/repair semantics; API representation cannot supply authority."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_shared_git_consumer_preserves_rejected_domain_content_staging[False-sha256]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha1]",
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha256]"
+        ],
+        "reason": "Actual retained Git consumers across SHA formats retain verified CAS staging/repair semantics; API representation cannot supply authority."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_shared_git_consumer_preserves_rejected_domain_content_staging[True-sha1]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha1]",
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha256]"
+        ],
+        "reason": "Actual retained Git consumers across SHA formats retain verified CAS staging/repair semantics; API representation cannot supply authority."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_shared_git_consumer_preserves_rejected_domain_content_staging[True-sha256]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha1]",
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats[sha256]"
+        ],
+        "reason": "Actual retained Git consumers across SHA formats retain verified CAS staging/repair semantics; API representation cannot supply authority."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_valid_git_dependencies_can_arrive_in_separate_units",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope"
+        ],
+        "reason": "Verified intrinsic objects survive partial intake; exact capture becomes complete only after missing refs/dependencies arrive."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_original_only_service_import_keeps_catalog_revision",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_phase1_exchange_retirement.py::test_opaque_original_field_is_rejected_before_any_admission"
+        ],
+        "reason": "Unsupported original envelopes reject before operational admissions or domain changes."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_promotion_groups_staged_candidates_before_preflight_scans",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_exchange_integrity_audit.py::test_single_immutable_variant_does_not_choose_winner",
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "All unresolved alternatives are compared as domain candidates without first-arrival winner."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_scaling.py::test_export_vm_work_is_scoped_away_from_thousands_of_unrelated_git_objects",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_phase1_exchange_scaling.py::test_selected_collection_work_independent_of_same_repository_history"
+        ],
+        "reason": "Stronger selected-capture VM bounds use unrelated actual history in the SAME repository."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase1_exchange_scaling.py::test_intake_context_does_not_materialize_unrelated_admission_receipts",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_exchange_scaling.py::test_conflict_free_barrier_refresh_is_bounded_under_real_history_growth"
+        ],
+        "reason": "Conflict-free recomputation avoids materializing shared bytes/Git rows even after real same-repository history growth."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase2_exchange_scaling.py::test_conflict_free_refresh_work_is_bounded_as_other_git_history_grows",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_exchange_scaling.py::test_conflict_free_barrier_refresh_is_bounded_under_real_history_growth"
+        ],
+        "reason": "No unresolved conflict means no global Git/CAS walk; SQL trace and VM bounds verify this."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase2_exchange_scaling.py::test_refresh_clears_prior_barriers_when_no_conflicts_remain",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_unordered_conflict_survives_reexport_and_newer_resolves"
+        ],
+        "reason": "Current conflict barriers disappear after justified newer values; retired parsed-result/profile barriers no longer exist."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase2_exchange_scaling.py::test_pending_selection_scopes_stay_blocked_without_conflict_seeds",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "Selection authority retired. Actual unresolved current candidates remain ineligible through selected exchange."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase2_exchange_scaling.py::test_actual_local_conflicts_still_propagate_to_result_or_coverage[document_observations]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_unordered_conflict_survives_reexport_and_newer_resolves",
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "Current/coverage conflict visibility comes from actual candidates; parsed-result/profile ownership is absent."
+      },
+      {
+        "baseline_node": "tests/integration/test_phase2_exchange_scaling.py::test_actual_local_conflicts_still_propagate_to_result_or_coverage[completion_markers]",
+        "disposition": "replaced_direct_domain_assertions",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_current_exchange.py::test_unordered_conflict_survives_reexport_and_newer_resolves",
+          "tests/integration/test_catalog3_selective_exchange.py::test_selected_collection_preserves_bounded_current_conflict"
+        ],
+        "reason": "Current/coverage conflict visibility comes from actual candidates; parsed-result/profile ownership is absent."
+      }
+    ]
+  },
+  "checkpoint_execution_evidence": {
+    "owned_current_cas_transport_model_audit_subset": {
+      "result": "418 passed, 15 failed",
+      "unique_executed_nodes": 433,
+      "duration_seconds": 109.26,
+      "log": "/tmp/ordinary-owned-regressions.log",
+      "failure_classification": "14 fixture/error-spelling cases corrected and covered by the later 50-pass fixture subset; 1 genuine escaped field-evidence path alias SQL guard regression assigned to root for parity fix. Full frozen 433-node repetition remains required."
+    },
+    "exchange_pr_review_subset": {
+      "result": "67 passed, 6 failed",
+      "unique_executed_nodes": 73,
+      "duration_seconds": 169.38,
+      "log": "/tmp/exchange-pr-regressions.log",
+      "failure_classification": "3 old aggregate/family scope fixture references; 2 wrong-OID reason ports; 1 old exact-target assessment missing-vs-incomplete reason. Full producer aggregate pr-documents evidence remains independently failing in e2e."
+    },
+    "corrected_pr_diagnostic_subset": {
+      "result": "3 passed",
+      "duration_seconds": 7.96,
+      "log": "/tmp/pr-diagnostic-final-port.log"
+    },
+    "schema_contract_subset": {
+      "result": "279 passed, 1 failed; one additional node passed separately",
+      "unique_current_collected_nodes": 281,
+      "log": "/tmp/schema_six_final_results.txt",
+      "limitation": "CLI node format-fingerprint failure occurred while live Git DDL changed; full frozen acceptance required."
+    },
+    "canceled_initial_ordinary": {
+      "selected_collected_count": 1904,
+      "completed": false,
+      "reason": "Root requested stop after dynamic DDL/source drift; xdist interrupted before JUnit emission. No exact executed-node or whole-suite result claim.",
+      "status_artifact": "artifacts/publication-free/ordinary-exploratory-status.json"
+    },
+    "corrected_ordinary_fixture_subset": {
+      "result": "50 passed",
+      "duration_seconds": 23.35,
+      "log": "/tmp/ordinary-last-fixtures.log",
+      "coverage": "All transport-independent-core and detached-guard assertions, real dependency-audit assertions and current review history rejection; no skips."
+    }
+  },
+  "acquisition_contract_rewrites": {
+    "mappings": [
+      {
+        "retired_node": "tests/integration/test_catalog3_github_runtime.py::test_fresh_history_and_sealed_listing_reuse",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_github_runtime.py::test_latest_documents_and_exact_listing_reuse"
+        ],
+        "surviving_assertion": "Only latest API text survives; exact typed head/base listings reuse without original envelopes.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_github_runtime.py::test_terminal_page_resume_has_one_original_coverage_observation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_github_runtime.py::test_terminal_page_resume_has_one_actual_coverage_observation"
+        ],
+        "surviving_assertion": "Resumed terminal prefix retains actual original capture clock and terminal proof; operation completion time never manufactures a capture.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_after_detail_keeps_only_justified_code_observations",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_keeps_only_justified_target_assessments"
+        ],
+        "surviving_assertion": "Retain only genuinely acquired exact-target code assessments and truthful observed partial clocks.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_github_runtime.py::test_interrupted_new_pr_head_is_not_complete_before_code_publication",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_github_runtime.py::test_interrupted_new_pr_head_has_no_complete_assessment"
+        ],
+        "surviving_assertion": "New target cannot borrow prior-head complete assessment or claim Git bytes before actual acquisition.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_github_runtime.py::test_304_never_attaches_cached_head_to_newer_race_observation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_github_runtime.py::test_fresh_target_race_never_borrows_another_head_assessment"
+        ],
+        "surviving_assertion": "A fresh target race cannot use an older exact-head code assessment; cached API originals are retired.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_rest_boundaries.py::test_detail_validator_reuses_admitted_payload_and_304_adds_no_observation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_rest_boundaries.py::test_detail_304_without_saved_normalized_state_fetches_live_response"
+        ],
+        "surviving_assertion": "304 without a corresponding normalized representation makes a real unconditional request; no cached API bytes or forged reuse observation.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_parsing_runtime.py::test_normal_acquisition_publishes_owned_results_and_multiple_code_inputs",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_parsing_runtime.py::test_normal_acquisition_retains_typed_producers_and_exact_code_dependencies"
+        ],
+        "surviving_assertion": "Actual producer module/version and exact real Git target roles remain; result publication ownership retired.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_parsing_runtime.py::test_source_inventory_records_separate_owned_raw_inputs",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_parsing_runtime.py::test_source_inventory_admits_current_scoped_roster_without_originals"
+        ],
+        "surviving_assertion": "Current Source roster keeps genuine identity, scoped capture, producer and positive admitted members; no provider response persistence.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_parsing_runtime.py::test_retired_http_reparse_rejects_quarantined_original_without_diagnosis",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_parsing_runtime.py::test_http_reparse_lookup_ignores_quarantined_git_content"
+        ],
+        "surviving_assertion": "Explicit HTTP replay lookup rejects without reading payloads, touching catalog or making network requests; Git-only repair remains separate.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_parsing_runtime.py::test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_parsing_runtime.py::test_api_original_has_no_admission_method_or_representation"
+        ],
+        "surviving_assertion": "Retired API representation cannot be introduced through API constructor/persistence methods; no API original or staging surrogate.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_parsing_runtime.py::test_other_profile_result_retained_without_changing_selected_document",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_parsing_runtime.py::test_parser_labels_cannot_replace_latest_document_clock"
+        ],
+        "surviving_assertion": "Parser label/version has no authority to replace comparable newer accepted current text.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_parsing_runtime.py::test_repository_response_etag_survives_as_immutable_history_including_304",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_parsing_runtime.py::test_repository_http_etag_is_transient_and_never_a_domain_original"
+        ],
+        "surviving_assertion": "Actual current repository capture remains; conditional HTTP artifacts/ETags do not become domain history.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase1_retirement.py::test_live_api_cas_corruption_rejection_does_not_save_replacement_original",
+        "replacement_nodes": [
+          "tests/integration/test_phase1_retirement.py::test_live_api_domain_admission_is_independent_of_quarantined_git_bytes"
+        ],
+        "surviving_assertion": "Actual Git quarantine remains verified; independent valid live API domain text requires no raw API CAS and no transport marker is retained.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_incomplete_historical_page_sequence_cannot_prove_complete",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_incomplete_normalized_page_sequence_cannot_prove_complete"
+        ],
+        "surviving_assertion": "Reject missing/duplicate/out-of-order terminal sequence under the exact current collection scope.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_unrelated_current_receipt_cannot_hide_flat_historical_continuation",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_unrelated_terminal_receipt_cannot_hide_scope_continuation"
+        ],
+        "surviving_assertion": "A different collection terminal cannot discharge this collection nonterminal prefix.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_valid_historical_sequence_including_empty_members_proves_complete",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_valid_normalized_sequence_including_empty_members_proves_complete"
+        ],
+        "surviving_assertion": "Contiguous real normalized pages including terminal empty page prove exact scope completion.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_current_only_thread_child_requires_its_own_receipts",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_normalized_thread_child_requires_its_own_terminal_evidence"
+        ],
+        "surviving_assertion": "Each required child needs its own exact scoped terminal proof.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_mixed_thread_receipts_must_pair_exact_raw_ordinals",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_thread_child_cannot_discharge_a_different_scope_or_target"
+        ],
+        "surviving_assertion": "Required child must bind exact root collection, thread, capture, head/base and same PR; raw pairing mechanism retired.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_mixed_thread_receipt_cannot_invent_a_boundary_or_capture_time",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_thread_child_cannot_discharge_a_different_scope_or_target"
+        ],
+        "surviving_assertion": "Reject cross-capture/root/target borrowing before completion; operation finish cannot create capture.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_current_receipt_cannot_invent_rawless_historical_root",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_empty_terminal_enumeration_is_valid_without_raw_api_bytes"
+        ],
+        "surviving_assertion": "Raw original ownership is retired; explicit genuinely observed normalized empty terminal is sufficient and missing terminal remains rejected.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_partial_root_retry_requires_available_unquarantined_bytes",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_empty_terminal_enumeration_is_valid_without_raw_api_bytes"
+        ],
+        "surviving_assertion": "Availability/quarantine of retired API originals no longer governs completion; normalized scopes/pages/child proof do. Actual restart without safe cursor is separately rejected by acquisition tests.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_corrupt_body_cannot_invent_partial_graphql_retry",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_earlier_complete_receipt_remains_valid_after_document_edit"
+        ],
+        "surviving_assertion": "Earlier immutable enumeration receipt is not compared with edited current body; terminal/root-child/capture facts remain mandatory.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_accepted_partial_graphql_root_retry_retains_valid_complete_proof",
+        "replacement_nodes": [
+          "tests/integration/test_phase2_collection_integrity.py::test_earlier_complete_receipt_remains_valid_after_document_edit"
+        ],
+        "surviving_assertion": "Accepted independent typed values and earlier complete enumeration proof survive body edits without retained response replay; actual later partial scopes still supersede old completion.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      }
+    ],
+    "unchanged_parameter_contracts": "Every still-named ordinary boundary node and original parameter dimension remains active, including 62 REST validation nodes and 69 runtime nodes. No skips/bootstrap/retired implementation shims.",
+    "additional_regression_file": "tests/integration/test_publication_free_acquisition.py"
+  },
+  "other_contract_rewrites": {
+    "mappings": [
+      {
+        "retired_node": "tests/e2e/test_cli_more.py::test_publication_fencing",
+        "replacement_nodes": [
+          "tests/e2e/test_cli_more.py::test_snapshot_completion_fencing"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "A stale job attempt cannot complete a new snapshot or replace the prior current snapshot; the attempt counter remains an operational fence."
+      },
+      {
+        "retired_node": "tests/e2e/test_github_sync.py::test_observed_content_and_replay_fencing",
+        "replacement_nodes": [
+          "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "A→B→A exposes final current A, ordinary search finds no B, the three positive document identities remain, API history selectors reject and original/result/history tables are absent."
+      },
+      {
+        "retired_node": "tests/e2e/test_recovery.py::test_old_run_history_publish",
+        "replacement_nodes": [
+          "tests/e2e/test_recovery.py::test_old_run_retains_divergent_capture_without_time_winner"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "A resumed interrupted older frozen capture retains its own bytes/history and pending cache obligations; independent captures cannot pick a sole current snapshot by observation/receipt time. Cache GC remains operational and recorded path bytes remain readable."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_cas_integrity.py::test_failed_api_admission_quarantines_shared_git_incumbent_without_staging",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_rejected_api_representation_cannot_diagnose_or_stage_shared_git_bytes"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Rejected retired API representation leaves shared corrupt Git bytes and catalog untouched and creates no quarantine/staging surrogate; genuine Git integrity scan then detects and quarantines the corruption."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_api_original_repair",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "A syntactically canonical forged Git OID is recomputed against bytes before repair, rejects GIT_OBJECT_IDENTITY, and preserves bytes/quarantine/catalog atomically."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_cas_integrity.py::test_only_api_bytes_cannot_be_repaired_from_the_adapter_or_application",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_removed_api_representations_cannot_create_repair_authority"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Both retired API representations reject before storage; a file passed through the actual maintenance repair application cannot manufacture a retained canonical Git repair authority or mutate the catalog."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_even_when_api_proof_shares_its_bytes",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_shared_across_git_formats"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Genuine SHA1/SHA256 Git mappings may share one physical digest; canonical Git reacquisition repairs exactly those bytes atomically, clears active quarantine, retains one logical payload and passes real verification. The removed API representation cannot provide authority."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_cas_integrity.py::test_scan_records_one_physical_diagnostic_across_representations",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cas_integrity.py::test_scan_records_one_physical_diagnostic_across_git_formats"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Two canonical Git identities/formats sharing one physical payload produce exactly one physical corruption diagnosis/quarantine; logical identity deduplication does not hide corrupt bytes."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_current",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_queries.py::test_retained_exact_code_assessment_does_not_recreate_api_edit_history"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "An old exact-target code assessment remains retained after the current PR head changes; current queries cannot borrow it, report the actual missing current assessment, and explicit API edit-history selection rejects. Separate exact-role tests retain availability/matching-root checks."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_payload_cas.py::test_independent_fetches_keep_separate_occurrences_for_shared_bytes",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_payload_cas.py::test_independent_acquisitions_keep_separate_captures_for_shared_bytes"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Two real Git acquisition captures at negative and zero times retain distinct acquisition/source rows while sharing one immutable physical object; removed HTTP occurrence ownership is not reintroduced."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_payload_cas.py::test_same_bytes_across_representations_share_one_physical_object",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_payload_cas.py::test_same_raw_bytes_across_git_formats_share_one_physical_object"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Canonical SHA1/SHA256 Git object identities for identical raw bytes share one physical digest and one logical Git representation while preserving two real Git object identities."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_complete_code_requires_saved_published_matching_role_roots",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_pr_scope_coverage.py::test_complete_code_requires_saved_complete_matching_role_roots"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Every head/base role needs an actual saved complete canonical root for the exact required OID; absent, incomplete, wrong-OID and missing-object roles remain partial, and document reads remain independent of those Git role gaps."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_pr_cursor_scope_and_publication_guards_survive_preflight",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_pr_scope_coverage.py::test_pr_cursor_scope_and_revision_guards_survive_preflight"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "A cursor is bound to the requested PR query scope and local catalog revision; scope mismatch and a intervening admitted coverage change reject instead of returning a mixed page."
+      },
+      {
+        "retired_node": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_needs_no_trusted_parent_interpretation",
+        "replacement_nodes": [
+          "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Imported direct current PR/Review/comment fields and exact family coverage are immediately readable without parser trust; sender local checks are omitted, bytes/items and metadata filters survive, and retired interpretation/history tables remain absent."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_job_plans.py::test_manual_inventory_has_source_owned_raw_input_and_result",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_job_plans.py::test_manual_inventory_has_source_owned_current_roster_and_assessment"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "A manual Source creates its own scoped current roster and complete terminal assessment with exact positive member, actual parser module/version and name-field capture; completed job attempt/checkpoint survive and all original/result/history tables stay absent."
+      },
+      {
+        "retired_node": "tests/unit/test_phase2_dependency_audit.py::test_actual_git_search_reader_includes_required_decoder_evidence",
+        "replacement_nodes": [
+          "tests/unit/test_phase2_dependency_audit.py::test_actual_git_name_reader_includes_explicit_decoder_evidence"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Native SQLite preparation exposes direct Git decoded-name dependencies on decoder key, metadata encoding and actual producer module/version; removed profile/result eligibility is not represented."
+      },
+      {
+        "retired_node": "tests/unit/test_phase2_dependency_audit.py::test_actual_local_forwarders_preserve_current_publication_and_git_boundaries",
+        "replacement_nodes": [
+          "tests/unit/test_phase2_dependency_audit.py::test_actual_local_forwarders_preserve_revision_and_git_content_boundaries"
+        ],
+        "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
+        "surviving_assertion": "Native dependency audit sees actual receiver-local revision fence and canonical Git verified-object/payload-view reads without executing SQL or importing sender publication authority."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_queries_preserve_complete_label_role_gap_checks",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_queries_preserve_complete_label_role_gap_checks"
+        ],
+        "reason": "Port the parameter dimension to the authorized direct domain model.",
+        "surviving_assertion": "The old unpublished/published parameter labels now name incomplete/complete root facts. All six original head/base/merge, absent/NULL root, wrong OID, unavailable object and valid full-root cases remain active through both ordinary and diagnostic queries; document queries remain independent."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation"
+        ],
+        "reason": "Port the parameter dimension to the authorized direct domain model.",
+        "surviving_assertion": "The old quarantined/unquarantined retained API-original dimension is removed because no HTTP original is retained. The actual public HTTP replay command rejects before any catalog mutation, network request, payload lookup or foreign-key change; separate canonical Git quarantine/repair regressions retain physical integrity behavior."
+      },
+      {
+        "retired_node": "tests/integration/test_current_boundaries_independent.py::test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling",
+        "replacement_nodes": [
+          "tests/integration/test_current_boundaries_independent.py::test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling"
+        ],
+        "reason": "A1 closed modeled staging forbids archival of conclusively invalid current capture JSON. Replace the obsolete invalid-pending-row expectation with an explicit rejected candidate and no pending archive, without weakening independent resource validity.",
+        "surviving_assertion": "Both malformed repository/binding and malformed Source-registration capture variants are rejected exactly once; original incumbent A and independently valid sibling remain eligible, no invalid intake or current conflict diagnosis survives, exact incumbent body remains A, and full catalog validation succeeds."
+      }
+    ]
+  },
+  "isolated_json_type_matrix": {
+    "nodes": [
+      "tests/integration/test_current_boundaries_independent.py::test_equal_proof_retention_preserves_distinct_json_types",
+      "tests/integration/test_current_boundaries_independent.py::test_equal_clock_distinct_json_values_remain_conflicted"
+    ],
+    "reason": "The closed provider metadata schema intentionally has no field supporting boolean/integer/array/object alternatives. These eight original parameter IDs exercise the actual pure merge/equal-proof-retention/dominance methods in an isolated persistence-sink fixture. Concrete neighboring body and real milestone/labels tests retain full admission, eligibility, transfer and repeated Exchange assertions. No provider schema exception or validation bypass is introduced.",
+    "execution": "8 passed, 21 deselected in 3.89s; pure methods only, before final schema freeze."
+  },
+  "collection_checkpoint": {
+    "ordinary_selected": 2000,
+    "collection_errors": 0,
+    "artifact": "artifacts/publication-free/ordinary-collected-latest.txt",
+    "status": "collection-only during corrected-source work; execution and exact frozen acceptance remain pending"
+  },
+  "git_contract_rewrites": {
+    "artifact": "tests/support/git_publication_free_node_replacements.json",
+    "baseline_collected_count": 31,
+    "scope": "All original ordinary nodes in five Git reader/object/runtime/intrinsic suites, with exact parameter counterparts and separately identified retained and retired assertions."
+  },
+  "exact_node_audit": {
+    "script": "scripts/audit_publication_free_test_dispositions.py",
+    "artifact": "tests/support/publication_free_node_dispositions.json",
+    "baseline_nodes": "tests/support/publication_free_baseline_nodes.txt",
+    "status": "All 1950 baseline collected nodes accounted for against actual 2000-node ordinary collection; 482 explicit exact-node mappings and 1468 still-collected same node IDs. All 193 removed/renamed baseline functions are mapped. This is collection and disposition evidence only, not execution acceptance.",
+    "removed_or_renamed_functions": 193,
+    "explicit_mapped_nodes": 482,
+    "still_collected_same_nodes": 1468
+  },
+  "corrected_source_narrow_execution": {
+    "selection": "tests/integration/test_catalog3_cache.py test_catalog3_job_plans.py test_database.py test_current_boundaries_independent.py test_catalog3_current_exchange.py and test_catalog3_review_coverage.py::test_new_observed_root_gap_supersedes_older_terminal_thread",
+    "selected": 71,
+    "passed": 66,
+    "failed": 5,
+    "seconds": 97.04,
+    "junit": "artifacts/publication-free/fixture-ports-corrected-source.xml",
+    "status": "Narrow corrected-source execution after schema author READY; Git/Exchange correction work still active, not final frozen acceptance.",
+    "failed_nodes": [
+      "tests/integration/test_catalog3_job_plans.py::test_credentials_lost_after_job_creation_complete_partial_without_evidence",
+      "tests/integration/test_current_boundaries_independent.py::test_transfer_fork_repeated_exchange_preserves_capture_and_child_clock[False]",
+      "tests/integration/test_current_boundaries_independent.py::test_transfer_fork_repeated_exchange_preserves_capture_and_child_clock[True]",
+      "tests/integration/test_current_boundaries_independent.py::test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling[owner]",
+      "tests/integration/test_current_boundaries_independent.py::test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling[source]"
+    ],
+    "findings": "Credentials lost before collector construction are incorrectly classified as acquisition failure; legitimate transferred child capture is confused with current owner during unresolved wire validation; malformed field captures raise before independent siblings can admit. Authors received root causes. Assertions preserved pending correction."
+  }
 }

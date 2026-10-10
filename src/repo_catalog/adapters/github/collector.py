@@ -19,6 +19,37 @@ from repo_catalog.domain.models import CatalogError, Waiting
 from repo_catalog.domain.pr_scope import NON_DOCUMENT_KINDS
 from repo_catalog.domain.time import format_iso8601_us
 
+PR_COLLECTION_KINDS = frozenset(
+    (
+        "pr-list",
+        "pr-detail",
+        "pr-code-check",
+        "issue-comment",
+        "issue-comment-incremental",
+        "review",
+        "review-comment",
+        "review-comment-incremental",
+        "threads",
+        "thread-comments",
+        "timeline",
+        "pr-commits",
+        "pr-files",
+    )
+)
+PR_CODE_COLLECTION_KINDS = frozenset(
+    (
+        "pr-list",
+        "pr-detail",
+        "pr-code-check",
+        "review",
+        "review-comment",
+        "threads",
+        "thread-comments",
+        "pr-commits",
+        "pr-files",
+    )
+)
+
 
 class GitHubCollector:
     """Live collection of direct resources and independent scoped evidence."""
@@ -43,6 +74,9 @@ class GitHubCollector:
         self.inventory_evidence = []
         self.facts = ApiFacts(store, self.cfg)
         self.thread_collections = {}
+        self.code_listing_failures = {}
+        self.code_listing_results = {}
+        self.code_listing_not_before_us = None
         self.observed_partial_scopes = set()
         self.recording_diagnostics = []
 
@@ -114,7 +148,9 @@ class GitHubCollector:
             if url in seen:
                 raise CatalogError("PAGINATION_CYCLE", "API redirect cycle")
             seen.add(url)
+            request_revision = self.s.revision()
             response = self.http.request("GET", url, **kwargs)
+            response.extensions["catalog_base_revision"] = request_revision
             self._retain_recording_diagnostics(response)
             if response.status_code not in (301, 302):
                 return response
@@ -170,6 +206,7 @@ class GitHubCollector:
                 "service_instance_uuidv4": registration["service_instance_uuidv4"],
                 "owner": source["owner"],
                 "principal_ref": self.facts.principal,
+                "observed_permissions": self.facts.permissions,
                 "api_version": self.cfg["rest_api_version"],
                 "endpoint": self.http.base + "/repos/" + name,
                 "query_kind": "verified-repository-redirect",
@@ -247,8 +284,8 @@ class GitHubCollector:
                 GitHubCollector.rest_oid(value["commit_id"], "commit_id")
         if kind in ("pr-list", "pr-detail", "pr-code-check"):
             GitHubCollector.rest_integer(value.get("number"), "number", minimum=1)
-            if not isinstance(value.get("title"), str):
-                raise CatalogError("API_SCHEMA", "PR title missing or malformed")
+            if "title" in value and not isinstance(value["title"], str):
+                raise CatalogError("API_SCHEMA", "Malformed PR title")
             for field in ("head", "base"):
                 ref = value.get(field)
                 if ref is not None:
@@ -598,6 +635,9 @@ class GitHubCollector:
                 endpoint,
             ),
         )
+        # A resumed operation keeps its original scan boundary even when a
+        # different job has since completed a newer scan of the same family.
+        candidates = sorted(candidates, key=lambda row: row["job_id"] != job)
         proof = CurrentCollectionProof(self.s.connection)
         for row in candidates:
             scope = json.loads(row["scope_json"])
@@ -807,6 +847,9 @@ class GitHubCollector:
                             "304 has no corresponding normalized representation",
                         )
                 uncommitted = True
+                base_revision = response.extensions.get(
+                    "catalog_base_revision", base_revision
+                )
                 values = self.rest_json(response)
                 if not isinstance(values, list):
                     raise CatalogError(
@@ -999,6 +1042,9 @@ class GitHubCollector:
         value = None
         try:
             value = self.rest_json(response)
+            base_revision = response.extensions.get(
+                "catalog_base_revision", base_revision
+            )
             timestamp = self.facts.response_time(response)
             with self.s.transaction():
                 self.facts.fence(job)
@@ -1040,31 +1086,39 @@ class GitHubCollector:
 
         return normalize
 
-    def summary_collection_ids(self, repo, job, *, documents_only=False):
-        return [
+    @staticmethod
+    def summary_kinds(*, documents_only=False, code_only=False):
+        if code_only:
+            return PR_CODE_COLLECTION_KINDS
+        if documents_only:
+            return PR_COLLECTION_KINDS - NON_DOCUMENT_KINDS - {"pr-code-check"}
+        return PR_COLLECTION_KINDS
+
+    def summary_collection_ids(
+        self, repo, job, *, documents_only=False, code_only=False
+    ):
+        kinds = self.summary_kinds(documents_only=documents_only, code_only=code_only)
+        identifiers = {
             row[0]
             for row in self.s.all(
-                "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
-                + (
-                    " AND f.kind NOT IN ("
-                    + ",".join("?" for _ in NON_DOCUMENT_KINDS)
-                    + ")"
-                    if documents_only
-                    else ""
-                )
-                + " ORDER BY f.fetch_collection_id",
-                (
-                    repo["repository_uuidv4"],
-                    repo["source_id"],
-                    job,
-                    *(sorted(NON_DOCUMENT_KINDS) if documents_only else ()),
-                ),
+                "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
+                + ",".join("?" for _ in kinds)
+                + ")",
+                (repo["repository_uuidv4"], repo["source_id"], job, *sorted(kinds)),
             )
-        ]
+        }
+        if code_only:
+            identifiers.update(
+                item[0]
+                for listings in self.code_listing_results.values()
+                for item in listings
+                if item is not None
+            )
+        return sorted(identifiers)
 
-    def summary_marker_ids(self, repo, job, *, documents_only=False):
+    def summary_marker_ids(self, repo, job, *, documents_only=False, code_only=False):
         identifiers = self.summary_collection_ids(
-            repo, job, documents_only=documents_only
+            repo, job, documents_only=documents_only, code_only=code_only
         )
         return (
             [
@@ -1081,21 +1135,19 @@ class GitHubCollector:
         )
 
     def summary_observed_at_us(
-        self, repo, job, *, documents_only=False, include_partial=True
+        self, repo, job, *, documents_only=False, code_only=False, include_partial=True
     ):
+        kinds = self.summary_kinds(documents_only=documents_only, code_only=code_only)
         return self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
-            + (
-                " AND f.kind NOT IN (" + ",".join("?" for _ in NON_DOCUMENT_KINDS) + ")"
-                if documents_only
-                else ""
-            ),
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
+            + ",".join("?" for _ in kinds)
+            + ")",
             (
                 include_partial,
                 repo["repository_uuidv4"],
                 repo["source_id"],
                 job,
-                *(sorted(NON_DOCUMENT_KINDS) if documents_only else ()),
+                *sorted(kinds),
             ),
         )[0]
 
@@ -1124,6 +1176,7 @@ class GitHubCollector:
             "owner": owner,
             "api_version": self.cfg["rest_api_version"],
             "principal_ref": None,
+            "observed_permissions": None,
             "visibility": "all",
             "selected_repositories": cfg.get("include_repositories"),
             "query_kind": "owner-repositories",
@@ -1192,7 +1245,7 @@ class GitHubCollector:
             )
 
         try:
-            _, identity, _ = request(base + "/user")
+            identity_response, identity, _ = request(base + "/user")
             if (
                 not isinstance(identity, dict)
                 or not isinstance(identity.get("login"), str)
@@ -1201,6 +1254,13 @@ class GitHubCollector:
                 raise CatalogError("API_SCHEMA", "Authenticated identity missing")
             scope["principal_ref"] = str(identity.get("id") or identity["login"])
             self.facts.principal = scope["principal_ref"]
+            permissions = identity_response.headers.get("x-oauth-scopes")
+            self.facts.permissions = (
+                sorted(item.strip() for item in permissions.split(",") if item.strip())
+                if permissions is not None
+                else None
+            )
+            scope["observed_permissions"] = self.facts.permissions
             if cfg.get("include_repositories"):
                 import re
 
@@ -1444,7 +1504,7 @@ class GitHubCollector:
             .read_text()
         )
         current = self.s.one(
-            "SELECT object_format,head_oid,base_oid FROM change_request_state WHERE change_request_id=?",
+            "SELECT object_format,head_oid,base_oid,metadata FROM change_request_state WHERE change_request_id=?",
             (pr["change_request_id"],),
         )
         target = (
@@ -1468,7 +1528,7 @@ class GitHubCollector:
                     "owner": owner,
                     "name": name,
                     "number": pr["provider_change_request_number"],
-                    "query": root_query,
+                    "query_kind": "review-thread-root",
                     **target,
                 },
             )
@@ -1528,15 +1588,32 @@ class GitHubCollector:
                 value = self.graphql_object(
                     payload, "data", "repository", "pullRequest"
                 )
-                # The response reached the exact PR requested by owner/name/number.
-                # A malformed connection is still a real scoped observation;
-                # error-only/null resource responses above supply no capture.
-                if (
-                    "number" in value
-                    and value["number"] != pr["provider_change_request_number"]
+                # A returned owner must match a captured identity or the
+                # canonical PR number requested by this static query.
+                if "number" in value and (
+                    type(value["number"]) is not int
+                    or value["number"] != pr["provider_change_request_number"]
                 ):
                     raise CatalogError(
                         "SCOPE_MISMATCH", "Thread root has a foreign PR parent"
+                    )
+                known_node_id = (
+                    json.loads(current["metadata"]).get("node_id") if current else None
+                )
+                returned_node_id = value.get("id")
+                if (
+                    known_node_id is not None
+                    and returned_node_id is not None
+                    and returned_node_id != known_node_id
+                ):
+                    raise CatalogError(
+                        "SCOPE_MISMATCH", "Thread root has a foreign opaque PR identity"
+                    )
+                if "number" not in value and not (
+                    known_node_id is not None and returned_node_id == known_node_id
+                ):
+                    raise CatalogError(
+                        "API_SCHEMA", "Thread root owner identity is unavailable"
                     )
                 identified = True
                 nodes, _, next_cursor = self.graphql_connection(
@@ -1970,33 +2047,64 @@ class GitHubCollector:
                 }
             ]
 
-        commits = self.collection(
-            repo,
-            pr["change_request_id"],
-            "pr-commits",
-            job,
-            url + f"/commits?per_page={self.cfg['rest_page_size']}",
-            commit,
-            context=context,
-            listing_kind="commits",
-            cap=250,
-            reported=before.get("commits"),
-            reuse=True,
+        failures = self.code_listing_failures[pr["change_request_id"]] = []
+
+        def collect(kind, normalizer, listing_kind, cap, reported):
+            if (
+                self.code_listing_not_before_us is not None
+                and self.code_listing_not_before_us > self.http.clock_us()
+            ):
+                failures.append({"kind": kind, "reason": "RATE_LIMIT_WAIT"})
+                return None
+            try:
+                return self.collection(
+                    repo,
+                    pr["change_request_id"],
+                    kind,
+                    job,
+                    url + f"/{listing_kind}?per_page={self.cfg['rest_page_size']}",
+                    normalizer,
+                    context=context,
+                    listing_kind=listing_kind,
+                    cap=cap,
+                    reported=reported,
+                    reuse=True,
+                )
+            except CatalogError as error:
+                if error.code in ("CANCELLED", "STALE_ATTEMPT"):
+                    raise
+                failures.append({"kind": kind, "reason": error.code})
+                self.code_listing_not_before_us = error.details.get(
+                    "not_before_us", self.code_listing_not_before_us
+                )
+                # The rejected boundary never becomes a page. Its already
+                # committed exact-target prefix remains a real domain listing.
+                saved = self.s.one(
+                    "SELECT l.fetch_collection_id,l.code_listing_id FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? AND p.job_id=? ORDER BY f.observed_at_us DESC LIMIT 1",
+                    (pr["change_request_id"], listing_kind, algorithm, head, base, job),
+                )
+                return tuple(saved) if saved else None
+
+        listings = (
+            collect("pr-commits", commit, "commits", 250, before.get("commits")),
+            collect("pr-files", file_item, "files", 3000, before.get("changed_files")),
         )
-        files_result = self.collection(
-            repo,
-            pr["change_request_id"],
-            "pr-files",
-            job,
-            url + f"/files?per_page={self.cfg['rest_page_size']}",
-            file_item,
-            context=context,
-            listing_kind="files",
-            cap=3000,
-            reported=before.get("changed_files"),
-            reuse=True,
-        )
-        return commits, files_result
+        self.code_listing_results[pr["change_request_id"]] = listings
+        if failures:
+            raise CatalogError(
+                failures[0]["reason"],
+                "PR comparison enumeration is truncated or incomplete",
+                {
+                    "missing": failures,
+                    "code_listing_ids": [item[1] for item in listings if item],
+                    **(
+                        {"not_before_us": self.code_listing_not_before_us}
+                        if self.code_listing_not_before_us is not None
+                        else {}
+                    ),
+                },
+            )
+        return listings
 
     def _assess_code(
         self, repo, pr, job, before, after, listings, inputs_complete, missing
@@ -2023,8 +2131,8 @@ class GitHubCollector:
                 ).encode()
             ).hexdigest()
         )
-        commit_listing = listings[0][1] if listings else None
-        file_listing = listings[1][1] if listings else None
+        commit_listing = listings[0][1] if listings and listings[0] else None
+        file_listing = listings[1][1] if listings and listings[1] else None
         actual = self.s.one(
             "SELECT head_oid,base_oid FROM eligible_change_request_state WHERE change_request_id=?",
             (pr["change_request_id"],),
@@ -2061,7 +2169,22 @@ class GitHubCollector:
         )
         if (
             previous
-            and after is None
+            and (
+                after is None
+                or any(
+                    failure["kind"]
+                    in (
+                        "threads",
+                        "review",
+                        "review-comment",
+                        "pr-commits",
+                        "pr-files",
+                        "pr-code-listings",
+                        "pr-code-check",
+                    )
+                    for failure in missing
+                )
+            )
             and actual is not None
             and actual["head_oid"] == head
             and actual["base_oid"] == base
@@ -2118,6 +2241,12 @@ class GitHubCollector:
                 *sorted(relevant_kinds),
             ),
         )[0]
+        if (
+            previous is not None
+            and previous["observed_at_us"] is not None
+            and (observed is None or observed < previous["observed_at_us"])
+        ):
+            return assessment
         with self.s.transaction():
             self.facts.fence(job)
             self.s.execute(
@@ -2287,6 +2416,9 @@ class GitHubCollector:
         assessments = []
         self.observed_partial_scopes.clear()
         self.thread_collections.clear()
+        self.code_listing_results.clear()
+        self.code_listing_failures.clear()
+        self.code_listing_not_before_us = None
 
         def attempt(kind, operation):
             nonlocal waiting
@@ -2429,6 +2561,13 @@ class GitHubCollector:
                     "pr-code-listings",
                     lambda: self._code_collect(repo, pr, job, url, before),
                 )
+                if listings is None:
+                    listings = self.code_listing_results.get(pr["change_request_id"])
+                failures.extend(
+                    self.code_listing_failures.get(pr["change_request_id"], ())
+                )
+                if self.code_listing_not_before_us is not None:
+                    waiting = self.code_listing_not_before_us
                 checked = attempt(
                     "pr-code-check", lambda: self.code_check(repo, pr, job, url)
                 )
@@ -2469,11 +2608,19 @@ class GitHubCollector:
                     failure
                     for failure in failures
                     if failure["kind"]
-                    not in ("pr-git", "pr-code-listings", "pr-code-check", "pr-code")
+                    not in (
+                        "pr-git",
+                        "pr-code-listings",
+                        "pr-commits",
+                        "pr-files",
+                        "pr-code-check",
+                        "pr-code",
+                        "timeline",
+                    )
                 ]
                 for kind, documents_only in (
                     ("pr-documents", True),
-                    ("pr", True),
+                    ("pr", False),
                     ("pr-code", False),
                 ):
                     summary_failures = (
@@ -2491,14 +2638,21 @@ class GitHubCollector:
                             repo,
                             job,
                             documents_only=documents_only,
+                            code_only=kind == "pr-code",
                             include_partial=bool(summary_failures),
                         ),
                         {
                             "fetch_collection_ids": self.summary_collection_ids(
-                                repo, job, documents_only=documents_only
+                                repo,
+                                job,
+                                documents_only=documents_only,
+                                code_only=kind == "pr-code",
                             ),
                             "completion_marker_uuidv4s": self.summary_marker_ids(
-                                repo, job, documents_only=documents_only
+                                repo,
+                                job,
+                                documents_only=documents_only,
+                                code_only=kind == "pr-code",
                             ),
                             "missing": summary_failures,
                         },
@@ -2544,9 +2698,20 @@ class GitHubCollector:
             return target
         base_revision = self.s.revision()
         response = self.request_get(url, repo)
+        if response.status_code == 304:
+            response = self.request_get(
+                url, repo, headers={"Cache-Control": "no-cache"}
+            )
+            if response.status_code == 304:
+                raise CatalogError(
+                    "REUSE_UNAVAILABLE", "304 without normalized representation"
+                )
         value = None
         try:
             value = self.rest_json(response)
+            base_revision = response.extensions.get(
+                "catalog_base_revision", base_revision
+            )
             timestamp = self.facts.response_time(response)
             with self.s.transaction():
                 self.facts.fence(job)

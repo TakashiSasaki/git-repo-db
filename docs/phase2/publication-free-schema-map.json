@@ -5,7 +5,7 @@
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "f66a3d1bf3b6636b20c8f58254012ce037beb0c5506cc45a08628e812924f1fe",
+    "ddl_sha256": "f1ec742a1d9778dab4ed7950bef0f257d0d368ee8c3d89f945cba61ed23ebd04",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -988,6 +988,39 @@
         ],
         "foreign_keys": [],
         "sql_sha256": "b12f74c9a935d34b029a2bb19c38cd5697ce69d0b074e21e50d83bc9b2ff8cbc"
+      },
+      "coverage_claim_markers": {
+        "columns": [
+          "coverage_claim_id",
+          "completion_marker_uuidv4"
+        ],
+        "primary_key": [
+          "coverage_claim_id",
+          "completion_marker_uuidv4"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "completion_markers",
+            "completion_marker_uuidv4",
+            "completion_marker_uuidv4",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "coverage_claims",
+            "coverage_claim_id",
+            "coverage_claim_id",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "ba065376d69055150ae3b434d8826796dd4260f600bea2a5d024e5f1e10978dd"
       },
       "coverage_claims": {
         "columns": [
@@ -3313,7 +3346,7 @@
             "NONE"
           ]
         ],
-        "sql_sha256": "564f1eb7e2a672a2c5dba1dbea98cfd29d32e23203f5f92dde66afef2421cea1"
+        "sql_sha256": "b88358486edbe2a9ea439a5bdc62ea3f0a0cd50ef5ce2f29eb4a0ce1bf08b48e"
       },
       "tree_objects": {
         "columns": [
@@ -3365,9 +3398,9 @@
     },
     "views": {
       "active_identity_relations": "90abaa6abf85c2c0faa2387435b5852c1d1c9cc1c83dc839c7a8327fcfb21053",
-      "available_git_acquisitions": "008f0d7107ea32cb10f1af171f350317f205da4711a38c711ba77b9d9525c94f",
-      "available_git_objects": "30dc8636e629a4702e53a0953e6cb816867b32577e9b50bf607ebb721e33360e",
-      "available_snapshots": "ea10166a8ee51a0b56b6acf1861fd2ed98e529321ea163c5e05bea8880233c7d",
+      "available_git_acquisitions": "4bf67be352cc93e00304d343eb8d8b3411b181a6fd12a9b91dbddf3a47ca446c",
+      "available_git_objects": "12c8a25107bb8de63cae7d80564dcf004c327be19228aa70c4fa08770e0c9ff2",
+      "available_snapshots": "1833d01d68322654f33ede71764df68d5e091a215c2246b97b64ae4e5b72c8a7",
       "current_coverage": "2211055d4d9a6aa544637d4cc903b129581fc85a8e9394cc1b10ab8bf182c4bc",
       "current_resource_diagnostics": "00dd0cbdfdc9613efd3771f871f8514e9b7e7306a71f96767c4d20e24c9dda3e",
       "current_snapshots": "c1a9a33b1de8259d9d9c760b4439a0ef4a05a6f007d42f2faff33f9c40552b8f",
@@ -3379,7 +3412,8 @@
       "eligible_source_repositories": "c6a88fc34e1a98aa495ac95a21d51a18bae9878c98896ee556120b810948cad7",
       "repository_equivalence_closure": "e14a435bb0a3650b2d64f8ba4fa0c952f4c9fc08b194c8d1862d9fbed59ff8a1",
       "repository_observed_names": "a952e04fa8adb65f758e14a84e967409cc6fc2c0e28ff7a4918cf375e331e634",
-      "service_equivalence_closure": "3ca6347db1acb9774175f884411ba0ad78b3399b06ff7b90d7cd162548192075"
+      "service_equivalence_closure": "3ca6347db1acb9774175f884411ba0ad78b3399b06ff7b90d7cd162548192075",
+      "valid_ref_captures": "995cba43756a2a380a6312cfc10003da61e36d0261ae91da874fb8faabffbdbd"
     },
     "triggers": {
       "acquisition_cache_owner_insert": {
@@ -3686,6 +3720,22 @@
         "owner": "contents",
         "sql_sha256": "f862d052938ccd63a271bb350f4e9e724b6d6ca1c6764a55cc50d61db28e527e"
       },
+      "coverage_claim_markers_immutable": {
+        "owner": "coverage_claim_markers",
+        "sql_sha256": "9e88b559182072bb2c03bca185ec1d78dba24461b8a6e8e3c0af85cc52a654c2"
+      },
+      "coverage_claim_markers_insert": {
+        "owner": "coverage_claims",
+        "sql_sha256": "fdc1ed6a8763bc28040babbebf845d04ef4b4ad884b6f7171889ded69c456b63"
+      },
+      "coverage_claim_markers_no_delete": {
+        "owner": "coverage_claim_markers",
+        "sql_sha256": "8f6f6110b734a647a344d16e5c4627cf04282951af14af6f495769d2e39cba18"
+      },
+      "coverage_claim_markers_subject": {
+        "owner": "coverage_claim_markers",
+        "sql_sha256": "7c3d302fdce6695b5b85d4a85ca499bbdebcc2b17978868e2fa847e6fa976b5a"
+      },
       "coverage_claims_immutable": {
         "owner": "coverage_claims",
         "sql_sha256": "30f28c4f49bdfb96024a71e1a0be0aca02f42faa52400f7c59e668bb848e71e6"
@@ -3712,7 +3762,7 @@
       },
       "current_collection_completion_valid": {
         "owner": "completion_markers",
-        "sql_sha256": "332739d56c535195d25d53aab08bd527e62532532b3271bb459214fd7bcf7cfa"
+        "sql_sha256": "e10d63fa02e09b64d581459b737d60be14db2ad9335a54682f2bb766e18cb505"
       },
       "current_collection_pages_immutable": {
         "owner": "current_collection_pages",
@@ -3732,7 +3782,7 @@
       },
       "current_collection_tree_completion_valid": {
         "owner": "completion_markers",
-        "sql_sha256": "c4cd64cfc8058ffb02d9688a69ca20d9f4ac081ead03a49dbef845f3b71f0eed"
+        "sql_sha256": "a83d807a054093f4cbbc01e0b6a4b8e9a064d8d0d610d45db6da6a069114d9ed"
       },
       "database_identity_immutable": {
         "owner": "database_identity",
@@ -3821,6 +3871,10 @@
       "git_name_facts_retain": {
         "owner": "git_name_facts",
         "sql_sha256": "628389172b68754808ed95a43903be1a2e73379331d691c77007baf79624d254"
+      },
+      "git_object_payloads_identity": {
+        "owner": "git_object_payloads",
+        "sql_sha256": "215952bd24b98ed1897de1218e8d92402191843606e575e82fdd65a54865879a"
       },
       "git_object_payloads_immutable": {
         "owner": "git_object_payloads",
@@ -3976,35 +4030,35 @@
       },
       "json_change_request_state_acquisition_scope_json_insert": {
         "owner": "change_request_state",
-        "sql_sha256": "02071cb72d6e63b3aec40b35c79752f020c19cbac84e0ebce1b4428239dac159"
+        "sql_sha256": "65a45b08c7f612c2ee854af87cf7a317cb331584a58ce2ca98eae6868cbc4db2"
       },
       "json_change_request_state_acquisition_scope_json_update": {
         "owner": "change_request_state",
-        "sql_sha256": "937660bf946a79630fc463aa88ff06e603f7b91c18cb8e4554acfd27e727ac5c"
+        "sql_sha256": "6cf4079083f5afe1b9e1703dc6fd096e4639d096ea0e6c83970c11c041cdf794"
       },
       "json_change_request_state_field_evidence_json_insert": {
         "owner": "change_request_state",
-        "sql_sha256": "627832ac0b96d0eb70cc081ccdca2fe7ca206f908ed1370b7ae35b44a9fc2a9d"
+        "sql_sha256": "3890e91d5f1185707b790ab35a4cb3afccbd261ab93484c6dd451846f8ba3bad"
       },
       "json_change_request_state_field_evidence_json_update": {
         "owner": "change_request_state",
-        "sql_sha256": "93112fc01759734071da6064a510d0a7c612b6c66992538c178b60449630da2a"
+        "sql_sha256": "f476a61e9c3a0355e582305378278ede176dee5cf3f832b3ee0706cb57ace2f6"
       },
       "json_change_request_state_metadata_insert": {
         "owner": "change_request_state",
-        "sql_sha256": "f40de496893fe1aefd0753b99cf3d27c3c8edc66ec29f3bb5f6f595ae5352b1c"
+        "sql_sha256": "adac37489a152679ae886527cff3ef4e66e3c0d8ff30b3314350fc5ede167b03"
       },
       "json_change_request_state_metadata_update": {
         "owner": "change_request_state",
-        "sql_sha256": "e93040c108e5574ef7e906bc0b55a3a82b6fecefe0c94217defacd625748f148"
+        "sql_sha256": "57b0ef1b4ac67baec8ce8203d5215d1ac0a39d4c271bd42c4d903b3f6cf1113b"
       },
       "json_code_assessments_details_json_insert": {
         "owner": "code_assessments",
-        "sql_sha256": "4c5247d009b382c3234335c7aca751b4d4df35a599786e839f2579292878f764"
+        "sql_sha256": "21add37ef5348d515eff16eb4420c4d1cccbd1fe346520bb5b990293d0099406"
       },
       "json_code_assessments_details_json_update": {
         "owner": "code_assessments",
-        "sql_sha256": "73d7fbfb7fc5a41b476452b4000dbfeae99f28ea46b1814a80ca5dbb8db49321"
+        "sql_sha256": "8dab98abeddbf1339b9e7148947df9cf9ff461c8ce1c17f240c3d626f60e8b36"
       },
       "json_code_commits_metadata_insert": {
         "owner": "code_commits",
@@ -4032,11 +4086,11 @@
       },
       "json_coverage_claims_details_json_insert": {
         "owner": "coverage_claims",
-        "sql_sha256": "986e4765875c9a581eac6323182c576419a156c77e114e9c699a05ccc61991f0"
+        "sql_sha256": "92a48e3789e16607c03e15aa23c29a26035be9435826658fd015d802913dc861"
       },
       "json_coverage_claims_details_json_update": {
         "owner": "coverage_claims",
-        "sql_sha256": "49d12545c3ee98a2905d75d80c8c676705b780b62e8b4686ae8916dfa7d626a8"
+        "sql_sha256": "32137d31e8d61608c0bc23fc94e7119796e8f9eaae4ca2fda797fb91b236cd54"
       },
       "json_current_collection_pages_members_insert": {
         "owner": "current_collection_pages",
@@ -4048,19 +4102,19 @@
       },
       "json_document_state_acquisition_scope_json_insert": {
         "owner": "document_state",
-        "sql_sha256": "40cda60c42e4eb10abf6d6ec6140d67820cf2b1723c8d278f968b903285c6be9"
+        "sql_sha256": "e3df02fcd6fc689de10f195be0ba64234b4d3725cbfae108b2bdb5f24b52cdf0"
       },
       "json_document_state_acquisition_scope_json_update": {
         "owner": "document_state",
-        "sql_sha256": "db9472d7ea9ea72706d8f4facc49f06902a81a3d85e882cda842a4489fe20f9f"
+        "sql_sha256": "1f1c51bce928750ba492baec4b10edd259a4a239cf22f2b377d8acfee802f73d"
       },
       "json_document_state_field_evidence_json_insert": {
         "owner": "document_state",
-        "sql_sha256": "75b6a04c9714db2e6133bcbbd45fd3989cccddc9c1baae22ad7a603b5808e74c"
+        "sql_sha256": "daaffc1a5e65245de91a653176b32e364649a27e20bf43e6e5283a1fc50576eb"
       },
       "json_document_state_field_evidence_json_update": {
         "owner": "document_state",
-        "sql_sha256": "ffcf6e00ab358c9c338244fe9c6a14d6f05fdacc50a1e1f8987236530c2e7309"
+        "sql_sha256": "93718546e9a4d19a271b6d21b2d3b6bac0099e8becc0fb12c5487093b8acccaf"
       },
       "json_document_state_metadata_insert": {
         "owner": "document_state",
@@ -4088,19 +4142,19 @@
       },
       "json_exchange_staging_record_json_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "2a0292aee5b66721ea3664d727380d656c6d0749d5954daed69b917a1ce05b5c"
+        "sql_sha256": "9523dd6f10fa1085e38ed4ab23b644a5342c3d512e17ca3dbef672e391bfd98f"
       },
       "json_exchange_staging_record_json_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "fd100d947760b6f019be074edbc064db9e2377ae6c8813e4546fa2f677062764"
+        "sql_sha256": "43835cdd77d6b92c06ab503edfa32b447c655e2e892d8676a338e0c1438cff73"
       },
       "json_fetch_collections_scope_json_insert": {
         "owner": "fetch_collections",
-        "sql_sha256": "3b4d89a1208130d94890cde225231e77a874f7a2124a6ce98b0e16c7f056b100"
+        "sql_sha256": "9f9edb8b33df6e580661531dafb7823cb1b6a96b325f458fae05ff4d526b278c"
       },
       "json_fetch_collections_scope_json_update": {
         "owner": "fetch_collections",
-        "sql_sha256": "219c739153aad6ac7f2088956190bb8d9be74049c60f6a36218ba5fab9ca7d4b"
+        "sql_sha256": "57b41fc2b2887e1212ed30782e995b861d2f98958e86f3af738db884bf93a2bb"
       },
       "json_git_acquisitions_request_insert": {
         "owner": "git_acquisitions",
@@ -4160,27 +4214,27 @@
       },
       "json_issue_resources_acquisition_scope_json_insert": {
         "owner": "issue_resources",
-        "sql_sha256": "96fa2d38fd5e16dc32f2529aae223e1c5da6976fa91c577c842069dcc78095df"
+        "sql_sha256": "5e53e2b38605342bb22c2f04f3f4042c0bcdb2c268387f727004c3a0993d12a6"
       },
       "json_issue_resources_acquisition_scope_json_update": {
         "owner": "issue_resources",
-        "sql_sha256": "66f050be802d60c726b3a7381fb391c20722f93858cb384b3aa5788cc4538353"
+        "sql_sha256": "3075b12e195d3cb6e0c77baba88f3b6e77eefc2ec40d59514bbc35e3669e961d"
       },
       "json_issue_resources_field_evidence_json_insert": {
         "owner": "issue_resources",
-        "sql_sha256": "39b0e31175aff9477eb7e6bf99871146eca8c14ca9761cef8370ac33e7201c26"
+        "sql_sha256": "30884dd251c3a9e6fe702974a316f7168d21510666e279a1bce0247c682b4a25"
       },
       "json_issue_resources_field_evidence_json_update": {
         "owner": "issue_resources",
-        "sql_sha256": "3ebd4ebe12fa6c39f5cdfffe7af662bb78ab16b03153db27989958a3cc0769b4"
+        "sql_sha256": "a95bcc8f8eb5fd451f1efc6840c9a2256388a731b3023ae391a8da40cbb71192"
       },
       "json_issue_resources_metadata_insert": {
         "owner": "issue_resources",
-        "sql_sha256": "3390236fa1f785a07fa2f0ba976f969d993cfec80f41daac98eaa34b0c2df81d"
+        "sql_sha256": "6f07cfcb20b5cb48ee0353ee1953bab2eca1156f84657bf41684fa1d1275ac04"
       },
       "json_issue_resources_metadata_update": {
         "owner": "issue_resources",
-        "sql_sha256": "025016ef9d396deb0007e232224d86715fd1757aa96eef2994e44f7449e9bb5e"
+        "sql_sha256": "bd46aa687da81ac87e7cc80ea8531b15c7d50f4651351dfa089187737b181e3f"
       },
       "json_job_attempts_checkpoint_insert": {
         "owner": "job_attempts",
@@ -4248,43 +4302,43 @@
       },
       "json_review_resources_acquisition_scope_json_insert": {
         "owner": "review_resources",
-        "sql_sha256": "b32746d4920b1d77e3512a9608c37107fa47aa31fed4304d6147daf2817bc006"
+        "sql_sha256": "bcc6c48caaf11f15875c908b46249ca6829a080333335bd6a9307d99f7162fa5"
       },
       "json_review_resources_acquisition_scope_json_update": {
         "owner": "review_resources",
-        "sql_sha256": "329273a8106cee3bde201930298f156fe8cd53e57cea032e477c33b904485582"
+        "sql_sha256": "b00f320d7d55dce97852a28c29d32d6962b0622836d22f5e2eb29bc48ac1cb48"
       },
       "json_review_resources_field_evidence_json_insert": {
         "owner": "review_resources",
-        "sql_sha256": "810ebafe1129d2eee751306cca41cc385ff3880aa22ba60377725e7817da885c"
+        "sql_sha256": "7d612b7d82cdd6967ebca98ad1a1961aa74ccec5ee204c6e5f9b676eb88fc61f"
       },
       "json_review_resources_field_evidence_json_update": {
         "owner": "review_resources",
-        "sql_sha256": "131175136be1ba2900fe5735dec30ebf83d50a7e7fbe9612eb78880011fcfd76"
+        "sql_sha256": "4460ba0160cd3a9349c590e2ef47c13e185232c89e8993087680b6e28eac4ebc"
       },
       "json_review_resources_metadata_insert": {
         "owner": "review_resources",
-        "sql_sha256": "d6f40d3ce97f4f8045838dae0e23812fb9855e5cbb42f76cb80b895eb76ec075"
+        "sql_sha256": "5b768f1ca5b4024a777e60143ae516aee8eeb961a85b1ff33990ae4d77110db8"
       },
       "json_review_resources_metadata_update": {
         "owner": "review_resources",
-        "sql_sha256": "ba85d69f4dc5bd7b4d942dba4c90b4d44c2cd245e8eff1c885428986518d6cdb"
+        "sql_sha256": "d5803f850970a22c578ce96fbb9ee1ade39ff092e8576769486022e7e9e8166e"
       },
       "json_review_thread_state_acquisition_scope_json_insert": {
         "owner": "review_thread_state",
-        "sql_sha256": "edf40933345c0c6205a22c26caab3af9199b374a99539e62aa0d1a9666113f1e"
+        "sql_sha256": "fabc00f984b216f322316e9a3e2e9fdb91c4d6dcbbd1a9ca9a2644b2003cfd2b"
       },
       "json_review_thread_state_acquisition_scope_json_update": {
         "owner": "review_thread_state",
-        "sql_sha256": "ec67d6f267cf31957851d6d01ef6e883a63b65ff971565775f433182ac42a4fb"
+        "sql_sha256": "8639a5583ddccf5a9617eb2736593d228409560ae2c361567668c1dfe25d27af"
       },
       "json_review_thread_state_field_evidence_json_insert": {
         "owner": "review_thread_state",
-        "sql_sha256": "1c781cdedf9bf86086020ef90e2dfc5d60f709ce54d817d4dd5e53f8225edeff"
+        "sql_sha256": "8f283e5f81a2c00ebf1cdcc5174cfe225934f931ac27c36dd236f0d7eba7f949"
       },
       "json_review_thread_state_field_evidence_json_update": {
         "owner": "review_thread_state",
-        "sql_sha256": "c8f873fb227db480fb89269f5550c826b82a91290714536374f1eaa0db872e4f"
+        "sql_sha256": "f85adbcd599c545f7d457c98e012e49eaeca640b3fe9dff1204b941a13caabb6"
       },
       "json_review_thread_state_metadata_insert": {
         "owner": "review_thread_state",
@@ -4312,27 +4366,27 @@
       },
       "json_source_inventory_assessments_members_json_insert": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "93158a001036f332c8d56803198175c7ab82c36025818ed089342da4e8cfc777"
+        "sql_sha256": "ba609237d5527f8862b9e8ec39a3bc65a91524dbbee673d08988ca1ae56c2e87"
       },
       "json_source_inventory_assessments_members_json_update": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "b757274a310ee30bb93e971da5dcd1c4e9014c440fcb4fb7fbb5a5075f505237"
+        "sql_sha256": "8a280324d3afdfe353318c497829ef81a0fd6f01f0e06c6032d1db14fdb4e9dd"
       },
       "json_source_inventory_assessments_scope_json_insert": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "8919023af7f181d84e9a75fabe80f3ac53d2cee2e649b02b3df082042fb6ebd0"
+        "sql_sha256": "162b503653495e37d288e3eedbf2212e5d33e29cf897f4f5126664d2d7de3c25"
       },
       "json_source_inventory_assessments_scope_json_update": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "c282fe8c1bed84f5d11a51ca3b609e11b425e8990700892d266ecdda02f084ab"
+        "sql_sha256": "72ffee64e68253e08ad25f660a7529c95a447cca28fa0a6aa1786ad83eb33243"
       },
       "json_source_repositories_field_evidence_json_insert": {
         "owner": "source_repositories",
-        "sql_sha256": "4e71dd15c843fe084a51bbd8cdb9971feb3fe742af97b705725d32da2a2b66f4"
+        "sql_sha256": "473de7c3a798137f440bc5761908fab490546083afce45f3e9c24eef95d2e73d"
       },
       "json_source_repositories_field_evidence_json_update": {
         "owner": "source_repositories",
-        "sql_sha256": "dc4a70bfc0a322c2c3214a8123458953d77cea9e1263daaeb7b1d6890d3d9fdd"
+        "sql_sha256": "774629284edd81095a6e14d8b34c49a2e042a61e319ec7d52c92243c8ae934c6"
       },
       "json_source_repositories_metadata_json_insert": {
         "owner": "source_repositories",
@@ -4344,11 +4398,11 @@
       },
       "json_source_repositories_scope_json_insert": {
         "owner": "source_repositories",
-        "sql_sha256": "2eb76b88330cc4e80d823bd11d3986a28191df74776ff4db01c1b22d9fd1ef74"
+        "sql_sha256": "b8b3e6daba5891ba234d7e7fbe6cb0add4d58c0607e484b9c05d2112fb952d7c"
       },
       "json_source_repositories_scope_json_update": {
         "owner": "source_repositories",
-        "sql_sha256": "6c9ea68d8861e7424c15b8fe9dde882c3be186120ab353f4b17743a38b274b8b"
+        "sql_sha256": "dae827072fd447255acc15ee3467d51f996d6607c99e3c6a865b78f626e5cf56"
       },
       "json_sources_settings_insert": {
         "owner": "sources",
@@ -4664,7 +4718,7 @@
       },
       "snapshots_complete_update": {
         "owner": "snapshots",
-        "sql_sha256": "f9cbb5a5289bc40851c56812eb51712cd1397b47f9c1c70c385b16b01703ec50"
+        "sql_sha256": "91e1e2016422701c75f38c4613e1b8f08babfd2bcb4f80c4920bddd21bb846c9"
       },
       "snapshots_immutable": {
         "owner": "snapshots",
@@ -4888,6 +4942,10 @@
         "owner": "content_locations",
         "sql_sha256": "d6ad52f9821c7d676c4b898302a96be863ccdb3eefaffe0e9e6ef2c16a041eec"
       },
+      "coverage_claim_markers_marker": {
+        "owner": "coverage_claim_markers",
+        "sql_sha256": "c31f0373db762f879cd8c126395c46ae4e5a6c1ff34415bab18bb6afa1226075"
+      },
       "coverage_claims_fk_0": {
         "owner": "coverage_claims",
         "sql_sha256": "8e5c202bdbf54a47480e03e5726a1b7c291a82c2601ab3c253eab483f84852dd"
@@ -4919,6 +4977,14 @@
       "exchange_staging_reason": {
         "owner": "exchange_staging",
         "sql_sha256": "e1f340a4188ac18c282e93ab588749d2c55c988267c72068680fedc62beffb59"
+      },
+      "exchange_staging_record_owner": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d92ed32025f6f4d87894276a70b40c026400a2bcb96990b868381d2bceffefcd"
+      },
+      "exchange_staging_table": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c85bc79231eb85f6dd3ba255407ce8e7b40be16045c37835e2f978faac201565"
       },
       "fetch_collections_fk_0": {
         "owner": "fetch_collections",
@@ -8035,6 +8101,7 @@
       "completion_markers",
       "coverage_scopes",
       "coverage_claims",
+      "coverage_claim_markers",
       "code_listings",
       "code_listing_progress",
       "code_assessments",
@@ -8143,6 +8210,7 @@
       "added": [
         "change_request_state",
         "code_assessments",
+        "coverage_claim_markers",
         "document_state",
         "git_commit_facts",
         "git_name_facts",
@@ -8240,7 +8308,8 @@
         "eligible_change_request_state",
         "eligible_document_state",
         "eligible_review_thread_state",
-        "eligible_source_repositories"
+        "eligible_source_repositories",
+        "valid_ref_captures"
       ],
       "changed": [
         "current_resource_diagnostics",
@@ -8542,6 +8611,10 @@
         "commits_target_insert",
         "commits_target_update",
         "completion_marker_uuid_insert",
+        "coverage_claim_markers_immutable",
+        "coverage_claim_markers_insert",
+        "coverage_claim_markers_no_delete",
+        "coverage_claim_markers_subject",
         "current_collection_completion_kind",
         "current_collection_tree_completion_valid",
         "document_state_identity",
@@ -8553,6 +8626,7 @@
         "git_name_facts_immutable",
         "git_name_facts_no_replace",
         "git_name_facts_retain",
+        "git_object_payloads_identity",
         "json_change_request_events_metadata_insert",
         "json_change_request_events_metadata_update",
         "json_change_request_state_acquisition_scope_json_insert",
@@ -8856,9 +8930,12 @@
       "added": [
         "blob_content_map_content",
         "change_request_state_repository",
+        "coverage_claim_markers_marker",
         "document_state_repository",
         "exchange_staging_owner",
         "exchange_staging_reason",
+        "exchange_staging_record_owner",
+        "exchange_staging_table",
         "repository_object_sources_acquisition",
         "review_thread_state_repository",
         "snapshots_predecessor",

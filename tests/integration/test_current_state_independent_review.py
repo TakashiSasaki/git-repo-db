@@ -311,7 +311,10 @@ def test_member_receipt_survives_later_current_body_edit(reviewed_catalog):
 def candidate(catalog, body, *, updated=10, observed=0, **changes):
     row = catalog.row("issue", "100", title="ordinary issue", state="open")
     row.pop("text_body_sha256")
-    row["metadata"] = {"labels": ["retained"], "nested": {"retained": True}}
+    row["metadata"] = {
+        "labels": [{"name": "retained"}],
+        "milestone": {"title": "retained"},
+    }
     row["acquisition_scope"] = json.loads(row.pop("acquisition_scope_json"))
     row.update(
         body=body,
@@ -342,14 +345,16 @@ def test_sparse_update_preserves_exact_body_and_nested_known_fields(reviewed_cat
         for key, value in initial.items()
         if key not in {"body", "title", "metadata"}
     }
-    sparse.update(provider_updated_at_us=20, metadata={"nested": {"new": 2}})
+    sparse.update(
+        provider_updated_at_us=20, metadata={"milestone": {"closed_issues": 2}}
+    )
     assert store.admit(sparse, source="import").status == "accepted"
     row = visible_issues(catalog).data["items"][0]
     assert row["body"] == initial["body"]
     assert row["title"] == initial["title"]
     assert row["metadata"] == {
-        "labels": ["retained"],
-        "nested": {"retained": True, "new": 2},
+        "labels": [{"name": "retained"}],
+        "milestone": {"title": "retained", "closed_issues": 2},
     }
     assert catalog.store.one("SELECT count(*) FROM issue_resources")[0] == 1
     assert_absent_tables(catalog.store.connection, "document_observations")

@@ -7,8 +7,14 @@ import json
 import sqlite3
 import uuid
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.transactions import atomic_unit
+from repo_catalog.domain.git_intrinsic import (
+    commit_structure,
+    tag_structure,
+    tree_structure,
+)
 from repo_catalog.domain.git_object import validate_git_object
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import now_us
@@ -25,6 +31,7 @@ class _ConnectionStore:
 
         self.connection = connection
         self.config = DEFAULTS
+        register_git_object_sql_function(connection)
 
     def execute(self, sql, values=()):
         cursor = self.connection.execute(sql, values)
@@ -456,34 +463,12 @@ class GitParsing:
                 "GIT_OBJECT_STRUCTURE", "Malformed intrinsic Git object"
             ) from error
 
-    def _oid(self, fmt, raw):
-        width = 40 if fmt == "sha1" else 64
-        if len(raw) != width or any(c not in b"0123456789abcdef" for c in raw):
-            raise CatalogError("GIT_OBJECT_STRUCTURE", "Malformed canonical target OID")
-        return bytes.fromhex(raw.decode("ascii"))
-
     def commit(self, obj, data, *, decode=True):
-        headers, message = data.split(b"\n\n", 1)
-        entries = [
-            line.split(b" ", 1)
-            for line in headers.split(b"\n")
-            if not line.startswith(b" ")
-        ]
-        trees = [v for k, v in entries if k == b"tree"]
-        if len(trees) != 1:
-            raise CatalogError(
-                "GIT_OBJECT_STRUCTURE", "Commit requires exactly one tree"
-            )
+        structure = commit_structure(obj["object_format"], data)
+        headers, message = structure["raw_headers"], structure["raw_message"]
         fmt, obj_id = obj["object_format"], obj["git_object_id"]
-        tree = self._oid(fmt, trees[0])
-        offset, tree_offset, parent_offsets = 0, None, []
-        for line in headers.split(b"\n"):
-            if line.startswith(b"tree "):
-                tree_offset = offset
-            elif line.startswith(b"parent "):
-                parent_offsets.append(offset)
-            offset += len(line) + 1
-        parents = [self._oid(fmt, v) for k, v in entries if k == b"parent"]
+        tree = structure["tree_oid"]
+        parents = structure["parents"]
         self.fact(
             "commits",
             {
@@ -491,7 +476,7 @@ class GitParsing:
                 "tree_format": fmt,
                 "tree_oid": tree,
                 "tree_git_object_id": self.object(fmt, tree, "tree"),
-                "tree_header_offset": tree_offset,
+                "tree_header_offset": structure["tree_header_offset"],
                 "parent_count": len(parents),
                 "raw_headers": headers,
                 "raw_message": message,
@@ -504,10 +489,12 @@ class GitParsing:
                 {
                     "commit_git_object_id": obj_id,
                     "parent_ordinal": ordinal,
-                    "parent_header_offset": parent_offsets[ordinal],
+                    "parent_header_offset": parent["parent_header_offset"],
                     "parent_format": fmt,
-                    "parent_oid": parent,
-                    "parent_git_object_id": self.object(fmt, parent, "commit"),
+                    "parent_oid": parent["parent_oid"],
+                    "parent_git_object_id": self.object(
+                        fmt, parent["parent_oid"], "commit"
+                    ),
                 },
                 ("commit_git_object_id", "parent_ordinal"),
             )
@@ -528,8 +515,7 @@ class GitParsing:
                 "metadata": json.dumps(
                     {
                         key.decode("ascii", "backslashreplace"): self.decode(value)
-                        for key, value in entries
-                        if key not in (b"tree", b"parent")
+                        for key, value in structure["metadata_entries"]
                     },
                     sort_keys=True,
                 ),
@@ -538,44 +524,18 @@ class GitParsing:
         )
 
     def tree(self, obj, data, *, decode=True):
-        offset, entries = 0, []
-        width = 20 if obj["object_format"] == "sha1" else 32
-        seen = set()
-        while offset < len(data):
-            space = data.index(b" ", offset)
-            end = data.index(b"\0", space)
-            mode = int(data[offset:space], 8)
-            name, child = data[space + 1 : end], data[end + 1 : end + 1 + width]
-            if (
-                data[offset:space].strip(b"01234567")
-                or not name
-                or b"/" in name
-                or name in (b".", b"..")
-                or name in seen
-                or len(child) != width
-                or mode not in (0o40000, 0o100644, 0o100755, 0o120000, 0o160000)
-            ):
-                raise CatalogError("GIT_OBJECT_STRUCTURE", "Malformed tree entry")
-            seen.add(name)
-            entries.append(
-                {
-                    "tree_git_object_id": obj["git_object_id"],
-                    "raw_name": name,
-                    "entry_offset": offset,
-                    "entry_length": end + 1 + width - offset,
-                    "mode": mode,
-                    "child_format": obj["object_format"],
-                    "child_oid": child,
-                    "child_git_object_id": None
-                    if mode == 0o160000
-                    else self.object(
-                        obj["object_format"],
-                        child,
-                        "tree" if mode == 0o40000 else "blob",
-                    ),
-                }
+        entries = tree_structure(obj["object_format"], data)
+        for entry in entries:
+            mode, child = entry["mode"], entry["child_oid"]
+            entry.update(
+                tree_git_object_id=obj["git_object_id"],
+                child_format=obj["object_format"],
+                child_git_object_id=None
+                if mode == 0o160000
+                else self.object(
+                    obj["object_format"], child, "tree" if mode == 0o40000 else "blob"
+                ),
             )
-            offset = end + 1 + width
         self.fact(
             "tree_objects",
             {"git_object_id": obj["git_object_id"], "entry_count": len(entries)},
@@ -598,16 +558,8 @@ class GitParsing:
             )
 
     def tag(self, obj, data):
-        headers, _ = data.split(b"\n\n", 1)
-        entries = dict(
-            line.split(b" ", 1)
-            for line in headers.split(b"\n")
-            if not line.startswith(b" ")
-        )
-        target = self._oid(obj["object_format"], entries[b"object"])
-        typ = entries[b"type"].decode("ascii")
-        if typ not in ("blob", "commit", "tree", "tag"):
-            raise CatalogError("GIT_OBJECT_STRUCTURE", "Malformed tag target type")
+        structure = tag_structure(obj["object_format"], data)
+        target, typ = structure["target_oid"], structure["target_type"]
         self.fact(
             "tag_objects",
             {
@@ -955,6 +907,7 @@ def verify_git_object_structure(connection, object_id):
         ("tree_objects", "git_object_id", "tree"),
         ("tree_entries", "tree_git_object_id", "tree"),
         ("tag_objects", "git_object_id", "tag"),
+        ("blob_content_map", "git_object_id", "blob"),
     ):
         if obj["type"] != expected_type and store.one(
             f"SELECT 1 FROM {table} WHERE {key}=? LIMIT 1", (object_id,)

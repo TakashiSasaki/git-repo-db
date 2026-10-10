@@ -16,7 +16,7 @@ JSON modeのstdoutは結果専用です。public schemaは同梱`resources/schem
 | cache・索引 | cache status/gc、index rebuild |
 | Git照会 | repos list/show、snapshots list/show、refs list、tree list、file show、commits list/show/compare |
 | 検索 | search path/code/commits/hash/pr/issue |
-| PR照会 | pr list/show/documents/thread/timeline |
+| PR照会 | pr list/show/documents/thread/timeline/code |
 | 通常Issue照会 | issue list/show/comments |
 | parser・補助通信 | parser reparse/inspect-message |
 | 交換 | exchange export/import/staging |
@@ -69,7 +69,7 @@ PR title/body/会話コメント/review/threadは最新受理状態だけを返�
 list/searchは`--limit`（既定100、上限1000）と`--cursor`を持ちます。
 ページが続くことと取得範囲がpartialであることは別です。
 PR照会の完全性は、同じ読み取りスナップショット内で要求したrepository・PR番号・種別・bindingの範囲を評価し、返却ページの切り出しから独立させます。`--limit`、返却バイト数、cursorの位置によって完全性の判定は変わりません。未保存の情報が検索条件に一致する可能性があるため、本文・author等の条件だけでは不足を除外しません。
-文書専用の`pr documents`と`search pr`は、`pr-code`、`pr-commits`、`pr-files`等のコードだけの不足やtimelineだけの不足を完全性に含めません。commit/path条件を指定した場合はコードも評価します。API観測後にコード取得前で中断した場合や、必要な公開済みGit参照が欠ける場合は、通常照会の`missing`に不足を示します。照会によってclaimを追加・更新することはありません。
+文書専用の`pr documents`と`search pr`は、`pr-code`、`pr-commits`、`pr-files`等のコードだけの不足やtimelineだけの不足を完全性に含めません。commit/path条件を指定した場合はコードも評価します。API観測後にコード取得前で中断した場合や、必要な検証済みのGit参照が欠ける場合は、通常照会の`missing`に不足を示します。照会によってclaimを追加・更新することはありません。
 local revision更新後のcursorはSTALE_CURSORになります。timeout時は確定できないページを捨て、飛ばしcursorを発行しません。
 `--all`による一括exportはありません。PR list/showとrepos showの入れ子配列は各100件まで表示し、`nested_collections`に保存総数と省略の有無を返します。外側cursorは入れ子配列の続きを示しません。endpointの全件参照にはendpoints listのcursorを使えます。JSONには全フィールドを、tableには主要なscalar列を安全表示します。
 

@@ -24,6 +24,10 @@ CREATE TABLE git_name_facts(
  FOREIGN KEY(tree_git_object_id,raw_name) REFERENCES tree_entries(tree_git_object_id,raw_name)
 ) STRICT;
 CREATE TRIGGER git_object_payloads_length BEFORE INSERT ON git_object_payloads WHEN NOT EXISTS(SELECT 1 FROM git_objects g JOIN stored_bytes b ON b.sha256=NEW.payload_sha256 WHERE g.git_object_id=NEW.git_object_id AND g.size=b.byte_length) BEGIN SELECT RAISE(ABORT,'Git raw payload length mismatch'); END;
+CREATE TRIGGER git_object_payloads_identity BEFORE INSERT ON git_object_payloads WHEN NOT EXISTS(
+ SELECT 1 FROM git_objects g JOIN stored_bytes b ON b.sha256=NEW.payload_sha256 WHERE g.git_object_id=NEW.git_object_id
+ AND repo_catalog_git_object_identity_valid(g.object_format,hex(g.oid),g.type,g.size,b.body,NEW.payload_sha256)=1
+) BEGIN SELECT RAISE(ABORT,'Git raw payload identity mismatch'); END;
 CREATE TRIGGER git_text_facts_content BEFORE INSERT ON git_text_facts WHEN NOT EXISTS(SELECT 1 FROM blob_content_map b JOIN git_objects g USING(git_object_id) WHERE b.git_object_id=NEW.git_object_id AND b.content_id=NEW.content_id AND g.type='blob') BEGIN SELECT RAISE(ABORT,'Git text requires matching raw blob identity'); END;
 CREATE TRIGGER commits_object_type BEFORE INSERT ON commits WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.git_object_id AND type='commit' AND object_format=NEW.tree_format) BEGIN SELECT RAISE(ABORT,'commit object identity mismatch'); END;
 CREATE TRIGGER tree_objects_object_type BEFORE INSERT ON tree_objects WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.git_object_id AND type='tree') BEGIN SELECT RAISE(ABORT,'tree object identity mismatch'); END;
@@ -36,56 +40,66 @@ CREATE TRIGGER root_manifest_entries_format BEFORE INSERT ON root_manifest_entri
 CREATE VIEW available_git_objects AS
  SELECT g.* FROM git_objects g JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256
  WHERE g.verified=1 AND g.size=b.byte_length AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=p.payload_sha256)
- AND ((g.type='blob' AND EXISTS(SELECT 1 FROM blob_content_map m JOIN contents c USING(content_id) WHERE m.git_object_id=g.git_object_id AND c.byte_length=g.size))
- OR (g.type='commit' AND EXISTS(SELECT 1 FROM commits c WHERE c.git_object_id=g.git_object_id AND c.parent_count=(SELECT count(*) FROM commit_parents p WHERE p.commit_git_object_id=c.git_object_id) AND g.size=length(c.raw_headers)+2+length(c.raw_message)
- AND b.body=CAST(c.raw_headers||char(10)||char(10)||c.raw_message AS BLOB)
- AND substr(c.raw_headers,c.tree_header_offset+1,5+length(c.tree_oid)*2)=CAST('tree '||lower(hex(c.tree_oid)) AS BLOB)
- AND (c.tree_header_offset=0 OR substr(c.raw_headers,c.tree_header_offset,1)=X'0a')
- AND (length(c.raw_headers)=c.tree_header_offset+5+length(c.tree_oid)*2 OR substr(c.raw_headers,c.tree_header_offset+6+length(c.tree_oid)*2,1)=X'0a')
- AND c.parent_count=(length(CAST(char(10)||c.raw_headers AS BLOB))-length(CAST(replace(char(10)||c.raw_headers,char(10)||'parent ','') AS BLOB)))/8
+ AND repo_catalog_git_object_identity_valid(g.object_format,hex(g.oid),g.type,g.size,b.body,p.payload_sha256)=1
+ AND NOT EXISTS(SELECT 1 FROM commits c WHERE c.git_object_id=g.git_object_id AND g.type<>'commit')
+ AND NOT EXISTS(SELECT 1 FROM commit_parents c WHERE c.commit_git_object_id=g.git_object_id AND g.type<>'commit')
+ AND NOT EXISTS(SELECT 1 FROM tree_objects t WHERE t.git_object_id=g.git_object_id AND g.type<>'tree')
+ AND NOT EXISTS(SELECT 1 FROM tree_entries t WHERE t.tree_git_object_id=g.git_object_id AND g.type<>'tree')
+ AND NOT EXISTS(SELECT 1 FROM tag_objects t WHERE t.git_object_id=g.git_object_id AND g.type<>'tag')
+ AND NOT EXISTS(SELECT 1 FROM blob_content_map m WHERE m.git_object_id=g.git_object_id AND g.type<>'blob')
+ AND ((g.type='blob' AND EXISTS(SELECT 1 FROM blob_content_map m JOIN contents c USING(content_id) WHERE m.git_object_id=g.git_object_id AND c.byte_length=g.size
+ AND NOT EXISTS(SELECT 1 FROM content_digests d WHERE d.content_id=m.content_id AND repo_catalog_git_content_digest_valid(b.body,d.algorithm,d.digest)<>1)))
+ OR (g.type='commit' AND EXISTS(SELECT 1 FROM commits c WHERE c.git_object_id=g.git_object_id AND c.tree_format=g.object_format
+ AND repo_catalog_git_commit_shape_valid(g.object_format,b.body,c.tree_oid,c.tree_header_offset,c.parent_count,c.raw_headers,c.raw_message)=1
+ AND c.parent_count=(SELECT count(*) FROM commit_parents p WHERE p.commit_git_object_id=c.git_object_id)
+ AND (c.tree_git_object_id IS NULL OR EXISTS(SELECT 1 FROM git_objects target WHERE target.git_object_id=c.tree_git_object_id AND target.verified=1 AND EXISTS(SELECT 1 FROM git_object_payloads raw WHERE raw.git_object_id=target.git_object_id) AND target.object_format=c.tree_format AND target.oid=c.tree_oid AND target.type='tree'))
  AND NOT EXISTS(SELECT 1 FROM commit_parents p WHERE p.commit_git_object_id=c.git_object_id AND (
-  substr(c.raw_headers,p.parent_header_offset+1,7+length(p.parent_oid)*2)<>CAST('parent '||lower(hex(p.parent_oid)) AS BLOB)
+  p.parent_format<>g.object_format OR p.parent_ordinal>=c.parent_count
+  OR substr(c.raw_headers,p.parent_header_offset+1,7)<>CAST('parent ' AS BLOB)
+  OR lower(CAST(substr(c.raw_headers,p.parent_header_offset+8,length(p.parent_oid)*2) AS TEXT))<>lower(hex(p.parent_oid))
   OR (p.parent_header_offset<>0 AND substr(c.raw_headers,p.parent_header_offset,1)<>X'0a')
   OR (length(c.raw_headers)<>p.parent_header_offset+7+length(p.parent_oid)*2 AND substr(c.raw_headers,p.parent_header_offset+8+length(p.parent_oid)*2,1)<>X'0a')
-  OR EXISTS(SELECT 1 FROM commit_parents prior WHERE prior.commit_git_object_id=p.commit_git_object_id AND prior.parent_ordinal=p.parent_ordinal-1 AND prior.parent_header_offset>=p.parent_header_offset)))))
- OR (g.type='tree' AND EXISTS(SELECT 1 FROM tree_objects t WHERE t.git_object_id=g.git_object_id AND t.entry_count=(SELECT count(*) FROM tree_entries e WHERE e.tree_git_object_id=g.git_object_id) AND g.size=(SELECT coalesce(sum(e.entry_length),0) FROM tree_entries e WHERE e.tree_git_object_id=g.git_object_id) AND NOT EXISTS(SELECT 1 FROM (SELECT entry_offset,lag(entry_offset+entry_length,1,0) OVER (ORDER BY entry_offset) AS expected_offset FROM tree_entries e WHERE e.tree_git_object_id=g.git_object_id) WHERE entry_offset<>expected_offset)
+  OR EXISTS(SELECT 1 FROM commit_parents prior WHERE prior.commit_git_object_id=p.commit_git_object_id AND prior.parent_ordinal=p.parent_ordinal-1 AND prior.parent_header_offset>=p.parent_header_offset)
+  OR (p.parent_git_object_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects target WHERE target.git_object_id=p.parent_git_object_id AND target.verified=1 AND EXISTS(SELECT 1 FROM git_object_payloads raw WHERE raw.git_object_id=target.git_object_id) AND target.object_format=p.parent_format AND target.oid=p.parent_oid AND target.type='commit'))
+ ))))
+ OR (g.type='tree' AND repo_catalog_git_tree_shape_valid(g.object_format,b.body)=1 AND EXISTS(SELECT 1 FROM tree_objects t WHERE t.git_object_id=g.git_object_id AND t.entry_count=(SELECT count(*) FROM tree_entries e WHERE e.tree_git_object_id=g.git_object_id) AND g.size=(SELECT coalesce(sum(e.entry_length),0) FROM tree_entries e WHERE e.tree_git_object_id=g.git_object_id) AND NOT EXISTS(SELECT 1 FROM (SELECT entry_offset,lag(entry_offset+entry_length,1,0) OVER (ORDER BY entry_offset) AS expected_offset FROM tree_entries e WHERE e.tree_git_object_id=g.git_object_id) WHERE entry_offset<>expected_offset)
  AND NOT EXISTS(SELECT 1 FROM tree_entries e WHERE e.tree_git_object_id=g.git_object_id AND (
-  instr(e.raw_name,X'00')<>0 OR ltrim(CAST(substr(b.body,e.entry_offset+1,e.entry_length-length(e.raw_name)-length(e.child_oid)-2) AS TEXT),'0')<>CASE e.mode WHEN 16384 THEN '40000' WHEN 33188 THEN '100644' WHEN 33261 THEN '100755' WHEN 40960 THEN '120000' WHEN 57344 THEN '160000' END
-  OR substr(b.body,e.entry_offset+1,e.entry_length)<>CAST(substr(b.body,e.entry_offset+1,e.entry_length-length(e.raw_name)-length(e.child_oid)-2)||' '||e.raw_name||char(0)||e.child_oid AS BLOB)))))
- OR (g.type='tag' AND EXISTS(SELECT 1 FROM tag_objects t WHERE t.git_object_id=g.git_object_id AND t.raw_payload=b.body AND substr(t.raw_payload,1,7+length(t.target_oid)*2)=CAST('object '||lower(hex(t.target_oid)) AS BLOB) AND substr(t.raw_payload,8+length(t.target_oid)*2,6+length(t.target_type))=CAST(char(10)||'type '||t.target_type AS BLOB))));
+  e.child_format<>g.object_format OR instr(e.raw_name,X'00')<>0
+  OR ltrim(CAST(substr(b.body,e.entry_offset+1,e.entry_length-length(e.raw_name)-length(e.child_oid)-2) AS TEXT),'0')<>CASE e.mode WHEN 16384 THEN '40000' WHEN 33188 THEN '100644' WHEN 33261 THEN '100755' WHEN 40960 THEN '120000' WHEN 57344 THEN '160000' END
+  OR substr(b.body,e.entry_offset+1,e.entry_length)<>CAST(substr(b.body,e.entry_offset+1,e.entry_length-length(e.raw_name)-length(e.child_oid)-2)||' '||e.raw_name||char(0)||e.child_oid AS BLOB)
+  OR (e.child_git_object_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects target WHERE target.git_object_id=e.child_git_object_id AND target.verified=1 AND EXISTS(SELECT 1 FROM git_object_payloads raw WHERE raw.git_object_id=target.git_object_id) AND target.object_format=e.child_format AND target.oid=e.child_oid AND target.type=CASE e.mode WHEN 16384 THEN 'tree' ELSE 'blob' END))
+ ))))
+ OR (g.type='tag' AND EXISTS(SELECT 1 FROM tag_objects t WHERE t.git_object_id=g.git_object_id AND t.target_format=g.object_format AND t.raw_payload=b.body
+ AND repo_catalog_git_tag_shape_valid(g.object_format,b.body,t.target_oid,t.target_type)=1
+ AND (t.target_git_object_id IS NULL OR EXISTS(SELECT 1 FROM git_objects target WHERE target.git_object_id=t.target_git_object_id AND target.verified=1 AND EXISTS(SELECT 1 FROM git_object_payloads raw WHERE raw.git_object_id=target.git_object_id) AND target.object_format=t.target_format AND target.oid=t.target_oid AND target.type=t.target_type))
+ )));
 CREATE VIEW available_git_acquisitions AS
  SELECT a.* FROM git_acquisitions a WHERE a.roots_manifest IS NOT NULL
+ -- This establishes availability once per exact source object. All remaining
+ -- closure checks use indexed identities/membership, avoiding repeated decoding.
  AND NOT EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM available_git_objects g WHERE g.git_object_id=r.git_object_id))
- AND NOT EXISTS(SELECT 1 FROM json_each(a.roots_manifest) ref WHERE NOT EXISTS(SELECT 1 FROM available_git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=a.object_format AND lower(hex(g.oid))=json_extract(ref.value,'$.oid')))
- AND NOT EXISTS(SELECT 1 FROM acquisition_roots root WHERE root.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM available_git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=root.object_format AND g.oid=root.oid))
- AND NOT EXISTS(
-  SELECT 1 FROM repository_object_sources source JOIN (
-   SELECT git_object_id AS owner,tree_format AS fmt,tree_oid AS oid FROM commits
-   UNION ALL SELECT commit_git_object_id,parent_format,parent_oid FROM commit_parents
-   UNION ALL SELECT tree_git_object_id,child_format,child_oid FROM tree_entries WHERE mode<>57344
-   UNION ALL SELECT git_object_id,target_format,target_oid FROM tag_objects
-  ) dependency ON dependency.owner=source.git_object_id
-  WHERE source.git_acquisition_id=a.git_acquisition_id
-  AND NOT EXISTS(SELECT 1 FROM available_git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=dependency.fmt AND g.oid=dependency.oid)
- );
-CREATE VIEW available_snapshots AS
+ AND NOT EXISTS(SELECT 1 FROM json_each(a.roots_manifest) ref WHERE NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=a.object_format AND g.oid=repo_catalog_git_oid_bytes(a.object_format,json_extract(ref.value,'$.oid')) AND g.type=json_extract(ref.value,'$.type')))
+ AND NOT EXISTS(SELECT 1 FROM json_each(a.roots_manifest) ref WHERE json_extract(ref.value,'$.peeled') IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=a.object_format AND g.oid=repo_catalog_git_oid_bytes(a.object_format,json_extract(ref.value,'$.peeled'))))
+ AND NOT EXISTS(SELECT 1 FROM acquisition_roots root WHERE root.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=root.object_format AND g.oid=root.oid))
+ AND NOT EXISTS(SELECT 1 FROM repository_object_sources source JOIN commits c ON c.git_object_id=source.git_object_id WHERE source.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=c.tree_format AND g.oid=c.tree_oid AND g.type='tree'))
+ AND NOT EXISTS(SELECT 1 FROM repository_object_sources source JOIN commit_parents p ON p.commit_git_object_id=source.git_object_id WHERE source.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=p.parent_format AND g.oid=p.parent_oid AND g.type='commit'))
+ AND NOT EXISTS(SELECT 1 FROM repository_object_sources source JOIN tree_entries e ON e.tree_git_object_id=source.git_object_id WHERE source.git_acquisition_id=a.git_acquisition_id AND e.mode<>57344 AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=e.child_format AND g.oid=e.child_oid AND g.type=CASE e.mode WHEN 16384 THEN 'tree' ELSE 'blob' END))
+ AND NOT EXISTS(SELECT 1 FROM repository_object_sources source JOIN tag_objects t ON t.git_object_id=source.git_object_id WHERE source.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=t.target_format AND g.oid=t.target_oid AND g.type=t.target_type));
+-- The same exact ref and closure predicate governs readers and completion.
+CREATE VIEW valid_ref_captures AS
  SELECT s.* FROM snapshots s JOIN available_git_acquisitions a USING(git_acquisition_id)
- WHERE s.complete=1 AND a.roots_manifest IS NOT NULL
- AND json_array_length(a.roots_manifest)=(SELECT count(*) FROM ref_observations f WHERE f.snapshot_id=s.snapshot_id)
- AND NOT EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.git_acquisition_id=s.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM available_git_objects g WHERE g.git_object_id=r.git_object_id))
- AND NOT EXISTS(SELECT 1 FROM ref_observations f WHERE f.snapshot_id=s.snapshot_id AND NOT EXISTS(SELECT 1 FROM repository_object_sources r JOIN available_git_objects g USING(git_object_id) WHERE r.git_acquisition_id=s.git_acquisition_id AND g.object_format=f.object_format AND g.oid=f.target_oid))
+ WHERE repo_catalog_git_ref_capture_valid(a.object_format,a.roots_manifest,coalesce((
+  SELECT json_group_array(json_object('name_hex',hex(f.raw_ref_name),'object_format',f.object_format,'oid_hex',hex(f.target_oid),'peeled_hex',CASE WHEN f.peeled_oid IS NULL THEN NULL ELSE hex(f.peeled_oid) END,'type',f.target_type)) FROM ref_observations f WHERE f.snapshot_id=s.snapshot_id
+ ),'[]'))=1
  AND NOT EXISTS(SELECT 1 FROM acquisition_roots r WHERE r.git_acquisition_id=s.git_acquisition_id AND r.complete=0);
+CREATE VIEW available_snapshots AS SELECT s.* FROM valid_ref_captures s WHERE s.complete=1;
 -- Frozen ref-capture predecessors preserve divergent heads, without a time winner.
 CREATE VIEW current_snapshots AS
  WITH heads AS (SELECT s.* FROM snapshots s WHERE s.complete=1 AND NOT EXISTS(SELECT 1 FROM snapshots n WHERE n.predecessor_snapshot_id=s.snapshot_id AND n.complete=1))
  SELECT a.* FROM available_snapshots a JOIN heads h USING(snapshot_id)
  WHERE (SELECT count(*) FROM heads x WHERE x.repository_uuidv4=a.repository_uuidv4)=1;
 CREATE TRIGGER snapshots_complete_insert BEFORE INSERT ON snapshots WHEN NEW.complete=1 BEGIN SELECT RAISE(ABORT,'capture complete only after exact closure validation'); END;
-CREATE TRIGGER snapshots_complete_update BEFORE UPDATE ON snapshots WHEN NEW.complete=1 AND OLD.complete=0 AND (
- NOT EXISTS(SELECT 1 FROM available_git_acquisitions a WHERE a.git_acquisition_id=NEW.git_acquisition_id AND a.roots_manifest IS NOT NULL AND json_array_length(a.roots_manifest)=(SELECT count(*) FROM ref_observations f WHERE f.snapshot_id=NEW.snapshot_id))
- OR EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.git_acquisition_id=NEW.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM available_git_objects g WHERE g.git_object_id=r.git_object_id))
- OR EXISTS(SELECT 1 FROM acquisition_roots r WHERE r.git_acquisition_id=NEW.git_acquisition_id AND r.complete=0)
- OR EXISTS(SELECT 1 FROM ref_observations f WHERE f.snapshot_id=NEW.snapshot_id AND NOT EXISTS(SELECT 1 FROM repository_object_sources r JOIN available_git_objects g USING(git_object_id) WHERE r.git_acquisition_id=NEW.git_acquisition_id AND g.object_format=f.object_format AND g.oid=f.target_oid)))
+CREATE TRIGGER snapshots_complete_update BEFORE UPDATE ON snapshots WHEN NEW.complete=1 AND OLD.complete=0 AND NOT EXISTS(SELECT 1 FROM valid_ref_captures s WHERE s.snapshot_id=NEW.snapshot_id)
  BEGIN SELECT RAISE(ABORT,'ref capture closure incomplete'); END;
 CREATE TRIGGER snapshots_immutable BEFORE UPDATE ON snapshots WHEN NEW.snapshot_id IS NOT OLD.snapshot_id OR NEW.git_acquisition_id IS NOT OLD.git_acquisition_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.predecessor_snapshot_id IS NOT OLD.predecessor_snapshot_id OR NEW.generation IS NOT OLD.generation OR NEW.created_at_us IS NOT OLD.created_at_us OR NEW.complete<OLD.complete BEGIN SELECT RAISE(ABORT,'immutable ref capture'); END;
 CREATE TRIGGER acquisition_roots_immutable BEFORE UPDATE ON acquisition_roots WHEN NEW.acquisition_root_id IS NOT OLD.acquisition_root_id OR NEW.git_acquisition_id IS NOT OLD.git_acquisition_id OR NEW.repository_uuidv4 IS NOT OLD.repository_uuidv4 OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid OR NEW.role IS NOT OLD.role OR NEW.expected_oid IS NOT OLD.expected_oid OR NEW.complete<OLD.complete BEGIN SELECT RAISE(ABORT,'immutable acquired root'); END;

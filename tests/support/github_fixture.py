@@ -212,6 +212,8 @@ class GitHubFixture:
                 for i in range(start, min(count, start + 100))
             ]
             pr = {
+                "id": f"PR{n}",
+                "number": n,
                 "mergeCommit": {"oid": self.git.alpha.commits["P"]}
                 if v["number"] == 43
                 else None,

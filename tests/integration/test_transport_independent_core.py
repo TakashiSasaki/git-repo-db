@@ -148,11 +148,24 @@ def core_catalog(tmp_path):
 
 
 def assert_no_originals_or_selection(store):
-    assert_absent_tables(store.connection, "fetch_occurrences", "source_input_observations", "parsed_results", "change_request_observations", "document_observations")
+    assert_absent_tables(
+        store.connection,
+        "fetch_occurrences",
+        "source_input_observations",
+        "parsed_results",
+        "change_request_observations",
+        "document_observations",
+    )
     for table in ("stored_bytes", "payloads"):
         assert store.one(f"SELECT count(*) FROM {table}")[0] == 0, table
-    tables = {row[0] for row in store.all("SELECT name FROM sqlite_schema WHERE type='table'")}
-    assert not any(table.startswith(("parser_profile", "fact_selection")) or table == "local_parser_profile_verification_trust" for table in tables)
+    tables = {
+        row[0] for row in store.all("SELECT name FROM sqlite_schema WHERE type='table'")
+    }
+    assert not any(
+        table.startswith(("parser_profile", "fact_selection"))
+        or table == "local_parser_profile_verification_trust"
+        for table in tables
+    )
     assert OPAQUE not in "\n".join(store.connection.iterdump())
 
 

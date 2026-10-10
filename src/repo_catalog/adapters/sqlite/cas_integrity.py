@@ -42,12 +42,21 @@ def _git_object_identity_valid(
 
 def register_git_object_sql_function(db: sqlite3.Connection):
     """Register the fail-closed Git identity predicate used by the DDL guard."""
-    db.create_function(
-        "repo_catalog_git_object_identity_valid",
-        6,
-        _git_object_identity_valid,
-        deterministic=True,
+    from repo_catalog.adapters.sqlite.git_intrinsic import (
+        register_git_intrinsic_sql_functions,
     )
+
+    register_git_intrinsic_sql_functions(db)
+    if not any(
+        row[0] == "repo_catalog_git_object_identity_valid"
+        for row in db.execute("PRAGMA function_list")
+    ):
+        db.create_function(
+            "repo_catalog_git_object_identity_valid",
+            6,
+            _git_object_identity_valid,
+            deterministic=True,
+        )
 
 
 def is_quarantined(db: sqlite3.Connection, digest: bytes) -> bool:

@@ -427,6 +427,7 @@ def test_rejected_graphql_root_has_no_saved_original_or_fake_completion(
         "data": {
             "repository": {
                 "pullRequest": {
+                    "number": 41,
                     "mergeCommit": None,
                     "potentialMergeCommit": None,
                     "reviewThreads": {
@@ -522,6 +523,7 @@ def test_rejected_graphql_child_retries_its_safe_cursor_without_original(
         "data": {
             "repository": {
                 "pullRequest": {
+                    "number": 41,
                     "mergeCommit": None,
                     "potentialMergeCommit": None,
                     "reviewThreads": {
@@ -870,7 +872,7 @@ def test_api_original_cannot_use_shared_git_rejection_staging(github_runtime, re
     before = list(store.connection.iterdump())
     with pytest.raises(CatalogError) as raised:
         stage_verified_payload(store.connection, body, reference, {}, reason=reason)
-    assert raised.value.code == "INVALID_ARGUMENT"
+    assert raised.value.code == "GIT_OBJECT_IDENTITY"
     assert list(store.connection.iterdump()) == before
     with pytest.raises(sqlite3.IntegrityError):
         store.execute(
@@ -908,7 +910,7 @@ def test_live_api_domain_admission_is_independent_of_quarantined_git_bytes(
     reference = register_git_blob(store.connection, b"actual canonical Git blob")
     with store.transaction():
         corrupt(store.connection, reference.sha256, b"corrupt")
-        verify_all(store.connection)
+    verify_all(store.connection)
     job = new_job(store)
     payload = {**api.prs[41], "body": DOMAIN_BODY, "unmodeled_transport_marker": MARKER}
     with collector_for(

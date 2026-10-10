@@ -3,6 +3,7 @@
 import json
 import sqlite3
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.adapters.sqlite.schema import DDL_SHA256, SCHEMA_VERSION, schema_sql
 
@@ -24,6 +25,7 @@ def insert(db, table, **values):
 
 def fresh_domain_db(sql=None):
     db = sqlite3.connect(":memory:", isolation_level=None)
+    register_git_object_sql_function(db)
     db.executescript(sql or schema_sql())
     insert(
         db,

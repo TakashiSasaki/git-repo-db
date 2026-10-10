@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 12 items
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_identity_missing_target_and_atomic_failure[sha1] PASSED [  8%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_identity_missing_target_and_atomic_failure[sha256] PASSED [ 16%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha1-2] PASSED [ 25%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha1-2048] PASSED [ 33%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha256-2] PASSED [ 41%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha256-2048] PASSED [ 50%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha1] PASSED [ 58%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha256] PASSED [ 66%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_current_document_missing_parent_late_arrival_and_stale_repeat PASSED [ 75%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_physical_shared_digest_quarantine_backup_restore_and_cas41 PASSED [ 83%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_receiver_local_revision_is_independent_and_repeat_stable PASSED [ 91%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_old_code_anchor_never_borrows_new_head PASSED [100%]
+
+============================= 12 passed in 12.78s ==============================

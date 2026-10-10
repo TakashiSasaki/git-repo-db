@@ -119,7 +119,7 @@ def test_valid_pr_prefix_survives_later_page_rejection(github_runtime):
     def normalize(item, collection, revision, position, timestamp, listing):
         return value.ensure_pr(repo, item, collection, revision, position, timestamp)[1]
 
-    with pytest.raises(CatalogError, match="malformed"):
+    with pytest.raises(CatalogError, match="[Mm]alformed"):
         value.collection(repo, None, "pr-list", task, url, normalize)
     assert store.one("SELECT count(*) FROM eligible_change_request_state")[0] == 1
     assert store.one("SELECT count(*) FROM change_requests")[0] == 1
@@ -140,6 +140,7 @@ def test_empty_thread_terminal_and_observed_null_targets(github_runtime):
                 "repository": {
                     "pullRequest": {
                         "id": "PR_1",
+                        "number": 1,
                         "mergeCommit": None,
                         "potentialMergeCommit": None,
                         "reviewThreads": {
@@ -185,6 +186,7 @@ def test_thread_children_resume_from_normalized_committed_prefix(github_runtime)
                     "repository": {
                         "pullRequest": {
                             "id": "PR_1",
+                            "number": 1,
                             "mergeCommit": None,
                             "potentialMergeCommit": None,
                             "reviewThreads": {
@@ -603,4 +605,429 @@ def test_source_discovery_recoverable_callback_failure_has_no_phantom_result(
         == assessment_count
     )
     assert not store.one("SELECT 1 FROM repositories WHERE name='fixture/rejected'")
+    assert not store.all("PRAGMA foreign_key_check")
+
+
+def prepared_detail(runtime, *, provider_clock=True):
+    store, repo, fixture, api = runtime
+    value = collector(store)
+    value.http.clock_us = lambda: 100
+    task = job(store)
+    data = {**pr_value(fixture.alpha.commits["N"]), "node_id": "PR_LOCAL"}
+    if not provider_clock:
+        data["updated_at"] = None
+    with store.transaction():
+        scope = value.facts.begin(
+            repo, None, "pr-list", task, api.url + "/repos/fixture/alpha/pulls"
+        )
+        ident, members = value.ensure_pr(repo, data, scope, store.revision(), 0, 100)
+        value.facts.page(scope, 100, None, members)
+        value.facts.finish(scope)
+        value.facts.advance_revision()
+    parent = store.one(
+        "SELECT * FROM change_requests WHERE change_request_id=?", (ident,)
+    )
+    return value, parent, task, data
+
+
+def test_capped_commits_preserve_prefix_and_collect_independent_files(github_runtime):
+    store, repo, fixture, api = github_runtime
+    value, parent, task, data = prepared_detail(github_runtime)
+    data.update(commits=251, changed_files=1)
+    requested = []
+
+    def route(method, path, params, body):
+        assert not store.connection.in_transaction
+        requested.append(path)
+        if path.endswith("/commits"):
+            return [{"sha": fixture.alpha.commits["N"]}], {}
+        if path.endswith("/files"):
+            return [
+                {
+                    "filename": "independent.txt",
+                    "status": "modified",
+                    "sha": fixture.alpha.blob(b"file bytes"),
+                }
+            ], {}
+        raise AssertionError(path)
+
+    api.route = route
+    with pytest.raises(CatalogError) as raised:
+        value._code_collect(
+            repo, parent, task, api.url + "/repos/fixture/alpha/pulls/1", data
+        )
+    assert raised.value.code == "API_CAP"
+    listings = value.code_listing_results[parent["change_request_id"]]
+    assert len(raised.value.details["code_listing_ids"]) == 2
+    assert {
+        row["code_listing_id"]
+        for row in store.all("SELECT code_listing_id FROM code_listings")
+    } == set(raised.value.details["code_listing_ids"])
+    assert (
+        store.one(
+            "SELECT count(*) FROM code_commits WHERE code_listing_id=?",
+            (listings[0][1],),
+        )[0]
+        == 1
+    )
+    assert (
+        store.one(
+            "SELECT count(*) FROM code_file_changes WHERE code_listing_id=?",
+            (listings[1][1],),
+        )[0]
+        == 1
+    )
+    assert (
+        store.one(
+            "SELECT state FROM code_listing_progress WHERE code_listing_id=?",
+            (listings[0][1],),
+        )[0]
+        == "partial"
+    )
+    assert (
+        store.one(
+            "SELECT state FROM code_listing_progress WHERE code_listing_id=?",
+            (listings[1][1],),
+        )[0]
+        == "complete"
+    )
+    assert any(path.endswith("/files") for path in requested)
+
+
+def test_live_sparse_rest_detail_preserves_actual_title_capture(github_runtime):
+    store, repo, _, api = github_runtime
+    value, parent, task, data = prepared_detail(github_runtime)
+    data = {**data, "body": "live sparse body", "updated_at": "2026-02-01T00:00:00Z"}
+    data.pop("title")
+    value.http.clock_us = lambda: 200
+    api.route = lambda method, path, params, body: (data, {})
+    value.detail(repo, parent, task, api.url + "/repos/fixture/alpha/pulls/1")
+    rows = {
+        row["kind"]: row
+        for row in store.all(
+            "SELECT d.*,b.body FROM document_state d LEFT JOIN text_bodies b ON b.sha256=d.text_body_sha256"
+        )
+    }
+    assert rows["pr-title"]["body"] == "title"
+    assert rows["pr-body"]["body"] == "live sparse body"
+    title_capture = json.loads(rows["pr-title"]["field_evidence_json"])['["body"]']
+    body_capture = json.loads(rows["pr-body"]["field_evidence_json"])['["body"]']
+    assert title_capture["observed_at_us"] == 100
+    assert body_capture["observed_at_us"] == 200
+    assert title_capture["parser_module"] == body_capture["parser_module"]
+
+
+def test_observed_permission_scope_is_attached_to_field_evidence(github_runtime):
+    store, repo, _, api = github_runtime
+    value, parent, task, data = prepared_detail(github_runtime)
+    value.facts.permissions = ["read:org", "repo"]
+    data = {
+        **data,
+        "body": "permission-scoped body",
+        "updated_at": "2026-02-01T00:00:00Z",
+    }
+    api.route = lambda method, path, params, body: (data, {})
+    value.detail(repo, parent, task, api.url + "/repos/fixture/alpha/pulls/1")
+    body = store.one(
+        "SELECT acquisition_scope_json,field_evidence_json FROM document_state WHERE kind='pr-body'"
+    )
+    assert json.loads(body["acquisition_scope_json"])["observed_permissions"] == [
+        "read:org",
+        "repo",
+    ]
+    assert json.loads(body["field_evidence_json"])['["body"]']["acquisition_scope"][
+        "observed_permissions"
+    ] == ["read:org", "repo"]
+
+
+def test_verified_rename_final_response_has_its_own_live_fence(github_runtime):
+    store, repo, _, api = github_runtime
+    value, parent, task, data = prepared_detail(github_runtime, provider_clock=False)
+    original = value.http.request
+    final_revisions = []
+
+    def request(method, url, **kwargs):
+        assert not store.connection.in_transaction
+        if "/repos/fixture/alpha/pulls/1" in url:
+            return httpx.Response(
+                301,
+                headers={"location": api.url + "/repos/fixture/renamed/pulls/1"},
+                request=httpx.Request(method, url),
+            )
+        if url == api.url + "/repos/fixture/renamed":
+            return httpx.Response(
+                200,
+                json={"id": 101, "full_name": "fixture/renamed"},
+                request=httpx.Request(method, url),
+                extensions={"catalog_observed_at_us": 200},
+            )
+        if url == api.url + "/repos/fixture/renamed/pulls/1":
+            final_revisions.append(store.revision())
+            return httpx.Response(
+                200,
+                json={**data, "body": "after legitimate rename"},
+                request=httpx.Request(method, url),
+                extensions={"catalog_observed_at_us": 201},
+            )
+        return original(method, url, **kwargs)
+
+    value.http.request = request
+    value.detail(repo, parent, task, api.url + "/repos/fixture/alpha/pulls/1")
+    assert final_revisions
+    assert (
+        store.one(
+            "SELECT b.body FROM eligible_document_state d JOIN text_bodies b ON b.sha256=d.text_body_sha256 WHERE d.kind='pr-body'"
+        )[0]
+        == "after legitimate rename"
+    )
+    assert store.one("SELECT name FROM source_repositories")[0] == "fixture/renamed"
+    assert not store.one(
+        "SELECT 1 FROM exchange_staging WHERE table_name='document_state'"
+    )
+
+
+def test_foreign_opaque_graphql_pr_id_cannot_prove_empty_roster(github_runtime):
+    store, repo, _, api = github_runtime
+    value, parent, task, _ = prepared_detail(github_runtime)
+    api.route = lambda method, path, params, body: (
+        {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "id": "PR_SOME_OTHER_PULL_REQUEST",
+                        "mergeCommit": None,
+                        "potentialMergeCommit": None,
+                        "reviewThreads": {
+                            "nodes": [],
+                            "pageInfo": {"hasNextPage": False, "endCursor": None},
+                        },
+                    }
+                }
+            }
+        },
+        {},
+    )
+    with pytest.raises(CatalogError) as raised:
+        value.threads(repo, parent, task)
+    assert raised.value.code == "SCOPE_MISMATCH"
+    assert not store.one(
+        "SELECT 1 FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='threads' AND m.asserted_state='complete'"
+    )
+    assert not store.one(
+        "SELECT 1 FROM current_collection_pages p JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='threads'"
+    )
+
+
+def test_older_code_assessment_cannot_replace_newer_complete(github_runtime):
+    store, repo, _, api = github_runtime
+    value = collector(store)
+    value.http.clock_us = lambda: 300
+    task = job(store)
+    value.sync(repo, task)
+    assessment = store.one(
+        "SELECT * FROM code_assessments WHERE state='complete' LIMIT 1"
+    )
+    parent = store.one(
+        "SELECT * FROM change_requests WHERE change_request_id=?",
+        (assessment["change_request_id"],),
+    )
+    before = value._current_pr_value(parent["change_request_id"])
+    old = collector(store)
+    old.facts.principal = value.facts.principal
+    old.facts.permissions = value.facts.permissions
+    old_task = job(store)
+    scope = old.facts.begin(
+        repo,
+        parent["change_request_id"],
+        "pr-detail",
+        old_task,
+        api.url
+        + "/repos/fixture/alpha/pulls/"
+        + str(parent["provider_change_request_number"]),
+    )
+    old.facts.page(scope, 175, None, [])
+    old.facts.finish(scope)
+    result = old._assess_code(repo, parent, old_task, before, before, None, False, [])
+    assert result == assessment["code_assessment_id"]
+    assert tuple(
+        store.one(
+            "SELECT state,observed_at_us FROM code_assessments WHERE code_assessment_id=?",
+            (result,),
+        )
+    ) == ("complete", 300)
+
+
+def test_code_target_check_304_requests_fresh_observed_state(github_runtime):
+    store, repo, _, api = github_runtime
+    value, parent, task, data = prepared_detail(github_runtime)
+    requests = []
+
+    def request(method, url, **kwargs):
+        assert not store.connection.in_transaction
+        requests.append(kwargs)
+        if len(requests) == 1:
+            return httpx.Response(304, request=httpx.Request(method, url))
+        return httpx.Response(
+            200,
+            json=data,
+            request=httpx.Request(method, url),
+            extensions={"catalog_observed_at_us": 200},
+        )
+
+    value.http.request = request
+    assert (
+        value.code_check(repo, parent, task, api.url + "/repos/fixture/alpha/pulls/1")
+        == data
+    )
+    assert len(requests) == 2
+    assert requests[1]["headers"]["Cache-Control"] == "no-cache"
+    marker = store.one(
+        "SELECT m.observed_at_us FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='pr-code-check' AND m.asserted_state='complete'"
+    )
+    assert marker[0] == 200
+
+
+def test_unknown_rest_node_id_requires_returned_canonical_graphql_owner(github_runtime):
+    store, repo, fixture, api = github_runtime
+    value, ident, task = seed_pr(store, repo, fixture.alpha.commits["N"])
+    parent = store.one(
+        "SELECT * FROM change_requests WHERE change_request_id=?", (ident,)
+    )
+    api.route = lambda method, path, params, body: (
+        {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "id": "PR_UNKNOWN",
+                        "mergeCommit": None,
+                        "potentialMergeCommit": None,
+                        "reviewThreads": {
+                            "nodes": [],
+                            "pageInfo": {"hasNextPage": False, "endCursor": None},
+                        },
+                    }
+                }
+            }
+        },
+        {},
+    )
+    with pytest.raises(CatalogError) as raised:
+        value.threads(repo, parent, task)
+    assert raised.value.code == "API_SCHEMA"
+    assert not store.one(
+        "SELECT 1 FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='threads' AND m.asserted_state='complete'"
+    )
+    api.route = lambda method, path, params, body: (
+        {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "id": "PR_UNKNOWN",
+                        "number": 1,
+                        "mergeCommit": None,
+                        "potentialMergeCommit": None,
+                        "reviewThreads": {
+                            "nodes": [],
+                            "pageInfo": {"hasNextPage": False, "endCursor": None},
+                        },
+                    }
+                }
+            }
+        },
+        {},
+    )
+    value.threads(repo, parent, task)
+    assert store.one(
+        "SELECT 1 FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='threads' AND m.asserted_state='complete'"
+    )
+
+
+def test_cancelled_rest_prefix_survives_loss_of_operational_cursor(github_runtime):
+    store, repo, _, api = github_runtime
+    value, parent, task, data = prepared_detail(github_runtime)
+    url = api.url + "/repos/fixture/alpha/pulls?state=all"
+
+    def route(method, path, params, body):
+        assert not store.connection.in_transaction
+        if not params.get("page"):
+            return [data], {"Link": f'<{url}&page=2>; rel="next"'}
+        value.token.cancelled = True
+        return [], {}
+
+    api.route = route
+
+    def normalize(item, scope, revision, position, timestamp, listing):
+        return value.ensure_pr(repo, item, scope, revision, position, timestamp)[1]
+
+    with pytest.raises(CatalogError) as failed:
+        value.collection(
+            repo, None, "pr-list", task, url, normalize, context={"state": "all"}
+        )
+    assert failed.value.code == "CANCELLED"
+    assert (
+        store.one("SELECT count(*) FROM eligible_document_state WHERE kind='pr-body'")[
+            0
+        ]
+        == 1
+    )
+    value.token.cancelled = False
+    store.execute("UPDATE collection_progress SET cursor=NULL WHERE state='partial'")
+    with pytest.raises(CatalogError) as failed:
+        value.collection(
+            repo, None, "pr-list", task, url, normalize, context={"state": "all"}
+        )
+    assert failed.value.code == "RESUME_UNAVAILABLE"
+    assert (
+        store.one("SELECT count(*) FROM eligible_document_state WHERE kind='pr-body'")[
+            0
+        ]
+        == 1
+    )
+    assert not store.all("PRAGMA foreign_key_check")
+
+
+def test_shared_issue_pr_job_summaries_reference_only_their_own_subjects(
+    github_runtime,
+):
+    from repo_catalog.adapters.sqlite.exchange import Graph
+
+    store, repo, _, _ = github_runtime
+    task = JobService(store).create("sync", {"kind": "all"})
+    store.expected_attempt = 1
+    issues = collector(store)
+    issues.http.clock_us = lambda: 900
+    assert issues.sync_issues(repo, task)["state"] == "complete"
+    prs = collector(store)
+    prs.http.clock_us = lambda: 100
+    assert prs.sync(repo, task)["state"] == "complete"
+    graph = Graph(store.connection)
+    for kind in ("pr", "pr-documents", "pr-code"):
+        scope = store.one(
+            "SELECT coverage_scope_id FROM coverage_scopes WHERE repository_uuidv4=? AND change_request_id IS NULL AND kind=?",
+            (repo["repository_uuidv4"], kind),
+        )
+        claim = store.one(
+            "SELECT * FROM coverage_claims WHERE coverage_scope_id=?", (scope[0],)
+        )
+        assert claim["observed_at_us"] == 100
+        identifiers = json.loads(claim["details_json"])["fetch_collection_ids"]
+        assert identifiers
+        kinds = {
+            store.one(
+                "SELECT kind FROM fetch_collections WHERE fetch_collection_id=?",
+                (ident,),
+            )[0]
+            for ident in identifiers
+        }
+        assert not kinds & {"issue", "ordinary-issue-comment"}
+        if kind == "pr-documents":
+            assert not kinds & {"timeline", "pr-commits", "pr-files", "pr-code-check"}
+        if kind == "pr-code":
+            assert not kinds & {
+                "timeline",
+                "issue-comment",
+                "issue-comment-incremental",
+                "review-comment-incremental",
+            }
+        assert graph.proof_requirements("coverage_claims", dict(claim)) is not None
     assert not store.all("PRAGMA foreign_key_check")
