@@ -86,10 +86,10 @@ snapshot, rather than being silently overwritten as Schema 19 runtime receipts.
 
 ## Verification and independent review
 
-The [independent review](independent-review.md) records actual counterexamples,
+The [independent review](independent-review.md) and [integrated interaction review](independent-integrated-correction-review.md) record actual counterexamples,
 correction source heads and development failures/bootstrap flags. Each correction
 was reviewed in a separate worktree; the combined production diff receives a
-further independent review. These fixes are independent of the proposal choices.
+further independent review. Its clock/reordered-Exchange/retry probe, fresh Schema 19 checks and explicit version-origin tests passed with the disclosed certificate boundary. These fixes are independent of the proposal choices.
 
 Reproduce current composition/field inventory without changing the historical
 proposal artifacts:
@@ -117,7 +117,7 @@ new collection with zero admitted occurrences; see
 `test_phase1_retirement.py::test_observed_rest_rejection_preserves_latest_coverage_candidate_set`.
 The recorder test now checks the exact partial scope/time/reason and all zero
 resource/page/byte/staging/diagnostic counts, while storage failures retain their
-zero-marker requirement. The failing report is retained as development evidence
+zero-marker requirement. The corrected frozen run at `47be2fd780f0a5278d950d0053cde9ac6fb6f196` passed all 1,921 ordinary cases without skips under explicit development bootstrap. The pre-run definition still matched after docs-only review integration, and the certificate was generated from that successful report. The failing report is retained as development evidence
 and cannot generate a certificate. A focused assertion initially compared JSON
 whitespace; it now checks the exact decoded reason contract instead.
 
