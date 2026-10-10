@@ -449,8 +449,9 @@ class Graph:
 
     def _resolve_key(self, key):
         mapping = self.db.execute(
-            "SELECT table_name,local_key_json FROM exchange_local_identities WHERE record_key=?",
-            (key,),
+            "SELECT table_name,local_key_json FROM exchange_local_identities WHERE record_key=? "
+            "UNION ALL SELECT table_name,local_key_json FROM exchange_admissions WHERE record_key=? LIMIT 1",
+            (key, key),
         ).fetchone()
         if mapping:
             local = json.loads(mapping[1])
@@ -1017,6 +1018,7 @@ class Graph:
             raise CatalogError("INVALID_EXCHANGE_SELECTION", "Select one domain scope")
         selected, queue = {}, deque()
         extra = []
+        deferred = set()
 
         def add(table, row):
             if table not in self.columns or row is None:
@@ -1274,22 +1276,47 @@ class Graph:
                     continue
                 visited.add(key)
                 for stage in self.db.execute(
-                    "SELECT record_json FROM exchange_staging WHERE record_key=? AND repository_uuidv4=? AND reason NOT LIKE 'current_state:%'",
+                    "SELECT record_json,reason FROM exchange_staging WHERE record_key=? AND repository_uuidv4=? AND reason NOT LIKE 'current_state:%'",
                     (key, repository_uuidv4),
                 ):
                     record = json.loads(stage[0])
                     if record["table"] in self.columns:
                         records.append(record)
+                        if stage[1] == "deferred:git_closure":
+                            deferred.add((record["key"], record_digest(record)))
+                        pending.extend(typed_references(record))
+                if key.startswith("acquisition_roots:"):
+                    for stage in self.db.execute(
+                        "SELECT record_json FROM exchange_staging WHERE table_name='root_origins' "
+                        "AND json_extract(record_json,'$.values.acquisition_root_id.\"$ref\"')=? AND repository_uuidv4=?",
+                        (key, repository_uuidv4),
+                    ):
+                        record = json.loads(stage[0])
+                        records.append(record)
+                        # Follow the candidate key as well, preserving genuine
+                        # alternatives of this selected pending child.
+                        pending.append(record["key"])
                         pending.extend(typed_references(record))
         else:
             for stage in self.db.execute(
-                "SELECT record_json FROM exchange_staging WHERE repository_uuidv4=? AND reason NOT LIKE 'current_state:%'",
+                "SELECT record_json,reason FROM exchange_staging WHERE repository_uuidv4=? AND reason NOT LIKE 'current_state:%'",
                 (repository_uuidv4,),
             ):
                 record = json.loads(stage[0])
                 if record["table"] in self.columns:
                     records.append(record)
+                    if stage[1] == "deferred:git_closure":
+                        deferred.add((record["key"], record_digest(record)))
+        # An incomplete receiver row is the physical prefix of its one deferred
+        # closure candidate. Forward that candidate once, without manufacturing
+        # competing complete/incomplete envelopes for the same capture.
         unique = {(record["key"], record_digest(record)): record for record in records}
+        for key, digest in list(unique):
+            candidate = unique[key, digest]
+            if (key, digest) not in deferred:
+                continue
+            prefix = {**candidate, "values": {**candidate["values"], "complete": 0}}
+            unique.pop((key, record_digest(prefix)), None)
         records = sorted(
             unique.values(), key=lambda r: (r["table"], r["key"], record_digest(r))
         )
@@ -1565,6 +1592,22 @@ class Graph:
 
     def _existing(self, table, data):
         columns = self.portable_columns(table)
+        if self._integer_identity(table) and not all(c in data for c in columns):
+            # These typed subjects have real natural UNIQUE constraints.
+            # Discarding processing aliases must not duplicate admitted facts.
+            columns = {
+                "acquisition_roots": (
+                    "git_acquisition_id",
+                    "object_format",
+                    "oid",
+                    "role",
+                ),
+                "root_origins": (
+                    "acquisition_root_id",
+                    "origin_kind",
+                    "source_ordinal",
+                ),
+            }.get(table, columns)
         if all(c in data for c in columns):
             return self.lookup(
                 table, columns, tuple(data[c] for c in columns), allow_null=True
@@ -1690,6 +1733,41 @@ class Graph:
             return "missing_json_dependency"
         except CatalogError:
             return "invalid:domain_json"
+        if table == "root_origins" and data["origin_kind"] == "ref":
+            root = self.lookup(
+                "acquisition_roots",
+                ("acquisition_root_id",),
+                (data["acquisition_root_id"],),
+            )
+            snapshot = self.lookup(
+                "snapshots", ("snapshot_id",), (data["snapshot_id"],)
+            )
+            if (
+                root is None
+                or snapshot is None
+                or root["repository_uuidv4"] != data["repository_uuidv4"]
+                or snapshot["repository_uuidv4"] != data["repository_uuidv4"]
+                or root["git_acquisition_id"] != snapshot["git_acquisition_id"]
+                or data["change_request_id"] is not None
+                or data["code_assessment_id"] is not None
+                or not isinstance(data["raw_ref_name"], bytes)
+                or not data["raw_ref_name"]
+                or type(data["source_ordinal"]) is not int
+                or data["source_ordinal"] < 0
+            ):
+                return "invalid:git_ref_origin"
+            ref = self.lookup(
+                "ref_observations",
+                ("snapshot_id", "raw_ref_name"),
+                (data["snapshot_id"], data["raw_ref_name"]),
+            )
+            if ref is None:
+                return "missing_captured_ref"
+            if (
+                ref["object_format"] != root["object_format"]
+                or (ref["peeled_oid"] or ref["target_oid"]) != root["oid"]
+            ):
+                return "invalid:git_ref_origin"
         if table == "code_assessments" and data["state"] == "complete":
             for column in ("commit_code_listing_id", "file_code_listing_id"):
                 listing = self.lookup(
@@ -1705,7 +1783,23 @@ class Graph:
             if complete and proof is None:
                 return "missing_completeness_proof"
             if complete and set(record.get("requires", ())) != proof:
-                return "invalid:completeness_dependencies"
+                # Processing aliases may change after receipt loss. Compare
+                # resolved domain subjects, never treat an alias as authority.
+                def subjects(keys):
+                    result = set()
+                    for key in keys:
+                        owner = key.split(":", 1)[0]
+                        subject = self._resolve_key(key)
+                        if subject is None:
+                            return None
+                        result.add((owner, self.local_key(owner, subject)))
+                    return result
+
+                received_subjects = subjects(record.get("requires", ()))
+                if received_subjects is None:
+                    return "missing_completeness_dependency"
+                if received_subjects != subjects(proof):
+                    return "invalid:completeness_dependencies"
             for key in proof or ():
                 if self._resolve_key(key) is None:
                     return "missing_completeness_dependency"

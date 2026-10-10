@@ -25,6 +25,11 @@ CREATE INDEX exchange_staging_owner ON exchange_staging(repository_uuidv4,table_
 CREATE INDEX exchange_staging_reason ON exchange_staging(reason,table_name);
 CREATE INDEX exchange_staging_table ON exchange_staging(table_name,record_key);
 CREATE INDEX exchange_staging_record_owner ON exchange_staging(record_key,repository_uuidv4);
+-- Pending ref origins have no domain row yet. Select them through their
+-- declared acquired-root dependency without scanning unrelated intake.
+CREATE INDEX exchange_staging_root_origin ON exchange_staging(
+ json_extract(record_json,'$.values.acquisition_root_id."$ref"'),repository_uuidv4
+) WHERE table_name='root_origins';
 -- Qualification barriers describe contested domain claims, not admission seals.
 CREATE TABLE exchange_blocked_coverage_claims(
  coverage_claim_id INTEGER PRIMARY KEY REFERENCES coverage_claims(coverage_claim_id)
