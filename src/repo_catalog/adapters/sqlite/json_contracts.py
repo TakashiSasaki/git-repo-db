@@ -115,14 +115,16 @@ def _capture_token(scope):
     """Keep actual JSON types distinct when sharing one structural check."""
 
     def keys(value):
-        if isinstance(value, dict):
+        if type(value) is dict:
             for key, child in value.items():
-                if not isinstance(key, str):
+                if type(key) is not str:
                     raise JsonContractError("Capture keys require text")
                 keys(child)
-        elif isinstance(value, list):
+        elif type(value) is list:
             for child in value:
                 keys(child)
+        elif value is not None and type(value) not in (str, int, float, bool):
+            raise JsonContractError("Capture requires JSON types")
 
     keys(scope)
     try:

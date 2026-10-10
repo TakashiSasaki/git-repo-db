@@ -59,13 +59,26 @@ def test_equal_field_captures_share_shape_check_with_distinct_capture_checks(
 
 
 @pytest.mark.parametrize(
-    "bad", ["time", "producer", "owner", "boolean-count", "numeric-key"]
+    "bad",
+    [
+        "time",
+        "producer",
+        "owner",
+        "boolean-count",
+        "integer-subclass",
+        "numeric-key",
+        "tuple",
+        "tuple-numeric-key",
+    ],
 )
 def test_shared_capture_cannot_mask_invalid_field_or_different_capture(bad):
     db = fresh_domain_db()
     value = candidate(state="open", draft=False, metadata={})
     value["acquisition_scope"]["request_context"] = {"number": 1}
+    if bad in {"tuple", "tuple-numeric-key"}:
+        value["acquisition_scope"]["request_context"]["permissions"] = []
     evidence = field_evidence(value)
+    valid = copy.deepcopy(evidence)
     altered = evidence['["draft"]']
     if bad == "time":
         altered["provider_updated_at_us"] = True
@@ -75,9 +88,20 @@ def test_shared_capture_cannot_mask_invalid_field_or_different_capture(bad):
         altered["acquisition_scope"]["change_request_id"] = "other-pr"
     elif bad == "boolean-count":
         altered["acquisition_scope"]["request_context"]["number"] = True
-    else:
+    elif bad == "integer-subclass":
+
+        class OtherInteger(int):
+            pass
+
+        altered["acquisition_scope"]["request_context"]["number"] = OtherInteger(1)
+    elif bad == "numeric-key":
         altered["acquisition_scope"]["request_context"][1] = 1
+    elif bad == "tuple":
+        altered["acquisition_scope"]["request_context"]["permissions"] = ()
+    else:
+        altered["acquisition_scope"]["request_context"]["permissions"] = ({1: "head"},)
     try:
+        assert json_contracts.validate_field_evidence(db, valid, value) == []
         with pytest.raises(json_contracts.JsonContractError):
             json_contracts.validate_field_evidence(db, evidence, value)
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
