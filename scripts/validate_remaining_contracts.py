@@ -168,8 +168,16 @@ def baseline_contracts(db):
         r[2] for r in db.execute("PRAGMA foreign_key_list(current_collection_pages)")
     }
     require(
-        page_parents == {"fetch_collections", "parser_profiles"},
-        "Current collection proof must retain exact context/profile without mutable body dependencies",
+        page_parents == {"fetch_collections"},
+        "Current collection proof must retain only its collection scope without mutable body or historical profile dependencies",
+    )
+    page_columns = {
+        r[1] for r in db.execute("PRAGMA table_info(current_collection_pages)")
+    }
+    require(
+        {"parser_module", "parser_version"} <= page_columns
+        and "parser_profile_uuidv4" not in page_columns,
+        "Current collection proof must identify its actual parser module/version",
     )
     for kind in ("review", "review-comment"):
         rejected(

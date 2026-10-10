@@ -128,13 +128,21 @@ def main():
                 name for name in new.keys() & old.keys() if new[name] != old[name]
             ),
         }
+
+    def semantic_columns(columns):
+        return {
+            name: {key: value for key, value in column.items() if key != "cid"}
+            for name, column in ((item["name"], item) for item in columns or [])
+        }
+
     column_changes = {
         table: {
-            "before": before["table_columns"].get(table),
-            "after": after["table_columns"].get(table),
+            "before": semantic_columns(before["table_columns"].get(table)),
+            "after": semantic_columns(after["table_columns"].get(table)),
         }
         for table in before["table_columns"].keys() | after["table_columns"].keys()
-        if before["table_columns"].get(table) != after["table_columns"].get(table)
+        if semantic_columns(before["table_columns"].get(table))
+        != semantic_columns(after["table_columns"].get(table))
     }
     removed_fks, added_fks = {}, {}
     for table in CURRENT_TABLES:
@@ -144,16 +152,12 @@ def main():
         )
         removed_fks[table] = [fk for fk in old if fk not in new]
         added_fks[table] = [fk for fk in new if fk not in old]
-        assert removed_fks[table] == [
-            {
-                "parent": "repository_bindings",
-                "columns": ["repository_binding_id"],
-                "targets": ["repository_binding_id"],
-                "on_update": "NO ACTION",
-                "on_delete": "NO ACTION",
-                "match": "NONE",
-            }
-        ]
+        expected_removed_parents = {
+            "parser_profile_capabilities",
+            "parser_profiles",
+            "repository_bindings",
+        }
+        assert {fk["parent"] for fk in removed_fks[table]} == expected_removed_parents
         assert not added_fks[table]
         assert any(
             fk["parent"] == "repository_bindings"
@@ -161,7 +165,33 @@ def main():
             for fk in new
         )
         assert "last_checked_at_us" not in after["current_wire_columns"][table]
-    assert not column_changes
+    expected_column_names = {
+        "current_collection_pages": {
+            "removed": {"parser_profile_uuidv4"},
+            "added": {"parser_module", "parser_version"},
+        },
+        "issue_resources": {
+            "removed": {"fact_kind", "owner_kind", "parser_profile_uuidv4"},
+            "added": {"parser_module", "parser_version"},
+        },
+        "review_resources": {
+            "removed": {"owner_kind", "parser_profile_uuidv4"},
+            "added": {"parser_module", "parser_version"},
+        },
+    }
+    assert {
+        table: {
+            "removed": {
+                column["name"] for column in before["table_columns"].get(table, [])
+            }
+            - {column["name"] for column in after["table_columns"].get(table, [])},
+            "added": {
+                column["name"] for column in after["table_columns"].get(table, [])
+            }
+            - {column["name"] for column in before["table_columns"].get(table, [])},
+        }
+        for table in expected_column_names
+    } == expected_column_names
     with sqlite3.connect(":memory:", isolation_level=None) as db:
         db.executescript(schema_sql())
         registry = inventory(db)
