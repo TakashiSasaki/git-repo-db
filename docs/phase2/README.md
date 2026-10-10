@@ -1,142 +1,35 @@
-# Phase 2 design reassessment: no independent Publication
+# Phase 2: Publication-independent reconstruction
 
-**Accepted direction, whole-design revision in progress; not a completed replacement schema.**
-The owner selected latest-state designs for P2-Q01/Q02/Q03 and rejected an
-independent Publication under P2-Q04. Further option selection is paused while
-all design areas are reconsidered for consistency. Implementation follows that
-review; this documentation change does not modify runtime behavior.
+The owner accepted Q01-B/Q02-B/Q03-B (latest accepted API resource state and current known Source inventory plus necessary evidence) and Q04 **NO_INDEPENDENT_PUBLICATION**. Further option selection is paused. The old Publication-centered 69-table sketch is not the target.
 
-Start with the [accepted decision and impact map](no-independent-publication-adr.md)
-and the [current decision register](decision-register.md).
+## Current design and implementation instructions
 
-The earlier [integrated proposal](proposal-before-no-publication.md) and
-[questionnaire](decision-register-before-no-publication.md) are preserved verbatim
-as comparison snapshots. Their Publication-centered 69-table sketch, recommended
-options and approval bundles are **not** the current target or permission to
-implement. The old prototypes and receipts remain unmodified historical evidence.
+1. [Accepted decision](no-independent-publication-adr.md) and [actual decision register](decision-register.md).
+2. [Reconstructed whole architecture](publication-free-design.md): direct domain ownership, current values and field evidence, local transaction atomicity, separate collection/Git completeness, operational fences, normalized Exchange and retained-content maintenance.
+3. [Implementation and independent-review prompt](publication-free-implementation-prompt.md): substantial integrated changes, required independent post-implementation subagent reviews, corrective iterations and exact-tree acceptance.
 
-## Verified baseline and authority
+The reconstruction is a logical/implementation contract under the accepted decisions, not an executed complete replacement DDL. It does not mark paused Q05-Q12 recommendations accepted, implement a new retention/cache/trust policy, claim independent subagent approval already happened, or authorize merging/releasing.
 
-Main was verified at `20e0f8d78b77c6c8d37826fd6d639819631e166b`, Schema 18.
-This design update is stacked on PR #22 at
-`e5f7ff386b77627490a400f0a7e29d3989a9a532`. PR #23 at
-`162581dfcfb501311d4993e90cdd160fb64d6e35` separately proposes Schema 19
-correctness/indexing changes. Neither PR was merged at this decision checkpoint.
-Recheck actual branches before later implementation; do not overwrite another
-agent's work or treat the old tested tree as acceptance of this redesign.
+## The decisive boundary
 
-[AGENTS.md](../../AGENTS.md) establishes explicit owner decision and accepted ADR
-precedence over unapproved proposals and transitional runtime structures.
-The new decision makes Q01-B/Q02-B/Q03-B and **NO_INDEPENDENT_PUBLICATION** binding.
-The unresolved choices have not been approved by this document or previous CI.
+No independent Publication ID, generic input/output manifest, member/seal registry, selected interpretation or universal publish transition may own or enable ordinary domain resources. A renamed batch/bundle/generation/receipt with the same role is also excluded.
 
-## Accepted invariants, unchanged
+Identity and ownership belong to the actual resource. A coherent local update commits its values, field evidence and applicable conflict/revision state atomically. Completeness belongs to the exact requested collection, child tree, Git closure or code target. Normalized Exchange validates real typed dependencies, not sender transaction groups. Valid individual resources are not hidden merely because a larger acquisition is incomplete.
 
-Permanent repository/service/Source identity, natural document keys, signed int64
-Unix epoch microseconds, the exact five-column Coverage claim model and its
-latest-time candidate-set derivation remain fixed. Preserve required exact text,
-verified Git content, typed owners/parents, actual module/version attribution,
-per-field evidence, missing/null/empty distinctions, incomparable conflicts,
-Issue transfer provenance, receiver-local checks and CAS-41.
+Latest-state choices must not become full edit/roster history stored under evidence. Required current origins, genuine unresolved candidates and minimal still-used target/scope evidence remain. Generic raw provider JSON is not an alternative to API-original deletion. Required Git content, exact domain text and CAS-41 remain protected.
 
-Latest-state storage does not imply receipt-order wins, automatic deletion on
-scan absence, discarding conflicts, or a GC/retention policy. Necessary evidence
-must not be an undeclared complete history of superseded PR/comment/roster values.
-Saved API originals, retired replay and parser-profile authority must not return
-under a new container name.
+The local `Store.publish()` / `publication_seq` role is a revision fence, not an independent domain Publication. Preserve that responsibility with clear naming, without creating a commit-history table. Physical catalog validation and atomic installation are likewise separate.
 
-## Evidence: live dependency chains, not grep conclusions
+## Integration baseline
 
-The existing [dependency inventory](dependency-inventory.json),
-[source analysis](dependency-source.json.gz), [field inventory](field-contract.json)
-and [conditional disposition](schema-disposition.json) describe the investigated
-Schema 18 checkpoint. The five [publication](workstreams/publication.md),
-[completeness](workstreams/completeness.md), [acquisition](workstreams/acquisition.md),
-[fields](workstreams/fields.md) and [Exchange](workstreams/exchange.md) workstreams
-are useful evidence of callers and failure cases. Their recommended replacement
-Publication topology and still-open lifecycle assumptions require revision.
+At reconstruction, main was `20e0f8d78b77c6c8d37826fd6d639819631e166b`, Schema 18. The runtime/audit stack is #22 -> #23 -> #24 -> #25; #23 supplies Schema 19 correctness fixes, #24 test efficiency and #25 corrected dependency/selected-scale evidence. #26 is the accepted decision overlay on a sibling of #23 based on #22. The reconstruction is stacked on #26.
 
-The new ADR maps these dependencies to independently meaningful duties. It does
-not assert that every production path has already been retraced or that a new
-DDL has been proven. Static references, statement preparation, executing a
-synthetic case and full runtime acceptance remain different kinds of evidence.
+Re-fetch actual state and integrate the decision documents without losing the separately submitted runtime/test corrections. No branch is rewritten, retargeted or merged by these design documents. An implementation must not regress to the older source tree merely because the design branch has it.
 
-## Integrated target architecture
+## Evidence and remaining policy boundaries
 
-The fixed architectural constraint is **no independent Publication entity or
-subsystem**, including a renamed generic bundle/seal with the same ownership and
-eligibility role. No common `publication_id` is required merely to record that
-a transaction committed.
+The [previous proposal](proposal-before-no-publication.md), [previous questionnaire](decision-register-before-no-publication.md), workstreams, inventories and prototypes remain checkpoint evidence. Static hits, SQL preparation, a synthetic counterexample and production acceptance are different evidence classes. Do not rewrite old validation receipts to claim new behavior.
 
-Review the model by independent responsibilities: resource identity/current value;
-actual field provenance and unresolved candidates; database atomic update;
-collection scope/completeness; Git objects/acquisitions/targets; operational
-concurrency/restart; receiver domain validation; and retained-content maintenance.
-The presence and exact shape of any further persistent evidence require a domain
-justification, not an assumption that the old Publication manifest must survive.
+The reconstruction specifies dependency direction, ownership, atomicity and required observable outcomes. Permanent fragment/final-set representation, stronger Exchange trust, new negative-membership rules, Git decoder/current-selection policy, cache/checkpoint lifetime and GC are not implicitly chosen. Preserve established semantics and report an exact irreducible policy conflict; do not restart the multiple-choice sequence or silently invent a policy.
 
-No new final table count, generic collection seal, checkpoint journal, current
-winner rule or Exchange trust policy is selected here. In particular, Q05 does
-not automatically inherit the old fragment-receipt recommendation.
-
-## Transactions, predicates and deletion dependencies
-
-A committed local transaction can expose a coherent update without an independent
-Publication record. It cannot by itself establish the completeness of an API
-list, nested child set, multi-transaction Git import or a received transfer.
-Review those predicates separately and preserve their real domain constraints.
-
-`Store.publish()` currently increments `database_identity.publication_seq`.
-That counter supports local revisions/fencing and is not an independent domain
-Publication. Classify and preserve the necessary concurrency semantics before
-renaming or removing anything. Similarly, catalog installation and a Git/collection
-completion condition are not automatically forbidden by their current names.
-
-Audit Publication/result FKs, manifests, read gates, exchange closure, generated
-JSON/SQL guards, staging and package tests together. Delete the independent
-mechanism in a coordinated replacement; do not use an empty input manifest,
-dummy Fetch, hidden history or compatibility Publication to satisfy old checks.
-
-## Independent review, prototypes and performance
-
-The old [independent review](independent-review.md),
-[Exchange addendum](review-exchange-addendum.md), [evidence ledger](verification.md)
-and probes remain checkpoint evidence only. Passing the old candidate does not
-validate a no-Publication architecture. Do not modify its raw receipts to make
-historical runs appear to cover revised inputs.
-
-The reassessment must challenge rollback and post-commit failure, partial and
-empty collections, same-time/stale evidence, sparse field origins, Source-scope
-mismatch, changed PR head/base, partial/reordered Exchange, incomplete Git object
-relations and shared-byte corruption. Review proposed evidence for hidden history
-or a renamed Publication. Capture new exact fingerprints for revised prototypes.
-
-## Implementation sequence after decisions
-
-The previous Publication-first approval bundles are superseded. The sequence is:
-
-1. Freeze the accepted no-Publication and latest-state direction (this decision).
-2. Reassess the entire model, update dependencies and evidence requirements, and
-   record genuine unresolved issues without continuing the multiple-choice sequence.
-3. Independently review the integrated no-Publication model and its counterexamples.
-4. Reflect the reviewed design across schema/writer/reader/Exchange/maintenance in
-   coherent, substantial implementation PRs, preserving settled correctness.
-
-No new option choice, merge or release is authorized here. There is no migration
-or intermediate-working-state requirement, but final integrated correctness is
-required. If a genuinely undecided semantic question blocks a sound replacement,
-report the specific issue rather than inventing a policy.
-
-## Reproduction and evidence scope
-
-The original reproduction commands and limitations are preserved in
-[the earlier proposal](proposal-before-no-publication.md#reproduction-and-evidence-scope)
-and [verification ledger](verification.md). They reproduce that checkpoint, not
-this redesign. New code-bearing work must use the actual latest repository tools,
-synthetic disposable catalogs, exact-tree ordinary/package acceptance and honest
-failure/skip reporting.
-
-This change records design authority, revises the active overview/register and
-preserves old materials. No runtime tests, implementation of this redesign,
-merge, live acquisition, migration, retained-data deletion or deployment is
-claimed by the document itself.
+Implementation may use a fresh incompatible development schema. After the integrated candidate is implemented, independent subagents must test it, the lead must correct findings, and affected reviewers must reverify the corrected tree. Final ordinary/package/hosted checks must identify that exact tree. This document update runs no runtime tests and claims no implementation or merge.
