@@ -67,9 +67,10 @@ def inventory(sql, *, validate_views=False):
     for kind, name, _, statement in objects:
         if kind != "table":
             continue
-        columns = db.execute(f'PRAGMA table_info("{name}")').fetchall()
+        columns = db.execute(f'PRAGMA table_xinfo("{name}")').fetchall()
         tables[name] = {
             "columns": [item[1] for item in columns],
+            "generated_columns": [item[1] for item in columns if item[6] in (2, 3)],
             "primary_key": [
                 item[1] for item in sorted(columns, key=lambda r: r[5]) if item[5]
             ],

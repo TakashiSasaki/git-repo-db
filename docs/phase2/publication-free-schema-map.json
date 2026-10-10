@@ -17,6 +17,7 @@
           "ended_at_us",
           "active_cache_entry_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_acquisition_id"
         ],
@@ -75,6 +76,7 @@
           "expected_oid",
           "complete"
         ],
+        "generated_columns": [],
         "primary_key": [
           "acquisition_root_id"
         ],
@@ -111,6 +113,7 @@
           "last_used_us",
           "bytes"
         ],
+        "generated_columns": [],
         "primary_key": [
           "active_cache_entry_id"
         ],
@@ -133,6 +136,7 @@
           "git_object_id",
           "content_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_object_id"
         ],
@@ -167,6 +171,7 @@
           "attempt",
           "acquired_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "active_cache_entry_id",
           "job_id",
@@ -214,6 +219,7 @@
           "access",
           "state"
         ],
+        "generated_columns": [],
         "primary_key": [
           "cache_locator_id"
         ],
@@ -247,6 +253,7 @@
           "parser_module",
           "parser_version"
         ],
+        "generated_columns": [],
         "primary_key": [
           "change_request_event_uuidv4"
         ],
@@ -310,6 +317,7 @@
           "acquisition_scope_json",
           "field_evidence_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "change_request_id"
         ],
@@ -415,6 +423,7 @@
           "change_request_kind",
           "provider_change_request_number"
         ],
+        "generated_columns": [],
         "primary_key": [
           "change_request_id"
         ],
@@ -450,6 +459,7 @@
           "oid",
           "acquisition_root_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "code_assessment_id",
           "role"
@@ -494,6 +504,7 @@
           "parser_version",
           "details_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "code_assessment_id"
         ],
@@ -570,6 +581,7 @@
           "oid",
           "metadata"
         ],
+        "generated_columns": [],
         "primary_key": [
           "code_listing_id",
           "position"
@@ -615,6 +627,7 @@
           "patch_status",
           "metadata"
         ],
+        "generated_columns": [],
         "primary_key": [
           "code_listing_id",
           "position"
@@ -651,6 +664,7 @@
           "page_count",
           "context_proven"
         ],
+        "generated_columns": [],
         "primary_key": [
           "code_listing_id"
         ],
@@ -679,6 +693,7 @@
           "head_oid",
           "base_oid"
         ],
+        "generated_columns": [],
         "primary_key": [
           "code_listing_id"
         ],
@@ -714,6 +729,7 @@
           "provider_change_request_document_id",
           "ordinal"
         ],
+        "generated_columns": [],
         "primary_key": [
           "fetch_collection_id",
           "change_request_id",
@@ -773,6 +789,7 @@
           "cursor",
           "reason"
         ],
+        "generated_columns": [],
         "primary_key": [
           "fetch_collection_id"
         ],
@@ -819,6 +836,7 @@
           "parent_oid",
           "parent_git_object_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "commit_git_object_id",
           "parent_ordinal"
@@ -858,6 +876,7 @@
           "raw_headers",
           "raw_message"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_object_id"
         ],
@@ -895,6 +914,7 @@
           "evidence",
           "observed_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "completion_marker_id"
         ],
@@ -921,6 +941,7 @@
           "verified_at_us",
           "pipeline_version"
         ],
+        "generated_columns": [],
         "primary_key": [
           "content_id",
           "representation",
@@ -948,6 +969,7 @@
           "cache_locator_id",
           "state"
         ],
+        "generated_columns": [],
         "primary_key": [
           "content_id",
           "kind",
@@ -983,6 +1005,7 @@
           "byte_length",
           "created_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "content_id"
         ],
@@ -994,6 +1017,7 @@
           "coverage_claim_id",
           "completion_marker_uuidv4"
         ],
+        "generated_columns": [],
         "primary_key": [
           "coverage_claim_id",
           "completion_marker_uuidv4"
@@ -1030,6 +1054,7 @@
           "observed_at_us",
           "details_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "coverage_claim_id"
         ],
@@ -1054,6 +1079,7 @@
           "change_request_id",
           "kind"
         ],
+        "generated_columns": [],
         "primary_key": [
           "coverage_scope_id"
         ],
@@ -1102,6 +1128,7 @@
           "parser_module",
           "parser_version"
         ],
+        "generated_columns": [],
         "primary_key": [
           "fetch_collection_id",
           "ordinal"
@@ -1130,6 +1157,7 @@
           "ddl_sha256",
           "lifecycle"
         ],
+        "generated_columns": [],
         "primary_key": [
           "singleton"
         ],
@@ -1160,6 +1188,7 @@
           "acquisition_scope_json",
           "field_evidence_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "change_request_id",
           "kind",
@@ -1275,6 +1304,7 @@
           "kind",
           "provider_change_request_document_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "change_request_id",
           "kind",
@@ -1301,6 +1331,7 @@
           "local_key_json",
           "content_sha256"
         ],
+        "generated_columns": [],
         "primary_key": [
           "record_key"
         ],
@@ -1311,6 +1342,7 @@
         "columns": [
           "coverage_claim_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "coverage_claim_id"
         ],
@@ -1334,6 +1366,7 @@
           "local_key_json",
           "record_key"
         ],
+        "generated_columns": [],
         "primary_key": [
           "table_name",
           "local_key_json"
@@ -1351,6 +1384,7 @@
           "record_json",
           "reason"
         ],
+        "generated_columns": [],
         "primary_key": [
           "record_key",
           "content_sha256"
@@ -1369,6 +1403,7 @@
           "observed_at_us",
           "scope_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "fetch_collection_id"
         ],
@@ -1431,6 +1466,7 @@
           "request",
           "roots_manifest"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_acquisition_id"
         ],
@@ -1492,6 +1528,7 @@
           "message_text",
           "metadata"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_fact_uuidv4"
         ],
@@ -1522,6 +1559,7 @@
           "max_text_blob_bytes",
           "decoded_name"
         ],
+        "generated_columns": [],
         "primary_key": [
           "tree_git_object_id",
           "raw_name",
@@ -1557,6 +1595,7 @@
           "payload_representation",
           "payload_sha256"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_object_id"
         ],
@@ -1603,6 +1642,7 @@
           "size",
           "verified"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_object_id"
         ],
@@ -1624,6 +1664,7 @@
           "text_state",
           "raw_text"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_fact_uuidv4"
         ],
@@ -1658,6 +1699,7 @@
           "evidence_json",
           "asserted_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "cancellation_uuidv4"
         ],
@@ -1683,6 +1725,7 @@
           "record_json",
           "reason"
         ],
+        "generated_columns": [],
         "primary_key": [
           "record_uuidv4",
           "content_sha256"
@@ -1701,6 +1744,7 @@
           "evidence_json",
           "asserted_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "relation_uuidv4"
         ],
@@ -1757,6 +1801,7 @@
           "safe_watermark_us",
           "evidence"
         ],
+        "generated_columns": [],
         "primary_key": [
           "incremental_scan_id"
         ],
@@ -1783,6 +1828,7 @@
           "target_max_search_document_id",
           "created_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "index_generation_id"
         ],
@@ -1795,6 +1841,7 @@
           "search_document_id",
           "input_version"
         ],
+        "generated_columns": [],
         "primary_key": [
           "index_generation_id",
           "search_document_id"
@@ -1832,6 +1879,7 @@
           "repository_binding_id",
           "provider_issue_number",
           "parent_provider_resource_id",
+          "parent_kind",
           "text_body_sha256",
           "body_status",
           "title",
@@ -1849,6 +1897,9 @@
           "metadata",
           "acquisition_scope_json",
           "field_evidence_json"
+        ],
+        "generated_columns": [
+          "parent_kind"
         ],
         "primary_key": [
           "service_instance_uuidv4",
@@ -1950,6 +2001,7 @@
           "checkpoint",
           "reason"
         ],
+        "generated_columns": [],
         "primary_key": [
           "job_id",
           "attempt"
@@ -1976,6 +2028,7 @@
           "current_attempt",
           "created_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "job_id"
         ],
@@ -2013,6 +2066,7 @@
           "reason",
           "received_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "stage_uuidv4"
         ],
@@ -2024,6 +2078,7 @@
           "sha256",
           "unresolved_payload_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "sha256"
         ],
@@ -2056,6 +2111,7 @@
           "representation",
           "sha256"
         ],
+        "generated_columns": [],
         "primary_key": [
           "representation",
           "sha256"
@@ -2084,6 +2140,7 @@
           "text_done",
           "complete"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_acquisition_id"
         ],
@@ -2122,6 +2179,7 @@
           "peeled_oid",
           "target_type"
         ],
+        "generated_columns": [],
         "primary_key": [
           "snapshot_id",
           "raw_ref_name"
@@ -2157,6 +2215,7 @@
           "preferred_repository_endpoint_id",
           "metadata"
         ],
+        "generated_columns": [],
         "primary_key": [
           "repository_uuidv4"
         ],
@@ -2193,6 +2252,7 @@
           "metadata",
           "created_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "repository_binding_id"
         ],
@@ -2230,6 +2290,7 @@
           "metadata",
           "created_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "repository_endpoint_id"
         ],
@@ -2254,6 +2315,7 @@
           "observed_at_us",
           "provenance_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "repository_uuidv4",
           "name"
@@ -2278,6 +2340,7 @@
           "git_object_id",
           "git_acquisition_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "repository_uuidv4",
           "git_object_id",
@@ -2334,6 +2397,7 @@
           "next_cursor",
           "reusable"
         ],
+        "generated_columns": [],
         "primary_key": [
           "resume_scope_id"
         ],
@@ -2384,6 +2448,7 @@
           "parser_version",
           "confidence"
         ],
+        "generated_columns": [],
         "primary_key": [
           "resume_scope_id"
         ],
@@ -2455,6 +2520,8 @@
           "review_provider_resource_id",
           "in_reply_to_provider_resource_id",
           "review_thread_provider_resource_id",
+          "parent_review_kind",
+          "reply_kind",
           "provider_updated_at_us",
           "provider_clock_scope",
           "observed_at_us",
@@ -2465,6 +2532,10 @@
           "metadata",
           "acquisition_scope_json",
           "field_evidence_json"
+        ],
+        "generated_columns": [
+          "parent_review_kind",
+          "reply_kind"
         ],
         "primary_key": [
           "change_request_id",
@@ -2667,6 +2738,7 @@
           "acquisition_scope_json",
           "field_evidence_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "change_request_id",
           "provider_resource_id"
@@ -2760,6 +2832,7 @@
           "change_request_id",
           "provider_resource_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "change_request_id",
           "provider_resource_id"
@@ -2787,6 +2860,7 @@
           "object_format",
           "oid"
         ],
+        "generated_columns": [],
         "primary_key": [
           "tree_git_object_id",
           "raw_path"
@@ -2821,6 +2895,7 @@
           "complete",
           "entry_count"
         ],
+        "generated_columns": [],
         "primary_key": [
           "tree_git_object_id"
         ],
@@ -2850,6 +2925,7 @@
           "change_request_id",
           "code_assessment_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "root_origin_id"
         ],
@@ -2945,6 +3021,7 @@
           "body",
           "metadata"
         ],
+        "generated_columns": [],
         "primary_key": [
           "search_document_id"
         ],
@@ -2961,6 +3038,7 @@
           "metadata",
           "created_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "service_instance_uuidv4"
         ],
@@ -2977,6 +3055,7 @@
           "generation",
           "created_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "snapshot_id"
         ],
@@ -3037,6 +3116,7 @@
           "parser_version",
           "reason"
         ],
+        "generated_columns": [],
         "primary_key": [
           "source_id",
           "scope_key",
@@ -3070,6 +3150,7 @@
           "parser_version",
           "field_evidence_json"
         ],
+        "generated_columns": [],
         "primary_key": [
           "source_id",
           "repository_uuidv4"
@@ -3107,6 +3188,7 @@
           "name",
           "settings"
         ],
+        "generated_columns": [],
         "primary_key": [
           "source_id"
         ],
@@ -3131,6 +3213,7 @@
           "reserved",
           "consumed"
         ],
+        "generated_columns": [],
         "primary_key": [
           "job_id",
           "attempt"
@@ -3165,6 +3248,7 @@
           "body",
           "byte_length"
         ],
+        "generated_columns": [],
         "primary_key": [
           "sha256"
         ],
@@ -3180,6 +3264,7 @@
           "target_git_object_id",
           "raw_payload"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_object_id"
         ],
@@ -3214,6 +3299,7 @@
           "byte_length",
           "sha256"
         ],
+        "generated_columns": [],
         "primary_key": [
           "text_body_id"
         ],
@@ -3227,6 +3313,7 @@
           "child_cursor",
           "observed_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "fetch_collection_id",
           "provider_resource_id"
@@ -3255,6 +3342,7 @@
           "head_oid",
           "base_oid"
         ],
+        "generated_columns": [],
         "primary_key": [
           "fetch_collection_id",
           "provider_resource_id"
@@ -3291,6 +3379,7 @@
           "oid",
           "observed_at_us"
         ],
+        "generated_columns": [],
         "primary_key": [
           "fetch_collection_id",
           "role"
@@ -3320,6 +3409,7 @@
           "child_oid",
           "child_git_object_id"
         ],
+        "generated_columns": [],
         "primary_key": [
           "tree_git_object_id",
           "raw_name"
@@ -3353,6 +3443,7 @@
           "git_object_id",
           "entry_count"
         ],
+        "generated_columns": [],
         "primary_key": [
           "git_object_id"
         ],
@@ -3378,6 +3469,7 @@
           "unresolved_payload_id",
           "reason"
         ],
+        "generated_columns": [],
         "primary_key": [
           "unresolved_payload_id"
         ],
