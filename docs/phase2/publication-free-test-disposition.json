@@ -1756,10 +1756,10 @@
     "execution": "8 passed, 21 deselected in 3.89s; pure methods only, before final schema freeze."
   },
   "collection_checkpoint": {
-    "ordinary_selected": 2115,
+    "ordinary_selected": 2128,
     "collection_errors": 0,
-    "artifact": "artifacts/publication-free/final-candidate-collection/ordinary-collected-nodes.txt",
-    "status": "Real collection after integrated Git/Exchange/pending/native-SQL corrections. Exact final execution and independent re-review are separate gates."
+    "artifact": "artifacts/publication-free/collection-4c738ef66d61/ordinary-collected-nodes.txt",
+    "status": "Actual integrated corrected-source collection, including timestamp and escaped JSON-key boundaries. Independent reviews and full execution are separate gates."
   },
   "git_contract_rewrites": {
     "artifact": "tests/support/git_publication_free_node_replacements.json",
@@ -1770,10 +1770,10 @@
     "script": "scripts/audit_publication_free_test_dispositions.py",
     "artifact": "tests/support/publication_free_node_dispositions.json",
     "baseline_nodes": "tests/support/publication_free_baseline_nodes.txt",
-    "status": "All 1950 baseline collected nodes accounted for against actual 2115-node ordinary collection; 485 explicit exact-node mappings and 1465 still-collected same node IDs. All 193 removed/renamed baseline functions are mapped. Collection and disposition evidence only; full execution acceptance is separate.",
+    "status": "All1950 baseline nodes accounted for against actual2128 ordinary nodes: 487 explicit mappings + 1463 same-node survivors; all193 removed/renamed functions mapped. Collection proof only, not full execution acceptance.",
     "removed_or_renamed_functions": 193,
-    "explicit_mapped_nodes": 485,
-    "still_collected_same_nodes": 1465
+    "explicit_mapped_nodes": 487,
+    "still_collected_same_nodes": 1463
   },
   "corrected_source_narrow_execution": {
     "selection": "tests/integration/test_catalog3_cache.py test_catalog3_job_plans.py test_database.py test_current_boundaries_independent.py test_catalog3_current_exchange.py and test_catalog3_review_coverage.py::test_new_observed_root_gap_supersedes_older_terminal_thread",

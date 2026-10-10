@@ -3,9 +3,9 @@
   "baseline_sha": "6ca31eb95d2dca91adcf20af88fbb54387595375",
   "selection": "tests/unit tests/integration tests/e2e, not live and not benchmark",
   "baseline_collected_count": 1950,
-  "current_collected_count": 2115,
-  "mapped_baseline_node_count": 485,
-  "still_collected_same_node_count": 1465,
+  "current_collected_count": 2128,
+  "mapped_baseline_node_count": 487,
+  "still_collected_same_node_count": 1463,
   "removed_or_renamed_baseline_function_count": 193,
   "removed_or_renamed_baseline_functions": [
     "tests/e2e/test_cli_more.py::test_publication_fencing",
@@ -204,7 +204,7 @@
   ],
   "node_list_sha256": {
     "baseline": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
-    "current": "e343b415e9cea3959fec6b212a83a4d6b282294ddf44439ce6f6686a8cfe61fc"
+    "current": "88ce59a32b14839d01f2d7d9363583621d6ced3bb3e1ac8282877fc197d84852"
   },
   "limitations": "Exact counterpart existence and explicit rationales are checked. Still-collected names do not imply unchanged implementation. Full execution, assertion sufficiency and fresh independent review remain separate acceptance requirements.",
   "entries": [
@@ -4138,6 +4138,24 @@
       "disposition_source": "exchange_contract_rewrites",
       "surviving_assertion": "Real GitHub collector complete typed receipts, aggregate scope and ordinary current Review behavior survive production ExchangeService round trip.",
       "retired_mechanism_reason": "Real GitHub collector complete typed receipts, aggregate scope and ordinary current Review behavior survive production ExchangeService round trip."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_timestamps.py::test_all_persisted_absolute_time_columns_have_units_and_integer_types[catalog3.sql]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_timestamps.py::test_all_persisted_absolute_time_columns_have_units_and_integer_types[catalog3.sql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "The original catalog3.sql parameter/node ID and all signed-int64 range, ordering, INTEGER storage, non-integer rejection, microsecond unit/type assertions survive. The fixture now registers pure Git SQL functions and executes the actual composed production schema, covering current API/evidence/Git/operational time columns rather than a base DDL fragment.",
+      "retired_mechanism_reason": "Retire only the obsolete fragment-layout assumption and unreachable reanalysis_runs fixture branch; required timestamp behavior is preserved and checked against every active persisted table."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_timestamps.py::test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types[catalog3.sql]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_timestamps.py::test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types[catalog3.sql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "The original catalog3.sql parameter/node ID and all signed-int64 range, ordering, INTEGER storage, non-integer rejection, microsecond unit/type assertions survive. The fixture now registers pure Git SQL functions and executes the actual composed production schema, covering current API/evidence/Git/operational time columns rather than a base DDL fragment.",
+      "retired_mechanism_reason": "Retire only the obsolete fragment-layout assumption and unreachable reanalysis_runs fixture branch; required timestamp behavior is preserved and checked against every active persisted table."
     },
     {
       "baseline_node": "tests/integration/test_current_boundaries_independent.py::test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling[owner]",
@@ -8325,8 +8343,6 @@
     "tests/integration/test_catalog3_timestamps.py::test_current_clock_keeps_integer_microseconds[0-0]",
     "tests/integration/test_catalog3_timestamps.py::test_current_clock_keeps_integer_microseconds[-1--1]",
     "tests/integration/test_catalog3_timestamps.py::test_current_clock_keeps_integer_microseconds[1791363600123456999-1791363600123456]",
-    "tests/integration/test_catalog3_timestamps.py::test_all_persisted_absolute_time_columns_have_units_and_integer_types[catalog3.sql]",
-    "tests/integration/test_catalog3_timestamps.py::test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types[catalog3.sql]",
     "tests/integration/test_ci_execution.py::test_full_current_acceptance_reports_exact_execution",
     "tests/integration/test_ci_execution.py::test_reconciliation_rejects_failed_missing_skipped_or_tampered_outputs[missing]",
     "tests/integration/test_ci_execution.py::test_reconciliation_rejects_failed_missing_skipped_or_tampered_outputs[failed]",
