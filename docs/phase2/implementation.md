@@ -109,6 +109,18 @@ behavior, ordinary integration/e2e, collection/Coverage, Exchange/CAS corruption
 and quarantine, and sequential isolated wheel/sdist installs. Ruff and CI
 selected/executed reconciliation are required.
 
+The first integrated development capability run at `250cb14bc9483af772eddf34f87c370dac612512`
+passed 1,920 cases and failed one overbroad recorder-test assertion that no completion
+marker could exist after a recognizable rejected first response. Independent
+review confirmed that Phase 1 already requires reason-only partial evidence for a
+new collection with zero admitted occurrences; see
+`test_phase1_retirement.py::test_observed_rest_rejection_preserves_latest_coverage_candidate_set`.
+The recorder test now checks the exact partial scope/time/reason and all zero
+resource/page/byte/staging/diagnostic counts, while storage failures retain their
+zero-marker requirement. The failing report is retained as development evidence
+and cannot generate a certificate. A focused assertion initially compared JSON
+whitespace; it now checks the exact decoded reason contract instead.
+
 Exact final feature SHA/effective tree, actual test totals, selected/executed gate,
 hosted CI URL and any failures/unexecuted checks are recorded in this PR's body and
 its `ci-profile` artifacts after execution. Earlier focused/bootstrap counts are
