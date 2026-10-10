@@ -1,4 +1,4 @@
--- Portable exchange bookkeeping is catalog-local and never re-exported.
+-- Discardable intake/deduplication indexes, never resource owners.
 CREATE TABLE exchange_local_identities(
  table_name TEXT NOT NULL,
  local_key_json TEXT NOT NULL CHECK(json_valid(local_key_json)),
@@ -9,8 +9,7 @@ CREATE TABLE exchange_admissions(
  record_key TEXT PRIMARY KEY,
  table_name TEXT NOT NULL,
  local_key_json TEXT NOT NULL CHECK(json_valid(local_key_json)),
- content_sha256 BLOB NOT NULL CHECK(length(content_sha256)=32),
- record_json TEXT NOT NULL CHECK(json_valid(record_json) AND json_type(record_json)='object')
+ content_sha256 BLOB NOT NULL CHECK(length(content_sha256)=32)
 ) STRICT;
 CREATE TABLE exchange_staging(
  record_key TEXT NOT NULL,
@@ -22,39 +21,38 @@ CREATE TABLE exchange_staging(
  reason TEXT NOT NULL,
  PRIMARY KEY(record_key,content_sha256)
 ) STRICT;
-CREATE TABLE exchange_source_provenance(
- source_registration_uuidv4 TEXT NOT NULL REFERENCES sources(source_registration_uuidv4),
- origin_catalog_uuidv4 TEXT NOT NULL,
- definition_sha256 BLOB NOT NULL CHECK(length(definition_sha256)=32),
- definition_json TEXT NOT NULL CHECK(json_valid(definition_json) AND json_type(definition_json)='object'),
- PRIMARY KEY(source_registration_uuidv4,origin_catalog_uuidv4,definition_sha256)
-) STRICT;
-CREATE TRIGGER exchange_admissions_immutable BEFORE UPDATE ON exchange_admissions BEGIN SELECT RAISE(ABORT,'Exchange admission is immutable'); END;
-CREATE TRIGGER exchange_admissions_retain BEFORE DELETE ON exchange_admissions BEGIN SELECT RAISE(ABORT,'Exchange admission must be retained'); END;
-CREATE TRIGGER exchange_local_identities_immutable BEFORE UPDATE ON exchange_local_identities BEGIN SELECT RAISE(ABORT,'Portable exchange identity is immutable'); END;
-CREATE TRIGGER exchange_local_identities_retain BEFORE DELETE ON exchange_local_identities BEGIN SELECT RAISE(ABORT,'Portable exchange identity must be retained'); END;
-CREATE TRIGGER exchange_source_provenance_immutable BEFORE UPDATE ON exchange_source_provenance BEGIN SELECT RAISE(ABORT,'Source provenance is immutable'); END;
-CREATE TRIGGER exchange_source_provenance_retain BEFORE DELETE ON exchange_source_provenance BEGIN SELECT RAISE(ABORT,'Source provenance must be retained'); END;
--- Derived local resolution barriers. Recomputed atomically after each intake;
--- they prevent a retained first-arriving immutable variant becoming a winner.
-CREATE TABLE exchange_blocked_results(
- parsed_result_uuidv4 TEXT PRIMARY KEY REFERENCES parsed_results(parsed_result_uuidv4)
-) STRICT;
-CREATE TABLE exchange_selection_blocks(
- scope_kind TEXT NOT NULL CHECK(scope_kind IN ('profile','fact')),
- scope_uuidv4 TEXT NOT NULL,
- record_key TEXT NOT NULL,
- PRIMARY KEY(scope_kind,scope_uuidv4,record_key)
-) STRICT;
-
--- Completion evidence has independent portable identity. Its sealed fetch set
--- is checked at exchange admission; UUID constraints apply to direct SQL too.
-CREATE TRIGGER completion_marker_uuid BEFORE INSERT ON completion_markers
-WHEN length(NEW.completion_marker_uuidv4)!=36 OR length(CAST(NEW.completion_marker_uuidv4 AS BLOB))!=36 OR NEW.completion_marker_uuidv4!=lower(NEW.completion_marker_uuidv4)
- OR NEW.completion_marker_uuidv4 NOT GLOB '????????-????-4???-[89ab]???-????????????'
- OR replace(NEW.completion_marker_uuidv4,'-','') GLOB '*[^0-9a-f]*'
-BEGIN SELECT RAISE(ABORT,'completion marker requires canonical UUIDv4'); END;
--- Disputed immutable completeness evidence cannot retain an arrival-order winner.
+CREATE INDEX exchange_staging_owner ON exchange_staging(repository_uuidv4,table_name,reason);
+CREATE INDEX exchange_staging_reason ON exchange_staging(reason,table_name);
+CREATE INDEX exchange_staging_table ON exchange_staging(table_name,record_key);
+CREATE INDEX exchange_staging_record_owner ON exchange_staging(record_key,repository_uuidv4);
+-- Pending ref origins have no domain row yet. Select them through their
+-- declared acquired-root dependency without scanning unrelated intake.
+CREATE INDEX exchange_staging_root_origin ON exchange_staging(
+ json_extract(record_json,'$.values.acquisition_root_id."$ref"'),repository_uuidv4
+) WHERE table_name='root_origins';
+-- Qualification barriers describe contested domain claims, not admission seals.
 CREATE TABLE exchange_blocked_coverage_claims(
  coverage_claim_id INTEGER PRIMARY KEY REFERENCES coverage_claims(coverage_claim_id)
 ) STRICT;
+-- Indexed direct proof subjects. The relation mirrors the immutable claim's
+-- declared terminal markers; it does not qualify a claim or replace validation
+-- of the actual collection pages, children, owners, and observation times.
+CREATE TABLE coverage_claim_markers(
+ coverage_claim_id INTEGER NOT NULL REFERENCES coverage_claims(coverage_claim_id),
+ completion_marker_uuidv4 TEXT NOT NULL REFERENCES completion_markers(completion_marker_uuidv4),
+ PRIMARY KEY(coverage_claim_id,completion_marker_uuidv4)
+) STRICT;
+CREATE INDEX coverage_claim_markers_marker ON coverage_claim_markers(completion_marker_uuidv4,coverage_claim_id);
+CREATE TRIGGER coverage_claim_markers_insert AFTER INSERT ON coverage_claims
+BEGIN
+ INSERT INTO coverage_claim_markers(coverage_claim_id,completion_marker_uuidv4)
+ SELECT NEW.coverage_claim_id,value FROM json_each(NEW.details_json,'$.completion_marker_uuidv4s');
+END;
+CREATE TRIGGER coverage_claim_markers_subject BEFORE INSERT ON coverage_claim_markers
+WHEN NOT EXISTS(SELECT 1 FROM coverage_claims c JOIN json_each(c.details_json,'$.completion_marker_uuidv4s') m
+ WHERE c.coverage_claim_id=NEW.coverage_claim_id AND m.value=NEW.completion_marker_uuidv4)
+BEGIN SELECT RAISE(ABORT,'Marker is not a declared coverage proof subject'); END;
+CREATE TRIGGER coverage_claim_markers_immutable BEFORE UPDATE ON coverage_claim_markers
+BEGIN SELECT RAISE(ABORT,'Immutable coverage proof subject'); END;
+CREATE TRIGGER coverage_claim_markers_no_delete BEFORE DELETE ON coverage_claim_markers
+BEGIN SELECT RAISE(ABORT,'Immutable coverage proof subject'); END;

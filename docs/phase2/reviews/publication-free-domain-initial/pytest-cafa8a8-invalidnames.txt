@@ -1,0 +1,38 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 15 items / 12 deselected / 3 selected
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[.] FAILED [ 33%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[..] FAILED [ 66%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[dir/file] FAILED [100%]
+
+=================================== FAILURES ===================================
+___________ test_invalid_intrinsic_tree_names_cannot_be_available[.] ___________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:300: in test_invalid_intrinsic_tree_names_cannot_be_available
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "invalid canonical name became available"
+E   AssertionError: invalid canonical name became available
+E   assert not <sqlite3.Row object at 0x7f7d25b63fd0>
+E    +  where <sqlite3.Row object at 0x7f7d25b63fd0> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f7d25f30320>.one
+__________ test_invalid_intrinsic_tree_names_cannot_be_available[..] ___________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:300: in test_invalid_intrinsic_tree_names_cannot_be_available
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "invalid canonical name became available"
+E   AssertionError: invalid canonical name became available
+E   assert not <sqlite3.Row object at 0x7f7d25b62fb0>
+E    +  where <sqlite3.Row object at 0x7f7d25b62fb0> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f7d265850a0>.one
+_______ test_invalid_intrinsic_tree_names_cannot_be_available[dir/file] ________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:300: in test_invalid_intrinsic_tree_names_cannot_be_available
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "invalid canonical name became available"
+E   AssertionError: invalid canonical name became available
+E   assert not <sqlite3.Row object at 0x7f7d25b62bf0>
+E    +  where <sqlite3.Row object at 0x7f7d25b62bf0> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f7d25b62d20>.one
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[.]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[..]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[dir/file]
+======================= 3 failed, 12 deselected in 1.81s =======================

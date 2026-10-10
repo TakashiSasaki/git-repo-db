@@ -82,6 +82,7 @@ _NULLABLE_COMMON = {
 _NULLABLE_REVIEW = _REVIEW - {
     "change_request_id",
     "provider_change_request_document_id",
+    "provider_resource_id",
 }
 _GENERATED = {
     "parent_kind",
@@ -97,6 +98,7 @@ _CLOCK_SCOPES = {
 
 _STRUCTURAL_FIELDS = {
     "kind",
+    "source_id",
     "service_instance_uuidv4",
     "repository_uuidv4",
     "repository_binding_id",
@@ -105,6 +107,7 @@ _STRUCTURAL_FIELDS = {
     "parent_provider_resource_id",
     "change_request_id",
     "provider_change_request_document_id",
+    "provider_resource_id",
 }
 
 
@@ -188,20 +191,21 @@ class CurrentResources:
 
     @contextmanager
     def _transaction(self):
-        if self.c.in_transaction:
-            yield
+        outer = not self.c.in_transaction
+        if self.store:
+            with self.store.transaction():
+                yield
+                if outer:
+                    self.store.advance_local_revision()
             return
-        self.c.execute("BEGIN IMMEDIATE")
-        try:
+        from repo_catalog.adapters.sqlite.transactions import atomic_unit
+
+        with atomic_unit(self.c):
             yield
-            self.c.execute(
-                "UPDATE database_identity SET publication_seq=publication_seq+1 WHERE singleton=1"
-            )
-            self.c.execute("COMMIT")
-        except BaseException:
-            if self.c.in_transaction:
-                self.c.execute("ROLLBACK")
-            raise
+            if outer:
+                self.c.execute(
+                    "UPDATE database_identity SET local_revision=local_revision+1 WHERE singleton=1"
+                )
 
     def _one(self, sql, args=()):
         cursor = self.c.execute(sql, args)
@@ -220,7 +224,7 @@ class CurrentResources:
     def capture_context(self, scope_context):
         """Capture immediately before a serialized live request, never after it."""
         revision = self._one(
-            "SELECT db_instance_id,publication_seq FROM database_identity WHERE singleton=1"
+            "SELECT db_instance_id,local_revision FROM database_identity WHERE singleton=1"
         )
         return revision, dict(scope_context)
 
@@ -338,10 +342,11 @@ class CurrentResources:
             merged["field_evidence"] = evidence
             if merged != old or existing["content_sha256"] != content_hash:
                 self.c.execute(
-                    "UPDATE exchange_staging SET record_json=?,content_sha256=? WHERE record_key=? AND content_sha256=?",
+                    "UPDATE exchange_staging SET record_json=?,content_sha256=?,repository_uuidv4=? WHERE record_key=? AND content_sha256=?",
                     (
                         _canonical(merged),
                         content_hash,
+                        merged["repository_uuidv4"],
                         record_key,
                         existing["content_sha256"],
                     ),
@@ -429,6 +434,18 @@ class CurrentResources:
             raise CatalogError(
                 "INVALID_CURRENT_RESOURCE", "Acquisition scope must be an object"
             )
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            _acquisition_shape,
+            _check_schema,
+        )
+
+        if "acquisition_scope" in candidate:
+            _acquisition_shape(
+                candidate["acquisition_scope"], candidate.get("service_instance_uuidv4")
+            )
+        if "metadata" in candidate:
+            table, _, _ = self._table_key(candidate)
+            _check_schema(table, "metadata", candidate["metadata"], candidate)
         if "field_evidence" in candidate:
             from repo_catalog.adapters.sqlite.json_contracts import (
                 validate_field_evidence,
@@ -456,6 +473,11 @@ class CurrentResources:
                 "Review submission time is not an update clock",
             )
         _canonical(candidate)
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            validate_current_candidate_shape,
+        )
+
+        validate_current_candidate_shape(table, candidate)
         return table, key
 
     def _missing(self, candidate, *, source="import"):
@@ -903,7 +925,7 @@ class CurrentResources:
             self._stage(complete, "missing_dependency")
             return AdmissionResult("missing_dependency", key, digest, missing)
         revision = self._one(
-            "SELECT db_instance_id,publication_seq FROM database_identity WHERE singleton=1"
+            "SELECT db_instance_id,local_revision FROM database_identity WHERE singleton=1"
         )
         authoritative = (
             source == "live"

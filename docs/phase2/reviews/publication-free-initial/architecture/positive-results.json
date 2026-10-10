@@ -1,0 +1,39 @@
+{
+  "rollback": {
+    "caught_nested_statement_failure": "resource/evidence/revision rolled back",
+    "unrelated_outer_edit": "committed"
+  },
+  "git_intrinsic_and_decoders": [
+    {
+      "format": "sha1",
+      "interrupted_object": "no partial owner/entries",
+      "unrelated_object": "available",
+      "missing_child": "real OID and NULL FK",
+      "disagreeing_decoder_count": 2,
+      "unselected_fact": null
+    },
+    {
+      "format": "sha256",
+      "interrupted_object": "no partial owner/entries",
+      "unrelated_object": "available",
+      "missing_child": "real OID and NULL FK",
+      "disagreeing_decoder_count": 2,
+      "unselected_fact": null
+    }
+  ],
+  "no_history": {
+    "updates": 10000,
+    "current_rows": 1,
+    "pending_rows": 0,
+    "collections": 0,
+    "local_revision": 10000,
+    "nonempty_tables": {
+      "database_identity": 1,
+      "service_instances": 1,
+      "repositories": 1,
+      "repository_bindings": 1,
+      "change_requests": 1,
+      "change_request_state": 1
+    }
+  }
+}

@@ -1,7 +1,10 @@
 """Ordinary catalog validation independent of historical import workspaces."""
 
+from repo_catalog.adapters.git.parsing import (
+    git_fact_validation_issues,
+    verify_git_object_structure,
+)
 from repo_catalog.domain.document import text_body_sha256
-from repo_catalog.domain.git_object import validate_git_object
 from repo_catalog.domain.models import CatalogError
 
 
@@ -44,17 +47,10 @@ def check_catalog(store, *, full=False):
             "WHERE NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=b.sha256)"
         ):
             try:
-                # verify_all separately checks the physical SHA-256. This audit
-                # checks the independent Git type/length/header object identity.
-                validate_git_object(
-                    row["object_format"],
-                    row["oid"],
-                    row["type"],
-                    row["size"],
-                    row["body"],
-                )
+                verify_git_object_structure(store.connection, row["git_object_id"])
             except CatalogError as error:
                 issues.append(
                     {"code": error.code, "git_object_id": row["git_object_id"]}
                 )
+        issues.extend(git_fact_validation_issues(store.connection))
     return issues

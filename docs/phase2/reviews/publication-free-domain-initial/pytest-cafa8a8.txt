@@ -1,0 +1,63 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 12 items
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_identity_missing_target_and_atomic_failure[sha1] PASSED [  8%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_identity_missing_target_and_atomic_failure[sha256] PASSED [ 16%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha1-2] PASSED [ 25%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha1-2048] PASSED [ 33%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha256-2] PASSED [ 41%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha256-2048] PASSED [ 50%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha1] FAILED [ 58%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha256] FAILED [ 66%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_current_document_missing_parent_late_arrival_and_stale_repeat PASSED [ 75%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_physical_shared_digest_quarantine_backup_restore_and_cas41 PASSED [ 83%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_receiver_local_revision_is_independent_and_repeat_stable PASSED [ 91%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_old_code_anchor_never_borrows_new_head FAILED [100%]
+
+=================================== FAILURES ===================================
+__________ test_decoder_reverse_repeat_reopen_onward_roundtrip[sha1] ___________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:140: in test_decoder_reverse_repeat_reopen_onward_roundtrip
+    parser, acq, ids, bodies, head = graph_fixture(store, fmt)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:75: in graph_fixture
+    insert(s, "git_acquisitions", git_acquisition_id=acq, repository_uuidv4=REPO, object_format=fmt, kind="git", request="{}", roots_manifest=json.dumps(roots), refs_observed_at_us=-1)
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:47: in insert
+    return s.execute(f"INSERT INTO {table}({','.join(row)}) VALUES({','.join('?' for _ in row)})", tuple(row.values()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/store.py:162: in execute
+    return self.connection.execute(sql, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   sqlite3.IntegrityError: JSON contract violation: git_acquisitions.roots_manifest
+_________ test_decoder_reverse_repeat_reopen_onward_roundtrip[sha256] __________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:140: in test_decoder_reverse_repeat_reopen_onward_roundtrip
+    parser, acq, ids, bodies, head = graph_fixture(store, fmt)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:75: in graph_fixture
+    insert(s, "git_acquisitions", git_acquisition_id=acq, repository_uuidv4=REPO, object_format=fmt, kind="git", request="{}", roots_manifest=json.dumps(roots), refs_observed_at_us=-1)
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:47: in insert
+    return s.execute(f"INSERT INTO {table}({','.join(row)}) VALUES({','.join('?' for _ in row)})", tuple(row.values()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/store.py:162: in execute
+    return self.connection.execute(sql, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   sqlite3.IntegrityError: JSON contract violation: git_acquisitions.roots_manifest
+_________________ test_old_code_anchor_never_borrows_new_head __________________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:276: in test_old_code_anchor_never_borrows_new_head
+    api.admit("change_request_state",candidate(100,state="open",object_format="sha1",head_oid=old,base_oid=base),source="import")
+src/repo_catalog/adapters/sqlite/current_api.py:424: in admit
+    return super().admit(candidate, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/current_resources.py:703: in admit
+    self._validate(incoming)
+src/repo_catalog/adapters/sqlite/current_api.py:193: in _validate
+    raise CatalogError(
+E   repo_catalog.domain.models.CatalogError: Binary domain field requires canonical text
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha1]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha256]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_old_code_anchor_never_borrows_new_head
+========================= 3 failed, 9 passed in 9.68s ==========================

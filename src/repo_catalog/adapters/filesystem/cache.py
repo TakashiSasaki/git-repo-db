@@ -52,8 +52,7 @@ class CacheManager:
         reasons = []
         for r in obligations:
             if r["roots_fixed"] and not all(
-                r[k]
-                for k in ("structure_done", "digest_done", "text_done", "published")
+                r[k] for k in ("structure_done", "digest_done", "text_done", "complete")
             ):
                 reasons.append("pending_obligations:" + r["git_acquisition_id"])
         # No fixed roots means failed transfer work; OS lock must prove all users stopped.

@@ -117,264 +117,196 @@ class CollectionService:
             return self._discover(s, job, plan)
 
     def _discover(self, s, job, plan):
-        from repo_catalog.adapters.sqlite.parser_model import ParserModel
-        from repo_catalog.adapters.sqlite.payloads import intern_payload
+        from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 
         job_plans.activate(s, plan)
-        sources = plan["sources"]
-        items = []
-        coverage = CoverageReport()
+        items, coverage = [], CoverageReport()
         skipped = list(plan["skipped_sources"])
-        for skipped_source in skipped:
-            coverage.add(
-                "inventory",
-                skipped_source["reason"],
-                source_registration_uuidv4=skipped_source["source_registration_uuidv4"],
-            )
         source_outcomes = list(skipped)
         acquisition_failed = False
-        for src in sources:
+        for outcome in skipped:
+            coverage.add(
+                "inventory",
+                outcome["reason"],
+                source_registration_uuidv4=outcome["source_registration_uuidv4"],
+            )
+        for src in plan["sources"]:
+            collector, members = None, []
             try:
                 self.token.check()
-            except CatalogError as cause:
-                JobService(s).update(
-                    job,
-                    "interrupted",
-                    cause.code,
-                    result={
-                        "status": "partial",
-                        "source_outcomes": source_outcomes,
-                        "skipped_sources": skipped,
-                    },
-                )
-                cause.details["job_id"] = job
-                raise
-            try:
                 job_plans.check_registration(s, src)
                 settings = json.loads(src["settings"])
-            except CatalogError as cause:
-                skipped.append(
-                    {
-                        "source_registration_uuidv4": src["source_registration_uuidv4"],
-                        "reason": cause.code,
-                    }
-                )
-                coverage.add("inventory", cause.code, source_id=src["source_id"])
-                continue
-            run = str(uuid.uuid4())
-            observed_at_us = now_us()
-            inventory_scope = dict(settings)
-            collector = None
-            result_uuid = None
-            model = ParserModel(s.connection)
-            try:
-                uncertainty = None
-                if src["discovery_kind"] == "manual_git":
-                    repos = [
-                        {
-                            "host": "local",
-                            "provider_repository_id": src["source_id"],
-                            "name": src["name"],
-                            "url": settings["url"],
-                            "metadata": {},
-                        }
-                    ]
-                else:
-                    from repo_catalog.adapters.github.collector import GitHubCollector
 
-                    collector = GitHubCollector(
-                        s, self.token, config=src["github_config"]
-                    )
-                    inventory_scope["response_evidence"] = collector.inventory_evidence
-                    repos = collector.inventory(src, job)
-                    uncertainty = collector.inventory_uncertainty
-                if uncertainty:
-                    acquisition_failed = True
-                    coverage.add("inventory", uncertainty, source_id=src["source_id"])
-                with s.transaction():
-                    if collector is not None:
-                        result_uuid = collector.inventory_result(src)
-                    else:
-                        input_uuid = str(uuid.uuid4())
-                        ref = intern_payload(
-                            s.connection,
-                            json.dumps(settings, sort_keys=True).encode(),
-                            representation="legacy_normalized",
+                def admit_repository(repo):
+                    self.token.check()
+                    with s.transaction():
+                        current_job = s.one(
+                            "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id "
+                            "AND a.attempt=j.current_attempt WHERE j.job_id=?",
+                            (job,),
                         )
-                        s.execute(
-                            "INSERT INTO source_input_observations(source_input_uuidv4,source_registration_uuidv4,observed_at_us,request_context_json,payload_representation,payload_sha256) VALUES(?,?,?,?,?,?)",
-                            (
-                                input_uuid,
-                                src["source_registration_uuidv4"],
-                                observed_at_us,
-                                json.dumps(
-                                    {
-                                        "kind": "manual_git_configuration",
-                                        "source_registration_uuidv4": src[
-                                            "source_registration_uuidv4"
-                                        ],
-                                    }
-                                ),
-                                *ref.parameters(),
-                            ),
-                        )
-                        profile = model.ensure_builtin_profile()
-                        result_uuid = model.create_result(
-                            profile,
-                            source_registration_uuidv4=src[
-                                "source_registration_uuidv4"
-                            ],
-                            inputs=[{"source_input_uuidv4": input_uuid}],
-                        )
-                    for repo in repos:
-                        provider_repository_id = (
+                        if current_job is None or current_job[0] != "running":
+                            raise CatalogError(
+                                "STALE_JOB", "Discovery job fence changed"
+                            )
+                        provider_id = (
                             repo["provider_repository_id"]
                             if src["discovery_kind"] == "github_inventory"
                             else settings.get("provider_repository_id")
                         )
-                        target = settings.get("repository_uuidv4")
+                        explicit = settings.get("repository_uuidv4")
                         existing = (
                             s.one(
                                 "SELECT repository_uuidv4 FROM repositories WHERE repository_uuidv4=?",
-                                (target,),
+                                (explicit,),
                             )
-                            if target
+                            if explicit
                             else None
                         )
-                        if target and not existing:
+                        if explicit and existing is None:
                             raise CatalogError(
                                 "NOT_FOUND",
                                 "Explicit repository identity no longer exists",
                             )
-                        if src["service_instance_uuidv4"] and provider_repository_id:
+                        if src["service_instance_uuidv4"] and provider_id:
                             binding = s.one(
-                                "SELECT repository_uuidv4 FROM repository_bindings WHERE service_instance_uuidv4=? AND provider_repository_id=?",
-                                (
-                                    src["service_instance_uuidv4"],
-                                    provider_repository_id,
-                                ),
+                                "SELECT repository_uuidv4 FROM repository_bindings "
+                                "WHERE service_instance_uuidv4=? AND provider_repository_id=?",
+                                (src["service_instance_uuidv4"], provider_id),
                             )
                             if binding:
                                 if existing and existing[0] != binding[0]:
                                     raise CatalogError(
                                         "IDENTITY_CONFLICT",
-                                        "Source and provider identity refer to different repositories",
+                                        "Source and provider repository identities disagree",
                                     )
-                                existing = s.one(
-                                    "SELECT repository_uuidv4 FROM repositories WHERE repository_uuidv4=?",
-                                    (binding[0],),
-                                )
-                        if not existing and src["discovery_kind"] == "manual_git":
+                                existing = binding
+                        if existing is None and src["discovery_kind"] == "manual_git":
                             existing = s.one(
                                 "SELECT repository_uuidv4 FROM source_repositories WHERE source_id=?",
                                 (src["source_id"],),
                             )
                         ident = existing[0] if existing else str(uuid.uuid4())
-                        if not existing:
+                        if existing is None:
                             s.execute(
                                 "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,?,?)",
                                 (ident, repo["name"], "{}"),
                             )
                         if src["service_instance_uuidv4"]:
                             identity.bind(
-                                s,
-                                ident,
-                                src["service_instance_uuidv4"],
-                                provider_repository_id,
+                                s, ident, src["service_instance_uuidv4"], provider_id
                             )
-                        identity.link_source(s, src["source_id"], ident)
                         identity.add_endpoint(s, ident, repo["url"])
-                        identity.observe_name(
-                            s,
-                            ident,
-                            repo["name"],
-                            observed_at_us,
-                            parsed_result_uuidv4=result_uuid,
-                        )
-                        s.execute(
-                            "INSERT INTO repository_inventory_observations VALUES(?,?,?,?,?,?)",
-                            (
-                                str(uuid.uuid4()),
-                                ident,
-                                result_uuid,
-                                src["source_registration_uuidv4"],
-                                repo["name"],
-                                json.dumps(repo["metadata"], allow_nan=False),
-                            ),
-                        )
-                        items.append({"repository_uuidv4": ident, "name": repo["name"]})
-                    s.execute(
-                        "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at_us,reason,parsed_result_uuidv4,source_registration_uuidv4) VALUES(?,?,?,?,?,?,?,?)",
-                        (
-                            run,
+                        CurrentApiState(s).confirm_source_repository(
                             src["source_id"],
-                            "partial" if uncertainty else "complete",
-                            json.dumps(inventory_scope),
-                            observed_at_us,
-                            uncertainty,
-                            result_uuid,
-                            src["source_registration_uuidv4"],
-                        ),
-                    )
-                    if not self._publish_inventory(s, model, result_uuid, src):
-                        coverage.add(
-                            "inventory",
-                            "PARSER_PROFILE_UNSELECTED",
-                            source_id=src["source_id"],
+                            ident,
+                            observed_at_us=repo["observed_at_us"],
+                            scope=repo["scope"],
+                            parser_module=repo["parser_module"],
+                            parser_version=repo["parser_version"],
+                            name=repo["name"],
+                            metadata=repo.get("metadata", {}),
+                            source="live",
+                            base_revision=repo["base_revision"],
+                            scope_context=repo["scope"],
                         )
-                    s.publish()
+                        return ident
+
+                if src["discovery_kind"] == "manual_git":
+                    observed = now_us()
+                    scope = {
+                        "source_registration_uuidv4": src["source_registration_uuidv4"],
+                        "kind": "manual_git",
+                        "endpoint": settings["url"],
+                    }
+                    base_revision = s.revision()
+                    with s.transaction():
+                        ident = admit_repository(
+                            {
+                                "provider_repository_id": src["source_id"],
+                                "name": src["name"],
+                                "url": settings["url"],
+                                "metadata": {},
+                                "observed_at_us": observed,
+                                "scope": scope,
+                                "parser_module": "repo_catalog.manual_source",
+                                "parser_version": "1",
+                                "base_revision": base_revision,
+                            }
+                        )
+                        CurrentApiState(s).assess_source_inventory(
+                            src["source_id"],
+                            scope=scope,
+                            observed_at_us=observed,
+                            state="complete",
+                            members=[ident],
+                            terminal=True,
+                            parser_module="repo_catalog.manual_source",
+                            parser_version="1",
+                        )
+                        s.advance_local_revision()
+                    items.append({"repository_uuidv4": ident, "name": src["name"]})
+                    uncertainty = None
+                else:
+                    from repo_catalog.adapters.github.collector import GitHubCollector
+
+                    collector = GitHubCollector(
+                        s, self.token, config=src["github_config"]
+                    )
+                    collector.inventory(src, job, admit_repository=admit_repository)
+                    uncertainty = collector.inventory_uncertainty
+                    self._assess_inventory(s, src, collector, members, uncertainty)
+                    items.extend(self._inventory_items(s, src, collector))
+                if uncertainty:
+                    acquisition_failed = True
+                    coverage.add("inventory", uncertainty, source_id=src["source_id"])
                 source_outcomes.append(
                     {
                         "source_registration_uuidv4": src["source_registration_uuidv4"],
                         "state": "partial" if uncertainty else "complete",
-                        "parsed_result_uuidv4": result_uuid,
                     }
                 )
-            except CatalogError as e:
-                if e.code == "CANCELLED":
+            except CatalogError as error:
+                skipped_before_acquisition = collector is None and error.code in (
+                    "SOURCE_CREDENTIAL_UNAVAILABLE",
+                    "SOURCE_UNCONFIGURED",
+                    "SOURCE_INVALID_SETTINGS",
+                    "SOURCE_IDENTITY_CHANGED",
+                )
+                acquisition_failed |= not skipped_before_acquisition
+                if collector is not None:
+                    try:
+                        self._assess_inventory(s, src, collector, members, error.code)
+                    except BaseException as cleanup_error:
+                        error.add_note(
+                            "Partial inventory assessment failed: "
+                            + type(cleanup_error).__name__
+                        )
+                    items.extend(self._inventory_items(s, src, collector))
+                source_outcomes.append(
+                    {
+                        "source_registration_uuidv4": src["source_registration_uuidv4"],
+                        "state": "skipped" if skipped_before_acquisition else "failed",
+                        "reason": error.code,
+                    }
+                )
+                if error.code == "CANCELLED":
                     JobService(s).update(
                         job,
                         "interrupted",
-                        e.code,
+                        error.code,
                         result={
                             "status": "partial",
                             "source_outcomes": source_outcomes,
                             "skipped_sources": skipped,
                         },
                     )
-                    e.details["job_id"] = job
+                    error.details["job_id"] = job
                     raise
-                acquisition_failed = True
-                coverage.add("inventory", e.code, source_id=src["source_id"])
-                source_outcomes.append(
-                    {
-                        "source_registration_uuidv4": src["source_registration_uuidv4"],
-                        "state": "failed",
-                        "reason": e.code,
-                    }
-                )
-                # An attempted request with no received input is a job outcome,
-                # never remote inventory evidence.
-                if collector is not None and collector.inventory_evidence:
-                    with s.transaction():
-                        result_uuid = collector.inventory_result(src)
-                        s.execute(
-                            "INSERT INTO inventory_observations(inventory_observation_id,source_id,asserted_state,scope,observed_at_us,reason,parsed_result_uuidv4,source_registration_uuidv4) VALUES(?,?,?,?,?,?,?,?)",
-                            (
-                                run,
-                                src["source_id"],
-                                "partial",
-                                json.dumps(inventory_scope),
-                                observed_at_us,
-                                e.code,
-                                result_uuid,
-                                src["source_registration_uuidv4"],
-                            ),
-                        )
-                        self._publish_inventory(s, model, result_uuid, src)
+                coverage.add("inventory", error.code, source_id=src["source_id"])
         JobService(s).update(
             job,
-            "complete" if not acquisition_failed else "waiting",
+            "waiting" if acquisition_failed else "complete",
             result={
                 "status": "complete"
                 if coverage.complete_for_requested_scope
@@ -391,21 +323,53 @@ class CollectionService:
         )
 
     @staticmethod
-    def _publish_inventory(store, model, result_uuid, src):
-        model.publish_result(result_uuid)
-        profile = store.one(
-            "SELECT parser_profile_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
-            (result_uuid,),
-        )[0]
-        scope = model.ensure_scope_profile(
-            profile,
-            source_registration_uuidv4=src["source_registration_uuidv4"],
-            fact_kind="inventory",
+    def _inventory_items(store, src, collector):
+        members = dict.fromkeys(
+            member
+            for page in collector.inventory_evidence
+            for member in page["members"]
         )
-        if scope is None:
-            return False
-        model.select_fact(result_uuid, fact_kind="inventory")
-        return True
+        result = []
+        for member in members:
+            row = store.one(
+                "SELECT repository_uuidv4,name FROM source_repositories WHERE source_id=? AND repository_uuidv4=?",
+                (src["source_id"], member),
+            )
+            if row is not None:
+                result.append(dict(row))
+        return result
+
+    @staticmethod
+    def _assess_inventory(store, src, collector, members, reason):
+        from repo_catalog.adapters.sqlite.current_api import CurrentApiState
+
+        evidence = collector.inventory_evidence
+        if not evidence:
+            return  # No observed input is a job outcome, not remote evidence.
+        members = list(
+            dict.fromkeys(member for page in evidence for member in page["members"])
+        )
+        observed = max(item["observed_at_us"] for item in evidence)
+        terminal = bool(evidence[-1].get("terminal")) and reason is None
+        with store.transaction():
+            current = store.one(
+                "SELECT state FROM job_attempts WHERE job_id=? AND attempt=?",
+                (collector.inventory_job[0], collector.inventory_job[1]),
+            )
+            if current is None or current[0] != "running":
+                return
+            CurrentApiState(store).assess_source_inventory(
+                src["source_id"],
+                scope=evidence[-1]["scope"],
+                observed_at_us=observed,
+                state="complete" if terminal else "partial",
+                members=members,
+                terminal=terminal,
+                reason=reason,
+                parser_module=evidence[-1]["parser_module"],
+                parser_version=evidence[-1]["parser_version"],
+            )
+            store.advance_local_revision()
 
     def sync(self, request):
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
@@ -556,7 +520,7 @@ class CollectionService:
                     try:
                         if kind == "git":
                             done = s.one(
-                                "SELECT x.snapshot_id FROM snapshots x JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_uuidv4=? AND a.kind='git' AND p.state='published' AND x.published=1",
+                                "SELECT x.snapshot_id FROM snapshots x JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_uuidv4=? AND a.kind='git' AND p.state='complete' AND x.complete=1",
                                 (job, repo["repository_uuidv4"]),
                             )
                             item = (

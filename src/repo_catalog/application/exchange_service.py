@@ -18,7 +18,7 @@ class ExchangeService:
         repository_uuidv4,
         output_path,
         *,
-        fetch_occurrence_uuidv4s=None,
+        git_acquisition_id=None,
         fetch_collection_id=None,
     ):
         destination = Path(output_path)
@@ -27,7 +27,7 @@ class ExchangeService:
                 with store.transaction():
                     unit = Graph(store.connection).export(
                         repository_uuidv4,
-                        fetch_occurrence_uuidv4s=fetch_occurrence_uuidv4s,
+                        git_acquisition_id=git_acquisition_id,
                         fetch_collection_id=fetch_collection_id,
                     )
             except CatalogError as exc:
@@ -65,7 +65,7 @@ class ExchangeService:
             with store.transaction():
                 result = Graph(store.connection).receive(unit)
                 if result["received_records"] or result["admitted_records"]:
-                    store.publish()
+                    store.advance_local_revision()
             response = Result(
                 result,
                 catalog=store.revision(),

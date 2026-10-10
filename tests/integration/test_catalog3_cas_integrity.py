@@ -62,10 +62,10 @@ def git_context(body, object_format="sha1"):
     }
 
 
-def test_scan_records_one_physical_diagnostic_across_representations(store):
+def test_scan_records_one_physical_diagnostic_across_git_formats(store):
     db = store.connection
     ref = register_git_blob(db, b"good")
-    intern_payload(db, b"good", representation="decoded_api")
+    register_git_blob(db, b"good", object_format="sha256")
     corrupt(db, ref.sha256, b"bad!")
     first = verify_all(db)
     revision = store.revision()
@@ -81,7 +81,7 @@ def test_scan_records_one_physical_diagnostic_across_representations(store):
     )
     assert store.one("SELECT count(*) FROM payload_quarantine")[0] == 1
     assert store.revision() == revision
-    assert store.one("SELECT count(*) FROM payloads")[0] == 2
+    assert store.one("SELECT count(*) FROM payloads")[0] == 1
 
 
 def test_valid_git_reacquisition_stages_bytes_and_object_context_without_repair(store):
@@ -211,18 +211,19 @@ def test_rejected_original_cannot_enter_git_staging_through_python_or_sql(
     store, representation
 ):
     body = b"API_TRANSPORT_ONLY_MARKER"
-    reference = PayloadRef(representation, hashlib.sha256(body).digest())
     before = list(store.connection.iterdump())
     with pytest.raises(CatalogError) as error:
-        stage_verified_payload(
-            store.connection, body, reference, {}, reason="PAYLOAD_CORRUPTION"
-        )
-    assert error.value.code == "INVALID_ARGUMENT"
+        PayloadRef(representation, hashlib.sha256(body).digest())
+    assert error.value.code == "INVALID_PAYLOAD_REFERENCE"
+    with pytest.raises(CatalogError) as error:
+        intern_payload(store.connection, body, representation=representation)
+    assert error.value.code == "INVALID_PAYLOAD_REFERENCE"
     with pytest.raises(sqlite3.IntegrityError, match="CHECK"):
         store.execute(
             "INSERT INTO payload_admission_staging VALUES('10000000-0000-4000-8000-000000000001',?,?,?,?, 'PAYLOAD_CORRUPTION',-1)",
             (
-                *reference.parameters(),
+                representation,
+                hashlib.sha256(body).digest(),
                 body,
                 json.dumps(git_context(body)),
             ),
@@ -230,38 +231,34 @@ def test_rejected_original_cannot_enter_git_staging_through_python_or_sql(
     assert list(store.connection.iterdump()) == before
 
 
-def test_only_api_bytes_cannot_be_repaired_from_the_adapter_or_application(
-    store, tmp_path
-):
+def test_removed_api_representations_cannot_create_repair_authority(store, tmp_path):
     db = store.connection
     raw = b'{"transport_only":"API_ORIGINAL_REPAIR_MARKER"}'
-    reference = intern_payload(db, raw, representation="decoded_api")
-    corrupt(db, reference.sha256, b"broken original")
-    diagnose_corruption(db, reference.sha256)
     before = list(db.iterdump())
-    with pytest.raises(CatalogError) as error:
-        repair_payload(db, reference.sha256, raw)
-    assert error.value.code == "INVALID_ARGUMENT"
+    for representation in ("decoded_api", "legacy_normalized"):
+        with pytest.raises(CatalogError) as error:
+            intern_payload(db, raw, representation=representation)
+        assert error.value.code == "INVALID_PAYLOAD_REFERENCE"
     replacement = tmp_path / "original.json"
     replacement.write_bytes(raw)
-    with pytest.raises(CatalogError) as error:
+    with pytest.raises(CatalogError):
         MaintenanceService(store.path).database(
             "repair-payload",
-            SimpleNamespace(sha256=reference.sha256.hex(), input=replacement),
+            SimpleNamespace(sha256=hashlib.sha256(raw).hexdigest(), input=replacement),
         )
-    assert error.value.code == "INVALID_ARGUMENT"
     assert list(db.iterdump()) == before
-    assert is_quarantined(db, reference.sha256)
 
 
 @pytest.mark.parametrize("object_format", ["sha1", "sha256"])
-def test_repair_accepts_real_git_content_even_when_api_proof_shares_its_bytes(
+def test_repair_accepts_real_git_content_shared_across_git_formats(
     store, tmp_path, object_format
 ):
     db = store.connection
     body = b'{"also_git_blob_content":"shared bytes"}'
     reference = register_git_blob(db, body, object_format=object_format)
-    intern_payload(db, body, representation="decoded_api")
+    register_git_blob(
+        db, body, object_format="sha256" if object_format == "sha1" else "sha1"
+    )
     corrupt(db, reference.sha256, b"damaged shared content")
     diagnose_corruption(db, reference.sha256)
     replacement = tmp_path / "blob.raw"
@@ -273,7 +270,7 @@ def test_repair_accepts_real_git_content_even_when_api_proof_shares_its_bytes(
     assert result.data["repaired"] is True
     assert not is_quarantined(db, reference.sha256)
     assert verify_all(db)["corrupt"] == []
-    assert store.one("SELECT count(*) FROM payloads")[0] == 2
+    assert store.one("SELECT count(*) FROM payloads")[0] == 1
     assert store.one("SELECT body FROM stored_bytes")[0] == body
 
 
@@ -292,26 +289,22 @@ def test_git_representation_without_a_retained_object_mapping_cannot_authorize_r
     assert list(db.iterdump()) == before
 
 
-def test_failed_api_admission_quarantines_shared_git_incumbent_without_staging(store):
+def test_rejected_api_representation_cannot_diagnose_or_stage_shared_git_bytes(store):
     db = store.connection
-    body = b'{"content":"retained Git and API proof bytes"}'
+    body = b'{"content":"retained Git bytes"}'
     reference = register_git_blob(db, body)
-    intern_payload(db, body, representation="decoded_api")
     corrupt(db, reference.sha256, b"damaged shared incumbent")
+    before = list(db.iterdump())
     with pytest.raises(CatalogError) as raised:
         with store.transaction():
             intern_payload(db, body, representation="decoded_api")
-    assert raised.value.code == "PAYLOAD_CORRUPTION"
-    assert not db.in_transaction
+    assert raised.value.code == "INVALID_PAYLOAD_REFERENCE"
+    assert diagnose_admission_failure(db, raised.value) is None
+    assert list(db.iterdump()) == before
     assert not is_quarantined(db, reference.sha256)
-    diagnosis = diagnose_admission_failure(db, raised.value)
-    assert diagnosis is not None
-    assert is_quarantined(db, reference.sha256)
-    assert diagnose_admission_failure(db, raised.value) == diagnosis
-    assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 1
-    assert store.one("SELECT body FROM stored_bytes")[0] == b"damaged shared incumbent"
     assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
-    assert store.one("SELECT count(*) FROM payloads")[0] == 2
+    assert verify_all(db)["corrupt"]
+    assert is_quarantined(db, reference.sha256)
 
 
 @pytest.mark.parametrize(
@@ -334,11 +327,10 @@ def test_physical_admission_diagnosis_requires_actual_corruption_evidence(
     assert list(store.connection.iterdump()) == before
 
 
-def test_forged_canonical_git_oid_cannot_authorize_api_original_repair(store):
+def test_forged_canonical_git_oid_cannot_authorize_repair(store):
     db = store.connection
     body = b'{"content":"API proof with forged Git mapping"}'
-    reference = intern_payload(db, body, representation="decoded_api")
-    intern_payload(db, body, representation="git-object-raw-v1")
+    reference = intern_payload(db, body, representation="git-object-raw-v1")
     # Deliberate direct-SQL forgery: the OID has a legal shape but is not this
     # blob's Git identity. Such a label must never authorize physical repair.
     oid = bytearray(hashlib.sha1(f"blob {len(body)}\0".encode() + body).digest())
@@ -367,12 +359,12 @@ def test_repair_restores_bytes_atomically_retains_diagnostic_and_tracks_recurren
     ref = register_git_blob(db, b"good")
     corrupt(db, ref.sha256, b"bad!")
     first = diagnose_corruption(db, ref.sha256)
-    before = store.revision()["publication_seq"]
+    before = store.revision()["local_revision"]
     repaired = repair_payload(db, ref.sha256, b"good")
     assert repaired["unresolved_payload_id"] == first
     assert not is_quarantined(db, ref.sha256)
     assert store.one("SELECT body FROM stored_bytes")[0] == b"good"
-    assert store.revision()["publication_seq"] == before + 1
+    assert store.revision()["local_revision"] == before + 1
     assert verify_all(db)["corrupt"] == []
     corrupt(db, ref.sha256, b"bad!")
     second = diagnose_corruption(db, ref.sha256)
@@ -441,7 +433,7 @@ def test_verification_uses_existing_nonblocking_writer_lock(store):
 
 def test_backup_detects_corruption_and_restore_retains_quarantine(store, tmp_path):
     ref = register_git_blob(store.connection, b"good")
-    intern_payload(store.connection, b"good", representation="decoded_api")
+    register_git_blob(store.connection, b"good", object_format="sha256")
     corrupt(store.connection, ref.sha256, b"bad!")
     backup = tmp_path / "backup.sqlite3"
     result = MaintenanceService(store.path).database(
@@ -471,7 +463,7 @@ def test_backup_counts_active_physical_quarantine_only(store, tmp_path):
     bodies = (b"one", b"two", b"repaired")
     refs = [register_git_blob(db, body) for body in bodies]
     for ref, body in zip(refs, bodies):
-        intern_payload(db, body, representation="decoded_api")
+        register_git_blob(db, body, object_format="sha256")
         corrupt(db, ref.sha256, b"bad")
     verify_all(db)
     repair_payload(db, refs[2].sha256, b"repaired")
@@ -493,7 +485,7 @@ def test_backup_counts_active_physical_quarantine_only(store, tmp_path):
     with Store(destination) as restored:
         assert restored.one("SELECT count(*) FROM payload_quarantine")[0] == 2
         assert restored.one("SELECT count(*) FROM unresolved_payloads")[0] == 3
-        assert restored.one("SELECT count(*) FROM payloads")[0] == 6
+        assert restored.one("SELECT count(*) FROM payloads")[0] == 3
         assert restored.one("SELECT count(*) FROM payload_admission_staging")[0] == 1
         assert (
             restored.one(
@@ -781,7 +773,7 @@ def test_restore_rejects_manifest_claim_for_a_different_catalog(store, tmp_path)
     MaintenanceService(store.path).database("backup", SimpleNamespace(output=backup))
     manifest_path = backup.with_name(backup.name + ".manifest.json")
     manifest = json.loads(manifest_path.read_text())
-    manifest["catalog"]["publication_seq"] += 1
+    manifest["catalog"]["local_revision"] += 1
     manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(CatalogError, match="identity differs"):
         MaintenanceService(tmp_path / "restore").restore(backup)

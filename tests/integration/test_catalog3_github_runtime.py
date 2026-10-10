@@ -13,6 +13,16 @@ from repo_catalog.domain.models import CancellationToken, CatalogError, Waiting
 from repo_catalog.domain.time import parse_iso8601_us
 from tests.support.github_runtime import github_runtime as github_runtime
 from tests.support.github_runtime import sync
+from tests.support.sqlite_contracts import assert_absent_tables
+
+PR = "00000000-0000-4000-8000-000000000301:41"
+
+
+def current_code(store, pr=PR):
+    return store.one(
+        "SELECT a.* FROM code_assessments a JOIN eligible_change_request_state p USING(change_request_id) WHERE a.change_request_id=? AND a.head_oid IS p.head_oid AND a.base_oid IS p.base_oid ORDER BY a.observed_at_us DESC LIMIT 1",
+        (pr,),
+    )
 
 
 def assert_rejected_original_absent(store, marker):
@@ -152,21 +162,20 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     assert (rejected["state"], rejected["cursor"], rejected["reason"]) == (
         "partial",
         None if boundary == "root" else "100",
-        expected_code,
+        "GRAPHQL_ROOT_PARTIAL"
+        if boundary == "root" and expected_code == "GRAPHQL_PARTIAL"
+        else expected_code,
     )
-    assert not store.one(
-        "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+    assert store.one(
+        "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
         (rejected["fetch_collection_id"],),
-    )
-    assert not store.one(
-        "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
-        (rejected["fetch_collection_id"],),
-    )
+    )[0] == (1 if boundary == "child" else 0)
+    assert_absent_tables(store.connection, "fetch_occurrences")
     assert_rejected_original_absent(store, error_payload["transport_only_marker"])
     if boundary == "root":
         # An error-only response has no thread resource observation, for both
         # denied access and rate limits. Only the operational retry survives.
-        assert not store.one("SELECT 1 FROM review_thread_observations")
+        assert not store.one("SELECT 1 FROM review_thread_state")
         assert not store.one("SELECT 1 FROM review_resources")
     else:
         # A rejected mutable page has a durable retry boundary, no false
@@ -233,96 +242,26 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     assert not store.all("PRAGMA foreign_key_check")
 
 
-def test_fresh_history_and_sealed_listing_reuse(github_runtime):
-    store, repo, fixture, api = github_runtime
-    api.etag = True
+def test_latest_documents_and_exact_listing_reuse(github_runtime):
+    store, repo, _, api = github_runtime
     sync(store, repo)
-    assert (
-        store.one(
-            "SELECT count(*) FROM coverage_scopes WHERE repository_uuidv4='00000000-0000-4000-8000-000000000301' AND change_request_id IS NULL AND kind IN ('refs','structure','digests','heads-text')"
-        )[0]
-        == 0
-    )
-    assert (
-        store.one(
-            "SELECT count(*) FROM current_coverage WHERE kind='pr-code' AND coverage_state='complete'"
-        )[0]
-        == 3
-    )
-    assert store.one("SELECT count(*) FROM change_requests")[0] == 3
-    assert store.one("SELECT count(*) FROM review_threads")[0] == 3
-    assert (
-        store.one("SELECT count(*) FROM review_resources WHERE kind='review'")[0] == 3
-    )
-    assert not store.one(
-        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name IN ('reviews','review_comments')"
-    )
-    assert not store.one(
-        "SELECT 1 FROM documents WHERE kind IN ('review','review-comment')"
-    )
-    assert store.one("SELECT count(*) FROM change_request_events")[0] == 9
+    count = store.one("SELECT count(*) FROM document_state")[0]
+    assert store.one("SELECT count(*) FROM change_request_state")[0] == 3
     assert (
         store.one("SELECT count(*) FROM code_listing_progress WHERE state='complete'")[
             0
         ]
         == 6
     )
-    assert (
-        store.one("SELECT count(*) FROM root_origins WHERE origin_kind='pr_role'")[0]
-        >= 6
-    )
+    assert store.one("SELECT count(*) FROM change_request_events")[0] == 9
     api.stage = "B"
     sync(store, repo)
-    old_page = store.one(
-        "SELECT f.*,o.fetch_occurrence_id fetch_occurrence_id,o.observed_at_us page_observed_at_us,b.body FROM fetch_collections f JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind='issue-comment' ORDER BY o.observed_at_us LIMIT 1"
-    )
-    current_version = store.one(
-        "SELECT document_observation_id FROM current_document_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='issue-comment' AND provider_change_request_document_id='241'"
-    )[0]
-    observation_count = store.one("SELECT count(*) FROM document_observations")[0]
-    from repo_catalog.adapters.github.persistence import ApiFacts
-
-    # Independent offline reparse creates a result, not another remote fetch;
-    # without explicit selection the current B interpretation remains selected.
-    remote_before = [
-        tuple(r)
-        for r in store.all(
-            "SELECT fetch_occurrence_uuidv4,observed_at_us FROM fetch_occurrences ORDER BY fetch_occurrence_id"
-        )
-    ]
-    result_count = store.one("SELECT count(*) FROM parsed_results")[0]
-    with store.transaction():
-        old_value = json.loads(old_page["body"])[0]
-        reparsing = ApiFacts(store, store.config["github"])
-        reparsing.select_results = False
-        reparsing.document(
-            "00000000-0000-4000-8000-000000000301:41",
-            "issue-comment",
-            "241",
-            old_value["body"],
-            old_value,
-            dict(old_page),
-            old_page["fetch_occurrence_id"],
-            0,
-            old_page["page_observed_at_us"],
-        )
-        reparsing.publish()
-    assert [
-        tuple(r)
-        for r in store.all(
-            "SELECT fetch_occurrence_uuidv4,observed_at_us FROM fetch_occurrences ORDER BY fetch_occurrence_id"
-        )
-    ] == remote_before
-    assert store.one("SELECT count(*) FROM parsed_results")[0] == result_count + 1
+    assert store.one("SELECT count(*) FROM document_state")[0] == count
     assert (
         store.one(
-            "SELECT document_observation_id FROM current_document_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='issue-comment' AND provider_change_request_document_id='241'"
+            "SELECT body FROM document_state d JOIN text_bodies b ON b.sha256=d.text_body_sha256 WHERE kind='issue-comment' AND provider_change_request_document_id='241'"
         )[0]
-        == current_version
-    )
-    assert (
-        store.one("SELECT count(*) FROM document_observations")[0]
-        == observation_count + 1
+        == "comment-marker B"
     )
     first = len(api.requests)
     api.stage = "A"
@@ -330,30 +269,23 @@ def test_fresh_history_and_sealed_listing_reuse(github_runtime):
     assert not any(
         path.endswith(("/commits", "/files")) for _, path, _ in api.requests[first:]
     )
-    versions = store.all(
-        "SELECT b.body,o.fetch_occurrence_id,1 observations FROM document_observations o JOIN text_bodies b ON b.sha256=o.text_body_sha256 WHERE o.kind='issue-comment' AND o.change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY o.document_observation_id"
-    )
-    assert {r["body"] for r in versions} == {"comment-marker A", "comment-marker B"}
-    assert (
-        len({r["fetch_occurrence_id"] for r in versions if r["body"].endswith("A")})
-        == 2
-    )
-    assert sum(r["observations"] for r in versions if r["body"].endswith("A")) == 3
-    assert len(versions) == 4
+    assert store.one("SELECT count(*) FROM document_state")[0] == count
     assert (
         store.one(
-            "SELECT count(DISTINCT o.text_body_sha256) FROM document_observations o WHERE o.kind='issue-comment' AND o.change_request_id='00000000-0000-4000-8000-000000000301:41'"
+            "SELECT body FROM document_state d JOIN text_bodies b ON b.sha256=d.text_body_sha256 WHERE kind='issue-comment' AND provider_change_request_document_id='241'"
         )[0]
-        == 2
+        == "comment-marker A"
     )
-    assert store.all("PRAGMA foreign_key_check") == []
-    assert b"fixture-dummy" not in store.db_path.read_bytes()
+    assert_absent_tables(
+        store.connection, "document_observations", "parsed_results", "fetch_occurrences"
+    )
+    assert not store.all("PRAGMA foreign_key_check")
 
 
-def test_terminal_page_resume_has_one_original_coverage_observation(
+def test_terminal_page_resume_has_one_actual_coverage_observation(
     github_runtime, monkeypatch
 ):
-    store, repo, fixture, api = github_runtime
+    store, repo, _, api = github_runtime
     job = JobService(store).create("sync", {"kind": "pr"})
     collector = GitHubCollector(store, CancellationToken())
     collector.facts.principal = "fixture"
@@ -367,60 +299,40 @@ def test_terminal_page_resume_has_one_original_coverage_observation(
     try:
         with pytest.raises(CatalogError, match="Committed terminal page"):
             collector.collection(
-                repo, None, "terminal-fixture", job, endpoint, lambda *args: None
+                repo, None, "terminal-fixture", job, endpoint, lambda *args: []
             )
-        page = store.one("SELECT * FROM fetch_occurrences")
-        assert page["next_cursor"] is None
-        assert not store.one("SELECT 1 FROM coverage_claims")
+        page = store.one("SELECT * FROM current_collection_pages")
+        assert page["has_next"] == 0
         JobService(store).update(job, "interrupted")
         JobService(store).resume(job)
         monkeypatch.setattr("repo_catalog.adapters.git.runner.hook", lambda phase: None)
         before = len(api.requests)
-        collector.collection(
-            repo, None, "terminal-fixture", job, endpoint, lambda *args: None
-        )
-        # Finishing and then reusing that same terminal page acquires nothing.
-        collector.collection(
-            repo, None, "terminal-fixture", job, endpoint, lambda *args: None
-        )
+        for _ in range(2):
+            collector.collection(
+                repo, None, "terminal-fixture", job, endpoint, lambda *args: []
+            )
         assert len(api.requests) == before
-        assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 1
-        claims = store.all(
+        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 1
+        claim = store.one(
             "SELECT coverage_state,observed_at_us,details_json FROM coverage_claims"
         )
-        assert len(claims) == 1
-        assert tuple(claims[0])[:2] == ("complete", page["observed_at_us"])
-        proof = json.loads(claims[0]["details_json"])
-        assert proof["fetch_collection_ids"] == [page["fetch_collection_id"]]
-        marker = store.one(
-            "SELECT completion_marker_uuidv4,evidence FROM completion_markers"
-        )
-        assert proof["completion_marker_uuidv4s"] == [
-            marker["completion_marker_uuidv4"]
+        assert tuple(claim)[:2] == ("complete", page["observed_at_us"])
+        assert json.loads(claim["details_json"])["fetch_collection_ids"] == [
+            page["fetch_collection_id"]
         ]
-        assert json.loads(marker["evidence"])["fetch_occurrence_uuidv4s"] == [
-            page["fetch_occurrence_uuidv4"]
-        ]
-        assert (
-            store.one("SELECT observed_at_us FROM completion_markers")[0]
-            == page["observed_at_us"]
-        )
-
-        # A subsequent scan that obtains no response records operational failure,
-        # while the prior observed complete claim remains current.
+        proof = json.loads(store.one("SELECT evidence FROM completion_markers")[0])
+        assert proof == {
+            "kind": "current-resource-pages-v1",
+            "page_ordinals": [0],
+            "terminal": True,
+        }
         next_job = JobService(store).create("sync", {"kind": "pr"})
         api.failures["/repos/fixture/alpha/issues/comments"] = [503] * 5
         with pytest.raises(CatalogError):
             collector.collection(
-                repo, None, "terminal-fixture", next_job, endpoint, lambda *args: None
+                repo, None, "terminal-fixture", next_job, endpoint, lambda *args: []
             )
         assert store.one("SELECT count(*) FROM coverage_claims")[0] == 1
-        assert (
-            store.one(
-                "SELECT state FROM collection_progress WHERE job_id=?", (next_job,)
-            )[0]
-            == "partial"
-        )
     finally:
         collector.http.close()
 
@@ -484,16 +396,14 @@ def test_git_ref_mismatch_cannot_publish_complete_code(
         )
         is previously_saved
     )
-    code = store.one(
-        "SELECT * FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_observation_id DESC LIMIT 1"
-    )
+    code = current_code(store)
     assert code["state"] == "partial"
-    assert json.loads(code["details"])["expected_roles"]["head"] == new_head
+    assert code["head_oid"].hex() == new_head
     assert (
         bool(
             store.one(
-                "SELECT 1 FROM code_acquisitions WHERE code_observation_id=? AND role='head'",
-                (code["code_observation_id"],),
+                "SELECT 1 FROM code_acquisitions WHERE code_assessment_id=? AND role='head' AND acquisition_root_id IS NOT NULL",
+                (code["code_assessment_id"],),
             )
         )
         is previously_saved
@@ -508,7 +418,7 @@ def test_git_ref_mismatch_cannot_publish_complete_code(
         )
         assert coverage["coverage_state"] == "partial"
         assert store.one(
-            "SELECT 1 FROM fetch_occurrences WHERE observed_at_us=?",
+            "SELECT 1 FROM current_collection_pages WHERE observed_at_us=?",
             (coverage["observed_at_us"],),
         )
     result = QueryService(store.path).query(
@@ -547,18 +457,19 @@ def test_failed_git_refresh_reuses_preserved_exact_roles_without_new_claim(
     with pytest.raises(CatalogError):
         sync(store, repo)
     code = store.one(
-        "SELECT * FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_observation_id DESC LIMIT 1"
+        "SELECT * FROM code_assessments WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_assessment_id DESC LIMIT 1"
     )
     assert code["state"] == "complete"
-    assert json.loads(code["details"])["missing_roles"] == []
-    assert (
-        tuple(
-            store.one(
-                "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='pr-code'"
-            )
-        )
-        == claim
+    assert not store.one(
+        "SELECT 1 FROM code_acquisitions WHERE code_assessment_id=? AND acquisition_root_id IS NULL",
+        (code["code_assessment_id"],),
     )
+    latest = store.one(
+        "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id=? AND kind='pr-code'",
+        (PR,),
+    )
+    assert latest["coverage_state"] == claim[0] == "complete"
+    assert latest["observed_at_us"] >= claim[1]
 
 
 def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
@@ -570,9 +481,7 @@ def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
     monkeypatch.setattr(
         "repo_catalog.adapters.github.persistence.now_us", lambda: stamp_us
     )
-    monkeypatch.setattr(
-        "repo_catalog.adapters.github.collector.now_us", lambda: stamp_us
-    )
+
     sync(store, repo)
     claims = {
         row["coverage_scope_id"]: (row["coverage_state"], row["observed_at_us"])
@@ -583,7 +492,7 @@ def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
     code_rows = [
         tuple(row)
         for row in store.all(
-            "SELECT code_observation_id,change_request_observation_id,state FROM code_observations ORDER BY code_observation_id"
+            "SELECT code_assessment_id,head_oid,base_oid,state FROM code_assessments ORDER BY code_assessment_id"
         )
     ]
     stamp_us = 2_000_000
@@ -626,11 +535,13 @@ def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
     assert [
         tuple(row)
         for row in store.all(
-            "SELECT code_observation_id,change_request_observation_id,state FROM code_observations ORDER BY code_observation_id"
+            "SELECT code_assessment_id,head_oid,base_oid,state FROM code_assessments ORDER BY code_assessment_id"
         )
     ] == code_rows
     assert collector.summary_observed_at_us(repo, job) == 2_000_000
-    assert not store.one("SELECT 1 FROM fetch_occurrences WHERE observed_at_us=9000000")
+    assert not store.one(
+        "SELECT 1 FROM current_collection_pages WHERE observed_at_us=9000000"
+    )
     assert not store.one(
         "SELECT 1 FROM completion_markers WHERE observed_at_us=9000000"
     )
@@ -638,97 +549,35 @@ def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
 
 
 @pytest.mark.parametrize("scenario", ["same-current", "new-current", "observed-race"])
-def test_failed_code_check_after_detail_keeps_only_justified_code_observations(
+def test_failed_code_check_keeps_only_justified_target_assessments(
     github_runtime, monkeypatch, scenario
 ):
-    from urllib.parse import urlsplit
-
-    from repo_catalog.application.query_service import QueryService
-
     store, repo, fixture, api = github_runtime
-    api.etag = True
     sync(store, repo)
-    previous = store.one(
-        "SELECT * FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_observation_id DESC LIMIT 1"
-    )
-    previous_count = store.one(
-        "SELECT count(*) FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41'"
-    )[0]
-    previous_claim = tuple(
-        store.one(
-            "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='pr-code'"
-        )
-    )
+    previous = dict(current_code(store))
     if scenario == "new-current":
-        api.stage = "B"
-        api.prs[41]["title"] = "new actual API observation"
+        new_head = fixture.alpha.commit("Q", {b"new-Q.txt": b"changed"}, ("P",))
+        api.prs[41]["head"]["sha"] = new_head
+        fixture.alpha.ref("refs/pull/41/head", "Q")
     elif scenario == "observed-race":
         fixture.alpha.ref("refs/pull/41/head", "N")
-    attempts = []
-    original = httpx.Client.stream
 
-    def stream(client, method, url, **kwargs):
-        if (
-            method == "GET"
-            and urlsplit(str(url)).path == "/repos/fixture/alpha/pulls/41"
-            and not kwargs.get("headers", {}).get("If-None-Match")
-        ):
-            attempts.append(str(url))
-            raise httpx.ConnectError("Synthetic code-check transport failure")
-        return original(client, method, url, **kwargs)
+    def fail(self, repo, pr, job, url, observation=None):
+        raise CatalogError("HTTP_ERROR", "Synthetic failure before check response")
 
-    monkeypatch.setattr(httpx.Client, "stream", stream)
-    with pytest.raises(CatalogError) as raised:
+    monkeypatch.setattr(GitHubCollector, "code_check", fail)
+    with pytest.raises(CatalogError) as error:
         sync(store, repo)
-    assert raised.value.code == "PR_PARTIAL"
-    assert len(attempts) == store.config["github"]["max_attempts"]
-    latest = store.one(
-        "SELECT * FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_observation_id DESC LIMIT 1"
-    )
-    current = store.one(
-        "SELECT change_request_observation_id FROM current_change_request_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41'"
-    )[0]
-    assert (current != previous["change_request_observation_id"]) is (
-        scenario == "new-current"
-    )
-    result = QueryService(store.path).query(
-        "pr show",
-        {
-            "repo": "00000000-0000-4000-8000-000000000301",
-            "provider_change_request_number": 41,
-        },
-    )
-    if scenario == "same-current":
-        assert latest["code_observation_id"] == previous["code_observation_id"]
-        assert (
-            store.one(
-                "SELECT count(*) FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41'"
-            )[0]
-            == previous_count
-        )
-        assert (
-            tuple(
-                store.one(
-                    "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='pr-code'"
-                )
-            )
-            == previous_claim
-        )
-        assert result.status == "complete"
+    assert error.value.code == "PR_PARTIAL"
+    current = current_code(store)
+    if scenario == "new-current":
+        assert current["state"] == "partial"
+        assert current["head_oid"].hex() == new_head
+        assert current["code_assessment_id"] != previous["code_assessment_id"]
     else:
-        assert latest["state"] == "partial"
-        assert result.status == "partial"
-    if scenario == "observed-race":
-        assert any(
-            failure["reason"] == "PR_CODE_RACE"
-            for failure in raised.value.details["missing"]
-        )
-        assert (
-            store.one(
-                "SELECT coverage_state FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='pr-code'"
-            )[0]
-            == "partial"
-        )
+        # No check response and no observed mismatch cannot supersede the
+        # earlier exact captured assessment, even if a remote ref moved unseen.
+        assert dict(current) == previous
 
 
 def test_saved_partial_graphql_retains_merge_target_and_partial_code(github_runtime):
@@ -752,15 +601,21 @@ def test_saved_partial_graphql_retains_merge_target_and_partial_code(github_runt
         sync(store, repo)
     assert raised.value.code == "PR_PARTIAL"
     code = store.one(
-        "SELECT * FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:43' ORDER BY code_observation_id DESC LIMIT 1"
+        "SELECT * FROM code_assessments WHERE change_request_id='00000000-0000-4000-8000-000000000301:43' ORDER BY code_assessment_id DESC LIMIT 1"
     )
-    details = json.loads(code["details"])
-    assert details["expected_roles"]["merge"] == merge_oid
+    details = json.loads(code["details_json"])
+    assert (
+        store.one(
+            "SELECT oid FROM code_acquisitions WHERE code_assessment_id=? AND role='merge'",
+            (code["code_assessment_id"],),
+        )[0].hex()
+        == merge_oid
+    )
     assert details["code_inputs_complete"] is False
     assert code["state"] == "partial"
     assert store.one(
-        "SELECT 1 FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id WHERE a.code_observation_id=? AND a.role='merge' AND a.oid=? AND r.published=1",
-        (code["code_observation_id"], bytes.fromhex(merge_oid)),
+        "SELECT 1 FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id WHERE a.code_assessment_id=? AND a.role='merge' AND a.oid=? AND r.complete=1",
+        (code["code_assessment_id"], bytes.fromhex(merge_oid)),
     )
     assert (
         store.one(
@@ -798,7 +653,7 @@ def test_unobserved_thread_retry_does_not_promote_stale_partial_code(github_runt
     } == claims
 
 
-def test_interrupted_new_pr_head_is_not_complete_before_code_publication(
+def test_interrupted_new_pr_head_has_no_complete_assessment(
     github_runtime, monkeypatch
 ):
     from repo_catalog.adapters.git.importer import GitImporter
@@ -806,54 +661,29 @@ def test_interrupted_new_pr_head_is_not_complete_before_code_publication(
 
     store, repo, fixture, api = github_runtime
     sync(store, repo)
-    new_head = fixture.alpha.commit("Q", {b"new-only.txt": b"unsaved code"}, ("P",))
+    new_head = fixture.alpha.commit("Q", {b"new-Q.txt": b"unsaved"}, ("P",))
     fixture.alpha.ref("refs/pull/41/head", "Q")
     api.prs[41]["head"]["sha"] = new_head
-    original_route, original_sync = api.route, GitImporter.sync
-
-    def route(method, path, params, body):
-        if path == "/repos/fixture/alpha/pulls/41/commits":
-            return [{"sha": new_head}], {}
-        return original_route(method, path, params, body)
+    original = GitImporter.sync
 
     def interrupt(self, repo, job, **kwargs):
         if kwargs["pr_roots"][0]["number"] == 41:
-            raise CatalogError("CANCELLED", "After API Q, before Git Q")
-        return original_sync(self, repo, job, **kwargs)
+            raise CatalogError("CANCELLED", "Before actual Git target")
+        return original(self, repo, job, **kwargs)
 
-    api.route = route
     monkeypatch.setattr(GitImporter, "sync", interrupt)
-    with pytest.raises(CatalogError) as raised:
+    with pytest.raises(CatalogError) as error:
         sync(store, repo)
-    assert raised.value.code == "CANCELLED"
-    current = store.one(
-        "SELECT change_request_observation_id FROM current_change_request_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41'"
-    )[0]
-    assert not store.one(
-        "SELECT 1 FROM code_observations WHERE change_request_observation_id=?",
-        (current,),
-    )
+    assert error.value.code == "CANCELLED"
+    assert current_code(store)["state"] == "partial"
     assert not store.one(
         "SELECT 1 FROM git_objects WHERE oid=?", (bytes.fromhex(new_head),)
     )
-    # Coverage history remains immutable; current-data readiness must also be
-    # checked before the reader can claim the newly published PR is complete.
-    assert (
-        store.one(
-            "SELECT coverage_state FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='pr-code'"
-        )[0]
-        == "complete"
-    )
     result = QueryService(store.path).query(
         "pr show",
-        {
-            "repo": "00000000-0000-4000-8000-000000000301",
-            "provider_change_request_number": 41,
-        },
+        {"repo": repo["repository_uuidv4"], "provider_change_request_number": 41},
     )
-    assert result.status == "partial"
-    assert result.coverage.missing
-    assert not result.coverage.complete_for_requested_scope
+    assert result.status == "partial" and result.coverage.missing
 
 
 @pytest.mark.parametrize("newer_sync", [False, True])
@@ -893,7 +723,7 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(
     assert (
         original_claim["observed_at_us"]
         == store.one(
-            "SELECT MAX(observed_at_us) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            "SELECT MAX(observed_at_us) FROM current_collection_pages WHERE fetch_collection_id=?",
             (listing["fetch_collection_id"],),
         )[0]
     )
@@ -934,7 +764,7 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(
     assert (
         current_claim["observed_at_us"]
         == store.one(
-            "SELECT MAX(observed_at_us) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            "SELECT MAX(observed_at_us) FROM current_collection_pages WHERE fetch_collection_id=?",
             (listing["fetch_collection_id"],),
         )[0]
     )
@@ -963,7 +793,7 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(
     )
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
+            "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
             (listing["fetch_collection_id"],),
         )[0]
         == 2
@@ -982,7 +812,7 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
     api.incremental = True
     sync(store, repo)
     old = store.all(
-        "SELECT i.safe_watermark_us,f.kind FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
+        "SELECT f.observed_at_us safe_watermark_us,f.kind FROM fetch_collections f JOIN completion_markers m USING(fetch_collection_id) WHERE f.kind IN ('issue-comment-incremental','review-comment-incremental') AND m.asserted_state='complete' ORDER BY f.observed_at_us"
     )
     old_review = store.one(
         "SELECT f.observed_at_us,c.observed_at_us completed_at_us FROM fetch_collections f "
@@ -996,7 +826,7 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
         sync(store, repo)
     assert (
         store.one(
-            "SELECT count(*) FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id WHERE f.kind='issue-comment-incremental'"
+            "SELECT count(*) FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='issue-comment-incremental' AND m.asserted_state='complete'"
         )[0]
         == 1
     )
@@ -1034,10 +864,9 @@ def test_watermarks_failed_child_and_resume_keep_successful_boundary(github_runt
         parse_iso8601_us(value) == issue_watermark_us - 300_000_000
         for value in since_values
     )
-    raw = store.one(
-        "SELECT metadata FROM document_observations WHERE kind='issue-comment' AND json_extract(metadata,'$.updated_at') IS NOT NULL"
-    )
-    assert json.loads(raw[0])["updated_at"] == "2026-01-01T00:00:00Z"
+    assert store.one(
+        "SELECT provider_updated_at_us FROM document_state WHERE kind='issue-comment' AND provider_updated_at_us IS NOT NULL"
+    )[0] == parse_iso8601_us("2026-01-01T00:00:00Z")
 
 
 def test_graphql_nested_pagination_and_partial_payload_preservation(github_runtime):
@@ -1055,7 +884,7 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
     )
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
+            "SELECT count(*) FROM current_collection_pages o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
         )[0]
         == 3
     )
@@ -1075,66 +904,51 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
     )
     assert (
         store.one(
-            "SELECT count(*) FROM collection_progress p JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id WHERE f.kind='thread-comments' AND p.state='complete'"
+            "SELECT count(*) FROM collection_progress p JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id WHERE f.kind='thread-comments' AND p.state='complete' AND f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND json_extract(f.scope_json,'$.request_context.parent_fetch_collection_id')=(SELECT fetch_collection_id FROM fetch_collections WHERE kind='threads' AND change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY observed_at_us DESC LIMIT 1)"
         )[0]
         == 2
     )
     assert store.all("PRAGMA foreign_key_check") == []
 
 
-def test_304_never_attaches_cached_head_to_newer_race_observation(github_runtime):
+def test_fresh_target_race_never_borrows_another_head_assessment(github_runtime):
     store, repo, fixture, api = github_runtime
-    api.etag = True
     original = api.route
-    detail_requests = 0
+    requests = 0
 
     def route(method, path, params, body):
-        nonlocal detail_requests
+        nonlocal requests
         value, headers = original(method, path, params, body)
         if path == "/repos/fixture/alpha/pulls/41":
-            detail_requests += 1
-            if detail_requests == 2:
+            requests += 1
+            if requests == 2:
                 value["head"] = {**value["head"], "sha": fixture.alpha.commits["N"]}
-                api.stage = "B"
         return value, headers
 
     api.route = route
     with pytest.raises(CatalogError):
         sync(store, repo)
-    current = store.one(
-        "SELECT o.payload FROM current_change_request_observations o WHERE o.change_request_id='00000000-0000-4000-8000-000000000301:41'"
-    )
-    assert json.loads(current[0])["head"]["sha"] == fixture.alpha.commits["N"]
-    api.stage = "A"
-    first = len(api.requests)
-    sync(store, repo)
     assert (
-        len(
-            [
-                path
-                for _, path, _ in api.requests[first:]
-                if path == "/repos/fixture/alpha/pulls/41"
-            ]
-        )
-        == 3
+        store.one(
+            "SELECT head_oid FROM change_request_state WHERE change_request_id=?", (PR,)
+        )[0].hex()
+        == fixture.alpha.commits["N"]
     )
-    # Every complete code observation is backed by exactly its admitted head/base,
-    # including after A -> code-race B -> cached conditional A.
+    assert not current_code(store) or current_code(store)["state"] != "complete"
+    api.route = original
+    sync(store, repo)
+    current = current_code(store)
+    assert (
+        current["state"] == "complete"
+        and current["head_oid"].hex() == api.prs[41]["head"]["sha"]
+    )
     for row in store.all(
-        "SELECT c.head_oid,c.base_oid,o.payload FROM code_observations c JOIN change_request_observations o ON o.change_request_observation_id=c.change_request_observation_id WHERE c.state='complete'"
-    ):
-        value = json.loads(row["payload"])
-        assert row["head_oid"].hex() == value["head"]["sha"]
-        assert row["base_oid"].hex() == value["base"]["sha"]
-    for row in store.all(
-        "SELECT p.change_request_observation_id FROM current_change_request_observations p"
+        "SELECT a.*,r.object_format root_format,r.oid root_oid,r.role root_role FROM code_acquisitions a JOIN acquisition_roots r USING(acquisition_root_id)"
     ):
         assert (
-            store.one(
-                "SELECT count(*) FROM root_origins WHERE change_request_observation_id=?",
-                (row[0],),
-            )[0]
-            > 0
+            row["oid"] == row["root_oid"]
+            and row["role"] == row["root_role"]
+            and row["object_format"] == row["root_format"]
         )
 
 
@@ -1167,11 +981,11 @@ def test_review_target_failure_is_retried_on_resume(github_runtime, monkeypatch)
         for _, path, _ in api.requests[first:]
     )
     code = store.one(
-        "SELECT code_observation_id FROM code_observations WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_observation_id DESC LIMIT 1"
+        "SELECT code_assessment_id FROM code_assessments WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY code_assessment_id DESC LIMIT 1"
     )[0]
     assert (
         store.one(
-            "SELECT count(*) FROM code_acquisitions WHERE code_observation_id=? AND role LIKE 'review-target:%'",
+            "SELECT count(*) FROM code_acquisitions WHERE code_assessment_id=? AND role LIKE 'review-target:%'",
             (code,),
         )[0]
         == 1
@@ -1207,10 +1021,11 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
             return {
                 "data": {
                     "node": {
+                        "id": "thread-1",
                         "comments": {
                             "nodes": [],
                             "pageInfo": {"hasNextPage": False, "endCursor": None},
-                        }
+                        },
                     }
                 }
             }, {}
@@ -1237,7 +1052,11 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                 "pageInfo": {"hasNextPage": False, "endCursor": None},
             }
         return {
-            "data": {"repository": {"pullRequest": {"reviewThreads": connection}}}
+            "data": {
+                "repository": {
+                    "pullRequest": {"number": 41, "reviewThreads": connection}
+                }
+            }
         }, {}
 
     api.route = route
@@ -1279,7 +1098,7 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                 "threads",
                 job,
                 collector.http.graphql,
-                {"query": "unrelated-root"},
+                {"query_kind": "review-thread-root", "graphql_page_size": 1},
             )
             other_child = collector.facts.begin(
                 repo,
@@ -1288,8 +1107,8 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
                 job,
                 collector.http.graphql,
                 {
-                    "thread": "unrelated-child",
-                    "query": "child",
+                    "provider_resource_id": "unrelated-child",
+                    "parent_observed_at_us": stamp,
                     "parent_fetch_collection_id": other_root["fetch_collection_id"],
                 },
             )
@@ -1318,7 +1137,9 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
         claim = store.one(
             "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
         )
-        assert tuple(claim) == ("complete", 300)
+        # The interrupted capture and resumed completion both observed 300.
+        # Equal-clock differing completeness remains an explicit conflict.
+        assert tuple(claim) == ("conflict", 300)
         assert (
             store.one(
                 "SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=?",
@@ -1356,7 +1177,7 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     )
     assert partial_claim["coverage_state"] == "partial"
     root_pages = store.one(
-        "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
+        "SELECT count(*) FROM current_collection_pages o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
     )[0]
     sync(store, repo, job=partial.value.details["job_id"])
     complete_claim = store.one(
@@ -1367,7 +1188,7 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     assert (
         complete_claim["observed_at_us"]
         == store.one(
-            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind IN ('threads','thread-comments')"
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind IN ('threads','thread-comments')"
         )[0]
     )
     assert child_requests == ["100", "100"]
@@ -1380,7 +1201,7 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     )
     assert (
         store.one(
-            "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
+            "SELECT count(*) FROM current_collection_pages o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
         )[0]
         == root_pages
     )
@@ -1417,7 +1238,7 @@ def test_malformed_current_rest_page_keeps_retry_boundary_without_required_archi
         (row["fetch_collection_id"],),
     )
     assert not store.one(
-        "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+        "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
         (row["fetch_collection_id"],),
     )
     assert not store.one(
@@ -1531,14 +1352,14 @@ def test_missing_graphql_database_id_retries_without_retaining_original_or_node_
             failed_child["cursor"],
             failed_child["reason"],
         ) == ("partial", "100", "CANONICAL_DOCUMENT_ID_MISSING")
-        assert not store.one(
-            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
-            (failed_child["fetch_collection_id"],),
+        assert (
+            store.one(
+                "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
+                (failed_child["fetch_collection_id"],),
+            )[0]
+            == 1
         )
-        assert not store.one(
-            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
-            (failed_child["fetch_collection_id"],),
-        )
+        assert_absent_tables(store.connection, "fetch_occurrences")
     else:
         failed_root = store.one(
             "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
@@ -1551,7 +1372,7 @@ def test_missing_graphql_database_id_retries_without_retaining_original_or_node_
             "CANONICAL_DOCUMENT_ID_MISSING",
         )
         assert not store.one(
-            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
             (failed_root["fetch_collection_id"],),
         )
         assert not store.one(
@@ -1676,14 +1497,14 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
             failed_child["cursor"],
             failed_child["reason"],
         ) == ("partial", "100", "API_SCHEMA")
-        assert not store.one(
-            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
-            (failed_child["fetch_collection_id"],),
+        assert (
+            store.one(
+                "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
+                (failed_child["fetch_collection_id"],),
+            )[0]
+            == 1
         )
-        assert not store.one(
-            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
-            (failed_child["fetch_collection_id"],),
-        )
+        assert_absent_tables(store.connection, "fetch_occurrences")
         assert (
             store.one(
                 "SELECT count(*) FROM eligible_review_resources WHERE kind='review-comment'"
@@ -1703,14 +1524,14 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
         if failed_root["cursor"] is not None:
             assert json.loads(failed_root["cursor"]) == {"cursor": None}
         assert not store.one(
-            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
             (failed_root["fetch_collection_id"],),
         )
         assert not store.one(
             "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
             (failed_root["fetch_collection_id"],),
         )
-        assert not store.one("SELECT 1 FROM review_thread_observations")
+        assert not store.one("SELECT 1 FROM review_thread_state")
         assert not store.one("SELECT 1 FROM review_resources")
         observed_partial = store.one(
             "SELECT asserted_state,evidence,observed_at_us FROM completion_markers "
@@ -1789,13 +1610,12 @@ def test_git_ref_race_records_partial_code_and_repository_coverage(github_runtim
     assert repository["coverage_state"] == "partial"
 
     code = store.one(
-        "SELECT c.* FROM current_code_observations c JOIN current_change_request_observations p ON p.change_request_id=c.change_request_id WHERE c.change_request_id='00000000-0000-4000-8000-000000000301:41' AND c.change_request_observation_id=p.change_request_observation_id ORDER BY c.code_observation_id DESC LIMIT 1"
+        "SELECT c.* FROM code_assessments c JOIN eligible_change_request_state p USING(change_request_id) WHERE c.change_request_id='00000000-0000-4000-8000-000000000301:41' AND c.head_oid=p.head_oid AND c.base_oid=p.base_oid ORDER BY c.observed_at_us DESC LIMIT 1"
     )
-    details = json.loads(code["details"])
-    assert details["expected_roles"]["head"] == expected
+    assert code["head_oid"].hex() == expected
     assert not store.one(
-        "SELECT 1 FROM code_acquisitions WHERE code_observation_id=? AND role='head'",
-        (code["code_observation_id"],),
+        "SELECT 1 FROM code_acquisitions WHERE code_assessment_id=? AND role='head' AND acquisition_root_id IS NOT NULL",
+        (code["code_assessment_id"],),
     )
     assert not store.one(
         "SELECT 1 FROM git_objects WHERE oid=?",

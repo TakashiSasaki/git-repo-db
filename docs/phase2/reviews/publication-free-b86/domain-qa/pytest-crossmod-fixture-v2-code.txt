@@ -1,0 +1,56 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 26 items / 19 deselected / 7 selected
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[False] FAILED [ 14%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[True] FAILED [ 28%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_issue_terminal_marker_does_not_prove_git_scope PASSED [ 42%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_code_proof.py::test_wrong_listing_capture_cannot_complete_assessment[kind] PASSED [ 57%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_code_proof.py::test_wrong_listing_capture_cannot_complete_assessment[head] PASSED [ 71%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_code_proof.py::test_wrong_listing_capture_cannot_complete_assessment[base] PASSED [ 85%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_code_proof.py::test_complete_code_assessment_waits_for_late_actual_terminal_proof PASSED [100%]
+
+=================================== FAILURES ===================================
+_ test_malformed_current_candidate_rejected_but_valid_sibling_admitted[False] __
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3bd9209130>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-204/test_malformed_current_candida0')
+missing_parent = False
+
+    @pytest.mark.parametrize("missing_parent", [False, True])
+    def test_malformed_current_candidate_rejected_but_valid_sibling_admitted(store, tmp_path, missing_parent):
+        seed(store)
+        api = CurrentApiState(store.connection)
+        for ident, body in (("1", "bad fixture"), ("2", "independent sibling")):
+            assert api.admit("document_state", candidate(100, "pr-body", provider_change_request_document_id=ident, body_status="present", body=body), source="import").status == "accepted"
+        unit = Graph(store.connection).export(REPO)
+>       bad = next(r for r in unit["records"] if r["table"] == "document_state" and '"provider_change_request_document_id":"1"' in r["key"])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py:209: StopIteration
+__ test_malformed_current_candidate_rejected_but_valid_sibling_admitted[True] __
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3bd9172e40>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-204/test_malformed_current_candida1')
+missing_parent = True
+
+    @pytest.mark.parametrize("missing_parent", [False, True])
+    def test_malformed_current_candidate_rejected_but_valid_sibling_admitted(store, tmp_path, missing_parent):
+        seed(store)
+        api = CurrentApiState(store.connection)
+        for ident, body in (("1", "bad fixture"), ("2", "independent sibling")):
+            assert api.admit("document_state", candidate(100, "pr-body", provider_change_request_document_id=ident, body_status="present", body=body), source="import").status == "accepted"
+        unit = Graph(store.connection).export(REPO)
+>       bad = next(r for r in unit["records"] if r["table"] == "document_state" and '"provider_change_request_document_id":"1"' in r["key"])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py:209: StopIteration
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[False] - StopIteration
+FAILED ../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[True] - StopIteration
+================= 2 failed, 5 passed, 19 deselected in 12.22s ==================

@@ -3,6 +3,7 @@
 import pytest
 
 from repo_catalog.adapters.github.collector import GitHubCollector
+from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CancellationToken, CatalogError
@@ -20,6 +21,31 @@ def start_threads(store):
                 "repository_binding_id,change_request_kind,provider_change_request_number) "
                 "VALUES('00000000-0000-4000-8000-000000000301:41','00000000-0000-4000-8000-000000000301','binding','pull_request',41)"
             )
+    if not store.one("SELECT 1 FROM change_request_state"):
+        owner = {
+            "repository_uuidv4": "00000000-0000-4000-8000-000000000301",
+            "repository_binding_id": "binding",
+            "service_instance_uuidv4": "00000000-0000-4000-8000-000000000101",
+            "change_request_id": "00000000-0000-4000-8000-000000000301:41",
+        }
+        candidate = {
+            **owner,
+            "kind": "change-request",
+            "state": "open",
+            "provider_updated_at_us": 0,
+            "provider_clock_scope": "github-pr-updated-at",
+            "observed_at_us": 0,
+            "parsed_at_us": 0,
+            "parser_module": __name__,
+            "parser_version": "1",
+            "acquisition_scope": {**owner, "endpoint": "synthetic-thread-parent"},
+        }
+        assert (
+            CurrentApiState(store)
+            .admit("change_request_state", candidate, source="import")
+            .status
+            == "accepted"
+        )
     job = JobService(store).create("sync", {"kind": "pr"})
     store.expected_attempt = 1
     return job
@@ -57,7 +83,7 @@ def assert_thread_partial(store, *, count):
     first = selected_thread(store, limit=1)
     full = selected_thread(store)
     assert first.coverage == full.coverage
-    assert full.status == "partial"
+    assert full.status == "partial", full.coverage
     assert len(full.data["items"]) == count
     assert full.coverage.missing == [
         {
@@ -103,7 +129,7 @@ def test_unsaved_thread_comments_remain_partial_until_resume(github_runtime, bou
     before = len(requested)
     collect_threads(store, repo, job)
     completed = selected_thread(store)
-    assert completed.status == "complete"
+    assert completed.status == "complete", completed.coverage
     assert completed.coverage.missing == []
     assert len(completed.data["items"]) == 101
     # Resuming child work consumes the saved root page without another request.
@@ -151,7 +177,7 @@ def test_new_observed_root_gap_supersedes_older_terminal_thread(
         payload, headers = original(method, path, params, body)
         if method == "POST":
             if response_shape == "malformed":
-                payload["data"]["repository"]["pullRequest"] = {}
+                payload["data"]["repository"]["pullRequest"] = {"number": 41}
             else:
                 payload["errors"] = [{"message": "partial"}]
         return payload, headers
@@ -261,7 +287,7 @@ def test_unrelated_child_failure_keeps_selected_terminal_thread_complete(
     with pytest.raises(CatalogError):
         collect_threads(store, repo, start_threads(store))
     selected = selected_thread(store)
-    assert selected.status == "complete"
+    assert selected.status == "complete", selected.coverage
     assert len(selected.data["items"]) == (101 if selected_needs_child else 1)
     assert selected_thread(store, resource="THREAD41-1").status == "partial"
 
@@ -310,7 +336,7 @@ def test_timeline_failure_is_outside_document_scope(github_runtime):
     }
     for command in ("pr documents", "search pr"):
         result = query.query(command, {**options, "literal": "body-marker"})
-        assert result.status == "complete"
+        assert result.status == "complete", result.coverage
         assert result.coverage.missing == []
         assert result.data["items"]
     for command in ("pr timeline", "pr show"):

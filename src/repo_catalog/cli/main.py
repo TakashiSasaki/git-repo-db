@@ -36,16 +36,14 @@ def parser():
         child.add_argument("--repo", required=action not in ("repos", "search"))
         child.add_argument("--limit", type=int, default=100)
         child.add_argument("--offset", type=int, default=0)
+        if action in ("commit", "tree", "file", "search"):
+            child.add_argument("--decoder-key")
         if action in ("commit", "tree", "file"):
             child.add_argument("--commit", required=True)
         if action == "file":
             select = child.add_mutually_exclusive_group(required=True)
             select.add_argument("--path")
             select.add_argument("--path-b64")
-        if action in ("pr", "search"):
-            child.add_argument(
-                "--observations", choices=("current", "all"), default="current"
-            )
         if action == "pr":
             child.add_argument(
                 "--provider-change-request-number", required=True, type=int
@@ -129,7 +127,7 @@ def parser():
         "file": ("show",),
         "commits": ("list", "show", "compare"),
         "jobs": ("list", "show", "resume", "cancel"),
-        "pr": ("list", "show", "documents", "thread", "timeline"),
+        "pr": ("list", "show", "documents", "thread", "timeline", "code"),
     }.items():
         group = commands.add_parser(category).add_subparsers(
             dest="action", required=True, parser_class=Parser
@@ -137,6 +135,8 @@ def parser():
         for action in actions:
             child = group.add_parser(action)
             page_options(child)
+            if category in ("tree", "file", "commits"):
+                child.add_argument("--decoder-key")
             if category == "repos" and action == "bind":
                 child.add_argument("--repo", required=True)
                 child.add_argument("--instance", required=True)
@@ -197,13 +197,6 @@ def parser():
                     )
                 child.add_argument("--provider-change-request-document-id")
                 child.add_argument("--document-kind")
-                child.add_argument("--parser-profile")
-                child.add_argument("--observation", type=int)
-                child.add_argument(
-                    "--document-observations",
-                    choices=("current", "all"),
-                    default="current",
-                )
     issues = commands.add_parser("issue").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
@@ -213,7 +206,6 @@ def parser():
         repo_selector(child)
         child.add_argument("--source")
         child.add_argument("--binding")
-        child.add_argument("--parser-profile")
         child.add_argument("--provider-resource-id")
         child.add_argument("--provider-issue-number", type=int)
         child.add_argument("--state", choices=("all", "open", "closed"), default="all")
@@ -228,6 +220,7 @@ def parser():
         page_options(child)
         child.add_argument("--source")
         if kind not in ("pr", "issue"):
+            child.add_argument("--decoder-key")
             child.add_argument(
                 "--scope",
                 choices=("current", "history", "recorded"),
@@ -264,7 +257,6 @@ def parser():
             child.add_argument("--byte-length", type=int)
         if kind == "issue":
             child.add_argument("--binding")
-            child.add_argument("--parser-profile")
             child.add_argument("--provider-resource-id")
             child.add_argument("--provider-issue-number", type=int)
             child.add_argument(
@@ -273,12 +265,7 @@ def parser():
             child.add_argument("--author")
             child.add_argument("--document-author")
         if kind == "pr":
-            child.add_argument("--parser-profile")
             child.add_argument("--provider-change-request-document-id")
-            child.add_argument("--observation", type=int)
-            child.add_argument(
-                "--document-observations", choices=("current", "all"), default="current"
-            )
             child.add_argument(
                 "--state", choices=("all", "open", "closed", "merged"), default="all"
             )
@@ -347,13 +334,12 @@ def parser():
     export.add_argument("--repo", required=True)
     export.add_argument("--output", required=True)
     export.add_argument(
-        "--fetch",
-        action="append",
-        help="Portable fetch occurrence UUID; repeat for an explicit set",
+        "--git-acquisition",
+        help="Select a retained Git acquisition and its domain dependencies",
     )
     export.add_argument(
         "--collection",
-        help="Catalog-local collection ID; optionally restrict with --fetch",
+        help="Select an exact domain collection and its required resources",
     )
     exchange.add_parser("import").add_argument("--input", required=True)
     exchange.add_parser("staging")
@@ -364,27 +350,9 @@ def parser():
     reparse.add_argument(
         "git_acquisition_id", help="Retained Git acquisition ID (API replay is retired)"
     )
-    reparse.add_argument(
-        "--profile",
-        dest="profile_uuidv4",
-        help="Explicit parser profile UUID for Git reparse",
-    )
-    reparse.add_argument("--select", action="store_true")
-    for action in (
-        "register",
-        "verify",
-        "select-profile",
-        "select-fact",
-        "admit-decision",
-    ):
-        profiles.add_parser(action).add_argument("--input", required=True)
-    trust = profiles.add_parser("trust")
-    trust.add_argument("verification_uuidv4")
-    trust.add_argument("--revoke", action="store_true")
-    invalidate = profiles.add_parser("invalidate")
-    invalidate.add_argument("verification_uuidv4")
-    invalidate.add_argument("--reason", required=True)
-    profiles.add_parser("status")
+    reparse.add_argument("--text-encoding", default="utf-8")
+    reparse.add_argument("--metadata-encoding", default="utf-8")
+    reparse.add_argument("--metadata-errors", default="backslashreplace")
     inspect = profiles.add_parser("inspect-message")
     inspect.add_argument("archive_reference")
     inspect.add_argument("--max-bytes", type=int, default=1048576)
@@ -511,7 +479,7 @@ def dispatch(args, token):
             return exchange.export_repository(
                 args.repo,
                 args.output,
-                fetch_occurrence_uuidv4s=args.fetch,
+                git_acquisition_id=args.git_acquisition,
                 fetch_collection_id=args.collection,
             )
         if args.action == "import":

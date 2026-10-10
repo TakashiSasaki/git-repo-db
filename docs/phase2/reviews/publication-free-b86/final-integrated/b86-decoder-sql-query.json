@@ -1,0 +1,72 @@
+{
+  "module": "/workspace/reviews/publication-free-final-verifier/src/repo_catalog/__init__.py",
+  "insert": "accepted",
+  "byte_validator": "CatalogError:Claimed text contradicts raw Git bytes",
+  "full_catalog_check": [],
+  "query_items": [
+    {
+      "path_b64": "ZmlsZS50eHQ=",
+      "path_utf8": "file.txt",
+      "path_display": null,
+      "name_decoder_candidates": [
+        {
+          "tree_git_object_id": 2,
+          "raw_name": "ZmlsZS50eHQ=",
+          "decoder_key": "8e551ecd4206c95d5058bc806d733d4678acc9f8abbc097a623cf6fbdcb469bb",
+          "parser_module": "repo_catalog.adapters.git.parsing",
+          "parser_version": "git-object-v2",
+          "metadata_encoding": "utf-8",
+          "metadata_errors": "backslashreplace",
+          "text_encoding": "utf-8",
+          "max_text_blob_bytes": 8388608,
+          "decoded_name": "file.txt"
+        }
+      ],
+      "mode": "100644",
+      "object_format": "sha1",
+      "oid": "sha1:72b0048963128c7bd2c7f35520c6a5dd0dd201cf",
+      "git_object_id": 3,
+      "content_id": 1,
+      "git_text_fact_uuidv4": "c7cf4289-690c-44ee-a5e5-b8b35b59ccb4",
+      "text_state": "eligible",
+      "decoder_candidates": [
+        {
+          "git_fact_uuidv4": "7ca54ee3-5b08-4689-a32a-a807e136122f",
+          "git_object_id": 3,
+          "content_id": 1,
+          "decoder_key": "8e551ecd4206c95d5058bc806d733d4678acc9f8abbc097a623cf6fbdcb469bb",
+          "parser_module": "repo_catalog.adapters.git.parsing",
+          "parser_version": "git-object-v2",
+          "text_encoding": "utf-8",
+          "max_text_blob_bytes": 8388608,
+          "metadata_encoding": "utf-8",
+          "metadata_errors": "backslashreplace",
+          "text_state": "eligible",
+          "raw_text": "genuine canonical content"
+        },
+        {
+          "git_fact_uuidv4": "c7cf4289-690c-44ee-a5e5-b8b35b59ccb4",
+          "git_object_id": 3,
+          "content_id": 1,
+          "decoder_key": "f9c0dbf36a90884322d98c4dab07d8231bd69e53962c2ef01ef58721b57928b0",
+          "parser_module": "scope4.false-local",
+          "parser_version": "unranked",
+          "text_encoding": "utf-8",
+          "max_text_blob_bytes": 8388608,
+          "metadata_encoding": "utf-8",
+          "metadata_errors": "backslashreplace",
+          "text_state": "eligible",
+          "raw_text": "scope-four-fabricated-text"
+        }
+      ],
+      "root": "refs/heads/main",
+      "snapshot_id": "f2f91ca9-ab55-4af6-89a6-81e72b8ab821",
+      "git_acquisition_id": "f2f91ca9-ab55-4af6-89a6-81e72b8ab821",
+      "repository_uuidv4": "10000000-0000-4000-8000-000000000001",
+      "byte_start": 0,
+      "byte_end": 26,
+      "line": 1,
+      "snippet": "scope-four-fabricated-text"
+    }
+  ]
+}

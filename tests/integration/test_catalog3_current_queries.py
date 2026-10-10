@@ -18,9 +18,9 @@ from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.application.pr_queries import _collection_state, _latest_collections
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
-from repo_catalog.application.target_queries import TargetQueryService
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from tests.support.github_runtime import github_runtime as github_runtime
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @dataclass
@@ -74,7 +74,7 @@ class CurrentCatalog:
     def admit(self, candidate):
         with self.store.transaction():
             admitted = CurrentResources(self.store).admit(candidate, source="import")
-            self.store.publish()
+            self.store.advance_local_revision()
         return admitted
 
     def query(self, command, **options):
@@ -105,7 +105,7 @@ def current_catalog(tmp_path):
                 (request, repository, binding),
             )
             store.coverage(repository, "issue", "complete", observed_at_us=1)
-            store.publish()
+            store.advance_local_revision()
         yield CurrentCatalog(
             state,
             store,
@@ -159,8 +159,8 @@ def test_issue_family_keeps_each_comment_and_search_replaces_superseded_text(
     assert catalog.admit(edited).status == "accepted"
     assert catalog.admit(edited).status == "identical"
     assert catalog.store.one("SELECT count(*) FROM issue_resources")[0] == 3
-    assert catalog.store.one("SELECT count(*) FROM document_observations")[0] == 0
-    assert catalog.store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+    assert_absent_tables(catalog.store.connection, "document_observations")
+    assert_absent_tables(catalog.store.connection, "fetch_occurrences")
     assert catalog.query("search issue", literal="obsolete needle").data["items"] == []
     assert (
         catalog.query("search issue", literal="replacement needle").data["items"][0][
@@ -218,12 +218,12 @@ def test_current_review_reads_keep_dismissed_reviews_and_no_edit_history(
         "items"
     ]
     assert len(documents) == 3
-    assert {r["review_state"] for r in documents if r["document_kind"] == "review"} == {
+    assert {r["state"] for r in documents if r["kind"] == "review"} == {
         "APPROVED",
         "DISMISSED",
     }
     assert all(
-        r["resource_lifecycle"] == "current" and r["parsed_result_uuidv4"] is None
+        r["resource_lifecycle"] == "current" and "parsed_result_uuidv4" not in r
         for r in documents
     )
     assert catalog.query("search pr", literal=comment["body"]).data["items"] == []
@@ -234,25 +234,11 @@ def test_current_review_reads_keep_dismissed_reviews_and_no_edit_history(
         == 2
     )
     assert catalog.query("pr list", reviewer="reviewer").data["items"]
-    assert (
-        len(catalog.query("pr documents", document_observations="all").data["items"])
-        == 3
-    )
-    diagnostic = TargetQueryService(catalog.store.db_path).query(
-        "pr", {"repo": catalog.repository, "provider_change_request_number": 1}
-    )
-    assert (
-        len(
-            [
-                r
-                for r in diagnostic.data["items"]
-                if r["record_kind"] in ("review", "review_comment")
-            ]
-        )
-        == 3
-    )
-    assert catalog.store.one("SELECT count(*) FROM document_observations")[0] == 0
-    assert catalog.store.one("SELECT count(*) FROM parsed_results")[0] == 0
+    with pytest.raises(CatalogError) as retired:
+        catalog.query("pr documents", document_observations="all")
+    assert retired.value.code == "INVALID_ARGUMENT"
+    assert_absent_tables(catalog.store.connection, "document_observations")
+    assert_absent_tables(catalog.store.connection, "parsed_results")
 
 
 def test_unordered_conflict_blocks_current_search_without_parser_selection(
@@ -279,11 +265,8 @@ def test_unordered_conflict_blocks_current_search_without_parser_selection(
         catalog.query("issue show", provider_issue_number=1).data["items"][0]["body"]
         == resolved["body"]
     )
-    assert catalog.store.one("SELECT count(*) FROM parser_profiles")[0] == 0
-    assert (
-        catalog.store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0]
-        == 0
-    )
+    assert_absent_tables(catalog.store.connection, "parser_profiles")
+    assert_absent_tables(catalog.store.connection, "parser_profile_selection_decisions")
     assert catalog.query("search issue", literal="resolved value").data["items"]
 
 
@@ -341,7 +324,7 @@ def test_corrupt_current_domain_body_rejects_reads_and_index_rebuild(
             "UPDATE text_bodies SET body='wrong text' WHERE sha256=?", (digest,)
         )
         catalog.store.execute(trigger)
-        catalog.store.publish()
+        catalog.store.advance_local_revision()
     command = "issue show" if family == "issue" else "pr documents"
     selector = (
         {"provider_issue_number": 1}
@@ -411,12 +394,24 @@ def test_partial_current_page_is_a_new_boundary_without_archive_or_marker(
     with catalog.store.transaction():
         for identifier in ("old-complete", "new-partial"):
             catalog.store.execute(
-                "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES(?,?,'{}','synthetic','synthetic','proven')",
+                "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,confidence) VALUES(?,?,'{}','synthetic','proven')",
                 (identifier, catalog.repository),
             )
             catalog.store.execute(
-                "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id) VALUES(?,?,?,'review',?)",
-                (identifier, catalog.repository, catalog.request, identifier),
+                "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,scope_json) VALUES(?,?,?,'review',?,?)",
+                (
+                    identifier,
+                    catalog.repository,
+                    catalog.request,
+                    identifier,
+                    json.dumps(
+                        {
+                            "repository_uuidv4": catalog.repository,
+                            "change_request_id": catalog.request,
+                            "endpoint": "synthetic",
+                        }
+                    ),
+                ),
             )
         proof.page(
             "old-complete",
@@ -446,7 +441,7 @@ def test_partial_current_page_is_a_new_boundary_without_archive_or_marker(
     assert _collection_state(query, old) == "complete"
     assert _latest_collections(query, [old, new]) == [new]
     assert _collection_state(query, new) == "partial"
-    assert catalog.store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+    assert_absent_tables(catalog.store.connection, "fetch_occurrences")
 
 
 def test_real_issue_collection_reports_complete_normal_queries(github_runtime):
@@ -467,7 +462,7 @@ def test_real_issue_collection_reports_complete_normal_queries(github_runtime):
         )[0]
         == "complete"
     )
-    assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+    assert_absent_tables(store.connection, "fetch_occurrences")
     query = QueryService(store.path)
     for command, options, expected in (
         ("issue list", {}, 2),

@@ -86,7 +86,7 @@ class IdentityRelations:
                             (row[0], row[1]),
                         )
             self.db.execute(
-                "UPDATE database_identity SET publication_seq=publication_seq+1 WHERE singleton=1"
+                "UPDATE database_identity SET local_revision=local_revision+1 WHERE singleton=1"
             )
             self.db.execute("RELEASE identity_admission")
             return state

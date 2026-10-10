@@ -1,7 +1,6 @@
 """Test subprocess guard; deliberately contains no application imports."""
 
 import ipaddress
-import os
 import socket
 
 
@@ -40,10 +39,3 @@ def resolve(host, *args, **kwargs):
 socket.socket.connect = connect
 socket.socket.connect_ex = connect_ex
 socket.getaddrinfo = resolve
-
-# Explicit test-only bootstrap; no application environment escape hatch.
-if os.environ.get("REPO_CATALOG_TEST_BOOTSTRAP") == "1":
-    import runpy
-    from pathlib import Path
-
-    runpy.run_path(str(Path(__file__).parents[1] / "parser_bootstrap.py"))["install"]()

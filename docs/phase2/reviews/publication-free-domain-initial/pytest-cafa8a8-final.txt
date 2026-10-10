@@ -1,0 +1,99 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 26 items
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_identity_missing_target_and_atomic_failure[sha1] PASSED [  3%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_identity_missing_target_and_atomic_failure[sha256] PASSED [  7%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha1-2] PASSED [ 11%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha1-2048] PASSED [ 15%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha256-2] PASSED [ 19%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_original_nul_boundary_counterexample_fixed[sha256-2048] PASSED [ 23%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha1] PASSED [ 26%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_decoder_reverse_repeat_reopen_onward_roundtrip[sha256] PASSED [ 30%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_current_document_missing_parent_late_arrival_and_stale_repeat PASSED [ 34%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_physical_shared_digest_quarantine_backup_restore_and_cas41 PASSED [ 38%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_receiver_local_revision_is_independent_and_repeat_stable PASSED [ 42%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_old_code_anchor_never_borrows_new_head PASSED [ 46%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[.] FAILED [ 50%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[..] FAILED [ 53%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[dir/file] FAILED [ 57%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[tag] FAILED [ 61%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[commit] FAILED [ 65%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_git_late_physical_arrival_and_pending_onward PASSED [ 69%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_fake_original_label_and_foreign_repository_record_rejected PASSED [ 73%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_inconsistent_ref_capture_cannot_qualify_available_snapshot FAILED [ 76%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_commit_parent_interruption_and_process_death_rollback[sha1] PASSED [ 80%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_commit_parent_interruption_and_process_death_rollback[sha256] PASSED [ 84%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_direct_raw_git_mapping_cannot_assert_fake_oid FAILED [ 88%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_equal_clock_current_conflicts_survive_repeat_and_onward PASSED [ 92%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_cas41_mismatch_precedes_new_copy_diagnosis PASSED [ 96%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_complete_exact_code_listing_roundtrip_derives_receiver_progress FAILED [100%]
+
+=================================== FAILURES ===================================
+___________ test_invalid_intrinsic_tree_names_cannot_be_available[.] ___________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:305: in test_invalid_intrinsic_tree_names_cannot_be_available
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "invalid canonical name became available"
+E   AssertionError: invalid canonical name became available
+E   assert not <sqlite3.Row object at 0x7f3c07d93e20>
+E    +  where <sqlite3.Row object at 0x7f3c07d93e20> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3c07d92090>.one
+__________ test_invalid_intrinsic_tree_names_cannot_be_available[..] ___________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:305: in test_invalid_intrinsic_tree_names_cannot_be_available
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "invalid canonical name became available"
+E   AssertionError: invalid canonical name became available
+E   assert not <sqlite3.Row object at 0x7f3c07c4cf70>
+E    +  where <sqlite3.Row object at 0x7f3c07c4cf70> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3c07d919d0>.one
+_______ test_invalid_intrinsic_tree_names_cannot_be_available[dir/file] ________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:305: in test_invalid_intrinsic_tree_names_cannot_be_available
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "invalid canonical name became available"
+E   AssertionError: invalid canonical name became available
+E   assert not <sqlite3.Row object at 0x7f3c07a8e110>
+E    +  where <sqlite3.Row object at 0x7f3c07a8e110> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3c07d92900>.one
+_________ test_available_intrinsic_headers_match_canonical_parser[tag] _________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:326: in test_available_intrinsic_headers_match_canonical_parser
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "malformed intrinsic headers became available"
+E   AssertionError: malformed intrinsic headers became available
+E   assert not <sqlite3.Row object at 0x7f3c07a8cee0>
+E    +  where <sqlite3.Row object at 0x7f3c07a8cee0> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3c07a8ef60>.one
+_______ test_available_intrinsic_headers_match_canonical_parser[commit] ________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:326: in test_available_intrinsic_headers_match_canonical_parser
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "malformed intrinsic headers became available"
+E   AssertionError: malformed intrinsic headers became available
+E   assert not <sqlite3.Row object at 0x7f3c07c4c850>
+E    +  where <sqlite3.Row object at 0x7f3c07c4c850> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3c07c4e300>.one
+_______ test_inconsistent_ref_capture_cannot_qualify_available_snapshot ________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:386: in test_inconsistent_ref_capture_cannot_qualify_available_snapshot
+    assert not store.one("SELECT 1 FROM available_snapshots WHERE snapshot_id=?",(acq,)), "inconsistent capture became available"
+E   AssertionError: inconsistent capture became available
+E   assert not <sqlite3.Row object at 0x7f3c07a49840>
+E    +  where <sqlite3.Row object at 0x7f3c07a49840> = one('SELECT 1 FROM available_snapshots WHERE snapshot_id=?', ('9798e3ff-cda8-476f-a41f-1cf768296e3f',))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3c07c4adb0>.one
+______________ test_direct_raw_git_mapping_cannot_assert_fake_oid ______________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:447: in test_direct_raw_git_mapping_cannot_assert_fake_oid
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "fake declared Git OID became available"
+E   AssertionError: fake declared Git OID became available
+E   assert not <sqlite3.Row object at 0x7f3c07a4a620>
+E    +  where <sqlite3.Row object at 0x7f3c07a4a620> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f3c07a4aa80>.one
+_____ test_complete_exact_code_listing_roundtrip_derives_receiver_progress _____
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:521: in test_complete_exact_code_listing_roundtrip_derives_receiver_progress
+    assert result["staged_records"]==0, [tuple(r) for r in target.all("SELECT table_name,reason FROM exchange_staging")]
+E   AssertionError: [('code_assessments', 'invalid:domain_constraint')]
+E   assert 1 == 0
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[.]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[..]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_invalid_intrinsic_tree_names_cannot_be_available[dir/file]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[tag]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[commit]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_inconsistent_ref_capture_cannot_qualify_available_snapshot
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_direct_raw_git_mapping_cannot_assert_fake_oid
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_complete_exact_code_listing_roundtrip_derives_receiver_progress
+=================== 8 failed, 18 passed in 71.96s (0:01:11) ====================

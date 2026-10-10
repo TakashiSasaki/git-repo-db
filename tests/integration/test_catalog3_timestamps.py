@@ -3,10 +3,11 @@
 import sqlite3
 from datetime import UTC, datetime
 from decimal import Decimal, localcontext
-from importlib.resources import files
 
 import pytest
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
+from repo_catalog.adapters.sqlite.schema import schema_sql
 from repo_catalog.domain import time as catalog_time
 from repo_catalog.domain.time import (
     datetime_to_us,
@@ -231,8 +232,10 @@ def test_current_clock_keeps_integer_microseconds(monkeypatch, nanoseconds, expe
 @pytest.fixture(params=["catalog3.sql"])
 def timestamp_database(request):
     with sqlite3.connect(":memory:") as db:
-        sql = files("repo_catalog").joinpath("resources", request.param).read_text()
-        db.executescript(sql)
+        db.execute("PRAGMA foreign_keys=ON")
+        db.execute("PRAGMA recursive_triggers=ON")
+        register_git_object_sql_function(db)
+        db.executescript(schema_sql())
         yield db, request.param
 
 
@@ -263,23 +266,16 @@ def test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types(
     timestamp_database,
 ):
     db, resource = timestamp_database
-    if resource == "catalog3.sql":
-        insert = (
-            "INSERT INTO contents(content_id,byte_length,created_at_us) VALUES(?,0,?)"
-        )
-        table, column = "contents", "created_at_us"
-    else:
-        insert = "INSERT INTO reanalysis_runs(reanalysis_run_id,parser_version,parsed_at_us,evidence) VALUES(?,'timestamp-test',?,'{}')"
-        table, column = "reanalysis_runs", "parsed_at_us"
+    assert resource == "catalog3.sql"
+    insert = "INSERT INTO contents(content_id,byte_length,created_at_us) VALUES(?,0,?)"
+    table, column = "contents", "created_at_us"
     values = [MAX_INT64, 0, -1, MIN_INT64, 1]
     for index, value in enumerate(values):
-        key = index if resource == "catalog3.sql" else str(index)
-        db.execute(insert, (key, value))
+        db.execute(insert, (index, value))
     assert db.execute(
         f"SELECT {column},typeof({column}) FROM {table} ORDER BY {column}"
     ).fetchall() == [(value, "integer") for value in sorted(values)]
     assert db.execute(f"SELECT MAX({column}) FROM {table}").fetchone()[0] == MAX_INT64
     for index, invalid in enumerate((1.5, "2026-10-07T09:00:00Z", b"0"), start=5):
-        key = index if resource == "catalog3.sql" else str(index)
         with pytest.raises(sqlite3.IntegrityError):
-            db.execute(insert, (key, invalid))
+            db.execute(insert, (index, invalid))

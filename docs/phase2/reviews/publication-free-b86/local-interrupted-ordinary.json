@@ -1,0 +1,11 @@
+{
+  "status": "interrupted; not an acceptance result",
+  "source_commit": "b86ff2c96d7558379b2230489e1494630b073ef7",
+  "source_tree": "085be492d5fbd8cfbcaa7eb4be3d1db27af84fee",
+  "selected_ordinary_nodes": 2003,
+  "junit_and_profile_created": false,
+  "last_log_update_utc": "2026-10-10T13:03:25Z",
+  "observed_progress": "approximately15%; three failure indicators, no exact executed-node roster",
+  "cause": "Execution session was retired when its coordinating agent turn ended; root confirmed zombie processes and unknown session98361. No final counts are inferred. Mandatory new reviewed corrections also invalidate b86 acceptance.",
+  "next_required_action": "Complete all ordinary and installed package tests on the next corrected frozen commit, owned by the root execution session."
+}

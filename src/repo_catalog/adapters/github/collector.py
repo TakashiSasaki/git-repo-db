@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import uuid
 from importlib.resources import files
@@ -8,7 +9,6 @@ from urllib.parse import urlencode, urljoin, urlsplit
 from repo_catalog.adapters.github import current_parser
 from repo_catalog.adapters.github.identity import database_resource_id
 from repo_catalog.adapters.github.persistence import (
-    PARSER,
     ApiFacts,
     canonical,
     oid_context,
@@ -16,13 +16,43 @@ from repo_catalog.adapters.github.persistence import (
 from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.adapters.sqlite.cas_integrity import diagnose_admission_failure
 from repo_catalog.domain.models import CatalogError, Waiting
-from repo_catalog.domain.payload import PayloadRef
-from repo_catalog.domain.pr_scope import NON_DOCUMENT_KINDS, document_scope_includes
-from repo_catalog.domain.time import format_iso8601_us, now_us
+from repo_catalog.domain.pr_scope import NON_DOCUMENT_KINDS
+from repo_catalog.domain.time import format_iso8601_us
+
+PR_COLLECTION_KINDS = frozenset(
+    (
+        "pr-list",
+        "pr-detail",
+        "pr-code-check",
+        "issue-comment",
+        "issue-comment-incremental",
+        "review",
+        "review-comment",
+        "review-comment-incremental",
+        "threads",
+        "thread-comments",
+        "timeline",
+        "pr-commits",
+        "pr-files",
+    )
+)
+PR_CODE_COLLECTION_KINDS = frozenset(
+    (
+        "pr-list",
+        "pr-detail",
+        "pr-code-check",
+        "review",
+        "review-comment",
+        "threads",
+        "thread-comments",
+        "pr-commits",
+        "pr-files",
+    )
+)
 
 
 class GitHubCollector:
-    """Explicit acquisition into ordinary catalog3 facts; no legacy write model."""
+    """Live collection of direct resources and independent scoped evidence."""
 
     def __init__(
         self, store, token, transport=None, *, config=None, repository_endpoint_id=None
@@ -44,262 +74,11 @@ class GitHubCollector:
         self.inventory_evidence = []
         self.facts = ApiFacts(store, self.cfg)
         self.thread_collections = {}
+        self.code_listing_failures = {}
+        self.code_listing_results = {}
+        self.code_listing_not_before_us = None
         self.observed_partial_scopes = set()
         self.recording_diagnostics = []
-
-    def current_incremental_url(self, repo, job, kind, endpoint, context):
-        """Freeze a bounded overlapping update scan and resume its original URL."""
-        from repo_catalog.adapters.sqlite.current_collections import (
-            CurrentCollectionProof,
-        )
-
-        matches = self.s.all(
-            "SELECT f.fetch_collection_id,f.observed_at_us,r.endpoint,r.request_context,p.job_id,p.state,c.completion_marker_uuidv4,c.asserted_state,c.evidence,c.observed_at_us marker_observed_at_us "
-            "FROM fetch_collections f JOIN resume_scopes r USING(resume_scope_id) JOIN collection_progress p USING(fetch_collection_id) "
-            "LEFT JOIN completion_markers c USING(fetch_collection_id) "
-            "WHERE f.repository_uuidv4=? AND f.kind=? AND r.source_id=? AND r.principal_ref IS ? AND r.api_version=? AND r.parser_version=? AND r.profile_version=? "
-            "AND json_extract(r.request_context,'$.incremental_endpoint')=? ORDER BY f.observed_at_us DESC",
-            (
-                repo["repository_uuidv4"],
-                kind,
-                repo["source_id"],
-                self.facts.principal,
-                self.cfg["rest_api_version"],
-                PARSER,
-                self.s.config["preservation"]["profile"],
-                endpoint,
-            ),
-        )
-        for row in matches:
-            saved_context = json.loads(row["request_context"])
-            if saved_context.get("permissions") != self.facts.permissions:
-                continue
-            if row["job_id"] == job:
-                return row["endpoint"], saved_context
-        proof = CurrentCollectionProof(self.s.connection)
-        for row in matches:
-            if (
-                json.loads(row["request_context"]).get("permissions")
-                != self.facts.permissions
-            ):
-                continue
-            if row["state"] != "complete" or row["asserted_state"] != "complete":
-                continue
-            if any(
-                (page["parser_module"], page["parser_version"])
-                != (current_parser.PARSER_MODULE, current_parser.PARSER_VERSION)
-                for page in proof.pages(row["fetch_collection_id"])
-            ):
-                continue
-            marker = {**dict(row), "observed_at_us": row["marker_observed_at_us"]}
-            if proof.is_complete_marker(marker):
-                return endpoint + "&" + urlencode(
-                    {"since": format_iso8601_us(row["observed_at_us"] - 300_000_000)}
-                ), {
-                    **context,
-                    "completion_marker_uuidv4": row["completion_marker_uuidv4"],
-                }
-        return endpoint, context
-
-    def current_collection(self, repo, pr, kind, job, url, parser, *, context=None):
-        """Admit mutable pages with durable bounds/members and no HTTP CAS input."""
-        from repo_catalog.adapters.sqlite.current_collections import (
-            CurrentCollectionProof,
-        )
-        from repo_catalog.domain.current_state import fingerprint_candidate
-
-        s = self.s
-        proof = CurrentCollectionProof(s.connection)
-        with s.transaction():
-            self.facts.fence(job)
-            collection = self.facts.begin(repo, pr, kind, job, url, context)
-            candidate_context = self.facts.current_context(
-                repo, pr, url, kind.replace("-incremental", "")
-            )
-        if collection["state"] == "complete":
-            return collection["fetch_collection_id"], None
-        previous = s.one(
-            "SELECT ordinal,next_cursor FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
-            (collection["fetch_collection_id"],),
-        )
-        ordinal = previous["ordinal"] + 1 if previous else 0
-        page_url = previous["next_cursor"] if previous else url
-        seen = set()
-        response, uncommitted, resource_observed = None, False, False
-        try:
-            while page_url:
-                response, uncommitted, resource_observed = None, False, False
-                self.token.check()
-                if page_url in seen:
-                    raise CatalogError(
-                        "PAGINATION_CYCLE", "Repeated current resource page"
-                    )
-                seen.add(page_url)
-                base_revision = s.revision()
-                response = self.request_get(
-                    page_url,
-                    repo,
-                    record_context={
-                        "provider_request_kind": kind,
-                        "repository": repo["name"],
-                        "collection_scope": canonical(
-                            candidate_context["acquisition_scope"]
-                        ),
-                        "service_instance_uuidv4": candidate_context[
-                            "service_instance_uuidv4"
-                        ],
-                    },
-                )
-                uncommitted = True
-                timestamp = self.facts.response_time(response)
-                values = self.rest_json(response)
-                if not isinstance(values, list):
-                    raise CatalogError(
-                        "API_SCHEMA", "Current collection response must be a list"
-                    )
-                resource_observed = not values or any(
-                    self.current_resource_identified(value, kind) for value in values
-                )
-                next_url = self.http.next_url(response)
-                from repo_catalog.adapters.git.runner import hook
-
-                hook("before_api_page_commit")
-                with s.transaction():
-                    self.facts.fence(job)
-                    members = []
-                    for value in values:
-                        self.rest_item(value, kind)
-                        candidate = parser(value, candidate_context, timestamp)
-                        if candidate is None:
-                            continue
-                        self.facts.admit_current(candidate, base_revision)
-                        issue_family = candidate["kind"] in ("issue", "issue-comment")
-                        key_fields = (
-                            ("service_instance_uuidv4", "provider_resource_id")
-                            if issue_family
-                            else (
-                                "change_request_id",
-                                "provider_change_request_document_id",
-                            )
-                        )
-                        members.append(
-                            {
-                                "family": "issue" if issue_family else "review",
-                                "kind": candidate["kind"],
-                                **{field: candidate[field] for field in key_fields},
-                                "state_digest": fingerprint_candidate(candidate),
-                            }
-                        )
-                    proof.page(
-                        collection["fetch_collection_id"],
-                        ordinal,
-                        timestamp,
-                        next_url,
-                        members,
-                        status=response.status_code,
-                        parser_module=current_parser.PARSER_MODULE,
-                        parser_version=current_parser.PARSER_VERSION,
-                    )
-                    s.execute(
-                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                        (next_url, collection["fetch_collection_id"]),
-                    )
-                    self.facts.publish()
-                uncommitted = False
-                hook("after_api_page_commit")
-                ordinal += 1
-                page_url = next_url
-            with s.transaction():
-                self.facts.fence(job)
-                # A resumed terminal receipt must still account for unresolved
-                # members saved by the earlier attempt; local control flow is
-                # never completeness evidence.
-                if self.current_members_unresolved(collection["fetch_collection_id"]):
-                    raise CatalogError(
-                        "CURRENT_STATE_UNRESOLVED",
-                        "Current collection contains unordered or unresolved resources",
-                    )
-                evidence = proof.evidence(collection["fetch_collection_id"])
-                self.facts.finish(collection, evidence=evidence)
-                self.collection_coverage(repo, pr, kind, collection, "complete")
-                self.facts.publish()
-            return collection["fetch_collection_id"], None
-        except CatalogError as error:
-            with s.transaction():
-                self.facts.fence(job)
-                self.facts.partial(
-                    collection,
-                    error.code,
-                    observed_at_us=self.facts.response_time(response)
-                    if response is not None
-                    and uncommitted
-                    and resource_observed
-                    and error.code
-                    not in ("CANCELLED", "STALE_ATTEMPT", "SCOPE_MISMATCH")
-                    else None,
-                )
-                if error.code not in ("CANCELLED", "STALE_ATTEMPT") or (
-                    self.facts.pending_response(collection)
-                ):
-                    self.collection_coverage(
-                        repo, pr, kind, collection, "partial", reason=error.code
-                    )
-                self.facts.publish()
-            raise
-
-    @staticmethod
-    def current_resource_identified(value, kind):
-        """Recognize an observed resource without admitting its rejected values."""
-        if not isinstance(value, dict) or kind == "issue" and "pull_request" in value:
-            return False
-        try:
-            current_parser.resource_id(value)
-        except CatalogError:
-            return False
-        if kind == "issue":
-            number = value.get("number")
-            return type(number) is int and 0 < number < 1 << 63
-        return True
-
-    def current_members_unresolved(self, collection_id):
-        from repo_catalog.adapters.sqlite.current_collections import (
-            CurrentCollectionProof,
-        )
-
-        for member in CurrentCollectionProof(self.s.connection).members(collection_id):
-            if member["family"] == "issue":
-                table, keys = (
-                    "issue_resources",
-                    ("service_instance_uuidv4", "kind", "provider_resource_id"),
-                )
-            else:
-                table, keys = (
-                    "review_resources",
-                    (
-                        "change_request_id",
-                        "kind",
-                        "provider_change_request_document_id",
-                    ),
-                )
-            predicate = " AND ".join(f"{field}=?" for field in keys)
-            if (
-                self.s.one(
-                    f"SELECT 1 FROM {table} WHERE {predicate}",
-                    tuple(member[field] for field in keys),
-                )
-                is None
-            ):
-                return True
-            diagnostics = " AND ".join(
-                f"json_extract(record_json,'$.{field}')=?" for field in keys
-            )
-            if self.s.one(
-                "SELECT 1 FROM current_resource_diagnostics WHERE table_name=? AND "
-                + diagnostics,
-                (table, *(member[field] for field in keys)),
-            ):
-                return True
-        return False
 
     def coverage_claim(
         self,
@@ -343,87 +122,19 @@ class GitHubCollector:
             self.facts.observed_at_us(collection, include_partial=state != "complete"),
             {
                 "fetch_collection_ids": [collection["fetch_collection_id"]],
+                "completion_marker_uuidv4s": [
+                    row[0]
+                    for row in self.s.all(
+                        "SELECT completion_marker_uuidv4 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                        (collection["fetch_collection_id"],),
+                    )
+                ]
+                if state == "complete"
+                else [],
                 **({"reason": reason} if reason else {}),
             },
             change_request_id=pr,
         )
-
-    def summary_collection_ids(self, repo, job, *, documents_only=False):
-        """The exact collections assessed by this job's repository summary."""
-        collections = {
-            row[0]
-            for row in self.s.all(
-                "SELECT DISTINCT f.fetch_collection_id FROM fetch_collections f "
-                "JOIN collection_progress p USING(fetch_collection_id) "
-                "WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
-                + (
-                    " AND f.kind NOT IN ("
-                    + ",".join("?" for _ in NON_DOCUMENT_KINDS)
-                    + ")"
-                    if documents_only
-                    else ""
-                )
-                + " ORDER BY f.fetch_collection_id",
-                (
-                    repo["repository_uuidv4"],
-                    repo["source_id"],
-                    job,
-                    *(sorted(NON_DOCUMENT_KINDS) if documents_only else ()),
-                ),
-            )
-        }
-        if not documents_only:
-            # Reused sealed code listings retain their original acquisition
-            # identity and collection. The assessment names those exact roots,
-            # rather than treating the later job's pages as their replacement.
-            collections.update(
-                row[0]
-                for row in self.s.all(
-                    "SELECT DISTINCT l.fetch_collection_id FROM current_code_observations o JOIN code_listings l ON l.code_listing_id IN (o.commit_code_listing_id,o.file_code_listing_id) WHERE o.repository_uuidv4=? AND o.state='complete'",
-                    (repo["repository_uuidv4"],),
-                )
-            )
-        return sorted(collections)
-
-    def thread_collection_ids(self, collection):
-        """Include the root and its exact children across interrupted resumes."""
-        return [
-            row[0]
-            for row in self.s.all(
-                """SELECT member.fetch_collection_id
-                   FROM fetch_collections root JOIN fetch_collections member
-                     ON member.repository_uuidv4=root.repository_uuidv4
-                    AND member.change_request_id IS root.change_request_id
-                    AND member.source_id IS root.source_id
-                   JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id
-                   WHERE root.fetch_collection_id=? AND (
-                       member.fetch_collection_id=root.fetch_collection_id OR
-                       (member.kind='thread-comments' AND
-                        json_extract(scope.request_context,'$.parent_fetch_collection_id')
-                            =root.fetch_collection_id))
-                   ORDER BY member.fetch_collection_id""",
-                (collection["fetch_collection_id"],),
-            )
-        ]
-
-    def summary_observed_at_us(
-        self, repo, job, *, documents_only=False, include_partial=True
-    ):
-        return self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
-            + (
-                " AND f.kind NOT IN (" + ",".join("?" for _ in NON_DOCUMENT_KINDS) + ")"
-                if documents_only
-                else ""
-            ),
-            (
-                include_partial,
-                repo["repository_uuidv4"],
-                repo["source_id"],
-                job,
-                *(sorted(NON_DOCUMENT_KINDS) if documents_only else ()),
-            ),
-        )[0]
 
     def _retain_recording_diagnostics(self, response):
         self.recording_diagnostics.extend(
@@ -437,7 +148,9 @@ class GitHubCollector:
             if url in seen:
                 raise CatalogError("PAGINATION_CYCLE", "API redirect cycle")
             seen.add(url)
+            request_revision = self.s.revision()
             response = self.http.request("GET", url, **kwargs)
+            response.extensions["catalog_base_revision"] = request_revision
             self._retain_recording_diagnostics(response)
             if response.status_code not in (301, 302):
                 return response
@@ -470,24 +183,49 @@ class GitHubCollector:
                     "SCOPE_MISMATCH", "Transfer target is outside declared owner"
                 )
             name = "/".join(parts[:2])
-            identity = self.http.request(
+            base_revision = self.s.revision()
+            identity_response = self.http.request(
                 "GET", self.http.base + "/repos/" + name
-            ).json()
+            )
+            self._retain_recording_diagnostics(identity_response)
+            identity = self.rest_json(identity_response)
             if str(identity.get("id")) != repo["provider_repository_id"]:
                 raise CatalogError(
                     "SCOPE_MISMATCH", "Redirect changed repository identity"
                 )
-            from repo_catalog.application.repository_identity import observe_name
+            from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 
+            registration = self.s.one(
+                "SELECT source_registration_uuidv4,service_instance_uuidv4 FROM sources WHERE source_id=?",
+                (repo["source_id"],),
+            )
+            scope = {
+                "source_registration_uuidv4": registration[
+                    "source_registration_uuidv4"
+                ],
+                "service_instance_uuidv4": registration["service_instance_uuidv4"],
+                "owner": source["owner"],
+                "principal_ref": self.facts.principal,
+                "observed_permissions": self.facts.permissions,
+                "api_version": self.cfg["rest_api_version"],
+                "endpoint": self.http.base + "/repos/" + name,
+                "query_kind": "verified-repository-redirect",
+            }
             with self.s.transaction():
-                observe_name(
-                    self.s,
+                CurrentApiState(self.s).confirm_source_repository(
+                    repo["source_id"],
                     repo["repository_uuidv4"],
-                    name,
-                    now_us(),
-                    provenance={"kind": "verified-api-redirect", "url": target},
+                    observed_at_us=self.facts.response_time(identity_response),
+                    scope=scope,
+                    parser_module=current_parser.PARSER_MODULE,
+                    parser_version=current_parser.PARSER_VERSION,
+                    name=name,
+                    metadata=current_parser.repository_metadata(identity),
+                    source="live",
+                    base_revision=base_revision,
+                    scope_context=scope,
                 )
-                self.facts.publish()
+                self.facts.advance_revision()
             url = target
 
     def inventory_request(self, method, url, **kwargs):
@@ -503,385 +241,11 @@ class GitHubCollector:
                 "API_SCHEMA", "Repository database ID must be a positive decimal ID"
             ) from None
 
-    def inventory_input(self, response, url):
-        """Retain accepted live inventory proof, after endpoint validation."""
-        next_url = self.http.next_url(response)
-        try:
-            with self.s.transaction():
-                input_uuid, observed, payload_ref = self.facts.source_input(
-                    self.inventory_source_registration_uuidv4,
-                    response,
-                    {
-                        "url": url,
-                        "method": "GET",
-                        "etag": response.headers.get("etag"),
-                        "source_settings": self.inventory_source_settings,
-                    },
-                )
-        except CatalogError as error:
-            diagnose_admission_failure(self.s.connection, error)
-            raise
-        self.inventory_evidence.append(
-            {
-                "source_input_uuidv4": input_uuid,
-                "payload": payload_ref.as_json(),
-                "url": url,
-                "method": "GET",
-                "observed_at_us": observed,
-                "etag": response.headers.get("etag"),
-                "next_url": next_url,
-            }
-        )
-
-    def inventory(self, source, job):
-        cfg = json.loads(source["settings"])
-        self.inventory_source_registration_uuidv4 = source["source_registration_uuidv4"]
-        self.inventory_source_settings = cfg
-        owner = cfg["owner"]
-        base = self.http.base
-        try:
-            response, identity = self.inventory_request("GET", base + "/user")
-            if (
-                not isinstance(identity, dict)
-                or not isinstance(identity.get("login"), str)
-                or not identity["login"].strip()
-            ):
-                raise CatalogError("API_SCHEMA", "Authenticated user identity missing")
-            self.inventory_input(response, base + "/user")
-            if cfg.get("include_repositories"):
-                import re
-
-                selected = []
-                for repository in cfg["include_repositories"]:
-                    name = repository.removeprefix(owner + "/")
-                    if not re.fullmatch(r"[A-Za-z0-9_.-]+", name):
-                        raise CatalogError(
-                            "INVALID_ARGUMENT",
-                            "Included repository must be a name within declared owner",
-                        )
-                    url = base + "/repos/" + owner + "/" + name
-                    response, payload = self.inventory_request("GET", url)
-                    if not isinstance(payload, dict) or not isinstance(
-                        payload.get("full_name"), str
-                    ):
-                        raise CatalogError("API_SCHEMA", "Repository identity missing")
-                    if (
-                        payload.get("full_name", "").lower()
-                        != f"{owner}/{name}".lower()
-                    ):
-                        raise CatalogError(
-                            "SCOPE_MISMATCH", "Selected repository identity changed"
-                        )
-                    provider = self.inventory_repository_id(payload.get("id"))
-                    clone = cfg.get("clone_url_overrides", {}).get(
-                        provider, payload.get("clone_url")
-                    )
-                    if not isinstance(clone, str) or not clone:
-                        raise CatalogError(
-                            "API_SCHEMA", "Repository identity or clone URL missing"
-                        )
-                    self.inventory_input(response, url)
-                    selected.append(
-                        {
-                            "host": "github.com",
-                            "provider_repository_id": provider,
-                            "name": payload["full_name"],
-                            "url": clone,
-                            "metadata": payload,
-                        }
-                    )
-                return selected
-            if identity.get("login", "").lower() == owner.lower():
-                url = (
-                    base
-                    + "/user/repos?"
-                    + urlencode(
-                        {
-                            "affiliation": "owner",
-                            "visibility": "all",
-                            "per_page": self.cfg["rest_page_size"],
-                        }
-                    )
-                )
-            else:
-                url = base + "/users/" + owner
-                response, user = self.inventory_request("GET", url)
-                if not isinstance(user, dict) or not isinstance(user.get("type"), str):
-                    raise CatalogError("API_SCHEMA", "Owner identity missing")
-                if user.get("type") == "Organization":
-                    self.inventory_input(response, url)
-                    url = (
-                        base
-                        + "/orgs/"
-                        + owner
-                        + "/repos?"
-                        + urlencode(
-                            {
-                                "per_page": self.cfg["rest_page_size"],
-                                "type": "all",
-                            }
-                        )
-                    )
-                else:
-                    raise CatalogError(
-                        "SCOPE_UNSUPPORTED",
-                        "Owner is not the authenticated user; private owner inventory is not established",
-                    )
-            result = []
-            seen = set()
-            while url:
-                if url in seen:
-                    raise CatalogError("PAGINATION_CYCLE", "Repeated inventory page")
-                seen.add(url)
-                response, values = self.inventory_request("GET", url)
-                if not isinstance(values, list):
-                    raise CatalogError("API_SCHEMA", "Expected repository list")
-                for r in values:
-                    if not isinstance(r, dict) or not isinstance(
-                        r.get("full_name"), str
-                    ):
-                        raise CatalogError("API_SCHEMA", "Repository identity missing")
-                    provider = self.inventory_repository_id(r.get("id"))
-                    parts = r["full_name"].split("/")
-                    if len(parts) != 2 or not all(parts):
-                        raise CatalogError(
-                            "API_SCHEMA", "Repository full name malformed"
-                        )
-                    if parts[0].lower() != owner.lower():
-                        raise CatalogError(
-                            "SCOPE_MISMATCH",
-                            "Inventory returned repository outside owner scope",
-                        )
-                    clone = cfg.get("clone_url_overrides", {}).get(
-                        provider, r.get("clone_url")
-                    )
-                    if not isinstance(clone, str) or not clone:
-                        raise CatalogError("API_SCHEMA", "Clone URL missing")
-                    result.append(
-                        {
-                            "host": "github.com",
-                            "provider_repository_id": provider,
-                            "name": r["full_name"],
-                            "url": clone,
-                            "metadata": r,
-                        }
-                    )
-                self.inventory_input(response, url)
-                url = self.http.next_url(response)
-            by_id = {repo["provider_repository_id"]: repo for repo in result}
-            result = list(by_id.values())
-            counts = (identity.get("public_repos"), identity.get("owned_private_repos"))
-            if (
-                identity.get("login", "").lower() != owner.lower()
-                or not all(type(value) is int and value >= 0 for value in counts)
-                or any(
-                    type(repo["metadata"].get("private")) is not bool for repo in result
-                )
-            ):
-                self.inventory_uncertainty = "INVENTORY_SCOPE_UNVERIFIED"
-            elif counts != (
-                sum(not repo["metadata"]["private"] for repo in result),
-                sum(repo["metadata"]["private"] for repo in result),
-            ):
-                self.inventory_uncertainty = "INVENTORY_COUNT_MISMATCH"
-            return result
-        finally:
-            if self.owned:
-                self.http.close()
-
-    def inventory_result(self, source):
-        """Create the source-owned parse execution; caller adds inventory facts."""
-        return self.facts.model.create_result(
-            self.facts.profile(),
-            source_registration_uuidv4=source["source_registration_uuidv4"],
-            inputs=[
-                {"source_input_uuidv4": item["source_input_uuidv4"]}
-                for item in self.inventory_evidence
-            ],
-            derivation={"parser": PARSER, "kind": "inventory"},
-        )
-
-    def collection(
-        self,
-        repo,
-        pr,
-        kind,
-        job,
-        url,
-        normalizer,
-        *,
-        context=None,
-        listing_kind=None,
-        cap=None,
-        reported=None,
-        reuse=False,
-    ):
-        s = self.s
-        if listing_kind:
-            # A changed provider count invalidates a completed cached listing
-            # even if its head/base fields are unchanged.
-            context = {**(context or {}), "reported_count": reported}
-        with s.transaction():
-            self.facts.fence(job)
-            collection = self.facts.begin(
-                repo, pr, kind, job, url, context, reuse=reuse
-            )
-            listing = None
-            if listing_kind:
-                listing = s.one(
-                    "SELECT code_listing_id FROM code_listings WHERE fetch_collection_id=? AND kind=?",
-                    (collection["fetch_collection_id"], listing_kind),
-                )
-                if not listing:
-                    algorithm, head, base = oid_context(context or {})
-                    ident = collection["fetch_collection_id"] + ":" + listing_kind
-                    s.execute(
-                        "INSERT INTO code_listings(code_listing_id,change_request_id,fetch_collection_id,kind,resume_scope_id,object_format,head_oid,base_oid) VALUES(?,?,?,?,?,?,?,?)",
-                        (
-                            ident,
-                            pr,
-                            collection["fetch_collection_id"],
-                            listing_kind,
-                            collection["resume_scope_id"],
-                            algorithm,
-                            head,
-                            base,
-                        ),
-                    )
-                    s.execute(
-                        "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES(?,'partial',0,0,0)",
-                        (ident,),
-                    )
-                    listing = (ident,)
-            if collection["state"] == "complete":
-                return collection["fetch_collection_id"], listing[
-                    0
-                ] if listing else None
-        previous = s.one(
-            "SELECT ordinal,next_cursor FROM fetch_occurrences WHERE fetch_collection_id=? ORDER BY ordinal DESC,fetch_occurrence_id DESC LIMIT 1",
-            (collection["fetch_collection_id"],),
-        )
-        # A committed terminal page still needs its completion boundary, never a
-        # repeated request. Empty initial cursor without a page means start fresh.
-        url = previous["next_cursor"] if previous else url
-        seen = set()
-        response, uncommitted = None, False
-        try:
-            while url:
-                self.token.check()
-                if url in seen:
-                    raise CatalogError("PAGINATION_CYCLE", "Repeated collection page")
-                seen.add(url)
-                response, uncommitted = None, False
-                response = self.request_get(url, repo)
-                uncommitted = True
-                values = self.rest_json(response)
-                if not isinstance(values, list):
-                    raise CatalogError(
-                        "API_SCHEMA", "Collection response must be a list"
-                    )
-                next_url = self.http.next_url(response)
-                from repo_catalog.adapters.git.runner import hook
-
-                hook("before_api_page_commit")
-                with s.transaction():
-                    self.facts.fence(job)
-                    occurrence, ordinal, timestamp = self.facts.page(
-                        collection, response, {"url": url, "method": "GET"}, next_url
-                    )
-                    for position, value in enumerate(values):
-                        self.rest_item(value, kind)
-                        normalizer(
-                            value,
-                            collection,
-                            occurrence,
-                            ordinal * 10000 + position,
-                            timestamp,
-                            listing[0] if listing else None,
-                        )
-                    self.facts.choose_page(collection, occurrence)
-                    if listing:
-                        s.execute(
-                            "UPDATE code_listing_progress SET page_count=page_count+1,terminal=? WHERE code_listing_id=?",
-                            (int(next_url is None), listing[0]),
-                        )
-                    self.facts.publish()
-                uncommitted = False
-                hook("after_api_page_commit")
-                url = next_url
-            if listing:
-                table = (
-                    "code_commits" if listing_kind == "commits" else "code_file_changes"
-                )
-                count = s.one(
-                    f"SELECT count(*) FROM {table} WHERE code_listing_id=?",
-                    (listing[0],),
-                )[0]
-                if cap and (count >= cap or reported is not None and count < reported):
-                    raise CatalogError(
-                        "API_CAP",
-                        "Provider list may be truncated",
-                        {"cap": cap, "collected": count, "reported": reported},
-                    )
-            with s.transaction():
-                self.facts.fence(job)
-                self.facts.finish(collection)
-                if listing:
-                    s.execute(
-                        "UPDATE code_listing_progress SET state='complete',terminal=1,context_proven=1 WHERE code_listing_id=?",
-                        (listing[0],),
-                    )
-                self.collection_coverage(repo, pr, kind, collection, "complete")
-                self.facts.publish()
-            return collection["fetch_collection_id"], listing[0] if listing else None
-        except CatalogError as error:
-            self.partial_rest_collection(
-                repo,
-                pr,
-                kind,
-                job,
-                collection,
-                error,
-                response if uncommitted else None,
-                url,
-            )
-            raise
-
-    def partial_rest_collection(
-        self, repo, pr, kind, job, collection, error, response, url
-    ):
-        """Keep the safe live retry boundary, never the rejected response bytes."""
-        with self.s.transaction():
-            self.facts.fence(job)
-            diagnose_admission_failure(self.s.connection, error)
-            if response is not None:
-                self.s.execute(
-                    "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                    (url, collection["fetch_collection_id"]),
-                )
-            self.facts.partial(
-                collection,
-                error.code,
-                observed_at_us=self.facts.response_time(response)
-                if response is not None
-                and error.code not in ("CANCELLED", "STALE_ATTEMPT")
-                else None,
-            )
-            if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
-                self.facts.pending_response(collection) or error.code == "API_CAP"
-            ):
-                # A committed terminal page interrupted before finish needs no
-                # new acquisition; a rejected response or saved prefix does.
-                self.collection_coverage(
-                    repo, pr, kind, collection, "partial", reason=error.code
-                )
-            self.facts.publish()
-
     @staticmethod
     def rest_json(response):
         try:
             value = response.json()
-            # SQLite projections retain whole provider objects as JSON. Check
+            # Validate JSON strings before projecting modeled fields. Check
             # every string, including unknown metadata and keys, before any
             # projection can fail with UnicodeEncodeError. Rejected responses
             # remain transient and are acquired afresh on a live retry.
@@ -920,8 +284,8 @@ class GitHubCollector:
                 GitHubCollector.rest_oid(value["commit_id"], "commit_id")
         if kind in ("pr-list", "pr-detail", "pr-code-check"):
             GitHubCollector.rest_integer(value.get("number"), "number", minimum=1)
-            if not isinstance(value.get("title"), str):
-                raise CatalogError("API_SCHEMA", "PR title missing or malformed")
+            if "title" in value and not isinstance(value["title"], str):
+                raise CatalogError("API_SCHEMA", "Malformed PR title")
             for field in ("head", "base"):
                 ref = value.get(field)
                 if ref is not None:
@@ -966,451 +330,6 @@ class GitHubCollector:
                 "CANONICAL_DOCUMENT_ID_MISSING",
                 f"GitHub document {field} is missing or invalid; Node IDs are not aliases",
             ) from None
-
-    def ensure_pr(
-        self, repo, value, collection, occurrence, position, timestamp, *, publish=True
-    ):
-        s = self.s
-        self.rest_item(value, "pr-detail")
-        provider_document_id = self.document_provider_id(value)
-        binding = s.one(
-            "SELECT repository_binding_id FROM resume_scopes WHERE resume_scope_id=?",
-            (collection["resume_scope_id"],),
-        )[0]
-        row = s.one(
-            "SELECT * FROM change_requests WHERE repository_binding_id=? AND change_request_kind='pull_request' AND provider_change_request_number=?",
-            (binding, value["number"]),
-        )
-        ident = (
-            row["change_request_id"]
-            if row
-            else f"{repo['repository_uuidv4']}:{value['number']}"
-        )
-        if row is None and s.one(
-            "SELECT 1 FROM change_requests WHERE change_request_id=?", (ident,)
-        ):
-            ident = f"{binding}:{value['number']}"
-        if collection.get("change_request_id") not in (None, ident):
-            raise CatalogError(
-                "API_SCHEMA", "PR response does not match the requested PR"
-            )
-        if not row:
-            s.execute(
-                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',?)",
-                (
-                    ident,
-                    repo["repository_uuidv4"],
-                    binding,
-                    value["number"],
-                ),
-            )
-        origin = self.facts.origin(collection, occurrence, position)
-        existing = s.one(
-            "SELECT change_request_observation_id FROM change_request_observations WHERE change_request_id=? AND origin_key=?",
-            (ident, origin),
-        )
-        if existing:
-            return ident
-        s.execute(
-            "INSERT INTO change_request_observations(change_request_observation_uuidv4,repository_uuidv4,parsed_result_uuidv4,change_request_id,observed_at_us,published,payload,origin_key,parsed_at_us,origin_fetch_occurrence_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
-            (
-                str(uuid.uuid4()),
-                repo["repository_uuidv4"],
-                self.facts.result(occurrence),
-                ident,
-                timestamp,
-                int(publish or not row),
-                canonical(value),
-                origin,
-                now_us(),
-                occurrence,
-            ),
-        )
-        if publish or not row:
-            self.facts.choose(
-                self.facts.result(occurrence),
-                fact_kind="change-request",
-                change_request_id=ident,
-            )
-            for offset, (kind, body) in enumerate(
-                (
-                    ("pr-title", value.get("title")),
-                    ("pr-body", "" if value.get("body") is None else value["body"]),
-                )
-            ):
-                self.facts.document(
-                    ident,
-                    kind,
-                    provider_document_id,
-                    body,
-                    value,
-                    collection,
-                    occurrence,
-                    position + offset,
-                    timestamp,
-                )
-        return ident
-
-    def detail(self, repo, pr, job, url):
-        with self.s.transaction():
-            self.facts.fence(job)
-            collection = self.facts.begin(
-                repo, pr["change_request_id"], "pr-detail", job, url
-            )
-            validator = self.s.one(
-                "SELECT * FROM validators WHERE resume_scope_id=? AND validator_key='representation'",
-                (collection["resume_scope_id"],),
-            )
-        if collection["state"] == "complete":
-            candidates = self.s.all(
-                "SELECT DISTINCT o.* FROM completion_markers c JOIN eligible_change_request_observations o ON o.change_request_observation_uuidv4=json_extract(c.evidence,'$.change_request_observation_uuidv4') WHERE c.fetch_collection_id=? AND o.change_request_id=?",
-                (collection["fetch_collection_id"], pr["change_request_id"]),
-            )
-            row = candidates[0] if len(candidates) == 1 else None
-            if row is None:
-                raise CatalogError(
-                    "API_SCHEMA", "Completed detail has no saved authorization"
-                )
-            value = json.loads(row["payload"])
-            return value, row["change_request_observation_id"]
-        headers = {"If-None-Match": validator["etag"]} if validator else {}
-        response = self.request_get(url, repo, headers=headers)
-        if response.status_code == 304:
-            payload = (
-                self.s.one(
-                    "SELECT b.body FROM payloads p JOIN stored_bytes b ON b.sha256=p.sha256 WHERE p.representation=? AND p.sha256=? AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=p.sha256)",
-                    (validator["payload_representation"], validator["payload_sha256"]),
-                )
-                if validator
-                else None
-            )
-            if payload:
-                value = json.loads(payload[0])
-                admitted = self.s.one(
-                    "SELECT o.change_request_observation_id AS current_change_request_observation_id,o.change_request_observation_uuidv4,o.payload FROM current_change_request_observations o WHERE o.change_request_id=?",
-                    (pr["change_request_id"],),
-                )
-                if not admitted or json.loads(admitted["payload"]) != value:
-                    # A newer race observation can differ from this validator.
-                    # Acquire an actual representation rather than attaching old
-                    # cached A bytes to the newer B observation.
-                    payload = None
-                else:
-                    current = admitted["current_change_request_observation_id"]
-            if payload:
-                # A validation is a successful boundary, not a new observation of
-                # cached bytes. It records no page/document/PR occurrence.
-                validated_at_us = now_us()
-                with self.s.transaction():
-                    self.facts.fence(job)
-                    self.facts.finish(
-                        collection,
-                        evidence={
-                            "status": 304,
-                            "response": self.facts.response_metadata(response),
-                            "payload": PayloadRef(
-                                validator["payload_representation"],
-                                validator["payload_sha256"],
-                            ).as_json(),
-                            "change_request_observation_uuidv4": admitted[
-                                "change_request_observation_uuidv4"
-                            ],
-                        },
-                        observed_at_us=validated_at_us,
-                    )
-                    self.s.execute(
-                        "UPDATE validators SET validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
-                        (validated_at_us, collection["resume_scope_id"]),
-                    )
-                    self.facts.publish()
-                return value, current
-            response = self.request_get(url, repo)
-            if response.status_code == 304:
-                raise CatalogError("API_SCHEMA", "304 without saved representation")
-        try:
-            value = self.rest_json(response)
-            with self.s.transaction():
-                self.facts.fence(job)
-                occurrence, _, timestamp = self.facts.page(
-                    collection, response, {"url": url, "method": "GET"}, None
-                )
-                self.ensure_pr(repo, value, collection, occurrence, 0, timestamp)
-                if response.headers.get("etag"):
-                    payload_key = self.s.one(
-                        "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
-                        (occurrence,),
-                    )
-                    if validator:
-                        self.s.execute(
-                            "UPDATE validators SET etag=?,payload_representation=?,payload_sha256=?,validated_at_us=? WHERE resume_scope_id=? AND validator_key='representation'",
-                            (
-                                response.headers["etag"],
-                                *payload_key,
-                                timestamp,
-                                collection["resume_scope_id"],
-                            ),
-                        )
-                    else:
-                        self.s.execute(
-                            "INSERT INTO validators(resume_scope_id,validator_key,etag,payload_representation,payload_sha256,validated_at_us) VALUES(?,'representation',?,?,?,?)",
-                            (
-                                collection["resume_scope_id"],
-                                response.headers["etag"],
-                                *payload_key,
-                                timestamp,
-                            ),
-                        )
-                self.facts.finish(collection)
-                self.facts.publish()
-        except CatalogError as error:
-            self.partial_rest_collection(
-                repo,
-                pr["change_request_id"],
-                "pr-detail",
-                job,
-                collection,
-                error,
-                response,
-                url,
-            )
-            raise
-        selected = self.s.one(
-            "SELECT change_request_observation_id FROM current_change_request_observations WHERE change_request_id=?",
-            (pr["change_request_id"],),
-        )
-        if selected is None:
-            raise CatalogError(
-                "PARSER_SELECTION_UNRESOLVED",
-                "Acquisition saved; an explicit parser/fact selection is required",
-            )
-        current = selected[0]
-        return value, current
-
-    def incremental_comments(self, repo, job, kind, endpoint, parent_field):
-        with self.s.transaction():
-            scope = self.facts.scope(
-                repo, endpoint, {"kind": kind, "sort": "updated", "direction": "asc"}
-            )
-        previous = self.s.one(
-            "SELECT i.* FROM incremental_scans i JOIN collection_progress p ON p.fetch_collection_id=i.fetch_collection_id WHERE json_extract(i.evidence,'$.stable_scope')=? AND i.safe_watermark_us IS NOT NULL AND p.state='complete' ORDER BY i.scan_started_at_us DESC LIMIT 1",
-            (scope,),
-        )
-        started = now_us()
-        parameters = {
-            "per_page": self.cfg["rest_page_size"],
-            "sort": "updated",
-            "direction": "asc",
-        }
-        if previous:
-            parameters["since"] = format_iso8601_us(
-                previous["safe_watermark_us"] - 300_000_000
-            )
-        endpoint_url = endpoint + "?" + urlencode(parameters)
-        # Resume keeps its originally bounded request and original scan start;
-        # resumption itself must never move a child watermark.
-        existing = self.s.one(
-            "SELECT f.fetch_collection_id,f.observed_at_us,s.endpoint FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id JOIN resume_scopes s ON s.resume_scope_id=f.resume_scope_id WHERE f.repository_uuidv4=? AND f.kind=? AND p.job_id=? AND s.source_id=? AND s.principal_ref=? AND s.api_version=? AND s.parser_version=? AND s.profile_version=? AND s.confidence='proven' ORDER BY f.observed_at_us DESC LIMIT 1",
-            (
-                repo["repository_uuidv4"],
-                kind + "-incremental",
-                job,
-                repo["source_id"],
-                self.facts.principal,
-                self.cfg["rest_api_version"],
-                PARSER,
-                self.s.config["preservation"]["profile"],
-            ),
-        )
-        if existing:
-            endpoint_url, started = existing["endpoint"], existing["observed_at_us"]
-
-        def normalize(value, collection, occurrence, position, timestamp, listing):
-            parent = value.get(parent_field)
-            if not isinstance(parent, str) or value.get("id") is None:
-                raise CatalogError("API_SCHEMA", "Comment parent/identity missing")
-            self.http.validate_url(parent)
-            expected_path = urlsplit(endpoint).path.rsplit("/", 2)[0]
-            parts = urlsplit(parent).path.rsplit("/", 2)
-            if (
-                len(parts) != 3
-                or parts[0] != expected_path
-                or parts[1] not in ("issues", "pulls")
-            ):
-                raise CatalogError(
-                    "SCOPE_MISMATCH", "Comment parent outside repository"
-                )
-            try:
-                number = int(parts[-1])
-            except ValueError:
-                raise CatalogError("API_SCHEMA", "Invalid comment parent") from None
-            self.rest_integer(number, "comment parent number", minimum=1)
-            pr = self.s.one(
-                "SELECT change_request_id FROM change_requests WHERE repository_binding_id=(SELECT repository_binding_id FROM resume_scopes WHERE resume_scope_id=?) AND change_request_kind='pull_request' AND provider_change_request_number=?",
-                (scope, number),
-            )
-            if not pr:
-                raise CatalogError(
-                    "COMMENT_PARENT_UNKNOWN", "Comment parent has not been acquired"
-                )
-            self.facts.document(
-                pr[0],
-                kind,
-                self.document_provider_id(value),
-                "" if value.get("body") is None else value["body"],
-                value,
-                collection,
-                occurrence,
-                position,
-                timestamp,
-            )
-
-        cid, _ = self.collection(
-            repo,
-            None,
-            kind + "-incremental",
-            job,
-            endpoint_url,
-            normalize,
-            context={"kind": kind, "sort": "updated", "direction": "asc"},
-        )
-        # Separate stable watermark scope from the actual since-specific request.
-        with self.s.transaction():
-            self.facts.fence(job)
-            if not self.s.one(
-                "SELECT 1 FROM incremental_scans WHERE fetch_collection_id=?", (cid,)
-            ):
-                actual_scope = self.s.one(
-                    "SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?",
-                    (cid,),
-                )[0]
-                # Each request scope records its own scan, and a stable scope also
-                # points to that same endpoint context via safe scan lookup below.
-                self.s.execute(
-                    "INSERT INTO incremental_scans(incremental_scan_id,resume_scope_id,fetch_collection_id,scan_started_at_us,safe_watermark_us,evidence) VALUES(?,?,?,?,?,?)",
-                    (
-                        cid,
-                        actual_scope,
-                        cid,
-                        started,
-                        started,
-                        canonical(
-                            {
-                                "stable_scope": scope,
-                                "boundary": "successful-terminal-page",
-                            }
-                        ),
-                    ),
-                )
-            self.facts.publish()
-
-    def current_incremental_reviews(self, repo, job, endpoint):
-        parameters = {
-            "per_page": self.cfg["rest_page_size"],
-            "sort": "updated",
-            "direction": "asc",
-        }
-        fixed_endpoint = endpoint + "?" + urlencode(parameters)
-        context = {
-            "kind": "review-comment",
-            "sort": "updated",
-            "direction": "asc",
-            "incremental_endpoint": fixed_endpoint,
-        }
-        url, context = self.current_incremental_url(
-            repo, job, "review-comment-incremental", fixed_endpoint, context
-        )
-
-        def parse(value, candidate_context, timestamp):
-            parent = value.get("pull_request_url") if isinstance(value, dict) else None
-            if not isinstance(parent, str):
-                raise CatalogError("API_SCHEMA", "Review comment parent missing")
-            self.http.validate_url(parent)
-            prefix = urlsplit(endpoint).path.rsplit("/", 2)[0] + "/pulls/"
-            path = urlsplit(parent).path
-            suffix = path.removeprefix(prefix)
-            if (
-                not path.startswith(prefix)
-                or not suffix.isascii()
-                or not suffix.isdecimal()
-                or str(int(suffix)) != suffix
-                or int(suffix) <= 0
-            ):
-                raise CatalogError(
-                    "SCOPE_MISMATCH",
-                    "Review comment parent outside selected repository",
-                )
-            self.rest_integer(int(suffix), "review comment parent number", minimum=1)
-            owner = self.s.one(
-                "SELECT change_request_id FROM change_requests WHERE repository_binding_id=? AND change_request_kind='pull_request' AND provider_change_request_number=?",
-                (candidate_context["repository_binding_id"], int(suffix)),
-            )
-            if owner is None:
-                raise CatalogError(
-                    "COMMENT_PARENT_UNKNOWN",
-                    "Review comment parent has not been acquired",
-                )
-            candidate_context = {
-                **candidate_context,
-                "change_request_id": owner["change_request_id"],
-                "acquisition_scope": {
-                    **candidate_context["acquisition_scope"],
-                    "change_request_id": owner["change_request_id"],
-                },
-            }
-            return current_parser.review_comment(value, candidate_context, timestamp)
-
-        cid, _ = self.current_collection(
-            repo, None, "review-comment-incremental", job, url, parse, context=context
-        )
-        with self.s.transaction():
-            self.facts.fence(job)
-            row = self.s.one(
-                "SELECT resume_scope_id,observed_at_us FROM fetch_collections WHERE fetch_collection_id=?",
-                (cid,),
-            )
-            if (
-                self.s.one(
-                    "SELECT 1 FROM incremental_scans WHERE fetch_collection_id=?",
-                    (cid,),
-                )
-                is None
-            ):
-                self.s.execute(
-                    "INSERT INTO incremental_scans(incremental_scan_id,resume_scope_id,fetch_collection_id,scan_started_at_us,safe_watermark_us,evidence) VALUES(?,?,?,?,?,?)",
-                    (
-                        cid,
-                        row["resume_scope_id"],
-                        cid,
-                        row["observed_at_us"],
-                        row["observed_at_us"],
-                        canonical(
-                            {
-                                "boundary": "successful-terminal-page",
-                                "current_resource_pages": True,
-                            }
-                        ),
-                    ),
-                )
-            self.facts.publish()
-        return cid
-
-    def _document_normalizer(self, pr, kind):
-        def normalize(value, collection, occurrence, position, timestamp, listing):
-            if value.get("id") is None:
-                raise CatalogError("API_SCHEMA", "Document ID missing")
-            self.facts.document(
-                pr,
-                kind,
-                self.document_provider_id(value),
-                "" if value.get("body") is None else value["body"],
-                value,
-                collection,
-                occurrence,
-                position,
-                timestamp,
-            )
-
-        return normalize
 
     def graphql_errors(self, payload, *resource):
         """Classify error-only responses before requiring ordinary data fields."""
@@ -1461,426 +380,6 @@ class GitHubCollector:
             raise CatalogError("API_SCHEMA", "Missing GraphQL next cursor", details)
         return value["nodes"], info, cursor if info["hasNextPage"] else None
 
-    def saved_thread_code_input(self, pr):
-        """Recover observed merge targets even when thread collection failed."""
-        collection = self.thread_collections.get(pr)
-        if collection is None:
-            return {}, False, None
-        page = self.s.one(
-            "SELECT b.body,o.observed_at_us,o.payload_sha256 FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_collection_id=? ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC LIMIT 1",
-            (collection["fetch_collection_id"],),
-        )
-        if page is None:
-            return {}, False, None
-        from repo_catalog.adapters.sqlite.cas_integrity import is_quarantined
-
-        if is_quarantined(self.s.connection, page["payload_sha256"]):
-            return {}, False, None
-        try:
-            payload = json.loads(page["body"])
-            value = self.graphql_object(payload, "data", "repository", "pullRequest")
-        except (ValueError, CatalogError):
-            return {}, False, page["observed_at_us"]
-        roles = {}
-        complete = not bool(payload.get("errors"))
-        from repo_catalog.domain.models import GitOid
-
-        for role, field in (
-            ("merge", "mergeCommit"),
-            ("test-merge", "potentialMergeCommit"),
-        ):
-            if field not in value:
-                complete = False
-                continue
-            target = value[field]
-            if target is None:
-                roles[role] = None
-                continue
-            oid = target.get("oid") if isinstance(target, dict) else None
-            if not isinstance(oid, str):
-                complete = False
-                continue
-            try:
-                GitOid.parse(("sha256:" if len(oid) == 64 else "sha1:") + oid)
-            except CatalogError:
-                complete = False
-                continue
-            roles[role] = oid
-        return roles, complete, page["observed_at_us"]
-
-    def threads(self, repo, pr, job):
-        owner, name = repo["name"].split("/", 1)
-        root_query = (
-            files("repo_catalog").joinpath("resources/pr_threads.graphql").read_text()
-        )
-        child_query = (
-            files("repo_catalog")
-            .joinpath("resources/thread_comments.graphql")
-            .read_text()
-        )
-        with self.s.transaction():
-            self.facts.current_context(
-                repo, pr["change_request_id"], self.http.graphql, "review-comment"
-            )
-            collection = self.facts.begin(
-                repo,
-                pr["change_request_id"],
-                "threads",
-                job,
-                self.http.graphql,
-                {
-                    "owner": owner,
-                    "name": name,
-                    "number": pr["provider_change_request_number"],
-                    "query": root_query,
-                },
-            )
-        self.thread_collections[pr["change_request_id"]] = collection
-        merge = {}
-        if collection["state"] == "complete":
-            last = self.s.one(
-                "SELECT b.body,o.payload_sha256 FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_collection_id=? ORDER BY o.ordinal DESC LIMIT 1",
-                (collection["fetch_collection_id"],),
-            )
-            if last:
-                self.facts.require_payload(last["payload_sha256"])
-                p = (
-                    (json.loads(last[0]).get("data") or {}).get("repository") or {}
-                ).get("pullRequest") or {}
-                return self._merge_roles(p)
-            return merge
-        pending = (
-            json.loads(collection["cursor"])
-            if collection["cursor"]
-            else {"cursor": None}
-        )
-        child_collections = []
-
-        def observed_at_us(*, include_partial=True):
-            return self.facts.thread_observed_at_us(
-                collection, include_partial=include_partial
-            )
-
-        seen = set()
-        response, uncommitted, resource_observed = None, False, False
-        try:
-            while True:
-                response, uncommitted, resource_observed = None, False, False
-                cursor = pending.get("cursor")
-                if cursor in seen:
-                    raise CatalogError("PAGINATION_CYCLE", "Thread cursor cycle")
-                seen.add(cursor)
-                variables = {
-                    "owner": owner,
-                    "name": name,
-                    "number": pr["provider_change_request_number"],
-                    "cursor": cursor,
-                    "pageSize": self.cfg["graphql_page_size"],
-                }
-                if pending.get("occurrence"):
-                    page = self.s.one(
-                        "SELECT o.*,b.body FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_occurrence_id=? AND o.fetch_collection_id=?",
-                        (pending["occurrence"], collection["fetch_collection_id"]),
-                    )
-                    self.facts.require_payload(page["payload_sha256"])
-                    payload = json.loads(page["body"])
-                    self.graphql_errors(payload, "data", "repository", "pullRequest")
-                    occurrence, timestamp = (
-                        page["fetch_occurrence_id"],
-                        page["observed_at_us"],
-                    )
-                else:
-                    base_revision = self.s.revision()
-                    response = self.http.request(
-                        "POST",
-                        self.http.graphql,
-                        json={"query": root_query, "variables": variables},
-                    )
-                    self._retain_recording_diagnostics(response)
-                    uncommitted = True
-                    payload = self.rest_json(response)
-                    self.graphql_errors(payload, "data", "repository", "pullRequest")
-                    p = self.graphql_object(
-                        payload, "data", "repository", "pullRequest"
-                    )
-                    resource_observed = True
-                    connection = p.get("reviewThreads")
-                    nodes, info, next_cursor = self.graphql_connection(connection)
-                    with self.s.transaction():
-                        self.facts.fence(job)
-                        occurrence, _, timestamp = self.facts.page(
-                            collection,
-                            response,
-                            {
-                                "url": self.http.graphql,
-                                "method": "POST",
-                                "query": root_query,
-                                "variables": variables,
-                            },
-                            next_cursor,
-                            advance=False,
-                        )
-                        current_members = []
-                        for index, thread in enumerate(nodes):
-                            review_thread_provider_resource_id = thread.get("id")
-                            if (
-                                not isinstance(review_thread_provider_resource_id, str)
-                                or not review_thread_provider_resource_id
-                            ):
-                                raise CatalogError(
-                                    "API_SCHEMA", "Thread identity missing"
-                                )
-                            if not self.s.one(
-                                "SELECT 1 FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
-                                (
-                                    pr["change_request_id"],
-                                    review_thread_provider_resource_id,
-                                ),
-                            ):
-                                self.s.execute(
-                                    "INSERT INTO review_threads(change_request_id,provider_resource_id) VALUES(?,?)",
-                                    (
-                                        pr["change_request_id"],
-                                        review_thread_provider_resource_id,
-                                    ),
-                                )
-                            current_members.extend(
-                                self._thread_documents(
-                                    repo,
-                                    pr,
-                                    review_thread_provider_resource_id,
-                                    thread.get("comments"),
-                                    collection,
-                                    occurrence,
-                                    index * 10000,
-                                    timestamp,
-                                    base_revision=base_revision,
-                                    refresh_root=True,
-                                )
-                            )
-                        for thread in nodes:
-                            self._thread(
-                                repo,
-                                pr,
-                                thread,
-                                timestamp,
-                                occurrence,
-                                observation_complete=not bool(payload.get("errors")),
-                            )
-                        from repo_catalog.adapters.sqlite.current_collections import (
-                            CurrentCollectionProof,
-                        )
-
-                        CurrentCollectionProof(self.s.connection).page(
-                            collection["fetch_collection_id"],
-                            self.s.one(
-                                "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
-                                (collection["fetch_collection_id"],),
-                            )[0],
-                            timestamp,
-                            canonical({"cursor": cursor})
-                            if payload.get("errors")
-                            else next_cursor,
-                            current_members,
-                            status=response.status_code,
-                            parser_module=current_parser.PARSER_MODULE,
-                            parser_version=current_parser.PARSER_VERSION,
-                        )
-                        # Root page and pending child boundary commit together. Resume
-                        # reads this exact page and never records it as a new response.
-                        if not payload.get("errors"):
-                            self.s.execute(
-                                "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                                (
-                                    canonical(
-                                        {"cursor": cursor, "occurrence": occurrence}
-                                    ),
-                                    collection["fetch_collection_id"],
-                                ),
-                            )
-                        self.facts.publish()
-                    uncommitted = False
-                p = self.graphql_object(payload, "data", "repository", "pullRequest")
-                connection = p.get("reviewThreads")
-                nodes, info, next_cursor = self.graphql_connection(connection)
-                merge = self._merge_roles(p)
-                if payload.get("errors"):
-                    raise CatalogError(
-                        "GRAPHQL_PARTIAL", "GraphQL partial page; cursor retained"
-                    )
-                for thread in nodes:
-                    review_thread_provider_resource_id = str(thread["id"])
-                    self._thread_children(
-                        repo,
-                        pr,
-                        thread,
-                        review_thread_provider_resource_id,
-                        job,
-                        child_query,
-                        collection,
-                        occurrence,
-                        timestamp,
-                        child_collections,
-                    )
-                with self.s.transaction():
-                    self.facts.fence(job)
-                    if info.get("hasNextPage"):
-                        pending = {"cursor": next_cursor}
-                        self.s.execute(
-                            "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                            (canonical(pending), collection["fetch_collection_id"]),
-                        )
-                    else:
-                        if any(
-                            self.current_members_unresolved(ident)
-                            for ident in self.thread_collection_ids(collection)
-                        ):
-                            raise CatalogError(
-                                "CURRENT_STATE_UNRESOLVED",
-                                "Thread has unresolved current comment members",
-                            )
-                        self.facts.finish(
-                            collection,
-                            evidence={
-                                "terminal": True,
-                                "fetch_collection_ids": self.thread_collection_ids(
-                                    collection
-                                ),
-                            },
-                            observed_at_us=observed_at_us(include_partial=False),
-                        )
-                        self.coverage_claim(
-                            repo["repository_uuidv4"],
-                            "threads",
-                            "complete",
-                            observed_at_us(include_partial=False),
-                            {
-                                "fetch_collection_ids": self.thread_collection_ids(
-                                    collection
-                                )
-                            },
-                            change_request_id=pr["change_request_id"],
-                        )
-                    self.facts.publish()
-                if not info.get("hasNextPage"):
-                    return merge
-        except CatalogError as error:
-            with self.s.transaction():
-                self.facts.fence(job)
-                diagnose_admission_failure(self.s.connection, error)
-                if error.details.get("refresh_root"):
-                    self.s.execute(
-                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                        (
-                            canonical({"cursor": pending.get("cursor")}),
-                            collection["fetch_collection_id"],
-                        ),
-                    )
-                self.facts.partial(
-                    collection,
-                    error.code,
-                    observed_at_us=self.facts.response_time(response)
-                    if response is not None
-                    and uncommitted
-                    and resource_observed
-                    and error.code not in ("CANCELLED", "STALE_ATTEMPT")
-                    else None,
-                )
-                if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
-                    any(
-                        self.facts.pending_response(item)
-                        for item in (collection, *child_collections)
-                    )
-                    or error.code
-                    in (
-                        "GRAPHQL_PARTIAL",
-                        "API_SCHEMA",
-                        "CANONICAL_DOCUMENT_ID_MISSING",
-                    )
-                ):
-                    self.coverage_claim(
-                        repo["repository_uuidv4"],
-                        "threads",
-                        "partial",
-                        observed_at_us(),
-                        {
-                            "reason": error.code,
-                            "fetch_collection_ids": self.thread_collection_ids(
-                                collection
-                            ),
-                        },
-                        change_request_id=pr["change_request_id"],
-                    )
-                self.facts.publish()
-            raise
-
-    @staticmethod
-    def _merge_roles(value):
-        return {
-            role: value[field].get("oid")
-            if isinstance(value.get(field), dict)
-            else None
-            for role, field in (
-                ("merge", "mergeCommit"),
-                ("test-merge", "potentialMergeCommit"),
-            )
-        }
-
-    def _thread(
-        self, repo, pr, thread, timestamp, occurrence, *, observation_complete=True
-    ):
-        if not isinstance(thread.get("id"), str) or not thread["id"]:
-            raise CatalogError("API_SCHEMA", "Thread identity missing")
-        provider_resource_id = thread["id"]
-        nodes, info, _ = self.graphql_connection(
-            thread.get("comments"), refresh_root=True
-        )
-        value = canonical(
-            {
-                **{key: item for key, item in thread.items() if key != "comments"},
-                "comments": {
-                    "nodes": [
-                        {
-                            "fullDatabaseId": current_parser.resource_id(
-                                item, "fullDatabaseId"
-                            )
-                        }
-                        for item in nodes
-                    ],
-                    "pageInfo": info,
-                    "observation_complete": observation_complete,
-                },
-            }
-        )
-        if not self.s.one(
-            "SELECT 1 FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
-            (pr["change_request_id"], provider_resource_id),
-        ):
-            self.s.execute(
-                "INSERT INTO review_threads(change_request_id,provider_resource_id) VALUES(?,?)",
-                (pr["change_request_id"], provider_resource_id),
-            )
-        result = self.facts.result(occurrence)
-        self.s.execute(
-            "INSERT INTO review_thread_observations(thread_observation_uuidv4,repository_uuidv4,change_request_id,provider_resource_id,parsed_result_uuidv4,observed_at_us,payload) VALUES(?,?,?,?,?,?,?)",
-            (
-                str(uuid.uuid4()),
-                repo["repository_uuidv4"],
-                pr["change_request_id"],
-                provider_resource_id,
-                result,
-                timestamp,
-                value,
-            ),
-        )
-        self.facts.choose(
-            result,
-            fact_kind="review-thread",
-            change_request_id=pr["change_request_id"],
-            provider_resource_id=provider_resource_id,
-        )
-        return provider_resource_id
-
     def _thread_documents(
         self,
         repo,
@@ -1923,202 +422,6 @@ class GitHubCollector:
                 }
             )
         return members
-
-    def _thread_children(
-        self,
-        repo,
-        pr,
-        thread,
-        review_thread_provider_resource_id,
-        job,
-        query,
-        parent,
-        parent_occurrence,
-        timestamp,
-        child_collections,
-    ):
-        from repo_catalog.adapters.sqlite.current_collections import (
-            CurrentCollectionProof,
-        )
-
-        proof = CurrentCollectionProof(self.s.connection)
-        _, info, initial_cursor = self.graphql_connection(
-            thread.get("comments"), refresh_root=True
-        )
-        if not info["hasNextPage"]:
-            return
-        with self.s.transaction():
-            collection = self.facts.begin(
-                repo,
-                pr["change_request_id"],
-                "thread-comments",
-                job,
-                self.http.graphql,
-                {
-                    "thread": thread["id"],
-                    "query": query,
-                    "parent_fetch_collection_id": parent["fetch_collection_id"],
-                },
-            )
-        child_collections.append(collection)
-        if collection["state"] == "complete":
-            return
-        page = self.s.one(
-            "SELECT ordinal,next_cursor FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
-            (collection["fetch_collection_id"],),
-        )
-        cursor = page["next_cursor"] if page else initial_cursor
-        ordinal = page["ordinal"] + 1 if page else 0
-        seen = set()
-        response, uncommitted, resource_observed = None, False, False
-        try:
-            while cursor:
-                response, uncommitted, resource_observed = None, False, False
-                if cursor in seen:
-                    raise CatalogError(
-                        "PAGINATION_CYCLE", "Thread comments cursor cycle"
-                    )
-                seen.add(cursor)
-                variables = {
-                    "thread": thread["id"],
-                    "commentCursor": cursor,
-                    "pageSize": self.cfg["graphql_page_size"],
-                }
-                base_revision = self.s.revision()
-                response = self.http.request(
-                    "POST",
-                    self.http.graphql,
-                    json={"query": query, "variables": variables},
-                    record_context={
-                        "provider_request_kind": "thread-comments",
-                        "repository": repo["name"],
-                        "pr_number": pr["provider_change_request_number"],
-                    },
-                )
-                self._retain_recording_diagnostics(response)
-                uncommitted = True
-                payload = self.rest_json(response)
-                self.graphql_errors(payload, "data", "node")
-                comments = self.graphql_object(payload, "data", "node").get("comments")
-                resource_observed = True
-                _, info, next_cursor = self.graphql_connection(comments)
-                with self.s.transaction():
-                    self.facts.fence(job)
-                    timestamp = response.extensions.get(
-                        "catalog_observed_at_us", now_us()
-                    )
-                    members = self._thread_documents(
-                        repo,
-                        pr,
-                        review_thread_provider_resource_id,
-                        comments,
-                        collection,
-                        None,
-                        ordinal * 10000,
-                        timestamp,
-                        base_revision=base_revision,
-                    )
-                    proof.page(
-                        collection["fetch_collection_id"],
-                        ordinal,
-                        timestamp,
-                        cursor if payload.get("errors") else next_cursor,
-                        members,
-                        status=response.status_code,
-                        parser_module=current_parser.PARSER_MODULE,
-                        parser_version=current_parser.PARSER_VERSION,
-                    )
-                    self.s.execute(
-                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                        (
-                            cursor if payload.get("errors") else next_cursor,
-                            collection["fetch_collection_id"],
-                        ),
-                    )
-                    self.facts.publish()
-                uncommitted = False
-                if payload.get("errors"):
-                    raise CatalogError(
-                        "GRAPHQL_PARTIAL", "Thread comments page has errors"
-                    )
-                cursor = next_cursor
-                ordinal += 1
-            with self.s.transaction():
-                self.facts.fence(job)
-                if self.current_members_unresolved(collection["fetch_collection_id"]):
-                    raise CatalogError(
-                        "CURRENT_STATE_UNRESOLVED",
-                        "Thread comments have unresolved current members",
-                    )
-                self.facts.finish(
-                    collection,
-                    evidence=proof.evidence(collection["fetch_collection_id"]),
-                )
-                self.facts.publish()
-        except CatalogError as error:
-            with self.s.transaction():
-                self.facts.fence(job)
-                diagnose_admission_failure(self.s.connection, error)
-                if response is not None and uncommitted:
-                    self.s.execute(
-                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                        (cursor, collection["fetch_collection_id"]),
-                    )
-                self.facts.partial(
-                    collection,
-                    error.code,
-                    observed_at_us=self.facts.response_time(response)
-                    if response is not None
-                    and uncommitted
-                    and resource_observed
-                    and error.code not in ("CANCELLED", "STALE_ATTEMPT")
-                    else None,
-                )
-                self.facts.publish()
-            raise
-
-    def completed_pr(self, repo, job, pr_id):
-        row = self.s.one(
-            "SELECT c.code_observation_id,c.head_oid,c.base_oid,c.details,sc.request_context scope_context FROM eligible_code_observations c JOIN eligible_change_request_observations o ON o.change_request_observation_id=c.change_request_observation_id JOIN fetch_occurrences a ON a.fetch_occurrence_id=o.origin_fetch_occurrence_id JOIN collection_progress p ON p.fetch_collection_id=a.fetch_collection_id JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id JOIN resume_scopes sc ON sc.resume_scope_id=f.resume_scope_id WHERE p.job_id=? AND c.change_request_id=? AND c.state='complete' AND sc.source_id=? AND sc.principal_ref=? AND sc.api_version=? AND sc.parser_version=? AND sc.profile_version=? AND sc.confidence='proven' ORDER BY c.code_observation_id DESC LIMIT 1",
-            (
-                job,
-                pr_id,
-                repo["source_id"],
-                self.facts.principal,
-                self.cfg["rest_api_version"],
-                PARSER,
-                self.s.config["preservation"]["profile"],
-            ),
-        )
-        if (
-            not row
-            or json.loads(row["scope_context"]).get("permissions")
-            != self.facts.permissions
-        ):
-            return False
-        kinds = {
-            r[0]
-            for r in self.s.all(
-                "SELECT f.kind FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE p.job_id=? AND f.change_request_id=? AND p.state='complete'",
-                (job, pr_id),
-            )
-        }
-        if (
-            not {"issue-comment", "review", "review-comment", "timeline", "threads"}
-            <= kinds
-        ):
-            return False
-        links = {
-            r[0]
-            for r in self.s.all(
-                "SELECT a.role FROM code_acquisitions a JOIN acquisition_roots r ON r.acquisition_root_id=a.acquisition_root_id WHERE a.code_observation_id=? AND r.published=1",
-                (row["code_observation_id"],),
-            )
-        }
-        roles = set(json.loads(row["details"]).get("expected_roles", {}))
-        if not roles:
-            return False
-        return roles <= links
 
     def sync_issues(self, repo, job):
         """Collect all accessible ordinary Issues and independently refresh children."""
@@ -2257,7 +560,7 @@ class GitHubCollector:
                         **({"missing": failures} if failures else {}),
                     },
                 )
-                self.facts.publish()
+                self.facts.advance_revision()
             if failures:
                 raise Waiting(
                     "ISSUE_PARTIAL",
@@ -2282,12 +585,1840 @@ class GitHubCollector:
             if self.owned:
                 self.http.close()
 
-    def sync(self, repo, job):
+    @staticmethod
+    def member(candidate):
+        from repo_catalog.domain.current_state import fingerprint_candidate
+
+        kind = candidate["kind"]
+        if kind == "change-request":
+            family, keys = "change-request", ("change_request_id",)
+        elif kind == "review-thread":
+            family, keys = "thread", ("change_request_id", "provider_resource_id")
+        elif (
+            kind in ("pr-title", "pr-body")
+            or kind == "issue-comment"
+            and "change_request_id" in candidate
+        ):
+            family, keys = (
+                "document",
+                ("change_request_id", "kind", "provider_change_request_document_id"),
+            )
+        elif kind in ("issue", "issue-comment"):
+            family, keys = (
+                "issue",
+                ("service_instance_uuidv4", "kind", "provider_resource_id"),
+            )
+        else:
+            family, keys = (
+                "review",
+                ("change_request_id", "kind", "provider_change_request_document_id"),
+            )
+        return {
+            "family": family,
+            **{key: candidate[key] for key in keys},
+            "state_digest": fingerprint_candidate(candidate),
+        }
+
+    def current_incremental_url(self, repo, job, kind, endpoint, context):
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        candidates = self.s.all(
+            "SELECT f.*,p.job_id,p.state,c.completion_marker_uuidv4,c.asserted_state,c.evidence,c.observed_at_us marker_observed_at_us FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) LEFT JOIN completion_markers c USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.kind=? AND f.source_id=? AND json_extract(f.scope_json,'$.principal_ref') IS ? AND json_extract(f.scope_json,'$.api_version')=? AND json_extract(f.scope_json,'$.request_context.incremental_endpoint')=? ORDER BY f.observed_at_us DESC",
+            (
+                repo["repository_uuidv4"],
+                kind,
+                repo["source_id"],
+                self.facts.principal,
+                self.cfg["rest_api_version"],
+                endpoint,
+            ),
+        )
+        # A resumed operation keeps its original scan boundary even when a
+        # different job has since completed a newer scan of the same family.
+        candidates = sorted(candidates, key=lambda row: row["job_id"] != job)
+        proof = CurrentCollectionProof(self.s.connection)
+        for row in candidates:
+            scope = json.loads(row["scope_json"])
+            saved_context = scope.get("request_context", {})
+            if saved_context.get("permissions") != self.facts.permissions:
+                continue
+            if row["job_id"] == job:
+                return scope["endpoint"], saved_context
+            if (
+                scope.get("parser_module") != current_parser.PARSER_MODULE
+                or scope.get("parser_version") != current_parser.PARSER_VERSION
+            ):
+                continue
+            if row["state"] == "complete" and proof.is_complete_marker(
+                {**dict(row), "observed_at_us": row["marker_observed_at_us"]}
+            ):
+                return endpoint + "&" + urlencode(
+                    {"since": format_iso8601_us(row["observed_at_us"] - 300_000_000)}
+                ), {
+                    **context,
+                    "completion_marker_uuidv4": row["completion_marker_uuidv4"],
+                }
+        return endpoint, context
+
+    def current_collection(self, repo, pr, kind, job, url, parser, *, context=None):
+        def normalize(value, collection, base_revision, position, timestamp, listing):
+            candidate_context = self.facts.current_context(repo, pr, url)
+            candidate = parser(value, candidate_context, timestamp)
+            if candidate is None:
+                return []
+            self.facts.admit_current(candidate, base_revision)
+            return [self.member(candidate)]
+
+        return self.collection(repo, pr, kind, job, url, normalize, context=context)
+
+    @staticmethod
+    def current_resource_identified(value, kind):
+        if not isinstance(value, dict) or kind == "issue" and "pull_request" in value:
+            return False
+        try:
+            current_parser.resource_id(value)
+        except CatalogError:
+            return False
+        if kind == "issue":
+            number = value.get("number")
+            return type(number) is int and 0 < number < 1 << 63
+        return True
+
+    def current_members_unresolved(self, collection_id):
+        from repo_catalog.adapters.sqlite.current_collections import (
+            CurrentCollectionProof,
+        )
+
+        tables = {
+            "issue": (
+                "issue_resources",
+                ("service_instance_uuidv4", "kind", "provider_resource_id"),
+            ),
+            "review": (
+                "review_resources",
+                ("change_request_id", "kind", "provider_change_request_document_id"),
+            ),
+            "change-request": ("change_request_state", ("change_request_id",)),
+            "document": (
+                "document_state",
+                ("change_request_id", "kind", "provider_change_request_document_id"),
+            ),
+            "thread": (
+                "review_thread_state",
+                ("change_request_id", "provider_resource_id"),
+            ),
+        }
+        for member in CurrentCollectionProof(self.s.connection).members(collection_id):
+            if member["family"] == "event":
+                if (
+                    self.s.one(
+                        "SELECT 1 FROM change_request_events WHERE change_request_event_uuidv4=? AND provider_event_id IS NOT NULL",
+                        (member["change_request_event_uuidv4"],),
+                    )
+                    is None
+                ):
+                    return True
+                continue
+            if member["family"] not in tables:
+                continue
+            table, keys = tables[member["family"]]
+            predicate = " AND ".join(f"{key}=?" for key in keys)
+            if (
+                self.s.one(
+                    f"SELECT 1 FROM {table} WHERE {predicate}",
+                    tuple(member[key] for key in keys),
+                )
+                is None
+            ):
+                return True
+            if table in ("issue_resources", "review_resources"):
+                diagnostics = " AND ".join(
+                    f"json_extract(record_json,'$.{key}')=?" for key in keys
+                )
+                if self.s.one(
+                    "SELECT 1 FROM current_resource_diagnostics WHERE table_name=? AND "
+                    + diagnostics,
+                    (table, *(member[key] for key in keys)),
+                ):
+                    return True
+            else:
+                diagnostics = " AND ".join(
+                    f"json_extract(record_json,'$.{key}')=?" for key in keys
+                )
+                if self.s.one(
+                    "SELECT 1 FROM exchange_staging WHERE reason LIKE 'current_state:%' AND table_name=? AND "
+                    + diagnostics,
+                    (table, *(member[key] for key in keys)),
+                ):
+                    return True
+        return False
+
+    def collection(
+        self,
+        repo,
+        pr,
+        kind,
+        job,
+        url,
+        normalizer,
+        *,
+        context=None,
+        listing_kind=None,
+        cap=None,
+        reported=None,
+        reuse=False,
+    ):
+        from repo_catalog.adapters.git.runner import hook
+
         s = self.s
+        if listing_kind:
+            context = {**(context or {}), "reported_count": reported}
+        with s.transaction():
+            self.facts.fence(job)
+            collection = self.facts.begin(
+                repo, pr, kind, job, url, context, reuse=reuse
+            )
+            listing = None
+            if listing_kind:
+                row = s.one(
+                    "SELECT code_listing_id FROM code_listings WHERE fetch_collection_id=? AND kind=?",
+                    (collection["fetch_collection_id"], listing_kind),
+                )
+                listing = row[0] if row else str(uuid.uuid4())
+                if row is None:
+                    algorithm, head, base = oid_context(context or {})
+                    s.execute(
+                        "INSERT INTO code_listings(code_listing_id,change_request_id,fetch_collection_id,kind,resume_scope_id,object_format,head_oid,base_oid) VALUES(?,?,?,?,?,?,?,?)",
+                        (
+                            listing,
+                            pr,
+                            collection["fetch_collection_id"],
+                            listing_kind,
+                            collection.get("resume_scope_id"),
+                            algorithm,
+                            head,
+                            base,
+                        ),
+                    )
+                    s.execute(
+                        "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES(?,'partial',0,0,0)",
+                        (listing,),
+                    )
+            if collection["state"] == "complete":
+                return collection["fetch_collection_id"], listing
+        previous = s.one(
+            "SELECT ordinal,has_next FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
+            (collection["fetch_collection_id"],),
+        )
+        page_url = (
+            collection.get("cursor")
+            if previous and previous["has_next"]
+            else None
+            if previous
+            else url
+        )
+        if previous and previous["has_next"] and not page_url:
+            raise CatalogError(
+                "RESUME_UNAVAILABLE",
+                "Committed prefix has no operational cursor; a fresh scan is required",
+            )
+        seen = set()
+        response, uncommitted, identified = None, False, False
+        try:
+            while page_url:
+                response, uncommitted, identified = None, False, False
+                self.token.check()
+                if page_url in seen:
+                    raise CatalogError("PAGINATION_CYCLE", "Repeated collection page")
+                seen.add(page_url)
+                base_revision = s.revision()
+                response = self.request_get(page_url, repo)
+                if response.status_code == 304:
+                    # No response cache is a core input. Conditional reuse requires
+                    # corresponding normalized state, so acquire a fresh body.
+                    response = self.request_get(
+                        page_url, repo, headers={"Cache-Control": "no-cache"}
+                    )
+                    if response.status_code == 304:
+                        raise CatalogError(
+                            "REUSE_UNAVAILABLE",
+                            "304 has no corresponding normalized representation",
+                        )
+                uncommitted = True
+                base_revision = response.extensions.get(
+                    "catalog_base_revision", base_revision
+                )
+                values = self.rest_json(response)
+                if not isinstance(values, list):
+                    raise CatalogError(
+                        "API_SCHEMA", "Collection response must be a list"
+                    )
+                identified = not values or any(
+                    self.current_resource_identified(value, kind)
+                    if kind not in ("pr-commits", "pr-files", "timeline")
+                    else isinstance(value, dict)
+                    and (
+                        isinstance(value.get("sha"), str)
+                        or isinstance(value.get("filename"), str)
+                        or isinstance(value.get("event"), str)
+                    )
+                    for value in values
+                )
+                timestamp, next_url = (
+                    self.facts.response_time(response),
+                    self.http.next_url(response),
+                )
+                hook("before_api_page_commit")
+                with s.transaction():
+                    self.facts.fence(job)
+                    ordinal = s.one(
+                        "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
+                        (collection["fetch_collection_id"],),
+                    )[0]
+                    members = []
+                    for index, value in enumerate(values):
+                        self.rest_item(value, kind)
+                        admitted = normalizer(
+                            value,
+                            collection,
+                            base_revision,
+                            ordinal * self.cfg["rest_page_size"] + index,
+                            timestamp,
+                            listing,
+                        )
+                        members.extend(admitted or [])
+                    self.facts.page(
+                        collection,
+                        timestamp,
+                        next_url,
+                        members,
+                        status=response.status_code,
+                    )
+                    if listing:
+                        s.execute(
+                            "UPDATE code_listing_progress SET page_count=page_count+1,terminal=? WHERE code_listing_id=?",
+                            (int(next_url is None), listing),
+                        )
+                    self.facts.advance_revision()
+                uncommitted = False
+                hook("after_api_page_commit")
+                page_url = next_url
+            if listing:
+                table = (
+                    "code_commits" if listing_kind == "commits" else "code_file_changes"
+                )
+                count = s.one(
+                    f"SELECT count(*) FROM {table} WHERE code_listing_id=?", (listing,)
+                )[0]
+                if cap and (count >= cap or reported is not None and count < reported):
+                    raise CatalogError(
+                        "API_CAP",
+                        "Provider list may be truncated",
+                        {"cap": cap, "collected": count, "reported": reported},
+                    )
+            with s.transaction():
+                self.facts.fence(job)
+                if self.current_members_unresolved(collection["fetch_collection_id"]):
+                    raise CatalogError(
+                        "CURRENT_STATE_UNRESOLVED",
+                        "Collection contains unresolved resources",
+                    )
+                self.facts.finish(collection)
+                if listing:
+                    s.execute(
+                        "UPDATE code_listing_progress SET state='complete',terminal=1,context_proven=1 WHERE code_listing_id=?",
+                        (listing,),
+                    )
+                self.collection_coverage(repo, pr, kind, collection, "complete")
+                self.facts.advance_revision()
+            return collection["fetch_collection_id"], listing
+        except CatalogError as error:
+            self.partial_rest_collection(
+                repo,
+                pr,
+                kind,
+                job,
+                collection,
+                error,
+                response if uncommitted and identified else None,
+                page_url,
+            )
+            raise
+
+    def partial_rest_collection(
+        self, repo, pr, kind, job, collection, error, response, url
+    ):
+        with self.s.transaction():
+            self.facts.fence(job)
+            diagnose_admission_failure(self.s.connection, error)
+            if response is not None:
+                self.s.execute(
+                    "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                    (url, collection["fetch_collection_id"]),
+                )
+            self.facts.partial(
+                collection,
+                error.code,
+                observed_at_us=self.facts.response_time(response)
+                if response is not None
+                and error.code not in ("CANCELLED", "STALE_ATTEMPT", "SCOPE_MISMATCH")
+                else None,
+            )
+            if error.code not in (
+                "CANCELLED",
+                "STALE_ATTEMPT",
+            ) or self.facts.pending_response(collection):
+                self.collection_coverage(
+                    repo, pr, kind, collection, "partial", reason=error.code
+                )
+            self.facts.advance_revision()
+
+    def ensure_pr(
+        self, repo, value, collection, base_revision, position, timestamp, **unused
+    ):
+        self.rest_item(value, "pr-detail")
+        self.document_provider_id(value)
+        endpoint = json.loads(collection["scope_json"])["endpoint"]
+        context = self.facts.current_context(repo, None, endpoint)
+        binding = context["repository_binding_id"]
+        row = self.s.one(
+            "SELECT change_request_id FROM change_requests WHERE repository_binding_id=? AND change_request_kind='pull_request' AND provider_change_request_number=?",
+            (binding, value["number"]),
+        )
+        ident = row[0] if row else f"{repo['repository_uuidv4']}:{value['number']}"
+        if row is None and self.s.one(
+            "SELECT 1 FROM change_requests WHERE change_request_id=?", (ident,)
+        ):
+            ident = f"{binding}:{value['number']}"
+        if collection.get("change_request_id") not in (None, ident):
+            raise CatalogError(
+                "SCOPE_MISMATCH", "PR response differs from requested parent"
+            )
+        if row is None:
+            self.s.execute(
+                "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,'pull_request',?)",
+                (ident, repo["repository_uuidv4"], binding, value["number"]),
+            )
+        context = {
+            **context,
+            "change_request_id": ident,
+            "acquisition_scope": {
+                **context["acquisition_scope"],
+                "change_request_id": ident,
+            },
+        }
+        candidate = current_parser.pull_request(value, context, timestamp)
+        self.facts.admit_current(candidate, base_revision)
+        members = [self.member(candidate)]
+        for kind in ("pr-title", "pr-body"):
+            candidate = current_parser.document(value, context, timestamp, kind)
+            # A missing title/body is unknown, never synthesized empty text.
+            self.facts.admit_current(candidate, base_revision)
+            members.append(self.member(candidate))
+        return ident, members
+
+    def detail(self, repo, pr, job, url):
+        with self.s.transaction():
+            self.facts.fence(job)
+            collection = self.facts.begin(
+                repo, pr["change_request_id"], "pr-detail", job, url
+            )
+        if collection["state"] == "complete":
+            return self._current_pr_value(pr["change_request_id"]), pr[
+                "change_request_id"
+            ]
+        base_revision = self.s.revision()
+        response = self.request_get(url, repo)
+        if response.status_code == 304:
+            response = self.request_get(
+                url, repo, headers={"Cache-Control": "no-cache"}
+            )
+            if response.status_code == 304:
+                raise CatalogError(
+                    "REUSE_UNAVAILABLE", "304 without normalized representation"
+                )
+        value = None
+        try:
+            value = self.rest_json(response)
+            base_revision = response.extensions.get(
+                "catalog_base_revision", base_revision
+            )
+            timestamp = self.facts.response_time(response)
+            with self.s.transaction():
+                self.facts.fence(job)
+                _, members = self.ensure_pr(
+                    repo, value, collection, base_revision, 0, timestamp
+                )
+                self.facts.page(
+                    collection, timestamp, None, members, status=response.status_code
+                )
+                if self.current_members_unresolved(collection["fetch_collection_id"]):
+                    raise CatalogError(
+                        "CURRENT_STATE_UNRESOLVED",
+                        "Detail contains unresolved current state",
+                    )
+                self.facts.finish(collection)
+                self.facts.advance_revision()
+            return value, pr["change_request_id"]
+        except CatalogError as error:
+            self.partial_rest_collection(
+                repo,
+                pr["change_request_id"],
+                "pr-detail",
+                job,
+                collection,
+                error,
+                response
+                if isinstance(value, dict) and value.get("id") is not None
+                else None,
+                url,
+            )
+            raise
+
+    def _document_normalizer(self, repo, pr, kind, endpoint):
+        def normalize(value, collection, base_revision, position, timestamp, listing):
+            context = self.facts.current_context(repo, pr, endpoint)
+            candidate = current_parser.document(value, context, timestamp, kind)
+            self.facts.admit_current(candidate, base_revision)
+            return [self.member(candidate)]
+
+        return normalize
+
+    @staticmethod
+    def summary_kinds(*, documents_only=False, code_only=False):
+        if code_only:
+            return PR_CODE_COLLECTION_KINDS
+        if documents_only:
+            return PR_COLLECTION_KINDS - NON_DOCUMENT_KINDS - {"pr-code-check"}
+        return PR_COLLECTION_KINDS
+
+    def summary_collection_ids(
+        self, repo, job, *, documents_only=False, code_only=False
+    ):
+        kinds = self.summary_kinds(documents_only=documents_only, code_only=code_only)
+        identifiers = {
+            row[0]
+            for row in self.s.all(
+                "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
+                + ",".join("?" for _ in kinds)
+                + ")",
+                (repo["repository_uuidv4"], repo["source_id"], job, *sorted(kinds)),
+            )
+        }
+        if code_only:
+            identifiers.update(
+                item[0]
+                for listings in self.code_listing_results.values()
+                for item in listings
+                if item is not None
+            )
+        return sorted(identifiers)
+
+    def summary_marker_ids(self, repo, job, *, documents_only=False, code_only=False):
+        identifiers = self.summary_collection_ids(
+            repo, job, documents_only=documents_only, code_only=code_only
+        )
+        return (
+            [
+                row[0]
+                for row in self.s.all(
+                    "SELECT completion_marker_uuidv4 FROM completion_markers WHERE asserted_state='complete' AND fetch_collection_id IN ("
+                    + ",".join("?" for _ in identifiers)
+                    + ") ORDER BY completion_marker_uuidv4",
+                    identifiers,
+                )
+            ]
+            if identifiers
+            else []
+        )
+
+    def summary_observed_at_us(
+        self, repo, job, *, documents_only=False, code_only=False, include_partial=True
+    ):
+        kinds = self.summary_kinds(documents_only=documents_only, code_only=code_only)
+        return self.s.one(
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
+            + ",".join("?" for _ in kinds)
+            + ")",
+            (
+                include_partial,
+                repo["repository_uuidv4"],
+                repo["source_id"],
+                job,
+                *sorted(kinds),
+            ),
+        )[0]
+
+    def thread_collection_ids(self, collection):
+        return [
+            collection["fetch_collection_id"],
+            *[
+                row[0]
+                for row in self.s.all(
+                    "SELECT child_fetch_collection_id FROM thread_collection_requirements WHERE fetch_collection_id=? AND child_fetch_collection_id IS NOT NULL ORDER BY provider_resource_id",
+                    (collection["fetch_collection_id"],),
+                )
+            ],
+        ]
+
+    def inventory(self, source, job, *, admit_repository=None):
+        cfg = json.loads(source["settings"])
+        owner = cfg["owner"]
+        self.inventory_items = []
+        self.inventory_evidence = []
+        self.inventory_uncertainty = None
+        base = self.http.base
+        scope = {
+            "source_registration_uuidv4": source["source_registration_uuidv4"],
+            "service_instance_uuidv4": source["service_instance_uuidv4"],
+            "owner": owner,
+            "api_version": self.cfg["rest_api_version"],
+            "principal_ref": None,
+            "observed_permissions": None,
+            "visibility": "all",
+            "selected_repositories": cfg.get("include_repositories"),
+            "query_kind": "owner-repositories",
+        }
+        self.inventory_scope = scope
+        self.inventory_job = (job, self.facts.fence(job))
+
+        def request(url):
+            base_revision = self.s.revision()
+            response, value = self.inventory_request("GET", url)
+            self._retain_recording_diagnostics(response)
+            return response, value, base_revision
+
+        def item(value, timestamp, base_revision):
+            if not isinstance(value, dict) or not isinstance(
+                value.get("full_name"), str
+            ):
+                raise CatalogError("API_SCHEMA", "Repository identity missing")
+            provider = self.inventory_repository_id(value.get("id"))
+            parts = value["full_name"].split("/")
+            if len(parts) != 2 or not all(parts) or parts[0].lower() != owner.lower():
+                raise CatalogError(
+                    "SCOPE_MISMATCH", "Inventory repository outside owner scope"
+                )
+            clone = cfg.get("clone_url_overrides", {}).get(
+                provider, value.get("clone_url")
+            )
+            if not isinstance(clone, str) or not clone:
+                raise CatalogError("API_SCHEMA", "Repository clone URL missing")
+            return {
+                "host": "github.com",
+                "provider_repository_id": provider,
+                "name": value["full_name"],
+                "url": clone,
+                "metadata": current_parser.repository_metadata(value),
+                "observed_at_us": timestamp,
+                "parser_module": current_parser.PARSER_MODULE,
+                "parser_version": current_parser.PARSER_VERSION,
+                "scope": dict(scope),
+                "scope_context": dict(scope),
+                "base_revision": base_revision,
+            }
+
+        def admit_page(response, values, base_revision, terminal):
+            timestamp = self.facts.response_time(response)
+            normalized = [item(value, timestamp, base_revision) for value in values]
+            members = []
+            with self.s.transaction():
+                self.facts.fence(job)
+                for candidate in normalized:
+                    repository = (
+                        admit_repository(candidate) if admit_repository else None
+                    )
+                    members.append(repository or candidate["provider_repository_id"])
+                self.facts.advance_revision()
+            self.inventory_items.extend(normalized)
+            self.inventory_evidence.append(
+                {
+                    "scope": dict(scope),
+                    "observed_at_us": timestamp,
+                    "members": members,
+                    "terminal": terminal,
+                    "parser_module": current_parser.PARSER_MODULE,
+                    "parser_version": current_parser.PARSER_VERSION,
+                }
+            )
+
+        try:
+            identity_response, identity, _ = request(base + "/user")
+            if (
+                not isinstance(identity, dict)
+                or not isinstance(identity.get("login"), str)
+                or not identity["login"].strip()
+            ):
+                raise CatalogError("API_SCHEMA", "Authenticated identity missing")
+            scope["principal_ref"] = str(identity.get("id") or identity["login"])
+            self.facts.principal = scope["principal_ref"]
+            permissions = identity_response.headers.get("x-oauth-scopes")
+            self.facts.permissions = (
+                sorted(item.strip() for item in permissions.split(",") if item.strip())
+                if permissions is not None
+                else None
+            )
+            scope["observed_permissions"] = self.facts.permissions
+            if cfg.get("include_repositories"):
+                import re
+
+                scope["query_kind"] = "selected-repositories"
+                selected = cfg["include_repositories"]
+                for index, name in enumerate(selected):
+                    name = name.removeprefix(owner + "/")
+                    if not re.fullmatch(r"[A-Za-z0-9_.-]+", name):
+                        raise CatalogError(
+                            "INVALID_ARGUMENT",
+                            "Included repository must belong to declared owner",
+                        )
+                    response, value, revision = request(
+                        base + "/repos/" + owner + "/" + name
+                    )
+                    if (
+                        not isinstance(value, dict)
+                        or value.get("full_name", "").lower()
+                        != f"{owner}/{name}".lower()
+                    ):
+                        raise CatalogError(
+                            "SCOPE_MISMATCH", "Selected repository identity changed"
+                        )
+                    admit_page(response, [value], revision, index == len(selected) - 1)
+                return self.inventory_items
+            if identity["login"].lower() == owner.lower():
+                url = (
+                    base
+                    + "/user/repos?"
+                    + urlencode(
+                        {
+                            "affiliation": "owner",
+                            "visibility": "all",
+                            "per_page": self.cfg["rest_page_size"],
+                        }
+                    )
+                )
+            else:
+                _, user, _ = request(base + "/users/" + owner)
+                if not isinstance(user, dict) or user.get("type") != "Organization":
+                    raise CatalogError(
+                        "SCOPE_UNSUPPORTED",
+                        "Private owner inventory scope is unestablished",
+                    )
+                scope["query_kind"] = "organization-repositories"
+                url = (
+                    base
+                    + "/orgs/"
+                    + owner
+                    + "/repos?"
+                    + urlencode({"type": "all", "per_page": self.cfg["rest_page_size"]})
+                )
+            seen = set()
+            while url:
+                if url in seen:
+                    raise CatalogError("PAGINATION_CYCLE", "Repeated inventory page")
+                seen.add(url)
+                response, values, revision = request(url)
+                if not isinstance(values, list):
+                    raise CatalogError("API_SCHEMA", "Expected repository list")
+                next_url = self.http.next_url(response)
+                admit_page(response, values, revision, next_url is None)
+                url = next_url
+            counts = (identity.get("public_repos"), identity.get("owned_private_repos"))
+            if (
+                identity["login"].lower() != owner.lower()
+                or not all(type(value) is int and value >= 0 for value in counts)
+                or any(
+                    type(candidate["metadata"].get("private")) is not bool
+                    for candidate in self.inventory_items
+                )
+            ):
+                self.inventory_uncertainty = "INVENTORY_SCOPE_UNVERIFIED"
+            elif counts != (
+                sum(
+                    not candidate["metadata"]["private"]
+                    for candidate in self.inventory_items
+                ),
+                sum(
+                    candidate["metadata"]["private"]
+                    for candidate in self.inventory_items
+                ),
+            ):
+                self.inventory_uncertainty = "INVENTORY_COUNT_MISMATCH"
+            return list(
+                {
+                    candidate["provider_repository_id"]: candidate
+                    for candidate in self.inventory_items
+                }.values()
+            )
+        except CatalogError as error:
+            self.inventory_uncertainty = error.code
+            raise
+        finally:
+            if self.owned:
+                self.http.close()
+
+    def saved_thread_code_input(self, pr):
+        collection = self.thread_collections.get(pr)
+        if collection is None:
+            return {}, False, None
+        rows = self.s.all(
+            "SELECT role,oid,observed_at_us FROM thread_collection_targets WHERE fetch_collection_id=?",
+            (collection["fetch_collection_id"],),
+        )
+        return (
+            {
+                row["role"]: row["oid"].hex() if row["oid"] is not None else None
+                for row in rows
+            },
+            {row["role"] for row in rows} == {"merge", "test-merge"},
+            max((row["observed_at_us"] for row in rows), default=None),
+        )
+
+    def _thread_child(self, repo, pr, requirement, job, query):
+        collection = dict(
+            self.s.one(
+                "SELECT f.*,p.state,p.cursor FROM fetch_collections f LEFT JOIN collection_progress p USING(fetch_collection_id) WHERE f.fetch_collection_id=?",
+                (requirement["child_fetch_collection_id"],),
+            )
+        )
+        if collection.get("state") == "complete":
+            return
+        child_cursor = self.s.one(
+            "SELECT child_cursor FROM thread_collection_continuations WHERE fetch_collection_id=? AND provider_resource_id=?",
+            (requirement["fetch_collection_id"], requirement["provider_resource_id"]),
+        )
+        if self.facts.pending_response(collection) and (
+            child_cursor is None or child_cursor[0] is None
+        ):
+            raise CatalogError(
+                "RESUME_UNAVAILABLE",
+                "Thread child continuation is unavailable; a fresh root is required",
+            )
+        try:
+            cursor = child_cursor[0] if child_cursor else None
+            seen = set()
+            response, node, uncommitted = None, None, False
+            while cursor:
+                self.token.check()
+                if cursor in seen:
+                    raise CatalogError(
+                        "PAGINATION_CYCLE", "Repeated thread child cursor"
+                    )
+                seen.add(cursor)
+                node, uncommitted = None, True
+                base_revision = self.s.revision()
+                response = self.http.request(
+                    "POST",
+                    self.http.graphql,
+                    json={
+                        "query": query,
+                        "variables": {
+                            "thread": requirement["provider_resource_id"],
+                            "commentCursor": cursor,
+                            "pageSize": self.cfg["graphql_page_size"],
+                        },
+                    },
+                )
+                self._retain_recording_diagnostics(response)
+                payload = self.rest_json(response)
+                self.graphql_errors(payload, "data", "node")
+                node = self.graphql_object(payload, "data", "node")
+                if node.get("id") != requirement["provider_resource_id"]:
+                    raise CatalogError(
+                        "SCOPE_MISMATCH", "Child response has foreign thread parent"
+                    )
+                _, _, next_cursor = self.graphql_connection(node.get("comments"))
+                timestamp = self.facts.response_time(response)
+                with self.s.transaction():
+                    self.facts.fence(job)
+                    members = self._thread_documents(
+                        repo,
+                        pr,
+                        requirement["provider_resource_id"],
+                        node["comments"],
+                        collection,
+                        None,
+                        0,
+                        timestamp,
+                        base_revision=base_revision,
+                    )
+                    self.facts.page(
+                        collection,
+                        timestamp,
+                        cursor if payload.get("errors") else next_cursor,
+                        members,
+                        status=response.status_code,
+                    )
+                    self.s.execute(
+                        "UPDATE thread_collection_continuations SET child_cursor=?,observed_at_us=? WHERE fetch_collection_id=? AND provider_resource_id=?",
+                        (
+                            cursor if payload.get("errors") else next_cursor,
+                            timestamp,
+                            requirement["fetch_collection_id"],
+                            requirement["provider_resource_id"],
+                        ),
+                    )
+                    self.facts.advance_revision()
+                uncommitted = False
+                if payload.get("errors"):
+                    raise CatalogError(
+                        "GRAPHQL_PARTIAL", "Thread child page is partial"
+                    )
+                cursor = next_cursor
+            with self.s.transaction():
+                self.facts.fence(job)
+                if self.current_members_unresolved(collection["fetch_collection_id"]):
+                    raise CatalogError(
+                        "CURRENT_STATE_UNRESOLVED",
+                        "Thread child has unresolved members",
+                    )
+                self.facts.finish(collection)
+                self.facts.advance_revision()
+        except CatalogError as error:
+            with self.s.transaction():
+                self.facts.fence(job)
+                self.facts.partial(
+                    collection,
+                    error.code,
+                    observed_at_us=self.facts.response_time(response)
+                    if response is not None
+                    and uncommitted
+                    and isinstance(node, dict)
+                    and node.get("id") == requirement["provider_resource_id"]
+                    and error.code
+                    not in ("CANCELLED", "STALE_ATTEMPT", "SCOPE_MISMATCH")
+                    else None,
+                )
+                self.facts.advance_revision()
+            raise
+
+    def threads(self, repo, pr, job):
+        owner, name = repo["name"].split("/", 1)
+        root_query = (
+            files("repo_catalog").joinpath("resources/pr_threads.graphql").read_text()
+        )
+        child_query = (
+            files("repo_catalog")
+            .joinpath("resources/thread_comments.graphql")
+            .read_text()
+        )
+        current = self.s.one(
+            "SELECT object_format,head_oid,base_oid,metadata FROM change_request_state WHERE change_request_id=?",
+            (pr["change_request_id"],),
+        )
+        target = (
+            {
+                "object_format": current["object_format"],
+                "head_oid": current["head_oid"].hex() if current["head_oid"] else None,
+                "base_oid": current["base_oid"].hex() if current["base_oid"] else None,
+            }
+            if current
+            else {}
+        )
+        with self.s.transaction():
+            self.facts.fence(job)
+            collection = self.facts.begin(
+                repo,
+                pr["change_request_id"],
+                "threads",
+                job,
+                self.http.graphql,
+                {
+                    "owner": owner,
+                    "name": name,
+                    "number": pr["provider_change_request_number"],
+                    "query_kind": "review-thread-root",
+                    **target,
+                },
+            )
+        self.thread_collections[pr["change_request_id"]] = collection
+        if collection["state"] == "complete":
+            return self.saved_thread_code_input(pr["change_request_id"])[0]
+        response, uncommitted, identified = None, False, False
+        payload = None
+        try:
+            # Commit the root's accepted values and normalized child requirements
+            # first. Resume requires no saved response envelope.
+            for requirement in self.s.all(
+                "SELECT * FROM thread_collection_requirements WHERE fetch_collection_id=? ORDER BY provider_resource_id",
+                (collection["fetch_collection_id"],),
+            ):
+                self._thread_child(repo, pr, requirement, job, child_query)
+            previous = self.s.one(
+                "SELECT has_next FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
+                (collection["fetch_collection_id"],),
+            )
+            progress = self.s.one(
+                "SELECT cursor FROM collection_progress WHERE fetch_collection_id=?",
+                (collection["fetch_collection_id"],),
+            )
+            cursor = (
+                json.loads(progress[0])["cursor"] if progress and progress[0] else None
+            )
+            need_root = previous is None or bool(previous["has_next"])
+            seen = set()
+            while need_root:
+                self.token.check()
+                if cursor in seen:
+                    raise CatalogError(
+                        "PAGINATION_CYCLE", "Repeated root thread cursor"
+                    )
+                seen.add(cursor)
+                response, uncommitted, identified = None, False, False
+                base_revision = self.s.revision()
+                response = self.http.request(
+                    "POST",
+                    self.http.graphql,
+                    json={
+                        "query": root_query,
+                        "variables": {
+                            "owner": owner,
+                            "name": name,
+                            "number": pr["provider_change_request_number"],
+                            "cursor": cursor,
+                            "pageSize": self.cfg["graphql_page_size"],
+                        },
+                    },
+                )
+                self._retain_recording_diagnostics(response)
+                uncommitted = True
+                payload = self.rest_json(response)
+                self.graphql_errors(payload, "data", "repository", "pullRequest")
+                value = self.graphql_object(
+                    payload, "data", "repository", "pullRequest"
+                )
+                # A returned owner must match a captured identity or the
+                # canonical PR number requested by this static query.
+                if "number" in value and (
+                    type(value["number"]) is not int
+                    or value["number"] != pr["provider_change_request_number"]
+                ):
+                    raise CatalogError(
+                        "SCOPE_MISMATCH", "Thread root has a foreign PR parent"
+                    )
+                known_node_id = (
+                    json.loads(current["metadata"]).get("node_id") if current else None
+                )
+                returned_node_id = value.get("id")
+                if (
+                    known_node_id is not None
+                    and returned_node_id is not None
+                    and returned_node_id != known_node_id
+                ):
+                    raise CatalogError(
+                        "SCOPE_MISMATCH", "Thread root has a foreign opaque PR identity"
+                    )
+                if "number" not in value and not (
+                    known_node_id is not None and returned_node_id == known_node_id
+                ):
+                    raise CatalogError(
+                        "API_SCHEMA", "Thread root owner identity is unavailable"
+                    )
+                identified = True
+                nodes, _, next_cursor = self.graphql_connection(
+                    value.get("reviewThreads")
+                )
+                timestamp = self.facts.response_time(response)
+                with self.s.transaction():
+                    self.facts.fence(job)
+                    context = self.facts.current_context(
+                        repo, pr["change_request_id"], self.http.graphql
+                    )
+                    members = []
+                    for node in nodes:
+                        candidate = current_parser.thread(node, context, timestamp)
+                        self.facts.admit_current(candidate, base_revision)
+                        members.append(self.member(candidate))
+                        thread_id = candidate["provider_resource_id"]
+                        _, _, child_cursor = self.graphql_connection(
+                            node.get("comments"), refresh_root=True
+                        )
+                        # A root refresh under the same request needs a new exact
+                        # child capture, never an old child's completion.
+                        child = self.facts.begin(
+                            repo,
+                            pr["change_request_id"],
+                            "thread-comments",
+                            job,
+                            self.http.graphql,
+                            {
+                                "provider_resource_id": thread_id,
+                                "parent_fetch_collection_id": collection[
+                                    "fetch_collection_id"
+                                ],
+                                "parent_observed_at_us": timestamp,
+                                **target,
+                            },
+                        )
+                        child_members = self._thread_documents(
+                            repo,
+                            pr,
+                            thread_id,
+                            node["comments"],
+                            child,
+                            None,
+                            0,
+                            timestamp,
+                            base_revision=base_revision,
+                            refresh_root=True,
+                        )
+                        self.facts.page(
+                            child,
+                            timestamp,
+                            child_cursor
+                            if not payload.get("errors")
+                            else child_cursor or "partial-root",
+                            child_members,
+                            status=response.status_code,
+                        )
+                        self.s.execute(
+                            "INSERT INTO thread_collection_requirements(fetch_collection_id,provider_resource_id,child_fetch_collection_id,required_observed_at_us,object_format,head_oid,base_oid) VALUES(?,?,?,?,?,?,?) ON CONFLICT(fetch_collection_id,provider_resource_id) DO UPDATE SET child_fetch_collection_id=excluded.child_fetch_collection_id,required_observed_at_us=excluded.required_observed_at_us,object_format=excluded.object_format,head_oid=excluded.head_oid,base_oid=excluded.base_oid",
+                            (
+                                collection["fetch_collection_id"],
+                                thread_id,
+                                child["fetch_collection_id"],
+                                timestamp,
+                                target.get("object_format"),
+                                bytes.fromhex(target["head_oid"])
+                                if target.get("head_oid")
+                                else None,
+                                bytes.fromhex(target["base_oid"])
+                                if target.get("base_oid")
+                                else None,
+                            ),
+                        )
+                        self.s.execute(
+                            "INSERT INTO thread_collection_continuations(fetch_collection_id,provider_resource_id,child_cursor,observed_at_us) VALUES(?,?,?,?) ON CONFLICT(fetch_collection_id,provider_resource_id) DO UPDATE SET child_cursor=excluded.child_cursor,observed_at_us=excluded.observed_at_us",
+                            (
+                                collection["fetch_collection_id"],
+                                thread_id,
+                                child_cursor,
+                                timestamp,
+                            ),
+                        )
+                        if (
+                            not child_cursor
+                            and not payload.get("errors")
+                            and not self.current_members_unresolved(
+                                child["fetch_collection_id"]
+                            )
+                        ):
+                            self.facts.finish(child)
+                    for role, field in (
+                        ("merge", "mergeCommit"),
+                        ("test-merge", "potentialMergeCommit"),
+                    ):
+                        if field in value:
+                            raw = value[field]
+                            oid = (
+                                current_parser._oid(raw.get("oid"))
+                                if isinstance(raw, dict)
+                                else None
+                                if raw is None
+                                else current_parser._oid(raw)
+                            )
+                            algorithm = (
+                                "sha256"
+                                if oid and len(oid) == 64
+                                else "sha1"
+                                if oid
+                                else None
+                            )
+                            self.s.execute(
+                                "INSERT INTO thread_collection_targets(fetch_collection_id,role,object_format,oid,observed_at_us) VALUES(?,?,?,?,?) ON CONFLICT(fetch_collection_id,role) DO UPDATE SET object_format=excluded.object_format,oid=excluded.oid,observed_at_us=excluded.observed_at_us",
+                                (
+                                    collection["fetch_collection_id"],
+                                    role,
+                                    algorithm,
+                                    bytes.fromhex(oid) if oid else None,
+                                    timestamp,
+                                ),
+                            )
+                    saved_cursor = (
+                        canonical(
+                            {"cursor": cursor if payload.get("errors") else next_cursor}
+                        )
+                        if payload.get("errors") or next_cursor
+                        else None
+                    )
+                    self.facts.page(
+                        collection,
+                        timestamp,
+                        saved_cursor,
+                        members,
+                        status=response.status_code,
+                    )
+                    self.facts.advance_revision()
+                uncommitted = False
+                if payload.get("errors"):
+                    raise CatalogError(
+                        "GRAPHQL_PARTIAL",
+                        "Accepted root facts are partial; fresh acquisition is required",
+                    )
+                for requirement in self.s.all(
+                    "SELECT * FROM thread_collection_requirements WHERE fetch_collection_id=? ORDER BY provider_resource_id",
+                    (collection["fetch_collection_id"],),
+                ):
+                    self._thread_child(repo, pr, requirement, job, child_query)
+                cursor, need_root = next_cursor, next_cursor is not None
+            with self.s.transaction():
+                self.facts.fence(job)
+                if any(
+                    self.current_members_unresolved(ident)
+                    for ident in self.thread_collection_ids(collection)
+                ):
+                    raise CatalogError(
+                        "CURRENT_STATE_UNRESOLVED",
+                        "Thread tree has unresolved current members",
+                    )
+                self.facts.finish(collection)
+                self.coverage_claim(
+                    repo["repository_uuidv4"],
+                    "threads",
+                    "complete",
+                    self.facts.thread_observed_at_us(collection, include_partial=False),
+                    {
+                        "fetch_collection_ids": self.thread_collection_ids(collection),
+                        "completion_marker_uuidv4s": [
+                            row[0]
+                            for row in self.s.all(
+                                "SELECT completion_marker_uuidv4 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                                (collection["fetch_collection_id"],),
+                            )
+                        ],
+                    },
+                    change_request_id=pr["change_request_id"],
+                )
+                self.facts.advance_revision()
+            return self.saved_thread_code_input(pr["change_request_id"])[0]
+        except CatalogError as error:
+            with self.s.transaction():
+                self.facts.fence(job)
+                self.facts.partial(
+                    collection,
+                    "GRAPHQL_ROOT_PARTIAL"
+                    if error.code == "GRAPHQL_PARTIAL"
+                    and isinstance(payload, dict)
+                    and payload.get("errors")
+                    else error.code,
+                    observed_at_us=self.facts.response_time(response)
+                    if response is not None
+                    and uncommitted
+                    and identified
+                    and error.code
+                    not in ("CANCELLED", "STALE_ATTEMPT", "SCOPE_MISMATCH")
+                    else None,
+                )
+                self.coverage_claim(
+                    repo["repository_uuidv4"],
+                    "threads",
+                    "partial",
+                    self.facts.thread_observed_at_us(collection),
+                    {
+                        "fetch_collection_ids": self.thread_collection_ids(collection),
+                        "reason": error.code,
+                    },
+                    change_request_id=pr["change_request_id"],
+                )
+                self.facts.advance_revision()
+            raise
+
+    def incremental_comments(self, repo, job, kind, endpoint, parent_field):
+        parameters = {
+            "per_page": self.cfg["rest_page_size"],
+            "sort": "updated",
+            "direction": "asc",
+        }
+        fixed_endpoint = endpoint + "?" + urlencode(parameters)
+        context = {
+            "kind": kind,
+            "sort": "updated",
+            "direction": "asc",
+            "incremental_endpoint": fixed_endpoint,
+        }
+        url, context = self.current_incremental_url(
+            repo, job, kind + "-incremental", fixed_endpoint, context
+        )
+
+        def normalize(value, collection, base_revision, position, timestamp, listing):
+            parent = value.get(parent_field)
+            if not isinstance(parent, str):
+                raise CatalogError("API_SCHEMA", "Comment parent missing")
+            self.http.validate_url(parent)
+            prefix = urlsplit(endpoint).path.rsplit("/", 2)[0]
+            parts = urlsplit(parent).path.rsplit("/", 2)
+            if (
+                len(parts) != 3
+                or parts[0] != prefix
+                or parts[1] not in ("issues", "pulls")
+                or not parts[2].isascii()
+                or not parts[2].isdecimal()
+            ):
+                raise CatalogError(
+                    "SCOPE_MISMATCH", "Comment parent outside repository"
+                )
+            self.rest_integer(int(parts[2]), "comment parent", minimum=1)
+            capture = self.facts.current_context(repo, None, endpoint)
+            owner = self.s.one(
+                "SELECT change_request_id FROM change_requests WHERE repository_binding_id=? AND provider_change_request_number=? AND change_request_kind='pull_request'",
+                (capture["repository_binding_id"], int(parts[2])),
+            )
+            if owner is None:
+                raise CatalogError(
+                    "COMMENT_PARENT_UNKNOWN", "Comment parent is unavailable"
+                )
+            capture = self.facts.current_context(repo, owner[0], endpoint)
+            candidate = (
+                current_parser.review_comment(value, capture, timestamp)
+                if kind == "review-comment"
+                else current_parser.document(value, capture, timestamp, kind)
+            )
+            self.facts.admit_current(candidate, base_revision)
+            return [self.member(candidate)]
+
+        return self.collection(
+            repo, None, kind + "-incremental", job, url, normalize, context=context
+        )
+
+    def current_incremental_reviews(self, repo, job, endpoint):
+        return self.incremental_comments(
+            repo, job, "review-comment", endpoint, "pull_request_url"
+        )
+
+    def _current_pr_value(self, ident):
+        row = self.s.one(
+            "SELECT * FROM eligible_change_request_state WHERE change_request_id=?",
+            (ident,),
+        )
+        if row is None:
+            return {}
+        metadata = json.loads(row["metadata"])
+        return {
+            "head": {"sha": row["head_oid"].hex() if row["head_oid"] else None},
+            "base": {"sha": row["base_oid"].hex() if row["base_oid"] else None},
+            **{
+                key: metadata[key]
+                for key in ("commits", "changed_files")
+                if key in metadata
+            },
+        }
+
+    def _event(self, repo, pr, value, timestamp):
+        from repo_catalog.domain.time import parse_iso8601_us
+
+        modeled = current_parser.timeline_event(value)
+        kind = modeled.get("event") or "unknown"
+        # Timeline occurrences retain transition meaning. Resource projections
+        # such as comment bodies are maintained in their own current stores.
+        for field in ("body", "title"):
+            modeled.pop(field, None)
+        event_id = str(value["id"]) if value.get("id") is not None else None
+        prior = (
+            self.s.one(
+                "SELECT change_request_event_uuidv4,metadata FROM change_request_events WHERE change_request_id=? AND provider_event_id=?",
+                (pr, event_id),
+            )
+            if event_id is not None
+            else None
+        )
+        ident = prior[0] if prior else str(uuid.uuid4())
+        if prior and json.loads(prior["metadata"]) != modeled:
+            raise CatalogError(
+                "EVENT_CONFLICT",
+                "Provider event identity has conflicting transition evidence",
+            )
+        oid = current_parser._oid(modeled.get("commit_id"))
+        algorithm = "sha256" if oid and len(oid) == 64 else "sha1" if oid else None
+        created = modeled.get("created_at") or modeled.get("submitted_at")
+        try:
+            created = parse_iso8601_us(created) if created else None
+        except (ValueError, TypeError):
+            raise CatalogError("API_SCHEMA", "Malformed timeline instant") from None
+        actor = (modeled.get("actor") or modeled.get("user") or {}).get("login")
+        self.s.execute(
+            "INSERT INTO change_request_events(change_request_event_uuidv4,change_request_id,repository_uuidv4,provider_event_id,event_kind,actor,created_at_us,object_format,commit_oid,metadata,observed_at_us,parser_module,parser_version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(change_request_event_uuidv4) DO UPDATE SET metadata=excluded.metadata,observed_at_us=excluded.observed_at_us,parser_module=excluded.parser_module,parser_version=excluded.parser_version",
+            (
+                ident,
+                pr,
+                repo["repository_uuidv4"],
+                event_id,
+                kind,
+                actor,
+                created,
+                algorithm,
+                bytes.fromhex(oid) if oid else None,
+                canonical(modeled),
+                timestamp,
+                current_parser.PARSER_MODULE,
+                current_parser.PARSER_VERSION,
+            ),
+        )
+        return {
+            "family": "event",
+            "change_request_id": pr,
+            "change_request_event_uuidv4": ident,
+            "state_digest": hashlib.sha256(canonical(modeled).encode()).hexdigest(),
+        }
+
+    def _code_collect(self, repo, pr, job, url, before):
+        algorithm, head, base = oid_context(before)
+        if algorithm is None or head is None or base is None:
+            raise CatalogError(
+                "PR_CODE_TARGETS_INCOMPLETE", "PR comparison target is unknown"
+            )
+        context = {"head": {"sha": head.hex()}, "base": {"sha": base.hex()}}
+
+        def commit(value, collection, base_revision, position, timestamp, listing):
+            from repo_catalog.domain.models import GitOid
+
+            oid = GitOid.parse(algorithm + ":" + value["sha"]).value
+            metadata = current_parser.code_commit_metadata(value)
+            self.s.execute(
+                "INSERT INTO code_commits(code_listing_id,position,repository_uuidv4,object_format,oid,metadata) VALUES(?,?,?,?,?,?)",
+                (
+                    listing,
+                    position,
+                    repo["repository_uuidv4"],
+                    algorithm,
+                    oid,
+                    canonical(metadata),
+                ),
+            )
+            return [
+                {
+                    "family": "code-commit",
+                    "code_listing_id": listing,
+                    "position": position,
+                    "state_digest": hashlib.sha256(
+                        canonical({"oid": oid.hex(), "metadata": metadata}).encode()
+                    ).hexdigest(),
+                }
+            ]
+
+        def file_item(value, collection, base_revision, position, timestamp, listing):
+            path = value.get("filename")
+            if not isinstance(path, str):
+                raise CatalogError("API_SCHEMA", "PR file path missing")
+            previous = value.get("previous_filename")
+            if previous is not None and not isinstance(previous, str):
+                raise CatalogError("API_SCHEMA", "PR previous path malformed")
+            oid = current_parser._oid(value.get("sha"))
+            file_format = (
+                "sha256" if oid and len(oid) == 64 else "sha1" if oid else None
+            )
+            metadata = {
+                field: value[field]
+                for field in ("blob_url", "raw_url", "contents_url")
+                if field in value
+            }
+            self.s.execute(
+                "INSERT INTO code_file_changes(code_listing_id,position,repository_uuidv4,raw_path,previous_path,status,object_format,oid,additions,deletions,changes,patch,patch_status,metadata) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    listing,
+                    position,
+                    repo["repository_uuidv4"],
+                    path.encode("utf-8"),
+                    previous.encode("utf-8") if previous else None,
+                    value.get("status"),
+                    file_format,
+                    bytes.fromhex(oid) if oid else None,
+                    value.get("additions"),
+                    value.get("deletions"),
+                    value.get("changes"),
+                    value.get("patch"),
+                    "present"
+                    if "patch" in value and value["patch"] is not None
+                    else "provider-null"
+                    if "patch" in value
+                    else "missing",
+                    canonical(metadata),
+                ),
+            )
+            projected = current_parser.code_file_metadata(value)
+            return [
+                {
+                    "family": "code-file",
+                    "code_listing_id": listing,
+                    "position": position,
+                    "state_digest": hashlib.sha256(
+                        canonical({"path": path, "metadata": projected}).encode()
+                    ).hexdigest(),
+                }
+            ]
+
+        failures = self.code_listing_failures[pr["change_request_id"]] = []
+
+        def collect(kind, normalizer, listing_kind, cap, reported):
+            if (
+                self.code_listing_not_before_us is not None
+                and self.code_listing_not_before_us > self.http.clock_us()
+            ):
+                failures.append({"kind": kind, "reason": "RATE_LIMIT_WAIT"})
+                return None
+            try:
+                return self.collection(
+                    repo,
+                    pr["change_request_id"],
+                    kind,
+                    job,
+                    url + f"/{listing_kind}?per_page={self.cfg['rest_page_size']}",
+                    normalizer,
+                    context=context,
+                    listing_kind=listing_kind,
+                    cap=cap,
+                    reported=reported,
+                    reuse=True,
+                )
+            except CatalogError as error:
+                if error.code in ("CANCELLED", "STALE_ATTEMPT"):
+                    raise
+                failures.append({"kind": kind, "reason": error.code})
+                self.code_listing_not_before_us = error.details.get(
+                    "not_before_us", self.code_listing_not_before_us
+                )
+                # The rejected boundary never becomes a page. Its already
+                # committed exact-target prefix remains a real domain listing.
+                saved = self.s.one(
+                    "SELECT l.fetch_collection_id,l.code_listing_id FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? AND p.job_id=? ORDER BY f.observed_at_us DESC LIMIT 1",
+                    (pr["change_request_id"], listing_kind, algorithm, head, base, job),
+                )
+                return tuple(saved) if saved else None
+
+        listings = (
+            collect("pr-commits", commit, "commits", 250, before.get("commits")),
+            collect("pr-files", file_item, "files", 3000, before.get("changed_files")),
+        )
+        self.code_listing_results[pr["change_request_id"]] = listings
+        if failures:
+            raise CatalogError(
+                failures[0]["reason"],
+                "PR comparison enumeration is truncated or incomplete",
+                {
+                    "missing": failures,
+                    "code_listing_ids": [item[1] for item in listings if item],
+                    **(
+                        {"not_before_us": self.code_listing_not_before_us}
+                        if self.code_listing_not_before_us is not None
+                        else {}
+                    ),
+                },
+            )
+        return listings
+
+    def _assess_code(
+        self, repo, pr, job, before, after, listings, inputs_complete, missing
+    ):
+        from repo_catalog.adapters.git.importer import GitImporter
+
+        algorithm, head, base = oid_context(before)
+        if algorithm is None or head is None or base is None:
+            return None
+        scope = self.facts.current_context(
+            repo, pr["change_request_id"], self.http.base
+        )["acquisition_scope"]
+        assessment = (
+            "code:"
+            + hashlib.sha256(
+                canonical(
+                    {
+                        "pr": pr["change_request_id"],
+                        "format": algorithm,
+                        "head": head.hex(),
+                        "base": base.hex(),
+                        "scope": scope,
+                    }
+                ).encode()
+            ).hexdigest()
+        )
+        commit_listing = listings[0][1] if listings and listings[0] else None
+        file_listing = listings[1][1] if listings and listings[1] else None
+        actual = self.s.one(
+            "SELECT head_oid,base_oid FROM eligible_change_request_state WHERE change_request_id=?",
+            (pr["change_request_id"],),
+        )
+        same = (
+            bool(after)
+            and all(
+                (before.get(role) or {}).get("sha")
+                == (after.get(role) or {}).get("sha")
+                for role in ("head", "base")
+            )
+            and actual is not None
+            and actual["head_oid"] == head
+            and actual["base_oid"] == base
+        )
+        previous = self.s.one(
+            "SELECT * FROM code_assessments WHERE code_assessment_id=?", (assessment,)
+        )
+        relevant_kinds = {
+            "pr-detail",
+            "pr-code-check",
+            "review",
+            "review-comment",
+            "threads",
+            "thread-comments",
+            "pr-commits",
+            "pr-files",
+        }
+        newly_partial = any(
+            repository == repo["repository_uuidv4"]
+            and owner == pr["change_request_id"]
+            and kind in relevant_kinds
+            for repository, owner, kind in self.observed_partial_scopes
+        )
+        if (
+            previous
+            and (
+                after is None
+                or any(
+                    failure["kind"]
+                    in (
+                        "threads",
+                        "review",
+                        "review-comment",
+                        "pr-commits",
+                        "pr-files",
+                        "pr-code-listings",
+                        "pr-code-check",
+                    )
+                    for failure in missing
+                )
+            )
+            and actual is not None
+            and actual["head_oid"] == head
+            and actual["base_oid"] == base
+            and not newly_partial
+        ):
+            return assessment
+        # A completed older prefix cannot discharge a newer observed gap.
+        # Required scoped input coverage uses its latest candidate set.
+        inputs_complete = inputs_complete and all(
+            (
+                row := self.s.one(
+                    "SELECT coverage_state FROM current_coverage WHERE repository_uuidv4=? AND change_request_id=? AND kind=?",
+                    (repo["repository_uuidv4"], pr["change_request_id"], kind),
+                )
+            )
+            is not None
+            and row["coverage_state"] == "complete"
+            for kind in (
+                "review",
+                "review-comment",
+                "threads",
+                "pr-commits",
+                "pr-files",
+            )
+        )
+        for kind in ("pr-detail", "pr-code-check"):
+            captures = self.s.one(
+                "SELECT MAX(m.observed_at_us) observed, MAX(CASE WHEN m.asserted_state='complete' THEN m.observed_at_us END) completed FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND p.job_id=? AND f.kind=?",
+                (repo["repository_uuidv4"], pr["change_request_id"], job, kind),
+            )
+            inputs_complete = (
+                inputs_complete
+                and captures["completed"] is not None
+                and captures["completed"] == captures["observed"]
+            )
+        roles, roles_complete, _ = self.saved_thread_code_input(pr["change_request_id"])
+        role_oids = {"head": head.hex(), "base": base.hex(), **roles}
+        for row in self.s.all(
+            "SELECT target_commit_oid FROM eligible_review_resources WHERE change_request_id=?",
+            (pr["change_request_id"],),
+        ):
+            if row[0]:
+                oid = row[0] if isinstance(row[0], str) else row[0].hex()
+                role_oids["review-target:" + oid] = oid
+        observed = self.s.one(
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial') o JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
+            + ",".join("?" for _ in relevant_kinds)
+            + ")",
+            (
+                repo["repository_uuidv4"],
+                pr["change_request_id"],
+                repo["source_id"],
+                job,
+                *sorted(relevant_kinds),
+            ),
+        )[0]
+        if (
+            previous is not None
+            and previous["observed_at_us"] is not None
+            and (observed is None or observed < previous["observed_at_us"])
+        ):
+            return assessment
+        with self.s.transaction():
+            self.facts.fence(job)
+            self.s.execute(
+                "INSERT INTO code_assessments(code_assessment_id,change_request_id,repository_uuidv4,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,observed_at_us,parser_module,parser_version,details_json) VALUES(?,?,?,?,?,'partial',?,?,?,?,?,?,?) ON CONFLICT(code_assessment_id) DO UPDATE SET commit_code_listing_id=excluded.commit_code_listing_id,file_code_listing_id=excluded.file_code_listing_id,state='partial',observed_at_us=excluded.observed_at_us,details_json=excluded.details_json",
+                (
+                    assessment,
+                    pr["change_request_id"],
+                    repo["repository_uuidv4"],
+                    commit_listing,
+                    file_listing,
+                    algorithm,
+                    head,
+                    base,
+                    observed,
+                    current_parser.PARSER_MODULE,
+                    current_parser.PARSER_VERSION,
+                    canonical(
+                        {
+                            "race": not same,
+                            "code_inputs_complete": bool(
+                                inputs_complete and roles_complete
+                            ),
+                        }
+                    ),
+                ),
+            )
+            self.facts.advance_revision()
+        links = {}
+        for role, expected in role_oids.items():
+            if expected is None:
+                continue
+            try:
+                GitImporter(self.s, self.token).sync(
+                    repo,
+                    job,
+                    pr_roots=[
+                        {
+                            "ref": f"refs/pull/{pr['provider_change_request_number']}/head"
+                            if role == "head"
+                            else expected,
+                            "expected": expected,
+                            "role": role,
+                            "number": pr["provider_change_request_number"],
+                        }
+                    ],
+                    code_assessment_id=assessment,
+                    repository_endpoint_id=self.repository_endpoint_id,
+                )
+            except CatalogError as error:
+                if error.code in ("CANCELLED", "STALE_ATTEMPT"):
+                    raise
+                missing.append({"kind": "pr-git", "reason": error.code, "role": role})
+            requested_format = "sha256" if len(expected) == 64 else "sha1"
+            row = self.s.one(
+                "SELECT r.acquisition_root_id FROM acquisition_roots r JOIN git_objects o ON o.object_format=r.object_format AND o.oid=r.oid WHERE r.repository_uuidv4=? AND r.object_format=? AND r.oid=? AND r.complete=1 AND o.type='commit' AND o.verified=1 AND r.role=? ORDER BY r.acquisition_root_id DESC LIMIT 1",
+                (
+                    repo["repository_uuidv4"],
+                    requested_format,
+                    bytes.fromhex(expected),
+                    role,
+                ),
+            )
+            if row:
+                links[role] = row[0]
+        required = {role for role, oid in role_oids.items() if oid is not None}
+        state = (
+            "complete"
+            if same
+            and inputs_complete
+            and roles_complete
+            and listings
+            and required <= links.keys()
+            and not any(failure["reason"] == "PR_CODE_RACE" for failure in missing)
+            else "partial"
+        )
+        if not same:
+            missing.append({"kind": "pr-code", "reason": "PR_CODE_RACE"})
+        if required - links.keys():
+            missing.append(
+                {
+                    "kind": "pr-code",
+                    "reason": "MISSING_CODE_ACQUISITION",
+                    "roles": sorted(required - links.keys()),
+                }
+            )
+        with self.s.transaction():
+            self.facts.fence(job)
+            self.s.execute(
+                "UPDATE code_assessments SET state=?,details_json=? WHERE code_assessment_id=?",
+                (
+                    state,
+                    canonical(
+                        {
+                            "race": not same,
+                            "code_inputs_complete": bool(
+                                inputs_complete and roles_complete
+                            ),
+                            "missing": missing,
+                        }
+                    ),
+                    assessment,
+                ),
+            )
+            for role, oid in role_oids.items():
+                if oid is not None:
+                    self.s.execute(
+                        "INSERT INTO code_acquisitions(code_assessment_id,role,object_format,oid,acquisition_root_id) VALUES(?,?,?,?,?) ON CONFLICT(code_assessment_id,role) DO UPDATE SET acquisition_root_id=excluded.acquisition_root_id",
+                        (
+                            assessment,
+                            role,
+                            "sha256" if len(oid) == 64 else "sha1",
+                            bytes.fromhex(oid),
+                            links.get(role),
+                        ),
+                    )
+            code_collections = [
+                row[0]
+                for row in self.s.all(
+                    "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND p.job_id=? AND f.kind IN ("
+                    + ",".join("?" for _ in relevant_kinds)
+                    + ")",
+                    (
+                        repo["repository_uuidv4"],
+                        pr["change_request_id"],
+                        job,
+                        *sorted(relevant_kinds),
+                    ),
+                )
+            ]
+            if listings:
+                code_collections.extend(
+                    item[0] for item in listings if item is not None
+                )
+            code_collections = sorted(set(code_collections))
+            marker_ids = (
+                [
+                    row[0]
+                    for row in self.s.all(
+                        "SELECT completion_marker_uuidv4 FROM completion_markers WHERE asserted_state='complete' AND fetch_collection_id IN ("
+                        + ",".join("?" for _ in code_collections)
+                        + ") ORDER BY completion_marker_uuidv4",
+                        code_collections,
+                    )
+                ]
+                if code_collections
+                else []
+            )
+            self.coverage_claim(
+                repo["repository_uuidv4"],
+                "pr-code",
+                state,
+                observed,
+                {
+                    "code_assessment_ids": [assessment],
+                    "fetch_collection_ids": code_collections,
+                    "completion_marker_uuidv4s": marker_ids,
+                    "missing": missing,
+                },
+                change_request_id=pr["change_request_id"],
+            )
+            self.facts.advance_revision()
+        return assessment
+
+    def sync(self, repo, job):
         root = f"{self.http.base}/repos/{repo['name']}"
         failures, waiting = [], None
+        assessments = []
         self.observed_partial_scopes.clear()
         self.thread_collections.clear()
+        self.code_listing_results.clear()
+        self.code_listing_failures.clear()
+        self.code_listing_not_before_us = None
 
         def attempt(kind, operation):
             nonlocal waiting
@@ -2308,33 +2439,27 @@ class GitHubCollector:
                 return None
 
         try:
-            identity_response = self.http.request("GET", self.http.base + "/user")
-            self._retain_recording_diagnostics(identity_response)
-            identity = identity_response.json()
-            permissions = identity_response.headers.get("x-oauth-scopes")
+            response = self.http.request("GET", self.http.base + "/user")
+            self._retain_recording_diagnostics(response)
+            identity = self.rest_json(response)
+            principal = identity.get("id") or identity.get("login")
+            if not principal:
+                raise CatalogError("API_SCHEMA", "Principal identity missing")
+            self.facts.principal = str(principal)
+            permissions = response.headers.get("x-oauth-scopes")
             self.facts.permissions = (
                 sorted(item.strip() for item in permissions.split(",") if item.strip())
                 if permissions is not None
                 else None
             )
-            principal = identity.get("id") or identity.get("login")
-            if not principal:
-                raise CatalogError("API_SCHEMA", "Principal identity missing")
-            self.facts.principal = str(principal)
             size = self.cfg["rest_page_size"]
 
-            def pr_item(value, collection, occurrence, position, timestamp, listing):
-                self.ensure_pr(
-                    repo,
-                    value,
-                    collection,
-                    occurrence,
-                    position,
-                    timestamp,
-                    publish=False,
-                )
+            def pr_item(value, collection, base_revision, position, timestamp, listing):
+                return self.ensure_pr(
+                    repo, value, collection, base_revision, position, timestamp
+                )[1]
 
-            attempt(
+            pr_listing = attempt(
                 "pr-list",
                 lambda: self.collection(
                     repo,
@@ -2346,40 +2471,35 @@ class GitHubCollector:
                     pr_item,
                 ),
             )
-            for kind, endpoint, parent in (
-                ("issue-comment", root + "/issues/comments", "issue_url"),
-            ):
-                attempt(
-                    kind + "-incremental",
-                    lambda kind=kind, endpoint=endpoint, parent=parent: (
-                        self.incremental_comments(repo, job, kind, endpoint, parent)
-                    ),
-                )
+            attempt(
+                "issue-comment-incremental",
+                lambda: self.incremental_comments(
+                    repo, job, "issue-comment", root + "/issues/comments", "issue_url"
+                ),
+            )
             attempt(
                 "review-comment-incremental",
                 lambda: self.current_incremental_reviews(
                     repo, job, root + "/pulls/comments"
                 ),
             )
-            selected_binding = self.facts.current_context(repo, None, root)[
+            binding = self.facts.current_context(repo, None, root)[
                 "repository_binding_id"
             ]
-            prs = s.all(
-                "SELECT p.*,o.change_request_observation_id AS current_change_request_observation_id,o.payload FROM change_requests p LEFT JOIN current_change_request_observations o ON o.change_request_id=p.change_request_id WHERE p.repository_binding_id=? AND p.change_request_kind='pull_request' ORDER BY p.provider_change_request_number",
-                (selected_binding,),
+            prs = self.s.all(
+                "SELECT * FROM change_requests WHERE repository_binding_id=? AND change_request_kind='pull_request' ORDER BY provider_change_request_number",
+                (binding,),
             )
             for pr in prs:
                 self.token.check()
-                if self.completed_pr(repo, job, pr["change_request_id"]):
-                    continue
-                initial_failures = len(failures)
+                start = len(failures)
                 url = root + f"/pulls/{pr['provider_change_request_number']}"
-                detail = attempt("pr-detail", lambda: self.detail(repo, pr, job, url))
-                if detail:
-                    before, current = detail
-                else:
-                    before = json.loads(pr["payload"]) if pr["payload"] else {}
-                    current = pr["current_change_request_observation_id"]
+                detailed = attempt("pr-detail", lambda: self.detail(repo, pr, job, url))
+                before = (
+                    detailed[0]
+                    if detailed
+                    else self._current_pr_value(pr["change_request_id"])
+                )
                 for kind, endpoint in (
                     (
                         "issue-comment",
@@ -2389,6 +2509,7 @@ class GitHubCollector:
                     ("review", url + "/reviews"),
                     ("review-comment", url + "/comments"),
                 ):
+                    endpoint += f"?per_page={size}"
                     attempt(
                         kind,
                         lambda kind=kind, endpoint=endpoint: (
@@ -2397,9 +2518,9 @@ class GitHubCollector:
                                 pr["change_request_id"],
                                 kind,
                                 job,
-                                endpoint + f"?per_page={size}",
+                                endpoint,
                                 self._document_normalizer(
-                                    pr["change_request_id"], kind
+                                    repo, pr["change_request_id"], kind, endpoint
                                 ),
                             )
                             if kind == "issue-comment"
@@ -2408,7 +2529,7 @@ class GitHubCollector:
                                 pr["change_request_id"],
                                 kind,
                                 job,
-                                endpoint + f"?per_page={size}",
+                                endpoint,
                                 current_parser.review
                                 if kind == "review"
                                 else current_parser.review_comment,
@@ -2416,25 +2537,12 @@ class GitHubCollector:
                         ),
                     )
 
-                def event(value, collection, occurrence, position, timestamp, listing):
-                    s.execute(
-                        "INSERT INTO change_request_events(change_request_event_uuidv4,repository_uuidv4,parsed_result_uuidv4,change_request_id,origin_key,ordinal,provider_event_id,payload,observed_at_us,origin_fetch_occurrence_uuidv4) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                        (
-                            str(uuid.uuid4()),
-                            repo["repository_uuidv4"],
-                            self.facts.result(occurrence),
-                            pr["change_request_id"],
-                            self.facts.origin(collection, occurrence, position),
-                            position,
-                            str(value["id"]) if value.get("id") is not None else None,
-                            canonical(value),
-                            timestamp,
-                            s.one(
-                                "SELECT fetch_occurrence_uuidv4 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
-                                (occurrence,),
-                            )[0],
-                        ),
-                    )
+                def event(
+                    value, collection, base_revision, position, timestamp, listing
+                ):
+                    return [
+                        self._event(repo, pr["change_request_id"], value, timestamp)
+                    ]
 
                 attempt(
                     "timeline",
@@ -2449,524 +2557,107 @@ class GitHubCollector:
                     ),
                 )
                 thread_result = attempt("threads", lambda: self.threads(repo, pr, job))
-                merge, merge_complete, merge_observed_at_us = (
-                    self.saved_thread_code_input(pr["change_request_id"])
+                listings = attempt(
+                    "pr-code-listings",
+                    lambda: self._code_collect(repo, pr, job, url, before),
                 )
-                code_input_failures = [
-                    failure
-                    for failure in failures[initial_failures:]
-                    if failure["kind"] in ("review", "threads")
-                ]
-                if (
-                    merge_observed_at_us is not None
-                    and not merge_complete
-                    and not any(f["kind"] == "threads" for f in code_input_failures)
-                ):
-                    failure = {
-                        "kind": "pr-code",
-                        "reason": "PR_CODE_TARGETS_INCOMPLETE",
-                    }
-                    failures.append(failure)
-                    code_input_failures.append(failure)
-                if not current:
-                    continue
-                algorithm, head, base = oid_context(before)
-
-                def commit(value, collection, occurrence, position, timestamp, listing):
-                    from repo_catalog.domain.models import GitOid
-
-                    if not value.get("sha") or not algorithm:
-                        raise CatalogError("API_SCHEMA", "PR commit OID missing")
-                    oid = GitOid.parse(algorithm + ":" + value["sha"]).value
-                    s.execute(
-                        "INSERT INTO code_commits(repository_uuidv4,parsed_result_uuidv4,code_listing_id,fetch_occurrence_id,position,object_format,oid,payload) VALUES(?,?,?,?,?,?,?,?)",
-                        (
-                            repo["repository_uuidv4"],
-                            self.facts.result(occurrence),
-                            listing,
-                            occurrence,
-                            position,
-                            algorithm,
-                            oid,
-                            canonical(value),
-                        ),
-                    )
-
-                def file_item(
-                    value, collection, occurrence, position, timestamp, listing
-                ):
-                    if not isinstance(value.get("filename"), str):
-                        raise CatalogError("API_SCHEMA", "PR file path missing")
-                    s.execute(
-                        "INSERT INTO code_file_changes(repository_uuidv4,parsed_result_uuidv4,code_listing_id,fetch_occurrence_id,position,raw_path,payload) VALUES(?,?,?,?,?,?,?)",
-                        (
-                            repo["repository_uuidv4"],
-                            self.facts.result(occurrence),
-                            listing,
-                            occurrence,
-                            position,
-                            value["filename"].encode("utf-8"),
-                            canonical(value),
-                        ),
-                    )
-
-                oldfail = len(failures)
-                commits = attempt(
-                    "pr-commits",
-                    lambda: self.collection(
-                        repo,
-                        pr["change_request_id"],
-                        "pr-commits",
-                        job,
-                        url + f"/commits?per_page={size}",
-                        commit,
-                        context={
-                            "head": before.get("head"),
-                            "base": before.get("base"),
-                        },
-                        listing_kind="commits",
-                        cap=250,
-                        reported=before.get("commits"),
-                        reuse=True,
-                    ),
+                if listings is None:
+                    listings = self.code_listing_results.get(pr["change_request_id"])
+                failures.extend(
+                    self.code_listing_failures.get(pr["change_request_id"], ())
                 )
-                files_result = attempt(
-                    "pr-files",
-                    lambda: self.collection(
-                        repo,
-                        pr["change_request_id"],
-                        "pr-files",
-                        job,
-                        url + f"/files?per_page={size}",
-                        file_item,
-                        context={
-                            "head": before.get("head"),
-                            "base": before.get("base"),
-                        },
-                        listing_kind="files",
-                        cap=3000,
-                        reported=before.get("changed_files"),
-                        reuse=True,
-                    ),
+                if self.code_listing_not_before_us is not None:
+                    waiting = self.code_listing_not_before_us
+                checked = attempt(
+                    "pr-code-check", lambda: self.code_check(repo, pr, job, url)
                 )
-                after_response = attempt(
-                    "pr-code", lambda: self.code_check(repo, pr, job, url, current)
-                )
-                same = bool(after_response) and all(
-                    (before.get(role) or {}).get("sha")
-                    == (after_response.json().get(role) or {}).get("sha")
-                    for role in ("head", "base")
-                )
-                if same:
-                    current = after_response.extensions["catalog_observation_id"]
-                if after_response is not None and not same:
-                    failures.append({"kind": "pr-code", "reason": "PR_CODE_RACE"})
-
-                # Failed listings still retain their IDs and early pages.
-                def code_listing_id(kind):
-                    scope = self.facts.scope(
-                        repo,
-                        url + f"/{kind}?per_page={size}",
-                        {
-                            "head": before.get("head"),
-                            "base": before.get("base"),
-                            "reported_count": before.get(
-                                "commits" if kind == "commits" else "changed_files"
-                            ),
-                        },
-                    )
-                    row = s.one(
-                        "SELECT l.code_listing_id FROM code_listings l JOIN collection_progress p ON p.fetch_collection_id=l.fetch_collection_id JOIN code_listing_progress lp ON lp.code_listing_id=l.code_listing_id WHERE l.change_request_id=? AND l.kind=? AND l.resume_scope_id=? ORDER BY (lp.state='complete') DESC,(p.job_id=?) DESC,l.code_listing_id DESC LIMIT 1",
-                        (pr["change_request_id"], kind, scope, job),
-                    )
-                    return row[0] if row else None
-
-                role_oids = {
-                    "head": (before.get("head") or {}).get("sha"),
-                    "base": (before.get("base") or {}).get("sha"),
-                    **merge,
-                }
-                for review in s.all(
-                    "SELECT target_commit_oid FROM eligible_review_resources WHERE kind='review' AND change_request_id=?",
-                    (pr["change_request_id"],),
-                ):
-                    value = review[0]
-                    if value:
-                        role_oids["review-target:" + value] = value
-                role_links = {}
-                for role, expected in role_oids.items():
-                    if not expected:
-                        continue
-                    from repo_catalog.adapters.git.importer import GitImporter
-
-                    fetched = attempt(
-                        "pr-git",
-                        lambda role=role, expected=expected: GitImporter(
-                            s, self.token
-                        ).sync(
-                            repo,
-                            job,
-                            pr_roots=[
-                                {
-                                    "ref": f"refs/pull/{pr['provider_change_request_number']}/head"
-                                    if role == "head"
-                                    else expected,
-                                    "expected": expected,
-                                    "role": role,
-                                    "number": pr["provider_change_request_number"],
-                                }
-                            ],
-                            change_request_observation_id=current,
-                            repository_endpoint_id=self.repository_endpoint_id,
-                        ),
-                    )
-                    # A failed refresh cannot erase an already preserved matching
-                    # role. Reuse only published same-repository, exact-OID roots
-                    # whose recorded role permits the same link as a fresh fetch.
-                    rootrow = s.one(
-                        """SELECT r.* FROM acquisition_roots r
-                           JOIN git_acquisitions g ON g.git_acquisition_id=r.git_acquisition_id
-                           JOIN preservation_obligations p ON p.git_acquisition_id=g.git_acquisition_id
-                           JOIN acquisition_progress a ON a.git_acquisition_id=g.git_acquisition_id
-                           JOIN git_objects o ON o.object_format=r.object_format AND o.oid=r.oid
-                           WHERE r.repository_uuidv4=? AND r.object_format=? AND r.oid=?
-                             AND r.published=1 AND p.published=1 AND a.state='published'
-                             AND o.type='commit' AND o.verified=1
-                             AND (r.expected_oid IS NULL OR r.expected_oid=r.oid)
-                             AND (r.role=? OR (r.role='traversal' AND EXISTS(
-                                 SELECT 1 FROM json_each(g.roots_manifest) j
-                                 WHERE json_extract(j.value,'$.role')=?
-                                   AND lower(json_extract(j.value,'$.expected'))=lower(hex(r.oid)))))
-                           ORDER BY (r.git_acquisition_id IS ?) DESC,r.acquisition_root_id DESC LIMIT 1""",
-                        (
-                            repo["repository_uuidv4"],
-                            algorithm,
-                            bytes.fromhex(expected),
-                            role,
-                            role,
-                            fetched["git_acquisition_id"] if fetched else None,
-                        ),
-                    )
-                    if rootrow:
-                        role_links[role] = rootrow
-                missing_roles = sorted(
-                    role
-                    for role, expected in role_oids.items()
-                    if expected and role not in role_links
-                )
-                if missing_roles:
-                    failures.append(
-                        {
-                            "kind": "pr-code",
-                            "reason": "MISSING_CODE_ACQUISITION",
-                            "roles": missing_roles,
-                        }
-                    )
-                inputs_complete = bool(
-                    algorithm
-                    and head
-                    and base
-                    and merge_complete
+                current_failures = failures[start:]
+                assessment = self._assess_code(
+                    repo,
+                    pr,
+                    job,
+                    before,
+                    checked,
+                    listings,
+                    detailed is not None
                     and thread_result is not None
-                    and not code_input_failures
+                    and not any(
+                        failure["kind"] in ("review", "review-comment", "threads")
+                        for failure in current_failures
+                    ),
+                    current_failures,
                 )
-                if not inputs_complete and not code_input_failures:
-                    failures.append(
-                        {"kind": "pr-code", "reason": "PR_CODE_TARGETS_INCOMPLETE"}
-                    )
-                code_race = any(
-                    failure["reason"] == "PR_CODE_RACE"
-                    for failure in failures[oldfail:]
-                )
-                with s.transaction():
-                    self.facts.fence(job)
-                    commit_listing = (
-                        commits[1] if commits else code_listing_id("commits")
-                    )
-                    file_listing = (
-                        files_result[1] if files_result else code_listing_id("files")
-                    )
-                    listings_complete = all(
-                        s.one(
-                            "SELECT 1 FROM code_listing_progress WHERE code_listing_id=? AND state='complete' AND terminal=1 AND context_proven=1",
-                            (listing,),
-                        )
-                        for listing in (commit_listing, file_listing)
-                    )
-                    state = (
-                        "complete"
-                        if same
-                        and not code_race
-                        and inputs_complete
-                        and listings_complete
-                        and not missing_roles
-                        else "partial"
-                    )
-                    code_failures = code_input_failures + failures[oldfail:]
-                    prior_code_coverage = s.one(
-                        "SELECT observed_at_us FROM current_coverage WHERE repository_uuidv4=? AND change_request_id=? AND kind='pr-code'",
-                        (repo["repository_uuidv4"], pr["change_request_id"]),
-                    )
-                    observed_incomplete_merge = (
-                        merge_observed_at_us is not None
-                        and not merge_complete
-                        and (
-                            prior_code_coverage is None
-                            or prior_code_coverage["observed_at_us"] is None
-                            or merge_observed_at_us
-                            >= prior_code_coverage["observed_at_us"]
-                        )
-                    )
-                    observed_incomplete_code = (
-                        code_race
-                        or bool(missing_roles)
-                        or observed_incomplete_merge
-                        or any(
-                            (repo["repository_uuidv4"], pr["change_request_id"], kind)
-                            in self.observed_partial_scopes
-                            for kind in ("pr-commits", "pr-files", "review", "threads")
-                        )
-                    )
-                    prior_code = s.one(
-                        "SELECT * FROM current_code_observations WHERE change_request_id=? AND change_request_observation_id=?",
-                        (pr["change_request_id"], current),
-                    )
-                    prior_roles = (
-                        json.loads(prior_code["details"]).get("expected_roles")
-                        if prior_code
-                        else None
-                    )
-                    if isinstance(prior_roles, dict) and merge_observed_at_us is None:
-                        # No merge input was observed on this attempt. Absence
-                        # from its inputs cannot revoke a prior saved role.
-                        prior_roles = {
-                            role: oid
-                            for role, oid in prior_roles.items()
-                            if role not in ("merge", "test-merge")
-                        }
-                    if (
-                        state == "partial"
-                        and not observed_incomplete_code
-                        and prior_code
-                        and prior_code["state"] == "complete"
-                        and prior_code["head_oid"] == head
-                        and prior_code["base_oid"] == base
-                        and prior_code["commit_code_listing_id"] == commit_listing
-                        and prior_code["file_code_listing_id"] == file_listing
-                        and prior_roles
-                        == {role: oid for role, oid in role_oids.items() if oid}
-                    ):
-                        # An unsuccessful check of an already represented
-                        # observation is job progress, not a partial code fact.
-                        continue
-                    input_rows = s.all(
-                        "SELECT DISTINCT o.fetch_occurrence_uuidv4 FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.change_request_id=? AND p.job_id=?",
-                        (repo["repository_uuidv4"], pr["change_request_id"], job),
-                    )
-                    inputs = [
-                        {"fetch_occurrence_uuidv4": item[0]} for item in input_rows
-                    ]
-                    for listing_id in (commit_listing, file_listing):
-                        for item in s.all(
-                            "SELECT o.fetch_occurrence_uuidv4 FROM fetch_occurrences o JOIN code_listings l ON l.fetch_collection_id=o.fetch_collection_id WHERE l.code_listing_id=?",
-                            (listing_id,),
-                        ):
-                            entry = {"fetch_occurrence_uuidv4": item[0]}
-                            if entry not in inputs:
-                                inputs.append(entry)
-                    original = s.one(
-                        "SELECT f.fetch_occurrence_uuidv4 FROM change_request_observations o JOIN fetch_occurrences f ON f.fetch_occurrence_id=o.origin_fetch_occurrence_id WHERE o.change_request_observation_id=?",
-                        (current,),
-                    )
-                    if (
-                        original
-                        and {"fetch_occurrence_uuidv4": original[0]} not in inputs
-                    ):
-                        inputs.append({"fetch_occurrence_uuidv4": original[0]})
-                    for rootrow in role_links.values():
-                        entry = {"git_acquisition_id": rootrow["git_acquisition_id"]}
-                        if entry not in inputs:
-                            inputs.append(entry)
-                    result = self.facts.model.create_result(
-                        self.facts.profile(),
-                        repository_uuidv4=repo["repository_uuidv4"],
-                        inputs=inputs,
-                        derivation={"parser": PARSER, "kind": "code"},
-                    )
-                    self.facts.choose(
-                        result,
-                        fact_kind="code",
-                        change_request_id=pr["change_request_id"],
-                    )
-                    code = s.execute(
-                        "INSERT INTO code_observations(code_observation_uuidv4,repository_uuidv4,parsed_result_uuidv4,change_request_id,change_request_observation_id,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,details) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-                        (
-                            str(uuid.uuid4()),
-                            repo["repository_uuidv4"],
-                            result,
-                            pr["change_request_id"],
-                            current,
-                            commit_listing,
-                            file_listing,
-                            state,
-                            algorithm,
-                            head,
-                            base,
-                            canonical(
-                                {
-                                    "api_head_base_stable": same,
-                                    "code_inputs_complete": inputs_complete,
-                                    "merge": merge,
-                                    "expected_roles": {
-                                        role: value
-                                        for role, value in role_oids.items()
-                                        if value
-                                    },
-                                    "missing_roles": missing_roles,
-                                    "provider_limits": {"commits": 250, "files": 3000},
-                                }
-                            ),
-                        ),
-                    ).lastrowid
-                    for role, rootrow in role_links.items():
-                        s.execute(
-                            "INSERT INTO code_acquisitions(code_observation_id,role,object_format,oid,acquisition_root_id) VALUES(?,?,?,?,?)",
-                            (
-                                code,
-                                role,
-                                rootrow["object_format"],
-                                rootrow["oid"],
-                                rootrow["acquisition_root_id"],
-                            ),
-                        )
-                        if not s.one(
-                            "SELECT 1 FROM root_origins WHERE acquisition_root_id=? AND change_request_observation_id=?",
-                            (rootrow["acquisition_root_id"], current),
-                        ):
-                            s.execute(
-                                "INSERT INTO root_origins(acquisition_root_id,origin_kind,source_ordinal,change_request_id,change_request_observation_id,repository_uuidv4) VALUES(?,'pr_role',?,?,?,?)",
-                                (
-                                    rootrow["acquisition_root_id"],
-                                    s.one(
-                                        "SELECT coalesce(max(source_ordinal),-1)+1 FROM root_origins WHERE acquisition_root_id=? AND origin_kind='pr_role'",
-                                        (rootrow["acquisition_root_id"],),
-                                    )[0],
-                                    pr["change_request_id"],
-                                    current,
-                                    repo["repository_uuidv4"],
-                                ),
-                            )
-                    code_observed_at_us = s.one(
-                        "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads','thread-comments')",
-                        (
-                            state != "complete",
-                            repo["repository_uuidv4"],
-                            pr["change_request_id"],
-                            repo["source_id"],
-                            job,
-                        ),
+                assessments.append(assessment)
+                failures[start:] = current_failures
+            code_complete = (
+                pr_listing is not None
+                and len(assessments) == len(prs)
+                and all(
+                    assessment is not None
+                    and self.s.one(
+                        "SELECT state FROM code_assessments WHERE code_assessment_id=?",
+                        (assessment,),
                     )[0]
-                    if (
-                        state == "complete"
-                        and not code_failures
-                        or observed_incomplete_code
-                    ):
-                        self.coverage_claim(
-                            repo["repository_uuidv4"],
-                            "pr-code",
-                            state,
-                            code_observed_at_us,
-                            {
-                                "parsed_result_uuidv4": result,
-                                "fetch_collection_ids": [
-                                    row[0]
-                                    for row in s.all(
-                                        "SELECT DISTINCT f.fetch_collection_id FROM parsed_result_inputs i "
-                                        "JOIN fetch_occurrences o USING(fetch_occurrence_uuidv4) "
-                                        "JOIN fetch_collections f USING(fetch_collection_id) "
-                                        "WHERE i.parsed_result_uuidv4=? AND f.kind IN "
-                                        "('pr-detail','pr-code-check','pr-commits','pr-files','review','threads','thread-comments') "
-                                        "ORDER BY f.fetch_collection_id",
-                                        (result,),
-                                    )
-                                ],
-                                "git_acquisition_ids": sorted(
-                                    {
-                                        item["git_acquisition_id"]
-                                        for item in inputs
-                                        if "git_acquisition_id" in item
-                                    }
-                                ),
-                                **({"missing": code_failures} if code_failures else {}),
-                            },
-                            change_request_id=pr["change_request_id"],
-                        )
-                    self.facts.publish()
-                if len(failures) != initial_failures:
-                    continue
-            document_failures = [
-                failure
-                for failure in failures
-                if document_scope_includes(failure["kind"])
-            ]
-            with s.transaction():
-                for component, missing in (
-                    ("pr-documents", document_failures),
-                    ("pr", failures),
-                ):
-                    documents_only = component == "pr-documents"
-                    observed_incomplete = any(
-                        not documents_only or document_scope_includes(kind)
-                        for _, _, kind in self.observed_partial_scopes
+                    == "complete"
+                    for assessment in assessments
+                )
+            )
+            with self.s.transaction():
+                self.facts.fence(job)
+                document_failures = [
+                    failure
+                    for failure in failures
+                    if failure["kind"]
+                    not in (
+                        "pr-git",
+                        "pr-code-listings",
+                        "pr-commits",
+                        "pr-files",
+                        "pr-code-check",
+                        "pr-code",
+                        "timeline",
                     )
-                    if missing and not observed_incomplete:
-                        # Failed work with no observed incomplete response is progress,
-                        # not a newer assessment of the saved repository coverage.
-                        continue
+                ]
+                for kind, documents_only in (
+                    ("pr-documents", True),
+                    ("pr", False),
+                    ("pr-code", False),
+                ):
+                    summary_failures = (
+                        document_failures if kind == "pr-documents" else failures
+                    )
                     self.coverage_claim(
                         repo["repository_uuidv4"],
-                        component,
-                        "partial" if missing else "complete",
+                        kind,
+                        ("complete" if code_complete else "partial")
+                        if kind == "pr-code"
+                        else "partial"
+                        if summary_failures
+                        else "complete",
                         self.summary_observed_at_us(
                             repo,
                             job,
                             documents_only=documents_only,
-                            include_partial=bool(missing),
+                            code_only=kind == "pr-code",
+                            include_partial=bool(summary_failures),
                         ),
                         {
                             "fetch_collection_ids": self.summary_collection_ids(
-                                repo, job, documents_only=documents_only
+                                repo,
+                                job,
+                                documents_only=documents_only,
+                                code_only=kind == "pr-code",
                             ),
-                            "change_request_ids": sorted(
-                                pr["change_request_id"] for pr in prs
+                            "completion_marker_uuidv4s": self.summary_marker_ids(
+                                repo,
+                                job,
+                                documents_only=documents_only,
+                                code_only=kind == "pr-code",
                             ),
-                            **(
-                                {
-                                    "parsed_result_uuidv4s": [
-                                        row[0]
-                                        for row in s.all(
-                                            "SELECT DISTINCT parsed_result_uuidv4 FROM current_code_observations "
-                                            "WHERE repository_uuidv4=? AND state='complete' "
-                                            "ORDER BY parsed_result_uuidv4",
-                                            (repo["repository_uuidv4"],),
-                                        )
-                                    ]
-                                }
-                                if not documents_only
-                                else {}
-                            ),
-                            **({"missing": missing} if missing else {}),
+                            "missing": summary_failures,
                         },
                     )
-                self.facts.publish()
-            if self.facts.unselected_results:
-                failures.append(
-                    {
-                        "kind": "parser-selection",
-                        "reason": "PARSER_SELECTION_UNRESOLVED",
-                        "parsed_results": sorted(self.facts.unselected_results),
-                    }
-                )
+                self.facts.advance_revision()
             if failures:
                 raise Waiting(
                     "PR_PARTIAL",
@@ -2980,7 +2671,7 @@ class GitHubCollector:
             return {
                 "repository_uuidv4": repo["repository_uuidv4"],
                 "state": "complete",
-                "pull_requests": len(prs),
+                "change_requests": len(prs),
                 **(
                     {"recording_diagnostics": self.recording_diagnostics}
                     if self.recording_diagnostics
@@ -2991,9 +2682,8 @@ class GitHubCollector:
             if self.owned:
                 self.http.close()
 
-    def code_check(self, repo, pr, job, url, observation):
-        # A transport failure adds no new evidence or incomplete saved listing.
-        response = self.request_get(url, repo)
+    def code_check(self, repo, pr, job, url, observation=None):
+        target = self._current_pr_value(pr["change_request_id"])
         with self.s.transaction():
             self.facts.fence(job)
             collection = self.facts.begin(
@@ -3002,18 +2692,43 @@ class GitHubCollector:
                 "pr-code-check",
                 job,
                 url,
-                {"observation": observation, "attempt": self.s.expected_attempt},
+                {"head": target.get("head"), "base": target.get("base")},
             )
+        if collection["state"] == "complete":
+            return target
+        base_revision = self.s.revision()
+        response = self.request_get(url, repo)
+        if response.status_code == 304:
+            response = self.request_get(
+                url, repo, headers={"Cache-Control": "no-cache"}
+            )
+            if response.status_code == 304:
+                raise CatalogError(
+                    "REUSE_UNAVAILABLE", "304 without normalized representation"
+                )
+        value = None
         try:
             value = self.rest_json(response)
+            base_revision = response.extensions.get(
+                "catalog_base_revision", base_revision
+            )
+            timestamp = self.facts.response_time(response)
             with self.s.transaction():
                 self.facts.fence(job)
-                occurrence, _, timestamp = self.facts.page(
-                    collection, response, {"url": url, "method": "GET"}, None
+                _, members = self.ensure_pr(
+                    repo, value, collection, base_revision, 0, timestamp
                 )
-                self.ensure_pr(repo, value, collection, occurrence, 0, timestamp)
+                self.facts.page(
+                    collection, timestamp, None, members, status=response.status_code
+                )
+                if self.current_members_unresolved(collection["fetch_collection_id"]):
+                    raise CatalogError(
+                        "CURRENT_STATE_UNRESOLVED",
+                        "Code target check has unresolved current fields",
+                    )
                 self.facts.finish(collection)
-                self.facts.publish()
+                self.facts.advance_revision()
+            return value
         except CatalogError as error:
             self.partial_rest_collection(
                 repo,
@@ -3022,19 +2737,9 @@ class GitHubCollector:
                 job,
                 collection,
                 error,
-                response,
+                response
+                if isinstance(value, dict) and value.get("id") is not None
+                else None,
                 url,
             )
             raise
-        selected = self.s.one(
-            "SELECT change_request_observation_id FROM current_change_request_observations WHERE change_request_id=?",
-            (pr["change_request_id"],),
-        )
-        if selected is None:
-            raise CatalogError(
-                "PARSER_SELECTION_UNRESOLVED",
-                "Acquisition saved; an explicit parser/fact selection is required",
-            )
-        response.extensions["catalog_observation_id"] = selected[0]
-        response.extensions["catalog_observed_at_us"] = timestamp
-        return response

@@ -14,6 +14,7 @@ from repo_catalog.adapters.sqlite.schema import (
     schema_sql,
 )
 from repo_catalog.domain.models import CatalogError
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @pytest.fixture
@@ -70,7 +71,10 @@ def issue(resources, **changes):
         "parsed_at_us": 1,
         "parser_module": parser_module,
         "parser_version": "1",
-        "metadata": {"labels": ["synthetic"], "nested": {"known": True}},
+        "metadata": {
+            "labels": [{"name": "synthetic"}],
+            "milestone": {"title": "retained"},
+        },
         "acquisition_scope": {**context, "endpoint": "issues"},
         **changes,
     }
@@ -131,10 +135,7 @@ def test_shared_physical_storage_replaces_marker_and_review_history(resources):
         ).fetchall()
         == []
     )
-    assert (
-        adapter.c.execute("SELECT count(*) FROM document_observations").fetchone()[0]
-        == 0
-    )
+    assert_absent_tables(adapter.c, "document_observations")
     assert adapter.c.execute("PRAGMA foreign_key_check").fetchall() == []
 
 
@@ -157,7 +158,7 @@ def test_edit_and_identical_refresh_have_no_normalized_versions(resources):
     assert current(adapter)["body"] == "edited"
     assert adapter.c.execute("SELECT count(*) FROM issue_resources").fetchone()[0] == 1
     assert adapter.c.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 2
-    assert adapter.c.execute("SELECT count(*) FROM parsed_results").fetchone()[0] == 0
+    assert_absent_tables(adapter.c, "parsed_results")
 
 
 def test_current_admission_rejects_unsupported_replay_without_catalog_changes(
@@ -285,13 +286,16 @@ def test_partial_and_provider_null_are_distinct_from_empty_and_missing(resources
     adapter, *_ = resources
     adapter.admit(issue(resources), source="import")
     partial = issue(
-        resources, provider_updated_at_us=20, metadata={"nested": {"new": True}}
+        resources, provider_updated_at_us=20, metadata={"milestone": {"state": "open"}}
     )
     for field in ("body", "title"):
         partial.pop(field)
     assert adapter.admit(partial, source="import").status == "accepted"
     assert current(adapter)["body"].endswith("\x00suffix")
-    assert current(adapter)["metadata"]["nested"] == {"known": True, "new": True}
+    assert current(adapter)["metadata"]["milestone"] == {
+        "title": "retained",
+        "state": "open",
+    }
     null = {**partial, "body_status": "provider-null", "provider_updated_at_us": 30}
     assert adapter.admit(null, source="import").status == "accepted"
     assert current(adapter)["body"] is None

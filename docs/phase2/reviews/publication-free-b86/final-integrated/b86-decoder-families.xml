@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="15.255" timestamp="2026-10-10T13:09:30.949550+00:00" hostname="80205147a63e"><testcase classname="review-artifacts.final-integrated.test_decoder_families" name="test_all_decoder_families_native_and_ordinary_readers_reject_false_value[text]" time="6.059"><failure message="AssertionError: text: ordinary reader returned a canonical-byte contradiction&#10;assert {'git_fact_uuidv4': 'c8656bfb-9173-43be-8548-190ef7f331e4', 'git_object_id': 3, 'content_id': 1, 'decoder_key': 'e4e56f26a7803289724ab3278a767d119b7b72ac8caefaadd909060b5adc9ed5', ...} is None">tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-209/test_all_decoder_families_nati0')
+attack = 'text'
+
+    @pytest.mark.parametrize('attack',['text','commit-message','commit-metadata','name'])
+    def test_all_decoder_families_native_and_ordinary_readers_reject_false_value(tmp_path,attack):
+        remote=FixtureRepo(tmp_path/'remote.git')
+        remote.commit('A',{b'name-\xff.txt':b'genuine canonical text'});remote.ref('refs/heads/main','A')
+        store,_=git_catalog(tmp_path/'state',remote)
+        table={'text':'git_text_facts','commit-message':'git_commit_facts','commit-metadata':'git_commit_facts','name':'git_name_facts'}[attack]
+        with store:
+            row=dict(store.one('SELECT * FROM '+table+' LIMIT 1'))
+            if 'git_fact_uuidv4' in row:row['git_fact_uuidv4']=str(uuid.uuid4())
+            row.update(parser_module='scope4.native-'+attack,parser_version='unranked')
+            settings={key:row[key] for key in ['parser_module','parser_version','text_encoding','metadata_encoding','metadata_errors','max_text_blob_bytes']}
+            row['decoder_key']=hashlib.sha256(json.dumps(settings,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+            field={'text':'raw_text','commit-message':'message_text','commit-metadata':'metadata','name':'decoded_name'}[attack]
+            row[field]='{"author":"invented"}' if attack=='commit-metadata' else 'scope4-fabricated-decoder-value'
+            try:store.execute('INSERT INTO '+table+'('+','.join(row)+') VALUES('+','.join('?' for _ in row)+')',tuple(row.values()))
+            except (CatalogError,sqlite3.IntegrityError):return
+            with pytest.raises(CatalogError):validate_git_fact(store.connection,table,row)
+            if attack=='name':
+                result=decoded_name(store,row['tree_git_object_id'],row['raw_name'],decoder_key=row['decoder_key'])
+                returned=result['decoded_name']
+            else:
+                result=decoded_fact(store,row['git_object_id'],'blob' if attack=='text' else 'commit',decoder_key=row['decoder_key'])
+                returned=result['fact']
+&gt;           assert returned is None, f'{attack}: ordinary reader returned a canonical-byte contradiction'
+E           AssertionError: text: ordinary reader returned a canonical-byte contradiction
+E           assert {'git_fact_uuidv4': 'c8656bfb-9173-43be-8548-190ef7f331e4', 'git_object_id': 3, 'content_id': 1, 'decoder_key': 'e4e56f26a7803289724ab3278a767d119b7b72ac8caefaadd909060b5adc9ed5', ...} is None
+
+../../review-artifacts/final-integrated/test_decoder_families.py:32: AssertionError</failure></testcase><testcase classname="review-artifacts.final-integrated.test_decoder_families" name="test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-message]" time="2.486"><failure message="AssertionError: commit-message: ordinary reader returned a canonical-byte contradiction&#10;assert {'git_fact_uuidv4': '04d4e020-d893-4bda-a5b4-7053892bae92', 'git_object_id': 1, 'decoder_key': '4af42184d499f2d5bff644b6e77f3bae36368bfbeb7e8c02900afb6c49e5da90', 'parser_module': 'scope4.native-commit-message', ...} is None">tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-209/test_all_decoder_families_nati1')
+attack = 'commit-message'
+
+    @pytest.mark.parametrize('attack',['text','commit-message','commit-metadata','name'])
+    def test_all_decoder_families_native_and_ordinary_readers_reject_false_value(tmp_path,attack):
+        remote=FixtureRepo(tmp_path/'remote.git')
+        remote.commit('A',{b'name-\xff.txt':b'genuine canonical text'});remote.ref('refs/heads/main','A')
+        store,_=git_catalog(tmp_path/'state',remote)
+        table={'text':'git_text_facts','commit-message':'git_commit_facts','commit-metadata':'git_commit_facts','name':'git_name_facts'}[attack]
+        with store:
+            row=dict(store.one('SELECT * FROM '+table+' LIMIT 1'))
+            if 'git_fact_uuidv4' in row:row['git_fact_uuidv4']=str(uuid.uuid4())
+            row.update(parser_module='scope4.native-'+attack,parser_version='unranked')
+            settings={key:row[key] for key in ['parser_module','parser_version','text_encoding','metadata_encoding','metadata_errors','max_text_blob_bytes']}
+            row['decoder_key']=hashlib.sha256(json.dumps(settings,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+            field={'text':'raw_text','commit-message':'message_text','commit-metadata':'metadata','name':'decoded_name'}[attack]
+            row[field]='{"author":"invented"}' if attack=='commit-metadata' else 'scope4-fabricated-decoder-value'
+            try:store.execute('INSERT INTO '+table+'('+','.join(row)+') VALUES('+','.join('?' for _ in row)+')',tuple(row.values()))
+            except (CatalogError,sqlite3.IntegrityError):return
+            with pytest.raises(CatalogError):validate_git_fact(store.connection,table,row)
+            if attack=='name':
+                result=decoded_name(store,row['tree_git_object_id'],row['raw_name'],decoder_key=row['decoder_key'])
+                returned=result['decoded_name']
+            else:
+                result=decoded_fact(store,row['git_object_id'],'blob' if attack=='text' else 'commit',decoder_key=row['decoder_key'])
+                returned=result['fact']
+&gt;           assert returned is None, f'{attack}: ordinary reader returned a canonical-byte contradiction'
+E           AssertionError: commit-message: ordinary reader returned a canonical-byte contradiction
+E           assert {'git_fact_uuidv4': '04d4e020-d893-4bda-a5b4-7053892bae92', 'git_object_id': 1, 'decoder_key': '4af42184d499f2d5bff644b6e77f3bae36368bfbeb7e8c02900afb6c49e5da90', 'parser_module': 'scope4.native-commit-message', ...} is None
+
+../../review-artifacts/final-integrated/test_decoder_families.py:32: AssertionError</failure></testcase><testcase classname="review-artifacts.final-integrated.test_decoder_families" name="test_all_decoder_families_native_and_ordinary_readers_reject_false_value[commit-metadata]" time="1.557"><failure message="AssertionError: commit-metadata: ordinary reader returned a canonical-byte contradiction&#10;assert {'git_fact_uuidv4': 'f29e717c-d1c1-4216-9e43-3ea99d3dfc3f', 'git_object_id': 1, 'decoder_key': '9ed01a25655c55969545d1811b40d21f14e1b75e85df76181965f946cc44b834', 'parser_module': 'scope4.native-commit-metadata', ...} is None">tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-209/test_all_decoder_families_nati2')
+attack = 'commit-metadata'
+
+    @pytest.mark.parametrize('attack',['text','commit-message','commit-metadata','name'])
+    def test_all_decoder_families_native_and_ordinary_readers_reject_false_value(tmp_path,attack):
+        remote=FixtureRepo(tmp_path/'remote.git')
+        remote.commit('A',{b'name-\xff.txt':b'genuine canonical text'});remote.ref('refs/heads/main','A')
+        store,_=git_catalog(tmp_path/'state',remote)
+        table={'text':'git_text_facts','commit-message':'git_commit_facts','commit-metadata':'git_commit_facts','name':'git_name_facts'}[attack]
+        with store:
+            row=dict(store.one('SELECT * FROM '+table+' LIMIT 1'))
+            if 'git_fact_uuidv4' in row:row['git_fact_uuidv4']=str(uuid.uuid4())
+            row.update(parser_module='scope4.native-'+attack,parser_version='unranked')
+            settings={key:row[key] for key in ['parser_module','parser_version','text_encoding','metadata_encoding','metadata_errors','max_text_blob_bytes']}
+            row['decoder_key']=hashlib.sha256(json.dumps(settings,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+            field={'text':'raw_text','commit-message':'message_text','commit-metadata':'metadata','name':'decoded_name'}[attack]
+            row[field]='{"author":"invented"}' if attack=='commit-metadata' else 'scope4-fabricated-decoder-value'
+            try:store.execute('INSERT INTO '+table+'('+','.join(row)+') VALUES('+','.join('?' for _ in row)+')',tuple(row.values()))
+            except (CatalogError,sqlite3.IntegrityError):return
+            with pytest.raises(CatalogError):validate_git_fact(store.connection,table,row)
+            if attack=='name':
+                result=decoded_name(store,row['tree_git_object_id'],row['raw_name'],decoder_key=row['decoder_key'])
+                returned=result['decoded_name']
+            else:
+                result=decoded_fact(store,row['git_object_id'],'blob' if attack=='text' else 'commit',decoder_key=row['decoder_key'])
+                returned=result['fact']
+&gt;           assert returned is None, f'{attack}: ordinary reader returned a canonical-byte contradiction'
+E           AssertionError: commit-metadata: ordinary reader returned a canonical-byte contradiction
+E           assert {'git_fact_uuidv4': 'f29e717c-d1c1-4216-9e43-3ea99d3dfc3f', 'git_object_id': 1, 'decoder_key': '9ed01a25655c55969545d1811b40d21f14e1b75e85df76181965f946cc44b834', 'parser_module': 'scope4.native-commit-metadata', ...} is None
+
+../../review-artifacts/final-integrated/test_decoder_families.py:32: AssertionError</failure></testcase><testcase classname="review-artifacts.final-integrated.test_decoder_families" name="test_all_decoder_families_native_and_ordinary_readers_reject_false_value[name]" time="4.708"><failure message="AssertionError: name: ordinary reader returned a canonical-byte contradiction&#10;assert 'scope4-fabricated-decoder-value' is None">tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-209/test_all_decoder_families_nati3')
+attack = 'name'
+
+    @pytest.mark.parametrize('attack',['text','commit-message','commit-metadata','name'])
+    def test_all_decoder_families_native_and_ordinary_readers_reject_false_value(tmp_path,attack):
+        remote=FixtureRepo(tmp_path/'remote.git')
+        remote.commit('A',{b'name-\xff.txt':b'genuine canonical text'});remote.ref('refs/heads/main','A')
+        store,_=git_catalog(tmp_path/'state',remote)
+        table={'text':'git_text_facts','commit-message':'git_commit_facts','commit-metadata':'git_commit_facts','name':'git_name_facts'}[attack]
+        with store:
+            row=dict(store.one('SELECT * FROM '+table+' LIMIT 1'))
+            if 'git_fact_uuidv4' in row:row['git_fact_uuidv4']=str(uuid.uuid4())
+            row.update(parser_module='scope4.native-'+attack,parser_version='unranked')
+            settings={key:row[key] for key in ['parser_module','parser_version','text_encoding','metadata_encoding','metadata_errors','max_text_blob_bytes']}
+            row['decoder_key']=hashlib.sha256(json.dumps(settings,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+            field={'text':'raw_text','commit-message':'message_text','commit-metadata':'metadata','name':'decoded_name'}[attack]
+            row[field]='{"author":"invented"}' if attack=='commit-metadata' else 'scope4-fabricated-decoder-value'
+            try:store.execute('INSERT INTO '+table+'('+','.join(row)+') VALUES('+','.join('?' for _ in row)+')',tuple(row.values()))
+            except (CatalogError,sqlite3.IntegrityError):return
+            with pytest.raises(CatalogError):validate_git_fact(store.connection,table,row)
+            if attack=='name':
+                result=decoded_name(store,row['tree_git_object_id'],row['raw_name'],decoder_key=row['decoder_key'])
+                returned=result['decoded_name']
+            else:
+                result=decoded_fact(store,row['git_object_id'],'blob' if attack=='text' else 'commit',decoder_key=row['decoder_key'])
+                returned=result['fact']
+&gt;           assert returned is None, f'{attack}: ordinary reader returned a canonical-byte contradiction'
+E           AssertionError: name: ordinary reader returned a canonical-byte contradiction
+E           assert 'scope4-fabricated-decoder-value' is None
+
+../../review-artifacts/final-integrated/test_decoder_families.py:32: AssertionError</failure></testcase></testsuite></testsuites>

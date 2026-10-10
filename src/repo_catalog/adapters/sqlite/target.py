@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.schema import DDL_SHA256, FORMAT_ID, SCHEMA_VERSION
 from repo_catalog.domain.models import CatalogError
 
@@ -27,6 +28,7 @@ class TargetReader:
         )
         self.connection.row_factory = sqlite3.Row
         try:
+            register_git_object_sql_function(self.connection)
             self.connection.execute("PRAGMA foreign_keys=ON")
             self.connection.execute("PRAGMA recursive_triggers=ON")
             self.connection.execute("PRAGMA query_only=ON")
@@ -40,7 +42,7 @@ class TargetReader:
                     )
             self.connection.execute("BEGIN")
             rows = self.connection.execute(
-                "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+                "SELECT singleton,format_id,schema_version,db_instance_id,local_revision,ddl_sha256,lifecycle FROM database_identity"
             ).fetchall()
             if len(rows) != 1:
                 raise CatalogError("SCHEMA_ERROR", "Invalid target database identity")

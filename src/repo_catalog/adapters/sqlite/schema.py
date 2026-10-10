@@ -4,7 +4,7 @@ import hashlib
 from importlib.resources import files
 
 FORMAT_ID = "repo-catalog/catalog3"
-SCHEMA_VERSION = 19
+SCHEMA_VERSION = 20
 
 
 def schema_sql():
@@ -12,11 +12,13 @@ def schema_sql():
         files("repo_catalog").joinpath("resources", name).read_text()
         for name in (
             "catalog3.sql",
+            "git_domain.sql",
             "git_facts.sql",
             "cas_integrity.sql",
             "exchange.sql",
             "identity_relations.sql",
             "current_resources.sql",
+            "current_api.sql",
             "current_collections.sql",
             "json_contracts.sql",
         )

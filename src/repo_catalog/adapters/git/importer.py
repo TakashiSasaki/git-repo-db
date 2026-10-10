@@ -9,10 +9,8 @@ import uuid
 
 from repo_catalog.adapters.filesystem.capacity import Capacity
 from repo_catalog.adapters.filesystem.locks import FileLock
-from repo_catalog.adapters.git.parsing import GitParsing, publish_git_acquisition
+from repo_catalog.adapters.git.parsing import GitParsing
 from repo_catalog.adapters.git.runner import GitRunner, git_env, hook
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
-from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.application.repository_identity import endpoint
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import now_us
@@ -21,7 +19,6 @@ from repo_catalog.domain.time import now_us
 class GitImporter:
     def __init__(self, store, token):
         self.s, self.token = store, token
-        self.model = ParserModel(store.connection)
 
     def sync(
         self,
@@ -29,7 +26,7 @@ class GitImporter:
         job,
         *,
         pr_roots=None,
-        change_request_observation_id=None,
+        code_assessment_id=None,
         repository_endpoint_id=None,
     ):
         """Collect into catalog3; committed fixed roots are reused across retries."""
@@ -90,41 +87,26 @@ class GitImporter:
                     (rid, job, attempt, generation, cache["active_cache_entry_id"]),
                 )
                 s.execute(
-                    "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,published) VALUES(?,?,0,0,0,0,0)",
+                    "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES(?,?,0,0,0,0,0)",
                     (rid, cache["cache_locator_id"]),
                 )
                 if kind == "git":
-                    profile = self.model.ensure_builtin_profile()
-                    predecessors = [
-                        row[0]
-                        for row in s.all(
-                            "SELECT d.fact_selection_decision_uuidv4 FROM fact_selection_decisions d JOIN fact_selection_publications p USING(fact_selection_decision_uuidv4) JOIN fact_selection_scopes f USING(fact_selection_scope_uuidv4) WHERE f.repository_uuidv4=? AND f.fact_kind='git' AND f.git_acquisition_id IS NULL AND NOT EXISTS(SELECT 1 FROM fact_selection_predecessors e JOIN fact_selection_publications ep ON ep.fact_selection_decision_uuidv4=e.fact_selection_decision_uuidv4 WHERE e.predecessor_decision_uuidv4=d.fact_selection_decision_uuidv4)",
-                            (repo["repository_uuidv4"],),
-                        )
-                    ]
-                    if len(predecessors) > 1:
+                    heads = s.all(
+                        "SELECT snapshot_id FROM snapshots s WHERE repository_uuidv4=? AND complete=1 AND NOT EXISTS(SELECT 1 FROM snapshots n WHERE n.predecessor_snapshot_id=s.snapshot_id AND n.complete=1)",
+                        (repo["repository_uuidv4"],),
+                    )
+                    if len(heads) > 1:
                         raise CatalogError(
                             "SELECTION_UNRESOLVED",
-                            "Resolve Git snapshot selection before starting a new selection",
+                            "Git ref captures have unresolved divergent heads; use an explicit snapshot",
                         )
-                    parsed_result = self.model.create_result(
-                        profile,
-                        repository_uuidv4=repo["repository_uuidv4"],
-                        inputs=[{"git_acquisition_id": rid}],
-                        derivation={
-                            "kind": "git",
-                            "decoder": "git-object-v1",
-                            "selection_decision_uuidv4": str(uuid.uuid4()),
-                            "selection_predecessors": predecessors,
-                        },
-                    )
                     s.execute(
-                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,parsed_result_uuidv4,published,generation,created_at_us) VALUES(?,?,?,?,0,?,?)",
+                        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,predecessor_snapshot_id,complete,generation,created_at_us) VALUES(?,?,?,?,0,?,?)",
                         (
                             rid,
                             rid,
                             repo["repository_uuidv4"],
-                            parsed_result,
+                            heads[0][0] if heads else None,
                             generation,
                             now_us(),
                         ),
@@ -133,7 +115,7 @@ class GitImporter:
                 "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE a.git_acquisition_id=?",
                 (rid,),
             )
-        elif run["state"] == "published":
+        elif run["state"] == "complete":
             return self.result(repo, run, kind)
         elif run["attempt"] != attempt:
             with s.transaction():
@@ -141,22 +123,7 @@ class GitImporter:
                     "UPDATE acquisition_progress SET attempt=? WHERE git_acquisition_id=?",
                     (attempt, run["git_acquisition_id"]),
                 )
-        # Git and PR acquisitions share the same immutable object parser.
-        parsed = s.one(
-            "SELECT parsed_result_uuidv4 FROM parsed_result_inputs WHERE git_acquisition_id=?",
-            (run["git_acquisition_id"],),
-        )
-        if parsed is None:
-            with s.transaction():
-                parsed_uuid = self.model.create_result(
-                    self.model.ensure_builtin_profile(),
-                    repository_uuidv4=repo["repository_uuidv4"],
-                    inputs=[{"git_acquisition_id": run["git_acquisition_id"]}],
-                    derivation={"kind": "git-pr", "decoder": "git-object-v1"},
-                )
-        else:
-            parsed_uuid = parsed[0]
-        self.result_uuid = parsed_uuid
+        self.parser = GitParsing(s, repo["repository_uuidv4"], token=self.token)
         repo = {**dict(repo), "url": run["endpoint_url"]}
         cache = s.one(
             "SELECT c.*,l.repository_uuidv4,l.path,l.access,l.state AS locator_state FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
@@ -353,13 +320,9 @@ class GitImporter:
                                     else "tag"
                                 )
                                 s.execute(
-                                    "INSERT INTO ref_observations(repository_uuidv4,parsed_result_uuidv4,snapshot_id,raw_ref_name,kind,object_format,target_oid,peeled_oid,target_type) VALUES(?,?,?,?,?,?,?,?,?)",
+                                    "INSERT INTO ref_observations(repository_uuidv4,snapshot_id,raw_ref_name,kind,object_format,target_oid,peeled_oid,target_type) VALUES(?,?,?,?,?,?,?,?)",
                                     (
                                         repo["repository_uuidv4"],
-                                        s.one(
-                                            "SELECT parsed_result_uuidv4 FROM snapshots WHERE snapshot_id=?",
-                                            (run["git_acquisition_id"],),
-                                        )[0],
                                         run["git_acquisition_id"],
                                         raw_name,
                                         refkind,
@@ -372,19 +335,21 @@ class GitImporter:
                                     ),
                                 )
                             root_oid = bytes.fromhex(r["peeled"] or r["oid"])
+                            root_role = "traversal" if kind == "git" else r["role"]
                             root = s.one(
-                                "SELECT acquisition_root_id FROM acquisition_roots WHERE git_acquisition_id=? AND object_format=? AND oid=? AND role='traversal'",
-                                (run["git_acquisition_id"], fmt, root_oid),
+                                "SELECT acquisition_root_id FROM acquisition_roots WHERE git_acquisition_id=? AND object_format=? AND oid=? AND role=?",
+                                (run["git_acquisition_id"], fmt, root_oid, root_role),
                             )
                             acquisition_root_id = (
                                 root[0]
                                 if root
                                 else s.execute(
-                                    "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES(?,?,?,'traversal',?,?,0)",
+                                    "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,complete) VALUES(?,?,?,?,?,?,0)",
                                     (
                                         run["git_acquisition_id"],
                                         fmt,
                                         root_oid,
+                                        root_role,
                                         repo["repository_uuidv4"],
                                         bytes.fromhex(r["expected"])
                                         if r.get("expected")
@@ -403,16 +368,31 @@ class GitImporter:
                                         repo["repository_uuidv4"],
                                     ),
                                 )
+                            elif code_assessment_id is not None:
+                                assessment = s.one(
+                                    "SELECT change_request_id FROM code_assessments WHERE code_assessment_id=? AND repository_uuidv4=?",
+                                    (code_assessment_id, repo["repository_uuidv4"]),
+                                )
+                                if assessment is None:
+                                    raise CatalogError(
+                                        "NOT_FOUND",
+                                        "Exact PR code assessment is missing",
+                                    )
+                                s.execute(
+                                    "INSERT INTO root_origins(acquisition_root_id,origin_kind,source_ordinal,change_request_id,code_assessment_id,repository_uuidv4) VALUES(?,'pr_role',?,?,?,?)",
+                                    (
+                                        acquisition_root_id,
+                                        ordinal,
+                                        assessment[0],
+                                        code_assessment_id,
+                                        repo["repository_uuidv4"],
+                                    ),
+                                )
                 # Even reuse captures this independent acquisition's exact object
                 # membership; retained raw bytes avoid a second cat-file read.
                 self.import_objects(path, fmt, refs, repo, run, job, lock)
-                with s.transaction():
-                    publish_git_acquisition(
-                        s, run["git_acquisition_id"], repo["repository_uuidv4"]
-                    )
-                GitParsing(s, self.result_uuid, token=self.token).parse_acquisition(
-                    run["git_acquisition_id"], refs
-                )
+                self.parser.parse_acquisition(run["git_acquisition_id"], refs)
+                self.parser.validate_acquisition(run["git_acquisition_id"])
                 hook("before_publish")
                 self.token.check()
                 with s.transaction():
@@ -434,55 +414,26 @@ class GitImporter:
                             "Refusing publication from obsolete attempt",
                         )
                     s.execute(
-                        "UPDATE preservation_obligations SET structure_done=1,digest_done=1,text_done=1,published=1 WHERE git_acquisition_id=?",
+                        "UPDATE preservation_obligations SET structure_done=1,digest_done=1,text_done=1,complete=1 WHERE git_acquisition_id=?",
                         (run["git_acquisition_id"],),
                     )
                     s.execute(
-                        "UPDATE acquisition_progress SET state='published',ended_at_us=? WHERE git_acquisition_id=?",
+                        "UPDATE acquisition_progress SET state='complete',ended_at_us=? WHERE git_acquisition_id=?",
                         (now_us(), run["git_acquisition_id"]),
                     )
                     s.execute(
-                        "UPDATE acquisition_roots SET published=1 WHERE git_acquisition_id=?",
+                        "UPDATE acquisition_roots SET complete=1 WHERE git_acquisition_id=?",
                         (run["git_acquisition_id"],),
                     )
                     if kind == "git":
                         s.execute(
-                            "UPDATE snapshots SET published=1 WHERE snapshot_id=?",
+                            "UPDATE snapshots SET complete=1 WHERE snapshot_id=?",
                             (run["git_acquisition_id"],),
                         )
                         incoming = s.one(
                             "SELECT refs_observed_at_us FROM git_acquisitions WHERE git_acquisition_id=?",
                             (run["git_acquisition_id"],),
                         )[0]
-                        snapshot = s.one(
-                            "SELECT parsed_result_uuidv4 FROM snapshots WHERE snapshot_id=?",
-                            (run["git_acquisition_id"],),
-                        )
-                        profile = self.model.ensure_builtin_profile()
-                        self.model.publish_result(snapshot[0])
-                        selected_profile = self.model.ensure_scope_profile(
-                            profile,
-                            repository_uuidv4=repo["repository_uuidv4"],
-                            fact_kind="git",
-                        )
-                        planned = json.loads(
-                            s.one(
-                                "SELECT derivation_json FROM parsed_results WHERE parsed_result_uuidv4=?",
-                                (snapshot[0],),
-                            )[0]
-                        )
-                        if selected_profile is not None:
-                            self.model.select_fact(
-                                snapshot[0],
-                                fact_kind="git",
-                                git_acquisition_id=run["git_acquisition_id"],
-                            )
-                            self.model.select_fact(
-                                snapshot[0],
-                                fact_kind="git",
-                                predecessors=planned["selection_predecessors"],
-                                decision_uuid=planned["selection_decision_uuidv4"],
-                            )
                         # Fixed-root resume preserves its original remote observation.
                         # A PR-only acquisition cannot establish repository-wide refs.
                         for component in ("structure", "digests", "heads-text", "refs"):
@@ -492,24 +443,11 @@ class GitImporter:
                                 "complete",
                                 {
                                     "git_acquisition_id": run["git_acquisition_id"],
-                                    "parsed_result_uuidv4": snapshot[0],
+                                    "snapshot_id": run["git_acquisition_id"],
                                 },
                                 observed_at_us=incoming,
                             )
-                    if kind == "pr":
-                        self.model.publish_result(self.result_uuid)
-                        scope = self.model.ensure_scope_profile(
-                            self.model.ensure_builtin_profile(),
-                            repository_uuidv4=repo["repository_uuidv4"],
-                            fact_kind="git",
-                        )
-                        if scope is not None:
-                            self.model.select_fact(
-                                self.result_uuid,
-                                fact_kind="git",
-                                git_acquisition_id=run["git_acquisition_id"],
-                            )
-                    s.publish()
+                    s.advance_local_revision()
                 return self.result(repo, run, kind)
             finally:
                 with s.transaction():
@@ -569,11 +507,11 @@ class GitImporter:
     def reusable_direct_roots(self, repo, fmt, roots):
         for root in roots:
             # Symbolic PR heads still require remote observation. Direct related
-            # OIDs can reuse this repository's already published full closure.
+            # OIDs can reuse this repository's already complete full closure.
             if root["role"] == "head" or root["ref"] != root.get("expected"):
                 return False
             if not self.s.one(
-                "SELECT 1 FROM git_objects g JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repository_uuidv4=? AND r.state='published' LIMIT 1",
+                "SELECT 1 FROM available_git_objects g JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repository_uuidv4=? AND r.state='complete' LIMIT 1",
                 (fmt, bytes.fromhex(root["ref"]), repo["repository_uuidv4"]),
             ):
                 return False
@@ -615,7 +553,7 @@ class GitImporter:
                 for line in out:
                     self.token.check()
                     obj = s.one(
-                        "SELECT * FROM git_objects WHERE object_format=? AND oid=?",
+                        "SELECT * FROM available_git_objects WHERE object_format=? AND oid=?",
                         (fmt, bytes.fromhex(line.strip().decode())),
                     )
                     reusable = (
@@ -724,43 +662,12 @@ class GitImporter:
                     raw_bytes = bytes(data)
                     try:
                         with s.transaction():
-                            payload = intern_payload(
-                                s.connection,
+                            self.parser.install_object(
+                                fmt,
+                                bytes.fromhex(oid.decode()),
+                                typ,
                                 raw_bytes,
-                                representation="git-object-raw-v1",
-                            )
-                            if typ == "blob":
-                                self.save_blob(
-                                    fmt, oid, size, hashes, repo, run, raw_bytes
-                                )
-                            else:
-                                self.ensure(
-                                    "git_objects",
-                                    (
-                                        "object_format",
-                                        "oid",
-                                        "type",
-                                        "size",
-                                        "verified",
-                                    ),
-                                    (fmt, bytes.fromhex(oid.decode()), typ, size, 1),
-                                    ("object_format", "oid"),
-                                )
-                                self.source(
-                                    s.git_object_id(fmt, bytes.fromhex(oid.decode())),
-                                    repo,
-                                    run,
-                                )
-                            obj = s.git_object_id(fmt, bytes.fromhex(oid.decode()))
-                            self.ensure(
-                                "git_object_payloads",
-                                (
-                                    "git_object_id",
-                                    "payload_representation",
-                                    "payload_sha256",
-                                ),
-                                (obj, payload.representation, payload.sha256),
-                                ("git_object_id",),
+                                acquisition=run["git_acquisition_id"],
                             )
                     except CatalogError as error:
                         if error.code not in (
@@ -803,79 +710,13 @@ class GitImporter:
         hook("after_digest")
 
     def source(self, obj, repo, run):
-        self.ensure(
-            "repository_object_sources",
-            ("repository_uuidv4", "git_object_id", "git_acquisition_id"),
-            (repo["repository_uuidv4"], obj, run["git_acquisition_id"]),
-            ("repository_uuidv4", "git_object_id", "git_acquisition_id"),
-        )
-
-    def save_blob(self, fmt, oid, size, hashes, repo, run, raw_bytes):
-        s = self.s
-        raw = bytes.fromhex(oid.decode())
-        previous = s.one(
-            "SELECT c.content_id,c.byte_length FROM git_objects g JOIN blob_content_map b ON b.git_object_id=g.git_object_id JOIN contents c ON c.content_id=b.content_id WHERE g.object_format=? AND g.oid=?",
-            (fmt, raw),
-        )
-        if previous and previous["byte_length"] != size:
-            raise CatalogError(
-                "INTEGRITY_ERROR", "Existing OID maps to different raw length"
-            )
-        self.ensure(
-            "git_objects",
-            ("object_format", "oid", "type", "size", "verified"),
-            (fmt, raw, "blob", size, 1),
-            ("object_format", "oid"),
-        )
-        obj = s.git_object_id(fmt, raw)
-        if previous:
-            cid = previous["content_id"]
-        else:
-            candidates = s.all(
-                "SELECT c.content_id FROM contents c JOIN content_digests d ON d.content_id=c.content_id WHERE d.algorithm='sha256' AND d.digest=? AND c.byte_length=?",
-                (hashes["sha256"].digest(), size),
-            )
-            cid = None
-            for candidate in candidates:
-                digests = {
-                    r["algorithm"]: r["digest"]
-                    for r in s.all(
-                        "SELECT * FROM content_digests WHERE content_id=?",
-                        (candidate["content_id"],),
-                    )
-                }
-                existing = s.one(
-                    "SELECT sb.body FROM blob_content_map b JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes sb ON sb.sha256=p.payload_sha256 WHERE b.content_id=? LIMIT 1",
-                    (candidate["content_id"],),
-                )
-                if (
-                    existing
-                    and existing[0] == raw_bytes
-                    and all(digests.get(a) == h.digest() for a, h in hashes.items())
-                ):
-                    cid = candidate["content_id"]
-                    break
-            if cid is None:
-                cid = s.execute(
-                    "INSERT INTO contents(byte_length,created_at_us) VALUES(?,?)",
-                    (size, now_us()),
-                ).lastrowid
-            s.execute(
-                "INSERT INTO blob_content_map(git_object_id,content_id,git_acquisition_id) VALUES(?,?,?)",
-                (obj, cid, run["git_acquisition_id"]),
-            )
-        for algo, h in hashes.items():
+        with self.s.transaction():
+            before = self.s.connection.total_changes
             self.ensure(
-                "content_digests",
-                (
-                    "content_id",
-                    "representation",
-                    "algorithm",
-                    "digest",
-                    "verified_at_us",
-                    "pipeline_version",
-                ),
-                (cid, "raw-content-v1", algo, h.digest(), now_us(), "v1"),
-                ("content_id", "representation", "algorithm"),
+                "repository_object_sources",
+                ("repository_uuidv4", "git_object_id", "git_acquisition_id"),
+                (repo["repository_uuidv4"], obj, run["git_acquisition_id"]),
+                ("repository_uuidv4", "git_object_id", "git_acquisition_id"),
             )
-        self.source(obj, repo, run)
+            if self.s.connection.total_changes != before:
+                self.s.advance_local_revision()

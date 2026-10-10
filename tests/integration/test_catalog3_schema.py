@@ -1,139 +1,63 @@
-"""Ordinary packaged catalog3 constraints on the working SQLite binding."""
+"""Fresh typed ownership and domain completeness constraints."""
 
 import copy
-import hashlib
+import json
 import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
+from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.adapters.sqlite.schema import schema_sql
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.config import DEFAULTS, serialize
-from tests.support.parser_facts import enrich
-
-TIME_US = 1_791_244_800_000_000
-
-
-def put(db, table, **values):
-    values = enrich(db, table, values)
-    db.execute(
-        f"INSERT INTO {table}({','.join(values)}) VALUES({','.join('?' for _ in values)})",
-        tuple(values.values()),
-    )
+from tests.support.domain_facts import (
+    TIME_US,
+    admit_pr,
+    candidate,
+    collection,
+    fresh_domain_db,
+    repository_uuid,
+)
+from tests.support.domain_facts import (
+    insert as put,
+)
 
 
 @pytest.fixture
 def facts():
-    db = sqlite3.connect(":memory:", autocommit=True)
-    db.executescript(schema_sql())
-    put(
-        db,
-        "service_instances",
-        service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
-        service_kind="github",
-        name="synthetic",
-        metadata="{}",
-    )
-    for owner, observation in (("a", 1), ("b", 2)):
-        put(db, "repositories", repository_uuidv4=owner, name=owner, metadata="{}")
+    db = fresh_domain_db()
+    for number in (1, 2):
+        admit_pr(db, number, state="open")
+        scope = collection(db, number, identity=f"collection-{number}")
         put(
             db,
-            "repository_bindings",
-            repository_binding_id="binding-" + owner,
-            repository_uuidv4=owner,
-            service_instance_uuidv4="00000000-0000-4000-8000-000000000101",
-            provider_repository_id=owner,
-            metadata="{}",
-        )
-        put(
-            db,
-            "change_requests",
-            change_request_id="pr-" + owner,
-            repository_uuidv4=owner,
-            repository_binding_id="binding-" + owner,
-            change_request_kind="pull_request",
-            provider_change_request_number=1,
-        )
-        put(
-            db,
-            "change_request_observations",
-            change_request_observation_id=observation,
-            change_request_id="pr-" + owner,
-            published=1,
-            payload="{}",
-            parsed_at_us=TIME_US,
-        )
-        put(
-            db,
-            "resume_scopes",
-            resume_scope_id="scope-" + owner,
-            repository_uuidv4=owner,
-            repository_binding_id="binding-" + owner,
-            request_context="{}",
-            parser_version="synthetic",
-            profile_version="synthetic",
-            confidence="proven",
-        )
-        put(
-            db,
-            "fetch_collections",
-            fetch_collection_id="collection-" + owner,
-            repository_uuidv4=owner,
-            change_request_id="pr-" + owner,
+            "code_listings",
+            code_listing_id=f"files-{number}",
+            change_request_id=f"pr{number}",
+            fetch_collection_id=f"collection-{number}",
             kind="files",
-            resume_scope_id="scope-" + owner,
+            resume_scope_id=scope,
+            object_format="sha1",
+            head_oid=b"h" * 20,
+            base_oid=b"b" * 20,
         )
         put(
             db,
-            "stored_bytes",
-            sha256=hashlib.sha256(owner.encode()).digest(),
-            body=owner.encode(),
-            byte_length=1,
+            "code_listing_progress",
+            code_listing_id=f"files-{number}",
+            state="partial",
+            terminal=0,
+            page_count=0,
+            context_proven=1,
         )
-        put(
-            db,
-            "payloads",
-            representation="decoded_api",
-            sha256=hashlib.sha256(owner.encode()).digest(),
-        )
-        put(
-            db,
-            "fetch_occurrences",
-            fetch_occurrence_id=observation,
-            fetch_collection_id="collection-" + owner,
-            ordinal=0,
-            payload_representation="decoded_api",
-            payload_sha256=hashlib.sha256(owner.encode()).digest(),
-            request="{}",
-            parsed_at_us=TIME_US,
-        )
-    put(
-        db,
-        "code_listings",
-        code_listing_id="files",
-        change_request_id="pr-a",
-        fetch_collection_id="collection-a",
-        kind="files",
-        resume_scope_id="scope-a",
-    )
-    put(
-        db,
-        "code_listing_progress",
-        code_listing_id="files",
-        state="partial",
-        terminal=0,
-        page_count=0,
-        context_proven=1,
-    )
     put(
         db,
         "code_file_changes",
-        code_listing_id="files",
-        fetch_occurrence_id=1,
+        code_listing_id="files-1",
         position=0,
+        repository_uuidv4=repository_uuid(1),
         raw_path=b"raw/\xff\tname",
-        payload="{}",
+        metadata="{}",
     )
     yield db
     assert not db.execute("PRAGMA foreign_key_check").fetchall()
@@ -141,64 +65,61 @@ def facts():
     db.close()
 
 
-@pytest.mark.parametrize("owner,observation", [("pr-a", 1), ("pr-a", 2)])
-def test_current_decision_requires_same_owner_completed_observation(
-    facts, owner, observation
-):
-    result, profile, repo = facts.execute(
-        "SELECT o.parsed_result_uuidv4,r.parser_profile_uuidv4,r.repository_uuidv4 FROM change_request_observations o JOIN parsed_results r USING(parsed_result_uuidv4) WHERE o.change_request_observation_id=?",
-        (observation,),
-    ).fetchone()
-    model = ParserModel(facts)
-    model.publish_result(result)
-    if observation == 1:
-        model.ensure_scope_profile(
-            profile, repository_uuidv4=repo, fact_kind="change-request"
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("repository_uuidv4", repository_uuid(2)),
+        ("repository_binding_id", "binding-2"),
+        ("change_request_id", "pr2"),
+    ],
+)
+def test_current_state_requires_same_typed_owner(facts, field, value):
+    with pytest.raises(sqlite3.IntegrityError):
+        facts.execute(
+            f"UPDATE change_request_state SET {field}=? WHERE change_request_id='pr1'",
+            (value,),
         )
-        model.select_fact(result, fact_kind="change-request", change_request_id=owner)
-        assert facts.execute(
-            "SELECT change_request_observation_id FROM current_change_request_observations"
-        ).fetchall() == [(1,)]
-    else:
-        with pytest.raises(sqlite3.IntegrityError):
-            model.select_fact(
-                result, fact_kind="change-request", change_request_id=owner
-            )
+    assert facts.execute(
+        "SELECT state FROM eligible_change_request_state WHERE change_request_id='pr1'"
+    ).fetchone() == ("open",)
 
 
-def test_listing_and_page_must_share_scope_and_owner(facts):
+def test_listing_and_members_must_share_scope_and_owner(facts):
     with pytest.raises(sqlite3.IntegrityError):
         put(
             facts,
             "code_listings",
             code_listing_id="wrong",
-            change_request_id="pr-a",
-            fetch_collection_id="collection-a",
+            change_request_id="pr1",
+            fetch_collection_id="collection-2",
             kind="commits",
-            resume_scope_id="scope-b",
+            resume_scope_id="scope-collection-2",
         )
     with pytest.raises(sqlite3.IntegrityError):
         put(
             facts,
             "code_file_changes",
-            parsed_result_uuidv4=facts.execute(
-                "SELECT parsed_result_uuidv4 FROM code_file_changes LIMIT 1"
-            ).fetchone()[0],
-            code_listing_id="files",
-            fetch_occurrence_id=2,
+            code_listing_id="files-1",
             position=1,
+            repository_uuidv4=repository_uuid(2),
             raw_path=b"cross-owner",
-            payload="{}",
+            metadata="{}",
         )
     with pytest.raises(sqlite3.IntegrityError):
         put(
             facts,
-            "code_observations",
-            change_request_id="pr-a",
-            change_request_observation_id=2,
-            file_code_listing_id="files",
+            "code_assessments",
+            code_assessment_id="foreign",
+            change_request_id="pr1",
+            repository_uuidv4=repository_uuid(1),
+            file_code_listing_id="files-2",
             state="partial",
-            details="{}",
+            object_format="sha1",
+            head_oid=b"h" * 20,
+            base_oid=b"b" * 20,
+            parser_module=__name__,
+            parser_version="1",
+            details_json="{}",
         )
     assert facts.execute("SELECT raw_path FROM code_file_changes").fetchall() == [
         (b"raw/\xff\tname",)
@@ -208,22 +129,40 @@ def test_listing_and_page_must_share_scope_and_owner(facts):
 @pytest.mark.parametrize(
     "attack", ["append", "edit", "delete", "reopen", "remove-marker", "replace-marker"]
 )
-def test_completed_listing_seals_content_and_completion_marker(facts, attack):
+def test_completed_listing_preserves_exact_target_content(facts, attack):
     facts.execute(
-        "UPDATE code_listing_progress SET state='complete',terminal=1,page_count=1 WHERE code_listing_id='files'"
+        "UPDATE code_listing_progress SET state='complete',terminal=1,page_count=1 WHERE code_listing_id='files-1'"
     )
     statements = {
-        "append": "INSERT INTO code_file_changes(code_listing_id,fetch_occurrence_id,position,raw_path,payload) VALUES('files',1,1,x'61','{}')",
-        "edit": "UPDATE code_file_changes SET raw_path=x'61' WHERE code_listing_id='files'",
-        "delete": "DELETE FROM code_file_changes WHERE code_listing_id='files'",
-        "reopen": "UPDATE code_listing_progress SET state='partial' WHERE code_listing_id='files'",
-        "remove-marker": "DELETE FROM code_listing_progress WHERE code_listing_id='files'",
-        "replace-marker": "INSERT OR REPLACE INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES('files','partial',0,0,1)",
+        "append": (
+            "INSERT INTO code_file_changes(code_listing_id,position,repository_uuidv4,raw_path,metadata) VALUES('files-1',1,?,x'61','{}')",
+            (repository_uuid(1),),
+        ),
+        "edit": (
+            "UPDATE code_file_changes SET raw_path=x'61' WHERE code_listing_id='files-1'",
+            (),
+        ),
+        "delete": ("DELETE FROM code_file_changes WHERE code_listing_id='files-1'", ()),
+        "reopen": (
+            "UPDATE code_listing_progress SET state='partial' WHERE code_listing_id='files-1'",
+            (),
+        ),
+        "remove-marker": (
+            "DELETE FROM code_listing_progress WHERE code_listing_id='files-1'",
+            (),
+        ),
+        "replace-marker": (
+            "INSERT OR REPLACE INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES('files-1','partial',0,0,1)",
+            (),
+        ),
     }
+    sql, args = statements[attack]
     with pytest.raises(sqlite3.IntegrityError):
-        facts.execute(statements[attack])
+        facts.execute(sql, args)
     assert (
-        facts.execute("SELECT state FROM code_listing_progress").fetchone()[0]
+        facts.execute(
+            "SELECT state FROM code_listing_progress WHERE code_listing_id='files-1'"
+        ).fetchone()[0]
         == "complete"
     )
     assert (
@@ -232,55 +171,59 @@ def test_completed_listing_seals_content_and_completion_marker(facts, attack):
     )
 
 
-def test_pending_observation_cannot_become_current(facts):
+def test_missing_parent_stages_current_candidate_until_parent_exists(facts):
+    data = candidate(
+        change_request_id="late-parent",
+        acquisition_scope={
+            **candidate()["acquisition_scope"],
+            "change_request_id": "late-parent",
+        },
+        state="open",
+    )
+    api = CurrentApiState(facts)
+    assert (
+        api.admit("change_request_state", data, source="import").status
+        == "missing_dependency"
+    )
+    assert not facts.execute(
+        "SELECT 1 FROM change_request_state WHERE change_request_id='late-parent'"
+    ).fetchall()
     put(
         facts,
-        "change_request_observations",
-        change_request_observation_id=3,
-        change_request_id="pr-a",
-        published=0,
-        payload="{}",
-        parsed_at_us=TIME_US,
+        "change_requests",
+        change_request_id="late-parent",
+        repository_uuidv4=repository_uuid(1),
+        repository_binding_id="binding-1",
+        change_request_kind="pull_request",
+        provider_change_request_number=2,
     )
-    result = facts.execute(
-        "SELECT parsed_result_uuidv4 FROM change_request_observations WHERE change_request_observation_id=3"
-    ).fetchone()[0]
-    model = ParserModel(facts)
-    model.publish_result(result)
-    with pytest.raises(sqlite3.IntegrityError):
-        model.select_fact(result, fact_kind="change-request", change_request_id="pr-a")
+    assert api._promote_staging() == 1
+    assert facts.execute(
+        "SELECT state FROM eligible_change_request_state WHERE change_request_id='late-parent'"
+    ).fetchone() == ("open",)
 
 
 def test_source_seen_range_preserves_order_at_single_microsecond_precision(facts):
     put(
         facts,
-        "sources",
-        source_registration_uuidv4="00000000-0000-4000-8000-000000000201",
-        source_id="source",
-        discovery_kind="manual_git",
-        name="synthetic",
-        settings="{}",
-    )
-    put(
-        facts,
         "source_repositories",
         source_id="source",
-        repository_uuidv4="a",
+        repository_uuidv4=repository_uuid(1),
         first_seen_us=TIME_US,
         last_seen_us=TIME_US + 1,
     )
-    for first_seen_us, last_seen_us in ((TIME_US + 1, TIME_US + 1), (TIME_US, TIME_US)):
+    for first, last in ((TIME_US + 1, TIME_US + 1), (TIME_US, TIME_US)):
         with pytest.raises(sqlite3.IntegrityError, match="aggregate time regression"):
             facts.execute(
                 "UPDATE source_repositories SET first_seen_us=?,last_seen_us=?",
-                (first_seen_us, last_seen_us),
+                (first, last),
             )
     with pytest.raises(sqlite3.IntegrityError):
         put(
             facts,
             "source_repositories",
             source_id="source",
-            repository_uuidv4="b",
+            repository_uuidv4=repository_uuid(2),
             first_seen_us=TIME_US + 1,
             last_seen_us=TIME_US,
         )
@@ -291,6 +234,41 @@ def test_source_seen_range_preserves_order_at_single_microsecond_precision(facts
     assert facts.execute(
         "SELECT first_seen_us,last_seen_us FROM source_repositories"
     ).fetchone() == (TIME_US - 1, TIME_US + 2)
+
+
+def test_committed_resource_does_not_need_collection_or_operation_success(facts):
+    facts.execute("DELETE FROM code_listing_progress WHERE code_listing_id='files-1'")
+    assert facts.execute(
+        "SELECT state FROM eligible_change_request_state WHERE change_request_id='pr1'"
+    ).fetchone() == ("open",)
+    assert facts.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
+    assert facts.execute("SELECT count(*) FROM completion_markers").fetchone()[0] == 0
+    assert not facts.execute(
+        "SELECT 1 FROM sqlite_schema WHERE name='parsed_results'"
+    ).fetchall()
+
+
+def test_latest_api_states_have_no_normalized_accepted_history(facts):
+    api = CurrentApiState(facts)
+    for clock in range(TIME_US + 1, TIME_US + 101):
+        result = api.admit(
+            "change_request_state",
+            candidate(
+                clock=clock,
+                observed_at_us=clock,
+                state="open" if clock % 2 else "closed",
+            ),
+            source="import",
+        )
+        assert result.status in {"accepted", "identical"}
+    assert facts.execute("SELECT count(*) FROM change_request_state").fetchone()[0] == 2
+    assert facts.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
+    evidence = json.loads(
+        facts.execute(
+            "SELECT field_evidence_json FROM change_request_state WHERE change_request_id='pr1'"
+        ).fetchone()[0]
+    )
+    assert evidence['["state"]']["provider_updated_at_us"] == TIME_US + 100
 
 
 def test_derived_fts_and_analyze_do_not_change_catalog_identity(tmp_path):

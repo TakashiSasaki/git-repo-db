@@ -1,0 +1,102 @@
+[
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"359f20f3-eecf-4824-ae15-7d7878dbcc5e\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"d256d690-66dc-44ee-b918-59c30fcdc56e\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"d256d690-66dc-44ee-b918-59c30fcdc56e\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"merge\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"4446cfa1-6d11-4d41-8fdd-119e26bd0983\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"W53sLTqnMUeo9YErXz+3/K8W0bM=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"2dcf9f1d-e081-4658-9889-92450cecc830\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"W53sLTqnMUeo9YErXz+3/K8W0bM=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"2dcf9f1d-e081-4658-9889-92450cecc830\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"base\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"495e8ca3-154f-467b-9e9e-c97b5a80da71\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"8c72621d-863d-413a-a3b5-c757202d8199\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"8c72621d-863d-413a-a3b5-c757202d8199\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"review-target:86bbb53d0a50d32d7885aff39653acbc95e9ec58\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"9dd7b91d-4a71-42a2-8991-28c91070b5c7\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"7dc040b7-2cc4-4584-acb5-d0cc756e754f\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"7dc040b7-2cc4-4584-acb5-d0cc756e754f\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"review-target:86bbb53d0a50d32d7885aff39653acbc95e9ec58\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"a7367f73-d76d-4ba2-bbfb-ec53e56ebc54\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"05739192-a9e7-4590-a71a-bfe2cf68213b\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"05739192-a9e7-4590-a71a-bfe2cf68213b\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"head\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"b9db6eb2-265a-42c9-9ae2-59d8387d2f63\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"W53sLTqnMUeo9YErXz+3/K8W0bM=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"daf1bc2b-6a7a-41e4-bb05-41467a0e509e\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"W53sLTqnMUeo9YErXz+3/K8W0bM=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"daf1bc2b-6a7a-41e4-bb05-41467a0e509e\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"base\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"bd3b8340-a9b5-4d71-a6f5-c18b2b22b14a\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"775a4844-6188-4d1a-a970-06937befc4f2\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"775a4844-6188-4d1a-a970-06937befc4f2\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"head\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"ce7e3b11-ae03-4bd2-9344-d0266f4c0ac8\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"W53sLTqnMUeo9YErXz+3/K8W0bM=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"a3b44b28-3fa0-4c29-952d-cf1015e19c96\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"W53sLTqnMUeo9YErXz+3/K8W0bM=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"a3b44b28-3fa0-4c29-952d-cf1015e19c96\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"base\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"eedcaf86-dfad-424a-9628-84334f2fc82d\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"ed4765f6-cc2e-4d9a-9257-f0c51f0a4ab2\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"ed4765f6-cc2e-4d9a-9257-f0c51f0a4ab2\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"review-target:86bbb53d0a50d32d7885aff39653acbc95e9ec58\"}}"
+  },
+  {
+    "table_name": "acquisition_roots",
+    "reason": "invalid:domain_constraint",
+    "record_json": "{\"key\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"f941e75c-f370-4d96-8f17-c1f559fd1b2a\\\"}\",\"table\":\"acquisition_roots\",\"values\":{\"complete\":1,\"expected_oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"git_acquisition_id\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"f489db89-060a-472b-9bb9-9fefbfe65e00\\\"}\",\"column\":\"git_acquisition_id\"},\"object_format\":\"sha1\",\"oid\":{\"$bytes\":\"hru1PQpQ0y14ha/zllOsvJXp7Fg=\"},\"repository_uuidv4\":{\"$ref\":\"git_acquisitions:{\\\"git_acquisition_id\\\":\\\"f489db89-060a-472b-9bb9-9fefbfe65e00\\\"}\",\"column\":\"repository_uuidv4\"},\"role\":\"head\"}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"0801b8a1-9a3d-45a3-8663-f2f29ee5d982\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"9dd7b91d-4a71-42a2-8991-28c91070b5c7\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:86f0bdfb30f0255bb266b5392b715f303caff614864f3338e4c288cfbbc1a16c\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"24718a27-9dc1-4879-914d-e586c98673d1\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"4446cfa1-6d11-4d41-8fdd-119e26bd0983\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:86f0bdfb30f0255bb266b5392b715f303caff614864f3338e4c288cfbbc1a16c\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"3286cdb2-3c6a-4609-add3-879c21cc98bc\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"a7367f73-d76d-4ba2-bbfb-ec53e56ebc54\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:86f0bdfb30f0255bb266b5392b715f303caff614864f3338e4c288cfbbc1a16c\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"347ce5bc-e45e-46c1-90dc-f7d236375486\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"b9db6eb2-265a-42c9-9ae2-59d8387d2f63\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:41\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:cfdcbb0f895e376e3660f892e8e39d1704ba8382763311823b7e78d1a96f4a08\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:41\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"3e699ae6-28ad-450a-95db-06885bf34516\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"bd3b8340-a9b5-4d71-a6f5-c18b2b22b14a\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:41\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:cfdcbb0f895e376e3660f892e8e39d1704ba8382763311823b7e78d1a96f4a08\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:41\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"94fa2dc3-5b44-43ef-9923-e9bdbd081833\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"495e8ca3-154f-467b-9e9e-c97b5a80da71\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:41\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:cfdcbb0f895e376e3660f892e8e39d1704ba8382763311823b7e78d1a96f4a08\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:41\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"99a2deae-f36b-48f7-b574-0a2dd04fb263\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"ce7e3b11-ae03-4bd2-9344-d0266f4c0ac8\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:42\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:d936b85e9156d92d730da5084b366f54ff64aad2a32777eb50c92cee85e14533\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:42\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"e2f63976-f1d7-44df-9e02-d74cbfe084a0\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"eedcaf86-dfad-424a-9628-84334f2fc82d\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:42\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:d936b85e9156d92d730da5084b366f54ff64aad2a32777eb50c92cee85e14533\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:42\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"f88c472b-14fc-4f37-82ed-bcffd84b796c\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"359f20f3-eecf-4824-ae15-7d7878dbcc5e\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:86f0bdfb30f0255bb266b5392b715f303caff614864f3338e4c288cfbbc1a16c\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:43\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  },
+  {
+    "table_name": "root_origins",
+    "reason": "missing_dependency",
+    "record_json": "{\"key\":\"root_origins:{\\\"root_origin_id\\\":\\\"fd42533e-665a-4e3d-b59c-7ed7969acfcf\\\"}\",\"table\":\"root_origins\",\"values\":{\"acquisition_root_id\":{\"$ref\":\"acquisition_roots:{\\\"acquisition_root_id\\\":\\\"f941e75c-f370-4d96-8f17-c1f559fd1b2a\\\"}\",\"column\":\"acquisition_root_id\"},\"change_request_id\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:42\\\"}\",\"column\":\"change_request_id\"},\"code_assessment_id\":{\"$ref\":\"code_assessments:{\\\"code_assessment_id\\\":\\\"code:d936b85e9156d92d730da5084b366f54ff64aad2a32777eb50c92cee85e14533\\\"}\",\"column\":\"code_assessment_id\"},\"origin_kind\":\"pr_role\",\"raw_ref_name\":null,\"repository_uuidv4\":{\"$ref\":\"change_requests:{\\\"change_request_id\\\":\\\"00000000-0000-4000-8000-000000000301:42\\\"}\",\"column\":\"repository_uuidv4\"},\"snapshot_id\":null,\"source_ordinal\":0}}"
+  }
+]

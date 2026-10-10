@@ -1,0 +1,35 @@
+{
+  "purpose": "Preserved actual independent initial Git/Exchange/CAS domain QA; not final acceptance",
+  "source_commit": "cafa8a8b143fe095b79f282690a6edf98e6f660e",
+  "source_tree": "477726d0f1fe7cb6f939a1fa577b35ab9e5ba96b",
+  "model": "not exposed",
+  "effort": "not exposed",
+  "files": {
+    "receipt-cafa8a8.md": "e4ce840de6f005126b7c7dffd291a7c52e83c399dd014a84de474e92778aa37e",
+    "metadata-final-initial-cafa8a8b143fe095b79f282690a6edf98e6f660e.json": "e0ebb75248236ef27edb2ea900359dfeb7442ea2a68681beb91ae1baed99452b",
+    "test_independent_domain_qa.cafa8a8b143fe095b79f282690a6edf98e6f660e.py": "163d6ed684161225d454c4f15dcd4ec1a9b75167084c9cc8ccc68de4cda5d95d",
+    "selected_pending_scale.py": "a787d654b9a94fa9a3985be99aa72075a80f79ef82c3e68906dddd94d365ba55",
+    "git_authorization_scale.py": "4d406d565ee7535ee580bff96274f4f66d22d8f36db0cb8acf2b34356543aab6",
+    "selected-pending-scale-cafa8a8b143fe095b79f282690a6edf98e6f660e.json": "ace926611ca8fa0534a32483497c82d279badd5bd6a5bf89974ef1117e013fc0",
+    "git-authorization-scale-cafa8a8b143fe095b79f282690a6edf98e6f660e.json": "1d8d1d6e1da13474cc1223114d6baa7b08120a7d3dd2d224f94251f4b2b67e27",
+    "schema-map-actual-cafa8a8b143fe095b79f282690a6edf98e6f660e.json": "c37913ab30507c29a5f5928c8773fefce3f359d6fd6257bfc53ee70a9f47b3b8",
+    "pytest-cafa8a8-invalidheaders.txt": "1850b2ffbbe6c92063c881d018bbc85f0b148cd4dcd5ced33d98b35d496fc170",
+    "pytest-cafa8a8-crash.txt": "39ede1594bd53f26707033c0bd1c399c28f21d902aa592fc6931f17e0486572a",
+    "pytest-cafa8a8-fakeoid.txt": "7bede60107ac76eb25db872aee519802b0ac9f8c1903c915a77e965304680668",
+    "pytest-cafa8a8-code-list.txt": "e61ed5612f7d5674238374e94132961c52dd9875fac3abb5c96ef9eb55a29a8a",
+    "pytest-cafa8a8-final.txt": "9ed8006c711ef824c1641c1734ceeaae0c30171bb74e7e5a3f3f389ded2d1b91",
+    "pytest-cafa8a8.txt": "7c7b8fda081853c8bceb2b74799e376aa2632e8b20e63f25939b068344b2e880",
+    "pytest-cafa8a8-fixture-v2.txt": "8db45bd406ce6fde5797d3a88ed1a207bf128a9c883e77f6b53e6d763590c970",
+    "pytest-cafa8a8-conflicts.txt": "732ac11b1ce6aa559f1e85f36faee5f11110932cb4e5545e14e0af030ea0b650",
+    "pytest-cafa8a8-late.txt": "b4ed697a95c9f399dbe79ba2d503316a4c9281f78f3655313715c2a09e0ab7ed",
+    "pytest-cafa8a8-invalidnames.txt": "c259f82db721300883b83aec4eedaa61d0c52ed7e51c1ec083868c39288e5daa",
+    "full-diff-cafa8a8b143fe095b79f282690a6edf98e6f660e.patch.gz": "ba017fe5ed2624dcefe0fda2460073a117b12a44ce0f985c0a40f3d6dbdfb275"
+  },
+  "compressed_originals": {
+    "full-diff-cafa8a8b143fe095b79f282690a6edf98e6f660e.patch": {
+      "sha256": "b07fca37b4970ff8e82d41e3a9fadbfeb19e253a35ab5d85754e0e2b719cbd5a",
+      "bytes": 5589972,
+      "gzip_file": "full-diff-cafa8a8b143fe095b79f282690a6edf98e6f660e.patch.gz"
+    }
+  }
+}

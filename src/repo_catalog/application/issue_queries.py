@@ -13,7 +13,7 @@ def _scope(query, command, options):
     if options.get("parser_profile"):
         raise CatalogError(
             "INVALID_ARGUMENT",
-            "Current Issue resources use module/version attribution; parser profiles select historical facts",
+            "Parser-profile selection is retired; current resources retain actual module/version attribution",
         )
     repositories = [r["repository_uuidv4"] for r in query.repos(options)]
     if command in ("issue show", "issue comments"):
