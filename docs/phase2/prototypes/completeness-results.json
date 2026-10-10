@@ -1,0 +1,64 @@
+{
+  "accepted_coverage": {
+    "equal_time_contradiction": "conflict",
+    "newer_partial_older_complete": "partial",
+    "stale_terminal_retry": "partial"
+  },
+  "baseline": {
+    "current_duplicate_ordinal_rejected": true,
+    "current_empty_terminal": true,
+    "current_missing_terminal": false,
+    "current_skipped_ordinal": false,
+    "current_terminal_before_final": false,
+    "historical_nonterminal_proof_accepted": true,
+    "historical_skipped_ordinal_proof_accepted": true
+  },
+  "production_ddl_sha256": "16110944d4b6a0942657644fe80383394210af1218a3e7111e331a1651fa211e",
+  "production_schema": 18,
+  "proposal": {
+    "committed_prefix_restart": true,
+    "empty": true,
+    "inconsistent_member_digest": false,
+    "late_exact_member_completes": true,
+    "missing_null_distinct": true,
+    "missing_source_rejected": true,
+    "missing_terminal": false,
+    "nested_empty_child_complete": true,
+    "partial_nested_missing_child": false,
+    "repository_mismatch_rejected": true,
+    "selective_member_subset_complete": false,
+    "skipped_ordinal": false,
+    "terminal_before_final": false
+  },
+  "python": "3.12.14",
+  "scale": {
+    "measurement_kind": "single-process characterization; not a clean comparative benchmark",
+    "member_query_plan": [
+      [
+        4,
+        0,
+        62,
+        "SEARCH p2_collection_members USING INDEX sqlite_autoindex_p2_collection_members_1 (collection_uuidv4=?)"
+      ]
+    ],
+    "rows": {
+      "coverage_claims": 0,
+      "p2_child_obligations": 10000,
+      "p2_collection_fragments": 10001,
+      "p2_collection_members": 10000,
+      "p2_collection_observations": 10001,
+      "p2_collection_scopes": 1,
+      "p2_collection_terminals": 10001,
+      "p2_member_observations": 10000,
+      "p2_repositories": 1,
+      "p2_sources": 1
+    },
+    "sqlite_page_size": 4096,
+    "sqlite_pages": 1569,
+    "threads": 10000,
+    "verification_seconds": 0.339812,
+    "verification_sql_statements": 60005
+  },
+  "sqlite": "3.53.1",
+  "status": "proposal characterization; no production redesign implemented"
+}

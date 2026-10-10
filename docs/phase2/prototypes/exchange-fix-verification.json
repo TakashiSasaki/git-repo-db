@@ -1,0 +1,32 @@
+{
+  "tested_head": "c8180e79acced221f9b7c3f3717388b7fb022721",
+  "tested_tree": "734ef7cd90b307d660234625eea68194eb1377ce",
+  "production_exchange_sha256": "02d9edc5df770d6c1d269a930db0b8bde5cab13853c89620421177ee8bd83b26",
+  "runs": [
+    {
+      "junit_name": "fix-regressions.xml",
+      "junit_sha256": "fad5802194186fc38c2a9ade9b4c3811e5b8d677e725a945cb3119e7cf546417",
+      "selected": 7,
+      "passed": 7,
+      "development_bootstrap": false,
+      "failure": 0,
+      "error": 0,
+      "skipped": 0
+    },
+    {
+      "junit_name": "fix-focused-bootstrap.xml",
+      "junit_sha256": "c777e3e2244540222fd53e6f49181b717011c52c9fbc5d1ff285649727afa805",
+      "selected": 175,
+      "passed": 175,
+      "development_bootstrap": true,
+      "failure": 0,
+      "error": 0,
+      "skipped": 0
+    }
+  ],
+  "note": "Focused development evidence. exchange.py is hashed by the transitional built-in parser definition; the expanded run uses explicit bootstrap and cannot be final acceptance. Integrated PR must freeze/regenerate certificates from a complete successful suite then validate without override.",
+  "prior_setup_or_development_failures": [
+    "One baseline backup CLI setup error due PATH; its isolated baseline rerun passed.",
+    "First fix regression invocation used the baseline editable p2-design source:4096-object opcode case failed, four semantics cases passed. Source resolution was corrected to p2-exchange and own editable environment installed; all five then passed."
+  ]
+}
