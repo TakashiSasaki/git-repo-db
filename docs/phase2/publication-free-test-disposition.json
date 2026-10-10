@@ -1491,40 +1491,45 @@
         "replacement_nodes": [
           "tests/integration/test_phase2_collection_integrity.py::test_normalized_thread_child_requires_its_own_terminal_evidence"
         ],
-        "surviving_assertion": "Each required child needs its own exact scoped terminal proof.",
-        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+        "surviving_assertion": "Both original False/True child-receipt parameters remain active. The normalized terminal root page explicitly enumerates THREAD-1 with its exact PR identity and observed-state digest, matching the root child requirement. Missing child terminal evidence prevents completion; a real scoped terminal child marker at200 makes the exact TREE proof complete with maximum actual observed time200.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions.",
+        "fixture_correction": "Use the actual normalized root roster and tree/flat proof kind required by CurrentCollectionProof; no production guard exception and no parameter removal."
       },
       {
         "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_mixed_thread_receipts_must_pair_exact_raw_ordinals",
         "replacement_nodes": [
           "tests/integration/test_phase2_collection_integrity.py::test_thread_child_cannot_discharge_a_different_scope_or_target"
         ],
-        "surviving_assertion": "Required child must bind exact root collection, thread, capture, head/base and same PR; raw pairing mechanism retired.",
-        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+        "surviving_assertion": "Raw API pairing is retired; actual normalized root roster explicitly enumerates THREAD-1 and matches its required child. The retained parent/thread/capture/head/base attack dimensions reject cross-root, foreign-thread, invented capture-time and target borrowing through genuine typed root/child constraints.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions.",
+        "fixture_correction": "Use the actual normalized root roster and tree/flat proof kind required by CurrentCollectionProof; no production guard exception and no parameter removal."
       },
       {
         "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_mixed_thread_receipt_cannot_invent_a_boundary_or_capture_time",
         "replacement_nodes": [
           "tests/integration/test_phase2_collection_integrity.py::test_thread_child_cannot_discharge_a_different_scope_or_target"
         ],
-        "surviving_assertion": "Reject cross-capture/root/target borrowing before completion; operation finish cannot create capture.",
-        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+        "surviving_assertion": "The actual normalized root roster explicitly enumerates THREAD-1, matching its required child rather than an empty synthetic roster. Parent collection, thread identity, exact parent capture time and head/base remain bound; every existing parent/thread/capture/head/base damage parameter retains rejection and foreign-key integrity assertions.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions.",
+        "fixture_correction": "Use the actual normalized root roster and tree/flat proof kind required by CurrentCollectionProof; no production guard exception and no parameter removal."
       },
       {
         "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_current_receipt_cannot_invent_rawless_historical_root",
         "replacement_nodes": [
           "tests/integration/test_phase2_collection_integrity.py::test_empty_terminal_enumeration_is_valid_without_raw_api_bytes"
         ],
-        "surviving_assertion": "Raw original ownership is retired; explicit genuinely observed normalized empty terminal is sufficient and missing terminal remains rejected.",
-        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+        "surviving_assertion": "Every original comments/threads/thread-comments parameter remains active. A genuinely observed terminal empty roster needs no raw API bytes. Threads explicitly reject flat page proof and accept exact TREE proof with empty required-child set; no child obligation is invented. Missing/nonterminal boundaries remain rejected by the unchanged sequence cases.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions.",
+        "fixture_correction": "Use the actual normalized root roster and tree/flat proof kind required by CurrentCollectionProof; no production guard exception and no parameter removal."
       },
       {
         "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_partial_root_retry_requires_available_unquarantined_bytes",
         "replacement_nodes": [
           "tests/integration/test_phase2_collection_integrity.py::test_empty_terminal_enumeration_is_valid_without_raw_api_bytes"
         ],
-        "surviving_assertion": "Availability/quarantine of retired API originals no longer governs completion; normalized scopes/pages/child proof do. Actual restart without safe cursor is separately rejected by acquisition tests.",
-        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+        "surviving_assertion": "The missing/quarantined API-original dimension is retired; completion derives only from actual normalized scope/page/child evidence. Exact empty threads require TREE proof and an empty observed roster/required-child set, while comments and thread-comments use flat terminal proof. Genuine Git-byte quarantine/repair and unsafe-resume regressions remain separate existing counterparts.",
+        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions.",
+        "fixture_correction": "Use the actual normalized root roster and tree/flat proof kind required by CurrentCollectionProof; no production guard exception and no parameter removal."
       },
       {
         "retired_node": "tests/integration/test_phase2_collection_integrity.py::test_corrupt_body_cannot_invent_partial_graphql_retry",
@@ -1719,7 +1724,7 @@
     "execution": "8 passed, 21 deselected in 3.89s; pure methods only, before final schema freeze."
   },
   "collection_checkpoint": {
-    "ordinary_selected": 2000,
+    "ordinary_selected": 2002,
     "collection_errors": 0,
     "artifact": "artifacts/publication-free/ordinary-collected-latest.txt",
     "status": "collection-only during corrected-source work; execution and exact frozen acceptance remain pending"
@@ -1733,7 +1738,7 @@
     "script": "scripts/audit_publication_free_test_dispositions.py",
     "artifact": "tests/support/publication_free_node_dispositions.json",
     "baseline_nodes": "tests/support/publication_free_baseline_nodes.txt",
-    "status": "All 1950 baseline collected nodes accounted for against actual 2000-node ordinary collection; 482 explicit exact-node mappings and 1468 still-collected same node IDs. All 193 removed/renamed baseline functions are mapped. This is collection and disposition evidence only, not execution acceptance.",
+    "status": "All 1950 baseline collected nodes accounted for against actual 2002-node ordinary collection; 482 explicit exact-node mappings and 1468 still-collected same node IDs. All 193 removed/renamed baseline functions are mapped. This is collection and disposition evidence only, not full ordinary execution acceptance.",
     "removed_or_renamed_functions": 193,
     "explicit_mapped_nodes": 482,
     "still_collected_same_nodes": 1468
@@ -1754,5 +1759,15 @@
       "tests/integration/test_current_boundaries_independent.py::test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling[source]"
     ],
     "findings": "Credentials lost before collector construction are incorrectly classified as acquisition failure; legitimate transferred child capture is confused with current owner during unresolved wire validation; malformed field captures raise before independent siblings can admit. Authors received root causes. Assertions preserved pending correction."
+  },
+  "phase2_collection_fixture_correction": {
+    "scope": "tests/integration/test_phase2_collection_integrity.py only; normalized terminal threads use real TREE evidence, and required THREAD-1 is explicitly listed in its root page roster.",
+    "selected": 23,
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 25.88,
+    "junit": "artifacts/publication-free/phase2-collection-fixture-corrections.xml",
+    "status": "Complete file executed after all production owners reported source frozen; existing parameter IDs and terminal/no-child assertions retained."
   }
 }
