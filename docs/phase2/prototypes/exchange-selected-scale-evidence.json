@@ -1,0 +1,1007 @@
+{
+  "bootstrap_override": false,
+  "ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
+  "kind": "large-selected-production-exchange-characterization-v1",
+  "limits": [
+    "Counts characterize the existing Schema 19 implementation, not a proposed normalized wire/trust policy.",
+    "Historical fixture publications have distinct natural comment members; synthetic profile verification is receiver-local and is not imported.",
+    "Git workload is verified raw blobs, not commits/trees or historical Git interpretation selection.",
+    "VM progress callbacks every 100 opcodes are estimates; SQL includes production triggers and savepoints.",
+    "Other focused work may execute concurrently; no wall-time, CPU-time or clean timing-comparison claim is made.",
+    "CAS corruption/quarantine/repair and CAS-41 backup/restore remain separately verified production tests; this large-closure probe does not repeat them.",
+    "No authenticated traffic, retained catalogs, production code edits, owner policy, merge, release or deployment."
+  ],
+  "python": "3.12.14",
+  "schema_version": 19,
+  "source_head": "5d4d73a00478fba1c2ca698ffbf062dbc57e140f",
+  "source_sha256": {
+    "docs/phase2/prototypes/exchange_selected_scale.py": "c325026e2f4989c802181f8555f14d7ff816940798c3721860ea9c9ea1151f58",
+    "src/repo_catalog/__init__.py": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0",
+    "src/repo_catalog/__main__.py": "ee690428669109bc4afce171576c4c3417da09edd37690815793b693fbb54aef",
+    "src/repo_catalog/adapters/filesystem/atomic_publish.py": "b1e4b79e93989d8c4dd5e41f0f5fbbeab41ec72cf6c40ad289f2cb95b656cacd",
+    "src/repo_catalog/adapters/filesystem/cache.py": "0151bd587e015205eed1a0c40fee5bf0c632e6a29ae686d87a42d5f3a96073b9",
+    "src/repo_catalog/adapters/filesystem/capacity.py": "32d6a00553bea160306ce0c7713a6327135920bf7c5d4690725fa63cf20dd285",
+    "src/repo_catalog/adapters/filesystem/locks.py": "02b3422aa231df94cb5ca5172dae67d907aeec77804502409235e491e525c6da",
+    "src/repo_catalog/adapters/git/importer.py": "4abf0992493d6c0f441cd52999f8e93f55bd1f4c06e7a67bce228a9d6eb89788",
+    "src/repo_catalog/adapters/git/parsing.py": "a6b23e46ca6f8df11bc13d60811890c3dd31c27130877e469dc510d283a3f902",
+    "src/repo_catalog/adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
+    "src/repo_catalog/adapters/github/collector.py": "192e7045bdeb51353c9406ec1ab18925e5ad24e984c871f1fc7e43a34aab1249",
+    "src/repo_catalog/adapters/github/current_parser.py": "e6f60f73fe88748d240c7c4f9e3aaa9b18863dd1d4fb6915d88652f9f69660eb",
+    "src/repo_catalog/adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
+    "src/repo_catalog/adapters/github/persistence.py": "9ba4167af90cc7c4a91e1d9acfea6ebff03a1818dbb0f4b5bb067361531f53b6",
+    "src/repo_catalog/adapters/github/transport.py": "b970b41099c8e4edb101db67e58047cee8c6132810b13bfc2fca0bc1c2acf714",
+    "src/repo_catalog/adapters/recording.py": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c",
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py": "2468f3b36237faf135fff6973cabb529f1aee3fef4f496244a1b7eb15f7bcc38",
+    "src/repo_catalog/adapters/sqlite/coverage.py": "6913211da033ed773a146c674cf25c014b928ed3de403b9044a19a7da183089b",
+    "src/repo_catalog/adapters/sqlite/current_collections.py": "27c42c6ed75124e6f7cf13a9a71cf764bfd6d651be3c91af014a31c47a10883d",
+    "src/repo_catalog/adapters/sqlite/current_resources.py": "dcaf95481c590eafd4d996447e745710c0161568b17a832728841d353954b006",
+    "src/repo_catalog/adapters/sqlite/exchange.py": "b63b914c0100f3116c5c549e2c046a897bf065d2ff57c387446362f69af0cc81",
+    "src/repo_catalog/adapters/sqlite/identity_relations.py": "8bf2c637b61eac126d7c8a2f9f3f058684f55e265db4d711a8e05adf933cd018",
+    "src/repo_catalog/adapters/sqlite/index.py": "1e54ec65fc7ff69103f86852921f528a115f5299d7b94b361e0c8dcdd67fbf32",
+    "src/repo_catalog/adapters/sqlite/json_contracts.py": "efd4ab0adecbf836cb2f3e9ead0bc718e5285ab44c2a97e8266089243a843648",
+    "src/repo_catalog/adapters/sqlite/parser_model.py": "fd147efa04459b30e7d9a33f2c23bd44e6fbe6d78ff66b31b4fc69b9094a4f0d",
+    "src/repo_catalog/adapters/sqlite/payloads.py": "9ce2d52bcfdd6a2dbcc6639e969eee60f8c237e2587b6451d6d10b51342dbbfc",
+    "src/repo_catalog/adapters/sqlite/schema.py": "f17d5f53120b10e866a16ce325fce15476c5696379db14eb5e8c3cdefdcc3e40",
+    "src/repo_catalog/adapters/sqlite/store.py": "b95c4d537e589a93b90f3822b94496d7183e42b43f74ee9c9a637d6e46311229",
+    "src/repo_catalog/adapters/sqlite/target.py": "066681e035e5f0d70babd12ed7251ee149e9a5bace28e94654b56739e8d43700",
+    "src/repo_catalog/adapters/sqlite/text_bodies.py": "a82e87a56ca071e5ce69717acb6523b78c03cbe5df8cdf82851f8721b61c74f1",
+    "src/repo_catalog/application/catalog_validation.py": "be653203ebe8bc1b2a0fb4a0b829b5e0a6c903618b52793a61e7a1131b438eb0",
+    "src/repo_catalog/application/collection_service.py": "f77d5b6b3c7ec18a7dc8390b906c90915eaf8a58dc84ca68a26a684ce8333a7d",
+    "src/repo_catalog/application/contracts.py": "c977b61d03abd239d9049a0c668eedcbf2bd684047c43df2b0710379c2ea5d4b",
+    "src/repo_catalog/application/exchange_service.py": "d28c9ab32b84e27c699c6af16210eabaf1d004702e713b992106ec1a7e03ee2f",
+    "src/repo_catalog/application/git_query_context.py": "7d4e84b91eaaba7e3b370866288990466b2b08273fdc17ee2cc974336b786491",
+    "src/repo_catalog/application/identity_service.py": "07e138bddf9485bc8756b6caa0643a388c2d9e6781113fd8c95b84f71a5efd97",
+    "src/repo_catalog/application/issue_queries.py": "e9b41d733b2eaf5232698a9233490e40bf22411b96f0ebb214409bbff608234d",
+    "src/repo_catalog/application/job_plans.py": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a",
+    "src/repo_catalog/application/job_service.py": "fa1a3569fe537205763fe4e62641e5d69f220a21fe07bc587b119d34253bf1cd",
+    "src/repo_catalog/application/maintenance_service.py": "c9ca38b96a7cfedf4b8eb1e68552a644aebd4efeabc6455c755673347d7748ae",
+    "src/repo_catalog/application/parser_service.py": "2d39d61b0124e2892bba53ce0ab79e0e8d626abc36b50df43204fd0131199bce",
+    "src/repo_catalog/application/parsing_service.py": "6684657a54c98600d43732ce24104ebb67f472acf35c912b0f8a0d7881c93f84",
+    "src/repo_catalog/application/ports.py": "ff7589d9a2b5ef75cea2b305f3854af67a1c995f42688417b3c392f38e90ff14",
+    "src/repo_catalog/application/pr_queries.py": "cc51e6e671132bfe5d1e9744316323b6126b8215ccae3cf8304f341252a16770",
+    "src/repo_catalog/application/query_service.py": "07fc36d68a35412df3bf382a63fda13d7c37dd1ae6c78c951f99ef2c956e0717",
+    "src/repo_catalog/application/repository_identity.py": "5e783ac2e3ca3997b2d15d2299c7bd57acee9421485a69d8b35017462dd874b9",
+    "src/repo_catalog/application/source_service.py": "af6e05064e567602c22b94e323dc3ccb86ffee188b85e081d28dccf79b77f2ca",
+    "src/repo_catalog/application/target_queries.py": "08dfd07b39a20e28492fa11c912550d135e22fffd44b5540b216b7b4a8db6fbc",
+    "src/repo_catalog/cli/main.py": "c35914ba2b508fdf1031f1212525627ebb8286741f4e86ee40bd42fa25d9273a",
+    "src/repo_catalog/cli/presenters.py": "9a1c6f5649750007ed263b566db6c7d77199ce77202a80699e73663bd5816198",
+    "src/repo_catalog/config.py": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785",
+    "src/repo_catalog/domain/coverage.py": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81",
+    "src/repo_catalog/domain/current_state.py": "52a69c094eabaa206598d2c5e0a669c7740eaca4a9572bd272263774dce30449",
+    "src/repo_catalog/domain/document.py": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548",
+    "src/repo_catalog/domain/git_object.py": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7",
+    "src/repo_catalog/domain/models.py": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b",
+    "src/repo_catalog/domain/payload.py": "d52bd08d785e016ff17996cfec36223f160e96e529cd73ff9f4f5232727d7e3e",
+    "src/repo_catalog/domain/pr_scope.py": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a",
+    "src/repo_catalog/domain/time.py": "eb4dc47a917797cdc210daa500a9c7e2a792708554d5f8717fce8ff72075d647",
+    "src/repo_catalog/resources/builtin_parser_verification.json": "9fc84708459382d96da3b3f044e6396632bbba4e2d5cb909b76b66353af6c43f",
+    "src/repo_catalog/resources/cas_integrity.sql": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1",
+    "src/repo_catalog/resources/catalog3.sql": "6f8afbe4a6a371d03cd781e66a41727dc535570713c6b9de8116e1bad844932c",
+    "src/repo_catalog/resources/current_collections.sql": "2b4394b0416486a5e2ca7407e63490341a953eeb8e263ff1ab3f9a0f24bd9cf1",
+    "src/repo_catalog/resources/current_resources.sql": "025ca9a1faee8984b10c354eeddc12e4d8988fbf0d87bc992c17c7bbb140c43a",
+    "src/repo_catalog/resources/exchange.sql": "574863f20509c2f27c3df1923247edc30aaf793c02ab847271c0e075b41e0d43",
+    "src/repo_catalog/resources/git_facts.sql": "87f9a4045fc3537857cb391892e59597336a0db7222198096170861829640359",
+    "src/repo_catalog/resources/identity_relations.sql": "8f5dcad95f63f9dc57618d619ccdb497155514340593278770df5c1d877b7119",
+    "src/repo_catalog/resources/json_contracts.sql": "b2216e19c1a602af778addfba6347ec58058a84ac755afdf789890be7d81c01d",
+    "src/repo_catalog/resources/pr_threads.graphql": "15efa5343c14705fe88f57c39d81c245dcbfe3b3bc1f983c8e59f1e64e90bbc8",
+    "src/repo_catalog/resources/schemas/cli-v1.schema.json": "415c38a235f8b8e17dd84601f239849f63d5d2824d744fdda81a1a4e87133e25",
+    "src/repo_catalog/resources/thread_comments.graphql": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4",
+    "tests/integration/test_catalog3_exchange.py": "9524186ec45f73a3b28c210db76146513f1fe1b2645dd12e4de4dc8950f276e8"
+  },
+  "source_tree": "09eced22e54bb1c6bd083a09663b33b1c4019c5b",
+  "sqlite": "3.53.1",
+  "workloads": [
+    {
+      "git": {
+        "accepted_prefix_reopened": true,
+        "checks": {
+          "full": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "late": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "source": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          }
+        },
+        "full_record_count": 259,
+        "full_records_by_table": {
+          "git_acquisitions": 2,
+          "git_object_payloads": 64,
+          "git_objects": 64,
+          "payloads": 32,
+          "repositories": 1,
+          "repository_object_sources": 64,
+          "stored_bytes": 32
+        },
+        "independently_recomputed_git_object_identities": 64,
+        "missing_body_records": 16,
+        "object_formats": {
+          "sha1": 32,
+          "sha256": 32
+        },
+        "outcomes": {
+          "late_body_promotion_after_restart": {
+            "admitted_records": 64,
+            "received_records": 16,
+            "rejected_records": 0,
+            "repository_uuidv4": "0be37c19-3870-43f4-8e12-002483b7dc2d",
+            "staged_records": 0
+          },
+          "missing_body_receive": {
+            "admitted_records": 195,
+            "received_records": 243,
+            "rejected_records": 0,
+            "repository_uuidv4": "0be37c19-3870-43f4-8e12-002483b7dc2d",
+            "staged_records": 48
+          },
+          "repeated_full_receive": {
+            "admitted_records": 0,
+            "received_records": 0,
+            "rejected_records": 0,
+            "repository_uuidv4": "0be37c19-3870-43f4-8e12-002483b7dc2d",
+            "staged_records": 0
+          },
+          "reversed_full_receive": {
+            "admitted_records": 259,
+            "received_records": 259,
+            "rejected_records": 0,
+            "repository_uuidv4": "0be37c19-3870-43f4-8e12-002483b7dc2d",
+            "staged_records": 0
+          }
+        },
+        "portable_graph_converged": true,
+        "selected_verified_git_objects": 64,
+        "shared_physical_bodies": 32,
+        "work": {
+          "full_export": {
+            "sql_statements": 3283,
+            "vm_steps_estimate": 53500
+          },
+          "late_body_promotion_after_restart": {
+            "sql_statements": 4789,
+            "vm_steps_estimate": 86400
+          },
+          "missing_body_receive": {
+            "sql_statements": 11461,
+            "vm_steps_estimate": 206900
+          },
+          "repeated_full_receive": {
+            "sql_statements": 1486,
+            "vm_steps_estimate": 25900
+          },
+          "reversed_full_receive": {
+            "sql_statements": 11637,
+            "vm_steps_estimate": 223900
+          }
+        }
+      },
+      "historical": {
+        "accepted_prefix_reopened": true,
+        "checks": {
+          "full": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "late": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "source": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          }
+        },
+        "collection_records_by_table": {
+          "change_requests": 1,
+          "completion_markers": 1,
+          "coverage_claims": 1,
+          "coverage_scopes": 1,
+          "document_observations": 64,
+          "documents": 64,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 64,
+          "parsed_result_inputs": 64,
+          "parsed_result_publications": 64,
+          "parsed_results": 64,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 64,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 64,
+          "text_bodies": 64
+        },
+        "complete_only_after_exact_closure": true,
+        "full_record_count": 660,
+        "full_records_by_table": {
+          "change_requests": 1,
+          "collection_memberships": 64,
+          "completion_markers": 1,
+          "coverage_claims": 1,
+          "coverage_scopes": 1,
+          "document_observations": 64,
+          "documents": 64,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 64,
+          "parsed_result_inputs": 64,
+          "parsed_result_publications": 64,
+          "parsed_results": 64,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 64,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 64,
+          "text_bodies": 64
+        },
+        "half_fetch_records_by_table": {
+          "change_requests": 1,
+          "document_observations": 32,
+          "documents": 32,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 32,
+          "parsed_result_inputs": 32,
+          "parsed_result_publications": 32,
+          "parsed_results": 32,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 32,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 32,
+          "text_bodies": 32
+        },
+        "outcomes": {
+          "incomplete_full_receive_after_restart": {
+            "admitted_records": 346,
+            "received_records": 351,
+            "rejected_records": 2,
+            "repository_uuidv4": "408b12dd-3b77-4246-a07c-41b4aeac431f",
+            "staged_records": 5
+          },
+          "late_dependency_promotion": {
+            "admitted_records": 9,
+            "received_records": 9,
+            "rejected_records": 0,
+            "repository_uuidv4": "408b12dd-3b77-4246-a07c-41b4aeac431f",
+            "staged_records": 0
+          },
+          "repeated_full_receive": {
+            "admitted_records": 0,
+            "received_records": 0,
+            "rejected_records": 0,
+            "repository_uuidv4": "408b12dd-3b77-4246-a07c-41b4aeac431f",
+            "staged_records": 0
+          },
+          "reversed_full_receive": {
+            "admitted_records": 660,
+            "received_records": 660,
+            "rejected_records": 0,
+            "repository_uuidv4": "408b12dd-3b77-4246-a07c-41b4aeac431f",
+            "staged_records": 0
+          },
+          "selective_half_receive": {
+            "admitted_records": 305,
+            "received_records": 305,
+            "rejected_records": 0,
+            "repository_uuidv4": "408b12dd-3b77-4246-a07c-41b4aeac431f",
+            "staged_records": 0
+          }
+        },
+        "portable_graph_converged": true,
+        "receiver_local_trust_imported": false,
+        "selected_pages_and_natural_members": 64,
+        "single_fetch_records_by_table": {
+          "change_requests": 1,
+          "document_observations": 1,
+          "documents": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 1,
+          "parsed_result_inputs": 1,
+          "parsed_result_publications": 1,
+          "parsed_results": 1,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 1,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 1,
+          "text_bodies": 1
+        },
+        "work": {
+          "collection_export": {
+            "sql_statements": 7664,
+            "vm_steps_estimate": 139300
+          },
+          "full_export": {
+            "sql_statements": 10145,
+            "vm_steps_estimate": 189000
+          },
+          "half_fetch_export": {
+            "sql_statements": 4733,
+            "vm_steps_estimate": 84100
+          },
+          "incomplete_full_receive_after_restart": {
+            "sql_statements": 25077,
+            "vm_steps_estimate": 749000
+          },
+          "late_dependency_promotion": {
+            "sql_statements": 6432,
+            "vm_steps_estimate": 180900
+          },
+          "repeated_full_receive": {
+            "sql_statements": 3877,
+            "vm_steps_estimate": 68200
+          },
+          "reversed_full_receive": {
+            "sql_statements": 56135,
+            "vm_steps_estimate": 1612700
+          },
+          "selective_half_receive": {
+            "sql_statements": 25918,
+            "vm_steps_estimate": 764500
+          },
+          "single_fetch_export": {
+            "sql_statements": 2349,
+            "vm_steps_estimate": 46800
+          }
+        }
+      },
+      "size": 64
+    },
+    {
+      "git": {
+        "accepted_prefix_reopened": true,
+        "checks": {
+          "full": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "late": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "source": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          }
+        },
+        "full_record_count": 1027,
+        "full_records_by_table": {
+          "git_acquisitions": 2,
+          "git_object_payloads": 256,
+          "git_objects": 256,
+          "payloads": 128,
+          "repositories": 1,
+          "repository_object_sources": 256,
+          "stored_bytes": 128
+        },
+        "independently_recomputed_git_object_identities": 256,
+        "missing_body_records": 64,
+        "object_formats": {
+          "sha1": 128,
+          "sha256": 128
+        },
+        "outcomes": {
+          "late_body_promotion_after_restart": {
+            "admitted_records": 256,
+            "received_records": 64,
+            "rejected_records": 0,
+            "repository_uuidv4": "0d5d1cac-8ffb-4f1c-8f6d-9d3060a177b9",
+            "staged_records": 0
+          },
+          "missing_body_receive": {
+            "admitted_records": 771,
+            "received_records": 963,
+            "rejected_records": 0,
+            "repository_uuidv4": "0d5d1cac-8ffb-4f1c-8f6d-9d3060a177b9",
+            "staged_records": 192
+          },
+          "repeated_full_receive": {
+            "admitted_records": 0,
+            "received_records": 0,
+            "rejected_records": 0,
+            "repository_uuidv4": "0d5d1cac-8ffb-4f1c-8f6d-9d3060a177b9",
+            "staged_records": 0
+          },
+          "reversed_full_receive": {
+            "admitted_records": 1027,
+            "received_records": 1027,
+            "rejected_records": 0,
+            "repository_uuidv4": "0d5d1cac-8ffb-4f1c-8f6d-9d3060a177b9",
+            "staged_records": 0
+          }
+        },
+        "portable_graph_converged": true,
+        "selected_verified_git_objects": 256,
+        "shared_physical_bodies": 128,
+        "work": {
+          "full_export": {
+            "sql_statements": 11923,
+            "vm_steps_estimate": 192500
+          },
+          "late_body_promotion_after_restart": {
+            "sql_statements": 16501,
+            "vm_steps_estimate": 266400
+          },
+          "missing_body_receive": {
+            "sql_statements": 42901,
+            "vm_steps_estimate": 743800
+          },
+          "repeated_full_receive": {
+            "sql_statements": 4558,
+            "vm_steps_estimate": 69100
+          },
+          "reversed_full_receive": {
+            "sql_statements": 43605,
+            "vm_steps_estimate": 812000
+          }
+        }
+      },
+      "historical": {
+        "accepted_prefix_reopened": true,
+        "checks": {
+          "full": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "late": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "source": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          }
+        },
+        "collection_records_by_table": {
+          "change_requests": 1,
+          "completion_markers": 1,
+          "coverage_claims": 1,
+          "coverage_scopes": 1,
+          "document_observations": 256,
+          "documents": 256,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 256,
+          "parsed_result_inputs": 256,
+          "parsed_result_publications": 256,
+          "parsed_results": 256,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 256,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 256,
+          "text_bodies": 256
+        },
+        "complete_only_after_exact_closure": true,
+        "full_record_count": 2580,
+        "full_records_by_table": {
+          "change_requests": 1,
+          "collection_memberships": 256,
+          "completion_markers": 1,
+          "coverage_claims": 1,
+          "coverage_scopes": 1,
+          "document_observations": 256,
+          "documents": 256,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 256,
+          "parsed_result_inputs": 256,
+          "parsed_result_publications": 256,
+          "parsed_results": 256,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 256,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 256,
+          "text_bodies": 256
+        },
+        "half_fetch_records_by_table": {
+          "change_requests": 1,
+          "document_observations": 128,
+          "documents": 128,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 128,
+          "parsed_result_inputs": 128,
+          "parsed_result_publications": 128,
+          "parsed_results": 128,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 128,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 128,
+          "text_bodies": 128
+        },
+        "outcomes": {
+          "incomplete_full_receive_after_restart": {
+            "admitted_records": 1402,
+            "received_records": 1407,
+            "rejected_records": 2,
+            "repository_uuidv4": "9e542938-2ae5-4084-bf7f-8c2e3c69b406",
+            "staged_records": 5
+          },
+          "late_dependency_promotion": {
+            "admitted_records": 9,
+            "received_records": 9,
+            "rejected_records": 0,
+            "repository_uuidv4": "9e542938-2ae5-4084-bf7f-8c2e3c69b406",
+            "staged_records": 0
+          },
+          "repeated_full_receive": {
+            "admitted_records": 0,
+            "received_records": 0,
+            "rejected_records": 0,
+            "repository_uuidv4": "9e542938-2ae5-4084-bf7f-8c2e3c69b406",
+            "staged_records": 0
+          },
+          "reversed_full_receive": {
+            "admitted_records": 2580,
+            "received_records": 2580,
+            "rejected_records": 0,
+            "repository_uuidv4": "9e542938-2ae5-4084-bf7f-8c2e3c69b406",
+            "staged_records": 0
+          },
+          "selective_half_receive": {
+            "admitted_records": 1169,
+            "received_records": 1169,
+            "rejected_records": 0,
+            "repository_uuidv4": "9e542938-2ae5-4084-bf7f-8c2e3c69b406",
+            "staged_records": 0
+          }
+        },
+        "portable_graph_converged": true,
+        "receiver_local_trust_imported": false,
+        "selected_pages_and_natural_members": 256,
+        "single_fetch_records_by_table": {
+          "change_requests": 1,
+          "document_observations": 1,
+          "documents": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 1,
+          "parsed_result_inputs": 1,
+          "parsed_result_publications": 1,
+          "parsed_results": 1,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 1,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 1,
+          "text_bodies": 1
+        },
+        "work": {
+          "collection_export": {
+            "sql_statements": 28784,
+            "vm_steps_estimate": 522100
+          },
+          "full_export": {
+            "sql_statements": 38369,
+            "vm_steps_estimate": 723400
+          },
+          "half_fetch_export": {
+            "sql_statements": 17213,
+            "vm_steps_estimate": 303200
+          },
+          "incomplete_full_receive_after_restart": {
+            "sql_statements": 99355,
+            "vm_steps_estimate": 2992900
+          },
+          "late_dependency_promotion": {
+            "sql_statements": 21276,
+            "vm_steps_estimate": 573100
+          },
+          "repeated_full_receive": {
+            "sql_statements": 13477,
+            "vm_steps_estimate": 225200
+          },
+          "reversed_full_receive": {
+            "sql_statements": 216263,
+            "vm_steps_estimate": 6165600
+          },
+          "selective_half_receive": {
+            "sql_statements": 96574,
+            "vm_steps_estimate": 2811800
+          },
+          "single_fetch_export": {
+            "sql_statements": 7533,
+            "vm_steps_estimate": 150100
+          }
+        }
+      },
+      "size": 256
+    },
+    {
+      "git": {
+        "accepted_prefix_reopened": true,
+        "checks": {
+          "full": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "late": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "source": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          }
+        },
+        "full_record_count": 4099,
+        "full_records_by_table": {
+          "git_acquisitions": 2,
+          "git_object_payloads": 1024,
+          "git_objects": 1024,
+          "payloads": 512,
+          "repositories": 1,
+          "repository_object_sources": 1024,
+          "stored_bytes": 512
+        },
+        "independently_recomputed_git_object_identities": 1024,
+        "missing_body_records": 256,
+        "object_formats": {
+          "sha1": 512,
+          "sha256": 512
+        },
+        "outcomes": {
+          "late_body_promotion_after_restart": {
+            "admitted_records": 1024,
+            "received_records": 256,
+            "rejected_records": 0,
+            "repository_uuidv4": "2d4599af-302d-47bc-a998-7bb48165b8c3",
+            "staged_records": 0
+          },
+          "missing_body_receive": {
+            "admitted_records": 3075,
+            "received_records": 3843,
+            "rejected_records": 0,
+            "repository_uuidv4": "2d4599af-302d-47bc-a998-7bb48165b8c3",
+            "staged_records": 768
+          },
+          "repeated_full_receive": {
+            "admitted_records": 0,
+            "received_records": 0,
+            "rejected_records": 0,
+            "repository_uuidv4": "2d4599af-302d-47bc-a998-7bb48165b8c3",
+            "staged_records": 0
+          },
+          "reversed_full_receive": {
+            "admitted_records": 4099,
+            "received_records": 4099,
+            "rejected_records": 0,
+            "repository_uuidv4": "2d4599af-302d-47bc-a998-7bb48165b8c3",
+            "staged_records": 0
+          }
+        },
+        "portable_graph_converged": true,
+        "selected_verified_git_objects": 1024,
+        "shared_physical_bodies": 512,
+        "work": {
+          "full_export": {
+            "sql_statements": 46483,
+            "vm_steps_estimate": 747000
+          },
+          "late_body_promotion_after_restart": {
+            "sql_statements": 63349,
+            "vm_steps_estimate": 986500
+          },
+          "missing_body_receive": {
+            "sql_statements": 168661,
+            "vm_steps_estimate": 2892600
+          },
+          "repeated_full_receive": {
+            "sql_statements": 16846,
+            "vm_steps_estimate": 241700
+          },
+          "reversed_full_receive": {
+            "sql_statements": 171477,
+            "vm_steps_estimate": 3159200
+          }
+        }
+      },
+      "historical": {
+        "accepted_prefix_reopened": true,
+        "checks": {
+          "full": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "late": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          },
+          "source": {
+            "foreign_keys": [],
+            "integrity": "ok"
+          }
+        },
+        "collection_records_by_table": {
+          "change_requests": 1,
+          "completion_markers": 1,
+          "coverage_claims": 1,
+          "coverage_scopes": 1,
+          "document_observations": 1024,
+          "documents": 1024,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 1024,
+          "parsed_result_inputs": 1024,
+          "parsed_result_publications": 1024,
+          "parsed_results": 1024,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 1024,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 1024,
+          "text_bodies": 1024
+        },
+        "complete_only_after_exact_closure": true,
+        "full_record_count": 10260,
+        "full_records_by_table": {
+          "change_requests": 1,
+          "collection_memberships": 1024,
+          "completion_markers": 1,
+          "coverage_claims": 1,
+          "coverage_scopes": 1,
+          "document_observations": 1024,
+          "documents": 1024,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 1024,
+          "parsed_result_inputs": 1024,
+          "parsed_result_publications": 1024,
+          "parsed_results": 1024,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 1024,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 1024,
+          "text_bodies": 1024
+        },
+        "half_fetch_records_by_table": {
+          "change_requests": 1,
+          "document_observations": 512,
+          "documents": 512,
+          "fact_selection_decisions": 1,
+          "fact_selection_publications": 1,
+          "fact_selection_scopes": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 512,
+          "parsed_result_inputs": 512,
+          "parsed_result_publications": 512,
+          "parsed_results": 512,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 512,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 512,
+          "text_bodies": 512
+        },
+        "outcomes": {
+          "incomplete_full_receive_after_restart": {
+            "admitted_records": 5626,
+            "received_records": 5631,
+            "rejected_records": 2,
+            "repository_uuidv4": "c134d144-33b4-4a9e-bee5-62e2e7329780",
+            "staged_records": 5
+          },
+          "late_dependency_promotion": {
+            "admitted_records": 9,
+            "received_records": 9,
+            "rejected_records": 0,
+            "repository_uuidv4": "c134d144-33b4-4a9e-bee5-62e2e7329780",
+            "staged_records": 0
+          },
+          "repeated_full_receive": {
+            "admitted_records": 0,
+            "received_records": 0,
+            "rejected_records": 0,
+            "repository_uuidv4": "c134d144-33b4-4a9e-bee5-62e2e7329780",
+            "staged_records": 0
+          },
+          "reversed_full_receive": {
+            "admitted_records": 10260,
+            "received_records": 10260,
+            "rejected_records": 0,
+            "repository_uuidv4": "c134d144-33b4-4a9e-bee5-62e2e7329780",
+            "staged_records": 0
+          },
+          "selective_half_receive": {
+            "admitted_records": 4625,
+            "received_records": 4625,
+            "rejected_records": 0,
+            "repository_uuidv4": "c134d144-33b4-4a9e-bee5-62e2e7329780",
+            "staged_records": 0
+          }
+        },
+        "portable_graph_converged": true,
+        "receiver_local_trust_imported": false,
+        "selected_pages_and_natural_members": 1024,
+        "single_fetch_records_by_table": {
+          "change_requests": 1,
+          "document_observations": 1,
+          "documents": 1,
+          "fetch_collections": 1,
+          "fetch_occurrences": 1,
+          "parsed_result_inputs": 1,
+          "parsed_result_publications": 1,
+          "parsed_results": 1,
+          "parser_profile_capabilities": 1,
+          "parser_profile_selection_decisions": 1,
+          "parser_profile_selection_publications": 1,
+          "parser_profile_selection_scopes": 1,
+          "parser_profile_verifications": 1,
+          "parser_profiles": 1,
+          "payloads": 1,
+          "repositories": 1,
+          "repository_bindings": 1,
+          "resume_scopes": 1,
+          "service_instances": 1,
+          "source_repositories": 1,
+          "sources": 1,
+          "stored_bytes": 1,
+          "text_bodies": 1
+        },
+        "work": {
+          "collection_export": {
+            "sql_statements": 113264,
+            "vm_steps_estimate": 2057900
+          },
+          "full_export": {
+            "sql_statements": 151265,
+            "vm_steps_estimate": 2863300
+          },
+          "half_fetch_export": {
+            "sql_statements": 67133,
+            "vm_steps_estimate": 1184500
+          },
+          "incomplete_full_receive_after_restart": {
+            "sql_statements": 396927,
+            "vm_steps_estimate": 11987900
+          },
+          "late_dependency_promotion": {
+            "sql_statements": 81036,
+            "vm_steps_estimate": 2151600
+          },
+          "repeated_full_receive": {
+            "sql_statements": 51877,
+            "vm_steps_estimate": 855200
+          },
+          "reversed_full_receive": {
+            "sql_statements": 856775,
+            "vm_steps_estimate": 24390900
+          },
+          "selective_half_receive": {
+            "sql_statements": 379198,
+            "vm_steps_estimate": 11022600
+          },
+          "single_fetch_export": {
+            "sql_statements": 28269,
+            "vm_steps_estimate": 564200
+          }
+        }
+      },
+      "size": 1024
+    }
+  ]
+}
