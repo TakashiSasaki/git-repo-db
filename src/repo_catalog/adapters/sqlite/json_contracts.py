@@ -80,9 +80,8 @@ search_documents.metadata local_parser_profile_verification_trust.rationale_json
 payload_admission_staging.context_json exchange_source_provenance.definition_json
 """,
 )
-_register(
-    "operational", "sources.settings unresolved_payloads.diagnostic_json", nullable=True
-)
+_register("operational", "sources.settings", nullable=True)
+_register("operational", "unresolved_payloads.diagnostic_json")
 _register(
     "definition",
     "parser_profiles.definition_json parser_profile_verifications.criteria_json parser_profile_verifications.evidence_json",
@@ -802,7 +801,7 @@ def _check_schema(table, column, value, data):
         ("completion_markers", "evidence"),
         ("fetch_occurrences", "request"),
     }:
-        for field in ("terminal", "context_proven", "operational_only"):
+        for field in ("terminal", "context_proven"):
             if field in value and not isinstance(value[field], bool):
                 raise JsonContractError(f"HTTP evidence {field} requires a boolean")
         if "status" in value and (
@@ -1871,7 +1870,7 @@ def guard_sql():
             ("completion_markers", "evidence"),
             ("fetch_occurrences", "request"),
         }:
-            for field in ("terminal", "context_proven", "operational_only"):
+            for field in ("terminal", "context_proven"):
                 conditions.append(
                     f"(json_type({doc},'$.{field}') IS NOT NULL AND json_type({doc},'$.{field}') NOT IN ('true','false'))"
                 )

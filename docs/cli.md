@@ -16,7 +16,7 @@ JSON modeのstdoutは結果専用です。public schemaは同梱`resources/schem
 | 検索 | search path/code/commits/hash/pr/issue |
 | PR照会 | pr list/show/documents/thread/timeline |
 | 通常Issue照会 | issue list/show/comments |
-| parser・補助通信 | parser status/register/verify/trust/invalidate/select-profile/select-fact/reparse/admit-decision/inspect-message/reparse-message |
+| parser・補助通信 | parser status/register/verify/trust/invalidate/select-profile/select-fact/reparse/admit-decision/inspect-message |
 | 交換 | exchange export/import/staging |
 | 原文 | content show/hydrate |
 | 状態 | coverage、status |
@@ -46,7 +46,7 @@ repo-catalog --state-dir /tmp/disposable-catalog issue comments --repo REPO_ID -
 repo-catalog --state-dir /tmp/disposable-catalog search issue --repo REPO_ID --literal 'saved text'
 ```
 
-Issue show/commentsは一つのrepoと `--provider-issue-number` または `--provider-resource-id` を指定します。番号がbinding間で曖昧な場合は `--binding BINDING_UUID` で区別します。`--source`、`--state all|open|closed`、`--author`、`--document-author`、`--parser-profile` で選択を絞れます。Issueの恒久識別はserviceとprovider IDで、現在のrepo番号とは別です。各Issue/commentの最新受理本文を返し、競合・未到着親・profile不適格をpartialとして公開します。
+Issue show/commentsは一つのrepoと `--provider-issue-number` または `--provider-resource-id` を指定します。番号がbinding間で曖昧な場合は `--binding BINDING_UUID` で区別します。`--source`、`--state all|open|closed`、`--author`、`--document-author` で選択を絞れます。通常Issueの`--parser-profile`指定は非対応として拒否します。Issueの恒久識別はserviceとprovider IDで、現在のrepo番号とは別です。各Issue/commentの最新受理本文を返し、競合・未到着親をpartialとして公開します。現在Issue/Reviewの帰属は実際のparser module/versionと項目別根拠で、profile/trust/selection gateを使いません。
 
 `current`は全heads先端、`history`は選択snapshotのheads/tagsから到達する履歴、`recorded`は過去の公開rootも含みます。
 PR rootはhistory/recordedで`--pr`または`--ref-kind pr-head|pr-related`により明示します。
@@ -62,8 +62,8 @@ PR番号は `--provider-change-request-number`、種別は `--change-request-kin
 `pr thread` は `--repo REPO_ID --provider-change-request-number NUMBER --provider-resource-id PROVIDER_RESOURCE_ID` でChange Requestを先にscopeし、その中のreview threadを選択します。`provider_resource_id` 単独のprovider全体一意性は仮定しません。選択threadのコメント一覧の終端を保存証拠から確認できない場合は、保存済み本文がすべて存在してもpartialになります。
 `--document-observations current|all` はPR title/body/PR会話issue-commentの現在採用観測と保存済み全観測を選びます。既定は `current` です。review/review-commentはどちらの指定でも各リソースの最新受理状態です。レビュー編集前の本文は通常検索に出しません。
 `--document-kind` と `--provider-change-request-document-id` で文書自然キーの構成要素を指定でき、`--observation INTEGER` で保存観測を選択します。
-PR履歴文書の結果は `document_kind`、`provider_change_request_document_id`、`document_observation_id`、`text_body_sha256`、`document_observed_at_us`、`document_current_selected` 等を返します。current-stateの結果はprovider更新/観測/最終確認/解析時刻とparser/profile帰属を持ち、履歴観測の代替IDを捏造しません。Issue系は `resource_kind`、`provider_resource_id`、`provider_issue_number` を使います。詳細は[application JSON契約](application-json-contracts.md)を参照してください。
-`last_checked_at_us` は受信側で事前revision/scopeが一致した正常live取得の最終確認です。初回・編集・同内容確認で更新し、import/replayでは進みません。部分取得の未提供値は元の根拠を保持し、後着した古い完全応答が未知の項目を補完できます。Issue移動後の現在repo/番号と元の取得scopeは別に保持します。項目別根拠の保存契約は[データモデル](data-model.md#shared-latest-state-resources)を参照してください。
+PR履歴文書の結果は `document_kind`、`provider_change_request_document_id`、`document_observation_id`、`text_body_sha256`、`document_observed_at_us`、`document_current_selected` 等を返します。current-stateの結果はprovider更新/観測/最終確認/解析時刻とparser module/version・項目別帰属を持ち、履歴観測の代替IDを捏造しません。Issue系は `resource_kind`、`provider_resource_id`、`provider_issue_number` を使います。詳細は[application JSON契約](application-json-contracts.md)を参照してください。
+`last_checked_at_us` は受信側で事前revision/scopeが一致した正常live取得の最終確認です。初回・編集・同内容確認で更新し、importでは進みません。現在状態のreplay受理は廃止済みです。部分取得の未提供値は元の根拠を保持し、後着した古い完全応答が未知の項目を補完できます。Issue移動後の現在repo/番号と元の取得scopeは別に保持します。項目別根拠の保存契約は[データモデル](data-model.md#shared-latest-state-resources)を参照してください。
 取得開始前や観測間の未観測編集、非公開/削除済みで取得不能な履歴は保証しません。
 
 list/searchは`--limit`（既定100、上限1000）と`--cursor`を持ちます。
@@ -103,9 +103,11 @@ repo-catalog --state-dir /tmp/disposable-catalog db backup --output /tmp/disposa
 repo-catalog --state-dir /tmp/disposable-restored db restore --input /tmp/disposable-backup.sqlite3
 ```
 
-schema 16を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
+schema 18を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
 
 backupはSQLite backup APIでdomainの現在状態・必要な本文・PR/Git/スレッド履歴・coverageを含むsnapshotを作り、checksum/configuration/identityと `quarantined_payload_count` を隣接manifestへ保存します。件数はactive物理隔離行数の非負JSON整数（bool除外、最大 `9223372036854775807`）です。restoreは未作成の `--state-dir` だけへ行い、checksum/identityの後、診断前に件数を照合して全bytesを検証します。正の一致件数を許容し、件数不一致や未説明の破損は失敗stageを保持して拒否します。cacheと任意通信archiveはbackupへ含めません。DB instance IDを変更して元catalogのcursorを無効にし、過去のjobs/leases/reservationsを稼働状態へ戻しません。[運用](operations.md)に制限を記載しています。
+
+明示的な`db repair-payload --sha256 HEX --input FILE`は、実在する`git_object_payloads`が参照する隔離bytesだけを修復します。SHA-256は小文字64桁で、replacementのhashと全対応Git objectのformat/OID/type/sizeを検証して原子的に更新します。API-only原本の修復は廃止済みですが、GitとAPIの物理digest共有はGit参照により修復対象です。`db verify-payloads`、backup/restoreは全物理bytesを検証し、CAS-41の件数契約を維持します。
 
 ## 交換と補助通信の読取り
 
@@ -115,16 +117,15 @@ repo-catalog --state-dir /tmp/disposable-catalog exchange export --repo REPO_ID 
 repo-catalog --state-dir /tmp/disposable-receiver exchange import --input repository.json
 repo-catalog --state-dir /tmp/disposable-receiver exchange staging
 repo-catalog --state-dir /tmp/disposable-catalog parser inspect-message ARCHIVE_REF --max-bytes 1048576
-repo-catalog --state-dir /tmp/disposable-catalog parser reparse-message ARCHIVE_REF --context projection.json --max-bytes 1048576
 ```
 
-全repository交換と履歴用 `--fetch FETCH_UUID` / `--collection COLLECTION_UUID` の選択を維持します。current-stateも必要な親・本文・scope/completion証拠を伴って選択します。任意archiveを必須依存へ含めず、親の後着、同一再import、順序不明の差分は共通受理/stagingへ渡します。
+全repository交換と履歴用 `--fetch FETCH_UUID` / `--collection COLLECTION_UUID` の選択を維持します。選択は実際のdomain公開・完全性証拠とその必要入力に限定し、原本だけのexport/import/promotionは拒否します。304や封印済み履歴公開に必要な原本closureはPhase 2境界として残ります。current-stateも必要な親・本文・scope/completion証拠を伴って選択します。任意archiveを必須依存へ含めず、親の後着、同一再import、順序不明の差分は共通受理/stagingへ渡します。
 
 同内容の再importでも新しいclock等の根拠を再評価し、順序を証明できれば保留競合を解消します。複数のcurrent競合はその分類のまま保持します。移動済みIssueコメントの元取得scopeは、移動元repo/Sourceの登録を受信側へ要求せずsnapshotとして保存します。
 
 `parser reparse GIT_ACQUISITION_UUID` は保存された Git domain bytes の再解析だけを扱います。API fetch UUID の core 再解析は廃止し、HTTP originals を読み出したり domain observation を追加したりしません。Git の解釈履歴と明示的な選択は既存の実装を維持しており、今後の lifecycle 決定とは別です。
 
-`github.record_messages` はbooleanで既定falseです。有効時のarchiveは `STATE_DIR/transport-archive/` に保存します。recording障害は許可された32文字以下のコードへ制限し、transport診断は最新100件を保持します。警告表示はbest-effortで、warnings-as-errorsでも有効な収集を続けます。domain状態の照会やcoverageとは別です。`inspect-message` はcanonical UUIDv4の参照を一つ読み、`reparse-message` は保存された成功JSONを現在resource parserへ渡して投影を返します。両方とも通信とdomain書込みを行わず、reparseも新しい観測を作りません。`--max-bytes` は既定1 MiB、0から32 MiBまでです。reparseは最大1000メンバーで、context JSONには `resource_kind` と所有者・acquisition_scopeを含む `context` が必要です。Issueコメントには `parent_provider_resource_id` も明示します。archiveがない場合は補助読取りエラーになりますが、独立に保存された現在状態は利用できます。[通信記録仕様](latest-state-transport.md)と[実装対応表](latest-state-transport-implementation.md)を参照してください。
+`github.record_messages` はbooleanで既定falseです。有効時のarchiveは `STATE_DIR/transport-archive/` に保存します。recording障害は許可された32文字以下のコードへ制限し、transport診断は最新100件を保持します。警告表示はbest-effortで、warnings-as-errorsでも有効な収集を続けます。domain状態の照会やcoverageとは別です。`inspect-message` はcanonical UUIDv4の参照を一つ読み、capture metadata・body representation・body有無とbyte数を返します。通信・domain書込み・domain parser実行は行いません。`--max-bytes` は既定1 MiB、0から32 MiBまでです。保存JSONをdomain parserへ渡す`reparse-message`とcontext/projection契約は廃止しました。archiveがない場合は補助読取りエラーになりますが、独立に保存された現在状態は利用できます。[通信記録仕様](latest-state-transport.md)と[Phase 1実装記録](phase1-api-original-retirement-implementation.md)を参照してください。
 
 ## catalog3診断読み取り
 
@@ -139,4 +140,4 @@ repo-catalog --format json target --database /tmp/disposable-catalog/catalog.sql
 
 歴史的なimport/finalization手順や検証receiptは過去の資料です。現行CLIの操作はこの契約と `--help` を参照してください。
 
-schema 16の変更範囲は[境界事例の対応記録](current-state-boundaries.md)と[完全schema一覧](current-state-boundaries-inventory.json)に記載します。schema 15までの[列の用途](current-state-schema-liveness.md)と[対応記録](current-state-schema-closure.md)も保持します。
+schema 18の変更範囲・R1–R7の処理・残存依存は[Phase 1実装記録](phase1-api-original-retirement-implementation.md)に記載します。schema 16の[境界事例の対応記録](current-state-boundaries.md)と[完全schema一覧](current-state-boundaries-inventory.json)は当時の証拠として保持します。schema 15までの[列の用途](current-state-schema-liveness.md)と[対応記録](current-state-schema-closure.md)も保持します。

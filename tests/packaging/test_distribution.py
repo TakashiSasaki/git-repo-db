@@ -159,6 +159,32 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         "exchange": True,
         "verification": True,
     }
+    help_text = checked(
+        [venv / "bin/repo-catalog", "parser", "--help"], cwd=outside, env=env
+    )
+    assert "inspect-message" in help_text and "reparse-message" not in help_text
+    retired_state = tmp_path / "retired-operation-state"
+    rejected = json.loads(
+        checked(
+            [
+                venv / "bin/repo-catalog",
+                "--state-dir",
+                retired_state,
+                "--format",
+                "json",
+                "parser",
+                "reparse-message",
+                "absent-original",
+                "--context",
+                "absent-context.json",
+            ],
+            cwd=outside,
+            env=env,
+            accepted_codes=(2,),
+        )
+    )
+    assert rejected["error"]["code"] == "INVALID_ARGUMENT"
+    assert not retired_state.exists()
     fixture = GitFixture(tmp_path / "remotes")
     state = tmp_path / "state"
 

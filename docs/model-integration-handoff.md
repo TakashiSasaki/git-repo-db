@@ -1,6 +1,28 @@
 # Integrated data model handoff
 
-## Current schema 16 handoff
+## Current schema 18 handoff
+
+Phase 1 starts from fetched main `47fd5b88355b98019c0c04408449081e16ab4505`
+(schema 17), stacked on the focused [retirement decision](phase1-api-original-retirement.md).
+The [implementation record](phase1-api-original-retirement-implementation.md)
+contains the executed composed-DDL/runtime inventory, R1–R7 dispositions, exact
+remaining shared boundaries and the implementation's own validation receipts.
+Fresh schema 18 rejects earlier development catalogs; no retained user catalog,
+migration, merge, release or content GC is part of this work.
+
+Current Issue/review acquisition, field provenance and collection receipts remain
+independent of historical profile gates and originals. `reparse-message`,
+current-resource offline replay admission, API raw rejection staging and API-only
+explicit repair are retired. `inspect-message` remains bounded diagnostic
+reading; `parser reparse` remains Git-only. `unresolved_payloads` is a five-column
+physical-corruption table, and `payload_admission_staging` admits only raw Git
+content. Scans, quarantine, backup and restore still inspect all physical bytes.
+Successful historical PR/thread/code/Source publication, accepted partial GraphQL
+roots with error envelopes, live restart/304 reuse,
+required domain-exchange proof and existing opaque provider JSON remain the
+exact Phase-2 boundaries documented in the implementation record.
+
+## Historical schema 16 handoff
 
 Start from PR #14 HEAD `3f76d4873d14604b918198ac06c1660d0fa9e1b9` on
 `fix/current-state-schema-closure`; use `fix/current-state-conflict-boundaries`
@@ -48,13 +70,13 @@ Job plans freeze registration identities, target repositories and non-secret acq
 
 Repository list/show responses expose `inventory_observations` as separate Source-owned interpretations with result/observation UUIDs and decoded metadata. Shared repository metadata is local registration data and is not populated from later parsers.
 
-`parser reparse ACQUISITION_UUID [--profile PROFILE_UUID] [--select]` parses retained bytes without creating another remote observation. The positional identity is a Git acquisition ID or GitHub fetch UUID; `--profile` selects a supported Git decoding profile for execution. The default preserves the new result as history. Git bytes, object OIDs, acquisition times and sealed object/root membership remain unchanged. Historical text is retained and interpreted at publication; hydration cannot mutate sealed facts. Git queries and indexing derive from explicitly selected, eligible result-owned facts.
+`parser reparse ACQUISITION_UUID [--profile PROFILE_UUID] [--select]` parses retained bytes without creating another remote observation. The positional identity is a retained Git acquisition ID; API fetch UUIDs are rejected before original bytes or historical parser execution; `--profile` selects a supported Git decoding profile for execution. The default preserves the new result as history. Git bytes, object OIDs, acquisition times and sealed object/root membership remain unchanged. Historical text is retained and interpreted at publication; hydration cannot mutate sealed facts. Git queries and indexing derive from explicitly selected, eligible result-owned facts.
 
 `parser register`, `parser verify`, `parser select-profile` and `parser select-fact` accept JSON keyword arguments for the corresponding `ParserModel` methods using `--input FILE`. `parser trust VERIFICATION_UUID [--revoke]` explicitly changes local trust; `parser invalidate VERIFICATION_UUID --reason TEXT` adds immutable invalidation. `parser status` exposes definitions, evidence, scopes, selections and staging. Profile verification requires evidence for every declared capability and the exact immutable definition. Reparse, receipt and new observations never silently change an established profile selection. Git fact selection can address repository-current output or a saved acquisition's scope using `git_acquisition_id`.
 
 `identity relation --input FILE`, `identity cancellation --input FILE` and `identity status` admit and inspect explicit equivalence evidence. A relation never merges repository rows, facts or coverage; missing cancellation targets remain staged.
 
-`exchange export --repo REPOSITORY_UUID --output FILE` exports the entire repository. Repeated `--fetch FETCH_UUID` selects permanent fetch identities; `--collection COLLECTION_LOCAL_ID` selects one local collection, optionally bounded by explicit `--fetch` members. The collection selector is local syntax; transported identities remain unchanged. Required owner/context, exact bytes, whole parsed-result publications, authored JSON references and applicable DAG dependencies close the selection without pulling unrelated sibling acquisition history. A 304 can require its exact original fetch; a sealed result can require additional inputs. Completeness travels only with its exact scope proof. Missing legitimate dependencies remain staged, and immutable proof conflicts suppress dependent current coverage/results without selecting a receipt-order winner.
+`exchange export --repo REPOSITORY_UUID --output FILE` exports the entire repository. Repeated `--fetch FETCH_UUID` selects permanent fetch identities only for their retained domain/publication or exact proof closure; an original-only selection is rejected; `--collection COLLECTION_LOCAL_ID` selects one local collection, optionally bounded by explicit `--fetch` members. The collection selector is local syntax; transported identities remain unchanged. Required owner/context, exact bytes, whole parsed-result publications, authored JSON references and applicable DAG dependencies close the selection without pulling unrelated sibling acquisition history. A live 304 proof can require its exact original fetch; a sealed result can require additional inputs. Bare originals and archive-only proof scaffolding are excluded from export, import and delayed promotion; these selectors do not provide standalone message distribution. Completeness travels only with its exact scope proof. Missing legitimate dependencies remain staged, and immutable proof conflicts suppress dependent current coverage/results without selecting a receipt-order winner.
 
 `exchange import --input FILE` and `exchange staging` use the existing one-repository exchange unit. Source-wide inventory, local quarantine/trust, derived conflict barriers and validator caches are outside the unit. Received Source settings remain historical provenance and never configure or overwrite receiver-local operational settings. Importing history never makes remote verification locally trusted automatically.
 
@@ -67,7 +89,7 @@ repo-catalog --state-dir PATH exchange export --repo REPOSITORY_UUID --collectio
 repo-catalog --state-dir RECEIVER_PATH exchange import --input fetch.json
 ```
 
-`db verify-payloads`, `db repair-payload --sha256 HEX --input FILE`, `db check --full`, `db backup --output FILE` and `db restore --input FILE` expose integrity maintenance. `db check` checks the exhaustive JSON classification gate; `--full` also audits authored references and retained Git object identities. Quarantine suppresses the affected Git interpretation and repair explicitly restores valid bytes without rewriting facts. Restore requires a new explicit state directory; backup requires unused database and companion manifest destinations. Failed restore stages are retained.
+`db verify-payloads`, `db repair-payload --sha256 HEX --input FILE`, `db check --full`, `db backup --output FILE` and `db restore --input FILE` expose integrity maintenance. `db check` checks the exhaustive JSON classification gate; `--full` also audits authored references and retained Git object identities. Quarantine suppresses the affected Git interpretation. Explicit repair requires a real `git_object_payloads` reference, verifies replacement bytes against every mapped Git object's format/OID/type/size and restores valid bytes without rewriting facts; a physical digest shared by Git and API references remains eligible. API-only originals cannot be explicitly repaired. Full scans, quarantine and backup/restore still cover all stored physical bytes. Restore requires a new explicit state directory; backup requires unused database and companion manifest destinations. Failed restore stages are retained.
 
 ## Removed compatibility-only work
 
@@ -78,6 +100,15 @@ The following suites existed solely for conversion, salvage or old-workspace adm
 Two imported-first-sync scenarios (five parameterized cases) in the GitHub runtime suite were removed with the importer. Ordinary fresh and resumed GitHub tests remain. The two packaging variants now validate the fresh result model and backup/restore instead of an installed salvage importer. This is intentional retirement of unsupported legacy behavior, not a test-count preservation exercise.
 
 ## Current-contract test replacements
+
+Phase 1 absence contracts exercise removed public parser operations, indirect
+archive parser reachability, API malformed/parser/CAS rejection without raw
+staging, original-only exchange and delayed promotion rejection, narrowed fresh
+DDL and direct SQL. Marker scans distinguish failed-response absence from
+successful historical proof and opaque provider JSON retained at classified
+Phase-2 boundaries. The implementation record reports executed checks; older
+receipts below do not establish schema 18 acceptance.
+
 
 The former lazy historical text expectation in `tests/e2e/test_text_policy.py`
 is replaced by immediate retained historical text and search after publication.

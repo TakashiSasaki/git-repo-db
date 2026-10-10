@@ -394,17 +394,17 @@ def test_tied_provider_clock_has_no_incumbent_public_winner(reviewed_catalog):
     assert [row["body"] for row in visible_issues(catalog).data["items"]] == ["three"]
 
 
-def test_replay_does_not_claim_live_authority_from_current_revision(reviewed_catalog):
+def test_import_does_not_claim_live_authority_from_current_revision(reviewed_catalog):
     catalog = reviewed_catalog
     resources = CurrentResources(catalog.store)
     first = candidate(catalog, "one", updated=None)
     assert resources.admit(first, source="import").status == "accepted"
-    replay = candidate(catalog, "two", updated=None, observed=2**60)
+    imported = candidate(catalog, "two", updated=None, observed=2**60)
     result = resources.admit(
-        replay,
-        source="replay",
+        imported,
+        source="import",
         base_revision=catalog.store.revision(),
-        scope_context=replay["acquisition_scope"],
+        scope_context=imported["acquisition_scope"],
     )
     assert result.status == "conflict"
     assert visible_issues(catalog).data["items"] == []

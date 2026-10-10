@@ -12,11 +12,11 @@ CREATE TRIGGER payload_quarantine_no_replace BEFORE INSERT ON payload_quarantine
 WHEN EXISTS(SELECT 1 FROM payload_quarantine WHERE sha256=NEW.sha256 OR unresolved_payload_id=NEW.unresolved_payload_id)
 BEGIN SELECT RAISE(ABORT,'Existing quarantine cannot be replaced'); END;
 
--- Valid received bytes remain separate from admitted immutable physical objects.
--- This is local pending admission, not a replacement object or a second digest.
+-- Rejected raw Git bytes remain separate from admitted immutable physical objects.
+-- API transport originals have no pending-admission store.
 CREATE TABLE payload_admission_staging(
     stage_uuidv4 TEXT PRIMARY KEY NOT NULL,
-    representation TEXT NOT NULL CHECK(representation IN ('decoded_api','legacy_normalized','git-object-raw-v1')),
+    representation TEXT NOT NULL CHECK(representation='git-object-raw-v1'),
     sha256 BLOB NOT NULL CHECK(length(sha256)=32),
     body BLOB NOT NULL,
     context_json TEXT NOT NULL CHECK(json_valid(context_json) AND json_type(context_json)='object'),

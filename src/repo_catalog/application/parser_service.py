@@ -14,8 +14,21 @@ class ParserService:
         self.path = Path(state_dir)
 
     def execute(self, action, options):
-        if action in ("inspect-message", "reparse-message"):
-            return self._message(action, options)
+        if action not in (
+            "register",
+            "verify",
+            "select-profile",
+            "select-fact",
+            "trust",
+            "invalidate",
+            "admit-decision",
+            "status",
+            "reparse",
+            "inspect-message",
+        ):
+            raise CatalogError("INVALID_ARGUMENT", "Unknown parser action")
+        if action == "inspect-message":
+            return self._inspect_message(options)
         if action == "status":
             with (
                 Store(self.path, readonly=True) as store,
@@ -86,7 +99,7 @@ class ParserService:
                         value = model.invalidate_verification(
                             options["verification_uuidv4"], options["reason"]
                         )
-                    elif action == "admit-decision":
+                    else:
                         decision_kind = data.pop("decision_kind")
                         if decision_kind not in ("profile", "fact"):
                             raise CatalogError(
@@ -98,8 +111,6 @@ class ParserService:
                             if decision_kind == "profile"
                             else model.receive_fact_decision
                         )(data)
-                    else:
-                        raise CatalogError("INVALID_ARGUMENT", "Unknown parser action")
                 except (TypeError, KeyError) as exc:
                     raise CatalogError(
                         "INVALID_ARGUMENT",
@@ -114,7 +125,7 @@ class ParserService:
                     response.coverage.add("parser", "decision_staged")
                 return response
 
-    def _message(self, action, options):
+    def _inspect_message(self, options):
         """Bounded supplementary inspection never acquires or admits domain state."""
         from repo_catalog.adapters.recording import LocalArchiveReader, RecordingError
 
@@ -130,57 +141,4 @@ class ParserService:
             "body_bytes": len(recorded.body) if recorded.body is not None else None,
             "admitted": False,
         }
-        if action == "reparse-message":
-            from repo_catalog.adapters.github import current_parser
-            from repo_catalog.domain.time import now_us
-
-            try:
-                spec = json.loads(Path(options["context"]).read_text())
-                kind = spec["resource_kind"]
-                context = spec["context"]
-                if not isinstance(context, dict) or not isinstance(
-                    context.get("acquisition_scope"), dict
-                ):
-                    raise ValueError()
-                if (
-                    recorded.body is None
-                    or recorded.context.get("response_status") != 200
-                ):
-                    raise ValueError()
-                payload = json.loads(recorded.body)
-            except (KeyError, ValueError, TypeError, UnicodeError) as error:
-                raise CatalogError(
-                    "INVALID_ARGUMENT",
-                    "Reparse requires a saved successful JSON body and explicit provider context",
-                ) from error
-            functions = {
-                "issue": current_parser.issue,
-                "issue-comment": current_parser.issue_comment,
-                "review": current_parser.review,
-                "review-comment": current_parser.review_comment,
-            }
-            if kind not in functions:
-                raise CatalogError(
-                    "INVALID_ARGUMENT", "Unsupported current resource kind"
-                )
-            values = payload if isinstance(payload, list) else [payload]
-            if len(values) > 1000:
-                raise CatalogError(
-                    "ARCHIVE_LIMIT", "Reparse member count exceeds the read bound"
-                )
-            projections = []
-            for value in values:
-                args = [value, context, recorded.context["observed_at_us"]]
-                if kind == "issue-comment":
-                    if not isinstance(spec.get("parent_provider_resource_id"), str):
-                        raise CatalogError(
-                            "INVALID_ARGUMENT",
-                            "Issue comment reparse requires an explicit parent provider ID",
-                        )
-                    args.append(spec["parent_provider_resource_id"])
-                projection = functions[kind](*args)
-                if projection is not None:
-                    projection["parsed_at_us"] = now_us()
-                    projections.append(projection)
-            data.update(resource_kind=kind, projections=projections, source="replay")
         return Result(data)

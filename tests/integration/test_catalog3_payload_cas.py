@@ -10,6 +10,7 @@ from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.schema import schema_sql
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.payload import PayloadRef
+from tests.support.git_payloads import register_git_blob
 
 
 @pytest.fixture
@@ -30,9 +31,10 @@ def test_payload_registration_requires_an_explicit_representation(db):
 
 
 def test_same_bytes_across_representations_share_one_physical_object(db):
-    first = intern_payload(db, b"\x00{}\xff", representation="decoded_api")
-    assert intern_payload(db, b"\x00{}\xff", representation="decoded_api") == first
-    second = intern_payload(db, b"\x00{}\xff", representation="legacy_normalized")
+    body = b'{"content":"also a Git blob"}'
+    first = register_git_blob(db, body)
+    assert register_git_blob(db, body) == first
+    second = intern_payload(db, body, representation="decoded_api")
     assert first != second
     assert first.sha256 == second.sha256
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (1,)
@@ -44,10 +46,7 @@ def test_same_bytes_across_representations_share_one_physical_object(db):
 
 
 def test_distinct_byte_encodings_remain_distinct(db):
-    refs = [
-        intern_payload(db, value, representation="decoded_api")
-        for value in (b"", b"{}", b"{ }", b"{}\n")
-    ]
+    refs = [register_git_blob(db, value) for value in (b"", b"{}", b"{ }", b"{}\n")]
     assert len(set(refs)) == 4
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (4,)
 
@@ -63,7 +62,7 @@ def test_independent_fetches_keep_separate_occurrences_for_shared_bytes(db):
         "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,resume_scope_id) VALUES('collection','cccccccc-cccc-4ccc-8ccc-cccccccccccc','fixture','scope')"
     )
     for ordinal, timestamp in enumerate((-1, 0)):
-        ref = intern_payload(db, b"same response", representation="decoded_api")
+        ref = intern_payload(db, b'{"same":"response"}', representation="decoded_api")
         db.execute(
             "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','collection',?,?,?,'{}',?,1)",
             (str(uuid.uuid4()), ordinal, *ref.parameters(), timestamp),
@@ -82,7 +81,7 @@ def test_declared_hash_mismatch_is_rejected_before_any_admission(db):
             db,
             b"invalid",
             expected_sha256=hashlib.sha256(b"valid").digest(),
-            representation="decoded_api",
+            representation="git-object-raw-v1",
         )
     assert error.value.code == "PAYLOAD_DIGEST_MISMATCH"
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (0,)
@@ -98,7 +97,7 @@ def test_physical_and_logical_admission_is_atomic_inside_caller_transaction(db):
         "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('dddddddd-dddd-4ddd-8ddd-dddddddddddd','dddddddd-dddd-4ddd-8ddd-dddddddddddd','{}')"
     )
     with pytest.raises(sqlite3.IntegrityError, match="injected failure"):
-        intern_payload(db, b"response", representation="decoded_api")
+        intern_payload(db, b"raw blob", representation="git-object-raw-v1")
     assert db.in_transaction
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (0,)
     db.commit()
@@ -110,7 +109,7 @@ def test_corrupt_existing_bytes_are_preserved_and_never_silently_repaired(db):
     # Simulate corrupt storage, bypassing only application admission.
     db.execute("INSERT INTO stored_bytes VALUES(?,?,?)", (digest, b"bad!", 4))
     with pytest.raises(CatalogError) as error:
-        intern_payload(db, b"good", representation="decoded_api")
+        intern_payload(db, b"good", representation="git-object-raw-v1")
     assert error.value.code == "PAYLOAD_CORRUPTION"
     assert db.execute("SELECT body FROM stored_bytes").fetchone() == (b"bad!",)
     assert db.execute("SELECT count(*) FROM payloads").fetchone() == (0,)
@@ -126,9 +125,9 @@ def test_real_collision_is_distinguished_from_bad_declared_hash(db, monkeypatch)
             return digest
 
     monkeypatch.setattr(payloads.hashlib, "sha256", lambda body: CollisionHash())
-    intern_payload(db, b"first", representation="decoded_api")
+    intern_payload(db, b"first", representation="git-object-raw-v1")
     with pytest.raises(CatalogError) as error:
-        intern_payload(db, b"other", representation="legacy_normalized")
+        intern_payload(db, b"other", representation="decoded_api")
     assert error.value.code == "PAYLOAD_HASH_COLLISION"
     assert db.execute("SELECT body FROM stored_bytes").fetchone() == (b"first",)
     assert db.execute("SELECT count(*) FROM payloads").fetchone() == (1,)
@@ -136,7 +135,7 @@ def test_real_collision_is_distinguished_from_bad_declared_hash(db, monkeypatch)
 
 @pytest.mark.parametrize("table", ["stored_bytes", "payloads"])
 def test_replace_update_delete_cannot_mutate_admitted_identity(db, table):
-    reference = intern_payload(db, b"response", representation="decoded_api")
+    reference = register_git_blob(db, b"raw Git content")
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(f"DELETE FROM {table}")
     with pytest.raises(sqlite3.IntegrityError):
@@ -151,29 +150,57 @@ def test_replace_update_delete_cannot_mutate_admitted_identity(db, table):
             db.execute(
                 "INSERT OR REPLACE INTO payloads VALUES(?,?)", reference.parameters()
             )
-    assert db.execute("SELECT body FROM stored_bytes").fetchone() == (b"response",)
-
-
-def test_logical_reference_requires_both_components(db):
-    reference = intern_payload(db, b"response", representation="decoded_api")
-    for representation, digest in (
-        (None, reference.sha256),
-        (reference.representation, None),
-        ("legacy_normalized", reference.sha256),
-    ):
-        with pytest.raises(sqlite3.IntegrityError):
-            db.execute(
-                "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,'gap')",
-                (representation, digest),
-            )
-    db.execute(
-        "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,'gap')",
-        reference.parameters(),
+    assert db.execute("SELECT body FROM stored_bytes").fetchone() == (
+        b"raw Git content",
     )
 
 
+def test_git_object_reference_requires_both_components_and_its_representation(db):
+    body = b"raw Git blob content"
+    reference = intern_payload(db, body, representation="git-object-raw-v1")
+    object_id = db.execute(
+        "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES('sha1',?,'blob',?,1)",
+        (hashlib.sha1(f"blob {len(body)}\0".encode() + body).digest(), len(body)),
+    ).lastrowid
+    for representation, digest in (
+        (None, reference.sha256),
+        (reference.representation, None),
+        ("decoded_api", reference.sha256),
+        (reference.representation, b"x" * 32),
+    ):
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute(
+                "INSERT INTO git_object_payloads VALUES(?,?,?)",
+                (object_id, representation, digest),
+            )
+    db.execute(
+        "INSERT INTO git_object_payloads VALUES(?,?,?)",
+        (object_id, *reference.parameters()),
+    )
+
+
+def test_rejection_diagnostics_have_no_api_payload_reference_or_logical_fk(db):
+    assert [
+        row[1] for row in db.execute("PRAGMA table_xinfo(unresolved_payloads)")
+    ] == [
+        "stored_sha256",
+        "detected_at_us",
+        "diagnostic_json",
+        "unresolved_payload_id",
+        "reason",
+    ]
+    foreign_keys = db.execute("PRAGMA foreign_key_list(unresolved_payloads)").fetchall()
+    assert len(foreign_keys) == 1
+    assert foreign_keys[0][2:5] == ("stored_bytes", "stored_sha256", "sha256")
+    assert not db.execute(
+        "SELECT 1 FROM sqlite_schema WHERE name='unresolved_payloads_fk_1'"
+    ).fetchone()
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute("INSERT INTO unresolved_payloads(reason) VALUES('API_SCHEMA')")
+
+
 def test_portable_json_reference_is_exact_lowercase_hex():
-    ref = PayloadRef("decoded_api", bytes(range(32)))
+    ref = PayloadRef("git-object-raw-v1", bytes(range(32)))
     assert PayloadRef.from_json(ref.as_json()) == ref
     assert len(ref.as_json()["sha256"]) == 64
 

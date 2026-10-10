@@ -1,6 +1,6 @@
 # Current implementation status
 
-The ordinary product runtime is catalog3. See [runtime handoff](schema-hardening/runtime-handoff.md) for runnable commands, current validation and limits. The earlier v1/v2 and independent-target milestones are historical context; they are not compatibility or acceptance requirements.
+The ordinary product runtime is Catalog3 schema 18. See [current handoff](model-integration-handoff.md), [transport-independent implementation](transport-independent-core-implementation.md) and [Phase 1 retirement](phase1-api-original-retirement-implementation.md) for runnable commands, scoped validation and remaining boundaries. The schema-hardening runtime handoff is historical evidence. The earlier v1/v2 and independent-target milestones are historical context; they are not compatibility or acceptance requirements.
 
 ## Historical v2 implementation record
 

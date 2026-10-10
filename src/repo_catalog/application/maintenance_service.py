@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -393,13 +394,17 @@ class MaintenanceService:
                     result.status = "partial"
                 return result
             if action == "repair-payload":
-                from repo_catalog.domain.payload import PayloadRef
-
-                reference = PayloadRef.from_json(
-                    {"representation": "decoded_api", "sha256": args.sha256}
-                )
+                if (
+                    not isinstance(args.sha256, str)
+                    or re.fullmatch(r"[0-9a-f]{64}", args.sha256) is None
+                ):
+                    raise CatalogError(
+                        "INVALID_ARGUMENT", "SHA-256 must be 64 lowercase hex digits"
+                    )
                 data = repair_payload(
-                    s.connection, reference.sha256, Path(args.input).read_bytes()
+                    s.connection,
+                    bytes.fromhex(args.sha256),
+                    Path(args.input).read_bytes(),
                 )
                 return Result(data, catalog=s.revision())
             if action == "backup":

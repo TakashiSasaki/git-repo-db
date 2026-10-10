@@ -14,6 +14,7 @@ from repo_catalog.adapters.github.persistence import (
     oid_context,
 )
 from repo_catalog.adapters.github.transport import GitHubTransport
+from repo_catalog.adapters.sqlite.cas_integrity import diagnose_admission_failure
 from repo_catalog.domain.models import CatalogError, Waiting
 from repo_catalog.domain.payload import PayloadRef
 from repo_catalog.domain.pr_scope import NON_DOCUMENT_KINDS, document_scope_includes
@@ -305,7 +306,7 @@ class GitHubCollector:
             repo["repository_uuidv4"],
             kind,
             state,
-            self.facts.observed_at_us(collection),
+            self.facts.observed_at_us(collection, include_partial=state != "complete"),
             {
                 "fetch_collection_ids": [collection["fetch_collection_id"]],
                 **({"reason": reason} if reason else {}),
@@ -371,15 +372,18 @@ class GitHubCollector:
             )
         ]
 
-    def summary_observed_at_us(self, repo, job, *, documents_only=False):
+    def summary_observed_at_us(
+        self, repo, job, *, documents_only=False, include_partial=True
+    ):
         return self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences WHERE coalesce(json_extract(request,'$.operational_only'),0)=0 UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=?"
             + (
                 " AND f.kind NOT IN (" + ",".join("?" for _ in NON_DOCUMENT_KINDS) + ")"
                 if documents_only
                 else ""
             ),
             (
+                include_partial,
                 repo["repository_uuidv4"],
                 repo["source_id"],
                 job,
@@ -454,6 +458,11 @@ class GitHubCollector:
 
     def inventory_request(self, method, url, **kwargs):
         response = self.http.request(method, url, **kwargs)
+        return response, self.rest_json(response)
+
+    def inventory_input(self, response, url):
+        """Retain accepted live inventory proof, after endpoint validation."""
+        next_url = self.http.next_url(response)
         try:
             with self.s.transaction():
                 input_uuid, observed, payload_ref = self.facts.source_input(
@@ -461,26 +470,25 @@ class GitHubCollector:
                     response,
                     {
                         "url": url,
-                        "method": method,
+                        "method": "GET",
                         "etag": response.headers.get("etag"),
                         "source_settings": self.inventory_source_settings,
                     },
                 )
-                self.inventory_evidence.append(
-                    {
-                        "source_input_uuidv4": input_uuid,
-                        "payload": payload_ref.as_json(),
-                        "url": url,
-                        "method": method,
-                        "observed_at_us": observed,
-                        "etag": response.headers.get("etag"),
-                        "next_url": self.http.next_url(response),
-                    }
-                )
         except CatalogError as error:
-            self.facts.stage_rejected(error)
+            diagnose_admission_failure(self.s.connection, error)
             raise
-        return response
+        self.inventory_evidence.append(
+            {
+                "source_input_uuidv4": input_uuid,
+                "payload": payload_ref.as_json(),
+                "url": url,
+                "method": "GET",
+                "observed_at_us": observed,
+                "etag": response.headers.get("etag"),
+                "next_url": next_url,
+            }
+        )
 
     def inventory(self, source, job):
         cfg = json.loads(source["settings"])
@@ -489,7 +497,12 @@ class GitHubCollector:
         owner = cfg["owner"]
         base = self.http.base
         try:
-            identity = self.inventory_request("GET", base + "/user").json()
+            response, identity = self.inventory_request("GET", base + "/user")
+            if not isinstance(identity, dict) or not isinstance(
+                identity.get("login"), str
+            ):
+                raise CatalogError("API_SCHEMA", "Authenticated user identity missing")
+            self.inventory_input(response, base + "/user")
             if cfg.get("include_repositories"):
                 import re
 
@@ -501,9 +514,12 @@ class GitHubCollector:
                             "INVALID_ARGUMENT",
                             "Included repository must be a name within declared owner",
                         )
-                    payload = self.inventory_request(
-                        "GET", base + "/repos/" + owner + "/" + name
-                    ).json()
+                    url = base + "/repos/" + owner + "/" + name
+                    response, payload = self.inventory_request("GET", url)
+                    if not isinstance(payload, dict) or not isinstance(
+                        payload.get("full_name"), str
+                    ):
+                        raise CatalogError("API_SCHEMA", "Repository identity missing")
                     if (
                         payload.get("full_name", "").lower()
                         != f"{owner}/{name}".lower()
@@ -511,7 +527,14 @@ class GitHubCollector:
                         raise CatalogError(
                             "SCOPE_MISMATCH", "Selected repository identity changed"
                         )
+                    if not payload.get("id") or not isinstance(
+                        payload.get("clone_url"), str
+                    ):
+                        raise CatalogError(
+                            "API_SCHEMA", "Repository identity or clone URL missing"
+                        )
                     provider = str(payload["id"])
+                    self.inventory_input(response, url)
                     selected.append(
                         {
                             "host": "github.com",
@@ -537,8 +560,12 @@ class GitHubCollector:
                     )
                 )
             else:
-                user = self.inventory_request("GET", base + "/users/" + owner).json()
+                url = base + "/users/" + owner
+                response, user = self.inventory_request("GET", url)
+                if not isinstance(user, dict) or not isinstance(user.get("type"), str):
+                    raise CatalogError("API_SCHEMA", "Owner identity missing")
                 if user.get("type") == "Organization":
+                    self.inventory_input(response, url)
                     url = (
                         base
                         + "/orgs/"
@@ -562,12 +589,15 @@ class GitHubCollector:
                 if url in seen:
                     raise CatalogError("PAGINATION_CYCLE", "Repeated inventory page")
                 seen.add(url)
-                response = self.inventory_request("GET", url)
-                values = response.json()
+                response, values = self.inventory_request("GET", url)
                 if not isinstance(values, list):
                     raise CatalogError("API_SCHEMA", "Expected repository list")
                 for r in values:
-                    if not r.get("id") or not r.get("full_name"):
+                    if (
+                        not isinstance(r, dict)
+                        or not r.get("id")
+                        or not isinstance(r.get("full_name"), str)
+                    ):
                         raise CatalogError("API_SCHEMA", "Repository identity missing")
                     if r["full_name"].split("/")[0].lower() != owner.lower():
                         raise CatalogError(
@@ -578,7 +608,7 @@ class GitHubCollector:
                     clone = cfg.get("clone_url_overrides", {}).get(
                         provider, r.get("clone_url")
                     )
-                    if not clone:
+                    if not isinstance(clone, str) or not clone:
                         raise CatalogError("API_SCHEMA", "Clone URL missing")
                     result.append(
                         {
@@ -589,6 +619,7 @@ class GitHubCollector:
                             "metadata": r,
                         }
                     )
+                self.inventory_input(response, url)
                 url = self.http.next_url(response)
             by_id = {repo["provider_repository_id"]: repo for repo in result}
             result = list(by_id.values())
@@ -772,38 +803,23 @@ class GitHubCollector:
     def partial_rest_collection(
         self, repo, pr, kind, job, collection, error, response, url
     ):
-        """Retain rejected input without committing any normalized page prefix."""
+        """Keep the safe live retry boundary, never the rejected response bytes."""
         with self.s.transaction():
-            staged = self.facts.stage_rejected(error)
-            if response is not None and not staged:
-                self.facts.fence(job)
-                occurrence, _, _ = self.facts.page(
-                    collection,
-                    response,
-                    {"url": url, "method": "GET", "normalization_error": error.code},
-                    url,
-                    advance=False,
-                )
-                payload_key = self.s.one(
-                    "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
-                    (occurrence,),
-                )
+            self.facts.fence(job)
+            diagnose_admission_failure(self.s.connection, error)
+            if response is not None:
                 self.s.execute(
-                    "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
-                    (
-                        *payload_key,
-                        canonical(
-                            {
-                                "code": error.code,
-                                "fetch_collection_id": collection[
-                                    "fetch_collection_id"
-                                ],
-                                "fetch_occurrence_id": occurrence,
-                            }
-                        ),
-                    ),
+                    "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                    (url, collection["fetch_collection_id"]),
                 )
-            self.facts.partial(collection, error.code)
+            self.facts.partial(
+                collection,
+                error.code,
+                observed_at_us=self.facts.response_time(response)
+                if response is not None
+                and error.code not in ("CANCELLED", "STALE_ATTEMPT")
+                else None,
+            )
             if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
                 self.facts.pending_response(collection) or error.code == "API_CAP"
             ):
@@ -820,12 +836,12 @@ class GitHubCollector:
             value = response.json()
             # SQLite projections retain whole provider objects as JSON. Check
             # every string, including unknown metadata and keys, before any
-            # projection can fail with UnicodeEncodeError. The raw response is
-            # still admitted unchanged by the rejected-page path.
+            # projection can fail with UnicodeEncodeError. Rejected responses
+            # remain transient and are acquired afresh on a live retry.
             json.dumps(value, ensure_ascii=False, allow_nan=False).encode("utf-8")
             return value
         except (ValueError, UnicodeError):
-            raise CatalogError("API_SCHEMA", "Malformed REST JSON") from None
+            raise CatalogError("API_SCHEMA", "Malformed API JSON") from None
 
     @staticmethod
     def rest_item(value, kind):
@@ -1186,25 +1202,9 @@ class GitHubCollector:
                 (scope, number),
             )
             if not pr:
-                payload_key = self.s.one(
-                    "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
-                    (occurrence,),
+                raise CatalogError(
+                    "COMMENT_PARENT_UNKNOWN", "Comment parent has not been acquired"
                 )
-                self.s.execute(
-                    "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
-                    (
-                        *payload_key,
-                        canonical(
-                            {
-                                "code": "COMMENT_PARENT_UNKNOWN",
-                                "number": number,
-                                "kind": kind,
-                                "position": position,
-                            }
-                        ),
-                    ),
-                )
-                return
             self.facts.document(
                 pr[0],
                 kind,
@@ -1365,48 +1365,6 @@ class GitHubCollector:
 
         return normalize
 
-    def failed_graphql_page(
-        self, collection, response, variables, query, cursor, error
-    ):
-        """Retain raw rejected evidence in the caller's writer transaction."""
-        if self.facts.stage_rejected(error):
-            return
-        resource = (
-            ("data", "node")
-            if "thread" in variables
-            else ("data", "repository", "pullRequest")
-        )
-        try:
-            self.graphql_object(response.json(), *resource)
-            operational_only = False
-        except (CatalogError, ValueError):
-            operational_only = True
-        occurrence, _, _ = self.facts.page(
-            collection,
-            response,
-            {
-                "url": self.http.graphql,
-                "method": "POST",
-                "query": query,
-                "variables": variables,
-                "normalization_error": error.code,
-                **({"operational_only": True} if operational_only else {}),
-            },
-            cursor,
-            advance=False,
-        )
-        payload_key = self.s.one(
-            "SELECT payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_id=?",
-            (occurrence,),
-        )
-        self.s.execute(
-            "INSERT INTO unresolved_payloads(payload_representation,payload_sha256,reason) VALUES(?,?,?)",
-            (
-                *payload_key,
-                canonical({"code": error.code, "fetch_occurrence_id": occurrence}),
-            ),
-        )
-
     def graphql_errors(self, payload, *resource):
         """Classify error-only responses before requiring ordinary data fields."""
         errors = payload.get("errors") if isinstance(payload, dict) else None
@@ -1462,7 +1420,7 @@ class GitHubCollector:
         if collection is None:
             return {}, False, None
         page = self.s.one(
-            "SELECT b.body,o.observed_at_us,o.payload_sha256 FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_collection_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC LIMIT 1",
+            "SELECT b.body,o.observed_at_us,o.payload_sha256 FROM fetch_occurrences o JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 WHERE o.fetch_collection_id=? ORDER BY o.ordinal DESC,o.fetch_occurrence_id DESC LIMIT 1",
             (collection["fetch_collection_id"],),
         )
         if page is None:
@@ -1551,14 +1509,16 @@ class GitHubCollector:
         )
         child_collections = []
 
-        def observed_at_us():
-            return self.facts.thread_observed_at_us(collection)
+        def observed_at_us(*, include_partial=True):
+            return self.facts.thread_observed_at_us(
+                collection, include_partial=include_partial
+            )
 
         seen = set()
-        response, uncommitted = None, False
+        response, uncommitted, resource_observed = None, False, False
         try:
             while True:
-                response, uncommitted = None, False
+                response, uncommitted, resource_observed = None, False, False
                 cursor = pending.get("cursor")
                 if cursor in seen:
                     raise CatalogError("PAGINATION_CYCLE", "Thread cursor cycle")
@@ -1591,11 +1551,12 @@ class GitHubCollector:
                     )
                     self._retain_recording_diagnostics(response)
                     uncommitted = True
-                    payload = response.json()
+                    payload = self.rest_json(response)
                     self.graphql_errors(payload, "data", "repository", "pullRequest")
                     p = self.graphql_object(
                         payload, "data", "repository", "pullRequest"
                     )
+                    resource_observed = True
                     connection = p.get("reviewThreads")
                     nodes, info, next_cursor = self.graphql_connection(connection)
                     with self.s.transaction():
@@ -1739,13 +1700,13 @@ class GitHubCollector:
                                     collection
                                 ),
                             },
-                            observed_at_us=observed_at_us(),
+                            observed_at_us=observed_at_us(include_partial=False),
                         )
                         self.coverage_claim(
                             repo["repository_uuidv4"],
                             "threads",
                             "complete",
-                            observed_at_us(),
+                            observed_at_us(include_partial=False),
                             {
                                 "fetch_collection_ids": self.thread_collection_ids(
                                     collection
@@ -1759,10 +1720,7 @@ class GitHubCollector:
         except CatalogError as error:
             with self.s.transaction():
                 self.facts.fence(job)
-                if response is not None and uncommitted:
-                    self.failed_graphql_page(
-                        collection, response, variables, root_query, cursor, error
-                    )
+                diagnose_admission_failure(self.s.connection, error)
                 if error.details.get("refresh_root"):
                     self.s.execute(
                         "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
@@ -1771,7 +1729,16 @@ class GitHubCollector:
                             collection["fetch_collection_id"],
                         ),
                     )
-                self.facts.partial(collection, error.code)
+                self.facts.partial(
+                    collection,
+                    error.code,
+                    observed_at_us=self.facts.response_time(response)
+                    if response is not None
+                    and uncommitted
+                    and resource_observed
+                    and error.code not in ("CANCELLED", "STALE_ATTEMPT")
+                    else None,
+                )
                 if error.code not in ("CANCELLED", "STALE_ATTEMPT") and (
                     any(
                         self.facts.pending_response(item)
@@ -1956,10 +1923,10 @@ class GitHubCollector:
         cursor = page["next_cursor"] if page else initial_cursor
         ordinal = page["ordinal"] + 1 if page else 0
         seen = set()
-        response, uncommitted = None, False
+        response, uncommitted, resource_observed = None, False, False
         try:
             while cursor:
-                response, uncommitted = None, False
+                response, uncommitted, resource_observed = None, False, False
                 if cursor in seen:
                     raise CatalogError(
                         "PAGINATION_CYCLE", "Thread comments cursor cycle"
@@ -1983,9 +1950,10 @@ class GitHubCollector:
                 )
                 self._retain_recording_diagnostics(response)
                 uncommitted = True
-                payload = response.json()
+                payload = self.rest_json(response)
                 self.graphql_errors(payload, "data", "node")
                 comments = self.graphql_object(payload, "data", "node").get("comments")
+                resource_observed = True
                 _, info, next_cursor = self.graphql_connection(comments)
                 with self.s.transaction():
                     self.facts.fence(job)
@@ -2043,12 +2011,22 @@ class GitHubCollector:
         except CatalogError as error:
             with self.s.transaction():
                 self.facts.fence(job)
+                diagnose_admission_failure(self.s.connection, error)
                 if response is not None and uncommitted:
                     self.s.execute(
                         "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
                         (cursor, collection["fetch_collection_id"]),
                     )
-                self.facts.partial(collection, error.code)
+                self.facts.partial(
+                    collection,
+                    error.code,
+                    observed_at_us=self.facts.response_time(response)
+                    if response is not None
+                    and uncommitted
+                    and resource_observed
+                    and error.code not in ("CANCELLED", "STALE_ATTEMPT")
+                    else None,
+                )
                 self.facts.publish()
             raise
 
@@ -2824,8 +2802,9 @@ class GitHubCollector:
                                 ),
                             )
                     code_observed_at_us = s.one(
-                        "SELECT MAX(o.observed_at_us) FROM fetch_occurrences o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND coalesce(json_extract(o.request,'$.operational_only'),0)=0 AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads','thread-comments')",
+                        "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND f.kind IN ('pr-detail','pr-code-check','pr-commits','pr-files','review','threads','thread-comments')",
                         (
+                            state != "complete",
                             repo["repository_uuidv4"],
                             pr["change_request_id"],
                             repo["source_id"],
@@ -2894,7 +2873,10 @@ class GitHubCollector:
                         component,
                         "partial" if missing else "complete",
                         self.summary_observed_at_us(
-                            repo, job, documents_only=documents_only
+                            repo,
+                            job,
+                            documents_only=documents_only,
+                            include_partial=bool(missing),
                         ),
                         {
                             "fetch_collection_ids": self.summary_collection_ids(

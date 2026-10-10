@@ -148,7 +148,7 @@ def test_retired_http_reparse_rejects_quarantined_original_without_diagnosis(
     assert store.one("SELECT count(*) FROM parsed_results")[0] == before
 
 
-def test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity(
+def test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging(
     github_runtime,
 ):
     import httpx
@@ -195,18 +195,9 @@ def test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity(
             None,
         )
     assert failure.value.code == "PAYLOAD_CORRUPTION"
-    received = facts.rejected_fetch[1].copy()
-    assert received["request"]["response"] == {
-        "status": 200,
-        "headers": {"etag": 'W/"opaque,=token"'},
-    }
-    assert "synthetic-secret" not in json.dumps(received)
-    assert facts.stage_rejected(failure.value)
-    staged = store.one("SELECT * FROM payload_admission_staging")
-    assert staged["body"] == body
-    assert json.loads(staged["context_json"]) == received
-    assert received["fetch_occurrence_uuidv4"] != fetch["fetch_occurrence_uuidv4"]
-    assert uuid.UUID(received["fetch_occurrence_uuidv4"]).version == 4
+    assert not hasattr(facts, "rejected_fetch")
+    assert not hasattr(facts, "stage_rejected")
+    assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
     assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == count
     assert (
         store.one(
@@ -214,6 +205,11 @@ def test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity(
         )[0]
         == corrupted
     )
+    from repo_catalog.adapters.sqlite.cas_integrity import verify_all
+
+    # The retired staging call used to diagnose as well as save the rejected
+    # input. Physical diagnosis remains an explicit shared integrity operation.
+    verify_all(store.connection)
     assert store.one(
         "SELECT 1 FROM payload_quarantine WHERE sha256=?", (fetch["payload_sha256"],)
     )

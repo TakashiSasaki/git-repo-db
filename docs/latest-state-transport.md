@@ -57,8 +57,11 @@ request evidence.
 
 The context preserves signed-int64 `observed_at_us`, one-based attempt number,
 method, filtered URL, selected request/response headers and response status.
-Failed exchanges have a stable failure code, no exception message and no body.
-A response interrupted halfway is never presented as a complete captured body.
+Transport failures before a complete response body have a stable failure code,
+no exception message and no body. A response interrupted halfway is never
+presented as a complete captured body. Complete HTTP error/retry responses and
+responses later rejected by a domain parser may still be captured by this
+optional external recorder. They do not enter a core failed-response retry store.
 Optional explicit provider hints are limited to request kind, owner, repository,
 PR/Issue number, collection scope and service/repository UUID. Arbitrary keyword
 arguments and GraphQL request bodies are not archived.
@@ -84,11 +87,15 @@ Returned responses expose three transport extension values:
 | `repo_catalog_archive_ref` | Optional UUIDv4 correlation reference |
 | `repo_catalog_recording_diagnostics` | Supplementary capture errors for this response |
 
-Archive inspection does not create a remote observation. Parsing saved bytes
-must retain the recorded observation time and must not admit ordinary current
-state implicitly. Provider hints supply context for the same provider parsing
-code; absent context, unavailable bodies and unsupported response kinds remain
-explicit inspection limitations rather than fabricated parents or identities.
+Archive inspection does not create a remote observation or invoke a domain
+parser. `parser inspect-message` exposes bounded capture metadata and body
+availability; unavailable bodies remain an inspection limitation. The
+[Phase 1 decision](phase1-api-original-retirement.md) retires `reparse-message`,
+including nonpublishing parser projections. An optional recorded response cannot
+be used as a core retry or replay source. Successful historical publication,
+accepted partial GraphQL roots with errors, live restart/304 reuse and required
+domain-exchange proof still use primary-catalog
+originals within the [documented Phase-2 boundaries](phase1-api-original-retirement-implementation.md).
 
 ## Bounded archive reading
 
@@ -120,4 +127,6 @@ Focused synthetic regression evidence lives in
 `tests/unit/test_recording_followup.py` and
 `tests/integration/test_recording_followup.py`, including disabled/unavailable modes,
 decoded-byte identity, credential filtering, retry/failure recording, bounded
-reading and corrupt/missing archive behavior.
+reading and corrupt/missing archive behavior. `tests/unit/test_message_inspection.py`
+checks the bounded CLI/service reader; retirement absence and side-effect
+regressions are recorded in the Phase 1 implementation report.

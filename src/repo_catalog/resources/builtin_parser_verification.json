@@ -51,8 +51,8 @@
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_nested_cursor_retries_saved_boundary",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[child-page]",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[root-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[False]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[True]",
         "tests.integration.test_catalog3_github_runtime::test_rate_limit_boundaries_are_exact_epoch_microseconds[headers0-1002000124]",
@@ -90,7 +90,7 @@
         "tests.integration.test_catalog3_parsing_runtime::test_repository_response_etag_survives_as_immutable_history_including_304",
         "tests.integration.test_catalog3_parsing_runtime::test_retired_http_reparse_rejects_quarantined_original_without_diagnosis",
         "tests.integration.test_catalog3_parsing_runtime::test_source_inventory_records_separate_owned_raw_inputs",
-        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity"
+        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging"
       ],
       "fact_kind": "change-request",
       "outcome": "passed",
@@ -147,8 +147,8 @@
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_nested_cursor_retries_saved_boundary",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[child-page]",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[root-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[False]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[True]",
         "tests.integration.test_catalog3_github_runtime::test_rate_limit_boundaries_are_exact_epoch_microseconds[headers0-1002000124]",
@@ -186,7 +186,7 @@
         "tests.integration.test_catalog3_parsing_runtime::test_repository_response_etag_survives_as_immutable_history_including_304",
         "tests.integration.test_catalog3_parsing_runtime::test_retired_http_reparse_rejects_quarantined_original_without_diagnosis",
         "tests.integration.test_catalog3_parsing_runtime::test_source_inventory_records_separate_owned_raw_inputs",
-        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity"
+        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging"
       ],
       "fact_kind": "pr-title",
       "outcome": "passed",
@@ -243,8 +243,8 @@
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_nested_cursor_retries_saved_boundary",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[child-page]",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[root-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[False]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[True]",
         "tests.integration.test_catalog3_github_runtime::test_rate_limit_boundaries_are_exact_epoch_microseconds[headers0-1002000124]",
@@ -282,7 +282,7 @@
         "tests.integration.test_catalog3_parsing_runtime::test_repository_response_etag_survives_as_immutable_history_including_304",
         "tests.integration.test_catalog3_parsing_runtime::test_retired_http_reparse_rejects_quarantined_original_without_diagnosis",
         "tests.integration.test_catalog3_parsing_runtime::test_source_inventory_records_separate_owned_raw_inputs",
-        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity"
+        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging"
       ],
       "fact_kind": "pr-body",
       "outcome": "passed",
@@ -339,8 +339,8 @@
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_nested_cursor_retries_saved_boundary",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[child-page]",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[root-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[False]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[True]",
         "tests.integration.test_catalog3_github_runtime::test_rate_limit_boundaries_are_exact_epoch_microseconds[headers0-1002000124]",
@@ -415,8 +415,8 @@
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_nested_cursor_retries_saved_boundary",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[child-page]",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[root-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[False]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[True]",
         "tests.integration.test_catalog3_github_runtime::test_rate_limit_boundaries_are_exact_epoch_microseconds[headers0-1002000124]",
@@ -476,7 +476,7 @@
         "tests.integration.test_catalog3_parsing_runtime::test_repository_response_etag_survives_as_immutable_history_including_304",
         "tests.integration.test_catalog3_parsing_runtime::test_retired_http_reparse_rejects_quarantined_original_without_diagnosis",
         "tests.integration.test_catalog3_parsing_runtime::test_source_inventory_records_separate_owned_raw_inputs",
-        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity"
+        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging"
       ],
       "fact_kind": "events",
       "outcome": "passed",
@@ -533,8 +533,8 @@
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
         "tests.integration.test_catalog3_github_runtime::test_malformed_nested_cursor_retries_saved_boundary",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[child-page]",
-        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias[root-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+        "tests.integration.test_catalog3_github_runtime::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[False]",
         "tests.integration.test_catalog3_github_runtime::test_partial_listing_resumes_same_items_and_no_completed_pages[True]",
         "tests.integration.test_catalog3_github_runtime::test_rate_limit_boundaries_are_exact_epoch_microseconds[headers0-1002000124]",
@@ -572,7 +572,7 @@
         "tests.integration.test_catalog3_parsing_runtime::test_repository_response_etag_survives_as_immutable_history_including_304",
         "tests.integration.test_catalog3_parsing_runtime::test_retired_http_reparse_rejects_quarantined_original_without_diagnosis",
         "tests.integration.test_catalog3_parsing_runtime::test_source_inventory_records_separate_owned_raw_inputs",
-        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity"
+        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging"
       ],
       "fact_kind": "code",
       "outcome": "passed",
@@ -628,7 +628,7 @@
         "tests.integration.test_catalog3_parsing_runtime::test_repository_response_etag_survives_as_immutable_history_including_304",
         "tests.integration.test_catalog3_parsing_runtime::test_retired_http_reparse_rejects_quarantined_original_without_diagnosis",
         "tests.integration.test_catalog3_parsing_runtime::test_source_inventory_records_separate_owned_raw_inputs",
-        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_staged_with_original_identity"
+        "tests.integration.test_catalog3_parsing_runtime::test_valid_new_fetch_of_corrupt_digest_is_rejected_without_original_staging"
       ],
       "fact_kind": "inventory",
       "outcome": "passed",
@@ -640,8 +640,8 @@
     "policy": "whole-profile-v1",
     "reports": [
       {
-        "executed_passed": 1614,
-        "sha256": "beb59e1ab7f068a2629d76da9190cdabbd7a65acb5274fb1a8bbc46ebc380a31",
+        "executed_passed": 1706,
+        "sha256": "f4efd61221ea50f967a9c98fc9e497f3a8a7ad34dce228acaa2aa81b69d97f37",
         "skipped": 0
       }
     ]
@@ -689,25 +689,25 @@
       "adapters/git/importer.py": "4abf0992493d6c0f441cd52999f8e93f55bd1f4c06e7a67bce228a9d6eb89788",
       "adapters/git/parsing.py": "a6b23e46ca6f8df11bc13d60811890c3dd31c27130877e469dc510d283a3f902",
       "adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
-      "adapters/github/collector.py": "0b6ac5d6d282c249eb040f85d405101047a7ce4ecd5a135693936359e890c43a",
-      "adapters/github/current_parser.py": "e9a024c46463ca148ef3be5223b3ea5c610dea5038b74cd2fdb9df58e0073271",
+      "adapters/github/collector.py": "f66bd04b232e9d5e344335112ba2a1bd58797acd1887de1edca595fc14e43b93",
+      "adapters/github/current_parser.py": "e8593169eae2468d4f49314ea150f90465670c8d86337c52ddfd65e006831da4",
       "adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
-      "adapters/github/persistence.py": "5efc3965b95863f2e9b2aaad2a0c7f2a3fd8445ae9ce4b54301ef5a6df307a58",
+      "adapters/github/persistence.py": "eb3715db570206a6c97eb1795cd20fef3a860c6ada2398bef56a1ea5c98fa6d4",
       "adapters/github/transport.py": "b970b41099c8e4edb101db67e58047cee8c6132810b13bfc2fca0bc1c2acf714",
       "adapters/recording.py": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c",
       "adapters/sqlite/coverage.py": "6913211da033ed773a146c674cf25c014b928ed3de403b9044a19a7da183089b",
       "adapters/sqlite/current_collections.py": "27c42c6ed75124e6f7cf13a9a71cf764bfd6d651be3c91af014a31c47a10883d",
-      "adapters/sqlite/current_resources.py": "2a7b6a7ca9e84800a41dcd56effb9681d6548ace389df8b85d2c5d06ef943319",
-      "adapters/sqlite/exchange.py": "de34f1058d1cce1c80821d6faa0c4b4b966deac2ead21fc9ec38f472ecb1fe46",
+      "adapters/sqlite/current_resources.py": "dcaf95481c590eafd4d996447e745710c0161568b17a832728841d353954b006",
+      "adapters/sqlite/exchange.py": "7fd55a03c001441358c14148459efd395958f0227bf4c8262becf3c1cf26431a",
       "adapters/sqlite/identity_relations.py": "8bf2c637b61eac126d7c8a2f9f3f058684f55e265db4d711a8e05adf933cd018",
-      "adapters/sqlite/json_contracts.py": "94e1e2d9c477383f51df561a068a9a0d0774872a35ee7c2a34d5a19dd6abb541",
+      "adapters/sqlite/json_contracts.py": "efd4ab0adecbf836cb2f3e9ead0bc718e5285ab44c2a97e8266089243a843648",
       "adapters/sqlite/parser_model.py": "fd147efa04459b30e7d9a33f2c23bd44e6fbe6d78ff66b31b4fc69b9094a4f0d",
       "adapters/sqlite/payloads.py": "9ce2d52bcfdd6a2dbcc6639e969eee60f8c237e2587b6451d6d10b51342dbbfc",
       "adapters/sqlite/store.py": "c09d21890762b0436e48efcb81859189bb68f57f223d6028c4e3f80575cf2e77",
       "adapters/sqlite/text_bodies.py": "a82e87a56ca071e5ce69717acb6523b78c03cbe5df8cdf82851f8721b61c74f1",
       "application/collection_service.py": "f77d5b6b3c7ec18a7dc8390b906c90915eaf8a58dc84ca68a26a684ce8333a7d",
       "application/job_plans.py": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a",
-      "application/parser_service.py": "665cb32d47970d8fc8c094f15211efd8608f18d64751a74e8f13ec88a0db1b58",
+      "application/parser_service.py": "2d39d61b0124e2892bba53ce0ab79e0e8d626abc36b50df43204fd0131199bce",
       "application/parsing_service.py": "6684657a54c98600d43732ce24104ebb67f472acf35c912b0f8a0d7881c93f84",
       "application/repository_identity.py": "5e783ac2e3ca3997b2d15d2299c7bd57acee9421485a69d8b35017462dd874b9",
       "application/source_service.py": "af6e05064e567602c22b94e323dc3ccb86ffee188b85e081d28dccf79b77f2ca",
@@ -723,8 +723,8 @@
       "resources/thread_comments.graphql": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4"
     },
     "output_schema": {
-      "catalog3": 17,
-      "ddl_sha256": "50f26b9cded3f9896a53b4820caaaf45c119736e83f85fb8b7663ede66b646d0",
+      "catalog3": 18,
+      "ddl_sha256": "9e9747518079ad9e087631e168b448a147b6859870f2e3d2bb74bcbefb392481",
       "facts": "scoped-immutable-and-current-resources-v1"
     },
     "settings": {

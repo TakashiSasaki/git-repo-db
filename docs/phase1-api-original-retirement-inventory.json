@@ -1,0 +1,276 @@
+{
+  "after": {
+    "counts": {
+      "columns_product": 665,
+      "explicit_indexes": 106,
+      "foreign_key_clauses_product": 226,
+      "foreign_key_components_product": 358,
+      "fts_and_sqlite_internal_tables": 0,
+      "implicit_indexes": 144,
+      "product_tables": 103,
+      "triggers": 497,
+      "views": 48
+    },
+    "ddl_sha256": "9e9747518079ad9e087631e168b448a147b6859870f2e3d2bb74bcbefb392481",
+    "schema_version": 18
+  },
+  "baseline_commit": "47fd5b88355b98019c0c04408449081e16ab4505",
+  "baseline_tree": "e7a41038e26eb93c89b921a9a9d0bf1d2c54a310",
+  "before": {
+    "counts": {
+      "columns_product": 667,
+      "explicit_indexes": 107,
+      "foreign_key_clauses_product": 227,
+      "foreign_key_components_product": 360,
+      "fts_and_sqlite_internal_tables": 0,
+      "implicit_indexes": 144,
+      "product_tables": 103,
+      "triggers": 497,
+      "views": 48
+    },
+    "ddl_sha256": "50f26b9cded3f9896a53b4820caaaf45c119736e83f85fb8b7663ede66b646d0",
+    "schema_version": 17
+  },
+  "changed_python_source_fingerprints": {
+    "src/repo_catalog/adapters/github/collector.py": {
+      "after": "f66bd04b232e9d5e344335112ba2a1bd58797acd1887de1edca595fc14e43b93",
+      "before": "0b6ac5d6d282c249eb040f85d405101047a7ce4ecd5a135693936359e890c43a"
+    },
+    "src/repo_catalog/adapters/github/current_parser.py": {
+      "after": "e8593169eae2468d4f49314ea150f90465670c8d86337c52ddfd65e006831da4",
+      "before": "e9a024c46463ca148ef3be5223b3ea5c610dea5038b74cd2fdb9df58e0073271"
+    },
+    "src/repo_catalog/adapters/github/persistence.py": {
+      "after": "eb3715db570206a6c97eb1795cd20fef3a860c6ada2398bef56a1ea5c98fa6d4",
+      "before": "5efc3965b95863f2e9b2aaad2a0c7f2a3fd8445ae9ce4b54301ef5a6df307a58"
+    },
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py": {
+      "after": "df8bb3c00508324fabcd4cbbbf959a2089ff92819801f2b6b78256220616002d",
+      "before": "50178ce626dd5aa1d0c8c89688ef3d9ccca55cd58f4481602df1f268ad1a2e38"
+    },
+    "src/repo_catalog/adapters/sqlite/current_resources.py": {
+      "after": "dcaf95481c590eafd4d996447e745710c0161568b17a832728841d353954b006",
+      "before": "2a7b6a7ca9e84800a41dcd56effb9681d6548ace389df8b85d2c5d06ef943319"
+    },
+    "src/repo_catalog/adapters/sqlite/exchange.py": {
+      "after": "7fd55a03c001441358c14148459efd395958f0227bf4c8262becf3c1cf26431a",
+      "before": "de34f1058d1cce1c80821d6faa0c4b4b966deac2ead21fc9ec38f472ecb1fe46"
+    },
+    "src/repo_catalog/adapters/sqlite/json_contracts.py": {
+      "after": "efd4ab0adecbf836cb2f3e9ead0bc718e5285ab44c2a97e8266089243a843648",
+      "before": "94e1e2d9c477383f51df561a068a9a0d0774872a35ee7c2a34d5a19dd6abb541"
+    },
+    "src/repo_catalog/adapters/sqlite/schema.py": {
+      "after": "d3b28fbe6cd9cdb7d866a175434abc5e63bfee04729a98cf12dec01c1f5fadec",
+      "before": "acae1b733fd546d0fed8fbeac5d11b5fbfebe120e286675c8de81e59546beb67"
+    },
+    "src/repo_catalog/application/exchange_service.py": {
+      "after": "d28c9ab32b84e27c699c6af16210eabaf1d004702e713b992106ec1a7e03ee2f",
+      "before": "1442453cb9eadfd31f3fbfb356ae7782001b8f2baf8fc00d02ed713df7eeebcd"
+    },
+    "src/repo_catalog/application/maintenance_service.py": {
+      "after": "c9ca38b96a7cfedf4b8eb1e68552a644aebd4efeabc6455c755673347d7748ae",
+      "before": "28e5051122814593f6497dbe1eb342d84b91a884a773dbcf87daff64a05b2ce5"
+    },
+    "src/repo_catalog/application/parser_service.py": {
+      "after": "2d39d61b0124e2892bba53ce0ab79e0e8d626abc36b50df43204fd0131199bce",
+      "before": "665cb32d47970d8fc8c094f15211efd8608f18d64751a74e8f13ec88a0db1b58"
+    },
+    "src/repo_catalog/application/pr_queries.py": {
+      "after": "cc51e6e671132bfe5d1e9744316323b6126b8215ccae3cf8304f341252a16770",
+      "before": "d0035b371642e843aeec5b8ad04c9713a24192da7a35f70f328bc659d679d52e"
+    },
+    "src/repo_catalog/cli/main.py": {
+      "after": "c35914ba2b508fdf1031f1212525627ebb8286741f4e86ee40bd42fa25d9273a",
+      "before": "9145d10e83dc3345899eecfff6bcb756b255d68837752debeb60adb044f8ecaf"
+    }
+  },
+  "checks": {
+    "after": {
+      "compiled_trigger_tables": 97,
+      "compiled_views": 48,
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    },
+    "before": {
+      "compiled_trigger_tables": 97,
+      "compiled_views": 48,
+      "foreign_key_check": [],
+      "integrity_check": [
+        "ok"
+      ]
+    }
+  },
+  "classified_json_fields": 57,
+  "column_changes": {
+    "unresolved_payloads": {
+      "added": [],
+      "modified": [
+        "detected_at_us",
+        "diagnostic_json",
+        "stored_sha256"
+      ],
+      "removed": [
+        "payload_representation",
+        "payload_sha256"
+      ]
+    }
+  },
+  "composition": [
+    "catalog3.sql",
+    "git_facts.sql",
+    "cas_integrity.sql",
+    "exchange.sql",
+    "identity_relations.sql",
+    "current_resources.sql",
+    "current_collections.sql",
+    "json_contracts.sql"
+  ],
+  "counting": "Product tables exclude SQLite metadata/internal, FTS virtual and shadow objects. FK clauses count constraints; components count individual columns. Indexes with SQL are explicit; null SQL indexes are implicit. Counts overlap and must not be added.",
+  "foreign_key_changes": {
+    "unresolved_payloads": {
+      "added": [],
+      "removed": [
+        {
+          "columns": [
+            "payload_representation",
+            "payload_sha256"
+          ],
+          "match": "NONE",
+          "on_delete": "RESTRICT",
+          "on_update": "RESTRICT",
+          "parent": "payloads",
+          "targets": [
+            "representation",
+            "sha256"
+          ]
+        }
+      ]
+    }
+  },
+  "function_changes": {
+    "added": [
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.inventory_input",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.response_time",
+      "src/repo_catalog/adapters/sqlite/cas_integrity.py:diagnose_admission_failure",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph._export",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph._export.add",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph._export.expand",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph._promote",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.git_original_status",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.local_original_context",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.original_dependencies",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.original_intake_context",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.original_intake_context.owner",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.original_key",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.original_root",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.rejected_api_original",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.required_original_keys",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.retained_git_body",
+      "src/repo_catalog/application/parser_service.py:ParserService._inspect_message"
+    ],
+    "modified": [
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector._thread_children",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.collection_coverage",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.incremental_comments",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.incremental_comments.normalize",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.inventory",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.inventory_request",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.partial_rest_collection",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.rest_json",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.saved_thread_code_input",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.summary_observed_at_us",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.sync",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.threads",
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.threads.observed_at_us",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.__init__",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.finish",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.observed_at_us",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.page",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.partial",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.source_input",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.thread_observed_at_us",
+      "src/repo_catalog/adapters/sqlite/cas_integrity.py:repair_payload",
+      "src/repo_catalog/adapters/sqlite/cas_integrity.py:stage_verified_payload",
+      "src/repo_catalog/adapters/sqlite/current_resources.py:CurrentResources.admit",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.__init__",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph._admit",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.export",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.promote",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.receive",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.record",
+      "src/repo_catalog/adapters/sqlite/json_contracts.py:_check_schema",
+      "src/repo_catalog/adapters/sqlite/json_contracts.py:guard_sql",
+      "src/repo_catalog/application/exchange_service.py:ExchangeService.import_file",
+      "src/repo_catalog/application/maintenance_service.py:MaintenanceService.database",
+      "src/repo_catalog/application/parser_service.py:ParserService.execute",
+      "src/repo_catalog/application/pr_queries.py:_collection_boundary",
+      "src/repo_catalog/application/pr_queries.py:_thread_listing_complete",
+      "src/repo_catalog/cli/main.py:parser"
+    ],
+    "removed": [
+      "src/repo_catalog/adapters/github/collector.py:GitHubCollector.failed_graphql_page",
+      "src/repo_catalog/adapters/github/persistence.py:ApiFacts.stage_rejected",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.export.add",
+      "src/repo_catalog/adapters/sqlite/exchange.py:Graph.export.expand",
+      "src/repo_catalog/application/parser_service.py:ParserService._message"
+    ]
+  },
+  "generated_json_guard_sha256": "b2216e19c1a602af778addfba6347ec58058a84ac755afdf789890be7d81c01d",
+  "json_field_changes": {
+    "unresolved_payloads.diagnostic_json": {
+      "after": {
+        "category": "operational",
+        "nullable": false,
+        "shape": "object"
+      },
+      "before": {
+        "category": "operational",
+        "nullable": true,
+        "shape": "object"
+      }
+    }
+  },
+  "json_reference_vocabulary_changed": false,
+  "object_changes": {
+    "index": {
+      "added": [],
+      "modified": [],
+      "removed": [
+        "unresolved_payloads_fk_1"
+      ]
+    },
+    "table": {
+      "added": [],
+      "modified": [
+        "database_identity",
+        "payload_admission_staging",
+        "unresolved_payloads"
+      ],
+      "removed": []
+    },
+    "trigger": {
+      "added": [],
+      "modified": [
+        "json_completion_markers_evidence_insert",
+        "json_completion_markers_evidence_update",
+        "json_fetch_occurrences_request_insert",
+        "json_fetch_occurrences_request_update"
+      ],
+      "removed": []
+    },
+    "view": {
+      "added": [],
+      "modified": [],
+      "removed": []
+    }
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1"
+  },
+  "runtime_limit": "AST references do not prove dynamic reachability or legitimate retained purpose; use the implementation dependency map and instrumented rejection/exchange tests.",
+  "script_sha256": "6723f54261af1341a05d5bfee72f9960ff0c96348040405dbf584bb1af86b886"
+}

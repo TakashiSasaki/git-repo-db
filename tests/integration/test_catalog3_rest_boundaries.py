@@ -1,4 +1,4 @@
-"""Rejected REST inputs retain exact evidence and retry the last safe boundary."""
+"""Rejected REST inputs are discarded and retry the last safe live boundary."""
 
 import json
 
@@ -33,25 +33,27 @@ def _job(store):
 
 def _rejected(store, kind):
     row = store.one(
-        "SELECT f.fetch_collection_id,p.state,p.cursor,p.reason,o.next_cursor,"
-        "o.request,b.body,u.reason diagnostic "
+        "SELECT f.fetch_collection_id,p.state,p.cursor,p.reason "
         "FROM fetch_collections f "
         "JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id "
-        "JOIN fetch_occurrences o ON o.fetch_collection_id=f.fetch_collection_id "
-        "JOIN stored_bytes b ON b.sha256=o.payload_sha256 "
-        "JOIN unresolved_payloads u ON u.payload_representation=o.payload_representation "
-        "AND u.payload_sha256=o.payload_sha256 "
-        "WHERE f.kind=? ORDER BY o.fetch_occurrence_id DESC LIMIT 1",
+        "WHERE f.kind=?",
         (kind,),
     )
     assert row["state"] == "partial"
     assert row["reason"] == "API_SCHEMA"
-    assert json.loads(row["request"])["normalization_error"] == "API_SCHEMA"
-    assert json.loads(row["diagnostic"])["code"] == "API_SCHEMA"
+    assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
+    assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+    assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 0
+    assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
     assert not store.one(
-        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=?",
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
         (row["fetch_collection_id"],),
     )
+    marker = store.one(
+        "SELECT * FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='partial'",
+        (row["fetch_collection_id"],),
+    )
+    assert json.loads(marker["evidence"]) == {"reason": "API_SCHEMA"}
     return row
 
 
@@ -182,7 +184,7 @@ def test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume(
     ],
 )
 @pytest.mark.parametrize("boundary", ["pr-list", "pr-detail", "pr-code-check"])
-def test_malformed_pr_shapes_retain_evidence_and_retry(
+def test_malformed_pr_shapes_discard_originals_and_retry(
     github_runtime, invalid, boundary
 ):
     store, repo, _, api = github_runtime
@@ -231,9 +233,7 @@ def test_malformed_pr_shapes_retain_evidence_and_retry(
             acquire()
         assert raised.value.code == "API_SCHEMA"
         row = _rejected(store, boundary)
-        assert row["body"] == json.dumps(rejected).encode()
-        assert row["cursor"] is None
-        assert row["next_cursor"] == url
+        assert row["cursor"] == url
         assert store.one("SELECT count(*) FROM change_request_observations")[0] == 0
         assert store.one("SELECT count(*) FROM documents")[0] == 0
         blocked = False
@@ -272,7 +272,7 @@ def test_programming_errors_are_not_misclassified_as_provider_data(github_runtim
 
 
 @pytest.mark.parametrize("boundary", ["pr-detail", "pr-code-check"])
-def test_invalid_json_detail_preserves_exact_bytes(
+def test_invalid_json_detail_discards_bytes_and_reacquires(
     github_runtime, monkeypatch, boundary
 ):
     store, repo, _, api = github_runtime
@@ -299,8 +299,7 @@ def test_invalid_json_detail_preserves_exact_bytes(
             acquire()
         assert raised.value.code == "API_SCHEMA"
         row = _rejected(store, boundary)
-        assert row["body"] == rejected
-        assert row["next_cursor"] == url
+        assert row["cursor"] == url
         acquire()
         assert (
             store.one(
@@ -370,7 +369,6 @@ def test_incremental_parent_number_is_checked_before_sqlite_lookup(github_runtim
         "body": "parent number boundary",
         "issue_url": api.url + f"/repos/fixture/alpha/issues/{1 << 63}",
     }
-    rejected = json.dumps([value]).encode()
     api.route = lambda *args: ([value], {})
     collector = GitHubCollector(store, CancellationToken())
     collector.facts.principal = "fixture"
@@ -381,9 +379,13 @@ def test_incremental_parent_number_is_checked_before_sqlite_lookup(github_runtim
             )
         assert raised.value.code == "API_SCHEMA"
         row = _rejected(store, "issue-comment-incremental")
-        assert row["body"] == rejected
-        assert row["cursor"] is None
-        assert row["next_cursor"] == json.loads(row["request"])["url"]
+        assert (
+            row["cursor"]
+            == store.one(
+                "SELECT s.endpoint FROM resume_scopes s JOIN fetch_collections f USING(resume_scope_id) WHERE f.fetch_collection_id=?",
+                (row["fetch_collection_id"],),
+            )[0]
+        )
         assert store.one("SELECT count(*) FROM incremental_scans")[0] == 0
         value["issue_url"] = api.url + "/repos/fixture/alpha/issues/41"
         collector.incremental_comments(
@@ -416,7 +418,7 @@ def test_single_pr_response_cannot_publish_a_different_pr(github_runtime, bounda
         with pytest.raises(CatalogError) as raised:
             acquire()
         assert raised.value.code == "API_SCHEMA"
-        assert _rejected(store, boundary)["body"] == json.dumps(other).encode()
+        assert _rejected(store, boundary)["cursor"] == url
         assert store.one("SELECT count(*) FROM change_requests")[0] == 1
         assert store.one("SELECT count(*) FROM change_request_observations")[0] == 0
         assert store.one("SELECT count(*) FROM documents")[0] == 0

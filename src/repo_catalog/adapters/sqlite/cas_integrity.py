@@ -84,6 +84,29 @@ def diagnose_corruption(db: sqlite3.Connection, digest: bytes):
         return diagnostic
 
 
+def diagnose_admission_failure(db: sqlite3.Connection, error: CatalogError):
+    """Diagnose a corrupt incumbent after rejected admission has rolled back.
+
+    The evidence comes only from the existing physical object and its declared
+    digest. Received bytes and acquisition context are never retained here.
+    """
+    if not isinstance(error, CatalogError) or error.code != "PAYLOAD_CORRUPTION":
+        return None
+    value = error.details.get("sha256")
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(char not in "0123456789abcdef" for char in value)
+    ):
+        return None
+    digest = bytes.fromhex(value)
+    if not db.execute(
+        "SELECT 1 FROM stored_bytes WHERE sha256=?", (digest,)
+    ).fetchone():
+        return None
+    return diagnose_corruption(db, digest)
+
+
 def verify_all(db: sqlite3.Connection, *, diagnose=True):
     """Full bytes scan under caller-held writer.lock, without a long SQL tx.
 
@@ -122,7 +145,14 @@ def verify_all(db: sqlite3.Connection, *, diagnose=True):
 
 
 def stage_verified_payload(db, body, reference: PayloadRef, context: dict, *, reason):
-    """Persist valid rejected acquisition evidence without modifying stored bytes."""
+    """Retain rejected raw Git content without modifying admitted stored bytes."""
+    if (
+        not isinstance(reference, PayloadRef)
+        or reference.representation != "git-object-raw-v1"
+    ):
+        raise CatalogError(
+            "INVALID_ARGUMENT", "Rejected acquisition staging requires raw Git content"
+        )
     if not isinstance(body, bytes) or hashlib.sha256(body).digest() != reference.sha256:
         raise CatalogError("PAYLOAD_DIGEST_MISMATCH", "Invalid bytes cannot be staged")
     if reason not in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}:
@@ -142,7 +172,7 @@ def stage_verified_payload(db, body, reference: PayloadRef, context: dict, *, re
 
 
 def repair_payload(db, digest: bytes, replacement: bytes):
-    """Explicit, hash-verified restoration with atomic quarantine removal.
+    """Restore retained Git bytes by their physical hash, atomically.
 
     The write-protection trigger is suspended and restored *within* this single
     SQLite transaction. Readers observe either the old quarantined bytes or the
@@ -157,6 +187,18 @@ def repair_payload(db, digest: bytes, replacement: bytes):
     ):
         raise CatalogError("PAYLOAD_DIGEST_MISMATCH", "Replacement digest mismatch")
     with _atomic(db):
+        objects = db.execute(
+            "SELECT g.object_format,g.oid,g.type,g.size FROM git_object_payloads p JOIN git_objects g USING(git_object_id) WHERE p.payload_representation='git-object-raw-v1' AND p.payload_sha256=?",
+            (digest,),
+        ).fetchall()
+        if not objects:
+            raise CatalogError(
+                "INVALID_ARGUMENT", "Explicit repair requires retained Git object bytes"
+            )
+        from repo_catalog.domain.git_object import validate_git_object
+
+        for obj in objects:
+            validate_git_object(*obj, replacement, digest)
         diagnostic = db.execute(
             "SELECT unresolved_payload_id FROM payload_quarantine WHERE sha256=?",
             (digest,),
