@@ -3,9 +3,9 @@
   "baseline_sha": "6ca31eb95d2dca91adcf20af88fbb54387595375",
   "selection": "tests/unit tests/integration tests/e2e, not live and not benchmark",
   "baseline_collected_count": 1950,
-  "current_collected_count": 2002,
-  "mapped_baseline_node_count": 482,
-  "still_collected_same_node_count": 1468,
+  "current_collected_count": 2115,
+  "mapped_baseline_node_count": 485,
+  "still_collected_same_node_count": 1465,
   "removed_or_renamed_baseline_function_count": 193,
   "removed_or_renamed_baseline_functions": [
     "tests/e2e/test_cli_more.py::test_publication_fencing",
@@ -204,7 +204,7 @@
   ],
   "node_list_sha256": {
     "baseline": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
-    "current": "a120050ce70322bb26677249cccfa139ad1ae49847ee6db746a6a92005c1aca9"
+    "current": "e343b415e9cea3959fec6b212a83a4d6b282294ddf44439ce6f6686a8cfe61fc"
   },
   "limitations": "Exact counterpart existence and explicit rationales are checked. Still-collected names do not imply unchanged implementation. Full execution, assertion sufficiency and fresh independent review remain separate acceptance requirements.",
   "entries": [
@@ -2615,6 +2615,33 @@
       "disposition_source": "other_contract_rewrites",
       "surviving_assertion": "Two real Git acquisition captures at negative and zero times retain distinct acquisition/source rows while sharing one immutable physical object; removed HTTP occurrence ownership is not reintroduced.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Both original selector parameters still reject before any job, Source association, scoped inventory assessment or Coverage claim. The removed inventory_observations table is explicitly absent; actual current/evidence tables remain empty.",
+      "retired_mechanism_reason": "Only obsolete positive inventory_observations storage assertions are retired; every original behavioral parameter and operational result/identity assertion is preserved through direct current Source pairs and truthful scoped assessment."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Both original selector parameters still reject before any job, Source association, scoped inventory assessment or Coverage claim. The removed inventory_observations table is explicitly absent; actual current/evidence tables remain empty.",
+      "retired_mechanism_reason": "Only obsolete positive inventory_observations storage assertions are retired; every original behavioral parameter and operational result/identity assertion is preserved through direct current Source pairs and truthful scoped assessment."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Unconfigured Source remains operationally skipped with portable registration diagnostic. Only configured manual Source has one complete singleton scope assessment and known positive pair. Job attempt is complete with partial requested result; registration selector still returns one actual repository. No remote observation or Coverage claim is invented.",
+      "retired_mechanism_reason": "Only obsolete positive inventory_observations storage assertions are retired; every original behavioral parameter and operational result/identity assertion is preserved through direct current Source pairs and truthful scoped assessment."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_pr_git_readers.py::test_pr_only_acquisition_has_explicit_selected_git_reads",
@@ -8061,9 +8088,6 @@
     "tests/integration/test_catalog3_portable_identity.py::test_source_registration_requires_uuidv4[None]",
     "tests/integration/test_catalog3_portable_identity.py::test_source_operational_settings_allow_null_but_not_invalid_json",
     "tests/integration/test_catalog3_portable_identity.py::test_repository_key_name_is_used_by_all_ordinary_foreign_keys",
-    "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
-    "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]",
-    "tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation",
     "tests/integration/test_catalog3_portable_identity.py::test_source_registration_survives_backup_restore",
     "tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[claim-pr-commits]",

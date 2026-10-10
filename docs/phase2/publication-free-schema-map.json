@@ -5,7 +5,7 @@
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "f1ec742a1d9778dab4ed7950bef0f257d0d368ee8c3d89f945cba61ed23ebd04",
+    "ddl_sha256": "569f2698535fde3800fdd503b6f50b61115b732124a86dbf7ffac100fde096f2",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -3413,6 +3413,9 @@
       "repository_equivalence_closure": "e14a435bb0a3650b2d64f8ba4fa0c952f4c9fc08b194c8d1862d9fbed59ff8a1",
       "repository_observed_names": "a952e04fa8adb65f758e14a84e967409cc6fc2c0e28ff7a4918cf375e331e634",
       "service_equivalence_closure": "3ca6347db1acb9774175f884411ba0ad78b3399b06ff7b90d7cd162548192075",
+      "valid_git_commit_facts": "03aabb32774147aff34f06190bdf163e7cb3a7a948bb82c1f871a30cb47e58bd",
+      "valid_git_name_facts": "1b2cd7fb99457d49ff2451623c22104c8ea0d8771574269e6ee92951e6744f76",
+      "valid_git_text_facts": "736eb9f96928732063ffa1f84be410b7da17484f6dee0636c8b04f29cc553c24",
       "valid_ref_captures": "995cba43756a2a380a6312cfc10003da61e36d0261ae91da874fb8faabffbdbd"
     },
     "triggers": {
@@ -3848,6 +3851,10 @@
         "owner": "git_acquisitions",
         "sql_sha256": "ee0dc7433edcf38a490738a6f46d154a3fc5aef71d3dfd148f60220d369221d8"
       },
+      "git_commit_facts_bytes": {
+        "owner": "git_commit_facts",
+        "sql_sha256": "0dc459c4ab01943197fa6c8a3c901ceaafb88d58f85cdf7325c9f14a6e0d8299"
+      },
       "git_commit_facts_immutable": {
         "owner": "git_commit_facts",
         "sql_sha256": "5145ca3db8e038ef695d3f057c5745b4fdff86af4450d2c160f2d805be836730"
@@ -3859,6 +3866,10 @@
       "git_commit_facts_retain": {
         "owner": "git_commit_facts",
         "sql_sha256": "444625bc577b16d5393b70b183322393359bb8b1766d8de26715df87cc77e9cc"
+      },
+      "git_name_facts_bytes": {
+        "owner": "git_name_facts",
+        "sql_sha256": "220c31d3249508db8571be78a82f43f088f53862c66d2fd3273ae3ca98924826"
       },
       "git_name_facts_immutable": {
         "owner": "git_name_facts",
@@ -3903,6 +3914,10 @@
       "git_objects_retain": {
         "owner": "git_objects",
         "sql_sha256": "c803ad0a800ff7ee047af1b3f30d766ce724b745c26635a703426ed7304b79c4"
+      },
+      "git_text_facts_bytes": {
+        "owner": "git_text_facts",
+        "sql_sha256": "523116f3aed10cb40f7466a88845d0f3678f29540382fc5e19b6b5e80df7214a"
       },
       "git_text_facts_content": {
         "owner": "git_text_facts",
@@ -4022,59 +4037,59 @@
       },
       "json_change_request_events_metadata_insert": {
         "owner": "change_request_events",
-        "sql_sha256": "14baa392f4cf9e93834b7b692a2004d462fa359e642bcdb6fac4846e6f9d4564"
+        "sql_sha256": "d7a02cb87e20cceb41a53b224fc5a0563ff5e62211fad8bb178eceb8150d3170"
       },
       "json_change_request_events_metadata_update": {
         "owner": "change_request_events",
-        "sql_sha256": "0456b193a1f7ca8c199d52aed8d3e246ddf8ecf6e3fc0a3cb4765d4d722bed70"
+        "sql_sha256": "cfed768049c934efb6e9a88f8e32a3a0f48c1e8c58b6d50034620e919b67449c"
       },
       "json_change_request_state_acquisition_scope_json_insert": {
         "owner": "change_request_state",
-        "sql_sha256": "65a45b08c7f612c2ee854af87cf7a317cb331584a58ce2ca98eae6868cbc4db2"
+        "sql_sha256": "1a58a9c0d1a6b1fb5172b533f8d0569e50328de9c1510f84c7190de53681e196"
       },
       "json_change_request_state_acquisition_scope_json_update": {
         "owner": "change_request_state",
-        "sql_sha256": "6cf4079083f5afe1b9e1703dc6fd096e4639d096ea0e6c83970c11c041cdf794"
+        "sql_sha256": "7a6085c75122cfa35ebccf663b487476b552e5a00a552b8c9890b88d4e8ff57c"
       },
       "json_change_request_state_field_evidence_json_insert": {
         "owner": "change_request_state",
-        "sql_sha256": "3890e91d5f1185707b790ab35a4cb3afccbd261ab93484c6dd451846f8ba3bad"
+        "sql_sha256": "6c9226aaad676a0db32dca95e12faa016b31e7a56c28099031d373efb414450a"
       },
       "json_change_request_state_field_evidence_json_update": {
         "owner": "change_request_state",
-        "sql_sha256": "f476a61e9c3a0355e582305378278ede176dee5cf3f832b3ee0706cb57ace2f6"
+        "sql_sha256": "9324dd606bc1eebd3b45a55f033af56353b57c7f3d4d3c5d65dd613e61904585"
       },
       "json_change_request_state_metadata_insert": {
         "owner": "change_request_state",
-        "sql_sha256": "adac37489a152679ae886527cff3ef4e66e3c0d8ff30b3314350fc5ede167b03"
+        "sql_sha256": "f5903df4501f77556c29f6d4af047b678fc228e895633b760b4e53c29a72ef60"
       },
       "json_change_request_state_metadata_update": {
         "owner": "change_request_state",
-        "sql_sha256": "57b0ef1b4ac67baec8ce8203d5215d1ac0a39d4c271bd42c4d903b3f6cf1113b"
+        "sql_sha256": "f8282cc946f4880eb34115282c716af5883887f23237e2c9433d2a2ee27377c4"
       },
       "json_code_assessments_details_json_insert": {
         "owner": "code_assessments",
-        "sql_sha256": "21add37ef5348d515eff16eb4420c4d1cccbd1fe346520bb5b990293d0099406"
+        "sql_sha256": "a30e9cef57a2236056f4139bf4bf49f283bfcf81504b25ad9c946eae8911b466"
       },
       "json_code_assessments_details_json_update": {
         "owner": "code_assessments",
-        "sql_sha256": "8dab98abeddbf1339b9e7148947df9cf9ff461c8ce1c17f240c3d626f60e8b36"
+        "sql_sha256": "3aab14156c7114cb40b4506fee4699ee40cbfbb58a241b48301a2d304d00d27c"
       },
       "json_code_commits_metadata_insert": {
         "owner": "code_commits",
-        "sql_sha256": "cd285dc235973c9f72fe46ca632ceaccae597a7522f701be0e175b28e146192b"
+        "sql_sha256": "b28fe412c32d743577afabf6558b66f2c671273638a473ac3645ceae1b2f6cf5"
       },
       "json_code_commits_metadata_update": {
         "owner": "code_commits",
-        "sql_sha256": "4a8b9b0e08122b0e03092ee935c6916e476bdfadf5a59b18d7bf2fcd4cd7267d"
+        "sql_sha256": "1a535bb0a2d420e90e534d8bba826903efed315171a636d4590e1ac43c3c1609"
       },
       "json_code_file_changes_metadata_insert": {
         "owner": "code_file_changes",
-        "sql_sha256": "d33994f53e7672071471d9d1e13b29819c17e18b152490821a7f2e6abfe58a63"
+        "sql_sha256": "85b82f969f659df3da1dbf745a09f1f5bcf5aedd85ad9055aa23cdf6e0ae8cf7"
       },
       "json_code_file_changes_metadata_update": {
         "owner": "code_file_changes",
-        "sql_sha256": "bce450e0c592e6c4220c2a00e75a4a070a9b11c10cb559b877221b77646b02ae"
+        "sql_sha256": "ea58802543496cbe3001508fd35d981b554d88c82cf4dbab0c513ec6a7df0610"
       },
       "json_completion_markers_evidence_insert": {
         "owner": "completion_markers",
@@ -4086,11 +4101,11 @@
       },
       "json_coverage_claims_details_json_insert": {
         "owner": "coverage_claims",
-        "sql_sha256": "92a48e3789e16607c03e15aa23c29a26035be9435826658fd015d802913dc861"
+        "sql_sha256": "0230914e9d38994a92c1b8c7f818e7183a6a9ea436db9611efe5e848f06eefae"
       },
       "json_coverage_claims_details_json_update": {
         "owner": "coverage_claims",
-        "sql_sha256": "32137d31e8d61608c0bc23fc94e7119796e8f9eaae4ca2fda797fb91b236cd54"
+        "sql_sha256": "64b5aeb36695fe45438e93fc3aadabd4f9558e9f2e89318709888758ddf23bf6"
       },
       "json_current_collection_pages_members_insert": {
         "owner": "current_collection_pages",
@@ -4102,27 +4117,27 @@
       },
       "json_document_state_acquisition_scope_json_insert": {
         "owner": "document_state",
-        "sql_sha256": "e3df02fcd6fc689de10f195be0ba64234b4d3725cbfae108b2bdb5f24b52cdf0"
+        "sql_sha256": "d11f8e4f9cbbd2cfb0f53ea04e5d3cb130ba7672b104f72da13146e8358e2948"
       },
       "json_document_state_acquisition_scope_json_update": {
         "owner": "document_state",
-        "sql_sha256": "1f1c51bce928750ba492baec4b10edd259a4a239cf22f2b377d8acfee802f73d"
+        "sql_sha256": "45f36b03a53d0d26ee23d53976525028ac2195997c545316f995435dc0ffcca5"
       },
       "json_document_state_field_evidence_json_insert": {
         "owner": "document_state",
-        "sql_sha256": "daaffc1a5e65245de91a653176b32e364649a27e20bf43e6e5283a1fc50576eb"
+        "sql_sha256": "ace1c9441cea1e38746ae2fd42a50d55c3d00a7c02fd75074069962040a40c22"
       },
       "json_document_state_field_evidence_json_update": {
         "owner": "document_state",
-        "sql_sha256": "93718546e9a4d19a271b6d21b2d3b6bac0099e8becc0fb12c5487093b8acccaf"
+        "sql_sha256": "bbe17bc511c4704947179cbc1e5301e35b68a9594052e6c1350beb124553da38"
       },
       "json_document_state_metadata_insert": {
         "owner": "document_state",
-        "sql_sha256": "100c554305c3c6272becc30491f9dc531ad735b43453ab67e2bbe087b2e6f2ac"
+        "sql_sha256": "620c5830dbccdac6d5b11f763f7744ac54a420156c61cc4c745d76e99dd80c51"
       },
       "json_document_state_metadata_update": {
         "owner": "document_state",
-        "sql_sha256": "562c78395d08b62b66900f4de509fc19f8496065ac9093f27c4c5d2b49d1f1b3"
+        "sql_sha256": "c921f3205eee8c4f0df6927e6573e088c11accc1ff42cdb758cbe4f5ab30c88a"
       },
       "json_exchange_admissions_local_key_json_insert": {
         "owner": "exchange_admissions",
@@ -4140,21 +4155,765 @@
         "owner": "exchange_local_identities",
         "sql_sha256": "2cf09b7c8403ab8a18f4c4bf369684b80991595e8058560b7e7cbdd85b77c575"
       },
+      "json_exchange_staging_candidate_change_request_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "0870ac5eaa8a4e259e2692ab918c8ca79c16f9a91ae2dfd1c696d49868cd0e58"
+      },
+      "json_exchange_staging_candidate_change_request_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a3093c5c289f79d3618e2eebdd0abb26ace55ae35561c6ab0a7395bf72e8e3b8"
+      },
+      "json_exchange_staging_candidate_document_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "71793b46d4c8e2b131d444502f970c6bab03725536970c280510dac114a6a439"
+      },
+      "json_exchange_staging_candidate_document_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "787eb300784f04ab56340ea60cf82bef9af8fe28ba7965d277ec34d5810577f6"
+      },
+      "json_exchange_staging_candidate_issue_resources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "98ca35d1d4fb342137e0aabfa08622b8abb120b5b74d74ffabff2974acd5d2cf"
+      },
+      "json_exchange_staging_candidate_issue_resources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "1d626215ddc6f8bb6ba78e43bfa592223c58cab0860f45a8ec132d40181e896a"
+      },
+      "json_exchange_staging_candidate_review_resources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "6af1820ecbd1c4770212edd063118cd89ead28d9d64d48bad2aa58b7c2215afd"
+      },
+      "json_exchange_staging_candidate_review_resources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8b72b01c1ba1d5797875c7c0320fe0879d6b7b9ea0797bb91aaf471bb88dde95"
+      },
+      "json_exchange_staging_candidate_review_thread_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3ccd9f2565371f3f75c067d4244742dcbbe73836af867d9c6063fff5ab95eb85"
+      },
+      "json_exchange_staging_candidate_review_thread_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4e939c79950a21deccac0df4b73b90c8d705dcd1746ba639e401ecf7f8eeafab"
+      },
+      "json_exchange_staging_candidate_source_repositories_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8e4f468d756bd48062db1b60381463c20ecb01142c9f9e8567fa446f08a3ec58"
+      },
+      "json_exchange_staging_candidate_source_repositories_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "afa73151ba044ac1d603635e835729a3b7b1aed959835a060653cce14d3b5ab7"
+      },
+      "json_exchange_staging_envelope_acquisition_roots_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "e2d030d96d0666077106664a1abb60e41f610e7a7b8fe2f1983c8e0a7f2b30f5"
+      },
+      "json_exchange_staging_envelope_acquisition_roots_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "0c98a3d751ce29e00f979c143367c23b8e4b5c9909350ba96d811cabeef8e0aa"
+      },
+      "json_exchange_staging_envelope_change_request_events_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a03e4a4efcc189673727d495a856aaa5e04adb80516624b84f7354a1265d7072"
+      },
+      "json_exchange_staging_envelope_change_request_events_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2bc012eba1a03b2cb3478cd56ff1e029e88c3c1386f03e15f366efb05fbfeba5"
+      },
+      "json_exchange_staging_envelope_change_request_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "dcb42e24797c830e33f359da76df9ccbb74aea9ec0fba1ae7b161acf909b42bf"
+      },
+      "json_exchange_staging_envelope_change_request_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "9f3042b12079d44342c6986172c7cfc317f18f59b0bd22bcf90edbc596280b69"
+      },
+      "json_exchange_staging_envelope_change_requests_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "1722aaea009801b415b1f9cca1d903191af62c8d351386e5727f344837c0cf55"
+      },
+      "json_exchange_staging_envelope_change_requests_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c4c5c1aaa05189c6ea0f1c0c1c7cd975ea2e619d60d615b4b40bee2278a97dca"
+      },
+      "json_exchange_staging_envelope_code_acquisitions_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3c70ef6e347ce819374484e3738e6f6db7545a29bf613fb1aa98889a01eabc37"
+      },
+      "json_exchange_staging_envelope_code_acquisitions_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "284cd3089b437aa6ed9901f1048edaf98e36ec1c93903d5ee5d16bead91e1738"
+      },
+      "json_exchange_staging_envelope_code_assessments_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "12915d70f564ee2524ce1d8976a88d77b916cc046e21b6806b30206e7effe54a"
+      },
+      "json_exchange_staging_envelope_code_assessments_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8937843fd0bf1050138d876167d2ca86ee2df99f89b5c08e3b92429ca155f2ef"
+      },
+      "json_exchange_staging_envelope_code_commits_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "12e58e01aa95bc5b9784c342d6646a8789fb84c16e8f6be46305280c8b826bf0"
+      },
+      "json_exchange_staging_envelope_code_commits_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "60976ff55c8e692820e7476988f6b5cabbae548bca2e7d04a7e5158eccca654b"
+      },
+      "json_exchange_staging_envelope_code_file_changes_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "e08ffec14ca54ada735a1da955ff59fff321b8878a7e9eda32e860cd719c3b64"
+      },
+      "json_exchange_staging_envelope_code_file_changes_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "f95bb961d41e71ff446d791025a713633d3c5c793d42c5ca4537209972decaa4"
+      },
+      "json_exchange_staging_envelope_code_listings_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "94a9abfa1bee8305acdedc16dd4cc4b6f29a2d016007e6779d5b90bdcb5be588"
+      },
+      "json_exchange_staging_envelope_code_listings_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "376a9e6cefe1f708abb190c81b02dcf712d7a32ee6c7fb43ee9ef3c813a2e098"
+      },
+      "json_exchange_staging_envelope_completion_markers_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "6b4541e8638d6a9515de39ba075c39f6f50fcf548936f276d8f3992e5863c0c3"
+      },
+      "json_exchange_staging_envelope_completion_markers_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "bc059e1ab12368de49168dc97d6faa95fbcc991eedb2c4606b24c1862412f988"
+      },
+      "json_exchange_staging_envelope_coverage_claims_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "dfd7e7f7c220090de35da4c40da1726f7b46ba4d4dad80ad84c494da10f15835"
+      },
+      "json_exchange_staging_envelope_coverage_claims_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2e84913238a9cb1ae64e2cfc9efd9006746223a18782d9785bac1f4c0c141de7"
+      },
+      "json_exchange_staging_envelope_coverage_scopes_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "505af973aeab589db69caad350a10ab815c875c82cbda5d9612efb2619a810bc"
+      },
+      "json_exchange_staging_envelope_coverage_scopes_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d8a116c18df3016658220cac04a0f5cc16714d1a8b9acd0474dcb2b5a84e4e93"
+      },
+      "json_exchange_staging_envelope_current_collection_pages_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d560ee065037d86cc213212edec4e0f5f6af1fae5ee7d06cafa9d968c931c974"
+      },
+      "json_exchange_staging_envelope_current_collection_pages_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "63af0de3e2c5ca911ac73003b6b5c5c7d0ec35d00f8af2a2b6e693df7ee55b4d"
+      },
+      "json_exchange_staging_envelope_document_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "65d9ee57caefaaf823c8ef21cc2dc1072eabb30b14df222334ca74eab59b9cde"
+      },
+      "json_exchange_staging_envelope_document_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "0d78fc689471ec735480bdaf5ef577afbef8a31b0b332f515a580dc2d94879e4"
+      },
+      "json_exchange_staging_envelope_documents_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8b7546dae3969effc1166dd723f1566b5039c30cb513c6c2bb4e2779969784cf"
+      },
+      "json_exchange_staging_envelope_documents_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "5fa441454f8129f13fc6e72affff16e9d2e51ed54cb3808d6daa9cfcf53c0f90"
+      },
+      "json_exchange_staging_envelope_fetch_collections_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "42b1dd951d8656bda5ba3487e067ce9014186910d51b2f3b0daec04b39a379c5"
+      },
+      "json_exchange_staging_envelope_fetch_collections_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "6c624b6f8feab75070a9a4f4ae69d98253fd3776ffa5e890797c64867726316c"
+      },
+      "json_exchange_staging_envelope_git_acquisitions_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "49ba684054ab23a228ed2be5c146111ef46a15ff25bb1cf174e2026616a6c9b8"
+      },
+      "json_exchange_staging_envelope_git_acquisitions_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "79457e5fcb0c22a62254ed4069064d1449ac609de7cc9574c98ac928a3f87574"
+      },
+      "json_exchange_staging_envelope_git_commit_facts_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "f41c07c4bf4ae6a5caf6ad925fbd1c18c1aa88c3d145e33ca2db86128b664d89"
+      },
+      "json_exchange_staging_envelope_git_commit_facts_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d8ce29159f3879ada8eeae395b7db501e30e767af6f858175fdbb85651c7a8a4"
+      },
+      "json_exchange_staging_envelope_git_name_facts_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c16eca02a5229a54c96b237792c542116058ac3c9d19df76134b9fc9b9627cf2"
+      },
+      "json_exchange_staging_envelope_git_name_facts_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a95acd9054e977290214c134993c476f5e5e8a17fa90de4fb71020b008603d8a"
+      },
+      "json_exchange_staging_envelope_git_object_payloads_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "75e01205e23a41666250066b9f3fed0bf2cb19cb3bd27c1dd8989d34f09c41b0"
+      },
+      "json_exchange_staging_envelope_git_object_payloads_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d9d83867c3709da5eff83d1ce72ebaef231c45de88a691bacc8fc0f2a1b5b62b"
+      },
+      "json_exchange_staging_envelope_git_objects_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "cd25fbbbe296935caf197716186e64319dfde2bcdf3b65da5def106258bb14a9"
+      },
+      "json_exchange_staging_envelope_git_objects_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "bd865ebfd587410cd588906327e9c53143bfd1202dba4ff77c4d69592ffeec2c"
+      },
+      "json_exchange_staging_envelope_git_text_facts_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "29f06b509075ef0a8c2eadcb79d666d339391fd63215fa04d6eb5b9994cef62c"
+      },
+      "json_exchange_staging_envelope_git_text_facts_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "0faefffe602815089565f8da2cdc3d66aa437979b213c1e16e9a661a00d233f6"
+      },
+      "json_exchange_staging_envelope_identity_relation_cancellations_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "12cff79328dda053838782158df813463d2c5e591a6e6ae27ec01cc86a1517af"
+      },
+      "json_exchange_staging_envelope_identity_relation_cancellations_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3f2929d9523604ea918f48967d537aa2b6e91b6cdd69bcd884f57498bc3a6dec"
+      },
+      "json_exchange_staging_envelope_identity_relations_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "769a930fe8d3567a8106a95ef75fcd3fcd538c5b648e5284304f6c2d5815a21b"
+      },
+      "json_exchange_staging_envelope_identity_relations_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "5885ba0f4fd7d5b43e9300db8a0a16248877739058ed59f41cf93c566c4b3837"
+      },
+      "json_exchange_staging_envelope_issue_resources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "7383a4ce766aa2d0da56ce52d89a0530a076ab586cf94e33ab03176793f0aa18"
+      },
+      "json_exchange_staging_envelope_issue_resources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "68a1b7b4f7cbebfc5f8eea90bd3a5fd6f31a26045389703c624e5193995a705c"
+      },
+      "json_exchange_staging_envelope_payloads_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "42465603b7421f26700ba99f0ba7c1ff68d28fa55cc7b56cb947d59cd49ea7bb"
+      },
+      "json_exchange_staging_envelope_payloads_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "951a779033bd78ef81d7e635da90ea6ba152949e5cc8f611be99960265ad1f9c"
+      },
+      "json_exchange_staging_envelope_ref_observations_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "ef1675c2bc094bc626ca0ce698c7e3b63e44f2f010076b7663dab1d7c1cd5ea9"
+      },
+      "json_exchange_staging_envelope_ref_observations_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "553f3ef8b444b195d9e72d3ef86ab31f39e4ad0c1b05f80a9dfe79cb88e0a599"
+      },
+      "json_exchange_staging_envelope_repositories_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "64def0af3f64b8b2a8340f117a9aca4f2a9b3990baa57da8af021d7bc0fa6350"
+      },
+      "json_exchange_staging_envelope_repositories_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3cf5e3b7586d99fb57a1e5853da024a88f129f84876e9f9c31213d9f3507db70"
+      },
+      "json_exchange_staging_envelope_repository_bindings_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "88fb5b8edb755b77df7ca5a7e6eddce20df329679e17370abb25b9d35f24ca08"
+      },
+      "json_exchange_staging_envelope_repository_bindings_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "7ed5a33144efd58a993956f2bf15fd1da14311e1db804905618529f16ebbbeb4"
+      },
+      "json_exchange_staging_envelope_repository_endpoints_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8c5eeaef29d358ed06db149f5589b176958ecdbf0aecc81d311875fec92da2ba"
+      },
+      "json_exchange_staging_envelope_repository_endpoints_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "35f793b2c9cbf720ec1e504a4558c030e59083abee3d45e219f0bffc6aef9b00"
+      },
+      "json_exchange_staging_envelope_repository_names_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "f9c6175e4d364bf506bf24a999bab4a51a25ca93d87f427748440cd5e5f039d5"
+      },
+      "json_exchange_staging_envelope_repository_names_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "34ccd67717f89a3f4383e28c6c9a90393f3694b1d6e6deb21a6dcd8c65d27b30"
+      },
+      "json_exchange_staging_envelope_repository_object_sources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "7eb28a4c1084f939e538d8ded8265498c42646d97b592ddfc06d812bcad8b5bc"
+      },
+      "json_exchange_staging_envelope_repository_object_sources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "203816460f8956062d443816d2f1c00572b78fe12738d6462bea89221773d5a9"
+      },
+      "json_exchange_staging_envelope_review_resources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d69c1dc045c3ffd58cb526293517574d70a11911f29b8ebbf93ee260bc0d876f"
+      },
+      "json_exchange_staging_envelope_review_resources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2bc5d40864b97ece9c763a46666aa586bf8c8f83f28fc7accc51d30eeeb17f6b"
+      },
+      "json_exchange_staging_envelope_review_thread_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4aef166923f825f6c864eb52f41441a449ca6709e48038421e3adefc10ecd0c9"
+      },
+      "json_exchange_staging_envelope_review_thread_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4a25b318da2343e6e34d6d1435bfcffe538df686afdcc9a83b7a2d826e86fe89"
+      },
+      "json_exchange_staging_envelope_review_threads_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "003b16ced1017780ead603d19097cdad893270e77f4c202d9e607efeeb473eb2"
+      },
+      "json_exchange_staging_envelope_review_threads_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d92e82f8ec1de29fa673148252448c816dcab7600851d82f43841c6b9351f55b"
+      },
+      "json_exchange_staging_envelope_root_origins_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d28835ef516d21f422abcb03dbcbcb1aa7772f18d1c9c1e7369e047512ebfeb9"
+      },
+      "json_exchange_staging_envelope_root_origins_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "13ed6eb198eb58fbbee0c5fb8732ab97b521c327ded1ca436e1955999dfcfab8"
+      },
+      "json_exchange_staging_envelope_service_instances_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "cfe891a7f0202983030df0d738a4de37606bb7f9e46b4f2aee1cef681bd08f16"
+      },
+      "json_exchange_staging_envelope_service_instances_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "e83483b658c84d74e541fb025d644ab71a14ba51d9f46b585706a98e750fedae"
+      },
+      "json_exchange_staging_envelope_snapshots_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "510cf8166da5c1d094070a9ff2be762173d5a5881ce9e8abda1a67f31bd64209"
+      },
+      "json_exchange_staging_envelope_snapshots_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "48487c1d371efe9c18895ec535a69fe2e8e8bd0c3954e6f8df85dc17a0438afd"
+      },
+      "json_exchange_staging_envelope_source_repositories_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "b6de6eccc45ccb5159bb5d521c91bb44ebf1561fa27c06f4a1565d96e72cecc0"
+      },
+      "json_exchange_staging_envelope_source_repositories_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4d3e2a8a35a2fe24f962fa1c1f819bd697947fef7d6f7299e6fc8bd408fa9676"
+      },
+      "json_exchange_staging_envelope_sources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a09bc2a8a52fc5cb9411103291cb0f30dfc6514e4a6bc28174e83031f4b92302"
+      },
+      "json_exchange_staging_envelope_sources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "9236138a3e81f773d383da2d64d69d7a46ba8e255a1140a3087631ddce73b3e6"
+      },
+      "json_exchange_staging_envelope_stored_bytes_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "eb14b301c1f44ede8eab4be4bba6599d49eb245e370b229e0641f9f8c81f2919"
+      },
+      "json_exchange_staging_envelope_stored_bytes_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a05e701bede0ee648d631d1373132615e40ee489b81a4a8835a869c9c92c11bf"
+      },
+      "json_exchange_staging_envelope_text_bodies_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c0aa82feeb012aaf9fed91a4ef0120e14428f192db95e83d6c898c959ea1c550"
+      },
+      "json_exchange_staging_envelope_text_bodies_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "720287402e5cb3ed64b0d0338aa6e1143786909bc08e2aa8df2f95acd70fe2d9"
+      },
+      "json_exchange_staging_envelope_thread_collection_requirements_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "6f41218529e2cf46ade310b4b1121629d6f901cda3e84b5a7d88011a83d98b0c"
+      },
+      "json_exchange_staging_envelope_thread_collection_requirements_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "bf461257d3572b99837bf8ba14729795b57b2855f091f36c9ded28ef2af0b99d"
+      },
+      "json_exchange_staging_envelope_thread_collection_targets_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3d1dc8f577f1dac091acbfb4d7784e14e528d4934763dfd8c906ce7b1df6bb11"
+      },
+      "json_exchange_staging_envelope_thread_collection_targets_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "438a2a7b8d7e5cec0b908cecaf51ce040a45fed7d36926d0411c5078d75d7863"
+      },
+      "json_exchange_staging_origins_change_request_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "ab4a8cc39b6892fdab55f8419834aa8a5739a4c0a9db627c66c9aefdfc27004d"
+      },
+      "json_exchange_staging_origins_change_request_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c91d2b9449541a2b00ce9ea3a1af01b7d9094c9cffb97ad10668cda2a8142028"
+      },
+      "json_exchange_staging_origins_document_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "77fc5ce22d8b2f07dfe52513b65b858e0c7b463179fd8e111026a35b6746784a"
+      },
+      "json_exchange_staging_origins_document_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "fe2631577720d7c990bbfe2d478dd5238b117c0c3e47276c9ac2cf8f5146437a"
+      },
+      "json_exchange_staging_origins_issue_resources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "326b97286d2ca0270491e01e8ad0ad1ed7466c041f09b3824e1500ebf568d6bc"
+      },
+      "json_exchange_staging_origins_issue_resources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d57457dfbb216cdbc68b64a06350ed8b6977bc5926a47bda631af6116616cd06"
+      },
+      "json_exchange_staging_origins_review_resources_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2574244b3ac707ed90092a65af02636873a0e566ac3a073cc23a49bfd9341c80"
+      },
+      "json_exchange_staging_origins_review_resources_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "07d048c1c03f6d7a68b2dd2b9a3fce441480df9ee9704af53951231aeede453f"
+      },
+      "json_exchange_staging_origins_review_thread_state_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "b04465e427d8dbb4896717e28aa0d09128dd399b3cd55e5ef639279667655986"
+      },
+      "json_exchange_staging_origins_review_thread_state_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2940016d3bf64e19f1e27ce8293beeb631579f82a86b5eee3b65817694911b80"
+      },
+      "json_exchange_staging_origins_source_repositories_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2c6a38f3aece884ba768a7e88e22b6c49efffe0c9d66d52d82a2a24bed8f9c46"
+      },
+      "json_exchange_staging_origins_source_repositories_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3d0de0f0794e77421f4cdd6334faf4f3d1a1b7aab54e5c7a23791007582b54a9"
+      },
       "json_exchange_staging_record_json_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "9523dd6f10fa1085e38ed4ab23b644a5342c3d512e17ca3dbef672e391bfd98f"
+        "sql_sha256": "32db89b62ee6cdaa6526b80910377511a29683e24607d8426909e5646ebdc47f"
       },
       "json_exchange_staging_record_json_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "43835cdd77d6b92c06ab503edfa32b447c655e2e892d8676a338e0c1438cff73"
+        "sql_sha256": "ec1d9d70c6194ab59e5d79f127daf201e76107cfc400e8e2f952a4554072fc9e"
+      },
+      "json_exchange_staging_value_change_request_events_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "9602ae75f4347391b5763b2486106cfc5a214431d4c87a665f2428bc22bc9c19"
+      },
+      "json_exchange_staging_value_change_request_events_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d0ca952e5bc7016bb6340d51cbf7227cee179bc48078d65f8b103e1af2875b74"
+      },
+      "json_exchange_staging_value_change_request_state_acquisition_scope_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "0d6afb321531067577643d82bcbee94f2e15cd202154861f4f4036a9da835503"
+      },
+      "json_exchange_staging_value_change_request_state_acquisition_scope_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4fd3df64669b2ad478733f8515514d8495a266553ccce0f6811a72c42b7553d9"
+      },
+      "json_exchange_staging_value_change_request_state_field_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d7d3413bea285296834d45cf203c4439bf7b0eaabcf61558311b750a5d923c59"
+      },
+      "json_exchange_staging_value_change_request_state_field_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "840fa3c59e22b5c7619eb339e3af985c9b479d1370df151fa3f5190f7554f969"
+      },
+      "json_exchange_staging_value_change_request_state_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8a7aa7177a1024060a5ed166a7ee0a92084c771aa3db38ad137aabd1deee12d3"
+      },
+      "json_exchange_staging_value_change_request_state_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "18c575f075dfa724292cd14a0a1754b50f8e3f707d9f13933f42e285afe63a5d"
+      },
+      "json_exchange_staging_value_code_assessments_details_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a8e87585fa0f3ea18a431d1ad0ea93f3c9d27468b9f62cf27f5df225b165dc55"
+      },
+      "json_exchange_staging_value_code_assessments_details_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4653b46d78a6e61eb4436cf1187908e87ecb6984e8d141a8c253584d548ec30d"
+      },
+      "json_exchange_staging_value_code_commits_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2d819072e83a30252409055ba6c4757ee7f82c585424abb6a99e575a021000ef"
+      },
+      "json_exchange_staging_value_code_commits_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3841e8a7f3d052fb872e2eceeb2c0c4a9047580e1e7670a7b2c630c7264c71aa"
+      },
+      "json_exchange_staging_value_code_file_changes_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "b3da7a656e2ce246e7ac6d427321026734b33bcb86cf12d18314c9f8b4e11e80"
+      },
+      "json_exchange_staging_value_code_file_changes_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "1e672283b024e10f622051a4b01bda1887abbb7fc552435882115aefc4468086"
+      },
+      "json_exchange_staging_value_completion_markers_evidence_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "eae5bc7acc303248f07f6b3ef7ccff1b6433f63a556224886a96a7aa82771b10"
+      },
+      "json_exchange_staging_value_completion_markers_evidence_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c4401e29f76e9892c501106ca6dfc9b85306ca5f73acdc0eab01180111852500"
+      },
+      "json_exchange_staging_value_coverage_claims_details_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "69e954a78ce609b4be412cc81bc5eb928550ea5e24a55026e4f43408dec82f5f"
+      },
+      "json_exchange_staging_value_coverage_claims_details_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "ffeb97e66ab9f50d3237760e9fd559238ede82f5da22bbcc50c9e6f3208e99c8"
+      },
+      "json_exchange_staging_value_current_collection_pages_members_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "2545598fef4a5edeb5ff652c3642398d683f48c7a18c1962bae0d6c1cbfc9e6d"
+      },
+      "json_exchange_staging_value_current_collection_pages_members_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "54244c785c4205ca71ebe3dfe4e925e88de9320cdfa55467cb90ed70d4a4e2c2"
+      },
+      "json_exchange_staging_value_document_state_acquisition_scope_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "e8d8018917a99b56ecfc0aaa001f468a856988bf733ae12db4b6e7201f96578a"
+      },
+      "json_exchange_staging_value_document_state_acquisition_scope_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3659b94fbc16f6ae68dc735701e6a7e764c1def140a1415d78fb895e622f31b0"
+      },
+      "json_exchange_staging_value_document_state_field_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "bfd3ec83a642b7efe61d79bd091235089658eca81795fdc5eba732443f6960f8"
+      },
+      "json_exchange_staging_value_document_state_field_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "f781284a6175b15ab9b75ae70f40d23d09c83f2f4c40730e5611d68c8b925bb9"
+      },
+      "json_exchange_staging_value_document_state_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "336021d80a1f6915c617bdf330a8bf0cfdbaf004ad977fef53e45fdad78fd435"
+      },
+      "json_exchange_staging_value_document_state_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "6bf09e399cb384935ae65a512fe6db61fc41719067c026165e73c40d5539db76"
+      },
+      "json_exchange_staging_value_fetch_collections_scope_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "dc6eeea9e5b7cdc1e56477829e333d3d3adae967357ae575a7b4f9f5840a16b7"
+      },
+      "json_exchange_staging_value_fetch_collections_scope_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "e056160c417a0fbe1efd0147e0381960b2894189005c80f267dad9049f4462bb"
+      },
+      "json_exchange_staging_value_git_acquisitions_request_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3b4da0107bad304cac866648465eb9e9108e4edea0f85fa4f9e591733eb78684"
+      },
+      "json_exchange_staging_value_git_acquisitions_request_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8441a7bcd700f4894f5d8df335a2dc50295e0b94c32584efa54e02dbfa365c5a"
+      },
+      "json_exchange_staging_value_git_acquisitions_roots_manifest_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "42b235a1574b3a0a3677ed1e53ae97d8dbf1abc31a96e8dc73ce4566dc17dacd"
+      },
+      "json_exchange_staging_value_git_acquisitions_roots_manifest_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "93656535283ae8c7b1fbe4eaeff35064cbb275077f5760ed7b3382e6b39be995"
+      },
+      "json_exchange_staging_value_git_commit_facts_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4a7092858f047c67e83b5274b4c34c27339d1476c8ed098bf08f4f80f5493990"
+      },
+      "json_exchange_staging_value_git_commit_facts_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a183c1fedf872616d3e7d233b3049f5298ef8605bd8b195bc031aa320baf25fd"
+      },
+      "json_exchange_staging_value_identity_relation_cancellations_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "1c1d97119799b56d31e5f2a1f1ff808d51e66d24e380976d64924087f9973298"
+      },
+      "json_exchange_staging_value_identity_relation_cancellations_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a7c78cbcc9f850347de00b496ea95a885859ff6523a9fdf1ea86fd709083e091"
+      },
+      "json_exchange_staging_value_identity_relations_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "5ef6d9aeec4ec1f1f1e22ee2cf1a0d4ec01c7fa3ad5d8e5f0d5e7946895751ad"
+      },
+      "json_exchange_staging_value_identity_relations_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "b8c0c30ced3db4b728582e1306d77d987aa402339ea65f9c82371b25133219e7"
+      },
+      "json_exchange_staging_value_issue_resources_acquisition_scope_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "096f081d369b2fcf8014dd026d2ce0a7f66e1188e2a3da2834e78e812c30c772"
+      },
+      "json_exchange_staging_value_issue_resources_acquisition_scope_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "1b150c62ae8c8a20474f68e21b1727133802b5212677c2ff66b8cbf370da4d56"
+      },
+      "json_exchange_staging_value_issue_resources_field_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "47100d911f9f513f2ccb801ee024114d66642b2b0db395e0235ae4f36e39ccc6"
+      },
+      "json_exchange_staging_value_issue_resources_field_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3f12806c3ed2b775afffaa5954dc2bfd61aaf32d1aba24ae8c857731b5358510"
+      },
+      "json_exchange_staging_value_issue_resources_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a3fa2d87e041ca65af5d95718cbf4bbe5e0ef5fe80b439089768d11e116786a1"
+      },
+      "json_exchange_staging_value_issue_resources_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "783e5aa258b3379bca4ffa641a75be9c323a66001d3e1d8541dd09d6879930b2"
+      },
+      "json_exchange_staging_value_repositories_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "53479984f5b7f4bb19fb0df59797f879b70dbda090858cd7cd2bc778ddce6cce"
+      },
+      "json_exchange_staging_value_repositories_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "3719d5e3e0c92c42e3ac8273509bf7f9a27580913694995ecb931003892bda81"
+      },
+      "json_exchange_staging_value_repository_bindings_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "26f8fd0ddbbf670531db43ddc26414482433aad15d9cdab9c4204fcb7a065dd6"
+      },
+      "json_exchange_staging_value_repository_bindings_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "366e9571bf02f248a6e609138262837a4def6c1176ac50e9bcc4cf9132e3be2d"
+      },
+      "json_exchange_staging_value_repository_endpoints_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "1a7b3bc87b7d32847ca5d208c8110f71f91fe9b6e621095012bac2bf357e5a31"
+      },
+      "json_exchange_staging_value_repository_endpoints_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "4ac107e8d760c4aa3b8f4789dce145c2c4f5272091ceedc67d69fe99bffeca50"
+      },
+      "json_exchange_staging_value_repository_names_provenance_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "8aa213f19e3769e27bf4c663207251728273b14a624f27848d08908611896fec"
+      },
+      "json_exchange_staging_value_repository_names_provenance_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a390ab18aaa5953fc5433ba44f618ea8e8a957b7af793bc46e47f601f0a3e357"
+      },
+      "json_exchange_staging_value_review_resources_acquisition_scope_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "9bf6ebe9543c5ae0b15bbd56729b8e0ca81bd53e1cc8c90a820901c9ae3d0d92"
+      },
+      "json_exchange_staging_value_review_resources_acquisition_scope_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c5f7b8514035761ce41daa77e2b718e561900a13deeb9664bb64d7a5146bd1d8"
+      },
+      "json_exchange_staging_value_review_resources_field_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "7cd5f357c15d6720897dd80adda14d41a1b8a2534623e1f6c88c962823731b8f"
+      },
+      "json_exchange_staging_value_review_resources_field_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "7324e432ddfeb6504e6b7f31974d54888c1eb720e5a7c5dcd7f6c81db55dd915"
+      },
+      "json_exchange_staging_value_review_resources_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "1453dd43a2c02094f41b1cfad9e5dc6e762859d8012fbaf8714df39c42623a9e"
+      },
+      "json_exchange_staging_value_review_resources_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "b6d00d084250ada6cae94b2a077ef567dce00e6d8b5377d1bccab0bdd8de3aba"
+      },
+      "json_exchange_staging_value_review_thread_state_acquisition_scope_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "24ac1491ce75cc26e434526221dd90799331cd1a67587dea3fbc5fe72aca8067"
+      },
+      "json_exchange_staging_value_review_thread_state_acquisition_scope_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "77422a6bcc8ac3113139a8b04caad6174afaea62f0a5e86b39d5dfc0054abe17"
+      },
+      "json_exchange_staging_value_review_thread_state_field_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "c5ff5346242c780951cacb5c8e28fe6fe01f3881918ccddbf924b0fd52fa3554"
+      },
+      "json_exchange_staging_value_review_thread_state_field_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "245afbc2637fcd5d1f5f1f7db33bad57c876a33c3f167dfcc7de8432469cb390"
+      },
+      "json_exchange_staging_value_review_thread_state_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "306f8d770a6b390317a5808844ee4e541caf12509bde92024c9a861508f257db"
+      },
+      "json_exchange_staging_value_review_thread_state_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "f53bf356c554c12a782145864e813bad7bff72cfd1f8e791b274b2e64a6bb5e2"
+      },
+      "json_exchange_staging_value_service_instances_metadata_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "0cc88306d44f6650bcc26bca97ebbbf3a1aaf654dcc244189a45652dc873d602"
+      },
+      "json_exchange_staging_value_service_instances_metadata_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "6d38f74b4d0bf1c996e8bacd15d38cf4c1c15a6ee96a677bfee9738ed29c05a5"
+      },
+      "json_exchange_staging_value_source_repositories_field_evidence_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "d42c24bf693082a5c9931a5c090d94aa08731735027f90947bf48b5f0756657d"
+      },
+      "json_exchange_staging_value_source_repositories_field_evidence_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "779f73eacc38a8e79424cfbe625eb493e04f4a594d5c1c2a4f9fd6d85289eecd"
+      },
+      "json_exchange_staging_value_source_repositories_metadata_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "5f7c00edd58ffd96e28e2682f33c832e9ff0ced915ce3fc3ae6bfb9fbc73fcfb"
+      },
+      "json_exchange_staging_value_source_repositories_metadata_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "ab6956f54989a40108478fd10919d6fdec0aa7dc3586162301db7ab1241212a5"
+      },
+      "json_exchange_staging_value_source_repositories_scope_json_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "7e737b5a123cfafca9c7a4dbf91afaba0ebb100c7b213292c695f5b612e4ece7"
+      },
+      "json_exchange_staging_value_source_repositories_scope_json_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "937fe5ed8593977cef3ace1c8a56fba56d9a8d5988260352fbbcf901d68ac00f"
+      },
+      "json_exchange_staging_value_sources_settings_insert": {
+        "owner": "exchange_staging",
+        "sql_sha256": "85d41279074921eb28f2757fcafe9bc51355c6fbcc643c8bcd4b188fd98eba87"
+      },
+      "json_exchange_staging_value_sources_settings_update": {
+        "owner": "exchange_staging",
+        "sql_sha256": "b30aa3c3bb77c89f44e99b8007dcacfb6171d95498467b1d1095076b15b042ef"
       },
       "json_fetch_collections_scope_json_insert": {
         "owner": "fetch_collections",
-        "sql_sha256": "9f9edb8b33df6e580661531dafb7823cb1b6a96b325f458fae05ff4d526b278c"
+        "sql_sha256": "d92b421da2f071f2c6a2adb8ef3a54d40b3e2df89aa0c2f804b36ffe538a5363"
       },
       "json_fetch_collections_scope_json_update": {
         "owner": "fetch_collections",
-        "sql_sha256": "57b41fc2b2887e1212ed30782e995b861d2f98958e86f3af738db884bf93a2bb"
+        "sql_sha256": "997b1332271b8cc350ee06f4ff71e8a3cff4c755198f18204487c3a12b15e004"
       },
       "json_git_acquisitions_request_insert": {
         "owner": "git_acquisitions",
@@ -4214,27 +4973,27 @@
       },
       "json_issue_resources_acquisition_scope_json_insert": {
         "owner": "issue_resources",
-        "sql_sha256": "5e53e2b38605342bb22c2f04f3f4042c0bcdb2c268387f727004c3a0993d12a6"
+        "sql_sha256": "24f2d79af0f1d909663ff0b6aa9e004af3079a4e99c66dc4162d0c8e7f1dc147"
       },
       "json_issue_resources_acquisition_scope_json_update": {
         "owner": "issue_resources",
-        "sql_sha256": "3075b12e195d3cb6e0c77baba88f3b6e77eefc2ec40d59514bbc35e3669e961d"
+        "sql_sha256": "9d7440416156738fc4218c38ed15df233fee1b393d345f92d863a14f1c0be461"
       },
       "json_issue_resources_field_evidence_json_insert": {
         "owner": "issue_resources",
-        "sql_sha256": "30884dd251c3a9e6fe702974a316f7168d21510666e279a1bce0247c682b4a25"
+        "sql_sha256": "1b6e3b25a8af3c97151da60ab81c1f7959a752c1cac1f53646b827352adeeb81"
       },
       "json_issue_resources_field_evidence_json_update": {
         "owner": "issue_resources",
-        "sql_sha256": "a95bcc8f8eb5fd451f1efc6840c9a2256388a731b3023ae391a8da40cbb71192"
+        "sql_sha256": "4373eb962dd31d7005fa5a28451b501e8d4248456423aa794ddbe9bc6b51e590"
       },
       "json_issue_resources_metadata_insert": {
         "owner": "issue_resources",
-        "sql_sha256": "6f07cfcb20b5cb48ee0353ee1953bab2eca1156f84657bf41684fa1d1275ac04"
+        "sql_sha256": "182ef1d98707565ffbaa1d0f6653f83a676853ccffef97ad653d2ce4177abe43"
       },
       "json_issue_resources_metadata_update": {
         "owner": "issue_resources",
-        "sql_sha256": "bd46aa687da81ac87e7cc80ea8531b15c7d50f4651351dfa089187737b181e3f"
+        "sql_sha256": "a0a206e82505d48417ae141b9f82933b1e961a23e711e40aa73f00d931786d3e"
       },
       "json_job_attempts_checkpoint_insert": {
         "owner": "job_attempts",
@@ -4302,51 +5061,51 @@
       },
       "json_review_resources_acquisition_scope_json_insert": {
         "owner": "review_resources",
-        "sql_sha256": "bcc6c48caaf11f15875c908b46249ca6829a080333335bd6a9307d99f7162fa5"
+        "sql_sha256": "d5408b0fd8724e79d7f21dd232bd6bb4a4a003e5ccf1c1309c0506bc311bffb7"
       },
       "json_review_resources_acquisition_scope_json_update": {
         "owner": "review_resources",
-        "sql_sha256": "b00f320d7d55dce97852a28c29d32d6962b0622836d22f5e2eb29bc48ac1cb48"
+        "sql_sha256": "93386c1b94312171984e2333a90b7d1fdf5a40b0e138fd462d5e0e7d8f7bf987"
       },
       "json_review_resources_field_evidence_json_insert": {
         "owner": "review_resources",
-        "sql_sha256": "7d612b7d82cdd6967ebca98ad1a1961aa74ccec5ee204c6e5f9b676eb88fc61f"
+        "sql_sha256": "251fcd05a217dcbd28cc7a4a24cb7a5ff3e27eae44ab10deeb3435ac610117c2"
       },
       "json_review_resources_field_evidence_json_update": {
         "owner": "review_resources",
-        "sql_sha256": "4460ba0160cd3a9349c590e2ef47c13e185232c89e8993087680b6e28eac4ebc"
+        "sql_sha256": "ef34a39bd7abd15729abdbb4e3f4a433579e8412829b8646da2d67171682f912"
       },
       "json_review_resources_metadata_insert": {
         "owner": "review_resources",
-        "sql_sha256": "5b768f1ca5b4024a777e60143ae516aee8eeb961a85b1ff33990ae4d77110db8"
+        "sql_sha256": "b4e9831f1f73aad6c5100191e4bd5fd1db43d1d2bbe2d834c8fa1a1b3dea2aeb"
       },
       "json_review_resources_metadata_update": {
         "owner": "review_resources",
-        "sql_sha256": "d5803f850970a22c578ce96fbb9ee1ade39ff092e8576769486022e7e9e8166e"
+        "sql_sha256": "7a201599c55eb56c8bef1ed7734170246ebaea7d5192bf223a848fc314d8dbad"
       },
       "json_review_thread_state_acquisition_scope_json_insert": {
         "owner": "review_thread_state",
-        "sql_sha256": "fabc00f984b216f322316e9a3e2e9fdb91c4d6dcbbd1a9ca9a2644b2003cfd2b"
+        "sql_sha256": "faf8681753ad2caeccd7181d2f8b31374048acafcaf1d481851dd038f24ef50c"
       },
       "json_review_thread_state_acquisition_scope_json_update": {
         "owner": "review_thread_state",
-        "sql_sha256": "8639a5583ddccf5a9617eb2736593d228409560ae2c361567668c1dfe25d27af"
+        "sql_sha256": "a2cd01fd0840c951af4a07b371531f12eee9f3a7799a9fcc15a541f93b4cfa8a"
       },
       "json_review_thread_state_field_evidence_json_insert": {
         "owner": "review_thread_state",
-        "sql_sha256": "8f283e5f81a2c00ebf1cdcc5174cfe225934f931ac27c36dd236f0d7eba7f949"
+        "sql_sha256": "90a254cc817cee40fe0aec40c12632afe5531c303c3c86664476be600ad74f0c"
       },
       "json_review_thread_state_field_evidence_json_update": {
         "owner": "review_thread_state",
-        "sql_sha256": "f85adbcd599c545f7d457c98e012e49eaeca640b3fe9dff1204b941a13caabb6"
+        "sql_sha256": "f4a4085c749aa13eb83d5524fcac27eac11caeed5a3629e96730f255e73cb51e"
       },
       "json_review_thread_state_metadata_insert": {
         "owner": "review_thread_state",
-        "sql_sha256": "2b0d3cfffb5f466cbe6de2f032f9c901e6340e9d9afa14fb8069299d38a7e605"
+        "sql_sha256": "1b7c6606bce9ba8893915cbb8381b3072c515c9a3f5306c0bcc7c8bcd36345c4"
       },
       "json_review_thread_state_metadata_update": {
         "owner": "review_thread_state",
-        "sql_sha256": "9a50c9f234578a871040ad26d2d844c19eb5d477a267b3d3f1334d350de70d91"
+        "sql_sha256": "6361a3bc18e047c055eca2929c7a6070cf387aad49588e4973fdd457a4e0745f"
       },
       "json_search_documents_metadata_insert": {
         "owner": "search_documents",
@@ -4374,35 +5133,35 @@
       },
       "json_source_inventory_assessments_scope_json_insert": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "162b503653495e37d288e3eedbf2212e5d33e29cf897f4f5126664d2d7de3c25"
+        "sql_sha256": "b0e98e481c5c1731aab38fb7dd5e83685d41d1d97dc4024953612e904330cce6"
       },
       "json_source_inventory_assessments_scope_json_update": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "72ffee64e68253e08ad25f660a7529c95a447cca28fa0a6aa1786ad83eb33243"
+        "sql_sha256": "0615554a201ba0f8f619aaef132084f4b4492ccc62dbc41ed6800c75a9709302"
       },
       "json_source_repositories_field_evidence_json_insert": {
         "owner": "source_repositories",
-        "sql_sha256": "473de7c3a798137f440bc5761908fab490546083afce45f3e9c24eef95d2e73d"
+        "sql_sha256": "ecf468209d4f2a78758dd27035a715da810ceb3af73475e42f9e36374aefcceb"
       },
       "json_source_repositories_field_evidence_json_update": {
         "owner": "source_repositories",
-        "sql_sha256": "774629284edd81095a6e14d8b34c49a2e042a61e319ec7d52c92243c8ae934c6"
+        "sql_sha256": "b9a080a1b94f29910debd62f13cd5b7fd8a99894d5e847d60e3e261bceb42a99"
       },
       "json_source_repositories_metadata_json_insert": {
         "owner": "source_repositories",
-        "sql_sha256": "97143c8f8720776fffd20af28dcebe54762bf987188d01fdb3155e51c652480b"
+        "sql_sha256": "0714ab71f25786906af05bf15ec6929deed32a094c258e7edc2a938d31c50981"
       },
       "json_source_repositories_metadata_json_update": {
         "owner": "source_repositories",
-        "sql_sha256": "4d95b6b0353024b20b6306f26929115cb00afd7a5b0da0877c4d150f85a52660"
+        "sql_sha256": "af422f9245d426ec6eb352589e0741440ba5b3b22446f33fa76685bb0481783d"
       },
       "json_source_repositories_scope_json_insert": {
         "owner": "source_repositories",
-        "sql_sha256": "b8b3e6daba5891ba234d7e7fbe6cb0add4d58c0607e484b9c05d2112fb952d7c"
+        "sql_sha256": "186571de52821fbdedeb7690d847246238a5258e1518e4e159cccb390b785a03"
       },
       "json_source_repositories_scope_json_update": {
         "owner": "source_repositories",
-        "sql_sha256": "dae827072fd447255acc15ee3467d51f996d6607c99e3c6a865b78f626e5cf56"
+        "sql_sha256": "6ce5e48c23434d4d91b9d26be7ba1cb3b82b4fc91df165a4a64d78c5029c7ecd"
       },
       "json_sources_settings_insert": {
         "owner": "sources",
@@ -4981,6 +5740,10 @@
       "exchange_staging_record_owner": {
         "owner": "exchange_staging",
         "sql_sha256": "d92ed32025f6f4d87894276a70b40c026400a2bcb96990b868381d2bceffefcd"
+      },
+      "exchange_staging_root_origin": {
+        "owner": "exchange_staging",
+        "sql_sha256": "a0e3fe43ef62cb3583db783f2791b5cd4463a4a57ab1a98187f4ffe1f812c5f2"
       },
       "exchange_staging_table": {
         "owner": "exchange_staging",
@@ -8309,6 +9072,9 @@
         "eligible_document_state",
         "eligible_review_thread_state",
         "eligible_source_repositories",
+        "valid_git_commit_facts",
+        "valid_git_name_facts",
+        "valid_git_text_facts",
         "valid_ref_captures"
       ],
       "changed": [
@@ -8620,13 +9386,16 @@
         "document_state_identity",
         "document_state_owner_insert",
         "document_state_owner_update",
+        "git_commit_facts_bytes",
         "git_commit_facts_immutable",
         "git_commit_facts_no_replace",
         "git_commit_facts_retain",
+        "git_name_facts_bytes",
         "git_name_facts_immutable",
         "git_name_facts_no_replace",
         "git_name_facts_retain",
         "git_object_payloads_identity",
+        "git_text_facts_bytes",
         "json_change_request_events_metadata_insert",
         "json_change_request_events_metadata_update",
         "json_change_request_state_acquisition_scope_json_insert",
@@ -8651,8 +9420,194 @@
         "json_exchange_admissions_local_key_json_update",
         "json_exchange_local_identities_local_key_json_insert",
         "json_exchange_local_identities_local_key_json_update",
+        "json_exchange_staging_candidate_change_request_state_insert",
+        "json_exchange_staging_candidate_change_request_state_update",
+        "json_exchange_staging_candidate_document_state_insert",
+        "json_exchange_staging_candidate_document_state_update",
+        "json_exchange_staging_candidate_issue_resources_insert",
+        "json_exchange_staging_candidate_issue_resources_update",
+        "json_exchange_staging_candidate_review_resources_insert",
+        "json_exchange_staging_candidate_review_resources_update",
+        "json_exchange_staging_candidate_review_thread_state_insert",
+        "json_exchange_staging_candidate_review_thread_state_update",
+        "json_exchange_staging_candidate_source_repositories_insert",
+        "json_exchange_staging_candidate_source_repositories_update",
+        "json_exchange_staging_envelope_acquisition_roots_insert",
+        "json_exchange_staging_envelope_acquisition_roots_update",
+        "json_exchange_staging_envelope_change_request_events_insert",
+        "json_exchange_staging_envelope_change_request_events_update",
+        "json_exchange_staging_envelope_change_request_state_insert",
+        "json_exchange_staging_envelope_change_request_state_update",
+        "json_exchange_staging_envelope_change_requests_insert",
+        "json_exchange_staging_envelope_change_requests_update",
+        "json_exchange_staging_envelope_code_acquisitions_insert",
+        "json_exchange_staging_envelope_code_acquisitions_update",
+        "json_exchange_staging_envelope_code_assessments_insert",
+        "json_exchange_staging_envelope_code_assessments_update",
+        "json_exchange_staging_envelope_code_commits_insert",
+        "json_exchange_staging_envelope_code_commits_update",
+        "json_exchange_staging_envelope_code_file_changes_insert",
+        "json_exchange_staging_envelope_code_file_changes_update",
+        "json_exchange_staging_envelope_code_listings_insert",
+        "json_exchange_staging_envelope_code_listings_update",
+        "json_exchange_staging_envelope_completion_markers_insert",
+        "json_exchange_staging_envelope_completion_markers_update",
+        "json_exchange_staging_envelope_coverage_claims_insert",
+        "json_exchange_staging_envelope_coverage_claims_update",
+        "json_exchange_staging_envelope_coverage_scopes_insert",
+        "json_exchange_staging_envelope_coverage_scopes_update",
+        "json_exchange_staging_envelope_current_collection_pages_insert",
+        "json_exchange_staging_envelope_current_collection_pages_update",
+        "json_exchange_staging_envelope_document_state_insert",
+        "json_exchange_staging_envelope_document_state_update",
+        "json_exchange_staging_envelope_documents_insert",
+        "json_exchange_staging_envelope_documents_update",
+        "json_exchange_staging_envelope_fetch_collections_insert",
+        "json_exchange_staging_envelope_fetch_collections_update",
+        "json_exchange_staging_envelope_git_acquisitions_insert",
+        "json_exchange_staging_envelope_git_acquisitions_update",
+        "json_exchange_staging_envelope_git_commit_facts_insert",
+        "json_exchange_staging_envelope_git_commit_facts_update",
+        "json_exchange_staging_envelope_git_name_facts_insert",
+        "json_exchange_staging_envelope_git_name_facts_update",
+        "json_exchange_staging_envelope_git_object_payloads_insert",
+        "json_exchange_staging_envelope_git_object_payloads_update",
+        "json_exchange_staging_envelope_git_objects_insert",
+        "json_exchange_staging_envelope_git_objects_update",
+        "json_exchange_staging_envelope_git_text_facts_insert",
+        "json_exchange_staging_envelope_git_text_facts_update",
+        "json_exchange_staging_envelope_identity_relation_cancellations_insert",
+        "json_exchange_staging_envelope_identity_relation_cancellations_update",
+        "json_exchange_staging_envelope_identity_relations_insert",
+        "json_exchange_staging_envelope_identity_relations_update",
+        "json_exchange_staging_envelope_issue_resources_insert",
+        "json_exchange_staging_envelope_issue_resources_update",
+        "json_exchange_staging_envelope_payloads_insert",
+        "json_exchange_staging_envelope_payloads_update",
+        "json_exchange_staging_envelope_ref_observations_insert",
+        "json_exchange_staging_envelope_ref_observations_update",
+        "json_exchange_staging_envelope_repositories_insert",
+        "json_exchange_staging_envelope_repositories_update",
+        "json_exchange_staging_envelope_repository_bindings_insert",
+        "json_exchange_staging_envelope_repository_bindings_update",
+        "json_exchange_staging_envelope_repository_endpoints_insert",
+        "json_exchange_staging_envelope_repository_endpoints_update",
+        "json_exchange_staging_envelope_repository_names_insert",
+        "json_exchange_staging_envelope_repository_names_update",
+        "json_exchange_staging_envelope_repository_object_sources_insert",
+        "json_exchange_staging_envelope_repository_object_sources_update",
+        "json_exchange_staging_envelope_review_resources_insert",
+        "json_exchange_staging_envelope_review_resources_update",
+        "json_exchange_staging_envelope_review_thread_state_insert",
+        "json_exchange_staging_envelope_review_thread_state_update",
+        "json_exchange_staging_envelope_review_threads_insert",
+        "json_exchange_staging_envelope_review_threads_update",
+        "json_exchange_staging_envelope_root_origins_insert",
+        "json_exchange_staging_envelope_root_origins_update",
+        "json_exchange_staging_envelope_service_instances_insert",
+        "json_exchange_staging_envelope_service_instances_update",
+        "json_exchange_staging_envelope_snapshots_insert",
+        "json_exchange_staging_envelope_snapshots_update",
+        "json_exchange_staging_envelope_source_repositories_insert",
+        "json_exchange_staging_envelope_source_repositories_update",
+        "json_exchange_staging_envelope_sources_insert",
+        "json_exchange_staging_envelope_sources_update",
+        "json_exchange_staging_envelope_stored_bytes_insert",
+        "json_exchange_staging_envelope_stored_bytes_update",
+        "json_exchange_staging_envelope_text_bodies_insert",
+        "json_exchange_staging_envelope_text_bodies_update",
+        "json_exchange_staging_envelope_thread_collection_requirements_insert",
+        "json_exchange_staging_envelope_thread_collection_requirements_update",
+        "json_exchange_staging_envelope_thread_collection_targets_insert",
+        "json_exchange_staging_envelope_thread_collection_targets_update",
+        "json_exchange_staging_origins_change_request_state_insert",
+        "json_exchange_staging_origins_change_request_state_update",
+        "json_exchange_staging_origins_document_state_insert",
+        "json_exchange_staging_origins_document_state_update",
+        "json_exchange_staging_origins_issue_resources_insert",
+        "json_exchange_staging_origins_issue_resources_update",
+        "json_exchange_staging_origins_review_resources_insert",
+        "json_exchange_staging_origins_review_resources_update",
+        "json_exchange_staging_origins_review_thread_state_insert",
+        "json_exchange_staging_origins_review_thread_state_update",
+        "json_exchange_staging_origins_source_repositories_insert",
+        "json_exchange_staging_origins_source_repositories_update",
         "json_exchange_staging_record_json_insert",
         "json_exchange_staging_record_json_update",
+        "json_exchange_staging_value_change_request_events_metadata_insert",
+        "json_exchange_staging_value_change_request_events_metadata_update",
+        "json_exchange_staging_value_change_request_state_acquisition_scope_json_insert",
+        "json_exchange_staging_value_change_request_state_acquisition_scope_json_update",
+        "json_exchange_staging_value_change_request_state_field_evidence_json_insert",
+        "json_exchange_staging_value_change_request_state_field_evidence_json_update",
+        "json_exchange_staging_value_change_request_state_metadata_insert",
+        "json_exchange_staging_value_change_request_state_metadata_update",
+        "json_exchange_staging_value_code_assessments_details_json_insert",
+        "json_exchange_staging_value_code_assessments_details_json_update",
+        "json_exchange_staging_value_code_commits_metadata_insert",
+        "json_exchange_staging_value_code_commits_metadata_update",
+        "json_exchange_staging_value_code_file_changes_metadata_insert",
+        "json_exchange_staging_value_code_file_changes_metadata_update",
+        "json_exchange_staging_value_completion_markers_evidence_insert",
+        "json_exchange_staging_value_completion_markers_evidence_update",
+        "json_exchange_staging_value_coverage_claims_details_json_insert",
+        "json_exchange_staging_value_coverage_claims_details_json_update",
+        "json_exchange_staging_value_current_collection_pages_members_insert",
+        "json_exchange_staging_value_current_collection_pages_members_update",
+        "json_exchange_staging_value_document_state_acquisition_scope_json_insert",
+        "json_exchange_staging_value_document_state_acquisition_scope_json_update",
+        "json_exchange_staging_value_document_state_field_evidence_json_insert",
+        "json_exchange_staging_value_document_state_field_evidence_json_update",
+        "json_exchange_staging_value_document_state_metadata_insert",
+        "json_exchange_staging_value_document_state_metadata_update",
+        "json_exchange_staging_value_fetch_collections_scope_json_insert",
+        "json_exchange_staging_value_fetch_collections_scope_json_update",
+        "json_exchange_staging_value_git_acquisitions_request_insert",
+        "json_exchange_staging_value_git_acquisitions_request_update",
+        "json_exchange_staging_value_git_acquisitions_roots_manifest_insert",
+        "json_exchange_staging_value_git_acquisitions_roots_manifest_update",
+        "json_exchange_staging_value_git_commit_facts_metadata_insert",
+        "json_exchange_staging_value_git_commit_facts_metadata_update",
+        "json_exchange_staging_value_identity_relation_cancellations_evidence_json_insert",
+        "json_exchange_staging_value_identity_relation_cancellations_evidence_json_update",
+        "json_exchange_staging_value_identity_relations_evidence_json_insert",
+        "json_exchange_staging_value_identity_relations_evidence_json_update",
+        "json_exchange_staging_value_issue_resources_acquisition_scope_json_insert",
+        "json_exchange_staging_value_issue_resources_acquisition_scope_json_update",
+        "json_exchange_staging_value_issue_resources_field_evidence_json_insert",
+        "json_exchange_staging_value_issue_resources_field_evidence_json_update",
+        "json_exchange_staging_value_issue_resources_metadata_insert",
+        "json_exchange_staging_value_issue_resources_metadata_update",
+        "json_exchange_staging_value_repositories_metadata_insert",
+        "json_exchange_staging_value_repositories_metadata_update",
+        "json_exchange_staging_value_repository_bindings_metadata_insert",
+        "json_exchange_staging_value_repository_bindings_metadata_update",
+        "json_exchange_staging_value_repository_endpoints_metadata_insert",
+        "json_exchange_staging_value_repository_endpoints_metadata_update",
+        "json_exchange_staging_value_repository_names_provenance_json_insert",
+        "json_exchange_staging_value_repository_names_provenance_json_update",
+        "json_exchange_staging_value_review_resources_acquisition_scope_json_insert",
+        "json_exchange_staging_value_review_resources_acquisition_scope_json_update",
+        "json_exchange_staging_value_review_resources_field_evidence_json_insert",
+        "json_exchange_staging_value_review_resources_field_evidence_json_update",
+        "json_exchange_staging_value_review_resources_metadata_insert",
+        "json_exchange_staging_value_review_resources_metadata_update",
+        "json_exchange_staging_value_review_thread_state_acquisition_scope_json_insert",
+        "json_exchange_staging_value_review_thread_state_acquisition_scope_json_update",
+        "json_exchange_staging_value_review_thread_state_field_evidence_json_insert",
+        "json_exchange_staging_value_review_thread_state_field_evidence_json_update",
+        "json_exchange_staging_value_review_thread_state_metadata_insert",
+        "json_exchange_staging_value_review_thread_state_metadata_update",
+        "json_exchange_staging_value_service_instances_metadata_insert",
+        "json_exchange_staging_value_service_instances_metadata_update",
+        "json_exchange_staging_value_source_repositories_field_evidence_json_insert",
+        "json_exchange_staging_value_source_repositories_field_evidence_json_update",
+        "json_exchange_staging_value_source_repositories_metadata_json_insert",
+        "json_exchange_staging_value_source_repositories_metadata_json_update",
+        "json_exchange_staging_value_source_repositories_scope_json_insert",
+        "json_exchange_staging_value_source_repositories_scope_json_update",
+        "json_exchange_staging_value_sources_settings_insert",
+        "json_exchange_staging_value_sources_settings_update",
         "json_fetch_collections_scope_json_insert",
         "json_fetch_collections_scope_json_update",
         "json_git_commit_facts_metadata_insert",
@@ -8935,6 +9890,7 @@
         "exchange_staging_owner",
         "exchange_staging_reason",
         "exchange_staging_record_owner",
+        "exchange_staging_root_origin",
         "exchange_staging_table",
         "repository_object_sources_acquisition",
         "review_thread_state_repository",
