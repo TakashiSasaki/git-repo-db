@@ -540,7 +540,12 @@ class GitParsing:
             )
         if not decode:
             return
-        message_text, metadata = decode_commit(fmt, data, self.decoder)
+        try:
+            message_text, metadata = decode_commit(fmt, data, self.decoder)
+        except UnicodeError as error:
+            raise CatalogError(
+                "PARSER_DECODE", "Git metadata decoding failed"
+            ) from error
         self.fact(
             "git_commit_facts",
             {

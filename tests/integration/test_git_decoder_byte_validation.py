@@ -390,3 +390,66 @@ def test_large_tree_name_validation_and_fullcheck_do_not_rehash_the_tree_per_can
     hashed.clear()
     assert check_catalog(store, full=True) == []
     assert len(hashed) == 1
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("invalid_part", ["message", "header"])
+def test_strict_metadata_failure_is_a_decoder_diagnostic_and_preserves_canonical_object(
+    store, fmt, invalid_part
+):
+    header = b"author " + (b"\xff" if invalid_part == "header" else b"genuine author")
+    message = b"\xff" if invalid_part == "message" else b"genuine message"
+    raw = (
+        b"tree "
+        + oid(fmt, "tree", b"").hex().encode()
+        + b"\n"
+        + header
+        + b"\n\n"
+        + message
+    )
+    parser = GitParsing(store, metadata_errors="strict")
+    obj_id = parser.install_object(
+        fmt, oid(fmt, "commit", raw), "commit", raw, decode=False
+    )
+    obj = store.one("SELECT * FROM git_objects WHERE git_object_id=?", (obj_id,))
+    tables = (
+        "git_objects",
+        "git_object_payloads",
+        "stored_bytes",
+        "payloads",
+        "commits",
+        "commit_parents",
+    )
+    before = {
+        table: [tuple(row) for row in store.all(f"SELECT * FROM {table}")]
+        for table in tables
+    }
+    revision = store.revision()
+    with pytest.raises(CatalogError) as error:
+        parser.parse_object(obj, raw)
+    assert error.value.code == "PARSER_DECODE"
+    assert isinstance(error.value.__cause__, UnicodeDecodeError)
+    assert (
+        store.one(
+            "SELECT count(*) FROM available_git_objects WHERE git_object_id=?",
+            (obj_id,),
+        )[0]
+        == 1
+    )
+    assert not store.one(
+        "SELECT 1 FROM git_commit_facts WHERE git_object_id=?", (obj_id,)
+    )
+    assert store.revision() == revision
+    assert before == {
+        table: [tuple(row) for row in store.all(f"SELECT * FROM {table}")]
+        for table in tables
+    }
+    assert check_catalog(store, full=True) == []
+    # A supported forgiving decoder can subsequently retain its actual value.
+    GitParsing(store, metadata_errors="replace").parse_object(obj, raw)
+    fact = decoded_fact(store, obj_id, "commit")["fact"]
+    assert fact["message_text"] == message.decode("utf-8", "replace")
+    assert json.loads(fact["metadata"])["author"] == header[7:].decode(
+        "utf-8", "replace"
+    )
+    assert check_catalog(store, full=True) == []
