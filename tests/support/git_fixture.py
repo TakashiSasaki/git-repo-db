@@ -42,6 +42,7 @@ class FixtureRepo:
         )
         self.format = fmt
         self.raws = {}
+        self._blob_oids = {}
         self.commits = {}
         self.trees = {}
 
@@ -52,7 +53,18 @@ class FixtureRepo:
             .decode()
         )
         self.raws[oid] = raw
+        if isinstance(raw, (bytes, bytearray, memoryview)):
+            self._blob_oids[bytes(raw)] = oid
         return oid
+
+    def _tree_blob(self, raw):
+        # Repeated files/commits reuse objects actually written by Git in this
+        # fixture, never another repository's objects or invented object IDs.
+        key = bytes(raw) if isinstance(raw, (bytes, bytearray, memoryview)) else None
+        oid = self._blob_oids.get(key)
+        if oid is not None and (self.path / "objects" / oid[:2] / oid[2:]).is_file():
+            return oid
+        return self.blob(raw)
 
     def tree(self, files):
         nested = {}
@@ -73,7 +85,7 @@ class FixtureRepo:
                 else:
                     mode, raw = value if isinstance(value, tuple) else ("100644", value)
                     typ = "commit" if mode == "160000" else "blob"
-                    oid = raw if mode == "160000" else self.blob(raw)
+                    oid = raw if mode == "160000" else self._tree_blob(raw)
                 records.append(
                     mode.encode()
                     + b" "

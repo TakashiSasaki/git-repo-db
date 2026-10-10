@@ -11,7 +11,7 @@ uv run --no-sync python -c 'import platform, sqlite3; print(platform.python_vers
 uv --version
 ```
 
-編集中は変更した機能の試験を実行します。仕上げでは [現在の acceptance policy](../scripts/ci_dependencies.json) の機能試験を一度実行し、installed package を独立した逐次 lane で確認します。
+編集中は変更した機能の試験を実行します。仕上げでは [現在の acceptance policy](../scripts/ci_dependencies.json) の機能試験を一度実行し、installed package を独立した lane で確認します。wheel版とsdist由来版は別プロセスの2 workersで並列実行し、ビルド入力だけをこのpytest実行内で共有します。
 
 ```bash
 uv run --no-sync ruff check src tests scripts
