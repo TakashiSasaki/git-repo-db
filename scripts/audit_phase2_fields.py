@@ -19,6 +19,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 from repo_catalog.adapters.sqlite.json_contracts import inventory  # noqa: E402
 from repo_catalog.adapters.sqlite.schema import (  # noqa: E402
@@ -26,10 +27,13 @@ from repo_catalog.adapters.sqlite.schema import (  # noqa: E402
     SCHEMA_VERSION,
     schema_sql,
 )
+from scripts.audit_phase2_dependencies import (  # noqa: E402
+    sql_call_method,
+    sql_forwarders,
+)
 
 CONTRACT = ROOT / "docs/phase2/field-contract.json"
 TABLE_REF = re.compile(r"\b(?:FROM|JOIN|INTO|UPDATE)\s+([A-Za-z_]\w*)", re.I)
-SQL_METHODS = {"execute", "executemany", "all", "one"}
 PUBLIC_FUNCTIONS = {
     "application/issue_queries.py": {"_fields"},
     "application/pr_queries.py": {"_current_review_fields", "pr_query"},
@@ -60,6 +64,11 @@ class SourceAudit(ast.NodeVisitor):
         self.scope = []
         self.sql_calls = []
         self.public_fields = {}
+        self.forwarders = set()
+
+    def visit_Module(self, node):
+        self.forwarders = sql_forwarders(node)
+        self.generic_visit(node)
 
     def visit_ClassDef(self, node):
         self.scope.append(node.name)
@@ -80,14 +89,14 @@ class SourceAudit(ast.NodeVisitor):
         self.generic_visit(node)
         self.scope.pop()
 
+    visit_AsyncFunctionDef = visit_FunctionDef
+
     def visit_Call(self, node):
-        if (
-            isinstance(node.func, ast.Attribute)
-            and node.func.attr in SQL_METHODS
-            and node.args
-        ):
+        if sql_call_method(node, self.scope, self.forwarders) and node.args:
             sql = static_text(node.args[0])
-            if sql and re.search(r"\b(?:SELECT|INSERT|UPDATE|DELETE)\b", sql, re.I):
+            if sql and re.search(
+                r"\b(?:SELECT|INSERT|UPDATE|DELETE|WITH)\b", sql, re.I
+            ):
                 tables = sorted(set(TABLE_REF.findall(sql)))
                 self.sql_calls.append(
                     {
@@ -97,6 +106,7 @@ class SourceAudit(ast.NodeVisitor):
                         "operation": sql.lstrip().split()[0].upper(),
                         "tables": tables,
                         "dynamic_sql": "{dynamic}" in sql,
+                        "evidence": "AST SQL interface/forwarding candidate; table tokens are not runtime reachability",
                     }
                 )
         self.generic_visit(node)
@@ -163,6 +173,7 @@ def generated_inventory():
             "public_projection_syntax": projections,
             "limitations": [
                 "Static SQL call sites are syntactic candidates; dynamic table names and indirect consumers require the prose investigation.",
+                "Recognized one/all and local AST SQL-forwarding methods do not resolve receiver types or argument aliases; unrecognized interfaces remain unproven.",
                 "Public projection keys include nested literal dictionaries and exclude dynamic keys; they are not a new public schema.",
                 "Provider projection columns accept unknown keys, so no finite provider-key vocabulary can be inferred from the DDL.",
                 "This is in-memory schema/AST verification, not application acceptance or a historical test receipt.",
@@ -177,7 +188,7 @@ def main():
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Fail if the committed generated inventory differs",
+        help="Compare the selected artifact with this checkout; the default artifact is the frozen historical proposal snapshot",
     )
     parser.add_argument(
         "--output",
@@ -187,12 +198,24 @@ def main():
     )
     args = parser.parse_args()
     data = json.loads(CONTRACT.read_text(encoding="utf-8"))
-    data["generated_inventory"] = generated_inventory()
+    current = generated_inventory()
+    data["generated_inventory"] = current
     encoded = json.dumps(data, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
     if args.check:
-        if encoded != args.output.read_text(encoding="utf-8"):
+        compared = args.output.read_text(encoding="utf-8")
+        if encoded != compared:
+            snapshot = json.loads(compared).get("generated_inventory", {})
+            separate = f"artifacts/schema{current['schema_version']}-fields.json"
             raise SystemExit(
-                "Field contract inventory is stale; regenerate scripts/audit_phase2_fields.py"
+                f"Field inventory differs: {args.output}\n"
+                f"Compared artifact: Schema {snapshot.get('schema_version', 'unknown')}, "
+                f"DDL SHA-256 {snapshot.get('ddl_sha256', 'unknown')}\n"
+                f"Current checkout: Schema {current['schema_version']}, "
+                f"DDL SHA-256 {current['ddl_sha256']}\n"
+                "Preserve the historical proposal snapshot. Generate and compare a "
+                "separate current artifact:\n"
+                f"python scripts/audit_phase2_fields.py --output {separate}\n"
+                f"python scripts/audit_phase2_fields.py --check --output {separate}"
             )
     else:
         args.output.parent.mkdir(parents=True, exist_ok=True)

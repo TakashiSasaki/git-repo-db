@@ -1,0 +1,139 @@
+{
+  "candidate_files_sha256": {
+    "candidate.sql": "0d8a03e841f0c2517c2a591943f8d012db9a664b6f9e7a8714f2aaa74643db1e",
+    "candidate_probe.py": "cf5317b9ab9dcfbac7d47b79e69b97dc9ca97b5558e98002fa9393f1a23dfd0e"
+  },
+  "candidate_groups_passed": 17,
+  "coverage_labels": [
+    "17 grouped candidate scenarios are illustrative checks, not production ordinary-suite cases.",
+    "The newer-partial checkpoint is asserted before the equal-time complete claim is added.",
+    "Missing/null/empty comparison hashes one modeled observation identity after changing only its actual body cell.",
+    "Close/reopen demonstrates a committed one-member prefix followed by a two-member continuation, with FK/recursive guards restored; it does not choose checkpoint placement or lifetime or simulate process-kill recovery.",
+    "The current-review receipt mutation and captured-parent checks are in the separately executed validator script.",
+    "Independent SQL/validator receipts with earlier hashes are preserved historical checkpoints, not current-candidate evidence.",
+    "No full acceptance, hosted CI rerun, production acquisition or benchmark was performed in this recheck."
+  ],
+  "execution": {
+    "base_feature_sha": "52a36cab26f2287591ff9296cac151fe135cc55a",
+    "command": "PYTHONPATH=src:. /workspace/test-efficiency/.venv/bin/python docs/phase2/prototypes/candidate_probe.py > docs/phase2/prototypes/candidate-recheck-evidence.json",
+    "executor": "/root/completeness",
+    "exit_code": 0,
+    "role": "Author recheck of corrected candidate prototype; independent review is recorded separately.",
+    "runtime": {
+      "python": "3.12.14",
+      "sqlite": "3.53.1"
+    },
+    "scope": "Disposable illustrative candidate only; no production acceptance or performance comparison.",
+    "source_revision": {
+      "head": "a14ae9e9fd8e2a77b1a613298359e5f5341f50d2",
+      "tracked_changes": false,
+      "tree": "3418e52ef4b6038c37363bc7a6cbfc19d1da78b7"
+    }
+  },
+  "kind": "phase2-completeness-candidate-author-recheck-v1",
+  "limits": [
+    "This is a domain skeleton, not production writer/reader or wire format.",
+    "Publication member sealing, complete retained-field contracts, current-resource admission and immutable guards reuse responsibilities traced in workstreams but are not fully implemented in this prototype.",
+    "Source/code/Git interpretation validators and production CAS-41 backup/restore are characterized separately; no prototype pass certifies those runtime paths.",
+    "No retention duration, GC, lifecycle or owner decision is implemented.",
+    "The validator attack still reproduces absent exact publication seal membership enforcement; that is a declared implementation obligation, not a successful integrity check.",
+    "Generic narrow-fixture wrong-family/unbound-child-parent admissions remain reproduced limits; they are not claims about production contracts or the integrated typed schema."
+  ],
+  "narrow_counterexample_reexecution": {
+    "actual_results": {
+      "kind": "independent-narrow-prototype-falsifiers-v1",
+      "limits": [
+        "These findings concern the generic disposable fixture only.",
+        "Integrated DDL must use typed collection and child keys or equivalent admission checks.",
+        "No production defect or permanent policy is inferred from a deliberately omitted prototype contract."
+      ],
+      "missing_null_empty": {
+        "same_identity_missing_null_empty_digests_distinct": true,
+        "weak_different_identity_test_passes_with_collapsed_status": true
+      },
+      "prototype_files_sha256": {
+        "completeness.sql": "f6b1defbc9d5833adc8cc20a39d90ff3eaa27d4564a197449a5b303afc7d3521",
+        "completeness_probe.py": "3c6ceccfe305f9caf401ed85e142b87b20d0e82ef012312cae1f6914d8d6ebdf"
+      },
+      "unbound_child_parent": {
+        "child_scope_family": "pr",
+        "limit": "Owner equality does not prove the child's natural domain parent.",
+        "narrow_prototype_accepts": true,
+        "parent_resource_key": "thread-T1"
+      },
+      "wrong_member_family": {
+        "limit": "Generic keys do not prove typed collection-family compatibility.",
+        "member_family": "thread",
+        "narrow_prototype_accepts": true,
+        "scope_family": "pr"
+      }
+    },
+    "execution": {
+      "base_feature_sha": "52a36cab26f2287591ff9296cac151fe135cc55a",
+      "command": "PYTHONPATH=src:. /workspace/test-efficiency/.venv/bin/python docs/phase2/prototypes/independent_counterexamples.py --prototype-dir docs/phase2/prototypes --output artifacts/completeness-recheck/counterexamples.json",
+      "executor": "/root/completeness",
+      "exit_code": 0,
+      "role": "Candidate author recheck of independently authored narrow-fixture falsifiers; accepted omissions are reported as limits.",
+      "runtime": {
+        "python": "3.12.14",
+        "sqlite": "3.53.1"
+      },
+      "scope": "Disposable illustrative candidate only; no production acceptance or performance comparison.",
+      "source_revision": {
+        "head": "a14ae9e9fd8e2a77b1a613298359e5f5341f50d2",
+        "tracked_changes": false,
+        "tree": "3418e52ef4b6038c37363bc7a6cbfc19d1da78b7"
+      }
+    },
+    "script_sha256": "6053d8b5555b42d6e25bc3da03b0b182e2561db006d5bb8e9f1711b19a5c52f1"
+  },
+  "receipts_sha256": {
+    "docs/phase2/candidate-recheck-sql-receipt.json": "7b7a91c27d5fc08ed86c0358f2ffcff4a782d1efa3672ddd156584d21ac6d50f",
+    "docs/phase2/candidate-recheck-validator-receipt.json": "a8f938182b7acdb76938982f456feab01a61df15dad48b68bbb6e5ff60d68379",
+    "docs/phase2/prototypes/candidate-recheck-evidence.json": "47fd04d585255a366bd8df87fc625b38a9b1095c14a8aedbe5fa6db854ce2935"
+  },
+  "status": "Proposed/Pending Owner Decision",
+  "strengthened_evidence": {
+    "coverage_exact_contract_newer_partial_equal_time_unknown": {
+      "checkpoints": [
+        {
+          "current": [
+            100,
+            "complete"
+          ],
+          "inserted_state": "complete"
+        },
+        {
+          "current": [
+            200,
+            "partial"
+          ],
+          "inserted_state": "partial"
+        },
+        {
+          "current": [
+            200,
+            "conflict"
+          ],
+          "inserted_state": "complete"
+        }
+      ]
+    },
+    "file_close_reopen_committed_prefix": {
+      "assessment_observed_at_us": 175,
+      "continued_members": 2,
+      "foreign_keys": true,
+      "prefix_members": 1,
+      "recursive_triggers": true,
+      "wrong_terminal_owner_rejected_after_reopen": true
+    },
+    "identical_identity_missing_null_empty": {
+      "modeled_body_digests": {
+        "empty": "29e3aca591c676223aee09599cc12d353f3965348560868e6a8e9282ecf72e39",
+        "missing": "f9f2ab15cd8e745fb855ee5097a726de9a0a0420b24b92a463e3626b2dbd34b7",
+        "null": "ec4125fc93f4b1d3654391c31a268f7fe04be8072436aff2c33dc476c78dabb4"
+      },
+      "same_observation_uuid": "00000000-0000-4000-8000-00000000006d"
+    }
+  }
+}

@@ -2,13 +2,20 @@
 
 import json
 import sqlite3
+from pathlib import Path
 
+import pytest
+
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
+from repo_catalog.adapters.sqlite.schema import schema_sql
 from scripts.audit_phase2_dependencies import (
     cli_inventory,
     prepare,
     schema_inventory,
     source_inventory,
 )
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def catalog():
@@ -106,3 +113,138 @@ def test_cli_inventory_expands_actual_parser_loops():
         {"command": "read", "options": ["--help", "--scope", "-h"]},
         {"command": "check", "options": ["--help", "--scope", "-h"]},
     ]
+
+
+def test_sql_helpers_compile_without_executing_or_treating_file_writes_as_sql(
+    tmp_path,
+):
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / "service.py").write_text("""
+class SqlPort:
+    def read(self, sql, args=()):
+        return self.driver.execute(sql, args).fetchone()
+    def read_again(self, sql):
+        return self.read(sql)
+    def run(self, store, table):
+        store.one("SELECT value FROM observations WHERE id=?", (1,))
+        store.all("SELECT value FROM admitted")
+        self.read("UPDATE observations SET value='changed' WHERE id=1")
+        self.read_again(f"SELECT * FROM {table}")
+class FilePort:
+    def write(self, data):
+        return self.stream.write(data)
+    def run(self):
+        self.write("DELETE FROM observations")
+def unrelated():
+    all("SELECT value FROM observations")
+""")
+    with catalog() as db:
+        before = list(db.iterdump())
+        report = source_inventory(tmp_path, db, {"observations", "admitted"})
+        assert list(db.iterdump()) == before
+    sites = [site for site in report["sql_sites"] if site["caller"].endswith(".run")]
+    assert {site["target"] for site in sites} == {
+        "store.one",
+        "store.all",
+        "self.read",
+        "self.read_again",
+    }
+    statements = {
+        site["target"]: report["sql_statements"][site["statement"]] for site in sites
+    }
+    for target in ("store.one", "store.all", "self.read"):
+        assert statements[target]["preparation"]["status"] == "compiled"
+    assert (
+        statements["self.read_again"]["preparation"]["status"] == "dynamic_or_non_dml"
+    )
+    assert not any(
+        site["caller"].endswith(":unrelated") for site in report["sql_sites"]
+    )
+
+
+@pytest.fixture(scope="module")
+def production_readers(tmp_path_factory):
+    root = tmp_path_factory.mktemp("production-reader-audit")
+    for relative in (
+        "application/issue_queries.py",
+        "application/query_service.py",
+        "adapters/sqlite/current_resources.py",
+        "adapters/sqlite/parser_model.py",
+        "adapters/git/parsing.py",
+    ):
+        target = root / "src/repo_catalog" / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text((ROOT / "src/repo_catalog" / relative).read_text())
+    with sqlite3.connect(":memory:", isolation_level=None, cached_statements=0) as db:
+        register_git_object_sql_function(db)
+        db.executescript(schema_sql())
+        changes = db.total_changes
+        names = {row[0] for row in db.execute("SELECT name FROM sqlite_schema")}
+        report = source_inventory(root, db, names)
+        assert db.total_changes == changes
+        assert db.execute("SELECT count(*) FROM issue_resources").fetchone() == (0,)
+    return report
+
+
+def accesses_for(report, symbol, sql_fragment):
+    for site in report["sql_sites"]:
+        if site["caller"].endswith(":" + symbol):
+            statement = report["sql_statements"][site["statement"]]
+            if statement["literal"] and sql_fragment in statement["literal"]:
+                assert statement["preparation"]["status"] == "compiled"
+                return {
+                    (item["operation"], item["object"], item["column"])
+                    for item in statement["preparation"]["accesses"]
+                }
+    pytest.fail(f"Missing SQL dependency for {symbol}: {sql_fragment}")
+
+
+def test_actual_issue_eligibility_reader_includes_body_and_conflict_dependencies(
+    production_readers,
+):
+    accesses = accesses_for(production_readers, "_eligible", "eligible_issue_resources")
+    assert ("read", "issue_resources", "provider_resource_id") in accesses
+    assert ("read", "text_bodies", "body") in accesses
+    assert ("read", "exchange_staging", "record_json") in accesses
+
+
+def test_actual_source_coverage_reader_includes_source_and_inventory_dependencies(
+    production_readers,
+):
+    sources = accesses_for(
+        production_readers, "QueryService.prepare_coverage", "sources"
+    )
+    inventory = accesses_for(
+        production_readers,
+        "QueryService.prepare_coverage",
+        "current_inventory_observations",
+    )
+    assert ("read", "sources", "source_registration_uuidv4") in sources
+    assert ("read", "inventory_observations", "asserted_state") in inventory
+
+
+@pytest.mark.parametrize("setting", ("git_metadata_encoding", "git_text_encoding"))
+def test_actual_git_search_reader_includes_required_decoder_evidence(
+    production_readers, setting
+):
+    accesses = accesses_for(production_readers, "QueryService.iter_query", setting)
+    assert ("read", "parser_profiles", "definition_json") in accesses
+    assert ("read", "parsed_results", "parsed_result_uuidv4") in accesses
+
+
+def test_actual_local_forwarders_preserve_current_publication_and_git_boundaries(
+    production_readers,
+):
+    current = accesses_for(
+        production_readers, "CurrentResources.capture_context", "publication_seq"
+    )
+    publication = accesses_for(
+        production_readers, "ParserModel.register_profile", "parser_profiles"
+    )
+    git = accesses_for(
+        production_readers, "GitParsing._manifest", "UPDATE root_manifests"
+    )
+    assert ("read", "database_identity", "publication_seq") in current
+    assert ("read", "parser_profiles", "definition_json") in publication
+    assert ("update", "root_manifests", "complete") in git
