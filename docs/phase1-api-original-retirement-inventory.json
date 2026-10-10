@@ -33,7 +33,7 @@
   },
   "changed_python_source_fingerprints": {
     "src/repo_catalog/adapters/github/collector.py": {
-      "after": "f5116194249b433bea3e3734bb1d9e5bfec2aac448a7d5839a64e493e34ab43d",
+      "after": "2d1d68c7690e64ce11140e2a09091f85d6d777420c0079ca682ce4676c98f7e5",
       "before": "0b6ac5d6d282c249eb040f85d405101047a7ce4ecd5a135693936359e890c43a"
     },
     "src/repo_catalog/adapters/github/current_parser.py": {

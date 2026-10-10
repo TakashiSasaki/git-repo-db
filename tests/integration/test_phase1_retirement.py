@@ -749,11 +749,21 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
 
 @pytest.mark.parametrize(
     "boundary",
-    ["identity", "identity_empty", "owner", "repository", "repository_id", "page"],
+    [
+        "identity",
+        "identity_empty",
+        "owner",
+        "repository",
+        "repository_id",
+        "repository_name_empty",
+        "repository_name_extra",
+        "selected_clone_empty",
+        "page",
+    ],
 )
 def test_rejected_inventory_page_does_not_become_source_input(github_runtime, boundary):
     store, repo, fixture, api = github_runtime
-    if boundary == "repository":
+    if boundary in {"repository", "selected_clone_empty"}:
         with store.transaction():
             store.execute(
                 "UPDATE sources SET settings=? WHERE source_id='source'",
@@ -776,6 +786,9 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
         "owner": "/users/fixture",
         "repository": "/repos/fixture/alpha",
         "repository_id": "/user/repos",
+        "repository_name_empty": "/user/repos",
+        "repository_name_extra": "/user/repos",
+        "selected_clone_empty": "/repos/fixture/alpha",
         "page": "/user/repos",
     }[boundary]
 
@@ -794,15 +807,17 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
                 else identity,
             )
         if request.url.path == "/repos/fixture/alpha":
+            invalid = {
+                **valid_repository,
+                "unmodeled_transport_marker": MARKER,
+            }
+            if boundary == "repository":
+                invalid["full_name"] = "foreign/wrong-owner"
+            else:
+                invalid["clone_url"] = ""
             return httpx.Response(
                 200,
-                json={
-                    **valid_repository,
-                    "full_name": "foreign/wrong-owner",
-                    "unmodeled_transport_marker": MARKER,
-                }
-                if blocked[0]
-                else valid_repository,
+                json=invalid if blocked[0] else valid_repository,
             )
         if request.url.path == "/users/fixture":
             return httpx.Response(
@@ -815,6 +830,10 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
         values = [valid_repository]
         if blocked[0] and boundary == "repository_id":
             values[0] = {**valid_repository, "id": {"unexpected": 7}}
+        if blocked[0] and boundary == "repository_name_empty":
+            values[0] = {**valid_repository, "full_name": "fixture/"}
+        if blocked[0] and boundary == "repository_name_extra":
+            values[0] = {**valid_repository, "full_name": "fixture/alpha/extra"}
         if blocked[0] and boundary != "owner":
             values.append(
                 {
@@ -831,7 +850,15 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
             collector.inventory(source, job)
         assert raised.value.code == (
             "API_SCHEMA"
-            if boundary in {"identity", "identity_empty", "repository_id"}
+            if boundary
+            in {
+                "identity",
+                "identity_empty",
+                "repository_id",
+                "repository_name_empty",
+                "repository_name_extra",
+                "selected_clone_empty",
+            }
             else "SCOPE_UNSUPPORTED"
             if boundary == "owner"
             else "SCOPE_MISMATCH"

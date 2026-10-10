@@ -538,20 +538,21 @@ class GitHubCollector:
                         raise CatalogError(
                             "SCOPE_MISMATCH", "Selected repository identity changed"
                         )
-                    if not isinstance(payload.get("clone_url"), str):
+                    provider = self.inventory_repository_id(payload.get("id"))
+                    clone = cfg.get("clone_url_overrides", {}).get(
+                        provider, payload.get("clone_url")
+                    )
+                    if not isinstance(clone, str) or not clone:
                         raise CatalogError(
                             "API_SCHEMA", "Repository identity or clone URL missing"
                         )
-                    provider = self.inventory_repository_id(payload.get("id"))
                     self.inventory_input(response, url)
                     selected.append(
                         {
                             "host": "github.com",
                             "provider_repository_id": provider,
                             "name": payload["full_name"],
-                            "url": cfg.get("clone_url_overrides", {}).get(
-                                provider, payload["clone_url"]
-                            ),
+                            "url": clone,
                             "metadata": payload,
                         }
                     )
@@ -607,7 +608,12 @@ class GitHubCollector:
                     ):
                         raise CatalogError("API_SCHEMA", "Repository identity missing")
                     provider = self.inventory_repository_id(r.get("id"))
-                    if r["full_name"].split("/")[0].lower() != owner.lower():
+                    parts = r["full_name"].split("/")
+                    if len(parts) != 2 or not all(parts):
+                        raise CatalogError(
+                            "API_SCHEMA", "Repository full name malformed"
+                        )
+                    if parts[0].lower() != owner.lower():
                         raise CatalogError(
                             "SCOPE_MISMATCH",
                             "Inventory returned repository outside owner scope",

@@ -30,6 +30,13 @@ at `7a35962` was not used as the implementation base.
    Its actual submitted PR URL, base/head/tree SHAs, draft status and final hosted
    CI receipts are recorded in the implementation PR and the owner handoff.
 
+Continuation review refetched PR #19 at
+`1cd407b41cb0ee6ede2b0f6ec025d8c5f528b017` and PR #20 at
+`f9bff8b2dc17ddffd6b3f7662791022f25175c44`. The authorization clarification in
+PR #19 was incorporated with an ordinary merge, preserving both histories.
+Independent review reports are retained under
+[`validation/synthetic/2026-10-10-phase1-review/`](validation/synthetic/2026-10-10-phase1-review/).
+
 The decision commit precedes implementation. Its
 [passing documentation CI](https://github.com/TakashiSasaki/git-repo-db/actions/runs/38018631631)
 does not certify this runtime change. Final acceptance must identify the feature
@@ -231,6 +238,14 @@ They tested actual diffs, not solely this report. Concrete independent findings:
    and were retained before rejection. Collector now validates nonempty login and
    positive decimal provider IDs before input admission. The six targeted inventory
    cases passed, including the unsupported owner and malformed-ID reproducers.
+10. **Medium — remaining inventory fields (`GitHubCollector.inventory`):** A selected
+    repository with an empty clone URL and a general listing with `fixture/` or
+    an extra path component were accepted as inventory inputs. Effective clone
+    URLs must now be nonempty, and listing names must contain exactly two nonempty
+    owner/repository components before input admission. Three additional rejection
+    regressions preserve the accepted `/user` prefix and refetch after correction.
+    Exact textual provider-ID spelling remains the established identity contract;
+    leading zeros alone are not treated as a defect or normalized away.
 
 Development runs are overlapping evidence, never summed as acceptance totals.
 The earlier collector selections had 90 passes/4 failures, then 92/2 while old
@@ -302,6 +317,12 @@ cases in 166.27s with zero failures, errors or skips. The nine retained parser
 capability certificates were regenerated from that exact successful receipt.
 This is certificate-generation evidence; ordinary and installed-package final
 acceptance runs separately without the bootstrap environment variable.
+
+The final inventory-field corrections then passed all nine targeted rejection
+cases. A new frozen-definition complete bootstrap execution passed 1,718 cases
+in 192.58s, with zero failures, errors or skips, and regenerated all nine parser
+certificates. Prior mixed-tree independent runs are explicitly failed development
+evidence in the review reports, not final acceptance.
 
 Final acceptance workflow:
 
