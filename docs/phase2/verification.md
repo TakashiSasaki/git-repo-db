@@ -31,7 +31,12 @@ including dirty status; it is not a clean submitted-tree acceptance receipt.
 
 ## Reproducible design checks
 
-Run from PR A's checkout after `uv sync --locked --group dev`:
+Run from PR A's Schema 18 checkout after `uv sync --locked --group dev`.
+The committed field/disposition artifacts bind that baseline. For a current
+Schema 19 checkout, use separate output as shown in
+[the implementation](implementation.md#verification-and-independent-review) or
+[the current reproduction commands](README.md#reproduction-and-evidence-scope);
+default field `--check` must not imply rewriting the historical snapshot.
 
 ```sh
 uv run --no-sync python scripts/audit_phase2_dependencies.py --output artifacts/dependency-inventory.json --source-output artifacts/dependency-source.json.gz
@@ -104,7 +109,7 @@ Certificate retention here does not approve it as a permanent architecture.
 
 For each submitted code-bearing tree, complete applicable acceptance means fresh
 schema/JSON/FK/integrity and view/trigger tests, Ruff, ordinary offline integration
-and end-to-end tests, Coverage/collection/Exchange/CAS adversarial tests, sequential
+and end-to-end tests, Coverage/collection/Exchange/CAS adversarial tests,
 isolated wheel/sdist installs, and CI selection/result reconciliation. Final
 acceptance must run without `REPO_CATALOG_TEST_BOOTSTRAP`.
 

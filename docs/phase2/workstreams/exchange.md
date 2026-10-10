@@ -219,10 +219,11 @@ choice, not an assumed consequence of normalizing the schema.
 
 ### P2-Q10 — What exact normalized evidence must a receiver possess?
 
-**Question:** For a portable complete publication/collection assertion, which
-members and observation values must be carried, and what can the receiver
-independently validate? Do one-repository units continue excluding Source-wide
-inventory and local trust?
+**Question:** For deferred historical-family publication/collection assertions,
+which members and observation values must be carried, and what can the receiver
+independently validate? Established current Issue/review receipt/identity closure
+stays unchanged under every option. Do one-repository units continue excluding
+Source-wide inventory and local trust?
 
 **Accepted constraints:** typed portable owner/parent identities; exact text and
 Git bytes; no originals or parser authority in target closure; truthful five-column
@@ -231,15 +232,16 @@ remain independent. New wire version/trust is unapproved.
 
 | Feasible alternative | Concrete consequence | Integrity, storage and runtime effects |
 | --- | --- | --- |
-| A. Exact normalized observation closure for every seal | Collection C observed at 100 names observation O1/value X and O2/value Y. To admit complete C, the receiver obtains O1/O2 and recomputes their canonical digests, even if current resources now contain Z | Strong reproducible historical value closure; requires retained normalized history for mutable families or explicitly modeled snapshot members. More rows/bytes; linear manifest hashing and indexed closure. Depends on Q01/Q02/Q09 |
-| B. Identity-and-receipt closure for mutable families, exact observation closure for immutable families | C retains typed members plus observed value digests; receiver obtains current identities, receipt and seal. Current X→Z does not rewrite C's observed digest or pretend Z was observed at 100 | Matches the established current receipt responsibility. Receiver validates structure/identity and the immutable receipt, not reconstructible past values. Avoids secretly choosing universal history; proof strength must be described honestly. Depends on Q05/Q09 |
+| A. Exact normalized observation closure for deferred historical-family seals | Historical collection C observed at 100 names observation O1/value X and O2/value Y. To admit complete C, the receiver obtains O1/O2 and recomputes their canonical digests, even if newer historical observations contain Z | Strong reproducible historical value closure; feasible only for deferred families approved to retain that history. Accepted current Issue/review families retain their existing receipt/identity closure without edit history. More historical rows/bytes; linear manifest hashing and indexed closure. Depends on Q01/Q02/Q03/Q08/Q09 for affected families |
+| B. Qualified receipt closure for approved latest-only historical families, exact observation closure for retained immutable families | C retains typed members plus observed value digests; receiver obtains the approved identities, receipt and seal. Accepted current X→Z does not rewrite C's observed digest or pretend Z was observed at 100 | Preserves the established current receipt responsibility under every option. Historical receipt-only proof requires its own approved lifecycle/attestation contract; it does not promise reconstructible past values. Proof strength must be described honestly. Depends on Q05/Q09 and affected historical lifecycle choices |
 | C. Carry only a sender completion assertion and member digest without member closure | Sender asserts C contains 3 members but sends only O1/O2; receiver records sender evidence while local complete eligibility waits for the missing closure | Feasible only as staged or separately qualified evidence; the digest/assertion alone cannot establish receiver-verified complete Coverage. Smaller partial units; requires an explicit trust/qualification policy if exposed as anything stronger |
 
 **Recommendation (pending):** B with exact normalized closure for retained
 historical families and stable identity/receipt closure for settled mutable
 current families; keep one-repository scope and local trust exclusion. A is a
-feasible owner choice if those families are approved to retain reconstructible
-domain history. C remains unavailable/staged evidence unless a separate owner
+feasible owner choice only for deferred historical families approved to retain
+reconstructible domain history; accepted current Issue/review history is not
+reopened. C remains unavailable/staged evidence unless a separate owner
 decision defines additional authority. Preserve exact manifested dependencies
 and independently recompute usable completeness; never accept an advisory
 envelope as proof.

@@ -106,7 +106,7 @@ successful synthetic bootstrap capability run and refuses a changed definition.
 Final complete acceptance is run without that override. Ordinary acceptance
 includes fresh initialization, composed fingerprint/JSON/FK/integrity, view/trigger
 behavior, ordinary integration/e2e, collection/Coverage, Exchange/CAS corruption
-and quarantine, and sequential isolated wheel/sdist installs. Ruff and CI
+and quarantine, and isolated wheel/sdist installs. Ruff and CI
 selected/executed reconciliation are required.
 
 The first integrated development capability run at `250cb14bc9483af772eddf34f87c370dac612512`
