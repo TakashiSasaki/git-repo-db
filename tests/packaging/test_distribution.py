@@ -48,6 +48,8 @@ def distributions(tmp_path_factory, request):
     env.pop("PYTHONPATH", None)
     env.pop("PYTHONHOME", None)
     env.pop("REPO_CATALOG_TEST_BOOTSTRAP", None)
+    env.pop("GH_TOKEN", None)
+    env.pop("GITHUB_TOKEN", None)
     wheelhouse = Path(
         os.environ.get("REPO_CATALOG_WHEELHOUSE", ROOT / "artifacts/wheelhouse")
     ).resolve()
