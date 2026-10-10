@@ -1728,6 +1728,22 @@
         ],
         "surviving_assertion": "Unconfigured Source remains operationally skipped with portable registration diagnostic. Only configured manual Source has one complete singleton scope assessment and known positive pair. Job attempt is complete with partial requested result; registration selector still returns one actual repository. No remote observation or Coverage claim is invented.",
         "reason": "Only obsolete positive inventory_observations storage assertions are retired; every original behavioral parameter and operational result/identity assertion is preserved through direct current Source pairs and truthful scoped assessment."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_timestamps.py::test_all_persisted_absolute_time_columns_have_units_and_integer_types",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_timestamps.py::test_all_persisted_absolute_time_columns_have_units_and_integer_types"
+        ],
+        "surviving_assertion": "The original catalog3.sql parameter/node ID and all signed-int64 range, ordering, INTEGER storage, non-integer rejection, microsecond unit/type assertions survive. The fixture now registers pure Git SQL functions and executes the actual composed production schema, covering current API/evidence/Git/operational time columns rather than a base DDL fragment.",
+        "reason": "Retire only the obsolete fragment-layout assumption and unreachable reanalysis_runs fixture branch; required timestamp behavior is preserved and checked against every active persisted table."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_timestamps.py::test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_timestamps.py::test_sqlite_preserves_integer_range_order_and_rejects_other_storage_types"
+        ],
+        "surviving_assertion": "The original catalog3.sql parameter/node ID and all signed-int64 range, ordering, INTEGER storage, non-integer rejection, microsecond unit/type assertions survive. The fixture now registers pure Git SQL functions and executes the actual composed production schema, covering current API/evidence/Git/operational time columns rather than a base DDL fragment.",
+        "reason": "Retire only the obsolete fragment-layout assumption and unreachable reanalysis_runs fixture branch; required timestamp behavior is preserved and checked against every active persisted table."
       }
     ]
   },
