@@ -583,7 +583,7 @@
     "reports": [
       {
         "executed_passed": 114,
-        "sha256": "f2846d8acc5a82eadb734872bc6c0544a3302fed56c75a95210c75d62f2ca782",
+        "sha256": "7b1ce9dfbdb41f57d1036b1bc860e437c79b54475de8e94169f5026ec9f85397",
         "skipped": 0
       }
     ]
@@ -666,7 +666,7 @@
     },
     "output_schema": {
       "catalog3": 17,
-      "ddl_sha256": "f913f4f9503e7fd82c70b89e349965bc337f5e481858ae699f65bf6d3dede7fc",
+      "ddl_sha256": "50f26b9cded3f9896a53b4820caaaf45c119736e83f85fb8b7663ede66b646d0",
       "facts": "scoped-immutable-and-current-resources-v1"
     },
     "settings": {
