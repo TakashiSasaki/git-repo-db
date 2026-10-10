@@ -600,16 +600,18 @@ class QueryService:
         ):
             self.coverage.add("git", "tree_structure_unavailable", git_object_id=tree)
             return
+        from repo_catalog.application.git_query_context import decoded_names
+
+        tree_names = decoded_names(self.s, tree, decoder_key=context.get("decoder_key"))
         for row in self.s.execute(
             "SELECT * FROM tree_entries WHERE tree_git_object_id=? ORDER BY raw_name",
             (tree,),
         ):
             self.check()
             raw = prefix + row["raw_name"]
-            from repo_catalog.application.git_query_context import decoded_name
-
-            name = decoded_name(
-                self.s, tree, row["raw_name"], decoder_key=context.get("decoder_key")
+            name = tree_names.get(
+                row["raw_name"],
+                {"decoded_name": None, "decoder_conflict": False, "candidates": []},
             )
             name_evidence = [
                 {

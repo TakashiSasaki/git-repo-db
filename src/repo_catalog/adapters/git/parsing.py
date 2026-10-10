@@ -10,6 +10,13 @@ import uuid
 from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.transactions import atomic_unit
+from repo_catalog.domain.git_decoding import (
+    DECODER_FIELDS,
+    decode_blob,
+    decode_commit,
+    decoder_settings,
+    validate_decoded_value,
+)
 from repo_catalog.domain.git_intrinsic import (
     commit_structure,
     tag_structure,
@@ -78,16 +85,6 @@ def validate_git_acquisition(connection, acquisition):
     return GitParsing(_ConnectionStore(connection)).validate_acquisition(acquisition)
 
 
-def decode_blob(data, encoding, limit):
-    if len(data) > limit:
-        return "oversize", None
-    try:
-        value = data.decode(encoding, "strict")
-    except UnicodeError:
-        return "non_utf8", None
-    return ("nul", None) if "\0" in value else ("eligible", value)
-
-
 def validate_git_fact(connection, table, row):
     """Verify a claimed decoder value against its real, direct Git subject.
 
@@ -99,37 +96,15 @@ def validate_git_fact(connection, table, row):
         raise CatalogError("GIT_DECODER_FACT", "Unknown direct Git value family")
     store = _ConnectionStore(connection)
     row = dict(row)
-    settings = {
-        key: row[key]
-        for key in (
-            "text_encoding",
-            "metadata_encoding",
-            "metadata_errors",
-            "max_text_blob_bytes",
-        )
-    }
-    parser = GitParsing(store, **settings)
-    provenance = {
-        "parser_module": row["parser_module"],
-        "parser_version": row["parser_version"],
-    }
-    if any(
-        not isinstance(value, str) or not value or "\0" in value
-        for value in provenance.values()
-    ):
-        raise CatalogError("GIT_DECODER_FACT", "Invalid decoder producer attribution")
-    expected_key = hashlib.sha256(
-        json.dumps(
-            {**settings, **provenance}, sort_keys=True, separators=(",", ":")
-        ).encode()
-    ).hexdigest()
-    if row["decoder_key"] != expected_key:
-        raise CatalogError(
-            "GIT_DECODER_FACT", "Decoder key contradicts concrete settings"
-        )
     obj_id = (
         row["tree_git_object_id"] if table == "git_name_facts" else row["git_object_id"]
     )
+    return _validate_git_fact_subject(
+        store, table, row, _git_fact_subject(store, obj_id)
+    )
+
+
+def _git_fact_subject(store, obj_id):
     obj = store.one(
         "SELECT g.*,p.payload_sha256,b.body FROM available_git_objects g JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 WHERE g.git_object_id=?",
         (obj_id,),
@@ -146,48 +121,40 @@ def validate_git_fact(connection, table, row):
         obj["body"],
         obj["payload_sha256"],
     )
+    return obj
+
+
+def _validate_git_fact_subject(store, table, row, obj):
+    settings = {key: row[key] for key in DECODER_FIELDS}
+    decoder_settings(settings, row["decoder_key"])
+    obj_id = obj["git_object_id"]
     if table == "git_text_facts":
         if obj["type"] != "blob":
             raise CatalogError("GIT_DECODER_FACT", "Text decoder subject is not a blob")
         content = store.one(
             "SELECT content_id FROM blob_content_map WHERE git_object_id=?", (obj_id,)
         )
-        state, text = decode_blob(obj["body"], parser.encoding, parser.limit)
-        if (
-            content is None
-            or row["content_id"] != content[0]
-            or row["text_state"] != state
-            or row["raw_text"] != text
-        ):
+        if content is None or row["content_id"] != content[0]:
             raise CatalogError(
-                "GIT_DECODER_FACT", "Claimed text contradicts raw Git bytes"
+                "GIT_DECODER_FACT", "Text content owner contradicts raw blob"
             )
+        family, subject, value, metadata = (
+            "text",
+            row["text_state"],
+            row["raw_text"],
+            None,
+        )
     elif table == "git_commit_facts":
         if obj["type"] != "commit":
             raise CatalogError(
                 "GIT_DECODER_FACT", "Metadata decoder subject is not a commit"
             )
-        headers, message = obj["body"].split(b"\n\n", 1)
-        metadata = {
-            key.decode("ascii", "backslashreplace"): parser.decode(value)
-            for key, value in (
-                line.split(b" ", 1)
-                for line in headers.split(b"\n")
-                if not line.startswith(b" ")
-            )
-            if key not in (b"tree", b"parent")
-        }
-        try:
-            claimed = json.loads(row["metadata"])
-        except (TypeError, ValueError) as error:
-            raise CatalogError(
-                "GIT_DECODER_FACT", "Invalid commit metadata value"
-            ) from error
-        if row["message_text"] != parser.decode(message) or claimed != metadata:
-            raise CatalogError(
-                "GIT_DECODER_FACT", "Claimed metadata contradicts raw Git bytes"
-            )
-        row["metadata"] = json.dumps(metadata, sort_keys=True)
+        family, subject, value, metadata = (
+            "commit",
+            None,
+            row["message_text"],
+            row["metadata"],
+        )
     else:
         entry = store.one(
             "SELECT 1 FROM tree_entries WHERE tree_git_object_id=? AND raw_name=?",
@@ -197,11 +164,84 @@ def validate_git_fact(connection, table, row):
             raise CatalogError(
                 "EXCHANGE_DEPENDENCY_MISSING", "Exact Git name subject is unavailable"
             )
-        if row["decoded_name"] != parser.decode(row["raw_name"]):
-            raise CatalogError(
-                "GIT_DECODER_FACT", "Claimed name contradicts raw Git bytes"
-            )
+        family, subject, value, metadata = (
+            "name",
+            row["raw_name"],
+            row["decoded_name"],
+            None,
+        )
+    try:
+        validate_decoded_value(
+            family,
+            obj["object_format"],
+            obj["body"],
+            row["decoder_key"],
+            settings,
+            subject,
+            value,
+            metadata,
+        )
+    except (TypeError, ValueError, AttributeError, UnicodeError) as error:
+        raise CatalogError(
+            "GIT_DECODER_FACT", "Invalid direct Git decoded value"
+        ) from error
+    if family == "commit":
+        row["metadata"] = json.dumps(json.loads(row["metadata"]), sort_keys=True)
     return row
+
+
+def git_fact_validation_issues(connection):
+    """Check retained decoder values, validating each actual subject once.
+
+    This ephemeral read groups candidates by their direct object key. It does
+    not install a certificate or make interpretations depend on a batch.
+    """
+    store = _ConnectionStore(connection)
+    issues = []
+    for owner in store.execute(
+        "SELECT git_object_id FROM git_text_facts UNION SELECT git_object_id FROM git_commit_facts "
+        "UNION SELECT tree_git_object_id FROM git_name_facts"
+    ):
+        obj_id = owner[0]
+        try:
+            obj, subject_error = _git_fact_subject(store, obj_id), None
+        except CatalogError as error:
+            obj, subject_error = None, error
+        for table in ("git_text_facts", "git_commit_facts", "git_name_facts"):
+            field = (
+                "tree_git_object_id" if table == "git_name_facts" else "git_object_id"
+            )
+            for row in store.execute(
+                f"SELECT * FROM {table} WHERE {field}=?", (obj_id,)
+            ):
+                try:
+                    if subject_error is not None:
+                        raise subject_error
+                    _validate_git_fact_subject(store, table, dict(row), obj)
+                except (
+                    TypeError,
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeError,
+                    CatalogError,
+                ) as error:
+                    code = (
+                        error.code
+                        if isinstance(error, CatalogError)
+                        else "GIT_DECODER_FACT"
+                    )
+                    if code == "EXCHANGE_DEPENDENCY_MISSING":
+                        code = "GIT_DECODER_SUBJECT_UNAVAILABLE"
+                    issues.append(
+                        {
+                            "code": code,
+                            "table": table,
+                            "git_object_id": obj_id,
+                            "decoder_key": row["decoder_key"],
+                        }
+                    )
+    return issues
 
 
 class GitParsing:
@@ -500,6 +540,7 @@ class GitParsing:
             )
         if not decode:
             return
+        message_text, metadata = decode_commit(fmt, data, self.decoder)
         self.fact(
             "git_commit_facts",
             {
@@ -511,14 +552,8 @@ class GitParsing:
                 "metadata_errors": self.errors,
                 "text_encoding": self.encoding,
                 "max_text_blob_bytes": self.limit,
-                "message_text": self.decode(message),
-                "metadata": json.dumps(
-                    {
-                        key.decode("ascii", "backslashreplace"): self.decode(value)
-                        for key, value in structure["metadata_entries"]
-                    },
-                    sort_keys=True,
-                ),
+                "message_text": message_text,
+                "metadata": json.dumps(metadata, sort_keys=True),
             },
             ("git_object_id", "decoder_key"),
         )

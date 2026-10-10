@@ -15,9 +15,9 @@ def decoder_settings(store, decoder_key):
     settings = {
         tuple(row)
         for row in store.all(
-            f"SELECT {fields} FROM git_commit_facts WHERE decoder_key=? "
-            f"UNION SELECT {fields} FROM git_text_facts WHERE decoder_key=? "
-            f"UNION SELECT {fields} FROM git_name_facts WHERE decoder_key=?",
+            f"SELECT {fields} FROM valid_git_commit_facts WHERE decoder_key=? "
+            f"UNION SELECT {fields} FROM valid_git_text_facts WHERE decoder_key=? "
+            f"UNION SELECT {fields} FROM valid_git_name_facts WHERE decoder_key=?",
             (decoder_key, decoder_key, decoder_key),
         )
     }
@@ -32,10 +32,28 @@ def decoded_name(store, tree_id, raw_name, *, decoder_key=None):
     candidates = [
         dict(row)
         for row in store.all(
-            "SELECT * FROM git_name_facts WHERE tree_git_object_id=? AND raw_name=?",
+            "SELECT * FROM valid_git_name_facts WHERE tree_git_object_id=? AND raw_name=?",
             (tree_id, raw_name),
         )
     ]
+    return _decoded_name_candidates(candidates, decoder_key)
+
+
+def decoded_names(store, tree_id, *, decoder_key=None):
+    """Read one tree's candidate names together, checking its raw subject once."""
+    grouped = {}
+    for row in store.all(
+        "SELECT * FROM valid_git_name_facts WHERE tree_git_object_id=?", (tree_id,)
+    ):
+        candidate = dict(row)
+        grouped.setdefault(candidate["raw_name"], []).append(candidate)
+    return {
+        raw: _decoded_name_candidates(candidates, decoder_key)
+        for raw, candidates in grouped.items()
+    }
+
+
+def _decoded_name_candidates(candidates, decoder_key):
     selected = (
         [row for row in candidates if row["decoder_key"] == decoder_key]
         if decoder_key is not None
@@ -56,8 +74,8 @@ def decoded_fact(store, object_id, object_type, *, decoder_key=None):
     UUID order never decide a competing interpretation.
     """
     table, outputs = {
-        "commit": ("git_commit_facts", ("message_text", "metadata")),
-        "blob": ("git_text_facts", ("content_id", "text_state", "raw_text")),
+        "commit": ("valid_git_commit_facts", ("message_text", "metadata")),
+        "blob": ("valid_git_text_facts", ("content_id", "text_state", "raw_text")),
     }[object_type]
     candidates = [
         dict(row)

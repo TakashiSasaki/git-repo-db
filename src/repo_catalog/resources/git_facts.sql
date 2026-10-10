@@ -36,6 +36,31 @@ CREATE TRIGGER tree_entries_format BEFORE INSERT ON tree_entries WHEN NOT EXISTS
 CREATE TRIGGER commit_parents_format BEFORE INSERT ON commit_parents WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.commit_git_object_id AND object_format=NEW.parent_format) BEGIN SELECT RAISE(ABORT,'parent format mismatch'); END;
 CREATE TRIGGER commit_parents_ordinal BEFORE INSERT ON commit_parents WHEN NOT EXISTS(SELECT 1 FROM commits WHERE git_object_id=NEW.commit_git_object_id AND parent_count>NEW.parent_ordinal) BEGIN SELECT RAISE(ABORT,'parent ordinal outside canonical sequence'); END;
 CREATE TRIGGER root_manifest_entries_format BEFORE INSERT ON root_manifest_entries WHEN NOT EXISTS(SELECT 1 FROM git_objects WHERE git_object_id=NEW.tree_git_object_id AND object_format=NEW.object_format) BEGIN SELECT RAISE(ABORT,'manifest child format mismatch'); END;
+-- Decoded candidates are computed from the actual byte subject and explicit settings.
+CREATE TRIGGER git_text_facts_bytes BEFORE INSERT ON git_text_facts WHEN NOT EXISTS(
+ SELECT 1 FROM git_objects g JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 WHERE g.git_object_id=NEW.git_object_id AND g.type='blob'
+ AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=p.payload_sha256)
+ AND repo_catalog_git_object_identity_valid(g.object_format,hex(g.oid),g.type,g.size,b.body,p.payload_sha256)=1 AND repo_catalog_git_decoded_value_valid('text',g.object_format,b.body,NEW.decoder_key,json_object('parser_module',NEW.parser_module,'parser_version',NEW.parser_version,'text_encoding',NEW.text_encoding,'metadata_encoding',NEW.metadata_encoding,'metadata_errors',NEW.metadata_errors,'max_text_blob_bytes',NEW.max_text_blob_bytes),NEW.text_state,NEW.raw_text,NULL)=1
+) BEGIN SELECT RAISE(ABORT,'Git decoder value contradicts raw bytes or settings'); END;
+CREATE VIEW valid_git_text_facts AS
+ SELECT f.* FROM git_text_facts f JOIN available_git_objects g ON g.git_object_id=f.git_object_id JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 JOIN blob_content_map m ON m.git_object_id=g.git_object_id AND m.content_id=f.content_id
+ WHERE g.type='blob' AND repo_catalog_git_decoded_value_valid('text',g.object_format,b.body,f.decoder_key,json_object('parser_module',f.parser_module,'parser_version',f.parser_version,'text_encoding',f.text_encoding,'metadata_encoding',f.metadata_encoding,'metadata_errors',f.metadata_errors,'max_text_blob_bytes',f.max_text_blob_bytes),f.text_state,f.raw_text,NULL)=1;
+CREATE TRIGGER git_commit_facts_bytes BEFORE INSERT ON git_commit_facts WHEN NOT EXISTS(
+ SELECT 1 FROM git_objects g JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 WHERE g.git_object_id=NEW.git_object_id AND g.type='commit'
+ AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=p.payload_sha256)
+ AND repo_catalog_git_object_identity_valid(g.object_format,hex(g.oid),g.type,g.size,b.body,p.payload_sha256)=1 AND repo_catalog_git_decoded_value_valid('commit',g.object_format,b.body,NEW.decoder_key,json_object('parser_module',NEW.parser_module,'parser_version',NEW.parser_version,'text_encoding',NEW.text_encoding,'metadata_encoding',NEW.metadata_encoding,'metadata_errors',NEW.metadata_errors,'max_text_blob_bytes',NEW.max_text_blob_bytes),NULL,NEW.message_text,NEW.metadata)=1
+) BEGIN SELECT RAISE(ABORT,'Git decoder value contradicts raw bytes or settings'); END;
+CREATE VIEW valid_git_commit_facts AS
+ SELECT f.* FROM git_commit_facts f JOIN available_git_objects g ON g.git_object_id=f.git_object_id JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256
+ WHERE g.type='commit' AND repo_catalog_git_decoded_value_valid('commit',g.object_format,b.body,f.decoder_key,json_object('parser_module',f.parser_module,'parser_version',f.parser_version,'text_encoding',f.text_encoding,'metadata_encoding',f.metadata_encoding,'metadata_errors',f.metadata_errors,'max_text_blob_bytes',f.max_text_blob_bytes),NULL,f.message_text,f.metadata)=1;
+CREATE TRIGGER git_name_facts_bytes BEFORE INSERT ON git_name_facts WHEN NOT EXISTS(
+ SELECT 1 FROM git_objects g JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 JOIN tree_entries e ON e.tree_git_object_id=g.git_object_id AND e.raw_name=NEW.raw_name WHERE g.git_object_id=NEW.tree_git_object_id AND g.type='tree'
+ AND NOT EXISTS(SELECT 1 FROM payload_quarantine q WHERE q.sha256=p.payload_sha256)
+ AND repo_catalog_git_name_subject_valid(g.object_format,substr(b.body,e.entry_offset+1,e.entry_length),e.raw_name,0,e.entry_length,e.mode,e.child_oid)=1 AND repo_catalog_git_decoded_value_valid('name',g.object_format,NULL,NEW.decoder_key,json_object('parser_module',NEW.parser_module,'parser_version',NEW.parser_version,'text_encoding',NEW.text_encoding,'metadata_encoding',NEW.metadata_encoding,'metadata_errors',NEW.metadata_errors,'max_text_blob_bytes',NEW.max_text_blob_bytes),NEW.raw_name,NEW.decoded_name,NULL)=1
+) BEGIN SELECT RAISE(ABORT,'Git decoder value contradicts raw bytes or settings'); END;
+CREATE VIEW valid_git_name_facts AS
+ SELECT f.* FROM available_git_objects g CROSS JOIN git_name_facts f ON g.git_object_id=f.tree_git_object_id JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 JOIN tree_entries e ON e.tree_git_object_id=g.git_object_id AND e.raw_name=f.raw_name
+ WHERE g.type='tree' AND repo_catalog_git_decoded_value_valid('name',g.object_format,NULL,f.decoder_key,json_object('parser_module',f.parser_module,'parser_version',f.parser_version,'text_encoding',f.text_encoding,'metadata_encoding',f.metadata_encoding,'metadata_errors',f.metadata_errors,'max_text_blob_bytes',f.max_text_blob_bytes),f.raw_name,f.decoded_name,NULL)=1;
 -- Availability checks raw bytes and the intrinsic sequence, never parser authority.
 CREATE VIEW available_git_objects AS
  SELECT g.* FROM git_objects g JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256

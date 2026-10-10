@@ -33,9 +33,9 @@ def refresh_documents(store, kind, token):
         from repo_catalog.application.git_query_context import decoded_fact
 
         table, object_type, field = (
-            ("git_text_facts", "blob", "raw_text")
+            ("valid_git_text_facts", "blob", "raw_text")
             if kind == "code"
-            else ("git_commit_facts", "commit", "message_text")
+            else ("valid_git_commit_facts", "commit", "message_text")
         )
 
         def git_rows():
@@ -121,8 +121,8 @@ def rebuild(store, kind, token=None):
         token.check()
         refresh_documents(s, current, token)
         selected = {
-            "code": "source_key IN (SELECT 'git:'||f.git_object_id FROM git_text_facts f JOIN available_git_objects g USING(git_object_id) WHERE f.raw_text IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_text_facts c WHERE c.git_object_id=f.git_object_id AND (c.raw_text IS NOT f.raw_text OR c.text_state IS NOT f.text_state)))",
-            "commits": "source_key IN (SELECT 'git:'||f.git_object_id FROM git_commit_facts f JOIN available_git_objects g USING(git_object_id) WHERE NOT EXISTS(SELECT 1 FROM git_commit_facts c WHERE c.git_object_id=f.git_object_id AND (c.message_text IS NOT f.message_text OR c.metadata IS NOT f.metadata)))",
+            "code": "source_key IN (SELECT 'git:'||f.git_object_id FROM valid_git_text_facts f JOIN available_git_objects g USING(git_object_id) WHERE f.raw_text IS NOT NULL AND NOT EXISTS(SELECT 1 FROM valid_git_text_facts c WHERE c.git_object_id=f.git_object_id AND (c.raw_text IS NOT f.raw_text OR c.text_state IS NOT f.text_state)))",
+            "commits": "source_key IN (SELECT 'git:'||f.git_object_id FROM valid_git_commit_facts f JOIN available_git_objects g USING(git_object_id) WHERE NOT EXISTS(SELECT 1 FROM valid_git_commit_facts c WHERE c.git_object_id=f.git_object_id AND (c.message_text IS NOT f.message_text OR repo_catalog_git_metadata_equal(c.metadata,f.metadata)<>1)))",
             "pr": "source_key IN (SELECT lower(hex(text_body_sha256)) FROM eligible_document_state WHERE deleted=0 UNION SELECT lower(hex(text_body_sha256)) FROM eligible_review_resources WHERE deleted=0)",
             "issue": "source_key IN (SELECT lower(hex(text_body_sha256)) FROM eligible_issue_resources WHERE deleted=0) OR EXISTS (SELECT 1 FROM eligible_issue_resources i WHERE i.deleted=0 AND i.title=search_documents.body)",
         }[current]
