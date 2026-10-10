@@ -878,7 +878,7 @@ def test_code_detail_consumers_reject_malformed_authored_types(databases, detail
 
 @pytest.mark.parametrize(
     "request_data",
-    [{"variables": []}, {"variables": None}, {"operational_only": "false"}],
+    [{"variables": []}, {"variables": None}],
 )
 def test_fetch_request_consumers_reject_malformed_authored_types(
     databases, request_data

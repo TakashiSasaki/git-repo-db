@@ -352,8 +352,15 @@ def test_publication_seals_fact_membership_not_only_input_membership(model):
 
 def test_repair_failure_restores_corrupt_bytes_quarantine_and_protection_trigger(model):
     db, _, _, _ = model
-    digest = hashlib.sha256(b"good").digest()
-    db.execute("INSERT INTO stored_bytes VALUES(?,?,4)", (digest, b"bad!"))
+    from tests.support.git_payloads import register_git_blob
+
+    digest = register_git_blob(db, b"good").sha256
+    immutable = db.execute(
+        "SELECT sql FROM sqlite_schema WHERE name='stored_bytes_immutable'"
+    ).fetchone()[0]
+    db.execute("DROP TRIGGER stored_bytes_immutable")
+    db.execute("UPDATE stored_bytes SET body=? WHERE sha256=?", (b"bad!", digest))
+    db.execute(immutable)
     first = verify_all(db)
     assert len(first["corrupt"]) == 1
     db.execute(
@@ -395,8 +402,8 @@ def test_invalid_declared_hash_cannot_be_retained_even_in_staging(model):
         stage_verified_payload(
             db,
             b"invalid",
-            PayloadRef("decoded_api", hashlib.sha256(b"valid").digest()),
-            {"fetch_occurrence_uuidv4": uid()},
+            PayloadRef("git-object-raw-v1", hashlib.sha256(b"valid").digest()),
+            {"object_format": "sha1"},
             reason="PAYLOAD_HASH_COLLISION",
         )
     assert error.value.code == "PAYLOAD_DIGEST_MISMATCH"

@@ -28,7 +28,6 @@ def _collection_boundary(query, collection_id):
     return query.s.one(
         "SELECT max(observed_at_us) FROM ("
         "SELECT observed_at_us FROM fetch_occurrences WHERE fetch_collection_id=? "
-        "AND coalesce(json_extract(request,'$.operational_only'),0)=0 "
         "UNION ALL SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=? "
         "UNION ALL SELECT observed_at_us FROM current_collection_pages WHERE fetch_collection_id=?)",
         (collection_id, collection_id, collection_id),
@@ -588,8 +587,9 @@ def _thread_listing_complete(query, request, thread):
     latest = None
     for row in query.s.execute(
         "WITH observations AS (SELECT fetch_collection_id,observed_at_us "
-        "FROM fetch_occurrences WHERE coalesce(json_extract(request,'$.operational_only'),0)=0 "
-        "UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages) "
+        "FROM fetch_occurrences "
+        "UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages "
+        "UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial') "
         "SELECT root.*,o.observed_at_us boundary FROM fetch_collections member "
         "JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id "
         "JOIN fetch_collections root ON root.change_request_id=member.change_request_id "

@@ -1,4 +1,4 @@
-"""Pure provider projections for mutable resources and diagnostic archive inspection.
+"""Pure live provider projections for mutable resources.
 
 REST ``updated_at`` orders Issues and comments within their documented resource
 clock. Review summaries have no such field; submitted_at is only submission time.

@@ -51,7 +51,6 @@ class ApiFacts:
         self.pending_results = {}
         self.select_results = True
         self.response_identities = {}
-        self.rejected_fetch = None
         self.unselected_results = set()
 
     def current_context(self, repo, pr, endpoint, kind=None):
@@ -208,21 +207,8 @@ class ApiFacts:
 
     def source_input(self, source_registration_uuidv4, response, context):
         ident = str(uuid.uuid4())
-        timestamp = now_us()
-        try:
-            payload = self.payload(response.content)
-        except CatalogError as error:
-            if error.code in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}:
-                self.rejected_fetch = (
-                    response.content,
-                    {
-                        "source_input_uuidv4": ident,
-                        "source_registration_uuidv4": source_registration_uuidv4,
-                        "observed_at_us": timestamp,
-                        "request_context": context,
-                    },
-                )
-            raise
+        timestamp = self.response_time(response)
+        payload = self.payload(response.content)
         self.s.execute(
             "INSERT INTO source_input_observations(source_input_uuidv4,source_registration_uuidv4,payload_representation,payload_sha256,request_context_json,observed_at_us) VALUES(?,?,?,?,?,?)",
             (
@@ -356,6 +342,11 @@ class ApiFacts:
         return intern_payload(self.s.connection, raw, representation="decoded_api")
 
     @staticmethod
+    def response_time(response):
+        """Reuse the actual live response clock even if its transaction failed."""
+        return response.extensions.setdefault("catalog_observed_at_us", now_us())
+
+    @staticmethod
     def response_metadata(response):
         """Preserve whitelisted historical evidence, independently of validators."""
         etag = response.headers.get("etag")
@@ -375,7 +366,7 @@ class ApiFacts:
             response_identity = (
                 response,
                 str(uuid.uuid4()),
-                response.extensions.get("catalog_observed_at_us", now_us()),
+                self.response_time(response),
             )
             self.response_identities[id(response)] = response_identity
         fetch_uuid, timestamp = response_identity[1:]
@@ -383,23 +374,7 @@ class ApiFacts:
             "SELECT repository_uuidv4 FROM fetch_collections WHERE fetch_collection_id=?",
             (collection["fetch_collection_id"],),
         )[0]
-        try:
-            payload = self.payload(response.content)
-        except CatalogError as error:
-            if error.code in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}:
-                self.rejected_fetch = (
-                    response.content,
-                    {
-                        "fetch_occurrence_uuidv4": fetch_uuid,
-                        "repository_uuidv4": repository,
-                        "fetch_collection_id": collection["fetch_collection_id"],
-                        "ordinal": ordinal,
-                        "observed_at_us": timestamp,
-                        "request": request,
-                        "next_cursor": next_cursor,
-                    },
-                )
-            raise
+        payload = self.payload(response.content)
         ident = self.s.execute(
             "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,?,?,?,?)",
             (
@@ -421,29 +396,9 @@ class ApiFacts:
             )
         return ident, ordinal, timestamp
 
-    def stage_rejected(self, error):
-        if (
-            error.code not in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}
-            or self.rejected_fetch is None
-        ):
-            return False
-        from repo_catalog.adapters.sqlite.cas_integrity import stage_verified_payload
-        from repo_catalog.domain.payload import PayloadRef
-
-        body, context = self.rejected_fetch
-        stage_verified_payload(
-            self.s.connection,
-            body,
-            PayloadRef("decoded_api", hashlib.sha256(body).digest()),
-            context,
-            reason=error.code,
-        )
-        self.rejected_fetch = None
-        return True
-
     def finish(self, collection, *, evidence=None, observed_at_us=None):
         if observed_at_us is None:
-            observed_at_us = self.observed_at_us(collection)
+            observed_at_us = self.observed_at_us(collection, include_partial=False)
         self.s.execute(
             "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
             (collection["fetch_collection_id"],),
@@ -597,14 +552,14 @@ class ApiFacts:
             ),
         )
 
-    def observed_at_us(self, collection):
-        """Latest actual saved response; starting or replaying a scan adds no time."""
+    def observed_at_us(self, collection, *, include_partial=True):
+        """Latest observation, with accepted receipts alone proving completion."""
         return self.s.one(
-            "SELECT MAX(observed_at_us) FROM (SELECT observed_at_us FROM fetch_occurrences WHERE fetch_collection_id=? AND coalesce(json_extract(request,'$.operational_only'),0)=0 UNION ALL SELECT observed_at_us FROM current_collection_pages WHERE fetch_collection_id=?)",
-            (collection["fetch_collection_id"], collection["fetch_collection_id"]),
+            "SELECT MAX(observed_at_us) FROM (SELECT observed_at_us FROM fetch_occurrences WHERE fetch_collection_id=? UNION ALL SELECT observed_at_us FROM current_collection_pages WHERE fetch_collection_id=? UNION ALL SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='partial' AND ?)",
+            (collection["fetch_collection_id"],) * 3 + (include_partial,),
         )[0]
 
-    def thread_observed_at_us(self, collection):
+    def thread_observed_at_us(self, collection, *, include_partial=True):
         """Include every child associated with this root, including earlier resumes."""
         return self.s.one(
             """SELECT MAX(o.observed_at_us)
@@ -614,16 +569,16 @@ class ApiFacts:
                 AND member.change_request_id IS root.change_request_id
                 AND member.source_id IS root.source_id
                JOIN resume_scopes scope ON scope.resume_scope_id=member.resume_scope_id
-               JOIN (SELECT fetch_collection_id,observed_at_us,request FROM fetch_occurrences
-                     UNION ALL SELECT fetch_collection_id,observed_at_us,'{}' request FROM current_collection_pages) o
+               JOIN (SELECT fetch_collection_id,observed_at_us FROM fetch_occurrences
+                     UNION ALL SELECT fetch_collection_id,observed_at_us FROM current_collection_pages
+                     UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o
                  ON o.fetch_collection_id=member.fetch_collection_id
                WHERE root.fetch_collection_id=?
-                 AND coalesce(json_extract(o.request,'$.operational_only'),0)=0
                  AND (member.fetch_collection_id=root.fetch_collection_id
                       OR (member.kind='thread-comments'
                           AND json_extract(scope.request_context,'$.parent_fetch_collection_id')
                               =root.fetch_collection_id))""",
-            (collection["fetch_collection_id"],),
+            (include_partial, collection["fetch_collection_id"]),
         )[0]
 
     def pending_response(self, collection):
@@ -634,11 +589,23 @@ class ApiFacts:
         )
         return page is None or page["next_cursor"] is not None
 
-    def partial(self, collection, reason):
+    def partial(self, collection, reason, *, observed_at_us=None):
         self.s.execute(
             "UPDATE collection_progress SET state='partial',reason=? WHERE fetch_collection_id=?",
             (reason, collection["fetch_collection_id"]),
         )
+        if observed_at_us is not None:
+            # An observed rejected page establishes only an incomplete boundary.
+            # No original, member/terminal claim or fictitious fetch is retained.
+            self.s.execute(
+                "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'partial',?,?)",
+                (
+                    collection["resume_scope_id"],
+                    collection["fetch_collection_id"],
+                    canonical({"reason": reason}),
+                    observed_at_us,
+                ),
+            )
 
     def origin(self, collection, occurrence, position):
         return f"parse:{self.result(occurrence)}:{position}"

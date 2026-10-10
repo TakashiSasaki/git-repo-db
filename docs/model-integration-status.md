@@ -1,17 +1,32 @@
 # Design decision implementation status
 
 Baseline: PR #10 (`1c69a868f65b9637a7b8cf00d2c68a4ba05b2faa`).
-Current implementation: schema **16**, branch `fix/current-state-conflict-boundaries`,
-stacked on PR #14 HEAD `3f76d4873d14604b918198ac06c1660d0fa9e1b9`.
-[Boundary corrections](current-state-boundaries.md) and the [schema 16 inventory](current-state-boundaries-inventory.json) record incumbent proof retention, transferred conflict exchange, receiver-local wire exclusions and duplicate FK cleanup. The schema 15 receipts below remain historical evidence.
+Current implementation: fresh schema **18**, with the scoped
+[Phase 1 retirement decision](phase1-api-original-retirement.md) and
+[implementation inventory](phase1-api-original-retirement-implementation.md).
+The runtime baseline is fetched main `47fd5b88355b98019c0c04408449081e16ab4505`
+(schema 17), which includes the reviewed PR #14–#18 corrections. Current
+Issue/review resources retain truthful module/version and field provenance
+without historical parser gates. API archive-backed projection/replay,
+core raw retention of fully rejected originals and API-only explicit repair are
+retired. Successful
+historical publication, accepted partial GraphQL roots with errors, live
+restart/304 reuse and exact domain-exchange proof retain the narrow shared
+original dependencies recorded for Phase 2; existing
+opaque provider JSON still awaits its field-inventory decision.
 `implemented` describes code and scoped evidence, not release certification.
-The prior schema 14 checkpoint passed 1,311 ordinary and two installed tests;
-that is historical evidence for its exact tree, not schema 15 acceptance.
+Current Phase 1 acceptance is recorded only in its own implementation report;
+older passing receipts do not certify schema 18.
 
-Final schema 16 local acceptance passed 1,509 ordinary cases and both isolated
-installed variants without bootstrap, failures, errors or skips; independent
-review passed 59 overlapping cases. The [exact boundary receipt](validation/synthetic/2026-10-09-current-state-boundaries.md)
-separates local evidence from the submitted HEAD's hosted acceptance.
+[Boundary corrections](current-state-boundaries.md) and the [schema 16 inventory](current-state-boundaries-inventory.json)
+record incumbent proof retention, transferred conflict exchange, receiver-local
+wire exclusions and duplicate FK cleanup. Historical schema 16 local acceptance
+passed 1,509 ordinary cases and both isolated installed variants without
+bootstrap, failures, errors or skips; independent review passed 59 overlapping
+cases. The [exact boundary receipt](validation/synthetic/2026-10-09-current-state-boundaries.md)
+separates local evidence from that submitted HEAD's hosted acceptance. The
+schema 14 checkpoint passed 1,311 ordinary and two installed tests; those
+receipts retain their exact-tree scope.
 
 The earlier schema 15 boundary corrections and evidence are in
 [current-state-schema-closure.md](current-state-schema-closure.md), with
@@ -30,11 +45,23 @@ and the submitted PR body distinguish local and hosted evidence.
 |---|---|---|---|
 | Ordinary Issues/comments | Latest accepted state per resource; one shared physical store; Issue identity independent of repository membership | `issue_resources`, common admission, standard `sync issue/all`, offline `issue list/show/comments`, `search issue` | Focused evidence is tracked in the implementation report; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
 | Reviews/comments | Latest accepted state per resource in one shared store | `review_resources`; redundant marker/history paths removed; independent review/reply/thread and stable code references retained | Focused current/review/query regressions; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
-| Supplementary HTTP archives | Recording supported but not required for ordinary current-state use | Transport recorder/reader ports; `github.record_messages=false`; visible expected recording failures; bounded read-only inspect/reparse | `tests/unit/test_transport_recording.py`; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
+| Supplementary HTTP archives | Recording supported but not required for ordinary current-state use | Transport recorder/reader ports; `github.record_messages=false`; bounded diagnostic inspect; archive-backed parser projection removed by Phase 1 | `tests/unit/test_transport_recording.py`; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
 | Collection/exchange | Required scope/member/terminal evidence independent of optional archives | Immutable current-resource page receipts; full/selective single-repository exchange; shared update/conflict/dependency admission | Current collection/exchange tests; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
 | CAS-41 | Required active physical quarantine count in backup manifests | Copied verified count; strict nonnegative int64 JSON integer; compare before restore diagnostic scan; full-byte checks retained | 39 focused maintenance/CAS/e2e checks passed on Python 3.12.14 / SQLite 3.53.1 without bootstrap; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
 | D2 | `not_applicable / retired` | No legacy importer or identity fabrication | Retirement is deliberate; historical receipts preserved. |
 | LFS/attachments | Pointer bytes / source text and embedded URLs only | No object-body download or automatic URL fetching | Existing Git/text preservation scope; body acquisition deferred. |
+
+## Phase 1 scoped supersession
+
+The [retirement decision](phase1-api-original-retirement.md#scoped-supersession-of-older-contracts)
+records the meaning of D3/D23/D25/D28/D29/D31/D36/D37 and
+CAS-3/4/9/16/42/44/46/49. Their independent ownership, observation and completeness
+invariants remain. API-original-only mechanisms are retired; existing historical
+publication, accepted partial GraphQL roots with errors, live restart/304 reuse,
+provider projections and domain-exchange
+proof are separately identified as Phase-2 boundaries. The old 18-table parser
+infrastructure inventory is not an unconditional DROP list. The table below
+keeps baseline traceability and now limits its feature claims to surviving uses.
 
 ## Evidence index
 
@@ -66,7 +93,7 @@ All code paths below are relative to `src/repo_catalog/`; tests are relative to 
 |---|---|---|---|---|
 | D1 | Portable independent acquisitions | partial | implemented | Permanent fetch UUIDs survive exchange; independent same-byte acquisitions remain distinct (W, X, A). |
 | D2 | Strict evidence for legacy observation identity | partial | not_applicable / retired | Legacy reconciliation was deliberately retired with v2 migration. No old-record identity is inferred; identity fabrication remains prohibited. Historical receipts are retained. |
-| D3 | Reparse identity separate from acquisition | unimplemented | implemented | Historical offline reparse creates a new result/facts and retains fetch UUID/time/bytes; explicit selection is required (W, CLI). Supplementary message reparse returns a bounded read-only projection retaining source time, without admission (T). |
+| D3 | Reparse identity separate from acquisition | unimplemented | Git implemented / API retired | API retrospective execution and supplementary parser projection are retired under R1/R2/R3. Git-only reanalysis creates a separate result while preserving its acquisition UUID/time/bytes and requiring explicit selection (W, CLI); bounded message inspection invokes no domain parser (T). |
 | D4 | Conflicting current choices stay unresolved | unimplemented | implemented | Multiple DAG heads and conflicting immutable variants produce no ordinary current; both arrival orders tested (P, X, A). |
 | D5 | No timestamp-only decision ordering | partial | implemented | Historical fact/profile decisions derive from sealed DAG heads, not time/UUID order (P, A). Current provider rows use proven comparable clocks or an explicit live revision/scope fence; receipt/parsing time alone cannot pick a winner (LS). |
 | D6 | Immutable current predecessor DAG | unimplemented | implemented | Immutable historical/profile decisions, predecessor manifests and publication membership prevent late edge mutation (P, A/A1). Mutable Issue/review states are outside sealed result membership (LS). |
@@ -86,21 +113,21 @@ All code paths below are relative to `src/repo_catalog/`; tests are relative to 
 | D20 | Names resolve only when unambiguous | partial | implemented | Historical name selection requires a unique repository UUID; ambiguity is an error (I). |
 | D21 | Permanent name-observation UUID | unimplemented | implemented | Each name observation has independent permanent UUID; identical displayed names are deduplicated only by the view (I, A). |
 | D22 | Immutable UID collisions stage dependencies | unimplemented | implemented | Immutable-content conflicts retain original data, stage incoming variants and block affected results/scopes independent of receipt order (X, A). |
-| D23 | Payload byte sharing is not observation identity | implemented | implemented | Exact payload bytes and representation sharing remain separate from permanent fetch identity (B, W). |
-| D24 | Ordinary reads require verified selected profile | unimplemented | implemented | Historical readers use eligible results and explicit trusted profiles; current rows carry exact parser/profile attribution and eligibility independently of archive/result membership (P, W, R, LS). Reparse/receipt never upgrades the selected profile. |
-| D25 | Permanent independent parsed-result UUID | unimplemented | implemented | Immutable interpretations retain independent result UUID/input/output publications and reimport identity (P, W, X). Mutable current rows are not result-owned immutable facts and do not create a result for every refresh (LS). |
-| D26 | Exchange nonselected parser interpretations | unimplemented | implemented | Unaffected repository interpretations and inputs remain exchangeable without receiver trust; Source-owned results are excluded (X, W). Current-state rows/profile attribution/required proofs exchange without mandatory historical transcripts (LS, LC). |
+| D23 | Payload byte sharing is not observation identity | implemented | implemented | Exact shared Git/domain bytes remain separate from observation identity (B, W). API archive-only registration/comparison is retired; successful historical live publication/proof still uses narrow original input closure pending Phase 2. |
+| D24 | Ordinary reads require verified selected profile | unimplemented | implemented | Historical readers use eligible results and explicit trusted profiles. Current Issue/review rows use actual module/version and per-field evidence, with typed eligibility and no profile/trust gate (P, W, R, LS). Git reanalysis/receipt never upgrades a historical selected profile. |
+| D25 | Permanent independent parsed-result UUID | unimplemented | implemented | Remaining historical/Git interpretations retain independent result UUID/input/output publications and reimport identity (P, W, X); retrospective API execution/publication is retired. Mutable current rows are not result-owned immutable facts and do not create a result for every refresh (LS). Normalized historical publication replacement is deferred. |
+| D26 | Exchange nonselected parser interpretations | unimplemented | implemented | Unaffected repository interpretations and inputs remain exchangeable without receiver trust; Source-owned results are excluded (X, W). Current-state rows/module-version attribution/required proofs exchange without mandatory historical transcripts (LS, LC). Original-only distribution is retired. |
 | D27 | Immutable full parser/profile definition | unimplemented | implemented | Definition binds implementation digest, settings, output schema and capability manifest; immutable UUID/content admission (P, A). |
-| D28 | Multiple owner-checked input references | unimplemented | implemented | Immutable results retain multiple fetch/Git/source inputs and sealed membership (P, W, A). Current rows preserve typed owner/acquisition scope and minimum collection proof without a mandatory HTTP-body input (LS, LC). |
-| D29 | Direct parsed-result FK on generated facts | unimplemented | implemented | Immutable Git/history facts retain result ownership, publications, acquisition seals and selected eligibility (G, W, R, N). Scoped Issue/review current rows are mutable and have parser/profile attribution rather than sealed output membership (LS). |
+| D28 | Multiple owner-checked input references | unimplemented | implemented | Remaining historical/Git results retain owner-checked fetch/Git/source inputs and sealed membership (P, W, A); API replay-only inputs are retired. Current rows preserve typed owner/acquisition scope and minimum collection proof without a mandatory HTTP-body input (LS, LC). |
+| D29 | Direct parsed-result FK on generated facts | unimplemented | implemented | Immutable Git/history facts retain result ownership, publications, acquisition seals and selected eligibility (G, W, R, N). Scoped Issue/review current rows are mutable and have actual module/version and field evidence rather than sealed output membership (LS). API replay publication is retired; replacement historical domain publication remains deferred. |
 | D30 | Owner/fact-kind profile selection scope | unimplemented | implemented | Repository, CR and Source scopes include fact kind; exact verified-profile and fact-selection DAGs are separate (P, CLI). |
-| D31 | Exclusive repository/source result ownership | unimplemented | implemented | Immutable result ownership remains XOR with matching inputs/facts, including Source-derived names (P, A). Current rows independently enforce repository/binding/service/parent ownership (LS). |
+| D31 | Exclusive repository/source result ownership | unimplemented | implemented | Retained historical/Git result ownership remains XOR with matching inputs/facts, including successful Source-derived names (P, A). Replay-only ownership routes are retired; normalized inventory publication is deferred. Current rows independently enforce repository/binding/service/parent ownership (LS). |
 | D32 | CR inheritance only without local selection | unimplemented | implemented | CR scope absence permits inheritance; present empty, staged or conflicting CR scope blocks fallback (P, A, R). |
 | D33 | Immutable verification and separate trust | unimplemented | implemented | Immutable verification runs and invalidations are separate from mutable catalog-local trust; trust is excluded from exchange (P, X, CLI). |
 | D34 | Decision references exact profile verification | unimplemented | implemented | Composite profile+verification FK; invalidating one selected run never substitutes a newer passing run (P, A). |
 | D35 | Passed verification covers full profile | unimplemented | implemented | Passed evidence must match the definition digest and every declared capability exactly; partial, duplicate and malformed evidence rejected (P, A). This validates recorded evidence; operator trust is still explicit. |
-| D36 | Composite ownership constraints | partial | implemented | Immutable generated Git facts retain non-NULL result/repository/acquisition ownership, input guards and sealed membership (G, P, N). Current stores add direct canonical-ID, kind/owner/parent/reply/thread/scope constraints; missing valid parents stage, malformed owners reject (LS, LC). |
-| D37 | Separate source-owned acquisition evidence | unimplemented | implemented | Separate Source input UUID/time/context/payload records drive Source-owned inventory results (W, J). |
+| D36 | Composite ownership constraints | partial | implemented | Retained generated Git/historical facts keep non-NULL typed result/repository/acquisition ownership, input guards and sealed membership (G, P, N). Retired-original-only guards are removed without weakening these constraints. Current stores add direct canonical-ID, kind/owner/parent/reply/thread/scope constraints; missing valid parents stage, malformed owners reject (LS, LC). |
+| D37 | Separate source-owned acquisition evidence | unimplemented | implemented | Successful endpoint-validated live Source input UUID/time/context/payload records still drive Source-owned inventory results (W, J), a Phase-2 normalized-publication/field-inventory boundary. Failed/rejected input retention and raw retry staging are retired. |
 | D38 | Independent source profile selection | unimplemented | implemented | Source/fact-kind scopes use independent verified profile selection and fact DAGs (P, W, J). |
 
 ## CAS-1–CAS-75
@@ -108,25 +135,25 @@ All code paths below are relative to `src/repo_catalog/`; tests are relative to 
 | Decision | Contract | Baseline | Integrated status | Evidence / remaining work |
 |---|---|---|---|---|
 | CAS-1 | Logical payload natural key | implemented | implemented | Logical PRIMARY KEY(representation,sha256), no surrogate payload ID (B). |
-| CAS-2 | True digest collision durable staging | partial | implemented | Verified true-collision bytes preserve original and enter durable admission staging; synthetic hash collision test distinguishes bad digest (B, C, W). |
+| CAS-2 | True digest collision durable staging | partial | implemented | Rejected verified raw Git collision bytes preserve the original and enter durable Git-only staging; bad declared digests never stage (B, C, W). API rejected bytes have no staging route. |
 | CAS-3 | Portable self-authored JSON payload references | partial | implemented | The central JSON registry distinguishes authored/provider/operational/native-manifest fields and includes new current-scope/member/proof shapes. Typed references, unknown/local references and duplicates are checked at writer, SQL, exchange/promotion and audit boundaries; provider bytes remain opaque (Q, N, LS, LC). |
-| CAS-4 | Complete bytes in each exchange unit | unimplemented | implemented | Every single-repository unit carries its required bytes; shared bytes repeat across units and deduplicate on receive (X). |
+| CAS-4 | Complete bytes in each exchange unit | unimplemented | implemented | Every single-repository unit carries required Git/domain bytes and currently inseparable historical proof inputs; shared physical bytes deduplicate on receive (X). Standalone API-original distribution is retired; normalized historical exchange proof remains deferred. |
 | CAS-5 | SHA-256 without digest aliases | implemented | implemented | Payload CAS uses SHA-256 only, with no alternate digest alias (B). General content candidate digests remain distinct from payload identity. |
 | CAS-6 | Canonical external hex/internal BLOB | implemented | implemented | PayloadRef uses canonical lowercase 64-hex JSON and 32-byte BLOB storage; malformed encodings rejected (B, X). |
 | CAS-7 | Admission and explicit full hash verification | partial | implemented | Admission recomputes hashes; explicit maintenance full scan added; ordinary reads do not run a full hash scan (B, C, CLI). |
 | CAS-8 | Local corruption subgraph quarantine | unimplemented | implemented | Quarantine disables dependent usable results/current facts while unrelated data remains queryable; no destructive data removal (C, P, R). |
 | CAS-9 | Schema-aware evidence reference validation | partial | implemented | Typed references validate actual target kind, repository/Source/service ownership and payload association. Missing valid dependencies stage durably across reopen and promote with original identities; malformed/wrong-kind/foreign references reject. Consumed request, code, root and marker structures have explicit schemas (Q, X, N). |
-| CAS-10 | Immutable physical corruption diagnostics | unimplemented | implemented | Immutable physical corruption rows in unresolved_payloads (C). |
+| CAS-10 | Immutable physical corruption diagnostics | unimplemented | implemented | Immutable physical corruption rows in the five-column `unresolved_payloads`; logical-payload parsing-gap columns, FK/index and generated guards are removed (C). |
 | CAS-11 | Cross-representation physical sharing | implemented | implemented | Representations share exact physical stored_bytes, tested independently of logical keys (B). |
 | CAS-12 | Physical digest key without surrogate | implemented | implemented | Physical PRIMARY KEY(sha256), no integer physical surrogate (B). |
 | CAS-13 | One diagnosis per physical object | unimplemented | implemented | One diagnostic per physical digest during continuous quarantine; shared representations derive impact (C). |
-| CAS-14 | Repair only by explicit maintenance | partial | implemented | Reacquisition preserves corrupt original and stages valid incoming evidence; only explicit repair changes bytes (C, W, X). |
+| CAS-14 | Repair only by explicit maintenance | partial | implemented | Reacquisition preserves admitted corrupt bytes; rejected Git content may stage, while rejected API responses do not. Explicit repair changes only physical bytes referenced by a real retained `git_object_payloads` row; a Git/API shared digest remains eligible (C, W, X). |
 | CAS-15 | Atomic physical/logical admission | implemented | implemented | Stored bytes and logical payload admit under one transaction; failure rollback tested (B). |
-| CAS-16 | Stage acquisitions blocked by corrupt bytes | unimplemented | implemented | Rejected acquisition retains original UUID/time/raw bytes/context in durable payload staging without repair (C, W). |
+| CAS-16 | Stage acquisitions blocked by corrupt bytes | unimplemented | Git implemented / API retired | Retained Git acquisition rejection preserves UUID/time/raw bytes/context in Git-only staging without repair (C, W). API raw rejection staging, logical parsing gaps and retry-from-saved-failure are retired; live incomplete boundaries keep reason/time and safe retry context. |
 | CAS-17 | No permanent successful hash-scan history | partial | implemented | Full-scan success/progress is returned, never persisted; failed diagnostics remain (C). |
 | CAS-18 | Separate local active quarantine | unimplemented | implemented | Separate payload_quarantine operational table and immutable unresolved_payloads history (C). |
 | CAS-19 | Reject declared digest mismatches without bytes | implemented | implemented | Bad declared hash rejects bytes and dependent closure; bytes do not enter normal or staging storage (B, C, X, A). |
-| CAS-20 | Atomic repair and quarantine release | unimplemented | implemented | Preverified replacement, transactional protection-trigger suspension/restoration, post-write hash check and quarantine removal; injected failure/process death rollback tests (C, A). |
+| CAS-20 | Atomic repair and quarantine release | unimplemented | implemented | A real retained Git payload reference and validation of replacement bytes against every mapped Git object's format/OID/type/size are required, then preverified replacement, transactional protection-trigger suspension/restoration, post-write hash check and quarantine removal apply; shared physical API/Git bytes remain protected. Injected failure/process death rollback tests cover atomicity (C, A). |
 | CAS-21 | Local-only physical corruption state | unimplemented | implemented | Physical diagnosis/quarantine is catalog-local and rejected/excluded in ordinary exchange (C, X). |
 | CAS-22 | Absence of quarantine means usable | unimplemented | implemented | Quarantine table contains only active quarantine; explicit repair removes row while keeping diagnostic history (C, P). |
 | CAS-23 | Exclude local diagnostics from exchange | unimplemented | implemented | Exchange allowlist excludes local diagnostics/quarantine/staging; backup retains them (X, C). |
@@ -148,11 +175,11 @@ All code paths below are relative to `src/repo_catalog/`; tests are relative to 
 | CAS-39 | Full source hash scan before backup | unimplemented | implemented | Backup scans source first and records newly detected quarantine before copying (C). |
 | CAS-40 | Full copy hash scan before publication | unimplemented | implemented | Backup copy scans all bytes and rejects unexplained new corruption before manifest publication (C). |
 | CAS-41 | Quarantine count in backup manifest | pending | implemented | Required `quarantined_payload_count`, strict JSON int 0..2^63-1 excluding bool. Count verified-copy active physical rows; compare after checksum/identity before diagnosis. Positive counts allowed; mismatches/unexplained corruption reject and retain stage (C). Focused 39 checks passed; Schema 14 checkpoint: 1,311 + 2, no bootstrap; schema 15 evidence is linked above. |
-| CAS-42 | 304 exchange includes original body evidence | unimplemented | implemented | 304 exchange includes original observation, result, fetch and body dependencies; truncated original stays staged, foreign-owner original rejected (X). |
+| CAS-42 | 304 exchange includes original body evidence | unimplemented | implemented | Retained live 304/domain-exchange proof includes its exact original observation, result, fetch and body dependencies; truncated required proof stays staged, foreign-owner proof rejects (X). Reinterpretation/replay distribution is retired; normalized cache/proof replacement remains Phase 2. |
 | CAS-43 | Dedup bytes within each exchange unit | unimplemented | implemented | Each physical byte object occurs once within a unit; separate repository units each include their dependency bytes (X). |
 | CAS-44 | Include original acquisition owner context | unimplemented | implemented | 304 dependency closure contains original fetch plus owner/binding/Source context and payload; receiver remaps local IDs (X). |
-| CAS-45 | Do not install received validator cache | unimplemented | implemented | Immutable fetch and 304 evidence retain exact response ETag/status, including rejected acquisition staging; unrelated secret-bearing headers are excluded. Received validator-cache rows are never installed (W, X). |
-| CAS-46 | Partial collection dependency closure | unimplemented | implemented | Historical fetch/collection selectors retain required FK/JSON/304/DAG/result/acquisition closure (S, X, N). Current collection selection adds required current rows/parents/bodies/proofs without pulling optional archive history (LS, LC); schema 14 installed checkpoint passed; current evidence is linked above. |
+| CAS-45 | Do not install received validator cache | unimplemented | implemented | Successful historical fetch and 304 proof retain exact response ETag/status; unrelated secret-bearing headers and rejected API raw acquisition staging are excluded. Received validator-cache rows are never installed (W, X). |
+| CAS-46 | Partial collection dependency closure | unimplemented | implemented | Historical fetch/collection selectors retain actual domain/publication and exact FK/JSON/304/DAG/result/acquisition proof closure; original-only selections and orphan original import/promotion are rejected (S, X, N). Current collection selection adds required current rows/parents/bodies/proofs without pulling optional archive history (LS, LC); schema 14 installed checkpoint passed; current evidence is linked above. |
 | CAS-47 | One repository per exchange unit | unimplemented | implemented | Exchange unit root is one repository UUID; references cannot expand to unrelated repository acquisitions (X). |
 | CAS-48 | Shared source context without other repositories | unimplemented | implemented | Referenced Source/service context included with target repository relation only; receiving operational settings remain independent (X, A). |
 | CAS-49 | No unsupported completeness in partial exchange | unimplemented | implemented | Historical completion retains exact markers/fetch membership/code/Git inputs/publications (S, R, N). Current completion uses immutable scoped page/member/terminal receipts independent of supplemental bytes; missing proof cannot become complete. Receiver conflicts remain unresolved and latest partial/unknown/conflict never falls back to older complete claims (LC, R). |
@@ -185,13 +212,13 @@ All code paths below are relative to `src/repo_catalog/`; tests are relative to 
 
 ## Completed checkpoint gaps and explicit limits
 
-Within the older 113-identifier mapping: **112 implemented, 0 partial, 1 not_applicable / retired (D2)**, with scoped supersessions above. This is a decision/implementation classification, not a test count or proof that all later boundaries passed. Prior checkpoint receipts remain in [`2026-10-09-complete-model-contracts.json`](validation/synthetic/2026-10-09-complete-model-contracts.json). Current implementation mapping and final verification belong in [latest-state-transport-implementation.md](latest-state-transport-implementation.md), the integration handoff and submitted PR body.
+The older 113-identifier checkpoint classification is preserved by its historical receipt. It is not a claim that retired API-original mechanisms remain supported or that the later Phase 1 boundaries passed. The R1–R7 labels below name earlier review gaps, distinct from the Phase 1 capability identifiers. Prior checkpoint receipts remain in [`2026-10-09-complete-model-contracts.json`](validation/synthetic/2026-10-09-complete-model-contracts.json). Current implementation mapping and final verification belong in [Phase 1 implementation](phase1-api-original-retirement-implementation.md), the integration handoff and submitted PR body. [Latest-state transport implementation](latest-state-transport-implementation.md) retains the schema 14 checkpoint.
 
 1. **R1 — Low-level Git interpretations (D29/D36), completed.** Schema 13 splits retained raw Git bytes from result-owned metadata, structure, traversal and text. Offline reparse retains acquisition identity, and ordinary/explicit readers, search, exchange and maintenance consume the owner-checked interpretations. Independent review covers sealed publication, ownership, identity conflicts and raw Git OID validation.
 2. **R2 — General self-authored JSON references (CAS-3/CAS-9), prior checkpoint completed.** The schema13 50-field registry introduced callback-free SQL guards and typed ownership checks at writer/exchange/full-audit boundaries. Schema14 extends the registry for current resource scopes, page members and proofs; the authoritative inventory is generated from the current registry. Valid missing dependencies remain staged; provider projections keep their separate classification.
 3. **R4 — Selective collection exchange (CAS-46/CAS-49), completed.** Fetch/collection selectors preserve exact required dependency and publication closure. Complete evidence is frozen and scope-specific; incomplete subsets, missing/conflicting proof and latest unknown/partial observations stay unresolved. Receipt ordering, repeat receipt, reopening, later full convergence and real synthetic GitHub/304 transport are exercised.
 4. **R5 — Retired legacy intake (D2).** No old catalog reconciliation or migration remains. This is intentional for a pre-release incompatible format. If legacy intake is later reintroduced, require strict original backup/record proof; digest or names alone cannot establish observation identity.
-5. **R6 — Platform and operational limits.** Atomic restore publication currently depends on Linux `renameat2`; another platform requires an equivalent no-replace primitive, not a check-then-rename fallback. Repair does not automatically replay retained rejected acquisitions; an explicit later import/retry is needed. OS-kill tests cover interrupted SQLite repair, not hardware power loss or every filesystem durability failure.
-6. **R7 — Prior checkpoint and current local acceptance.** The schema13 checkpoint passed unflagged ordinary and installed-package acceptance (1,161 + 2, one opt-in live exclusion). That receipt and its artifact remain historical. Schema14 verification was regenerated from the successful 1,311-case exact-definition bootstrap report; final ordinary 1,311 and isolated-package 2 cases passed without bootstrap. Exact submitted HEAD/tree and hosted CI receipt belong in the implementation report and PR body.
+5. **R6 — Platform and operational limits.** Atomic restore publication currently depends on Linux `renameat2`; another platform requires an equivalent no-replace primitive, not a check-then-rename fallback. Repair never automatically replays staged Git content. Rejected API responses are not retained for later import/retry; retry means genuine live acquisition. OS-kill tests cover interrupted SQLite repair, not hardware power loss or every filesystem durability failure.
+6. **R7 — Historical checkpoint acceptance.** The schema13 checkpoint passed unflagged ordinary and installed-package acceptance (1,161 + 2, one opt-in live exclusion). That receipt and its artifact remain historical. Schema14 verification was regenerated from the successful 1,311-case exact-definition bootstrap report; final ordinary 1,311 and isolated-package 2 cases passed without bootstrap. Exact submitted HEAD/tree and hosted CI receipt belong in the implementation report and PR body.
 
 CAS-41 is selected and implemented. CAS-76/CAS-77 remain deferred; no content or implementation is invented for them. Archive retention/deletion, comprehensive deletion propagation, LFS/attachment body acquisition, global PR/Git history removal, non-Linux restore and broader provider collection remain outside this task. Source-wide inventory exclusion remains the single-repository exchange boundary. Coverage v2 retains exactly five claim columns and latest-observation-time set derivation, including unknown/conflict; optional recording does not redefine completeness.

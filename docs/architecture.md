@@ -1,6 +1,6 @@
 # アーキテクチャ
 
-> **確定方針と実装境界:** [通信原本非依存のコアDBとParser由来情報の簡素化](transport-independent-core-adr.md)を参照してください。API通信原本のコア永続保存・再解析依存とParser選択DAGを廃止する方針を固定しています。リソースの履歴／現行状態のライフサイクルは未決定です。Schema 17の現在Issue/Review経路は実装済みです。[実装範囲と未決定の契約](transport-independent-core-implementation.md)を参照してください。PR/Gitの履歴公開・選択は既存実装のままです。
+> **確定方針と実装境界:** [通信原本非依存のコアDBとParser由来情報の簡素化](transport-independent-core-adr.md)を参照してください。API通信原本のコア永続保存・再解析依存とParser選択DAGを廃止する方針を固定しています。リソースの履歴／現行状態のライフサイクルは未決定です。Schema 18では現在Issue/Review経路のmodule/version帰属を維持し、[Phase 1のAPI原本依存機能廃止](phase1-api-original-retirement.md)を適用しています。[実装範囲と未決定の契約](transport-independent-core-implementation.md)を参照してください。PR/Gitの履歴公開・選択は既存実装のままです。
 
 依存方向は`cli → application → domain/ports`です。Git/GitHub/SQLite/filesystem adapterはapplicationから利用します。
 CLIはargparse、presentation、終了コード、SIGINTの変換を担当します。
@@ -41,7 +41,7 @@ WALは明示設定かつ修正済みruntimeのgateを通した場合のみ有効
 
 旧v2 importerとfinalizeは廃止済みです。初期化は新規catalogを直接作成し、通常操作は変換workspaceを開きません。D2は `not_applicable / retired` ですが、不明なidentityや観測時刻を捏造しない契約は維持します。歴史的なreceiptは現行ランタイムの前提ではありません。
 
-Active catalog3 schema identity is version **17**. [Data model](data-model.md) and [schema composition](../src/repo_catalog/adapters/sqlite/schema.py) define portable UUIDv4 service namespaces, natural resource keys, SHA-256 text identity and signed integer epoch microseconds. Historical documents have no surrogate ID or version table. Composite FK ownership and explicit historical selection remain enforced. There is no development-database migration or compatibility layer.
+Active catalog3 schema identity is version **18**. [Data model](data-model.md) and [schema composition](../src/repo_catalog/adapters/sqlite/schema.py) define portable UUIDv4 service namespaces, natural resource keys, SHA-256 text identity and signed integer epoch microseconds. Historical documents have no surrogate ID or version table. Composite FK ownership and explicit historical selection remain enforced. There is no development-database migration or compatibility layer.
 
 ## 現在状態と通信記録の境界
 
@@ -49,14 +49,18 @@ Active catalog3 schema identity is version **17**. [Data model](data-model.md) a
 
 同じ行の `field_evidence_json` は、現在値とmetadataの各pathに取得時刻・clock・parser module/version・scopeを対応付けます。未提供の値は元の根拠を保持し、古い完全応答の後着で未観測項目を補完できます。同時刻に実際に観測した異なる値は競合のままです。根拠mapは保持中の項目数に対応し、以前の値や編集回数に応じた履歴行を追加しません。同内容でも強い根拠が届けば競合を再評価します。
 
-現在のIssue所属と取得時のscopeは独立しています。移動時は子のrepository/binding/番号だけを更新し、元endpoint・Source・取得時刻・項目別根拠を保持します。交換先に移動元の登録がない場合も、取得scopeの識別子をsnapshotとして保存します。実在する登録との整合性は検査します。`last_checked_at_us` は事前revisionとscopeが一致した正常live取得の初回・編集・同内容確認で進み、import/replayは受信側の確認時刻を作りません。
+現在のIssue所属と取得時のscopeは独立しています。移動時は子のrepository/binding/番号だけを更新し、元endpoint・Source・取得時刻・項目別根拠を保持します。交換先に移動元の登録がない場合も、取得scopeの識別子をsnapshotとして保存します。実在する登録との整合性は検査します。`last_checked_at_us` は事前revisionとscopeが一致した正常live取得の初回・編集・同内容確認で進み、importは受信側の確認時刻を作りません。現在状態の受理経路はlive/importだけで、保存API応答のreplayは廃止済みです。
 
 可変現在行は、不変 `parsed_results` の封印された出力には所属しません。正確な本文、型付き親、repository/service/bindingと各項目を生成したparser module/versionへの帰属はdomain datastoreに残します。レビュー所属・返信先・独立スレッド所属は別々の関係です。code listingに必要な不変参照は固定し、後のレビュー編集で以前のGit/code snapshotを変更しません。
 
 HTTP transportは `MessageRecorder` へ補助記録を渡し、recording adapterが保存とarchive読取りを所有します。`github.record_messages` は既定でfalse、有効時は `transport-archive/` を利用します。recorder障害は許可された32文字以下のコード、観測時刻、試行番号だけを診断へ渡し、transport内で最新100件を保持します。警告表示はbest-effortで、warnings-as-errorsや表示hookの失敗でも正常応答の解析・domain保存を続けます。取消し・通信・解析・必須domain証拠の失敗は通常どおり扱います。記録するbytesはHTTP content-decoding後の正確なbytesです。資格情報を除くメタデータ許可リストと読取り上限は[通信記録](latest-state-transport.md)に記載しています。
 
-現在状態のcollectionは、取得scope、ページ順、メンバーidentity/digest、次ページと終端の最小限の不変証拠をdomain側へ保存します。補助archiveの有無はcollection完全性を変えません。Exchangeとbackup/restoreもarchiveを必須依存に含めません。保存メッセージのinspect/reparseは明示選択したbytesを読むだけで、元の観測時刻を保持し、domain状態を自動受理しません。
+現在状態のcollectionは、取得scope、ページ順、メンバーidentity/digest、次ページと終端の最小限の不変証拠をdomain側へ保存します。補助archiveの有無はcollection完全性を変えません。Exchangeとbackup/restoreもarchiveを必須依存に含めません。`inspect-message`は明示選択した記録のmetadataとbody有無を上限付きで読み、domain parserを呼びません。保存API応答をparserへ渡す`reparse-message`投影も廃止済みです。
 
-Coverage claims are immutable evaluations identified by scope, observation time and state. Domain helpers define admission and derivation; SQLite performs admission atomically and derives `current_coverage` from the latest-time claim set. Unknown is weak only within that selected time; disagreement among determinate states yields a derived conflict. Runtime producers preserve actual source observation times across replay and keep job execution state separate. Query adapters return the derived scope with each selected claim and its own advisory details. See the [coverage contract](data-model.md#coverage-claims-and-current-state).
+Coverage claims are immutable evaluations identified by scope, observation time and state. Domain helpers define admission and derivation; SQLite performs admission atomically and derives `current_coverage` from the latest-time claim set. Unknown is weak only within that selected time; disagreement among determinate states yields a derived conflict. Live restart and Git reanalysis preserve actual source observation times and keep job execution state separate; API offline replay is retired. Query adapters return the derived scope with each selected claim and its own advisory details. See the [coverage contract](data-model.md#coverage-claims-and-current-state).
 
-構造変更は[対応記録](current-state-schema-closure.md)、[列の用途](current-state-schema-liveness.md)と[完全schema一覧](current-state-schema-inventory.md)、設計決定と旧契約の適用範囲は[実装対応表](latest-state-transport-implementation.md)を参照してください。最終受入は実装完了後の正確なtreeに対する試験で判定し、過去の合格receiptとは区別します。
+全面拒否された未commit API応答のraw bytes、論理payload解析gap、保存応答からの再試行はcoreに保持しません。部分的に受理済みのGraphQL rootはerror envelopeも含め履歴公開/live再開の入力として残るC境界です。任意の外部recorderは、coreで拒否された応答も別途記録できます。取得した内容が不完全と判明した場合は、partial理由・実際の観測時刻・安全なlive再取得境界だけを保持します。error-onlyのrate-limit応答は再試行期限を保持しますが、domain観測時刻を進めません。
+
+`unresolved_payloads`は5列の物理破損診断専用です。拒否payload stagingはraw Gitだけ、明示修復は実在する`git_object_payloads`参照のbytesだけを対象とし、全対応Git objectのformat/OID/type/sizeにreplacementが一致することを検証します。Git/APIで共有する物理digestはGit参照により修復でき、全物理bytesの走査・隔離・backup/restore・CAS-41は維持します。原本だけの交換は廃止し、`--fetch`/`--collection`は実際のdomain公開・完全性証拠に必要な入力closureの選択に使います。成功した歴史的PR/スレッド/Source/コード公開、live restart/304、domain交換証明と既存provider JSON投影は[Phase 2境界](phase1-api-original-retirement-implementation.md)として残します。
+
+現在の構造変更と旧契約の限定的な上書きは[Phase 1実装記録](phase1-api-original-retirement-implementation.md)を参照してください。以前の[対応記録](current-state-schema-closure.md)、[列の用途](current-state-schema-liveness.md)と[完全schema一覧](current-state-schema-inventory.md)、[schema 14実装対応表](latest-state-transport-implementation.md)は当時の証拠として保持します。最終受入は実装完了後の正確なtreeに対する試験で判定し、過去の合格receiptとは区別します。

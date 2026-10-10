@@ -693,7 +693,7 @@ class CurrentResources:
         base_revision=None,
         scope_context=None,
     ):
-        if source not in ("live", "import", "replay"):
+        if source not in ("live", "import"):
             raise ValueError("Unknown current resource admission source")
         incoming = dict(candidate)
         self._validate(incoming)

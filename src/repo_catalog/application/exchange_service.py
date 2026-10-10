@@ -64,7 +64,8 @@ class ExchangeService:
         with FileLock(self.path / "locks" / "writer.lock"), Store(self.path) as store:
             with store.transaction():
                 result = Graph(store.connection).receive(unit)
-                store.publish()
+                if result["received_records"] or result["admitted_records"]:
+                    store.publish()
             response = Result(
                 result,
                 catalog=store.revision(),

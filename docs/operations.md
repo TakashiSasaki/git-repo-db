@@ -39,13 +39,17 @@ cache/lease/予約/旧running processを有効な復元状態とみなしませ�
 
 `quarantined_payload_count` は必須の非負JSON整数で、bool・文字列・小数・負数・`9223372036854775807`を超える値を拒否します。数えるのは検証済みコピーのactive `payload_quarantine` 行だけです。同じphysical objectの複数representation、修復済みの診断履歴、staging、cache隔離directoryは数えません。正の一致件数は正常に扱い、既知の隔離bytesと診断を保持します。件数が一致しても未説明の破損を許容しません。archiveの欠落・故障をこの件数へ含めません。
 
-catalog3 の新規初期化は schema version **16** のcomplete packaged DDLから直接行います。旧開発DBとそのbackupは拒否し、migrationや互換viewは設けません。v2 importerとfinalizeは廃止済みで、D2は `not_applicable / retired` です。歴史的なreceiptと不明identityの捏造禁止は維持します。
+catalog3 の新規初期化は schema version **18** のcomplete packaged DDLから直接行います。旧開発DBとそのbackupは拒否し、migrationや互換viewは設けません。v2 importerとfinalizeは廃止済みで、D2は `not_applicable / retired` です。歴史的なreceiptと不明identityの捏造禁止は維持します。
 
 通常Issue/コメントとレビュー/レビューコメントは各リソースの最新受理状態を保存します。PRタイトル・本文・PR会話コメント、Git、独立スレッドの履歴は保持します。通常の現在状態と必要な完全性証拠はcatalogだけで再起動・照会・再索引・交換・backup/restoreできます。
 
 部分取得で未提供の値には元のclockと取得scopeを保持します。後着した古い完全応答は未知の項目だけを補完でき、実際の同時刻矛盾は未解決として確認します。Issue移動後も、子コメントには現在所属と元の取得元の両方が残ります。受信先に移動元repo/Sourceがなくても、その取得snapshotを保持して交換できます。
 
-照会の `last_checked_at_us` はこのcatalogで正常なlive取得を確認した時刻です。事前revision/scopeの一致を確認した初回・編集・同内容取得で単調に更新します。provider更新時刻や項目ごとの取得時刻とは用途が異なり、importや再解析では進みません。最新状態だけを照会していても、以前の共有本文は自動GCされません。容量計画では[実測された本文保持量と列用途](current-state-schema-liveness.md)も考慮してください。
+照会の `last_checked_at_us` はこのcatalogで正常なlive取得を確認した時刻です。事前revision/scopeの一致を確認した初回・編集・同内容取得で単調に更新します。provider更新時刻や項目ごとの取得時刻とは用途が異なり、importでは進みません。API原本からの再解析/replay受理は廃止済みです。最新状態だけを照会していても、以前の共有本文は自動GCされません。容量計画では[実測された本文保持量と列用途](current-state-schema-liveness.md)も考慮してください。
+
+全面拒否された未commit API原本をcoreのstagingや解析gapへ保存して再試行する機能は廃止済みです。部分的に受理済みのGraphQL rootはerror envelopeも含め履歴公開/live再開の入力として残ります。任意の外部通信記録はcoreで拒否された応答も別途保存できます。再試行は安全なcursorから新しいlive応答を取得します。domainの不完全性を実測した場合はpartial理由と真の観測時刻を保持し、error-only rate-limit応答はoperational期限だけを保持します。成功済みの履歴公開・live restart/304・必要な交換証明が使う原本とprovider JSONは[Phase 2境界](phase1-api-original-retirement-implementation.md)として残ります。
+
+`unresolved_payloads`は物理破損専用の5列です。拒否bytes stagingはraw Gitだけに限定し、`db repair-payload --sha256 HEX --input FILE`は実在する`git_object_payloads`参照がある物理bytesだけを、全対応Git objectのformat/OID/type/sizeとの一致を検証して明示修復します。API-only原本の修復は廃止済みです。Git/API共有digestはGit参照により対象となり、全物理bytesの走査・隔離・backup/restoreは引き続き行います。保持済みcatalogのcleanup/GCはPhase 1の対象外です。
 
 ## 任意の通信記録
 
@@ -56,7 +60,7 @@ catalog3 の新規初期化は schema version **16** のcomplete packaged DDLか
 record_messages = false
 ```
 
-`parser inspect-message REF --max-bytes N` と `parser reparse-message REF --context FILE --max-bytes N` は明示した保存通信を上限付きで読みます。後者は投影だけを返し、元の観測時刻を保持して通常状態を自動更新しません。再解析contextはprovider投影に必要な所有者・取得scopeを明示するJSONです。[記録仕様](latest-state-transport.md)と[CLI](cli.md)を参照してください。
+`parser inspect-message REF --max-bytes N` は明示した保存通信のmetadataとbody有無を上限付きで読み、domain parserを呼びません。`reparse-message`とそのcontext/projection契約は廃止済みです。`parser reparse`は保存されたGit acquisitionだけを扱います。[記録仕様](latest-state-transport.md)と[CLI](cli.md)を参照してください。
 
 catalog backupは補助archiveを含めず、多storeのforensic backupや保存期間・自動削除を保証しません。archive保持を別に選ぶ場合は、その用途と容量を別途管理します。本文bytesは書き換えずに保存するため、source本文内の秘密情報までmetadata filteringで除去されるわけではありません。
 
@@ -68,4 +72,4 @@ catalog backupは補助archiveを含めず、多storeのforensic backupや保存
 
 定期運用ではsync、jobs resume、cache gc --applyをcron/systemd等から呼べます。
 この開発では実ユーザーのスケジュールを登録しません。実運用の対象・周期・要求予算はpilot後に決めてください。
-LFSはGit pointer bytes、添付はsource本文と埋込みURLを保存します。本体取得・URLの自動巡回は行いません。archiveの保存期間・自動削除、包括的な削除伝播、全履歴本文・diff索引、意味検索、Web GUI、非Linux restore、CAS-76/CAS-77は保留範囲です。現在の実装・検証・制限は[構造改善の対応記録](current-state-schema-closure.md)、[完全schema一覧](current-state-schema-inventory.md)、[実装対応表](latest-state-transport-implementation.md)と[統合handoff](model-integration-handoff.md)を参照してください。
+LFSはGit pointer bytes、添付はsource本文と埋込みURLを保存します。本体取得・URLの自動巡回は行いません。archiveの保存期間・自動削除、包括的な削除伝播、全履歴本文・diff索引、意味検索、Web GUI、非Linux restore、CAS-76/CAS-77は保留範囲です。現在の実装・検証・制限は[Phase 1実装記録](phase1-api-original-retirement-implementation.md)と[統合handoff](model-integration-handoff.md)を参照してください。以前の[構造改善の対応記録](current-state-schema-closure.md)、[完全schema一覧](current-state-schema-inventory.md)、[schema 14実装対応表](latest-state-transport-implementation.md)は当時の証拠として保持します。

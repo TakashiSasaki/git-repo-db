@@ -9,7 +9,7 @@ PRAGMA recursive_triggers=ON;
 CREATE TABLE database_identity(
 singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     format_id TEXT NOT NULL CHECK(format_id='repo-catalog/catalog3'),
-    schema_version INTEGER NOT NULL CHECK(schema_version=17),
+    schema_version INTEGER NOT NULL CHECK(schema_version=18),
     db_instance_id TEXT NOT NULL,
     publication_seq INTEGER NOT NULL CHECK(publication_seq>=0),
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32), lifecycle TEXT NOT NULL CHECK(lifecycle IN ('building','validated','rejected'))
@@ -225,12 +225,12 @@ CREATE TABLE collection_memberships(
     PRIMARY KEY(fetch_collection_id,change_request_id,kind,provider_change_request_document_id),
     FOREIGN KEY(change_request_id,kind,provider_change_request_document_id) REFERENCES documents(change_request_id,kind,provider_change_request_document_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
-CREATE TABLE unresolved_payloads(stored_sha256 BLOB REFERENCES stored_bytes(sha256), detected_at_us INTEGER, diagnostic_json TEXT CHECK(diagnostic_json IS NULL OR (json_valid(diagnostic_json) AND json_type(diagnostic_json)='object')),
-
-unresolved_payload_id INTEGER PRIMARY KEY, payload_representation TEXT, payload_sha256 BLOB, reason TEXT NOT NULL CHECK(length(reason)>0),
-    CHECK((payload_representation IS NULL)=(payload_sha256 IS NULL)),
-    FOREIGN KEY(payload_representation,payload_sha256) REFERENCES payloads(representation,sha256) ON UPDATE RESTRICT ON DELETE RESTRICT,
-CHECK((stored_sha256 IS NULL AND detected_at_us IS NULL AND diagnostic_json IS NULL) OR (stored_sha256 IS NOT NULL AND payload_representation IS NULL AND payload_sha256 IS NULL AND reason='physical_corruption' AND detected_at_us IS NOT NULL AND diagnostic_json IS NOT NULL))
+CREATE TABLE unresolved_payloads(
+    stored_sha256 BLOB NOT NULL REFERENCES stored_bytes(sha256),
+    detected_at_us INTEGER NOT NULL,
+    diagnostic_json TEXT NOT NULL CHECK(json_valid(diagnostic_json) AND json_type(diagnostic_json)='object'),
+    unresolved_payload_id INTEGER PRIMARY KEY,
+    reason TEXT NOT NULL CHECK(reason='physical_corruption')
 ) STRICT;
 CREATE TABLE validators(
 resume_scope_id TEXT NOT NULL REFERENCES resume_scopes(resume_scope_id) ON UPDATE RESTRICT ON DELETE RESTRICT, validator_key TEXT NOT NULL, etag TEXT NOT NULL, payload_representation TEXT NOT NULL, payload_sha256 BLOB NOT NULL, validated_at_us INTEGER, PRIMARY KEY(resume_scope_id,validator_key),
@@ -569,7 +569,6 @@ CREATE TRIGGER text_bodies_retain BEFORE DELETE ON text_bodies BEGIN SELECT RAIS
 CREATE INDEX tree_entries_fk_0 ON tree_entries(child_git_object_id);
 CREATE TRIGGER unresolved_payloads_no_replace BEFORE INSERT ON unresolved_payloads WHEN EXISTS(SELECT 1 FROM unresolved_payloads WHERE (unresolved_payload_id=NEW.unresolved_payload_id)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE TRIGGER unresolved_payloads_retain BEFORE DELETE ON unresolved_payloads BEGIN SELECT RAISE(ABORT,'Retain acquired and conversion facts'); END;
-CREATE INDEX unresolved_payloads_fk_1 ON unresolved_payloads(payload_representation,payload_sha256);
 CREATE TRIGGER validators_immutable BEFORE UPDATE ON validators WHEN NEW.resume_scope_id IS NOT OLD.resume_scope_id OR NEW.validator_key IS NOT OLD.validator_key BEGIN SELECT RAISE(ABORT,'Immutable identity, owner, fact or publication'); END;
 CREATE TRIGGER validators_no_replace BEFORE INSERT ON validators WHEN EXISTS(SELECT 1 FROM validators WHERE (resume_scope_id=NEW.resume_scope_id AND validator_key=NEW.validator_key) OR (resume_scope_id=NEW.resume_scope_id AND validator_key=NEW.validator_key)) BEGIN SELECT RAISE(ABORT,'Conflict insert/UPSERT/REPLACE prohibited; use explicit UPDATE'); END;
 CREATE INDEX validators_fk_0 ON validators(payload_representation,payload_sha256);

@@ -374,14 +374,8 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
             operational = collector.facts.begin(
                 repo, None, "threads", job, "https://github.test/error"
             )
-            collector.facts.page(
-                operational,
-                httpx.Response(
-                    200, content=b"{}", extensions={"catalog_observed_at_us": 999}
-                ),
-                {"operational_only": True},
-                None,
-            )
+            # A failed attempt with no domain response keeps only progress.
+            collector.facts.partial(operational, "API_SCHEMA")
             current = collector.facts.begin(
                 repo, None, "review", job, "https://github.test/reviews"
             )

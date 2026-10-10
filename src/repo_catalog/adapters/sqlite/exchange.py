@@ -41,7 +41,6 @@ EXCLUDED = {
     "index_generations",
     "index_membership",
     "payload_quarantine",
-    "payload_repairs",
     "unresolved_payloads",
     "payload_admission_staging",
     "parser_profile_selection_staging",
@@ -75,6 +74,47 @@ LOCAL_COLUMNS = {
 }
 SCOPES = {"parser_profile_selection_scopes", "fact_selection_scopes", "coverage_scopes"}
 CURRENT_RESOURCES = {"issue_resources", "review_resources"}
+# Saved API messages are not independently exchangeable. The remaining
+# historical facts and terminal proofs still require their exact input closure;
+# verified Git object bytes are domain content with their own typed consumer.
+ORIGINAL_RECORDS = {"fetch_occurrences", "payloads", "stored_bytes"}
+DOMAIN_FACTS = {
+    "change_request_observations",
+    "document_observations",
+    "change_request_events",
+    "review_thread_observations",
+    "code_observations",
+    "code_commits",
+    "code_file_changes",
+    "repository_name_observations",
+    "snapshots",
+    "ref_observations",
+    "commits",
+    "commit_parents",
+    "tree_entries",
+    "tag_objects",
+    "root_manifests",
+    "root_manifest_entries",
+    "git_text_facts",
+}
+ORIGINAL_PROOF_TABLES = (
+    DOMAIN_FACTS
+    | ORIGINAL_RECORDS
+    | {
+        "parsed_results",
+        "parsed_result_inputs",
+        "parsed_result_publications",
+        "completion_markers",
+        "git_acquisitions",
+        "git_acquisition_publications",
+        "acquisition_roots",
+        "root_origins",
+        "repository_object_sources",
+        "git_objects",
+        "git_object_payloads",
+        "code_listings",
+    }
+)
 SHA = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -188,6 +228,673 @@ class Graph:
                     key=lambda fk: fk[0] not in {"service_instances", "change_requests"}
                 )
         self.key_cache = {}
+        self._original_admission_keys = None
+        self._original_export_keys = None
+        self._prevalidated_original_keys = {}
+        self._original_preflight_records = None
+        self._root_constraint_cache = {}
+
+    def original_dependencies(self, record):
+        """Follow typed domain-input/proof edges, excluding archive-only chains.
+
+        Profiles, registrations, selection decisions and operational scopes do
+        not justify transporting messages. In particular, authored JSON in an
+        otherwise required profile cannot turn an unrelated payload into a
+        required domain input.
+        """
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            JSON_REGISTRY,
+            JsonContractError,
+            reference_dependencies,
+        )
+
+        table = record["table"]
+        if table not in ORIGINAL_PROOF_TABLES or table == "stored_bytes":
+            return set()
+        values = record["values"]
+        # Reference validation needs authored JSON and ordinary scalar fields,
+        # not resolved receiver-local IDs or a decoded original body.
+        data, required = {}, set()
+        for column, value in values.items():
+            if isinstance(value, dict) and "$ref" in value:
+                if (
+                    set(value) != {"$ref", "column"}
+                    or not isinstance(value["$ref"], str)
+                    or not any(
+                        value["$ref"].startswith(parent + ":")
+                        and value["column"]
+                        == parent_columns[child_columns.index(column)]
+                        for parent, child_columns, parent_columns in self.foreign[table]
+                        if column in child_columns
+                    )
+                ):
+                    return None
+                required.add(value["$ref"])
+                data[column] = None
+            else:
+                try:
+                    data[column] = decode(value)
+                except CatalogError:
+                    return None
+        try:
+            reference_dependencies(table, data)
+        except JsonContractError:
+            # Malformed authored evidence cannot authorize original retention.
+            # Ordinary admission retains its existing diagnostic behavior.
+            return None
+        # Generic request/metadata references are validated for exchange, but
+        # they are not consumers of extra saved originals. Retained input and
+        # object manifests, plus exact terminal/304 fetch identities, own that
+        # dependency. A request.payload annotation cannot archive another body.
+        proof_data = {
+            column: value
+            for column, value in data.items()
+            if (table, column) not in JSON_REGISTRY
+            or JSON_REGISTRY[table, column].category
+            in {"input-manifest", "git-roots", "git-object-manifest", "fact-manifest"}
+        }
+        if table == "completion_markers":
+            evidence = json.loads(data["evidence"])
+            proof_data["evidence"] = canonical(
+                {
+                    name: value
+                    for name, value in evidence.items()
+                    if name
+                    in {
+                        "fetch_occurrence_uuidv4s",
+                        "fetch_occurrence_uuidv4",
+                        "parsed_result_uuidv4",
+                        "change_request_observation_uuidv4",
+                        "current_page_collections",
+                    }
+                }
+            )
+        dependencies = reference_dependencies(table, proof_data)
+        for dependency in dependencies:
+            if dependency["table"] not in self.columns:
+                continue
+            required.add(
+                self.missing_parent_key(
+                    dependency["table"],
+                    dependency["columns"],
+                    dependency["values"],
+                )
+            )
+        # Envelope requires lists are checked against derived proof at admission.
+        # They cannot authorize retention: otherwise an unrelated fetch could be
+        # attached to an otherwise valid proof by changing only its envelope.
+        return required
+
+    @staticmethod
+    def original_key(table, row):
+        if table == "fetch_occurrences":
+            identity = {"fetch_occurrence_uuidv4": row["fetch_occurrence_uuidv4"]}
+        elif table == "stored_bytes":
+            identity = {"sha256": encode(row["sha256"], "sha256")}
+        else:
+            identity = {
+                "representation": row["representation"],
+                "sha256": {
+                    "$ref": Graph.original_key("stored_bytes", row),
+                    "column": "sha256",
+                },
+            }
+        return table + ":" + canonical(identity)
+
+    def original_root(self, record):
+        table, values = record["table"], record["values"]
+        if table in DOMAIN_FACTS:
+            # Domain rows are legitimate consumers only after their portable
+            # shape and SQL-owned row constraints are established. Local rows
+            # were read from the catalog; unresolved incoming rows are checked
+            # with deferred FK placeholders so a valid out-of-order fact can
+            # still stage while its input closure arrives later.
+            return self._verified_domain_root(record)
+        if table == "git_object_payloads":
+            representation = values.get("payload_representation")
+            if isinstance(representation, dict) and "$ref" in representation:
+                try:
+                    representation = json.loads(
+                        representation["$ref"].split(":", 1)[1]
+                    )["representation"]
+                except (KeyError, IndexError, TypeError, ValueError):
+                    return False
+            return representation == "git-object-raw-v1"
+        if table == "parsed_result_publications":
+            # A syntactically plausible manifest is not proof that a domain
+            # fact was actually admitted.  Only a persisted publication whose
+            # complete JSON dependency set validates can root its inputs.
+            return self._verified_local_root(record, table)
+        if table == "completion_markers" and values.get("asserted_state") == "complete":
+            # Validate the terminal/304/current-page proof using the same
+            # admission verifier as normal Exchange. A forged ``requires``
+            # envelope or marker shape cannot retain its input bytes.
+            return self._verified_local_root(record, table)
+        return False
+
+    def _verified_domain_root(self, record):
+        if record.get("_original_local_verified"):
+            return True
+        if self._verified_local_root(record, record["table"]):
+            return True
+        return self._constraint_valid_unresolved(record)
+
+    def _verified_local_root(self, record, table):
+        try:
+            identity = json.loads(record["key"].split(":", 1)[1])
+            if not isinstance(identity, dict) or not identity:
+                return False
+            row = self.lookup(
+                table,
+                tuple(identity),
+                tuple(decode(value) for value in identity.values()),
+            )
+            if row is None:
+                return False
+            verifier = Graph(self.db, persist_identities=False)
+            if table == "completion_markers" and (
+                verifier.proof_requirements(table, row) is None
+            ):
+                return False
+            expected = verifier.record(table, row)
+            values = dict(record["values"])
+            primary = self.keys[table]
+            if (
+                len(primary) == 1
+                and self.columns[table][primary[0]] == "INTEGER"
+                and not any(primary[0] in fk[1] for fk in self.foreign[table])
+            ):
+                values.pop(primary[0], None)
+            if expected["values"] != values:
+                return False
+            if "requires" in record and record.get("requires") != expected.get(
+                "requires"
+            ):
+                return False
+            return True
+        except (
+            CatalogError,
+            KeyError,
+            IndexError,
+            TypeError,
+            ValueError,
+            sqlite3.Error,
+        ):
+            return False
+
+    def required_original_keys(self, records):
+        """Reach originals only from actual retained facts or terminal proofs."""
+        records = list(records)
+        by_key = {record["key"]: record for record in records}
+        active, all_keys = [], set(by_key)
+        for record in records:
+            dependencies = self.original_dependencies(record)
+            if (
+                record.get("_original_rejected")
+                or record["values"].get("owner_kind") == "source"
+                or dependencies is None
+            ):
+                continue
+            if (
+                record["table"] == "git_object_payloads"
+                and self.git_original_status(record, by_key) is False
+            ):
+                continue
+            active.append((record, dependencies))
+        # A known-invalid owner/descriptor cannot become an input consumer merely
+        # because its domain descendants remain staged. Unknown valid parents
+        # still preserve the ordinary partial-exchange path. A valid incumbent
+        # with the same key remains an independent eligible descriptor.
+        blocked = all_keys - {record["key"] for record, _ in active}
+        while blocked:
+            remaining = [item for item in active if not (item[1] & blocked)]
+            if len(remaining) == len(active):
+                break
+            active = remaining
+            blocked = all_keys - {record["key"] for record, _ in active}
+        edges, pending = defaultdict(set), deque()
+        for record, dependencies in active:
+            edges[record["key"]].update(dependencies)
+            if self.original_root(record):
+                pending.append(record["key"])
+        reached = set()
+        while pending:
+            key = pending.popleft()
+            if key in reached:
+                continue
+            reached.add(key)
+            pending.extend(edges[key] - reached)
+        return reached
+
+    def _constraint_valid_unresolved(self, record):
+        """Check a delayed domain row's own SQL constraints without its parents."""
+        cache_key = (record["key"], record_digest(record))
+        if cache_key in self._root_constraint_cache:
+            return self._root_constraint_cache[cache_key]
+        table = record["table"]
+        if table not in DOMAIN_FACTS or table not in self.columns:
+            self._root_constraint_cache[cache_key] = False
+            return False
+        data = {}
+        for column, value in record["values"].items():
+            if isinstance(value, dict) and "$ref" in value:
+                declared_type = self.columns[table].get(column, "").upper()
+                try:
+                    parent = json.loads(value["$ref"].split(":", 1)[1])
+                except (IndexError, TypeError, ValueError):
+                    parent = {}
+                if value["column"] in parent and not isinstance(
+                    parent[value["column"]], dict
+                ):
+                    data[column] = decode(parent[value["column"]])
+                elif "INT" in declared_type:
+                    data[column] = -1
+                elif "BLOB" in declared_type:
+                    data[column] = b"\0"
+                elif "uuid" in column:
+                    data[column] = str(uuid.uuid4())
+                else:
+                    data[column] = "exchange-unresolved"
+            else:
+                data[column] = decode(value)
+        if not data:
+            self._root_constraint_cache[cache_key] = False
+            return False
+        name = "exchange_root_constraint_" + uuid.uuid4().hex
+        self.db.execute(f"SAVEPOINT {name}")
+        try:
+            self.db.execute("PRAGMA defer_foreign_keys=ON")
+            columns = tuple(data)
+            sql = (
+                f'INSERT INTO "{table}" ('
+                + ",".join(f'"{column}"' for column in columns)
+                + ") VALUES("
+                + ",".join("?" for _ in columns)
+                + ")"
+            )
+            self.db.execute(sql, tuple(data[column] for column in columns))
+            valid = True
+        except (sqlite3.IntegrityError, sqlite3.OperationalError, CatalogError):
+            valid = False
+        finally:
+            self.db.execute(f"ROLLBACK TO {name}")
+            self.db.execute(f"RELEASE {name}")
+        self._root_constraint_cache[cache_key] = valid
+        return valid
+
+    def git_original_status(self, record, by_key):
+        """Validate known Git input identity; missing valid parents remain pending."""
+        from repo_catalog.domain.git_object import validate_git_object
+
+        try:
+            if not self.original_root(record):
+                return False
+            values = record["values"]
+            payload_key = values["payload_sha256"]["$ref"]
+            payload_identity = json.loads(payload_key.split(":", 1)[1])
+            stored_key = payload_identity["sha256"]["$ref"]
+            digest = decode(json.loads(stored_key.split(":", 1)[1])["sha256"])
+            obj_key = values["git_object_id"]["$ref"]
+            identity = json.loads(obj_key.split(":", 1)[1])
+            obj = by_key.get(obj_key)
+            if obj is None:
+                attributes = self.lookup(
+                    "git_objects",
+                    ("object_format", "oid"),
+                    (identity["object_format"], decode(identity["oid"])),
+                )
+            else:
+                if obj.get("_original_rejected"):
+                    return False
+                attributes = {
+                    column: decode(value) for column, value in obj["values"].items()
+                }
+            stored = by_key.get(stored_key)
+            if stored is not None and "body" in stored["values"]:
+                body = decode(stored["values"]["body"])
+            else:
+                local = self.db.execute(
+                    "SELECT body FROM stored_bytes WHERE sha256=?", (digest,)
+                ).fetchone()
+                if local is None:
+                    return None
+                body = local[0]
+            if attributes is None:
+                # The missing row's portable key still declares its actual Git
+                # format/OID. Reject bytes that cannot be that object, while a
+                # matching body retains its typed missing-parent dependency.
+                for object_type in ("blob", "tree", "commit", "tag"):
+                    try:
+                        validate_git_object(
+                            identity["object_format"],
+                            decode(identity["oid"]),
+                            object_type,
+                            len(body),
+                            body,
+                            digest,
+                        )
+                    except CatalogError:
+                        continue
+                    return True
+                return False
+            validate_git_object(
+                attributes["object_format"],
+                attributes["oid"],
+                attributes["type"],
+                attributes["size"],
+                body,
+                digest,
+            )
+        except (CatalogError, KeyError, IndexError, TypeError, ValueError):
+            return False
+        return True
+
+    def local_original_context(self, repository_uuidv4=None, git_payload_sha256=None):
+        """Build dependency descriptors without encoding saved message bodies.
+
+        A separate nonpersisting graph prevents a rejected original-only
+        operation from registering portable identities as a side effect.
+        """
+        graph = (
+            self
+            if not self.persist_identities
+            else Graph(self.db, persist_identities=False)
+        )
+        pending, seen, records = deque(), set(), []
+        for table in DOMAIN_FACTS & graph.columns.keys():
+            rows = (
+                graph.matching(table, ("repository_uuidv4",), (repository_uuidv4,))
+                if repository_uuidv4 is not None
+                and "repository_uuidv4" in graph.columns[table]
+                else graph.rows(table)
+            )
+            pending.extend((table, row) for row in rows)
+        collections = (
+            graph.matching(
+                "fetch_collections", ("repository_uuidv4",), (repository_uuidv4,)
+            )
+            if repository_uuidv4 is not None
+            else graph.rows("fetch_collections")
+        )
+        for collection in collections:
+            pending.extend(
+                ("completion_markers", row)
+                for row in graph.matching(
+                    "completion_markers",
+                    ("fetch_collection_id",),
+                    (collection["fetch_collection_id"],),
+                )
+                if row["asserted_state"] == "complete"
+            )
+        # Raw Git bytes have an independent domain consumer, but only an
+        # acquisition that names a repository can make them part of that
+        # repository's exchange. A shared digest diagnosis can instead select
+        # the small set of mappings for the digest under investigation.
+        if "git_object_payloads" in graph.columns:
+            columns = tuple(graph.columns["git_object_payloads"])
+            selected = ",".join(f'gp."{column}"' for column in columns)
+            if git_payload_sha256 is not None:
+                query = (
+                    f"SELECT DISTINCT {selected} FROM git_object_payloads gp "
+                    "WHERE gp.payload_sha256=?"
+                )
+                parameters = (git_payload_sha256,)
+            elif "repository_object_sources" in graph.columns:
+                query = (
+                    f"SELECT DISTINCT {selected} FROM git_object_payloads gp "
+                    "JOIN repository_object_sources ros "
+                    "ON ros.git_object_id=gp.git_object_id "
+                )
+                if repository_uuidv4 is not None:
+                    query += "WHERE ros.repository_uuidv4=?"
+                    parameters = (repository_uuidv4,)
+                else:
+                    parameters = ()
+            else:
+                query, parameters = None, ()
+            if query is not None:
+                pending.extend(
+                    (
+                        "git_object_payloads",
+                        dict(zip(columns, row, strict=True)),
+                    )
+                    for row in self.db.execute(query, parameters)
+                )
+        while pending:
+            table, row = pending.popleft()
+            if (
+                table not in ORIGINAL_PROOF_TABLES
+                or row.get("owner_kind") == "source"
+                or row.get("owner_source_registration_uuidv4")
+            ):
+                continue
+            if row.get("parsed_result_uuidv4") and table != "parsed_results":
+                result = graph.lookup(
+                    "parsed_results",
+                    ("parsed_result_uuidv4",),
+                    (row["parsed_result_uuidv4"],),
+                )
+                if result and result["owner_kind"] == "source":
+                    continue
+            key = graph.key(table, row)
+            if key in seen:
+                continue
+            seen.add(key)
+            data = {
+                column: encode(value, column)
+                for column, value in row.items()
+                if not (table == "stored_bytes" and column == "body")
+            }
+            for parent, child_columns, parent_columns in graph.foreign[table]:
+                if parent not in graph.columns or any(
+                    row.get(c) is None for c in child_columns
+                ):
+                    continue
+                target = graph.lookup(
+                    parent, parent_columns, tuple(row[c] for c in child_columns)
+                )
+                if target is None:
+                    continue
+                for child, column in zip(child_columns, parent_columns):
+                    data[child] = {"$ref": graph.key(parent, target), "column": column}
+                pending.append((parent, target))
+            record = {"key": key, "table": table, "values": data}
+            record["_original_local_verified"] = True
+            records.append(record)
+            from repo_catalog.adapters.sqlite.json_contracts import (
+                reference_dependencies,
+            )
+
+            for dependency in reference_dependencies(table, row):
+                if dependency["table"] not in graph.columns:
+                    continue
+                target = graph.lookup(
+                    dependency["table"], dependency["columns"], dependency["values"]
+                )
+                if target is not None:
+                    pending.append((dependency["table"], target))
+        return records
+
+    def original_intake_context(
+        self,
+        records=(),
+        repository_uuidv4=None,
+        git_payload_sha256=None,
+        *,
+        include_staging=True,
+    ):
+        """Include relevant local roots and pending records for one intake."""
+        context = list(
+            self.local_original_context(repository_uuidv4, git_payload_sha256)
+        )
+        if include_staging:
+            query = "SELECT record_json,table_name,reason FROM exchange_staging"
+            parameters = ()
+            if repository_uuidv4 is not None:
+                query += " WHERE repository_uuidv4=?"
+                parameters = (repository_uuidv4,)
+            for serialized, table, reason in self.db.execute(query, parameters):
+                if staging_owner(table, reason) == "current_candidate":
+                    continue
+                record = json.loads(serialized)
+                try:
+                    self.validate_record(record)
+                except CatalogError:
+                    record["_original_rejected"] = True
+                if reason.startswith(("invalid:", "constraint:")):
+                    record["_original_rejected"] = True
+                context.append(record)
+        context.extend(records)
+        # Walk exact immutable receipt keys reached by this candidate graph.
+        # This restores admitted parents without materializing every receipt
+        # in the catalog (which scales with unrelated repositories).
+        by_key = {record["key"]: record for record in context}
+        pending_keys = deque()
+        for record in context:
+            dependencies = self.original_dependencies(record)
+            if dependencies:
+                pending_keys.extend(dependencies)
+        inspected = set()
+        while pending_keys:
+            key = pending_keys.popleft()
+            if key in inspected:
+                continue
+            inspected.add(key)
+            if key not in by_key:
+                record = self._admitted_original_context_record(key)
+                if record is None:
+                    continue
+                context.append(record)
+                by_key[key] = record
+                dependencies = self.original_dependencies(record)
+                if dependencies:
+                    pending_keys.extend(dependencies)
+        if repository_uuidv4 is not None:
+            by_key = {record["key"]: record for record in context}
+
+            def owner(record, visited=None):
+                visited = visited or set()
+                if record["key"] in visited:
+                    return None
+                visited.add(record["key"])
+                data = record["values"]
+                for column in ("repository_uuidv4", "owner_repository_uuidv4"):
+                    value = data.get(column)
+                    if isinstance(value, str):
+                        return value
+                    if isinstance(value, dict) and "$ref" in value:
+                        identity = json.loads(value["$ref"].split(":", 1)[1])
+                        return identity.get("repository_uuidv4")
+                for column in ("fetch_collection_id", "parsed_result_uuidv4"):
+                    value = data.get(column)
+                    if isinstance(value, dict) and value.get("$ref") in by_key:
+                        return owner(by_key[value["$ref"]], visited)
+                return None
+
+            context = [
+                dict(record, _original_rejected=True)
+                if owner(record) not in (None, repository_uuidv4)
+                else record
+                for record in context
+            ]
+        return context
+
+    def _admitted_original_context_record(self, key):
+        """Load one admitted parent reached by portable key, without body scans."""
+        receipt = self.db.execute(
+            "SELECT table_name,local_key_json,content_sha256,record_json "
+            "FROM exchange_admissions WHERE record_key=?",
+            (key,),
+        ).fetchone()
+        if receipt is None or receipt[0] not in ORIGINAL_PROOF_TABLES:
+            return None
+        table, local_json, digest, serialized = receipt
+        try:
+            local = json.loads(local_json)
+            target = self.lookup(
+                table, tuple(local), tuple(decode(value) for value in local.values())
+            )
+            if target is None:
+                return None
+            if table == "stored_bytes":
+                # The receipt identity and extant physical row suffice to
+                # follow a logical dependency; physical-byte validation stays
+                # with CAS diagnosis and is deliberately not hidden here.
+                return {
+                    "key": key,
+                    "table": table,
+                    "values": {
+                        column: encode(value, column)
+                        for column, value in target.items()
+                        if column != "body"
+                    },
+                    "_original_local_verified": True,
+                }
+            record = json.loads(serialized)
+            if (
+                record.get("key") != key
+                or record.get("table") != table
+                or record_digest(record) != digest
+            ):
+                return None
+            if table in DOMAIN_FACTS:
+                record["_original_local_verified"] = True
+            return record
+        except (CatalogError, KeyError, TypeError, ValueError, sqlite3.Error):
+            return None
+
+    def retained_git_body(self, record, records=(), repository_uuidv4=None):
+        """Recognize actual Git content, rather than an asserted representation."""
+        digest = decode(record["values"]["sha256"])
+        context = self.original_intake_context(
+            records,
+            repository_uuidv4,
+            git_payload_sha256=digest,
+        )
+        by_key = {item["key"]: item for item in context}
+        for item in context:
+            if item["table"] != "git_object_payloads" or item.get("_original_rejected"):
+                continue
+            try:
+                payload_key = item["values"]["payload_sha256"]["$ref"]
+                identity = json.loads(payload_key.split(":", 1)[1])
+                if identity["sha256"]["$ref"] != record["key"]:
+                    continue
+            except (KeyError, IndexError, TypeError, ValueError):
+                continue
+            # The candidate itself can be a late incoming body not yet staged.
+            if self.git_original_status(item, by_key | {record["key"]: record}) is True:
+                return True
+        return False
+
+    def rejected_api_original(self, record, records=(), repository_uuidv4=None):
+        """Diagnose an incumbent collision without retaining the incoming API body."""
+        if record["table"] != "stored_bytes":
+            return False
+        digest = decode(record["values"]["sha256"])
+        if not self.db.execute(
+            "SELECT 1 FROM stored_bytes WHERE sha256=?", (digest,)
+        ).fetchone():
+            return False
+        try:
+            intern_stored_bytes(self.db, decode(record["values"]["body"]), digest)
+        except CatalogError as error:
+            if error.code not in {
+                "PAYLOAD_CORRUPTION",
+                "PAYLOAD_HASH_COLLISION",
+                "PAYLOAD_QUARANTINED",
+            }:
+                raise
+            if self.retained_git_body(record, records, repository_uuidv4):
+                return False
+            if error.code == "PAYLOAD_CORRUPTION":
+                from repo_catalog.adapters.sqlite.cas_integrity import (
+                    diagnose_corruption,
+                )
+
+                diagnose_corruption(self.db, digest)
+            return True
+        return False
 
     def rows(self, table):
         columns = tuple(self.columns[table])
@@ -314,6 +1021,30 @@ class Graph:
             validate_record,
         )
 
+        if table in ORIGINAL_RECORDS:
+            required = self._original_export_keys
+            if required is None:
+                verifier = Graph(self.db, persist_identities=False)
+                repository_uuidv4 = (
+                    row.get("repository_uuidv4")
+                    if table == "fetch_occurrences"
+                    else None
+                )
+                git_payload_sha256 = (
+                    row.get("payload_sha256", row.get("sha256"))
+                    if table in {"git_object_payloads", "payloads", "stored_bytes"}
+                    else None
+                )
+                required = verifier.required_original_keys(
+                    verifier.local_original_context(
+                        repository_uuidv4, git_payload_sha256
+                    )
+                )
+            if self.original_key(table, row) not in required:
+                raise CatalogError(
+                    "RETIRED_API_ORIGINAL_EXCHANGE",
+                    "Saved messages require retained domain facts or completeness proof",
+                )
         try:
             validate_record(self.db, table, row)
         except MissingJsonDependencies:
@@ -1261,6 +1992,27 @@ class Graph:
         fetch_occurrence_uuidv4s=None,
         fetch_collection_id=None,
     ):
+        verifier = Graph(self.db, persist_identities=False)
+        previous = self._original_export_keys
+        self._original_export_keys = verifier.required_original_keys(
+            verifier.local_original_context(repository_uuidv4)
+        )
+        try:
+            return self._export(
+                repository_uuidv4,
+                fetch_occurrence_uuidv4s=fetch_occurrence_uuidv4s,
+                fetch_collection_id=fetch_collection_id,
+            )
+        finally:
+            self._original_export_keys = previous
+
+    def _export(
+        self,
+        repository_uuidv4,
+        *,
+        fetch_occurrence_uuidv4s=None,
+        fetch_collection_id=None,
+    ):
         """Export a repository or an explicit acquisition set and its ancestors.
 
         Collection IDs select local catalog rows; fetch UUIDs are permanent
@@ -1279,6 +2031,9 @@ class Graph:
         def add(table, row):
             if row is None or table not in self.columns:
                 return False
+            if table in ORIGINAL_RECORDS and self._original_export_keys is not None:
+                if self.original_key(table, row) not in self._original_export_keys:
+                    return False
             if (
                 row.get("owner_kind") == "source"
                 and table != "parser_profile_capabilities"
@@ -1360,6 +2115,16 @@ class Graph:
                         "NOT_FOUND",
                         "Fetch is not owned by the selected repository/collection",
                     )
+                fetch_key = "fetch_occurrences:" + canonical(
+                    {"fetch_occurrence_uuidv4": identifier}
+                )
+                if fetch_key not in self._original_export_keys:
+                    if fetch_occurrence_uuidv4s is not None:
+                        raise CatalogError(
+                            "RETIRED_API_ORIGINAL_EXCHANGE",
+                            "Fetch selection requires retained domain facts or completeness proof",
+                        )
+                    continue
                 selected_fetches.add(identifier)
                 add("fetch_occurrences", fetch)
         else:
@@ -1901,6 +2666,21 @@ class Graph:
 
     def _admit(self, record, origin_catalog_uuidv4, repository_uuidv4):
         table, key = record["table"], record["key"]
+        if table in ORIGINAL_RECORDS:
+            required = self._original_admission_keys
+            if required is None:
+                verifier = Graph(self.db, persist_identities=False)
+                required = verifier.required_original_keys(
+                    verifier.original_intake_context([record], repository_uuidv4)
+                )
+            if key not in required:
+                return "invalid:retired_api_original"
+            if self.rejected_api_original(
+                record,
+                self._original_preflight_records or (),
+                repository_uuidv4=repository_uuidv4,
+            ):
+                return "invalid:rejected_api_original"
         for dependency in record.get("requires", ()):
             if not self.db.execute(
                 "SELECT 1 FROM exchange_admissions WHERE record_key=? UNION ALL SELECT 1 FROM exchange_local_identities WHERE record_key=? AND table_name IN ('issue_resources','review_resources')",
@@ -1971,6 +2751,18 @@ class Graph:
             try:
                 self.validate_git_payload(data)
             except CatalogError as exc:
+                candidates = self._original_preflight_records or ()
+                by_key = {item["key"]: item for item in candidates}
+                candidate = by_key.get(key)
+                if (
+                    candidate is not None
+                    and self.git_original_status(candidate, by_key) is True
+                ):
+                    # A correct incoming Git body may replace a corrupt local
+                    # incumbent only through the existing explicit repair
+                    # contract. Keep both the verified Git mapping and body
+                    # staged as domain content while that repair is pending.
+                    return "missing_dependency"
                 return "invalid:" + exc.code.lower()
         existing = self._existing(table, data)
         if table in CURRENT_RESOURCES:
@@ -2101,6 +2893,202 @@ class Graph:
             )
         return None
 
+    def _preflight_original_roots(
+        self,
+        records,
+        origin_catalog_uuidv4,
+        repository_uuidv4,
+        *,
+        staged_candidates=None,
+    ):
+        """Validate intake roots in a rolled-back, repository-scoped overlay.
+
+        API input bytes can be needed to admit a terminal marker or a fact
+        publication. Preflight temporarily admits the complete available
+        dependency graph, then derives roots from the ordinary post-admission
+        validators. This lets delayed dependencies remain stageable without
+        allowing a malformed root to retain its input body.
+        """
+        candidates = []
+        if staged_candidates is None:
+            staged_candidates = self.db.execute(
+                "SELECT record_json,reason,origin_catalog_uuidv4 "
+                "FROM exchange_staging WHERE repository_uuidv4=? "
+                "ORDER BY record_key,content_sha256",
+                (repository_uuidv4,),
+            )
+        for serialized, reason, origin in staged_candidates:
+            if reason.startswith(("conflict:", "invalid:", "constraint:")):
+                continue
+            try:
+                record = json.loads(serialized)
+                self.validate_record(record)
+                if staging_owner(record["table"], reason) == "current_candidate":
+                    continue
+            except (CatalogError, KeyError, TypeError, ValueError):
+                continue
+            candidates.append((record, origin))
+        candidates.extend((record, origin_catalog_uuidv4) for record in records)
+
+        # A competing immutable variant has no evidence-based winner. Neither
+        # variant can establish an intake root during this dry-run.
+        variants = defaultdict(set)
+        for record, _ in candidates:
+            variants[record["key"]].add(record_digest(record))
+        candidates = [
+            (record, origin)
+            for record, origin in candidates
+            if len(variants[record["key"]]) == 1
+        ]
+        unique = {}
+        for record, origin in candidates:
+            unique.setdefault((record["key"], record_digest(record)), (record, origin))
+        # Existing exact receipts are already represented by their local rows.
+        # Do not re-admit them into the dry-run or let an incoming duplicate
+        # override a verified local root.
+        pending = []
+        for (key, digest), pair in unique.items():
+            existing = self.db.execute(
+                "SELECT content_sha256 FROM exchange_admissions WHERE record_key=?",
+                (key,),
+            ).fetchone()
+            if existing is not None:
+                continue
+            pending.append(pair)
+        pending_reasons = {}
+        all_original_keys = {
+            record["key"]
+            for record, _ in pending
+            if record["table"] in ORIGINAL_RECORDS
+        }
+
+        savepoint = "exchange_preflight_" + uuid.uuid4().hex
+        self.db.execute(f"SAVEPOINT {savepoint}")
+        previous = self._original_admission_keys
+        previous_records = self._original_preflight_records
+        self._original_admission_keys = all_original_keys
+        self._original_preflight_records = [record for record, _ in pending]
+        try:
+            # A missing API body is the one transport dependency that cannot
+            # be validated until its later arrival. Seed a savepoint-only row
+            # for that digest so ordinary FK, trigger, JSON-manifest, and
+            # completion validators can check the rest of the candidate graph.
+            # The placeholder and synthetic receipt exist only inside this
+            # savepoint and are always rolled back with the preflight.
+            body_records = {
+                record["key"]
+                for record, _ in pending
+                if record["table"] == "stored_bytes"
+            }
+            api_digests = {}
+            for record, _ in pending:
+                if record["table"] != "payloads":
+                    continue
+                representation = record["values"].get("representation")
+                if representation not in {"decoded_api", "legacy_normalized"}:
+                    continue
+                payload_ref = record["values"].get("sha256")
+                if not isinstance(payload_ref, dict) or "$ref" not in payload_ref:
+                    continue
+                try:
+                    storage_identity = json.loads(payload_ref["$ref"].split(":", 1)[1])
+                    digest = decode(storage_identity["sha256"])
+                except (KeyError, IndexError, TypeError, ValueError, CatalogError):
+                    continue
+                storage_key = payload_ref["$ref"]
+                stored_locally = self.db.execute(
+                    "SELECT 1 FROM stored_bytes WHERE sha256=?", (digest,)
+                ).fetchone()
+                if stored_locally or storage_key not in body_records:
+                    api_digests[digest] = storage_key
+            for digest, storage_key in api_digests.items():
+                if not self.db.execute(
+                    "SELECT 1 FROM stored_bytes WHERE sha256=?", (digest,)
+                ).fetchone():
+                    placeholder = b"exchange-preflight-placeholder"
+                    ignore_checks = self.db.execute(
+                        "PRAGMA ignore_check_constraints"
+                    ).fetchone()[0]
+                    self.db.execute("PRAGMA ignore_check_constraints=ON")
+                    try:
+                        self.db.execute(
+                            "INSERT INTO stored_bytes(sha256,body,byte_length) VALUES(?,?,?)",
+                            (digest, placeholder, len(placeholder)),
+                        )
+                    finally:
+                        self.db.execute(
+                            "PRAGMA ignore_check_constraints="
+                            + ("ON" if ignore_checks else "OFF")
+                        )
+                self.db.execute(
+                    "INSERT OR IGNORE INTO exchange_admissions VALUES(?,?,?,?,?)",
+                    (
+                        storage_key,
+                        "stored_bytes",
+                        canonical({"sha256": encode(digest, "sha256")}),
+                        hashlib.sha256(storage_key.encode()).digest(),
+                        canonical({"preflight_placeholder": True}),
+                    ),
+                )
+            changed = True
+            while changed and pending:
+                changed = False
+                remaining = []
+                for index, (record, origin) in enumerate(pending):
+                    name = f"exchange_preflight_record_{index}"
+                    self.db.execute(f"SAVEPOINT {name}")
+                    try:
+                        reason = self._admit(record, origin, repository_uuidv4)
+                    except CatalogError as exc:
+                        self.db.execute(f"ROLLBACK TO {name}")
+                        self.db.execute(f"RELEASE {name}")
+                        remaining.append((record, origin))
+                        pending_reasons[(record["key"], record_digest(record))] = (
+                            "invalid:" + exc.code.lower()
+                        )
+                        continue
+                    except sqlite3.IntegrityError as exc:
+                        self.db.execute(f"ROLLBACK TO {name}")
+                        self.db.execute(f"RELEASE {name}")
+                        remaining.append((record, origin))
+                        pending_reasons[(record["key"], record_digest(record))] = (
+                            "constraint:" + str(exc)
+                        )
+                        continue
+                    if reason:
+                        self.db.execute(f"ROLLBACK TO {name}")
+                        remaining.append((record, origin))
+                        pending_reasons[(record["key"], record_digest(record))] = reason
+                    else:
+                        changed = True
+                    self.db.execute(f"RELEASE {name}")
+                pending = remaining
+            verifier = Graph(self.db, persist_identities=False)
+            unresolved = []
+            for record, _ in pending:
+                reason = pending_reasons.get(
+                    (record["key"], record_digest(record)), "invalid:preflight"
+                )
+                eligible = reason == "missing_dependency" or reason.startswith(
+                    "missing_"
+                )
+                if eligible and record["table"] in DOMAIN_FACTS:
+                    eligible = verifier._constraint_valid_unresolved(record)
+                candidate = dict(record)
+                if not eligible:
+                    candidate["_original_rejected"] = True
+                unresolved.append(candidate)
+            return verifier.required_original_keys(
+                verifier.original_intake_context(
+                    unresolved, repository_uuidv4, include_staging=False
+                )
+            )
+        finally:
+            self.db.execute(f"ROLLBACK TO {savepoint}")
+            self.db.execute(f"RELEASE {savepoint}")
+            self._original_admission_keys = previous
+            self._original_preflight_records = previous_records
+
     def receive(self, unit):
         if (
             not isinstance(unit, dict)
@@ -2175,6 +3163,28 @@ class Graph:
                     "INVALID_EXCHANGE",
                     "Source-wide facts cannot be exchanged per repository",
                 )
+        has_original_inputs = any(
+            record["table"] in ORIGINAL_RECORDS for record in records
+        )
+        if has_original_inputs:
+            required = self._preflight_original_roots(
+                records,
+                unit["origin_catalog_uuidv4"],
+                unit["repository_uuidv4"],
+            )
+        else:
+            verifier = Graph(self.db, persist_identities=False)
+            required = verifier.required_original_keys(
+                verifier.original_intake_context(records, unit["repository_uuidv4"])
+            )
+        # Reject independent original distribution before its Base64 envelope
+        # can enter shared dependency staging or immutable admission receipts.
+        for record in records:
+            if record["table"] in ORIGINAL_RECORDS and record["key"] not in required:
+                rejected.add(record["key"])
+            elif self.rejected_api_original(record, records, unit["repository_uuidv4"]):
+                rejected.add(record["key"])
+        records = [record for record in records if record["key"] not in rejected]
         received = 0
         for record in records:
             serialized = canonical(record)
@@ -2277,7 +3287,12 @@ class Graph:
                 "UPDATE exchange_staging SET reason='conflict:competing_variants' WHERE record_key=? AND table_name=?",
                 (key, table),
             )
-        admitted = self.promote(unit["origin_catalog_uuidv4"])
+        previous_prevalidated = self._prevalidated_original_keys
+        self._prevalidated_original_keys = {unit["repository_uuidv4"]: required}
+        try:
+            admitted = self.promote(unit["origin_catalog_uuidv4"])
+        finally:
+            self._prevalidated_original_keys = previous_prevalidated
         count = self.db.execute("SELECT COUNT(*) FROM exchange_staging").fetchone()[0]
         return {
             "received_records": received,
@@ -2288,6 +3303,12 @@ class Graph:
         }
 
     def promote(self, origin_catalog_uuidv4):
+        try:
+            return self._promote(origin_catalog_uuidv4)
+        finally:
+            self._original_admission_keys = None
+
+    def _promote(self, origin_catalog_uuidv4):
         admitted = 0
         changed = True
         while changed:
@@ -2304,6 +3325,29 @@ class Graph:
                     "SELECT record_key,content_sha256,record_json,reason,repository_uuidv4,origin_catalog_uuidv4,table_name FROM exchange_staging ORDER BY record_key,content_sha256"
                 )
             )
+            staged_by_repository = defaultdict(list)
+            for row in pending:
+                staged_by_repository[row[4]].append((row[2], row[3], row[5]))
+            required_by_repository = {}
+            verifier = Graph(self.db, persist_identities=False)
+            for row in pending:
+                repository = row[4]
+                if repository not in required_by_repository:
+                    required_by_repository[repository] = (
+                        self._prevalidated_original_keys.get(repository)
+                    )
+                    if required_by_repository[repository] is None:
+                        required_by_repository[repository] = (
+                            verifier._preflight_original_roots(
+                                (),
+                                origin_catalog_uuidv4,
+                                repository,
+                                staged_candidates=staged_by_repository[repository],
+                            )
+                        )
+                    required_by_repository[repository].update(
+                        self._prevalidated_original_keys.get(repository, ())
+                    )
             for (
                 key,
                 digest,
@@ -2315,9 +3359,43 @@ class Graph:
             ) in pending:
                 if staging_owner(table, reason) == "current_candidate":
                     continue
-                if reason.startswith(("conflict:", "invalid:")):
+                self._original_admission_keys = required_by_repository[
+                    repository_uuidv4
+                ]
+                if (
+                    table in ORIGINAL_RECORDS
+                    and key not in self._original_admission_keys
+                ):
+                    # Direct-SQL/pending envelopes do not provide an alternate
+                    # archive intake route. Delete the rejected envelope itself;
+                    # retaining an invalid Base64 record would retain the body.
+                    self.db.execute(
+                        "DELETE FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+                        (key, digest),
+                    )
                     continue
                 record = json.loads(serialized)
+                if table == "stored_bytes" and (
+                    self.rejected_api_original(
+                        record, repository_uuidv4=repository_uuidv4
+                    )
+                    or (
+                        reason.startswith(("conflict:", "invalid:", "constraint:"))
+                        and not self.retained_git_body(
+                            record, repository_uuidv4=repository_uuidv4
+                        )
+                    )
+                ):
+                    # Rejected API bytes are not retry material. This applies
+                    # before the normal invalid/conflict skip as well as intake;
+                    # a real Git body keeps its existing repair staging meaning.
+                    self.db.execute(
+                        "DELETE FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+                        (key, digest),
+                    )
+                    continue
+                if reason.startswith(("conflict:", "invalid:")):
+                    continue
                 self.db.execute("SAVEPOINT exchange_record")
                 try:
                     reason = self._admit(record, record_origin, repository_uuidv4)
@@ -2328,6 +3406,11 @@ class Graph:
                         )
                         admitted += 1
                         changed = True
+                    elif reason == "invalid:rejected_api_original":
+                        self.db.execute(
+                            "DELETE FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+                            (key, digest),
+                        )
                 except CatalogError as exc:
                     self.db.execute("ROLLBACK TO exchange_record")
                     if record["table"] in CURRENT_RESOURCES and (

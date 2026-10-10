@@ -320,7 +320,10 @@ def parser():
     )
     db.add_parser("check").add_argument("--full", action="store_true")
     db.add_parser("verify-payloads")
-    repair = db.add_parser("repair-payload")
+    repair = db.add_parser(
+        "repair-payload",
+        help="Repair quarantined retained Git object bytes by physical SHA-256",
+    )
     repair.add_argument("--sha256", required=True)
     repair.add_argument("--input", required=True)
     db.add_parser("backup").add_argument("--output", required=True)
@@ -382,16 +385,9 @@ def parser():
     invalidate.add_argument("verification_uuidv4")
     invalidate.add_argument("--reason", required=True)
     profiles.add_parser("status")
-    for action in ("inspect-message", "reparse-message"):
-        child = profiles.add_parser(action)
-        child.add_argument("archive_reference")
-        child.add_argument("--max-bytes", type=int, default=1048576)
-        if action == "reparse-message":
-            child.add_argument(
-                "--context",
-                required=True,
-                help="Explicit synthetic provider projection context JSON",
-            )
+    inspect = profiles.add_parser("inspect-message")
+    inspect.add_argument("archive_reference")
+    inspect.add_argument("--max-bytes", type=int, default=1048576)
     return p
 
 

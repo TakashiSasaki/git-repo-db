@@ -457,7 +457,6 @@ def test_valid_code_expectations_are_declarations_before_git_acquisition(facts):
         {"variables": {"thread": []}},
         {"variables": {"pageSize": True}},
         {"variables": {"cursor": {}}},
-        {"operational_only": "false"},
         {"context_proven": 1},
         {"terminal": "true"},
     ],

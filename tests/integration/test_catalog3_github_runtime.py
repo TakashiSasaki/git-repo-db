@@ -15,6 +15,16 @@ from tests.support.github_runtime import github_runtime as github_runtime
 from tests.support.github_runtime import sync
 
 
+def assert_rejected_original_absent(store, marker):
+    encoded = marker.encode()
+    for table in ("stored_bytes", "payload_admission_staging"):
+        assert all(
+            encoded not in row[0] for row in store.all(f"SELECT body FROM {table}")
+        )
+    assert not store.one("SELECT 1 FROM unresolved_payloads")
+    assert not (store.path / "transport-archive").exists()
+
+
 @pytest.mark.parametrize(
     "headers,expected_us",
     [
@@ -92,6 +102,7 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     error_payload = {
         "data": None,
         "errors": [{"type": error_type, "message": "synthetic GraphQL failure"}],
+        "transport_only_marker": "PHASE1_ERROR_ONLY_GRAPHQL_ORIGINAL",
     }
     if data_shape == "empty":
         error_payload["data"] = {}
@@ -132,44 +143,34 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     deadline_us = stamp_us + delay_us if delay_us is not None else None
     assert error.details.get("not_before_us") == deadline_us
     rejected_kind = "threads" if boundary == "root" else "thread-comments"
+    rejected = store.one(
+        "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
+        "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
+        "WHERE f.kind=?",
+        (rejected_kind,),
+    )
+    assert (rejected["state"], rejected["cursor"], rejected["reason"]) == (
+        "partial",
+        None if boundary == "root" else "100",
+        expected_code,
+    )
+    assert not store.one(
+        "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+        (rejected["fetch_collection_id"],),
+    )
+    assert not store.one(
+        "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+        (rejected["fetch_collection_id"],),
+    )
+    assert_rejected_original_absent(store, error_payload["transport_only_marker"])
     if boundary == "root":
-        # Independent thread interpretation still requires its original input.
-        rejected = store.one(
-            "SELECT o.next_cursor,o.request,b.body,u.reason "
-            "FROM fetch_occurrences o "
-            "JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id "
-            "JOIN payloads p ON p.representation=o.payload_representation AND p.sha256=o.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256 "
-            "JOIN unresolved_payloads u ON u.payload_representation=p.representation AND u.payload_sha256=p.sha256 "
-            "WHERE f.kind=? ORDER BY o.fetch_occurrence_id DESC LIMIT 1",
-            (rejected_kind,),
-        )
-        assert json.loads(rejected["body"]) == error_payload
-        assert rejected["next_cursor"] is None
-        assert expected_code in rejected["reason"]
         # An error-only response has no thread resource observation, for both
-        # denied access and rate limits. The raw diagnostic remains retained.
-        assert json.loads(rejected["request"])["operational_only"] is True
+        # denied access and rate limits. Only the operational retry survives.
+        assert not store.one("SELECT 1 FROM review_thread_observations")
+        assert not store.one("SELECT 1 FROM review_resources")
     else:
-        rejected = store.one(
-            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
-            "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
-            "WHERE f.kind='thread-comments'"
-        )
-        assert (rejected["state"], rejected["cursor"], rejected["reason"]) == (
-            "partial",
-            "100",
-            expected_code,
-        )
         # A rejected mutable page has a durable retry boundary, no false
         # success receipt, and no mandatory HTTP body behind the domain store.
-        assert not store.one(
-            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
-            (rejected["fetch_collection_id"],),
-        )
-        assert not store.one(
-            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
-            (rejected["fetch_collection_id"],),
-        )
         assert (
             store.one(
                 "SELECT count(*) FROM review_resources WHERE kind='review-comment'"
@@ -587,12 +588,17 @@ def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
     ]
     stamp_us = 2_000_000
     original = api.route
+    rejected_marker = "PHASE1_SYNC_ERROR_ONLY_RATE_ORIGINAL"
 
     def route(method, path, params, body):
         nonlocal stamp_us
         if method == "POST":
             stamp_us = 9_000_000
-            return {"data": None, "errors": [{"type": "RATE_LIMITED"}]}, {}
+            return {
+                "data": None,
+                "errors": [{"type": "RATE_LIMITED"}],
+                "transport_only_marker": rejected_marker,
+            }, {}
         return original(method, path, params, body)
 
     api.route = route
@@ -624,10 +630,11 @@ def test_error_only_rate_during_sync_preserves_saved_code_and_claims(
         )
     ] == code_rows
     assert collector.summary_observed_at_us(repo, job) == 2_000_000
-    receipt = store.one(
-        "SELECT observed_at_us FROM fetch_occurrences WHERE json_extract(request,'$.operational_only')=1"
+    assert not store.one("SELECT 1 FROM fetch_occurrences WHERE observed_at_us=9000000")
+    assert not store.one(
+        "SELECT 1 FROM completion_markers WHERE observed_at_us=9000000"
     )
-    assert receipt["observed_at_us"] == 9_000_000
+    assert_rejected_original_absent(store, rejected_marker)
 
 
 @pytest.mark.parametrize("scenario", ["same-current", "new-current", "observed-race"])
@@ -1478,7 +1485,7 @@ def test_changed_observed_permission_scope_refreshes_complete_listings(github_ru
 
 
 @pytest.mark.parametrize("child_page", [False, True], ids=["root-page", "child-page"])
-def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias(
+def test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias(
     github_runtime, child_page
 ):
     store, repo, fixture, api = github_runtime
@@ -1486,6 +1493,7 @@ def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias
     original = api.route
     enabled = True
     rejected_nodes = []
+    rejected_marker = "PHASE1_MISSING_GRAPHQL_DATABASE_ID_ORIGINAL"
 
     def route(method, path, params, body):
         result, headers = original(method, path, params, body)
@@ -1505,6 +1513,7 @@ def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias
                 return result, headers
             rejected_nodes.append(comment["id"])
             comment["fullDatabaseId"] = None
+            result["transport_only_marker"] = rejected_marker
         return result, headers
 
     api.route = route
@@ -1531,22 +1540,46 @@ def test_missing_graphql_database_id_retains_page_and_resumes_without_node_alias
             (failed_child["fetch_collection_id"],),
         )
     else:
-        assert (
-            store.one(
-                "SELECT count(*) FROM unresolved_payloads WHERE reason LIKE '%CANONICAL_DOCUMENT_ID_MISSING%'"
-            )[0]
-            > 0
+        failed_root = store.one(
+            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
+            "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
+            "WHERE f.kind='threads' AND f.change_request_id='00000000-0000-4000-8000-000000000301:41'"
         )
+        assert (failed_root["state"], failed_root["cursor"], failed_root["reason"]) == (
+            "partial",
+            None,
+            "CANONICAL_DOCUMENT_ID_MISSING",
+        )
+        assert not store.one(
+            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (failed_root["fetch_collection_id"],),
+        )
+        assert not store.one(
+            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+            (failed_root["fetch_collection_id"],),
+        )
+        observed_partial = store.one(
+            "SELECT asserted_state,evidence,observed_at_us FROM completion_markers "
+            "WHERE fetch_collection_id=?",
+            (failed_root["fetch_collection_id"],),
+        )
+        assert observed_partial["asserted_state"] == "partial"
+        assert json.loads(observed_partial["evidence"]) == {
+            "reason": "CANONICAL_DOCUMENT_ID_MISSING"
+        }
+        assert (
+            observed_partial["observed_at_us"]
+            == store.one(
+                "SELECT observed_at_us FROM current_coverage "
+                "WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
+            )[0]
+        )
+    assert_rejected_original_absent(store, rejected_marker)
     for node in rejected_nodes:
         assert not store.one(
             "SELECT 1 FROM review_resources WHERE provider_change_request_document_id=?",
             (node,),
         )
-        if not child_page:
-            assert any(
-                node.encode() in row[0]
-                for row in store.all("SELECT body FROM stored_bytes")
-            )
     enabled = False
     sync(store, repo, job=partial.value.details["job_id"])
     assert (
@@ -1587,6 +1620,7 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
         api.reply_count = 101
     original = api.route
     malformed_response = None
+    rejected_marker = "PHASE1_MALFORMED_GRAPHQL_CONNECTION_ORIGINAL"
 
     def route(method, path, params, body):
         nonlocal malformed_response
@@ -1617,6 +1651,7 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
         else:
             connection["pageInfo"] = {"hasNextPage": True, "endCursor": None}
         malformed_response = value
+        value["transport_only_marker"] = rejected_marker
         return value, headers
 
     api.route = route
@@ -1656,12 +1691,42 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
             == 100
         )
     else:
-        assert any(
-            json.loads(row["body"]) == malformed_response
-            for row in store.all(
-                "SELECT b.body FROM unresolved_payloads u JOIN payloads p ON p.representation=u.payload_representation AND p.sha256=u.payload_sha256 JOIN stored_bytes b ON b.sha256=p.sha256"
-            )
+        failed_root = store.one(
+            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
+            "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
+            "WHERE f.kind='threads'"
         )
+        assert (failed_root["state"], failed_root["reason"]) == (
+            "partial",
+            "API_SCHEMA",
+        )
+        if failed_root["cursor"] is not None:
+            assert json.loads(failed_root["cursor"]) == {"cursor": None}
+        assert not store.one(
+            "SELECT 1 FROM fetch_occurrences WHERE fetch_collection_id=?",
+            (failed_root["fetch_collection_id"],),
+        )
+        assert not store.one(
+            "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+            (failed_root["fetch_collection_id"],),
+        )
+        assert not store.one("SELECT 1 FROM review_thread_observations")
+        assert not store.one("SELECT 1 FROM review_resources")
+        observed_partial = store.one(
+            "SELECT asserted_state,evidence,observed_at_us FROM completion_markers "
+            "WHERE fetch_collection_id=?",
+            (failed_root["fetch_collection_id"],),
+        )
+        assert observed_partial["asserted_state"] == "partial"
+        assert json.loads(observed_partial["evidence"]) == {"reason": "API_SCHEMA"}
+        assert (
+            observed_partial["observed_at_us"]
+            == store.one(
+                "SELECT observed_at_us FROM current_coverage "
+                "WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
+            )[0]
+        )
+    assert_rejected_original_absent(store, rejected_marker)
     assert (
         store.one(
             "SELECT coverage_state FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
@@ -1669,7 +1734,7 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
         == "partial"
     )
     assert not store.one(
-        "SELECT 1 FROM fetch_collections f JOIN completion_markers c ON c.fetch_collection_id=f.fetch_collection_id WHERE f.kind IN ('threads','thread-comments')"
+        "SELECT 1 FROM fetch_collections f JOIN completion_markers c ON c.fetch_collection_id=f.fetch_collection_id WHERE f.kind IN ('threads','thread-comments') AND c.asserted_state='complete'"
     )
     jobs.update(job, "waiting")
     jobs.resume(job)

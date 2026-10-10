@@ -1,9 +1,21 @@
 # Latest resource state and optional transport archive
 
-Current schema 15 corrections and acceptance are described in
-[current-state-schema-closure.md](current-state-schema-closure.md). The schema 14
-implementation and successful checkpoint below remain historical evidence for
-PR #13, not acceptance of the follow-up.
+Current schema 18 behavior and scoped API-original retirement are described in
+[transport-independent implementation](transport-independent-core-implementation.md)
+and the [Phase 1 implementation record](phase1-api-original-retirement-implementation.md).
+Current Issue/review rows use actual parser module/version and field provenance
+without profile gates. Admission supports live acquisition and import; archived
+API parser projection/replay and core raw staging of fully rejected originals
+are retired. Accepted partial GraphQL roots with errors remain historical
+publication/live-restart inputs at the documented C boundary. Bounded
+`inspect-message` remains. Explicit repair requires retained Git byte ownership;
+full physical verification and CAS-41 backup/restore remain.
+
+The [schema 15 corrections](current-state-schema-closure.md), schema 16 boundary
+receipt and the schema 14 checkpoint below are historical evidence for their
+exact trees, not schema 18 acceptance. Production-contract statements below
+describe PR #13 at schema 14, including features since superseded by the
+[Phase 1 decision](phase1-api-original-retirement.md).
 
 ## PR #13 schema 14 checkpoint
 
@@ -13,7 +25,7 @@ This change starts from PR #12, `feat/complete-model-contracts`, commit
 format; there is no migration or legacy intake. The schema 12/13 validation
 receipts are historical evidence and do not establish acceptance of this change.
 
-## Production contracts
+## Historical schema 14 production contracts
 
 `issue_resources` holds each ordinary Issue and each of its comments in one
 physical table. Its natural key is service-instance UUID, kind and canonical
@@ -70,7 +82,7 @@ counts preserve documented known corruption; unexplained corruption, missing or
 malformed counts and mismatches reject admission while preserving failure stages.
 Full-byte verification, no-overwrite and atomic publication contracts remain.
 
-## Existing decision reconciliation
+## Historical schema 14 decision reconciliation
 
 | Decisions | Schema 14 scope |
 |---|---|
@@ -89,7 +101,7 @@ and its machine-readable JSON. Transport details are in
 review is recorded in
 [the current-state review receipt](validation/synthetic/2026-10-09-current-state-independent-review.md).
 
-## Verification and limits
+## Historical schema 14 verification and limits
 
 Final local schema 14 acceptance passed with bootstrap absent: **1,311 ordinary tests** in 197.66s and **2 isolated wheel/sdist tests** in 61.76s, with zero failures, errors or skips. The exact certificate was generated from a successful 1,311-case bootstrap report (175.66s) and binds 35 implementation files/resources, complete composed DDL and all 13 capabilities.
 

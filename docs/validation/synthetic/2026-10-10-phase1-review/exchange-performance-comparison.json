@@ -1,0 +1,88 @@
+{
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "uv": "0.12.19",
+    "git": "2.52.0",
+    "os": "Linux x86_64"
+  },
+  "baseline_sha": "f9bff8b2dc17ddffd6b3f7662791022f25175c44",
+  "corrected_exchange_sha256": "d142d7689272ba869fdb56c33539750efc665bc831c5623ced58a6ee7ddaa103",
+  "initial_pr20": [
+    {
+      "export": {
+        "elapsed_s": 0.654,
+        "output_records": 1,
+        "python_peak_mib": 9.076,
+        "sql_statements": 10224
+      },
+      "objects": 1000
+    },
+    {
+      "export": {
+        "elapsed_s": 3.3088,
+        "output_records": 1,
+        "python_peak_mib": 44.854,
+        "sql_statements": 50224
+      },
+      "objects": 5000
+    },
+    {
+      "context": {
+        "elapsed_s": 0.0005,
+        "output_records": 0,
+        "python_peak_mib": 0.014,
+        "sql_statements": 21
+      },
+      "unrelated_admissions": 0
+    },
+    {
+      "context": {
+        "elapsed_s": 0.3577,
+        "output_records": 50000,
+        "python_peak_mib": 24.167,
+        "sql_statements": 21
+      },
+      "unrelated_admissions": 50000
+    }
+  ],
+  "corrected": [
+    {
+      "export": {
+        "elapsed_s": 0.0188,
+        "output_records": 1,
+        "python_peak_mib": 0.605,
+        "sql_statements": 224
+      },
+      "objects": 1000
+    },
+    {
+      "export": {
+        "elapsed_s": 0.0095,
+        "output_records": 1,
+        "python_peak_mib": 0.221,
+        "sql_statements": 224
+      },
+      "objects": 5000
+    },
+    {
+      "context": {
+        "elapsed_s": 0.0005,
+        "output_records": 0,
+        "python_peak_mib": 0.015,
+        "sql_statements": 20
+      },
+      "unrelated_admissions": 0
+    },
+    {
+      "context": {
+        "elapsed_s": 0.0006,
+        "output_records": 0,
+        "python_peak_mib": 0.016,
+        "sql_statements": 20
+      },
+      "unrelated_admissions": 50000
+    }
+  ],
+  "metrics": "Elapsed wall seconds, Python tracemalloc peak MiB, traced SQLite statement count; setup excluded; not full process RSS; single measurements, no deadline changed"
+}

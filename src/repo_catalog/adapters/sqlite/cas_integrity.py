@@ -18,6 +18,38 @@ from repo_catalog.domain.payload import PayloadRef
 from repo_catalog.domain.time import now_us
 
 
+def _git_object_identity_valid(
+    object_format, oid_hex, object_type, byte_length, body, sha256
+):
+    """SQLite trigger predicate for exact raw Git identity and physical digest."""
+    from repo_catalog.domain.git_object import validate_git_object
+
+    if not isinstance(oid_hex, str):
+        return 0
+    try:
+        validate_git_object(
+            object_format,
+            bytes.fromhex(oid_hex),
+            object_type,
+            byte_length,
+            body,
+            sha256,
+        )
+    except (ValueError, CatalogError, TypeError):
+        return 0
+    return 1
+
+
+def register_git_object_sql_function(db: sqlite3.Connection):
+    """Register the fail-closed Git identity predicate used by the DDL guard."""
+    db.create_function(
+        "repo_catalog_git_object_identity_valid",
+        6,
+        _git_object_identity_valid,
+        deterministic=True,
+    )
+
+
 @contextmanager
 def _atomic(db):
     name = "cas_" + uuid.uuid4().hex
@@ -84,6 +116,29 @@ def diagnose_corruption(db: sqlite3.Connection, digest: bytes):
         return diagnostic
 
 
+def diagnose_admission_failure(db: sqlite3.Connection, error: CatalogError):
+    """Diagnose a corrupt incumbent after rejected admission has rolled back.
+
+    The evidence comes only from the existing physical object and its declared
+    digest. Received bytes and acquisition context are never retained here.
+    """
+    if not isinstance(error, CatalogError) or error.code != "PAYLOAD_CORRUPTION":
+        return None
+    value = error.details.get("sha256")
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(char not in "0123456789abcdef" for char in value)
+    ):
+        return None
+    digest = bytes.fromhex(value)
+    if not db.execute(
+        "SELECT 1 FROM stored_bytes WHERE sha256=?", (digest,)
+    ).fetchone():
+        return None
+    return diagnose_corruption(db, digest)
+
+
 def verify_all(db: sqlite3.Connection, *, diagnose=True):
     """Full bytes scan under caller-held writer.lock, without a long SQL tx.
 
@@ -122,15 +177,52 @@ def verify_all(db: sqlite3.Connection, *, diagnose=True):
 
 
 def stage_verified_payload(db, body, reference: PayloadRef, context: dict, *, reason):
-    """Persist valid rejected acquisition evidence without modifying stored bytes."""
+    """Retain rejected raw Git content without modifying admitted stored bytes."""
+    if (
+        not isinstance(reference, PayloadRef)
+        or reference.representation != "git-object-raw-v1"
+    ):
+        raise CatalogError(
+            "INVALID_ARGUMENT", "Rejected acquisition staging requires raw Git content"
+        )
     if not isinstance(body, bytes) or hashlib.sha256(body).digest() != reference.sha256:
         raise CatalogError("PAYLOAD_DIGEST_MISMATCH", "Invalid bytes cannot be staged")
     if reason not in {"PAYLOAD_CORRUPTION", "PAYLOAD_HASH_COLLISION"}:
         raise CatalogError("INVALID_ARGUMENT", "Unsupported payload staging reason")
     if not isinstance(context, dict):
         raise CatalogError("INVALID_ARGUMENT", "Acquisition context must be an object")
+    # The representation label is not evidence that rejected bytes are a Git
+    # object.  Staging is the last resort for exact raw Git reacquisition, so
+    # require the full descriptor to identify these bytes before persisting it.
+    from repo_catalog.domain.git_object import validate_git_object
+
+    object_format = context.get("object_format")
+    oid_hex = context.get("oid")
+    object_type = context.get("object_type")
+    byte_length = context.get("byte_length")
+    oid_length = {"sha1": 40, "sha256": 64}.get(object_format)
+    if (
+        oid_length is None
+        or not isinstance(oid_hex, str)
+        or len(oid_hex) != oid_length
+        or any(char not in "0123456789abcdef" for char in oid_hex)
+        or type(byte_length) is not int
+    ):
+        raise CatalogError(
+            "GIT_OBJECT_IDENTITY", "Rejected Git bytes require a complete descriptor"
+        )
+    try:
+        oid = bytes.fromhex(oid_hex)
+        validate_git_object(
+            object_format, oid, object_type, byte_length, body, reference.sha256
+        )
+    except (ValueError, CatalogError) as exc:
+        raise CatalogError(
+            "GIT_OBJECT_IDENTITY", "Rejected bytes do not match their Git descriptor"
+        ) from exc
     encoded = json.dumps(context, sort_keys=True, allow_nan=False)
     ident = str(uuid.uuid4())
+    register_git_object_sql_function(db)
     with _atomic(db):
         if reason == "PAYLOAD_CORRUPTION":
             diagnose_corruption(db, reference.sha256)
@@ -142,7 +234,7 @@ def stage_verified_payload(db, body, reference: PayloadRef, context: dict, *, re
 
 
 def repair_payload(db, digest: bytes, replacement: bytes):
-    """Explicit, hash-verified restoration with atomic quarantine removal.
+    """Restore retained Git bytes by their physical hash, atomically.
 
     The write-protection trigger is suspended and restored *within* this single
     SQLite transaction. Readers observe either the old quarantined bytes or the
@@ -157,6 +249,18 @@ def repair_payload(db, digest: bytes, replacement: bytes):
     ):
         raise CatalogError("PAYLOAD_DIGEST_MISMATCH", "Replacement digest mismatch")
     with _atomic(db):
+        objects = db.execute(
+            "SELECT g.object_format,g.oid,g.type,g.size FROM git_object_payloads p JOIN git_objects g USING(git_object_id) WHERE p.payload_representation='git-object-raw-v1' AND p.payload_sha256=?",
+            (digest,),
+        ).fetchall()
+        if not objects:
+            raise CatalogError(
+                "INVALID_ARGUMENT", "Explicit repair requires retained Git object bytes"
+            )
+        from repo_catalog.domain.git_object import validate_git_object
+
+        for obj in objects:
+            validate_git_object(*obj, replacement, digest)
         diagnostic = db.execute(
             "SELECT unresolved_payload_id FROM payload_quarantine WHERE sha256=?",
             (digest,),

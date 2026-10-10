@@ -153,11 +153,32 @@ def test_edit_and_identical_refresh_have_no_normalized_versions(resources):
         ).status
         == "accepted"
     )
-    assert adapter.admit(first, source="replay").status == "stale"
+    assert adapter.admit(first, source="import").status == "stale"
     assert current(adapter)["body"] == "edited"
     assert adapter.c.execute("SELECT count(*) FROM issue_resources").fetchone()[0] == 1
     assert adapter.c.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 2
     assert adapter.c.execute("SELECT count(*) FROM parsed_results").fetchone()[0] == 0
+
+
+def test_current_admission_rejects_unsupported_replay_without_catalog_changes(
+    resources,
+):
+    adapter, *_ = resources
+    first = issue(resources)
+    assert adapter.admit(first, source="import").status == "accepted"
+    before = list(adapter.c.iterdump())
+    with pytest.raises(ValueError, match="Unknown current resource admission source"):
+        adapter.admit(
+            issue(
+                resources,
+                body="saved-message interpretation",
+                provider_updated_at_us=20,
+            ),
+            source="replay",
+            base_revision=0,
+            scope_context=first["acquisition_scope"],
+        )
+    assert list(adapter.c.iterdump()) == before
 
 
 @pytest.mark.parametrize("updated", [None, 10])

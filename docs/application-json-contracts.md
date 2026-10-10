@@ -1,6 +1,6 @@
 # Application JSON contract inventory
 
-This schema **15** inventory contains **57 JSON CHECK columns**. It is generated from the composed production SQLite schema and the explicit `json_contracts.JSON_REGISTRY`; the registry rejects unclassified new CHECK-backed JSON columns. [Current closure](current-state-schema-closure.md), [column liveness](current-state-schema-liveness.md) and [complete schema inventory](current-state-schema-inventory.md) describe the follow-up. Historical validation receipts remain separate.
+This active schema **18** contract inventory follows the composed production SQLite schema and explicit `json_contracts.JSON_REGISTRY`; the registry rejects unclassified CHECK-backed JSON columns. The [Phase 1 implementation inventory](phase1-api-original-retirement-implementation.md) records executed before/after schema and JSON dependencies. Earlier [current closure](current-state-schema-closure.md), [column liveness](current-state-schema-liveness.md) and [complete schema inventory](current-state-schema-inventory.md) are historical receipts, separate from schema 18 acceptance.
 
 ## Enforceable categories
 
@@ -8,7 +8,7 @@ This schema **15** inventory contains **57 JSON CHECK columns**. It is generated
 |---|---|
 | `authored` | Recursive typed target/owner/dependency validation; SQL guards; exact payload identities. |
 | `current-acquisition` | Issue capture scope with canonical typed identifiers, endpoint and service checks. A transferred comment may retain detached repository/binding/Source identifiers as a validated snapshot; available registrations must agree, but the old registrations are not required exchange dependencies. |
-| `current-field-evidence` | One proof per retained mutable scalar/body/metadata path; canonical path and clock/time/profile/capture schema, no absent-field proofs or previous values. Exact profile dependencies remain portable; original capture scopes are snapshots. |
+| `current-field-evidence` | One proof per retained mutable scalar/body/metadata path; canonical path, clock/time, actual parser module/version and capture schema, with no absent-field proofs or previous values. Profile/result/transport-original references are rejected; original capture scopes are snapshots. |
 | `current-members` | Typed current-page resource identities/digests, unique member keys and collection binding/owner checks; immutable page and terminal evidence. |
 | `provider` | Opaque provider projection; object JSON only. Application reference names have no meaning here. |
 | `operational` | Receiver-local configuration/checkpoints/diagnostics; object JSON; existing operational writer/registration contracts. Excluded from portable evidence. |
@@ -19,7 +19,7 @@ This schema **15** inventory contains **57 JSON CHECK columns**. It is generated
 | `predecessor-manifest` | Unique canonical decision UUID array; typed targets, scope FKs and publication DAG guards. |
 | `git-roots` | Captured Git refs require structured name/name_b64/oid/type/peeled and optional exact PR role/number/expected fields. Python checks canonical base64 and lossless displayed-name correspondence; SQL checks member types/base64 syntax and canonical OID format. Capture OIDs are declarations before object admission; published roots use exact format/OID/role set guards. |
 | `git-object-manifest` | Exact object-format/OID/raw-payload map; typed Git natural keys, owner/acquisition membership, raw mapping and immutable publication guards. |
-| `staging-envelope` | Unadmitted or original transport envelope; dedicated envelope validator before admission and on promotion. Missing dependencies/immutable variants stay durable. |
+| `staging-envelope` | Unadmitted retained domain/proof record envelope; dedicated validator before admission and on promotion. Missing dependencies/immutable variants stay durable. Original-only envelope chains cannot authorize API-original admission. |
 | `local-key` | Receiver-local table-key map; Graph remapping validates table/key schema; never application evidence. |
 
 ## Every JSON CHECK column
@@ -82,7 +82,7 @@ This schema **15** inventory contains **57 JSON CHECK columns**. It is generated
 | `service_instances.metadata` | `authored` | object; required |
 | `source_input_observations.request_context_json` | `authored` | object; required |
 | `sources.settings` | `operational` | object; NULL allowed |
-| `unresolved_payloads.diagnostic_json` | `operational` | object; NULL allowed |
+| `unresolved_payloads.diagnostic_json` | `operational` | object; required; physical corruption only |
 
 ## Meaningful reference vocabulary
 
@@ -124,15 +124,15 @@ Authored evidence recursively reserves registered names, unknown `*_uuidv4`/`*_u
 
 The root `parsed_results.derivation_json.selection_decision_uuidv4` when `kind` is `git` declares a future output decision allocated by the Git planner; it is canonical but is not an already-existing dependency. The same name at any nested location or under another derivation kind is a real typed decision dependency. `selection_predecessors` always contains dependencies.
 
-Application-consumed code detail fields have concrete optional schemas: expected role/OID maps match the declared Git object format, review-target role IDs match their OID, API/code completion flags are booleans, missing roles are typed arrays, provider limits are positive int64 bounds, and merge declarations contain canonical OIDs or null. These OIDs are expectations until actual acquisition links/publications establish ownership and completeness. Request/context GraphQL variables, provider thread identities, query/request strings and consumed operational/terminal/context flags have concrete types; malformed persisted variable arrays cannot reach offline reparse.
+Application-consumed code detail fields have concrete optional schemas: expected role/OID maps match the declared Git object format, review-target role IDs match their OID, API/code completion flags are booleans, missing roles are typed arrays, provider limits are positive int64 bounds, and merge declarations contain canonical OIDs or null. These OIDs are expectations until actual acquisition links/publications establish ownership and completeness. Retained live request/context GraphQL variables, provider thread identities, query/request strings and consumed terminal/context flags have concrete types. API offline reparse is absent; the failed-response `operational_only` flag and its dedicated guards are removed.
 
-The `head` and `base` members in `resume_scopes.request_context` are unmodified provider excerpts and remain opaque. Other members, including `parent_fetch_collection_id`, use authored reference rules. Provider projection columns are explicitly opaque throughout export/import and preserve their content; raw provider response bytes stay unchanged in CAS.
+The `head` and `base` members in `resume_scopes.request_context` are unmodified provider excerpts and remain opaque. Other members, including `parent_fetch_collection_id`, use authored reference rules. Provider projection columns remain explicitly opaque throughout export/import and preserve their content, pending the field-inventory decision. Successful historical publication, accepted partial GraphQL roots with error envelopes, live restart/304 and domain-proof paths still retain exact API bytes in CAS. Fully rejected, uncommitted API responses are not archived or staged in the core; optional external transport recording may separately capture them. This boundary does not claim zero transport-shaped JSON everywhere.
 
 Current field proofs use canonical JSON-array path keys, such as `["body"]` or
 `["metadata","reactions","total_count"]`. Each entry contains exactly
 `provider_updated_at_us`, `provider_clock_scope`, `observed_at_us`,
-`parsed_at_us`, `parser_profile_uuidv4` and `acquisition_scope`. The body and its
-availability status share one proof. Missing fields keep their prior proof;
+`parsed_at_us`, `parser_module`, `parser_version` and `acquisition_scope`. The
+body and its availability status share one proof. Missing fields keep their prior proof;
 explicit NULL and empty text remain known values. An older full projection may
 fill an unknown field without overwriting a newer known field. The map holds
 current attribution only, with size proportional to retained fields/metadata
@@ -152,11 +152,11 @@ outside the proof map and remains a receiver-local authoritative-live check.
 | Structure | Classification and validation |
 |---|---|
 | `collection_progress.cursor` JSON variants | Local restart boundary; contains opaque provider cursor/thread ID and receiver-local occurrence. Collector validates the saved boundary and ownership through SQL acquisition context. Excluded from exchange. Ordinary cursor text remains valid. |
-| `unresolved_payloads.reason` JSON diagnostic variants | Local immutable diagnostic annotations; may contain local occurrence/collection IDs. No portable reference semantics or promotion is inferred from these annotations. Excluded from exchange. |
+| `unresolved_payloads.reason` | Required literal `physical_corruption`; no logical parsing-gap or JSON retry variant. Physical diagnostics remain local and excluded from exchange. |
 | `job_attempts.reason` and progress reasons | Diagnostic strings, not a reference envelope, even if their text resembles JSON. |
-| `stored_bytes.body` for API JSON | Original provider bytes; SHA admission and exact byte equality only. No application provenance semantics are inferred from body field names. |
+| `stored_bytes.body` for API JSON | Remaining successful historical publication/live restart/304/domain-proof original bytes; SHA admission and exact equality. Body field names cannot justify standalone distribution or reinterpretation. |
 | `parsed_fact_members.fact_key_json` | SQL-generated read-only manifest members derived from actual fact keys; publication checks exact membership. |
-| Exchange unit / record `$refs`, `$bytes`, dependency manifests | Explicit `Graph` envelope schema and typed table/FK remapping; canonical hashes, real owners, repository boundary, exact publication and coverage proof checks. Import and staged promotion rerun JSON registry admission after remapping. |
+| Exchange unit / record `$refs`, `$bytes`, dependency manifests | Explicit `Graph` envelope schema and typed table/FK remapping; canonical hashes, real owners, repository boundary, exact publication and coverage proof checks. Original records require actual retained domain/Git/proof reachability; orphan originals and archive-only scaffolding are rejected on export/import/promotion. Promotion reruns JSON registry admission after remapping. |
 | Parser verification package artifact | Exact full definition, capability evidence and report digests; checked by `verify_builtin_parser.py` and runtime full-profile verification. |
 | Backup manifest | Local backup file/schema/digest envelope; maintenance validates exact format, retained DB hash and complete DDL before atomic restore. CAS-41 requires the verified copy's active physical `quarantined_payload_count`, strictly checked before restore diagnosis. |
 | Source settings input / frozen job plan | Local acquisition configuration. `source_service`, `repository_identity` and `job_plans` validate supported settings, Source registration, saved plan ownership and credential references. Frozen Source registrations/settings are protected by the job plan FK table and checked before execution. |
@@ -168,4 +168,4 @@ Packaged `resources/json_contracts.sql` is generated by `guard_sql()` and instal
 
 `ParserModel` validates profile definitions, verification criteria/evidence, result derivation and input/output manifests at application writer boundaries. `ApiFacts.finish` validates exact completion evidence, original 304 observation/result/fetch/payload and named root/child collection membership. Name observation and identity-evidence writers use the same registry. Exchange validates export, includes typed JSON dependency closure, and validates again on import/promotion after local-ID remapping. An explicit full catalog validation audits all admitted authored records; quick validation checks exhaustive schema classification.
 
-`tests/integration/test_catalog3_json_contracts.py` covers canonical/nested/foreign/wrong-kind references, logical payload identity and owner acquisition, duplicate properties/reference set semantics, missing multiple targets, opaque provider data, future declarations, reopened promotion and record permutations. Independent attacks in `test_catalog3_remaining_adversarial.py` cover Source membership arrays, nested verification, delayed Git raw membership and embedded NUL encodings in Git OIDs and parser-definition digests. Current projection/transfer follow-up tests cover inherited clocks, detached snapshots and invalid proof paths. Installed distribution tests check the registry, SQL resource/generator equality and populated catalog audit. Invalid-header and code-role reader fixtures assert early rejection while retaining child-row ownership attacks and valid missing-acquisition diagnostics. Final schema 15 acceptance is recorded separately by the integration workflow.
+`tests/integration/test_catalog3_json_contracts.py` covers canonical/nested/foreign/wrong-kind references, logical payload identity and owner acquisition, duplicate properties/reference set semantics, missing multiple targets, opaque provider data, future declarations, reopened promotion and record permutations. Independent attacks in `test_catalog3_remaining_adversarial.py` cover Source membership arrays, nested verification, delayed Git raw membership and embedded NUL encodings in Git OIDs and parser-definition digests. Current projection/transfer follow-up tests cover inherited clocks, detached snapshots and invalid proof paths. Installed distribution tests check the registry, SQL resource/generator equality and populated catalog audit. Invalid-header and code-role reader fixtures assert early rejection while retaining child-row ownership attacks and valid missing-acquisition diagnostics. Phase 1 schema 18 acceptance is recorded separately in the implementation report; the prior schema 15 receipt remains historical.
