@@ -52,7 +52,10 @@ Independent reviewers found these additional gaps:
    isolation from unrelated growth, but do not measure a large selected closure.
    The new production-Graph probe grows selected domain/Git dependencies and
    checks full/selective transfer, reversed/repeated records and late dependency
-   convergence. It records operation counts rather than concurrent wall times.
+   convergence. At 1,024 selected historical members it transfers 10,260 actual
+   records; the Git workload verifies 1,024 SHA-1/SHA-256 identities sharing 512
+   bodies. [Results and exact bindings](prototypes/exchange-selected-scale.md)
+   record operation counts rather than concurrent wall times.
 4. **Candidate assertion and receipt precision.** The newer-partial case now
    checks partial state before adding an equal-time contradiction. Presence
    checks use actual modeled cells/digests. Restart preserves a nonempty committed
@@ -106,6 +109,29 @@ or grant false completeness. Those production strides remain pending. Missing
 publication/current/Source/code/Git validators in the disposable sketch are stated
 implementation limits; they are not silently called successful checks or accepted
 semantics. A production-ready replacement prototype was not an original deliverable.
+
+## Existing performance work still unoptimized
+
+The added selected-volume probe found a separate existing cost: one-fetch export
+returns 23 records at all three sizes, while its SQL statements grow
+2,349 → 7,533 → 28,269 as the same repository grows 64 → 256 → 1,024 historical
+members. `Graph.export` prepares the repository's original-eligibility context
+before acquisition selectors. Other current-candidate and Coverage paths also
+scan the selected repository. The earlier unrelated-repository bounds remain
+valid, and these samples do not demonstrate quadratic construction or a newly
+introduced regression. This correction measures and discloses the cost; it does
+not claim to remove it or mislabel it as an owner-policy blocker.
+
+Independent reviewers proposed a lazy positive-witness resolver using indexed
+selected-fetch result inputs and actual typed output members, the existing exact
+dependency verifier and one unchanged fallback when a witness is unavailable.
+Before production use, prove equal records, errors and catalog side effects for
+multi-input results, bare terminal-proof roots, empty/304 cross-collection origins,
+Source-owner exclusion, malformed/empty publications, conflicting decision DAGs,
+quarantined shared Git/API bytes and late arrival. Merely filtering existing
+context by selected fetch fails the already executable proof-only and empty-304
+cases. Optimizing this prepass alone would not bound the additional current and
+Coverage scans, so an end-to-end claim needs its own evidence.
 
 No merge, release, deployment, authenticated production collection, retained
 catalog mutation or automatic retention/deletion is performed by this recheck.
