@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 22 items / 20 deselected / 2 selected
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[False] PASSED [ 50%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[True] PASSED [100%]
+
+======================= 2 passed, 20 deselected in 9.29s =======================

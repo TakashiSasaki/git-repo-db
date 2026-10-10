@@ -1,0 +1,67 @@
+{
+  "profile_version": 1,
+  "name": "packaging",
+  "series": "packaging",
+  "mode": "xdist",
+  "workers": 2,
+  "runtime": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "cpu_count": 5,
+    "affinity": 5,
+    "cpu_quota": "400000 100000",
+    "commit_sha": "b86ff2c96d7558379b2230489e1494630b073ef7",
+    "run_id": null,
+    "run_attempt": null,
+    "feature_sha": "b86ff2c96d7558379b2230489e1494630b073ef7",
+    "tracked_changes": false
+  },
+  "started_at": "2026-10-10T12:55:39.009920+00:00",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "tests/packaging/test_distribution.py",
+    "--strict-markers",
+    "-m",
+    "not live and not benchmark",
+    "--junitxml",
+    "artifacts/publication-free/b86ff2c-final/packaging.xml",
+    "--durations=20",
+    "-n",
+    "2",
+    "--dist",
+    "worksteal"
+  ],
+  "wall_seconds": 307.50397386499935,
+  "exit_code": 1,
+  "junit": {
+    "tests": [
+      {
+        "file": "tests/packaging/test_distribution.py",
+        "name": "test_wheel_sdist_cli[sdist-wheel]",
+        "seconds": 296.153,
+        "status": "failure",
+        "nodeid": "tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]"
+      },
+      {
+        "file": "tests/packaging/test_distribution.py",
+        "name": "test_wheel_sdist_cli[wheel]",
+        "seconds": 262.958,
+        "status": "failure",
+        "nodeid": "tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]"
+      }
+    ],
+    "files": [
+      {
+        "file": "tests/packaging/test_distribution.py",
+        "seconds": 559.1110000000001,
+        "tests": 2,
+        "failures": 2,
+        "skipped": 0
+      }
+    ],
+    "count": 2
+  }
+}

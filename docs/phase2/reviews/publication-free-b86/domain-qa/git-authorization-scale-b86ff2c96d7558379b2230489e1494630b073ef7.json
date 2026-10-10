@@ -1,0 +1,35 @@
+{
+  "source": "b86ff2c96d7558379b2230489e1494630b073ef7",
+  "tree": "085be492d5fbd8cfbcaa7eb4be3d1db27af84fee",
+  "cwd": "/workspace/reviews/publication-free-domain-qa-corrected",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "repo_catalog": "/workspace/reviews/publication-free-domain-qa-corrected/src/repo_catalog/__init__.py",
+  "state": "/workspace/review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/authorization-scale-yxydbqtt",
+  "measurements": [
+    {
+      "selected_git_objects": 32,
+      "wire_records": 160,
+      "table_record_visits": 320,
+      "authorized_records": 128
+    },
+    {
+      "selected_git_objects": 128,
+      "wire_records": 640,
+      "table_record_visits": 1280,
+      "authorized_records": 512
+    },
+    {
+      "selected_git_objects": 512,
+      "wire_records": 2560,
+      "table_record_visits": 5120,
+      "authorized_records": 2048
+    },
+    {
+      "selected_git_objects": 1024,
+      "wire_records": 5120,
+      "table_record_visits": 10240,
+      "authorized_records": 4096
+    }
+  ]
+}

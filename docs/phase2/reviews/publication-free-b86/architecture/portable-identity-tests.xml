@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="18" time="26.011" timestamp="2026-10-10T13:05:03.438547+00:00" hostname="80205147a63e"><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_same_named_services_remain_separate_and_require_uuid" time="1.809" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_service_uuid_selector_is_not_shadowed_by_a_display_name" time="1.175" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_ambiguous_implicit_github_instance_is_rejected" time="1.255" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_names_are_not_selectors_and_id_kinds_can_be_explicit" time="1.347" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_cross_kind_source_id_collision_requires_explicit_selector" time="2.149" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_identity_is_immutable[source_registration_uuidv4-00000000-0000-4000-8000-000000000001]" time="1.687" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_identity_is_immutable[discovery_kind-github_inventory]" time="1.333" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_identity_is_immutable[service_instance_uuidv4-00000000-0000-4000-8000-000000000101]" time="0.817" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_registration_requires_uuidv4[not-a-uuid]" time="0.656" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_registration_requires_uuidv4[9ed40fb6-0254-5e7a-82da-8009f471fd45]" time="3.323" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_registration_requires_uuidv4[None]" time="1.327" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_operational_settings_allow_null_but_not_invalid_json" time="0.827" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_repository_key_name_is_used_by_all_ordinary_foreign_keys" time="0.618" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_no_usable_source_rejects_before_job_and_observation[None]" time="0.687"><failure message="sqlite3.OperationalError: no such table: inventory_observations">store = &lt;repo_catalog.adapters.sqlite.store.Store object at 0x7f6e6085fb90&gt;
+selector = None
+
+    @pytest.mark.parametrize("selector", [None, "first"])
+    def test_no_usable_source_rejects_before_job_and_observation(store, selector):
+        add_source(store, "first")
+        with pytest.raises(CatalogError) as error:
+            CollectionService(store.path).discover(selector)
+        assert error.value.code == (
+            "NO_USABLE_SOURCE" if selector is None else "SOURCE_UNCONFIGURED"
+        )
+        assert store.one("SELECT count(*) FROM jobs")[0] == 0
+&gt;       assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_catalog3_portable_identity.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repo_catalog/adapters/sqlite/store.py:165: in one
+    return self.execute(sql, args).fetchone()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;repo_catalog.adapters.sqlite.store.Store object at 0x7f6e6085fb90&gt;
+sql = 'SELECT count(*) FROM inventory_observations', args = ()
+
+    def execute(self, sql, args=()):
+&gt;       return self.connection.execute(sql, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       sqlite3.OperationalError: no such table: inventory_observations
+
+src/repo_catalog/adapters/sqlite/store.py:162: OperationalError</failure></testcase><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_no_usable_source_rejects_before_job_and_observation[first]" time="0.917"><failure message="sqlite3.OperationalError: no such table: inventory_observations">store = &lt;repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60bc0d40&gt;
+selector = 'first'
+
+    @pytest.mark.parametrize("selector", [None, "first"])
+    def test_no_usable_source_rejects_before_job_and_observation(store, selector):
+        add_source(store, "first")
+        with pytest.raises(CatalogError) as error:
+            CollectionService(store.path).discover(selector)
+        assert error.value.code == (
+            "NO_USABLE_SOURCE" if selector is None else "SOURCE_UNCONFIGURED"
+        )
+        assert store.one("SELECT count(*) FROM jobs")[0] == 0
+&gt;       assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_catalog3_portable_identity.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repo_catalog/adapters/sqlite/store.py:165: in one
+    return self.execute(sql, args).fetchone()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60bc0d40&gt;
+sql = 'SELECT count(*) FROM inventory_observations', args = ()
+
+    def execute(self, sql, args=()):
+&gt;       return self.connection.execute(sql, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       sqlite3.OperationalError: no such table: inventory_observations
+
+src/repo_catalog/adapters/sqlite/store.py:162: OperationalError</failure></testcase><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_batch_skip_retains_diagnostic_without_remote_observation" time="1.174"><failure message="sqlite3.OperationalError: no such table: inventory_observations">store = &lt;repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60856600&gt;
+
+    def test_batch_skip_retains_diagnostic_without_remote_observation(store):
+        missing = add_source(store, "missing")
+        configured = add_source(store, "configured")
+        store.execute(
+            "UPDATE sources SET settings=? WHERE source_id='configured'",
+            ('{"url":"file:///synthetic-only"}',),
+        )
+        result = CollectionService(store.path).discover()
+        assert result.status == "partial"
+        assert result.data["skipped_sources"] == [
+            {"source_registration_uuidv4": missing, "reason": "SOURCE_UNCONFIGURED"}
+        ]
+        assert [
+&gt;           r[0] for r in store.all("SELECT source_id FROM inventory_observations")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ] == ["configured"]
+
+tests/integration/test_catalog3_portable_identity.py:164: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repo_catalog/adapters/sqlite/store.py:168: in all
+    return self.execute(sql, args).fetchall()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60856600&gt;
+sql = 'SELECT source_id FROM inventory_observations', args = ()
+
+    def execute(self, sql, args=()):
+&gt;       return self.connection.execute(sql, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       sqlite3.OperationalError: no such table: inventory_observations
+
+src/repo_catalog/adapters/sqlite/store.py:162: OperationalError</failure></testcase><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_source_registration_survives_backup_restore" time="3.249" /><testcase classname="tests.integration.test_catalog3_portable_identity" name="test_job_result_and_terminal_state_commit_atomically" time="1.336" /></testsuite></testsuites>
