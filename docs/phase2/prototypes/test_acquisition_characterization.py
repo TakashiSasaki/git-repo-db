@@ -193,12 +193,12 @@ def test_saved_root_is_reused_with_old_observation_for_child_restart(
 def test_current_rest_rejection_boundary_characterization(
     github_runtime, monkeypatch, retry_us
 ):
-    """Expose the current missing newer rejection clock, without canonizing it.
+    """The independently demonstrated newer rejection gap stays repaired.
 
     A list at 150 commits; a validly identified but malformed member at 200 is
-    rejected. Schema 18 keeps only the 150 boundary. A terminal retry at 175
-    consequently reports complete@175. The proposal flags this as an observed
-    integrity gap; the expected corrected result would remain partial@200.
+    rejected. The rejected body is discarded, while partial@200 remains current
+    after a terminal retry at 175. Equal time stays contradictory; 300 completes.
+    The initial baseline characterization is recorded in the workstream report.
     """
     store, repo, _, api = github_runtime
     pr = seed_pr(store, repo)
@@ -232,12 +232,12 @@ def test_current_rest_rejection_boundary_characterization(
                 current_parser.review,
             )
         assert error.value.code == "API_SCHEMA"
-        assert store.one("SELECT count(*) FROM completion_markers")[0] == 0
+        assert store.one("SELECT count(*) FROM completion_markers")[0] == 1
         assert tuple(
             store.one(
                 "SELECT coverage_state,observed_at_us FROM current_coverage WHERE kind='review'"
             )
-        ) == ("partial", 150)
+        ) == ("partial", 200)
         assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
         JobService(store).update(job, "waiting")
         JobService(store).resume(job)
@@ -255,7 +255,13 @@ def test_current_rest_rejection_boundary_characterization(
             store.one(
                 "SELECT coverage_state,observed_at_us FROM current_coverage WHERE kind='review'"
             )
-        ) == ("complete", retry_us)
+        ) == (
+            ("partial", 200)
+            if retry_us < 200
+            else ("conflict", 200)
+            if retry_us == 200
+            else ("complete", retry_us)
+        )
         assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
     finally:
         current.http.close()
