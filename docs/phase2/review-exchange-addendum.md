@@ -94,3 +94,29 @@ needs the Q03/Q09 domain scope contract before scans can be treated as comparabl
 These prototype findings and corrections do not certify production acquisition,
 Exchange admission or CAS-41 service backup/restore. Their independent production
 characterization and the exact integrated runtime acceptance are separate evidence.
+
+## Final thread-identity and Source-scope correction retest
+
+The final independently tested draft was read at design HEAD
+`a35775f65184cbe167779adabe53a0dfa7e2f008`, tree
+`758b27819a4350dda59a9f6128dfac8a776fd4e2`; the candidate files were still
+uncommitted. SHA-256 identifies the effective tested files:
+
+| File | SHA-256 |
+| --- | --- |
+| candidate.sql | `0d8a03e841f0c2517c2a591943f8d012db9a664b6f9e7a8714f2aaa74643db1e` |
+| candidate_probe.py | `acb6a7752ae6cb9ece7ffba8ba549254c20e4764afc00d270c36311f35c32cf4` |
+
+An independently constructed duplicate local thread ID for the same PR/provider
+thread now fails the requested compound UNIQUE constraint. Reusing that provider
+thread ID under another PR succeeds. Three Source scopes sharing one Source but
+differing in principal, visibility or query contract retained their explicit
+captured values; omitting the principal failed its NOT NULL constraint. The SQL
+marks their vocabulary/comparability Q03/Q09 pending and forbids equating scans
+merely because their Source matches. These examples do not select a permanent
+scope vocabulary or implement a Source completeness/selection validator.
+
+All 17 candidate probe cases passed, including the added duplicate-thread
+rejection within the nested-child case. Independent catalog checks returned no
+FK violations and `integrity_check=ok`; fingerprints were unchanged after the
+run. No production tests or production files were changed for this retest.
