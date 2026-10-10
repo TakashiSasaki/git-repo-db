@@ -245,12 +245,12 @@
     },
     {
       "source_path": "/workspace/review-artifacts/architecture/final-fafc1b2/json-corrections.diff",
-      "archived_path": "architecture/json-corrections.diff",
+      "archived_path": "architecture/json-corrections.diff.gz",
       "source_sha256": "757587a0910b65e2206f42affd62aa180241e557484967544417d664fbd80ee3",
       "source_bytes": 28265,
-      "archived_sha256": "757587a0910b65e2206f42affd62aa180241e557484967544417d664fbd80ee3",
-      "archived_bytes": 28265,
-      "compression": null
+      "archived_sha256": "72986e6b771280ca29342803dc4d550fa63b09d80b1a8943cfb53455cebfcb4c",
+      "archived_bytes": 6543,
+      "compression": "gzip-mtime0"
     },
     {
       "source_path": "/workspace/review-artifacts/architecture/final-fafc1b2/json-inventory.json",
@@ -821,12 +821,12 @@
     },
     {
       "source_path": "/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/final-json-correction.patch",
-      "archived_path": "domain-qa/final-json-correction.patch",
+      "archived_path": "domain-qa/final-json-correction.patch.gz",
       "source_sha256": "5320aa240988d1c577ee37ab86520d05f830dd88715075afec81e70cf57e1762",
       "source_bytes": 30417,
-      "archived_sha256": "5320aa240988d1c577ee37ab86520d05f830dd88715075afec81e70cf57e1762",
-      "archived_bytes": 30417,
-      "compression": null
+      "archived_sha256": "a8293f3caaa27a52fbb137d61ae11bc74eb1e41d411fbab5cce4381cecf2cce2",
+      "archived_bytes": 7014,
+      "compression": "gzip-mtime0"
     },
     {
       "source_path": "/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/final-production-diff.patch",
@@ -1361,12 +1361,12 @@
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/json-contracts-correction.patch",
-      "archived_path": "integrated/json-contracts-correction.patch",
+      "archived_path": "integrated/json-contracts-correction.patch.gz",
       "source_sha256": "757587a0910b65e2206f42affd62aa180241e557484967544417d664fbd80ee3",
       "source_bytes": 28265,
-      "archived_sha256": "757587a0910b65e2206f42affd62aa180241e557484967544417d664fbd80ee3",
-      "archived_bytes": 28265,
-      "compression": null
+      "archived_sha256": "72986e6b771280ca29342803dc4d550fa63b09d80b1a8943cfb53455cebfcb4c",
+      "archived_bytes": 6543,
+      "compression": "gzip-mtime0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/own-23-sqlite353.txt",
