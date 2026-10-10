@@ -20,8 +20,8 @@ its actual earlier version. All current identity, transfer, clock/conflict and
 receiver-local check rules remain intact.
 
 **Rejected known resource evidence keeps its real time.** After a committed page
-at150, a recognizable in-scope resource response rejected at200 records partial200.
-A valid retry175 cannot certify complete200; equal200 remains conflict and valid300
+at 150, a recognizable in-scope resource response rejected at 200 records partial200.
+A valid retry 175 cannot certify complete 200; equal 200 remains conflict and valid 300
 can supersede it. Unknown/malformed responses, another Source, wrong scope,
 cancelled or fenced attempts cannot lend a resource observation clock. Terminal
 cancellation can resume the already committed proof rather than creating a false
@@ -30,7 +30,7 @@ Source/job scope and relevant partial boundary. Adapter response timestamps must
 be signed-int64 microseconds, including genuine zero/negative values.
 
 **Historical proof requires its actual page boundary.** Historical complete
-markers require unique contiguous ordinals0..N, continuation on intermediate
+markers require unique contiguous ordinals 0..N, continuation on intermediate
 pages, and an explicit final terminal boundary. Accepted partial GraphQL roots
 with errors retain their existing retry semantics: a raw/current continuation
 difference is admitted only for the exact typed root, ordinal and observation
@@ -44,29 +44,29 @@ eligibility without discarding valid individual facts.
 **Conflict-free refresh has bounded work.** Exchange first clears stale barriers
 and recomputes pending historical selection scopes. With no actual conflict seeds,
 it returns before building an unnecessary whole-catalog dependency graph. Actual
-conflicts keep dependency propagation and Coverage blocking. At4096 unrelated Git
-objects, refresh changes from24651 statements to4; selected export remains223.
-This preserves Phase1's exact dependency closure and bounded proof construction.
+conflicts keep dependency propagation and Coverage blocking. At 4,096 unrelated Git
+objects, refresh changes from 24,651 statements to four; selected export remains 223.
+This preserves Phase 1's exact dependency closure and bounded proof construction.
 
 **Historical output sealing uses result-led indexes.** Seven indexes cover
 `code_observations`, `change_request_events`, `snapshots`, `ref_observations`,
 `code_commits`, `code_file_changes` and nonnull-result repository name observations.
 The name index is composed after its table in `identity_relations.sql`. Existing
 `ParserModel.publish_result` now uses SEARCH plans on those seven branches instead
-of scanning unrelated histories. Independent actual sealing stays1088 VM steps
-at100/2000 unrelated histories; removing only the indexes yields3329/45151. These
+of scanning unrelated histories. Independent actual sealing stays 1,088 VM steps
+at 100/2,000 unrelated histories; removing only the indexes yields 3,329/45,151. These
 are deterministic operation counts, not clean concurrent elapsed-time benchmarks.
 
 ## Schema and files
 
-Active runtime is Schema19 with complete DDL SHA-256
+Active runtime is Schema 19 with complete DDL SHA-256
 `d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415`.
-The index revision retains103 product tables,665 columns,226 FK constraints,
-48 views and498 triggers; explicit indexes rise106→113. The exact Coverage claim
+The index revision retains 103 product tables, 665 columns, 226 FK constraints,
+48 views and 498 triggers; explicit indexes rise 106→113. The exact Coverage claim
 contract and current maximum-observation predicates are unchanged. Fresh schema
 identity/check and packaged DDL share this version/fingerprint. Earlier development
 catalogs are rejected under the existing fresh-only contract; no migration is
-introduced. Schema18 investigation snapshots remain historical evidence.
+introduced. Schema 18 investigation snapshots remain historical evidence.
 
 Production changes are in `adapters/github/current_parser.py`, `collector.py`,
 `persistence.py`, `adapters/sqlite/exchange.py`, `schema.py`, and packaged
@@ -78,11 +78,11 @@ certificate is regenerated from the frozen implementation and successful
 synthetic capability tests because its existing historical consumer is still
 active; it is not part of the proposed final architecture.
 
-The current guide, README, data model and testing instructions name Schema19.
+The current guide, README, data model and testing instructions name Schema 19.
 The acquisition characterization now expects the repaired partial200 boundary.
 The [conditional disposition](schema-disposition.json) and
-[field contract](field-contract.json) are explicitly the investigated Schema18
-snapshot, rather than being silently overwritten as Schema19 runtime receipts.
+[field contract](field-contract.json) are explicitly the investigated Schema 18
+snapshot, rather than being silently overwritten as Schema 19 runtime receipts.
 
 ## Verification and independent review
 
