@@ -345,3 +345,70 @@ def test_optional_pending_provider_clock_still_requires_signed_int64(catalog, in
     with pytest.raises(sqlite3.IntegrityError):
         insert_stage(db, row)
     assert db.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        r'{"\u006dilestone":{"title":false}}',
+        r'{"milestone":{"\u0074itle":false}}',
+        r'{"labels":[{"\u006eame":false}]}',
+        r'{"\u006cabels":[false]}',
+        r'{"reactions":{"\u002b1":"wrong"}}',
+        r'{"\u006eode_id":false}',
+    ],
+)
+@pytest.mark.parametrize("boundary", ["domain-column", "pending-candidate"])
+def test_escaped_modeled_keys_retain_full_native_type_guards(catalog, raw, boundary):
+    db, ids = catalog
+    value = pr(ids)
+    if boundary == "pending-candidate":
+        value.pop("metadata", None)
+        row = stage(db, ids, value)
+        row["record_json"] = json.dumps(value)[:-1] + ',"metadata":' + raw + "}"
+        row["content_sha256"] = hashlib.sha256(row["record_json"].encode()).digest()
+        with pytest.raises(JsonContractError):
+            validate_record(db, "exchange_staging", row)
+        with pytest.raises(sqlite3.IntegrityError):
+            insert_stage(db, row)
+        assert db.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
+    else:
+        assert (
+            CurrentApiState(db)
+            .admit("change_request_state", value, source="import")
+            .status
+            == "accepted"
+        )
+        row = dict(db.execute("SELECT * FROM change_request_state").fetchone())
+        row["metadata"] = raw
+        with pytest.raises(JsonContractError):
+            validate_record(db, "change_request_state", row)
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute("UPDATE change_request_state SET metadata=?", (raw,))
+        assert (
+            json.loads(
+                db.execute("SELECT metadata FROM change_request_state").fetchone()[0]
+            )
+            == {}
+        )
+
+
+def test_escaped_valid_scalar_array_and_special_key_metadata_remains_usable(catalog):
+    db, ids = catalog
+    raw = r'{"\u006dilestone":{"\u0074itle":"known","creator":{"login":"synthetic"}},"\u006cabels":[{"\u006eame":"ready","default":false}],"reactions":{"\u002b1":0},"\u006eode_id":"node"}'
+    value = pr(ids)
+    assert (
+        CurrentApiState(db).admit("change_request_state", value, source="import").status
+        == "accepted"
+    )
+    row = dict(db.execute("SELECT * FROM change_request_state").fetchone())
+    row["metadata"] = raw
+    validate_record(db, "change_request_state", row)
+    db.execute("UPDATE change_request_state SET metadata=?", (raw,))
+    value.pop("metadata", None)
+    pending = stage(db, ids, value)
+    pending["record_json"] = json.dumps(value)[:-1] + ',"metadata":' + raw + "}"
+    pending["content_sha256"] = hashlib.sha256(pending["record_json"].encode()).digest()
+    validate_record(db, "exchange_staging", pending)
+    insert_stage(db, pending)
+    assert validate_catalog(db)["records_checked"] > 0

@@ -1849,9 +1849,9 @@ def _check_metadata(spec, value):
 def _metadata_conditions(spec, doc, type_expr):
     """Flat tree predicates preserve the modeled shape on bounded SQLite parsers.
 
-    Each modeled path has an independent check. Arrays match exactly the number
-    of index segments, so an array wildcard cannot also consume descendants.
-    Neither provider object depth nor model depth nests generated SQL queries.
+    Each modeled path has an independent check. Paths use decoded keys and
+    parent relations, so JSON escape spellings cannot bypass a known field.
+    Arrays match exactly their index depth. Model depth never nests SQL queries.
     """
     types = {
         "string": {"text"},
@@ -1880,9 +1880,7 @@ def _metadata_conditions(spec, doc, type_expr):
         match = (
             "md_node.fullkey=" + repr(path)
             if not arrays
-            else "md_node.fullkey GLOB "
-            + repr(path)
-            + f" AND length(md_node.fullkey)-length(replace(md_node.fullkey,'[',''))={arrays}"
+            else "md_node.fullkey GLOB " + repr(path) + f" AND md_node.arrays={arrays}"
         )
         invalid = [f"md_node.type NOT IN ({quoted(allowed(item))})"]
         if isinstance(item, dict):
@@ -1893,12 +1891,7 @@ def _metadata_conditions(spec, doc, type_expr):
                 f"md_child WHERE md_child.key NOT IN ({names})))"
             )
             for name, child in sorted(item.items()):
-                label = (
-                    name
-                    if re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", name)
-                    else json.dumps(name)
-                )
-                pending.append((path + "." + label, arrays, child))
+                pending.append((path + "." + json.dumps(name), arrays, child))
         elif isinstance(item, list):
             pending.append((path + "[[]*[]]", arrays + 1, item[0]))
         checks.append("(" + match + " AND (" + " OR ".join(invalid) + "))")
@@ -1906,7 +1899,7 @@ def _metadata_conditions(spec, doc, type_expr):
     return (
         "("
         + root
-        + f" OR EXISTS(SELECT 1 FROM json_tree({tree}) md_node WHERE "
+        + f" OR EXISTS(WITH RECURSIVE md_tree AS MATERIALIZED (SELECT id,parent,key,type,value FROM json_tree({tree})), md_paths(id,parent,key,type,value,fullkey,arrays) AS (SELECT id,parent,key,type,value,'$',0 FROM md_tree WHERE parent IS NULL UNION ALL SELECT child.id,child.parent,child.key,child.type,child.value,CASE WHEN typeof(child.key)='integer' THEN parent.fullkey||'['||child.key||']' ELSE parent.fullkey||'.'||json_quote(child.key) END,parent.arrays+(typeof(child.key)='integer') FROM md_paths parent JOIN md_tree child ON child.parent=parent.id) SELECT 1 FROM md_paths md_node WHERE "
         + " OR ".join(checks)
         + "))"
     )
