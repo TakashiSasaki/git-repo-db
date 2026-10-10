@@ -12,6 +12,10 @@ from repo_catalog.adapters.sqlite.coverage import (
     current_coverages,
     export_current_claims,
 )
+from repo_catalog.adapters.sqlite.json_contracts import (
+    JsonContractError,
+    validate_record,
+)
 from repo_catalog.adapters.sqlite.schema import schema_sql
 from repo_catalog.domain.coverage import (
     decide_admission,
@@ -136,17 +140,44 @@ def test_latest_time_always_wins_and_conflict_never_falls_back(
     )
 
 
-@pytest.mark.parametrize("first_details", [None, "{}", '{ "original": true }'])
+@pytest.mark.parametrize(
+    "first_details",
+    [
+        None,
+        "{}",
+        pytest.param('{ "reason": "first advisory" }', id='{ "original": true }'),
+    ],
+)
 def test_duplicate_and_stale_input_are_noops_without_advisory_merge(
     catalog, first_details
 ):
     first = admit_claim(catalog, "scope", "complete", 10, first_details)
     before = catalog.total_changes
     existing = export_current_claims(catalog, "scope")
-    assert decide_admission(existing, claim("complete", 10, '{"new":1}')) == "duplicate"
-    assert decide_admission(existing, claim("partial", 9, '{"new":2}')) == "stale"
-    assert admit_claim(catalog, "scope", "complete", 10, '{"new":1}') is None
-    assert admit_claim(catalog, "scope", "partial", 9, '{"new":2}') is None
+    assert (
+        decide_admission(
+            existing, claim("complete", 10, '{"reason":"different duplicate advisory"}')
+        )
+        == "duplicate"
+    )
+    assert (
+        decide_admission(existing, claim("partial", 9, '{"reason":"stale advisory"}'))
+        == "stale"
+    )
+    assert (
+        admit_claim(
+            catalog,
+            "scope",
+            "complete",
+            10,
+            '{"reason":"different duplicate advisory"}',
+        )
+        is None
+    )
+    assert (
+        admit_claim(catalog, "scope", "partial", 9, '{"reason":"stale advisory"}')
+        is None
+    )
     assert catalog.total_changes == before
     assert export_current_claims(catalog, "scope") == [
         {"coverage_claim_id": first, **claim("complete", 10, first_details)}
@@ -160,12 +191,17 @@ def test_duplicate_and_stale_input_are_noops_without_advisory_merge(
         ]
         == "complete"
     )
-    assert admit_claim(catalog, "scope", "partial", 10, '{"new":3}') is not None
+    assert (
+        admit_claim(
+            catalog, "scope", "partial", 10, '{"reason":"same-time partial advisory"}'
+        )
+        is not None
+    )
     component = current_coverages(catalog, "00000000-0000-4000-8000-000000000301")[0]
     assert component["coverage_state"] == "conflict"
     assert [row["details_json"] for row in component["claims"]] == [
         first_details,
-        '{"new":3}',
+        '{"reason":"same-time partial advisory"}',
         None,
     ]
     assert "details_json" not in component
@@ -178,7 +214,7 @@ def test_export_transports_latest_set_and_repeated_admission_is_idempotent(catal
         ("partial", 2),
         ("unknown", 2),
     ]:
-        admit_claim(catalog, "scope", state, stamp, '{"from":"source"}')
+        admit_claim(catalog, "scope", state, stamp, '{"reason":"source advisory"}')
     exported = export_current_claims(catalog, "scope")
     assert len(exported) == 3
     assert {row["observed_at_us"] for row in exported} == {2}
@@ -300,7 +336,10 @@ def test_advisory_details_require_json_object_or_sql_null(catalog, details_json)
     "statement",
     [
         "UPDATE coverage_claims SET coverage_state='partial'",
-        "UPDATE coverage_claims SET details_json='{\"changed\":1}'",
+        pytest.param(
+            'UPDATE coverage_claims SET details_json=\'{"reason":"changed advisory"}\'',
+            id="UPDATE coverage_claims SET details_json='{\"changed\":1}'",
+        ),
         "UPDATE coverage_claims SET observed_at_us=2",
         "DELETE FROM coverage_claims",
         "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)",
@@ -320,7 +359,7 @@ def test_structure_retains_immutable_claims_and_prevents_semantic_duplicates(
 
 
 def test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids(catalog):
-    original = '{ "original": "unchanged" }'
+    original = '{ "reason": "unchanged advisory" }'
     catalog.execute(
         "INSERT INTO coverage_claims(coverage_claim_id,coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(-1,'scope','complete',10,?)",
         (original,),
@@ -341,8 +380,18 @@ def test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids(ca
     newer = admit_claim(catalog, "scope", "unknown", 11)
     assert newer is not None and newer != -1
     before = [tuple(row) for row in catalog.execute("SELECT * FROM coverage_claims")]
-    assert admit_claim(catalog, "scope", "complete", 10, '{"ignored":1}') is None
-    assert admit_claim(catalog, "scope", "unknown", 11, '{"ignored":2}') is None
+    assert (
+        admit_claim(
+            catalog, "scope", "complete", 10, '{"reason":"ignored stale advisory"}'
+        )
+        is None
+    )
+    assert (
+        admit_claim(
+            catalog, "scope", "unknown", 11, '{"reason":"ignored duplicate advisory"}'
+        )
+        is None
+    )
     assert [
         tuple(row) for row in catalog.execute("SELECT * FROM coverage_claims")
     ] == before
@@ -366,7 +415,7 @@ def test_all_local_ids_reject_collision_replacement_and_updates(
 ):
     catalog.execute(
         "INSERT INTO coverage_claims VALUES(?,'scope','complete',1,?)",
-        (local_id, '{ "original": true }'),
+        (local_id, '{ "reason": "initial advisory" }'),
     )
     before = export_current_claims(catalog, "scope")
     with pytest.raises(sqlite3.IntegrityError):
@@ -387,7 +436,7 @@ def test_explicit_id_conflict_can_only_be_ignored_without_mutation(
 ):
     catalog.execute(
         "INSERT INTO coverage_claims VALUES(?,'scope','complete',1,?)",
-        (local_id, '{ "original": true }'),
+        (local_id, '{ "reason": "initial advisory" }'),
     )
     before = export_current_claims(catalog, "scope")
     changes = catalog.total_changes
@@ -478,3 +527,25 @@ def test_domain_helpers_reject_cross_scope_claim_sets_and_ignore_advisory_conten
         decide_admission([first], claim("complete", 0, scope="different"))
     with pytest.raises(ValueError):
         derive_coverage_state(["conflict"])
+
+
+@pytest.mark.parametrize(
+    "details",
+    [
+        '{"raw_api_response":{"data":{"body":"synthetic original"}}}',
+        '{"encoded_response":"c3ludGhldGlj"}',
+        '{"reason":{"data":{"body":"synthetic original"}}}',
+        '{"missing":[{"kind":"pr","reason":{"body":"synthetic original"}}]}',
+    ],
+)
+def test_advisory_details_reject_original_carriers_before_retention(catalog, details):
+    row = {"coverage_claim_id": 1, **claim("complete", 1, details)}
+    with pytest.raises(JsonContractError):
+        validate_record(catalog, "coverage_claims", row)
+    with pytest.raises(sqlite3.IntegrityError):
+        admit_claim(catalog, "scope", "complete", 1, details)
+    with pytest.raises(sqlite3.IntegrityError):
+        catalog.execute(
+            "INSERT INTO coverage_claims VALUES(1,'scope','complete',1,?)", (details,)
+        )
+    assert export_current_claims(catalog, "scope") == []

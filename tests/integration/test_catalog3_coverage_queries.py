@@ -82,8 +82,8 @@ def test_cli_current_conflict_preserves_separate_latest_claim_details(
     coverage_catalog, command
 ):
     state, store = coverage_catalog
-    complete_details = '{"producer":"first","complete_only":true}'
-    partial_details = '{"producer":"second","partial_only":true}'
+    complete_details = '{"reason":"first complete advisory"}'
+    partial_details = '{"reason":"second partial advisory"}'
     with store.transaction():
         store.coverage(
             "00000000-0000-4000-8000-000000000401", "git", "complete", observed_at_us=0
@@ -137,7 +137,7 @@ def test_cli_latest_unknown_does_not_fall_back_to_saved_complete(coverage_catalo
             "00000000-0000-4000-8000-000000000401",
             "git",
             "complete",
-            {"old": True},
+            {"reason": "old complete advisory"},
             observed_at_us=-1,
         )
         store.coverage(
@@ -277,7 +277,7 @@ def test_document_only_queries_ignore_code_only_coverage(coverage_catalog):
                 "00000000-0000-4000-8000-000000000401",
                 kind,
                 "partial",
-                {"code_only": True},
+                {"reason": "code-only partial advisory"},
                 observed_at_us=1,
                 change_request_id="pr",
             )
