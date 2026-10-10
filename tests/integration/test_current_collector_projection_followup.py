@@ -194,6 +194,7 @@ def test_old_full_new_partial_equal_clock_full_across_collector_endpoints(
         else {"fullDatabaseId": "501", "body": "root body", "updatedAt": OLD_CLOCK}
     )
     try:
+        monkeypatch.setattr(current_parser, "PARSER_VERSION", "1")
         seed_review(collector, repo, pr, api)
         collect(collector, repo, pr, api, first, [parent, full(fixture)])
         monkeypatch.setattr(current_parser, "PARSER_VERSION", "2")
@@ -280,8 +281,8 @@ def test_older_complete_response_fills_unknown_fields_without_reverting_newer_fi
     other = "graphql" if first == "rest" else "rest"
     full = rest_full if first == "rest" else graphql_full
     try:
-        seed_review(collector, repo, pr, api)
         monkeypatch.setattr(current_parser, "PARSER_VERSION", "2")
+        seed_review(collector, repo, pr, api)
         collect(collector, repo, pr, api, other, [partial(other)])
         monkeypatch.setattr(current_parser, "PARSER_VERSION", "1")
         collect(

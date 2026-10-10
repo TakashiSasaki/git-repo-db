@@ -121,13 +121,18 @@ def current_candidate(adapter, family):
     "null_actor", (None, {"login": None}), ids=("null", "null-login")
 )
 def test_sparse_actor_preserves_value_and_capture_until_explicit_null(
-    resources, family, actor, null_actor
+    resources, family, actor, null_actor, monkeypatch
 ):
     adapter, *_ = resources
     context = context_for(resources, family)
+    # Model a field captured before the extraction correction, then parse the
+    # sparse response with the corrected producer. Their origins stay distinct.
+    monkeypatch.setattr(current_parser, "PARSER_VERSION", "1")
     first = project(family, {"login": "original-author"}, context=context)
     assert live_admit(adapter, first).status == "accepted"
     proof = current_candidate(adapter, family)["field_evidence"]['["author"]']
+    assert proof["parser_version"] == "1"
+    monkeypatch.setattr(current_parser, "PARSER_VERSION", "2")
     partial = project(family, actor, context=context, observed=200, newer=True)
     assert live_admit(adapter, partial).status == "accepted"
     saved = current_candidate(adapter, family)
@@ -135,6 +140,7 @@ def test_sparse_actor_preserves_value_and_capture_until_explicit_null(
     assert saved["author"] == "original-author"
     assert saved["field_evidence"]['["author"]'] == proof
     assert saved["field_evidence"]['["body"]']["observed_at_us"] == 200
+    assert saved["field_evidence"]['["body"]']["parser_version"] == "2"
     assert saved["last_checked_at_us"] == 200
     cleared = project(
         family,
@@ -148,6 +154,7 @@ def test_sparse_actor_preserves_value_and_capture_until_explicit_null(
     saved = current_candidate(adapter, family)
     assert saved["author"] is None
     assert saved["field_evidence"]['["author"]']["observed_at_us"] == 300
+    assert saved["field_evidence"]['["author"]']["parser_version"] == "2"
     assert (
         saved["field_evidence"]['["author"]']["parser_module"]
         == current_parser.__name__

@@ -12,7 +12,7 @@ from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import parse_iso8601_us
 
 PARSER_MODULE = __name__
-PARSER_VERSION = "1"
+PARSER_VERSION = "2"
 
 
 def resource_id(value, field="id"):

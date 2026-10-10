@@ -89,14 +89,14 @@ def test_all_issue_comments_retained_without_archives_across_restart(github_runt
     assert store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0] == 0
     for row in store.all("SELECT * FROM issue_resources"):
         assert row["parser_module"] == current_parser.__name__
-        assert row["parser_version"] == "1"
+        assert row["parser_version"] == current_parser.PARSER_VERSION
         for evidence in json.loads(row["field_evidence_json"]).values():
             assert evidence["parser_module"] == current_parser.__name__
-            assert evidence["parser_version"] == "1"
+            assert evidence["parser_version"] == current_parser.PARSER_VERSION
             assert "parser_profile_uuidv4" not in evidence
     for page in store.all("SELECT * FROM current_collection_pages"):
         assert page["parser_module"] == current_parser.__name__
-        assert page["parser_version"] == "1"
+        assert page["parser_version"] == current_parser.PARSER_VERSION
     assert not (store.path / "transport-archive").exists()
     JobService(store).update(job, "complete")
     stage = 1
@@ -178,7 +178,7 @@ def test_review_projection_has_no_fabricated_clock_and_partial_fields_are_absent
     assert "author" not in projection
     assert projection["body"] == ""
     assert projection["parser_module"] == current_parser.__name__
-    assert projection["parser_version"] == "1"
+    assert projection["parser_version"] == current_parser.PARSER_VERSION
     null = current_parser.review({"id": 9, "body": None}, context, 10)
     assert "body" not in null and null["body_status"] == "provider-null"
     graph = current_parser.review_comment(
@@ -253,7 +253,7 @@ def test_each_review_keeps_latest_state_without_history_or_archive(github_runtim
         )
         for row in store.all("SELECT * FROM review_resources"):
             assert row["parser_module"] == current_parser.__name__
-            assert row["parser_version"] == "1"
+            assert row["parser_version"] == current_parser.PARSER_VERSION
     finally:
         collector.http.close()
 
@@ -386,7 +386,7 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
                 None,
                 [],
                 parser_module=current_parser.__name__,
-                parser_version="1",
+                parser_version=current_parser.PARSER_VERSION,
             )
             unrelated = collector.facts.begin(
                 repo, None, "review", other_job, "https://github.test/other"
@@ -398,7 +398,7 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
                 None,
                 [],
                 parser_module=current_parser.__name__,
-                parser_version="1",
+                parser_version=current_parser.PARSER_VERSION,
             )
         assert collector.summary_observed_at_us(repo, job) == 20
         assert collector.summary_observed_at_us(repo, job, documents_only=True) == 20
@@ -429,6 +429,7 @@ def test_changed_parser_rescans_instead_of_reusing_collection_receipts(
     endpoint = api.url + "/repos/fixture/alpha/issues?state=all&per_page=100"
     context = {"incremental_endpoint": endpoint}
     try:
+        monkeypatch.setattr(current_parser, "PARSER_VERSION", "1")
         job = _job(store)
         collector.current_collection(
             repo, None, "issue", job, endpoint, current_parser.issue, context=context

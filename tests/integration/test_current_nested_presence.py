@@ -126,15 +126,20 @@ def current(adapter):
 @pytest.mark.parametrize("nested", ({}, {"unselected": "attribute"}))
 @pytest.mark.parametrize("admission_source", ("live", "import"))
 def test_sparse_child_preserves_known_target_and_original_field_capture(
-    resources, source, key, target, known, nested, admission_source
+    resources, source, key, target, known, nested, admission_source, monkeypatch
 ):
     adapter, *_ = resources
     context = context_for(resources, "graphql-review-comment")
+    # A previously captured parent/OID keeps its version-1 origin when the
+    # version-2 parser receives an object without that projected field.
+    monkeypatch.setattr(current_parser, "PARSER_VERSION", "1")
     seed_parents(adapter, context)
     first = project({source: {key: known}}, context=context)
     assert live_admit(adapter, first).status == "accepted"
     proof_key = f'["{target}"]'
     proof = current(adapter)["field_evidence"][proof_key]
+    assert proof["parser_version"] == "1"
+    monkeypatch.setattr(current_parser, "PARSER_VERSION", "2")
     partial = project({source: nested}, context=context, observed=200, clock=NEW_CLOCK)
     result = (
         live_admit(adapter, partial)
@@ -146,6 +151,7 @@ def test_sparse_child_preserves_known_target_and_original_field_capture(
     assert saved[target] == known
     assert saved["field_evidence"][proof_key] == proof
     assert saved["field_evidence"]['["body"]']["observed_at_us"] == 200
+    assert saved["field_evidence"]['["body"]']["parser_version"] == "2"
     assert saved["last_checked_at_us"] == (200 if admission_source == "live" else 100)
     cleared = project({source: None}, context=context, observed=300, clock=NEWEST_CLOCK)
     result = (
@@ -157,6 +163,7 @@ def test_sparse_child_preserves_known_target_and_original_field_capture(
     saved = current(adapter)
     assert saved[target] is None
     assert saved["field_evidence"][proof_key]["observed_at_us"] == 300
+    assert saved["field_evidence"][proof_key]["parser_version"] == "2"
     assert (
         saved["field_evidence"][proof_key]["parser_module"] == current_parser.__name__
     )
