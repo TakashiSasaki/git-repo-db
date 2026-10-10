@@ -3557,6 +3557,11 @@ class Graph:
                             "INSERT OR IGNORE INTO exchange_selection_blocks VALUES(?,?,?)",
                             (kind, scope[col], key),
                         )
+        # Cleanup and pending selection barriers above apply even when there
+        # are no local conflict seeds. Without a seed, dependency propagation
+        # cannot add a result/coverage barrier; avoid materializing the catalog.
+        if not blocked:
+            return
         from repo_catalog.adapters.sqlite.json_contracts import reference_dependencies
 
         # Build dependency edges once, then propagate with a queue. Shared
