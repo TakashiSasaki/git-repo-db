@@ -1,0 +1,144 @@
+{
+  "status": "Proposed/Pending Owner Decision",
+  "sql_sha256": "0d8a03e841f0c2517c2a591943f8d012db9a664b6f9e7a8714f2aaa74643db1e",
+  "probe_sha256": "cf5317b9ab9dcfbac7d47b79e69b97dc9ca97b5558e98002fa9393f1a23dfd0e",
+  "source_revision": {
+    "head": "a14ae9e9fd8e2a77b1a613298359e5f5341f50d2",
+    "tree": "3418e52ef4b6038c37363bc7a6cbfc19d1da78b7",
+    "tracked_changes": false
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1"
+  },
+  "cases": [
+    {
+      "case": "empty",
+      "outcome": "passed"
+    },
+    {
+      "case": "terminal",
+      "outcome": "passed"
+    },
+    {
+      "case": "ordinal",
+      "outcome": "passed"
+    },
+    {
+      "case": "duplicate",
+      "outcome": "passed"
+    },
+    {
+      "case": "digest",
+      "outcome": "passed"
+    },
+    {
+      "case": "selective",
+      "outcome": "passed"
+    },
+    {
+      "case": "owner",
+      "outcome": "passed"
+    },
+    {
+      "case": "wrong_family",
+      "outcome": "passed"
+    },
+    {
+      "case": "tampered_value",
+      "outcome": "passed"
+    },
+    {
+      "case": "cross_field_origin",
+      "outcome": "passed"
+    },
+    {
+      "case": "coverage_exact_contract_newer_partial_equal_time_unknown",
+      "outcome": "passed",
+      "evidence": {
+        "checkpoints": [
+          {
+            "inserted_state": "complete",
+            "current": [
+              100,
+              "complete"
+            ]
+          },
+          {
+            "inserted_state": "partial",
+            "current": [
+              200,
+              "partial"
+            ]
+          },
+          {
+            "inserted_state": "complete",
+            "current": [
+              200,
+              "conflict"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "case": "identical_identity_missing_null_empty",
+      "outcome": "passed",
+      "evidence": {
+        "same_observation_uuid": "00000000-0000-4000-8000-00000000006d",
+        "modeled_body_digests": {
+          "missing": "f9f2ab15cd8e745fb855ee5097a726de9a0a0420b24b92a463e3626b2dbd34b7",
+          "null": "ec4125fc93f4b1d3654391c31a268f7fe04be8072436aff2c33dc476c78dabb4",
+          "empty": "29e3aca591c676223aee09599cc12d353f3965348560868e6a8e9282ecf72e39"
+        }
+      }
+    },
+    {
+      "case": "incomparable_observations_keep_both_candidates",
+      "outcome": "passed"
+    },
+    {
+      "case": "manual_source_and_unknown_provider_identity_without_fabrication",
+      "outcome": "passed"
+    },
+    {
+      "case": "nested_missing_child_then_exact_empty_child_wrong_pr_scope",
+      "outcome": "passed"
+    },
+    {
+      "case": "verified_git_sha1_sha256_exact_shared_content",
+      "outcome": "passed"
+    },
+    {
+      "case": "file_close_reopen_committed_prefix",
+      "outcome": "passed",
+      "evidence": {
+        "prefix_members": 1,
+        "continued_members": 2,
+        "assessment_observed_at_us": 175,
+        "foreign_keys": true,
+        "recursive_triggers": true,
+        "wrong_terminal_owner_rejected_after_reopen": true
+      }
+    }
+  ],
+  "counts": {
+    "table": 69,
+    "view": 2,
+    "trigger": 3,
+    "index": 103
+  },
+  "checks": {
+    "foreign_keys": [],
+    "integrity": [
+      "ok"
+    ],
+    "strict_tables": 69
+  },
+  "limitations": [
+    "This is a domain skeleton, not production writer/reader or wire format.",
+    "Publication member sealing, complete retained-field contracts, current-resource admission and immutable guards reuse responsibilities traced in workstreams but are not fully implemented in this prototype.",
+    "Source/code/Git interpretation validators and production CAS-41 backup/restore are characterized separately; no prototype pass certifies those runtime paths.",
+    "No retention duration, GC, lifecycle or owner decision is implemented."
+  ]
+}
