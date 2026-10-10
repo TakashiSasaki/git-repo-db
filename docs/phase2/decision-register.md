@@ -391,9 +391,11 @@ blocks restart rewrite. Full options: [acquisition](workstreams/acquisition.md#6
    publication/proof/field meaning, not retention duration or GC.
 2. **Acquisition boundary:** Q07-A and Q12-A, or explicit alternatives before
    writer/restart/cache replacement. No cache policy is inferred from archive retirement.
-3. **Parallel families:** Q03-A Source scan design and Q08-A Git/domain selection
-   contract can be reviewed independently, then implemented in parallel workstreams.
-4. **Portable integration:** Q10-B after proof/lifecycle meanings are known. Q11-A
+3. **Parallel families:** Q03-A Source scan design and the independently answered
+   Q08-S-A candidate-selection / Q08-G-A intrinsic Git facts contracts can be
+   reviewed independently, then implemented in parallel workstreams.
+4. **Portable integration:** Q10-B and an explicit Q10-T attestation/trust answer
+   after proof/lifecycle meanings are known. Q11-A
    is the lowest change physical option; broader storage or GC decisions can wait.
 
 The core coordinated schema/writer/query/Exchange retirement cannot truthfully be
