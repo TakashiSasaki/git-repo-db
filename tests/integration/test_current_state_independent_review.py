@@ -19,6 +19,7 @@ from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.config import DEFAULTS
 from repo_catalog.domain.models import CancellationToken
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @dataclass
@@ -89,17 +90,28 @@ class ReviewCatalog:
         self.store.execute(
             "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,"
             "repository_binding_id,endpoint,request_context,parser_version,"
-            "profile_version,confidence) VALUES(?,?,?,'synthetic','{}','test','test','proven')",
+            "confidence) VALUES(?,?,?,'synthetic','{}','test','proven')",
             (scope, context["repository_uuidv4"], context["repository_binding_id"]),
         )
         self.store.execute(
             "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,"
-            "change_request_id,kind,resume_scope_id) VALUES(?,?,?,'review-comment',?)",
+            "change_request_id,kind,resume_scope_id,scope_json) VALUES(?,?,?,'review-comment',?,?)",
             (
                 collection,
                 context["repository_uuidv4"],
                 context["change_request_id"] if parent else None,
                 scope,
+                json.dumps(
+                    {
+                        "repository_uuidv4": context["repository_uuidv4"],
+                        "change_request_id": context["change_request_id"]
+                        if parent
+                        else None,
+                        "repository_binding_id": context["repository_binding_id"],
+                        "service_instance_uuidv4": context["service_instance_uuidv4"],
+                        "endpoint": "synthetic",
+                    }
+                ),
             ),
         )
         return collection
@@ -215,7 +227,7 @@ def test_repo_wide_receipt_rejects_member_from_another_binding(reviewed_catalog)
     collection = catalog.collection(parent=False)
     with pytest.raises(sqlite3.IntegrityError):
         catalog.store.execute(
-            "INSERT INTO current_collection_pages VALUES(?,0,0,NULL,?,200,?,?)",
+            "INSERT INTO current_collection_pages VALUES(?,0,0,0,?,200,?,?)",
             (
                 collection,
                 json.dumps([review_member(catalog, owner=2)]),
@@ -261,7 +273,7 @@ def test_current_receipts_reject_malformed_members_via_direct_sql(
         )
     with pytest.raises(sqlite3.IntegrityError):
         catalog.store.execute(
-            "INSERT INTO current_collection_pages VALUES(?,0,0,NULL,?,200,?,?)",
+            "INSERT INTO current_collection_pages VALUES(?,0,0,0,?,200,?,?)",
             (collection, encoded, catalog.parser_module, catalog.parser_version),
         )
 
@@ -340,7 +352,7 @@ def test_sparse_update_preserves_exact_body_and_nested_known_fields(reviewed_cat
         "nested": {"retained": True, "new": 2},
     }
     assert catalog.store.one("SELECT count(*) FROM issue_resources")[0] == 1
-    assert catalog.store.one("SELECT count(*) FROM document_observations")[0] == 0
+    assert_absent_tables(catalog.store.connection, "document_observations")
 
 
 def test_actual_parser_attribution_needs_no_profile_selection_or_trust(
@@ -364,11 +376,8 @@ def test_actual_parser_attribution_needs_no_profile_selection_or_trust(
     assert [row["body"] for row in visible_issues(catalog).data["items"]] == [
         "second module body"
     ]
-    assert catalog.store.one("SELECT count(*) FROM parser_profiles")[0] == 0
-    assert (
-        catalog.store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0]
-        == 0
-    )
+    assert_absent_tables(catalog.store.connection, "parser_profiles")
+    assert_absent_tables(catalog.store.connection, "parser_profile_selection_decisions")
 
 
 def test_tied_provider_clock_has_no_incumbent_public_winner(reviewed_catalog):

@@ -41,13 +41,13 @@
         "db_instance_id": {
           "type": "string"
         },
-        "publication_seq": {
+        "local_revision": {
           "type": "integer"
         }
       },
       "required": [
         "db_instance_id",
-        "publication_seq"
+        "local_revision"
       ]
     },
     "data": {

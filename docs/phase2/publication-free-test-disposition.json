@@ -1,0 +1,574 @@
+{
+  "status": "ordinary suite execution in progress; exact frozen-tree acceptance pending",
+  "mechanism_only_retirements": [
+    {
+      "retired_node": "tests/integration/test_catalog3_parser_model.py::test_independent_reparse_retains_input_and_produces_separate_output",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_offline_git_reanalysis_preserves_captures_and_verified_byte_identities",
+        "tests/integration/test_git_direct_objects.py::test_reanalysis_keeps_real_capture_and_intrinsic_identity"
+      ],
+      "surviving_assertion": "Git-only reanalysis preserves original acquisition/ref/snapshot and canonical byte identities; decoder candidates remain explicit.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_parser_model.py::test_independent_reparse_retains_input_and_produces_separate_output"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_parser_model.py::test_delayed_predecessor_promotes_without_new_decision_or_time_order",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_parser_model.py::test_delayed_predecessor_promotes_without_new_decision_or_time_order"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_parser_model.py::test_output_manifest_cannot_publish_an_incomplete_exchange_subset",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_selective_exchange.py::test_valid_member_usable_before_terminal_evidence",
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_collection_subset_manifest_does_not_prove_complete_collection",
+        "tests/integration/test_git_direct_objects.py::test_interrupted_intrinsic_object_rolls_back_whole_unit"
+      ],
+      "surviving_assertion": "Independently valid typed resources remain usable before collection completion; a subset cannot claim full normalized collection proof; interrupted one-object intrinsic installation rolls back its complete atomic unit. Generic output/fact seals are removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_parser_model.py::test_output_manifest_cannot_publish_an_incomplete_exchange_subset"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_parser_model.py::test_invalidated_verification_never_switches_to_newer_pass",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_parser_model.py::test_invalidated_verification_never_switches_to_newer_pass"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_parser_model.py::test_conflicting_same_uuid_preserves_original_and_blocks_current",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_unordered_conflict_blocks_current_search_without_parser_selection",
+        "tests/integration/test_current_exchange_followup.py::test_application_import_reopens_conflicts_and_exports_every_variant",
+        "tests/integration/test_current_resources.py::test_fresh_serialized_live_scope_resolves_unknown_conflict"
+      ],
+      "surviving_assertion": "Natural current subject equal-clock/unordered alternatives remain hidden, every variant is retained across repeated/onward Exchange, and only a valid serialized live scope can resolve unknown order; generic fact UUID DAG resolution is removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_parser_model.py::test_conflicting_same_uuid_preserves_original_and_blocks_current"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_parser_model.py::test_repository_names_require_published_selected_usable_parser_result",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_publication_free_current_api.py::test_source_roster_fenced_sparse_values_and_partial_no_absence_deletion",
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission"
+      ],
+      "surviving_assertion": "Source roster directly keeps actual module/version and field evidence, and partial scans do not delete known names/associations; ordinary validity requires no selected parser result.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_parser_model.py::test_repository_names_require_published_selected_usable_parser_result"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_normal_reads_use_selected_profile_and_history_is_explicit",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_retained_exact_code_assessment_does_not_recreate_api_edit_history",
+        "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history",
+        "tests/integration/test_catalog3_current_queries.py::test_current_issue_queries_reject_obsolete_parser_profile_selector"
+      ],
+      "surviving_assertion": "API history/profile selectors reject explicitly; live A\u2192B\u2192A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_normal_reads_use_selected_profile_and_history_is_explicit"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_no_selection_does_not_use_largest_observation_or_timestamp",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_unordered_conflict_blocks_current_search_without_parser_selection",
+        "tests/integration/test_catalog3_current_queries.py::test_corrupt_current_domain_body_rejects_reads_and_index_rebuild",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict"
+      ],
+      "surviving_assertion": "Current conflicts hide ordinary current/search winners; content corruption blocks dependent reads; parser version/receipt order has no authority.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_no_selection_does_not_use_largest_observation_or_timestamp"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_fact_conflict_is_partial_until_explicit_multi_predecessor_resolution",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_unordered_conflict_blocks_current_search_without_parser_selection",
+        "tests/integration/test_current_exchange_followup.py::test_application_import_reopens_conflicts_and_exports_every_variant",
+        "tests/integration/test_current_resources.py::test_fresh_serialized_live_scope_resolves_unknown_conflict"
+      ],
+      "surviving_assertion": "Natural current subject equal-clock/unordered alternatives remain hidden, every variant is retained across repeated/onward Exchange, and only a valid serialized live scope can resolve unknown order; generic fact UUID DAG resolution is removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_fact_conflict_is_partial_until_explicit_multi_predecessor_resolution"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_conflicting_cr_profile_blocks_repository_inheritance",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_conflicting_cr_profile_blocks_repository_inheritance"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_staged_individual_selection_blocks_parent_until_dependency_arrives",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_staged_individual_selection_blocks_parent_until_dependency_arrives"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_untrusted_or_invalidated_verification_does_not_expose_current",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_untrusted_or_invalidated_verification_does_not_expose_current[False]",
+        "tests/integration/test_catalog3_profile_queries.py::test_untrusted_or_invalidated_verification_does_not_expose_current[True]"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_trust_change_invalidates_query_cursor",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_pr_scope_coverage.py::test_pr_cursor_scope_and_revision_guards_survive_preflight"
+      ],
+      "surviving_assertion": "Trust-only mutation is retired. Real local revision changes invalidate a saved query cursor, and changing request scope rejects cursor reuse.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_trust_change_invalidates_query_cursor"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_quarantine_hides_only_dependent_results_and_invalidates_cursor",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_quarantined_raw_git_bytes_leave_independent_prefix_available",
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_git_quarantine_suppresses_only_dependent_repository_readers",
+        "tests/integration/test_catalog3_cas_integrity.py::test_repair_restores_bytes_atomically_retains_diagnostic_and_tracks_recurrence"
+      ],
+      "surviving_assertion": "Quarantined raw Git bytes suppress only dependent intrinsic/read projections while independent objects remain available; repair is atomic and diagnostic recurrence retained. HTTP-current text no longer depends on raw API CAS.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_quarantine_hides_only_dependent_results_and_invalidates_cursor"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_target_diagnostics_require_explicit_history_for_other_profiles",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_retained_exact_code_assessment_does_not_recreate_api_edit_history",
+        "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history",
+        "tests/integration/test_catalog3_current_queries.py::test_current_issue_queries_reject_obsolete_parser_profile_selector"
+      ],
+      "surviving_assertion": "API history/profile selectors reject explicitly; live A\u2192B\u2192A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_target_diagnostics_require_explicit_history_for_other_profiles"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_new_verification_never_silently_replaces_selected_evidence",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_new_verification_never_silently_replaces_selected_evidence"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_fts_cannot_bypass_profile_or_trust_selection",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_unordered_conflict_blocks_current_search_without_parser_selection",
+        "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text"
+      ],
+      "surviving_assertion": "FTS/search cannot expose unordered current alternatives or superseded current text; neither profile selection nor certificate trust is required.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_fts_cannot_bypass_profile_or_trust_selection"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_profile_queries.py::test_cli_history_and_profile_filters_are_explicit",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_retained_exact_code_assessment_does_not_recreate_api_edit_history",
+        "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history",
+        "tests/integration/test_catalog3_current_queries.py::test_current_issue_queries_reject_obsolete_parser_profile_selector"
+      ],
+      "surviving_assertion": "API history/profile selectors reject explicitly; live A\u2192B\u2192A edits expose only final current A and old B is absent from ordinary search. Retained exact code assessments do not reintroduce old PR metadata/edit snapshots.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_profile_queries.py::test_cli_history_and_profile_filters_are_explicit"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_published_decision_cannot_gain_predecessor_and_change_its_meaning",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_published_decision_cannot_gain_predecessor_and_change_its_meaning"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_unsealed_decision_blocks_existing_current_until_exact_dependencies_publish",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_unsealed_decision_blocks_existing_current_until_exact_dependencies_publish"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_empty_cr_scope_blocks_parent_profile_inheritance",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_empty_cr_scope_blocks_parent_profile_inheritance"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_new_verification_does_not_silently_replace_invalidated_selected_record",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_new_verification_does_not_silently_replace_invalidated_selected_record"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_passed_verification_requires_exact_full_profile_evidence",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_followup_adversarial.py::test_field_proof_requires_actual_nonempty_parser_attribution"
+      ],
+      "surviving_assertion": "Certificate evidence is removed. Actual per-field parser module/version remain mandatory and exact; a highest version/capture time cannot resolve an unordered current value.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_passed_verification_requires_exact_full_profile_evidence[missing-capability]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_passed_verification_requires_exact_full_profile_evidence[failed-capability]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_passed_verification_requires_exact_full_profile_evidence[empty-checks]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_passed_verification_requires_exact_full_profile_evidence[wrong-definition]"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_sqlite_nul_termination_cannot_hide_noncanonical_profile_uuid",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_completion_marker_uuid_cannot_hide_noncanonical_suffix_after_nul",
+        "tests/integration/test_current_state_independent_review.py::test_provider_identity_cannot_hide_noncanonical_suffix_in_sql"
+      ],
+      "surviving_assertion": "Profile UUIDs are removed. Actual provider identities and retained completion UUIDs reject hidden NUL suffixes at direct SQL boundaries.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_sqlite_nul_termination_cannot_hide_noncanonical_profile_uuid"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_result_owner_xor_cannot_bypass_composite_foreign_keys",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_git_acquisition_membership_rejects_foreign_typed_owner",
+        "tests/integration/test_current_state_independent_review.py::test_issue_parent_constraints_resist_direct_sql_bypass",
+        "tests/integration/test_catalog3_document_identity.py::test_current_state_must_belong_to_exact_document",
+        "tests/integration/test_catalog3_document_identity.py::test_document_tuple_distinguishes_parent_kind_and_provider_spelling"
+      ],
+      "surviving_assertion": "Each document family has a concrete typed owner/key; current state must belong to that exact natural parent/kind/provider tuple. Git membership and Issue parent binding reject NULL/cross-repository bypass. Generic result-owner XOR and parsed-input polymorphism are removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_result_owner_xor_cannot_bypass_composite_foreign_keys[repository-None-None]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_result_owner_xor_cannot_bypass_composite_foreign_keys[source-None-None]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_result_owner_xor_cannot_bypass_composite_foreign_keys[repository-repo-source]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_result_owner_xor_cannot_bypass_composite_foreign_keys[source-repo-source]"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_parsed_input_rejects_null_bypass_and_foreign_repository",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_git_acquisition_membership_rejects_foreign_typed_owner",
+        "tests/integration/test_current_state_independent_review.py::test_issue_parent_constraints_resist_direct_sql_bypass",
+        "tests/integration/test_catalog3_document_identity.py::test_current_state_must_belong_to_exact_document",
+        "tests/integration/test_catalog3_document_identity.py::test_document_tuple_distinguishes_parent_kind_and_provider_spelling"
+      ],
+      "surviving_assertion": "Each document family has a concrete typed owner/key; current state must belong to that exact natural parent/kind/provider tuple. Git membership and Issue parent binding reject NULL/cross-repository bypass. Generic result-owner XOR and parsed-input polymorphism are removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_parsed_input_rejects_null_bypass_and_foreign_repository[repository-None-None-fetch]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_parsed_input_rejects_null_bypass_and_foreign_repository[source-None-source-fetch]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_parsed_input_rejects_null_bypass_and_foreign_repository[repository-repo-None-fetch2]"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_publication_seals_fact_membership_not_only_input_membership",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_selective_exchange.py::test_valid_member_usable_before_terminal_evidence",
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_collection_subset_manifest_does_not_prove_complete_collection",
+        "tests/integration/test_git_direct_objects.py::test_interrupted_intrinsic_object_rolls_back_whole_unit"
+      ],
+      "surviving_assertion": "Independently valid typed resources remain usable before collection completion; a subset cannot claim full normalized collection proof; interrupted one-object intrinsic installation rolls back its complete atomic unit. Generic output/fact seals are removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_publication_seals_fact_membership_not_only_input_membership"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_repair_failure_restores_corrupt_bytes_quarantine_and_protection_trigger",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_quarantined_raw_git_bytes_leave_independent_prefix_available",
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_git_quarantine_suppresses_only_dependent_repository_readers",
+        "tests/integration/test_catalog3_cas_integrity.py::test_repair_restores_bytes_atomically_retains_diagnostic_and_tracks_recurrence"
+      ],
+      "surviving_assertion": "Quarantined raw Git bytes suppress only dependent intrinsic/read projections while independent objects remain available; repair is atomic and diagnostic recurrence retained. HTTP-current text no longer depends on raw API CAS.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_repair_failure_restores_corrupt_bytes_quarantine_and_protection_trigger"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_invalid_declared_hash_cannot_be_retained_even_in_staging",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_cas_integrity.py::test_declared_hash_mismatch_is_never_staged",
+        "tests/integration/test_catalog3_payload_cas.py::test_declared_hash_mismatch_is_rejected_before_any_admission"
+      ],
+      "surviving_assertion": "Bad declared digest enters neither physical/logical storage nor rejected-byte staging.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_invalid_declared_hash_cannot_be_retained_even_in_staging"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_received_source_configuration_variants_are_provenance_not_identity_conflicts",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_repository_exchange_preserves_capture_without_changing_local_source_settings"
+      ],
+      "surviving_assertion": "One-repository Exchange carries required Source identity/scoped association, omits local Source settings and Source-wide assessment; repeated receipts after sender configuration changes preserve receiver settings and exact original per-field capture registration.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_received_source_configuration_variants_are_provenance_not_identity_conflicts"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_source_result_cannot_take_another_source_input",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_source_capture_rejects_outside_source_membership",
+        "tests/integration/test_issue_transfer_followup.py::test_known_capture_binding_mismatch_rejected_by_sql",
+        "tests/integration/test_publication_free_current_api.py::test_source_roster_fenced_sparse_values_and_partial_no_absence_deletion"
+      ],
+      "surviving_assertion": "Typed current Source association and capture validate actual repository, binding and registration membership; a source result/input-generator ownership chain is removed. Sparse partial roster scans retain actual associations.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_source_result_cannot_take_another_source_input"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_profile_dag_rejects_cycle_even_before_publication",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_profile_dag_rejects_cycle_even_before_publication"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_published_profile_cannot_be_replaced_with_same_uuid",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_parser_provenance.py::test_greatest_parser_version_and_capture_time_do_not_resolve_domain_conflict",
+        "tests/integration/test_current_resources.py::test_stale_revision_and_wrong_scope_do_not_certify_live_order"
+      ],
+      "surviving_assertion": "Profile/certificate/selection DAG nodes and immutable published predecessor sets are retired. Actual module/version suffices; only correct typed live capture scope and revision can establish ordering, and profile/version/time cannot choose a conflict winner.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_published_profile_cannot_be_replaced_with_same_uuid"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_late_generated_fact_keeps_result_unpublished_until_manifest_complete",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_selective_exchange.py::test_valid_member_usable_before_terminal_evidence",
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_collection_subset_manifest_does_not_prove_complete_collection",
+        "tests/integration/test_git_direct_objects.py::test_interrupted_intrinsic_object_rolls_back_whole_unit"
+      ],
+      "surviving_assertion": "Independently valid typed resources remain usable before collection completion; a subset cannot claim full normalized collection proof; interrupted one-object intrinsic installation rolls back its complete atomic unit. Generic output/fact seals are removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_late_generated_fact_keeps_result_unpublished_until_manifest_complete[False]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_late_generated_fact_keeps_result_unpublished_until_manifest_complete[True]"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_late_source_dependency_does_not_relabel_the_original_sender",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_current_resources.py::test_missing_parent_survives_restart_then_promotes",
+        "tests/integration/test_issue_transfer_followup.py::test_transfer_exchange_retains_snapshot_without_exporting_other_repository",
+        "tests/integration/test_parser_provenance.py::test_repository_exchange_preserves_capture_without_changing_local_source_settings"
+      ],
+      "surviving_assertion": "Late typed parents promote persisted candidates without rewriting exact captured Source registration or original owner; one-repository export retains detached capture without importing local Source settings or Source-wide assessments.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_late_source_dependency_does_not_relabel_the_original_sender"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_generated_repository_names_enforce_generator_ownership",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_remaining_adversarial.py::test_source_capture_rejects_outside_source_membership",
+        "tests/integration/test_issue_transfer_followup.py::test_known_capture_binding_mismatch_rejected_by_sql",
+        "tests/integration/test_publication_free_current_api.py::test_source_roster_fenced_sparse_values_and_partial_no_absence_deletion"
+      ],
+      "surviving_assertion": "Typed current Source association and capture validate actual repository, binding and registration membership; a source result/input-generator ownership chain is removed. Sparse partial roster scans retain actual associations.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_generated_repository_names_enforce_generator_ownership[other-repository]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_generated_repository_names_enforce_generator_ownership[missing-owner]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_generated_repository_names_enforce_generator_ownership[unlinked-source]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_generated_repository_names_enforce_generator_ownership[other-source]"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_generated_name_is_in_output_manifest_and_cannot_arrive_after_sealing",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_publication_free_current_api.py::test_source_roster_fenced_sparse_values_and_partial_no_absence_deletion",
+        "tests/integration/test_publication_free_current_api.py::test_sparse_api_update_preserves_exact_origin_and_older_fill"
+      ],
+      "surviving_assertion": "Source roster/name fields are current typed data with exact field evidence; sparse refresh may preserve prior evidence, while generic generated-name output-manifest sealing is removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_generated_name_is_in_output_manifest_and_cannot_arrive_after_sealing"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_adversarial_model.py::test_same_fact_uuid_conflict_blocks_current_independently_of_arrival_order",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_unordered_conflict_blocks_current_search_without_parser_selection",
+        "tests/integration/test_current_exchange_followup.py::test_application_import_reopens_conflicts_and_exports_every_variant",
+        "tests/integration/test_current_resources.py::test_fresh_serialized_live_scope_resolves_unknown_conflict"
+      ],
+      "surviving_assertion": "Natural current subject equal-clock/unordered alternatives remain hidden, every variant is retained across repeated/onward Exchange, and only a valid serialized live scope can resolve unknown order; generic fact UUID DAG resolution is removed.",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_adversarial_model.py::test_same_fact_uuid_conflict_blocks_current_independently_of_arrival_order[False]",
+        "tests/integration/test_catalog3_adversarial_model.py::test_same_fact_uuid_conflict_blocks_current_independently_of_arrival_order[True]"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_phase2_publication_scaling.py::test_actual_publication_lookup_uses_all_seven_result_led_indexes",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_phase1_exchange_scaling.py::test_selected_collection_work_independent_of_same_repository_history",
+        "tests/integration/test_phase1_exchange_scaling.py::test_selected_member_volume_has_linear_vm_work",
+        "tests/integration/test_phase2_exchange_scaling.py::test_conflict_free_barrier_refresh_is_bounded_under_real_history_growth"
+      ],
+      "surviving_assertion": "Result-led publication indexes are removed. Actual selected typed closure work is measured with SQLite VM steps against 1,000/5,000 same-repository current resources, code and real Git captures; selected member volume grows linearly and conflict-free barriers do not walk raw Git/CAS history.",
+      "retired_collected_nodes": [
+        "tests/integration/test_phase2_publication_scaling.py::test_actual_publication_lookup_uses_all_seven_result_led_indexes"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_phase2_publication_scaling.py::test_actual_sealing_vm_work_is_independent_of_unrelated_histories",
+      "reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated.",
+      "replacement_nodes": [
+        "tests/integration/test_phase1_exchange_scaling.py::test_selected_collection_work_independent_of_same_repository_history",
+        "tests/integration/test_phase1_exchange_scaling.py::test_selected_member_volume_has_linear_vm_work",
+        "tests/integration/test_phase2_exchange_scaling.py::test_conflict_free_barrier_refresh_is_bounded_under_real_history_growth"
+      ],
+      "surviving_assertion": "Result-led publication indexes are removed. Actual selected typed closure work is measured with SQLite VM steps against 1,000/5,000 same-repository current resources, code and real Git captures; selected member volume grows linearly and conflict-free barriers do not walk raw Git/CAS history.",
+      "retired_collected_nodes": [
+        "tests/integration/test_phase2_publication_scaling.py::test_actual_sealing_vm_work_is_independent_of_unrelated_histories"
+      ]
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_model_cli.py::test_profile_registration_selection_trust_and_invalidation_cli",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_model_cli.py::test_profile_registration_selection_trust_and_invalidation_cli"
+      ],
+      "reason": "Profile CLI registration/trust/invalidation commands are removed by no-independent-Publication design.",
+      "replacement_nodes": [
+        "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission",
+        "tests/integration/test_catalog3_model_cli.py::test_retired_profile_cli_routes_do_not_create_catalog"
+      ],
+      "surviving_assertion": "Ordinary current admission accepts exact actual module/version with no profile registration or trust. Retired register/verify/trust/select/invalidate CLI routes reject with INVALID_ARGUMENT without creating catalog state."
+    },
+    {
+      "retired_node": "tests/integration/test_catalog3_model_cli.py::test_admitted_late_dependency_is_partial_then_promotes_without_new_ids",
+      "retired_collected_nodes": [
+        "tests/integration/test_catalog3_model_cli.py::test_admitted_late_dependency_is_partial_then_promotes_without_new_ids"
+      ],
+      "reason": "Generic selected result/decision late dependencies are retired; actual typed resource intake retains the late-parent behavior.",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_exchange.py::test_missing_parent_stays_pending_then_promotes"
+      ],
+      "surviving_assertion": "Actual required parent absence keeps direct document pending, then adding that parent promotes without creating a new document identity."
+    }
+  ],
+  "replacement_families": {},
+  "limitations": "Every listed replacement is an actual function, not a skipped legacy fixture. Mechanism-only removals deliberately do not emulate retired API history, parser certificates, result seals, or local Source settings/Source-wide assessment Exchange. Current behavior ports preserve independent resources, typed owner/parent/field evidence, CAS integrity, full-scope query coverage, cursor guards and real bounded SQLite work. Frozen-tree full execution remains required.",
+  "schema_contract_rewrites": "tests/support/schema20_contract_replacements.json: all 240 independently collected original schema/provider/document/JSON/adversarial nodes mapped to exact collected typed-domain replacements.",
+  "baseline": {
+    "sha": "6ca31eb95d2dca91adcf20af88fbb54387595375",
+    "ordinary_collected_count": 1950,
+    "selection": "tests/unit tests/integration tests/e2e, not live and not benchmark",
+    "source": "independent archived HEAD scripts/tests/src collection, matching schema and marker configuration"
+  },
+  "mechanism_retired_collected_count": 56,
+  "retired_fixture_support": [
+    {
+      "path": "tests/support/parser_bootstrap.py",
+      "reason": "Removed automatic registration/result/profile/publication bootstrap from tests and CLI subprocess startup; direct domain fixtures need no authority setup."
+    },
+    {
+      "path": "tests/support/parser_facts.py",
+      "reason": "Unused after six schema suites, PR coverage and Git tests moved to direct resource/object fixtures. Its only behavior was fabricating profiles/results, fake empty acquisition seals and inherited result fields."
+    }
+  ]
+}

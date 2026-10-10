@@ -1,17 +1,19 @@
 """Current coverage reaches offline CLI projections without historical fallback."""
 
-import json
 import sqlite3
 
 import pytest
 
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.maintenance_service import MaintenanceService
+from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.domain.models import CatalogError
 from tests.integration.test_catalog3_pr_scope_coverage import (
     add_complete_code,
+    add_document,
     add_fact,
+    admit_pr_state,
 )
 from tests.integration.test_catalog3_pr_scope_coverage import (
     pr_catalog as pr_catalog,
@@ -43,26 +45,19 @@ def coverage_catalog(tmp_path):
                 snapshot_id="snapshot",
                 git_acquisition_id="acquisition",
                 repository_uuidv4="00000000-0000-4000-8000-000000000401",
-                published=1,
+                complete=0,
                 generation=1,
                 created_at_us=0,
+            )
+            store.execute(
+                "UPDATE snapshots SET complete=1 WHERE snapshot_id='snapshot'"
             )
             store.execute(
                 "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES('pr','00000000-0000-4000-8000-000000000401',?,'pull_request',1)",
                 (binding,),
             )
-            add_fact(
-                store,
-                "change_request_observations",
-                change_request_observation_id=1,
-                change_request_id="pr",
-                observed_at_us=0,
-                published=1,
-                payload=json.dumps(
-                    {"title": "needle", "state": "open", "merged": False}
-                ),
-                parsed_at_us=0,
-            )
+            admit_pr_state(store, "pr", state="open", merged=False)
+            add_document(store, "pr", "1", "needle")
             for kind in ("pr", "pr-documents"):
                 store.coverage(
                     "00000000-0000-4000-8000-000000000401",
@@ -331,18 +326,8 @@ def test_pr_query_coverage_is_independent_of_page_limit(coverage_catalog):
                     number,
                 ),
             )
-            add_fact(
-                store,
-                "change_request_observations",
-                change_request_observation_id=number,
-                change_request_id=change_request_id,
-                observed_at_us=0,
-                published=1,
-                payload=json.dumps(
-                    {"title": f"pr {number}", "state": "open", "merged": False}
-                ),
-                parsed_at_us=0,
-            )
+            admit_pr_state(store, change_request_id, state="open", merged=False)
+            add_document(store, change_request_id, str(number), f"pr {number}")
         store.coverage(
             "00000000-0000-4000-8000-000000000401",
             "pr-documents",
@@ -410,10 +395,10 @@ def test_coverage_owner_namespaces_are_explicit(coverage_catalog):
     [
         ("head", "absent"),
         ("base", "null_root"),
-        ("merge", "unpublished"),
+        ("merge", "incomplete"),
         ("head", "wrong_oid"),
         ("base", "object_missing"),
-        (None, "published"),
+        (None, "complete"),
     ],
 )
 def test_diagnostic_queries_preserve_complete_label_role_gap_checks(
@@ -422,7 +407,7 @@ def test_diagnostic_queries_preserve_complete_label_role_gap_checks(
     state, store = pr_catalog
     with store.transaction():
         add_complete_code(store, role, link_state)
-        store.publish()
+        store.advance_local_revision()
     commands = (
         (
             "pr",
@@ -459,7 +444,11 @@ def test_diagnostic_queries_preserve_complete_label_role_gap_checks(
     assert all(result["coverage"] == results[0]["coverage"] for result in results)
     missing = results[0]["coverage"]["missing"]
     assert [gap["reason"] for gap in missing] == (
-        ["code_role_acquisition_missing"] if role else []
+        ["code_role_target_conflict"]
+        if link_state == "wrong_oid"
+        else ["code_role_acquisition_missing"]
+        if role
+        else []
     )
     assert [gap["role"] for gap in missing] == ([role] if role else [])
 
@@ -469,78 +458,58 @@ def test_diagnostic_role_target_shapes_are_rejected_before_admission(
     pr_catalog, declared
 ):
     _, store = pr_catalog
-    with pytest.raises(sqlite3.IntegrityError, match="JSON reference"):
+    with pytest.raises(sqlite3.IntegrityError, match="JSON contract"):
         with store.transaction():
             add_complete_code(store, declared=declared)
-    assert store.one("SELECT count(*) FROM code_observations")[0] == 0
+    assert store.one("SELECT count(*) FROM code_assessments")[0] == 0
 
 
-def test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_current(
-    pr_catalog,
-):
+def test_retained_exact_code_assessment_does_not_recreate_api_edit_history(pr_catalog):
     state, store = pr_catalog
     with store.transaction():
         old_code, targets = add_complete_code(store, "head", "absent")
-        # Preserve a later complete interpretation without modifying the older
-        # complete-labelled observation whose acquisition was never saved.
-        saved = dict(
-            store.one(
-                "SELECT * FROM code_observations WHERE code_observation_id=?",
-                (old_code,),
-            )
+        admit_pr_state(
+            store, "repo:1:pull_request", provider_updated_at_us=2, head_oid="ab" * 20
         )
-        for column in (
-            "code_observation_id",
-            "code_observation_uuidv4",
-            "parsed_result_uuidv4",
-        ):
-            saved.pop(column)
-        new_code = add_fact(store, "code_observations", **saved)
-        store.execute(
-            "INSERT INTO code_acquisitions(code_observation_id,role,object_format,oid,acquisition_root_id) SELECT ?,role,object_format,oid,acquisition_root_id FROM code_acquisitions WHERE code_observation_id=?",
-            (new_code, old_code),
-        )
-        store.execute(
-            "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES('sha1',?,'commit',0,1)",
-            (targets["head"],),
-        )
-        root = store.execute(
-            "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,'head','00000000-0000-4000-8000-000000000401',?,1)",
-            (targets["head"], targets["head"]),
-        ).lastrowid
-        store.execute(
-            "INSERT INTO code_acquisitions(code_observation_id,role,object_format,oid,acquisition_root_id) VALUES(?,'head','sha1',?,?)",
-            (new_code, targets["head"], root),
-        )
-        store.publish()
-    ordinary = run(
-        state,
-        "pr",
-        "show",
-        "--repo",
-        "00000000-0000-4000-8000-000000000401",
-        "--provider-change-request-number",
-        1,
+        store.advance_local_revision()
+    assert (
+        store.one(
+            "SELECT head_oid FROM code_assessments WHERE code_assessment_id=?",
+            (old_code,),
+        )[0]
+        == targets["head"]
     )
-    assert ordinary["coverage"]["missing"] == []
+    assert (
+        store.one(
+            "SELECT count(*) FROM change_request_state WHERE change_request_id='repo:1:pull_request'"
+        )[0]
+        == 1
+    )
     from repo_catalog.application.target_queries import TargetQueryService
 
-    diagnostic = TargetQueryService(state / "catalog.sqlite3").query(
-        "pr",
+    with pytest.raises(CatalogError, match="history"):
+        TargetQueryService(state / "catalog.sqlite3").query(
+            "pr",
+            {
+                "repo": "00000000-0000-4000-8000-000000000401",
+                "provider_change_request_number": 1,
+                "observations": "all",
+            },
+        )
+    result = QueryService(state).query(
+        "pr code",
         {
             "repo": "00000000-0000-4000-8000-000000000401",
             "provider_change_request_number": 1,
-            "observations": "all",
         },
-        limit=1,
     )
-    diagnostic = {"coverage": {"missing": diagnostic.coverage.missing}}
-    assert [
-        gap["code_observation_id"] for gap in diagnostic["coverage"]["missing"]
-    ] == [old_code]
-    assert [gap["reason"] for gap in diagnostic["coverage"]["missing"]] == [
-        "code_role_acquisition_missing"
-    ]
+    assert result.status == "partial"
+    assert result.data["items"] == []
+    assert any(
+        gap["reason"] == "code_assessment_missing"
+        and gap["change_request_id"] == "repo:1:pull_request"
+        for gap in result.coverage.missing
+    )
 
 
 def test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope(
@@ -549,7 +518,7 @@ def test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope(
     state, store = pr_catalog
     with store.transaction():
         add_complete_code(store, "head", "absent")
-        store.publish()
+        store.advance_local_revision()
     result = run(
         state,
         "search",

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from repo_catalog.domain.models import CatalogError
 
-REPRESENTATIONS = frozenset({"decoded_api", "legacy_normalized", "git-object-raw-v1"})
+REPRESENTATIONS = frozenset({"git-object-raw-v1"})
 
 
 @dataclass(frozen=True)

@@ -343,7 +343,7 @@ def test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary(
                             repo["repository_uuidv4"],
                         ),
                     )
-                    competing.publish()
+                    competing.advance_local_revision()
             return response
 
         monkeypatch.setattr(collector.http, "request", intervening_publication)

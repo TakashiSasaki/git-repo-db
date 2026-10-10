@@ -30,15 +30,14 @@ def test_payload_registration_requires_an_explicit_representation(db):
     assert db.execute("SELECT count(*) FROM payloads").fetchone() == (0,)
 
 
-def test_same_bytes_across_representations_share_one_physical_object(db):
+def test_same_raw_bytes_across_git_formats_share_one_physical_object(db):
     body = b'{"content":"also a Git blob"}'
-    first = register_git_blob(db, body)
-    assert register_git_blob(db, body) == first
-    second = intern_payload(db, body, representation="decoded_api")
-    assert first != second
-    assert first.sha256 == second.sha256
+    first = register_git_blob(db, body, object_format="sha1")
+    second = register_git_blob(db, body, object_format="sha256")
+    assert first == second
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (1,)
-    assert db.execute("SELECT count(*) FROM payloads").fetchone() == (2,)
+    assert db.execute("SELECT count(*) FROM payloads").fetchone() == (1,)
+    assert db.execute("SELECT count(*) FROM git_objects").fetchone() == (2,)
     assert [r[1] for r in db.execute("PRAGMA table_info(payloads)")] == [
         "representation",
         "sha256",
@@ -51,27 +50,31 @@ def test_distinct_byte_encodings_remain_distinct(db):
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (4,)
 
 
-def test_independent_fetches_keep_separate_occurrences_for_shared_bytes(db):
+def test_independent_acquisitions_keep_separate_captures_for_shared_bytes(db):
+    repository = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
     db.execute(
-        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('cccccccc-cccc-4ccc-8ccc-cccccccccccc','cccccccc-cccc-4ccc-8ccc-cccccccccccc','{}')"
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'fixture','{}')",
+        (repository,),
     )
-    db.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('scope','cccccccc-cccc-4ccc-8ccc-cccccccccccc','{}','parser','profile','proven')"
-    )
-    db.execute(
-        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,resume_scope_id) VALUES('collection','cccccccc-cccc-4ccc-8ccc-cccccccccccc','fixture','scope')"
-    )
-    for ordinal, timestamp in enumerate((-1, 0)):
-        ref = intern_payload(db, b'{"same":"response"}', representation="decoded_api")
+    register_git_blob(db, b"same canonical Git content")
+    object_id = db.execute("SELECT git_object_id FROM git_objects").fetchone()[0]
+    for timestamp in (-1, 0):
+        acquisition = str(uuid.uuid4())
         db.execute(
-            "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','collection',?,?,?,'{}',?,1)",
-            (str(uuid.uuid4()), ordinal, *ref.parameters(), timestamp),
+            "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,observed_at_us,request) VALUES(?,?,'git',?,'{}')",
+            (acquisition, repository, timestamp),
         )
+        db.execute(
+            "INSERT INTO repository_object_sources VALUES(?,?,?)",
+            (repository, object_id, acquisition),
+        )
+    assert db.execute("SELECT count(*) FROM git_acquisitions").fetchone() == (2,)
+    assert db.execute("SELECT count(*) FROM repository_object_sources").fetchone() == (
+        2,
+    )
+    assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (1,)
     assert db.execute(
-        "SELECT count(DISTINCT fetch_occurrence_id),count(DISTINCT payload_sha256) FROM fetch_occurrences"
-    ).fetchone() == (2, 1)
-    assert db.execute(
-        "SELECT observed_at_us FROM fetch_occurrences ORDER BY ordinal"
+        "SELECT observed_at_us FROM git_acquisitions ORDER BY observed_at_us"
     ).fetchall() == [(-1,), (0,)]
 
 
@@ -127,7 +130,7 @@ def test_real_collision_is_distinguished_from_bad_declared_hash(db, monkeypatch)
     monkeypatch.setattr(payloads.hashlib, "sha256", lambda body: CollisionHash())
     intern_payload(db, b"first", representation="git-object-raw-v1")
     with pytest.raises(CatalogError) as error:
-        intern_payload(db, b"other", representation="decoded_api")
+        intern_payload(db, b"other", representation="git-object-raw-v1")
     assert error.value.code == "PAYLOAD_HASH_COLLISION"
     assert db.execute("SELECT body FROM stored_bytes").fetchone() == (b"first",)
     assert db.execute("SELECT count(*) FROM payloads").fetchone() == (1,)

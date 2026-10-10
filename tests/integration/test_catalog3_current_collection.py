@@ -2,7 +2,6 @@
 
 import json
 
-import httpx
 import pytest
 
 from repo_catalog.adapters.github import current_parser
@@ -12,6 +11,7 @@ from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from tests.support.github_runtime import github_runtime as github_runtime
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 def _job(store, kind="issue"):
@@ -82,11 +82,11 @@ def test_all_issue_comments_retained_without_archives_across_restart(github_runt
         == 2
     )
     assert store.one("SELECT count(*) FROM issue_resources")[0] == 5
-    assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+    assert_absent_tables(store.connection, "fetch_occurrences")
     assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
-    assert store.one("SELECT count(*) FROM document_observations")[0] == 0
-    assert store.one("SELECT count(*) FROM parser_profiles")[0] == 0
-    assert store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0] == 0
+    assert_absent_tables(store.connection, "document_observations")
+    assert_absent_tables(store.connection, "parser_profiles")
+    assert_absent_tables(store.connection, "parser_profile_selection_decisions")
     for row in store.all("SELECT * FROM issue_resources"):
         assert row["parser_module"] == current_parser.__name__
         assert row["parser_version"] == current_parser.PARSER_VERSION
@@ -110,7 +110,7 @@ def test_all_issue_comments_retained_without_archives_across_restart(github_runt
             )[0]
             == "edited"
         )
-        assert restarted.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+        assert_absent_tables(restarted.connection, "fetch_occurrences")
     assert any(
         "since" in params for path, params in requests if path.endswith("/comments")
     )
@@ -227,8 +227,8 @@ def test_each_review_keeps_latest_state_without_history_or_archive(github_runtim
             )
             JobService(store).update(job, "complete")
             assert store.one("SELECT count(*) FROM review_resources")[0] == 3
-            assert store.one("SELECT count(*) FROM document_observations")[0] == 0
-            assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+            assert_absent_tables(store.connection, "document_observations")
+            assert_absent_tables(store.connection, "fetch_occurrences")
         assert (
             store.one(
                 "SELECT b.body FROM review_resources r JOIN text_bodies b ON b.sha256=r.text_body_sha256 WHERE r.provider_change_request_document_id='12'"
@@ -247,10 +247,8 @@ def test_each_review_keeps_latest_state_without_history_or_archive(github_runtim
             )[0]
             == 0
         )
-        assert store.one("SELECT count(*) FROM parser_profiles")[0] == 0
-        assert (
-            store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0] == 0
-        )
+        assert_absent_tables(store.connection, "parser_profiles")
+        assert_absent_tables(store.connection, "parser_profile_selection_decisions")
         for row in store.all("SELECT * FROM review_resources"):
             assert row["parser_module"] == current_parser.__name__
             assert row["parser_version"] == current_parser.PARSER_VERSION
@@ -320,13 +318,17 @@ def test_two_service_bindings_keep_same_number_in_distinct_pr_owners(github_runt
             collection = collector.facts.begin(
                 other_repo, None, "pr-list", job, api.url + "/repos/fixture/alpha/pulls"
             )
-            occurrence, _, timestamp = collector.facts.page(
-                collection, httpx.Response(200, json=[api.prs[41]]), {}, None
+            timestamp = 10
+            owner, members = collector.ensure_pr(
+                other_repo,
+                api.prs[41],
+                collection,
+                store.revision()["local_revision"],
+                0,
+                timestamp,
             )
-            owner = collector.ensure_pr(
-                other_repo, api.prs[41], collection, occurrence, 0, timestamp
-            )
-            collector.facts.publish()
+            collector.facts.page(collection, timestamp, None, members)
+            collector.facts.advance_revision()
         assert owner == "other-binding:41"
         assert (
             store.one(
@@ -341,9 +343,10 @@ def test_two_service_bindings_keep_same_number_in_distinct_pr_owners(github_runt
             )[0]
             == 2
         )
+        assert_absent_tables(store.connection, "document_observations")
         assert (
             store.one(
-                "SELECT count(*) FROM document_observations WHERE change_request_id=?",
+                "SELECT count(*) FROM document_state WHERE change_request_id=?",
                 (repo["repository_uuidv4"] + ":41",),
             )[0]
             == 0
@@ -365,11 +368,9 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
             )
             collector.facts.page(
                 raw,
-                httpx.Response(
-                    200, content=b"[]", extensions={"catalog_observed_at_us": 10}
-                ),
-                {},
+                10,
                 None,
+                [],
             )
             operational = collector.facts.begin(
                 repo, None, "threads", job, "https://github.test/error"
@@ -408,11 +409,9 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
             )
             collector.facts.page(
                 code,
-                httpx.Response(
-                    200, content=b"[]", extensions={"catalog_observed_at_us": 30}
-                ),
-                {},
+                30,
                 None,
+                [],
             )
         assert collector.summary_observed_at_us(repo, job) == 30
         assert collector.summary_observed_at_us(repo, job, documents_only=True) == 20
@@ -450,6 +449,6 @@ def test_changed_parser_rescans_instead_of_reusing_collection_receipts(
         page = store.one("SELECT * FROM current_collection_pages")
         assert page["parser_module"] == current_parser.__name__
         assert page["parser_version"] == "1"
-        assert store.one("SELECT count(*) FROM parser_profiles")[0] == 0
+        assert_absent_tables(store.connection, "parser_profiles")
     finally:
         collector.http.close()

@@ -265,7 +265,7 @@ class MaintenanceService:
                         str(uuid.uuid4()),
                     ),
                 )
-                s.publish()
+                s.advance_local_revision()
             return Result(
                 {
                     "source_id": ident,
@@ -283,7 +283,7 @@ class MaintenanceService:
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
             with s.transaction():
                 ident = identity.add_instance(s, kind, name, web_base_url, api_base_url)
-                s.publish()
+                s.advance_local_revision()
             return Result({"service_instance_uuidv4": ident}, catalog=s.revision())
 
     def repository_bind(self, repo, instance, provider_repository_id=None):
@@ -301,7 +301,7 @@ class MaintenanceService:
                     service_instance_uuidv4,
                     provider_repository_id,
                 )
-                s.publish()
+                s.advance_local_revision()
             return Result(
                 {
                     "repository_uuidv4": repository_uuidv4,
@@ -320,7 +320,7 @@ class MaintenanceService:
                 ident = identity.add_endpoint(
                     s, repository_uuidv4, url, label, preferred
                 )
-                s.publish()
+                s.advance_local_revision()
             return Result(
                 {
                     "repository_uuidv4": repository_uuidv4,
@@ -336,7 +336,7 @@ class MaintenanceService:
             with s.transaction():
                 repository_uuidv4 = single_repository(s, repo)["repository_uuidv4"]
                 identity.prefer_endpoint(s, repository_uuidv4, repository_endpoint_id)
-                s.publish()
+                s.advance_local_revision()
             return Result(
                 {
                     "repository_uuidv4": repository_uuidv4,
@@ -497,16 +497,16 @@ class MaintenanceService:
                 )
             ],
             "foreign_keys": [tuple(r) for r in s.all("PRAGMA foreign_key_check")],
-            "dangling_publications": [
+            "dangling_snapshots": [
                 dict(r)
                 for r in s.all(
-                    "SELECT sn.repository_uuidv4 FROM current_snapshots sn LEFT JOIN repositories r ON r.repository_uuidv4=sn.repository_uuidv4 WHERE r.repository_uuidv4 IS NULL OR sn.published!=1"
+                    "SELECT sn.repository_uuidv4 FROM current_snapshots sn LEFT JOIN repositories r ON r.repository_uuidv4=sn.repository_uuidv4 WHERE r.repository_uuidv4 IS NULL OR sn.complete!=1"
                 )
             ],
-            "unfinished_published_runs": [
+            "unfinished_complete_runs": [
                 dict(r)
                 for r in s.all(
-                    "SELECT * FROM preservation_obligations WHERE published=1 AND "
+                    "SELECT * FROM preservation_obligations WHERE complete=1 AND "
                     "(roots_fixed!=1 OR structure_done!=1 OR digest_done!=1 OR text_done!=1)"
                 )
             ],
@@ -547,8 +547,8 @@ class MaintenanceService:
                 for key in (
                     "owner_evidence",
                     "foreign_keys",
-                    "dangling_publications",
-                    "unfinished_published_runs",
+                    "dangling_snapshots",
+                    "unfinished_complete_runs",
                     "repository_endpoints",
                 )
             )
@@ -693,12 +693,9 @@ class MaintenanceService:
             raise
 
     def hydrate(self, content_id, repo_selector, token):
-        """Every supported decoded text is published atomically with its result.
-
-        Raw object bytes remain durable separately; hydration never mutates a
-        published interpretation. A different decoder requires explicit reparse.
-        """
+        """Report saved object-specific text; other decoders use Git reanalysis."""
         from repo_catalog.application.collection_service import select_repositories
+        from repo_catalog.application.git_query_context import current_content_facts
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as store:
             token.check()
@@ -710,19 +707,18 @@ class MaintenanceService:
                 store, (repo_selector,) if repo_selector else ()
             )
             owners = [r["repository_uuidv4"] for r in repos]
-            facts = store.all(
-                "SELECT * FROM current_git_text_facts WHERE content_id=? AND repository_uuidv4 IN ("
-                + ",".join("?" for _ in owners)
-                + ")",
-                (content_id, *owners),
-            )
+            facts = current_content_facts(store, content_id, owners)
+            if any(f["text_state"] == "decoder_conflict" for f in facts):
+                raise CatalogError(
+                    "GIT_DECODER_CONFLICT", "Decoded content has unresolved candidates"
+                )
             if not facts or not any(
                 f["text_state"] == "eligible" and f["raw_text"] is not None
                 for f in facts
             ):
                 raise CatalogError(
-                    "PROFILE_UNSUPPORTED",
-                    "Selected parser profile does not provide decoded text",
+                    "TEXT_UNAVAILABLE",
+                    "Retained Git content has no available decoded text",
                 )
             return Result(
                 {"content_id": content_id, "state": "already_saved"},

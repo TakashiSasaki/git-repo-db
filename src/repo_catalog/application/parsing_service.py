@@ -12,11 +12,11 @@ class ParsingService:
     def __init__(self, store):
         self.s = store
 
-    def reparse(self, git_acquisition_id, *, select=False, profile_uuid=None):
+    def reparse(self, git_acquisition_id, **decoder_settings):
         """Decode Git content without manufacturing another remote acquisition.
 
-        Git's existing interpretation and explicit-selection behavior remains
-        the implementation baseline pending its separate lifecycle decision.
+        Decoder-specific outputs retain their exact settings; an incomparable
+        decoder output cannot become current merely because it arrived later.
         """
         if not self.s.one(
             "SELECT 1 FROM git_acquisitions WHERE git_acquisition_id=?",
@@ -31,6 +31,5 @@ class ParsingService:
         return reparse_git(
             self.s,
             git_acquisition_id,
-            select=select,
-            profile_uuid=profile_uuid,
+            **decoder_settings,
         )

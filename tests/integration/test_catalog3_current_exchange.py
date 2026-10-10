@@ -16,7 +16,18 @@ from repo_catalog.domain.current_state import fingerprint_candidate
 from tests.integration.test_catalog3_current_queries import (
     current_catalog as current_catalog,
 )
-from tests.integration.test_catalog3_exchange import receive
+from tests.support.sqlite_contracts import assert_absent_tables
+
+
+def receive(db, unit):
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        result = Graph(db).receive(unit)
+        db.commit()
+        return result
+    except BaseException:
+        db.rollback()
+        raise
 
 
 def receiver():
@@ -33,12 +44,25 @@ def collection(catalog, candidate, *, observed=0, pages=1, context=None):
     db = catalog.store.connection
     scope, ident = str(uuid.uuid4()), str(uuid.uuid4())
     db.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,repository_binding_id,endpoint,request_context,parser_version,profile_version,confidence) VALUES(?,?,?,'synthetic',?,'test','test','proven')",
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,repository_binding_id,endpoint,request_context,parser_version,confidence) VALUES(?,?,?,'synthetic',?,'test','proven')",
         (scope, catalog.repository, catalog.binding, json.dumps(context or {})),
     )
     db.execute(
-        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,resume_scope_id) VALUES(?,?,'issue',?)",
-        (ident, catalog.repository, scope),
+        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,resume_scope_id,scope_json) VALUES(?,?,'issue',?,?)",
+        (
+            ident,
+            catalog.repository,
+            scope,
+            json.dumps(
+                {
+                    "repository_uuidv4": catalog.repository,
+                    "endpoint": "synthetic",
+                    "service_instance_uuidv4": catalog.service,
+                    "repository_binding_id": catalog.binding,
+                    **(context or {}),
+                }
+            ),
+        ),
     )
     proof = CurrentCollectionProof(db)
     member = {
@@ -104,15 +128,13 @@ def test_current_edits_reversed_repeat_and_archive_free_selection(
             "SELECT b.body FROM issue_resources r JOIN text_bodies b ON b.sha256=r.text_body_sha256"
         ).fetchall() == [("new body",)]
         assert target.execute("SELECT count(*) FROM issue_resources").fetchone() == (1,)
-        assert target.execute("SELECT count(*) FROM parsed_results").fetchone() == (0,)
+        assert_absent_tables(target, "parsed_results")
         assert receive(target, new)["received_records"] == 0
-        assert target.execute(
-            "SELECT count(*) FROM local_parser_profile_verification_trust"
-        ).fetchone() == (0,)
+        assert_absent_tables(target, "local_parser_profile_verification_trust")
         assert target.execute(
             "SELECT count(*) FROM eligible_issue_resources"
         ).fetchone() == (1,)
-        assert target.execute("SELECT count(*) FROM parser_profiles").fetchone() == (0,)
+        assert_absent_tables(target, "parser_profiles")
         assert target.execute("PRAGMA foreign_key_check").fetchall() == []
     finally:
         target.close()
@@ -179,7 +201,9 @@ def test_current_completeness_freezes_terminal_pages_and_max_time(current_catalo
         assert len(db.execute("PRAGMA table_info(coverage_claims)").fetchall()) == 5
         frozen = freeze_complete_proof(db, 0, details)
         assert json.loads(frozen)["completion_marker_uuidv4s"]
-        with pytest.raises(sqlite3.IntegrityError, match="sealed"):
+        with pytest.raises(
+            sqlite3.IntegrityError, match="Completed collection evidence"
+        ):
             CurrentCollectionProof(db).page(
                 ident,
                 2,
@@ -194,9 +218,7 @@ def test_current_completeness_freezes_terminal_pages_and_max_time(current_catalo
         assert target.execute(
             "SELECT coverage_state,observed_at_us FROM current_coverage WHERE kind='issue'"
         ).fetchone() == ("complete", 0)
-        assert target.execute("SELECT count(*) FROM fetch_occurrences").fetchone() == (
-            0,
-        )
+        assert_absent_tables(target, "fetch_occurrences")
     finally:
         db.close()
         target.close()
@@ -284,7 +306,7 @@ def test_current_comment_parent_arrives_after_restart(current_catalog, tmp_path)
         assert disk.execute(
             "SELECT kind FROM issue_resources ORDER BY kind"
         ).fetchall() == [("issue",), ("issue-comment",)]
-        assert disk.execute("SELECT count(*) FROM parsed_results").fetchone() == (0,)
+        assert_absent_tables(disk, "parsed_results")
         assert disk.execute("PRAGMA foreign_key_check").fetchall() == []
     finally:
         disk.close()
@@ -306,7 +328,7 @@ def test_old_repository_receipt_does_not_export_transferred_issue(current_catalo
             "SELECT repository_binding_id FROM repository_bindings WHERE repository_uuidv4=?",
             (other_repository,),
         )[0]
-        catalog.store.publish()
+        catalog.store.advance_local_revision()
     moved = {
         **first,
         "repository_uuidv4": other_repository,

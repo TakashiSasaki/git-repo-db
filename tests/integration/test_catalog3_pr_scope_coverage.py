@@ -1,13 +1,12 @@
 """Requested PR coverage is independent of result pagination and code-only gaps."""
 
-import hashlib
 import json
 import sqlite3
-import uuid
 
 import pytest
 
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
+from repo_catalog.adapters.sqlite.current_api import CurrentApiState
+from repo_catalog.adapters.sqlite.current_resources import CurrentResources
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application import pr_queries
 from repo_catalog.application.maintenance_service import MaintenanceService
@@ -15,126 +14,89 @@ from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from tests.support.cli import run
-from tests.support.parser_facts import enrich
+
+REPOSITORY = "00000000-0000-4000-8000-000000000401"
 
 
 def add_fact(store, table, **values):
-    values = enrich(store.connection, table, values)
-    result = values["parsed_result_uuidv4"]
-    ident = store.execute(
+    """Insert explicit direct domain rows, never synthetic parser results."""
+    return store.execute(
         f"INSERT INTO {table}({','.join(values)}) VALUES({','.join('?' for _ in values)})",
         tuple(values.values()),
     ).lastrowid
-    model = ParserModel(store.connection)
-    scope = {"change_request_id": values.get("change_request_id")}
-    if table == "document_observations":
-        scope.update(
-            fact_kind=values["kind"],
-            kind=values["kind"],
-            provider_change_request_document_id=values[
-                "provider_change_request_document_id"
-            ],
-        )
-    elif table == "review_thread_observations":
-        scope.update(
-            fact_kind="review-thread",
-            provider_resource_id=values["provider_resource_id"],
-        )
-    else:
-        scope["fact_kind"] = {
-            "code_observations": "code",
-            "change_request_observations": "change-request",
-            "snapshots": "git",
-        }[table]
-    profile = store.one(
-        "SELECT parser_profile_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
-        (result,),
-    )[0]
-    model.publish_result(result)
-    model.ensure_scope_profile(
-        profile,
-        repository_uuidv4=values["repository_uuidv4"],
-        fact_kind=scope["fact_kind"],
+
+
+def candidate(store, pr, kind, **fields):
+    owner = store.one(
+        "SELECT c.*,b.service_instance_uuidv4 FROM change_requests c JOIN repository_bindings b USING(repository_binding_id) WHERE c.change_request_id=?",
+        (pr,),
     )
-    model.select_fact(result, **scope)
-    return ident
+    scope = {
+        key: owner[key]
+        for key in (
+            "change_request_id",
+            "repository_uuidv4",
+            "repository_binding_id",
+            "service_instance_uuidv4",
+        )
+    }
+    return {
+        **scope,
+        "kind": kind,
+        "observed_at_us": 0,
+        "parsed_at_us": 0,
+        "provider_updated_at_us": 0 if kind != "review-thread" else None,
+        "provider_clock_scope": "github-pr-updated-at"
+        if kind in ("change-request", "pr-body", "pr-title")
+        else None,
+        "parser_module": __name__,
+        "parser_version": "1",
+        "acquisition_scope": {**scope, "endpoint": "synthetic-pr-query"},
+        **fields,
+    }
+
+
+def admit_pr_state(store, pr, **fields):
+    result = CurrentApiState(store).admit(
+        "change_request_state",
+        candidate(store, pr, "change-request", **fields),
+        source="import",
+    )
+    assert result.status in ("accepted", "identical")
+    return pr
 
 
 def add_document(store, pr, document_id, body, *, kind="pr-body", thread=None):
-    key = (pr, kind, document_id)
-    if kind in ("review", "review-comment"):
-        from repo_catalog.adapters.sqlite.current_resources import CurrentResources
-
-        owner = store.one(
-            "SELECT * FROM change_requests WHERE change_request_id=?", (pr,)
-        )
-        binding = store.one(
-            "SELECT * FROM repository_bindings WHERE repository_binding_id=?",
-            (owner["repository_binding_id"],),
-        )
-        scope = {
-            "repository_uuidv4": owner["repository_uuidv4"],
-            "repository_binding_id": owner["repository_binding_id"],
-            "service_instance_uuidv4": binding["service_instance_uuidv4"],
-            "change_request_id": pr,
-            "endpoint": "synthetic-test",
-        }
-        candidate = {
-            "kind": kind,
-            "provider_change_request_document_id": document_id,
-            **{k: v for k, v in scope.items() if k != "endpoint"},
-            "acquisition_scope": scope,
-            "body": body,
-            "body_status": "present" if body is not None else "missing",
-            "observed_at_us": 0,
-            "parsed_at_us": 0,
-            "parser_module": __name__,
-            "parser_version": "1",
-            "metadata": {},
-            "review_thread_provider_resource_id": thread,
-        }
-        assert (
-            CurrentResources(store).admit(candidate, source="import").status
-            == "accepted"
-        )
-        return key
-    store.execute("INSERT INTO documents VALUES(?,?,?)", key)
-    if body is not None:
-        encoded = body.encode("utf8")
-        digest = hashlib.sha256(encoded).digest()
-        store.execute(
-            "INSERT INTO text_bodies(body,byte_length,sha256) VALUES(?,?,?)",
-            (body, len(encoded), digest),
-        )
-        add_fact(
-            store,
-            "document_observations",
-            change_request_id=pr,
-            kind=kind,
-            provider_change_request_document_id=document_id,
-            text_body_sha256=digest,
-            observed_at_us=0,
-            parsed_at_us=0,
-            metadata="{}",
-        )
-    return key
+    fields = {
+        "provider_change_request_document_id": document_id,
+        "body": body,
+        "body_status": "present" if body is not None else "missing",
+    }
+    if kind == "review-comment":
+        fields["review_thread_provider_resource_id"] = thread
+    row = candidate(store, pr, kind, **fields)
+    existing = store.one(
+        "SELECT provider_updated_at_us FROM document_state WHERE change_request_id=? AND kind=? AND provider_change_request_document_id=?",
+        (pr, kind, document_id),
+    )
+    if existing:
+        row["provider_updated_at_us"] = existing[0] + 1
+    result = (
+        CurrentResources(store).admit(row, source="import")
+        if kind in ("review", "review-comment")
+        else CurrentApiState(store).admit("document_state", row, source="import")
+    )
+    assert result.status in ("accepted", "identical")
+    return pr, kind, document_id
 
 
 def add_pr(store, repository, binding, number, *, kind="pull_request"):
     pr = f"repo:{number}:{kind}"
     store.execute(
-        "INSERT INTO change_requests(change_request_id,repository_uuidv4,repository_binding_id,change_request_kind,provider_change_request_number) VALUES(?,?,?,?,?)",
+        "INSERT INTO change_requests VALUES(?,?,?,?,?)",
         (pr, repository, binding, kind, number),
     )
-    add_fact(
-        store,
-        "change_request_observations",
-        change_request_id=pr,
-        observed_at_us=0,
-        published=1,
-        payload=json.dumps({"title": "needle", "state": "open", "merged": False}),
-        parsed_at_us=0,
-    )
+    admit_pr_state(store, pr, state="open", merged=False)
     add_document(store, pr, str(number), f"needle body for {pr}")
     for coverage_kind in ("pr-documents", "pr-code"):
         store.coverage(
@@ -170,7 +132,7 @@ def pr_catalog(tmp_path):
                     "complete",
                     observed_at_us=0,
                 )
-            store.publish()
+            store.advance_local_revision()
         yield state, store
         assert not store.all("PRAGMA foreign_key_check")
         assert store.one("PRAGMA integrity_check")[0] == "ok"
@@ -194,14 +156,27 @@ def add_gap(store, kind, source, *, number=1, coverage_state="partial"):
         "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('query-job',1,'failed',0,'{}')"
     )
     store.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('query-resume','00000000-0000-4000-8000-000000000401','{}','test','test','proven')"
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,confidence) VALUES('query-resume','00000000-0000-4000-8000-000000000401','{}','test','proven')"
     )
     store.execute(
-        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES('query-collection','00000000-0000-4000-8000-000000000401',?,?,'query-resume',1)",
-        (pr, kind),
+        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,scope_json,observed_at_us) VALUES('query-collection','00000000-0000-4000-8000-000000000401',?,?,'query-resume',?,1)",
+        (
+            pr,
+            kind,
+            json.dumps(
+                {
+                    "repository_uuidv4": REPOSITORY,
+                    "change_request_id": pr,
+                    "endpoint": "query-test",
+                }
+            ),
+        ),
     )
     store.execute(
         "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state) VALUES('query-collection','query-job',1,'partial')"
+    )
+    store.execute(
+        "INSERT INTO completion_markers(fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES('query-collection','partial','{}',1)"
     )
 
 
@@ -211,7 +186,7 @@ def test_document_queries_ignore_code_listing_gaps(pr_catalog, kind, source):
     state, store = pr_catalog
     with store.transaction():
         add_gap(store, kind, source)
-        store.publish()
+        store.advance_local_revision()
     for command in (
         (
             "pr",
@@ -254,7 +229,7 @@ def test_document_queries_retain_document_gaps(pr_catalog, kind, source):
     state, store = pr_catalog
     with store.transaction():
         add_gap(store, kind, source)
-        store.publish()
+        store.advance_local_revision()
     for command in (
         (
             "pr",
@@ -286,7 +261,7 @@ def test_code_filter_requires_code_coverage_even_without_results(pr_catalog, sel
     state, store = pr_catalog
     with store.transaction():
         add_gap(store, "pr-commits", "claim")
-        store.publish()
+        store.advance_local_revision()
     result = run(
         state,
         "search",
@@ -323,7 +298,7 @@ def test_full_requested_scope_coverage_is_identical_on_every_page(pr_catalog, co
     state, store = pr_catalog
     with store.transaction():
         add_gap(store, "pr-documents", "claim", number=3, coverage_state="unknown")
-        store.publish()
+        store.advance_local_revision()
     full = run(state, *command, "--limit", 100, expected=3)
     assert [
         item["provider_change_request_number"] for item in full["data"]["items"]
@@ -351,18 +326,19 @@ def test_full_requested_scope_coverage_is_identical_on_every_page(pr_catalog, co
 def test_code_observation_gap_beyond_page_is_reported(pr_catalog):
     state, store = pr_catalog
     with store.transaction():
-        current = store.one(
-            "SELECT change_request_id,change_request_observation_id FROM current_change_request_observations WHERE change_request_id='repo:3:pull_request'"
-        )
         add_fact(
             store,
-            "code_observations",
-            change_request_id=current[0],
-            change_request_observation_id=current[1],
+            "code_assessments",
+            code_assessment_id="partial-target",
+            repository_uuidv4=REPOSITORY,
+            change_request_id="repo:3:pull_request",
             state="partial",
-            details="{}",
+            observed_at_us=0,
+            parser_module=__name__,
+            parser_version="1",
+            details_json="{}",
         )
-        store.publish()
+        store.advance_local_revision()
     first = run(
         state,
         "pr",
@@ -385,7 +361,7 @@ def test_code_observation_gap_beyond_page_is_reported(pr_catalog):
     )
     assert first["coverage"] == full["coverage"]
     assert [gap["reason"] for gap in first["coverage"]["missing"]] == [
-        "code_observation_incomplete"
+        "code_assessment_incomplete"
     ]
 
 
@@ -395,16 +371,15 @@ def test_new_current_api_observation_requires_its_own_code_observation(
 ):
     state, store = pr_catalog
     with store.transaction():
-        observation = add_fact(
+        admit_pr_state(
             store,
-            "change_request_observations",
-            change_request_id="repo:3:pull_request",
+            "repo:3:pull_request",
+            provider_updated_at_us=1,
             observed_at_us=1,
-            published=1,
-            payload=json.dumps({"state": "open", role: {"sha": "01" * 20}}),
-            parsed_at_us=1,
+            object_format="sha1",
+            **{role + "_oid": "01" * 20},
         )
-        store.publish()
+        store.advance_local_revision()
     assert (
         store.one(
             "SELECT coverage_state FROM current_coverage WHERE change_request_id='repo:3:pull_request' AND kind='pr-code'"
@@ -432,15 +407,11 @@ def test_new_current_api_observation_requires_its_own_code_observation(
         expected=3,
     )
     assert first["coverage"] == selected["coverage"]
-    assert selected["data"]["items"][0]["code_observation"] is None
-    assert selected["coverage"]["missing"] == [
-        {
-            "kind": "pr",
-            "reason": "code_observation_missing",
-            "change_request_id": "repo:3:pull_request",
-            "change_request_observation_id": observation,
-        }
-    ]
+    assert any(
+        gap["reason"] == "code_assessment_missing"
+        and gap["change_request_id"] == "repo:3:pull_request"
+        for gap in selected["coverage"]["missing"]
+    )
     docs = run(
         state,
         "pr",
@@ -465,7 +436,7 @@ def test_identity_selection_excludes_other_pr_gaps_but_empty_search_retains_them
     state, store = pr_catalog
     with store.transaction():
         add_gap(store, "pr-documents", "claim", number=3, coverage_state="unknown")
-        store.publish()
+        store.advance_local_revision()
     for action in ("show", "documents"):
         result = run(
             state,
@@ -509,24 +480,21 @@ def test_identity_selection_excludes_other_pr_gaps_but_empty_search_retains_them
 def test_thread_body_gap_after_page_is_reported(pr_catalog):
     state, store = pr_catalog
     with store.transaction():
-        store.execute(
-            "INSERT INTO review_threads VALUES('repo:1:pull_request','thread')"
-        )
-        from tests.support.parser_facts import new_result
-
-        result = new_result(store.connection, "00000000-0000-4000-8000-000000000401")
-        add_fact(
-            store,
-            "review_thread_observations",
-            thread_observation_uuidv4=str(uuid.uuid4()),
-            parsed_result_uuidv4=result,
-            repository_uuidv4="00000000-0000-4000-8000-000000000401",
-            change_request_id="repo:1:pull_request",
-            provider_resource_id="thread",
-            observed_at_us=0,
-            payload=json.dumps(
-                {"comments": {"nodes": [{"fullDatabaseId": n} for n in (1, 2, 3)]}}
-            ),
+        assert (
+            CurrentApiState(store)
+            .admit(
+                "review_thread_state",
+                candidate(
+                    store,
+                    "repo:1:pull_request",
+                    "review-thread",
+                    provider_resource_id="thread",
+                    resolved=False,
+                ),
+                source="import",
+            )
+            .status
+            == "accepted"
         )
         for number in (1, 2, 3):
             add_document(
@@ -537,7 +505,7 @@ def test_thread_body_gap_after_page_is_reported(pr_catalog):
                 kind="review-comment",
                 thread="thread",
             )
-        store.publish()
+        store.advance_local_revision()
     command = (
         "pr",
         "thread",
@@ -572,9 +540,9 @@ def test_thread_body_gap_after_page_is_reported(pr_catalog):
 def test_byte_page_boundary_keeps_later_pr_coverage(pr_catalog):
     state, store = pr_catalog
     with store.transaction():
-        add_document(store, "repo:1:pull_request", "large", "needle " + "x" * 8_388_608)
+        add_document(store, "repo:1:pull_request", "1", "needle " + "x" * 8_388_608)
         add_gap(store, "pr-documents", "claim", number=3, coverage_state="unknown")
-        store.publish()
+        store.advance_local_revision()
     result = run(
         state,
         "search",
@@ -599,7 +567,7 @@ def test_preflight_does_not_materialize_later_document_results(pr_catalog, monke
     state, store = pr_catalog
     with store.transaction():
         add_gap(store, "pr-documents", "claim", number=3, coverage_state="unknown")
-        store.publish()
+        store.advance_local_revision()
     query = QueryService(state)
     matches = []
     original = query.literal_match
@@ -612,7 +580,7 @@ def test_preflight_does_not_materialize_later_document_results(pr_catalog, monke
     result = query.query(
         "search pr",
         {
-            "00000000-0000-4000-8000-000000000401": "00000000-0000-4000-8000-000000000401",
+            "repo": "00000000-0000-4000-8000-000000000401",
             "literal": "needle",
         },
         limit=1,
@@ -627,18 +595,16 @@ def test_preflight_does_not_materialize_later_document_results(pr_catalog, monke
 
 def test_preflight_timeout_discards_page_and_issues_no_cursor(pr_catalog, monkeypatch):
     state, _ = pr_catalog
-    original = pr_queries._coverage
+    original = pr_queries.prepare_pr_coverage
 
-    def expire(query, pr, documents_only):
-        original(query, pr, documents_only)
+    def expire(query, command, options):
+        original(query, command, options)
         query.deadline = -1
 
-    monkeypatch.setattr(pr_queries, "_coverage", expire)
+    monkeypatch.setattr(pr_queries, "prepare_pr_coverage", expire)
     result = QueryService(state).query(
         "pr list",
-        {
-            "00000000-0000-4000-8000-000000000401": "00000000-0000-4000-8000-000000000401"
-        },
+        {"repo": "00000000-0000-4000-8000-000000000401"},
         limit=1,
     )
     assert result.status == "partial"
@@ -653,25 +619,23 @@ def test_preflight_timeout_discards_page_and_issues_no_cursor(pr_catalog, monkey
 def test_preflight_cancellation_remains_an_interruption(pr_catalog, monkeypatch):
     state, _ = pr_catalog
     token = CancellationToken()
-    original = pr_queries._coverage
+    original = pr_queries.prepare_pr_coverage
 
-    def cancel(query, pr, documents_only):
-        original(query, pr, documents_only)
+    def cancel(query, command, options):
+        original(query, command, options)
         token.cancelled = True
 
-    monkeypatch.setattr(pr_queries, "_coverage", cancel)
+    monkeypatch.setattr(pr_queries, "prepare_pr_coverage", cancel)
     with pytest.raises(CatalogError) as caught:
         QueryService(state, token).query(
             "pr list",
-            {
-                "00000000-0000-4000-8000-000000000401": "00000000-0000-4000-8000-000000000401"
-            },
+            {"repo": "00000000-0000-4000-8000-000000000401"},
             limit=1,
         )
     assert caught.value.code == "CANCELLED"
 
 
-def test_pr_cursor_scope_and_publication_guards_survive_preflight(pr_catalog):
+def test_pr_cursor_scope_and_revision_guards_survive_preflight(pr_catalog):
     state, store = pr_catalog
     first = run(
         state,
@@ -700,7 +664,7 @@ def test_pr_cursor_scope_and_publication_guards_survive_preflight(pr_catalog):
     assert result["error"]["code"] == "INVALID_ARGUMENT"
     with store.transaction():
         add_gap(store, "pr-documents", "claim", number=3)
-        store.publish()
+        store.advance_local_revision()
     result = run(
         state,
         "search",
@@ -717,54 +681,118 @@ def test_pr_cursor_scope_and_publication_guards_survive_preflight(pr_catalog):
 
 
 def add_complete_code(
-    store, unavailable_role=None, link_state="published", *, declared=None
+    store, unavailable_role=None, link_state="complete", *, declared=None
 ):
-    """Valid complete listings with independently preserved role evidence."""
-    targets = {
-        role: bytes([index]) * 20
-        for index, role in enumerate(("head", "base", "merge"), 1)
-    }
-    store.execute(
-        "INSERT INTO jobs(job_id,kind,request,current_attempt,created_at_us) VALUES('code-job','sync','{}',1,0)"
-    )
-    store.execute(
-        "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('code-job',1,'complete',0,'{}')"
-    )
-    store.execute(
-        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES('code-resume','00000000-0000-4000-8000-000000000401','{}','test','test','proven')"
-    )
-    for kind in ("commits", "files"):
-        store.execute(
-            "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,kind,resume_scope_id,observed_at_us) VALUES(?,'00000000-0000-4000-8000-000000000401','repo:1:pull_request',?,'code-resume',0)",
-            (kind, "pr-" + kind),
-        )
-        store.execute(
-            "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state) VALUES(?,'code-job',1,'complete')",
-            (kind,),
-        )
-        store.execute(
-            "INSERT INTO code_listings(code_listing_id,change_request_id,fetch_collection_id,kind,resume_scope_id,object_format,head_oid,base_oid) VALUES(?,'repo:1:pull_request',?,?,'code-resume','sha1',?,?)",
-            (kind, kind, kind, targets["head"], targets["base"]),
-        )
-        store.execute(
-            "INSERT INTO code_listing_progress(code_listing_id,state,terminal,page_count,context_proven) VALUES(?,'complete',1,0,1)",
-            (kind,),
-        )
-    current = store.one(
-        "SELECT change_request_observation_id FROM current_change_request_observations WHERE change_request_id='repo:1:pull_request'"
-    )[0]
-    code = add_fact(
+    """Exact typed code anchors with actual independently verified Git bytes."""
+    import hashlib
+
+    from repo_catalog.adapters.git.parsing import GitParsing
+
+    acquisition = "code-acquisition"
+    add_fact(
         store,
-        "code_observations",
+        "git_acquisitions",
+        git_acquisition_id=acquisition,
+        repository_uuidv4=REPOSITORY,
+        object_format="sha1",
+        kind="pr",
+        observed_at_us=0,
+        request="{}",
+        roots_manifest="[]",
+    )
+    parser = GitParsing(store, REPOSITORY)
+    tree_raw = b""
+    tree_oid = hashlib.sha1(b"tree 0\0").digest()
+    parser.install_object("sha1", tree_oid, "tree", tree_raw, acquisition=acquisition)
+    targets = {}
+    raws = {}
+    for role in ("head", "base", "merge"):
+        raw = (
+            f"tree {tree_oid.hex()}\nauthor Fixture <fixture@example.invalid> 0 +0000\ncommitter Fixture <fixture@example.invalid> 0 +0000\n\n{role}\n"
+        ).encode()
+        oid = hashlib.sha1(f"commit {len(raw)}\0".encode() + raw).digest()
+        targets[role] = oid
+        raws[role] = raw
+        if not (role == unavailable_role and link_state == "object_missing"):
+            parser.install_object("sha1", oid, "commit", raw, acquisition=acquisition)
+    admit_pr_state(
+        store,
+        "repo:1:pull_request",
+        provider_updated_at_us=1,
+        object_format="sha1",
+        head_oid=targets["head"].hex(),
+        base_oid=targets["base"].hex(),
+        merge_oid=targets["merge"].hex(),
+    )
+    from repo_catalog.adapters.sqlite.current_collections import CurrentCollectionProof
+
+    for kind in ("commits", "files"):
+        scope = {
+            "repository_uuidv4": REPOSITORY,
+            "change_request_id": "repo:1:pull_request",
+            "endpoint": "code-" + kind,
+            "request_context": {
+                "object_format": "sha1",
+                "head_oid": targets["head"].hex(),
+                "base_oid": targets["base"].hex(),
+            },
+        }
+        add_fact(
+            store,
+            "fetch_collections",
+            fetch_collection_id=kind,
+            repository_uuidv4=REPOSITORY,
+            change_request_id="repo:1:pull_request",
+            kind="pr-" + kind,
+            scope_json=json.dumps(scope),
+        )
+        proof = CurrentCollectionProof(store.connection)
+        proof.page(kind, 0, 0, None, [], parser_module=__name__, parser_version="1")
+        add_fact(
+            store,
+            "completion_markers",
+            fetch_collection_id=kind,
+            asserted_state="complete",
+            evidence=json.dumps(proof.evidence(kind)),
+            observed_at_us=0,
+        )
+        add_fact(
+            store,
+            "code_listings",
+            code_listing_id=kind,
+            change_request_id="repo:1:pull_request",
+            fetch_collection_id=kind,
+            kind=kind,
+            object_format="sha1",
+            head_oid=targets["head"],
+            base_oid=targets["base"],
+        )
+        add_fact(
+            store,
+            "code_listing_progress",
+            code_listing_id=kind,
+            state="complete",
+            terminal=1,
+            page_count=1,
+            context_proven=1,
+        )
+    assessment = "exact-target-assessment"
+    add_fact(
+        store,
+        "code_assessments",
+        code_assessment_id=assessment,
+        repository_uuidv4=REPOSITORY,
         change_request_id="repo:1:pull_request",
-        change_request_observation_id=current,
         commit_code_listing_id="commits",
         file_code_listing_id="files",
         state="complete",
         object_format="sha1",
         head_oid=targets["head"],
         base_oid=targets["base"],
-        details=json.dumps(
+        observed_at_us=0,
+        parser_module=__name__,
+        parser_version="1",
+        details_json=json.dumps(
             {
                 "expected_roles": {"merge": targets["merge"].hex()}
                 if declared is None
@@ -772,30 +800,64 @@ def add_complete_code(
             }
         ),
     )
-    store.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,kind,observed_at_us,request,roots_manifest) VALUES('code-acquisition','00000000-0000-4000-8000-000000000401','sha1','legacy',0,'{}','[]')"
-    )
     for role, oid in targets.items():
-        mode = link_state if role == unavailable_role else "published"
+        mode = link_state if role == unavailable_role else "complete"
         if mode == "absent":
             continue
-        actual = bytes([4]) * 20 if mode == "wrong_oid" else oid
+        actual = targets["merge"] if mode == "wrong_oid" else oid
         root = None
         if mode != "null_root":
+            role_acquisition = acquisition + "-" + role
+            add_fact(
+                store,
+                "git_acquisitions",
+                git_acquisition_id=role_acquisition,
+                repository_uuidv4=REPOSITORY,
+                object_format="sha1",
+                kind="pr",
+                observed_at_us=0,
+                request="{}",
+                roots_manifest="[]",
+            )
+            parser.install_object(
+                "sha1", tree_oid, "tree", tree_raw, acquisition=role_acquisition
+            )
             if mode != "object_missing":
-                store.execute(
-                    "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES('sha1',?,'commit',0,1)",
-                    (actual,),
+                actual_role = "merge" if mode == "wrong_oid" else role
+                parser.install_object(
+                    "sha1",
+                    actual,
+                    "commit",
+                    raws[actual_role],
+                    acquisition=role_acquisition,
                 )
-            root = store.execute(
-                "INSERT INTO acquisition_roots(git_acquisition_id,object_format,oid,role,repository_uuidv4,expected_oid,published) VALUES('code-acquisition','sha1',?,?,'00000000-0000-4000-8000-000000000401',?,?)",
-                (actual, role, actual, 0 if mode == "unpublished" else 1),
-            ).lastrowid
-        store.execute(
-            "INSERT INTO code_acquisitions(code_observation_id,role,object_format,oid,acquisition_root_id) VALUES(?,?,'sha1',?,?)",
-            (code, role, actual, root),
+            root = add_fact(
+                store,
+                "acquisition_roots",
+                git_acquisition_id=role_acquisition,
+                repository_uuidv4=REPOSITORY,
+                object_format="sha1",
+                oid=actual,
+                role=role,
+                expected_oid=actual,
+                complete=0,
+            )
+            if mode not in {"incomplete", "object_missing"}:
+                assert parser.validate_acquisition(role_acquisition)
+                store.execute(
+                    "UPDATE acquisition_roots SET complete=1 WHERE acquisition_root_id=?",
+                    (root,),
+                )
+        add_fact(
+            store,
+            "code_acquisitions",
+            code_assessment_id=assessment,
+            role=role,
+            object_format="sha1",
+            oid=actual,
+            acquisition_root_id=root,
         )
-    return code, targets
+    return assessment, targets
 
 
 @pytest.mark.parametrize(
@@ -803,19 +865,19 @@ def add_complete_code(
     [
         ("head", "absent"),
         ("base", "null_root"),
-        ("merge", "unpublished"),
+        ("merge", "incomplete"),
         ("head", "wrong_oid"),
         ("base", "object_missing"),
-        (None, "published"),
+        (None, "complete"),
     ],
 )
-def test_complete_code_requires_saved_published_matching_role_roots(
+def test_complete_code_requires_saved_complete_matching_role_roots(
     pr_catalog, unavailable_role, link_state
 ):
     state, store = pr_catalog
     with store.transaction():
         code, targets = add_complete_code(store, unavailable_role, link_state)
-        store.publish()
+        store.advance_local_revision()
     result = run(
         state,
         "pr",
@@ -826,14 +888,22 @@ def test_complete_code_requires_saved_published_matching_role_roots(
         1,
         expected=3 if unavailable_role else 0,
     )
-    assert result["data"]["items"][0]["code_observation"]["state"] == "complete"
     assert result["coverage"]["missing"] == (
         [
             {
                 "kind": "pr",
+                "reason": "code_role_target_conflict",
+                "change_request_id": "repo:1:pull_request",
+                "role": unavailable_role,
+            }
+        ]
+        if link_state == "wrong_oid"
+        else [
+            {
+                "kind": "pr",
                 "reason": "code_role_acquisition_missing",
                 "change_request_id": "repo:1:pull_request",
-                "code_observation_id": code,
+                "code_assessment_id": code,
                 "role": unavailable_role,
                 "expected_oid": "sha1:" + targets[unavailable_role].hex(),
             }
@@ -859,13 +929,13 @@ def test_imported_role_target_shapes_are_rejected_before_admission(
 ):
     state, store = pr_catalog
     with (
-        pytest.raises(sqlite3.IntegrityError, match="JSON reference"),
+        pytest.raises(sqlite3.IntegrityError, match="JSON contract"),
         store.transaction(),
     ):
         add_complete_code(store, declared=declared)
     assert (
         store.one(
-            "SELECT count(*) FROM code_observations WHERE json_type(details,'$.expected_roles') IS NOT NULL AND json_type(details,'$.expected_roles')<>'object'"
+            "SELECT count(*) FROM code_assessments WHERE json_type(details_json,'$.expected_roles') IS NOT NULL AND json_type(details_json,'$.expected_roles')<>'object'"
         )[0]
         == 0
     )

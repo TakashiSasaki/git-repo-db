@@ -26,6 +26,7 @@ from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.application.repository_identity import add_instance, bind
 from repo_catalog.domain.models import CancellationToken, CatalogError
+from tests.support.sqlite_contracts import assert_absent_tables
 
 API = "https://synthetic.github.test"
 OPAQUE = "unmodeled-transport-original-must-not-be-retained"
@@ -96,7 +97,7 @@ class CoreCatalog:
     def admit(self, candidate):
         with self.store.transaction():
             result = CurrentResources(self.store).admit(candidate, source="import")
-            self.store.publish()
+            self.store.advance_local_revision()
         return result
 
     def query(self, command, **options):
@@ -140,31 +141,18 @@ def core_catalog(tmp_path):
                 "INSERT INTO change_requests VALUES(?,?,?,'pull_request',7)",
                 (request, repository, binding),
             )
-            store.publish()
+            store.advance_local_revision()
         yield CoreCatalog(state, store, repository, service, binding, request)
         assert store.all("PRAGMA foreign_key_check") == []
         assert store.one("PRAGMA integrity_check")[0] == "ok"
 
 
 def assert_no_originals_or_selection(store):
-    for table in (
-        "fetch_occurrences",
-        "source_input_observations",
-        "stored_bytes",
-        "payloads",
-        "parsed_results",
-        "change_request_observations",
-        "document_observations",
-    ):
+    assert_absent_tables(store.connection, "fetch_occurrences", "source_input_observations", "parsed_results", "change_request_observations", "document_observations")
+    for table in ("stored_bytes", "payloads"):
         assert store.one(f"SELECT count(*) FROM {table}")[0] == 0, table
-    tables = [
-        row[0]
-        for row in store.all("SELECT name FROM sqlite_schema WHERE type='table'")
-        if row[0].startswith(("parser_profile", "fact_selection"))
-        or row[0] == "local_parser_profile_verification_trust"
-    ]
-    for table in tables:
-        assert store.one(f"SELECT count(*) FROM {table}")[0] == 0, table
+    tables = {row[0] for row in store.all("SELECT name FROM sqlite_schema WHERE type='table'")}
+    assert not any(table.startswith(("parser_profile", "fact_selection")) or table == "local_parser_profile_verification_trust" for table in tables)
     assert OPAQUE not in "\n".join(store.connection.iterdump())
 
 

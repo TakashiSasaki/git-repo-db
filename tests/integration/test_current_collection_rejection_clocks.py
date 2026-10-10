@@ -1,6 +1,7 @@
 """Current collection rejection clocks survive retries without transport bytes."""
 
 import copy
+import json
 from contextlib import contextmanager
 
 import httpx
@@ -11,6 +12,7 @@ from repo_catalog.adapters.github.collector import GitHubCollector
 from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
+from repo_catalog.domain.time import format_iso8601_us
 from tests.support.github_runtime import github_runtime as github_runtime
 
 MARKER = "CURRENT_REJECTED_TRANSPORT_MARKER_20261010"
@@ -58,12 +60,15 @@ def mock_collector(store, responder, clock):
 
 
 def assert_no_original(store):
+    absent = {"fetch_occurrences", "source_input_observations"}
+    present = {
+        row[0] for row in store.all("SELECT name FROM sqlite_schema WHERE type='table'")
+    }
+    assert not absent.intersection(present)
     for table in (
         "stored_bytes",
         "payloads",
         "payload_admission_staging",
-        "fetch_occurrences",
-        "source_input_observations",
         "unresolved_payloads",
     ):
         assert store.one(f"SELECT count(*) FROM {table}")[0] == 0, table
@@ -436,7 +441,7 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
     store, repo, _, api = github_runtime
     seed_pr(store, repo)
     endpoint = api.url + "/repos/fixture/alpha/pulls/comments"
-    clock, blocked, requested = [100], [True], []
+    clock, blocked, requested, since = [100], [True], [], []
     monkeypatch.setattr(
         "repo_catalog.adapters.github.persistence.now_us", lambda: clock[0]
     )
@@ -444,6 +449,7 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
     def response(request):
         page = request.url.params.get("page", "1")
         requested.append(page)
+        since.append(request.url.params.get("since"))
         if page == "1":
             clock[0] = 150
             return httpx.Response(
@@ -478,17 +484,32 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
         blocked[0] = False
         current.current_incremental_reviews(repo, job, endpoint)
         assert requested == ["1", "2", "2"]
-        assert tuple(
-            store.one(
-                "SELECT scan_started_at_us,safe_watermark_us FROM incremental_scans"
-            )
-        ) == (100, 100)
+        collection = store.one(
+            "SELECT f.observed_at_us,f.scope_json FROM fetch_collections f "
+            "JOIN collection_progress p USING(fetch_collection_id) WHERE p.job_id=?",
+            (job,),
+        )
+        assert collection["observed_at_us"] == 100
+        scope = json.loads(collection["scope_json"])
+        assert (
+            scope["request_context"]["incremental_endpoint"]
+            == endpoint + "?per_page=100&sort=updated&direction=asc"
+        )
+        assert scope["repository_uuidv4"] == repo["repository_uuidv4"]
+        assert not store.one("SELECT 1 FROM incremental_scans")
         assert (
             store.one(
                 "SELECT observed_at_us FROM completion_markers WHERE asserted_state='complete'"
             )[0]
             == 300
         )
+        JobService(store).update(job, "complete")
+        clock[0] = 400
+        current.current_incremental_reviews(repo, new_job(store), endpoint)
+        assert requested == ["1", "2", "2", "1", "2"]
+        assert since[:3] == [None, None, None]
+        assert since[3] == format_iso8601_us(100 - 300_000_000)
+        assert since[4] is None  # Follow the provider's page-two Link exactly.
         assert_no_original(store)
 
 

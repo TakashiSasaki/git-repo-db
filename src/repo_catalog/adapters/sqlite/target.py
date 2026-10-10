@@ -40,7 +40,7 @@ class TargetReader:
                     )
             self.connection.execute("BEGIN")
             rows = self.connection.execute(
-                "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+                "SELECT singleton,format_id,schema_version,db_instance_id,local_revision,ddl_sha256,lifecycle FROM database_identity"
             ).fetchall()
             if len(rows) != 1:
                 raise CatalogError("SCHEMA_ERROR", "Invalid target database identity")

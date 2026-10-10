@@ -27,7 +27,7 @@
     "docs/**/*.md",
     "docs/*.md"
   ],
-  "notes": "All test_*.py and *_test.py files below the four ordinary test directories are current acceptance inputs. Live tests remain explicit opt-in outside those directories. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. Runtime/schema, immutable parser verification and portable exchange contracts are shared src inputs. Named historical schema-hardening snapshots and validation evidence are report inputs; unclassified files conservatively select full acceptance.",
+  "notes": "All test_*.py and *_test.py files below the four ordinary test directories are current acceptance inputs. Live tests remain explicit opt-in outside those directories. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. Runtime/schema, direct typed domain validity and portable exchange contracts are shared src inputs. Named historical schema-hardening snapshots and validation evidence are report inputs; unclassified files conservatively select full acceptance.",
   "report_inputs": [
     "docs/ci-performance-baseline.json",
     "docs/ci-performance-results.json",

@@ -27,23 +27,35 @@ def refresh_documents(store, kind, token):
     """Reconstruct disposable inputs from eligible domain text, including imports.
 
     Shared text storage can retain superseded bodies. It is not a search scope:
-    only retained PR histories and admitted current resources supply inputs.
+    only current API values and legitimate Git/domain content supply inputs.
     """
-    if kind == "code":
-        rows = store.execute(
-            "SELECT git_fact_uuidv4 source_key,raw_text body FROM current_git_text_facts WHERE raw_text IS NOT NULL ORDER BY git_fact_uuidv4"
+    if kind in {"code", "commits"}:
+        from repo_catalog.application.git_query_context import decoded_fact
+
+        table, object_type, field = (
+            ("git_text_facts", "blob", "raw_text")
+            if kind == "code"
+            else ("git_commit_facts", "commit", "message_text")
         )
-    elif kind == "commits":
-        rows = store.execute(
-            "SELECT git_fact_uuidv4 source_key,message_text body FROM current_git_commits ORDER BY git_fact_uuidv4"
-        )
+
+        def git_rows():
+            for obj in store.execute(
+                f"SELECT DISTINCT f.git_object_id FROM {table} f JOIN available_git_objects g USING(git_object_id) JOIN repository_object_sources s USING(git_object_id) ORDER BY git_object_id"
+            ):
+                token.check()
+                result = decoded_fact(store, obj[0], object_type)
+                if result["fact"] is not None and result["fact"][field] is not None:
+                    yield {
+                        "source_key": "git:" + str(obj[0]),
+                        "body": result["fact"][field],
+                    }
+
+        rows = git_rows()
     elif kind == "pr":
         rows = store.execute(
             "SELECT lower(hex(b.sha256)) source_key,b.body,b.byte_length FROM text_bodies b "
-            "WHERE b.sha256 IN (SELECT o.text_body_sha256 FROM document_observations o "
-            "JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
-            "UNION SELECT text_body_sha256 FROM eligible_review_resources WHERE deleted=0) "
-            "ORDER BY b.sha256"
+            "WHERE b.sha256 IN (SELECT text_body_sha256 FROM eligible_document_state WHERE deleted=0 "
+            "UNION SELECT text_body_sha256 FROM eligible_review_resources WHERE deleted=0) ORDER BY b.sha256"
         )
     elif kind == "issue":
         rows = store.execute(
@@ -109,9 +121,9 @@ def rebuild(store, kind, token=None):
         token.check()
         refresh_documents(s, current, token)
         selected = {
-            "code": "source_key IN (SELECT git_fact_uuidv4 FROM current_git_text_facts WHERE raw_text IS NOT NULL)",
-            "commits": "source_key IN (SELECT git_fact_uuidv4 FROM current_git_commits)",
-            "pr": "source_key IN (SELECT lower(hex(o.text_body_sha256)) FROM document_observations o JOIN usable_parsed_results r USING(parsed_result_uuidv4) UNION SELECT lower(hex(text_body_sha256)) FROM eligible_review_resources WHERE deleted=0)",
+            "code": "source_key IN (SELECT 'git:'||f.git_object_id FROM git_text_facts f JOIN available_git_objects g USING(git_object_id) WHERE f.raw_text IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_text_facts c WHERE c.git_object_id=f.git_object_id AND (c.raw_text IS NOT f.raw_text OR c.text_state IS NOT f.text_state)))",
+            "commits": "source_key IN (SELECT 'git:'||f.git_object_id FROM git_commit_facts f JOIN available_git_objects g USING(git_object_id) WHERE NOT EXISTS(SELECT 1 FROM git_commit_facts c WHERE c.git_object_id=f.git_object_id AND (c.message_text IS NOT f.message_text OR c.metadata IS NOT f.metadata)))",
+            "pr": "source_key IN (SELECT lower(hex(text_body_sha256)) FROM eligible_document_state WHERE deleted=0 UNION SELECT lower(hex(text_body_sha256)) FROM eligible_review_resources WHERE deleted=0)",
             "issue": "source_key IN (SELECT lower(hex(text_body_sha256)) FROM eligible_issue_resources WHERE deleted=0) OR EXISTS (SELECT 1 FROM eligible_issue_resources i WHERE i.deleted=0 AND i.title=search_documents.body)",
         }[current]
         selected = "(" + selected + ")"

@@ -1,66 +1,19 @@
-# アーキテクチャ
+# Architecture — Catalog3 Schema 20
 
-> **確定方針と実装境界:** [通信原本非依存のコアDBとParser由来情報の簡素化](transport-independent-core-adr.md)を参照してください。API通信原本のコア永続保存・再解析依存とParser選択DAGを廃止する方針を固定しています。リソースの履歴／現行状態のライフサイクルは未決定です。Schema 18では現在Issue/Review経路のmodule/version帰属を維持し、[Phase 1のAPI原本依存機能廃止](phase1-api-original-retirement.md)を適用しています。[実装範囲と未決定の契約](transport-independent-core-implementation.md)を参照してください。PR/Gitの履歴公開・選択は既存実装のままです。
+The active architecture implements the [accepted Publication-independent reconstruction](phase2/publication-free-design.md). The [implementation handoff](phase2/publication-free-implementation.md) distinguishes implementation from independent review and final acceptance. Earlier boundary/audit receipts remain historical evidence; the 69-table proposal is superseded.
 
-依存方向は`cli → application → domain/ports`です。Git/GitHub/SQLite/filesystem adapterはapplicationから利用します。
-CLIはargparse、presentation、終了コード、SIGINTの変換を担当します。
-applicationは収集、照会、job、保守を担当し、terminalやHTTP handlerへ依存しません。
+The runtime dependency direction is `cli -> application -> domain/ports`. Adapters own SQLite, HTTP, Git and filesystem operations. `adapters/sqlite/schema.py` composes the sole complete packaged DDL. Initialization, reads/writes, Exchange, maintenance and installed distributions share that schema fingerprint; earlier catalogs are rejected without a migration/compatibility layer.
 
-`CollectionRequest`、`QueryRequest`、`SearchQuery`、`PageRequest`をサービス入口に利用できます。
-`QueryService.execute(request)`はCLIなしで使用でき、結果、coverage、page、実行状態を返します。
-CLIが共通JSON envelopeと終了コードへ変換します。
+Portable service/repository/Source registration identities and typed resource parents own facts directly. PR metadata, natural-key documents, threads, Issues/reviews and known Source associations retain current accepted values with per-field origins. A sparse response cannot reattribute inherited values; absence differs from null; equal or incomparable contradictions remain visible. No result/profile/certificate/selection/Publication row enables ordinary reads.
 
-```python
-from repo_catalog.application.contracts import SearchQuery, PageRequest
-from repo_catalog.application.query_service import QueryService
+SQLite transactions and nested savepoints make values, presence, evidence, conflicts and local revision coherent. Write transactions do not span network requests. Individually committed resources remain usable after a later page fails. Requested collection completeness has its own exact scope, normalized member/terminal and required-child evidence, while Coverage retains its five-column latest-observation candidate contract. Operational job/cursor state does not own resource validity.
 
-result = QueryService("/path/to/state").execute(
-    SearchQuery(kind="code", literal="認証", page=PageRequest(limit=100))
-)
-```
+Git object identity and canonical raw bytes own intrinsic commit/parent/tree/tag structure. Each object installs atomically; genuine captures, roots, refs and graph closure have domain responsibilities. Missing targets remain actual missing OIDs. Decoder-specific values attach to objects with explicit settings and module/version; disagreeing candidates are not silently ranked. Code assessments retain minimal head/base/role/list context so current head B cannot borrow head A's completeness.
 
-初版のcoordinatorはforegroundでstateのwriter OS lockを保持し、SQLite更新接続を所有します。
-Git/APIの処理は現在直列です。HTTP、Git、hash、待機、stdout出力中にwrite transactionを保持しません。
-将来のWeb adapterは同じDTO/serviceを呼び、CLIのshell実行や複数Web workerの独立writerを導入しません。
+Exchange exports indexed domain closure from one consistent snapshot. It validates typed dependencies, exact text/Git bytes and current-state rules, stages actual missing/conflicting records, and supports reverse/repeated/late arrival and onward export. Delivery/idempotency processing records do not become fact owners. Sender checksums cannot prove provider authenticity or detect coherent external omission.
 
-Git snapshot順序、物理cache generation、job attemptは別に管理します。
-Git fetchはrun固有namespaceへ取得し、解析対象のrootを固定します。
-immutable objectを小transactionで保存し、必要な構造・digest・本文の保存後に不変の公開・選択記録を追加します。
-古いrunの正当な再開は履歴として公開でき、現在採用する解析結果は明示選択とそのDAGから導出します。
+Search indexes are derived from current API values and legitimate Git/event content. API originals, retrospective replay, opaque provider replicas and full normalized API edit history are removed. Optional supplementary recording is external and nonfatal. Shared unreferenced text can remain until an independently authorized reclamation policy exists.
 
-PRの文書ページは独立して公開し、collection終端、watermark、コード対応の完了を分離します。
-通常Issue/コメントとレビュー/レビューコメントは、各リソースの最新受理状態を共有物理テーブルへ保存します。PRタイトル・本文・PR会話コメントとGit・独立スレッドの観測履歴は維持します。
-検索は原文literalが正本です。contentless trigram FTSは候補検索に使い、原文で最終照合します。
-索引が欠落・未索引・利用不能ならscanで補完します。
+CAS quarantine/repair, preservation obligations, verified backup, copied quarantine count (CAS-41) and atomic no-overwrite restore protect physical content. Catalog lifecycle and the single receiver-local `local_revision` counter remain mechanical infrastructure. No new retention/GC, cache architecture, negative-membership, provider trust or Git interpretation policy is implied.
 
-SQLiteはローカルfilesystemに置きます。既定DELETE/EXTRA、全接続foreign_keys=ON、有限busy_timeoutです。
-WALは明示設定かつ修正済みruntimeのgateを通した場合のみ有効にできます。
-
-
-通常の初期化・収集・照会・保守は catalog3 の同じ packaged schema を共有します。読み取りは `mode=ro` と通常の SQLite transaction snapshot を使い、変更中の DB に `immutable=1` を指定しません。derived FTS/statistics は format identity を変更せず、照会のたびに全 schema/source archive を hash 検証しません。
-
-旧v2 importerとfinalizeは廃止済みです。初期化は新規catalogを直接作成し、通常操作は変換workspaceを開きません。D2は `not_applicable / retired` ですが、不明なidentityや観測時刻を捏造しない契約は維持します。歴史的なreceiptは現行ランタイムの前提ではありません。
-
-Active catalog3 schema identity is version **18**. [Data model](data-model.md) and [schema composition](../src/repo_catalog/adapters/sqlite/schema.py) define portable UUIDv4 service namespaces, natural resource keys, SHA-256 text identity and signed integer epoch microseconds. Historical documents have no surrogate ID or version table. Composite FK ownership and explicit historical selection remain enforced. There is no development-database migration or compatibility layer.
-
-## 現在状態と通信記録の境界
-
-`issue_resources` は通常Issueとコメント、`review_resources` はレビュー概要とレビューコメントの共有ストアです。local収集とexchangeは同じ受理処理を使います。同一内容は冪等に扱い、比較可能なprovider更新時刻など順序の証拠がある場合だけ差分を受理します。順序不明の差分・未到着の親は診断/stagingへ保存し、競合を確定した最新状態として表示しません。`observed_at_us`、`last_checked_at_us`、`provider_updated_at_us`、`parsed_at_us` はそれぞれ観測、確認、provider更新、解析の時刻です。
-
-同じ行の `field_evidence_json` は、現在値とmetadataの各pathに取得時刻・clock・parser module/version・scopeを対応付けます。未提供の値は元の根拠を保持し、古い完全応答の後着で未観測項目を補完できます。同時刻に実際に観測した異なる値は競合のままです。根拠mapは保持中の項目数に対応し、以前の値や編集回数に応じた履歴行を追加しません。同内容でも強い根拠が届けば競合を再評価します。
-
-現在のIssue所属と取得時のscopeは独立しています。移動時は子のrepository/binding/番号だけを更新し、元endpoint・Source・取得時刻・項目別根拠を保持します。交換先に移動元の登録がない場合も、取得scopeの識別子をsnapshotとして保存します。実在する登録との整合性は検査します。`last_checked_at_us` は事前revisionとscopeが一致した正常live取得の初回・編集・同内容確認で進み、importは受信側の確認時刻を作りません。現在状態の受理経路はlive/importだけで、保存API応答のreplayは廃止済みです。
-
-可変現在行は、不変 `parsed_results` の封印された出力には所属しません。正確な本文、型付き親、repository/service/bindingと各項目を生成したparser module/versionへの帰属はdomain datastoreに残します。レビュー所属・返信先・独立スレッド所属は別々の関係です。code listingに必要な不変参照は固定し、後のレビュー編集で以前のGit/code snapshotを変更しません。
-
-HTTP transportは `MessageRecorder` へ補助記録を渡し、recording adapterが保存とarchive読取りを所有します。`github.record_messages` は既定でfalse、有効時は `transport-archive/` を利用します。recorder障害は許可された32文字以下のコード、観測時刻、試行番号だけを診断へ渡し、transport内で最新100件を保持します。警告表示はbest-effortで、warnings-as-errorsや表示hookの失敗でも正常応答の解析・domain保存を続けます。取消し・通信・解析・必須domain証拠の失敗は通常どおり扱います。記録するbytesはHTTP content-decoding後の正確なbytesです。資格情報を除くメタデータ許可リストと読取り上限は[通信記録](latest-state-transport.md)に記載しています。
-
-現在状態のcollectionは、取得scope、ページ順、メンバーidentity/digest、次ページと終端の最小限の不変証拠をdomain側へ保存します。補助archiveの有無はcollection完全性を変えません。Exchangeとbackup/restoreもarchiveを必須依存に含めません。`inspect-message`は明示選択した記録のmetadataとbody有無を上限付きで読み、domain parserを呼びません。保存API応答をparserへ渡す`reparse-message`投影も廃止済みです。
-
-Coverage claims are immutable evaluations identified by scope, observation time and state. Domain helpers define admission and derivation; SQLite performs admission atomically and derives `current_coverage` from the latest-time claim set. Unknown is weak only within that selected time; disagreement among determinate states yields a derived conflict. Live restart and Git reanalysis preserve actual source observation times and keep job execution state separate; API offline replay is retired. Query adapters return the derived scope with each selected claim and its own advisory details. See the [coverage contract](data-model.md#coverage-claims-and-current-state).
-
-全面拒否された未commit API応答のraw bytes、論理payload解析gap、保存応答からの再試行はcoreに保持しません。部分的に受理済みのGraphQL rootはerror envelopeも含め履歴公開/live再開の入力として残るC境界です。任意の外部recorderは、coreで拒否された応答も別途記録できます。取得した内容が不完全と判明した場合は、partial理由・実際の観測時刻・安全なlive再取得境界だけを保持します。error-onlyのrate-limit応答は再試行期限を保持しますが、domain観測時刻を進めません。
-
-`unresolved_payloads`は5列の物理破損診断専用です。拒否payload stagingはraw Gitだけ、明示修復は実在する`git_object_payloads`参照のbytesだけを対象とし、全対応Git objectのformat/OID/type/sizeにreplacementが一致することを検証します。Git/APIで共有する物理digestはGit参照により修復でき、全物理bytesの走査・隔離・backup/restore・CAS-41は維持します。原本だけの交換は廃止し、`--fetch`/`--collection`は実際のdomain公開・完全性証拠に必要な入力closureの選択に使います。成功した歴史的PR/スレッド/Source/コード公開、live restart/304、domain交換証明と既存provider JSON投影は[Phase 2境界](phase1-api-original-retirement-implementation.md)として残します。
-
-現在の構造変更と旧契約の限定的な上書きは[Phase 1実装記録](phase1-api-original-retirement-implementation.md)を参照してください。以前の[対応記録](current-state-schema-closure.md)、[列の用途](current-state-schema-liveness.md)と[完全schema一覧](current-state-schema-inventory.md)、[schema 14実装対応表](latest-state-transport-implementation.md)は当時の証拠として保持します。最終受入は実装完了後の正確なtreeに対する試験で判定し、過去の合格receiptとは区別します。
+See [every durable subject's key/consumer/lifetime](phase2/publication-free-implementation.md#durable-responsibilities), the [complete table/FK/view/trigger map](phase2/publication-free-schema-map.json), [CLI](cli.md), [operations](operations.md) and [verification](testing.md).

@@ -18,6 +18,7 @@ from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from tests.support.github_runtime import github_runtime as github_runtime
 from tests.support.github_runtime import sync
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 def current_query(state, repository, kind, *, search=False):
@@ -32,7 +33,7 @@ def current_query(state, repository, kind, *, search=False):
 
 
 @pytest.mark.parametrize("kind", ["review", "review-comment"])
-def test_imported_current_family_needs_no_trusted_parent_interpretation(
+def test_imported_current_family_uses_direct_fields_without_parser_trust(
     github_runtime, tmp_path, kind
 ):
     sender, repo, _, _ = github_runtime
@@ -45,26 +46,22 @@ def test_imported_current_family_needs_no_trusted_parent_interpretation(
     assert result.data["rejected_records"] == 0
     assert result.data["staged_records"] == 0
     with Store(receiver) as received:
-        assert received.one("SELECT count(*) FROM change_request_observations")[0] > 0
-        assert received.one("SELECT count(*) FROM document_observations")[0] > 0
-        assert (
-            received.one(
-                "SELECT count(*) FROM local_parser_profile_verification_trust"
-            )[0]
-            == 0
+        assert received.one("SELECT count(*) FROM eligible_change_request_state")[0] > 0
+        assert_absent_tables(received.connection, "change_request_observations")
+        assert_absent_tables(received.connection, "document_observations")
+        assert_absent_tables(
+            received.connection, "local_parser_profile_verification_trust"
         )
-        assert (
-            received.one("SELECT count(*) FROM current_change_request_observations")[0]
-            == 0
-        )
-        assert (
-            received.one("SELECT count(*) FROM current_document_observations")[0] == 0
+        assert_absent_tables(
+            received.connection,
+            "current_change_request_observations",
+            "current_document_observations",
         )
         assert (
             received.one(
                 "SELECT coverage_state FROM current_coverage WHERE repository_uuidv4=? "
-                "AND change_request_id IS NULL AND kind='pr-documents'",
-                (repo["repository_uuidv4"],),
+                "AND change_request_id=? AND kind=?",
+                (repo["repository_uuidv4"], repo["repository_uuidv4"] + ":41", kind),
             )[0]
             == "complete"
         )
@@ -112,20 +109,15 @@ def test_imported_current_family_needs_no_trusted_parent_interpretation(
                 **filter_option,
             },
         )
-        assert filtered.status == "partial"
-        assert any(
-            gap["reason"] == "change_request_observation_missing"
-            for gap in filtered.coverage.missing
-        )
+        assert filtered.status == "complete", filtered.coverage
+        assert filtered.coverage.missing == []
     mixed = QueryService(receiver).query(
         "pr documents",
         {"repo": repo["repository_uuidv4"], "provider_change_request_number": 41},
     )
-    assert mixed.status == "partial"
-    assert any(
-        gap["reason"] == "document_current_selection_unresolved"
-        for gap in mixed.coverage.missing
-    )
+    assert mixed.status == "complete", mixed.coverage
+    assert mixed.coverage.missing == []
+    assert mixed.data["items"]
 
 
 @pytest.mark.parametrize("gap", ["missing-body", "conflict"])
@@ -226,8 +218,7 @@ def test_current_family_keeps_repository_parent_set_completeness(github_runtime)
     store, repo, _, _ = github_runtime
     sync(store, repo)
     summary = store.one(
-        "SELECT observed_at_us FROM current_coverage WHERE repository_uuidv4=? "
-        "AND change_request_id IS NULL AND kind='pr-documents'",
+        "SELECT max(observed_at_us) FROM current_coverage WHERE repository_uuidv4=?",
         (repo["repository_uuidv4"],),
     )
     store.coverage(

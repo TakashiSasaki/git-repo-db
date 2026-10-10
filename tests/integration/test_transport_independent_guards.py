@@ -71,9 +71,14 @@ def detached_catalog():
         )
     # Only empty legacy tables are removed. Foreign keys remain enabled, and
     # actual current writes must prepare their triggers against the reduced DB.
+    existing = {
+        row[0]
+        for row in db.execute("SELECT name FROM sqlite_schema WHERE type='table'")
+    }
     for table in LEGACY_STORES:
-        assert db.execute(f"SELECT count(*) FROM {table}").fetchone()[0] == 0
-        db.execute(f"DROP TABLE {table}")
+        if table in existing:
+            assert db.execute(f"SELECT count(*) FROM {table}").fetchone()[0] == 0
+            db.execute(f"DROP TABLE {table}")
     assert db.execute("PRAGMA foreign_keys").fetchone()[0] == 1
     yield db, owners
     assert db.execute("PRAGMA foreign_key_check").fetchall() == []

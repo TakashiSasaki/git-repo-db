@@ -14,6 +14,7 @@ from repo_catalog.adapters.sqlite.schema import (
     schema_sql,
 )
 from repo_catalog.domain.models import CatalogError
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @pytest.fixture
@@ -131,10 +132,7 @@ def test_shared_physical_storage_replaces_marker_and_review_history(resources):
         ).fetchall()
         == []
     )
-    assert (
-        adapter.c.execute("SELECT count(*) FROM document_observations").fetchone()[0]
-        == 0
-    )
+    assert_absent_tables(adapter.c, "document_observations")
     assert adapter.c.execute("PRAGMA foreign_key_check").fetchall() == []
 
 
@@ -157,7 +155,7 @@ def test_edit_and_identical_refresh_have_no_normalized_versions(resources):
     assert current(adapter)["body"] == "edited"
     assert adapter.c.execute("SELECT count(*) FROM issue_resources").fetchone()[0] == 1
     assert adapter.c.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 2
-    assert adapter.c.execute("SELECT count(*) FROM parsed_results").fetchone()[0] == 0
+    assert_absent_tables(adapter.c, "parsed_results")
 
 
 def test_current_admission_rejects_unsupported_replay_without_catalog_changes(

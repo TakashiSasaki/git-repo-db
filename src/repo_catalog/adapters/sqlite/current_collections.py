@@ -12,6 +12,7 @@ import json
 from repo_catalog.domain.models import CatalogError
 
 PROOF_KIND = "current-resource-pages-v1"
+TREE_PROOF_KIND = "current-resource-tree-v1"
 
 
 class CurrentCollectionProof:
@@ -41,7 +42,7 @@ class CurrentCollectionProof:
             "fetch_collection_id": fetch_collection_id,
             "ordinal": ordinal,
             "observed_at_us": observed_at_us,
-            "next_cursor": next_cursor,
+            "has_next": int(next_cursor is not None),
             "members": json.dumps(members, sort_keys=True, separators=(",", ":")),
             "status": status,
             "parser_module": parser_module,
@@ -88,8 +89,8 @@ class CurrentCollectionProof:
         if (
             not pages
             or [page["ordinal"] for page in pages] != list(range(len(pages)))
-            or any(page["next_cursor"] is None for page in pages[:-1])
-            or pages[-1]["next_cursor"] is not None
+            or any(page["has_next"] == 0 for page in pages[:-1])
+            or pages[-1]["has_next"] != 0
         ):
             return None
         return {
@@ -109,10 +110,46 @@ class CurrentCollectionProof:
             evidence = json.loads(marker["evidence"])
         except (ValueError, TypeError):
             return False
-        expected = self.evidence(marker["fetch_collection_id"])
+        collection = marker["fetch_collection_id"]
+        expected = self.evidence(collection)
+        if evidence.get("kind") == TREE_PROOF_KIND:
+            requirements = self.db.execute(
+                "SELECT child_fetch_collection_id FROM thread_collection_requirements WHERE fetch_collection_id=? ORDER BY provider_resource_id",
+                (collection,),
+            ).fetchall()
+            children = [row[0] for row in requirements]
+            if expected is None or any(child is None for child in children):
+                return False
+            for child in children:
+                cursor = self.db.execute(
+                    "SELECT * FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                    (child,),
+                )
+                columns = [col[0] for col in cursor.description]
+                if not any(
+                    self.is_complete_marker(dict(zip(columns, row, strict=True)))
+                    for row in cursor
+                ):
+                    return False
+            expected = {
+                **expected,
+                "kind": TREE_PROOF_KIND,
+                "fetch_collection_ids": children,
+            }
+            observed = max(
+                (self.observed_at_us(item) for item in [collection, *children]),
+                default=None,
+            )
+            return (
+                evidence.keys() == expected.keys()
+                and evidence["kind"] == TREE_PROOF_KIND
+                and evidence["terminal"] is True
+                and evidence["page_ordinals"] == expected["page_ordinals"]
+                and sorted(evidence["fetch_collection_ids"]) == sorted(children)
+                and marker["observed_at_us"] == observed
+            )
         return (
             expected is not None
             and evidence == expected
-            and marker["observed_at_us"]
-            == self.observed_at_us(marker["fetch_collection_id"])
+            and marker["observed_at_us"] == self.observed_at_us(collection)
         )

@@ -32,8 +32,8 @@ def freeze_complete_proof(connection, observed_at_us, details_json):
     markers = []
     for collection_id in details["fetch_collection_ids"]:
         rows = connection.execute(
-            "SELECT m.completion_marker_uuidv4,m.observed_at_us FROM completion_markers m WHERE m.fetch_collection_id=? AND m.asserted_state='complete' AND (m.observed_at_us<=? OR (json_extract(m.evidence,'$.status')=304 AND EXISTS(SELECT 1 FROM fetch_occurrences f WHERE f.fetch_occurrence_uuidv4=json_extract(m.evidence,'$.fetch_occurrence_uuidv4') AND f.observed_at_us<=?))) ORDER BY m.observed_at_us DESC,m.completion_marker_uuidv4",
-            (collection_id, observed_at_us, observed_at_us),
+            "SELECT m.completion_marker_uuidv4,m.observed_at_us FROM completion_markers m WHERE m.fetch_collection_id=? AND m.asserted_state='complete' AND m.observed_at_us<=? ORDER BY m.observed_at_us DESC,m.completion_marker_uuidv4",
+            (collection_id, observed_at_us),
         ).fetchall()
         if not rows:
             return details_json

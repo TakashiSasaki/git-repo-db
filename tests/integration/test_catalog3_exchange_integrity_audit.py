@@ -1,358 +1,265 @@
-"""Independent adversarial audit of portable closure and local CAS state."""
+"""Adversarial validation of typed owners and verified Git normalization."""
 
+import base64
 import copy
+import hashlib
 import json
-import uuid
 
 import pytest
 
-from repo_catalog.adapters.sqlite.cas_integrity import diagnose_corruption
-from repo_catalog.adapters.sqlite.coverage import freeze_complete_proof
+from repo_catalog.adapters.git.parsing import (
+    install_git_object,
+    validate_git_acquisition,
+)
 from repo_catalog.adapters.sqlite.exchange import Graph
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
-from repo_catalog.adapters.sqlite.payloads import intern_payload
-from repo_catalog.adapters.sqlite.store import Store
-from repo_catalog.application.exchange_service import ExchangeService
-from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.domain.models import CatalogError
-from tests.integration.test_catalog3_cas_integrity import corrupt
+from tests.integration.test_catalog3_exchange import databases as databases
 from tests.integration.test_catalog3_exchange import (
-    complete_collection,
     fixture,
     receive,
+    uid,
 )
-from tests.integration.test_catalog3_exchange import databases as databases
 
 
-def source_derived_name(db, expected):
-    profile = ParserModel(db).register_profile(
+def git_fixture(db, *, repository=None, suffix="", decoder_settings=None):
+    repo, acquisition, snapshot = repository or uid(), uid(), uid()
+    if not db.execute(
+        "SELECT 1 FROM repositories WHERE repository_uuidv4=?", (repo,)
+    ).fetchone():
+        db.execute(
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'git','{}')",
+            (repo,),
+        )
+    blob = ("hello Git" + suffix).encode()
+
+    def oid(kind, body):
+        return hashlib.sha1(
+            kind.encode() + b" " + str(len(body)).encode() + b"\0" + body
+        ).digest()
+
+    blob_oid = oid("blob", blob)
+    tree = b"100644 file.txt\0" + blob_oid
+    tree_oid = oid("tree", tree)
+    commit = (
+        b"tree "
+        + tree_oid.hex().encode()
+        + b"\nauthor Test <test@example.invalid> 0 +0000\ncommitter Test <test@example.invalid> 0 +0000\n\nmessage\n"
+    )
+    commit_oid = oid("commit", commit)
+    refs = [
         {
-            "implementation": {"test": "inventory"},
-            "settings": {},
-            "output_schema": {},
-            "capabilities": [{"owner_kind": "source", "fact_kind": "inventory"}],
+            "name": "refs/heads/main",
+            "name_b64": base64.b64encode(b"refs/heads/main").decode(),
+            "oid": commit_oid.hex(),
+            "peeled": None,
+            "type": "commit",
         }
-    )
-    ref = intern_payload(
-        db,
-        b'{"source-wide-secret":"other-repository-inventory"}',
-        representation="decoded_api",
-    )
-    input_uuid = str(uuid.uuid4())
+    ]
     db.execute(
-        "INSERT INTO source_input_observations(source_input_uuidv4,source_registration_uuidv4,payload_representation,payload_sha256,request_context_json,observed_at_us) VALUES(?,?,?,?, '{}',1)",
-        (input_uuid, expected["source"], *ref.parameters()),
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,object_format,request,roots_manifest) VALUES(?,?,'git','sha1','{}',?)",
+        (acquisition, repo, json.dumps(refs)),
     )
-    result = ParserModel(db).create_result(
-        profile,
-        source_registration_uuidv4=expected["source"],
-        inputs=[{"source_input_uuidv4": input_uuid}],
+    for kind, body in (("blob", blob), ("tree", tree), ("commit", commit)):
+        install_git_object(
+            db,
+            "sha1",
+            oid(kind, body),
+            kind,
+            body,
+            repository_uuid=repo,
+            acquisition=acquisition,
+            **(decoder_settings or {}),
+        )
+    db.execute(
+        "INSERT INTO snapshots(snapshot_id,git_acquisition_id,repository_uuidv4,complete,generation) VALUES(?,?,?,0,1)",
+        (snapshot, acquisition, repo),
     )
     db.execute(
-        "INSERT INTO repository_name_observations(repository_name_observation_uuidv4,repository_uuidv4,name,observed_at_us,parsed_result_uuidv4,provenance_json,owner_source_registration_uuidv4) VALUES(?,?, 'observed-name',1,?,'{}',?)",
-        (str(uuid.uuid4()), expected["repository"], result, expected["source"]),
+        "INSERT INTO ref_observations(repository_uuidv4,snapshot_id,raw_ref_name,kind,object_format,target_oid,target_type) VALUES(?,?,?,'head','sha1',?,'commit')",
+        (repo, snapshot, b"refs/heads/main", commit_oid),
     )
-    ParserModel(db).publish_result(result)
-    return input_uuid, result, ref
+    db.execute(
+        "INSERT INTO acquisition_roots(git_acquisition_id,repository_uuidv4,object_format,oid,role,complete) VALUES(?,?,'sha1',?,'head',1)",
+        (acquisition, repo, commit_oid),
+    )
+    validate_git_acquisition(db, acquisition)
+    db.execute("UPDATE snapshots SET complete=1 WHERE snapshot_id=?", (snapshot,))
+    return {
+        "repository": repo,
+        "acquisition": acquisition,
+        "snapshot": snapshot,
+        "blob": blob_oid,
+        "tree": tree_oid,
+        "commit": commit_oid,
+    }
 
 
-def test_source_derived_name_never_leaks_source_wide_evidence_or_dangles(databases):
+def test_git_roundtrip_recomputes_complete_intrinsic_rows(databases):
+    source, target = databases
+    expected = git_fixture(source)
+    unit = Graph(source).export(expected["repository"])
+    assert not {"commits", "tree_entries", "commit_parents", "parsed_results"} & {
+        r["table"] for r in unit["records"]
+    }
+    unit["records"].reverse()
+    result = receive(target, unit)
+    assert result["staged_records"] == 0, target.execute(
+        "SELECT table_name,reason FROM exchange_staging"
+    ).fetchall()
+    assert target.execute("SELECT count(*) FROM available_git_objects").fetchone() == (
+        3,
+    )
+    assert target.execute("SELECT count(*) FROM tree_entries").fetchone() == (1,)
+    assert target.execute("SELECT count(*) FROM current_snapshots").fetchone() == (1,)
+    assert receive(target, unit)["received_records"] == 0
+
+
+def test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope(databases):
+    source, target = databases
+    expected = git_fixture(source)
+    unit = Graph(source).export(expected["repository"])
+    missing = next(r for r in unit["records"] if r["table"] == "ref_observations")
+    partial = {**unit, "records": [r for r in unit["records"] if r is not missing]}
+    result = receive(target, partial)
+    assert result["staged_records"] > 0
+    assert target.execute("SELECT count(*) FROM available_git_objects").fetchone() == (
+        3,
+    )
+    assert target.execute("SELECT count(*) FROM current_snapshots").fetchone() == (0,)
+    assert receive(target, {**unit, "records": [missing]})["staged_records"] == 0
+    assert target.execute("SELECT count(*) FROM current_snapshots").fetchone() == (1,)
+
+
+def test_foreign_owner_is_rejected_before_intake(databases):
     source, target = databases
     expected = fixture(source)
-    input_uuid, result_uuid, reference = source_derived_name(source, expected)
+    other = fixture(source, source_local="other")
     unit = Graph(source).export(expected["repository"])
-    encoded = json.dumps(unit)
-    assert input_uuid not in encoded
-    assert reference.sha256.hex() not in encoded
-    assert result_uuid not in encoded
-    # A locally exported unit is closed, not a promise of source-wide evidence
-    # that this exchange format deliberately cannot send later.
-    assert receive(target, unit)["staged_records"] == 0
+    foreign = next(
+        r
+        for r in Graph(source).export(other["repository"])["records"]
+        if r["table"] == "repositories"
+    )
+    unit["records"].append(foreign)
+    with pytest.raises(CatalogError, match="Foreign repository"):
+        receive(target, unit)
+    assert target.execute("SELECT count(*) FROM exchange_staging").fetchone() == (0,)
+
+
+def test_unknown_fields_and_untyped_foreign_ids_fail_closed(databases):
+    source, target = databases
+    expected = fixture(source)
+    unit = Graph(source).export(expected["repository"])
+    document = next(r for r in unit["records"] if r["table"] == "document_state")
+    document["values"]["whole_response"] = "secret response"
+    with pytest.raises(CatalogError, match="Unexpected domain"):
+        receive(target, unit)
+    assert target.execute("SELECT count(*) FROM exchange_staging").fetchone() == (0,)
+    unit = Graph(source).export(expected["repository"])
+    document = next(r for r in unit["records"] if r["table"] == "document_state")
+    document["values"]["change_request_id"] = expected["cr"]
+    with pytest.raises(CatalogError, match="portable references"):
+        receive(target, unit)
+
+
+def test_single_immutable_variant_does_not_choose_winner(databases):
+    source, target = databases
+    expected = fixture(source)
+    unit = Graph(source).export(expected["repository"])
+    binding = next(r for r in unit["records"] if r["table"] == "repository_bindings")
+    conflict = copy.deepcopy(binding)
+    conflict["values"]["provider_repository_id"] = "different provider owner"
+    unit["records"].append(conflict)
+    result = receive(target, unit)
+    assert result["staged_records"] > 0
+    assert target.execute(
+        "SELECT count(*) FROM eligible_document_state"
+    ).fetchone() == (0,)
+    assert target.execute(
+        "SELECT count(*) FROM exchange_staging WHERE reason='conflict:competing_variants'"
+    ).fetchone() == (2,)
+
+
+def test_exchange_preserves_explicit_sender_decoder_without_receiver_winner(databases):
+    source, target = databases
+    expected = git_fixture(
+        source,
+        suffix="é",
+        decoder_settings={"text_encoding": "latin-1", "metadata_encoding": "latin-1"},
+    )
+    key, text = source.execute(
+        "SELECT decoder_key,raw_text FROM git_text_facts"
+    ).fetchone()
+    unit = Graph(source).export(expected["repository"])
+    assert {"git_commit_facts", "git_text_facts", "git_name_facts"} <= {
+        r["table"] for r in unit["records"]
+    }
+    unit["records"].reverse()
+    result = receive(target, unit)
+    assert result["staged_records"] == 0, target.execute(
+        "SELECT table_name,reason FROM exchange_staging"
+    ).fetchall()
+    assert target.execute(
+        "SELECT decoder_key,raw_text,text_encoding FROM git_text_facts"
+    ).fetchall() == [(key, text, "latin-1")]
+    assert receive(target, unit)["received_records"] == 0
     assert (
-        target.execute("SELECT count(*) FROM source_input_observations").fetchone()[0]
+        receive(source, Graph(target).export(expected["repository"]))["staged_records"]
         == 0
     )
 
 
-def test_local_quarantine_diagnostics_and_staging_do_not_cross_exchange(databases):
+def test_forged_sender_decoder_value_does_not_claim_git_bytes(databases):
     source, target = databases
-    expected = fixture(source)
-    unrelated = fixture(source, source_local="other-source")
-    isolated = intern_payload(
-        source, b"unrelated damaged bytes", representation="decoded_api"
-    )
-    corrupt(source, isolated.sha256, b"changed bytes")
-    diagnose_corruption(source, isolated.sha256)
+    expected = git_fixture(source)
     unit = Graph(source).export(expected["repository"])
-    assert not {
-        "payload_quarantine",
-        "unresolved_payloads",
-        "payload_admission_staging",
-    } & {r["table"] for r in unit["records"]}
-    assert unrelated["repository"] not in json.dumps(unit)
-    assert receive(target, unit)["staged_records"] == 0
-    assert target.execute("SELECT count(*) FROM payload_quarantine").fetchone()[0] == 0
-    assert target.execute("SELECT count(*) FROM unresolved_payloads").fetchone()[0] == 0
-
-
-def test_forged_local_quarantine_record_rejects_entire_unit(databases):
-    source, target = databases
-    expected = fixture(source)
-    unit = Graph(source).export(expected["repository"])
-    unit["records"].append(
-        {
-            "key": "payload_quarantine:forged",
-            "table": "payload_quarantine",
-            "values": {},
-        }
+    fact = next(r for r in unit["records"] if r["table"] == "git_text_facts")
+    fact["values"]["raw_text"] = "forged derived text"
+    result = receive(target, unit)
+    assert result["staged_records"] == 1
+    assert target.execute("SELECT reason FROM exchange_staging").fetchone() == (
+        "invalid:git_decoder_value",
     )
-    with pytest.raises(CatalogError) as error:
-        receive(target, unit)
-    assert error.value.code == "INVALID_EXCHANGE"
-    assert target.execute("SELECT count(*) FROM repositories").fetchone()[0] == 0
-    assert target.execute("SELECT count(*) FROM payload_quarantine").fetchone()[0] == 0
+    assert target.execute("SELECT count(*) FROM available_git_objects").fetchone() == (
+        3,
+    )
+    assert target.execute("SELECT count(*) FROM git_text_facts").fetchone() == (0,)
 
 
-def test_export_corruption_failure_persists_local_diagnosis_without_output(tmp_path):
-    state = tmp_path / "state"
-    MaintenanceService(state).init("catalog-text-v1", 33554432, 0)
-    with Store(state) as store:
-        expected = fixture(store.connection)
-        digest = store.one("SELECT sha256 FROM stored_bytes")[0]
-        corrupt(store.connection, digest, b"corrupted")
-    output = tmp_path / "unit.json"
-    with pytest.raises(CatalogError) as error:
-        ExchangeService(state).export_repository(expected["repository"], output)
-    assert error.value.code == "PAYLOAD_CORRUPTION"
-    assert not output.exists()
-    with Store(state) as store:
-        assert store.one("SELECT sha256 FROM payload_quarantine")[0] == digest
-        assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 1
-
-
-def test_required_bytes_repeat_in_each_repository_unit_and_deduplicate_on_receive(
-    databases,
-):
+def test_required_shared_git_bytes_repeat_per_owner_and_deduplicate(databases):
     source, target = databases
-    first = fixture(source)
-    second = fixture(source, source_local="other-source")
-    units = [Graph(source).export(item["repository"]) for item in (first, second)]
-    for unit in units:
-        objects = [r for r in unit["records"] if r["table"] == "stored_bytes"]
-        assert len(objects) == 1 and objects[0]["values"]["body"]
+    first, second = git_fixture(source), git_fixture(source)
+    for owner in (first, second):
+        unit = Graph(source).export(owner["repository"])
+        assert sum(r["table"] == "stored_bytes" for r in unit["records"]) == 3
         assert receive(target, unit)["staged_records"] == 0
-    assert target.execute("SELECT count(*) FROM stored_bytes").fetchone()[0] == 1
-    assert target.execute("SELECT count(*) FROM fetch_occurrences").fetchone()[0] == 2
+    assert target.execute("SELECT count(*) FROM git_objects").fetchone() == (3,)
+    assert target.execute("SELECT count(*) FROM stored_bytes").fetchone() == (3,)
+    assert target.execute(
+        "SELECT count(*) FROM repository_object_sources"
+    ).fetchone() == (6,)
+    assert target.execute(
+        "SELECT count(*) FROM snapshots WHERE complete=1"
+    ).fetchone() == (2,)
 
 
-def test_record_order_permutation_preserves_observation_and_selection_sets(databases):
-    source, first = databases
+@pytest.mark.parametrize(
+    "table",
+    [
+        "payload_quarantine",
+        "payload_corruption_diagnostics",
+        "exchange_admissions",
+        "exchange_staging",
+    ],
+)
+def test_local_operational_or_quarantine_record_cannot_enter_domain_wire(
+    databases, table
+):
+    source, target = databases
     expected = fixture(source)
     unit = Graph(source).export(expected["repository"])
-    reverse = copy.deepcopy(unit)
-    reverse["records"].reverse()
-    assert receive(first, reverse)["staged_records"] == 0
-    # Independent trust does not arrive with the sender's verified choice.
-    assert (
-        first.execute("SELECT count(*) FROM active_fact_selections").fetchone()[0] == 0
-    )
-    assert (
-        first.execute("SELECT parsed_result_uuidv4 FROM parsed_results").fetchone()[0]
-        == expected["result"]
-    )
-    assert receive(first, unit)["received_records"] == 0
-
-
-def pr_observation(db, expected):
-    model = ParserModel(db)
-    profile = model.register_profile(
-        {
-            "implementation": {"fixture": "pr-state"},
-            "settings": {},
-            "output_schema": {},
-            "capabilities": [
-                {"owner_kind": "repository", "fact_kind": "change-request"}
-            ],
-        }
-    )
-    result = model.create_result(
-        profile,
-        repository_uuidv4=expected["repository"],
-        inputs=[{"fetch_occurrence_uuidv4": expected["fetch"]}],
-    )
-    acquisition = db.execute(
-        "SELECT fetch_occurrence_id,fetch_collection_id,payload_representation,payload_sha256 FROM fetch_occurrences WHERE fetch_occurrence_uuidv4=?",
-        (expected["fetch"],),
-    ).fetchone()
-    portable = str(uuid.uuid4())
-    local = db.execute(
-        "INSERT INTO change_request_observations(change_request_observation_uuidv4,parsed_result_uuidv4,repository_uuidv4,change_request_id,observed_at_us,published,payload,parsed_at_us,origin_fetch_occurrence_id) VALUES(?,?,?,?,0,1,'{}',0,?)",
-        (portable, result, expected["repository"], expected["cr"], acquisition[0]),
-    ).lastrowid
-    model.publish_result(result)
-    return portable, local, acquisition
-
-
-def test_304_self_authored_evidence_uses_received_original_observation(databases):
-    source, target = databases
-    incoming = fixture(source)
-    portable, original_id, acquisition = pr_observation(source, incoming)
-    existing = fixture(target)
-    _, occupied_id, _ = pr_observation(target, existing)
-    assert original_id == occupied_id
-    scope = source.execute(
-        "SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?",
-        (acquisition[1],),
-    ).fetchone()[0]
-    source.execute(
-        "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,-1)",
-        (
-            scope,
-            acquisition[1],
-            json.dumps(
-                {
-                    "status": 304,
-                    "fetch_occurrence_uuidv4s": [incoming["fetch"]],
-                    "payload": {
-                        "representation": acquisition[2],
-                        "sha256": acquisition[3].hex(),
-                    },
-                    "change_request_observation_uuidv4": portable,
-                    "parsed_result_uuidv4": source.execute(
-                        "SELECT parsed_result_uuidv4 FROM change_request_observations WHERE change_request_observation_uuidv4=?",
-                        (portable,),
-                    ).fetchone()[0],
-                    "fetch_occurrence_uuidv4": incoming["fetch"],
-                }
-            ),
-        ),
-    )
-    unit = Graph(source).export(incoming["repository"])
-    assert receive(target, unit)["staged_records"] == 0
-    remapped = target.execute(
-        "SELECT change_request_observation_id FROM change_request_observations WHERE change_request_observation_uuidv4=?",
-        (portable,),
-    ).fetchone()[0]
-    assert remapped != original_id
-    marker = json.loads(
-        target.execute("SELECT evidence FROM completion_markers").fetchone()[0]
-    )
-    assert marker["change_request_observation_uuidv4"] == portable
-    assert marker["fetch_occurrence_uuidv4"] == incoming["fetch"]
-    assert "change_request_observation_id" not in marker
-    assert target.execute("SELECT count(*) FROM validators").fetchone()[0] == 0
-
-
-def marker_unit(db, expected):
-    portable, _, acquisition = pr_observation(db, expected)
-    result_uuid = db.execute(
-        "SELECT parsed_result_uuidv4 FROM change_request_observations WHERE change_request_observation_uuidv4=?",
-        (portable,),
-    ).fetchone()[0]
-    scope = db.execute(
-        "SELECT resume_scope_id FROM fetch_collections WHERE fetch_collection_id=?",
-        (acquisition[1],),
-    ).fetchone()[0]
-    db.execute(
-        "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'complete',?,-1)",
-        (
-            scope,
-            acquisition[1],
-            json.dumps(
-                {
-                    "status": 304,
-                    "fetch_occurrence_uuidv4s": [expected["fetch"]],
-                    "payload": {
-                        "representation": acquisition[2],
-                        "sha256": acquisition[3].hex(),
-                    },
-                    "change_request_observation_uuidv4": portable,
-                    "parsed_result_uuidv4": result_uuid,
-                    "fetch_occurrence_uuidv4": expected["fetch"],
-                }
-            ),
-        ),
-    )
-    return Graph(db).export(expected["repository"])
-
-
-def test_304_marker_cannot_complete_before_its_original_payload_and_observation(
-    databases,
-):
-    source, target = databases
-    expected = fixture(source)
-    unit = marker_unit(source, expected)
-    owners_only = copy.deepcopy(unit)
-    owners_only["records"] = [
-        r
-        for r in unit["records"]
-        if r["table"]
-        in {
-            "repositories",
-            "service_instances",
-            "sources",
-            "repository_bindings",
-            "source_repositories",
-            "change_requests",
-            "resume_scopes",
-            "fetch_collections",
-            "completion_markers",
-        }
-    ]
-    outcome = receive(target, owners_only)
-    assert outcome["staged_records"] > 0
-    assert target.execute("SELECT count(*) FROM completion_markers").fetchone()[0] == 0
-    assert receive(target, unit)["staged_records"] == 0
-    assert target.execute("SELECT count(*) FROM completion_markers").fetchone()[0] == 1
-
-
-def test_304_marker_rejects_an_original_observation_from_another_repository(databases):
-    source, target = databases
-    expected = fixture(source)
-    other = fixture(target)
-    other_observation, _, _ = pr_observation(target, other)
-    unit = marker_unit(source, expected)
-    marker = next(r for r in unit["records"] if r["table"] == "completion_markers")
-    evidence = json.loads(marker["values"]["evidence"])
-    evidence["change_request_observation_uuidv4"] = other_observation
-    marker["values"]["evidence"] = json.dumps(evidence)
-    assert receive(target, unit)["staged_records"] > 0
-    assert target.execute("SELECT count(*) FROM completion_markers").fetchone()[0] == 0
-
-
-def test_complete_claim_keeps_identity_when_unrelated_repository_records_grow(
-    databases,
-):
-    source, target = databases
-    expected = fixture(source)
-    scope = str(uuid.uuid4())
-    source.execute(
-        "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,change_request_id,kind) VALUES(?,?,?,'comment')",
-        (scope, expected["repository"], expected["cr"]),
-    )
-    source.execute(
-        "INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(?,'complete',-1,?)",
-        (
-            scope,
-            freeze_complete_proof(
-                source,
-                -1,
-                json.dumps(
-                    {
-                        "fetch_collection_ids": [
-                            complete_collection(source, expected["fetch"])
-                        ]
-                    }
-                ),
-            ),
-        ),
-    )
-    first = Graph(source).export(expected["repository"])
-    assert receive(target, first)["staged_records"] == 0
-    source.execute(
-        "INSERT INTO repository_endpoints(repository_endpoint_id,repository_uuidv4,url,transport,metadata) VALUES(?,?,'file:///unrelated-endpoint.git','file','{}')",
-        (str(uuid.uuid4()), expected["repository"]),
-    )
-    second = Graph(source).export(expected["repository"])
-    assert receive(target, second)["staged_records"] == 0
-    assert target.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 1
+    assert table not in {r["table"] for r in unit["records"]}
+    unit["records"].append({"table": table, "key": table + ":{}", "values": {}})
+    with pytest.raises(CatalogError, match="Unexpected domain"):
+        receive(target, unit)
+    assert target.execute("SELECT count(*) FROM repositories").fetchone() == (0,)

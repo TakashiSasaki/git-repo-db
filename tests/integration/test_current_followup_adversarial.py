@@ -23,6 +23,7 @@ from tests.integration.test_catalog3_exchange import receive
 from tests.integration.test_current_resources import current, issue
 from tests.integration.test_current_resources import resources as _resources_fixture
 from tests.integration.test_issue_transfer_followup import _transfer
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @pytest.fixture(name="resources")
@@ -648,7 +649,7 @@ def test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic(
             "SELECT table_name,reason,record_json FROM exchange_staging"
         ).fetchone()
         assert staged[0] == "issue_resources"
-        assert staged[1].startswith("invalid:json_reference:")
+        assert staged[1] == "invalid:domain_json"
         assert json.loads(staged[2])["values"]["provider_resource_id"] == "10"
         assert target.execute("PRAGMA foreign_key_check").fetchall() == []
         assert target.execute("PRAGMA integrity_check").fetchone() == ("ok",)
@@ -742,4 +743,4 @@ def test_field_proof_accepts_a_distinct_actual_module_without_profile_authority(
         "tests.synthetic.body_parser",
         "7",
     )
-    assert adapter.c.execute("SELECT count(*) FROM parser_profiles").fetchone()[0] == 0
+    assert_absent_tables(adapter.c, "parser_profiles")
