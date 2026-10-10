@@ -122,6 +122,8 @@ repo-catalog --state-dir /tmp/disposable-catalog parser reparse-message ARCHIVE_
 
 同内容の再importでも新しいclock等の根拠を再評価し、順序を証明できれば保留競合を解消します。複数のcurrent競合はその分類のまま保持します。移動済みIssueコメントの元取得scopeは、移動元repo/Sourceの登録を受信側へ要求せずsnapshotとして保存します。
 
+`parser reparse GIT_ACQUISITION_UUID` は保存された Git domain bytes の再解析だけを扱います。API fetch UUID の core 再解析は廃止し、HTTP originals を読み出したり domain observation を追加したりしません。Git の解釈履歴と明示的な選択は既存の実装を維持しており、今後の lifecycle 決定とは別です。
+
 `github.record_messages` はbooleanで既定falseです。有効時のarchiveは `STATE_DIR/transport-archive/` に保存します。recording障害は許可された32文字以下のコードへ制限し、transport診断は最新100件を保持します。警告表示はbest-effortで、warnings-as-errorsでも有効な収集を続けます。domain状態の照会やcoverageとは別です。`inspect-message` はcanonical UUIDv4の参照を一つ読み、`reparse-message` は保存された成功JSONを現在resource parserへ渡して投影を返します。両方とも通信とdomain書込みを行わず、reparseも新しい観測を作りません。`--max-bytes` は既定1 MiB、0から32 MiBまでです。reparseは最大1000メンバーで、context JSONには `resource_kind` と所有者・acquisition_scopeを含む `context` が必要です。Issueコメントには `parent_provider_resource_id` も明示します。archiveがない場合は補助読取りエラーになりますが、独立に保存された現在状態は利用できます。[通信記録仕様](latest-state-transport.md)と[実装対応表](latest-state-transport-implementation.md)を参照してください。
 
 ## catalog3診断読み取り

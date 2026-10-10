@@ -71,7 +71,7 @@ def model():
     db.execute(
         "INSERT INTO documents(change_request_id,kind,provider_change_request_document_id) VALUES('cr','body','1')"
     )
-    payload = intern_payload(db, b"{}")
+    payload = intern_payload(db, b"{}", representation="decoded_api")
     for fetch, repo in (("fetch", "repo"), ("fetch2", "other")):
         db.execute(
             "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,profile_version,confidence) VALUES(?,?,'{}','fixture','fixture','proven')",

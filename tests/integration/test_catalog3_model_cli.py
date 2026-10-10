@@ -3,6 +3,8 @@
 import json
 import uuid
 
+import pytest
+
 from tests.integration.test_catalog3_profile_queries import catalog as catalog
 from tests.support.cli import run
 from tests.support.github_runtime import github_runtime as github_runtime
@@ -285,50 +287,29 @@ def test_source_configuration_rejects_secrets_then_saves_local_nonsecret_setting
     assert catalog.store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
 
 
-def test_cli_offline_reparse_has_one_transaction_and_no_remote_observation(
-    github_runtime,
+@pytest.mark.parametrize("select", [False, True])
+def test_cli_retires_http_reparse_without_mutation_or_remote_observation(
+    github_runtime, select
 ):
     store, repo, _, api = github_runtime
     sync(store, repo)
     fetch = store.one(
         "SELECT o.* FROM fetch_occurrences o JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='pr-detail' ORDER BY o.fetch_occurrence_id LIMIT 1"
     )
-    before = [
-        tuple(row)
-        for row in store.all(
-            "SELECT * FROM fetch_occurrences ORDER BY fetch_occurrence_id"
-        )
-    ]
+    before = list(store.connection.iterdump())
     requests = len(api.requests)
-    current = [
-        tuple(row)
-        for row in store.all(
-            "SELECT document_observation_uuidv4 FROM current_document_observations ORDER BY 1"
-        )
-    ]
-    parsed = run(store.path, "parser", "reparse", fetch["fetch_occurrence_uuidv4"])[
-        "data"
-    ]["result"]
-    assert parsed["selected"] is False
-    assert [
-        tuple(row)
-        for row in store.all(
-            "SELECT document_observation_uuidv4 FROM current_document_observations ORDER BY 1"
-        )
-    ] == current
-    selected = run(
-        store.path, "parser", "reparse", fetch["fetch_occurrence_uuidv4"], "--select"
-    )["data"]["result"]
-    assert selected["parsed_result_uuidv4"] != parsed["parsed_result_uuidv4"]
-    assert store.one(
-        "SELECT 1 FROM current_document_observations WHERE parsed_result_uuidv4=?",
-        (selected["parsed_result_uuidv4"],),
+    rejected = run(
+        store.path,
+        "parser",
+        "reparse",
+        fetch["fetch_occurrence_uuidv4"],
+        *(["--select"] if select else []),
+        expected=5,
     )
-    assert [
-        tuple(row)
-        for row in store.all(
-            "SELECT * FROM fetch_occurrences ORDER BY fetch_occurrence_id"
-        )
-    ] == before
+    assert rejected["status"] == "error"
+    assert rejected["error"]["code"] == "PARSER_UNSUPPORTED_INPUT"
+    assert "API response replay is retired" in rejected["error"]["message"]
+    assert rejected["data"] is None
+    assert list(store.connection.iterdump()) == before
     assert len(api.requests) == requests
     assert not store.all("PRAGMA foreign_key_check")

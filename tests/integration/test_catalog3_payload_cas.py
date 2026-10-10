@@ -22,9 +22,16 @@ def db():
     connection.close()
 
 
+def test_payload_registration_requires_an_explicit_representation(db):
+    with pytest.raises(TypeError, match="representation"):
+        intern_payload(db, b"unclassified bytes")
+    assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (0,)
+    assert db.execute("SELECT count(*) FROM payloads").fetchone() == (0,)
+
+
 def test_same_bytes_across_representations_share_one_physical_object(db):
-    first = intern_payload(db, b"\x00{}\xff")
-    assert intern_payload(db, b"\x00{}\xff") == first
+    first = intern_payload(db, b"\x00{}\xff", representation="decoded_api")
+    assert intern_payload(db, b"\x00{}\xff", representation="decoded_api") == first
     second = intern_payload(db, b"\x00{}\xff", representation="legacy_normalized")
     assert first != second
     assert first.sha256 == second.sha256
@@ -37,7 +44,10 @@ def test_same_bytes_across_representations_share_one_physical_object(db):
 
 
 def test_distinct_byte_encodings_remain_distinct(db):
-    refs = [intern_payload(db, value) for value in (b"", b"{}", b"{ }", b"{}\n")]
+    refs = [
+        intern_payload(db, value, representation="decoded_api")
+        for value in (b"", b"{}", b"{ }", b"{}\n")
+    ]
     assert len(set(refs)) == 4
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (4,)
 
@@ -53,7 +63,7 @@ def test_independent_fetches_keep_separate_occurrences_for_shared_bytes(db):
         "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,kind,resume_scope_id) VALUES('collection','cccccccc-cccc-4ccc-8ccc-cccccccccccc','fixture','scope')"
     )
     for ordinal, timestamp in enumerate((-1, 0)):
-        ref = intern_payload(db, b"same response")
+        ref = intern_payload(db, b"same response", representation="decoded_api")
         db.execute(
             "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','collection',?,?,?,'{}',?,1)",
             (str(uuid.uuid4()), ordinal, *ref.parameters(), timestamp),
@@ -69,7 +79,10 @@ def test_independent_fetches_keep_separate_occurrences_for_shared_bytes(db):
 def test_declared_hash_mismatch_is_rejected_before_any_admission(db):
     with pytest.raises(CatalogError) as error:
         intern_payload(
-            db, b"invalid", expected_sha256=hashlib.sha256(b"valid").digest()
+            db,
+            b"invalid",
+            expected_sha256=hashlib.sha256(b"valid").digest(),
+            representation="decoded_api",
         )
     assert error.value.code == "PAYLOAD_DIGEST_MISMATCH"
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (0,)
@@ -85,7 +98,7 @@ def test_physical_and_logical_admission_is_atomic_inside_caller_transaction(db):
         "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('dddddddd-dddd-4ddd-8ddd-dddddddddddd','dddddddd-dddd-4ddd-8ddd-dddddddddddd','{}')"
     )
     with pytest.raises(sqlite3.IntegrityError, match="injected failure"):
-        intern_payload(db, b"response")
+        intern_payload(db, b"response", representation="decoded_api")
     assert db.in_transaction
     assert db.execute("SELECT count(*) FROM stored_bytes").fetchone() == (0,)
     db.commit()
@@ -97,7 +110,7 @@ def test_corrupt_existing_bytes_are_preserved_and_never_silently_repaired(db):
     # Simulate corrupt storage, bypassing only application admission.
     db.execute("INSERT INTO stored_bytes VALUES(?,?,?)", (digest, b"bad!", 4))
     with pytest.raises(CatalogError) as error:
-        intern_payload(db, b"good")
+        intern_payload(db, b"good", representation="decoded_api")
     assert error.value.code == "PAYLOAD_CORRUPTION"
     assert db.execute("SELECT body FROM stored_bytes").fetchone() == (b"bad!",)
     assert db.execute("SELECT count(*) FROM payloads").fetchone() == (0,)
@@ -113,7 +126,7 @@ def test_real_collision_is_distinguished_from_bad_declared_hash(db, monkeypatch)
             return digest
 
     monkeypatch.setattr(payloads.hashlib, "sha256", lambda body: CollisionHash())
-    intern_payload(db, b"first")
+    intern_payload(db, b"first", representation="decoded_api")
     with pytest.raises(CatalogError) as error:
         intern_payload(db, b"other", representation="legacy_normalized")
     assert error.value.code == "PAYLOAD_HASH_COLLISION"
@@ -123,7 +136,7 @@ def test_real_collision_is_distinguished_from_bad_declared_hash(db, monkeypatch)
 
 @pytest.mark.parametrize("table", ["stored_bytes", "payloads"])
 def test_replace_update_delete_cannot_mutate_admitted_identity(db, table):
-    reference = intern_payload(db, b"response")
+    reference = intern_payload(db, b"response", representation="decoded_api")
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(f"DELETE FROM {table}")
     with pytest.raises(sqlite3.IntegrityError):
@@ -142,7 +155,7 @@ def test_replace_update_delete_cannot_mutate_admitted_identity(db, table):
 
 
 def test_logical_reference_requires_both_components(db):
-    reference = intern_payload(db, b"response")
+    reference = intern_payload(db, b"response", representation="decoded_api")
     for representation, digest in (
         (None, reference.sha256),
         (reference.representation, None),

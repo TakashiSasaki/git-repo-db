@@ -431,6 +431,36 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         assert current_reads("B") == expected_current_reads
         assert not api.errors
 
+    # Installed core reparse rejects HTTP input without reading the original or
+    # changing any domain row. This holds for wheel and sdist installations.
+    with sqlite3.connect(state / "catalog.sqlite3") as db:
+        fetch = db.execute(
+            "SELECT fetch_occurrence_uuidv4 FROM fetch_occurrences LIMIT 1"
+        ).fetchone()[0]
+        before_replay = list(db.iterdump())
+    rejected = json.loads(
+        checked(
+            [
+                venv / "bin/repo-catalog",
+                "--state-dir",
+                state,
+                "--format",
+                "json",
+                "parser",
+                "reparse",
+                fetch,
+                "--select",
+            ],
+            cwd=outside,
+            env=env,
+            accepted_codes=(5,),
+        )
+    )
+    assert rejected["error"]["code"] == "PARSER_UNSUPPORTED_INPUT"
+    assert "API response replay is retired" in rejected["error"]["message"]
+    with sqlite3.connect(state / "catalog.sqlite3") as db:
+        assert list(db.iterdump()) == before_replay
+
     # The registry and its schema-discovered completeness gate must resolve
     # from each installed distribution, outside the source checkout.
     inventory = json.loads(

@@ -191,7 +191,7 @@ def test_repository_names_require_published_selected_usable_parser_result(model)
         (source_id, source),
     )
     db.execute("INSERT INTO source_repositories VALUES(?,?,0,0)", (source_id, repo))
-    payload = intern_payload(db, b'{"fixture":"names"}')
+    payload = intern_payload(db, b'{"fixture":"names"}', representation="decoded_api")
     db.execute(
         "INSERT INTO source_input_observations VALUES(?,?,?,?,?,0)",
         (source_input, source, *payload.parameters(), "{}"),

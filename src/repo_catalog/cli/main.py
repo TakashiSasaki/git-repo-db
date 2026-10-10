@@ -359,7 +359,7 @@ def parser():
     )
     reparse = profiles.add_parser("reparse")
     reparse.add_argument(
-        "fetch_occurrence_uuidv4", help="Portable fetch UUID or Git acquisition ID"
+        "git_acquisition_id", help="Retained Git acquisition ID (API replay is retired)"
     )
     reparse.add_argument(
         "--profile",

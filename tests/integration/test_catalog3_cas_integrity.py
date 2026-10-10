@@ -51,7 +51,7 @@ def corrupt(db, digest, body):
 
 def test_scan_records_one_physical_diagnostic_across_representations(store):
     db = store.connection
-    ref = intern_payload(db, b"good")
+    ref = intern_payload(db, b"good", representation="decoded_api")
     intern_payload(db, b"good", representation="legacy_normalized")
     corrupt(db, ref.sha256, b"bad!")
     first = verify_all(db)
@@ -73,11 +73,11 @@ def test_scan_records_one_physical_diagnostic_across_representations(store):
 
 def test_valid_reacquisition_stages_bytes_and_original_context_without_repair(store):
     db = store.connection
-    ref = intern_payload(db, b"good")
+    ref = intern_payload(db, b"good", representation="decoded_api")
     corrupt(db, ref.sha256, b"bad!")
     with pytest.raises(CatalogError) as error:
         with store.transaction():
-            intern_payload(db, b"good")
+            intern_payload(db, b"good", representation="decoded_api")
     assert error.value.code == "PAYLOAD_CORRUPTION"
     context = {
         "fetch_uuid": "original-observation",
@@ -106,7 +106,7 @@ def test_repair_restores_bytes_atomically_retains_diagnostic_and_tracks_recurren
     store,
 ):
     db = store.connection
-    ref = intern_payload(db, b"good")
+    ref = intern_payload(db, b"good", representation="decoded_api")
     corrupt(db, ref.sha256, b"bad!")
     first = diagnose_corruption(db, ref.sha256)
     before = store.revision()["publication_seq"]
@@ -124,7 +124,7 @@ def test_repair_restores_bytes_atomically_retains_diagnostic_and_tracks_recurren
 
 def test_repair_failure_rolls_back_bytes_quarantine_and_protection_trigger(store):
     db = store.connection
-    ref = intern_payload(db, b"good")
+    ref = intern_payload(db, b"good", representation="decoded_api")
     corrupt(db, ref.sha256, b"bad!")
     diagnose_corruption(db, ref.sha256)
     db.execute(
@@ -142,7 +142,10 @@ def test_interrupted_scan_keeps_diagnostics_and_next_attempt_starts_over(
     store, monkeypatch
 ):
     db = store.connection
-    refs = [intern_payload(db, raw) for raw in (b"one", b"two")]
+    refs = [
+        intern_payload(db, raw, representation="decoded_api")
+        for raw in (b"one", b"two")
+    ]
     for ref in refs:
         corrupt(db, ref.sha256, b"bad")
     original = cas_integrity._failure
@@ -182,7 +185,7 @@ def test_verification_uses_existing_nonblocking_writer_lock(store):
 
 
 def test_backup_detects_corruption_and_restore_retains_quarantine(store, tmp_path):
-    ref = intern_payload(store.connection, b"good")
+    ref = intern_payload(store.connection, b"good", representation="decoded_api")
     intern_payload(store.connection, b"good", representation="legacy_normalized")
     corrupt(store.connection, ref.sha256, b"bad!")
     backup = tmp_path / "backup.sqlite3"
@@ -211,7 +214,7 @@ def test_backup_detects_corruption_and_restore_retains_quarantine(store, tmp_pat
 def test_backup_counts_active_physical_quarantine_only(store, tmp_path):
     db = store.connection
     bodies = (b"one", b"two", b"repaired")
-    refs = [intern_payload(db, body) for body in bodies]
+    refs = [intern_payload(db, body, representation="decoded_api") for body in bodies]
     for ref, body in zip(refs, bodies):
         intern_payload(db, body, representation="legacy_normalized")
         corrupt(db, ref.sha256, b"bad")
@@ -240,7 +243,7 @@ def test_backup_counts_active_physical_quarantine_only(store, tmp_path):
 
 
 def test_backup_manifest_zero_excludes_repaired_historical_diagnoses(store, tmp_path):
-    ref = intern_payload(store.connection, b"good")
+    ref = intern_payload(store.connection, b"good", representation="decoded_api")
     corrupt(store.connection, ref.sha256, b"bad!")
     verify_all(store.connection)
     repair_payload(store.connection, ref.sha256, b"good")
@@ -289,7 +292,7 @@ def test_restore_requires_quarantine_count(store, tmp_path):
 @pytest.mark.parametrize("count,active", [(1, 0), (2**63 - 1, 0), (0, 1)])
 def test_restore_valid_integer_count_must_match_copy(store, tmp_path, count, active):
     if active:
-        ref = intern_payload(store.connection, b"good")
+        ref = intern_payload(store.connection, b"good", representation="decoded_api")
         corrupt(store.connection, ref.sha256, b"bad!")
     backup = tmp_path / "backup.sqlite3"
     MaintenanceService(store.path).database("backup", SimpleNamespace(output=backup))
@@ -308,7 +311,7 @@ def test_restore_valid_integer_count_must_match_copy(store, tmp_path, count, act
 def test_restore_count_mismatch_precedes_scan_and_retries_keep_fresh_stages(
     store, tmp_path, monkeypatch
 ):
-    ref = intern_payload(store.connection, b"good")
+    ref = intern_payload(store.connection, b"good", representation="decoded_api")
     backup = tmp_path / "backup.sqlite3"
     MaintenanceService(store.path).database("backup", SimpleNamespace(output=backup))
     with sqlite3.connect(backup, isolation_level=None) as writer:
@@ -346,8 +349,8 @@ def test_restore_matching_count_still_rejects_unexplained_copy_corruption(
     store, tmp_path
 ):
     db = store.connection
-    known = intern_payload(db, b"known")
-    unknown = intern_payload(db, b"unknown")
+    known = intern_payload(db, b"known", representation="decoded_api")
+    unknown = intern_payload(db, b"unknown", representation="decoded_api")
     corrupt(db, known.sha256, b"bad")
     backup = tmp_path / "backup.sqlite3"
     result = MaintenanceService(store.path).database(
@@ -379,7 +382,7 @@ def test_restore_matching_count_still_rejects_unexplained_copy_corruption(
 def test_backup_copy_new_corruption_blocks_publication_and_keeps_stage(
     store, tmp_path, monkeypatch
 ):
-    ref = intern_payload(store.connection, b"good")
+    ref = intern_payload(store.connection, b"good", representation="decoded_api")
     original = maintenance_service.verify_all
 
     def corrupt_copy(db, *, diagnose=True):
@@ -482,7 +485,7 @@ def test_restore_manifest_cannot_write_outside_its_new_stage(store, tmp_path):
 
 def test_process_death_during_repair_recovers_original_quarantined_bytes(store):
     db = store.connection
-    ref = intern_payload(db, b"good")
+    ref = intern_payload(db, b"good", representation="decoded_api")
     corrupt(db, ref.sha256, b"bad!")
     diagnose_corruption(db, ref.sha256)
     db.execute(

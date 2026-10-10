@@ -65,7 +65,9 @@ class Catalog:
     def observe(self, body, *, profile=None, document="1", select=True, timestamp=0):
         profile = profile or self.profile
         fetch_uuid = uid()
-        payload = intern_payload(self.store.connection, body.encode())
+        payload = intern_payload(
+            self.store.connection, body.encode(), representation="decoded_api"
+        )
         fetch_id = self.store.execute(
             "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,0,?,?,'{}',?,0)",
             (

@@ -1,4 +1,4 @@
-"""Historical parser controls and supplementary diagnostic inspection."""
+"""Legacy parser administration, Git reanalysis and external message inspection."""
 
 import json
 from pathlib import Path
@@ -56,7 +56,7 @@ class ParserService:
 
                 # Reparse owns the atomic fact/input publication transaction.
                 value = ParsingService(store).reparse(
-                    options["fetch_occurrence_uuidv4"],
+                    options["git_acquisition_id"],
                     select=options["select"],
                     profile_uuid=options.get("profile_uuidv4"),
                 )

@@ -53,7 +53,6 @@ class ApiFacts:
         self.response_identities = {}
         self.rejected_fetch = None
         self.unselected_results = set()
-        self.replaying = False
 
     def current_context(self, repo, pr, endpoint, kind=None):
         """Typed provider owner and acquisition scope, without retained HTTP input."""
@@ -93,18 +92,6 @@ class ApiFacts:
 
     def admit_current(self, candidate, base_revision):
         from repo_catalog.adapters.sqlite.current_resources import CurrentResources
-        from repo_catalog.domain.current_state import (
-            AdmissionResult,
-            fingerprint_candidate,
-            resource_key,
-        )
-
-        if self.replaying:
-            # Reinterpreting an immutable thread input is not a new remote
-            # observation and has no implicit mutable admission authority.
-            return AdmissionResult(
-                "inspection", resource_key(candidate), fingerprint_candidate(candidate)
-            )
 
         candidate = {**candidate, "parsed_at_us": now_us()}
         resources = CurrentResources(self.s)
@@ -366,7 +353,7 @@ class ApiFacts:
             )
 
     def payload(self, raw):
-        return intern_payload(self.s.connection, raw)
+        return intern_payload(self.s.connection, raw, representation="decoded_api")
 
     @staticmethod
     def response_metadata(response):

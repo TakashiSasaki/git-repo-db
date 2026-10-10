@@ -267,7 +267,7 @@ def test_source_owned_nested_json_rejects_outside_repository_membership(
             "capabilities": [{"owner_kind": "source", "fact_kind": "inventory"}],
         }
     )
-    payload = intern_payload(db, b"{}")
+    payload = intern_payload(db, b"{}", representation="decoded_api")
     input_uuid = uid()
     db.execute(
         "INSERT INTO source_input_observations(source_input_uuidv4,source_registration_uuidv4,"
