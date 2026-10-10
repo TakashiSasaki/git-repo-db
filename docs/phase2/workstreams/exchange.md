@@ -36,6 +36,10 @@ identity/admission boundary:
   `stored_bytes` checks physical SHA-256 and length. `git_object_payloads` also
   checks format/OID/type/size against the actual Git object bytes. A digest alone
   establishes content identity; it does not establish ownership or completeness.
+  The `legacy_normalized` representation also carries manual Git configuration
+  proof authored by the user; this is not an HTTP response and its legitimate
+  Source registration meaning must be preserved when generic payload storage is
+  simplified.
 * Mutable current resources have natural identity mappings and shared
   `CurrentResources.admit` semantics. They are never sealed in immutable
   `exchange_admissions`. `last_checked_at_us` is omitted from sender output;
@@ -96,8 +100,8 @@ observation time and the terminal assertion. For 304 it requires the original
 observation/result/fetch/payload anchor under the same repository and PR. For a
 complete Coverage Claim it verifies matching exact complete marker identities,
 scope kind, collection ownership, Git acquisitions/publications, code/aggregate
-proof and the maximum underlying observation time. The 304 claim's resource
-observation time comes from the original observation, not the validation receipt.
+proof and the maximum underlying observation time. The 304 claim's time comes
+from the original fetch observation, not the validation receipt.
 Coverage retains its accepted five-column claim shape and latest-time candidate
 set; neither sender checks nor parsing/receipt time can establish ordering.
 
@@ -376,6 +380,17 @@ preserves all domain semantics and avoids the unnecessary global walk. This
 fix is independent of every deferred Phase 2 policy and belongs in a separate
 implementation commit/PR with positive-conflict and pending-scope regressions.
 
+That guard is implemented separately at
+`c8180e79acced221f9b7c3f3717388b7fb022721` (tested tree
+`734ef7cd90b307d660234625eea68194eb1377ce`). The new five regressions cover the
+4,096-object work bound, stale barrier cleanup, missing selection predecessors
+that still require both pending scope barriers, and positive propagation of
+domain-member and completion-marker conflicts. The
+[`post-fix receipt`](../prototypes/exchange-fixed.json) reports four refresh
+statements at every tested size; the selected export and all Git/CAS outcomes
+stay the same. No production publication, completeness, wire-format, trust or
+retention policy is changed by this optimization.
+
 These are operation counts, not clean timing benchmarks; other agents may run
 tests concurrently. The VM progress callback is invoked every 100 opcodes, so
 each measurement has that granularity. No wall-time comparison is claimed.
@@ -409,6 +424,19 @@ absent from PATH. With the environment's `venv/bin` added to PATH, that isolated
 backup case passed. Both runs and JUnit hashes are recorded in
 [`exchange-characterization.json`](../prototypes/exchange-characterization.json).
 The first run is explicitly a failed invocation, not a 132-case success receipt.
+Those baseline test invocations imported another worktree's editable package;
+all 70 tracked production files in that import path were independently compared
+byte-for-byte with the fetched main revision and had zero differences. Fix
+verification uses this worktree's own installed editable package.
 Ruff lint/format, Python compilation, JSON parsing and whitespace checks passed
 for these design/probe artifacts. Packaging/full-runtime acceptance is performed
 for the integrated code-bearing PR rather than inferred from these focused runs.
+
+[`exchange-fix-verification.json`](../prototypes/exchange-fix-verification.json)
+records seven new/Phase 1 scaling cases passing without bootstrap and 175 focused
+Exchange/CAS/backup cases passing with explicit development bootstrap. The
+expanded override is necessary because the legacy built-in parser definition
+hashes `exchange.py`. It is not final acceptance, and no certificate was generated
+from this focused receipt. The integrated feature must freeze the complete
+definition, regenerate from a complete successful suite, and pass final checks
+without that override while this transitional mechanism remains reachable.

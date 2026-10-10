@@ -27,5 +27,11 @@
     "src/repo_catalog/adapters/sqlite/cas_integrity.py": "2468f3b36237faf135fff6973cabb529f1aee3fef4f496244a1b7eb15f7bcc38",
     "src/repo_catalog/application/exchange_service.py": "d28c9ab32b84e27c699c6af16210eabaf1d004702e713b992106ec1a7e03ee2f",
     "src/repo_catalog/application/maintenance_service.py": "c9ca38b96a7cfedf4b8eb1e68552a644aebd4efeabc6455c755673347d7748ae"
+  },
+  "baseline_import_resolution": {
+    "package_path": "/workspace/p2-design/src/repo_catalog",
+    "equivalence_check": "All 70 tracked production files are byte-identical to fetched main baseline; this alternate editable source path is the same effective production content. Later fix checks use p2-exchange own editable environment.",
+    "production_files_compared": 70,
+    "differences": []
   }
 }

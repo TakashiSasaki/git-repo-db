@@ -1,0 +1,103 @@
+{
+  "kind": "production-characterization; no replacement-policy acceptance",
+  "head": "c8180e79acced221f9b7c3f3717388b7fb022721",
+  "head_tree": "734ef7cd90b307d660234625eea68194eb1377ce",
+  "exchange_source_sha256": "02d9edc5df770d6c1d269a930db0b8bde5cab13853c89620421177ee8bd83b26",
+  "schema_sha256": "16110944d4b6a0942657644fe80383394210af1218a3e7111e331a1651fa211e",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "git_and_cas": {
+    "verified_object_formats": [
+      "sha1",
+      "sha256"
+    ],
+    "exported_records": 11,
+    "physical_bodies_after_receive": 1,
+    "reversed_receive": {
+      "received_records": 11,
+      "rejected_records": 0,
+      "admitted_records": 11,
+      "staged_records": 0,
+      "repository_uuidv4": "56c553a7-3540-4b18-970f-434e60f223bd"
+    },
+    "repeated_receive": {
+      "received_records": 0,
+      "rejected_records": 0,
+      "admitted_records": 0,
+      "staged_records": 0,
+      "repository_uuidv4": "56c553a7-3540-4b18-970f-434e60f223bd"
+    },
+    "missing_body_receive": {
+      "received_records": 10,
+      "rejected_records": 0,
+      "admitted_records": 7,
+      "staged_records": 3,
+      "repository_uuidv4": "56c553a7-3540-4b18-970f-434e60f223bd"
+    },
+    "late_body_receive": {
+      "received_records": 1,
+      "rejected_records": 0,
+      "admitted_records": 4,
+      "staged_records": 0,
+      "repository_uuidv4": "56c553a7-3540-4b18-970f-434e60f223bd"
+    },
+    "corrupt_physical_bodies": 1,
+    "active_quarantine_after_repair": 0,
+    "historical_diagnostics_after_repair": 1
+  },
+  "operation_counts": [
+    {
+      "unrelated_git_objects": 0,
+      "selected_export": {
+        "sqlite_vm_steps_estimate": 4000,
+        "statements": 223,
+        "unfiltered_select_statements": 1
+      },
+      "conflict_free_refresh": {
+        "sqlite_vm_steps_estimate": 0,
+        "statements": 4,
+        "unfiltered_select_statements": 1
+      }
+    },
+    {
+      "unrelated_git_objects": 256,
+      "selected_export": {
+        "sqlite_vm_steps_estimate": 4000,
+        "statements": 223,
+        "unfiltered_select_statements": 1
+      },
+      "conflict_free_refresh": {
+        "sqlite_vm_steps_estimate": 0,
+        "statements": 4,
+        "unfiltered_select_statements": 1
+      }
+    },
+    {
+      "unrelated_git_objects": 1024,
+      "selected_export": {
+        "sqlite_vm_steps_estimate": 4000,
+        "statements": 223,
+        "unfiltered_select_statements": 1
+      },
+      "conflict_free_refresh": {
+        "sqlite_vm_steps_estimate": 0,
+        "statements": 4,
+        "unfiltered_select_statements": 1
+      }
+    },
+    {
+      "unrelated_git_objects": 4096,
+      "selected_export": {
+        "sqlite_vm_steps_estimate": 4000,
+        "statements": 223,
+        "unfiltered_select_statements": 1
+      },
+      "conflict_free_refresh": {
+        "sqlite_vm_steps_estimate": 0,
+        "statements": 4,
+        "unfiltered_select_statements": 1
+      }
+    }
+  ],
+  "measurement": "VM callbacks every 100 opcodes; no wall-time comparison"
+}
