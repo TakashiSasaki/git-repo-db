@@ -1365,6 +1365,7 @@ def guard_sql():
                 + "\n OR ".join(conditions)
                 + f"\n) END BEGIN SELECT RAISE(ABORT,'JSON contract violation: {table}.{column}'); END;\n"
             )
+    output.append(_staging_guard_sql())
     return "".join(output)
 
 
@@ -1845,43 +1846,70 @@ def _check_metadata(spec, value):
             raise JsonContractError("Modeled domain metadata has wrong scalar type")
 
 
-def _metadata_conditions(spec, doc, type_expr, depth=0):
-    alias = "md" + str(depth)
-    if isinstance(spec, dict):
-        names = ",".join("'" + name + "'" for name in sorted(spec)) or "''"
-        cases = []
-        for name, item in sorted(spec.items()):
-            cases.append(
-                "WHEN '"
-                + name
-                + "' THEN ("
-                + _metadata_conditions(
-                    item, alias + ".value", alias + ".type", depth + 1
-                )
-                + ")"
-            )
-        child = (
-            "CASE " + alias + ".key " + " ".join(cases) + " ELSE 1 END"
-            if cases
-            else "1"
-        )
-        return f"({type_expr}<>'null' AND ({type_expr}<>'object' OR EXISTS(SELECT 1 FROM json_each(CASE WHEN {type_expr}='object' THEN {doc} ELSE '{{}}' END) {alias} WHERE {alias}.key NOT IN ({names}) OR ({child}))))"
-    if isinstance(spec, list):
-        child = _metadata_conditions(
-            spec[0], alias + ".value", alias + ".type", depth + 1
-        )
-        return f"({type_expr}<>'null' AND ({type_expr}<>'array' OR EXISTS(SELECT 1 FROM json_each(CASE WHEN {type_expr}='array' THEN {doc} ELSE '[]' END) {alias} WHERE {child})))"
+def _metadata_conditions(spec, doc, type_expr):
+    """Flat tree predicates preserve the modeled shape on bounded SQLite parsers.
+
+    Each modeled path has an independent check. Arrays match exactly the number
+    of index segments, so an array wildcard cannot also consume descendants.
+    Neither provider object depth nor model depth nests generated SQL queries.
+    """
     types = {
         "string": {"text"},
         "integer": {"integer"},
         "boolean": {"true", "false"},
         "number": {"integer", "real"},
     }
-    allowed = ",".join(
-        "'" + name + "'"
-        for name in sorted({"null"} | {name for kind in spec for name in types[kind]})
+
+    def allowed(item):
+        if isinstance(item, dict):
+            return {"null", "object"}
+        if isinstance(item, list):
+            return {"null", "array"}
+        return {"null"} | {name for kind in item for name in types[kind]}
+
+    def quoted(values):
+        return ",".join("'" + value + "'" for value in sorted(values))
+
+    root = f"{type_expr} NOT IN ({quoted(allowed(spec))})"
+    if not isinstance(spec, (dict, list)):
+        return root
+    pending = [("$", 0, spec)]
+    checks = []
+    while pending:
+        path, arrays, item = pending.pop()
+        match = (
+            "md_node.fullkey=" + repr(path)
+            if not arrays
+            else "md_node.fullkey GLOB "
+            + repr(path)
+            + f" AND length(md_node.fullkey)-length(replace(md_node.fullkey,'[',''))={arrays}"
+        )
+        invalid = [f"md_node.type NOT IN ({quoted(allowed(item))})"]
+        if isinstance(item, dict):
+            names = quoted(item) or "''"
+            invalid.append(
+                "(md_node.type='object' AND EXISTS(SELECT 1 FROM "
+                "json_each(CASE WHEN md_node.type='object' THEN md_node.value ELSE '{}' END) "
+                f"md_child WHERE md_child.key NOT IN ({names})))"
+            )
+            for name, child in sorted(item.items()):
+                label = (
+                    name
+                    if re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", name)
+                    else json.dumps(name)
+                )
+                pending.append((path + "." + label, arrays, child))
+        elif isinstance(item, list):
+            pending.append((path + "[[]*[]]", arrays + 1, item[0]))
+        checks.append("(" + match + " AND (" + " OR ".join(invalid) + "))")
+    tree = f"CASE WHEN {type_expr} IN ('object','array') THEN {doc} ELSE 'null' END"
+    return (
+        "("
+        + root
+        + f" OR EXISTS(SELECT 1 FROM json_tree({tree}) md_node WHERE "
+        + " OR ".join(checks)
+        + "))"
     )
-    return f"{type_expr} NOT IN ({allowed})"
 
 
 def _special_conditions(table, column, doc):
@@ -2052,6 +2080,132 @@ _STAGED_KINDS = {
 }
 
 
+def _candidate_required(table, kind):
+    if table == "source_repositories":
+        return {
+            "kind",
+            "source_id",
+            "repository_uuidv4",
+            "first_seen_us",
+            "last_seen_us",
+            "parser_module",
+            "parser_version",
+            "acquisition_scope",
+        }
+    fields = {
+        "kind",
+        "repository_uuidv4",
+        "repository_binding_id",
+        "service_instance_uuidv4",
+        "observed_at_us",
+        "parsed_at_us",
+        "parser_module",
+        "parser_version",
+        "acquisition_scope",
+    }
+    if table == "issue_resources":
+        fields |= {"provider_resource_id", "provider_issue_number"}
+        if kind == "issue-comment":
+            fields.add("parent_provider_resource_id")
+    else:
+        fields.add("change_request_id")
+        if table in {"document_state", "review_resources"}:
+            fields.add("provider_change_request_document_id")
+        if table == "review_thread_state":
+            fields.add("provider_resource_id")
+    return fields
+
+
+def validate_current_candidate_shape(table, candidate):
+    """Require a typed candidate before any unavailable parent may defer it.
+
+    This validates only authored identity and capture correlations. It neither
+    resolves a dependency nor treats an absent registration as an invalid one.
+    """
+    kind = candidate.get("kind")
+    if table not in _STAGED_KINDS or kind not in _STAGED_KINDS[table]:
+        raise JsonContractError("Current candidate kind differs from table")
+    if "metadata" in candidate and not isinstance(candidate["metadata"], dict):
+        raise JsonContractError("Current metadata requires modeled object")
+    for name, value in candidate.items():
+        if name.endswith("_us") and value is not None:
+            try:
+                validate_epoch_us(value)
+            except (TypeError, ValueError) as cause:
+                raise JsonContractError(
+                    "Candidate timestamp requires signed int64"
+                ) from cause
+    for name in _candidate_required(table, kind) - {"acquisition_scope"}:
+        if name.endswith("_us") or name == "provider_issue_number":
+            try:
+                validate_epoch_us(candidate.get(name))
+            except (TypeError, ValueError) as cause:
+                raise JsonContractError(
+                    "Candidate requires actual integer " + name
+                ) from cause
+        else:
+            _identity(name, candidate.get(name))
+    scope = candidate.get("acquisition_scope")
+    _candidate_capture_shape(table, scope, candidate, candidate)
+    if candidate.get("provider_clock_scope") is not None and candidate[
+        "provider_clock_scope"
+    ] != _CLOCKS.get(kind):
+        raise JsonContractError("Invalid candidate provider clock")
+    if (
+        kind in {"review", "review-thread", "source-repository"}
+        and candidate.get("provider_updated_at_us") is not None
+    ):
+        raise JsonContractError("Candidate has no comparable provider update clock")
+    if table == "issue_resources" and candidate["provider_issue_number"] <= 0:
+        raise JsonContractError("Issue number requires positive integer")
+    evidence = candidate.get("field_evidence", {})
+    if not isinstance(evidence, dict):
+        raise JsonContractError("Candidate field evidence requires object")
+    _check_schema(table, "field_evidence_json", evidence, candidate)
+    if any(json.loads(path)[0] not in candidate for path in evidence):
+        raise JsonContractError("Candidate evidence refers to omitted field")
+    if table == "source_repositories":
+        for origin in evidence.values():
+            _candidate_capture_shape(
+                table, origin["acquisition_scope"], candidate, origin, field_origin=True
+            )
+
+
+def _candidate_capture_shape(table, scope, owner, producer, *, field_origin=False):
+    if table == "source_repositories":
+        validate_capture_shape(scope)
+        _identity("source_registration_uuidv4", scope.get("source_registration_uuidv4"))
+        if (
+            field_origin
+            and scope["source_registration_uuidv4"]
+            != owner["acquisition_scope"]["source_registration_uuidv4"]
+        ):
+            raise JsonContractError(
+                "Source field capture differs from candidate Source"
+            )
+    else:
+        _acquisition_shape(scope, owner["service_instance_uuidv4"])
+        if table == "issue_resources":
+            if "change_request_id" in scope:
+                raise JsonContractError("Ordinary Issue capture cannot claim PR")
+            correlate = not field_origin and not _detached_acquisition(owner, scope)
+        else:
+            _identity("change_request_id", scope.get("change_request_id"))
+            if scope["change_request_id"] != owner["change_request_id"]:
+                raise JsonContractError("Capture differs from candidate parent")
+            correlate = True
+        if correlate and any(
+            scope.get(name) != owner[name]
+            for name in ("repository_uuidv4", "repository_binding_id")
+        ):
+            raise JsonContractError("Capture differs from candidate owner")
+    if any(
+        name in scope and scope[name] != producer.get(name)
+        for name in ("parser_module", "parser_version")
+    ):
+        raise JsonContractError("Candidate producer differs from capture")
+
+
 def _validate_staging_record(value, data):
     table = data.get("table_name")
     if data.get("reason", "").startswith("current_state:"):
@@ -2063,6 +2217,18 @@ def _validate_staging_record(value, data):
             _candidate_spec(table),
             {k: v for k, v in value.items() if k != "field_evidence"},
         )
+        validate_current_candidate_shape(table, value)
+        if value["repository_uuidv4"] != data.get("repository_uuidv4"):
+            raise JsonContractError("Staging repository differs from candidate owner")
+        prefix = (
+            "source-current:" if table == "source_repositories" else "current-state:"
+        )
+        if (
+            not isinstance(data.get("record_key"), str)
+            or re.fullmatch(re.escape(prefix) + "[0-9a-f]{64}", data["record_key"])
+            is None
+        ):
+            raise JsonContractError("Invalid typed current staging key")
         for field in {"deleted", "draft", "merged", "locked", "resolved", "outdated"}:
             if value.get(field) is not None and value[field] not in (False, True):
                 raise JsonContractError("Staged current flag requires boolean or 0/1")
@@ -2109,7 +2275,7 @@ _ORIGIN_SPEC = {
 }
 
 
-def _staged_evidence_conditions(doc, fields):
+def _staged_evidence_conditions(doc, fields, *, table=None, owner_doc=None):
     names = ",".join("'" + name + "'" for name in sorted(fields))
     origin = _metadata_conditions(_ORIGIN_SPEC, "se.value", "se.type")
     scope = "json_extract(se.value,'$.acquisition_scope')"
@@ -2118,13 +2284,175 @@ def _staged_evidence_conditions(doc, fields):
         f"(SELECT count(*) FROM json_each(se.value))<>{len(_EVIDENCE_KEYS)}",
         *_sql_scope_conditions(scope),
     ]
-    return [
+    if table is not None:
+        invalid += _candidate_capture_conditions(
+            table, scope, owner_doc, "se.value", field_origin=True
+        )
+        invalid += [
+            f"coalesce(json_type(se.value,'$.{name}'),'')<>'integer' OR typeof(json_extract(se.value,'$.{name}'))<>'integer'"
+            for name in ("observed_at_us", "parsed_at_us")
+        ]
+        invalid.append(
+            "(json_type(se.value,'$.provider_updated_at_us')='integer' AND typeof(json_extract(se.value,'$.provider_updated_at_us'))<>'integer')"
+        )
+        invalid += [
+            f"coalesce(json_type(se.value,'$.{name}'),'')<>'text' OR length(json_extract(se.value,'$.{name}'))=0 OR instr(json_extract(se.value,'$.{name}'),char(0))>0"
+            for name in ("parser_module", "parser_version")
+        ]
+        clock = (
+            "CASE json_extract("
+            + owner_doc
+            + ",'$.kind') "
+            + " ".join(
+                f"WHEN '{kind}' THEN '{value}'"
+                for kind, value in sorted(_CLOCKS.items())
+            )
+            + " END"
+        )
+        invalid += [
+            f"(json_type(se.value,'$.provider_clock_scope')<>'null' AND json_extract(se.value,'$.provider_clock_scope') IS NOT {clock})",
+            f"(json_extract({owner_doc},'$.kind') IN ('review','review-thread','source-repository') AND json_type(se.value,'$.provider_updated_at_us')<>'null')",
+        ]
+    result = [
         f"(json_type({doc}) IS NOT NULL AND json_type({doc})<>'object')",
         f"EXISTS(SELECT 1 FROM json_each({doc}) se WHERE CASE WHEN NOT json_valid(se.key) THEN 1 WHEN json_type(se.key)<>'array' THEN 1 ELSE (json_array_length(se.key)=0 OR (SELECT json_group_array(p.value) FROM json_each(se.key) p)<>se.key OR EXISTS(SELECT 1 FROM json_each(se.key) p WHERE p.type<>'text') OR json_extract(se.key,'$[0]') NOT IN ({names}) OR (json_array_length(se.key)>1 AND json_extract(se.key,'$[0]')<>'metadata')) END)",
         f"EXISTS(SELECT 1 FROM json_each({doc}) se WHERE CASE WHEN se.type<>'object' THEN 1 ELSE ("
         + " OR ".join(invalid)
         + ") END)",
     ]
+    if owner_doc is not None:
+        result += [
+            f"EXISTS(SELECT 1 FROM json_each({doc}) se WHERE CASE WHEN NOT json_valid(se.key) THEN 1 WHEN json_type(se.key)<>'array' THEN 1 ELSE NOT EXISTS(SELECT 1 FROM json_each({owner_doc}) field WHERE field.key=json_extract(se.key,'$[0]')) END)",
+            f"EXISTS(WITH RECURSIVE paths(path,value,type) AS (SELECT json_array('metadata'),json_extract({owner_doc},'$.metadata'),'object' UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type FROM paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{{}}' END) j WHERE p.type='object') SELECT 1 FROM json_each({doc}) se WHERE CASE WHEN NOT json_valid(se.key) THEN 1 ELSE json_extract(se.key,'$[0]')='metadata' AND NOT EXISTS(SELECT 1 FROM paths p WHERE p.path=se.key) END)",
+            f"EXISTS(SELECT 1 FROM json_each({doc}) se JOIN json_each(CASE WHEN json_valid(se.key) THEN se.key ELSE '[]' END) depth WHERE json_extract(se.key,'$[0]')='metadata' AND CAST(depth.key AS INTEGER)>0 AND NOT EXISTS(SELECT 1 FROM json_each({doc}) ancestor WHERE ancestor.key=(SELECT json_group_array(p.value) FROM json_each(se.key) p WHERE CAST(p.key AS INTEGER)<CAST(depth.key AS INTEGER))))",
+        ]
+    return result
+
+
+def _candidate_capture_conditions(table, scope, owner, producer, *, field_origin=False):
+    result = []
+    # Check authored reference spelling without requiring its parent to exist.
+    for name in sorted(REFERENCE_TARGETS):
+        valid = (
+            _sql_uuid("captured.value")
+            if "uuidv4" in name
+            else "(length(captured.value)>0 AND instr(captured.value,char(0))=0)"
+        )
+        null = "" if "uuidv4" in name else " AND captured.type<>'null'"
+        result.append(
+            f"EXISTS(SELECT 1 FROM json_tree({scope}) captured WHERE captured.key='{name}'{null} AND (captured.type<>'text' OR NOT {valid}))"
+        )
+    required = (
+        {"source_registration_uuidv4"}
+        if table == "source_repositories"
+        else {
+            "repository_uuidv4",
+            "repository_binding_id",
+            "service_instance_uuidv4",
+            "endpoint",
+        }
+    )
+    if table not in {"issue_resources", "source_repositories"}:
+        required.add("change_request_id")
+    for name in sorted(required):
+        value = f"json_extract({scope},'$.{name}')"
+        valid = (
+            _sql_uuid(value)
+            if "uuidv4" in name
+            else f"(length({value})>0 AND instr({value},char(0))=0)"
+        )
+        result.append(
+            f"coalesce(json_type({scope},'$.{name}'),'')<>'text' OR NOT {valid}"
+        )
+    if table == "source_repositories":
+        if field_origin:
+            result.append(
+                f"json_extract({scope},'$.source_registration_uuidv4') IS NOT json_extract({owner},'$.acquisition_scope.source_registration_uuidv4')"
+            )
+    else:
+        result.append(
+            f"json_extract({scope},'$.service_instance_uuidv4') IS NOT json_extract({owner},'$.service_instance_uuidv4')"
+        )
+        if table == "issue_resources":
+            result.append(f"json_type({scope},'$.change_request_id') IS NOT NULL")
+            if not field_origin:
+                different = " OR ".join(
+                    f"json_extract({scope},'$.{name}') IS NOT json_extract({owner},'$.{name}')"
+                    for name in ("repository_uuidv4", "repository_binding_id")
+                )
+                result.append(
+                    f"((json_extract({owner},'$.kind')<>'issue-comment' OR json_extract({scope},'$.repository_uuidv4') IS json_extract({owner},'$.repository_uuidv4')) AND ({different}))"
+                )
+        else:
+            result += [
+                f"json_extract({scope},'$.{name}') IS NOT json_extract({owner},'$.{name}')"
+                for name in (
+                    "repository_uuidv4",
+                    "repository_binding_id",
+                    "change_request_id",
+                )
+            ]
+    result += [
+        f"(json_type({scope},'$.{name}') IS NOT NULL AND json_extract({scope},'$.{name}') IS NOT json_extract({producer},'$.{name}'))"
+        for name in ("parser_module", "parser_version")
+    ]
+    return result
+
+
+def _candidate_conditions(table, doc):
+    result = [
+        f"json_extract({doc},'$.repository_uuidv4') IS NOT NEW.repository_uuidv4",
+        f"(json_type({doc},'$.metadata') IS NOT NULL AND json_type({doc},'$.metadata')<>'object')",
+    ]
+    kinds = _STAGED_KINDS[table]
+    result += [
+        f"(json_type({doc},'$.{name}')='integer' AND typeof(json_extract({doc},'$.{name}'))<>'integer')"
+        for name in sorted(_candidate_spec(table))
+        if name.endswith("_us")
+    ]
+    for kind in sorted(kinds):
+        invalid = []
+        for name in sorted(_candidate_required(table, kind) - {"acquisition_scope"}):
+            value = f"json_extract({doc},'$.{name}')"
+            if name.endswith("_us") or name == "provider_issue_number":
+                invalid.append(
+                    f"coalesce(json_type({doc},'$.{name}'),'')<>'integer' OR typeof({value})<>'integer'"
+                )
+            else:
+                valid = (
+                    _sql_uuid(value)
+                    if "uuidv4" in name
+                    else f"(length({value})>0 AND instr({value},char(0))=0)"
+                )
+                invalid.append(
+                    f"coalesce(json_type({doc},'$.{name}'),'')<>'text' OR NOT {valid}"
+                )
+        result.append(
+            f"(json_extract({doc},'$.kind')='{kind}' AND ("
+            + " OR ".join(invalid)
+            + "))"
+        )
+    scope = f"json_extract({doc},'$.acquisition_scope')"
+    result += [f"coalesce(json_type({doc},'$.acquisition_scope'),'')<>'object'"]
+    result += _candidate_capture_conditions(table, scope, doc, doc)
+    result += [
+        f"(json_type({doc},'$.provider_clock_scope') NOT IN ('null') AND json_extract({doc},'$.provider_clock_scope') IS NOT CASE json_extract({doc},'$.kind') "
+        + " ".join(
+            f"WHEN '{kind}' THEN '{clock}'" for kind, clock in sorted(_CLOCKS.items())
+        )
+        + " END)"
+    ]
+    result.append(
+        f"(json_extract({doc},'$.kind') IN ('review','review-thread','source-repository') AND json_type({doc},'$.provider_updated_at_us') NOT IN ('null'))"
+    )
+    if table == "issue_resources":
+        result.append(f"json_extract({doc},'$.provider_issue_number')<=0")
+    prefix = "source-current:" if table == "source_repositories" else "current-state:"
+    suffix = f"substr(NEW.record_key,{len(prefix) + 1})"
+    result.append(
+        f"substr(NEW.record_key,1,{len(prefix)})<>'{prefix}' OR NOT {_sql_hex(suffix, '64')}"
+    )
+    return result
 
 
 def _staged_json_conditions(table, column, doc):
@@ -2161,36 +2489,66 @@ def _staged_json_conditions(table, column, doc):
 
 
 def _staging_conditions(doc):
+    names = ",".join("'" + name + "'" for name in sorted(_wire_graph().columns))
+    current = ",".join("'" + name + "'" for name in sorted(_STAGED_KINDS))
+    return [
+        f"NEW.table_name NOT IN ({names})",
+        f"(NEW.reason LIKE 'current_state:%' AND NEW.table_name NOT IN ({current}))",
+        f"CASE WHEN NEW.reason LIKE 'current_state:%' THEN 0 ELSE (json_extract({doc},'$.table') IS NOT NEW.table_name OR coalesce(json_type({doc},'$.key'),'')<>'text' OR substr(json_extract({doc},'$.key'),1,length(NEW.table_name)+1)<>NEW.table_name||':' OR coalesce(json_type({doc},'$.values'),'')<>'object' OR EXISTS(SELECT 1 FROM json_each({doc}) sk WHERE sk.key NOT IN ('key','table','values','requires')) OR (SELECT count(*) FROM json_each({doc})) NOT IN (3,4) OR (json_type({doc},'$.requires') IS NOT NULL AND (NEW.table_name NOT IN ('completion_markers','coverage_claims') OR json_type({doc},'$.requires')<>'array' OR EXISTS(SELECT 1 FROM json_each({doc},'$.requires') r WHERE r.type<>'text') OR EXISTS(SELECT 1 FROM json_each({doc},'$.requires') r GROUP BY r.value HAVING count(*)>1)))) END",
+    ]
+
+
+def _staging_guard_sql():
+    """Independent table/column guards avoid nesting a domain-wide CASE tree."""
     graph = _wire_graph()
-    names = ",".join("'" + name + "'" for name in sorted(graph.columns))
-    current_cases = []
+    output = []
+    doc = "NEW.record_json"
+
+    def emit(name, table, current, conditions):
+        reason = "LIKE" if current else "NOT LIKE"
+        for operation in ("INSERT", "UPDATE"):
+            output.append(
+                f"CREATE TRIGGER json_exchange_staging_{name}_{operation.lower()} BEFORE {operation} ON exchange_staging\n"
+                f"WHEN NEW.table_name='{table}' AND NEW.reason {reason} 'current_state:%' AND CASE WHEN NOT json_valid({doc}) THEN 1 WHEN json_type({doc})<>'object' THEN 1 ELSE (\n"
+                + "\n OR ".join(conditions)
+                + ") END BEGIN SELECT RAISE(ABORT,'JSON contract violation: exchange_staging.record_json'); END;\n"
+            )
+
     for table, kinds in sorted(_STAGED_KINDS.items()):
         candidate = _candidate_spec(table)
         body = f"json_remove({doc},'$.field_evidence')"
-        invalid = [
+        conditions = [
             _metadata_conditions(candidate, body, f"json_type({body})"),
             f"coalesce(json_extract({doc},'$.kind'),'') NOT IN ("
             + ",".join("'" + kind + "'" for kind in sorted(kinds))
             + ")",
             *_sql_scope_conditions(f"json_extract({doc},'$.acquisition_scope')"),
-            *_staged_evidence_conditions(
-                f"json_extract({doc},'$.field_evidence')", _allowed_fields(table)
-            ),
+            *_candidate_conditions(table, doc),
         ]
-        invalid += [
+        conditions += [
             f"(json_type({doc},'$.{field}')='integer' AND json_extract({doc},'$.{field}') NOT IN (0,1))"
             for field in sorted(
                 {"deleted", "draft", "merged", "locked", "resolved", "outdated"}
             )
             if field in candidate
         ]
-        current_cases.append("WHEN '" + table + "' THEN (" + " OR ".join(invalid) + ")")
-    wire_cases = []
+        emit("candidate_" + table, table, True, conditions)
+        emit(
+            "origins_" + table,
+            table,
+            True,
+            _staged_evidence_conditions(
+                f"json_extract({doc},'$.field_evidence')",
+                _allowed_fields(table),
+                table=table,
+                owner_doc=doc,
+            ),
+        )
     for table in sorted(graph.columns):
         columns = graph.expected_columns(table)
         fields = ",".join("'" + name + "'" for name in sorted(columns))
         values = f"json_extract({doc},'$.values')"
-        invalid = [
+        conditions = [
             f"(SELECT count(*) FROM json_each({values}))<>{len(columns)}",
             f"EXISTS(SELECT 1 FROM json_each({values}) sv WHERE sv.key NOT IN ({fields}))",
         ]
@@ -2213,24 +2571,21 @@ def _staging_conditions(doc):
             )
             if (table, column) in JSON_REGISTRY:
                 inner = f"json_extract({doc},'$.values.{column}')"
-                check = _staged_json_conditions(table, column, inner)
-                invalid.append(
-                    f"(json_type({doc},'$.values.{column}')<>'null' AND CASE WHEN json_type({doc},'$.values.{column}')<>'text' OR NOT json_valid({inner}) THEN 1 ELSE ("
-                    + " OR ".join(check)
-                    + ") END)"
+                checks = _staged_json_conditions(table, column, inner)
+                emit(
+                    "value_" + table + "_" + column,
+                    table,
+                    False,
+                    [
+                        f"CASE WHEN json_type({doc},'$.values.{column}')='null' THEN 0 WHEN json_type({doc},'$.values.{column}')<>'text' OR NOT json_valid({inner}) THEN 1 ELSE ("
+                        + " OR ".join(checks)
+                        + ") END"
+                    ],
                 )
-        invalid.append(
-            f"EXISTS(SELECT 1 FROM json_each({values}) sv WHERE sv.type='array' OR (sv.type='object' AND CASE sv.key "
+        conditions.append(
+            f"EXISTS(SELECT 1 FROM json_each({values}) sv WHERE CASE WHEN sv.type='array' THEN 1 WHEN sv.type<>'object' THEN 0 ELSE CASE sv.key "
             + " ".join(object_cases)
-            + " ELSE 1 END))"
+            + " ELSE 1 END END)"
         )
-        wire_cases.append("WHEN '" + table + "' THEN (" + " OR ".join(invalid) + ")")
-    return [
-        f"NEW.table_name NOT IN ({names})",
-        "CASE WHEN NEW.reason LIKE 'current_state:%' THEN CASE NEW.table_name "
-        + " ".join(current_cases)
-        + " ELSE 1 END ELSE ("
-        + f"json_extract({doc},'$.table') IS NOT NEW.table_name OR coalesce(json_type({doc},'$.key'),'')<>'text' OR substr(json_extract({doc},'$.key'),1,length(NEW.table_name)+1)<>NEW.table_name||':' OR coalesce(json_type({doc},'$.values'),'')<>'object' OR EXISTS(SELECT 1 FROM json_each({doc}) sk WHERE sk.key NOT IN ('key','table','values','requires')) OR (SELECT count(*) FROM json_each({doc})) NOT IN (3,4) OR (json_type({doc},'$.requires') IS NOT NULL AND (NEW.table_name NOT IN ('completion_markers','coverage_claims') OR json_type({doc},'$.requires')<>'array' OR EXISTS(SELECT 1 FROM json_each({doc},'$.requires') r WHERE r.type<>'text') OR EXISTS(SELECT 1 FROM json_each({doc},'$.requires') r GROUP BY r.value HAVING count(*)>1))) OR CASE NEW.table_name "
-        + " ".join(wire_cases)
-        + " ELSE 1 END) END",
-    ]
+        emit("envelope_" + table, table, False, conditions)
+    return "".join(output)

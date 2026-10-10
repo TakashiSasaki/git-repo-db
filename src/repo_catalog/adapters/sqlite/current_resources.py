@@ -342,10 +342,11 @@ class CurrentResources:
             merged["field_evidence"] = evidence
             if merged != old or existing["content_sha256"] != content_hash:
                 self.c.execute(
-                    "UPDATE exchange_staging SET record_json=?,content_sha256=? WHERE record_key=? AND content_sha256=?",
+                    "UPDATE exchange_staging SET record_json=?,content_sha256=?,repository_uuidv4=? WHERE record_key=? AND content_sha256=?",
                     (
                         _canonical(merged),
                         content_hash,
+                        merged["repository_uuidv4"],
                         record_key,
                         existing["content_sha256"],
                     ),
@@ -472,6 +473,11 @@ class CurrentResources:
                 "Review submission time is not an update clock",
             )
         _canonical(candidate)
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            validate_current_candidate_shape,
+        )
+
+        validate_current_candidate_shape(table, candidate)
         return table, key
 
     def _missing(self, candidate, *, source="import"):

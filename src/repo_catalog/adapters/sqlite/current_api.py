@@ -251,6 +251,11 @@ class CurrentApiState(CurrentResources):
                     "INVALID_CURRENT_RESOURCE_SCOPE", "Capture parent mismatch"
                 )
         _canonical(candidate)
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            validate_current_candidate_shape,
+        )
+
+        validate_current_candidate_shape(table, candidate)
         return table, key
 
     def _complete(self, incoming, previous):
