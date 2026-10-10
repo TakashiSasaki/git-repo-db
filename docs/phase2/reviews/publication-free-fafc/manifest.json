@@ -1523,21 +1523,21 @@
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/own-23-sqlite345.txt",
-      "archived_path": "integrated-strengthened/own-23-sqlite345.txt",
+      "archived_path": "integrated-strengthened/own-23-sqlite345.txt.gz",
       "source_sha256": "0bba88a24f0b7722929d7e538bbf5105d3e34f998b8cf0cbded861dd53fb6da4",
       "source_bytes": 4684,
-      "archived_sha256": "0bba88a24f0b7722929d7e538bbf5105d3e34f998b8cf0cbded861dd53fb6da4",
-      "archived_bytes": 4684,
-      "compression": null
+      "archived_sha256": "23fa20a37a505bc876c63991bd5523bd9fa296acd33c5ad444c1606992d8aa18",
+      "archived_bytes": 1638,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/own-23-sqlite345.xml",
-      "archived_path": "integrated-strengthened/own-23-sqlite345.xml",
+      "archived_path": "integrated-strengthened/own-23-sqlite345.xml.gz",
       "source_sha256": "f960ebc551690cff859eddc9dcb17bd3cbbc03f05b97f358d1aa468482db1618",
       "source_bytes": 9280,
-      "archived_sha256": "f960ebc551690cff859eddc9dcb17bd3cbbc03f05b97f358d1aa468482db1618",
-      "archived_bytes": 9280,
-      "compression": null
+      "archived_sha256": "8ce7057dfd82d693bca5a70dd6b4c64fc02e120a8ac4561d6c1a3a7b6ebe3cf2",
+      "archived_bytes": 2518,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/own-native-4-sqlite353.txt",
@@ -1730,21 +1730,21 @@
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-boundaries-sqlite353.txt",
-      "archived_path": "integrated-followup/reader-boundaries-sqlite353.txt",
+      "archived_path": "integrated-followup/reader-boundaries-sqlite353.txt.gz",
       "source_sha256": "18a5cfd04f238f831a3783ed405b5348f7b60e396f9bd96059167b0f41f6504d",
       "source_bytes": 6170,
-      "archived_sha256": "18a5cfd04f238f831a3783ed405b5348f7b60e396f9bd96059167b0f41f6504d",
-      "archived_bytes": 6170,
-      "compression": null
+      "archived_sha256": "0a97cdd7a4d1f751af1208586799744d8a71608e59fa2cf54ad67978d3dfdf96",
+      "archived_bytes": 1687,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-boundaries-sqlite353.xml",
-      "archived_path": "integrated-followup/reader-boundaries-sqlite353.xml",
+      "archived_path": "integrated-followup/reader-boundaries-sqlite353.xml.gz",
       "source_sha256": "a3aada062deab2c09c59ebcd688deca675e7fc0e7fdca5ac1be8df248013696e",
       "source_bytes": 7536,
-      "archived_sha256": "a3aada062deab2c09c59ebcd688deca675e7fc0e7fdca5ac1be8df248013696e",
-      "archived_bytes": 7536,
-      "compression": null
+      "archived_sha256": "e255f01da91249f2b348c2fcc32e07165c6acd73b9b70ad6607e63889410d686",
+      "archived_bytes": 1953,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-followup-executions.json",
@@ -1766,21 +1766,21 @@
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-nine-sqlite353.txt",
-      "archived_path": "integrated-followup/reader-nine-sqlite353.txt",
+      "archived_path": "integrated-followup/reader-nine-sqlite353.txt.gz",
       "source_sha256": "c249756dc4439b6919f574d179a1f61070f7f2f0d44b31ed96445a05a9e61472",
       "source_bytes": 7542,
-      "archived_sha256": "c249756dc4439b6919f574d179a1f61070f7f2f0d44b31ed96445a05a9e61472",
-      "archived_bytes": 7542,
-      "compression": null
+      "archived_sha256": "2257e30b2f34f896edaabba5ac90728e8dbe3d715d26bf0bea8a7e1a4b80e696",
+      "archived_bytes": 1856,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-nine-sqlite353.xml",
-      "archived_path": "integrated-followup/reader-nine-sqlite353.xml",
+      "archived_path": "integrated-followup/reader-nine-sqlite353.xml.gz",
       "source_sha256": "168d7e13d4c289468146a49e07dcfddbb0068b13273b2c62a1fa9982f8ef17e7",
       "source_bytes": 9051,
-      "archived_sha256": "168d7e13d4c289468146a49e07dcfddbb0068b13273b2c62a1fa9982f8ef17e7",
-      "archived_bytes": 9051,
-      "compression": null
+      "archived_sha256": "a242040cbbfc77b36fe2c6a54ded02cd15dda5a856531042c6640fc3aaf78f02",
+      "archived_bytes": 2101,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/scoped-receipt-independent-audit.json",
@@ -1820,21 +1820,21 @@
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/utf8-sig-sqlite353.txt",
-      "archived_path": "integrated-followup/utf8-sig-sqlite353.txt",
+      "archived_path": "integrated-followup/utf8-sig-sqlite353.txt.gz",
       "source_sha256": "d7edb24884b716b9c9d2e032b9801e2106b929a0cd5c4e83591b23ae688a6f9d",
       "source_bytes": 7562,
-      "archived_sha256": "d7edb24884b716b9c9d2e032b9801e2106b929a0cd5c4e83591b23ae688a6f9d",
-      "archived_bytes": 7562,
-      "compression": null
+      "archived_sha256": "573f8c62d63455b98d1934f7fc6c387647332fbc47b0018214e75a90f250ff52",
+      "archived_bytes": 1402,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/utf8-sig-sqlite353.xml",
-      "archived_path": "integrated-followup/utf8-sig-sqlite353.xml",
+      "archived_path": "integrated-followup/utf8-sig-sqlite353.xml.gz",
       "source_sha256": "a445a42cf6be475f7b52a9ca48e6905837819afd668081bea16d9e881e9af1d4",
       "source_bytes": 7742,
-      "archived_sha256": "a445a42cf6be475f7b52a9ca48e6905837819afd668081bea16d9e881e9af1d4",
-      "archived_bytes": 7742,
-      "compression": null
+      "archived_sha256": "c26010b7d60663bbadec7c9ba936d68c27a3df944109a353714bf37d9b0f855c",
+      "archived_bytes": 1512,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/test_raw_escape_boundary.py",

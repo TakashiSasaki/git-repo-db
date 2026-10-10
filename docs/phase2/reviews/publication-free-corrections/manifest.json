@@ -76,21 +76,21 @@
     },
     {
       "source_path": "/workspace/review-artifacts/coverage-fafc/shared353-affected.log",
-      "archived_path": "coverage-author-1562f98/shared353-affected.log",
+      "archived_path": "coverage-author-1562f98/shared353-affected.log.gz",
       "source_sha256": "3640f843ba388910b6caa4216b7c645a18531fa8492b4657b798f2c6ec20b145",
       "source_bytes": 5351,
-      "archived_sha256": "3640f843ba388910b6caa4216b7c645a18531fa8492b4657b798f2c6ec20b145",
-      "archived_bytes": 5351,
-      "compression": null
+      "archived_sha256": "4ec52eb6280eac9e398661de8a848835aadb786cfab83c4b0bace632c6386160",
+      "archived_bytes": 1463,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/coverage-fafc/shared353-corrected-scaling.log",
-      "archived_path": "coverage-author-1562f98/shared353-corrected-scaling.log",
+      "archived_path": "coverage-author-1562f98/shared353-corrected-scaling.log.gz",
       "source_sha256": "666e8221bcf007f7fdd2dbaf67217b1c0e362cdd0b3e901181a7400208583c9a",
       "source_bytes": 5390,
-      "archived_sha256": "666e8221bcf007f7fdd2dbaf67217b1c0e362cdd0b3e901181a7400208583c9a",
-      "archived_bytes": 5390,
-      "compression": null
+      "archived_sha256": "33d2b6cc3a6ffeb27dd211bccf7471398aeb743b8822a1b4b475022828ebf418",
+      "archived_bytes": 1552,
+      "compression": "gzip mtime=0"
     },
     {
       "source_path": "/workspace/review-artifacts/coverage-fafc/shared353-corrected2-scaling.log",
