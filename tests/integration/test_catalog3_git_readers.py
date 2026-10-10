@@ -92,3 +92,17 @@ def test_git_readers_require_explicit_decoder_when_real_outputs_differ(catalog):
         },
     )
     assert diagnostic.data["items"][0]["text"] == expected
+
+
+def test_history_entry_root_is_an_actual_reachable_ref(catalog):
+    state, fixture, repositories = catalog
+    run(state, "sync", "git")
+    result = QueryService(state).query(
+        "search path",
+        {"repo": repositories["alpha"], "path": "old-only.txt", "scope": "history"},
+    )
+    assert len(result.data["items"]) == 1
+    row = result.data["items"][0]
+    assert row["root"] == "refs/heads/rewrite"
+    assert row["commit"] == "sha1:" + fixture.alpha.commits["D"]
+    assert row["raw_available"] and row["byte_length"] == 3

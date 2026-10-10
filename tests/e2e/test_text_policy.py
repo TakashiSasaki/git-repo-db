@@ -1,5 +1,6 @@
 import base64
 
+from repo_catalog.adapters.sqlite.store import Store
 from tests.support.cli import add_local, pages, run
 from tests.support.git_fixture import FixtureRepo
 
@@ -38,7 +39,23 @@ def test_text_bounds(catalog, tmp_path):
         entries["nul.txt"]["text_state"] == "nul"
         and entries["invalid.txt"]["text_state"] == "non_utf8"
     )
-    bounded = run(
+    assert entries["nul.txt"]["raw_available"]
+    with Store(state, readonly=True) as store:
+        canonical = store.one(
+            "SELECT b.body FROM blob_content_map c JOIN available_git_objects g USING(git_object_id) JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 WHERE c.content_id=?",
+            (entries["nul.txt"]["content_id"],),
+        )
+        assert canonical[0] == b"a\0b"
+    nul = run(
+        state,
+        "content",
+        "show",
+        "--content-id",
+        entries["nul.txt"]["content_id"],
+        expected=4,
+    )
+    assert nul["error"]["details"]["reason"] == "nul"
+    excluded = run(
         state,
         "content",
         "show",
@@ -48,9 +65,22 @@ def test_text_bounds(catalog, tmp_path):
         8388607,
         "--length",
         2,
+        expected=4,
+    )
+    assert excluded["error"]["details"]["reason"] == "oversize"
+    bounded = run(
+        state,
+        "content",
+        "show",
+        "--content-id",
+        entries["at-limit.txt"]["content_id"],
+        "--offset",
+        8388606,
+        "--length",
+        2,
     )["data"]["items"][0]
     assert base64.b64decode(bounded["data_b64"]) == b"zz"
-    assert bounded["byte_length"] == 8388609 and not bounded["has_more"]
+    assert bounded["byte_length"] == 8388608 and not bounded["has_more"]
     # Canonical raw Git bytes remain available independently of text eligibility.
     # History follows ancestors of the selected capture, including old.txt.
     assert pages(

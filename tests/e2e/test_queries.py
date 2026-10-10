@@ -27,6 +27,22 @@ def test_commit_literal_checks_original_bytes(catalog):
         .decode()
     )
     git(fixture.alpha.path, "update-ref", "refs/heads/legacy", oid)
+    literal_message = b"\\xff literal\n"
+    literal_oid = (
+        git(
+            fixture.alpha.path,
+            "hash-object",
+            "-t",
+            "commit",
+            "-w",
+            "--stdin",
+            input=headers + literal_message,
+        )
+        .strip()
+        .decode()
+    )
+    git(fixture.alpha.path, "update-ref", "refs/heads/literal", literal_oid)
+    assert b"\\xff" not in message and b"\\xff" in literal_message
     run(state, "sync", "git")
     for indexed in (False, True):
         if indexed:
@@ -40,12 +56,23 @@ def test_commit_literal_checks_original_bytes(catalog):
         assert len(hits) == 1 and hits[0]["oid"] == "sha1:" + oid
         assert hits[0]["byte_start"] == 1 and hits[0]["byte_end"] == 10
         assert base64.b64decode(hits[0]["message_b64"]) == message
-        escaped = pages(
+        assert not pages(
+            state,
+            "search",
+            "commits",
+            "--repo",
+            repos["alpha"],
+            "--ref",
+            "refs/heads/legacy",
+            "--literal",
+            r"\xff",
+        )
+        actual = pages(
             state, "search", "commits", "--repo", repos["alpha"], "--literal", r"\xff"
         )
-        assert len(escaped) == 1 and escaped[0]["oid"] == "sha1:" + oid
-        # Decoder-rendered escape text has no corresponding raw-byte span.
-        assert escaped[0]["byte_start"] is None and escaped[0]["byte_end"] is None
+        assert len(actual) == 1 and actual[0]["oid"] == "sha1:" + literal_oid
+        assert actual[0]["byte_start"] == 0 and actual[0]["byte_end"] == 4
+        assert base64.b64decode(actual[0]["message_b64"]) == literal_message
 
 
 def test_root_scopes(catalog):

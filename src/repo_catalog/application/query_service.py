@@ -534,7 +534,11 @@ class QueryService:
         return result
 
     def commit_set(self, roots, first_parent=False):
-        ids, pending = set(), []
+        return set(self.commit_contexts(roots, first_parent))
+
+    def commit_contexts(self, roots, first_parent=False):
+        """Keep an actual traversed root for each reachable commit's provenance."""
+        ids, pending = {}, []
         for root in roots:
             obj = self.peel(root["object_format"], root["oid"], root)
             if obj and obj["type"] == "commit":
@@ -543,7 +547,7 @@ class QueryService:
             object_id, context = pending.pop()
             if object_id in ids:
                 continue
-            ids.add(object_id)
+            ids[object_id] = context
             for parent in self.s.execute(
                 "SELECT * FROM commit_parents WHERE commit_git_object_id=?"
                 + (" AND parent_ordinal=0" if first_parent else "")
@@ -727,8 +731,8 @@ class QueryService:
             for root in roots:
                 acquisitions.setdefault(root["git_acquisition_id"], []).append(root)
             for acquisition, captured_roots in acquisitions.items():
-                context = captured_roots[0]
-                for object_id in sorted(self.commit_set(captured_roots)):
+                contexts = self.commit_contexts(captured_roots)
+                for object_id, context in sorted(contexts.items()):
                     obj = self.s.one(
                         "SELECT * FROM available_git_objects WHERE git_object_id=?",
                         (object_id,),
@@ -1073,6 +1077,8 @@ class QueryService:
                                     literal,
                                 )
                             )
+                            if fields["byte_start"] is None:
+                                continue
                             yield [repo["repository_uuidv4"], obj["oid"].hex()], fields
                     continue
                 if command == "search hash":
@@ -1159,6 +1165,8 @@ class QueryService:
                                 literal,
                             )
                         )
+                        if entry["byte_start"] is None:
+                            continue
                     yield (
                         [repo["repository_uuidv4"], *key],
                         {**path_fields(raw), **entry},
@@ -1169,6 +1177,30 @@ class QueryService:
             )
             if not content:
                 raise CatalogError("NOT_FOUND", "Content not found")
+            values = set()
+            for obj in s.all(
+                "SELECT git_object_id FROM blob_content_map WHERE content_id=?",
+                (content["content_id"],),
+            ):
+                values.update(
+                    fact["text_state"]
+                    for fact in s.all(
+                        "SELECT text_state,decoder_key FROM valid_git_text_facts WHERE git_object_id=?",
+                        (obj[0],),
+                    )
+                    if options.get("decoder_key") in (None, fact["decoder_key"])
+                )
+            if values != {"eligible"}:
+                raise CatalogError(
+                    "RAW_CONTENT_UNAVAILABLE",
+                    "Content is unavailable under the captured text policy",
+                    {
+                        "content_id": content["content_id"],
+                        "reason": next(iter(values))
+                        if len(values) == 1
+                        else "decoder_unresolved",
+                    },
+                )
             raw = s.one(
                 "SELECT b.body FROM blob_content_map c JOIN available_git_objects g USING(git_object_id) JOIN git_object_payloads p USING(git_object_id) JOIN stored_bytes b ON b.sha256=p.payload_sha256 WHERE c.content_id=?",
                 (content["content_id"],),
