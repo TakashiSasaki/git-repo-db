@@ -1,0 +1,93 @@
+{
+  "status": "Proposed/Pending Owner Decision",
+  "sql_sha256": "0d8a03e841f0c2517c2a591943f8d012db9a664b6f9e7a8714f2aaa74643db1e",
+  "cases": [
+    {
+      "case": "empty",
+      "outcome": "passed"
+    },
+    {
+      "case": "terminal",
+      "outcome": "passed"
+    },
+    {
+      "case": "ordinal",
+      "outcome": "passed"
+    },
+    {
+      "case": "duplicate",
+      "outcome": "passed"
+    },
+    {
+      "case": "digest",
+      "outcome": "passed"
+    },
+    {
+      "case": "selective",
+      "outcome": "passed"
+    },
+    {
+      "case": "owner",
+      "outcome": "passed"
+    },
+    {
+      "case": "wrong_family",
+      "outcome": "passed"
+    },
+    {
+      "case": "tampered_value",
+      "outcome": "passed"
+    },
+    {
+      "case": "cross_field_origin",
+      "outcome": "passed"
+    },
+    {
+      "case": "coverage_exact_contract_newer_partial_equal_time_unknown",
+      "outcome": "passed"
+    },
+    {
+      "case": "identical_identity_missing_null_empty",
+      "outcome": "passed"
+    },
+    {
+      "case": "incomparable_observations_keep_both_candidates",
+      "outcome": "passed"
+    },
+    {
+      "case": "manual_source_and_unknown_provider_identity_without_fabrication",
+      "outcome": "passed"
+    },
+    {
+      "case": "nested_missing_child_then_exact_empty_child_wrong_pr_scope",
+      "outcome": "passed"
+    },
+    {
+      "case": "verified_git_sha1_sha256_exact_shared_content",
+      "outcome": "passed"
+    },
+    {
+      "case": "file_close_reopen_committed_prefix",
+      "outcome": "passed"
+    }
+  ],
+  "counts": {
+    "table": 69,
+    "view": 2,
+    "trigger": 3,
+    "index": 103
+  },
+  "checks": {
+    "foreign_keys": [],
+    "integrity": [
+      "ok"
+    ],
+    "strict_tables": 69
+  },
+  "limitations": [
+    "This is a domain skeleton, not production writer/reader or wire format.",
+    "Publication member sealing, complete retained-field contracts, current-resource admission and immutable guards reuse responsibilities traced in workstreams but are not fully implemented in this prototype.",
+    "Source/code/Git interpretation validators and production CAS-41 backup/restore are characterized separately; no prototype pass certifies those runtime paths.",
+    "No retention duration, GC, lifecycle or owner decision is implemented."
+  ]
+}

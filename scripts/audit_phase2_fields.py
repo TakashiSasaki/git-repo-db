@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reproduce the Phase 2 JSON/field inventory; this is a design audit, not runtime.
 
-Run with PYTHONPATH=src. The output enriches the hand-reviewed field contract
+The output enriches the hand-reviewed field contract
 with the executed production DDL, its registry, static SQL call sites and public
 projection syntax. Static references are leads, not claims of runtime liveness.
 Only a disposable in-memory catalog is created. No network or user state is used.
@@ -14,13 +14,19 @@ import ast
 import json
 import re
 import sqlite3
+import sys
 from collections import Counter
 from pathlib import Path
 
-from repo_catalog.adapters.sqlite.json_contracts import inventory
-from repo_catalog.adapters.sqlite.schema import DDL_SHA256, SCHEMA_VERSION, schema_sql
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from repo_catalog.adapters.sqlite.json_contracts import inventory  # noqa: E402
+from repo_catalog.adapters.sqlite.schema import (  # noqa: E402
+    DDL_SHA256,
+    SCHEMA_VERSION,
+    schema_sql,
+)
+
 CONTRACT = ROOT / "docs/phase2/field-contract.json"
 TABLE_REF = re.compile(r"\b(?:FROM|JOIN|INTO|UPDATE)\s+([A-Za-z_]\w*)", re.I)
 SQL_METHODS = {"execute", "executemany", "all", "one"}
@@ -173,17 +179,24 @@ def main():
         action="store_true",
         help="Fail if the committed generated inventory differs",
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=CONTRACT,
+        help="Write or check a separate current inventory without changing the baseline contract",
+    )
     args = parser.parse_args()
     data = json.loads(CONTRACT.read_text(encoding="utf-8"))
     data["generated_inventory"] = generated_inventory()
     encoded = json.dumps(data, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
     if args.check:
-        if encoded != CONTRACT.read_text(encoding="utf-8"):
+        if encoded != args.output.read_text(encoding="utf-8"):
             raise SystemExit(
                 "Field contract inventory is stale; regenerate scripts/audit_phase2_fields.py"
             )
     else:
-        CONTRACT.write_text(encoded, encoding="utf-8")
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(encoded, encoding="utf-8")
     print(
         json.dumps(
             {
