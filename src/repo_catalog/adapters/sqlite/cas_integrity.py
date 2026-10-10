@@ -18,6 +18,38 @@ from repo_catalog.domain.payload import PayloadRef
 from repo_catalog.domain.time import now_us
 
 
+def _git_object_identity_valid(
+    object_format, oid_hex, object_type, byte_length, body, sha256
+):
+    """SQLite trigger predicate for exact raw Git identity and physical digest."""
+    from repo_catalog.domain.git_object import validate_git_object
+
+    if not isinstance(oid_hex, str):
+        return 0
+    try:
+        validate_git_object(
+            object_format,
+            bytes.fromhex(oid_hex),
+            object_type,
+            byte_length,
+            body,
+            sha256,
+        )
+    except (ValueError, CatalogError, TypeError):
+        return 0
+    return 1
+
+
+def register_git_object_sql_function(db: sqlite3.Connection):
+    """Register the fail-closed Git identity predicate used by the DDL guard."""
+    db.create_function(
+        "repo_catalog_git_object_identity_valid",
+        6,
+        _git_object_identity_valid,
+        deterministic=True,
+    )
+
+
 @contextmanager
 def _atomic(db):
     name = "cas_" + uuid.uuid4().hex
@@ -159,8 +191,38 @@ def stage_verified_payload(db, body, reference: PayloadRef, context: dict, *, re
         raise CatalogError("INVALID_ARGUMENT", "Unsupported payload staging reason")
     if not isinstance(context, dict):
         raise CatalogError("INVALID_ARGUMENT", "Acquisition context must be an object")
+    # The representation label is not evidence that rejected bytes are a Git
+    # object.  Staging is the last resort for exact raw Git reacquisition, so
+    # require the full descriptor to identify these bytes before persisting it.
+    from repo_catalog.domain.git_object import validate_git_object
+
+    object_format = context.get("object_format")
+    oid_hex = context.get("oid")
+    object_type = context.get("object_type")
+    byte_length = context.get("byte_length")
+    oid_length = {"sha1": 40, "sha256": 64}.get(object_format)
+    if (
+        oid_length is None
+        or not isinstance(oid_hex, str)
+        or len(oid_hex) != oid_length
+        or any(char not in "0123456789abcdef" for char in oid_hex)
+        or type(byte_length) is not int
+    ):
+        raise CatalogError(
+            "GIT_OBJECT_IDENTITY", "Rejected Git bytes require a complete descriptor"
+        )
+    try:
+        oid = bytes.fromhex(oid_hex)
+        validate_git_object(
+            object_format, oid, object_type, byte_length, body, reference.sha256
+        )
+    except (ValueError, CatalogError) as exc:
+        raise CatalogError(
+            "GIT_OBJECT_IDENTITY", "Rejected bytes do not match their Git descriptor"
+        ) from exc
     encoded = json.dumps(context, sort_keys=True, allow_nan=False)
     ident = str(uuid.uuid4())
+    register_git_object_sql_function(db)
     with _atomic(db):
         if reason == "PAYLOAD_CORRUPTION":
             diagnose_corruption(db, reference.sha256)

@@ -26,6 +26,7 @@ from collections import Counter
 from importlib.resources import files
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.json_contracts import guard_sql, validate_catalog
 from repo_catalog.adapters.sqlite.json_contracts import inventory as json_inventory
 from repo_catalog.adapters.sqlite.schema import DDL_SHA256, SCHEMA_VERSION, schema_sql
@@ -322,6 +323,7 @@ def baseline_contracts(db):
 
 def validate_schema():
     with sqlite3.connect(":memory:", autocommit=True) as db:
+        register_git_object_sql_function(db)
         db.execute("PRAGMA foreign_keys=ON")
         db.execute("PRAGMA recursive_triggers=ON")
         ddl = schema_sql()

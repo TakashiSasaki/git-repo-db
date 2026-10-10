@@ -747,7 +747,10 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
     assert_marker_absent(store)
 
 
-@pytest.mark.parametrize("boundary", ["identity", "owner", "repository", "page"])
+@pytest.mark.parametrize(
+    "boundary",
+    ["identity", "identity_empty", "owner", "repository", "repository_id", "page"],
+)
 def test_rejected_inventory_page_does_not_become_source_input(github_runtime, boundary):
     store, repo, fixture, api = github_runtime
     if boundary == "repository":
@@ -769,19 +772,26 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
     }
     rejected_path = {
         "identity": "/user",
+        "identity_empty": "/user",
         "owner": "/users/fixture",
         "repository": "/repos/fixture/alpha",
+        "repository_id": "/user/repos",
         "page": "/user/repos",
     }[boundary]
 
     def response(request):
         requested.append(request.url.path)
         if request.url.path == "/user":
+            identity = dict(valid_identity)
+            if blocked[0] and boundary == "identity":
+                identity["login"] = []
+            if blocked[0] and boundary == "identity_empty":
+                identity["login"] = ""
             return httpx.Response(
                 200,
-                json={"login": [], "unmodeled_transport_marker": MARKER}
-                if blocked[0] and boundary == "identity"
-                else valid_identity,
+                json={**identity, "unmodeled_transport_marker": MARKER}
+                if blocked[0] and boundary in {"identity", "identity_empty"}
+                else identity,
             )
         if request.url.path == "/repos/fixture/alpha":
             return httpx.Response(
@@ -803,6 +813,8 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
             )
         assert request.url.path in ("/user/repos", "/orgs/fixture/repos")
         values = [valid_repository]
+        if blocked[0] and boundary == "repository_id":
+            values[0] = {**valid_repository, "id": {"unexpected": 7}}
         if blocked[0] and boundary != "owner":
             values.append(
                 {
@@ -819,7 +831,7 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
             collector.inventory(source, job)
         assert raised.value.code == (
             "API_SCHEMA"
-            if boundary == "identity"
+            if boundary in {"identity", "identity_empty", "repository_id"}
             else "SCOPE_UNSUPPORTED"
             if boundary == "owner"
             else "SCOPE_MISMATCH"
@@ -833,7 +845,7 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
             == 0
         )
         assert store.one("SELECT count(*) FROM source_input_observations")[0] == (
-            0 if boundary == "identity" else 1
+            0 if boundary in {"identity", "identity_empty"} else 1
         )
         assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
         assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 0

@@ -6,6 +6,7 @@ import uuid
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
 from repo_catalog.adapters.sqlite.coverage import admit_claim
 from repo_catalog.adapters.sqlite.schema import (
     DDL_SHA256,
@@ -58,6 +59,7 @@ class Store:
             autocommit=True,
         )
         self.connection.row_factory = sqlite3.Row
+        register_git_object_sql_function(self.connection)
         try:
             self.execute("PRAGMA foreign_keys=ON")
             self.execute("PRAGMA recursive_triggers=ON")

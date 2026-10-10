@@ -640,8 +640,8 @@
     "policy": "whole-profile-v1",
     "reports": [
       {
-        "executed_passed": 1706,
-        "sha256": "f4efd61221ea50f967a9c98fc9e497f3a8a7ad34dce228acaa2aa81b69d97f37",
+        "executed_passed": 1715,
+        "sha256": "172422d8c1a1987e580bbac189ff9a8ce777db2014538eaaaba33e16258a1b66",
         "skipped": 0
       }
     ]
@@ -689,7 +689,7 @@
       "adapters/git/importer.py": "4abf0992493d6c0f441cd52999f8e93f55bd1f4c06e7a67bce228a9d6eb89788",
       "adapters/git/parsing.py": "a6b23e46ca6f8df11bc13d60811890c3dd31c27130877e469dc510d283a3f902",
       "adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
-      "adapters/github/collector.py": "f66bd04b232e9d5e344335112ba2a1bd58797acd1887de1edca595fc14e43b93",
+      "adapters/github/collector.py": "f5116194249b433bea3e3734bb1d9e5bfec2aac448a7d5839a64e493e34ab43d",
       "adapters/github/current_parser.py": "e8593169eae2468d4f49314ea150f90465670c8d86337c52ddfd65e006831da4",
       "adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
       "adapters/github/persistence.py": "eb3715db570206a6c97eb1795cd20fef3a860c6ada2398bef56a1ea5c98fa6d4",
@@ -698,12 +698,12 @@
       "adapters/sqlite/coverage.py": "6913211da033ed773a146c674cf25c014b928ed3de403b9044a19a7da183089b",
       "adapters/sqlite/current_collections.py": "27c42c6ed75124e6f7cf13a9a71cf764bfd6d651be3c91af014a31c47a10883d",
       "adapters/sqlite/current_resources.py": "dcaf95481c590eafd4d996447e745710c0161568b17a832728841d353954b006",
-      "adapters/sqlite/exchange.py": "7fd55a03c001441358c14148459efd395958f0227bf4c8262becf3c1cf26431a",
+      "adapters/sqlite/exchange.py": "d142d7689272ba869fdb56c33539750efc665bc831c5623ced58a6ee7ddaa103",
       "adapters/sqlite/identity_relations.py": "8bf2c637b61eac126d7c8a2f9f3f058684f55e265db4d711a8e05adf933cd018",
       "adapters/sqlite/json_contracts.py": "efd4ab0adecbf836cb2f3e9ead0bc718e5285ab44c2a97e8266089243a843648",
       "adapters/sqlite/parser_model.py": "fd147efa04459b30e7d9a33f2c23bd44e6fbe6d78ff66b31b4fc69b9094a4f0d",
       "adapters/sqlite/payloads.py": "9ce2d52bcfdd6a2dbcc6639e969eee60f8c237e2587b6451d6d10b51342dbbfc",
-      "adapters/sqlite/store.py": "c09d21890762b0436e48efcb81859189bb68f57f223d6028c4e3f80575cf2e77",
+      "adapters/sqlite/store.py": "b95c4d537e589a93b90f3822b94496d7183e42b43f74ee9c9a637d6e46311229",
       "adapters/sqlite/text_bodies.py": "a82e87a56ca071e5ce69717acb6523b78c03cbe5df8cdf82851f8721b61c74f1",
       "application/collection_service.py": "f77d5b6b3c7ec18a7dc8390b906c90915eaf8a58dc84ca68a26a684ce8333a7d",
       "application/job_plans.py": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a",
@@ -724,7 +724,7 @@
     },
     "output_schema": {
       "catalog3": 18,
-      "ddl_sha256": "9e9747518079ad9e087631e168b448a147b6859870f2e3d2bb74bcbefb392481",
+      "ddl_sha256": "16110944d4b6a0942657644fe80383394210af1218a3e7111e331a1651fa211e",
       "facts": "scoped-immutable-and-current-resources-v1"
     },
     "settings": {

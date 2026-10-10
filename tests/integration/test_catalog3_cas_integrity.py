@@ -51,6 +51,17 @@ def corrupt(db, digest, body):
     db.execute(trigger)
 
 
+def git_context(body, object_format="sha1"):
+    header = f"blob {len(body)}\0".encode("ascii")
+    oid = hashlib.new(object_format, header + body).hexdigest()
+    return {
+        "object_format": object_format,
+        "oid": oid,
+        "object_type": "blob",
+        "byte_length": len(body),
+    }
+
+
 def test_scan_records_one_physical_diagnostic_across_representations(store):
     db = store.connection
     ref = register_git_blob(db, b"good")
@@ -81,12 +92,7 @@ def test_valid_git_reacquisition_stages_bytes_and_object_context_without_repair(
         with store.transaction():
             intern_payload(db, b"good", representation="git-object-raw-v1")
     assert error.value.code == "PAYLOAD_CORRUPTION"
-    context = {
-        "object_format": "sha1",
-        "oid": hashlib.sha1(b"blob 4\0good").hexdigest(),
-        "object_type": "blob",
-        "byte_length": 4,
-    }
+    context = git_context(b"good")
     stage_verified_payload(db, b"good", ref, context, reason=error.value.code)
     assert store.one("SELECT body FROM stored_bytes")[0] == b"bad!"
     row = store.one("SELECT body,context_json FROM payload_admission_staging")
@@ -105,6 +111,101 @@ def test_declared_hash_mismatch_is_never_staged(store):
     assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 0
 
 
+@pytest.mark.parametrize("object_format", ["sha1", "sha256"])
+def test_verified_rejected_git_bytes_require_true_object_identity(store, object_format):
+    body = b"valid raw Git blob"
+    reference = PayloadRef("git-object-raw-v1", hashlib.sha256(body).digest())
+    context = git_context(body, object_format)
+    stage_verified_payload(
+        store.connection,
+        body,
+        reference,
+        context,
+        reason="PAYLOAD_HASH_COLLISION",
+    )
+    assert store.one("SELECT body FROM payload_admission_staging")[0] == body
+
+    bad_contexts = []
+    for name, value in (
+        ("object_format", "sha1" if object_format == "sha256" else "sha256"),
+        ("oid", "not-a-git-oid"),
+        ("object_type", "forged"),
+        ("byte_length", len(body) + 1),
+    ):
+        forged = dict(context)
+        forged[name] = value
+        bad_contexts.append(forged)
+    for forged in bad_contexts:
+        with pytest.raises(CatalogError) as error:
+            stage_verified_payload(
+                store.connection,
+                body,
+                reference,
+                forged,
+                reason="PAYLOAD_HASH_COLLISION",
+            )
+        assert error.value.code == "GIT_OBJECT_IDENTITY"
+    assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 1
+
+    sql_body = b"genuine raw Git through SQL"
+    sql_context = git_context(sql_body, object_format)
+    store.execute(
+        "INSERT INTO payload_admission_staging(stage_uuidv4,representation,sha256,body,context_json,reason,received_at_us) VALUES(?,?,?,?,?,'PAYLOAD_HASH_COLLISION',0)",
+        (
+            "20000000-0000-4000-8000-000000000002",
+            "git-object-raw-v1",
+            hashlib.sha256(sql_body).digest(),
+            sql_body,
+            json.dumps(sql_context),
+        ),
+    )
+    false_context = dict(sql_context, oid="0" * len(sql_context["oid"]))
+    with pytest.raises(sqlite3.IntegrityError, match="Git object identity"):
+        store.execute(
+            "INSERT INTO payload_admission_staging(stage_uuidv4,representation,sha256,body,context_json,reason,received_at_us) VALUES(?,?,?,?,?,'PAYLOAD_HASH_COLLISION',0)",
+            (
+                "30000000-0000-4000-8000-000000000003",
+                "git-object-raw-v1",
+                hashlib.sha256(sql_body).digest(),
+                sql_body,
+                json.dumps(false_context),
+            ),
+        )
+    with pytest.raises(sqlite3.IntegrityError, match="Git object identity"):
+        store.execute(
+            "INSERT INTO payload_admission_staging(stage_uuidv4,representation,sha256,body,context_json,reason,received_at_us) VALUES(?,?,?,?,?,'PAYLOAD_HASH_COLLISION',0)",
+            (
+                "50000000-0000-4000-8000-000000000005",
+                "git-object-raw-v1",
+                bytes(32),
+                sql_body,
+                json.dumps(sql_context),
+            ),
+        )
+    assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 2
+
+
+def test_unregistered_sql_connection_fails_closed_for_git_staging(store):
+    body = b"genuine raw Git"
+    context = git_context(body)
+    connection = sqlite3.connect(store.db_path)
+    try:
+        with pytest.raises(sqlite3.OperationalError, match="no such function"):
+            connection.execute(
+                "INSERT INTO payload_admission_staging(stage_uuidv4,representation,sha256,body,context_json,reason,received_at_us) VALUES(?,?,?,?,?,'PAYLOAD_HASH_COLLISION',0)",
+                (
+                    "40000000-0000-4000-8000-000000000004",
+                    "git-object-raw-v1",
+                    hashlib.sha256(body).digest(),
+                    body,
+                    json.dumps(context),
+                ),
+            )
+    finally:
+        connection.close()
+    assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
+
+
 @pytest.mark.parametrize("representation", ["decoded_api", "legacy_normalized"])
 def test_rejected_original_cannot_enter_git_staging_through_python_or_sql(
     store, representation
@@ -119,8 +220,12 @@ def test_rejected_original_cannot_enter_git_staging_through_python_or_sql(
     assert error.value.code == "INVALID_ARGUMENT"
     with pytest.raises(sqlite3.IntegrityError, match="CHECK"):
         store.execute(
-            "INSERT INTO payload_admission_staging VALUES('10000000-0000-4000-8000-000000000001',?,?,?,'{}','PAYLOAD_CORRUPTION',-1)",
-            (*reference.parameters(), body),
+            "INSERT INTO payload_admission_staging VALUES('10000000-0000-4000-8000-000000000001',?,?,?,?, 'PAYLOAD_CORRUPTION',-1)",
+            (
+                *reference.parameters(),
+                body,
+                json.dumps(git_context(body)),
+            ),
         )
     assert list(store.connection.iterdump()) == before
 
@@ -370,7 +475,13 @@ def test_backup_counts_active_physical_quarantine_only(store, tmp_path):
         corrupt(db, ref.sha256, b"bad")
     verify_all(db)
     repair_payload(db, refs[2].sha256, b"repaired")
-    stage_verified_payload(db, b"one", refs[0], {}, reason="PAYLOAD_CORRUPTION")
+    stage_verified_payload(
+        db,
+        b"one",
+        refs[0],
+        git_context(b"one"),
+        reason="PAYLOAD_CORRUPTION",
+    )
     (store.path / "quarantine" / "cache-object").mkdir()
     backup = tmp_path / "backup.sqlite3"
     result = MaintenanceService(store.path).database(

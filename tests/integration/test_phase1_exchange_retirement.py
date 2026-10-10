@@ -34,6 +34,51 @@ ORIGINAL = json.dumps({"transport_only": MARKER}).encode()
 ENCODED = base64.b64encode(ORIGINAL).decode()
 
 
+def bare_fetch_fixture(db):
+    """Create one API fetch with no published facts to justify its body."""
+    repository, service, registration, binding, request, scope, collection, fetch = (
+        uid() for _ in range(8)
+    )
+    db.execute(
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'repo','{}')",
+        (repository,),
+    )
+    db.execute(
+        "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES(?,'github','github','{}')",
+        (service,),
+    )
+    db.execute(
+        "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name,settings) VALUES('source',?,?,'github_inventory','Remote name','{}')",
+        (registration, service),
+    )
+    db.execute(
+        "INSERT INTO source_repositories(source_id,repository_uuidv4) VALUES('source',?)",
+        (repository,),
+    )
+    db.execute(
+        "INSERT INTO repository_bindings VALUES(?,?,?,?,'{}',0)",
+        (binding, repository, service, repository),
+    )
+    db.execute(
+        "INSERT INTO change_requests VALUES(?,?,?,'pull_request',1)",
+        (request, repository, binding),
+    )
+    db.execute(
+        "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,source_id,request_context,parser_version,profile_version,confidence) VALUES(?,?, 'source','{}','parser','profile','proven')",
+        (scope, repository),
+    )
+    db.execute(
+        "INSERT INTO fetch_collections(fetch_collection_id,repository_uuidv4,change_request_id,source_id,kind,resume_scope_id) VALUES(?,?,?,'source','comments',?)",
+        (collection, repository, request, scope),
+    )
+    ref = intern_payload(db, ORIGINAL, representation="decoded_api")
+    db.execute(
+        "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,0,?,?,'{}',-1,0)",
+        (fetch, repository, collection, *ref.parameters()),
+    )
+    return {"repository": repository, "fetch": fetch}
+
+
 def adversarial_record(db, table, row):
     """Construct a wire attack without using the guarded production encoder."""
     graph = Graph(db, persist_identities=False)
@@ -324,6 +369,77 @@ def test_malformed_publication_manifest_cannot_authorize_originals(databases, ma
     assert_no_original(target)
 
 
+def test_publication_for_missing_fact_cannot_retain_its_input(databases):
+    source, target = databases
+    expected = fixture(source)
+    rows, originals = original_records(source, expected)
+    parsed = ParserModel(source).create_result(
+        expected["profile"],
+        repository_uuidv4=expected["repository"],
+        inputs=[{"fetch_occurrence_uuidv4": rows[-1][1]["fetch_occurrence_uuidv4"]}],
+    )
+    ParserModel(source).publish_result(parsed)
+    exported = Graph(source).export(expected["repository"])
+    publication = next(
+        record
+        for record in exported["records"]
+        if record["table"] == "parsed_result_publications"
+        and record["values"]["parsed_result_uuidv4"]["$ref"].endswith(
+            canonical({"parsed_result_uuidv4": parsed})
+        )
+    )
+    publication["values"]["fact_manifest_json"] = json.dumps(
+        [
+            {
+                "table": "document_observations",
+                "key": ["missing-observation-uuidv4"],
+            }
+        ]
+    )
+    exported["records"].extend(originals)
+    assert receive(target, exported)["rejected_records"] == 3
+    assert_no_original(target)
+
+
+def test_incomplete_terminal_proof_cannot_retain_input_body(databases):
+    source, target = databases
+    expected = bare_fetch_fixture(source)
+    complete_collection(source, expected["fetch"])
+    exported = Graph(source).export(expected["repository"])
+    marker = next(
+        record
+        for record in exported["records"]
+        if record["table"] == "completion_markers"
+    )
+    marker["values"]["observed_at_us"] = 999
+    assert receive(target, exported)["rejected_records"] > 0
+    assert_no_original(target)
+
+
+def test_domain_fact_rejected_by_catalog_constraint_cannot_retain_input(databases):
+    source, target = databases
+    expected = fixture(source)
+    exported = Graph(source).export(expected["repository"])
+    observation = next(
+        record
+        for record in exported["records"]
+        if record["table"] == "document_observations"
+    )
+    observation["values"]["deleted"] = 2
+    exported["records"] = [
+        record
+        for record in exported["records"]
+        if record["table"]
+        not in {
+            "parsed_result_publications",
+            "parser_profile_selection_decisions",
+            "fact_selection_decisions",
+        }
+    ]
+    assert receive(target, exported)["rejected_records"] > 0
+    assert_no_original(target)
+
+
 def test_pending_metadata_reference_cannot_turn_domain_row_into_original_carrier(
     databases,
 ):
@@ -394,8 +510,17 @@ def test_generic_request_payload_reference_cannot_authorize_unrelated_original(
         stage_records(target, incoming)
         Graph(target).promote(incoming["origin_catalog_uuidv4"])
     else:
-        assert receive(target, incoming)["rejected_records"] == 2
+        # The injected request reference has no acquisition under this owner,
+        # so it also invalidates the fetch that was otherwise used by the
+        # fixture's domain publication. None of those rejected inputs may
+        # preserve the original response bytes.
+        assert receive(target, incoming)["rejected_records"] == 5
     assert_no_original(target)
+    fixture_digest = hashlib.sha256(b'{"body":"hello"}').digest()
+    assert target.execute(
+        "SELECT count(*) FROM stored_bytes WHERE sha256=?", (fixture_digest,)
+    ).fetchone() == (0,)
+    assert target.execute("SELECT count(*) FROM fetch_occurrences").fetchone() == (0,)
     assert target.execute("SELECT count(*) FROM document_observations").fetchone() == (
         0,
     )
@@ -611,3 +736,41 @@ def test_original_only_service_import_keeps_catalog_revision(tmp_path):
         assert store.revision() == before
         assert_no_original(store.connection)
     source.close()
+
+
+def test_promotion_groups_staged_candidates_before_preflight_scans(databases):
+    source, target = databases
+    graph = Graph(source, persist_identities=False)
+    origins = [uid() for _ in range(24)]
+    for index, repository in enumerate(origins):
+        body = f"unpublished-api-original-{index}".encode()
+        reference = intern_payload(source, body, representation="decoded_api")
+        row = graph.lookup("stored_bytes", ("sha256",), (reference.sha256,))
+        record = adversarial_record(source, "stored_bytes", row)
+        digest = record_digest(record)
+        target.execute(
+            "INSERT INTO exchange_staging VALUES(?,?,?,?,?,?,?)",
+            (
+                record["key"],
+                digest,
+                "stored_bytes",
+                repository,
+                uid(),
+                canonical(record),
+                "missing_dependency",
+            ),
+        )
+
+    statements = []
+    target.set_trace_callback(statements.append)
+    Graph(target).promote(uid())
+    target.set_trace_callback(None)
+    repository_scans = [
+        statement
+        for statement in statements
+        if "FROM exchange_staging WHERE repository_uuidv4=" in statement
+    ]
+    assert repository_scans == []
+    assert target.execute("SELECT count(*) FROM exchange_staging").fetchone() == (0,)
+    assert target.execute("SELECT count(*) FROM stored_bytes").fetchone() == (0,)
+    assert target.execute("SELECT count(*) FROM repositories").fetchone() == (0,)

@@ -460,6 +460,15 @@ class GitHubCollector:
         response = self.http.request(method, url, **kwargs)
         return response, self.rest_json(response)
 
+    @staticmethod
+    def inventory_repository_id(value):
+        try:
+            return database_resource_id(value)
+        except ValueError:
+            raise CatalogError(
+                "API_SCHEMA", "Repository database ID must be a positive decimal ID"
+            ) from None
+
     def inventory_input(self, response, url):
         """Retain accepted live inventory proof, after endpoint validation."""
         next_url = self.http.next_url(response)
@@ -498,8 +507,10 @@ class GitHubCollector:
         base = self.http.base
         try:
             response, identity = self.inventory_request("GET", base + "/user")
-            if not isinstance(identity, dict) or not isinstance(
-                identity.get("login"), str
+            if (
+                not isinstance(identity, dict)
+                or not isinstance(identity.get("login"), str)
+                or not identity["login"].strip()
             ):
                 raise CatalogError("API_SCHEMA", "Authenticated user identity missing")
             self.inventory_input(response, base + "/user")
@@ -527,13 +538,11 @@ class GitHubCollector:
                         raise CatalogError(
                             "SCOPE_MISMATCH", "Selected repository identity changed"
                         )
-                    if not payload.get("id") or not isinstance(
-                        payload.get("clone_url"), str
-                    ):
+                    if not isinstance(payload.get("clone_url"), str):
                         raise CatalogError(
                             "API_SCHEMA", "Repository identity or clone URL missing"
                         )
-                    provider = str(payload["id"])
+                    provider = self.inventory_repository_id(payload.get("id"))
                     self.inventory_input(response, url)
                     selected.append(
                         {
@@ -593,18 +602,16 @@ class GitHubCollector:
                 if not isinstance(values, list):
                     raise CatalogError("API_SCHEMA", "Expected repository list")
                 for r in values:
-                    if (
-                        not isinstance(r, dict)
-                        or not r.get("id")
-                        or not isinstance(r.get("full_name"), str)
+                    if not isinstance(r, dict) or not isinstance(
+                        r.get("full_name"), str
                     ):
                         raise CatalogError("API_SCHEMA", "Repository identity missing")
+                    provider = self.inventory_repository_id(r.get("id"))
                     if r["full_name"].split("/")[0].lower() != owner.lower():
                         raise CatalogError(
                             "SCOPE_MISMATCH",
                             "Inventory returned repository outside owner scope",
                         )
-                    provider = str(r["id"])
                     clone = cfg.get("clone_url_overrides", {}).get(
                         provider, r.get("clone_url")
                     )

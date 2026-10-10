@@ -19,6 +19,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402
+    register_git_object_sql_function,
+)
 from repo_catalog.adapters.sqlite.json_contracts import (  # noqa: E402
     guard_sql,
     inventory,
@@ -182,6 +185,7 @@ def runtime_inventory(source_files):
 def schema_inventory(ddl):
     result = inspect(ddl)
     with sqlite3.connect(":memory:") as db:
+        register_git_object_sql_function(db)
         db.executescript(ddl)
         objects = db.execute(
             "SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name"
@@ -328,6 +332,7 @@ def main():
         generated == Path("src/repo_catalog/resources/json_contracts.sql").read_text()
     )
     with sqlite3.connect(":memory:") as db:
+        register_git_object_sql_function(db)
         db.executescript(schema_sql())
         json_fields = inventory(db)
     report = {

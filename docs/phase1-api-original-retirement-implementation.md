@@ -3,8 +3,9 @@
 This implements the owner's [Phase 1 decision](phase1-api-original-retirement.md).
 Fresh Catalog3 advances from schema 17 to 18 because the physical diagnostic and
 rejected-admission contracts change. Retained catalogs are neither migrated nor
-cleaned up. No merge, release, deployment, retention policy or replacement domain
-publication design is included.
+cleaned up. This architecture report does not choose a retention policy or
+replacement domain-publication design. The current owner instruction separately
+authorizes merging PRs #19 and #20 after their review and acceptance gates pass.
 
 This is a scoped retirement, not a repository-wide zero-original guarantee.
 Successful historical publication, accepted partial GraphQL roots, coherent live
@@ -15,9 +16,10 @@ also remain pending a field-inventory decision.
 ## A. Stack and baseline
 
 Fetched starting main: `47fd5b88355b98019c0c04408449081e16ab4505`, tree
-`e7a41038e26eb93c89b921a9a9d0bf1d2c54a310`. It contains merged PRs #14–#18;
-there were no open PRs at the initial investigation. The stale clean checkout at
-`7a35962` was not used as the implementation base.
+`e7a41038e26eb93c89b921a9a9d0bf1d2c54a310`. It contains merged PRs #14–#18.
+Fresh metadata confirmed PRs #19 and #20 open and mergeable in the intended
+dependency order, with no unrelated changes included. The stale clean checkout
+at `7a35962` was not used as the implementation base.
 
 1. [Decision PR #19](https://github.com/TakashiSasaki/git-repo-db/pull/19), branch
    `docs/phase1-api-original-retirement-20261010`, based on fetched main. Head:
@@ -32,7 +34,9 @@ The decision commit precedes implementation. Its
 [passing documentation CI](https://github.com/TakashiSasaki/git-repo-db/actions/runs/38018631631)
 does not certify this runtime change. Final acceptance must identify the feature
 HEAD and tested tree; a PR merge checkout may have a different commit SHA with
-the same tree. No main branch change or PR merge is authorized.
+the same tree. This report records the implementation scope and does not itself
+grant merge authority; the current owner instruction authorizes the two scoped
+merges after their gates pass.
 
 ## B. R1–R7 disposition
 
@@ -84,7 +88,7 @@ SQL. Counts overlap and must not be summed.
 | Columns | 667 | 665 | Removed unresolved logical representation/digest columns. |
 | FK clauses / components | 227 / 360 | 226 / 358 | Removed the two-column unresolved logical-payload FK. |
 | Views | 48 | 48 | Shared eligibility/publication/coverage readers remain. |
-| Triggers | 497 | 497 | Four generated JSON triggers narrow; integrity guards stay. |
+| Triggers | 497 | 498 | Four generated JSON triggers narrow; one Git-object identity guard is added; other integrity guards stay. |
 | Explicit / implicit indexes | 107 / 144 | 106 / 144 | Removed `unresolved_payloads_fk_1`. |
 | Classified application JSON fields | 57 | 57 | Diagnostic field becomes required physical evidence; no new JSON store. |
 
@@ -95,7 +99,7 @@ SQL. Counts overlap and must not be summed.
 | `stage_rejected`, rejected-fetch cache, `failed_graphql_page`, raw failure writes | A: delete | No accepted domain publication owns these rejected bytes. Retry context does not need the body. |
 | `unresolved_payloads.payload_representation/payload_sha256`, composite FK, `unresolved_payloads_fk_1` | A: delete | Retired rejected logical inputs were their consumer. |
 | Remaining five-column `unresolved_payloads`; its immutability/retain/no-replace guards and physical FK | B: narrow/retain | `diagnose_corruption/verify_all`, active physical quarantine and CAS-41 read them. Digest, actual/declared lengths, diagnosis clock and reason identify physical corruption without retaining incoming bytes. |
-| `payload_admission_staging` and `cas_integrity.sql` | B: narrow | Only rejected raw Git acquisition remains; SQL CHECK and Python validation both reject API and legacy-normalized originals. |
+| `payload_admission_staging` and `cas_integrity.sql` | B: narrow | Only rejected raw Git acquisition remains. SQL CHECKs validate descriptor shape and a fail-closed Git-object identity trigger verifies the raw object hash and physical SHA-256; the writer also validates before INSERT. API and legacy-normalized originals are rejected. |
 | `repair_payload` and maintenance CLI | B: narrow | Genuine retained Git objects, including SHA-1/SHA-256 and digests shared with API. All mapped Git identities are checked before atomic repair/quarantine mutation. |
 | `diagnose_admission_failure` | B: preserve shared diagnosis | Only a canonical `PAYLOAD_CORRUPTION` digest of actual incumbent content is accepted after rollback. It accepts no incoming response/body/context. Shared Git eligibility cannot silently continue after corruption detection. |
 | `database_identity.schema_version`, `SCHEMA_VERSION` | B: advance to 18 | Actual structural contracts changed; no compatibility/migration branch. |
@@ -187,24 +191,46 @@ Independent workstreams changed disjoint entry-point, CAS/schema, exchange and
 test/document files; the lead integrated shared DDL/generator/collector changes.
 They tested actual diffs, not solely this report. Concrete independent findings:
 
-1. A malformed observed GraphQL child at 200 after accepted root 100 originally
+1. **Medium — collection boundary:** A malformed observed GraphQL child at 200 after accepted root 100 originally
    lost its newer partial boundary when the body was discarded. Existing
    reason-only partial markers now retain 200; raw-invalid JSON without a resource
    keeps 100 rather than fabricating a resource observation.
-2. An older terminal retry at 150 after partial 200 originally failed the current
+2. **Medium — observation clock:** An older terminal retry at 150 after partial 200 originally failed the current
    page completeness trigger, and copying 200 into completion would fabricate its
    clock. Completion uses accepted page receipts; partial 200 remains the latest
    candidate. Equal-time retry 200 leaves a conflict, while a later 300 can complete.
-3. A valid-looking `/users/owner` response for an unsupported nonauthenticated
+3. **Medium — Source inventory admission:** A valid-looking `/users/owner` response for an unsupported nonauthenticated
    User was saved before `SCOPE_UNSUPPORTED`. Its intake now follows accepted
    Organization scope validation; the earlier accepted `/user` input is C.
-4. Standalone byte/payload exchange originally admitted originals with no domain
+4. **High — Exchange root validation (`Graph.original_root`, `required_original_keys`, `receive`, `_promote`):** Standalone byte/payload exchange originally admitted originals with no domain
    facts. Malformed direct-SQL staged reference carriers and advisory `requires`
    could also authorize originals. Typed closure validation and attack regressions
    cover export/intake/direct admission/promote, not just the normal encoder.
-5. Removing raw failure staging also removed its incumbent-corruption diagnosis.
+5. **Medium — CAS diagnosis (`stage_verified_payload`, `diagnose_admission_failure`):** Removing raw failure staging also removed its incumbent-corruption diagnosis.
    A physical-only post-rollback helper restores shared diagnosis without saving
    replacement bytes. Canonical wrong-OID Git mappings cannot authorize API repair.
+6. **Medium — CAS staging (`stage_verified_payload`, `payload_admission_staging`):** The Python staging helper rejected a forged Git descriptor, but direct SQL could
+   still insert an API body with a syntactically valid false OID. A deterministic
+   SQLite UDF and fail-closed INSERT trigger now verify Git format/type/size/OID
+   and the physical SHA-256 in the database itself. Direct-SQL positive and forged
+   SHA-1/SHA-256 probes cover both paths; an unregistered SQLite writer fails closed.
+7. **High — Exchange preflight (`original_root`, `_admit`, `receive`, `_promote`):** Exchange preflight treated malformed complete markers, inconsistent publication
+   manifests, and SQL-invalid domain facts as original roots. Minimal receive and
+   delayed-promotion reproducers showed rejected API bytes persisted. The corrected
+   preflight evaluates ordinary admission and proof closure over incoming dependencies
+   before authorizing raw bytes; invalid evidence is discarded while justified
+   missing-dependency staging remains. Independent retest passed 53 Exchange cases.
+8. **Medium — Exchange scalability (`local_original_context`, `original_intake_context`, `_promote`):** A selected-repository export scanned unrelated Git mappings and every exchange
+   receipt; promotion repeated an unindexed staging scan per repository. Scoped
+   root discovery, receipt lookups, and one grouped pending snapshot remove those
+   repeated scans. On the same harness, an empty export with 1,000 / 5,000 unrelated
+   Git objects fell from 0.635s / 3.119s, 10,224 / 50,224 statements, and 9.1 / 44.9
+   MiB peak to 0.018s / 0.010s, 224 statements, and 0.6 / 0.2 MiB. A 50,000 unrelated
+   receipt context fell from 0.324s and 24.2 MiB to 0.0006s and 0.016 MiB.
+9. **Medium — Source inventory input (`GitHubCollector.inventory`):** Empty Source login and nonnumeric repository IDs passed structural validation
+   and were retained before rejection. Collector now validates nonempty login and
+   positive decimal provider IDs before input admission. The six targeted inventory
+   cases passed, including the unsupported owner and malformed-ID reproducers.
 
 Development runs are overlapping evidence, never summed as acceptance totals.
 The earlier collector selections had 90 passes/4 failures, then 92/2 while old
@@ -263,14 +289,19 @@ development assertion incorrectly expected stale coverage insertion and failed
 one of three new cases; the assertion was corrected to preserve the existing
 stale-admission contract. No production ordering rule was weakened.
 
-After the last production changes were frozen, a fresh definition snapshot and
-the complete non-packaging bootstrap suite passed all 1,706 cases in 229.40s,
-with zero failures, errors or skips. Its JUnit SHA-256 is
-`f4efd61221ea50f967a9c98fc9e497f3a8a7ad34dce228acaa2aa81b69d97f37`.
-Regeneration checked the snapshot against the unchanged implementation and
-packaged nine verified capability certificates from that successful receipt.
-This remains development evidence; clean-HEAD ordinary and installed-package
-acceptance runs below use no bootstrap override.
+Before the database-level Git identity guard was added, a fresh definition
+snapshot and the complete non-packaging bootstrap suite passed 1,714 cases in
+168.49s with zero failures, errors or skips. That run is historical development
+evidence and does not cover the later SQL guard. Its nine parser certificates were
+regenerated from the successful receipt. A fresh snapshot/bootstrap and clean-tree
+ordinary and installed-package acceptance are required for the final feature tree.
+
+After the database-level guard and final regression additions, a new pre-run
+definition snapshot and complete non-packaging bootstrap execution passed 1,715
+cases in 166.27s with zero failures, errors or skips. The nine retained parser
+capability certificates were regenerated from that exact successful receipt.
+This is certificate-generation evidence; ordinary and installed-package final
+acceptance runs separately without the bootstrap environment variable.
 
 Final acceptance workflow:
 
@@ -296,8 +327,8 @@ FTS/doctor and report validation also run. CI reconciles selected/executed node
 IDs, skips/failures/exclusions and unexecuted lanes, and records clean-tree and
 feature/tested-tree identity. Final counts and hosted artifacts belong to the
 submitted PR's actual receipt, not an old count floor or this development ledger.
-No live provider, benchmark, old-schema migration, retained-data cleanup, merge
-or deployment is exercised.
+No live provider, old-schema migration, retained-data cleanup or deployment is
+exercised.
 
 ## G. Prioritized remaining decisions
 
