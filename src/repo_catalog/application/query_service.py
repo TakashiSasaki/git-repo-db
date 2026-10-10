@@ -1323,11 +1323,23 @@ class QueryService:
             try:
                 needle = literal.encode(encoding)
                 offset = raw[0].find(needle) if raw else -1
-                if (
-                    offset >= 0
-                    and raw[0][:offset].decode(encoding, errors) == text[:start]
-                ):
-                    value.update(byte_start=offset, byte_end=offset + len(needle))
+                if offset >= 0:
+                    prefix = raw[0][:offset].decode(encoding, errors)
+                    mapped_start = len(prefix)
+                    if (
+                        text[:mapped_start] == prefix
+                        and text[mapped_start : mapped_start + len(literal)] == literal
+                    ):
+                        value.update(
+                            byte_start=offset,
+                            byte_end=offset + len(needle),
+                            line=text[:mapped_start].count("\n") + 1,
+                            snippet=text[
+                                max(0, mapped_start - 40) : mapped_start
+                                + len(literal)
+                                + 80
+                            ],
+                        )
             except UnicodeError:
                 pass
             offsets.append(value)

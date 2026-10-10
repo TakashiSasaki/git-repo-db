@@ -27,7 +27,7 @@ def test_commit_literal_checks_original_bytes(catalog):
         .decode()
     )
     git(fixture.alpha.path, "update-ref", "refs/heads/legacy", oid)
-    literal_message = b"\\xff literal\n"
+    literal_message = b"\xff gap \\xff literal\n" + "� actual\n".encode()
     literal_oid = (
         git(
             fixture.alpha.path,
@@ -71,8 +71,36 @@ def test_commit_literal_checks_original_bytes(catalog):
             state, "search", "commits", "--repo", repos["alpha"], "--literal", r"\xff"
         )
         assert len(actual) == 1 and actual[0]["oid"] == "sha1:" + literal_oid
-        assert actual[0]["byte_start"] == 0 and actual[0]["byte_end"] == 4
+        assert actual[0]["byte_start"] == 6 and actual[0]["byte_end"] == 10
         assert base64.b64decode(actual[0]["message_b64"]) == literal_message
+
+    from repo_catalog.adapters.git.parsing import reparse_git
+    from repo_catalog.adapters.sqlite.store import Store
+
+    with Store(state) as store:
+        acquisition = store.one(
+            "SELECT git_acquisition_id FROM current_snapshots WHERE repository_uuidv4=?",
+            (repos["alpha"],),
+        )[0]
+        replace = reparse_git(store, acquisition, metadata_errors="replace")
+    for indexed in (False, True):
+        if indexed:
+            run(state, "index", "rebuild", "--kind", "commits")
+        actual = pages(
+            state,
+            "search",
+            "commits",
+            "--repo",
+            repos["alpha"],
+            "--literal",
+            "�",
+            "--decoder-key",
+            replace["decoder_key"],
+        )
+        assert len(actual) == 1 and actual[0]["oid"] == "sha1:" + literal_oid
+        start = literal_message.index("�".encode())
+        assert actual[0]["byte_start"] == start and actual[0]["byte_end"] == start + 3
+        assert actual[0]["line"] == 2 and "� actual" in actual[0]["snippet"]
 
 
 def test_root_scopes(catalog):
