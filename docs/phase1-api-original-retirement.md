@@ -1,9 +1,11 @@
 # Phase 1 decision: retire API-original capabilities
 
 Status: accepted owner instruction, implementation pending in a stacked PR.
-Decision date: 2026-10-10. This record authorizes implementation, commits and new
-task-branch PRs, but not merge, main changes, deployment, release, or mutation of
-retained user catalogs. Work and verification use fresh disposable catalogs.
+Decision date: 2026-10-10. This record authorized implementation, commits and new
+task-branch PRs; it did not itself authorize a merge, deployment, release, or
+mutation of retained user catalogs. The later owner instruction for the
+independent review task explicitly authorizes merging PRs #19 and #20 after its
+acceptance gates pass. Work and verification use fresh disposable catalogs.
 
 ## Actual baseline
 
@@ -141,7 +143,9 @@ CI IDs, and bind hosted evidence to submitted feature HEAD/tree. Neither this
 decision PR nor old passing receipts certify the later implementation.
 
 Stack order: this focused decision PR based on main, then one coherent integrated
-implementation PR based on its head. Continue without waiting for merge. No PR
-merge or release is authorized. The implementation handoff must distinguish
+implementation PR based on its head. Continue without waiting for merge. This
+decision record itself grants no merge or release authorization; PR #19 and
+PR #20 may be merged only under the later explicit owner authorization and after
+its review and acceptance gates pass. The implementation handoff must distinguish
 verified removals, already absent paths and shared Phase-2 portions for every
 R1–R7 target, and name remaining design questions without selecting their answers.
