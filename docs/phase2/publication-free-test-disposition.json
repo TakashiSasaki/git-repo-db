@@ -1,5 +1,5 @@
 {
-  "status": "initial frozen checkpoint 41dbe555 reviewed; fixture corrections and final frozen-tree acceptance pending",
+  "status": "Integrated publication-independent implementation with explicit old-to-current behavior mapping; failed checkpoints preserved; final coherent-source acceptance requires complete gates and fresh independent affected rechecks.",
   "mechanism_only_retirements": [
     {
       "retired_node": "tests/integration/test_catalog3_parser_model.py::test_independent_reparse_retains_input_and_produces_separate_output",
@@ -1575,7 +1575,7 @@
           "tests/e2e/test_recovery.py::test_old_run_retains_divergent_capture_without_time_winner"
         ],
         "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
-        "surviving_assertion": "A resumed interrupted older frozen capture retains its own bytes/history and pending cache obligations; independent captures cannot pick a sole current snapshot by observation/receipt time. Cache GC remains operational and recorded path bytes remain readable."
+        "surviving_assertion": "A resumed interrupted older frozen capture retains its own bytes/history and pending cache obligations; independent captures cannot pick a sole current snapshot by observation/receipt time. Cache GC remains operational and recorded path bytes remain readable. Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
       },
       {
         "retired_node": "tests/integration/test_catalog3_cas_integrity.py::test_failed_api_admission_quarantines_shared_git_incumbent_without_staging",
@@ -1591,7 +1591,7 @@
           "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair"
         ],
         "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
-        "surviving_assertion": "A syntactically canonical forged Git OID is recomputed against bytes before repair, rejects GIT_OBJECT_IDENTITY, and preserves bytes/quarantine/catalog atomically."
+        "surviving_assertion": "A syntactically canonical forged Git OID is recomputed against bytes before repair, rejects GIT_OBJECT_IDENTITY, and preserves bytes/quarantine/catalog atomically. Native admission now correctly denies a forged OID before the old retained-corruption setup can insert it. Assert native denial and no admitted mapping, then independently inject retained corruption with the original guard restored; fullcheck/repair rejection and no mutation still required."
       },
       {
         "retired_node": "tests/integration/test_catalog3_cas_integrity.py::test_only_api_bytes_cannot_be_repaired_from_the_adapter_or_application",
@@ -1631,7 +1631,7 @@
           "tests/integration/test_catalog3_payload_cas.py::test_independent_acquisitions_keep_separate_captures_for_shared_bytes"
         ],
         "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
-        "surviving_assertion": "Two real Git acquisition captures at negative and zero times retain distinct acquisition/source rows while sharing one immutable physical object; removed HTTP occurrence ownership is not reintroduced."
+        "surviving_assertion": "Two real Git acquisition captures at negative and zero times retain distinct acquisition/source rows while sharing one immutable physical object; removed HTTP occurrence ownership is not reintroduced. Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
       },
       {
         "retired_node": "tests/integration/test_catalog3_payload_cas.py::test_same_bytes_across_representations_share_one_physical_object",
@@ -1639,7 +1639,7 @@
           "tests/integration/test_catalog3_payload_cas.py::test_same_raw_bytes_across_git_formats_share_one_physical_object"
         ],
         "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
-        "surviving_assertion": "Canonical SHA1/SHA256 Git object identities for identical raw bytes share one physical digest and one logical Git representation while preserving two real Git object identities."
+        "surviving_assertion": "Canonical SHA1/SHA256 Git object identities for identical raw bytes share one physical digest and one logical Git representation while preserving two real Git object identities. Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
       },
       {
         "retired_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_complete_code_requires_saved_published_matching_role_roots",
@@ -1663,7 +1663,7 @@
           "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust"
         ],
         "reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions.",
-        "surviving_assertion": "Imported direct current PR/Review/comment fields and exact family coverage are immediately readable without parser trust; sender local checks are omitted, bytes/items and metadata filters survive, and retired interpretation/history tables remain absent."
+        "surviving_assertion": "Imported direct current PR/Review/comment fields and exact family coverage are immediately readable without parser trust; sender local checks are omitted, bytes/items and metadata filters survive, and retired interpretation/history tables remain absent. Actual None-filter and metadata filter/physical Git gate failures; all assertions retained."
       },
       {
         "retired_node": "tests/integration/test_catalog3_job_plans.py::test_manual_inventory_has_source_owned_raw_input_and_result",
@@ -1744,6 +1744,302 @@
         ],
         "surviving_assertion": "The original catalog3.sql parameter/node ID and all signed-int64 range, ordering, INTEGER storage, non-integer rejection, microsecond unit/type assertions survive. The fixture now registers pure Git SQL functions and executes the actual composed production schema, covering current API/evidence/Git/operational time columns rather than a base DDL fragment.",
         "reason": "Retire only the obsolete fragment-layout assumption and unreachable reanalysis_runs fixture branch; required timestamp behavior is preserved and checked against every active persisted table."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Retire only the per-observation surrogate distinction for repeated same local alias: natural(repository,name) association remains one row and returns one stable key. Preserve ambiguous resolution across distinct repository identities with the same alias."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Keep original 32-new/32-replay VM measurements at 64 versus512 prior comments and1.5 growth bound,544 direct/current eligible review owners and one shared text body. Replace only document_observations/fetch_occurrences queries with sqlite_schema absence checks; preserve existing collection_memberships zero-count assertion and actual direct current/eligible owner counts."
+      },
+      {
+        "retired_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints",
+        "replacement_nodes": [
+          "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained."
+      },
+      {
+        "retired_node": "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields",
+        "replacement_nodes": [
+          "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained."
+      },
+      {
+        "retired_node": "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary",
+        "replacement_nodes": [
+          "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained."
+      },
+      {
+        "retired_node": "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic",
+        "replacement_nodes": [
+          "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Current closed intake rejects malformed domain JSON before persistence. Assert rejected_records=1, no staging of rejected candidate, independently valid sibling/body available, FK/integrity clean. Original invalid timestamp attacks retained."
+      },
+      {
+        "retired_node": "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing",
+        "replacement_nodes": [
+          "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Child fixture used obsolete thread request_context key; current closed scope requires provider_resource_id. The anti-completeness assertion is retained."
+      },
+      {
+        "retired_node": "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors",
+        "replacement_nodes": [
+          "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Retired fetch_occurrences no longer exists; assert table absence, retain original errors, recording warnings, rollback/clock/partial-marker and remaining empty-store assertions."
+      },
+      {
+        "retired_node": "tests/e2e/test_github_sync.py::test_child_watermarks",
+        "replacement_nodes": [
+          "tests/e2e/test_github_sync.py::test_child_watermarks"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Unused old incremental_scans is not produced by current collectors. Select exact terminal complete marker-qualified fetch collection start, preserve failed issue scan prior safe start, independent review scan advancement and actual since request assertion. Watermark remains original start, never terminal time."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Actual selected thread completeness failures; all assertions retained."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Actual selected thread completeness failures; all assertions retained."
+      },
+      {
+        "retired_node": "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
+        "replacement_nodes": [
+          "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Actual hidden conflicted parent must cause per-document unresolved coverage. Assertions strengthened for document exclusion and selected-thread unresolved coverage."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Native admission now correctly denies a forged OID before the old retained-corruption setup can insert it. Assert native denial and no admitted mapping, then independently inject retained corruption with the original guard restored; fullcheck/repair rejection and no mutation still required."
+      },
+      {
+        "retired_node": "tests/e2e/test_content.py::test_bounded_raw",
+        "replacement_nodes": [
+          "tests/e2e/test_content.py::test_bounded_raw"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Old fixture expected canonical binary Git raw bytes to be absent after successful collection. Require independently retained bounded raw bytes, correct full length and pagination, while text hydration remains unavailable."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_payload_cas.py::test_distinct_byte_encodings_remain_distinct",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_payload_cas.py::test_distinct_byte_encodings_remain_distinct"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_payload_cas.py::test_git_object_reference_requires_both_components_and_its_representation",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_payload_cas.py::test_git_object_reference_requires_both_components_and_its_representation"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_queries.py::test_fresh_catalog3_doctor_and_file_query",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_queries.py::test_fresh_catalog3_doctor_and_file_query"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Tree/file reader lost actual raw availability and byte length in the returned object entry. Expose actual available canonical blob bytes and size, restricted to the exact repository/acquisition membership, independently of text candidate eligibility."
+      },
+      {
+        "retired_node": "tests/e2e/test_queries.py::test_commit_literal_checks_original_bytes",
+        "replacement_nodes": [
+          "tests/e2e/test_queries.py::test_commit_literal_checks_original_bytes"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Search offsets counted decoder-rendered backslash escape bytes instead of original Git message bytes. Find literal bytes in canonical raw input using each genuine supported decoder and verify the decoded prefix; rendered escape text has no invented raw span. Scan and indexed paths retain exact offset controls."
+      },
+      {
+        "retired_node": "tests/e2e/test_queries.py::test_root_scopes",
+        "replacement_nodes": [
+          "tests/e2e/test_queries.py::test_root_scopes"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "History enumerated every historical capture instead of traversing ancestors of current selected refs. Current/history use the actual selected snapshot; history traverses all reachable commit ancestors. Recorded scope retains independently captured orphan roots."
+      },
+      {
+        "retired_node": "tests/e2e/test_queries.py::test_pr_root_scopes",
+        "replacement_nodes": [
+          "tests/e2e/test_queries.py::test_pr_root_scopes"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Root selector validation lost the existing prohibition on combining snapshot with PR or recorded selectors. Restore exact selector conflicts and single-repository requirements; mixed head/PR history combines current ref capture with exact current PR targets."
+      },
+      {
+        "retired_node": "tests/e2e/test_repository_identity.py::test_remounted_paths_share_explicit_repo_identity",
+        "replacement_nodes": [
+          "tests/e2e/test_repository_identity.py::test_remounted_paths_share_explicit_repo_identity"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
+      },
+      {
+        "retired_node": "tests/e2e/test_repository_identity.py::test_github_instances_and_sources_keep_api_identity_separate",
+        "replacement_nodes": [
+          "tests/e2e/test_repository_identity.py::test_github_instances_and_sources_keep_api_identity_separate"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
+      },
+      {
+        "retired_node": "tests/e2e/test_repository_identity.py::test_instance_scoped_native_ids_and_conflicts",
+        "replacement_nodes": [
+          "tests/e2e/test_repository_identity.py::test_instance_scoped_native_ids_and_conflicts"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
+      },
+      {
+        "retired_node": "tests/e2e/test_text_policy.py::test_text_bounds",
+        "replacement_nodes": [
+          "tests/e2e/test_text_policy.py::test_text_bounds"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Reader lost raw availability/length fields; old assertion also equated oversized text ineligibility with missing canonical raw Git bytes. Return actual canonical raw availability/length independently of decoder text state; preserve oversize/NUL/invalid UTF-8 controls and verify bounded oversized reads plus reachable ancestor text."
+      },
+      {
+        "retired_node": "tests/integration/test_cache.py::test_old_obligations",
+        "replacement_nodes": [
+          "tests/integration/test_cache.py::test_old_obligations"
+        ],
+        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
       }
     ]
   },
@@ -1756,10 +2052,10 @@
     "execution": "8 passed, 21 deselected in 3.89s; pure methods only, before final schema freeze."
   },
   "collection_checkpoint": {
-    "ordinary_selected": 2128,
+    "ordinary_selected": 2148,
     "collection_errors": 0,
-    "artifact": "artifacts/publication-free/collection-4c738ef66d61/ordinary-collected-nodes.txt",
-    "status": "Actual integrated corrected-source collection, including timestamp and escaped JSON-key boundaries. Independent reviews and full execution are separate gates."
+    "artifact": "artifacts/publication-free/collection-8fe1fba4eaa4/ordinary-collected-nodes.txt",
+    "status": "Actual integrated correction collection on8fe1fba with documentation-only edits. Source/test corrections and independent review probes are not final complete execution acceptance."
   },
   "git_contract_rewrites": {
     "artifact": "tests/support/git_publication_free_node_replacements.json",
@@ -1770,10 +2066,10 @@
     "script": "scripts/audit_publication_free_test_dispositions.py",
     "artifact": "tests/support/publication_free_node_dispositions.json",
     "baseline_nodes": "tests/support/publication_free_baseline_nodes.txt",
-    "status": "All1950 baseline nodes accounted for against actual2128 ordinary nodes: 487 explicit mappings + 1463 same-node survivors; all193 removed/renamed functions mapped. Collection proof only, not full execution acceptance.",
+    "status": "All1950 baseline nodes accounted for against actual2148 ordinary nodes: 623 explicit mappings + 1327 same-node survivors; all193 removed/renamed functions mapped. Collection proof only, not full execution acceptance.",
     "removed_or_renamed_functions": 193,
-    "explicit_mapped_nodes": 487,
-    "still_collected_same_nodes": 1463
+    "explicit_mapped_nodes": 623,
+    "still_collected_same_nodes": 1327
   },
   "corrected_source_narrow_execution": {
     "selection": "tests/integration/test_catalog3_cache.py test_catalog3_job_plans.py test_database.py test_current_boundaries_independent.py test_catalog3_current_exchange.py and test_catalog3_review_coverage.py::test_new_observed_root_gap_supersedes_older_terminal_thread",
@@ -1801,5 +2097,233 @@
     "seconds": 25.88,
     "junit": "artifacts/publication-free/phase2-collection-fixture-corrections.xml",
     "status": "Complete file executed after all production owners reported source frozen; existing parameter IDs and terminal/no-child assertions retained."
+  },
+  "whole_gate_corrections": {
+    "baseline_checkpoint": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+    "status": "Integrated corrections; final coherent-source collection, independent rechecks and complete gates still required.",
+    "function_reasons": [
+      {
+        "original_function": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge",
+        "replacement_function": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent",
+        "replacement_function": "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates",
+        "replacement_function": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids",
+        "replacement_function": "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates",
+        "replacement_function": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation",
+        "replacement_function": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation",
+        "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
+        "replacement_function": "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
+        "surviving_assertion": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
+        "replacement_function": "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
+        "surviving_assertion": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details",
+        "replacement_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details",
+        "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
+        "replacement_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
+        "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage",
+        "replacement_function": "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage",
+        "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution",
+        "replacement_function": "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution",
+        "surviving_assertion": "Retire only the per-observation surrogate distinction for repeated same local alias: natural(repository,name) association remains one row and returns one stable key. Preserve ambiguous resolution across distinct repository identities with the same alias."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work",
+        "replacement_function": "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work",
+        "surviving_assertion": "Keep original 32-new/32-replay VM measurements at 64 versus512 prior comments and1.5 growth bound,544 direct/current eligible review owners and one shared text body. Replace only document_observations/fetch_occurrences queries with sqlite_schema absence checks; preserve existing collection_memberships zero-count assertion and actual direct current/eligible owner counts."
+      },
+      {
+        "original_function": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints",
+        "replacement_function": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints",
+        "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained."
+      },
+      {
+        "original_function": "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields",
+        "replacement_function": "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields",
+        "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained."
+      },
+      {
+        "original_function": "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary",
+        "replacement_function": "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary",
+        "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained."
+      },
+      {
+        "original_function": "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic",
+        "replacement_function": "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic",
+        "surviving_assertion": "Current closed intake rejects malformed domain JSON before persistence. Assert rejected_records=1, no staging of rejected candidate, independently valid sibling/body available, FK/integrity clean. Original invalid timestamp attacks retained."
+      },
+      {
+        "original_function": "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing",
+        "replacement_function": "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing",
+        "surviving_assertion": "Child fixture used obsolete thread request_context key; current closed scope requires provider_resource_id. The anti-completeness assertion is retained."
+      },
+      {
+        "original_function": "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors",
+        "replacement_function": "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors",
+        "surviving_assertion": "Retired fetch_occurrences no longer exists; assert table absence, retain original errors, recording warnings, rollback/clock/partial-marker and remaining empty-store assertions."
+      },
+      {
+        "original_function": "tests/e2e/test_github_sync.py::test_child_watermarks",
+        "replacement_function": "tests/e2e/test_github_sync.py::test_child_watermarks",
+        "surviving_assertion": "Unused old incremental_scans is not produced by current collectors. Select exact terminal complete marker-qualified fetch collection start, preserve failed issue scan prior safe start, independent review scan advancement and actual since request assertion. Watermark remains original start, never terminal time."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request",
+        "replacement_function": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request",
+        "surviving_assertion": "Actual selected thread completeness failures; all assertions retained."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete",
+        "replacement_function": "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete",
+        "surviving_assertion": "Actual selected thread completeness failures; all assertions retained."
+      },
+      {
+        "original_function": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust",
+        "replacement_function": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust",
+        "surviving_assertion": "Actual None-filter and metadata filter/physical Git gate failures; all assertions retained."
+      },
+      {
+        "original_function": "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
+        "replacement_function": "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
+        "surviving_assertion": "Actual hidden conflicted parent must cause per-document unresolved coverage. Assertions strengthened for document exclusion and selected-thread unresolved coverage."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes",
+        "replacement_function": "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes",
+        "surviving_assertion": "Native admission now correctly denies a forged OID before the old retained-corruption setup can insert it. Assert native denial and no admitted mapping, then independently inject retained corruption with the original guard restored; fullcheck/repair rejection and no mutation still required."
+      },
+      {
+        "original_function": "tests/e2e/test_content.py::test_bounded_raw",
+        "replacement_function": "tests/e2e/test_content.py::test_bounded_raw",
+        "surviving_assertion": "Old fixture expected canonical binary Git raw bytes to be absent after successful collection. Require independently retained bounded raw bytes, correct full length and pagination, while text hydration remains unavailable."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_payload_cas.py::test_same_raw_bytes_across_git_formats_share_one_physical_object",
+        "replacement_function": "tests/integration/test_catalog3_payload_cas.py::test_same_raw_bytes_across_git_formats_share_one_physical_object",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_payload_cas.py::test_distinct_byte_encodings_remain_distinct",
+        "replacement_function": "tests/integration/test_catalog3_payload_cas.py::test_distinct_byte_encodings_remain_distinct",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_payload_cas.py::test_independent_acquisitions_keep_separate_captures_for_shared_bytes",
+        "replacement_function": "tests/integration/test_catalog3_payload_cas.py::test_independent_acquisitions_keep_separate_captures_for_shared_bytes",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity",
+        "replacement_function": "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_payload_cas.py::test_git_object_reference_requires_both_components_and_its_representation",
+        "replacement_function": "tests/integration/test_catalog3_payload_cas.py::test_git_object_reference_requires_both_components_and_its_representation",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_queries.py::test_fresh_catalog3_doctor_and_file_query",
+        "replacement_function": "tests/integration/test_catalog3_queries.py::test_fresh_catalog3_doctor_and_file_query",
+        "surviving_assertion": "Tree/file reader lost actual raw availability and byte length in the returned object entry. Expose actual available canonical blob bytes and size, restricted to the exact repository/acquisition membership, independently of text candidate eligibility."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_remaining_adversarial.py::test_git_decoder_candidates_never_choose_receipt_parser_or_uuid_winner",
+        "replacement_function": "tests/integration/test_catalog3_remaining_adversarial.py::test_git_decoder_candidates_never_choose_receipt_parser_or_uuid_winner",
+        "surviving_assertion": "Old fixture asserted an invented UTF-8 text value and a decoder key unrelated to actual supported settings. Use genuine UTF-8/Latin-1 interpretations of identical canonical bytes and canonical settings keys, preserving both arrival orders and explicit/default ambiguity; false values are rejected before valid admission."
+      },
+      {
+        "original_function": "tests/e2e/test_queries.py::test_commit_literal_checks_original_bytes",
+        "replacement_function": "tests/e2e/test_queries.py::test_commit_literal_checks_original_bytes",
+        "surviving_assertion": "Search offsets counted decoder-rendered backslash escape bytes instead of original Git message bytes. Find literal bytes in canonical raw input using each genuine supported decoder and verify the decoded prefix; rendered escape text has no invented raw span. Scan and indexed paths retain exact offset controls."
+      },
+      {
+        "original_function": "tests/e2e/test_queries.py::test_root_scopes",
+        "replacement_function": "tests/e2e/test_queries.py::test_root_scopes",
+        "surviving_assertion": "History enumerated every historical capture instead of traversing ancestors of current selected refs. Current/history use the actual selected snapshot; history traverses all reachable commit ancestors. Recorded scope retains independently captured orphan roots."
+      },
+      {
+        "original_function": "tests/e2e/test_queries.py::test_pr_root_scopes",
+        "replacement_function": "tests/e2e/test_queries.py::test_pr_root_scopes",
+        "surviving_assertion": "Root selector validation lost the existing prohibition on combining snapshot with PR or recorded selectors. Restore exact selector conflicts and single-repository requirements; mixed head/PR history combines current ref capture with exact current PR targets."
+      },
+      {
+        "original_function": "tests/e2e/test_recovery.py::test_old_run_retains_divergent_capture_without_time_winner",
+        "replacement_function": "tests/e2e/test_recovery.py::test_old_run_retains_divergent_capture_without_time_winner",
+        "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
+      },
+      {
+        "original_function": "tests/e2e/test_repository_identity.py::test_remounted_paths_share_explicit_repo_identity",
+        "replacement_function": "tests/e2e/test_repository_identity.py::test_remounted_paths_share_explicit_repo_identity",
+        "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
+      },
+      {
+        "original_function": "tests/e2e/test_repository_identity.py::test_github_instances_and_sources_keep_api_identity_separate",
+        "replacement_function": "tests/e2e/test_repository_identity.py::test_github_instances_and_sources_keep_api_identity_separate",
+        "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
+      },
+      {
+        "original_function": "tests/e2e/test_repository_identity.py::test_instance_scoped_native_ids_and_conflicts",
+        "replacement_function": "tests/e2e/test_repository_identity.py::test_instance_scoped_native_ids_and_conflicts",
+        "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements."
+      },
+      {
+        "original_function": "tests/e2e/test_text_policy.py::test_text_bounds",
+        "replacement_function": "tests/e2e/test_text_policy.py::test_text_bounds",
+        "surviving_assertion": "Reader lost raw availability/length fields; old assertion also equated oversized text ineligibility with missing canonical raw Git bytes. Return actual canonical raw availability/length independently of decoder text state; preserve oversize/NUL/invalid UTF-8 controls and verify bounded oversized reads plus reachable ancestor text."
+      },
+      {
+        "original_function": "tests/integration/test_cache.py::test_old_obligations",
+        "replacement_function": "tests/integration/test_cache.py::test_old_obligations",
+        "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "original_function": "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair",
+        "replacement_function": "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair",
+        "surviving_assertion": "Native admission now correctly denies a forged OID before the old retained-corruption setup can insert it. Assert native denial and no admitted mapping, then independently inject retained corruption with the original guard restored; fullcheck/repair rejection and no mutation still required."
+      }
+    ],
+    "additional_boundaries": [
+      "Raw Git bytes retained for canonical identity remain subject to established content readability limits; NUL and oversized content are denied.",
+      "Raw commit literal search requires an actual physical byte occurrence; rendered escapes are not byte hits.",
+      "Capture validation memoization is per admission and accepts actual JSON types only; live dependencies and each field are still checked.",
+      "Nested selected-thread completeness does not depend on unrelated unfinished siblings; incremental reuse preserves original collection start."
+    ],
+    "execution_limit": "Affected split-run receipts and focused counterexamples do not establish full ordinary/package acceptance."
   }
 }

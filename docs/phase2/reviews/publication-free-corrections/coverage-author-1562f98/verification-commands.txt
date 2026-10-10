@@ -1,0 +1,24 @@
+# Source isolation
+# Worktree /workspace/fixes/publication-free-coverage-fafc, base fafc1b2d4d2e1986768143cc71a0e55cba943ba3.
+# Only five test files differ; source and composed DDL remain identical to fafc.
+
+# Shared runtime: Python 3.12.14, SQLite 3.53.1
+PYTHONPATH=/workspace/fixes/publication-free-coverage-fafc/src:/workspace/fixes/publication-free-coverage-fafc PATH=/workspace/git-repo-db/.venv/bin:$PATH /workspace/git-repo-db/.venv/bin/python -m pytest tests/integration/test_catalog3_coverage.py tests/integration/test_catalog3_coverage_ownership.py tests/integration/test_catalog3_coverage_queries.py tests/integration/test_catalog3_identity_relations.py tests/integration/test_catalog3_github_scaling.py -q
+
+# Native runtime: Python 3.13.5, SQLite 3.45.1 built with FTS5
+# Isolated repo-catalog launcher uses this interpreter and the explicit source PYTHONPATH.
+LD_PRELOAD=/workspace/review-artifacts/final-integrated/sqlite345-fts5/lib/libsqlite3.so.0 PYTHONPATH=/workspace/fixes/publication-free-coverage-fafc/src:/workspace/fixes/publication-free-coverage-fafc PATH=/workspace/review-artifacts/coverage-fafc/native-bin:/workspace/review-artifacts/schema-a1-b86/native345-venv/bin:$PATH PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /workspace/review-artifacts/schema-a1-b86/native345-venv/bin/python -m pytest tests/integration/test_catalog3_coverage.py tests/integration/test_catalog3_coverage_ownership.py tests/integration/test_catalog3_coverage_queries.py tests/integration/test_catalog3_identity_relations.py tests/integration/test_catalog3_github_scaling.py -q
+
+# Corrected shared scaling retest after two test-only name fixes.
+PYTHONPATH=/workspace/fixes/publication-free-coverage-fafc/src:/workspace/fixes/publication-free-coverage-fafc PATH=/workspace/git-repo-db/.venv/bin:$PATH /workspace/git-repo-db/.venv/bin/python -m pytest tests/integration/test_catalog3_github_scaling.py -q
+
+# Static checks
+/workspace/git-repo-db/.venv/bin/ruff check tests/integration/test_catalog3_coverage.py tests/integration/test_catalog3_coverage_ownership.py tests/integration/test_catalog3_coverage_queries.py tests/integration/test_catalog3_identity_relations.py tests/integration/test_catalog3_github_scaling.py
+git diff --check
+
+/workspace/git-repo-db/.venv/bin/ruff format --check tests/integration/test_catalog3_coverage.py tests/integration/test_catalog3_coverage_ownership.py tests/integration/test_catalog3_coverage_queries.py tests/integration/test_catalog3_identity_relations.py tests/integration/test_catalog3_github_scaling.py
+
+# Corrected native full query-file retest after external launcher import fix.
+LD_PRELOAD=/workspace/review-artifacts/final-integrated/sqlite345-fts5/lib/libsqlite3.so.0 PYTHONPATH=/workspace/fixes/publication-free-coverage-fafc/src:/workspace/fixes/publication-free-coverage-fafc PATH=/workspace/review-artifacts/coverage-fafc/native-bin:/workspace/review-artifacts/schema-a1-b86/native345-venv/bin:$PATH PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /workspace/review-artifacts/schema-a1-b86/native345-venv/bin/python -m pytest tests/integration/test_catalog3_coverage_queries.py -q
+# The launcher inserts the isolated worktree src directly into sys.path before import.
+# tests/conftest.py still loads the child network guard via its own PYTHONPATH.

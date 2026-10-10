@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="22.316" timestamp="2026-10-10T14:24:47.991859+00:00" hostname="80205147a63e"><testcase classname="review-artifacts.final-integrated.final-fafc1b2-valid-keys.test_raw_escape_boundary" name="test_generated_decoder_escape_is_not_raw_commit_literal" time="18.933"><failure message="AssertionError: assert not [{'git_object_id': 1, 'oid': 'sha1:231d0c256e0e2f43c28520f39863199e7d8f95f2', 'type': 'commit', 'byte_length': 241, ...}]&#10; +  where [{'git_object_id': 1, 'oid': 'sha1:231d0c256e0e2f43c28520f39863199e7d8f95f2', 'type': 'commit', 'byte_length': 241, ...}] = rows(PosixPath('/tmp/pytest-of-agent/pytest-249/test_generated_decoder_escape_0/catalog'), 'search commits', literal='\\xff')">invalid_utf8_commit = (PosixPath('/tmp/pytest-of-agent/pytest-249/test_generated_decoder_escape_0/catalog'), b'\xff\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\n', '231d0c256e0e2f43c28520f39863199e7d8f95f2')
+
+    def test_generated_decoder_escape_is_not_raw_commit_literal(invalid_utf8_commit):
+        state, message, _ = invalid_utf8_commit
+        assert b'\\xff' not in message
+        for indexed in (False, True):
+            if indexed:
+                with Store(state) as store:
+                    rebuild(store, 'commits')
+&gt;           assert not rows(state, 'search commits', literal=r'\xff')
+E           AssertionError: assert not [{'git_object_id': 1, 'oid': 'sha1:231d0c256e0e2f43c28520f39863199e7d8f95f2', 'type': 'commit', 'byte_length': 241, ...}]
+E            +  where [{'git_object_id': 1, 'oid': 'sha1:231d0c256e0e2f43c28520f39863199e7d8f95f2', 'type': 'commit', 'byte_length': 241, ...}] = rows(PosixPath('/tmp/pytest-of-agent/pytest-249/test_generated_decoder_escape_0/catalog'), 'search commits', literal='\\xff')
+
+review-artifacts/final-integrated/final-fafc1b2-valid-keys/test_raw_escape_boundary.py:13: AssertionError</failure></testcase></testsuite></testsuites>

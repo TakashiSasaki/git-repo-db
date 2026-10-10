@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /workspace/fixes/publication-free-package-status-fafc
+configfile: pyproject.toml
+plugins: anyio-4.15.1, xdist-3.8.0
+created: 2/2 workers
+2 workers [2 items]
+
+..                                                                       [100%]
+-- generated xml file: /workspace/review-artifacts/package-status-0357cc2.xml --
+============================= slowest 10 durations =============================
+139.15s call     tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]
+136.91s call     tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]
+10.06s setup    tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]
+10.05s setup    tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]
+
+(2 durations < 0.005s hidden.  Use -vv to show these durations.)
+======================== 2 passed in 152.14s (0:02:32) =========================

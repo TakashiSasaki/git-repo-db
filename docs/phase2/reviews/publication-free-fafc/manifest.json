@@ -1682,6 +1682,240 @@
       "archived_sha256": "4d2b166f8ae82a4d82adf0fce8d4e4a769449ac0b5cbc2bc34d2c5eb7f5589e1",
       "archived_bytes": 19018,
       "compression": "gzip-mtime0"
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/raw-backslash-positive-sqlite353.txt",
+      "archived_path": "integrated-followup/raw-backslash-positive-sqlite353.txt",
+      "source_sha256": "eeeb32a9c8a9b9aef1c1b53c9a0403668a6e168e6bf081d364bf29c9776c5ba4",
+      "source_bytes": 113,
+      "archived_sha256": "eeeb32a9c8a9b9aef1c1b53c9a0403668a6e168e6bf081d364bf29c9776c5ba4",
+      "archived_bytes": 113,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/raw-backslash-positive-sqlite353.xml",
+      "archived_path": "integrated-followup/raw-backslash-positive-sqlite353.xml",
+      "source_sha256": "3bede62cfd1dd8a1cb664fc505ecf9a4224951a543ee6f8b13f30d524bd8ffd6",
+      "source_bytes": 421,
+      "archived_sha256": "3bede62cfd1dd8a1cb664fc505ecf9a4224951a543ee6f8b13f30d524bd8ffd6",
+      "archived_bytes": 421,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/raw-escape-sqlite353.txt",
+      "archived_path": "integrated-followup/raw-escape-sqlite353.txt",
+      "source_sha256": "9bbc3f978060e88df2139cf14aed576e43bad62126767a0b0a08074c9359e48c",
+      "source_bytes": 1630,
+      "archived_sha256": "9bbc3f978060e88df2139cf14aed576e43bad62126767a0b0a08074c9359e48c",
+      "archived_bytes": 1630,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/raw-escape-sqlite353.xml",
+      "archived_path": "integrated-followup/raw-escape-sqlite353.xml",
+      "source_sha256": "92b65cba01bb5291c2f5190f841b1096c289afd5bd487fe9a62e9e6dbf2564cb",
+      "source_bytes": 2023,
+      "archived_sha256": "92b65cba01bb5291c2f5190f841b1096c289afd5bd487fe9a62e9e6dbf2564cb",
+      "archived_bytes": 2023,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/raw-literal-probe-input-reconciliation.json",
+      "archived_path": "integrated-followup/raw-literal-probe-input-reconciliation.json",
+      "source_sha256": "7b0dd6d1f4f13897ae58283987b57a518616ccc6794c33af309518adbc9571ed",
+      "source_bytes": 378,
+      "archived_sha256": "7b0dd6d1f4f13897ae58283987b57a518616ccc6794c33af309518adbc9571ed",
+      "archived_bytes": 378,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-boundaries-sqlite353.txt",
+      "archived_path": "integrated-followup/reader-boundaries-sqlite353.txt",
+      "source_sha256": "18a5cfd04f238f831a3783ed405b5348f7b60e396f9bd96059167b0f41f6504d",
+      "source_bytes": 6170,
+      "archived_sha256": "18a5cfd04f238f831a3783ed405b5348f7b60e396f9bd96059167b0f41f6504d",
+      "archived_bytes": 6170,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-boundaries-sqlite353.xml",
+      "archived_path": "integrated-followup/reader-boundaries-sqlite353.xml",
+      "source_sha256": "a3aada062deab2c09c59ebcd688deca675e7fc0e7fdca5ac1be8df248013696e",
+      "source_bytes": 7536,
+      "archived_sha256": "a3aada062deab2c09c59ebcd688deca675e7fc0e7fdca5ac1be8df248013696e",
+      "archived_bytes": 7536,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-followup-executions.json",
+      "archived_path": "integrated-followup/reader-followup-executions.json",
+      "source_sha256": "4d77987ba02893109169d6b4352a17414333dc27fa89127e16d77e9400e4932c",
+      "source_bytes": 3586,
+      "archived_sha256": "4d77987ba02893109169d6b4352a17414333dc27fa89127e16d77e9400e4932c",
+      "archived_bytes": 3586,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-followup-review.md",
+      "archived_path": "integrated-followup/reader-followup-review.md",
+      "source_sha256": "2daac08735d5f69497c6327c6a9c943629181ea30a765da4d4038ce294812c34",
+      "source_bytes": 5662,
+      "archived_sha256": "2daac08735d5f69497c6327c6a9c943629181ea30a765da4d4038ce294812c34",
+      "archived_bytes": 5662,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-nine-sqlite353.txt",
+      "archived_path": "integrated-followup/reader-nine-sqlite353.txt",
+      "source_sha256": "c249756dc4439b6919f574d179a1f61070f7f2f0d44b31ed96445a05a9e61472",
+      "source_bytes": 7542,
+      "archived_sha256": "c249756dc4439b6919f574d179a1f61070f7f2f0d44b31ed96445a05a9e61472",
+      "archived_bytes": 7542,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-nine-sqlite353.xml",
+      "archived_path": "integrated-followup/reader-nine-sqlite353.xml",
+      "source_sha256": "168d7e13d4c289468146a49e07dcfddbb0068b13273b2c62a1fa9982f8ef17e7",
+      "source_bytes": 9051,
+      "archived_sha256": "168d7e13d4c289468146a49e07dcfddbb0068b13273b2c62a1fa9982f8ef17e7",
+      "archived_bytes": 9051,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/scoped-receipt-independent-audit.json",
+      "archived_path": "integrated-followup/scoped-receipt-independent-audit.json.gz",
+      "source_sha256": "426c20ff239e92926a478d4415e988def6ad6767462ded88285d4f3f65d16986",
+      "source_bytes": 117661,
+      "archived_sha256": "1b816c516c351b1bb8c07e6f36a4bd6fbe48b840c258be1e35b96337d2fa601e",
+      "archived_bytes": 12411,
+      "compression": "gzip mtime=0"
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/stopped-local-independent-artifact-audit.json",
+      "archived_path": "integrated-followup/stopped-local-independent-artifact-audit.json.gz",
+      "source_sha256": "21180a6fe68d94a1cb5b3575d76f3ba51da16e9c15d2366292bbea5d5dd35ccf",
+      "source_bytes": 275214,
+      "archived_sha256": "b25d1c75de624dbf91509d5bf5fdb3b0a9440ce22259c8d05cfeecb414e7b722",
+      "archived_bytes": 27321,
+      "compression": "gzip mtime=0"
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/test_raw_escape_boundary.first-one-frozen.py",
+      "archived_path": "integrated-followup/test_raw_escape_boundary.first-one-frozen.py",
+      "source_sha256": "543dc031fa1ca6bcf51287951ea1146551b15f74ffad4981ebc9326a1078e714",
+      "source_bytes": 553,
+      "archived_sha256": "543dc031fa1ca6bcf51287951ea1146551b15f74ffad4981ebc9326a1078e714",
+      "archived_bytes": 553,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/test_reader_boundaries.first-eight-frozen.py",
+      "archived_path": "integrated-followup/test_reader_boundaries.first-eight-frozen.py",
+      "source_sha256": "4902cbe5d2d080a7bfbc77fa658746e5763e6bfd0fea2990191b4cfa808ecf51",
+      "source_bytes": 6282,
+      "archived_sha256": "4902cbe5d2d080a7bfbc77fa658746e5763e6bfd0fea2990191b4cfa808ecf51",
+      "archived_bytes": 6282,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/utf8-sig-sqlite353.txt",
+      "archived_path": "integrated-followup/utf8-sig-sqlite353.txt",
+      "source_sha256": "d7edb24884b716b9c9d2e032b9801e2106b929a0cd5c4e83591b23ae688a6f9d",
+      "source_bytes": 7562,
+      "archived_sha256": "d7edb24884b716b9c9d2e032b9801e2106b929a0cd5c4e83591b23ae688a6f9d",
+      "archived_bytes": 7562,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/utf8-sig-sqlite353.xml",
+      "archived_path": "integrated-followup/utf8-sig-sqlite353.xml",
+      "source_sha256": "a445a42cf6be475f7b52a9ca48e6905837819afd668081bea16d9e881e9af1d4",
+      "source_bytes": 7742,
+      "archived_sha256": "a445a42cf6be475f7b52a9ca48e6905837819afd668081bea16d9e881e9af1d4",
+      "archived_bytes": 7742,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/test_raw_escape_boundary.py",
+      "archived_path": "integrated-strengthened/test_raw_escape_boundary.py",
+      "source_sha256": "19f2f93ac6a39a4dd1965e14fc99c451b39d4e0502ca1bcd50fa7337d861959a",
+      "source_bytes": 1465,
+      "archived_sha256": "19f2f93ac6a39a4dd1965e14fc99c451b39d4e0502ca1bcd50fa7337d861959a",
+      "archived_bytes": 1465,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/final-fafc1b2-valid-keys/test_reader_boundaries.py",
+      "archived_path": "integrated-strengthened/test_reader_boundaries.py",
+      "source_sha256": "444e0bbb76d3197b440fb5a2b8976ac0016d1a81ca652132005bfb586753d2aa",
+      "source_bytes": 7038,
+      "archived_sha256": "444e0bbb76d3197b440fb5a2b8976ac0016d1a81ca652132005bfb586753d2aa",
+      "archived_bytes": 7038,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/audit_collection_binding.py",
+      "archived_path": "integrated-reproduction/audit_collection_binding.py",
+      "source_sha256": "c27c3662821bb06dc41d2a25c3b893b74fe78732abcd540baffd368ba3887f51",
+      "source_bytes": 2700,
+      "archived_sha256": "c27c3662821bb06dc41d2a25c3b893b74fe78732abcd540baffd368ba3887f51",
+      "archived_bytes": 2700,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/audit_completed_results.py",
+      "archived_path": "integrated-reproduction/audit_completed_results.py",
+      "source_sha256": "dbcc507a173a7a62becb1c68198a31891e4bf45d55f645bdb9ff2c367147150a",
+      "source_bytes": 12190,
+      "archived_sha256": "dbcc507a173a7a62becb1c68198a31891e4bf45d55f645bdb9ff2c367147150a",
+      "archived_bytes": 12190,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/audit_scoped_receipts.py",
+      "archived_path": "integrated-reproduction/audit_scoped_receipts.py",
+      "source_sha256": "e850b51e6229c4c9e00f7edb99a47b6ec47ef1eedc42f65583124cd6e86ffa7e",
+      "source_bytes": 5091,
+      "archived_sha256": "e850b51e6229c4c9e00f7edb99a47b6ec47ef1eedc42f65583124cd6e86ffa7e",
+      "archived_bytes": 5091,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/inspect_final_schema.py",
+      "archived_path": "integrated-reproduction/inspect_final_schema.py",
+      "source_sha256": "dd2cdd60ab9915e4bd02ca43f8126a75d1c570a2aae7bbdf7239d554719debe2",
+      "source_bytes": 3371,
+      "archived_sha256": "dd2cdd60ab9915e4bd02ca43f8126a75d1c570a2aae7bbdf7239d554719debe2",
+      "archived_bytes": 3371,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/recheck_installed_package_scope.py",
+      "archived_path": "integrated-reproduction/recheck_installed_package_scope.py",
+      "source_sha256": "e1d871f3675f4d4124f92aea596c41831425d5b2293cfc692119748d3552bd00",
+      "source_bytes": 2512,
+      "archived_sha256": "e1d871f3675f4d4124f92aea596c41831425d5b2293cfc692119748d3552bd00",
+      "archived_bytes": 2512,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/strict_decoder_diagnostic_recheck.py",
+      "archived_path": "integrated-reproduction/strict_decoder_diagnostic_recheck.py",
+      "source_sha256": "4e227b1445183b35aeea636b955f37a95baa198e20b119aa2f7d07859011b982",
+      "source_bytes": 3540,
+      "archived_sha256": "4e227b1445183b35aeea636b955f37a95baa198e20b119aa2f7d07859011b982",
+      "archived_bytes": 3540,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/final-integrated/sqlite345-fts5/build-receipt.json",
+      "archived_path": "native345-fts5/build-receipt.json",
+      "source_sha256": "3f85701d96afe12953b22b736c453c1a99d76e0deafc06d72edec1c04af2bf94",
+      "source_bytes": 799,
+      "archived_sha256": "3f85701d96afe12953b22b736c453c1a99d76e0deafc06d72edec1c04af2bf94",
+      "archived_bytes": 799,
+      "compression": null
     }
   ],
   "scoped_reviews": "All four have no open findings within exercised boundaries; the complete ordinary gate still failed and requires corrections.",
@@ -1706,5 +1940,6 @@
     "unexecuted": 1294,
     "exit_code": 2,
     "reason": "Explicitly stopped obsolete failing candidate after the same submitted feature had completed hosted ordinary execution; final corrected complete local gate remains required."
-  }
+  },
+  "followup_review": "Preserved reader/raw-literal counterexamples found seven source failures in eleven distinct supported-codec cases after the original scoped reviews. Unsupported UTF-8-sig experiments failed at parser setup and are excluded from acceptance coverage. Later repair and final coherent-candidate review remain separate."
 }

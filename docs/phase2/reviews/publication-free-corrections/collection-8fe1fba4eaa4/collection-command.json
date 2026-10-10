@@ -1,0 +1,24 @@
+{
+  "head": "8fe1fba4eaa47d989a26f196275c17d5db19170d",
+  "head_tree": "85a53b54049cef0007aee35a836a1e60366254e8",
+  "tracked_source_dirty": true,
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "--collect-only",
+    "-q",
+    "tests/unit",
+    "tests/integration",
+    "tests/e2e",
+    "-m",
+    "not live and not benchmark"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "exit_code": 0,
+  "ordinary_collected": 2148,
+  "node_list_sha256": "61e0584590e16dfcc992cd3ad7a8c252385cf6268185626612a98fc36dea8f43",
+  "status": "actual collection only; not final acceptance or execution"
+}

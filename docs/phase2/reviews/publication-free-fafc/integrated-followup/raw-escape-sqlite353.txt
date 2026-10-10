@@ -1,0 +1,21 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_generated_decoder_escape_is_not_raw_commit_literal ____________
+
+invalid_utf8_commit = (PosixPath('/tmp/pytest-of-agent/pytest-249/test_generated_decoder_escape_0/catalog'), b'\xff\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\n', '231d0c256e0e2f43c28520f39863199e7d8f95f2')
+
+    def test_generated_decoder_escape_is_not_raw_commit_literal(invalid_utf8_commit):
+        state, message, _ = invalid_utf8_commit
+        assert b'\\xff' not in message
+        for indexed in (False, True):
+            if indexed:
+                with Store(state) as store:
+                    rebuild(store, 'commits')
+>           assert not rows(state, 'search commits', literal=r'\xff')
+E           AssertionError: assert not [{'git_object_id': 1, 'oid': 'sha1:231d0c256e0e2f43c28520f39863199e7d8f95f2', 'type': 'commit', 'byte_length': 241, ...}]
+E            +  where [{'git_object_id': 1, 'oid': 'sha1:231d0c256e0e2f43c28520f39863199e7d8f95f2', 'type': 'commit', 'byte_length': 241, ...}] = rows(PosixPath('/tmp/pytest-of-agent/pytest-249/test_generated_decoder_escape_0/catalog'), 'search commits', literal='\\xff')
+
+review-artifacts/final-integrated/final-fafc1b2-valid-keys/test_raw_escape_boundary.py:13: AssertionError
+=========================== short test summary info ============================
+FAILED review-artifacts/final-integrated/final-fafc1b2-valid-keys/test_raw_escape_boundary.py::test_generated_decoder_escape_is_not_raw_commit_literal
+1 failed in 23.36s

@@ -1,0 +1,177 @@
+{
+  "purpose": "Exact author-focused correction and actual collection evidence; not independent review or complete integrated acceptance.",
+  "source_bindings": "Each command/result retains its actual isolated commit/runtime; collected IDs are from8fe1fba with documentation-only edits.",
+  "entries": [
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/baseline-node-ids.txt",
+      "archived_path": "coverage-author-1562f98/baseline-node-ids.txt",
+      "source_sha256": "7ec692a0c4452c528b784db6cb0db7a2642e45e7d27ccfefae68eb396948be58",
+      "source_bytes": 31386,
+      "archived_sha256": "7ec692a0c4452c528b784db6cb0db7a2642e45e7d27ccfefae68eb396948be58",
+      "archived_bytes": 31386,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/corrected-node-ids.txt",
+      "archived_path": "coverage-author-1562f98/corrected-node-ids.txt",
+      "source_sha256": "44ec70bc1fdfc4919a056b5db496c9e36b7fa793933528e6e9c62937e85b8550",
+      "source_bytes": 32732,
+      "archived_sha256": "44ec70bc1fdfc4919a056b5db496c9e36b7fa793933528e6e9c62937e85b8550",
+      "archived_bytes": 32732,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/function-dispositions.json",
+      "archived_path": "coverage-author-1562f98/function-dispositions.json",
+      "source_sha256": "5209c9534ebfaa717df831788c2e26047b404aeb206ba3d5bae7f36f62d76a92",
+      "source_bytes": 7984,
+      "archived_sha256": "5209c9534ebfaa717df831788c2e26047b404aeb206ba3d5bae7f36f62d76a92",
+      "archived_bytes": 7984,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/native345fts5-affected.log",
+      "archived_path": "coverage-author-1562f98/native345fts5-affected.log.gz",
+      "source_sha256": "82422e0d69a37804deb727bed04753ae01274559b474637ccac43e1629e95ef2",
+      "source_bytes": 107058,
+      "archived_sha256": "ac2a2a20f60e8f474e9a39ce3562dd011881bee425eff78478fe1269e7332fc6",
+      "archived_bytes": 4763,
+      "compression": "gzip mtime=0"
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/native345fts5-corrected-queries.log",
+      "archived_path": "coverage-author-1562f98/native345fts5-corrected-queries.log",
+      "source_sha256": "f2ecdf6728db64f1fa2981c7df1779a6a28a51babc1f27192eb0e6a53a8d2207",
+      "source_bytes": 111,
+      "archived_sha256": "f2ecdf6728db64f1fa2981c7df1779a6a28a51babc1f27192eb0e6a53a8d2207",
+      "archived_bytes": 111,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/native345fts5-runtime.json",
+      "archived_path": "coverage-author-1562f98/native345fts5-runtime.json",
+      "source_sha256": "9d4290d068e10036a4720f48d771e88e27fedd4f71aa481ff4576c8b41dd9ec6",
+      "source_bytes": 300,
+      "archived_sha256": "9d4290d068e10036a4720f48d771e88e27fedd4f71aa481ff4576c8b41dd9ec6",
+      "archived_bytes": 300,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/node-comparison.json",
+      "archived_path": "coverage-author-1562f98/node-comparison.json",
+      "source_sha256": "b5f39fc5be6f7b99a6ddbb2bb85ff26535b1b9d332d4c38a3c83d835383bbc72",
+      "source_bytes": 1553,
+      "archived_sha256": "b5f39fc5be6f7b99a6ddbb2bb85ff26535b1b9d332d4c38a3c83d835383bbc72",
+      "archived_bytes": 1553,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/results.json",
+      "archived_path": "coverage-author-1562f98/results.json",
+      "source_sha256": "35b511157a1eb8eb72ed7b178a1517c00bcb0862e6c77d2bf7ea4dab1b079ab9",
+      "source_bytes": 2846,
+      "archived_sha256": "35b511157a1eb8eb72ed7b178a1517c00bcb0862e6c77d2bf7ea4dab1b079ab9",
+      "archived_bytes": 2846,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/shared353-affected.log",
+      "archived_path": "coverage-author-1562f98/shared353-affected.log",
+      "source_sha256": "3640f843ba388910b6caa4216b7c645a18531fa8492b4657b798f2c6ec20b145",
+      "source_bytes": 5351,
+      "archived_sha256": "3640f843ba388910b6caa4216b7c645a18531fa8492b4657b798f2c6ec20b145",
+      "archived_bytes": 5351,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/shared353-corrected-scaling.log",
+      "archived_path": "coverage-author-1562f98/shared353-corrected-scaling.log",
+      "source_sha256": "666e8221bcf007f7fdd2dbaf67217b1c0e362cdd0b3e901181a7400208583c9a",
+      "source_bytes": 5390,
+      "archived_sha256": "666e8221bcf007f7fdd2dbaf67217b1c0e362cdd0b3e901181a7400208583c9a",
+      "archived_bytes": 5390,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/shared353-corrected2-scaling.log",
+      "archived_path": "coverage-author-1562f98/shared353-corrected2-scaling.log",
+      "source_sha256": "0f1639498b975f514e0064209e9d347fad8a64f5b69e5adcf45b4201b9c3a3a5",
+      "source_bytes": 99,
+      "archived_sha256": "0f1639498b975f514e0064209e9d347fad8a64f5b69e5adcf45b4201b9c3a3a5",
+      "archived_bytes": 99,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/shared353-runtime.json",
+      "archived_path": "coverage-author-1562f98/shared353-runtime.json",
+      "source_sha256": "6b4ad76c4dd94cdd245cffab08e51bace4822d1054a672d95a9e992a4f5df2f9",
+      "source_bytes": 288,
+      "archived_sha256": "6b4ad76c4dd94cdd245cffab08e51bace4822d1054a672d95a9e992a4f5df2f9",
+      "archived_bytes": 288,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/coverage-fafc/verification-commands.txt",
+      "archived_path": "coverage-author-1562f98/verification-commands.txt",
+      "source_sha256": "9013a83d0b57c729266045b762747747cae63257b393e5594d9b076e6ececa88",
+      "source_bytes": 3272,
+      "archived_sha256": "9013a83d0b57c729266045b762747747cae63257b393e5594d9b076e6ececa88",
+      "archived_bytes": 3272,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/git-repo-db/artifacts/publication-free/collection-8fe1fba4eaa4/collection-command.json",
+      "archived_path": "collection-8fe1fba4eaa4/collection-command.json",
+      "source_sha256": "7f1bdf52049f7b3b42f16964738963e3158e5ee74856bf04e7dfe4cbd6378a14",
+      "source_bytes": 642,
+      "archived_sha256": "7f1bdf52049f7b3b42f16964738963e3158e5ee74856bf04e7dfe4cbd6378a14",
+      "archived_bytes": 642,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/git-repo-db/artifacts/publication-free/collection-8fe1fba4eaa4/ordinary-collected-nodes.txt",
+      "archived_path": "collection-8fe1fba4eaa4/ordinary-collected-nodes.txt.gz",
+      "source_sha256": "61e0584590e16dfcc992cd3ad7a8c252385cf6268185626612a98fc36dea8f43",
+      "source_bytes": 316002,
+      "archived_sha256": "2e988716fa41b836d884b82eba817c0d051d0bbf0da2393becbbefca17ef6946",
+      "archived_bytes": 30132,
+      "compression": "gzip mtime=0"
+    },
+    {
+      "source_path": "/workspace/git-repo-db/artifacts/publication-free/collection-8fe1fba4eaa4/ordinary-collection.log",
+      "archived_path": "collection-8fe1fba4eaa4/ordinary-collection.log.gz",
+      "source_sha256": "805f53e6fb9de1b0d02beee5045b93f3bdde2e67af316d60643d1fda53536080",
+      "source_bytes": 316033,
+      "archived_sha256": "dbd5d03c8c9630cbdf83a106ab6e30c88a3ca5e53d5c7049d89ea9cc82e555fa",
+      "archived_bytes": 30155,
+      "compression": "gzip mtime=0"
+    },
+    {
+      "source_path": "/workspace/review-artifacts/package-status-0357cc2.log",
+      "archived_path": "focused-controls/package-status-0357cc2.log",
+      "source_sha256": "3d11ea7661dd89947b5a73c83a1687395a3ed4f5ee551c7ae6aedc3d90cfdb15",
+      "source_bytes": 1040,
+      "archived_sha256": "3d11ea7661dd89947b5a73c83a1687395a3ed4f5ee551c7ae6aedc3d90cfdb15",
+      "archived_bytes": 1040,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/package-status-0357cc2.xml",
+      "archived_path": "focused-controls/package-status-0357cc2.xml",
+      "source_sha256": "fea22c1010bdfc9a24a8bcd8371e9013ef3a95594676252ecf29277a0187d1c6",
+      "source_bytes": 472,
+      "archived_sha256": "fea22c1010bdfc9a24a8bcd8371e9013ef3a95594676252ecf29277a0187d1c6",
+      "archived_bytes": 472,
+      "compression": null
+    },
+    {
+      "source_path": "/workspace/review-artifacts/collector-tuple-counterexample.txt",
+      "archived_path": "focused-controls/collector-tuple-counterexample.txt",
+      "source_sha256": "eae2e22949d87e330cfa06fea5ccb6f5fdcf92a1a41e8687f3434cefb451a22e",
+      "source_bytes": 61,
+      "archived_sha256": "eae2e22949d87e330cfa06fea5ccb6f5fdcf92a1a41e8687f3434cefb451a22e",
+      "archived_bytes": 61,
+      "compression": null
+    }
+  ]
+}

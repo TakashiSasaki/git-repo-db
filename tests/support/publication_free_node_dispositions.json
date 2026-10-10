@@ -3,9 +3,9 @@
   "baseline_sha": "6ca31eb95d2dca91adcf20af88fbb54387595375",
   "selection": "tests/unit tests/integration tests/e2e, not live and not benchmark",
   "baseline_collected_count": 1950,
-  "current_collected_count": 2128,
-  "mapped_baseline_node_count": 487,
-  "still_collected_same_node_count": 1463,
+  "current_collected_count": 2148,
+  "mapped_baseline_node_count": 623,
+  "still_collected_same_node_count": 1327,
   "removed_or_renamed_baseline_function_count": 193,
   "removed_or_renamed_baseline_functions": [
     "tests/e2e/test_cli_more.py::test_publication_fencing",
@@ -204,7 +204,7 @@
   ],
   "node_list_sha256": {
     "baseline": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
-    "current": "88ce59a32b14839d01f2d7d9363583621d6ced3bb3e1ac8282877fc197d84852"
+    "current": "61e0584590e16dfcc992cd3ad7a8c252385cf6268185626612a98fc36dea8f43"
   },
   "limitations": "Exact counterpart existence and explicit rationales are checked. Still-collected names do not imply unchanged implementation. Full execution, assertion sufficiency and fresh independent review remain separate acceptance requirements.",
   "entries": [
@@ -234,6 +234,15 @@
       "disposition_source": "other_contract_rewrites",
       "surviving_assertion": "Native dependency audit sees actual receiver-local revision fence and canonical Git verified-object/payload-view reads without executing SQL or importing sender publication authority.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_cache.py::test_old_obligations",
+      "replacement_nodes": [
+        "tests/integration/test_cache.py::test_old_obligations"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_adversarial_model.py::test_published_decision_cannot_gain_predecessor_and_change_its_meaning",
@@ -792,8 +801,800 @@
         "tests/integration/test_catalog3_cas_integrity.py::test_forged_canonical_git_oid_cannot_authorize_repair"
       ],
       "disposition_source": "other_contract_rewrites",
-      "surviving_assertion": "A syntactically canonical forged Git OID is recomputed against bytes before repair, rejects GIT_OBJECT_IDENTITY, and preserves bytes/quarantine/catalog atomically.",
+      "surviving_assertion": "A syntactically canonical forged Git OID is recomputed against bytes before repair, rejects GIT_OBJECT_IDENTITY, and preserves bytes/quarantine/catalog atomically. Native admission now correctly denies a forged OID before the old retained-corruption setup can insert it. Assert native denial and no admitted mapping, then independently inject retained corruption with the original guard restored; fullcheck/repair rejection and no mutation still required.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-None]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-None]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-{}]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-{}]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-{ \"original\": true }]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-{ \"original\": true }]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-None]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-None]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-{}]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-{}]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-{ \"original\": true }]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-{ \"original\": true }]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent[tuple]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent[tuple]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent[row]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent[row]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET coverage_state='partial']",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET coverage_state='partial']"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET details_json='{\"changed\":1}']",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET details_json='{\"changed\":1}']"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET observed_at_us=2]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET observed_at_us=2]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-DELETE FROM coverage_claims]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-DELETE FROM coverage_claims]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT OR IGNORE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT OR IGNORE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT OR REPLACE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT OR REPLACE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1) ON CONFLICT(coverage_scope_id,observed_at_us,coverage_state) DO UPDATE SET details_json='{}']",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1) ON CONFLICT(coverage_scope_id,observed_at_us,coverage_state) DO UPDATE SET details_json='{}']"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET coverage_state='partial']",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET coverage_state='partial']"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET details_json='{\"changed\":1}']",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET details_json='{\"changed\":1}']"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET observed_at_us=2]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET observed_at_us=2]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-DELETE FROM coverage_claims]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-DELETE FROM coverage_claims]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT OR IGNORE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT OR IGNORE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT OR REPLACE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT OR REPLACE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1) ON CONFLICT(coverage_scope_id,observed_at_us,coverage_state) DO UPDATE SET details_json='{}']",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1) ON CONFLICT(coverage_scope_id,observed_at_us,coverage_state) DO UPDATE SET details_json='{}']"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids[tuple]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids[tuple]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids[row]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids[row]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING--1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING--1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command2]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command2]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command3]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command3]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_queries_preserve_complete_label_role_gap_checks[head-absent]",
@@ -1552,6 +2353,24 @@
       "disposition_source": "acquisition_contract_rewrites",
       "surviving_assertion": "A fresh target race cannot use an older exact-head code assessment; cached API originals are retired.",
       "retired_mechanism_reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Keep original 32-new/32-replay VM measurements at 64 versus512 prior comments and1.5 growth bound,544 direct/current eligible review owners and one shared text body. Replace only document_observations/fetch_occurrences queries with sqlite_schema absence checks; preserve existing collection_memberships zero-count assertion and actual direct current/eligible owner counts.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Retire only the per-observation surrogate distinction for repeated same local alias: natural(repository,name) association remains one row and returns one stable key. Preserve ambiguous resolution across distinct repository identities with the same alias.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_job_plans.py::test_manual_inventory_has_source_owned_raw_input_and_result",
@@ -2426,6 +3245,24 @@
       "retired_mechanism_reason": "Retains typed identity, owner, content, presence, provenance or completeness assertions using direct domain subjects; removed parser/result/API-original machinery supplies no validity."
     },
     {
+      "baseline_node": "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes[exact-oid]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes[exact-oid]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Native admission now correctly denies a forged OID before the old retained-corruption setup can insert it. Assert native denial and no admitted mapping, then independently inject retained corruption with the original guard restored; fullcheck/repair rejection and no mutation still required.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes[forged-oid]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes[forged-oid]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Native admission now correctly denies a forged OID before the old retained-corruption setup can insert it. Assert native denial and no admitted mapping, then independently inject retained corruption with the original guard restored; fullcheck/repair rejection and no mutation still required.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
       "baseline_node": "tests/integration/test_catalog3_model_cli.py::test_profile_registration_selection_trust_and_invalidation_cli",
       "replacement_nodes": [
         "tests/integration/test_parser_provenance.py::test_actual_module_and_version_are_sufficient_for_current_admission[tests.decoder-1]",
@@ -2604,8 +3441,17 @@
         "tests/integration/test_catalog3_payload_cas.py::test_same_raw_bytes_across_git_formats_share_one_physical_object"
       ],
       "disposition_source": "other_contract_rewrites",
-      "surviving_assertion": "Canonical SHA1/SHA256 Git object identities for identical raw bytes share one physical digest and one logical Git representation while preserving two real Git object identities.",
+      "surviving_assertion": "Canonical SHA1/SHA256 Git object identities for identical raw bytes share one physical digest and one logical Git representation while preserving two real Git object identities. Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_payload_cas.py::test_distinct_byte_encodings_remain_distinct",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_payload_cas.py::test_distinct_byte_encodings_remain_distinct"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_payload_cas.py::test_independent_fetches_keep_separate_occurrences_for_shared_bytes",
@@ -2613,8 +3459,35 @@
         "tests/integration/test_catalog3_payload_cas.py::test_independent_acquisitions_keep_separate_captures_for_shared_bytes"
       ],
       "disposition_source": "other_contract_rewrites",
-      "surviving_assertion": "Two real Git acquisition captures at negative and zero times retain distinct acquisition/source rows while sharing one immutable physical object; removed HTTP occurrence ownership is not reintroduced.",
+      "surviving_assertion": "Two real Git acquisition captures at negative and zero times retain distinct acquisition/source rows while sharing one immutable physical object; removed HTTP occurrence ownership is not reintroduced. Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity[stored_bytes]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity[stored_bytes]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity[payloads]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity[payloads]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_payload_cas.py::test_git_object_reference_requires_both_components_and_its_representation",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_payload_cas.py::test_git_object_reference_requires_both_components_and_its_representation"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
@@ -3227,6 +4100,15 @@
       "disposition_source": "schema_contract_rewrites",
       "surviving_assertion": "Retains typed identity, owner, content, presence, provenance or completeness assertions using direct domain subjects; removed parser/result/API-original machinery supplies no validity.",
       "retired_mechanism_reason": "Retains typed identity, owner, content, presence, provenance or completeness assertions using direct domain subjects; removed parser/result/API-original machinery supplies no validity."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_queries.py::test_fresh_catalog3_doctor_and_file_query",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_queries.py::test_fresh_catalog3_doctor_and_file_query"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Tree/file reader lost actual raw availability and byte length in the returned object entry. Expose actual available canonical blob bytes and size, restricted to the exact repository/acquisition membership, independently of text candidate eligibility.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_remaining_adversarial.py::test_unrelated_present_record_cannot_prove_complete_coverage",
@@ -3864,6 +4746,42 @@
       "retired_mechanism_reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
     },
     {
+      "baseline_node": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[False]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[False]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Actual selected thread completeness failures; all assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[True]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[True]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Actual selected thread completeness failures; all assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete[False]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete[False]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Actual selected thread completeness failures; all assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete[True]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete[True]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Actual selected thread completeness failures; all assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
       "baseline_node": "tests/integration/test_catalog3_schema.py::test_current_decision_requires_same_owner_completed_observation[pr-a-1]",
       "replacement_nodes": [
         "tests/integration/test_catalog3_schema.py::test_current_state_requires_same_typed_owner[repository_uuidv4-10000000-0000-4000-8000-000000000002]",
@@ -4176,12 +5094,192 @@
       "retired_mechanism_reason": "A1 closed modeled staging forbids archival of conclusively invalid current capture JSON. Replace the obsolete invalid-pending-row expectation with an explicit rejected candidate and no pending archive, without weakening independent resource validity."
     },
     {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-new exact\\nbody\\x00suffix-rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-new exact\\nbody\\x00suffix-rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-new exact\\nbody\\x00suffix-graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-new exact\\nbody\\x00suffix-graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-None-rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-None-rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-None-graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-None-graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first--rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first--rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first--graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first--graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-new exact\\nbody\\x00suffix-rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-new exact\\nbody\\x00suffix-rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-new exact\\nbody\\x00suffix-graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-new exact\\nbody\\x00suffix-graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-None-rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-None-rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-None-graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-None-graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first--rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first--rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first--graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first--graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary[rest]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary[rest]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary[graphql]",
+      "replacement_nodes": [
+        "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary[graphql]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Synthetic GraphQL PR root omitted mandatory canonical PR number. Added captured number to shared route; all value/presence/provenance/stale/equal-clock assertions retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[True]",
+      "replacement_nodes": [
+        "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[True]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Current closed intake rejects malformed domain JSON before persistence. Assert rejected_records=1, no staging of rejected candidate, independently valid sibling/body available, FK/integrity clean. Original invalid timestamp attacks retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[1.5]",
+      "replacement_nodes": [
+        "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[1.5]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Current closed intake rejects malformed domain JSON before persistence. Assert rejected_records=1, no staging of rejected candidate, independently valid sibling/body available, FK/integrity clean. Original invalid timestamp attacks retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[9223372036854775808]",
+      "replacement_nodes": [
+        "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[9223372036854775808]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Current closed intake rejects malformed domain JSON before persistence. Assert rejected_records=1, no staging of rejected candidate, independently valid sibling/body available, FK/integrity clean. Original invalid timestamp attacks retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[-9223372036854775809]",
+      "replacement_nodes": [
+        "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[-9223372036854775809]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Current closed intake rejects malformed domain JSON before persistence. Assert rejected_records=1, no staging of rejected candidate, independently valid sibling/body available, FK/integrity clean. Original invalid timestamp attacks retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
       "baseline_node": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_needs_no_trusted_parent_interpretation[review]",
       "replacement_nodes": [
         "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review]"
       ],
       "disposition_source": "other_contract_rewrites",
-      "surviving_assertion": "Imported direct current PR/Review/comment fields and exact family coverage are immediately readable without parser trust; sender local checks are omitted, bytes/items and metadata filters survive, and retired interpretation/history tables remain absent.",
+      "surviving_assertion": "Imported direct current PR/Review/comment fields and exact family coverage are immediately readable without parser trust; sender local checks are omitted, bytes/items and metadata filters survive, and retired interpretation/history tables remain absent. Actual None-filter and metadata filter/physical Git gate failures; all assertions retained.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
     },
     {
@@ -4190,8 +5288,26 @@
         "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review-comment]"
       ],
       "disposition_source": "other_contract_rewrites",
-      "surviving_assertion": "Imported direct current PR/Review/comment fields and exact family coverage are immediately readable without parser trust; sender local checks are omitted, bytes/items and metadata filters survive, and retired interpretation/history tables remain absent.",
+      "surviving_assertion": "Imported direct current PR/Review/comment fields and exact family coverage are immediately readable without parser trust; sender local checks are omitted, bytes/items and metadata filters survive, and retired interpretation/history tables remain absent. Actual None-filter and metadata filter/physical Git gate failures; all assertions retained.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing[False]",
+      "replacement_nodes": [
+        "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing[False]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Child fixture used obsolete thread request_context key; current closed scope requires provider_resource_id. The anti-completeness assertion is retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing[True]",
+      "replacement_nodes": [
+        "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing[True]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Child fixture used obsolete thread request_context key; current closed scope requires provider_resource_id. The anti-completeness assertion is retained.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_git_objects.py::test_repeat_reuses_durable_objects",
@@ -4237,6 +5353,15 @@
       "disposition_source": "git_contract_rewrites",
       "surviving_assertion": "An incomplete cache/closure cannot overwrite the existing complete current ref capture.",
       "retired_mechanism_reason": null
+    },
+    {
+      "baseline_node": "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
+      "replacement_nodes": [
+        "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Actual hidden conflicted parent must cause per-document unresolved coverage. Assertions strengthened for document exclusion and selected-thread unresolved coverage.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_phase1_exchange_retirement.py::test_original_only_units_do_not_enter_storage_or_json_envelopes[decoded_api]",
@@ -4958,6 +6083,24 @@
       "disposition_source": "mechanism_only_retirements",
       "surviving_assertion": "Result-led publication indexes are removed. Actual selected typed closure work is measured with SQLite VM steps against 1,000/5,000 same-repository current resources, code and real Git captures; selected member volume grows linearly and conflict-free barriers do not walk raw Git/CAS history.",
       "retired_mechanism_reason": "The old assertion names a removed parser result, profile/certificate, selection DAG, or publication authority. Its concrete domain obligation is separately identified below; removed authority is not emulated."
+    },
+    {
+      "baseline_node": "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[parser]",
+      "replacement_nodes": [
+        "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[parser]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Retired fetch_occurrences no longer exists; assert table absence, retain original errors, recording warnings, rollback/clock/partial-marker and remaining empty-store assertions.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[storage]",
+      "replacement_nodes": [
+        "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[storage]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Retired fetch_occurrences no longer exists; assert table absence, retain original errors, recording warnings, rollback/clock/partial-marker and remaining empty-store assertions.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     },
     {
       "baseline_node": "tests/integration/test_target_schema.py::test_fresh_complete_schema",
@@ -7500,6 +8643,15 @@
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
     },
     {
+      "baseline_node": "tests/e2e/test_content.py::test_bounded_raw",
+      "replacement_nodes": [
+        "tests/e2e/test_content.py::test_bounded_raw"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Old fixture expected canonical binary Git raw bytes to be absent after successful collection. Require independently retained bounded raw bytes, correct full length and pagination, while text hydration remains unavailable.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
       "baseline_node": "tests/e2e/test_github_sync.py::test_observed_content_and_replay_fencing",
       "replacement_nodes": [
         "tests/e2e/test_github_sync.py::test_latest_current_content_and_retired_edit_history"
@@ -7509,13 +8661,85 @@
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
     },
     {
+      "baseline_node": "tests/e2e/test_github_sync.py::test_child_watermarks",
+      "replacement_nodes": [
+        "tests/e2e/test_github_sync.py::test_child_watermarks"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Unused old incremental_scans is not produced by current collectors. Select exact terminal complete marker-qualified fetch collection start, preserve failed issue scan prior safe start, independent review scan advancement and actual since request assertion. Watermark remains original start, never terminal time.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/e2e/test_queries.py::test_commit_literal_checks_original_bytes",
+      "replacement_nodes": [
+        "tests/e2e/test_queries.py::test_commit_literal_checks_original_bytes"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Search offsets counted decoder-rendered backslash escape bytes instead of original Git message bytes. Find literal bytes in canonical raw input using each genuine supported decoder and verify the decoded prefix; rendered escape text has no invented raw span. Scan and indexed paths retain exact offset controls.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/e2e/test_queries.py::test_root_scopes",
+      "replacement_nodes": [
+        "tests/e2e/test_queries.py::test_root_scopes"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "History enumerated every historical capture instead of traversing ancestors of current selected refs. Current/history use the actual selected snapshot; history traverses all reachable commit ancestors. Recorded scope retains independently captured orphan roots.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/e2e/test_queries.py::test_pr_root_scopes",
+      "replacement_nodes": [
+        "tests/e2e/test_queries.py::test_pr_root_scopes"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Root selector validation lost the existing prohibition on combining snapshot with PR or recorded selectors. Restore exact selector conflicts and single-repository requirements; mixed head/PR history combines current ref capture with exact current PR targets.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
       "baseline_node": "tests/e2e/test_recovery.py::test_old_run_history_publish",
       "replacement_nodes": [
         "tests/e2e/test_recovery.py::test_old_run_retains_divergent_capture_without_time_winner"
       ],
       "disposition_source": "other_contract_rewrites",
-      "surviving_assertion": "A resumed interrupted older frozen capture retains its own bytes/history and pending cache obligations; independent captures cannot pick a sole current snapshot by observation/receipt time. Cache GC remains operational and recorded path bytes remain readable.",
+      "surviving_assertion": "A resumed interrupted older frozen capture retains its own bytes/history and pending cache obligations; independent captures cannot pick a sole current snapshot by observation/receipt time. Cache GC remains operational and recorded path bytes remain readable. Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/e2e/test_repository_identity.py::test_remounted_paths_share_explicit_repo_identity",
+      "replacement_nodes": [
+        "tests/e2e/test_repository_identity.py::test_remounted_paths_share_explicit_repo_identity"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/e2e/test_repository_identity.py::test_github_instances_and_sources_keep_api_identity_separate",
+      "replacement_nodes": [
+        "tests/e2e/test_repository_identity.py::test_github_instances_and_sources_keep_api_identity_separate"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/e2e/test_repository_identity.py::test_instance_scoped_native_ids_and_conflicts",
+      "replacement_nodes": [
+        "tests/e2e/test_repository_identity.py::test_instance_scoped_native_ids_and_conflicts"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Repository identity output incorrectly acquired a required Git capture dependency, marking valid identity-only results partial. Read the optional current_snapshot_id directly; missing or divergent Git capture remains NULL without invalidating independently captured identity. Git-reading commands retain their own coverage requirements.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
+    },
+    {
+      "baseline_node": "tests/e2e/test_text_policy.py::test_text_bounds",
+      "replacement_nodes": [
+        "tests/e2e/test_text_policy.py::test_text_bounds"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Reader lost raw availability/length fields; old assertion also equated oversized text ineligibility with missing canonical raw Git bytes. Return actual canonical raw availability/length independently of decoder text state; preserve oversize/NUL/invalid UTF-8 controls and verify bounded oversized reads plus reachable ancestor text.",
+      "retired_mechanism_reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required."
     }
   ],
   "still_collected_same_nodes": [
@@ -7695,7 +8919,6 @@
     "tests/integration/test_cache.py::test_capacity_scan_during_temporary_file_removal",
     "tests/integration/test_cache.py::test_git_transfer_timeout_terminates_child_group",
     "tests/integration/test_cache.py::test_locks_fencing",
-    "tests/integration/test_cache.py::test_old_obligations",
     "tests/integration/test_cache.py::test_capacity_wait",
     "tests/integration/test_cache.py::test_failed_fetch_cleanup",
     "tests/integration/test_cache.py::test_orphan_git_holds_lock",
@@ -7796,14 +9019,6 @@
     "tests/integration/test_catalog3_coverage.py::test_latest_time_always_wins_and_conflict_never_falls_back[row-history1-conflict-1-expected_states1]",
     "tests/integration/test_catalog3_coverage.py::test_latest_time_always_wins_and_conflict_never_falls_back[row-history2-complete-1-expected_states2]",
     "tests/integration/test_catalog3_coverage.py::test_latest_time_always_wins_and_conflict_never_falls_back[row-history3-unknown-1-expected_states3]",
-    "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-None]",
-    "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-{}]",
-    "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[tuple-{ \"original\": true }]",
-    "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-None]",
-    "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-{}]",
-    "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge[row-{ \"original\": true }]",
-    "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent[tuple]",
-    "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent[row]",
     "tests/integration/test_catalog3_coverage.py::test_current_output_filters_kind_without_inventing_an_empty_scope_claim[tuple]",
     "tests/integration/test_catalog3_coverage.py::test_current_output_filters_kind_without_inventing_an_empty_scope_claim[row]",
     "tests/integration/test_catalog3_coverage.py::test_admission_preserves_full_int64_observation_time[tuple--9223372036854775808]",
@@ -7840,78 +9055,6 @@
     "tests/integration/test_catalog3_coverage.py::test_advisory_details_require_json_object_or_sql_null[row-[]]",
     "tests/integration/test_catalog3_coverage.py::test_advisory_details_require_json_object_or_sql_null[row-\"text\"]",
     "tests/integration/test_catalog3_coverage.py::test_advisory_details_require_json_object_or_sql_null[row-broken JSON]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET coverage_state='partial']",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET details_json='{\"changed\":1}']",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-UPDATE coverage_claims SET observed_at_us=2]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-DELETE FROM coverage_claims]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT OR IGNORE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT OR REPLACE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[tuple-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1) ON CONFLICT(coverage_scope_id,observed_at_us,coverage_state) DO UPDATE SET details_json='{}']",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET coverage_state='partial']",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET details_json='{\"changed\":1}']",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-UPDATE coverage_claims SET observed_at_us=2]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-DELETE FROM coverage_claims]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT OR IGNORE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT OR REPLACE INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1)]",
-    "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates[row-INSERT INTO coverage_claims(coverage_scope_id,coverage_state,observed_at_us) VALUES('scope','complete',1) ON CONFLICT(coverage_scope_id,observed_at_us,coverage_state) DO UPDATE SET details_json='{}']",
-    "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids[tuple]",
-    "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids[row]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[tuple-DELETE FROM coverage_claims WHERE coverage_claim_id=?-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT OR REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-REPLACE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET coverage_state=excluded.coverage_state, observed_at_us=excluded.observed_at_us-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO UPDATE SET details_json=coverage_claims.details_json-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-UPDATE coverage_claims SET coverage_claim_id=coverage_claim_id WHERE coverage_claim_id=?-1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?--1]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?-0]",
-    "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates[row-DELETE FROM coverage_claims WHERE coverage_claim_id=?-1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING--1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-0]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[tuple-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')--1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-0]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT OR IGNORE INTO coverage_claims VALUES(?,'scope','partial',2,'{}')-1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING--1]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-0]",
-    "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation[row-INSERT INTO coverage_claims VALUES(?,'scope','partial',2,'{}') ON CONFLICT(coverage_claim_id) DO NOTHING-1]",
     "tests/integration/test_catalog3_coverage.py::test_scope_uniqueness_prevents_split_repository_coverage[tuple]",
     "tests/integration/test_catalog3_coverage.py::test_scope_uniqueness_prevents_split_repository_coverage[row]",
     "tests/integration/test_catalog3_coverage.py::test_explicit_negative_claim_id_does_not_block_generated_ids[tuple]",
@@ -7927,19 +9070,11 @@
     "tests/integration/test_catalog3_coverage_ownership.py::test_unknown_or_cross_repository_coverage_owner_is_rejected_before_writing[00000000-0000-4000-8000-000000000301-absent-pr]",
     "tests/integration/test_catalog3_coverage_ownership.py::test_unknown_or_cross_repository_coverage_owner_is_rejected_before_writing[absent-repository-00000000-0000-4000-8000-000000000302]",
     "tests/integration/test_catalog3_coverage_ownership.py::test_unknown_or_cross_repository_coverage_owner_is_rejected_before_writing[absent-repository-None]",
-    "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
-    "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
-    "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command0]",
-    "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command1]",
-    "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command2]",
-    "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details[command3]",
-    "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
     "tests/integration/test_catalog3_coverage_queries.py::test_cli_empty_scope_has_no_fabricated_claim_time_or_details",
     "tests/integration/test_catalog3_coverage_queries.py::test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage[old_states0-latest_states0-True]",
     "tests/integration/test_catalog3_coverage_queries.py::test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage[old_states1-latest_states1-False]",
     "tests/integration/test_catalog3_coverage_queries.py::test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage[old_states2-latest_states2-False]",
     "tests/integration/test_catalog3_coverage_queries.py::test_ordinary_and_diagnostic_pr_queries_use_only_current_coverage[old_states3-latest_states3-True]",
-    "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage",
     "tests/integration/test_catalog3_coverage_queries.py::test_pr_query_coverage_is_independent_of_page_limit",
     "tests/integration/test_catalog3_coverage_queries.py::test_coverage_owner_namespaces_are_explicit",
     "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_role_target_shapes_are_rejected_before_admission[declared0]",
@@ -8042,11 +9177,9 @@
     "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-next-cursor-nested-child]",
     "tests/integration/test_catalog3_github_runtime.py::test_git_ref_race_records_partial_code_and_repository_coverage",
     "tests/integration/test_catalog3_github_runtime.py::test_graphql_page_info_requires_boolean_has_next_page",
-    "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work",
     "tests/integration/test_catalog3_identity_relations.py::test_transitive_equivalence_retains_independent_repo_rows",
     "tests/integration/test_catalog3_identity_relations.py::test_cancellation_first_is_promoted_atomically_without_activation",
     "tests/integration/test_catalog3_identity_relations.py::test_same_uuid_different_assertion_is_staged_and_not_a_winner",
-    "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution",
     "tests/integration/test_catalog3_job_plans.py::test_discovery_resume_uses_frozen_source_set_and_settings",
     "tests/integration/test_catalog3_job_plans.py::test_missing_explicit_credentials_creates_no_job_or_remote_evidence",
     "tests/integration/test_catalog3_job_plans.py::test_plan_saves_credential_reference_not_value",
@@ -8058,8 +9191,6 @@
     "tests/integration/test_catalog3_job_plans.py::test_bulk_mixed_sources_persist_partial_result_with_complete_attempt",
     "tests/integration/test_catalog3_job_plans.py::test_credentials_lost_after_job_creation_complete_partial_without_evidence",
     "tests/integration/test_catalog3_job_plans.py::test_explicit_configuration_reuses_source_registration_and_does_not_rewrite_job",
-    "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes[exact-oid]",
-    "tests/integration/test_catalog3_maintenance_contracts.py::test_full_check_detects_wrong_git_identity_with_valid_physical_bytes[forged-oid]",
     "tests/integration/test_catalog3_model_cli.py::test_identity_cancellation_before_relation_cli_never_activates_edge",
     "tests/integration/test_catalog3_model_cli.py::test_source_configuration_rejects_secrets_then_saves_local_nonsecret_settings",
     "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-detail]",
@@ -8077,14 +9208,10 @@
     "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-files]",
     "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-issue-comment]",
     "tests/integration/test_catalog3_payload_cas.py::test_payload_registration_requires_an_explicit_representation",
-    "tests/integration/test_catalog3_payload_cas.py::test_distinct_byte_encodings_remain_distinct",
     "tests/integration/test_catalog3_payload_cas.py::test_declared_hash_mismatch_is_rejected_before_any_admission",
     "tests/integration/test_catalog3_payload_cas.py::test_physical_and_logical_admission_is_atomic_inside_caller_transaction",
     "tests/integration/test_catalog3_payload_cas.py::test_corrupt_existing_bytes_are_preserved_and_never_silently_repaired",
     "tests/integration/test_catalog3_payload_cas.py::test_real_collision_is_distinguished_from_bad_declared_hash",
-    "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity[stored_bytes]",
-    "tests/integration/test_catalog3_payload_cas.py::test_replace_update_delete_cannot_mutate_admitted_identity[payloads]",
-    "tests/integration/test_catalog3_payload_cas.py::test_git_object_reference_requires_both_components_and_its_representation",
     "tests/integration/test_catalog3_payload_cas.py::test_rejection_diagnostics_have_no_api_payload_reference_or_logical_fk",
     "tests/integration/test_catalog3_payload_cas.py::test_portable_json_reference_is_exact_lowercase_hex",
     "tests/integration/test_catalog3_payload_cas.py::test_noncanonical_json_reference_is_rejected[None]",
@@ -8139,7 +9266,6 @@
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_imported_role_target_shapes_are_rejected_before_admission[declared0]",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_imported_role_target_shapes_are_rejected_before_admission[declared1]",
     "tests/integration/test_catalog3_queries.py::test_query_observes_sqlite_wal_snapshot_and_derived_schema",
-    "tests/integration/test_catalog3_queries.py::test_fresh_catalog3_doctor_and_file_query",
     "tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir",
     "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[None]",
     "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[unexpected scalar]",
@@ -8211,10 +9337,6 @@
     "tests/integration/test_catalog3_review_coverage.py::test_new_observed_root_gap_supersedes_older_terminal_thread[partial]",
     "tests/integration/test_catalog3_review_coverage.py::test_new_observed_root_gap_supersedes_older_terminal_thread[malformed]",
     "tests/integration/test_catalog3_review_coverage.py::test_resumed_older_job_uses_new_observation_instead_of_later_started_job",
-    "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[False]",
-    "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[True]",
-    "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete[False]",
-    "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete[True]",
     "tests/integration/test_catalog3_review_coverage.py::test_child_completion_from_another_root_does_not_prove_selected_thread",
     "tests/integration/test_catalog3_review_coverage.py::test_timeline_failure_is_outside_document_scope",
     "tests/integration/test_catalog3_review_identity.py::test_explicit_service_uuid_keeps_its_endpoints_with_duplicate_names_and_rename",
@@ -8522,22 +9644,6 @@
     "tests/integration/test_current_collection_rejection_clocks.py::test_invalid_response_clock_cannot_become_rejected_observation[1.5]",
     "tests/integration/test_current_collection_rejection_clocks.py::test_invalid_response_clock_cannot_become_rejected_observation[9223372036854775808]",
     "tests/integration/test_current_collection_rejection_clocks.py::test_invalid_response_clock_cannot_become_rejected_observation[-9223372036854775809]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-new exact\\nbody\\x00suffix-rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-new exact\\nbody\\x00suffix-graphql]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-None-rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first-None-graphql]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first--rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[partial-first--graphql]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-new exact\\nbody\\x00suffix-rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-new exact\\nbody\\x00suffix-graphql]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-None-rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first-None-graphql]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first--rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_old_full_new_partial_equal_clock_full_across_collector_endpoints[full-first--graphql]",
-    "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[graphql]",
-    "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary[rest]",
-    "tests/integration/test_current_collector_projection_followup.py::test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary[graphql]",
     "tests/integration/test_current_conflict_boundaries.py::test_incumbent_duplicate_keeps_freshness_during_conflict[A20-first-full-issue]",
     "tests/integration/test_current_conflict_boundaries.py::test_incumbent_duplicate_keeps_freshness_during_conflict[A20-first-full-issue-comment]",
     "tests/integration/test_current_conflict_boundaries.py::test_incumbent_duplicate_keeps_freshness_during_conflict[A20-first-full-review-comment]",
@@ -8638,10 +9744,6 @@
     "tests/integration/test_current_followup_adversarial.py::test_leaf_only_evidence_cannot_replace_a_newer_or_unordered_scalar[20]",
     "tests/integration/test_current_followup_adversarial.py::test_leaf_only_evidence_cannot_replace_a_newer_or_unordered_scalar[30]",
     "tests/integration/test_current_followup_adversarial.py::test_graph_leaf_only_evidence_cannot_replace_newer_scalar",
-    "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[True]",
-    "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[1.5]",
-    "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[9223372036854775808]",
-    "tests/integration/test_current_followup_adversarial.py::test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic[-9223372036854775809]",
     "tests/integration/test_current_followup_adversarial.py::test_sql_field_evidence_requires_known_metadata_object_ancestors",
     "tests/integration/test_current_followup_adversarial.py::test_sql_field_evidence_rejects_times_outside_signed_int64[9223372036854775808-provider_updated_at_us]",
     "tests/integration/test_current_followup_adversarial.py::test_sql_field_evidence_rejects_times_outside_signed_int64[9223372036854775808-observed_at_us]",
@@ -8764,8 +9866,6 @@
     "tests/integration/test_current_review_query_coverage.py::test_current_family_preserves_body_and_conflict_coverage[conflict]",
     "tests/integration/test_current_review_query_coverage.py::test_nonterminal_current_page_cannot_inherit_complete_family_coverage",
     "tests/integration/test_current_review_query_coverage.py::test_current_family_keeps_repository_parent_set_completeness",
-    "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing[False]",
-    "tests/integration/test_current_review_query_coverage.py::test_current_rows_or_child_pages_cannot_prove_family_listing[True]",
     "tests/integration/test_current_review_query_coverage.py::test_unknown_document_scope_stays_conservatively_incomplete",
     "tests/integration/test_current_state_independent_review.py::test_provider_identity_cannot_hide_noncanonical_suffix_in_sql[None-issue]",
     "tests/integration/test_current_state_independent_review.py::test_provider_identity_cannot_hide_noncanonical_suffix_in_sql[None-review]",
@@ -8834,7 +9934,6 @@
     "tests/integration/test_database.py::test_constraints_and_transaction_atomicity",
     "tests/integration/test_database.py::test_writer_and_capacity",
     "tests/integration/test_database.py::test_full_rollback",
-    "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
     "tests/integration/test_issue_transfer_followup.py::test_transfer_retains_capture_when_original_source_has_no_destination",
     "tests/integration/test_issue_transfer_followup.py::test_actual_destination_refresh_replaces_capture_truthfully[comment acquired in repository A]",
     "tests/integration/test_issue_transfer_followup.py::test_actual_destination_refresh_replaces_capture_truthfully[edited comment acquired in B]",
@@ -8895,8 +9994,6 @@
     "tests/integration/test_recording_followup.py::test_warning_error_filter_preserves_actual_collection_and_admission[error0-ARCHIVE_FAILURE]",
     "tests/integration/test_recording_followup.py::test_warning_error_filter_preserves_actual_collection_and_admission[error1-ARCHIVE_IO]",
     "tests/integration/test_recording_followup.py::test_warning_error_filter_preserves_actual_collection_and_admission[error2-ARCHIVE_FAILURE]",
-    "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[parser]",
-    "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[storage]",
     "tests/integration/test_search_index.py::test_generation_switch",
     "tests/integration/test_transport_independent_core.py::test_live_acquisition_and_ordinary_reads_need_no_saved_inputs",
     "tests/integration/test_transport_independent_core.py::test_deleted_optional_archives_do_not_affect_exchange_or_restore[False]",
@@ -8944,7 +10041,6 @@
     "tests/e2e/test_cli_more.py::test_exit_codes",
     "tests/e2e/test_cli_more.py::test_query_timeout_and_invalid_cursor",
     "tests/e2e/test_cli_more.py::test_read_transaction_released_before_output",
-    "tests/e2e/test_content.py::test_bounded_raw",
     "tests/e2e/test_digests.py::test_all_raw_digests",
     "tests/e2e/test_git_sync.py::test_initial_and_repeat",
     "tests/e2e/test_git_sync.py::test_rewrite_delete",
@@ -8959,7 +10055,6 @@
     "tests/e2e/test_github_sync.py::test_unobserved_refresh_failure_preserves_saved_coverage_and_waits",
     "tests/e2e/test_github_sync.py::test_nested_partial",
     "tests/e2e/test_github_sync.py::test_nested_pagination",
-    "tests/e2e/test_github_sync.py::test_child_watermarks",
     "tests/e2e/test_github_sync.py::test_code_races_caps",
     "tests/e2e/test_github_sync.py::test_rate_etag",
     "tests/e2e/test_github_sync.py::test_page_crash",
@@ -8968,19 +10063,12 @@
     "tests/e2e/test_jobs.py::test_cancel_query_closes_read_transaction",
     "tests/e2e/test_offline.py::test_evicted_queries",
     "tests/e2e/test_offline.py::test_offline_reindex",
-    "tests/e2e/test_queries.py::test_commit_literal_checks_original_bytes",
-    "tests/e2e/test_queries.py::test_root_scopes",
     "tests/e2e/test_queries.py::test_raw_paths",
-    "tests/e2e/test_queries.py::test_pr_root_scopes",
     "tests/e2e/test_recovery.py::test_kill_before_publish",
     "tests/e2e/test_recovery.py::test_kill_mid_blob",
     "tests/e2e/test_recovery.py::test_kill_during_gc",
-    "tests/e2e/test_repository_identity.py::test_remounted_paths_share_explicit_repo_identity",
-    "tests/e2e/test_repository_identity.py::test_github_instances_and_sources_keep_api_identity_separate",
-    "tests/e2e/test_repository_identity.py::test_instance_scoped_native_ids_and_conflicts",
     "tests/e2e/test_repository_identity.py::test_endpoint_scope_and_resume_keep_original_url",
     "tests/e2e/test_search.py::test_fts_fallback",
-    "tests/e2e/test_search.py::test_pages_cursor",
-    "tests/e2e/test_text_policy.py::test_text_bounds"
+    "tests/e2e/test_search.py::test_pages_cursor"
   ]
 }

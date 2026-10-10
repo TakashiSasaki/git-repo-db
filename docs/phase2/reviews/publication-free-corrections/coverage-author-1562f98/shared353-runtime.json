@@ -1,0 +1,6 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "json_contracts": "/workspace/fixes/publication-free-coverage-fafc/src/repo_catalog/adapters/sqlite/json_contracts.py",
+  "production_source_base": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3"
+}
