@@ -26,6 +26,16 @@ The corrective runtime remains Schema 19: 103 tables, 665 columns, 226 FK
 constraints, 48 views, 498 triggers and 113 explicit indexes. Schema 18 proposal
 snapshots remain historical inputs, not the active Schema 19 fingerprint.
 
+The [current dependency supplement](completion-dependency-supplement.json)
+reconstructs the full current native schema from the preserved baseline plus an
+exact delta, and binds a complete new compressed AST/source inventory. It records
+2,717 SQL sites (736 in production), 1,604 unique statement records, the same 57
+JSON columns, 96 CLI commands and fresh FK/integrity/JSON checks. Of those unique
+statements, 1,357 compile, 241 remain dynamic/non-DML and six do not compile;
+uncertainty is retained rather than treated as dead code. The
+[execution receipt](../validation/synthetic/phase2-completion-recheck-20261010.json)
+binds the clean integration core and 23 focused audit/acquisition cases.
+
 ## Genuine omissions found and corrected
 
 Passing the earlier checks did not establish that the investigation was complete.
