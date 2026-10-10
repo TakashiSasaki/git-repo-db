@@ -11,6 +11,7 @@ import argparse
 import copy
 import hashlib
 import json
+import os
 import sqlite3
 import subprocess
 import sys
@@ -289,6 +290,7 @@ def historical_case(directory, size):
         ).fetchall() == [("complete", size - 1)]
         assert same_records(full, Graph(late).export(owner))
         assert receive(late, full)["received_records"] == 0
+        assert count(direct, "local_parser_profile_verification_trust") == 0
         assert count(late, "local_parser_profile_verification_trust") == 0
         return {
             "selected_pages_and_natural_members": size,
@@ -479,6 +481,8 @@ def main():
     args = parser.parse_args()
     if args.sizes != sorted(set(args.sizes)) or any(n < 2 or n % 2 for n in args.sizes):
         parser.error("sizes must be unique increasing even counts >= 2")
+    if "REPO_CATALOG_TEST_BOOTSTRAP" in os.environ:
+        parser.error("Unset REPO_CATALOG_TEST_BOOTSTRAP for truthful runtime evidence")
     if (
         Path(exchange_module.__file__).resolve()
         != ROOT / "src/repo_catalog/adapters/sqlite/exchange.py"
