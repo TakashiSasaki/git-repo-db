@@ -437,7 +437,7 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
     assert scoped["coverage"]["complete_for_requested_scope"]
     assert scoped["data"]["items"]
     whole_inventory = cli(
-        "search", "code", "--literal", "認証", state_dir=receiver, accepted_codes=(2,)
+        "search", "code", "--literal", "認証", state_dir=receiver, accepted_codes=(3,)
     )
     assert whole_inventory["status"] == "partial"
     assert whole_inventory["data"]["items"] == scoped["data"]["items"]
