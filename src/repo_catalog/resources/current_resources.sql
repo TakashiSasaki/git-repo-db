@@ -15,17 +15,15 @@ CREATE TABLE issue_resources(
  author TEXT, url TEXT, deleted INTEGER NOT NULL DEFAULT 0 CHECK(deleted IN (0,1)),
  provider_updated_at_us INTEGER, provider_clock_scope TEXT CHECK(provider_clock_scope IS NULL OR (kind='issue' AND provider_clock_scope='github-issue-updated-at') OR (kind='issue-comment' AND provider_clock_scope='github-issue-comment-updated-at')),
  observed_at_us INTEGER NOT NULL, last_checked_at_us INTEGER, parsed_at_us INTEGER NOT NULL,
- parser_profile_uuidv4 TEXT NOT NULL REFERENCES parser_profiles(parser_profile_uuidv4),
- owner_kind TEXT GENERATED ALWAYS AS ('repository') VIRTUAL,
- fact_kind TEXT GENERATED ALWAYS AS (CASE WHEN kind='issue-comment' THEN 'ordinary-issue-comment' ELSE 'issue' END) VIRTUAL,
+ parser_module TEXT NOT NULL CHECK(length(parser_module)>0 AND instr(parser_module,char(0))=0),
+ parser_version TEXT NOT NULL CHECK(length(parser_version)>0 AND instr(parser_version,char(0))=0),
  metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
  acquisition_scope_json TEXT NOT NULL CHECK(json_valid(acquisition_scope_json) AND json_type(acquisition_scope_json)='object'),
  field_evidence_json TEXT NOT NULL DEFAULT '{}' CHECK(json_valid(field_evidence_json) AND json_type(field_evidence_json)='object'),
  PRIMARY KEY(service_instance_uuidv4,kind,provider_resource_id),
  CHECK((kind='issue' AND parent_provider_resource_id IS NULL) OR (kind='issue-comment' AND parent_provider_resource_id IS NOT NULL AND title IS NULL AND state IS NULL)),
  FOREIGN KEY(repository_binding_id,repository_uuidv4) REFERENCES repository_bindings(repository_binding_id,repository_uuidv4),
- FOREIGN KEY(service_instance_uuidv4,parent_kind,parent_provider_resource_id) REFERENCES issue_resources(service_instance_uuidv4,kind,provider_resource_id),
- FOREIGN KEY(parser_profile_uuidv4,owner_kind,fact_kind) REFERENCES parser_profile_capabilities(parser_profile_uuidv4,owner_kind,fact_kind)
+ FOREIGN KEY(service_instance_uuidv4,parent_kind,parent_provider_resource_id) REFERENCES issue_resources(service_instance_uuidv4,kind,provider_resource_id)
 ) STRICT;
 CREATE UNIQUE INDEX issue_resources_current_number ON issue_resources(repository_binding_id,provider_issue_number) WHERE kind='issue';
 CREATE INDEX issue_resources_repository ON issue_resources(repository_uuidv4,kind,provider_issue_number);
@@ -55,8 +53,8 @@ CREATE TABLE review_resources(
  reply_kind TEXT GENERATED ALWAYS AS ('review-comment') VIRTUAL,
  provider_updated_at_us INTEGER, provider_clock_scope TEXT CHECK(provider_clock_scope IS NULL OR (kind='review-comment' AND provider_clock_scope='github-review-comment-updated-at')),
  observed_at_us INTEGER NOT NULL, last_checked_at_us INTEGER, parsed_at_us INTEGER NOT NULL,
- parser_profile_uuidv4 TEXT NOT NULL REFERENCES parser_profiles(parser_profile_uuidv4),
- owner_kind TEXT GENERATED ALWAYS AS ('repository') VIRTUAL,
+ parser_module TEXT NOT NULL CHECK(length(parser_module)>0 AND instr(parser_module,char(0))=0),
+ parser_version TEXT NOT NULL CHECK(length(parser_version)>0 AND instr(parser_version,char(0))=0),
  metadata TEXT NOT NULL CHECK(json_valid(metadata) AND json_type(metadata)='object'),
  acquisition_scope_json TEXT NOT NULL CHECK(json_valid(acquisition_scope_json) AND json_type(acquisition_scope_json)='object'),
  field_evidence_json TEXT NOT NULL DEFAULT '{}' CHECK(json_valid(field_evidence_json) AND json_type(field_evidence_json)='object'),
@@ -69,8 +67,7 @@ CREATE TABLE review_resources(
  FOREIGN KEY(repository_binding_id,repository_uuidv4) REFERENCES repository_bindings(repository_binding_id,repository_uuidv4),
  FOREIGN KEY(change_request_id,parent_review_kind,review_provider_resource_id) REFERENCES review_resources(change_request_id,kind,provider_change_request_document_id),
  FOREIGN KEY(change_request_id,reply_kind,in_reply_to_provider_resource_id) REFERENCES review_resources(change_request_id,kind,provider_change_request_document_id),
- FOREIGN KEY(change_request_id,review_thread_provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id),
- FOREIGN KEY(parser_profile_uuidv4,owner_kind,kind) REFERENCES parser_profile_capabilities(parser_profile_uuidv4,owner_kind,fact_kind)
+ FOREIGN KEY(change_request_id,review_thread_provider_resource_id) REFERENCES review_threads(change_request_id,provider_resource_id)
 ) STRICT;
 CREATE INDEX review_resources_repository ON review_resources(repository_uuidv4,kind);
 CREATE INDEX review_resources_review ON review_resources(change_request_id,review_provider_resource_id);
@@ -81,14 +78,14 @@ CREATE VIEW current_resource_diagnostics AS
  SELECT table_name,record_key,repository_uuidv4,reason,record_json
  FROM exchange_staging WHERE table_name IN ('issue_resources','review_resources') AND reason LIKE 'current_state:%';
 CREATE VIEW eligible_issue_resources AS
- SELECT r.* FROM issue_resources r JOIN effective_repository_parser_profiles p
- ON p.repository_uuidv4=r.repository_uuidv4 AND p.fact_kind=r.fact_kind AND p.parser_profile_uuidv4=r.parser_profile_uuidv4
+ SELECT r.* FROM issue_resources r
  WHERE NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='issue_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.service_instance_uuidv4')=r.service_instance_uuidv4 AND json_extract(d.record_json,'$.kind')=r.kind AND json_extract(d.record_json,'$.provider_resource_id')=r.provider_resource_id)
- AND (r.kind='issue' OR EXISTS(SELECT 1 FROM issue_resources parent JOIN effective_repository_parser_profiles pp ON pp.repository_uuidv4=parent.repository_uuidv4 AND pp.fact_kind='issue' AND pp.parser_profile_uuidv4=parent.parser_profile_uuidv4 WHERE parent.service_instance_uuidv4=r.service_instance_uuidv4 AND parent.kind='issue' AND parent.provider_resource_id=r.parent_provider_resource_id AND NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='issue_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.service_instance_uuidv4')=parent.service_instance_uuidv4 AND json_extract(d.record_json,'$.kind')='issue' AND json_extract(d.record_json,'$.provider_resource_id')=parent.provider_resource_id)));
+ AND (r.kind='issue' OR EXISTS(SELECT 1 FROM issue_resources parent WHERE parent.service_instance_uuidv4=r.service_instance_uuidv4 AND parent.kind='issue' AND parent.provider_resource_id=r.parent_provider_resource_id AND NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='issue_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.service_instance_uuidv4')=parent.service_instance_uuidv4 AND json_extract(d.record_json,'$.kind')='issue' AND json_extract(d.record_json,'$.provider_resource_id')=parent.provider_resource_id)));
 CREATE VIEW eligible_review_resources AS
- SELECT r.* FROM review_resources r JOIN effective_change_request_parser_profiles p
- ON p.change_request_id=r.change_request_id AND p.fact_kind=r.kind AND p.parser_profile_uuidv4=r.parser_profile_uuidv4
- WHERE NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='review_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.change_request_id')=r.change_request_id AND json_extract(d.record_json,'$.kind')=r.kind AND json_extract(d.record_json,'$.provider_change_request_document_id')=r.provider_change_request_document_id);
+ SELECT r.* FROM review_resources r
+ WHERE NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='review_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.change_request_id')=r.change_request_id AND json_extract(d.record_json,'$.kind')=r.kind AND json_extract(d.record_json,'$.provider_change_request_document_id')=r.provider_change_request_document_id)
+ AND NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='review_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.change_request_id')=r.change_request_id AND json_extract(d.record_json,'$.kind')='review' AND json_extract(d.record_json,'$.provider_change_request_document_id')=r.review_provider_resource_id)
+ AND NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='review_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.change_request_id')=r.change_request_id AND json_extract(d.record_json,'$.kind')='review-comment' AND json_extract(d.record_json,'$.provider_change_request_document_id')=r.in_reply_to_provider_resource_id);
 
 CREATE TRIGGER issue_resources_identity BEFORE UPDATE ON issue_resources WHEN NEW.service_instance_uuidv4 IS NOT OLD.service_instance_uuidv4 OR NEW.kind IS NOT OLD.kind OR NEW.provider_resource_id IS NOT OLD.provider_resource_id BEGIN SELECT RAISE(ABORT,'immutable current resource identity'); END;
 CREATE TRIGGER issue_resources_no_replace BEFORE INSERT ON issue_resources WHEN EXISTS(SELECT 1 FROM issue_resources WHERE service_instance_uuidv4=NEW.service_instance_uuidv4 AND kind=NEW.kind AND provider_resource_id=NEW.provider_resource_id) BEGIN SELECT RAISE(ABORT,'use explicit current resource update'); END;
@@ -109,5 +106,3 @@ CREATE TRIGGER issue_resources_transfer_children AFTER UPDATE OF repository_uuid
 CREATE TRIGGER review_resources_reply_cycle_insert BEFORE INSERT ON review_resources WHEN NEW.in_reply_to_provider_resource_id IS NOT NULL AND EXISTS(WITH RECURSIVE ancestors(id) AS (SELECT NEW.in_reply_to_provider_resource_id UNION SELECT r.in_reply_to_provider_resource_id FROM review_resources r JOIN ancestors a ON r.provider_change_request_document_id=a.id WHERE r.change_request_id=NEW.change_request_id AND r.kind='review-comment' AND r.in_reply_to_provider_resource_id IS NOT NULL) SELECT 1 FROM ancestors WHERE id=NEW.provider_change_request_document_id) BEGIN SELECT RAISE(ABORT,'review reply cycle'); END;
 CREATE TRIGGER review_resources_reply_cycle_update BEFORE UPDATE ON review_resources WHEN NEW.in_reply_to_provider_resource_id IS NOT NULL AND EXISTS(WITH RECURSIVE ancestors(id) AS (SELECT NEW.in_reply_to_provider_resource_id UNION SELECT r.in_reply_to_provider_resource_id FROM review_resources r JOIN ancestors a ON r.provider_change_request_document_id=a.id WHERE r.change_request_id=NEW.change_request_id AND r.kind='review-comment' AND r.in_reply_to_provider_resource_id IS NOT NULL) SELECT 1 FROM ancestors WHERE id=NEW.provider_change_request_document_id) BEGIN SELECT RAISE(ABORT,'review reply cycle'); END;
 CREATE TRIGGER review_resources_child_thread_update BEFORE UPDATE OF review_thread_provider_resource_id ON review_resources WHEN NEW.kind='review-comment' AND EXISTS(SELECT 1 FROM review_resources child WHERE child.change_request_id=NEW.change_request_id AND child.kind='review-comment' AND child.in_reply_to_provider_resource_id=NEW.provider_change_request_document_id AND child.review_thread_provider_resource_id IS NOT NULL AND NEW.review_thread_provider_resource_id IS NOT NULL AND child.review_thread_provider_resource_id<>NEW.review_thread_provider_resource_id) BEGIN SELECT RAISE(ABORT,'reply child belongs to a different review thread'); END;
-CREATE TRIGGER issue_resources_profile_update BEFORE UPDATE OF parser_profile_uuidv4 ON issue_resources WHEN NEW.parser_profile_uuidv4 IS NOT OLD.parser_profile_uuidv4 AND NOT EXISTS(SELECT 1 FROM effective_repository_parser_profiles p WHERE p.repository_uuidv4=NEW.repository_uuidv4 AND p.fact_kind=NEW.fact_kind AND p.parser_profile_uuidv4=NEW.parser_profile_uuidv4) BEGIN SELECT RAISE(ABORT,'new current parser profile must be selected and trusted'); END;
-CREATE TRIGGER review_resources_profile_update BEFORE UPDATE OF parser_profile_uuidv4 ON review_resources WHEN NEW.parser_profile_uuidv4 IS NOT OLD.parser_profile_uuidv4 AND NOT EXISTS(SELECT 1 FROM effective_change_request_parser_profiles p WHERE p.change_request_id=NEW.change_request_id AND p.fact_kind=NEW.kind AND p.parser_profile_uuidv4=NEW.parser_profile_uuidv4) BEGIN SELECT RAISE(ABORT,'new current parser profile must be selected and trusted'); END;

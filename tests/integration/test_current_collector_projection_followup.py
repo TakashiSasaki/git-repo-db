@@ -181,7 +181,7 @@ def comment(store):
 @pytest.mark.parametrize("final_body", ["new exact\nbody\x00suffix", None, ""])
 @pytest.mark.parametrize("arrival", ["partial-first", "full-first"])
 def test_old_full_new_partial_equal_clock_full_across_collector_endpoints(
-    github_runtime, first, final_body, arrival
+    github_runtime, first, final_body, arrival, monkeypatch
 ):
     store, repo, fixture, api = github_runtime
     pr = seed_pr(store, repo)
@@ -196,6 +196,7 @@ def test_old_full_new_partial_equal_clock_full_across_collector_endpoints(
     try:
         seed_review(collector, repo, pr, api)
         collect(collector, repo, pr, api, first, [parent, full(fixture)])
+        monkeypatch.setattr(current_parser, "PARSER_VERSION", "2")
         if arrival == "partial-first":
             collect(collector, repo, pr, api, other, [partial(other)])
             saved = comment(store)
@@ -215,6 +216,11 @@ def test_old_full_new_partial_equal_clock_full_across_collector_endpoints(
             assert evidence['["author"]']["provider_updated_at_us"] == parse_iso8601_us(
                 NEW_CLOCK
             )
+            assert evidence['["body"]']["parser_module"] == current_parser.__name__
+            assert evidence['["body"]']["parser_version"] == "1"
+            assert evidence['["author"]']["parser_module"] == current_parser.__name__
+            assert evidence['["author"]']["parser_version"] == "2"
+            assert "parser_profile_uuidv4" not in evidence['["body"]']
             assert evidence['["body"]']["acquisition_scope"]["endpoint"] == (
                 api.url + "/repos/fixture/alpha/pulls/41/comments"
                 if first == "rest"
@@ -252,6 +258,10 @@ def test_old_full_new_partial_equal_clock_full_across_collector_endpoints(
             None if final_body is None else "501"
         )
         assert saved["review_thread_provider_resource_id"] == "projection-thread"
+        evidence = json.loads(saved["field_evidence_json"])
+        assert evidence['["body"]']["parser_module"] == current_parser.__name__
+        assert evidence['["body"]']["parser_version"] == "2"
+        assert evidence['["author"]']["parser_version"] == "2"
         assert store.one("SELECT count(*) FROM current_resource_diagnostics")[0] == 0
         assert store.one("SELECT count(*) FROM eligible_review_resources")[0] == 3
         assert store.one("SELECT count(*) FROM review_resources")[0] == 3
@@ -262,7 +272,7 @@ def test_old_full_new_partial_equal_clock_full_across_collector_endpoints(
 
 @pytest.mark.parametrize("first", ["rest", "graphql"])
 def test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields(
-    github_runtime, first
+    github_runtime, first, monkeypatch
 ):
     store, repo, fixture, api = github_runtime
     pr = seed_pr(store, repo)
@@ -271,7 +281,9 @@ def test_older_complete_response_fills_unknown_fields_without_reverting_newer_fi
     full = rest_full if first == "rest" else graphql_full
     try:
         seed_review(collector, repo, pr, api)
+        monkeypatch.setattr(current_parser, "PARSER_VERSION", "2")
         collect(collector, repo, pr, api, other, [partial(other)])
+        monkeypatch.setattr(current_parser, "PARSER_VERSION", "1")
         collect(
             collector,
             repo,
@@ -293,6 +305,10 @@ def test_older_complete_response_fills_unknown_fields_without_reverting_newer_fi
         assert evidence['["author"]']["provider_updated_at_us"] == parse_iso8601_us(
             NEW_CLOCK
         )
+        assert evidence['["body"]']["parser_module"] == current_parser.__name__
+        assert evidence['["body"]']["parser_version"] == "1"
+        assert evidence['["author"]']["parser_module"] == current_parser.__name__
+        assert evidence['["author"]']["parser_version"] == "2"
         assert saved["provider_updated_at_us"] == parse_iso8601_us(NEW_CLOCK)
         assert store.one("SELECT count(*) FROM current_resource_diagnostics")[0] == 0
     finally:

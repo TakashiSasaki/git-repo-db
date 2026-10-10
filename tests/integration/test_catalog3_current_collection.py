@@ -85,6 +85,18 @@ def test_all_issue_comments_retained_without_archives_across_restart(github_runt
     assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
     assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
     assert store.one("SELECT count(*) FROM document_observations")[0] == 0
+    assert store.one("SELECT count(*) FROM parser_profiles")[0] == 0
+    assert store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0] == 0
+    for row in store.all("SELECT * FROM issue_resources"):
+        assert row["parser_module"] == current_parser.__name__
+        assert row["parser_version"] == "1"
+        for evidence in json.loads(row["field_evidence_json"]).values():
+            assert evidence["parser_module"] == current_parser.__name__
+            assert evidence["parser_version"] == "1"
+            assert "parser_profile_uuidv4" not in evidence
+    for page in store.all("SELECT * FROM current_collection_pages"):
+        assert page["parser_module"] == current_parser.__name__
+        assert page["parser_version"] == "1"
     assert not (store.path / "transport-archive").exists()
     JobService(store).update(job, "complete")
     stage = 1
@@ -149,7 +161,11 @@ def test_unresolved_terminal_receipt_does_not_become_complete_on_resume(github_r
 
 
 def test_review_projection_has_no_fabricated_clock_and_partial_fields_are_absent():
-    context = {"acquisition_scope": {}}
+    context = {
+        "acquisition_scope": {},
+        "parser_module": "caller.supplied.module",
+        "parser_version": "caller-supplied-version",
+    }
     value = {
         "id": 9,
         "body": "",
@@ -161,6 +177,8 @@ def test_review_projection_has_no_fabricated_clock_and_partial_fields_are_absent
     assert "provider_updated_at_us" not in projection
     assert "author" not in projection
     assert projection["body"] == ""
+    assert projection["parser_module"] == current_parser.__name__
+    assert projection["parser_version"] == "1"
     null = current_parser.review({"id": 9, "body": None}, context, 10)
     assert "body" not in null and null["body_status"] == "provider-null"
     graph = current_parser.review_comment(
@@ -229,6 +247,13 @@ def test_each_review_keeps_latest_state_without_history_or_archive(github_runtim
             )[0]
             == 0
         )
+        assert store.one("SELECT count(*) FROM parser_profiles")[0] == 0
+        assert (
+            store.one("SELECT count(*) FROM parser_profile_selection_decisions")[0] == 0
+        )
+        for row in store.all("SELECT * FROM review_resources"):
+            assert row["parser_module"] == current_parser.__name__
+            assert row["parser_version"] == "1"
     finally:
         collector.http.close()
 
@@ -366,7 +391,8 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
                 20,
                 None,
                 [],
-                parser_profile_uuidv4=collector.facts.profile(),
+                parser_module=current_parser.__name__,
+                parser_version="1",
             )
             unrelated = collector.facts.begin(
                 repo, None, "review", other_job, "https://github.test/other"
@@ -377,7 +403,8 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
                 400,
                 None,
                 [],
-                parser_profile_uuidv4=collector.facts.profile(),
+                parser_module=current_parser.__name__,
+                parser_version="1",
             )
         assert collector.summary_observed_at_us(repo, job) == 20
         assert collector.summary_observed_at_us(repo, job, documents_only=True) == 20
@@ -399,9 +426,9 @@ def test_pr_summary_time_includes_current_pages_with_exact_job_scope(github_runt
         collector.http.close()
 
 
-def test_incremental_baseline_requires_the_exact_page_parser_profile(github_runtime):
-    from repo_catalog.adapters.sqlite.parser_model import builtin_definition
-
+def test_changed_parser_rescans_instead_of_reusing_collection_receipts(
+    github_runtime, monkeypatch
+):
     store, repo, _, api = github_runtime
     api.route = lambda *args: ([], {})
     collector = GitHubCollector(store, CancellationToken())
@@ -418,14 +445,16 @@ def test_incremental_baseline_requires_the_exact_page_parser_profile(github_runt
             repo, next_job, "issue", endpoint, context
         )
         assert "since=" in url and baseline["completion_marker_uuidv4"]
-        definition = builtin_definition()
-        definition["settings"]["fixture_profile_change"] = True
-        with store.transaction():
-            changed = collector.facts.model.register_profile(definition)
-        collector.facts.profile_uuid = changed
+        # Preserve the existing conservative full-rescan behavior across a
+        # producer change. This does not rank or supersede any domain value.
+        monkeypatch.setattr(current_parser, "PARSER_VERSION", "2")
         url, baseline = collector.current_incremental_url(
             repo, next_job, "issue", endpoint, context
         )
         assert url == endpoint and "completion_marker_uuidv4" not in baseline
+        page = store.one("SELECT * FROM current_collection_pages")
+        assert page["parser_module"] == current_parser.__name__
+        assert page["parser_version"] == "1"
+        assert store.one("SELECT count(*) FROM parser_profiles")[0] == 0
     finally:
         collector.http.close()

@@ -85,7 +85,8 @@ class GitHubCollector:
             if row["state"] != "complete" or row["asserted_state"] != "complete":
                 continue
             if any(
-                page["parser_profile_uuidv4"] != self.facts.profile()
+                (page["parser_module"], page["parser_version"])
+                != (current_parser.PARSER_MODULE, current_parser.PARSER_VERSION)
                 for page in proof.pages(row["fetch_collection_id"])
             ):
                 continue
@@ -189,7 +190,8 @@ class GitHubCollector:
                         next_url,
                         members,
                         status=response.status_code,
-                        parser_profile_uuidv4=self.facts.profile(),
+                        parser_module=current_parser.PARSER_MODULE,
+                        parser_version=current_parser.PARSER_VERSION,
                     )
                     s.execute(
                         "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
@@ -1673,7 +1675,8 @@ class GitHubCollector:
                             else next_cursor,
                             current_members,
                             status=response.status_code,
-                            parser_profile_uuidv4=self.facts.profile(),
+                            parser_module=current_parser.PARSER_MODULE,
+                            parser_version=current_parser.PARSER_VERSION,
                         )
                         # Root page and pending child boundary commit together. Resume
                         # reads this exact page and never records it as a new response.
@@ -2019,7 +2022,8 @@ class GitHubCollector:
                         cursor if payload.get("errors") else next_cursor,
                         members,
                         status=response.status_code,
-                        parser_profile_uuidv4=self.facts.profile(),
+                        parser_module=current_parser.PARSER_MODULE,
+                        parser_version=current_parser.PARSER_VERSION,
                     )
                     self.s.execute(
                         "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",

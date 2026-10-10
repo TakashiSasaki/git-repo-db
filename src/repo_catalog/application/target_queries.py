@@ -33,6 +33,7 @@ def row_fields(row):
         "settings",
         "scope",
         "acquisition_scope_json",
+        "field_evidence_json",
     ):
         if isinstance(result.get(key), str):
             result[key] = json.loads(result[key])

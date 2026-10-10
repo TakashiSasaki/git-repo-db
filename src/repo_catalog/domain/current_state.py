@@ -53,6 +53,8 @@ _CONTEXT_FIELDS = {
     "observed_at_us",
     "last_checked_at_us",
     "parsed_at_us",
+    "parser_module",
+    "parser_version",
     "acquisition_scope",
     "acquisition_scope_json",
     "text_body_id",

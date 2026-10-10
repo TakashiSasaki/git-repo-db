@@ -470,6 +470,30 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         assert db.execute(
             "SELECT kind,count(*) FROM review_resources GROUP BY kind ORDER BY kind"
         ).fetchall() == [("review", 3), ("review-comment", 3)]
+        assert db.execute(
+            "SELECT count(*) FROM fetch_occurrences o JOIN fetch_collections c "
+            "USING(fetch_collection_id) WHERE c.kind IN "
+            "('issue','ordinary-issue-comment','review','review-comment')"
+        ).fetchone() == (0,)
+        for table in (
+            "issue_resources",
+            "review_resources",
+            "current_collection_pages",
+        ):
+            assert "parser_profile_uuidv4" not in {
+                row[1] for row in db.execute(f"PRAGMA table_info({table})")
+            }
+            assert db.execute(
+                f"SELECT DISTINCT parser_module,parser_version FROM {table}"
+            ).fetchall() == [("repo_catalog.adapters.github.current_parser", "1")]
+        for (encoded,) in db.execute("SELECT field_evidence_json FROM issue_resources"):
+            assert all(
+                evidence["parser_module"]
+                == "repo_catalog.adapters.github.current_parser"
+                and evidence["parser_version"] == "1"
+                and "parser_profile_uuidv4" not in evidence
+                for evidence in json.loads(encoded).values()
+            )
         current_collection = db.execute(
             "SELECT c.fetch_collection_id FROM fetch_collections c "
             "JOIN current_collection_pages p USING(fetch_collection_id) "
@@ -670,21 +694,20 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
                     f"SELECT {keys} FROM {table} ORDER BY {keys}"
                 ).fetchall()
             )
-        imported_verifications = receiver.execute(
-            "SELECT DISTINCT v.parser_profile_verification_uuidv4 "
-            "FROM parser_profile_verifications v JOIN review_resources r "
-            "USING(parser_profile_uuidv4) WHERE v.outcome='passed'"
-        ).fetchall()
+        assert receiver.execute(
+            "SELECT DISTINCT parser_module,parser_version FROM review_resources"
+        ).fetchall() == [("repo_catalog.adapters.github.current_parser", "1")]
+        assert (
+            receiver.execute(
+                "SELECT count(*) FROM eligible_review_resources"
+            ).fetchone()[0]
+            > 0
+        )
         assert (
             receiver.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
         )
         assert receiver.execute("PRAGMA foreign_key_check").fetchall() == []
         assert receiver.execute("PRAGMA integrity_check").fetchone() == ("ok",)
-    # Trust remains receiver-local. Explicitly accept the fixture's imported
-    # verified definition before expecting its ordinary current interpretations.
-    assert imported_verifications
-    for (verification,) in imported_verifications:
-        cli("parser", "trust", verification)
     # Exchange preserves provider observations, but the sender's live checks
     # cannot claim a receiver-local check. Compare every other returned field
     # exactly; backup/restore below retains the original catalog's check times.

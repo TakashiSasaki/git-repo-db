@@ -118,27 +118,111 @@ def _collection_state(query, row):
     return row["state"]
 
 
-def _coverage(query, pr, documents_only):
+def _current_review_kind(command, options):
+    """A current-family request needs no historical parent interpretation.
+
+    Filters over parent metadata, code, or retained thread observations keep
+    their existing broader coverage contract.
+    """
+    if (
+        command in ("pr documents", "search pr")
+        and options.get("document_kind") in ("review", "review-comment")
+        and not any(
+            options.get(key) is not None
+            for key in (
+                "observation",
+                "parser_profile",
+                "commit",
+                "path",
+                "path_b64",
+                "author",
+                "reviewer",
+            )
+        )
+        and options.get("state") in (None, "all")
+        and options.get("draft") in (None, "any")
+        and options.get("resolved") in (None, "any")
+        and options.get("outdated") in (None, "any")
+    ):
+        return options["document_kind"]
+    return None
+
+
+def _current_review_scope_includes(kind, family_kinds):
+    if kind in family_kinds:
+        return True
+    if not document_scope_includes(kind):
+        return False
+    # These established kinds have distinct owners or domain meanings. Unknown
+    # document work remains relevant, as in the broader PR coverage contract.
+    return kind not in {
+        "pr-list",
+        "pr-detail",
+        "pr-code-check",
+        "change-request",
+        "pr-title",
+        "pr-body",
+        "issue",
+        "ordinary-issue-comment",
+        "issue-comment",
+        "issue-comment-incremental",
+        "review",
+        "review-comment",
+        "review-comment-incremental",
+        "threads",
+        "thread-comments",
+    }
+
+
+def _coverage(query, pr, documents_only, *, current_kind=None):
     s = query.s
-    if pr["change_request_observation_id"] is None:
+    if current_kind is None and pr["change_request_observation_id"] is None:
         query.coverage.add(
             "pr",
             "current_selection_unresolved",
             change_request_id=pr["change_request_id"],
         )
-    if pr["change_request_observation_id"] is None:
+    if current_kind is None and pr["change_request_observation_id"] is None:
         query.coverage.add(
             "pr",
             "change_request_observation_missing",
             change_request_id=pr["change_request_id"],
         )
+    current_kinds = (
+        {"review"}
+        if current_kind == "review"
+        else {
+            "review-comment",
+            "review-comment-incremental",
+            "threads",
+            "thread-comments",
+        }
+        if current_kind == "review-comment"
+        else None
+    )
     rows = s.execute(
-        "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.kind",
-        (pr["change_request_id"],),
+        "SELECT c.kind,p.state,c.fetch_collection_id FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=?"
+        + (
+            " OR (c.repository_uuidv4=? AND c.change_request_id IS NULL AND c.kind='review-comment-incremental')"
+            if current_kind == "review-comment"
+            else ""
+        )
+        + " ORDER BY c.kind",
+        (pr["change_request_id"],)
+        + ((pr["repository_uuidv4"],) if current_kind == "review-comment" else ()),
     )
     by_kind = {}
     for row in rows:
+        if current_kinds is not None and not _current_review_scope_includes(
+            row["kind"], current_kinds
+        ):
+            continue
         by_kind.setdefault(row["kind"], []).append(row)
+    # Child pages alone cannot establish a complete parent listing. Retain the
+    # existing collection proof and coverage-claim semantics for this family.
+    family_observed = current_kinds is not None and bool(
+        set(by_kind) & (current_kinds - {"thread-comments"})
+    )
     for row in (
         row
         for candidates in by_kind.values()
@@ -155,10 +239,20 @@ def _coverage(query, pr, documents_only):
                 collection_kind=row["kind"],
             )
     for row in s.execute(
-        "SELECT coverage_scope_id,kind,coverage_state FROM current_coverage WHERE change_request_id=?",
-        (pr["change_request_id"],),
+        "SELECT coverage_scope_id,kind,coverage_state FROM current_coverage WHERE change_request_id=?"
+        + (
+            " OR (repository_uuidv4=? AND change_request_id IS NULL AND kind='review-comment-incremental')"
+            if current_kind == "review-comment"
+            else ""
+        ),
+        (pr["change_request_id"],)
+        + ((pr["repository_uuidv4"],) if current_kind == "review-comment" else ()),
     ):
         query.check()
+        if current_kinds is not None:
+            if not _current_review_scope_includes(row["kind"], current_kinds):
+                continue
+            family_observed |= row["kind"] in current_kinds - {"thread-comments"}
         if documents_only and not document_scope_includes(row["kind"]):
             continue
         if row["coverage_state"] not in ("complete", "not_applicable"):
@@ -168,10 +262,22 @@ def _coverage(query, pr, documents_only):
                 coverage_scope_id=row["coverage_scope_id"],
             )
 
-    for row in s.execute(
-        "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) has_observation FROM documents d LEFT JOIN current_document_observations selected USING(change_request_id,kind,provider_change_request_document_id) WHERE d.change_request_id=? AND selected.document_observation_id IS NULL",
-        (pr["change_request_id"],),
-    ):
+    if current_kind is not None and not family_observed:
+        query.coverage.add(
+            "pr",
+            "collection_incomplete",
+            change_request_id=pr["change_request_id"],
+            collection_kind=current_kind,
+        )
+    historical_documents = (
+        ()
+        if current_kind is not None
+        else s.execute(
+            "SELECT d.change_request_id,d.kind,d.provider_change_request_document_id,EXISTS(SELECT 1 FROM document_observations o WHERE o.change_request_id=d.change_request_id AND o.kind=d.kind AND o.provider_change_request_document_id=d.provider_change_request_document_id) has_observation FROM documents d LEFT JOIN current_document_observations selected USING(change_request_id,kind,provider_change_request_document_id) WHERE d.change_request_id=? AND selected.document_observation_id IS NULL",
+            (pr["change_request_id"],),
+        )
+    )
+    for row in historical_documents:
         query.check()
         key = DocumentKey(
             row["change_request_id"],
@@ -190,18 +296,22 @@ def _coverage(query, pr, documents_only):
     for row in s.execute(
         "SELECT r.change_request_id,r.kind document_kind,r.provider_change_request_document_id "
         "FROM review_resources r WHERE r.change_request_id=? AND r.deleted=0 "
-        "AND NOT EXISTS(SELECT 1 FROM eligible_review_resources e "
+        + ("AND r.kind=? " if current_kind is not None else "")
+        + "AND NOT EXISTS(SELECT 1 FROM eligible_review_resources e "
         "WHERE e.change_request_id=r.change_request_id AND e.kind=r.kind "
         "AND e.provider_change_request_document_id=r.provider_change_request_document_id)",
-        (pr["change_request_id"],),
+        (pr["change_request_id"],)
+        + ((current_kind,) if current_kind is not None else ()),
     ):
         query.check()
         query.coverage.add("pr", "current_resource_unresolved", **dict(row))
     for row in s.execute(
         "SELECT change_request_id,kind document_kind,provider_change_request_document_id,body_status "
         "FROM eligible_review_resources WHERE change_request_id=? AND deleted=0 "
-        "AND body_status IN ('missing','inaccessible')",
-        (pr["change_request_id"],),
+        + ("AND kind=? " if current_kind is not None else "")
+        + "AND body_status IN ('missing','inaccessible')",
+        (pr["change_request_id"],)
+        + ((current_kind,) if current_kind is not None else ()),
     ):
         query.check()
         query.coverage.add("pr", "document_body_missing", **dict(row))
@@ -267,8 +377,16 @@ def _scope_rows(query, command, o):
             continue
         conditions.append(f"p.{column}=?")
         values.append(value)
+    projection = (
+        "SELECT p.*,r.name,NULL payload,NULL observed_at_us,"
+        "NULL change_request_observation_id,NULL change_request_observation_uuidv4,"
+        "NULL parsed_result_uuidv4,NULL parser_profile_uuidv4 "
+        "FROM change_requests p JOIN repositories r ON r.repository_uuidv4=p.repository_uuidv4 WHERE "
+        if _current_review_kind(command, o) is not None
+        else "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id,obs.change_request_observation_uuidv4,obs.parsed_result_uuidv4,profile.parser_profile_uuidv4 FROM change_requests p JOIN repositories r ON r.repository_uuidv4=p.repository_uuidv4 LEFT JOIN current_change_request_observations obs ON obs.change_request_id=p.change_request_id LEFT JOIN parsed_results profile ON profile.parsed_result_uuidv4=obs.parsed_result_uuidv4 WHERE "
+    )
     rows = s.execute(
-        "SELECT p.*,r.name,obs.payload,obs.observed_at_us,obs.change_request_observation_id,obs.change_request_observation_uuidv4,obs.parsed_result_uuidv4,profile.parser_profile_uuidv4 FROM change_requests p JOIN repositories r ON r.repository_uuidv4=p.repository_uuidv4 LEFT JOIN current_change_request_observations obs ON obs.change_request_id=p.change_request_id LEFT JOIN parsed_results profile ON profile.parsed_result_uuidv4=obs.parsed_result_uuidv4 WHERE "
+        projection
         + " AND ".join(conditions)
         + " ORDER BY p.repository_uuidv4,p.provider_change_request_number,p.change_request_id",
         values,
@@ -325,11 +443,11 @@ def _query_filters(query, command, o):
 
 
 def _matches_pr_filters(query, pr, payload, state, o):
-    if o.get("state", "all") != "all" and state != o["state"]:
+    if o.get("state") not in (None, "all") and state != o["state"]:
         return False
     if o.get("author") and (payload.get("user") or {}).get("login") != o["author"]:
         return False
-    if o.get("draft", "any") != "any" and payload.get("draft") is not (
+    if o.get("draft") not in (None, "any") and payload.get("draft") is not (
         o["draft"] == "true"
     ):
         return False
@@ -630,6 +748,7 @@ def prepare_pr_coverage(query, command, o):
             )
         return
     _, _, documents_only = _query_filters(query, command, o)
+    current_kind = _current_review_kind(command, o)
     from repo_catalog.application.repository_identity import pr_applicable
 
     for repo in query.repos(o):
@@ -648,6 +767,11 @@ def prepare_pr_coverage(query, command, o):
                 repository_uuidv4=repo["repository_uuidv4"],
                 scope_kind=summary_kind,
             )
+    if current_kind is not None:
+        for pr in rows:
+            query.check()
+            _coverage(query, pr, True, current_kind=current_kind)
+        return
     for pr in rows:
         query.check()
         _coverage(query, pr, documents_only)
@@ -673,7 +797,9 @@ def _current_review_fields(row):
     return {
         "resource_lifecycle": "current",
         "body_status": row["body_status"],
-        "parser_profile_uuidv4": row["parser_profile_uuidv4"],
+        "parser_module": row["parser_module"],
+        "parser_version": row["parser_version"],
+        "field_evidence": json.loads(row["field_evidence_json"]),
         "provider_updated_at_us": row["provider_updated_at_us"],
         "observed_at_us": row["observed_at_us"],
         "parsed_at_us": row["parsed_at_us"],
@@ -688,6 +814,7 @@ def _current_review_fields(row):
         "diff_hunk": row["diff_hunk"],
         "review_provider_resource_id": row["review_provider_resource_id"],
         "in_reply_to_provider_resource_id": row["in_reply_to_provider_resource_id"],
+        "review_thread_provider_resource_id": row["review_thread_provider_resource_id"],
     }
 
 
@@ -697,37 +824,37 @@ def _document_rows(query, pr, options):
         "document_observations", "current"
     ) == "current" and not options.get("observation")
     table = "current_document_observations" if current else "document_observations"
-    history = s.execute(
-        f"SELECT obs.*,NULL review_thread_provider_resource_id,obs.observed_at_us document_observed_at_us,"
-        "obs.parsed_at_us document_parsed_at_us,obs.metadata observation_metadata,"
-        "r.parser_profile_uuidv4,b.body,'history' resource_lifecycle,"
-        "EXISTS(SELECT 1 FROM current_document_observations c "
-        "WHERE c.document_observation_id=obs.document_observation_id) current_selected "
-        f"FROM {table} obs JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
-        "JOIN text_bodies b ON b.sha256=obs.text_body_sha256 "
-        "WHERE obs.change_request_id=?"
-        + (" AND obs.deleted=0" if current else "")
-        + (" AND r.parser_profile_uuidv4=?" if options.get("parser_profile") else "")
-        + " ORDER BY obs.kind,obs.provider_change_request_document_id,obs.document_observation_id",
-        (pr["change_request_id"],)
-        + ((options["parser_profile"],) if options.get("parser_profile") else ()),
-    )
-
-    def reviews():
-        # Historical document selectors do not invent mutable resource versions.
-        if options.get("observation"):
-            return
-        for row in s.execute(
-            "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_review_resources r LEFT JOIN text_bodies b "
-            "ON b.sha256=r.text_body_sha256 WHERE r.change_request_id=? AND r.deleted=0"
+    history = ()
+    if options.get("document_kind") not in ("review", "review-comment"):
+        history = s.execute(
+            f"SELECT obs.*,NULL review_thread_provider_resource_id,obs.observed_at_us document_observed_at_us,"
+            "obs.parsed_at_us document_parsed_at_us,obs.metadata observation_metadata,"
+            "r.parser_profile_uuidv4,b.body,'history' resource_lifecycle,"
+            "EXISTS(SELECT 1 FROM current_document_observations c "
+            "WHERE c.document_observation_id=obs.document_observation_id) current_selected "
+            f"FROM {table} obs JOIN usable_parsed_results r USING(parsed_result_uuidv4) "
+            "JOIN text_bodies b ON b.sha256=obs.text_body_sha256 "
+            "WHERE obs.change_request_id=?"
+            + (" AND obs.deleted=0" if current else "")
             + (
                 " AND r.parser_profile_uuidv4=?"
                 if options.get("parser_profile")
                 else ""
             )
-            + " ORDER BY r.kind,r.provider_change_request_document_id",
+            + " ORDER BY obs.kind,obs.provider_change_request_document_id,obs.document_observation_id",
             (pr["change_request_id"],)
             + ((options["parser_profile"],) if options.get("parser_profile") else ()),
+        )
+
+    def reviews():
+        # Historical document selectors do not invent mutable resource versions.
+        if options.get("observation") or options.get("parser_profile"):
+            return
+        for row in s.execute(
+            "SELECT r.*,b.body,b.byte_length body_byte_length FROM eligible_review_resources r LEFT JOIN text_bodies b "
+            "ON b.sha256=r.text_body_sha256 WHERE r.change_request_id=? AND r.deleted=0"
+            + " ORDER BY r.kind,r.provider_change_request_document_id",
+            (pr["change_request_id"],),
         ):
             verify_text_body(
                 row["body"], row["text_body_sha256"], row["body_byte_length"]
@@ -795,6 +922,7 @@ def pr_query(query, command, options):
             )
         return
     literal, path, documents_only = _query_filters(query, command, o)
+    current_kind = _current_review_kind(command, o)
     for pr in rows:
         query.check()
         payload = json.loads(pr["payload"] or "{}")
@@ -846,6 +974,21 @@ def pr_query(query, command, options):
             "observed_at_us": pr["observed_at_us"],
             "url": payload.get("html_url"),
         }
+        if current_kind is not None:
+            # Parent identity is sufficient. Optional historical interpretations
+            # cannot alter the meaning or presentation of current review values.
+            base = {
+                key: base[key]
+                for key in (
+                    "repository_uuidv4",
+                    "repository",
+                    "provider_change_request_number",
+                    "change_request_kind",
+                    "pr_id",
+                    "change_request_id",
+                    "repository_binding_id",
+                )
+            }
         if command in ("pr list", "pr show"):
             collections = s.all(
                 "SELECT c.*,p.state,p.cursor,p.reason FROM fetch_collections c LEFT JOIN collection_progress p ON p.fetch_collection_id=c.fetch_collection_id WHERE c.change_request_id=? ORDER BY c.kind,c.observed_at_us,c.fetch_collection_id",
@@ -964,7 +1107,7 @@ def pr_query(query, command, options):
                     "review_thread_provider_resource_id"
                 ]
                 thread = None
-                if review_thread_provider_resource_id:
+                if review_thread_provider_resource_id and current_kind is None:
                     # Only current review resources carry a thread reference;
                     # retained PR documents have no review-thread association.
                     thread = s.one(
@@ -976,7 +1119,7 @@ def pr_query(query, command, options):
                     )
                 thread_payload = json.loads(thread["payload"]) if thread else {}
                 if any(
-                    o.get(option, "any") != "any"
+                    o.get(option) not in (None, "any")
                     and thread_payload.get(field) is not (o[option] == "true")
                     for option, field in (
                         ("resolved", "isResolved"),
@@ -1014,7 +1157,6 @@ def pr_query(query, command, options):
                         "document_parsed_at_us": doc["document_parsed_at_us"],
                         "document_current_selected": bool(doc["current_selected"]),
                         "parsed_result_uuidv4": doc["parsed_result_uuidv4"],
-                        "parser_profile_uuidv4": doc["parser_profile_uuidv4"],
                         "origin_key": doc["origin_key"],
                         "fetch_occurrence_id": doc["fetch_occurrence_id"],
                         "author": doc["author"],
@@ -1028,7 +1170,10 @@ def pr_query(query, command, options):
                         **(
                             _current_review_fields(doc)
                             if doc["resource_lifecycle"] == "current"
-                            else {"resource_lifecycle": "history"}
+                            else {
+                                "resource_lifecycle": "history",
+                                "parser_profile_uuidv4": doc["parser_profile_uuidv4"],
+                            }
                         ),
                         **(
                             {"review_position": meta}

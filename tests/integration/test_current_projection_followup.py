@@ -75,3 +75,46 @@ def test_imported_sender_check_is_not_a_receiver_local_check(resources):
     adapter, *_ = resources
     adapter.admit(issue(resources, last_checked_at_us=900), source="import")
     assert current(adapter)["last_checked_at_us"] is None
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_partial_fields_keep_actual_parser_when_another_version_updates_row(
+    resources, reverse
+):
+    adapter, *_ = resources
+    older = issue(
+        resources,
+        body="old body",
+        title="old title",
+        metadata={},
+        parser_module="tests.synthetic.body_parser",
+        parser_version="9",
+        provider_updated_at_us=10,
+    )
+    newer = issue(
+        resources,
+        title="new title",
+        metadata={},
+        parser_module="tests.synthetic.title_parser",
+        parser_version="0",
+        provider_updated_at_us=20,
+    )
+    newer.pop("body")
+    for observation in (newer, older) if reverse else (older, newer):
+        assert adapter.admit(observation, source="import").status == "accepted"
+    row = current(adapter)
+    assert row["body"] == "old body"
+    assert row["title"] == "new title"
+    evidence = row["field_evidence"]
+    assert (
+        evidence['["body"]']["parser_module"],
+        evidence['["body"]']["parser_version"],
+    ) == ("tests.synthetic.body_parser", "9")
+    assert (
+        evidence['["title"]']["parser_module"],
+        evidence['["title"]']["parser_version"],
+    ) == ("tests.synthetic.title_parser", "0")
+    assert adapter.c.execute("SELECT count(*) FROM parser_profiles").fetchone()[0] == 0
+    assert (
+        adapter.c.execute("SELECT count(*) FROM fetch_occurrences").fetchone()[0] == 0
+    )

@@ -1,4 +1,4 @@
-"""Explicit parser registration, verification, trust, selection and offline reparse."""
+"""Historical parser controls and supplementary diagnostic inspection."""
 
 import json
 from pathlib import Path
@@ -106,12 +106,6 @@ class ParserService:
                         "Parser request fields do not match the action",
                     ) from exc
                 model.promote_staging()
-                if action in ("select-profile", "trust", "admit-decision"):
-                    from repo_catalog.adapters.sqlite.current_resources import (
-                        CurrentResources,
-                    )
-
-                    CurrentResources(store).promote_staging()
                 response = Result(
                     {"action": action, "result": value}, catalog=store.revision()
                 )

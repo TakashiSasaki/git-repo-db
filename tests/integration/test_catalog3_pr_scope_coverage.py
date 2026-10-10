@@ -72,11 +72,6 @@ def add_document(store, pr, document_id, body, *, kind="pr-body", thread=None):
             "SELECT * FROM repository_bindings WHERE repository_binding_id=?",
             (owner["repository_binding_id"],),
         )
-        model = ParserModel(store.connection)
-        profile = model.ensure_builtin_profile()
-        model.ensure_scope_profile(
-            profile, repository_uuidv4=owner["repository_uuidv4"], fact_kind=kind
-        )
         scope = {
             "repository_uuidv4": owner["repository_uuidv4"],
             "repository_binding_id": owner["repository_binding_id"],
@@ -93,7 +88,8 @@ def add_document(store, pr, document_id, body, *, kind="pr-body", thread=None):
             "body_status": "present" if body is not None else "missing",
             "observed_at_us": 0,
             "parsed_at_us": 0,
-            "parser_profile_uuidv4": profile,
+            "parser_module": __name__,
+            "parser_version": "1",
             "metadata": {},
             "review_thread_provider_resource_id": thread,
         }

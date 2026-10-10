@@ -67,20 +67,6 @@ class ApiFacts:
         )
         if binding is None:
             raise CatalogError("SCOPE_MISMATCH", "Current resource binding is missing")
-        if kind is not None and not self.replaying:
-            fact_kind = "ordinary-issue-comment" if kind == "issue-comment" else kind
-            if (
-                self.model.ensure_scope_profile(
-                    self.profile(),
-                    repository_uuidv4=repo["repository_uuidv4"],
-                    fact_kind=fact_kind,
-                )
-                is None
-            ):
-                raise CatalogError(
-                    "PARSER_SELECTION_UNRESOLVED",
-                    "Current resource parser profile selection is unresolved",
-                )
         scope = {
             "repository_uuidv4": repo["repository_uuidv4"],
             "repository_binding_id": binding["repository_binding_id"],
@@ -89,7 +75,6 @@ class ApiFacts:
             "source_registration_uuidv4": binding["source_registration_uuidv4"],
             "principal_ref": self.principal,
             "api_version": self.cfg["rest_api_version"],
-            "parser_profile_uuidv4": self.profile(),
             "preservation_profile": self.s.config["preservation"]["profile"],
             **({"change_request_id": pr} if pr is not None else {}),
         }
@@ -104,7 +89,6 @@ class ApiFacts:
             },
             **({"change_request_id": pr} if pr is not None else {}),
             "acquisition_scope": scope,
-            "parser_profile_uuidv4": self.profile(),
         }
 
     def admit_current(self, candidate, base_revision):

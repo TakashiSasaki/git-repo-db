@@ -1,4 +1,4 @@
-"""Pure provider projections for mutable resources, also used by archive reparse.
+"""Pure provider projections for mutable resources and diagnostic archive inspection.
 
 REST ``updated_at`` orders Issues and comments within their documented resource
 clock. Review summaries have no such field; submitted_at is only submission time.
@@ -10,6 +10,9 @@ from __future__ import annotations
 from repo_catalog.adapters.github.identity import database_resource_id
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import parse_iso8601_us
+
+PARSER_MODULE = __name__
+PARSER_VERSION = "1"
 
 
 def resource_id(value, field="id"):
@@ -40,6 +43,8 @@ def _common(value, context, observed_at_us, *, graphql=False, update_clock=True)
         raise CatalogError("API_SCHEMA", "Provider resource must be an object")
     result = {
         **context,
+        "parser_module": PARSER_MODULE,
+        "parser_version": PARSER_VERSION,
         "observed_at_us": observed_at_us,
         "acquisition_scope": context["acquisition_scope"],
     }
