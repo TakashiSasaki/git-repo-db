@@ -71,7 +71,7 @@ CREATE TABLE tree_objects(
 ) STRICT;
 CREATE TABLE tree_entries(
  tree_git_object_id INTEGER NOT NULL REFERENCES tree_objects(git_object_id),
- raw_name BLOB NOT NULL CHECK(length(raw_name)>0),
+ raw_name BLOB NOT NULL CHECK(length(raw_name)>0 AND instr(raw_name,X'00')=0),
  entry_offset INTEGER NOT NULL CHECK(entry_offset>=0), entry_length INTEGER NOT NULL CHECK(entry_length>0),
  mode INTEGER NOT NULL CHECK(mode IN (16384,33188,33261,40960,57344)),
  child_format TEXT NOT NULL CHECK(child_format IN ('sha1','sha256')),

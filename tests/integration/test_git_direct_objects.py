@@ -3,11 +3,13 @@
 import copy
 import hashlib
 import shutil
+import sqlite3
 
 import pytest
 
 from repo_catalog.adapters.git.importer import GitImporter
 from repo_catalog.adapters.git.parsing import GitParsing, reparse_git
+from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.catalog_validation import check_catalog
 from repo_catalog.application.git_query_context import decoded_fact
@@ -359,6 +361,34 @@ def test_canonical_raw_tree_rejects_forged_relations_even_with_matching_counts(
     assert any(
         row.get("code") == "GIT_OBJECT_STRUCTURE"
         for row in check_catalog(store, full=True)
+    )
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("width", [2, 2048])
+def test_tree_entry_name_cannot_hide_multiple_canonical_entries(store, fmt, width):
+    # Independently reported review counterexample: byte length and offsets can
+    # agree while one purported name swallows other entries and their OIDs.
+    target = oid(fmt, "blob", b"missing")
+    raw = b"".join(b"100644 n%04d\0" % number + target for number in range(width))
+    payload = intern_payload(store.connection, raw, representation="git-object-raw-v1")
+    obj_id = store.execute(
+        "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES(?,?,'tree',?,1)",
+        (fmt, oid(fmt, "tree", raw), len(raw)),
+    ).lastrowid
+    store.execute(
+        "INSERT INTO git_object_payloads VALUES(?,'git-object-raw-v1',?)",
+        (obj_id, payload.sha256),
+    )
+    store.execute("INSERT INTO tree_objects VALUES(?,1)", (obj_id,))
+    malformed_name = raw[len(b"100644 ") : -len(target) - 1]
+    with pytest.raises(sqlite3.IntegrityError, match="CHECK constraint failed"):
+        store.execute(
+            "INSERT INTO tree_entries VALUES(?,?,0,?,33188,?,?,NULL)",
+            (obj_id, malformed_name, len(raw), fmt, target),
+        )
+    assert not store.one(
+        "SELECT 1 FROM available_git_objects WHERE git_object_id=?", (obj_id,)
     )
 
 
