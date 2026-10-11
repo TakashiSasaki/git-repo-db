@@ -1103,7 +1103,6 @@ def validate_record(db, table, data, *, allow_missing=False):
     if (
         table == "exchange_staging"
         and data.get("reason", "").startswith("current_state:")
-        and data.get("reason") != "current_state:invalid"
         and data.get("table_name") != "source_repositories"
     ):
         candidate = _load(
@@ -1111,7 +1110,17 @@ def validate_record(db, table, data, *, allow_missing=False):
             JSON_REGISTRY["exchange_staging", "record_json"],
             "staged current candidate",
         )
-        validate_current_candidate_relationships(db, data["table_name"], candidate)
+        retained_invalid = False
+        if data.get("reason") == "current_state:invalid":
+            stored = _row(
+                db,
+                "exchange_staging",
+                ("record_key", "content_sha256"),
+                (data["record_key"], data["content_sha256"]),
+            )
+            retained_invalid = stored is not None and stored == data
+        if not retained_invalid:
+            validate_current_candidate_relationships(db, data["table_name"], candidate)
     if (
         table == "exchange_staging"
         and data.get("reason", "").startswith("current_state:")

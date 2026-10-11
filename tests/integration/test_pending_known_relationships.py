@@ -214,3 +214,52 @@ def test_sparse_git_update_inherits_known_format_and_capture(catalog):
     evidence = json.loads(row["field_evidence_json"])
     assert evidence['["object_format"]']["observed_at_us"] == 100
     assert evidence['["head_oid"]']["observed_at_us"] == 200
+
+
+@pytest.mark.parametrize("damage", ["unstored", "hash", "origin", "payload"])
+def test_invalid_diagnostic_exemption_requires_the_exact_retained_input(
+    catalog, damage
+):
+    db, ids = catalog
+    value = pending(ids, "change_request_state")
+    missing_binding = str(uuid.uuid4())
+    value["repository_binding_id"] = value["acquisition_scope"][
+        "repository_binding_id"
+    ] = missing_binding
+    assert admit(db, "change_request_state", value).status == "missing_dependency"
+    other_repository = str(uuid.uuid4())
+    db.execute(
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'other','{}')",
+        (other_repository,),
+    )
+    db.execute(
+        "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,metadata) VALUES(?,?,?,'{}')",
+        (missing_binding, other_repository, ids["service_instance_uuidv4"]),
+    )
+    assert CurrentApiState(db).promote_staging() == 0
+    row = dict(db.execute("SELECT * FROM exchange_staging").fetchone())
+    assert row["reason"] == "current_state:invalid"
+    validate_record(db, "exchange_staging", row)
+    original_key, original_hash = row["record_key"], row["content_sha256"]
+    if damage == "unstored":
+        db.execute("DELETE FROM exchange_staging")
+    elif damage == "hash":
+        row["content_sha256"] = b"x" * 32
+    elif damage == "origin":
+        row["origin_catalog_uuidv4"] = str(uuid.uuid4())
+    else:
+        row["record_json"] = json.dumps(
+            {**json.loads(row["record_json"]), "parsed_at_us": 102}
+        )
+    with pytest.raises(CatalogError):
+        validate_record(db, "exchange_staging", row)
+    with pytest.raises(sqlite3.IntegrityError):
+        if damage == "unstored":
+            insert_stage(db, row)
+        else:
+            db.execute(
+                "UPDATE exchange_staging SET "
+                + ",".join(name + "=?" for name in row)
+                + " WHERE record_key=? AND content_sha256=?",
+                (*row.values(), original_key, original_hash),
+            )
