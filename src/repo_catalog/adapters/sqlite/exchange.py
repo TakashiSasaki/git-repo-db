@@ -1935,6 +1935,32 @@ class Graph:
                     ),
                 )
             data = final
+        elif (
+            table == "code_acquisitions"
+            and existing
+            and (existing["acquisition_root_id"] is None)
+            != (data["acquisition_root_id"] is None)
+        ):
+            if any(
+                existing[column] != value
+                for column, value in data.items()
+                if column != "acquisition_root_id"
+            ):
+                return "conflict:immutable_content"
+            if existing["acquisition_root_id"] is None:
+                # SQL verifies the attached real root's owner, format, OID and
+                # role. This fills a missing dependency of the same target;
+                # received order cannot replace an already captured root.
+                self.db.execute(
+                    "UPDATE code_acquisitions SET acquisition_root_id=? WHERE code_assessment_id=? AND role=?",
+                    (
+                        data["acquisition_root_id"],
+                        data["code_assessment_id"],
+                        data["role"],
+                    ),
+                )
+            else:
+                data = existing
         elif existing:
             if table in SCOPES:
                 data.update({c: existing[c] for c in self.keys[table]})

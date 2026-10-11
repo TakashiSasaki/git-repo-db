@@ -184,7 +184,7 @@ def test_equal_clock_equivalent_list_captures_remain_complete(github_runtime):
     assert code_query(store, repo).data["items"]
 
 
-@pytest.mark.parametrize("interrupt", [False, True])
+@pytest.mark.parametrize("interrupt", [False, True, "role-failure"])
 def test_provisional_code_acquisition_exchange_converges_after_finalization(
     github_runtime, tmp_path, monkeypatch, interrupt
 ):
@@ -193,10 +193,16 @@ def test_provisional_code_acquisition_exchange_converges_after_finalization(
     store, repo, _, api = github_runtime
     one_pr(api)
     provisional = []
+    failed_role = []
     original = GitImporter.sync
 
     def export_during_acquisition(importer, *args, **kwargs):
-        if not provisional:
+        if interrupt == "role-failure":
+            role = kwargs["pr_roots"][0]["role"]
+            if role.startswith("review-target:") and not failed_role:
+                failed_role.append(role)
+                raise CatalogError("API_ACCESS", "Recoverable missing review target")
+        elif not provisional:
             assert selected(store)["state"] in {"pending", "partial"}
             provisional.append(
                 Graph(store.connection).export(repo["repository_uuidv4"])
@@ -212,9 +218,22 @@ def test_provisional_code_acquisition_exchange_converges_after_finalization(
     job = jobs.create("sync", {"kind": "pr"})
     store.expected_attempt = 1
     if interrupt:
-        with pytest.raises(CatalogError, match="After real input capture"):
+        with pytest.raises(CatalogError) as raised:
             collector.sync(repo, job)
+        assert raised.value.code == (
+            "PR_PARTIAL" if interrupt == "role-failure" else "CANCELLED"
+        )
         assert selected(store)["state"] == "pending"
+        if interrupt == "role-failure":
+            assert (
+                store.one(
+                    "SELECT count(*) FROM code_acquisitions WHERE acquisition_root_id IS NULL"
+                )[0]
+                == 1
+            )
+            provisional.append(
+                Graph(store.connection).export(repo["repository_uuidv4"])
+            )
         jobs.update(job, "interrupted")
         jobs.resume(job)
         store.expected_attempt = 2
@@ -222,6 +241,11 @@ def test_provisional_code_acquisition_exchange_converges_after_finalization(
         collector.http.clock_us = lambda: 300
     assert collector.sync(repo, job)["state"] == "complete"
     assert store.one("SELECT count(*) FROM code_assessments")[0] == 1
+    if interrupt == "role-failure":
+        # Completion of physical work does not fabricate a newer API clock or
+        # erase the earlier equal-clock partial Coverage observation.
+        assert current_coverage(store) == "conflict"
+        assert code_query(store, repo).status == "partial"
     complete = Graph(store.connection).export(repo["repository_uuidv4"])
     state = tmp_path / "interleaving-receiver"
     MaintenanceService(state).init("catalog-text-v1", 67_108_864, 0)
@@ -232,7 +256,33 @@ def test_provisional_code_acquisition_exchange_converges_after_finalization(
             assert result["staged_records"] == 0
             assert result["rejected_records"] == 0
         assert selected(receiver)["state"] == "complete"
+        assert not receiver.one(
+            "SELECT 1 FROM code_acquisitions WHERE acquisition_root_id IS NULL"
+        )
         assert code_query(receiver, repo).data["items"]
+        if interrupt == "role-failure":
+            assert current_coverage(receiver) == "conflict"
+            assert code_query(receiver, repo).status == "partial"
+        with receiver.transaction():
+            receiver.execute("DELETE FROM exchange_admissions")
+            receiver.execute("DELETE FROM exchange_local_identities")
+    with Store(state) as receiver:
+        for unit in (provisional[0], complete):
+            with receiver.transaction():
+                assert Graph(receiver.connection).receive(unit)["staged_records"] == 0
+        assert selected(receiver)["state"] == "complete"
+        onward = Graph(receiver.connection).export(repo["repository_uuidv4"])
+    forwarded = tmp_path / "interleaving-onward"
+    MaintenanceService(forwarded).init("catalog-text-v1", 67_108_864, 0)
+    with Store(forwarded) as receiver:
+        with receiver.transaction():
+            assert Graph(receiver.connection).receive(onward)["staged_records"] == 0
+        assert selected(receiver)["state"] == "complete"
+        assert not receiver.one(
+            "SELECT 1 FROM code_acquisitions WHERE acquisition_root_id IS NULL"
+        )
+    if interrupt:
+        return
     # Progress cannot replace another capture or alter already-final facts.
     for field in ("clock", "captured-detail", "final-state"):
         state = tmp_path / ("mismatch-" + field)

@@ -2351,14 +2351,18 @@ class GitHubCollector:
             if row:
                 links[role] = row[0]
         required = {role for role, oid in role_oids.items() if oid is not None}
-        state = (
-            "complete"
-            if same
+        captured_inputs_complete = (
+            same
             and inputs_complete
             and roles_complete
             and listings
-            and required <= links.keys()
             and not any(failure["reason"] == "PR_CODE_RACE" for failure in missing)
+        )
+        state = (
+            "complete"
+            if captured_inputs_complete and required <= links.keys()
+            else "pending"
+            if captured_inputs_complete
             else "partial"
         )
         if not same:
@@ -2378,13 +2382,9 @@ class GitHubCollector:
                 (
                     state,
                     canonical(
-                        {
-                            "race": not same,
-                            "code_inputs_complete": bool(
-                                inputs_complete and roles_complete
-                            ),
-                            "missing": missing,
-                        }
+                        details
+                        if state == "pending"
+                        else {**details, "missing": missing}
                     ),
                     assessment,
                 ),
@@ -2392,7 +2392,7 @@ class GitHubCollector:
             for role, oid in role_oids.items():
                 if oid is not None:
                     self.s.execute(
-                        "INSERT INTO code_acquisitions(code_assessment_id,role,object_format,oid,acquisition_root_id) VALUES(?,?,?,?,?) ON CONFLICT(code_assessment_id,role) DO UPDATE SET acquisition_root_id=excluded.acquisition_root_id",
+                        "INSERT INTO code_acquisitions(code_assessment_id,role,object_format,oid,acquisition_root_id) VALUES(?,?,?,?,?) ON CONFLICT(code_assessment_id,role) DO UPDATE SET acquisition_root_id=coalesce(code_acquisitions.acquisition_root_id,excluded.acquisition_root_id)",
                         (
                             assessment,
                             role,
@@ -2422,7 +2422,7 @@ class GitHubCollector:
             self.coverage_claim(
                 repo["repository_uuidv4"],
                 "pr-code",
-                state if selected is not None else "partial",
+                state if selected is not None and state != "pending" else "partial",
                 observed,
                 {
                     "code_assessment_ids": [assessment],
