@@ -1,0 +1,380 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "source": "/workspace/reviews/publication-free-architecture-final-fafc1b2/src/repo_catalog/__init__.py",
+  "DDL": "bf6deb09471a361918ab9d9e97ca1ba204060ffc78420972775a914357912f26",
+  "map_equal": true,
+  "guard_equal": true,
+  "counts": {
+    "product_tables": 84,
+    "product_columns": 617,
+    "foreign_key_constraints": 141,
+    "views": 20,
+    "triggers": 556,
+    "indexes": 55
+  },
+  "checks": {
+    "foreign_keys_enabled": 1,
+    "recursive_triggers_enabled": 1,
+    "foreign_key_check": [],
+    "integrity_check": [
+      [
+        "ok"
+      ]
+    ]
+  },
+  "views_prepared": 20,
+  "mutations_prepared": 252,
+  "json_inventory": [
+    {
+      "table": "change_request_events",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "change_request_state",
+      "column": "acquisition_scope_json",
+      "category": "current-acquisition",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "change_request_state",
+      "column": "field_evidence_json",
+      "category": "current-field-evidence",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "change_request_state",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "code_assessments",
+      "column": "details_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "code_commits",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "code_file_changes",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "completion_markers",
+      "column": "evidence",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "coverage_claims",
+      "column": "details_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": true
+    },
+    {
+      "table": "current_collection_pages",
+      "column": "members",
+      "category": "current-members",
+      "shape": "array",
+      "nullable": false
+    },
+    {
+      "table": "document_state",
+      "column": "acquisition_scope_json",
+      "category": "current-acquisition",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "document_state",
+      "column": "field_evidence_json",
+      "category": "current-field-evidence",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "document_state",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "exchange_admissions",
+      "column": "local_key_json",
+      "category": "local-key",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "exchange_local_identities",
+      "column": "local_key_json",
+      "category": "local-key",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "exchange_staging",
+      "column": "record_json",
+      "category": "staging-envelope",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "fetch_collections",
+      "column": "scope_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "git_acquisitions",
+      "column": "request",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "git_acquisitions",
+      "column": "roots_manifest",
+      "category": "git-roots",
+      "shape": "array",
+      "nullable": true
+    },
+    {
+      "table": "git_commit_facts",
+      "column": "metadata",
+      "category": "decoded-headers",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "identity_relation_cancellations",
+      "column": "evidence_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "identity_relation_staging",
+      "column": "record_json",
+      "category": "staging-envelope",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "identity_relations",
+      "column": "evidence_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "incremental_scans",
+      "column": "evidence",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "issue_resources",
+      "column": "acquisition_scope_json",
+      "category": "current-acquisition",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "issue_resources",
+      "column": "field_evidence_json",
+      "category": "current-field-evidence",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "issue_resources",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "job_attempts",
+      "column": "checkpoint",
+      "category": "operational",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "jobs",
+      "column": "request",
+      "category": "operational",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "payload_admission_staging",
+      "column": "context_json",
+      "category": "operational",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "repositories",
+      "column": "metadata",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "repository_bindings",
+      "column": "metadata",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "repository_endpoints",
+      "column": "metadata",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "repository_names",
+      "column": "provenance_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "resume_scopes",
+      "column": "request_context",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "review_resources",
+      "column": "acquisition_scope_json",
+      "category": "current-acquisition",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "review_resources",
+      "column": "field_evidence_json",
+      "category": "current-field-evidence",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "review_resources",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "review_thread_state",
+      "column": "acquisition_scope_json",
+      "category": "current-acquisition",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "review_thread_state",
+      "column": "field_evidence_json",
+      "category": "current-field-evidence",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "review_thread_state",
+      "column": "metadata",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "search_documents",
+      "column": "metadata",
+      "category": "operational",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "service_instances",
+      "column": "metadata",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "source_inventory_assessments",
+      "column": "members_json",
+      "category": "inventory-members",
+      "shape": "array",
+      "nullable": false
+    },
+    {
+      "table": "source_inventory_assessments",
+      "column": "scope_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "source_repositories",
+      "column": "field_evidence_json",
+      "category": "current-field-evidence",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "source_repositories",
+      "column": "metadata_json",
+      "category": "provider",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "source_repositories",
+      "column": "scope_json",
+      "category": "authored",
+      "shape": "object",
+      "nullable": false
+    },
+    {
+      "table": "sources",
+      "column": "settings",
+      "category": "operational",
+      "shape": "object",
+      "nullable": true
+    },
+    {
+      "table": "unresolved_payloads",
+      "column": "diagnostic_json",
+      "category": "operational",
+      "shape": "object",
+      "nullable": false
+    }
+  ]
+}

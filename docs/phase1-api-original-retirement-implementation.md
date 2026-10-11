@@ -1,3 +1,9 @@
+# Historical checkpoint
+
+This report preserves Phase 1's scoped implementation. Schema 20 removes the remaining original-dependent mechanisms under [the later accepted reconstruction and implementation](phase2/publication-free-implementation.md); consult that handoff for current behavior and verification status.
+
+---
+
 # Phase 1 implementation: API-original capability retirement
 
 This implements the owner's [Phase 1 decision](phase1-api-original-retirement.md).

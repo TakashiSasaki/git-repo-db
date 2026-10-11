@@ -1,0 +1,7 @@
+{
+  "original_one_source_sha256": "543dc031fa1ca6bcf51287951ea1146551b15f74ffad4981ebc9326a1078e714",
+  "new_two_source_sha256": "19f2f93ac6a39a4dd1965e14fc99c451b39d4e0502ca1bcd50fa7337d861959a",
+  "original_test_function_ast_identical": true,
+  "added_node": "test_real_backslash_bytes_remain_searchable",
+  "original_snapshot_reconstructed_from_exact_original_patch": true
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "file": "test_final_integrated.py",
+    "previous_sha256": "2469b2ba56543d269725ad37ecfa5f84f53f63f4a82dca0ecbf7b9547c9dad3d",
+    "final_sha256": "2469b2ba56543d269725ad37ecfa5f84f53f63f4a82dca0ecbf7b9547c9dad3d",
+    "edit": "unchanged"
+  },
+  {
+    "file": "test_decoder_families.py",
+    "previous_sha256": "ca85b8cb5978042fa2ba717f5c067919cabe6274df497c1a23768133a041af0e",
+    "final_sha256": "ca85b8cb5978042fa2ba717f5c067919cabe6274df497c1a23768133a041af0e",
+    "edit": "unchanged"
+  },
+  {
+    "file": "test_final_followups.py",
+    "previous_sha256": "2ef98cedbecb26826e68e84819517781edd607dee5a1aa1ee3034e14c8eea44e",
+    "final_sha256": "07af9a6f269bcca936fc771405cedb83cf832752e7402625fb797f3ebc2c2a87",
+    "edit": "Use valid typed current-state key so candidate payload rejection cannot be masked by key rejection"
+  }
+]

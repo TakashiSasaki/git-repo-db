@@ -84,14 +84,24 @@ def test_new_graphql_comments_have_bounded_sqlite_work(github_runtime):
             late_replay_steps,
         )
         assert store.one("SELECT count(*) FROM text_bodies")[0] == 1
+        assert store.one("SELECT count(*) FROM documents")[0] == 0
+        assert store.one("SELECT count(*) FROM document_state")[0] == 0
+        assert store.one("SELECT count(*) FROM eligible_review_resources")[0] == 544
+        assert store.one("SELECT count(*) FROM exchange_staging")[0] == 0
+        assert store.one("SELECT count(*) FROM collection_memberships")[0] == 0
+        # Current comments have direct owners and no original/edit-history
+        # store. Check absence without querying a retired table.
         for table in (
-            "documents",
             "document_observations",
             "fetch_occurrences",
-            "collection_memberships",
-            "exchange_staging",
         ):
-            assert store.one(f"SELECT count(*) FROM {table}")[0] == 0
+            assert (
+                store.one(
+                    "SELECT 1 FROM sqlite_schema WHERE type='table' AND name=?",
+                    (table,),
+                )
+                is None
+            )
         assert not store.all("PRAGMA foreign_key_check")
     finally:
         collector.http.close()

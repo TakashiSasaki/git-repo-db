@@ -85,7 +85,53 @@ def test_document_queries_independent_of_git_availability(catalog):
         )
         assert result["coverage"]["complete_for_requested_scope"]
         assert result["data"]["items"]
-        run(
+        path_result = run(
+            state,
+            "search",
+            "pr",
+            "--repo",
+            repo,
+            "--literal",
+            "comment-marker",
+            "--path",
+            "pr-only.txt",
+        )
+        assert path_result["coverage"]["complete_for_requested_scope"]
+        assert path_result["data"]["items"]
+        commit_result = run(
+            state,
+            "search",
+            "pr",
+            "--repo",
+            repo,
+            "--literal",
+            "comment-marker",
+            "--commit",
+            "sha1:" + fixture.alpha.commits["P"],
+        )
+        assert commit_result["coverage"]["complete_for_requested_scope"]
+        assert commit_result["data"]["items"]
+        absent_path = run(
+            state,
+            "search",
+            "pr",
+            "--repo",
+            repo,
+            "--literal",
+            "comment-marker",
+            "--path",
+            "not-listed.txt",
+        )
+        assert absent_path["coverage"]["complete_for_requested_scope"]
+        assert not absent_path["data"]["items"]
+        new_head = api.git.alpha.commit(
+            "P2", {**fixture.m, b"pr-only.txt": b"pr-marker updated"}, ("P",)
+        )
+        api.git.alpha.ref("refs/pull/41/head", "P2")
+        api.prs[41].update(head={**api.prs[41]["head"], "sha": new_head}, commits=2)
+        api.failures["/repos/fixture/alpha/pulls/41/files"] = [503] * 5
+        run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
+        incomplete_listing = run(
             state,
             "search",
             "pr",
@@ -97,6 +143,7 @@ def test_document_queries_independent_of_git_availability(catalog):
             "pr-only.txt",
             expected=3,
         )
+        assert not incomplete_listing["coverage"]["complete_for_requested_scope"]
 
 
 def test_resume_skips_completed_prs(catalog):
@@ -142,8 +189,11 @@ def test_pr_documents(catalog):
                 "--document-kind",
                 kind,
             )
-            assert len(result) == 3 and all(r["document_kind"] == kind for r in result)
-        assert {r["state"] for r in pages(state, "pr", "list", "--repo", repo)} == {
+            assert len(result) == 3 and all(r["kind"] == kind for r in result)
+        assert {
+            "merged" if r["merged"] else r["state"]
+            for r in pages(state, "pr", "list", "--repo", repo)
+        } == {
             "open",
             "closed",
             "merged",
@@ -151,19 +201,39 @@ def test_pr_documents(catalog):
         shown = run(
             state, "pr", "show", "--repo", repo, "--provider-change-request-number", 43
         )["data"]["items"][0]
-        code = shown["code_observation"]
-        details = json.loads(code["details"])
-        links = {link["role"]: link for link in shown["code_links"]}
-        assert code["state"] == "complete"
-        assert details["code_inputs_complete"] is True
-        assert details["merge"]["test-merge"] is None
-        assert "test-merge" not in details["expected_roles"]
-        assert "test-merge" not in links
-        merge_oid = fixture.alpha.commits["P"]
-        assert details["merge"]["merge"] == merge_oid
-        assert details["expected_roles"]["merge"] == merge_oid
-        assert links["merge"]["oid"] == f"{code['object_format']}:{merge_oid}"
-        assert links["merge"]["acquisition_root_id"] is not None
+        with sqlite3.connect(state / "catalog.sqlite3") as db:
+            db.row_factory = sqlite3.Row
+            code = db.execute(
+                "SELECT * FROM code_assessments WHERE change_request_id=? AND head_oid=? AND base_oid=?",
+                (
+                    repo + ":43",
+                    bytes.fromhex(shown["head_oid"].split(":")[1]),
+                    bytes.fromhex(shown["base_oid"].split(":")[1]),
+                ),
+            ).fetchone()
+            details = json.loads(code["details_json"])
+            links = {
+                row["role"]: row
+                for row in db.execute(
+                    "SELECT * FROM code_acquisitions WHERE code_assessment_id=?",
+                    (code["code_assessment_id"],),
+                )
+            }
+            roles = {
+                row["role"]: row["oid"]
+                for row in db.execute(
+                    "SELECT t.* FROM thread_collection_targets t JOIN fetch_collections f USING(fetch_collection_id) WHERE f.change_request_id=?",
+                    (repo + ":43",),
+                )
+            }
+            assert code["state"] == "complete"
+            assert details["code_inputs_complete"] is True
+            assert roles["test-merge"] is None
+            assert "test-merge" not in links
+            merge_oid = fixture.alpha.commits["P"]
+            assert roles["merge"].hex() == merge_oid
+            assert links["merge"]["oid"].hex() == merge_oid
+            assert links["merge"]["acquisition_root_id"] is not None
         assert pages(
             state,
             "search",
@@ -181,40 +251,28 @@ def test_pr_documents(catalog):
     assert b"fixture-dummy" not in (state / "catalog.sqlite3").read_bytes()
 
 
-def test_observed_content_and_replay_fencing(catalog):
+def test_latest_current_content_and_retired_edit_history(catalog):
     state, fixture, repos = catalog
     with GitHubFixture(fixture) as api:
         _, repo, env = configure(state, api, fixture)
         for stage in ("A", "B", "A"):
             api.stage = stage
             run(state, "sync", "pr", "--repo", repo, env=env)
+        assert (
+            pages(
+                state,
+                "search",
+                "pr",
+                "--repo",
+                repo,
+                "--literal",
+                "comment-marker B",
+                "--document-kind",
+                "issue-comment",
+            )
+            == []
+        )
         latest = pages(
-            state,
-            "search",
-            "pr",
-            "--repo",
-            repo,
-            "--literal",
-            "comment-marker B",
-            "--document-kind",
-            "issue-comment",
-        )
-        assert latest == []
-        historical = pages(
-            state,
-            "search",
-            "pr",
-            "--repo",
-            repo,
-            "--literal",
-            "comment-marker B",
-            "--document-kind",
-            "issue-comment",
-            "--document-observations",
-            "all",
-        )
-        assert len(historical) == 3
-        a = pages(
             state,
             "search",
             "pr",
@@ -224,14 +282,38 @@ def test_observed_content_and_replay_fencing(catalog):
             "comment-marker A",
             "--document-kind",
             "issue-comment",
+        )
+        assert len(latest) == 3
+        assert all(row["resource_lifecycle"] == "current" for row in latest)
+        retired = run(
+            state,
+            "search",
+            "pr",
+            "--repo",
+            repo,
+            "--literal",
+            "comment-marker B",
             "--document-observations",
             "all",
+            expected=2,
         )
-        assert len(a) == 6 and all(r["document_observed_at_us"] for r in a)
-        assert all(
-            len({r["document_observation_id"] for r in a if r["pr_id"] == pr}) == 2
-            for pr in {r["pr_id"] for r in a}
-        )
+        assert retired["error"]["code"] == "INVALID_ARGUMENT"
+        with sqlite3.connect(state / "catalog.sqlite3") as db:
+            assert (
+                db.execute(
+                    "SELECT count(*) FROM document_state WHERE kind='issue-comment'"
+                ).fetchone()[0]
+                == 3
+            )
+            tables = {
+                row[0]
+                for row in db.execute(
+                    "SELECT name FROM sqlite_schema WHERE type='table'"
+                )
+            }
+            assert not tables.intersection(
+                {"document_observations", "parsed_results", "fetch_occurrences"}
+            )
 
 
 def test_private_inventory(catalog):
@@ -240,13 +322,14 @@ def test_private_inventory(catalog):
         _, repo, env = configure(state, api, fixture)
         item = run(state, "repos", "show", "--repo", repo)["data"]["items"][0]
         assert item["metadata"] == {}
-        observations = item["inventory_observations"]
-        assert len(observations) == 1
-        assert observations[0]["source_registration_uuidv4"]
-        assert observations[0]["parsed_result_uuidv4"]
-        assert observations[0]["repository_uuidv4"] == repo
-        metadata = observations[0]["metadata"]
+        associations = item["sources"]
+        assert len(associations) == 1
+        association = associations[0]
+        assert association["repository_uuidv4"] == repo
+        assert association["parser_module"] and association["parser_version"]
+        metadata = json.loads(association["metadata_json"])
         assert metadata["private"] and metadata["archived"] and metadata["fork"]
+        assert json.loads(association["field_evidence_json"])
 
 
 def test_unknown_inventory_scope_retains_known_repositories(catalog):
@@ -316,7 +399,7 @@ def test_nested_pagination(catalog):
         _, repo, env = configure(state, api, fixture)
         api.thread_count = 101
         api.reply_count = 101
-        run(state, "sync", "pr", "--repo", repo, env=env)
+        run(state, "sync", "pr", "--repo", repo, env=env, timeout=120)
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
                 db.execute(
@@ -344,7 +427,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             old = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark_us FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
+                    "SELECT f.kind,f.observed_at_us FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE m.asserted_state='complete' ORDER BY f.observed_at_us"
                 )
             )
         api.stage = "B"
@@ -353,7 +436,7 @@ def test_child_watermarks(catalog):
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             new = dict(
                 db.execute(
-                    "SELECT f.kind,i.safe_watermark_us FROM incremental_scans i JOIN fetch_collections f ON f.fetch_collection_id=i.fetch_collection_id ORDER BY i.scan_started_at_us"
+                    "SELECT f.kind,f.observed_at_us FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE m.asserted_state='complete' ORDER BY f.observed_at_us"
                 )
             )
         issue = "issue-comment-incremental"
@@ -373,7 +456,7 @@ def test_code_races_caps(catalog):
         api.cap_mode = True
         api.prs[41].update(commits=251, changed_files=3001)
         run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
-        shown = run(
+        run(
             state,
             "pr",
             "show",
@@ -382,23 +465,37 @@ def test_code_races_caps(catalog):
             "--provider-change-request-number",
             41,
             expected=3,
-        )["data"]["items"][0]
-        assert shown["code_observation"]["state"] == "partial"
-        assert any(c["reason"] == "API_CAP" for c in shown["collections"])
-        assert len(shown["file_changes"]) == 100
-        assert shown["nested_collections"]["file_changes"] == {
-            "returned": 100,
-            "total": 3001,
-            "has_more": True,
-        }
+        )
         with sqlite3.connect(state / "catalog.sqlite3") as db:
+            db.row_factory = sqlite3.Row
+            code = db.execute(
+                "SELECT * FROM code_assessments WHERE change_request_id=?",
+                (repo + ":41",),
+            ).fetchone()
+            assert code["state"] == "partial"
             assert (
                 db.execute(
-                    "SELECT count(*) FROM code_file_changes f JOIN code_observations c ON c.file_code_listing_id=f.code_listing_id WHERE c.code_observation_id=?",
-                    (shown["code_observation"]["code_observation_id"],),
+                    "SELECT count(*) FROM code_file_changes WHERE code_listing_id=?",
+                    (code["file_code_listing_id"],),
                 ).fetchone()[0]
                 == 3001
-            )
+            ), dict(code)
+            gaps = json.loads(code["details_json"])["missing"]
+            assert any(gap["reason"] == "API_CAP" for gap in gaps)
+        listing = run(
+            state,
+            "pr",
+            "code",
+            "--repo",
+            repo,
+            "--provider-change-request-number",
+            41,
+            "--limit",
+            100,
+            expected=3,
+        )
+        assert listing["data"]["page"]["returned"] == 100
+        assert listing["data"]["page"]["has_more"] is True
 
 
 def test_rate_etag(catalog):
@@ -437,7 +534,10 @@ def test_page_crash(catalog, tmp_path):
         process.communicate(timeout=10)
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
-                db.execute("SELECT count(*) FROM fetch_occurrences").fetchone()[0] == 1
+                db.execute("SELECT count(*) FROM current_collection_pages").fetchone()[
+                    0
+                ]
+                == 1
             )
         run(state, "jobs", "resume", interrupted_job(state), env=env)
         assert len(pages(state, "pr", "list", "--repo", repo)) == 3

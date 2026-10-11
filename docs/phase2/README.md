@@ -7,6 +7,7 @@ The owner accepted Q01-B/Q02-B/Q03-B (latest accepted API resource state and cur
 1. [Accepted decision](no-independent-publication-adr.md) and [actual decision register](decision-register.md).
 2. [Reconstructed whole architecture](publication-free-design.md): direct domain ownership, current values and field evidence, local transaction atomicity, separate collection/Git completeness, operational fences, normalized Exchange and retained-content maintenance.
 3. [Implementation and independent-review prompt](publication-free-implementation-prompt.md): substantial integrated changes, required independent post-implementation subagent reviews, corrective iterations and exact-tree acceptance.
+4. [Schema 20 implementation handoff](publication-free-implementation.md), [complete schema map](publication-free-schema-map.json) and [test disposition](publication-free-test-disposition.json): current implementation and outstanding verification gates.
 
 The reconstruction is a logical/implementation contract under the accepted decisions, not an executed complete replacement DDL. It does not mark paused Q05-Q12 recommendations accepted, implement a new retention/cache/trust policy, claim independent subagent approval already happened, or authorize merging/releasing.
 
@@ -18,7 +19,7 @@ Identity and ownership belong to the actual resource. A coherent local update co
 
 Latest-state choices must not become full edit/roster history stored under evidence. Required current origins, genuine unresolved candidates and minimal still-used target/scope evidence remain. Generic raw provider JSON is not an alternative to API-original deletion. Required Git content, exact domain text and CAS-41 remain protected.
 
-The local `Store.publish()` / `publication_seq` role is a revision fence, not an independent domain Publication. Preserve that responsibility with clear naming, without creating a commit-history table. Physical catalog validation and atomic installation are likewise separate.
+Schema 20 names the local revision fence `advance_local_revision()` / `local_revision`; it has no commit-history table. Physical catalog validation and atomic installation are likewise separate.
 
 ## Integration baseline
 

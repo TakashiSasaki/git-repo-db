@@ -1,0 +1,275 @@
+{
+  "source": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "tree": "6f566cb3e91e25facda60671c40108e0a9f8965b",
+  "status": "",
+  "runtime": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/workspace/git-repo-db/.venv/bin/python",
+  "sqlite": "3.53.1",
+  "module_path": "/workspace/reviews/publication-free-domain-qa-corrected/src/repo_catalog/__init__.py",
+  "ddl_sha256": "bf6deb09471a361918ab9d9e97ca1ba204060ffc78420972775a914357912f26",
+  "schema_map_matches": true,
+  "schema_counts": {
+    "tables": 84,
+    "views": 20,
+    "triggers": 556,
+    "indexes": 55
+  },
+  "ordinary_collection": 2128,
+  "ordinary_node_sha256": "bae7189a8b50bca59a19f13501cfb9e833f1cd61551fd7a16cba2f1a97ba7d20",
+  "baseline_node_sha256": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
+  "model": "not exposed",
+  "reasoning_effort": "not exposed",
+  "schema_version": 20,
+  "production_authorship": false,
+  "independent_node_count": 66,
+  "coherent_fresh_execution": true,
+  "test_result": "66 passed, exit 0, no skips or deselections",
+  "scope_findings": {
+    "D1": "resolved by actual exact-final rerun",
+    "D2": "resolved by actual exact-final rerun",
+    "D3": "resolved by actual exact-final rerun",
+    "D4": "resolved by actual exact-final rerun",
+    "D5": "resolved by actual exact-final rerun",
+    "D6": "resolved by actual exact-final rerun"
+  },
+  "prior_scope3_findings": {
+    "tree_entry_NUL_boundary": "passing in final coherent suite",
+    "selected_same_scope_coverage_history": "passing exact-final sequential work count"
+  },
+  "controlled_workloads_order": [
+    "selected coverage history",
+    "selected pending history",
+    "selected authorization volume"
+  ],
+  "measurements": {
+    "selected-coverage-scale": [
+      {
+        "unrelated_claims": 0,
+        "vm_steps": 13942,
+        "statements": 320,
+        "records": 14,
+        "records_identical": true
+      },
+      {
+        "unrelated_claims": 1000,
+        "vm_steps": 13850,
+        "statements": 320,
+        "records": 14,
+        "records_identical": true
+      },
+      {
+        "unrelated_claims": 5000,
+        "vm_steps": 13850,
+        "statements": 320,
+        "records": 14,
+        "records_identical": true
+      }
+    ],
+    "selected-pending-scale": [
+      {
+        "unrelated_pending_roots": 0,
+        "vm_steps": 12648,
+        "statements": 266,
+        "records": 24,
+        "records_identical": true
+      },
+      {
+        "unrelated_pending_roots": 1000,
+        "vm_steps": 12694,
+        "statements": 266,
+        "records": 24,
+        "records_identical": true
+      },
+      {
+        "unrelated_pending_roots": 5000,
+        "vm_steps": 12694,
+        "statements": 266,
+        "records": 24,
+        "records_identical": true
+      }
+    ],
+    "git-authorization-scale": [
+      {
+        "selected_git_objects": 32,
+        "wire_records": 160,
+        "table_record_visits": 320,
+        "authorized_records": 128
+      },
+      {
+        "selected_git_objects": 128,
+        "wire_records": 640,
+        "table_record_visits": 1280,
+        "authorized_records": 512
+      },
+      {
+        "selected_git_objects": 512,
+        "wire_records": 2560,
+        "table_record_visits": 5120,
+        "authorized_records": 2048
+      },
+      {
+        "selected_git_objects": 1024,
+        "wire_records": 5120,
+        "table_record_visits": 10240,
+        "authorized_records": 4096
+      }
+    ]
+  },
+  "exclusive_wall_time_or_throughput_claim": false,
+  "overall_acceptance": false,
+  "limits": [
+    "Complete ordinary execution, lint/format, package execution and hosted CI belong to parent/final verifier.",
+    "No native SQLite 3.45.1 execution, authenticated/live acquisition, snapshot concurrency or full selected-volume CLI benchmark by this reviewer.",
+    "Full integrated diff preserved but not wholly read line by line; manual scope limits in receipt."
+  ],
+  "copied_script_equivalence": {
+    "test_independent_domain_qa.py": true,
+    "test_corrected_crossmod.py": true,
+    "test_corrected_code_proof.py": true,
+    "selected_pending_scale.py": true,
+    "git_authorization_scale.py": true,
+    "selected_coverage_scale.py": "only exact-commit output directory substitution"
+  },
+  "original_artifact_preservation": {
+    "/workspace/review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/metadata.json": {
+      "metadata_sha256": "a1f338af58d1bb39643d04c0e59fa82123d9bc8be3a702615ba465a527e43271",
+      "checked_files": 31,
+      "all_recorded_hashes_unchanged": true
+    },
+    "/workspace/review-artifacts/domain-qa/metadata-final-initial-cafa8a8b143fe095b79f282690a6edf98e6f660e.json": {
+      "metadata_sha256": "e0ebb75248236ef27edb2ea900359dfeb7442ea2a68681beb91ae1baed99452b",
+      "checked_files": 26,
+      "all_recorded_hashes_unchanged": true
+    }
+  },
+  "b86_equal_source_files": {
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py": "b2c1cfd13c907493380df2d113617ad95e7fcfae2525d51c38e28e0514e4232c",
+    "src/repo_catalog/adapters/sqlite/payloads.py": "15e0fff2e2b0c0f10aab6c6bc4c90322c8e06e0afb0a19fe832299b7faf92050",
+    "src/repo_catalog/adapters/sqlite/store.py": "ba628f7d33a29689eee8fbb4eddb894dba6c1512d557ab1cd9dff463b0d3cb6c",
+    "src/repo_catalog/adapters/sqlite/transactions.py": "0fe7bcef262470347c721e64c34ea218a2cfa375725559a11e1ddf6c84959d10",
+    "src/repo_catalog/application/maintenance_service.py": "a041becb14038000b8fa1cf46f10f5eae6274741b276ff1a9fdd8a3b13c465f1",
+    "src/repo_catalog/resources/cas_integrity.sql": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1",
+    "src/repo_catalog/domain/git_intrinsic.py": "cce4ecb75f17dc5c1de454407fd3df3fcce9fb3fcf9d6a08edd3d8ef9cbdf370",
+    "src/repo_catalog/adapters/sqlite/current_collections.py": "1835c8e68f6ba05c7684498abdb1a79782b5f38e979dc3b5033ac891e8bb39ed"
+  },
+  "source_file_sha256": {
+    "src/repo_catalog/__init__.py": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0",
+    "src/repo_catalog/__main__.py": "ee690428669109bc4afce171576c4c3417da09edd37690815793b693fbb54aef",
+    "src/repo_catalog/adapters/filesystem/atomic_publish.py": "b1e4b79e93989d8c4dd5e41f0f5fbbeab41ec72cf6c40ad289f2cb95b656cacd",
+    "src/repo_catalog/adapters/filesystem/cache.py": "847e1ba4e7f12c658c549c7ec05d24ad9156445af6570e9b45307aeb19901b09",
+    "src/repo_catalog/adapters/filesystem/capacity.py": "32d6a00553bea160306ce0c7713a6327135920bf7c5d4690725fa63cf20dd285",
+    "src/repo_catalog/adapters/filesystem/locks.py": "02b3422aa231df94cb5ca5172dae67d907aeec77804502409235e491e525c6da",
+    "src/repo_catalog/adapters/git/importer.py": "e523306b334a4fb697e584eee8ede409b10d09fc4e7487e4016e8fce0608f3cd",
+    "src/repo_catalog/adapters/git/parsing.py": "3ea835b190cd392cf913d539a1d1e18112c6b370bc337597c3fa22afc2c0a323",
+    "src/repo_catalog/adapters/git/runner.py": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
+    "src/repo_catalog/adapters/github/collector.py": "2aed8f291e44d73b03df41dfd97f4b1eee016d59d3d2333e4ac5333b5b070da4",
+    "src/repo_catalog/adapters/github/current_parser.py": "ac544df570f07499f3088d198a51bc708145c7e54a147a74d058eab17ff614c6",
+    "src/repo_catalog/adapters/github/identity.py": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
+    "src/repo_catalog/adapters/github/persistence.py": "184065194fcec2bcdd6b71a6969be419d3b443868382c94309b41c7d91002794",
+    "src/repo_catalog/adapters/github/transport.py": "b970b41099c8e4edb101db67e58047cee8c6132810b13bfc2fca0bc1c2acf714",
+    "src/repo_catalog/adapters/recording.py": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c",
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py": "b2c1cfd13c907493380df2d113617ad95e7fcfae2525d51c38e28e0514e4232c",
+    "src/repo_catalog/adapters/sqlite/coverage.py": "af0434c7f9934b4284ed2c6880dcf763d5bf7b3e8ebf81297bc0bbd76ae3fbc2",
+    "src/repo_catalog/adapters/sqlite/current_api.py": "8f2f2721fede67c0efb726fe1d342b3732f07f21d7e5a0b77633502117fff243",
+    "src/repo_catalog/adapters/sqlite/current_collections.py": "1835c8e68f6ba05c7684498abdb1a79782b5f38e979dc3b5033ac891e8bb39ed",
+    "src/repo_catalog/adapters/sqlite/current_resources.py": "e32f024d5491fc2891b87625f243da8e2699f48d8f7e1f082716dee9af30dc49",
+    "src/repo_catalog/adapters/sqlite/exchange.py": "59a5c773fda4f52947ff99653091983aa13bc774e93b39b13c553c2d93a0e655",
+    "src/repo_catalog/adapters/sqlite/git_intrinsic.py": "89d3e6a80619157062eafeefdc2b79734329a3defda5bde6ede87aba2111585a",
+    "src/repo_catalog/adapters/sqlite/identity_relations.py": "a23044e5049ffc4b55f91871d756643c7b427f3a108ea11304b44ec57efe7f80",
+    "src/repo_catalog/adapters/sqlite/index.py": "0ab64d72151ce7c9956904531b64c5424a0bb527961f4a8757535366baa27fa9",
+    "src/repo_catalog/adapters/sqlite/json_contracts.py": "bf9306f603f64d020572c8528a0518d5369599a26db262d57a88bb8d47909430",
+    "src/repo_catalog/adapters/sqlite/payloads.py": "15e0fff2e2b0c0f10aab6c6bc4c90322c8e06e0afb0a19fe832299b7faf92050",
+    "src/repo_catalog/adapters/sqlite/schema.py": "2308ae883bc9ebfba7eae970a4d5d2a5eb83a4d8d7dd89046330e80d20268864",
+    "src/repo_catalog/adapters/sqlite/store.py": "ba628f7d33a29689eee8fbb4eddb894dba6c1512d557ab1cd9dff463b0d3cb6c",
+    "src/repo_catalog/adapters/sqlite/target.py": "6d7cbb10afe505950ebed1fdea7a037920be23e3fe10770047d086f1cb7c9cbc",
+    "src/repo_catalog/adapters/sqlite/text_bodies.py": "a82e87a56ca071e5ce69717acb6523b78c03cbe5df8cdf82851f8721b61c74f1",
+    "src/repo_catalog/adapters/sqlite/transactions.py": "0fe7bcef262470347c721e64c34ea218a2cfa375725559a11e1ddf6c84959d10",
+    "src/repo_catalog/application/catalog_validation.py": "6c181c086ac005c804ddfc3622af5ee08f7c7e2836de5ef95e9d111e4c1f7c21",
+    "src/repo_catalog/application/collection_service.py": "d15286cdf8a91875ec4270bf412fc169d9412dca6cb178e5b29c7e1205a5c3f5",
+    "src/repo_catalog/application/contracts.py": "c977b61d03abd239d9049a0c668eedcbf2bd684047c43df2b0710379c2ea5d4b",
+    "src/repo_catalog/application/exchange_service.py": "978ba1d010a371365400f15090707f6570f01e2580ed5545c4ad7e0b39a22231",
+    "src/repo_catalog/application/git_query_context.py": "e6a41f528469c551a1503cbf37fa962469f3c66b9090dbc1fdb037bddde5f13a",
+    "src/repo_catalog/application/identity_service.py": "07e138bddf9485bc8756b6caa0643a388c2d9e6781113fd8c95b84f71a5efd97",
+    "src/repo_catalog/application/issue_queries.py": "474e375ee88fad1050433be37e665d6802b6b6817ec951cfb016394917f7d295",
+    "src/repo_catalog/application/job_plans.py": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a",
+    "src/repo_catalog/application/job_service.py": "fa1a3569fe537205763fe4e62641e5d69f220a21fe07bc587b119d34253bf1cd",
+    "src/repo_catalog/application/maintenance_service.py": "a041becb14038000b8fa1cf46f10f5eae6274741b276ff1a9fdd8a3b13c465f1",
+    "src/repo_catalog/application/parser_service.py": "7b8ae7e23d9b8f1add4a520fcad22c6e0d0745d561af2d46aecc5bd1d623518a",
+    "src/repo_catalog/application/parsing_service.py": "11cfc45eae63094e6deff0b46a070320fb120376eb5fc5baa76a38105bee8d45",
+    "src/repo_catalog/application/ports.py": "ff7589d9a2b5ef75cea2b305f3854af67a1c995f42688417b3c392f38e90ff14",
+    "src/repo_catalog/application/pr_queries.py": "2bc343c0d290ca0303b850cfa9368d325d31d494dbfa333b2fe4d11107ebd27c",
+    "src/repo_catalog/application/query_service.py": "fa44dc0b64b7af21629a43f5638d2e2e9a71125d01add4dc3373a071ea2119ee",
+    "src/repo_catalog/application/repository_identity.py": "9225b46edba2f0be92929905c64ad9afb4bfef1f8b6d5721a4840cb3ac036e94",
+    "src/repo_catalog/application/source_service.py": "5a9c21c7e598b41ab1a5dc7704dfcbbaeaf51fdb36acc08c938a463f3766307e",
+    "src/repo_catalog/application/target_queries.py": "ce5e725ea0e05748337defa4fe7759b47d2baa04988d5f612d1e1d0d4bf0c1e0",
+    "src/repo_catalog/cli/main.py": "fe4f3e5da23a3823a95cdaac5c16f51a1fc4467ccb7a4579352b2b8554633606",
+    "src/repo_catalog/cli/presenters.py": "9a1c6f5649750007ed263b566db6c7d77199ce77202a80699e73663bd5816198",
+    "src/repo_catalog/config.py": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785",
+    "src/repo_catalog/domain/coverage.py": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81",
+    "src/repo_catalog/domain/current_state.py": "52a69c094eabaa206598d2c5e0a669c7740eaca4a9572bd272263774dce30449",
+    "src/repo_catalog/domain/document.py": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548",
+    "src/repo_catalog/domain/git_decoding.py": "3bc407c5e193b37075c51241859fb0da82a1f3cf7d0ac571a7cda5cd8fae8ccf",
+    "src/repo_catalog/domain/git_intrinsic.py": "cce4ecb75f17dc5c1de454407fd3df3fcce9fb3fcf9d6a08edd3d8ef9cbdf370",
+    "src/repo_catalog/domain/git_object.py": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7",
+    "src/repo_catalog/domain/models.py": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b",
+    "src/repo_catalog/domain/payload.py": "e8b830b9ddcebdd61e2739f646e1565cdea34facb9b3513b9756cb06ae6d6208",
+    "src/repo_catalog/domain/pr_scope.py": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a",
+    "src/repo_catalog/domain/time.py": "eb4dc47a917797cdc210daa500a9c7e2a792708554d5f8717fce8ff72075d647",
+    "src/repo_catalog/resources/cas_integrity.sql": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1",
+    "src/repo_catalog/resources/catalog3.sql": "d61e2e02c9315a544476ace312a0fa85af26549fac56a4761f590a60817d93da",
+    "src/repo_catalog/resources/current_api.sql": "92ee7f293ab1c1f9827b1f79d08a330ae7e4121cba02ddf36b2f2d96e68fa039",
+    "src/repo_catalog/resources/current_collections.sql": "ac5ec2df8955bc856e0fcd19f6bc04d9caddbe902d6137bf1064b61e1cdf04bc",
+    "src/repo_catalog/resources/current_resources.sql": "0a7a5fdfe024578ee008cff8b3f409c48a2c9b1d0da242122fd7bb7d16dcbf5f",
+    "src/repo_catalog/resources/exchange.sql": "d60fef0e3cca2825a072d239e8c05c1bb9919036472ad84c1f0e49f213fd33ee",
+    "src/repo_catalog/resources/git_domain.sql": "31611b0dfd641694198dde519f58180f4a0b7a257400c57a77e79325cfd99f9c",
+    "src/repo_catalog/resources/git_facts.sql": "2a484c252c973af52f70e4f7d4120c7e633a4db381e67b4adb16215ba6c214df",
+    "src/repo_catalog/resources/identity_relations.sql": "b596bb6b9a20552501ad411bf33053edee9565e6414e2e4fc9870f100e766461",
+    "src/repo_catalog/resources/json_contracts.sql": "594ac9b539ef089138b7f4353f017b5d9af75c0adae6ed1f612164f79e853795",
+    "src/repo_catalog/resources/pr_threads.graphql": "1bdf8a80df5221a44f3f5365d83dad8bfc5f7b203fbb11cba6c196c5816401e9",
+    "src/repo_catalog/resources/schemas/cli-v1.schema.json": "c6093eae50b54e27eb032238d0284cc6cca3f49a4e7875498a8241ee2775264e",
+    "src/repo_catalog/resources/thread_comments.graphql": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4"
+  },
+  "removed_synthetic_fixture_directories": [
+    "/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/disposable-correctness",
+    "/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/pending-scale-ijurkboj",
+    "/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/authorization-scale-7rncswbx",
+    "/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/__pycache__"
+  ],
+  "artifact_sha256": {
+    "baseline-ordinary-nodes.txt": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
+    "binding-exploratory-error.txt": "d4800de1f5c0454ec1bac97250dbe1dada30553e4ddf80d8e40c2d4f5e2efcac",
+    "binding.json": "d193510a660f6f655d1cb0e7603d2b5afccf58345a4984a462d452f4e6ea55a2",
+    "binding.txt": "d193510a660f6f655d1cb0e7603d2b5afccf58345a4984a462d452f4e6ea55a2",
+    "collection-bindings-comparison.json": "c763443893f4530bdb12b933a5ec8e985d37047ab735d155954f5c548b9b19df",
+    "current-ordinary-collection.txt": "f4ac09fabce2a80a881f846e993fe6e54cdeed140847ecd8ece512b9a61cc4fc",
+    "current-ordinary-nodes.txt": "bae7189a8b50bca59a19f13501cfb9e833f1cd61551fd7a16cba2f1a97ba7d20",
+    "disposition-actual.json": "e6a16004cc78ccd9e2945485affa6297f38aecfdf1c955d67e0c20a9702bc903",
+    "disposition-audit-v2.txt": "408ab582c815ef224657b90c10dc5e4e97f95c1c2ddd9c5705afe88e8d8f7727",
+    "disposition-audit.txt": "ad611ce49c0b336cb19354feb91aa04fa4cfb7d6067b8be2689673e2a26fea30",
+    "final-json-correction.patch": "5320aa240988d1c577ee37ab86520d05f830dd88715075afec81e70cf57e1762",
+    "final-production-diff.patch": "e4a3e587835016122d50a4a0955db9c466381f1a04eedcfb1e0781db0c053731",
+    "finalize_artifacts.py": "1c298b35bb7d5dd940a81c52d76204e5dea59055a5f3f3af4bc244f79a5f7a34",
+    "full-baseline-diff.patch": "425931a45d299e51901b3b10b71bc6a35bcb1ea0a26e64b5df53fcce5d1c56b6",
+    "git-authorization-scale-fafc1b2d4d2e1986768143cc71a0e55cba943ba3.json": "12ea8aaf696e6e92b91ad5deac93eb1a2a0b2c1a7922a7b50c497bde1a36eec0",
+    "git-authorization-scale.txt": "12ea8aaf696e6e92b91ad5deac93eb1a2a0b2c1a7922a7b50c497bde1a36eec0",
+    "git_authorization_scale.py": "4d406d565ee7535ee580bff96274f4f66d22d8f36db0cb8acf2b34356543aab6",
+    "publication-free-schema-map.json": "a248b7c4a6abbdf7d7d882211cd769323281964b172d9f7065869ba72104ebd3",
+    "publication-free-test-disposition.json": "0cf9f2589c6a5e6720fa3e8b7bba85c489e80928080cdbc94e6231c77460226c",
+    "publication_free_node_dispositions.json": "eaa9418854f728980840585acc62bf4e143d79dcad9d5d41f5819e3795c4178c",
+    "pytest-combined-66.txt": "40306d5eae99a7c11bff096a5f7bef80877fa6ea103d2271ff6d3e972b4e14ce",
+    "receipt.md": "9ec43cb7d9ebc92ecb33a96d1f4a59831b8cb72520409246051fa139e900304d",
+    "record_binding.py": "6a1d5d326a0bcfba583308f99e39dbd4909608244a8e5e5b5e732fbc230f0826",
+    "schema-map-actual.json": "a248b7c4a6abbdf7d7d882211cd769323281964b172d9f7065869ba72104ebd3",
+    "schema20_contract_replacements.json": "7ab28cb31664a252c8d0fc1dc2353ea8a57fe13728ef53b01ea8398fc696a382",
+    "selected-coverage-scale-fafc1b2d4d2e1986768143cc71a0e55cba943ba3.json": "e7f449feb9aed9607b9b85f2893c5d1ca7981bac999e6e30d05e4f44bbf26d65",
+    "selected-coverage-scale.txt": "e7f449feb9aed9607b9b85f2893c5d1ca7981bac999e6e30d05e4f44bbf26d65",
+    "selected-pending-scale-fafc1b2d4d2e1986768143cc71a0e55cba943ba3.json": "3ee985f9875170f1f61d8010c0a40ae3c13a74587c69a571c96c503b82d0d846",
+    "selected-pending-scale.txt": "3ee985f9875170f1f61d8010c0a40ae3c13a74587c69a571c96c503b82d0d846",
+    "selected_coverage_scale.py": "7af4dd0eb0dbfcf660c6bf0b407cf7be353d4c4f421c0b8891b5bc482f54c71b",
+    "selected_pending_scale.py": "a787d654b9a94fa9a3985be99aa72075a80f79ef82c3e68906dddd94d365ba55",
+    "test_corrected_code_proof.py": "71c6eb586a944273c7aa519b849311241d064f5005d84d856419308cd49df1eb",
+    "test_corrected_crossmod.py": "77bd08fe740b244a125ea68de09c5b99876fd3b691fa19ffdf092ae39296253d",
+    "test_final_boundaries.py": "bb74b1475d275c78feea2fc9a432b4391d3d3787bf479a6db036c3965169255f",
+    "test_independent_domain_qa.py": "fb0de46f3d6a5633407fe1de506fa004159d0bc02f7d4b552bb74e69453d7f8e"
+  }
+}

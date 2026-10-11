@@ -56,7 +56,12 @@ def exit_code(result=None, error=None):
             return 3
         if error.code == "CANCELLED":
             return 130
-        if error.code in ("INVALID_ARGUMENT", "CONFIG_ERROR", "PROFILE_UNSUPPORTED"):
+        if error.code in (
+            "INVALID_ARGUMENT",
+            "CONFIG_ERROR",
+            "PROFILE_UNSUPPORTED",
+            "TEXT_UNAVAILABLE",
+        ):
             return 2
         if error.code in (
             "NOT_FOUND",

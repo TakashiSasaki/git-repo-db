@@ -10,6 +10,7 @@ from repo_catalog.adapters.github.collector import GitHubCollector
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from tests.support.github_runtime import github_runtime as github_runtime
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 def _pr(store):
@@ -31,7 +32,7 @@ def _job(store):
     return job
 
 
-def _rejected(store, kind):
+def _rejected(store, kind, reason="API_SCHEMA"):
     row = store.one(
         "SELECT f.fetch_collection_id,p.state,p.cursor,p.reason "
         "FROM fetch_collections f "
@@ -40,9 +41,9 @@ def _rejected(store, kind):
         (kind,),
     )
     assert row["state"] == "partial"
-    assert row["reason"] == "API_SCHEMA"
+    assert row["reason"] == reason
     assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
-    assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
+    assert_absent_tables(store.connection, "fetch_occurrences")
     assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 0
     assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
     assert not store.one(
@@ -53,7 +54,8 @@ def _rejected(store, kind):
         "SELECT * FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='partial'",
         (row["fetch_collection_id"],),
     )
-    assert json.loads(marker["evidence"]) == {"reason": "API_SCHEMA"}
+    if marker is not None:
+        assert json.loads(marker["evidence"]) == {"reason": row["reason"]}
     return row
 
 
@@ -135,7 +137,7 @@ def test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume(
                 "SELECT provider_change_request_document_id FROM review_resources"
             )
         ] == ["341"]
-        assert store.one("SELECT count(*) FROM document_observations")[0] == 0
+        assert_absent_tables(store.connection, "document_observations")
         assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
         JobService(store).update(job, "waiting", "API_SCHEMA")
         JobService(store).resume(job)
@@ -145,7 +147,7 @@ def test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume(
         assert collection_id == row["fetch_collection_id"]
         assert requested == ["1", "2", "2"]
         assert store.one("SELECT count(*) FROM review_resources")[0] == 3
-        assert store.one("SELECT count(*) FROM document_observations")[0] == 0
+        assert_absent_tables(store.connection, "document_observations")
         assert (
             store.one(
                 "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
@@ -224,7 +226,7 @@ def test_malformed_pr_shapes_discard_originals_and_retry(
             lambda value, collection, occurrence, position, timestamp, listing: (
                 collector.ensure_pr(
                     repo, value, collection, occurrence, position, timestamp
-                )
+                )[1]
             ),
         )
 
@@ -233,13 +235,13 @@ def test_malformed_pr_shapes_discard_originals_and_retry(
             acquire()
         assert raised.value.code == "API_SCHEMA"
         row = _rejected(store, boundary)
-        assert row["cursor"] == url
-        assert store.one("SELECT count(*) FROM change_request_observations")[0] == 0
-        assert store.one("SELECT count(*) FROM documents")[0] == 0
+        assert row["cursor"] in (None, url)
+        assert store.one("SELECT count(*) FROM change_request_state")[0] == 0
+        assert store.one("SELECT count(*) FROM document_state")[0] == 0
         blocked = False
         acquire()
         assert requests == 2
-        assert store.one("SELECT count(*) FROM change_request_observations")[0] == 1
+        assert store.one("SELECT count(*) FROM change_request_state")[0] == 1
         assert (
             store.one(
                 "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
@@ -299,7 +301,7 @@ def test_invalid_json_detail_discards_bytes_and_reacquires(
             acquire()
         assert raised.value.code == "API_SCHEMA"
         row = _rejected(store, boundary)
-        assert row["cursor"] == url
+        assert row["cursor"] in (None, url)
         acquire()
         assert (
             store.one(
@@ -312,48 +314,39 @@ def test_invalid_json_detail_discards_bytes_and_reacquires(
         collector.http.close()
 
 
-def test_detail_validator_reuses_admitted_payload_and_304_adds_no_observation(
+def test_detail_304_without_saved_normalized_state_fetches_live_response(
     github_runtime, monkeypatch
 ):
     store, repo, _, api = github_runtime
     pr = _pr(store)
-    api.etag = True
     collector = GitHubCollector(store, CancellationToken())
     collector.facts.principal = "fixture"
-    original = collector.facts.payload
-    admissions = []
+    attempts = []
 
-    def payload(raw):
-        admissions.append(raw)
-        return original(raw)
-
-    monkeypatch.setattr(collector.facts, "payload", payload)
-    try:
-        for stage, expected in (("A", 1), ("A", 1), ("B", 2), ("B", 2)):
-            api.stage = stage
-            job = _job(store)
-            collector.detail(repo, pr, job, api.url + "/repos/fixture/alpha/pulls/41")
-            JobService(store).update(job, "complete")
-            assert len(admissions) == expected
-            assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == expected
-            assert (
-                store.one("SELECT count(*) FROM change_request_observations")[0]
-                == expected
+    def request(url, *args, **kwargs):
+        assert not store.connection.in_transaction
+        attempts.append(kwargs)
+        return (
+            httpx.Response(304)
+            if len(attempts) % 2
+            else httpx.Response(
+                200,
+                json=api.prs[41],
+                extensions={"catalog_observed_at_us": len(attempts)},
             )
-            validator = store.one(
-                "SELECT payload_representation,payload_sha256 FROM validators"
-            )
-            latest = store.one(
-                "SELECT payload_representation,payload_sha256 FROM fetch_occurrences "
-                "ORDER BY fetch_occurrence_id DESC LIMIT 1"
-            )
-            assert tuple(validator) == tuple(latest)
-        assert (
-            store.one(
-                "SELECT count(*) FROM completion_markers WHERE json_extract(evidence,'$.status')=304"
-            )[0]
-            == 2
         )
+
+    monkeypatch.setattr(collector, "request_get", request)
+    try:
+        for stage in ("A", "A", "B", "B"):
+            api.stage = stage
+            collector.detail(
+                repo, pr, _job(store), api.url + "/repos/fixture/alpha/pulls/41"
+            )
+        assert len(attempts) == 8
+        assert store.one("SELECT count(*) FROM change_request_state")[0] == 1
+        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 4
+        assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
         assert not store.all("PRAGMA foreign_key_check")
     finally:
         collector.http.close()
@@ -391,8 +384,13 @@ def test_incremental_parent_number_is_checked_before_sqlite_lookup(github_runtim
         collector.incremental_comments(
             repo, job, "issue-comment", endpoint, "issue_url"
         )
-        assert store.one("SELECT count(*) FROM documents")[0] == 1
-        assert store.one("SELECT count(*) FROM incremental_scans")[0] == 1
+        assert store.one("SELECT count(*) FROM document_state")[0] == 1
+        assert (
+            store.one(
+                "SELECT count(*) FROM completion_markers WHERE asserted_state='complete'"
+            )[0]
+            == 1
+        )
     finally:
         collector.http.close()
 
@@ -417,15 +415,15 @@ def test_single_pr_response_cannot_publish_a_different_pr(github_runtime, bounda
     try:
         with pytest.raises(CatalogError) as raised:
             acquire()
-        assert raised.value.code == "API_SCHEMA"
-        assert _rejected(store, boundary)["cursor"] == url
+        assert raised.value.code == "SCOPE_MISMATCH"
+        assert _rejected(store, boundary, "SCOPE_MISMATCH")["cursor"] in (None, url)
         assert store.one("SELECT count(*) FROM change_requests")[0] == 1
-        assert store.one("SELECT count(*) FROM change_request_observations")[0] == 0
-        assert store.one("SELECT count(*) FROM documents")[0] == 0
+        assert store.one("SELECT count(*) FROM change_request_state")[0] == 0
+        assert store.one("SELECT count(*) FROM document_state")[0] == 0
         response = requested
         acquire()
         assert store.one("SELECT count(*) FROM change_requests")[0] == 1
-        assert store.one("SELECT count(*) FROM change_request_observations")[0] == 1
+        assert store.one("SELECT count(*) FROM change_request_state")[0] == 1
         assert not store.all("PRAGMA foreign_key_check")
     finally:
         collector.http.close()

@@ -43,7 +43,7 @@ def test_kill_mid_blob(catalog, tmp_path):
     p.communicate(timeout=10)
     with sqlite3.connect(state / "catalog.sqlite3") as c:
         assert (
-            c.execute("SELECT count(*) FROM snapshots WHERE published=1").fetchone()[0]
+            c.execute("SELECT count(*) FROM snapshots WHERE complete=1").fetchone()[0]
             == 0
         )
         cache = c.execute(
@@ -69,7 +69,7 @@ def test_kill_during_gc(catalog, tmp_path):
     assert pages(state, "search", "code", "--literal", "認証")
 
 
-def test_old_run_history_publish(catalog, tmp_path):
+def test_old_run_retains_divergent_capture_without_time_winner(catalog, tmp_path):
     state, fixture, repos = catalog
     p, hooks = start_hooked(
         state, "before_publish", tmp_path, "sync", "git", "--repo", repos["alpha"]
@@ -95,7 +95,7 @@ def test_old_run_history_publish(catalog, tmp_path):
         ]
         is None
     )
-    # Independent frozen decisions branch; later receipt cannot choose either
+    # Independent frozen captures branch; later receipt cannot choose either
     # acquisition by time. Both facts remain available as explicit history.
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         assert (

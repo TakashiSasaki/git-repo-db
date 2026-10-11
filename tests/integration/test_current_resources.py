@@ -14,6 +14,7 @@ from repo_catalog.adapters.sqlite.schema import (
     schema_sql,
 )
 from repo_catalog.domain.models import CatalogError
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @pytest.fixture
@@ -70,8 +71,35 @@ def issue(resources, **changes):
         "parsed_at_us": 1,
         "parser_module": parser_module,
         "parser_version": "1",
-        "metadata": {"labels": ["synthetic"], "nested": {"known": True}},
+        "metadata": {
+            "labels": [{"name": "synthetic"}],
+            "milestone": {"title": "retained"},
+        },
         "acquisition_scope": {**context, "endpoint": "issues"},
+        **changes,
+    }
+
+
+def review_comment(resources, provider_id, **changes):
+    _, context, parser_module, change, _ = resources
+    return {
+        **context,
+        "kind": "review-comment",
+        "change_request_id": change,
+        "provider_change_request_document_id": provider_id,
+        "body": f"review comment {provider_id}",
+        "provider_updated_at_us": 10,
+        "provider_clock_scope": "github-review-comment-updated-at",
+        "observed_at_us": 0,
+        "parsed_at_us": 1,
+        "parser_module": parser_module,
+        "parser_version": "1",
+        "metadata": {},
+        "acquisition_scope": {
+            **context,
+            "change_request_id": change,
+            "endpoint": "review-comments",
+        },
         **changes,
     }
 
@@ -79,6 +107,89 @@ def issue(resources, **changes):
 def current(adapter, table="issue_resources"):
     row = adapter.c.execute(f"SELECT * FROM {table}").fetchone()
     return adapter.candidate_from_row(table, row) if row is not None else None
+
+
+def test_live_page_admission_promotes_reply_when_parent_arrives_later(resources):
+    adapter, *_ = resources
+    child = review_comment(resources, "2", in_reply_to_provider_resource_id="1")
+    parent = review_comment(resources, "1")
+    revision, _ = adapter.capture_context(parent["acquisition_scope"])
+
+    results = adapter.admit_live_page([child, parent], base_revision=revision)
+
+    assert [result.status for result in results] == ["missing_dependency", "accepted"]
+    assert adapter.c.execute("SELECT count(*) FROM review_resources").fetchone()[0] == 2
+    assert adapter.c.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
+    assert adapter.c.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_live_page_prefetch_observes_an_earlier_same_page_write(resources):
+    adapter, *_ = resources
+    first = review_comment(
+        resources, "1", body="first value", provider_updated_at_us=10
+    )
+    second = review_comment(
+        resources, "1", body="later value", provider_updated_at_us=20
+    )
+    revision, _ = adapter.capture_context(first["acquisition_scope"])
+
+    results = adapter.admit_live_page([first, second], base_revision=revision)
+
+    assert [result.status for result in results] == ["accepted", "accepted"]
+    assert current(adapter, "review_resources")["body"] == "later value"
+
+
+def test_live_page_later_resource_clears_earlier_staged_value(resources):
+    adapter, *_ = resources
+    first = review_comment(
+        resources, "2", in_reply_to_provider_resource_id="1", body="reply"
+    )
+    second = review_comment(
+        resources, "2", body="standalone", provider_updated_at_us=20
+    )
+    revision, _ = adapter.capture_context(first["acquisition_scope"])
+
+    results = adapter.admit_live_page([first, second], base_revision=revision)
+
+    assert [result.status for result in results] == ["missing_dependency", "accepted"]
+    assert current(adapter, "review_resources")["body"] == "standalone"
+    assert adapter.c.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
+
+
+def test_live_page_admission_rolls_back_when_later_resource_has_wrong_owner(resources):
+    adapter, context, _, change, _ = resources
+    first = review_comment(resources, "1")
+    other_repository, other_binding = str(uuid.uuid4()), str(uuid.uuid4())
+    adapter.c.execute(
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'other','{}')",
+        (other_repository,),
+    )
+    adapter.c.execute(
+        "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata) VALUES(?,?,?,'12','{}')",
+        (other_binding, other_repository, context["service_instance_uuidv4"]),
+    )
+    invalid = review_comment(
+        resources,
+        "2",
+        repository_uuidv4=other_repository,
+        repository_binding_id=other_binding,
+        acquisition_scope={
+            **context,
+            "repository_uuidv4": other_repository,
+            "repository_binding_id": other_binding,
+            "change_request_id": change,
+            "endpoint": "review-comments",
+        },
+    )
+    revision, _ = adapter.capture_context(first["acquisition_scope"])
+
+    with pytest.raises(
+        CatalogError, match="Review does not match its parent change request"
+    ):
+        adapter.admit_live_page([first, invalid], base_revision=revision)
+
+    assert adapter.c.execute("SELECT count(*) FROM review_resources").fetchone()[0] == 0
+    assert adapter.c.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
 
 
 def test_shared_physical_storage_replaces_marker_and_review_history(resources):
@@ -131,10 +242,7 @@ def test_shared_physical_storage_replaces_marker_and_review_history(resources):
         ).fetchall()
         == []
     )
-    assert (
-        adapter.c.execute("SELECT count(*) FROM document_observations").fetchone()[0]
-        == 0
-    )
+    assert_absent_tables(adapter.c, "document_observations")
     assert adapter.c.execute("PRAGMA foreign_key_check").fetchall() == []
 
 
@@ -157,7 +265,7 @@ def test_edit_and_identical_refresh_have_no_normalized_versions(resources):
     assert current(adapter)["body"] == "edited"
     assert adapter.c.execute("SELECT count(*) FROM issue_resources").fetchone()[0] == 1
     assert adapter.c.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 2
-    assert adapter.c.execute("SELECT count(*) FROM parsed_results").fetchone()[0] == 0
+    assert_absent_tables(adapter.c, "parsed_results")
 
 
 def test_current_admission_rejects_unsupported_replay_without_catalog_changes(
@@ -285,13 +393,16 @@ def test_partial_and_provider_null_are_distinct_from_empty_and_missing(resources
     adapter, *_ = resources
     adapter.admit(issue(resources), source="import")
     partial = issue(
-        resources, provider_updated_at_us=20, metadata={"nested": {"new": True}}
+        resources, provider_updated_at_us=20, metadata={"milestone": {"state": "open"}}
     )
     for field in ("body", "title"):
         partial.pop(field)
     assert adapter.admit(partial, source="import").status == "accepted"
     assert current(adapter)["body"].endswith("\x00suffix")
-    assert current(adapter)["metadata"]["nested"] == {"known": True, "new": True}
+    assert current(adapter)["metadata"]["milestone"] == {
+        "title": "retained",
+        "state": "open",
+    }
     null = {**partial, "body_status": "provider-null", "provider_updated_at_us": 30}
     assert adapter.admit(null, source="import").status == "accepted"
     assert current(adapter)["body"] is None

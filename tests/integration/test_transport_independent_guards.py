@@ -71,9 +71,14 @@ def detached_catalog():
         )
     # Only empty legacy tables are removed. Foreign keys remain enabled, and
     # actual current writes must prepare their triggers against the reduced DB.
+    existing = {
+        row[0]
+        for row in db.execute("SELECT name FROM sqlite_schema WHERE type='table'")
+    }
     for table in LEGACY_STORES:
-        assert db.execute(f"SELECT count(*) FROM {table}").fetchone()[0] == 0
-        db.execute(f"DROP TABLE {table}")
+        if table in existing:
+            assert db.execute(f"SELECT count(*) FROM {table}").fetchone()[0] == 0
+            db.execute(f"DROP TABLE {table}")
     assert db.execute("PRAGMA foreign_keys").fetchone()[0] == 1
     yield db, owners
     assert db.execute("PRAGMA foreign_key_check").fetchall() == []
@@ -118,7 +123,12 @@ def test_current_json_triggers_have_no_legacy_store_dependencies(detached_catalo
         "SELECT name,sql FROM sqlite_schema WHERE type='trigger' "
         "AND (name LIKE 'json_issue_resources_%' OR name LIKE 'json_review_resources_%')"
     ).fetchall()
-    assert len(triggers) == 8
+    assert {trigger["name"] for trigger in triggers} == {
+        f"json_{table}_{column}_{operation}"
+        for table in ("issue_resources", "review_resources")
+        for column in ("metadata", "acquisition_scope_json", "field_evidence_json")
+        for operation in ("insert", "update")
+    }
     for trigger in triggers:
         for table in LEGACY_STORES:
             assert not re.search(r"\b" + table + r"\b", trigger["sql"]), (

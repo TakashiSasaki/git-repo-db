@@ -1,0 +1,9 @@
+{
+  "version": "3.45.1",
+  "official_archive": "/workspace/review-artifacts/schema-a1-b86/sqlite345/amalgamation.zip",
+  "official_archive_sha256": "5592243caf28b2cdef41e6ab58d25d653dfc53deded8450eb66072c929f030c4",
+  "source": "/workspace/review-artifacts/schema-a1-b86/sqlite345/sqlite-amalgamation-3450100/sqlite3.c",
+  "source_sha256": "1a206854aa9fe0ccc1b609f5cfce67eb52ac0a8f5aa2f5e853f7c3ed84c710ab",
+  "compile_command": "gcc -O2 -fPIC -shared -DSQLITE_ENABLE_FTS5 /workspace/review-artifacts/schema-a1-b86/sqlite345/sqlite-amalgamation-3450100/sqlite3.c -o /workspace/review-artifacts/final-integrated/sqlite345-fts5/lib/libsqlite3.so.0 -ldl -lpthread -lm",
+  "reason": "Original official native library lacked FTS5; unchanged independent counterexamples require trigram index execution"
+}

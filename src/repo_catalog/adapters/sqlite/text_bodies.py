@@ -9,7 +9,11 @@ from repo_catalog.domain.models import CatalogError
 
 
 def intern_text_body(
-    db: sqlite3.Connection, body: str, *, expected_sha256: bytes | None = None
+    db: sqlite3.Connection,
+    body: str,
+    *,
+    expected_sha256: bytes | None = None,
+    identity_cache=None,
 ) -> bytes:
     """Resolve by SHA-256, checking bytes before reusing an existing body.
 
@@ -27,6 +31,13 @@ def intern_text_body(
         raise CatalogError(
             "TEXT_BODY_DIGEST_MISMATCH", "Text does not match its SHA-256"
         )
+    if identity_cache is not None and digest in identity_cache:
+        cached_body, cached_length = identity_cache[digest]
+        if cached_body != body or cached_length != byte_length:
+            raise CatalogError(
+                "TEXT_BODY_IDENTITY_CONFLICT", "Same SHA-256 identifies different text"
+            )
+        return digest
     stored = db.execute(
         "SELECT body,byte_length FROM text_bodies WHERE sha256=?", (digest,)
     ).fetchone()
@@ -35,9 +46,13 @@ def intern_text_body(
             raise CatalogError(
                 "TEXT_BODY_IDENTITY_CONFLICT", "Same SHA-256 identifies different text"
             )
+        if identity_cache is not None:
+            identity_cache[digest] = (body, byte_length)
         return digest
     db.execute(
         "INSERT INTO text_bodies(body,byte_length,sha256) VALUES(?,?,?)",
         (body, byte_length, digest),
     )
+    if identity_cache is not None:
+        identity_cache[digest] = (body, byte_length)
     return digest

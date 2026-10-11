@@ -1,0 +1,32 @@
+{
+  "source": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "tree": "6f566cb3e91e25facda60671c40108e0a9f8965b",
+  "cwd": "/workspace/reviews/publication-free-domain-qa-corrected",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "repo_catalog": "/workspace/reviews/publication-free-domain-qa-corrected/src/repo_catalog/__init__.py",
+  "state": "/workspace/review-artifacts/domain-qa/fafc1b2d4d2e1986768143cc71a0e55cba943ba3/pending-scale-ijurkboj",
+  "measurements": [
+    {
+      "unrelated_pending_roots": 0,
+      "vm_steps": 12648,
+      "statements": 266,
+      "records": 24,
+      "records_identical": true
+    },
+    {
+      "unrelated_pending_roots": 1000,
+      "vm_steps": 12694,
+      "statements": 266,
+      "records": 24,
+      "records_identical": true
+    },
+    {
+      "unrelated_pending_roots": 5000,
+      "vm_steps": 12694,
+      "statements": 266,
+      "records": 24,
+      "records_identical": true
+    }
+  ]
+}

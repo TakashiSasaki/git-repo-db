@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 22 items / 20 deselected / 2 selected
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_commit_parent_interruption_and_process_death_rollback[sha1] PASSED [ 50%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_commit_parent_interruption_and_process_death_rollback[sha256] PASSED [100%]
+
+======================= 2 passed, 20 deselected in 2.42s =======================

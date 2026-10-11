@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 23 items / 22 deselected / 1 selected
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_direct_raw_git_mapping_cannot_assert_fake_oid FAILED [100%]
+
+=================================== FAILURES ===================================
+______________ test_direct_raw_git_mapping_cannot_assert_fake_oid ______________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:446: in test_direct_raw_git_mapping_cannot_assert_fake_oid
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "fake declared Git OID became available"
+E   AssertionError: fake declared Git OID became available
+E   assert not <sqlite3.Row object at 0x7fe1d3be2170>
+E    +  where <sqlite3.Row object at 0x7fe1d3be2170> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7fe1d3c339e0>.one
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_direct_raw_git_mapping_cannot_assert_fake_oid
+======================= 1 failed, 22 deselected in 0.55s =======================

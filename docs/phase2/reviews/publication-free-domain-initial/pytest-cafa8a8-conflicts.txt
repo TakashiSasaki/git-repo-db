@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 25 items / 23 deselected / 2 selected
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_equal_clock_current_conflicts_survive_repeat_and_onward PASSED [ 50%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_cas41_mismatch_precedes_new_copy_diagnosis PASSED [100%]
+
+======================= 2 passed, 23 deselected in 6.87s =======================

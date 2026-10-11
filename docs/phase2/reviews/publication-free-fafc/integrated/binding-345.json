@@ -1,0 +1,11 @@
+{
+  "commit": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "tree": "6f566cb3e91e25facda60671c40108e0a9f8965b",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "sqlite": "3.45.1",
+  "module": "/workspace/reviews/publication-free-final-verifier-fafc1b2/src/repo_catalog/__init__.py",
+  "schema": 20,
+  "ddl": "bf6deb09471a361918ab9d9e97ca1ba204060ffc78420972775a914357912f26",
+  "sqlite_library": "/workspace/review-artifacts/schema-a1-b86/sqlite345/lib/libsqlite3.so.0",
+  "sqlite_library_sha256": "59e250f15ce8a511aefd49b29ad7577234ce3de532f54559a501676902b61106"
+}

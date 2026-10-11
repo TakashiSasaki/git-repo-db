@@ -1,6 +1,7 @@
 """Full maintenance checks independently validate Git identity above physical CAS."""
 
 import hashlib
+import sqlite3
 
 import pytest
 
@@ -25,9 +26,24 @@ def test_full_check_detects_wrong_git_identity_with_valid_physical_bytes(
             "INSERT INTO git_objects(object_format,oid,type,size,verified) VALUES('sha1',?,'blob',5,1)",
             (b"x" * 20 if forged else oid,),
         ).lastrowid
-        store.execute(
-            "INSERT INTO git_object_payloads VALUES(?,?,?)", (obj, *ref.parameters())
-        )
+        mapping = "INSERT INTO git_object_payloads VALUES(?,?,?)"
+        if forged:
+            # Actual DDL rejects this identity before it can become a mapping.
+            with pytest.raises(sqlite3.IntegrityError, match="identity mismatch"):
+                store.execute(mapping, (obj, *ref.parameters()))
+            assert not store.one(
+                "SELECT 1 FROM git_object_payloads WHERE git_object_id=?", (obj,)
+            )
+            # Retained-data fault injection is separate from normal admission:
+            # restore the guard before testing independent full maintenance.
+            guard = store.one(
+                "SELECT sql FROM sqlite_schema WHERE name='git_object_payloads_identity'"
+            )[0]
+            store.execute("DROP TRIGGER git_object_payloads_identity")
+            store.execute(mapping, (obj, *ref.parameters()))
+            store.execute(guard)
+        else:
+            store.execute(mapping, (obj, *ref.parameters()))
     with Store(state) as store:
         assert verify_all(store.connection, diagnose=False)["unexplained"] == []
         assert check_catalog(store) == []

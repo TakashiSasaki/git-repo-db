@@ -37,7 +37,7 @@ def configure_source(state_dir, selector, input_path):
                 "UPDATE sources SET settings=? WHERE source_id=?",
                 (source["settings"], source["source_id"]),
             )
-            store.publish()
+            store.advance_local_revision()
             return Result(
                 {
                     "source_id": source["source_id"],

@@ -5,11 +5,14 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.collection_service import CollectionService
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.maintenance_service import MaintenanceService
+from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CatalogError
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @pytest.fixture
@@ -72,8 +75,11 @@ def test_missing_explicit_credentials_creates_no_job_or_remote_evidence(state):
     assert error.value.code == "SOURCE_CREDENTIAL_UNAVAILABLE"
     with Store(state) as store:
         assert store.one("SELECT count(*) FROM jobs")[0] == 0
-        assert store.one("SELECT count(*) FROM source_input_observations")[0] == 0
-        assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+        assert_absent_tables(
+            store.connection, "source_input_observations", "inventory_observations"
+        )
+        assert store.one("SELECT count(*) FROM source_inventory_assessments")[0] == 0
+        assert store.one("SELECT count(*) FROM source_repositories")[0] == 0
 
 
 def test_plan_saves_credential_reference_not_value(state, monkeypatch):
@@ -100,23 +106,46 @@ def test_plan_saves_credential_reference_not_value(state, monkeypatch):
         )
 
 
-def test_manual_inventory_has_source_owned_raw_input_and_result(state):
+def test_manual_inventory_has_source_owned_current_roster_and_assessment(state):
     source = add_manual(state)
     response = CollectionService(state).discover(source)
     with Store(state) as store:
-        row = store.one(
-            "SELECT o.*,r.owner_kind FROM inventory_observations o JOIN parsed_results r USING(parsed_result_uuidv4)"
-        )
-        assert row["owner_kind"] == "source"
+        row = store.one("SELECT * FROM source_inventory_assessments")
+        assert row["source_id"] == source
+        assert row["state"] == "complete" and row["terminal"] == 1
+        association = store.one("SELECT * FROM source_repositories")
+        assert association["source_id"] == source
+        assert json.loads(row["members_json"]) == [association["repository_uuidv4"]]
+        scope = json.loads(row["scope_json"])
         assert (
-            store.one(
-                "SELECT count(*) FROM parsed_result_inputs WHERE parsed_result_uuidv4=?",
-                (row["parsed_result_uuidv4"],),
+            scope["source_registration_uuidv4"]
+            == store.one(
+                "SELECT source_registration_uuidv4 FROM sources WHERE source_id=?",
+                (source,),
             )[0]
-            == 1
         )
-        assert store.one("SELECT count(*) FROM current_inventory_observations")[0] == 1
-        assert store.one("SELECT count(*) FROM repository_name_observations")[0] == 1
+        assert (
+            scope["kind"] == "manual_git"
+            and scope["endpoint"] == "file:///synthetic/source.git"
+        )
+        assert (
+            association["parser_module"]
+            == row["parser_module"]
+            == "repo_catalog.manual_source"
+        )
+        assert association["parser_version"] == row["parser_version"] == "1"
+        assert association["name"] == "source"
+        evidence = json.loads(association["field_evidence_json"])
+        assert evidence['["name"]']["acquisition_scope"] == scope
+        assert_absent_tables(
+            store.connection,
+            "source_input_observations",
+            "inventory_observations",
+            "parsed_results",
+            "parsed_result_inputs",
+            "current_inventory_observations",
+            "repository_name_observations",
+        )
         attempt = store.one(
             "SELECT a.state,a.checkpoint FROM job_attempts a WHERE job_id=?",
             (response.data["job_id"],),
@@ -127,6 +156,103 @@ def test_manual_inventory_has_source_owned_raw_input_and_result(state):
             == "complete"
         )
         assert store.all("PRAGMA foreign_key_check") == []
+
+
+def test_equal_clock_inventory_member_sets_remain_ambiguous(state):
+    source = add_manual(state)
+    CollectionService(state).discover(source)
+    with Store(state) as store:
+        original = store.one(
+            "SELECT * FROM source_inventory_assessments WHERE source_id=?",
+            (source,),
+        )
+        CurrentApiState(store).assess_source_inventory(
+            source,
+            scope=json.loads(original["scope_json"]),
+            observed_at_us=original["observed_at_us"],
+            state="complete",
+            members=[],
+            terminal=True,
+            parser_module=original["parser_module"],
+            parser_version=original["parser_version"],
+        )
+        assessments = store.all(
+            "SELECT members_json FROM source_inventory_assessments WHERE source_id=? AND scope_key=? AND observed_at_us=? AND state='complete' ORDER BY members_json",
+            (source, original["scope_key"], original["observed_at_us"]),
+        )
+        assert {tuple(json.loads(row["members_json"])) for row in assessments} == {
+            (),
+            tuple(json.loads(original["members_json"])),
+        }
+    result = QueryService(state).query("repos list", {"source": source}, limit=100)
+    assert result.status == "partial"
+    assert {(gap["kind"], gap["reason"]) for gap in result.coverage.missing} == {
+        ("inventory", "inventory_incomplete")
+    }
+
+
+def test_native_sql_scope_key_cannot_hide_inventory_ambiguity(state):
+    source = add_manual(state)
+    CollectionService(state).discover(source)
+    with Store(state) as store:
+        original = store.one(
+            "SELECT * FROM source_inventory_assessments WHERE source_id=?",
+            (source,),
+        )
+        assert json.loads(original["members_json"])
+        store.execute(
+            "INSERT INTO source_inventory_assessments(source_id,scope_key,scope_json,observed_at_us,state,terminal,members_json,parser_module,parser_version,reason) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (
+                source,
+                "forged-scope-key",
+                original["scope_json"] + " ",
+                original["observed_at_us"],
+                original["state"],
+                original["terminal"],
+                "[]",
+                original["parser_module"],
+                original["parser_version"],
+                original["reason"],
+            ),
+        )
+        assert (
+            store.one(
+                "SELECT count(*) FROM source_inventory_assessments WHERE source_id=?",
+                (source,),
+            )[0]
+            == 2
+        )
+    result = QueryService(state).query("repos list", {"source": source}, limit=100)
+    assert result.status == "partial"
+    assert {(gap["kind"], gap["reason"]) for gap in result.coverage.missing} == {
+        ("inventory", "inventory_incomplete")
+    }
+
+
+def test_equal_clock_terminal_variants_remain_distinct(state):
+    source = add_manual(state)
+    CollectionService(state).discover(source)
+    with Store(state) as store:
+        original = store.one(
+            "SELECT * FROM source_inventory_assessments WHERE source_id=?",
+            (source,),
+        )
+        for terminal in (False, True):
+            CurrentApiState(store).assess_source_inventory(
+                source,
+                scope=json.loads(original["scope_json"]),
+                observed_at_us=original["observed_at_us"],
+                state="partial",
+                members=json.loads(original["members_json"]),
+                terminal=terminal,
+                parser_module=original["parser_module"],
+                parser_version=original["parser_version"],
+            )
+        variants = store.all(
+            "SELECT terminal FROM source_inventory_assessments WHERE source_id=? AND state='partial' ORDER BY terminal",
+            (source,),
+        )
+        assert [row["terminal"] for row in variants] == [0, 1]
 
 
 def test_bulk_zero_usable_sources_creates_no_job(state):
@@ -167,7 +293,8 @@ def test_cancelled_discovery_attempt_is_interrupted(state):
     assert error.value.code == "CANCELLED"
     with Store(state) as store:
         assert store.one("SELECT state FROM job_attempts")[0] == "interrupted"
-        assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+        assert_absent_tables(store.connection, "inventory_observations")
+        assert store.one("SELECT count(*) FROM source_inventory_assessments")[0] == 0
 
 
 def test_bulk_mixed_sources_persist_partial_result_with_complete_attempt(state):
@@ -186,7 +313,9 @@ def test_bulk_mixed_sources_persist_partial_result_with_complete_attempt(state):
         saved = json.loads(row["checkpoint"])["result"]
         assert saved["status"] == "partial"
         assert len(saved["skipped_sources"]) == 1
-        assert store.one("SELECT count(*) FROM source_input_observations")[0] == 1
+        assert_absent_tables(store.connection, "source_input_observations")
+        assert store.one("SELECT count(*) FROM source_inventory_assessments")[0] == 1
+        assert store.one("SELECT count(*) FROM source_repositories")[0] == 1
 
 
 def test_credentials_lost_after_job_creation_complete_partial_without_evidence(
@@ -209,8 +338,11 @@ def test_credentials_lost_after_job_creation_complete_partial_without_evidence(
     assert result.status == "partial"
     with Store(state) as store:
         assert store.one("SELECT state FROM job_attempts")[0] == "complete"
-        assert store.one("SELECT count(*) FROM source_input_observations")[0] == 0
-        assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+        assert_absent_tables(
+            store.connection, "source_input_observations", "inventory_observations"
+        )
+        assert store.one("SELECT count(*) FROM source_inventory_assessments")[0] == 0
+        assert store.one("SELECT count(*) FROM source_repositories")[0] == 0
 
 
 def test_explicit_configuration_reuses_source_registration_and_does_not_rewrite_job(

@@ -212,6 +212,8 @@ class GitHubFixture:
                 for i in range(start, min(count, start + 100))
             ]
             pr = {
+                "id": f"PR{n}",
+                "number": n,
                 "mergeCommit": {"oid": self.git.alpha.commits["P"]}
                 if v["number"] == 43
                 else None,
@@ -359,13 +361,13 @@ class GitHubFixture:
         if collection == "timeline":
             return [
                 {"id": 400 + n, "event": "closed"},
-                {"event": "referenced"},
-                {"event": "referenced"},
+                {"id": 500 + n, "event": "referenced"},
+                {"id": 600 + n, "event": "referenced"},
             ], {}
         if collection == "commits":
             if self.cap_mode and n == 41:
                 return [{"sha": f"{i:040x}"} for i in range(251)], {}
-            return [{"sha": self.git.alpha.commits["P"]}], {}
+            return [{"sha": self.prs[n]["head"]["sha"]}], {}
         if collection == "files":
             if self.cap_mode and n == 41:
                 return [

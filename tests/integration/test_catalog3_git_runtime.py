@@ -5,9 +5,9 @@ import copy
 import pytest
 
 from repo_catalog.adapters.git.importer import GitImporter
+from repo_catalog.adapters.git.parsing import reparse_git
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.job_service import JobService
-from repo_catalog.application.parsing_service import ParsingService
 from repo_catalog.application.repository_identity import add_endpoint
 from repo_catalog.config import DEFAULTS, serialize
 from repo_catalog.domain.models import CancellationToken, CatalogError
@@ -45,9 +45,8 @@ def collect(store, repo, token=None, job=None):
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-@pytest.mark.parametrize("select", [False, True])
 def test_core_reparse_retains_git_content_and_acquisition_without_http_inputs(
-    tmp_path, fmt, select
+    tmp_path, fmt
 ):
     fixture = FixtureRepo(tmp_path / "remote.git", fmt)
     fixture.commit("A", {b"body.txt": b"exact Git bytes\r\n"})
@@ -60,7 +59,6 @@ def test_core_reparse_retains_git_content_and_acquisition_without_http_inputs(
             table: [tuple(row) for row in store.all(f"SELECT * FROM {table}")]
             for table in (
                 "git_acquisitions",
-                "git_acquisition_publications",
                 "stored_bytes",
                 "payloads",
                 "git_object_payloads",
@@ -68,23 +66,17 @@ def test_core_reparse_retains_git_content_and_acquisition_without_http_inputs(
             )
         }
         previous = store.one("SELECT snapshot_id FROM current_snapshots")[0]
-        result = ParsingService(store).reparse(acquisition, select=select)
+        result = reparse_git(store, acquisition)
         assert result["git_acquisition_id"] == acquisition
-        assert result["selected"] is select
-        assert store.one("SELECT snapshot_id FROM current_snapshots")[0] == (
-            result["snapshot_id"] if select else previous
-        )
-        assert store.one(
-            "SELECT 1 FROM commits WHERE parsed_result_uuidv4=?",
-            (result["parsed_result_uuidv4"],),
-        )
-        assert store.one(
-            "SELECT 1 FROM parsed_result_publications WHERE parsed_result_uuidv4=?",
-            (result["parsed_result_uuidv4"],),
-        )
+        assert result["decoded_objects"] > 0
+        assert store.one("SELECT snapshot_id FROM current_snapshots")[0] == previous
+        assert store.one("SELECT 1 FROM commits")
+        assert not store.one("SELECT 1 FROM sqlite_schema WHERE name='parsed_results'")
         for table, rows in before.items():
             assert [tuple(row) for row in store.all(f"SELECT * FROM {table}")] == rows
-        assert not store.one("SELECT 1 FROM fetch_occurrences")
+        assert not store.one(
+            "SELECT 1 FROM sqlite_schema WHERE name='fetch_occurrences'"
+        )
         assert not store.one(
             "SELECT 1 FROM payloads WHERE representation='decoded_api'"
         )
@@ -138,7 +130,7 @@ def test_catalog3_git_preserves_roots_bytes_parents_and_new_observations(tmp_pat
             == 4
         )
         assert (
-            store.one("SELECT published FROM snapshots WHERE snapshot_id=?", (sid,))[0]
+            store.one("SELECT complete FROM snapshots WHERE snapshot_id=?", (sid,))[0]
             == 1
         )
         oid = bytes.fromhex(fixture.commits["M"])
@@ -272,7 +264,7 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
         collect(store, repo, job=job)
         assert old != newest
         assert (
-            store.one("SELECT published FROM snapshots WHERE snapshot_id=?", (old,))[0]
+            store.one("SELECT complete FROM snapshots WHERE snapshot_id=?", (old,))[0]
             == 1
         )
         # Independent acquisitions froze their predecessors before either
@@ -283,12 +275,7 @@ def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(
             )[0]
             is None
         )
-        assert (
-            store.one(
-                "SELECT count(*) FROM fact_selection_decisions d JOIN fact_selection_scopes s USING(fact_selection_scope_uuidv4) WHERE s.git_acquisition_id IS NULL"
-            )[0]
-            == 2
-        )
+        assert store.one("SELECT count(*) FROM snapshots WHERE complete=1")[0] == 2
         assert store.one("SELECT count(*) FROM coverage_claims")[0] == 4
         assert {
             (row["coverage_state"], row["observed_at_us"])
@@ -314,7 +301,7 @@ def test_unverified_imported_oid_needs_actual_bytes_before_admission(tmp_path):
             )[0]
             == 1
         )
-        assert store.one("SELECT raw_text FROM current_git_text_facts")[0] == "abc"
+        assert store.one("SELECT raw_text FROM git_text_facts")[0] == "abc"
 
 
 def test_unknown_provider_binding_admits_one_proven_identity(tmp_path):

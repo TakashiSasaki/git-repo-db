@@ -76,7 +76,7 @@ CREATE INDEX review_resources_thread ON review_resources(change_request_id,revie
 
 CREATE VIEW current_resource_diagnostics AS
  SELECT table_name,record_key,repository_uuidv4,reason,record_json
- FROM exchange_staging WHERE table_name IN ('issue_resources','review_resources') AND reason LIKE 'current_state:%';
+ FROM exchange_staging WHERE table_name IN ('issue_resources','review_resources','change_request_state','document_state','review_thread_state','source_repositories') AND reason LIKE 'current_state:%';
 CREATE VIEW eligible_issue_resources AS
  SELECT r.* FROM issue_resources r
  WHERE NOT EXISTS(SELECT 1 FROM current_resource_diagnostics d WHERE d.table_name='issue_resources' AND d.reason='current_state:conflict' AND json_extract(d.record_json,'$.service_instance_uuidv4')=r.service_instance_uuidv4 AND json_extract(d.record_json,'$.kind')=r.kind AND json_extract(d.record_json,'$.provider_resource_id')=r.provider_resource_id)

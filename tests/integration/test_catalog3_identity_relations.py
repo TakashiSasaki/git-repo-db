@@ -88,7 +88,11 @@ def test_names_keep_independent_observations_and_ambiguous_resolution(catalog):
     store, (a, b, _) = catalog
     first = observe_name(store, a, "historical", 0)
     second = observe_name(store, a, "historical", 0)
-    assert first != second
+    # Local aliases retain their natural identity, rather than an observation
+    # ID per repeated name. The same alias on a different repository remains
+    # ambiguous and never merges the two repository identities.
+    assert first == second == (a, "historical")
+    assert store.one("SELECT count(*) FROM repository_names")[0] == 1
     assert store.one("SELECT count(*) FROM repository_observed_names")[0] == 1
     assert select_repositories(store, ("historical",))[0]["repository_uuidv4"] == a
     observe_name(store, b, "historical", 1)

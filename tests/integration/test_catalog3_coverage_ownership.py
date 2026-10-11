@@ -101,7 +101,7 @@ def test_unknown_or_cross_repository_coverage_owner_is_rejected_before_writing(
 
 
 def test_explicit_owner_admission_preserves_original_details_and_caller_rollback(store):
-    original = '{ "observed": "first", "spacing": true }'
+    original = '{ "reason" : "first advisory with preserved spacing" }'
     with store.transaction():
         first = store.coverage(
             "00000000-0000-4000-8000-000000000301",
@@ -117,7 +117,7 @@ def test_explicit_owner_admission_preserves_original_details_and_caller_rollback
                 "00000000-0000-4000-8000-000000000301",
                 "git",
                 "complete",
-                '{"ignored":true}',
+                '{"reason":"ignored duplicate advisory"}',
                 change_request_id="00000000-0000-4000-8000-000000000302",
                 observed_at_us=10,
             )
@@ -128,7 +128,7 @@ def test_explicit_owner_admission_preserves_original_details_and_caller_rollback
                 "00000000-0000-4000-8000-000000000301",
                 "git",
                 "partial",
-                '{"stale":true}',
+                '{"reason":"stale advisory"}',
                 change_request_id="00000000-0000-4000-8000-000000000302",
                 observed_at_us=9,
             )
@@ -174,7 +174,7 @@ def test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection(st
         store.execute(
             "INSERT INTO coverage_scopes(coverage_scope_id,repository_uuidv4,kind) VALUES('scope','00000000-0000-4000-8000-000000000301','git')"
         )
-        original = '{ "source": "explicit negative ID" }'
+        original = '{ "reason": "explicit negative ID advisory" }'
         store.execute(
             "INSERT INTO coverage_claims(coverage_claim_id,coverage_scope_id,coverage_state,observed_at_us,details_json) VALUES(-1,'scope','complete',1,?)",
             (original,),

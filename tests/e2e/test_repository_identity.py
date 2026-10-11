@@ -1,3 +1,4 @@
+import json
 import sqlite3
 import uuid
 
@@ -336,6 +337,90 @@ def test_instance_scoped_native_ids_and_conflicts(catalog):
         ]
         == "IDENTITY_CONFLICT"
     )
+
+
+def test_manual_git_discovery_preserves_optional_service_scope(catalog):
+    state, fixture, repos = catalog
+    service = run(
+        state,
+        "instances",
+        "add",
+        "gitlab",
+        "--name",
+        "gl-a",
+        "--web-base-url",
+        "https://code.example.net:8443",
+        "--api-base-url",
+        "https://code.example.net:8443/api/v4",
+    )["data"]["service_instance_uuidv4"]
+    run(
+        state,
+        "repos",
+        "bind",
+        "--repo",
+        repos["alpha"],
+        "--instance",
+        service,
+        "--provider-repo-id",
+        "42",
+    )
+    bound = run(
+        state,
+        "sources",
+        "add",
+        "git-url",
+        "--name",
+        "bound-manual-source",
+        "--url",
+        fixture.alpha.url,
+        "--instance",
+        "gl-a",
+        "--provider-repo-id",
+        "42",
+    )["data"]["source_id"]
+    result = run(state, "discover", "--source", bound)
+    assert result["data"]["repositories"][0]["repository_uuidv4"] == repos["alpha"]
+
+    unbound = run(
+        state,
+        "sources",
+        "add",
+        "git-url",
+        "--name",
+        "unbound-manual-source",
+        "--url",
+        fixture.beta.url,
+        "--repo",
+        repos["beta"],
+    )["data"]["source_id"]
+    unbound_result = run(state, "discover", "--source", unbound)
+    assert (
+        unbound_result["data"]["repositories"][0]["repository_uuidv4"] == repos["beta"]
+    )
+
+    with sqlite3.connect(state / "catalog.sqlite3") as db:
+        registrations = dict(
+            db.execute(
+                "SELECT source_id,source_registration_uuidv4 FROM sources WHERE source_id IN (?,?)",
+                (bound, unbound),
+            )
+        )
+        bound_scope = json.loads(
+            db.execute(
+                "SELECT scope_json FROM source_repositories WHERE source_id=? AND repository_uuidv4=?",
+                (bound, repos["alpha"]),
+            ).fetchone()[0]
+        )
+        unbound_scope = json.loads(
+            db.execute(
+                "SELECT scope_json FROM source_repositories WHERE source_id=? AND repository_uuidv4=?",
+                (unbound, repos["beta"]),
+            ).fetchone()[0]
+        )
+    assert bound_scope["service_instance_uuidv4"] == service
+    assert bound_scope["source_registration_uuidv4"] == registrations[bound]
+    assert unbound_scope["source_registration_uuidv4"] == registrations[unbound]
+    assert "service_instance_uuidv4" not in unbound_scope
 
 
 def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):

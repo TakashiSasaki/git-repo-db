@@ -1,0 +1,79 @@
+{
+  "baseline": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "production_changes": [],
+  "original_nodes": 201,
+  "replacement_nodes": 209,
+  "removed_baseline_nodes": [],
+  "added_regression_function": "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention",
+  "functions": [
+    {
+      "original_function": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge",
+      "replacement_function": "tests/integration/test_catalog3_coverage.py::test_duplicate_and_stale_input_are_noops_without_advisory_merge",
+      "reason": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent",
+      "replacement_function": "tests/integration/test_catalog3_coverage.py::test_export_transports_latest_set_and_repeated_admission_is_idempotent",
+      "reason": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates",
+      "replacement_function": "tests/integration/test_catalog3_coverage.py::test_structure_retains_immutable_claims_and_prevents_semantic_duplicates",
+      "reason": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids",
+      "replacement_function": "tests/integration/test_catalog3_coverage.py::test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids",
+      "reason": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates",
+      "replacement_function": "tests/integration/test_catalog3_coverage.py::test_all_local_ids_reject_collision_replacement_and_updates",
+      "reason": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation",
+      "replacement_function": "tests/integration/test_catalog3_coverage.py::test_explicit_id_conflict_can_only_be_ignored_without_mutation",
+      "reason": "Replace unmodeled synthetic advisory keys with distinct modeled reason strings. Preserve exact authored incumbent JSON text/spacing, immutable/local-ID collision behavior, no-op admission, unchanged selected latest set and all baseline parameter IDs."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
+      "replacement_function": "tests/integration/test_catalog3_coverage_ownership.py::test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
+      "reason": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
+      "replacement_function": "tests/integration/test_catalog3_coverage_ownership.py::test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
+      "reason": "Use modeled advisory reason strings while preserving explicit repository/PR ownership, exact authored details bytes, ignored duplicate/stale no-op behavior and caller rollback."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details",
+      "replacement_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_current_conflict_preserves_separate_latest_claim_details",
+      "reason": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
+      "replacement_function": "tests/integration/test_catalog3_coverage_queries.py::test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
+      "reason": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage",
+      "replacement_function": "tests/integration/test_catalog3_coverage_queries.py::test_document_only_queries_ignore_code_only_coverage",
+      "reason": "Replace arbitrary producer/old/code-only synthetic keys with modeled reason strings; preserve every separate latest candidate detail, no historical complete fallback and query-specific scope selection."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution",
+      "replacement_function": "tests/integration/test_catalog3_identity_relations.py::test_names_keep_independent_observations_and_ambiguous_resolution",
+      "reason": "Retire only the per-observation surrogate distinction for repeated same local alias: natural(repository,name) association remains one row and returns one stable key. Preserve ambiguous resolution across distinct repository identities with the same alias."
+    },
+    {
+      "original_function": "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work",
+      "replacement_function": "tests/integration/test_catalog3_github_scaling.py::test_new_graphql_comments_have_bounded_sqlite_work",
+      "reason": "Keep original 32-new/32-replay VM measurements at 64 versus512 prior comments and1.5 growth bound,544 direct/current eligible review owners and one shared text body. Replace only document_observations/fetch_occurrences queries with sqlite_schema absence checks; preserve existing collection_memberships zero-count assertion and actual direct current/eligible owner counts."
+    }
+  ],
+  "design_basis": [
+    "publication-free-design.md section 6: five-column claims, latest observation candidate set, optional advisory details; absent certificate does not invalidate claim",
+    "publication-free-design.md sections 8-9: modeled portable current resources and rejection of original-bearing pending/authored JSON"
+  ]
+}

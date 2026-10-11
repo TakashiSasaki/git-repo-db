@@ -1,20 +1,19 @@
 """Agreed provider scopes, natural thread keys, and no second Node-ID identity."""
 
 import sqlite3
-import uuid
 
 import pytest
 
 from repo_catalog.adapters.github.identity import database_resource_id
+from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.adapters.sqlite.current_resources import CurrentResources
-from repo_catalog.adapters.sqlite.parser_model import ParserModel
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.cli.main import parser
 from repo_catalog.domain.document import DocumentKey
 from repo_catalog.domain.models import CatalogError
 from tests.integration.test_catalog3_document_identity import catalog as catalog
 from tests.integration.test_catalog3_document_identity import observe
-from tests.support.parser_facts import new_result, register_test_profile
+from tests.support.domain_facts import candidate
 
 
 def test_no_normalized_node_or_local_thread_id(catalog):
@@ -40,7 +39,7 @@ def thread(store, owner, resource):
 
 
 def current_review_comment(store, owner, resource, body, *, thread_id=None):
-    """Admit an explicit current comment with separately selected thread history."""
+    """Admit a current comment with a typed current thread parent."""
     binding = store.one(
         "SELECT c.repository_uuidv4,c.repository_binding_id,b.service_instance_uuidv4 "
         "FROM change_requests c JOIN repository_bindings b USING(repository_binding_id) "
@@ -53,33 +52,19 @@ def current_review_comment(store, owner, resource, body, *, thread_id=None):
         "endpoint": "synthetic-provider-identity",
     }
     if thread_id is not None:
-        model = ParserModel(store.connection)
-        profile = register_test_profile(store.connection)
-        model.ensure_scope_profile(
-            profile,
-            repository_uuidv4=binding["repository_uuidv4"],
-            fact_kind="review-thread",
-        )
-        result = new_result(store.connection, binding["repository_uuidv4"])
-        store.execute(
-            "INSERT INTO review_thread_observations(thread_observation_uuidv4,"
-            "repository_uuidv4,change_request_id,provider_resource_id,parsed_result_uuidv4,"
-            "observed_at_us,payload) VALUES(?,?,?,?,?,0,'{}')",
-            (
-                str(uuid.uuid4()),
-                binding["repository_uuidv4"],
-                owner,
-                thread_id,
-                result,
+        number = int(owner.removeprefix("pr"))
+        result = CurrentApiState(store).admit(
+            "review_thread_state",
+            candidate(
+                number,
+                kind="review-thread",
+                provider_resource_id=thread_id,
+                resolved=False,
+                observed_at_us=0,
             ),
+            source="import",
         )
-        model.publish_result(result)
-        model.select_fact(
-            result,
-            fact_kind="review-thread",
-            change_request_id=owner,
-            provider_resource_id=thread_id,
-        )
+        assert result.status in {"accepted", "identical"}
     admitted = CurrentResources(store).admit(
         {
             **dict(binding),
@@ -141,8 +126,7 @@ def test_comment_thread_fk_requires_same_change_request(catalog):
 
 def test_nodes_do_not_bridge_distinct_documents_or_reject_changed_alias(catalog):
     _, store = catalog
-    # PR conversation comments retain immutable observed history. Node aliases
-    # remain provider metadata and cannot bridge two natural document keys.
+    # Node aliases remain current provider metadata; natural keys retain identity.
     a = DocumentKey("pr1", "issue-comment", "100")
     b = DocumentKey("pr1", "issue-comment", "101")
     with store.transaction():
@@ -150,13 +134,16 @@ def test_nodes_do_not_bridge_distinct_documents_or_reject_changed_alias(catalog)
         observe(store, a, "second", 1, node="new-node")
         observe(store, b, "third", 2, node="new-node")
     assert store.one("SELECT count(*) FROM documents")[0] == 2
-    assert store.one("SELECT count(*) FROM document_observations")[0] == 3
+    assert store.one("SELECT count(*) FROM document_state")[0] == 2
     assert [
         r[0]
         for r in store.all(
-            "SELECT json_extract(metadata,'$.node_id') FROM document_observations ORDER BY document_observation_id"
+            "SELECT json_extract(metadata,'$.node_id') FROM document_state ORDER BY provider_change_request_document_id"
         )
-    ] == ["old-node", "new-node", "new-node"]
+    ] == ["new-node", "new-node"]
+    assert not store.one(
+        "SELECT 1 FROM sqlite_schema WHERE name='document_observations'"
+    )
 
 
 def test_thread_cli_and_query_require_parent_and_support_kind_scope(catalog):
@@ -187,7 +174,7 @@ def test_thread_cli_and_query_require_parent_and_support_kind_scope(catalog):
     ).data["items"]
     assert len(rows) == 1 and rows[0]["body"] == "pr1"
     assert rows[0]["review_thread_provider_resource_id"] == "shared-thread"
-    with pytest.raises(CatalogError, match="requires"):
+    with pytest.raises(CatalogError, match="requires|required"):
         query.query(
             "pr thread",
             {

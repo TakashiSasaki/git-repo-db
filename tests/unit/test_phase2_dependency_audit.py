@@ -170,7 +170,7 @@ def production_readers(tmp_path_factory):
         "application/issue_queries.py",
         "application/query_service.py",
         "adapters/sqlite/current_resources.py",
-        "adapters/sqlite/parser_model.py",
+        "application/git_query_context.py",
         "adapters/git/parsing.py",
     ):
         target = root / "src/repo_catalog" / relative
@@ -218,33 +218,50 @@ def test_actual_source_coverage_reader_includes_source_and_inventory_dependencie
     inventory = accesses_for(
         production_readers,
         "QueryService.prepare_coverage",
-        "current_inventory_observations",
+        "source_inventory_assessments",
     )
-    assert ("read", "sources", "source_registration_uuidv4") in sources
-    assert ("read", "inventory_observations", "asserted_state") in inventory
+    assert ("read", "sources", "source_id") in sources
+    assert ("read", "source_inventory_assessments", "state") in inventory
 
 
-@pytest.mark.parametrize("setting", ("git_metadata_encoding", "git_text_encoding"))
-def test_actual_git_search_reader_includes_required_decoder_evidence(
-    production_readers, setting
+def test_actual_git_name_reader_includes_explicit_decoder_evidence(production_readers):
+    accesses = accesses_for(production_readers, "decoded_name", "git_name_facts")
+    assert ("read", "git_name_facts", "decoder_key") in accesses
+    assert ("read", "git_name_facts", "metadata_encoding") in accesses
+    assert ("read", "git_name_facts", "parser_module") in accesses
+    assert ("read", "git_name_facts", "parser_version") in accesses
+
+
+def test_actual_decoder_candidate_queries_report_dynamic_sql_honestly(
+    production_readers,
 ):
-    accesses = accesses_for(production_readers, "QueryService.iter_query", setting)
-    assert ("read", "parser_profiles", "definition_json") in accesses
-    assert ("read", "parsed_results", "parsed_result_uuidv4") in accesses
+    sites = [
+        site
+        for site in production_readers["sql_sites"]
+        if site["caller"].endswith(":decoded_fact")
+        or site["caller"].endswith(":decoder_settings")
+    ]
+    assert sites
+    for site in sites:
+        assert (
+            production_readers["sql_statements"][site["statement"]]["preparation"][
+                "status"
+            ]
+            == "dynamic_or_non_dml"
+        )
+    refs = production_readers["static_object_references"]
+    assert not any(
+        ref.get("object") in {"parser_profiles", "parsed_results"} for ref in refs
+    )
 
 
-def test_actual_local_forwarders_preserve_current_publication_and_git_boundaries(
+def test_actual_local_forwarders_preserve_revision_and_git_content_boundaries(
     production_readers,
 ):
     current = accesses_for(
-        production_readers, "CurrentResources.capture_context", "publication_seq"
+        production_readers, "CurrentResources.capture_context", "local_revision"
     )
-    publication = accesses_for(
-        production_readers, "ParserModel.register_profile", "parser_profiles"
-    )
-    git = accesses_for(
-        production_readers, "GitParsing._manifest", "UPDATE root_manifests"
-    )
-    assert ("read", "database_identity", "publication_seq") in current
-    assert ("read", "parser_profiles", "definition_json") in publication
-    assert ("update", "root_manifests", "complete") in git
+    git = accesses_for(production_readers, "GitParsing.object", "git_object_payloads")
+    assert ("read", "database_identity", "local_revision") in current
+    assert ("read", "git_objects", "verified") in git
+    assert ("read", "git_object_payloads", "") in git

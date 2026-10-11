@@ -9,6 +9,7 @@ from tests.integration.test_current_resources import (  # noqa: F401
 from tests.integration.test_current_resources import (
     resources as _resources_fixture,
 )
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @pytest.fixture(name="resources")
@@ -114,7 +115,5 @@ def test_partial_fields_keep_actual_parser_when_another_version_updates_row(
         evidence['["title"]']["parser_module"],
         evidence['["title"]']["parser_version"],
     ) == ("tests.synthetic.title_parser", "0")
-    assert adapter.c.execute("SELECT count(*) FROM parser_profiles").fetchone()[0] == 0
-    assert (
-        adapter.c.execute("SELECT count(*) FROM fetch_occurrences").fetchone()[0] == 0
-    )
+    assert_absent_tables(adapter.c, "parser_profiles")
+    assert_absent_tables(adapter.c, "fetch_occurrences")

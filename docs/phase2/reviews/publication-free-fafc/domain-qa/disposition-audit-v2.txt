@@ -1,0 +1,1 @@
+1950 baseline nodes accounted for; 487 explicit mappings; 2128 current nodes collected; no execution claim

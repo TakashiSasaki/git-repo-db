@@ -20,16 +20,16 @@ def test_readonly_snapshot_tracks_mutable_catalog_without_immutable(tmp_path):
     initialize(state)
     with Store(state) as writer, Store(state, readonly=True) as reader:
         with reader.transaction(read=True):
-            assert reader.revision()["publication_seq"] == 0
+            assert reader.revision()["local_revision"] == 0
         with writer.transaction():
-            writer.publish()
+            writer.advance_local_revision()
         with reader.transaction(read=True):
-            assert reader.revision()["publication_seq"] == 1
+            assert reader.revision()["local_revision"] == 1
         with writer.transaction():
-            writer.publish()
-        assert reader.revision()["publication_seq"] == 2
+            writer.advance_local_revision()
+        assert reader.revision()["local_revision"] == 2
         with pytest.raises(sqlite3.OperationalError, match="readonly"):
-            reader.publish()
+            reader.advance_local_revision()
 
 
 def test_optional_wal_is_guarded_or_reads_active_snapshot(tmp_path):
@@ -48,17 +48,17 @@ def test_optional_wal_is_guarded_or_reads_active_snapshot(tmp_path):
         assert rejected.value.code == "UNSAFE_WAL_RUNTIME"
         assert database.read_bytes() == before
         with Store(state, readonly=True) as reader:
-            assert reader.revision()["publication_seq"] == 0
+            assert reader.revision()["local_revision"] == 0
         return
     with Store(state) as writer, Store(state, readonly=True) as reader:
         with reader.transaction(read=True):
-            assert reader.one("SELECT publication_seq FROM database_identity")[0] == 0
+            assert reader.one("SELECT local_revision FROM database_identity")[0] == 0
             with writer.transaction():
-                writer.publish()
-            assert reader.one("SELECT publication_seq FROM database_identity")[0] == 0
-        assert reader.revision()["publication_seq"] == 1
+                writer.advance_local_revision()
+            assert reader.one("SELECT local_revision FROM database_identity")[0] == 0
+        assert reader.revision()["local_revision"] == 1
         with pytest.raises(sqlite3.OperationalError, match="readonly"):
-            reader.publish()
+            reader.advance_local_revision()
 
 
 def test_derived_fts_and_statistics_preserve_catalog_identity(tmp_path):
@@ -149,17 +149,17 @@ def test_previous_catalog3_identity_is_rejected_without_mutation(tmp_path, reado
     with Store(state) as store:
         identity = tuple(
             store.one(
-                "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+                "SELECT singleton,format_id,schema_version,db_instance_id,local_revision,ddl_sha256,lifecycle FROM database_identity"
             )
         )
     database = state / "catalog.sqlite3"
     database.unlink()
     with sqlite3.connect(database) as old:
         old.execute(
-            "CREATE TABLE database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle)"
+            "CREATE TABLE database_identity(singleton,format_id,schema_version,db_instance_id,local_revision,ddl_sha256,lifecycle)"
         )
         old.execute(
-            "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,local_revision,ddl_sha256,lifecycle) VALUES(?,?,?,?,?,?,?)",
             (*identity[:2], 3, *identity[3:]),
         )
     before = database.read_bytes()

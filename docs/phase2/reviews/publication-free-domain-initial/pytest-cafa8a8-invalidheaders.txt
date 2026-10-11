@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 17 items / 15 deselected / 2 selected
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[tag] FAILED [ 50%]
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[commit] FAILED [100%]
+
+=================================== FAILURES ===================================
+_________ test_available_intrinsic_headers_match_canonical_parser[tag] _________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:323: in test_available_intrinsic_headers_match_canonical_parser
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "malformed intrinsic headers became available"
+E   AssertionError: malformed intrinsic headers became available
+E   assert not <sqlite3.Row object at 0x7f5c126abb50>
+E    +  where <sqlite3.Row object at 0x7f5c126abb50> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f5c12a919a0>.one
+_______ test_available_intrinsic_headers_match_canonical_parser[commit] ________
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:323: in test_available_intrinsic_headers_match_canonical_parser
+    assert not store.one("SELECT 1 FROM available_git_objects WHERE git_object_id=?",(obj,)), "malformed intrinsic headers became available"
+E   AssertionError: malformed intrinsic headers became available
+E   assert not <sqlite3.Row object at 0x7f5c12558820>
+E    +  where <sqlite3.Row object at 0x7f5c12558820> = one('SELECT 1 FROM available_git_objects WHERE git_object_id=?', (1,))
+E    +    where one = <repo_catalog.adapters.sqlite.store.Store object at 0x7f5c12cd2180>.one
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[tag]
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_available_intrinsic_headers_match_canonical_parser[commit]
+======================= 2 failed, 15 deselected in 1.04s =======================

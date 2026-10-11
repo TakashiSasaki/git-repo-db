@@ -1,0 +1,15 @@
+{
+  "baseline_nodes": 201,
+  "corrected_nodes": 209,
+  "removed": [],
+  "added": [
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[row-{\"encoded_response\":\"c3ludGhldGlj\"}]",
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[row-{\"missing\":[{\"kind\":\"pr\",\"reason\":{\"body\":\"synthetic original\"}}]}]",
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[row-{\"raw_api_response\":{\"data\":{\"body\":\"synthetic original\"}}}]",
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[row-{\"reason\":{\"data\":{\"body\":\"synthetic original\"}}}]",
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[tuple-{\"encoded_response\":\"c3ludGhldGlj\"}]",
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[tuple-{\"missing\":[{\"kind\":\"pr\",\"reason\":{\"body\":\"synthetic original\"}}]}]",
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[tuple-{\"raw_api_response\":{\"data\":{\"body\":\"synthetic original\"}}}]",
+    "tests/integration/test_catalog3_coverage.py::test_advisory_details_reject_original_carriers_before_retention[tuple-{\"reason\":{\"data\":{\"body\":\"synthetic original\"}}}]"
+  ]
+}

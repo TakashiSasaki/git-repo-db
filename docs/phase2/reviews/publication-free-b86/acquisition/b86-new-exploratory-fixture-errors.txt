@@ -1,0 +1,30 @@
+............FE.F                                                         [100%]
+==================================== ERRORS ====================================
+____ ERROR at teardown of test_real_permissions_header_reaches_field_origin ____
+tests/support/github_runtime.py:62: in github_runtime
+    assert not api.errors
+           ^^^^^^^^^^^^^^
+E   AssertionError
+=================================== FAILURES ===================================
+______________ test_real_permissions_header_reaches_field_origin _______________
+../../review-artifacts/acquisition/corrected-new-probes.py:123: in test_real_permissions_header_reaches_field_origin
+    acquisition.sync(repo,job)
+src/repo_catalog/adapters/github/collector.py:2662: in sync
+    raise Waiting(
+E   repo_catalog.domain.models.Waiting: Some PR collections are incomplete
+____________ test_credential_loss_before_acquisition_is_operational ____________
+../../review-artifacts/acquisition/corrected-new-probes.py:163: in test_credential_loss_before_acquisition_is_operational
+    attempt=store.one('SELECT * FROM job_attempts ORDER BY started_at_us DESC LIMIT 1')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/store.py:165: in one
+    return self.execute(sql, args).fetchone()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/store.py:162: in execute
+    return self.connection.execute(sql, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   sqlite3.OperationalError: no such column: started_at_us
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/acquisition/corrected-new-probes.py::test_real_permissions_header_reaches_field_origin
+FAILED ../../review-artifacts/acquisition/corrected-new-probes.py::test_credential_loss_before_acquisition_is_operational
+ERROR ../../review-artifacts/acquisition/corrected-new-probes.py::test_real_permissions_header_reaches_field_origin
+2 failed, 13 passed, 1 error in 147.05s (0:02:27)

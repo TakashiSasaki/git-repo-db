@@ -1,3 +1,9 @@
+# Historical checkpoint
+
+This report describes the earlier scoped implementation. Schema 20's current integrated replacement and verification status are in [the Publication-independent handoff](phase2/publication-free-implementation.md). Preserve the earlier receipt as evidence; its pending boundaries do not override later accepted decisions.
+
+---
+
 # Transport-independent core implementation boundary
 
 The accepted [ADR](transport-independent-core-adr.md) is implemented incrementally from PR #16 (`7829a6addb05d73ab4f303eb48ba19cd9957aba7`). The current fresh format is schema 18. The [Phase 1 retirement decision](phase1-api-original-retirement.md) and [implementation inventory](phase1-api-original-retirement-implementation.md) supersede older original-preservation requirements within R1–R7. Initialize disposable fresh catalogs; no migration, merge or release is included. This boundary does not assert full ADR implementation.

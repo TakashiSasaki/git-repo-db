@@ -31,7 +31,7 @@ def test_repeat_reuses_durable_objects(catalog, monkeypatch):
     assert all(fixture.alpha.commits["N"].encode() not in batch for batch in requested)
 
 
-def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
+def test_related_oid_reuses_complete_local_closure(catalog, monkeypatch):
     from repo_catalog.adapters.git.importer import GitImporter
     from repo_catalog.adapters.git.runner import GitRunner
     from repo_catalog.adapters.sqlite.store import Store
@@ -42,7 +42,7 @@ def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
     run(state, "sync", "git")
 
     def no_transfer(*args, **kwargs):
-        raise AssertionError("Already published direct OID must not fetch again")
+        raise AssertionError("Already complete direct OID must not fetch again")
 
     monkeypatch.setattr(GitRunner, "transfer", no_transfer)
     import subprocess
@@ -74,10 +74,10 @@ def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
         )
         assert result["state"] == "complete"
         acquired = store.one(
-            "SELECT role,oid,published FROM acquisition_roots WHERE git_acquisition_id=?",
+            "SELECT role,oid,complete FROM acquisition_roots WHERE git_acquisition_id=?",
             (result["git_acquisition_id"],),
         )
-        assert acquired["role"] == "traversal" and acquired["published"] == 1
+        assert acquired["role"] == "base" and acquired["complete"] == 1
         assert acquired["oid"].hex() == fixture.alpha.commits["N"]
         assert requested and all(not batch for batch in requested)
         assert (
@@ -87,17 +87,18 @@ def test_related_oid_reuses_published_local_closure(catalog, monkeypatch):
             )[0]
             > 0
         )
-        assert store.one(
-            "SELECT 1 FROM git_acquisition_publications WHERE git_acquisition_id=?",
-            (result["git_acquisition_id"],),
+        from repo_catalog.adapters.git.parsing import GitParsing
+
+        assert (
+            GitParsing(store, repos["alpha"]).validate_acquisition(
+                result["git_acquisition_id"]
+            )
+            > 0
         )
 
 
-def test_manifest_generation_publishes_bounded_rows_in_new_result(catalog):
-    import math
-
+def test_manifest_generation_installs_exact_tree_scoped_entries(catalog):
     from repo_catalog.adapters.git.parsing import GitParsing
-    from repo_catalog.adapters.sqlite.parser_model import ParserModel
     from repo_catalog.adapters.sqlite.store import Store
 
     state, fixture, repos = catalog
@@ -108,60 +109,36 @@ def test_manifest_generation_publishes_bounded_rows_in_new_result(catalog):
     with Store(state) as store:
         tree = store.git_object_id("sha1", bytes.fromhex(oid))
         original = store.one(
-            "SELECT parsed_result_uuidv4,git_acquisition_id FROM current_snapshots WHERE repository_uuidv4=?",
+            "SELECT snapshot_id FROM current_snapshots WHERE repository_uuidv4=?",
             (repos["alpha"],),
-        )
-        assert not store.one(
-            "SELECT complete FROM root_manifests WHERE parsed_result_uuidv4=? AND tree_git_object_id=?",
-            (original[0], tree),
         )[0]
         store.config["collection"]["write_batch_rows"] = 2
-        model = ParserModel(store.connection)
-        with store.transaction():
-            result = model.create_result(
-                model.ensure_builtin_profile(),
-                repository_uuidv4=repos["alpha"],
-                inputs=[{"git_acquisition_id": original[1]}],
-            )
-        parser = GitParsing(store, result)
-        parser.parse_acquisition(original[1], [])
         store.connection.set_trace_callback(statements.append)
-        parser.manifest(tree)
+        GitParsing(store, repos["alpha"]).manifest(tree)
         store.connection.set_trace_callback(None)
-        with store.transaction():
-            model.publish_result(result)
         assert (
             store.one(
-                "SELECT count(*) FROM root_manifest_entries WHERE parsed_result_uuidv4=? AND tree_git_object_id=?",
-                (result, tree),
+                "SELECT count(*) FROM root_manifest_entries WHERE tree_git_object_id=?",
+                (tree,),
             )[0]
             == expected
         )
         assert (
             store.one(
-                "SELECT complete FROM root_manifests WHERE parsed_result_uuidv4=? AND tree_git_object_id=?",
-                (original[0], tree),
+                "SELECT complete FROM root_manifests WHERE tree_git_object_id=?",
+                (tree,),
             )[0]
-            == 0
+            == 1
         )
         assert (
             store.one(
-                "SELECT parsed_result_uuidv4 FROM current_snapshots WHERE repository_uuidv4=?",
+                "SELECT snapshot_id FROM current_snapshots WHERE repository_uuidv4=?",
                 (repos["alpha"],),
             )[0]
-            == original[0]
+            == original
         )
-    # Manifest entries are staged in bounded transactions, then completed in
-    # one final boundary. Exact output publication belongs to the new result.
-    inserts = [
-        sql
-        for sql in statements
-        if sql.startswith("INSERT INTO root_manifest_entries(")
-    ]
-    # SQLite repeats the originating SQL in its trace for every trigger call.
-    assert len(set(inserts)) == expected
-    assert all(" VALUES(" in sql and "),(" not in sql for sql in inserts)
-    assert statements.count("COMMIT") == math.ceil(expected / 2) + 1
+        assert not store.all("PRAGMA foreign_key_check")
+    assert statements.count("COMMIT") == 1
 
 
 def test_tags_paths_links(catalog, tmp_path):

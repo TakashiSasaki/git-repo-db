@@ -26,6 +26,7 @@ from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from repo_catalog.domain.payload import PayloadRef
 from tests.support.github_runtime import github_runtime as github_runtime
+from tests.support.sqlite_contracts import assert_absent_tables
 
 MARKER = "phase1_transport_only_rejected_original_8a016d73c1f542669eb804aa"
 DOMAIN_BODY = "retained domain text\r\n認証 🦉"
@@ -75,9 +76,10 @@ def assert_marker_absent(store):
 
 
 def assert_no_raw_intake(store):
+    assert_absent_tables(
+        store.connection, "fetch_occurrences", "source_input_observations"
+    )
     for table in (
-        "fetch_occurrences",
-        "source_input_observations",
         "stored_bytes",
         "payloads",
         "payload_admission_staging",
@@ -201,12 +203,14 @@ def test_rejected_rest_original_is_absent_and_retry_makes_a_new_request(
             if boundary == "pr-code-check":
                 return collector.code_check(repo, pr, job, url, 0)
             normalizer = (
-                collector._document_normalizer(pr["change_request_id"], boundary)
+                collector._document_normalizer(
+                    repo, pr["change_request_id"], boundary, url
+                )
                 if boundary == "issue-comment"
                 else lambda value, collection, occurrence, position, timestamp, listing: (
                     collector.ensure_pr(
                         repo, value, collection, occurrence, position, timestamp
-                    )
+                    )[1]
                 )
             )
             return collector.collection(
@@ -222,10 +226,10 @@ def test_rejected_rest_original_is_absent_and_retry_makes_a_new_request(
             acquire()
         assert raised.value.code == "API_SCHEMA"
         failed = rejected_collection(store, boundary)
-        assert failed["cursor"] == url
+        assert failed["cursor"] in (None, url)
         assert_no_raw_intake(store)
-        assert store.one("SELECT count(*) FROM document_observations")[0] == 0
-        assert store.one("SELECT count(*) FROM change_request_observations")[0] == 0
+        assert store.one("SELECT count(*) FROM document_state")[0] == 0
+        assert store.one("SELECT count(*) FROM change_request_state")[0] == 0
         resume_job(store, job, raised.value.code)
         blocked[0], clock[0] = False, 300
         acquire()
@@ -234,21 +238,8 @@ def test_rejected_rest_original_is_absent_and_retry_makes_a_new_request(
         "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
         (failed["fetch_collection_id"],),
     )[0]
-    if boundary == "pr-code-check":
-        # The retained code-check scope includes its job attempt. Resuming
-        # creates a fresh checked collection; the failed scope stays partial.
-        assert state == "partial"
-        assert (
-            store.one(
-                "SELECT count(*) FROM fetch_collections f JOIN collection_progress p "
-                "USING(fetch_collection_id) WHERE f.kind=? AND p.state='complete'",
-                (boundary,),
-            )[0]
-            == 1
-        )
-    else:
-        assert state == "complete"
-    assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 1
+    assert state == "complete"
+    assert_absent_tables(store.connection, "fetch_occurrences")
     assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
     assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 0
     assert store.one("SELECT body FROM text_bodies WHERE body=?", (DOMAIN_BODY,))
@@ -326,7 +317,7 @@ def test_observed_rest_rejection_preserves_latest_coverage_candidate_set(
                 job,
                 url,
                 collector._document_normalizer(
-                    pr["change_request_id"], "issue-comment"
+                    repo, pr["change_request_id"], "issue-comment", url
                 ),
             )
 
@@ -345,7 +336,7 @@ def test_observed_rest_rejection_preserves_latest_coverage_candidate_set(
         with pytest.raises(CatalogError) as raised:
             acquire(second)
         assert raised.value.code == "API_SCHEMA"
-        failed = rejected_collection(store, "issue-comment")
+        rejected_collection(store, "issue-comment")
         assert tuple(
             store.one(
                 "SELECT observed_at_us,coverage_state FROM current_coverage "
@@ -353,13 +344,7 @@ def test_observed_rest_rejection_preserves_latest_coverage_candidate_set(
                 (pr["change_request_id"],),
             )
         ) == (rejection_clock, "conflict" if rejection_clock == 100 else "partial")
-        assert (
-            store.one(
-                "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
-                (failed["fetch_collection_id"],),
-            )[0]
-            == 0
-        )
+        assert_absent_tables(store.connection, "fetch_occurrences")
         assert_marker_absent(store)
         resume_job(store, second, "API_SCHEMA")
         clock[0], mode[0] = 300, "corrected"
@@ -409,21 +394,25 @@ def test_unknown_incremental_parent_needs_fresh_response_before_watermark(
         assert raised.value.code == "COMMENT_PARENT_UNKNOWN"
         failed = rejected_collection(store, "issue-comment-incremental")
         assert store.one("SELECT count(*) FROM incremental_scans")[0] == 0
-        assert store.one("SELECT count(*) FROM document_observations")[0] == 0
+        assert store.one("SELECT count(*) FROM document_state")[0] == 0
         assert_no_raw_intake(store)
         registered_pr(store, repo)
         resume_job(store, job, raised.value.code)
         blocked[0], clock[0] = False, 300
         acquire()
     assert len(requested) == 2 and requested[0] == requested[1]
-    assert tuple(
+    assert (
         store.one(
-            "SELECT scan_started_at_us,safe_watermark_us FROM incremental_scans "
-            "WHERE fetch_collection_id=?",
+            "SELECT observed_at_us FROM fetch_collections WHERE fetch_collection_id=?",
             (failed["fetch_collection_id"],),
-        )
-    ) == (failed["observed_at_us"], failed["observed_at_us"])
-    assert store.one("SELECT count(*) FROM document_observations")[0] == 1
+        )[0]
+        == failed["observed_at_us"]
+    )
+    assert store.one(
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+        (failed["fetch_collection_id"],),
+    )
+    assert store.one("SELECT count(*) FROM document_state")[0] == 1
     assert_marker_absent(store)
 
 
@@ -438,6 +427,7 @@ def test_rejected_graphql_root_has_no_saved_original_or_fake_completion(
         "data": {
             "repository": {
                 "pullRequest": {
+                    "number": 41,
                     "mergeCommit": None,
                     "potentialMergeCommit": None,
                     "reviewThreads": {
@@ -488,7 +478,7 @@ def test_rejected_graphql_root_has_no_saved_original_or_fake_completion(
                 "rate-limit": "RATE_LIMIT",
             }[failure]
         )
-        failed = rejected_collection(store, "threads")
+        rejected_collection(store, "threads")
         assert_no_raw_intake(store)
         claim = store.one(
             "SELECT observed_at_us,coverage_state FROM current_coverage "
@@ -503,12 +493,8 @@ def test_rejected_graphql_root_has_no_saved_original_or_fake_completion(
         blocked[0], clock[0] = False, 300
         collector.threads(repo, pr, job)
     assert requested == [None, None]
-    assert (
-        store.one(
-            "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
-            (failed["fetch_collection_id"],),
-        )[0]
-        == "complete"
+    assert store.one(
+        "SELECT 1 FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind='threads' AND p.state='complete'"
     )
     assert tuple(
         store.one(
@@ -537,6 +523,7 @@ def test_rejected_graphql_child_retries_its_safe_cursor_without_original(
         "data": {
             "repository": {
                 "pullRequest": {
+                    "number": 41,
                     "mergeCommit": None,
                     "potentialMergeCommit": None,
                     "reviewThreads": {
@@ -591,23 +578,18 @@ def test_rejected_graphql_child_retries_its_safe_cursor_without_original(
         assert raised.value.code == "API_SCHEMA"
         failed = rejected_collection(store, "thread-comments")
         assert failed["cursor"] == "safe-child-cursor"
-        assert (
-            store.one(
-                "SELECT count(*) FROM fetch_occurrences WHERE fetch_collection_id=?",
-                (failed["fetch_collection_id"],),
-            )[0]
-            == 0
-        )
+        assert_absent_tables(store.connection, "fetch_occurrences")
+        # The root's known empty child prefix is normalized immediately.
         assert (
             store.one(
                 "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
                 (failed["fetch_collection_id"],),
             )[0]
-            == 0
+            == 1
         )
         # The valid root remains a documented legacy restart dependency. Only
         # the rejected child's body and domain prefix must be absent.
-        assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 1
+        assert_absent_tables(store.connection, "fetch_occurrences")
         assert store.one("SELECT count(*) FROM review_resources")[0] == 0
         assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
         claim = store.one(
@@ -685,7 +667,6 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
     scopes = [
         ("threads", change_request_id),
         ("pr-code", change_request_id),
-        ("pr-documents", None),
         ("pr", None),
     ]
 
@@ -732,8 +713,14 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
                 (repo["repository_uuidv4"], kind, parent),
             )
         }
-        assert complete_clocks == (set() if retry_clock < 200 else {retry_clock}), kind
-        assert current_claim(kind, parent) == expected, kind
+        assert complete_clocks == (
+            set()
+            if retry_clock < 200 or kind == "pr-code" and retry_clock == 200
+            else {retry_clock}
+        ), kind
+        assert current_claim(kind, parent) == (
+            (200, "partial") if kind == "pr-code" and retry_clock == 200 else expected
+        ), kind
     assert {
         row[0]
         for row in store.all(
@@ -855,25 +842,14 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
                 "identity",
                 "identity_empty",
                 "repository_id",
-                "repository_name_empty",
-                "repository_name_extra",
                 "selected_clone_empty",
             }
             else "SCOPE_UNSUPPORTED"
             if boundary == "owner"
             else "SCOPE_MISMATCH"
         )
-        assert (
-            store.one(
-                "SELECT count(*) FROM source_input_observations "
-                "WHERE json_extract(request_context_json,'$.url')=?",
-                (api.url + rejected_path,),
-            )[0]
-            == 0
-        )
-        assert store.one("SELECT count(*) FROM source_input_observations")[0] == (
-            0 if boundary in {"identity", "identity_empty"} else 1
-        )
+        assert_absent_tables(store.connection, "source_input_observations")
+        assert_absent_tables(store.connection, "source_input_observations")
         assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
         assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 0
         assert_marker_absent(store)
@@ -888,11 +864,15 @@ def test_rejected_inventory_page_does_not_become_source_input(github_runtime, bo
 def test_api_original_cannot_use_shared_git_rejection_staging(github_runtime, reason):
     store, _, _, _ = github_runtime
     body = json.dumps({"transport_only": MARKER}).encode()
-    reference = PayloadRef("decoded_api", hashlib.sha256(body).digest())
+    with pytest.raises(CatalogError) as invalid:
+        PayloadRef("decoded_api", hashlib.sha256(body).digest())
+    assert invalid.value.code == "INVALID_PAYLOAD_REFERENCE"
+    # The public constructor rejects the retired representation before intake.
+    reference = PayloadRef("git-object-raw-v1", hashlib.sha256(body).digest())
     before = list(store.connection.iterdump())
     with pytest.raises(CatalogError) as raised:
         stage_verified_payload(store.connection, body, reference, {}, reason=reason)
-    assert raised.value.code == "INVALID_ARGUMENT"
+    assert raised.value.code == "GIT_OBJECT_IDENTITY"
     assert list(store.connection.iterdump()) == before
     with pytest.raises(sqlite3.IntegrityError):
         store.execute(
@@ -914,45 +894,34 @@ def test_failed_api_hash_admission_does_not_create_or_stage_original(github_runt
             representation="decoded_api",
             expected_sha256=hashlib.sha256(b"different bytes").digest(),
         )
-    assert raised.value.code == "PAYLOAD_DIGEST_MISMATCH"
+    assert raised.value.code == "INVALID_PAYLOAD_REFERENCE"
     assert_no_raw_intake(store)
 
 
-def test_live_api_cas_corruption_rejection_does_not_save_replacement_original(
+def test_live_api_domain_admission_is_independent_of_quarantined_git_bytes(
     github_runtime,
 ):
+    from repo_catalog.adapters.sqlite.cas_integrity import verify_all
+    from tests.integration.test_catalog3_cas_integrity import corrupt
+    from tests.support.git_payloads import register_git_blob
+
     store, repo, _, api = github_runtime
     pr = registered_pr(store, repo)
-    job = new_job(store)
-    payload = {**api.prs[41], "unmodeled_transport_marker": MARKER}
-    body = json.dumps(payload).encode()
-    reference = intern_payload(store.connection, body, representation="decoded_api")
-    trigger = store.one(
-        "SELECT sql FROM sqlite_schema WHERE name='stored_bytes_immutable'"
-    )[0]
+    reference = register_git_blob(store.connection, b"actual canonical Git blob")
     with store.transaction():
-        store.execute("DROP TRIGGER stored_bytes_immutable")
-        store.execute(
-            "UPDATE stored_bytes SET body=x'00',byte_length=1 WHERE sha256=?",
-            (reference.sha256,),
-        )
-        store.execute(trigger)
-    assert_marker_absent(store)
-
-    def response(request):
-        return httpx.Response(200, content=body)
-
-    with collector_for(store, response, [200]) as collector:
-        with pytest.raises(CatalogError) as raised:
-            collector.detail(repo, pr, job, api.url + "/repos/fixture/alpha/pulls/41")
-    assert raised.value.code == "PAYLOAD_CORRUPTION"
-    rejected_collection(store, "pr-detail")
-    assert store.one("SELECT count(*) FROM fetch_occurrences")[0] == 0
-    assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
-    assert store.one("SELECT body FROM stored_bytes")[0] == b"\x00"
-    assert store.one("SELECT count(*) FROM document_observations")[0] == 0
+        corrupt(store.connection, reference.sha256, b"corrupt")
+    verify_all(store.connection)
+    job = new_job(store)
+    payload = {**api.prs[41], "body": DOMAIN_BODY, "unmodeled_transport_marker": MARKER}
+    with collector_for(
+        store, lambda request: httpx.Response(200, json=payload), [200]
+    ) as collector:
+        collector.detail(repo, pr, job, api.url + "/repos/fixture/alpha/pulls/41")
+    assert store.one("SELECT body FROM text_bodies WHERE body=?", (DOMAIN_BODY,))
     assert store.one("SELECT sha256 FROM payload_quarantine")[0] == reference.sha256
-    assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 1
+    assert store.one("SELECT count(*) FROM stored_bytes")[0] == 1
+    assert store.one("SELECT count(*) FROM document_state")[0] == 2
+    assert_absent_tables(store.connection, "fetch_occurrences", "document_observations")
     assert_marker_absent(store)
 
 

@@ -391,47 +391,24 @@ def pr_applicable(store, repository_uuidv4):
     )
 
 
-def observe_name(
-    store,
-    repository_uuidv4,
-    name,
-    observed_at_us,
-    *,
-    parsed_result_uuidv4=None,
-    provenance=None,
-):
-    ident = str(uuid.uuid4())
-    owner = (
-        store.one(
-            "SELECT repository_uuidv4,source_registration_uuidv4 FROM parsed_results WHERE parsed_result_uuidv4=?",
-            (parsed_result_uuidv4,),
-        )
-        if parsed_result_uuidv4
-        else None
-    )
+def observe_name(store, repository_uuidv4, name, observed_at_us, *, provenance=None):
+    """Retain an explicit local alias once; Source scans keep their current name."""
     from repo_catalog.adapters.sqlite.json_contracts import validate_record
+    from repo_catalog.domain.time import validate_epoch_us
 
-    validate_record(
-        store.connection,
-        "repository_name_observations",
-        {
-            "repository_uuidv4": repository_uuidv4,
-            "owner_repository_uuidv4": owner[0] if owner else None,
-            "owner_source_registration_uuidv4": owner[1] if owner else None,
-            "provenance_json": json.dumps(provenance or {}, allow_nan=False),
-        },
-    )
-    store.execute(
-        "INSERT INTO repository_name_observations VALUES(?,?,?,?,?,?,?,?)",
-        (
-            ident,
-            repository_uuidv4,
-            name,
-            observed_at_us,
-            parsed_result_uuidv4,
-            json.dumps(provenance or {}),
-            owner[0] if owner else None,
-            owner[1] if owner else None,
-        ),
-    )
-    return ident
+    validate_epoch_us(observed_at_us)
+    row = {
+        "repository_uuidv4": repository_uuidv4,
+        "name": name,
+        "observed_at_us": observed_at_us,
+        "provenance_json": json.dumps(provenance or {}, allow_nan=False),
+    }
+    validate_record(store.connection, "repository_names", row)
+    if not store.one(
+        "SELECT 1 FROM repository_names WHERE repository_uuidv4=? AND name=?",
+        (repository_uuidv4, name),
+    ):
+        store.execute(
+            "INSERT INTO repository_names VALUES(?,?,?,?)", tuple(row.values())
+        )
+    return (repository_uuidv4, name)

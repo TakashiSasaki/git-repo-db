@@ -1,0 +1,74 @@
+{
+  "base": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "fix_commit": "1562f98a5e15b986fdc81b79c14aa9d69bd1c05c",
+  "fix_tree": "6c6cb508d620a9702cc93fec8ee4fefdf12e7c88",
+  "src_tree": "f825b78fa83fee25040480a0bc979a9ee0891a67",
+  "base_src_tree": "f825b78fa83fee25040480a0bc979a9ee0891a67",
+  "production_changes": [],
+  "affected_files": [
+    "tests/integration/test_catalog3_coverage.py",
+    "tests/integration/test_catalog3_coverage_ownership.py",
+    "tests/integration/test_catalog3_coverage_queries.py",
+    "tests/integration/test_catalog3_identity_relations.py",
+    "tests/integration/test_catalog3_github_scaling.py"
+  ],
+  "node_mapping": {
+    "original201_preserved": true,
+    "baseline": 201,
+    "corrected": 209,
+    "removed": 0,
+    "added": 8,
+    "file": "function-dispositions.json"
+  },
+  "shared353": {
+    "runtime_file": "shared353-runtime.json",
+    "complete_run": {
+      "passed": 208,
+      "failed": 1,
+      "seconds": 669.4,
+      "log": "shared353-affected.log",
+      "failure": "Test-only port used nonexistent review_documents table; corrected to actual eligible_review_resources view."
+    },
+    "first_scaling_retest": {
+      "passed": 0,
+      "failed": 1,
+      "seconds": 37.51,
+      "log": "shared353-corrected-scaling.log",
+      "failure": "Test-only port incorrectly classified retained typed collection_memberships as absent; restored original zero-count assertion."
+    },
+    "final_scaling_retest": {
+      "passed": 1,
+      "failed": 0,
+      "seconds": 25.79,
+      "log": "shared353-corrected2-scaling.log"
+    },
+    "final_unique_affected_nodes_passed": 209,
+    "accounting": "208 unchanged cases from full run plus corrected scaling1; not a single clean209-node final run."
+  },
+  "native345fts5": {
+    "runtime_file": "native345fts5-runtime.json",
+    "complete_run": {
+      "passed": 190,
+      "failed": 19,
+      "seconds": 547.43,
+      "log": "native345fts5-affected.log",
+      "failure": "CLI harness failed before product import: autouse offline fixture replaces PYTHONPATH; isolated launcher initially lacked explicit sys.path. Network guard retained; fixed external launcher, no source/test edits."
+    },
+    "final_query_file_retest": {
+      "passed": 23,
+      "failed": 0,
+      "seconds": 154.24,
+      "log": "native345fts5-corrected-queries.log"
+    },
+    "final_unique_affected_nodes_passed": 209,
+    "accounting": "190 full-run cases +23 query-file cases,4 already passing query cases repeated; not a single clean209-node final run."
+  },
+  "checks": {
+    "ruff_check": "passed",
+    "ruff_format_check": "5 files already formatted",
+    "git_diff_check": "passed",
+    "git_status": "clean"
+  },
+  "commands_file": "verification-commands.txt",
+  "scope": "Author focused verification only; no full ordinary/packaging/hosted final acceptance claim."
+}

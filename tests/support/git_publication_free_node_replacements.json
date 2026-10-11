@@ -1,0 +1,377 @@
+{
+  "baseline_commit": "6ca31eb",
+  "baseline_nodes_file": "artifacts/publication-free/baseline-ordinary-collected-nodes.txt",
+  "old_collected_nodes": 31,
+  "excluded_nodes": [],
+  "skipped_nodes": [],
+  "mappings": [
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_offline_git_reparse_preserves_acquisition_and_byte_identities",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_offline_git_reanalysis_preserves_captures_and_verified_byte_identities",
+        "tests/integration/test_git_direct_objects.py::test_reanalysis_keeps_real_capture_and_intrinsic_identity[sha1]",
+        "tests/integration/test_git_direct_objects.py::test_reanalysis_keeps_real_capture_and_intrinsic_identity[sha256]"
+      ],
+      "retained_assertions": [
+        "After deleting Git cache, offline decoding retains acquisitions, canonical objects, raw payload mappings, physical bytes, ref observations and current snapshot exactly. SHA1/SHA256 intrinsic tree/parent/manifest rows also remain identical."
+      ],
+      "retired_assertions": [
+        "A fresh parsed-result UUID/publication, authority-bearing output manifest, and selecting that result to change current ref interpretation are removed."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_result_owned_git_facts_reject_sql_history_reinterpretation[late]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_direct_git_decoded_values_reject_identity_reinterpretation[late]"
+      ],
+      "retained_assertions": [
+        "The exact late SQL attack is rejected and original decoded row stays identical. Owner constraints now bind the direct canonical Git object/content rather than an interpretation result or copied repository owner."
+      ],
+      "retired_assertions": [
+        "Result-owned publication/history identity is removed; canonical object plus concrete decoder settings owns the value."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_result_owned_git_facts_reject_sql_history_reinterpretation[update]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_direct_git_decoded_values_reject_identity_reinterpretation[update]"
+      ],
+      "retained_assertions": [
+        "The exact update SQL attack is rejected and original decoded row stays identical. Owner constraints now bind the direct canonical Git object/content rather than an interpretation result or copied repository owner."
+      ],
+      "retired_assertions": [
+        "Result-owned publication/history identity is removed; canonical object plus concrete decoder settings owns the value."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_result_owned_git_facts_reject_sql_history_reinterpretation[delete]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_direct_git_decoded_values_reject_identity_reinterpretation[delete]"
+      ],
+      "retained_assertions": [
+        "The exact delete SQL attack is rejected and original decoded row stays identical. Owner constraints now bind the direct canonical Git object/content rather than an interpretation result or copied repository owner."
+      ],
+      "retired_assertions": [
+        "Result-owned publication/history identity is removed; canonical object plus concrete decoder settings owns the value."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_result_owned_git_facts_reject_sql_history_reinterpretation[replace]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_direct_git_decoded_values_reject_identity_reinterpretation[replace]"
+      ],
+      "retained_assertions": [
+        "The exact replace SQL attack is rejected and original decoded row stays identical. Owner constraints now bind the direct canonical Git object/content rather than an interpretation result or copied repository owner."
+      ],
+      "retired_assertions": [
+        "Result-owned publication/history identity is removed; canonical object plus concrete decoder settings owns the value."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_result_owned_git_facts_reject_sql_history_reinterpretation[null]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_direct_git_decoded_values_reject_identity_reinterpretation[null]"
+      ],
+      "retained_assertions": [
+        "The exact null SQL attack is rejected and original decoded row stays identical. Owner constraints now bind the direct canonical Git object/content rather than an interpretation result or copied repository owner."
+      ],
+      "retired_assertions": [
+        "Result-owned publication/history identity is removed; canonical object plus concrete decoder settings owns the value."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_result_owned_git_facts_reject_sql_history_reinterpretation[other-owner]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_direct_git_decoded_values_reject_identity_reinterpretation[other-object]"
+      ],
+      "retained_assertions": [
+        "The exact other-owner SQL attack is rejected and original decoded row stays identical. Owner constraints now bind the direct canonical Git object/content rather than an interpretation result or copied repository owner."
+      ],
+      "retired_assertions": [
+        "Result-owned publication/history identity is removed; canonical object plus concrete decoder settings owns the value."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_quarantine_disables_git_input_and_reparse_without_repairing_history",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_fact_contracts.py::test_quarantine_disables_affected_git_bytes_and_reanalysis_until_real_repair"
+      ],
+      "retained_assertions": [
+        "Physical blob corruption disables its capture and reanalysis; an unrelated repository subgraph remains usable. Explicit repair with real raw bytes restores original text/current capture without rewriting retained acquisition or decoder identities."
+      ],
+      "retired_assertions": [
+        "Parsed-result count and profile/history publication are no longer eligibility conditions."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_invalid_selected_verification_never_substitutes_newer_evidence",
+      "replacement_nodes": [
+        "tests/integration/test_git_canonical_availability.py::test_physical_damage_is_unavailable_before_a_quarantine_scan",
+        "tests/integration/test_git_direct_objects.py::test_decoder_candidates_remain_explicit_without_profile_or_version_winner[\\xfftext-True]",
+        "tests/integration/test_git_direct_objects.py::test_decoder_candidates_remain_explicit_without_profile_or_version_winner[ascii-False]"
+      ],
+      "retained_assertions": [
+        "Readers cannot silently select a version/arrival winner among differing UTF8/Latin1 outputs; agreeing candidates preserve every producer. Canonically damaged input becomes unavailable before a quarantine scan."
+      ],
+      "retired_assertions": [
+        "Invalidating a selected whole-parser verification and trusting a newer verification to gate unchanged canonical Git data is explicitly retired. No parser_profiles table or trust certificate can confer/revoke fact eligibility."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_identical_git_bytes_keep_distinct_profile_metadata_and_text",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_readers.py::test_git_readers_require_explicit_decoder_when_real_outputs_differ",
+        "tests/integration/test_git_direct_objects.py::test_decoder_candidates_remain_explicit_without_profile_or_version_winner[\\xfftext-True]",
+        "tests/integration/test_git_direct_objects.py::test_decoder_candidates_remain_explicit_without_profile_or_version_winner[ascii-False]",
+        "tests/integration/test_git_direct_objects.py::test_reanalysis_keeps_real_capture_and_intrinsic_identity[sha1]",
+        "tests/integration/test_git_direct_objects.py::test_reanalysis_keeps_real_capture_and_intrinsic_identity[sha256]"
+      ],
+      "retained_assertions": [
+        "The same object/raw headers retain independently produced UTF8/Latin1 metadata and text. Non-ASCII values differ visibly; explicit decoder selects actual values while canonical content/object identity remains shared."
+      ],
+      "retired_assertions": [
+        "Repository-wide profile/result selection and implicit default interpretation authority are removed."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_conflicting_git_fact_uuid_never_selects_arrival_order_winner[False]",
+      "replacement_nodes": [
+        "tests/integration/test_git_canonical_availability.py::test_invalid_decoder_claim_cannot_replace_valid_candidate_in_either_order[False]"
+      ],
+      "retained_assertions": [
+        "The same portable candidate identity with forged text is tested in the exact False reversed-order case. Invalid text cannot acquire/replace a raw-backed candidate; replay leaves exactly one genuine value and identical available raw object."
+      ],
+      "retired_assertions": [
+        "An invalid sender interpretation does not globally revoke an independently verified raw capture through generic parser-publication conflict gating. Unsupported claims are explicitly rejected before immutable candidate competition; they cannot occupy a portable fact identity."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_conflicting_git_fact_uuid_never_selects_arrival_order_winner[True]",
+      "replacement_nodes": [
+        "tests/integration/test_git_canonical_availability.py::test_invalid_decoder_claim_cannot_replace_valid_candidate_in_either_order[True]"
+      ],
+      "retained_assertions": [
+        "The same portable candidate identity with forged text is tested in the exact True reversed-order case. Invalid text cannot acquire/replace a raw-backed candidate; replay leaves exactly one genuine value and identical available raw object."
+      ],
+      "retired_assertions": [
+        "An invalid sender interpretation does not globally revoke an independently verified raw capture through generic parser-publication conflict gating. Unsupported claims are explicitly rejected before immutable candidate competition; they cannot occupy a portable fact identity."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_interrupted_bounded_git_fact_staging_resumes_original_uuids",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation",
+        "tests/integration/test_git_direct_objects.py::test_interrupted_intrinsic_object_rolls_back_whole_unit[commit-sha1]",
+        "tests/integration/test_git_direct_objects.py::test_interrupted_intrinsic_object_rolls_back_whole_unit[commit-sha256]",
+        "tests/integration/test_git_direct_objects.py::test_interrupted_intrinsic_object_rolls_back_whole_unit[tree-sha1]",
+        "tests/integration/test_git_direct_objects.py::test_interrupted_intrinsic_object_rolls_back_whole_unit[tree-sha256]"
+      ],
+      "retained_assertions": [
+        "A fault during the second intrinsic row is injected with row/byte thresholds of 1 for SHA1/SHA256 commit and tree objects. No prefix bytes/identity/relations/revision leaks; an unrelated complete object survives. Fixed acquisition/ref capture resumes without recapture after remote changes."
+      ],
+      "retired_assertions": [
+        "Persisting half of one intrinsic object in bounded unsealed batches, result UUID ownership, and a later generic publication seal are removed. Whole objects are atomic independently valid units."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_fact_contracts.py::test_exchange_retains_complete_git_manifest_until_exact_publication",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_partial_capture_does_not_hide_valid_objects_or_claim_scope",
+        "tests/integration/test_catalog3_exchange_integrity_audit.py::test_git_roundtrip_recomputes_complete_intrinsic_rows",
+        "tests/integration/test_git_objects.py::test_manifest_generation_installs_exact_tree_scoped_entries"
+      ],
+      "retained_assertions": [
+        "Reversed wire rows reconstruct complete intrinsic entry sets from verified bytes, replay adds no rows, and a missing ref leaves real objects available while capture completion waits for the exact observation. Tree-scoped flattened manifest has exact recursive ls-tree entry count and completes atomically without a new snapshot."
+      ],
+      "retired_assertions": [
+        "Portable parsed-result/fact publication UUIDs and a generic late-member seal do not confer authority; derived tree structure is recomputed locally from canonical bytes."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_readers.py::test_git_reader_profile_and_result_selection",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_readers.py::test_git_readers_require_explicit_decoder_when_real_outputs_differ"
+      ],
+      "retained_assertions": [
+        "File/commit/tree/search/content and exact snapshot/target readers expose the actual selected decoder text/metadata and preserve raw content ID/bytes. Differing decoder outputs report partial conflict until explicit concrete decoder choice; repeat reanalysis does not create a new capture or winner."
+      ],
+      "retired_assertions": [
+        "Trusted profile/result selection as universal read gate is removed."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[False-sha1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha1]"
+      ],
+      "retained_assertions": [
+        "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha1. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."
+      ],
+      "retired_assertions": [
+        "The False select=True/False profile/result-selection dimension is removed. Reanalysis creates direct decoder candidates and cannot create or select a ref snapshot."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[False-sha256]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha256]"
+      ],
+      "retained_assertions": [
+        "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha256. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."
+      ],
+      "retired_assertions": [
+        "The False select=True/False profile/result-selection dimension is removed. Reanalysis creates direct decoder candidates and cannot create or select a ref snapshot."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[True-sha1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha1]"
+      ],
+      "retained_assertions": [
+        "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha1. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."
+      ],
+      "retired_assertions": [
+        "The True select=True/False profile/result-selection dimension is removed. Reanalysis creates direct decoder candidates and cannot create or select a ref snapshot."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[True-sha256]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha256]"
+      ],
+      "retained_assertions": [
+        "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha256. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."
+      ],
+      "retired_assertions": [
+        "The True select=True/False profile/result-selection dimension is removed. Reanalysis creates direct decoder candidates and cannot create or select a ref snapshot."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_catalog3_git_preserves_roots_bytes_parents_and_new_observations[sha1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_catalog3_git_preserves_roots_bytes_parents_and_new_observations[sha1]"
+      ],
+      "retained_assertions": [
+        "Retains all actual root origin targets, both hash formats, raw commit bytes/message, exact ordered merge parents and repeated new captures without duplicating physical/intrinsic objects. Current successor follows captured predecessor, and foreign keys remain valid."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_catalog3_git_preserves_roots_bytes_parents_and_new_observations[sha256]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_catalog3_git_preserves_roots_bytes_parents_and_new_observations[sha256]"
+      ],
+      "retained_assertions": [
+        "Retains all actual root origin targets, both hash formats, raw commit bytes/message, exact ordered merge parents and repeated new captures without duplicating physical/intrinsic objects. Current successor follows captured predecessor, and foreign keys remain valid."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation"
+      ],
+      "retained_assertions": [
+        "The job resumes the same acquisition and already frozen ref list after the remote changes; final ref still points to A, original origin remains, leases/reservations are released."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation"
+      ],
+      "retained_assertions": [
+        "A late completion resumes its captured target and predecessor; concurrent capture heads remain divergent and no time/generation winner is exposed. Existing coverage boundaries remain tied to their real captures."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_unverified_imported_oid_needs_actual_bytes_before_admission",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_unverified_imported_oid_needs_actual_bytes_before_admission"
+      ],
+      "retained_assertions": [
+        "An existing unverified object identity cannot be reused as bytes. Actual acquisition verifies the OID/type/size/body and produces real decoded text."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_unknown_provider_binding_admits_one_proven_identity",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_git_runtime.py::test_unknown_provider_binding_admits_one_proven_identity"
+      ],
+      "retained_assertions": [
+        "Endpoint provider binding accepts its one demonstrated repository identity and rejects later different identity and another repository; FK consistency remains."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_catalog3_pr_git_readers.py::test_pr_only_acquisition_has_explicit_selected_git_reads",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_pr_git_readers.py::test_pr_only_acquisition_reads_direct_objects_without_ref_selection"
+      ],
+      "retained_assertions": [
+        "PR-only acquisition reads commit/tree/file/search from actual source ownership even without a ref snapshot. Repeated same bytes under a second exact acquisition do not invent an interpretation ambiguity; target diagnostics retain the acquisition."
+      ],
+      "retired_assertions": [
+        "Generic selected_git_acquisition_results and conflicting profile/result choice between identical intrinsic bytes are removed."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_git_objects.py::test_repeat_reuses_durable_objects",
+      "replacement_nodes": [
+        "tests/integration/test_git_objects.py::test_repeat_reuses_durable_objects"
+      ],
+      "retained_assertions": [
+        "Second acquisition issues no cat-file body requests for retained verified objects; a new commit fetches only newly missing objects and reuses old closure."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_git_objects.py::test_related_oid_reuses_published_local_closure",
+      "replacement_nodes": [
+        "tests/integration/test_git_objects.py::test_related_oid_reuses_complete_local_closure"
+      ],
+      "retained_assertions": [
+        "Exact related OID acquisition reuses existing complete local canonical closure without body download; retains requested root role/target and concrete completeness."
+      ],
+      "retired_assertions": [
+        "Generic publication/new-result ownership and threshold commits inside one manifest are removed; completion describes the actual exact tree closure."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_git_objects.py::test_manifest_generation_publishes_bounded_rows_in_new_result",
+      "replacement_nodes": [
+        "tests/integration/test_git_objects.py::test_manifest_generation_installs_exact_tree_scoped_entries"
+      ],
+      "retained_assertions": [
+        "Flattened tree-scoped manifest entry count equals git ls-tree -r; actual completion is installed in one transaction and the current ref snapshot does not change."
+      ],
+      "retired_assertions": [
+        "Generic publication/new-result ownership and threshold commits inside one manifest are removed; completion describes the actual exact tree closure."
+      ]
+    },
+    {
+      "old_node": "tests/integration/test_git_objects.py::test_tags_paths_links",
+      "replacement_nodes": [
+        "tests/integration/test_git_objects.py::test_tags_paths_links"
+      ],
+      "retained_assertions": [
+        "Annotated tags, raw non-ASCII paths, executable mode, symlink/gitlink handling and real LFS content IDs remain readable."
+      ],
+      "retired_assertions": []
+    },
+    {
+      "old_node": "tests/integration/test_git_objects.py::test_incomplete_closure",
+      "replacement_nodes": [
+        "tests/integration/test_git_objects.py::test_incomplete_closure"
+      ],
+      "retained_assertions": [
+        "An incomplete cache/closure cannot overwrite the existing complete current ref capture."
+      ],
+      "retired_assertions": []
+    }
+  ]
+}

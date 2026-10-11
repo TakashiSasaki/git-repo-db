@@ -73,7 +73,7 @@ def test_query_timeout_and_invalid_cursor(catalog):
     )
 
 
-def test_publication_fencing(catalog, tmp_path):
+def test_snapshot_completion_fencing(catalog, tmp_path):
     state, fixture, repos = catalog
     run(state, "sync", "git")
     before = run(state, "repos", "show", "--repo", repos["alpha"])["data"]["items"][0][
@@ -88,11 +88,9 @@ def test_publication_fencing(catalog, tmp_path):
         db.execute(
             "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) "
             "SELECT job_id,99,'running','{}' FROM acquisition_progress "
-            "WHERE state!='published'"
+            "WHERE state!='complete'"
         )
-        db.execute(
-            "UPDATE acquisition_progress SET attempt=99 WHERE state!='published'"
-        )
+        db.execute("UPDATE acquisition_progress SET attempt=99 WHERE state!='complete'")
     (hooks / "before_publish.release").touch()
     out, err = process.communicate(timeout=10)
     assert (
@@ -116,5 +114,5 @@ def test_read_transaction_released_before_output(catalog):
     with Store(state) as s:
         s.execute("PRAGMA busy_timeout=0")
         with s.transaction():
-            s.execute("UPDATE database_identity SET publication_seq=publication_seq")
+            s.execute("UPDATE database_identity SET local_revision=local_revision")
     assert result.data["items"]

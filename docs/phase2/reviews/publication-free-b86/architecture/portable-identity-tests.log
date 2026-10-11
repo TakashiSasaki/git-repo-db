@@ -1,0 +1,110 @@
+.............FFF..                                                       [100%]
+=================================== FAILURES ===================================
+________ test_no_usable_source_rejects_before_job_and_observation[None] ________
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7f6e6085fb90>
+selector = None
+
+    @pytest.mark.parametrize("selector", [None, "first"])
+    def test_no_usable_source_rejects_before_job_and_observation(store, selector):
+        add_source(store, "first")
+        with pytest.raises(CatalogError) as error:
+            CollectionService(store.path).discover(selector)
+        assert error.value.code == (
+            "NO_USABLE_SOURCE" if selector is None else "SOURCE_UNCONFIGURED"
+        )
+        assert store.one("SELECT count(*) FROM jobs")[0] == 0
+>       assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_catalog3_portable_identity.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repo_catalog/adapters/sqlite/store.py:165: in one
+    return self.execute(sql, args).fetchone()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <repo_catalog.adapters.sqlite.store.Store object at 0x7f6e6085fb90>
+sql = 'SELECT count(*) FROM inventory_observations', args = ()
+
+    def execute(self, sql, args=()):
+>       return self.connection.execute(sql, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       sqlite3.OperationalError: no such table: inventory_observations
+
+src/repo_catalog/adapters/sqlite/store.py:162: OperationalError
+_______ test_no_usable_source_rejects_before_job_and_observation[first] ________
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60bc0d40>
+selector = 'first'
+
+    @pytest.mark.parametrize("selector", [None, "first"])
+    def test_no_usable_source_rejects_before_job_and_observation(store, selector):
+        add_source(store, "first")
+        with pytest.raises(CatalogError) as error:
+            CollectionService(store.path).discover(selector)
+        assert error.value.code == (
+            "NO_USABLE_SOURCE" if selector is None else "SOURCE_UNCONFIGURED"
+        )
+        assert store.one("SELECT count(*) FROM jobs")[0] == 0
+>       assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_catalog3_portable_identity.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repo_catalog/adapters/sqlite/store.py:165: in one
+    return self.execute(sql, args).fetchone()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60bc0d40>
+sql = 'SELECT count(*) FROM inventory_observations', args = ()
+
+    def execute(self, sql, args=()):
+>       return self.connection.execute(sql, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       sqlite3.OperationalError: no such table: inventory_observations
+
+src/repo_catalog/adapters/sqlite/store.py:162: OperationalError
+________ test_batch_skip_retains_diagnostic_without_remote_observation _________
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60856600>
+
+    def test_batch_skip_retains_diagnostic_without_remote_observation(store):
+        missing = add_source(store, "missing")
+        configured = add_source(store, "configured")
+        store.execute(
+            "UPDATE sources SET settings=? WHERE source_id='configured'",
+            ('{"url":"file:///synthetic-only"}',),
+        )
+        result = CollectionService(store.path).discover()
+        assert result.status == "partial"
+        assert result.data["skipped_sources"] == [
+            {"source_registration_uuidv4": missing, "reason": "SOURCE_UNCONFIGURED"}
+        ]
+        assert [
+>           r[0] for r in store.all("SELECT source_id FROM inventory_observations")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ] == ["configured"]
+
+tests/integration/test_catalog3_portable_identity.py:164: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repo_catalog/adapters/sqlite/store.py:168: in all
+    return self.execute(sql, args).fetchall()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <repo_catalog.adapters.sqlite.store.Store object at 0x7f6e60856600>
+sql = 'SELECT source_id FROM inventory_observations', args = ()
+
+    def execute(self, sql, args=()):
+>       return self.connection.execute(sql, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       sqlite3.OperationalError: no such table: inventory_observations
+
+src/repo_catalog/adapters/sqlite/store.py:162: OperationalError
+=========================== short test summary info ============================
+FAILED tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]
+FAILED tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]
+FAILED tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation
+3 failed, 15 passed in 26.02s

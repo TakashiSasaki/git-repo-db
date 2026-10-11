@@ -1,0 +1,113 @@
+{
+  "source": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3",
+  "logical_new_nodes": 11,
+  "original_eight_superseded_probe_input": true,
+  "completed_runs": [
+    {
+      "path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-boundaries-sqlite353.xml",
+      "sha256": "a3aada062deab2c09c59ebcd688deca675e7fc0e7fdca5ac1be8df248013696e",
+      "count": 8,
+      "nodes": [
+        {
+          "name": "test_history_does_not_promote_retired_captured_head",
+          "status": "failure"
+        },
+        {
+          "name": "test_history_uses_reachable_ancestor_tree_of_latest_head",
+          "status": "passed"
+        },
+        {
+          "name": "test_pr_and_snapshot_are_exclusive_before_subject_lookup",
+          "status": "failure"
+        },
+        {
+          "name": "test_commit_literal_cannot_match_replacement_character",
+          "status": "passed"
+        },
+        {
+          "name": "test_commit_literal_offsets_are_physical_message_offsets",
+          "status": "failure"
+        },
+        {
+          "name": "test_tree_entry_reports_actual_saved_eligible_raw",
+          "status": "failure"
+        },
+        {
+          "name": "test_saved_raw_ranges_remain_bounded",
+          "status": "passed"
+        },
+        {
+          "name": "test_physical_git_bytes_do_not_override_content_profile",
+          "status": "failure"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/reader-nine-sqlite353.xml",
+      "sha256": "168d7e13d4c289468146a49e07dcfddbb0068b13273b2c62a1fa9982f8ef17e7",
+      "count": 9,
+      "nodes": [
+        {
+          "name": "test_history_does_not_promote_retired_captured_head",
+          "status": "failure"
+        },
+        {
+          "name": "test_history_uses_reachable_ancestor_tree_of_latest_head",
+          "status": "passed"
+        },
+        {
+          "name": "test_history_includes_reachable_ancestor_never_captured_as_ref",
+          "status": "failure"
+        },
+        {
+          "name": "test_pr_and_snapshot_are_exclusive_before_subject_lookup",
+          "status": "failure"
+        },
+        {
+          "name": "test_commit_literal_cannot_match_replacement_character",
+          "status": "passed"
+        },
+        {
+          "name": "test_commit_literal_offsets_are_physical_message_offsets",
+          "status": "failure"
+        },
+        {
+          "name": "test_tree_entry_reports_actual_saved_eligible_raw",
+          "status": "failure"
+        },
+        {
+          "name": "test_saved_raw_ranges_remain_bounded",
+          "status": "passed"
+        },
+        {
+          "name": "test_physical_git_bytes_do_not_override_content_profile",
+          "status": "failure"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/raw-escape-sqlite353.xml",
+      "sha256": "92b65cba01bb5291c2f5190f841b1096c289afd5bd487fe9a62e9e6dbf2564cb",
+      "count": 1,
+      "nodes": [
+        {
+          "name": "test_generated_decoder_escape_is_not_raw_commit_literal",
+          "status": "failure"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/review-artifacts/final-integrated/final-fafc1b2/raw-backslash-positive-sqlite353.xml",
+      "sha256": "3bede62cfd1dd8a1cb664fc505ecf9a4224951a543ee6f8b13f30d524bd8ffd6",
+      "count": 1,
+      "nodes": [
+        {
+          "name": "test_real_backslash_bytes_remain_searchable",
+          "status": "passed"
+        }
+      ],
+      "focused_selection": "real_backslash",
+      "other_node_deselected": 1
+    }
+  ]
+}

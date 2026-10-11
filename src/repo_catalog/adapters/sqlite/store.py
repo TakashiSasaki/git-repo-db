@@ -108,7 +108,7 @@ class Store:
                     for statement in statements(schema_sql()):
                         self.execute(statement)
                     self.execute(
-                        "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle) VALUES(1,?,?,?,0,?,'validated')",
+                        "INSERT INTO database_identity(singleton,format_id,schema_version,db_instance_id,local_revision,ddl_sha256,lifecycle) VALUES(1,?,?,?,0,?,'validated')",
                         (FORMAT_ID, SCHEMA_VERSION, str(uuid.uuid4()), DDL_SHA256),
                     )
             self.verify_format(allow_building=allow_building)
@@ -124,7 +124,7 @@ class Store:
 
     def verify_format(self, *, allow_building=False):
         rows = self.all(
-            "SELECT singleton,format_id,schema_version,db_instance_id,publication_seq,ddl_sha256,lifecycle FROM database_identity"
+            "SELECT singleton,format_id,schema_version,db_instance_id,local_revision,ddl_sha256,lifecycle FROM database_identity"
         )
         if len(rows) != 1 or rows[0]["singleton"] != 1:
             raise CatalogError("SCHEMA_ERROR", "Invalid catalog identity")
@@ -145,7 +145,7 @@ class Store:
         ):
             raise CatalogError(
                 "TARGET_NOT_READY",
-                "Catalog publication is incomplete",
+                "Catalog installation is incomplete",
                 {"lifecycle": row["lifecycle"]},
             )
 
@@ -169,24 +169,51 @@ class Store:
 
     @contextmanager
     def transaction(self, *, read=False):
-        self.execute("BEGIN" if read else "BEGIN IMMEDIATE")
+        # Every nested unit has its own rollback boundary, including units whose
+        # caller catches the error and continues the surrounding transaction.
+        savepoint = (
+            "unit_" + uuid.uuid4().hex if self.connection.in_transaction else None
+        )
+        self.execute(
+            f"SAVEPOINT {savepoint}"
+            if savepoint
+            else "BEGIN"
+            if read
+            else "BEGIN IMMEDIATE"
+        )
         try:
             yield self
-            self.execute("COMMIT")
-        except BaseException:
-            if self.connection.in_transaction:
-                self.execute("ROLLBACK")
+            self.execute(f"RELEASE {savepoint}" if savepoint else "COMMIT")
+        except BaseException as error:
+            try:
+                if self.connection.in_transaction:
+                    if savepoint:
+                        self.execute(f"ROLLBACK TO {savepoint}")
+                        self.execute(f"RELEASE {savepoint}")
+                    else:
+                        self.execute("ROLLBACK")
+            except BaseException as cleanup_error:
+                error.add_note(
+                    "Transaction cleanup failed: " + type(cleanup_error).__name__
+                )
+                # Retire a connection whose rollback cannot be completed.
+                try:
+                    self.connection.close()
+                except BaseException as close_error:
+                    error.add_note(
+                        "Connection retirement failed: " + type(close_error).__name__
+                    )
             raise
 
-    def publish(self):
+    def advance_local_revision(self):
         self.execute(
-            "UPDATE database_identity SET publication_seq=publication_seq+1 WHERE singleton=1"
+            "UPDATE database_identity SET local_revision=local_revision+1 WHERE singleton=1"
         )
 
     def revision(self):
         return dict(
             self.one(
-                "SELECT db_instance_id,publication_seq FROM database_identity WHERE singleton=1"
+                "SELECT db_instance_id,local_revision FROM database_identity WHERE singleton=1"
             )
         )
 
@@ -211,7 +238,7 @@ class Store:
         The repository is always explicit. An optional change request must belong
         to that repository; overlapping IDs never determine the owner type.
         Scope discovery and creation serialize with claim admission. Callers may
-        include this operation in their existing page/publication transaction.
+        include this operation in their existing resource transaction.
         """
         validate_epoch_us(observed_at_us)
         if coverage_state not in STORED_COVERAGE_STATES:

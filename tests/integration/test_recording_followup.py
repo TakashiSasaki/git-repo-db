@@ -216,8 +216,11 @@ def test_recorder_failure_preserves_actual_parser_and_storage_errors(
             ) == ("partial", 200)
         else:
             assert store.one("SELECT count(*) FROM completion_markers")[0] == 0
+        assert (
+            store.one("SELECT 1 FROM sqlite_schema WHERE name='fetch_occurrences'")
+            is None
+        )
         for table in (
-            "fetch_occurrences",
             "stored_bytes",
             "payloads",
             "payload_admission_staging",

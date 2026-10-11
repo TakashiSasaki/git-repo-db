@@ -50,6 +50,11 @@ jobs:
         run: |
           python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
           python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog --format json doctor
+      - name: Verify composed schema and generated guards
+        if: steps.plan.outputs.smoke == 'true'
+        run: |
+          uv run --no-sync python scripts/audit_publication_free.py > artifacts/ci-profile/schema-map.json
+          cmp artifacts/ci-profile/schema-map.json docs/phase2/publication-free-schema-map.json
       - name: Collect selected tests before execution
         if: steps.plan.outputs.tests == 'true' || steps.plan.outputs.packaging == 'true'
         run: uv run --no-sync python scripts/ci_execute.py collect
@@ -62,6 +67,50 @@ jobs:
       - name: Reconcile selected checks and report unexecuted coverage
         if: always()
         run: python scripts/ci_execute.py gate
+      - name: Emit bounded verification receipts to job log
+        if: always()
+        run: |
+          python - <<'PY'
+          import base64
+          import hashlib
+          import io
+          import json
+          import os
+          import subprocess
+          import textwrap
+          import zipfile
+          from pathlib import Path
+
+          root = Path("artifacts/ci-profile")
+          files = {p.name: p.read_bytes() for p in sorted(root.glob("*"))
+                   if p.is_file() and (p.suffix in {".json", ".md", ".xml"}
+                                      or p.name == "selected-tests.txt")}
+          files["receipt-binding.json"] = (json.dumps({
+              "head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+              "tree": subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip(),
+              "feature_sha": os.environ.get("CI_FEATURE_SHA"),
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+          }, sort_keys=True) + "\n").encode()
+          files["receipt-index.json"] = (json.dumps({
+              name: {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+              for name, data in files.items()
+          }, sort_keys=True) + "\n").encode()
+          output = io.BytesIO()
+          with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+              for name, data in files.items():
+                  info = zipfile.ZipInfo(name)
+                  info.compress_type = zipfile.ZIP_DEFLATED
+                  archive.writestr(info, data)
+          body = output.getvalue()
+          if len(body) > 2 * 1024 * 1024:
+              raise SystemExit("CI receipts exceed the bounded log limit; use the artifact")
+          digest = hashlib.sha256(body).hexdigest()
+          print(f"CI_RECEIPTS_BEGIN_V1 {digest} {len(body)}")
+          for line in textwrap.wrap(base64.b64encode(body).decode("ascii"), 120):
+              print("CI_RECEIPTS_DATA_V1 " + line)
+          print("CI_RECEIPTS_END_V1 " + digest)
+          PY
       - name: Retain timing and selection evidence
         if: always()
         uses: actions/upload-artifact@v7

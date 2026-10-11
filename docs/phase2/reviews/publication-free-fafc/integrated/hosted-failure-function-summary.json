@@ -1,0 +1,303 @@
+[
+  {
+    "function": "tests.integration.test_catalog3_maintenance_contracts.test_full_check_detects_wrong_git_identity_with_valid_physical_bytes",
+    "cases": 1,
+    "messages": [
+      "sqlite3.IntegrityError: Git raw payload identity mismatch"
+    ]
+  },
+  {
+    "function": "tests.integration.test_independent_stack_review.test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
+    "cases": 1,
+    "messages": [
+      "assert False"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_content.test_bounded_raw",
+    "cases": 1,
+    "messages": [
+      "AssertionError: (0, {'catalog': {'db_instance_id': '0b0cce0a-0d2b-4e25-8a4a-71d03857872a', 'local_revision': 54}, 'command': 'content show', 'coverage': {'complete_for_requested_sc"
+    ]
+  },
+  {
+    "function": "tests.integration.test_current_collector_projection_followup.test_old_full_new_partial_equal_clock_full_across_collector_endpoints",
+    "cases": 12,
+    "messages": [
+      "repo_catalog.domain.models.CatalogError: Thread root owner identity is unavailable"
+    ]
+  },
+  {
+    "function": "tests.integration.test_current_collector_projection_followup.test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields",
+    "cases": 2,
+    "messages": [
+      "repo_catalog.domain.models.CatalogError: Thread root owner identity is unavailable"
+    ]
+  },
+  {
+    "function": "tests.integration.test_current_collector_projection_followup.test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary",
+    "cases": 2,
+    "messages": [
+      "repo_catalog.domain.models.CatalogError: Thread root owner identity is unavailable"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_payload_cas.test_same_raw_bytes_across_git_formats_share_one_physical_object",
+    "cases": 1,
+    "messages": [
+      "sqlite3.OperationalError: no such function: repo_catalog_git_object_identity_valid"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_payload_cas.test_distinct_byte_encodings_remain_distinct",
+    "cases": 1,
+    "messages": [
+      "sqlite3.OperationalError: no such function: repo_catalog_git_object_identity_valid"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_payload_cas.test_independent_acquisitions_keep_separate_captures_for_shared_bytes",
+    "cases": 1,
+    "messages": [
+      "sqlite3.OperationalError: no such function: repo_catalog_git_object_identity_valid"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_payload_cas.test_replace_update_delete_cannot_mutate_admitted_identity",
+    "cases": 2,
+    "messages": [
+      "sqlite3.OperationalError: no such function: repo_catalog_git_object_identity_valid"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_payload_cas.test_git_object_reference_requires_both_components_and_its_representation",
+    "cases": 1,
+    "messages": [
+      "sqlite3.OperationalError: no such function: repo_catalog_git_object_identity_valid"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_github_sync.test_nested_pagination",
+    "cases": 1,
+    "messages": [
+      "subprocess.TimeoutExpired: Command '['repo-catalog', '--state-dir', '/tmp/pytest-of-runner/pytest-0/popen-gw0/test_nested_pagination0/state', '--format', 'json', 'sync', 'pr', '--r"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_queries.test_fresh_catalog3_doctor_and_file_query",
+    "cases": 1,
+    "messages": [
+      "KeyError: 'raw_available'"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_remaining_adversarial.test_git_decoder_candidates_never_choose_receipt_parser_or_uuid_winner",
+    "cases": 2,
+    "messages": [
+      "sqlite3.IntegrityError: Git decoder value contradicts raw bytes or settings"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_github_sync.test_child_watermarks",
+    "cases": 1,
+    "messages": [
+      "KeyError: 'issue-comment-incremental'"
+    ]
+  },
+  {
+    "function": "tests.integration.test_current_followup_adversarial.test_graph_invalid_field_time_retains_valid_sibling_and_invalid_diagnostic",
+    "cases": 4,
+    "messages": [
+      "assert 0 == 1"
+    ]
+  },
+  {
+    "function": "tests.integration.test_recording_followup.test_recorder_failure_preserves_actual_parser_and_storage_errors",
+    "cases": 2,
+    "messages": [
+      "sqlite3.OperationalError: no such table: fetch_occurrences"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_queries.test_commit_literal_checks_original_bytes",
+    "cases": 1,
+    "messages": [
+      "assert (4 == 1)"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_queries.test_root_scopes",
+    "cases": 1,
+    "messages": [
+      "AssertionError: assert [{'content_id...id': 26, ...}] == []"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_queries.test_pr_root_scopes",
+    "cases": 1,
+    "messages": [
+      "AssertionError: (0, {'catalog': {'db_instance_id': '59619745-cd0f-4fc3-81e6-d32f04c07ab8', 'local_revision': 383}, 'command': 'search path', 'coverage': {'complete_for_requested_sc"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_review_coverage.test_resumed_child_observation_governs_its_thread_without_new_root_request",
+    "cases": 1,
+    "messages": [
+      "AssertionError: CoverageReport(complete_for_requested_scope=True, missing=[], excluded_by_policy=[])"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_review_coverage.test_unrelated_child_failure_keeps_selected_terminal_thread_complete",
+    "cases": 2,
+    "messages": [
+      "AssertionError: CoverageReport(complete_for_requested_scope=False, missing=[{'kind': 'pr', 'reason': 'thread_listing_incomplete', 'change_request_id': '00000000-0000-4000-8000-0000"
+    ]
+  },
+  {
+    "function": "tests.integration.test_current_review_query_coverage.test_imported_current_family_uses_direct_fields_without_parser_trust",
+    "cases": 2,
+    "messages": [
+      "repo_catalog.domain.models.CatalogError: Invalid PR state"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_recovery.test_old_run_retains_divergent_capture_without_time_winner",
+    "cases": 1,
+    "messages": [
+      "AssertionError: (3, {'catalog': {'db_instance_id': 'b9a44ce0-d682-432d-bd61-b5d3932083e7', 'local_revision': 77}, 'command': 'repos show', 'coverage': {'complete_for_requested_scop"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_repository_identity.test_remounted_paths_share_explicit_repo_identity",
+    "cases": 1,
+    "messages": [
+      "AssertionError: (3, {'catalog': {'db_instance_id': '41a25c85-f6d1-41cf-8b02-9434ed730ca0', 'local_revision': 78}, 'command': 'repos list', 'coverage': {'complete_for_requested_scop"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_repository_identity.test_github_instances_and_sources_keep_api_identity_separate",
+    "cases": 1,
+    "messages": [
+      "AssertionError: (3, {'catalog': {'db_instance_id': 'f1f9bac0-a678-4f6f-bea7-09ee4c2ae509', 'local_revision': 671}, 'command': 'repos show', 'coverage': {'complete_for_requested_sco"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage_ownership.test_explicit_owner_admission_preserves_original_details_and_caller_rollback",
+    "cases": 1,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage_ownership.test_store_accepts_auto_id_after_negative_id_and_keeps_replace_protection",
+    "cases": 1,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage_queries.test_cli_current_conflict_preserves_separate_latest_claim_details",
+    "cases": 4,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_current_review_query_coverage.test_current_rows_or_child_pages_cannot_prove_family_listing",
+    "cases": 1,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: fetch_collections.scope_json"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_repository_identity.test_instance_scoped_native_ids_and_conflicts",
+    "cases": 1,
+    "messages": [
+      "AssertionError: (3, {'catalog': {'db_instance_id': 'ecbff726-d2ec-4679-be20-66dbeb4d49a5', 'local_revision': 10}, 'command': 'repos show', 'coverage': {'complete_for_requested_scop"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage.test_duplicate_and_stale_input_are_noops_without_advisory_merge",
+    "cases": 6,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage.test_export_transports_latest_set_and_repeated_admission_is_idempotent",
+    "cases": 2,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage_queries.test_cli_latest_unknown_does_not_fall_back_to_saved_complete",
+    "cases": 1,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage_queries.test_document_only_queries_ignore_code_only_coverage",
+    "cases": 1,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage.test_negative_local_id_does_not_block_later_raw_or_admitted_automatic_ids",
+    "cases": 2,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage.test_all_local_ids_reject_collision_replacement_and_updates",
+    "cases": 42,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.e2e.test_text_policy.test_text_bounds",
+    "cases": 1,
+    "messages": [
+      "KeyError: 'raw_available'"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_coverage.test_explicit_id_conflict_can_only_be_ignored_without_mutation",
+    "cases": 12,
+    "messages": [
+      "sqlite3.IntegrityError: JSON contract violation: coverage_claims.details_json"
+    ]
+  },
+  {
+    "function": "tests.integration.test_cache.test_old_obligations",
+    "cases": 1,
+    "messages": [
+      "sqlite3.OperationalError: no such function: repo_catalog_git_object_identity_valid"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_cas_integrity.test_forged_canonical_git_oid_cannot_authorize_repair",
+    "cases": 1,
+    "messages": [
+      "sqlite3.IntegrityError: Git raw payload identity mismatch"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_github_scaling.test_new_graphql_comments_have_bounded_sqlite_work",
+    "cases": 1,
+    "messages": [
+      "sqlite3.OperationalError: no such table: document_observations"
+    ]
+  },
+  {
+    "function": "tests.integration.test_catalog3_identity_relations.test_names_keep_independent_observations_and_ambiguous_resolution",
+    "cases": 1,
+    "messages": [
+      "AssertionError: assert ('ce45e1f0-7a12-4e17-b2ec-ae463e6c21aa', 'historical') != ('ce45e1f0-7a12-4e17-b2ec-ae463e6c21aa', 'historical')"
+    ]
+  }
+]

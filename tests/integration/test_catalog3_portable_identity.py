@@ -14,6 +14,7 @@ from repo_catalog.application.job_service import JobService
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CatalogError
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 @pytest.fixture
@@ -144,7 +145,9 @@ def test_no_usable_source_rejects_before_job_and_observation(store, selector):
         "NO_USABLE_SOURCE" if selector is None else "SOURCE_UNCONFIGURED"
     )
     assert store.one("SELECT count(*) FROM jobs")[0] == 0
-    assert store.one("SELECT count(*) FROM inventory_observations")[0] == 0
+    assert_absent_tables(store.connection, "inventory_observations")
+    assert store.one("SELECT count(*) FROM source_inventory_assessments")[0] == 0
+    assert store.one("SELECT count(*) FROM source_repositories")[0] == 0
     assert store.one("SELECT count(*) FROM coverage_claims")[0] == 0
 
 
@@ -160,9 +163,15 @@ def test_batch_skip_retains_diagnostic_without_remote_observation(store):
     assert result.data["skipped_sources"] == [
         {"source_registration_uuidv4": missing, "reason": "SOURCE_UNCONFIGURED"}
     ]
-    assert [
-        r[0] for r in store.all("SELECT source_id FROM inventory_observations")
-    ] == ["configured"]
+    assert_absent_tables(store.connection, "inventory_observations")
+    assessments = store.all("SELECT * FROM source_inventory_assessments")
+    assert len(assessments) == 1
+    assessment = assessments[0]
+    assert assessment["source_id"] == "configured"
+    assert assessment["state"] == "complete" and assessment["terminal"] == 1
+    members = store.all("SELECT source_id,repository_uuidv4 FROM source_repositories")
+    assert len(members) == 1 and members[0]["source_id"] == "configured"
+    assert json.loads(assessment["members_json"]) == [members[0]["repository_uuidv4"]]
     attempt = store.one(
         "SELECT state,checkpoint FROM job_attempts WHERE job_id=?",
         (result.data["job_id"],),

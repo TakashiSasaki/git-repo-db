@@ -1,0 +1,28 @@
+modeled_tree_sql passed
+decoded_candidates_computed_and_checked passed
+{
+  "source": "/workspace/reviews/publication-free-architecture-final-fafc1b2/src/repo_catalog/__init__.py",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "sqlite": "3.45.1",
+  "modeled_tree_sql": {
+    "nested_shape_variants_rejected_Python_and_SQL": 6,
+    "escaped_known_keys": "valid",
+    "decoded_duplicate_key": "rejected"
+  },
+  "decoded_candidates_computed_and_checked": [
+    {
+      "format": "sha1",
+      "native_insert": "rejected",
+      "simulated_old_malformed_row": "excluded_by_computed_view_and_reader",
+      "full_check": "specific_GIT_DECODER_FACT",
+      "healthy_candidate": "still_usable"
+    },
+    {
+      "format": "sha256",
+      "native_insert": "rejected",
+      "simulated_old_malformed_row": "excluded_by_computed_view_and_reader",
+      "full_check": "specific_GIT_DECODER_FACT",
+      "healthy_candidate": "still_usable"
+    }
+  ]
+}

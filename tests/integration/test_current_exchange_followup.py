@@ -16,6 +16,7 @@ from tests.integration.test_catalog3_current_queries import (
     current_catalog as current_catalog,
 )
 from tests.integration.test_catalog3_exchange import receive
+from tests.support.sqlite_contracts import assert_absent_tables
 
 
 def reopen(db, path):
@@ -150,7 +151,7 @@ def test_semantically_duplicate_candidate_admits_stronger_provider_evidence(
         assert db.execute(
             f"SELECT count(*) FROM {table_for(kind)} WHERE kind=?", (kind,)
         ).fetchone() == (1,)
-        assert db.execute("SELECT count(*) FROM parsed_results").fetchone() == (0,)
+        assert_absent_tables(db, "parsed_results")
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
     finally:
         db.close()

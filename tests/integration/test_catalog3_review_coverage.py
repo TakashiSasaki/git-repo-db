@@ -1,8 +1,11 @@
 """Selected review coverage follows terminal evidence, independent of pagination."""
 
+import json
+
 import pytest
 
 from repo_catalog.adapters.github.collector import GitHubCollector
+from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CancellationToken, CatalogError
@@ -20,9 +23,82 @@ def start_threads(store):
                 "repository_binding_id,change_request_kind,provider_change_request_number) "
                 "VALUES('00000000-0000-4000-8000-000000000301:41','00000000-0000-4000-8000-000000000301','binding','pull_request',41)"
             )
+    if not store.one("SELECT 1 FROM change_request_state"):
+        owner = {
+            "repository_uuidv4": "00000000-0000-4000-8000-000000000301",
+            "repository_binding_id": "binding",
+            "service_instance_uuidv4": "00000000-0000-4000-8000-000000000101",
+            "change_request_id": "00000000-0000-4000-8000-000000000301:41",
+        }
+        candidate = {
+            **owner,
+            "kind": "change-request",
+            "state": "open",
+            "provider_updated_at_us": 0,
+            "provider_clock_scope": "github-pr-updated-at",
+            "observed_at_us": 0,
+            "parsed_at_us": 0,
+            "parser_module": __name__,
+            "parser_version": "1",
+            "acquisition_scope": {**owner, "endpoint": "synthetic-thread-parent"},
+        }
+        assert (
+            CurrentApiState(store)
+            .admit("change_request_state", candidate, source="import")
+            .status
+            == "accepted"
+        )
     job = JobService(store).create("sync", {"kind": "pr"})
     store.expected_attempt = 1
     return job
+
+
+def set_pr_target(store, head, base, clock):
+    pr_id = "00000000-0000-4000-8000-000000000301:41"
+    scope = {
+        "repository_uuidv4": "00000000-0000-4000-8000-000000000301",
+        "repository_binding_id": "binding",
+        "service_instance_uuidv4": "00000000-0000-4000-8000-000000000101",
+        "change_request_id": pr_id,
+        "endpoint": "synthetic-pr-target",
+    }
+    fields = {
+        "object_format": "sha1",
+        "head_oid": head,
+        "base_oid": base,
+    }
+    evidence = {
+        json.dumps([field], separators=(",", ":")): {
+            "provider_updated_at_us": clock,
+            "provider_clock_scope": "github-pr-updated-at",
+            "observed_at_us": clock,
+            "parsed_at_us": clock,
+            "parser_module": __name__,
+            "parser_version": "1",
+            "acquisition_scope": scope,
+        }
+        for field in fields
+    }
+    candidate = {
+        "repository_uuidv4": scope["repository_uuidv4"],
+        "repository_binding_id": scope["repository_binding_id"],
+        "service_instance_uuidv4": scope["service_instance_uuidv4"],
+        "change_request_id": pr_id,
+        "kind": "change-request",
+        "provider_updated_at_us": clock,
+        "provider_clock_scope": "github-pr-updated-at",
+        "observed_at_us": clock,
+        "parsed_at_us": clock,
+        "parser_module": __name__,
+        "parser_version": "1",
+        "acquisition_scope": scope,
+        "field_evidence": evidence,
+        **fields,
+    }
+    result = CurrentApiState(store).admit(
+        "change_request_state", candidate, source="import"
+    )
+    assert result.status == "accepted", result
 
 
 def collect_threads(store, repo, job):
@@ -57,7 +133,7 @@ def assert_thread_partial(store, *, count):
     first = selected_thread(store, limit=1)
     full = selected_thread(store)
     assert first.coverage == full.coverage
-    assert full.status == "partial"
+    assert full.status == "partial", full.coverage
     assert len(full.data["items"]) == count
     assert full.coverage.missing == [
         {
@@ -103,7 +179,7 @@ def test_unsaved_thread_comments_remain_partial_until_resume(github_runtime, bou
     before = len(requested)
     collect_threads(store, repo, job)
     completed = selected_thread(store)
-    assert completed.status == "complete"
+    assert completed.status == "complete", completed.coverage
     assert completed.coverage.missing == []
     assert len(completed.data["items"]) == 101
     # Resuming child work consumes the saved root page without another request.
@@ -139,6 +215,63 @@ def test_unobserved_new_root_preserves_terminal_thread(github_runtime, error_typ
     assert selected_thread(store).status == "complete"
 
 
+def test_failed_root_after_head_change_keeps_thread_bound_to_captured_head(
+    github_runtime,
+):
+    store, repo, fixture, api = github_runtime
+    head_a = fixture.alpha.commits["P"]
+    base_a = fixture.alpha.commits["N"]
+    job_a = start_threads(store)
+    set_pr_target(store, head_a, base_a, 1)
+    collect_threads(store, repo, job_a)
+    assert selected_thread(store).status == "complete"
+    current_thread_before = store.one(
+        "SELECT acquisition_scope_json,field_evidence_json,observed_at_us,parser_module,parser_version FROM eligible_review_thread_state WHERE change_request_id=? AND provider_resource_id='THREAD41-0'",
+        ("00000000-0000-4000-8000-000000000301:41",),
+    )
+    assert current_thread_before is not None
+
+    root_a = store.one(
+        "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind='threads' AND json_extract(f.scope_json,'$.request_context.head_oid')=? AND json_extract(f.scope_json,'$.request_context.base_oid')=? AND p.state='complete'",
+        (head_a, base_a),
+    )
+    assert root_a is not None
+    requirement_a = store.one(
+        "SELECT child_fetch_collection_id,object_format,head_oid,base_oid FROM thread_collection_requirements WHERE fetch_collection_id=? AND provider_resource_id='THREAD41-0'",
+        (root_a[0],),
+    )
+    assert requirement_a is not None
+    assert requirement_a["object_format"] == "sha1"
+    assert requirement_a["head_oid"] == bytes.fromhex(head_a)
+    assert requirement_a["base_oid"] == bytes.fromhex(base_a)
+
+    head_b = fixture.alpha.commit("Q", {b"new-Q.txt": b"changed"}, parents=("P",))
+    set_pr_target(store, head_b, base_a, 2)
+    api.failures["/graphql"] = [404]
+    with pytest.raises(CatalogError):
+        collect_threads(store, repo, start_threads(store))
+
+    assert selected_thread(store).status == "complete"
+    current_thread_after = store.one(
+        "SELECT acquisition_scope_json,field_evidence_json,observed_at_us,parser_module,parser_version FROM eligible_review_thread_state WHERE change_request_id=? AND provider_resource_id='THREAD41-0'",
+        ("00000000-0000-4000-8000-000000000301:41",),
+    )
+    assert tuple(current_thread_after) == tuple(current_thread_before)
+    failed_root = store.one(
+        "SELECT f.fetch_collection_id FROM fetch_collections f WHERE f.kind='threads' AND json_extract(f.scope_json,'$.request_context.head_oid')=? ORDER BY f.observed_at_us DESC LIMIT 1",
+        (head_b,),
+    )
+    assert failed_root is not None
+    assert not store.one(
+        "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+        (failed_root[0],),
+    )
+    assert not store.one(
+        "SELECT 1 FROM thread_collection_requirements WHERE fetch_collection_id=?",
+        (failed_root[0],),
+    )
+
+
 @pytest.mark.parametrize("response_shape", ["partial", "malformed"])
 def test_new_observed_root_gap_supersedes_older_terminal_thread(
     github_runtime, response_shape
@@ -151,7 +284,7 @@ def test_new_observed_root_gap_supersedes_older_terminal_thread(
         payload, headers = original(method, path, params, body)
         if method == "POST":
             if response_shape == "malformed":
-                payload["data"]["repository"]["pullRequest"] = {}
+                payload["data"]["repository"]["pullRequest"] = {"number": 41}
             else:
                 payload["errors"] = [{"message": "partial"}]
         return payload, headers
@@ -261,7 +394,7 @@ def test_unrelated_child_failure_keeps_selected_terminal_thread_complete(
     with pytest.raises(CatalogError):
         collect_threads(store, repo, start_threads(store))
     selected = selected_thread(store)
-    assert selected.status == "complete"
+    assert selected.status == "complete", selected.coverage
     assert len(selected.data["items"]) == (101 if selected_needs_child else 1)
     assert selected_thread(store, resource="THREAD41-1").status == "partial"
 
@@ -288,6 +421,47 @@ def test_child_completion_from_another_root_does_not_prove_selected_thread(
     assert_thread_partial(store, count=101)
 
 
+def test_later_sibling_partial_resume_preserves_selected_scope_only(github_runtime):
+    store, repo, _, api = github_runtime
+    api.reply_count = 101
+    api.thread_count = 2
+    original = api.route
+    sibling_has_data = False
+
+    def route(method, path, params, body):
+        if method == "POST" and body["variables"].get("thread") == "THREAD41-1":
+            payload = (
+                original(method, path, params, body)[0]
+                if sibling_has_data
+                else {"data": None}
+            )
+            payload["errors"] = [{"message": "unavailable"}]
+            return payload, {}
+        return original(method, path, params, body)
+
+    api.route = route
+    job = start_threads(store)
+    with pytest.raises(CatalogError):
+        collect_threads(store, repo, job)
+    assert selected_thread(store).status == "complete"
+    sibling_has_data = True
+    with pytest.raises(CatalogError):
+        collect_threads(store, repo, job)
+    selected = selected_thread(store)
+    assert selected.status == "complete", selected.coverage
+    assert len(selected.data["items"]) == 101
+    assert selected_thread(store, resource="THREAD41-1").status == "partial"
+    whole = QueryService(store.path).query(
+        "pr threads",
+        {
+            "repo": repo["repository_uuidv4"],
+            "provider_change_request_number": 41,
+        },
+    )
+    assert whole.status == "partial"
+    assert not whole.coverage.complete_for_requested_scope
+
+
 def test_timeline_failure_is_outside_document_scope(github_runtime):
     store, repo, _, api = github_runtime
     api.failures["/repos/fixture/alpha/issues/41/timeline"] = [404]
@@ -310,7 +484,7 @@ def test_timeline_failure_is_outside_document_scope(github_runtime):
     }
     for command in ("pr documents", "search pr"):
         result = query.query(command, {**options, "literal": "body-marker"})
-        assert result.status == "complete"
+        assert result.status == "complete", result.coverage
         assert result.coverage.missing == []
         assert result.data["items"]
     for command in ("pr timeline", "pr show"):
@@ -319,3 +493,25 @@ def test_timeline_failure_is_outside_document_scope(github_runtime):
         assert any(
             gap.get("collection_kind") == "timeline" for gap in result.coverage.missing
         )
+
+
+def test_exact_path_selector_without_code_targets_reports_missing_listing(
+    github_runtime,
+):
+    store, repo, _, _ = github_runtime
+    start_threads(store)
+    result = QueryService(store.path).query(
+        "search pr",
+        {
+            "repo": repo["repository_uuidv4"],
+            "provider_change_request_number": 41,
+            "literal": "marker",
+            "path": "src/unknown.py",
+        },
+    )
+    assert result.status == "partial", result.coverage
+    assert {
+        "kind": "pr",
+        "reason": "code_assessment_missing",
+        "change_request_id": "00000000-0000-4000-8000-000000000301:41",
+    } in result.coverage.missing

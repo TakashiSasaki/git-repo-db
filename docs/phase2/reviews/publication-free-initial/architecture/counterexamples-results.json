@@ -1,0 +1,69 @@
+{
+  "source": "/workspace/reviews/publication-free-architecture/src/repo_catalog/__init__.py",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "DDL_sha256": "f66a3d1bf3b6636b20c8f58254012ce037beb0c5506cc45a08628e812924f1fe",
+  "probe_scope_replica": {
+    "admission": "accepted",
+    "catalog_validation": "passed",
+    "export_contains_replica": true,
+    "receiver": {
+      "received_records": 5,
+      "rejected_records": 0,
+      "admitted_records": 5,
+      "staged_records": 0,
+      "repository_uuidv4": "871e9169-c2a8-429b-8cf1-f9c08d7b6742"
+    },
+    "receiver_field_evidence_contains_replica": true
+  },
+  "probe_issue_metadata_replica": {
+    "opaque_Issue_metadata": "accepted",
+    "catalog_validation": "passed",
+    "export_contains_replica": true
+  },
+  "probe_pending_replica": {
+    "admission": "missing_dependency",
+    "pending_contains_replica": true,
+    "catalog_validation": "passed"
+  },
+  "probe_staging_vocab": {
+    "SQL_insertion": "accepted",
+    "catalog_validation": "passed",
+    "table_name": "not_a_domain_table"
+  },
+  "probe_source_assessment_owner_and_members": {
+    "foreign_source_scope": "accepted_as_complete",
+    "unassociated_member": "accepted_as_complete",
+    "nonidentity_and_replica_members": "accepted_as_complete",
+    "catalog_validation": "passed",
+    "actual_source_a_associations": 0
+  },
+  "probe_cross_domain_coverage_proof": {
+    "empty_issues_list_qualifies_git_claim": true,
+    "receiver_git_coverage": "complete",
+    "receiver_git_acquisitions": 0,
+    "receiver": {
+      "received_records": 9,
+      "rejected_records": 0,
+      "admitted_records": 9,
+      "staged_records": 0,
+      "repository_uuidv4": "c08dd9f8-b8ea-4016-8722-d1fdc8cbbaaf"
+    }
+  },
+  "probe_missing_thread_obligation": {
+    "thread_roster_members": 1,
+    "required_reply_child_records": 0,
+    "complete_tree_proof": "accepted_and_exported",
+    "receiver": {
+      "received_records": 9,
+      "rejected_records": 0,
+      "admitted_records": 9,
+      "staged_records": 0,
+      "repository_uuidv4": "4dc6b95e-5d4b-4528-a46a-4858ece5ca8e"
+    }
+  },
+  "probe_current_conflict_deletion": {
+    "conflict": "blocked",
+    "after_operational_receipt_deletion": "still_blocked"
+  }
+}

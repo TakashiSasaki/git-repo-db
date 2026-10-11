@@ -21,18 +21,8 @@ def offline_test_environment(monkeypatch, request):
     monkeypatch.setenv("GIT_ALLOW_PROTOCOL", "file")
     monkeypatch.delenv("GH_TOKEN", raising=False)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
-    import os
     import runpy
     import socket
-
-    if os.environ.get("REPO_CATALOG_TEST_BOOTSTRAP") == "1":
-        from repo_catalog.adapters.sqlite.parser_model import ParserModel
-        from tests.support.parser_bootstrap import install
-
-        monkeypatch.setattr(
-            ParserModel, "ensure_builtin_profile", ParserModel.ensure_builtin_profile
-        )
-        install()
 
     original = (socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo)
     runpy.run_path(str(guard / "sitecustomize.py"))

@@ -26,7 +26,10 @@ def _source(db, service, repository):
         "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name) VALUES(?,?,?,'github_inventory','synthetic transfer')",
         (local, registration, service),
     )
-    db.execute("INSERT INTO source_repositories VALUES(?,?,-2,0)", (local, repository))
+    db.execute(
+        "INSERT INTO source_repositories(source_id,repository_uuidv4,first_seen_us,last_seen_us) VALUES(?,?,-2,0)",
+        (local, repository),
+    )
     return registration
 
 

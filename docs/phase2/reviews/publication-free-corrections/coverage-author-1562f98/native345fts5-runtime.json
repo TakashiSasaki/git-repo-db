@@ -1,0 +1,7 @@
+{
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "sqlite": "3.45.1",
+  "json_contracts": "/workspace/fixes/publication-free-coverage-fafc/src/repo_catalog/adapters/sqlite/json_contracts.py",
+  "fts5": true,
+  "production_source_base": "fafc1b2d4d2e1986768143cc71a0e55cba943ba3"
+}

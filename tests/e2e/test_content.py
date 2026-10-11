@@ -28,5 +28,6 @@ def test_bounded_raw(catalog):
         expected=2,
     )
     binary = pages(state, "search", "path", "--path", "binary.bin")[0]["content_id"]
-    run(state, "content", "show", "--content-id", binary, expected=4)
+    excluded = run(state, "content", "show", "--content-id", binary, expected=4)
+    assert excluded["error"]["code"] == "RAW_CONTENT_UNAVAILABLE"
     run(state, "content", "hydrate", "--content-id", binary, expected=2)

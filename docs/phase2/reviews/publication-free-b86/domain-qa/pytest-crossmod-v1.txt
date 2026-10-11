@@ -1,0 +1,97 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 22 items
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_duplicate_tree_name_never_available[sha1] PASSED [  4%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_duplicate_tree_name_never_available[sha256] PASSED [  9%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_same_length_blob_map_with_wrong_digest_never_available[sha1] PASSED [ 13%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_same_length_blob_map_with_wrong_digest_never_available[sha256] PASSED [ 18%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_exact_ref_capture_type_and_peeled_match[type-sha1] PASSED [ 22%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_exact_ref_capture_type_and_peeled_match[type-sha256] PASSED [ 27%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_exact_ref_capture_type_and_peeled_match[peeled-sha1] PASSED [ 31%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_exact_ref_capture_type_and_peeled_match[peeled-sha256] PASSED [ 36%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_readonly_target_uses_predicates_without_writes PASSED [ 40%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_accepted_header_spelling_and_gitlink_remain_usable[sha1] PASSED [ 45%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_accepted_header_spelling_and_gitlink_remain_usable[sha256] PASSED [ 50%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_forged_decoder_arrival_does_not_monopolize_valid_value[False-git_text_facts-raw_text] PASSED [ 54%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_forged_decoder_arrival_does_not_monopolize_valid_value[False-git_commit_facts-message_text] PASSED [ 59%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_forged_decoder_arrival_does_not_monopolize_valid_value[False-git_name_facts-decoded_name] PASSED [ 63%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_forged_decoder_arrival_does_not_monopolize_valid_value[True-git_text_facts-raw_text] PASSED [ 68%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_forged_decoder_arrival_does_not_monopolize_valid_value[True-git_commit_facts-message_text] PASSED [ 72%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_forged_decoder_arrival_does_not_monopolize_valid_value[True-git_name_facts-decoded_name] PASSED [ 77%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_detached_issue_capture_shape_before_parent_strict_after_resolution[False] PASSED [ 81%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_detached_issue_capture_shape_before_parent_strict_after_resolution[True] PASSED [ 86%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[False] FAILED [ 90%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[True] FAILED [ 95%]
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_issue_terminal_marker_does_not_prove_git_scope FAILED [100%]
+
+=================================== FAILURES ===================================
+_ test_malformed_current_candidate_rejected_but_valid_sibling_admitted[False] __
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7fe81d758f80>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-197/test_malformed_current_candida0')
+missing_parent = False
+
+    @pytest.mark.parametrize("missing_parent", [False, True])
+    def test_malformed_current_candidate_rejected_but_valid_sibling_admitted(store, tmp_path, missing_parent):
+        seed(store)
+        api = CurrentApiState(store.connection)
+        for ident, body in (("1", "bad fixture"), ("2", "independent sibling")):
+            assert api.admit("document_state", candidate(100, "pr-body", provider_change_request_document_id=ident, body_status="present", body=body), source="import").status == "accepted"
+        unit = Graph(store.connection).export(REPO)
+>       bad = next(r for r in unit["records"] if r["table"] == "document_state" and r["values"]["provider_change_request_document_id"] == "1")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py:209: StopIteration
+__ test_malformed_current_candidate_rejected_but_valid_sibling_admitted[True] __
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7fe81d9ebc50>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-197/test_malformed_current_candida1')
+missing_parent = True
+
+    @pytest.mark.parametrize("missing_parent", [False, True])
+    def test_malformed_current_candidate_rejected_but_valid_sibling_admitted(store, tmp_path, missing_parent):
+        seed(store)
+        api = CurrentApiState(store.connection)
+        for ident, body in (("1", "bad fixture"), ("2", "independent sibling")):
+            assert api.admit("document_state", candidate(100, "pr-body", provider_change_request_document_id=ident, body_status="present", body=body), source="import").status == "accepted"
+        unit = Graph(store.connection).export(REPO)
+>       bad = next(r for r in unit["records"] if r["table"] == "document_state" and r["values"]["provider_change_request_document_id"] == "1")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py:209: StopIteration
+_____________ test_issue_terminal_marker_does_not_prove_git_scope ______________
+
+store = <repo_catalog.adapters.sqlite.store.Store object at 0x7fe81db66540>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-197/test_issue_terminal_marker_doe0')
+
+    def test_issue_terminal_marker_does_not_prove_git_scope(store, tmp_path):
+        seed(store)
+        collection = "independent-issues"
+        insert(store, "fetch_collections", fetch_collection_id=collection, repository_uuidv4=REPO, kind="issues", observed_at_us=100, scope_json=json.dumps({"repository_uuidv4": REPO, "repository_binding_id": "qa-binding", "service_instance_uuidv4": SERVICE, "endpoint": "issues"}))
+        proof = CurrentCollectionProof(store.connection)
+        proof.page(collection, 0, 100, None, [], parser_module="qa", parser_version="1")
+        marker = insert(store, "completion_markers", fetch_collection_id=collection, asserted_state="complete", evidence=json.dumps(proof.evidence(collection)), observed_at_us=100).lastrowid
+        marker_uuid = store.one("SELECT completion_marker_uuidv4 FROM completion_markers WHERE completion_marker_id=?", (marker,))[0]
+        scope = "independent-git-scope"
+        insert(store, "coverage_scopes", coverage_scope_id=scope, repository_uuidv4=REPO, kind="git")
+        claim_id = admit_claim(store.connection, scope, "complete", 100, json.dumps({"completion_marker_uuidv4s": [marker_uuid]}))
+        claim = dict(store.one("SELECT * FROM coverage_claims WHERE coverage_claim_id=?", (claim_id,)))
+        assert Graph(store.connection).proof_requirements("coverage_claims", claim) is None
+        unit = Graph(store.connection).export(REPO)
+        with new_store(tmp_path / "receiver") as target:
+            result = Graph(target.connection).receive(unit)
+>           assert result["staged_records"] > 0
+E           assert 0 > 0
+
+../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py:245: AssertionError
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[False] - StopIteration
+FAILED ../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_malformed_current_candidate_rejected_but_valid_sibling_admitted[True] - StopIteration
+FAILED ../../review-artifacts/domain-qa/b86ff2c96d7558379b2230489e1494630b073ef7/test_corrected_crossmod.py::test_issue_terminal_marker_does_not_prove_git_scope - assert 0 > 0
+=================== 3 failed, 19 passed in 194.25s (0:03:14) ===================

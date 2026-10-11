@@ -58,7 +58,7 @@ def test_init_and_config(tmp_path):
         "--min-free-bytes",
         0,
     )
-    assert code == 0 and data["catalog"]["publication_seq"] == 0
+    assert code == 0 and data["catalog"]["local_revision"] == 0
     code, data = cli("--state-dir", state, "doctor")
     assert code == 0 and data["data"]["initialized"] is True
     code, data = cli(

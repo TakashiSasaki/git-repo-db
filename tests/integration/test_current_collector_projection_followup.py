@@ -118,6 +118,7 @@ def collect(collector, repo, pr, api, api_kind, values):
             "data": {
                 "repository": {
                     "pullRequest": {
+                        "number": pr["provider_change_request_number"],
                         "mergeCommit": None,
                         "potentialMergeCommit": None,
                         "reviewThreads": terminal(
@@ -343,7 +344,7 @@ def test_conflicting_equal_clock_overlap_remains_visible_at_collector_boundary(
                             repo["repository_uuidv4"],
                         ),
                     )
-                    competing.publish()
+                    competing.advance_local_revision()
             return response
 
         monkeypatch.setattr(collector.http, "request", intervening_publication)

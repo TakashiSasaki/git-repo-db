@@ -11,8 +11,8 @@ import hashlib
 import json
 import sqlite3
 import uuid
-from contextlib import contextmanager
 
+from repo_catalog.adapters.sqlite.transactions import atomic_unit
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.payload import PayloadRef
 from repo_catalog.domain.time import now_us
@@ -42,25 +42,21 @@ def _git_object_identity_valid(
 
 def register_git_object_sql_function(db: sqlite3.Connection):
     """Register the fail-closed Git identity predicate used by the DDL guard."""
-    db.create_function(
-        "repo_catalog_git_object_identity_valid",
-        6,
-        _git_object_identity_valid,
-        deterministic=True,
+    from repo_catalog.adapters.sqlite.git_intrinsic import (
+        register_git_intrinsic_sql_functions,
     )
 
-
-@contextmanager
-def _atomic(db):
-    name = "cas_" + uuid.uuid4().hex
-    db.execute(f"SAVEPOINT {name}")
-    try:
-        yield
-    except BaseException:
-        db.execute(f"ROLLBACK TO {name}")
-        raise
-    finally:
-        db.execute(f"RELEASE {name}")
+    register_git_intrinsic_sql_functions(db)
+    if not any(
+        row[0] == "repo_catalog_git_object_identity_valid"
+        for row in db.execute("PRAGMA function_list")
+    ):
+        db.create_function(
+            "repo_catalog_git_object_identity_valid",
+            6,
+            _git_object_identity_valid,
+            deterministic=True,
+        )
 
 
 def is_quarantined(db: sqlite3.Connection, digest: bytes) -> bool:
@@ -87,7 +83,7 @@ def _failure(row):
 
 def diagnose_corruption(db: sqlite3.Connection, digest: bytes):
     """Record one immutable diagnostic per continuous quarantine interval."""
-    with _atomic(db):
+    with atomic_unit(db):
         old = db.execute(
             "SELECT unresolved_payload_id FROM payload_quarantine WHERE sha256=?",
             (digest,),
@@ -111,7 +107,7 @@ def diagnose_corruption(db: sqlite3.Connection, digest: bytes):
             (digest, diagnostic),
         )
         db.execute(
-            "UPDATE database_identity SET publication_seq=publication_seq+1 WHERE singleton=1"
+            "UPDATE database_identity SET local_revision=local_revision+1 WHERE singleton=1"
         )
         return diagnostic
 
@@ -223,7 +219,7 @@ def stage_verified_payload(db, body, reference: PayloadRef, context: dict, *, re
     encoded = json.dumps(context, sort_keys=True, allow_nan=False)
     ident = str(uuid.uuid4())
     register_git_object_sql_function(db)
-    with _atomic(db):
+    with atomic_unit(db):
         if reason == "PAYLOAD_CORRUPTION":
             diagnose_corruption(db, reference.sha256)
         db.execute(
@@ -248,7 +244,7 @@ def repair_payload(db, digest: bytes, replacement: bytes):
         or hashlib.sha256(replacement).digest() != digest
     ):
         raise CatalogError("PAYLOAD_DIGEST_MISMATCH", "Replacement digest mismatch")
-    with _atomic(db):
+    with atomic_unit(db):
         objects = db.execute(
             "SELECT g.object_format,g.oid,g.type,g.size FROM git_object_payloads p JOIN git_objects g USING(git_object_id) WHERE p.payload_representation='git-object-raw-v1' AND p.payload_sha256=?",
             (digest,),
@@ -285,7 +281,7 @@ def repair_payload(db, digest: bytes, replacement: bytes):
             raise CatalogError("PAYLOAD_CORRUPTION", "Replacement verification failed")
         db.execute("DELETE FROM payload_quarantine WHERE sha256=?", (digest,))
         db.execute(
-            "UPDATE database_identity SET publication_seq=publication_seq+1 WHERE singleton=1"
+            "UPDATE database_identity SET local_revision=local_revision+1 WHERE singleton=1"
         )
     return {
         "sha256": digest.hex(),

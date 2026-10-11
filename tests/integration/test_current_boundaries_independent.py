@@ -70,49 +70,80 @@ def test_fresh_incumbent_proof_survives_two_unordered_alternatives(
     )
 
 
+@pytest.fixture
+def projection_engine(monkeypatch):
+    """Exercise JSON merge semantics without claiming provider metadata fields.
+
+    Provider row validation has a closed field catalog. The generic merge
+    algorithm also handles JSON types that no modeled provider field permits;
+    test those types directly, with persistence replaced by an explicit sink.
+    Actual row admission and visibility remain covered by the neighboring tests.
+    """
+    engine = CurrentResources(None)
+    writes = []
+    monkeypatch.setattr(
+        engine,
+        "_write",
+        lambda table, candidate, previous: writes.append(copy.deepcopy(candidate)),
+    )
+    return engine, writes
+
+
+def _projection(value, *, body="A", clock=10):
+    return {
+        "kind": "issue",
+        "body": body,
+        "metadata": {"value": value},
+        "provider_updated_at_us": clock,
+        "provider_clock_scope": "same-subject-clock",
+    }
+
+
 @pytest.mark.parametrize(
     ("stored", "incoming"),
     [(True, 1), ([True], [1]), ({}, []), ([], {})],
     ids=["boolean", "array", "object-to-array", "array-to-object"],
 )
 def test_equal_proof_retention_preserves_distinct_json_types(
-    resources, stored, incoming
+    projection_engine, stored, incoming
 ):
-    adapter, *_ = resources
-    first = issue(resources, body="A", metadata={"value": stored})
-    adapter.admit(first, source="import")
-    assert (
-        adapter.admit(
-            {**first, "body": "B", "provider_updated_at_us": None}, source="import"
-        ).status
-        == "conflict"
-    )
-    assert (
-        adapter.admit(
-            {**first, "metadata": {"value": incoming}, "provider_updated_at_us": 20},
-            source="import",
-        ).status
-        == "conflict"
-    )
-    state = _state(adapter.c, "issue")
+    engine, writes = projection_engine
+    first = _projection(stored)
+    state, conflict, stale = engine._merge_fields(first, None, False)
+    assert not conflict and not stale
+    unknown = _projection(stored, body="B", clock=None)
+    _, conflict, stale = engine._merge_fields(unknown, state, False)
+    assert conflict and not stale
+
+    fresh_other = _projection(incoming, clock=20)
+    other, _, _ = engine._merge_fields(fresh_other, None, False)
+    candidate, conflict, stale = engine._merge_fields(fresh_other, state, False)
+    unknown_alternative, _, _ = engine._merge_fields(unknown, None, False)
+    assert not conflict and not stale
+    assert not engine._dominates(candidate, unknown_alternative)
+    state = engine._retain_equal_evidence("issue_resources", fresh_other, state)
     assert json.dumps(state["metadata"]["value"]) == json.dumps(stored)
     assert state["field_evidence"]['["body"]']["provider_updated_at_us"] == 20
     assert (
         state["field_evidence"]['["metadata","value"]']["provider_updated_at_us"] == 10
     )
-    assert _visible(adapter.c, "issue") == 0
-    adapter.admit({**first, "body": "B", "provider_updated_at_us": 15}, source="import")
-    # Body dating disproves B, but the different JSON value observed at 20
-    # remains unresolved against the retained value's weaker proof at 15.
-    assert _visible(adapter.c, "issue") == 0
-    adapter.admit(
-        {**first, "metadata": {"value": incoming}, "provider_updated_at_us": 20},
-        source="import",
-    )
-    assert json.dumps(_state(adapter.c, "issue")["metadata"]["value"]) == json.dumps(
-        incoming
-    )
-    assert _visible(adapter.c, "issue") == 1
+    assert writes == [state]
+    assert not engine._dominates(state, other)
+
+    dated_b = _projection(stored, body="B", clock=15)
+    dated_alternative, _, _ = engine._merge_fields(dated_b, None, False)
+    candidate, conflict, stale = engine._merge_fields(dated_b, state, False)
+    assert stale and not conflict
+    # The A20 body disproves B15. A different JSON value dated 20 is still
+    # unresolved against the incumbent value's independently retained proof.
+    assert engine._dominates(state, dated_alternative)
+    assert not engine._dominates(candidate, other)
+
+    resolved, conflict, stale = engine._merge_fields(fresh_other, state, False)
+    assert not conflict and not stale
+    assert json.dumps(resolved["metadata"]["value"]) == json.dumps(incoming)
+    assert engine._dominates(resolved, dated_alternative)
+    assert engine._dominates(resolved, other)
 
 
 @pytest.mark.parametrize(
@@ -121,18 +152,16 @@ def test_equal_proof_retention_preserves_distinct_json_types(
     ids=["boolean", "array", "object-to-array", "array-to-object"],
 )
 def test_equal_clock_distinct_json_values_remain_conflicted(
-    resources, stored, incoming
+    projection_engine, stored, incoming
 ):
-    adapter, *_ = resources
-    first = issue(resources, body="A", metadata={"value": stored})
-    adapter.admit(first, source="import")
-    assert (
-        adapter.admit(
-            {**first, "metadata": {"value": incoming}}, source="import"
-        ).status
-        == "conflict"
-    )
-    assert _visible(adapter.c, "issue") == 0
+    engine, _ = projection_engine
+    state, _, _ = engine._merge_fields(_projection(stored), None, False)
+    different = _projection(incoming)
+    candidate, conflict, stale = engine._merge_fields(different, state, False)
+    alternative, _, _ = engine._merge_fields(different, None, False)
+    assert conflict and not stale
+    assert json.dumps(candidate["metadata"]["value"]) == json.dumps(stored)
+    assert not engine._dominates(state, alternative)
 
 
 @pytest.mark.parametrize("deleted", [False, True])
@@ -478,14 +507,21 @@ def test_graph_malformed_field_capture_is_invalid_and_keeps_valid_sibling(
     target = _receiver()
     try:
         receive(target, initial)
-        receive(target, malformed)
+        result = receive(target, malformed)
+        assert result["rejected_records"] == 1
         assert target.execute("SELECT count(*) FROM issue_resources").fetchone()[0] == 2
         assert _visible(target, "issue") == 2
         reasons = [
             row[0] for row in target.execute("SELECT reason FROM exchange_staging")
         ]
-        assert len(reasons) == 1
-        assert "invalid" in reasons[0]
+        assert reasons == []
+        assert (
+            target.execute(
+                "SELECT b.body FROM issue_resources r JOIN text_bodies b "
+                "ON b.sha256=r.text_body_sha256 WHERE r.provider_resource_id='12'"
+            ).fetchone()[0]
+            == "A"
+        )
         assert (
             target.execute(
                 "SELECT count(*) FROM current_resource_diagnostics"

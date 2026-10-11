@@ -4,6 +4,7 @@ import hashlib
 import sqlite3
 
 from repo_catalog.adapters.sqlite.cas_integrity import is_quarantined
+from repo_catalog.adapters.sqlite.transactions import atomic_unit
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.payload import PayloadRef
 
@@ -57,8 +58,8 @@ def intern_payload(
 ) -> PayloadRef:
     """Register explicitly identified content; never infer its meaning from bytes.
 
-    Retained Git content and temporary legacy API-original paths share physical
-    integrity checks, but callers must declare which logical contract they use.
+    Raw Git content has an explicit logical representation. API transport
+    originals cannot be registered as catalog content.
     """
     if not isinstance(body, bytes):
         raise CatalogError("INVALID_PAYLOAD", "Payload body must be bytes")
@@ -70,8 +71,7 @@ def intern_payload(
     )
     # A failed logical registration must not leave an orphan physical object,
     # even when its caller catches the error inside a larger transaction.
-    db.execute("SAVEPOINT payload_admission")
-    try:
+    with atomic_unit(db):
         intern_stored_bytes(db, body, reference.sha256)
         if (
             db.execute(
@@ -84,9 +84,4 @@ def intern_payload(
                 "INSERT INTO payloads(representation,sha256) VALUES(?,?)",
                 reference.parameters(),
             )
-    except BaseException:
-        db.execute("ROLLBACK TO payload_admission")
-        raise
-    finally:
-        db.execute("RELEASE payload_admission")
     return reference

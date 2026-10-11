@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /workspace/git-repo-db/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 26 items / 25 deselected / 1 selected
+
+../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_complete_exact_code_listing_roundtrip_derives_receiver_progress FAILED [100%]
+
+=================================== FAILURES ===================================
+_____ test_complete_exact_code_listing_roundtrip_derives_receiver_progress _____
+../../review-artifacts/domain-qa/test_independent_domain_qa.py:521: in test_complete_exact_code_listing_roundtrip_derives_receiver_progress
+    assert result["staged_records"]==0, [tuple(r) for r in target.all("SELECT table_name,reason FROM exchange_staging")]
+E   AssertionError: [('code_assessments', 'invalid:domain_constraint')]
+E   assert 1 == 0
+=========================== short test summary info ============================
+FAILED ../../review-artifacts/domain-qa/test_independent_domain_qa.py::test_complete_exact_code_listing_roundtrip_derives_receiver_progress
+======================= 1 failed, 25 deselected in 2.06s =======================

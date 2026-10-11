@@ -1,0 +1,42 @@
+[
+  {
+    "format": "sha1",
+    "canonical_entry_count": 2,
+    "stored_entry_count": 1,
+    "byte_size": 66,
+    "available_git_objects_count": 1,
+    "full_structure_validator": "GIT_OBJECT_STRUCTURE: Stored intrinsic relation contradicts canonical Git bytes",
+    "fk_check": [],
+    "integrity": "ok"
+  },
+  {
+    "format": "sha1",
+    "canonical_entry_count": 2048,
+    "stored_entry_count": 1,
+    "byte_size": 67584,
+    "available_git_objects_count": 1,
+    "full_structure_validator": "GIT_OBJECT_STRUCTURE: Stored intrinsic relation contradicts canonical Git bytes",
+    "fk_check": [],
+    "integrity": "ok"
+  },
+  {
+    "format": "sha256",
+    "canonical_entry_count": 2,
+    "stored_entry_count": 1,
+    "byte_size": 90,
+    "available_git_objects_count": 1,
+    "full_structure_validator": "GIT_OBJECT_STRUCTURE: Stored intrinsic relation contradicts canonical Git bytes",
+    "fk_check": [],
+    "integrity": "ok"
+  },
+  {
+    "format": "sha256",
+    "canonical_entry_count": 2048,
+    "stored_entry_count": 1,
+    "byte_size": 92160,
+    "available_git_objects_count": 1,
+    "full_structure_validator": "GIT_OBJECT_STRUCTURE: Stored intrinsic relation contradicts canonical Git bytes",
+    "fk_check": [],
+    "integrity": "ok"
+  }
+]
