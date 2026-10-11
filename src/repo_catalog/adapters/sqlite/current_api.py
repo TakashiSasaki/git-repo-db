@@ -974,7 +974,7 @@ class CurrentApiState(CurrentResources):
             # page order does not manufacture a same-clock alternative.
             members_json = _canonical(sorted(members))
             self.c.execute(
-                "INSERT INTO source_inventory_assessments(source_id,scope_key,scope_json,observed_at_us,state,terminal,members_json,parser_module,parser_version,reason) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(source_id,scope_key,observed_at_us,state,members_json) DO NOTHING",
+                "INSERT INTO source_inventory_assessments(source_id,scope_key,scope_json,observed_at_us,state,terminal,members_json,parser_module,parser_version,reason) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(source_id,scope_json,observed_at_us,state,terminal,members_json) DO NOTHING",
                 (
                     source_id,
                     scope_key,

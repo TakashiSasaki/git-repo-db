@@ -324,6 +324,22 @@ def test_source_roster_fenced_sparse_values_and_partial_no_absence_deletion(api)
         parser_module="synthetic",
         parser_version="1",
     )
+    adapter.assess_source_inventory(
+        "source",
+        scope=scope,
+        observed_at_us=100,
+        state="complete",
+        members=[other, context["repository_uuidv4"]],
+        terminal=True,
+        parser_module="synthetic",
+        parser_version="1",
+    )
+    assert (
+        adapter.c.execute(
+            "SELECT count(*) FROM source_inventory_assessments WHERE source_id='source' AND state='complete'"
+        ).fetchone()[0]
+        == 1
+    )
     assert confirm(context["repository_uuidv4"], 200, "R1 renamed") == "conflict"
     assert (
         confirm(

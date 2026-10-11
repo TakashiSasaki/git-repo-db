@@ -107,7 +107,7 @@ CREATE TABLE source_inventory_assessments(
  observed_at_us INTEGER NOT NULL,state TEXT NOT NULL CHECK(state IN ('complete','partial','unknown')),
  terminal INTEGER NOT NULL CHECK(terminal IN (0,1)),members_json TEXT NOT NULL CHECK(json_valid(members_json) AND json_type(members_json)='array'),
  parser_module TEXT NOT NULL,parser_version TEXT NOT NULL,reason TEXT,
- PRIMARY KEY(source_id,scope_key,observed_at_us,state,members_json),CHECK(state<>'complete' OR terminal=1)
+ PRIMARY KEY(source_id,scope_json,observed_at_us,state,terminal,members_json),CHECK(state<>'complete' OR terminal=1)
 ) STRICT;
 CREATE TABLE thread_collection_requirements(
  fetch_collection_id TEXT NOT NULL REFERENCES fetch_collections(fetch_collection_id),provider_resource_id TEXT NOT NULL,

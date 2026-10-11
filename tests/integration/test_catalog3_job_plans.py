@@ -191,6 +191,70 @@ def test_equal_clock_inventory_member_sets_remain_ambiguous(state):
     }
 
 
+def test_native_sql_scope_key_cannot_hide_inventory_ambiguity(state):
+    source = add_manual(state)
+    CollectionService(state).discover(source)
+    with Store(state) as store:
+        original = store.one(
+            "SELECT * FROM source_inventory_assessments WHERE source_id=?",
+            (source,),
+        )
+        assert json.loads(original["members_json"])
+        store.execute(
+            "INSERT INTO source_inventory_assessments(source_id,scope_key,scope_json,observed_at_us,state,terminal,members_json,parser_module,parser_version,reason) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (
+                source,
+                "forged-scope-key",
+                original["scope_json"] + " ",
+                original["observed_at_us"],
+                original["state"],
+                original["terminal"],
+                "[]",
+                original["parser_module"],
+                original["parser_version"],
+                original["reason"],
+            ),
+        )
+        assert (
+            store.one(
+                "SELECT count(*) FROM source_inventory_assessments WHERE source_id=?",
+                (source,),
+            )[0]
+            == 2
+        )
+    result = QueryService(state).query("repos list", {"source": source}, limit=100)
+    assert result.status == "partial"
+    assert {(gap["kind"], gap["reason"]) for gap in result.coverage.missing} == {
+        ("inventory", "inventory_incomplete")
+    }
+
+
+def test_equal_clock_terminal_variants_remain_distinct(state):
+    source = add_manual(state)
+    CollectionService(state).discover(source)
+    with Store(state) as store:
+        original = store.one(
+            "SELECT * FROM source_inventory_assessments WHERE source_id=?",
+            (source,),
+        )
+        for terminal in (False, True):
+            CurrentApiState(store).assess_source_inventory(
+                source,
+                scope=json.loads(original["scope_json"]),
+                observed_at_us=original["observed_at_us"],
+                state="partial",
+                members=json.loads(original["members_json"]),
+                terminal=terminal,
+                parser_module=original["parser_module"],
+                parser_version=original["parser_version"],
+            )
+        variants = store.all(
+            "SELECT terminal FROM source_inventory_assessments WHERE source_id=? AND state='partial' ORDER BY terminal",
+            (source,),
+        )
+        assert [row["terminal"] for row in variants] == [0, 1]
+
+
 def test_bulk_zero_usable_sources_creates_no_job(state):
     with pytest.raises(CatalogError) as error:
         CollectionService(state).discover()

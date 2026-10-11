@@ -247,19 +247,49 @@ class QueryService:
                 if options.get("source") and source[0] != options["source"]:
                     continue
                 rows = self.s.all(
-                    "SELECT a.* FROM source_inventory_assessments a WHERE source_id=? AND observed_at_us=(SELECT max(b.observed_at_us) FROM source_inventory_assessments b WHERE b.source_id=a.source_id AND b.scope_key=a.scope_key)",
+                    "SELECT * FROM source_inventory_assessments WHERE source_id=?",
                     (source[0],),
                 )
-                candidates_by_scope = {}
+                latest_by_scope = {}
                 for row in rows:
-                    members = tuple(sorted(json.loads(row["members_json"])))
-                    candidates_by_scope.setdefault(row["scope_key"], set()).add(members)
+                    # scope_key is application-derived and cannot be verified
+                    # by SQLite's built-in JSON constraints; use the scope
+                    # value itself for the coverage decision.
+                    scope = json.dumps(
+                        json.loads(row["scope_json"]),
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        ensure_ascii=False,
+                        allow_nan=False,
+                    )
+                    current = latest_by_scope.get(scope)
+                    if (
+                        current is None
+                        or row["observed_at_us"] > current["observed_at_us"]
+                    ):
+                        latest_by_scope[scope] = {
+                            "observed_at_us": row["observed_at_us"],
+                            "rows": [row],
+                        }
+                    elif row["observed_at_us"] == current["observed_at_us"]:
+                        current["rows"].append(row)
                 conflicting_members = any(
-                    len(candidates) > 1 for candidates in candidates_by_scope.values()
+                    len(
+                        {
+                            tuple(sorted(json.loads(row["members_json"])))
+                            for row in latest["rows"]
+                        }
+                    )
+                    > 1
+                    for latest in latest_by_scope.values()
                 )
                 if (
                     not rows
-                    or any(r["state"] != "complete" for r in rows)
+                    or any(
+                        row["state"] != "complete"
+                        for latest in latest_by_scope.values()
+                        for row in latest["rows"]
+                    )
                     or conflicting_members
                 ):
                     self.coverage.add(
