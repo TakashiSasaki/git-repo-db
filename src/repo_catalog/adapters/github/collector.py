@@ -774,6 +774,7 @@ class GitHubCollector:
     ):
         from repo_catalog.adapters.git.runner import hook
 
+        self.http.validate_url(url)
         s = self.s
         if listing_kind:
             context = {**(context or {}), "reported_count": reported}
@@ -832,6 +833,7 @@ class GitHubCollector:
             while page_url:
                 response, uncommitted, identified = None, False, False
                 self.token.check()
+                self.http.validate_url(page_url)
                 if page_url in seen:
                     raise CatalogError("PAGINATION_CYCLE", "Repeated collection page")
                 seen.add(page_url)
@@ -2122,6 +2124,42 @@ class GitHubCollector:
             return None
         commit_listing = listings[0][1] if listings and listings[0] else None
         file_listing = listings[1][1] if listings and listings[1] else None
+        if commit_listing:
+            row = self.s.one(
+                "SELECT l.kind, l.change_request_id, l.object_format, l.head_oid, l.base_oid, f.repository_uuidv4 "
+                "FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) "
+                "WHERE l.code_listing_id=?",
+                (commit_listing,),
+            )
+            if (
+                row is None
+                or row["kind"] != "commits"
+                or row["change_request_id"] != pr["change_request_id"]
+                or row["repository_uuidv4"] != repo["repository_uuidv4"]
+                or (algorithm and row["object_format"] != algorithm)
+                or (head and row["head_oid"] != head)
+                or (base and row["base_oid"] != base)
+            ):
+                commit_listing = None
+                missing.append({"kind": "pr-code", "reason": "INVALID_CODE_LISTING"})
+        if file_listing:
+            row = self.s.one(
+                "SELECT l.kind, l.change_request_id, l.object_format, l.head_oid, l.base_oid, f.repository_uuidv4 "
+                "FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) "
+                "WHERE l.code_listing_id=?",
+                (file_listing,),
+            )
+            if (
+                row is None
+                or row["kind"] != "files"
+                or row["change_request_id"] != pr["change_request_id"]
+                or row["repository_uuidv4"] != repo["repository_uuidv4"]
+                or (algorithm and row["object_format"] != algorithm)
+                or (head and row["head_oid"] != head)
+                or (base and row["base_oid"] != base)
+            ):
+                file_listing = None
+                missing.append({"kind": "pr-code", "reason": "INVALID_CODE_LISTING"})
         actual = self.s.one(
             "SELECT head_oid,base_oid FROM eligible_change_request_state WHERE change_request_id=?",
             (pr["change_request_id"],),
@@ -2255,7 +2293,9 @@ class GitHubCollector:
         code_collections = sorted(set(code_collections))
         details = {
             "race": not same,
-            "code_inputs_complete": bool(inputs_complete and roles_complete),
+            "code_inputs_complete": bool(
+                inputs_complete and roles_complete and commit_listing and file_listing
+            ),
         }
         # Identity names the actual captured inputs, not just their head/base
         # targets. A retry of this capture resumes its pending anchor; a fresh

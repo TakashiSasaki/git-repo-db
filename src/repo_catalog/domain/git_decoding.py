@@ -66,6 +66,21 @@ def decode_commit(object_format, body, settings):
     }
 
 
+_DECODER_COMPARISON_CACHE: dict = {}
+_MAX_CACHE_ENTRIES = 16384
+
+
+def clear_decoder_cache():
+    """Clear memoized pure decoder comparison results."""
+    _DECODER_COMPARISON_CACHE.clear()
+
+
+def _freeze_settings(settings):
+    if not isinstance(settings, dict):
+        return None
+    return tuple((k, type(settings[k]), settings[k]) for k in sorted(settings))
+
+
 def validate_decoded_value(family, fmt, body, key, settings, subject, value, metadata):
     """Compare a claimed value with actual supported byte decoding.
 
@@ -74,21 +89,53 @@ def validate_decoded_value(family, fmt, body, key, settings, subject, value, met
     every name. Producer names and versions are attribution, never a ranking.
     """
     decoder_settings(settings, key)
+    cache_key = (
+        family,
+        fmt,
+        body,
+        key,
+        _freeze_settings(settings),
+        type(subject),
+        subject,
+        type(value),
+        value,
+        type(metadata),
+        metadata,
+    )
+    if cache_key in _DECODER_COMPARISON_CACHE:
+        if not _DECODER_COMPARISON_CACHE[cache_key]:
+            raise CatalogError(
+                "GIT_DECODER_FACT", "Claimed Git value contradicts raw bytes"
+            )
+        return
+
     if family == "text":
         actual = decode_blob(
             body, settings["text_encoding"], settings["max_text_blob_bytes"]
         )
         valid = (subject, value) == actual
     elif family == "commit":
-        message, headers = decode_commit(fmt, body, settings)
-        valid = value == message and json.loads(metadata) == headers
+        try:
+            message, headers = decode_commit(fmt, body, settings)
+            valid = value == message and json.loads(metadata) == headers
+        except (CatalogError, TypeError, ValueError):
+            valid = False
     elif family == "name":
-        valid = value == subject.decode(
-            settings["metadata_encoding"], settings["metadata_errors"]
-        )
+        try:
+            valid = value == subject.decode(
+                settings["metadata_encoding"], settings["metadata_errors"]
+            )
+        except (CatalogError, TypeError, ValueError, UnicodeError):
+            valid = False
     else:
         valid = False
+
+    if len(_DECODER_COMPARISON_CACHE) >= _MAX_CACHE_ENTRIES:
+        _DECODER_COMPARISON_CACHE.clear()
+    _DECODER_COMPARISON_CACHE[cache_key] = valid
+
     if not valid:
         raise CatalogError(
             "GIT_DECODER_FACT", "Claimed Git value contradicts raw bytes"
         )
+

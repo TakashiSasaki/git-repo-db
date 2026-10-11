@@ -89,29 +89,33 @@ def decoded_fact(store, object_id, object_type, *, decoder_key=None):
         if decoder_key is not None
         else candidates
     )
-    groups = {
-        tuple(
-            json.dumps(json.loads(row[field]), sort_keys=True)
-            if field == "metadata"
-            else row[field]
-            for field in outputs
-        )
-        for row in selected
-    }
+    valid_selected = []
+    for row in selected:
+        try:
+            val = tuple(
+                json.dumps(json.loads(row[field]), sort_keys=True)
+                if field == "metadata"
+                else row[field]
+                for field in outputs
+            )
+            valid_selected.append((row, val))
+        except (ValueError, TypeError):
+            continue
+    groups = {val for _, val in valid_selected}
     conflict = len(groups) > 1
     fact = None
-    if selected and not conflict:
-        if len(selected) == 1:
-            fact = selected[0]
+    if valid_selected and not conflict:
+        if len(valid_selected) == 1:
+            fact = valid_selected[0][0]
         else:
             # Agreeing values retain every actual decoder attribution.
             fact = {
                 "git_object_id": object_id,
-                **{key: selected[0][key] for key in outputs},
+                **{key: valid_selected[0][0][key] for key in outputs},
             }
             fact["decoder_evidence"] = [
                 {key: value for key, value in row.items() if key not in outputs}
-                for row in selected
+                for row, _ in valid_selected
             ]
     return {
         "fact": fact,

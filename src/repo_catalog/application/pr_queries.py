@@ -298,19 +298,122 @@ def _document_rows(query, pr, options):
             yield row
 
 
-def _code_observation(query, pr):
-    state = _state(query, pr)
-    if state is None:
-        return None
+def _code_observation(query, pr, options=None):
     from repo_catalog.adapters.sqlite.code_assessments import current_code_assessment
 
-    return current_code_assessment(
-        query.s,
-        pr["change_request_id"],
-        state["object_format"],
-        state["head_oid"],
-        state["base_oid"],
+    options = options or {}
+    if options.get("code_assessment_id"):
+        row = query.s.one(
+            "SELECT * FROM code_assessments WHERE code_assessment_id=? AND change_request_id=?",
+            (options["code_assessment_id"], pr["change_request_id"]),
+        )
+        if row:
+            return dict(row)
+    if options.get("head") or options.get("head_oid"):
+        head_val = options.get("head") or options.get("head_oid")
+        base_val = options.get("base") or options.get("base_oid")
+        head_bytes = (
+            bytes.fromhex(head_val) if isinstance(head_val, str) else head_val
+        )
+        base_bytes = (
+            bytes.fromhex(base_val) if isinstance(base_val, str) else base_val
+        )
+        fmt = (
+            options.get("format")
+            or options.get("object_format")
+            or ("sha256" if head_bytes and len(head_bytes) == 32 else "sha1")
+        )
+        return current_code_assessment(
+            query.s, pr["change_request_id"], fmt, head_bytes, base_bytes
+        )
+    if options.get("code_listing_id"):
+        row = query.s.one(
+            "SELECT * FROM code_assessments WHERE change_request_id=? AND (commit_code_listing_id=? OR file_code_listing_id=?) ORDER BY observed_at_us DESC LIMIT 1",
+            (
+                pr["change_request_id"],
+                options["code_listing_id"],
+                options["code_listing_id"],
+            ),
+        )
+        if row:
+            return dict(row)
+        listing_row = query.s.one(
+            "SELECT * FROM code_listings WHERE code_listing_id=? AND change_request_id=?",
+            (options["code_listing_id"], pr["change_request_id"]),
+        )
+        if listing_row:
+            return {
+                "code_assessment_id": None,
+                "change_request_id": pr["change_request_id"],
+                "repository_uuidv4": pr["repository_uuidv4"],
+                "commit_code_listing_id": (
+                    listing_row["code_listing_id"]
+                    if listing_row["kind"] == "commits"
+                    else None
+                ),
+                "file_code_listing_id": (
+                    listing_row["code_listing_id"]
+                    if listing_row["kind"] == "files"
+                    else None
+                ),
+                "state": "partial",
+                "object_format": listing_row["object_format"],
+                "head_oid": listing_row["head_oid"],
+                "base_oid": listing_row["base_oid"],
+                "observed_at_us": None,
+                "details_json": "{}",
+            }
+
+    state = _state(query, pr)
+    if state is not None and (
+        state.get("head_oid") is not None or state.get("base_oid") is not None
+    ):
+        return current_code_assessment(
+            query.s,
+            pr["change_request_id"],
+            state["object_format"],
+            state["head_oid"],
+            state["base_oid"],
+        )
+    latest = query.s.one(
+        "SELECT object_format,head_oid,base_oid FROM code_assessments WHERE change_request_id=? ORDER BY observed_at_us DESC LIMIT 1",
+        (pr["change_request_id"],),
     )
+    if latest:
+        return current_code_assessment(
+            query.s,
+            pr["change_request_id"],
+            latest["object_format"],
+            latest["head_oid"],
+            latest["base_oid"],
+        )
+    latest_listing = query.s.one(
+        "SELECT * FROM code_listings WHERE change_request_id=? ORDER BY code_listing_id DESC LIMIT 1",
+        (pr["change_request_id"],),
+    )
+    if latest_listing:
+        return {
+            "code_assessment_id": None,
+            "change_request_id": pr["change_request_id"],
+            "repository_uuidv4": pr["repository_uuidv4"],
+            "commit_code_listing_id": (
+                latest_listing["code_listing_id"]
+                if latest_listing["kind"] == "commits"
+                else None
+            ),
+            "file_code_listing_id": (
+                latest_listing["code_listing_id"]
+                if latest_listing["kind"] == "files"
+                else None
+            ),
+            "state": "partial",
+            "object_format": latest_listing["object_format"],
+            "head_oid": latest_listing["head_oid"],
+            "base_oid": latest_listing["base_oid"],
+            "observed_at_us": None,
+            "details_json": "{}",
+        }
+    return None
 
 
 def _code_listing_complete(query, code, kind):
@@ -642,7 +745,7 @@ def prepare_pr_coverage(query, command, options):
                             listing_kind=kind,
                         )
         elif not documents_only:
-            code = _code_observation(query, pr)
+            code = _code_observation(query, pr, options)
             expects_code = bool(
                 state
                 and (state["head_oid"] is not None or state["base_oid"] is not None)
@@ -650,12 +753,25 @@ def prepare_pr_coverage(query, command, options):
                 "SELECT 1 FROM code_assessments WHERE change_request_id=? UNION ALL SELECT 1 FROM code_listings WHERE change_request_id=? LIMIT 1",
                 (pr["change_request_id"], pr["change_request_id"]),
             )
+            requested_kind = (
+                options.get("listing_kind")
+                or options.get("kind")
+                or options.get("list")
+            )
             if code is None and expects_code:
                 query.coverage.add(
                     "pr",
                     "code_assessment_missing",
                     change_request_id=pr["change_request_id"],
                 )
+            elif requested_kind in ("commits", "files"):
+                if not _code_listing_complete(query, code, requested_kind):
+                    query.coverage.add(
+                        "pr",
+                        "code_assessment_incomplete",
+                        code_assessment_id=code.get("code_assessment_id"),
+                        listing_kind=requested_kind,
+                    )
             elif code is not None and code["state"] != "complete":
                 query.coverage.add(
                     "pr",
@@ -848,20 +964,39 @@ def pr_query(query, command, options):
                     fields,
                 )
         elif command == "pr code":
-            code = _code_observation(query, pr)
+            code = _code_observation(query, pr, options)
             if code is None:
                 continue
-            for kind, table, column in (
+            requested_kind = (
+                options.get("listing_kind")
+                or options.get("kind")
+                or options.get("list")
+            )
+            kinds_to_yield = (
+                (
+                    requested_kind,
+                    "code_commits"
+                    if requested_kind == "commits"
+                    else "code_file_changes",
+                    "commit_code_listing_id"
+                    if requested_kind == "commits"
+                    else "file_code_listing_id",
+                ),
+            ) if requested_kind in ("commits", "files") else (
                 ("commits", "code_commits", "commit_code_listing_id"),
                 ("files", "code_file_changes", "file_code_listing_id"),
-            ):
+            )
+            for kind, table, column in kinds_to_yield:
+                listing_id = code.get(column)
+                if not listing_id:
+                    continue
                 for row in query.s.execute(
                     f"SELECT * FROM {table} WHERE code_listing_id=? ORDER BY position",
-                    (code[column],),
+                    (listing_id,),
                 ):
                     fields = dict(row)
                     fields["kind"] = kind
-                    fields["code_assessment_id"] = code["code_assessment_id"]
+                    fields["code_assessment_id"] = code.get("code_assessment_id")
                     fields["metadata"] = json.loads(fields["metadata"])
                     if fields.get("oid") is not None:
                         fields["oid"] = (

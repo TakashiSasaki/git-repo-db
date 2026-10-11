@@ -1819,13 +1819,58 @@ class Graph:
                     if error.code == "INCOMPLETE_CLOSURE"
                     else "invalid:git_ref_origin"
                 )
-        if table == "code_assessments" and data["state"] == "complete":
-            for column in ("commit_code_listing_id", "file_code_listing_id"):
-                listing = self.lookup(
-                    "code_listings", ("code_listing_id",), (data[column],)
-                )
-                if listing is None or not self._restore_code_progress(listing):
-                    return "missing_code_listing_proof"
+        if table == "code_assessments":
+            if data.get("state") == "complete" and (
+                not data.get("commit_code_listing_id")
+                or not data.get("file_code_listing_id")
+            ):
+                return "missing_code_listing_proof"
+            for column, expected_kind in (
+                ("commit_code_listing_id", "commits"),
+                ("file_code_listing_id", "files"),
+            ):
+                listing_id = data.get(column)
+                if listing_id is not None:
+                    listing = self.lookup(
+                        "code_listings", ("code_listing_id",), (listing_id,)
+                    )
+                    if listing is None:
+                        if data.get("state") == "complete":
+                            return "missing_code_listing_proof"
+                        return "missing_dependency"
+                    if (
+                        listing.get("kind") != expected_kind
+                        or listing.get("change_request_id")
+                        != data.get("change_request_id")
+                        or (
+                            data.get("object_format")
+                            and listing.get("object_format") != data.get("object_format")
+                        )
+                        or (
+                            data.get("head_oid")
+                            and listing.get("head_oid") != data.get("head_oid")
+                        )
+                        or (
+                            data.get("base_oid")
+                            and listing.get("base_oid") != data.get("base_oid")
+                        )
+                    ):
+                        return "invalid:code_listing_context"
+                    fc = self.lookup(
+                        "fetch_collections",
+                        ("fetch_collection_id",),
+                        (listing.get("fetch_collection_id"),),
+                    )
+                    if (
+                        fc is not None
+                        and fc.get("repository_uuidv4") != data.get("repository_uuidv4")
+                    ):
+                        return "invalid:code_listing_context"
+                    if (
+                        data.get("state") == "complete"
+                        and not self._restore_code_progress(listing)
+                    ):
+                        return "missing_code_listing_proof"
         if table in {"completion_markers", "coverage_claims"}:
             proof = self.proof_requirements(table, data)
             complete = (
