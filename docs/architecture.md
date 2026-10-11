@@ -1,4 +1,4 @@
-# Architecture — Catalog3 Schema 21
+# Architecture — Catalog3 Schema 20
 
 The active architecture implements the [accepted Publication-independent reconstruction](phase2/publication-free-design.md). The [implementation handoff](phase2/publication-free-implementation.md) distinguishes implementation from independent review and final acceptance. Earlier boundary/audit receipts remain historical evidence; the 69-table proposal is superseded.
 

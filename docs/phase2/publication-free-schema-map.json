@@ -1,11 +1,11 @@
 {
   "purpose": "Exact composed-DDL structural map; semantic responsibilities in publication-free-implementation.md; not independent review or acceptance",
-  "schema_version": 21,
+  "schema_version": 20,
   "baseline_commit": "0bd5704caca2f6e3723bef22531b065cd4d7bad0",
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "80e9e3856a6101eec768cf80f959b96c4d599ba4feeeb8a7aeaeefeb59a1e5ab",
+    "ddl_sha256": "27dedcf846f39ce2df6ffb298e899a3249009bd7f6f972b1e3828ee33b341dad",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -1162,7 +1162,7 @@
           "singleton"
         ],
         "foreign_keys": [],
-        "sql_sha256": "f5b04d40199257f0229e87ae3b6f8e60df35d232a8522665f18e2547237ac1d4"
+        "sql_sha256": "a27a3858e1a72d8e38c124e0652cd57aed91b264ecaccc5d5aab0fa8e313dbbc"
       },
       "document_state": {
         "columns": [

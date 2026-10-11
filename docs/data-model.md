@@ -1,4 +1,4 @@
-# Data model — Catalog3 Schema 21
+# Data model — Catalog3 Schema 20
 
 The [composed packaged DDL](../src/repo_catalog/adapters/sqlite/schema.py) is authoritative. The [schema map](phase2/publication-free-schema-map.json) records all current columns/PKs/FKs/views/triggers/indexes and the preserved Schema 19 delta. The [implementation handoff](phase2/publication-free-implementation.md) explains keys, consumers, lifetimes and pending acceptance. Historical inventory reports are earlier checkpoints, not active format contracts.
 

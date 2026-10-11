@@ -1,4 +1,4 @@
-# CLI契約 — Schema 21
+# CLI契約 — Schema 20
 
 現在の構造と検証状況は[Publication非依存の実装記録](phase2/publication-free-implementation.md)を参照してください。
 
@@ -103,7 +103,7 @@ repo-catalog --state-dir /tmp/disposable-catalog db backup --output /tmp/disposa
 repo-catalog --state-dir /tmp/disposable-restored db restore --input /tmp/disposable-backup.sqlite3
 ```
 
-schema 21を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
+schema 20を直接初期化します。v2 importerとfinalizeは廃止済みで、旧DBの移行や互換引数はありません。D2は `not_applicable / retired` です。
 
 backupはSQLite backup APIでdomainの現在状態・必要な本文・現在API状態・Git取得履歴・範囲証拠・coverageを含むsnapshotを作り、checksum/configuration/identityと `quarantined_payload_count` を隣接manifestへ保存します。件数はactive物理隔離行数の非負JSON整数（bool除外、最大 `9223372036854775807`）です。restoreは未作成の `--state-dir` だけへ行い、checksum/identityの後、診断前に件数を照合して全bytesを検証します。正の一致件数を許容し、件数不一致や未説明の破損は失敗stageを保持して拒否します。cacheと任意通信archiveはbackupへ含めません。DB instance IDを変更して元catalogのcursorを無効にし、過去のjobs/leases/reservationsを稼働状態へ戻しません。[運用](operations.md)に制限を記載しています。
 

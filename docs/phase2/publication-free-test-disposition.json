@@ -2040,6 +2040,22 @@
         ],
         "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
         "surviving_assertion": "Fixture connection omitted the production canonical Git SQL-function registrar. Use the normal registrar on bare fixture connections; original exact CAS/obligation assertions remain."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_coverage_queries.py::test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_coverage_queries.py::test_metadata_filters_do_not_hide_missing_code_listings_from_pr_scope"
+        ],
+        "reason": "The requested document metadata selector depends on exact head/base provider listing evidence, while physical Git availability is required only by code-reading commands. The renamed test corrects the former physical-Git-only gap expectation without treating a metadata filter or empty result set as completeness evidence.",
+        "surviving_assertion": "Missing exact provider listing evidence remains a partial result even when author/state metadata excludes every displayed PR. Require both unassessed requested PR identities in code_assessment_missing diagnostics, rather than only an unrelated physical Git-role gap."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_pr_scope_coverage.py::test_metadata_filter_requires_its_provider_listing_even_without_results"
+        ],
+        "reason": "Document selectors are backed by their corresponding provider listing: --commit requires pr-commits; --path and --path-b64 require pr-files. Keep the three original selector parameters and empty-result partial-status assertion; do not impose unrelated listing or physical Git requirements.",
+        "surviving_assertion": "For every original commit/path/path-b64 parameter, a missing matching provider listing makes the requested metadata scope partial even when no documents match. The test retains exit 3, zero matching items and explicit incomplete coverage."
       }
     ]
   },

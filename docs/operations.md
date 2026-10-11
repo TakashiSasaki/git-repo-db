@@ -1,4 +1,4 @@
-# Schema 21の運用
+# Schema 20の運用
 
 [現在の実装と検証状況](phase2/publication-free-implementation.md)を参照してください。API原本・parser profile/selection/publicationは廃止済みです。現在API値、必要な範囲証拠、Git domain content、CASとphysical catalogを扱います。以下の運用上の保全契約は維持します。
 
@@ -76,4 +76,4 @@ catalog backupは補助archiveを含めず、多storeのforensic backupや保存
 
 定期運用ではsync、jobs resume、cache gc --applyをcron/systemd等から呼べます。
 この開発では実ユーザーのスケジュールを登録しません。実運用の対象・周期・要求予算はpilot後に決めてください。
-LFSはGit pointer bytes、添付はsource本文と埋込みURLを保存します。本体取得・URLの自動巡回は行いません。archiveの保存期間・自動削除、包括的な削除伝播、全履歴本文・diff索引、意味検索、Web GUI、非Linux restore、CAS-76/CAS-77は保留範囲です。現在の実装・検証・制限は[Schema 21実装記録](phase2/publication-free-implementation.md)を参照してください。以前の[構造改善の対応記録](current-state-schema-closure.md)、[完全schema一覧](current-state-schema-inventory.md)、[schema 14実装対応表](latest-state-transport-implementation.md)は当時の証拠として保持します。
+LFSはGit pointer bytes、添付はsource本文と埋込みURLを保存します。本体取得・URLの自動巡回は行いません。archiveの保存期間・自動削除、包括的な削除伝播、全履歴本文・diff索引、意味検索、Web GUI、非Linux restore、CAS-76/CAS-77は保留範囲です。現在の実装・検証・制限は[Schema 20実装記録](phase2/publication-free-implementation.md)を参照してください。以前の[構造改善の対応記録](current-state-schema-closure.md)、[完全schema一覧](current-state-schema-inventory.md)、[schema 14実装対応表](latest-state-transport-implementation.md)は当時の証拠として保持します。

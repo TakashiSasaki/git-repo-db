@@ -123,4 +123,4 @@ demoは新規/空directoryにfixtureを生成し、収集、更新、clone実回
 
 詳細は[CLI仕様](docs/cli.md)、[アーキテクチャ](docs/architecture.md)、[データモデル](docs/data-model.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)、[実装状況](docs/implementation-status.md)を参照してください。
 
-Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 21の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。
+Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 20の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。

@@ -3,10 +3,10 @@
   "baseline_sha": "6ca31eb95d2dca91adcf20af88fbb54387595375",
   "selection": "tests/unit tests/integration tests/e2e, not live and not benchmark",
   "baseline_collected_count": 1950,
-  "current_collected_count": 2148,
-  "mapped_baseline_node_count": 623,
-  "still_collected_same_node_count": 1327,
-  "removed_or_renamed_baseline_function_count": 193,
+  "current_collected_count": 2163,
+  "mapped_baseline_node_count": 627,
+  "still_collected_same_node_count": 1323,
+  "removed_or_renamed_baseline_function_count": 195,
   "removed_or_renamed_baseline_functions": [
     "tests/e2e/test_cli_more.py::test_publication_fencing",
     "tests/e2e/test_github_sync.py::test_observed_content_and_replay_fencing",
@@ -37,6 +37,7 @@
     "tests/integration/test_catalog3_cas_integrity.py::test_repair_accepts_real_git_content_even_when_api_proof_shares_its_bytes",
     "tests/integration/test_catalog3_cas_integrity.py::test_scan_records_one_physical_diagnostic_across_representations",
     "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_role_checks_retain_history_while_ordinary_query_selects_current",
+    "tests/integration/test_catalog3_coverage_queries.py::test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope",
     "tests/integration/test_catalog3_document_identity.py::test_current_observation_must_belong_to_exact_document",
     "tests/integration/test_catalog3_document_identity.py::test_direct_observations_keep_a_a_b_a_and_replay_does_not_move_current",
     "tests/integration/test_catalog3_document_identity.py::test_unresolved_current_is_partial_not_implicit_maximum_observation",
@@ -110,6 +111,7 @@
     "tests/integration/test_catalog3_payload_cas.py::test_independent_fetches_keep_separate_occurrences_for_shared_bytes",
     "tests/integration/test_catalog3_payload_cas.py::test_same_bytes_across_representations_share_one_physical_object",
     "tests/integration/test_catalog3_pr_git_readers.py::test_pr_only_acquisition_has_explicit_selected_git_reads",
+    "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_complete_code_requires_saved_published_matching_role_roots",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_pr_cursor_scope_and_publication_guards_survive_preflight",
     "tests/integration/test_catalog3_profile_queries.py::test_cli_history_and_profile_filters_are_explicit",
@@ -204,7 +206,7 @@
   ],
   "node_list_sha256": {
     "baseline": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
-    "current": "61e0584590e16dfcc992cd3ad7a8c252385cf6268185626612a98fc36dea8f43"
+    "current": "3b62b25cda279cd9ea58088ab58397535d14e9959be0cb7f6eeb2a2428a1d5c5"
   },
   "limitations": "Exact counterpart existence and explicit rationales are checked. Still-collected names do not imply unchanged implementation. Full execution, assertion sufficiency and fresh independent review remain separate acceptance requirements.",
   "entries": [
@@ -1658,6 +1660,15 @@
       "disposition_source": "other_contract_rewrites",
       "surviving_assertion": "An old exact-target code assessment remains retained after the current PR head changes; current queries cannot borrow it, report the actual missing current assessment, and explicit API edit-history selection rejects. Separate exact-role tests retain availability/matching-root checks.",
       "retired_mechanism_reason": "Port the still-required behavior to direct domain ownership; remove API original/result/profile/publication mechanism assertions."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_coverage_queries.py::test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_coverage_queries.py::test_metadata_filters_do_not_hide_missing_code_listings_from_pr_scope"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "Missing exact provider listing evidence remains a partial result even when author/state metadata excludes every displayed PR. Require both unassessed requested PR identities in code_assessment_missing diagnostics, rather than only an unrelated physical Git-role gap.",
+      "retired_mechanism_reason": "The requested document metadata selector depends on exact head/base provider listing evidence, while physical Git availability is required only by code-reading commands. The renamed test corrects the former physical-Git-only gap expectation without treating a metadata filter or empty result set as completeness evidence."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_document_identity.py::test_no_document_local_id_or_version_and_direct_digest_fk",
@@ -3524,6 +3535,33 @@
       "disposition_source": "git_contract_rewrites",
       "surviving_assertion": "PR-only acquisition reads commit/tree/file/search from actual source ownership even without a ref snapshot. Repeated same bytes under a second exact acquisition do not invent an interpretation ambiguity; target diagnostics retain the acquisition.",
       "retired_mechanism_reason": "Generic selected_git_acquisition_results and conflicting profile/result choice between identical intrinsic bytes are removed."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results[selector0]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_pr_scope_coverage.py::test_metadata_filter_requires_its_provider_listing_even_without_results[selector0]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "For every original commit/path/path-b64 parameter, a missing matching provider listing makes the requested metadata scope partial even when no documents match. The test retains exit 3, zero matching items and explicit incomplete coverage.",
+      "retired_mechanism_reason": "Document selectors are backed by their corresponding provider listing: --commit requires pr-commits; --path and --path-b64 require pr-files. Keep the three original selector parameters and empty-result partial-status assertion; do not impose unrelated listing or physical Git requirements."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results[selector1]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_pr_scope_coverage.py::test_metadata_filter_requires_its_provider_listing_even_without_results[selector1]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "For every original commit/path/path-b64 parameter, a missing matching provider listing makes the requested metadata scope partial even when no documents match. The test retains exit 3, zero matching items and explicit incomplete coverage.",
+      "retired_mechanism_reason": "Document selectors are backed by their corresponding provider listing: --commit requires pr-commits; --path and --path-b64 require pr-files. Keep the three original selector parameters and empty-result partial-status assertion; do not impose unrelated listing or physical Git requirements."
+    },
+    {
+      "baseline_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results[selector2]",
+      "replacement_nodes": [
+        "tests/integration/test_catalog3_pr_scope_coverage.py::test_metadata_filter_requires_its_provider_listing_even_without_results[selector2]"
+      ],
+      "disposition_source": "other_contract_rewrites",
+      "surviving_assertion": "For every original commit/path/path-b64 parameter, a missing matching provider listing makes the requested metadata scope partial even when no documents match. The test retains exit 3, zero matching items and explicit incomplete coverage.",
+      "retired_mechanism_reason": "Document selectors are backed by their corresponding provider listing: --commit requires pr-commits; --path and --path-b64 require pr-files. Keep the three original selector parameters and empty-result partial-status assertion; do not impose unrelated listing or physical Git requirements."
     },
     {
       "baseline_node": "tests/integration/test_catalog3_pr_scope_coverage.py::test_pr_cursor_scope_and_publication_guards_survive_preflight",
@@ -9079,7 +9117,6 @@
     "tests/integration/test_catalog3_coverage_queries.py::test_coverage_owner_namespaces_are_explicit",
     "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_role_target_shapes_are_rejected_before_admission[declared0]",
     "tests/integration/test_catalog3_coverage_queries.py::test_diagnostic_role_target_shapes_are_rejected_before_admission[declared1]",
-    "tests/integration/test_catalog3_coverage_queries.py::test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope",
     "tests/integration/test_catalog3_current_collection.py::test_all_issue_comments_retained_without_archives_across_restart",
     "tests/integration/test_catalog3_current_collection.py::test_unresolved_terminal_receipt_does_not_become_complete_on_resume",
     "tests/integration/test_catalog3_current_collection.py::test_review_projection_has_no_fabricated_clock_and_partial_fields_are_absent",
@@ -9249,9 +9286,6 @@
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-issue-comment]",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-threads]",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-pr-documents]",
-    "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results[selector0]",
-    "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results[selector1]",
-    "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_filter_requires_code_coverage_even_without_results[selector2]",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_full_requested_scope_coverage_is_identical_on_every_page[command0]",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_full_requested_scope_coverage_is_identical_on_every_page[command1]",
     "tests/integration/test_catalog3_pr_scope_coverage.py::test_code_observation_gap_beyond_page_is_reported",
