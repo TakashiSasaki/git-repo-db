@@ -61,7 +61,13 @@ def put(store, table, **values):
 def git_catalog(path, remote, owner):
     store = opened(path)
     with store.transaction():
-        put(store, "repositories", repository_uuidv4=owner, name="synthetic", metadata="{}")
+        put(
+            store,
+            "repositories",
+            repository_uuidv4=owner,
+            name="synthetic",
+            metadata="{}",
+        )
         add_endpoint(store, owner, remote.url)
     repo = {"repository_uuidv4": owner, "name": "synthetic"}
     job = JobService(store).create("sync", {"kind": "git"})
@@ -84,10 +90,42 @@ def _setup_collector_db(tmp_path):
         # Insert repositories and bindings
         put(store, "repositories", repository_uuidv4=repo1, name="repo1", metadata="{}")
         put(store, "repositories", repository_uuidv4=repo2, name="repo2", metadata="{}")
-        put(store, "service_instances", service_instance_uuidv4=SERVICE, service_kind="github", name="test", metadata="{}")
-        put(store, "sources", source_registration_uuidv4=SOURCE, source_id="src", service_instance_uuidv4=SERVICE, discovery_kind="github_inventory", name="test", settings="{}")
-        put(store, "repository_bindings", repository_binding_id="b-1", repository_uuidv4=repo1, service_instance_uuidv4=SERVICE, provider_repository_id="1", metadata="{}")
-        put(store, "repository_bindings", repository_binding_id="b-2", repository_uuidv4=repo2, service_instance_uuidv4=SERVICE, provider_repository_id="2", metadata="{}")
+        put(
+            store,
+            "service_instances",
+            service_instance_uuidv4=SERVICE,
+            service_kind="github",
+            name="test",
+            metadata="{}",
+        )
+        put(
+            store,
+            "sources",
+            source_registration_uuidv4=SOURCE,
+            source_id="src",
+            service_instance_uuidv4=SERVICE,
+            discovery_kind="github_inventory",
+            name="test",
+            settings="{}",
+        )
+        put(
+            store,
+            "repository_bindings",
+            repository_binding_id="b-1",
+            repository_uuidv4=repo1,
+            service_instance_uuidv4=SERVICE,
+            provider_repository_id="1",
+            metadata="{}",
+        )
+        put(
+            store,
+            "repository_bindings",
+            repository_binding_id="b-2",
+            repository_uuidv4=repo2,
+            service_instance_uuidv4=SERVICE,
+            provider_repository_id="2",
+            metadata="{}",
+        )
 
         # Insert Change Requests
         put(
@@ -119,9 +157,27 @@ def _setup_collector_db(tmp_path):
         )
 
         # Insert Fetch Collections with matching scope_json
-        scope1 = json.dumps({"repository_uuidv4": repo1, "change_request_id": "cr-1", "endpoint": "https://api.github.com/commits"})
-        scope2 = json.dumps({"repository_uuidv4": repo1, "change_request_id": "cr-2", "endpoint": "https://api.github.com/commits"})
-        scope_other = json.dumps({"repository_uuidv4": repo2, "change_request_id": "cr-other", "endpoint": "https://api.github.com/commits"})
+        scope1 = json.dumps(
+            {
+                "repository_uuidv4": repo1,
+                "change_request_id": "cr-1",
+                "endpoint": "https://api.github.com/commits",
+            }
+        )
+        scope2 = json.dumps(
+            {
+                "repository_uuidv4": repo1,
+                "change_request_id": "cr-2",
+                "endpoint": "https://api.github.com/commits",
+            }
+        )
+        scope_other = json.dumps(
+            {
+                "repository_uuidv4": repo2,
+                "change_request_id": "cr-other",
+                "endpoint": "https://api.github.com/commits",
+            }
+        )
 
         put(
             store,
@@ -250,7 +306,14 @@ def test_assess_code_rejects_cross_pr_and_swapped_listings(tmp_path):
         ("files", "list-files-1"),
     ]
     res_cross_repo = collector._assess_code(
-        repo_row, pr_row, job, pr_payload, pr_payload, listings_cross_repo, True, missing
+        repo_row,
+        pr_row,
+        job,
+        pr_payload,
+        pr_payload,
+        listings_cross_repo,
+        True,
+        missing,
     )
     assert any(m.get("reason") == "INVALID_CODE_LISTING" for m in missing)
     row_cross_repo = store.one(
@@ -409,7 +472,9 @@ def test_explicit_code_list_scope_isolated_completeness(tmp_path):
         },
     )
     gaps_commits = [
-        m for m in res_commits.coverage.missing if m.get("reason") == "code_assessment_incomplete"
+        m
+        for m in res_commits.coverage.missing
+        if m.get("reason") == "code_assessment_incomplete"
     ]
     assert not gaps_commits
 
@@ -423,7 +488,9 @@ def test_explicit_code_list_scope_isolated_completeness(tmp_path):
         },
     )
     gaps_files = [
-        m for m in res_files.coverage.missing if m.get("reason") == "code_assessment_incomplete"
+        m
+        for m in res_files.coverage.missing
+        if m.get("reason") == "code_assessment_incomplete"
     ]
     assert len(gaps_files) > 0
 
@@ -560,7 +627,11 @@ def test_captured_ref_contradiction_versus_absent_dependency(tmp_path):
 
     # 4. Annotated tag target contradiction:
     # Tag object T points to commit C1, but ref claims peeled_oid=C2
-    tag_body = b"object " + (b"1" * 40) + b"\ntype commit\ntag v1\ntagger T <t@t> 0 +0000\n\ntag msg"
+    tag_body = (
+        b"object "
+        + (b"1" * 40)
+        + b"\ntype commit\ntag v1\ntagger T <t@t> 0 +0000\n\ntag msg"
+    )
     tag_oid = oid("sha1", "tag", tag_body)
     c1_oid = b"\x44" * 20
     c2_oid = b"\x55" * 20
@@ -604,18 +675,27 @@ def test_gitlink_boundary_preservation(tmp_path):
     owner = repository_uuid(1)
     remote = FixtureRepo(tmp_path / "remote.git")
     submodule_commit = "1" * 40
-    remote.commit("A", {b"regular.txt": b"hello world", b"submodule": ("160000", submodule_commit)})
+    remote.commit(
+        "A",
+        {b"regular.txt": b"hello world", b"submodule": ("160000", submodule_commit)},
+    )
     remote.ref("refs/heads/main", "A")
     store = git_catalog(tmp_path / "catalog", remote, owner)
 
     qs = QueryService(store.path)
     result = qs.query("tree list", {"repo": owner, "ref": "refs/heads/main"})
     items = result.data["items"]
-    submodule_item = next(item for item in items if item.get("path_utf8") == "submodule")
+    submodule_item = next(
+        item for item in items if item.get("path_utf8") == "submodule"
+    )
     assert submodule_item["mode"] == "160000"
     assert submodule_item["raw_available"] is False
     # No spurious gaps for tree child or body
-    gaps = [m for m in result.coverage.missing if m.get("reason") in ("tree_child_unavailable", "body_not_saved")]
+    gaps = [
+        m
+        for m in result.coverage.missing
+        if m.get("reason") in ("tree_child_unavailable", "body_not_saved")
+    ]
     assert not gaps
 
 
@@ -665,7 +745,14 @@ def test_decoder_memoization_cache_and_boolean_rejection():
     ).hexdigest()
     with pytest.raises(CatalogError) as exc_info:
         validate_decoded_value(
-            "text", "sha1", raw_body, bool_key, bool_settings, "eligible", "valid text content", "{}"
+            "text",
+            "sha1",
+            raw_body,
+            bool_key,
+            bool_settings,
+            "eligible",
+            "valid text content",
+            "{}",
         )
     assert exc_info.value.code == "GIT_DECODER_FACT"
 

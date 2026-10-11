@@ -1,6 +1,7 @@
 """Reviewer D integrated verification harness and multi-stage transition probe."""
 
 import json
+import os
 import sqlite3
 import uuid
 from pathlib import Path
@@ -122,14 +123,27 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             "SELECT observed_at_us, coverage_state FROM current_coverage WHERE repository_uuidv4=? AND change_request_id=? AND kind='review'",
             (repo["repository_uuidv4"], pr_id),
         )
-        assert (cov_100["observed_at_us"], cov_100["coverage_state"]) == (100, "complete")
+        assert (cov_100["observed_at_us"], cov_100["coverage_state"]) == (
+            100,
+            "complete",
+        )
 
         # CLI surface checks
-        res_tree_100 = run(store.path, "tree", "list", "--repo", repo_name, "--commit", commit_oid)
+        res_tree_100 = run(
+            store.path, "tree", "list", "--repo", repo_name, "--commit", commit_oid
+        )
         assert len(res_tree_100["data"]["items"]) > 0
 
         res_file_100 = run(
-            store.path, "file", "show", "--repo", repo_name, "--commit", commit_oid, "--path", "README.md"
+            store.path,
+            "file",
+            "show",
+            "--repo",
+            repo_name,
+            "--commit",
+            commit_oid,
+            "--path",
+            "README.md",
         )
         assert res_file_100["data"]["items"][0]["raw_available"] is True
 
@@ -143,7 +157,10 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             pr_number,
             expected=None,
         )
-        assert res_pr_100["data"]["items"][0]["provider_change_request_number"] == pr_number
+        assert (
+            res_pr_100["data"]["items"][0]["provider_change_request_number"]
+            == pr_number
+        )
 
         res_pr_code_100 = run(
             store.path,
@@ -168,15 +185,17 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
         ).fetchone()
         assert receiver_cov_100 == (100, "complete")
 
-        receipt["stages"].append({
-            "stage": "complete100",
-            "clock_us": 100,
-            "expected_state": "complete",
-            "observed_coverage_state": cov_100["coverage_state"],
-            "receiver_coverage_state": receiver_cov_100[1],
-            "cli_commands_tested": ["tree list", "file show", "pr show", "pr code"],
-            "status": "PASS",
-        })
+        receipt["stages"].append(
+            {
+                "stage": "complete100",
+                "clock_us": 100,
+                "expected_state": "complete",
+                "observed_coverage_state": cov_100["coverage_state"],
+                "receiver_coverage_state": receiver_cov_100[1],
+                "cli_commands_tested": ["tree list", "file show", "pr show", "pr code"],
+                "status": "PASS",
+            }
+        )
 
         # -------------------------------------------------------------
         # Stage 2: partial200
@@ -194,7 +213,10 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             "SELECT observed_at_us, coverage_state FROM current_coverage WHERE repository_uuidv4=? AND change_request_id=? AND kind='review'",
             (repo["repository_uuidv4"], pr_id),
         )
-        assert (cov_200["observed_at_us"], cov_200["coverage_state"]) == (200, "partial")
+        assert (cov_200["observed_at_us"], cov_200["coverage_state"]) == (
+            200,
+            "partial",
+        )
 
         # CLI surface check
         res_pr_200 = run(
@@ -207,7 +229,10 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             pr_number,
             expected=None,
         )
-        assert res_pr_200["data"]["items"][0]["provider_change_request_number"] == pr_number
+        assert (
+            res_pr_200["data"]["items"][0]["provider_change_request_number"]
+            == pr_number
+        )
 
         # Exchange pipeline check
         export_200 = Graph(store.connection).export(repo["repository_uuidv4"])
@@ -220,15 +245,17 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
         ).fetchone()
         assert receiver_cov_200 == (200, "partial")
 
-        receipt["stages"].append({
-            "stage": "partial200",
-            "clock_us": 200,
-            "expected_state": "partial",
-            "observed_coverage_state": cov_200["coverage_state"],
-            "receiver_coverage_state": receiver_cov_200[1],
-            "cli_commands_tested": ["pr show"],
-            "status": "PASS",
-        })
+        receipt["stages"].append(
+            {
+                "stage": "partial200",
+                "clock_us": 200,
+                "expected_state": "partial",
+                "observed_coverage_state": cov_200["coverage_state"],
+                "receiver_coverage_state": receiver_cov_200[1],
+                "cli_commands_tested": ["pr show"],
+                "status": "PASS",
+            }
+        )
 
         # -------------------------------------------------------------
         # Stage 3: stale successful175 remains partial200
@@ -245,7 +272,10 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             "SELECT observed_at_us, coverage_state FROM current_coverage WHERE repository_uuidv4=? AND change_request_id=? AND kind='review'",
             (repo["repository_uuidv4"], pr_id),
         )
-        assert (cov_175["observed_at_us"], cov_175["coverage_state"]) == (200, "partial")
+        assert (cov_175["observed_at_us"], cov_175["coverage_state"]) == (
+            200,
+            "partial",
+        )
 
         # CLI surface check continues to show partial 200
         res_pr_175 = run(
@@ -258,7 +288,10 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             pr_number,
             expected=None,
         )
-        assert res_pr_175["data"]["items"][0]["provider_change_request_number"] == pr_number
+        assert (
+            res_pr_175["data"]["items"][0]["provider_change_request_number"]
+            == pr_number
+        )
 
         # Exchange pipeline check: receiver still preserves (200, partial)
         export_175 = Graph(store.connection).export(repo["repository_uuidv4"])
@@ -271,16 +304,18 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
         ).fetchone()
         assert receiver_cov_175 == (200, "partial")
 
-        receipt["stages"].append({
-            "stage": "stale_successful175_remains_partial200",
-            "clock_us": 175,
-            "preserved_clock_us": 200,
-            "expected_state": "partial",
-            "observed_coverage_state": cov_175["coverage_state"],
-            "receiver_coverage_state": receiver_cov_175[1],
-            "cli_commands_tested": ["pr show"],
-            "status": "PASS",
-        })
+        receipt["stages"].append(
+            {
+                "stage": "stale_successful175_remains_partial200",
+                "clock_us": 175,
+                "preserved_clock_us": 200,
+                "expected_state": "partial",
+                "observed_coverage_state": cov_175["coverage_state"],
+                "receiver_coverage_state": receiver_cov_175[1],
+                "cli_commands_tested": ["pr show"],
+                "status": "PASS",
+            }
+        )
 
         # -------------------------------------------------------------
         # Stage 4: complete300
@@ -298,7 +333,10 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             "SELECT observed_at_us, coverage_state FROM current_coverage WHERE repository_uuidv4=? AND change_request_id=? AND kind='review'",
             (repo["repository_uuidv4"], pr_id),
         )
-        assert (cov_300["observed_at_us"], cov_300["coverage_state"]) == (300, "complete")
+        assert (cov_300["observed_at_us"], cov_300["coverage_state"]) == (
+            300,
+            "complete",
+        )
 
         # CLI surfaces
         res_pr_300 = run(
@@ -311,7 +349,10 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
             pr_number,
             expected=None,
         )
-        assert res_pr_300["data"]["items"][0]["provider_change_request_number"] == pr_number
+        assert (
+            res_pr_300["data"]["items"][0]["provider_change_request_number"]
+            == pr_number
+        )
 
         res_pr_code_300 = run(
             store.path,
@@ -325,11 +366,21 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
         )
         assert res_pr_code_300["status"] in ("ok", "partial")
 
-        res_tree_300 = run(store.path, "tree", "list", "--repo", repo_name, "--commit", commit_oid)
+        res_tree_300 = run(
+            store.path, "tree", "list", "--repo", repo_name, "--commit", commit_oid
+        )
         assert len(res_tree_300["data"]["items"]) > 0
 
         res_file_300 = run(
-            store.path, "file", "show", "--repo", repo_name, "--commit", commit_oid, "--path", "README.md"
+            store.path,
+            "file",
+            "show",
+            "--repo",
+            repo_name,
+            "--commit",
+            commit_oid,
+            "--path",
+            "README.md",
         )
         assert res_file_300["data"]["items"][0]["raw_available"] is True
 
@@ -344,18 +395,41 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
         ).fetchone()
         assert receiver_cov_300 == (300, "complete")
 
-        receipt["stages"].append({
-            "stage": "complete300",
-            "clock_us": 300,
-            "expected_state": "complete",
-            "observed_coverage_state": cov_300["coverage_state"],
-            "receiver_coverage_state": receiver_cov_300[1],
-            "cli_commands_tested": ["tree list", "file show", "pr show", "pr code"],
-            "status": "PASS",
-        })
+        receipt["stages"].append(
+            {
+                "stage": "complete300",
+                "clock_us": 300,
+                "expected_state": "complete",
+                "observed_coverage_state": cov_300["coverage_state"],
+                "receiver_coverage_state": receiver_cov_300[1],
+                "cli_commands_tested": ["tree list", "file show", "pr show", "pr code"],
+                "status": "PASS",
+            }
+        )
+
+        # Validate all captured CLI outputs explicitly against cli-v1.schema.json
+        from tests.support.cli import response_validator
+
+        validator = response_validator()
+        for res in (
+            res_tree_100,
+            res_file_100,
+            res_pr_100,
+            res_pr_code_100,
+            res_pr_200,
+            res_pr_175,
+            res_pr_300,
+            res_pr_code_300,
+            res_tree_300,
+            res_file_300,
+        ):
+            validator.validate(res)
 
     receipt["verdict"] = "PASS"
 
-    receipt_file = Path("/home/ubuntu/github/git-repo-db/reviewer_d_receipt.json")
+    receipt_dir = Path(os.environ.get("REVIEWER_D_RECEIPT_DIR", tmp_path))
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    receipt_file = receipt_dir / "reviewer_d_receipt.json"
     receipt_file.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+    assert receipt_file.is_file()
     assert receipt["verdict"] == "PASS"

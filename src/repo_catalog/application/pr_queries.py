@@ -312,12 +312,15 @@ def _code_observation(query, pr, options=None):
     if options.get("head") or options.get("head_oid"):
         head_val = options.get("head") or options.get("head_oid")
         base_val = options.get("base") or options.get("base_oid")
-        head_bytes = (
-            bytes.fromhex(head_val) if isinstance(head_val, str) else head_val
-        )
-        base_bytes = (
-            bytes.fromhex(base_val) if isinstance(base_val, str) else base_val
-        )
+        try:
+            head_bytes = (
+                bytes.fromhex(head_val) if isinstance(head_val, str) else head_val
+            )
+            base_bytes = (
+                bytes.fromhex(base_val) if isinstance(base_val, str) else base_val
+            )
+        except (ValueError, TypeError):
+            return None
         fmt = (
             options.get("format")
             or options.get("object_format")
@@ -327,19 +330,42 @@ def _code_observation(query, pr, options=None):
             query.s, pr["change_request_id"], fmt, head_bytes, base_bytes
         )
     if options.get("code_listing_id"):
-        row = query.s.one(
-            "SELECT * FROM code_assessments WHERE change_request_id=? AND (commit_code_listing_id=? OR file_code_listing_id=?) ORDER BY observed_at_us DESC LIMIT 1",
-            (
-                pr["change_request_id"],
-                options["code_listing_id"],
-                options["code_listing_id"],
-            ),
+        listing_id = options["code_listing_id"]
+        matching_ca = list(
+            query.s.all(
+                "SELECT * FROM code_assessments WHERE change_request_id=? AND (commit_code_listing_id=? OR file_code_listing_id=?)",
+                (pr["change_request_id"], listing_id, listing_id),
+            )
         )
-        if row:
-            return dict(row)
+        if matching_ca:
+            max_us = max(
+                (
+                    r["observed_at_us"]
+                    for r in matching_ca
+                    if r["observed_at_us"] is not None
+                ),
+                default=None,
+            )
+            candidates = [r for r in matching_ca if r["observed_at_us"] == max_us]
+            distinct_targets = {
+                (r["object_format"], r["head_oid"], r["base_oid"]) for r in candidates
+            }
+            if len(distinct_targets) == 1:
+                target_fmt, target_head, target_base = next(iter(distinct_targets))
+                resolved = current_code_assessment(
+                    query.s,
+                    pr["change_request_id"],
+                    target_fmt,
+                    target_head,
+                    target_base,
+                )
+                if resolved is not None:
+                    return resolved
+            elif len(distinct_targets) > 1:
+                return None
         listing_row = query.s.one(
             "SELECT * FROM code_listings WHERE code_listing_id=? AND change_request_id=?",
-            (options["code_listing_id"], pr["change_request_id"]),
+            (listing_id, pr["change_request_id"]),
         )
         if listing_row:
             return {
@@ -363,56 +389,87 @@ def _code_observation(query, pr, options=None):
                 "observed_at_us": None,
                 "details_json": "{}",
             }
+        return None
 
+    all_ca = list(
+        query.s.all(
+            "SELECT * FROM code_assessments WHERE change_request_id=?",
+            (pr["change_request_id"],),
+        )
+    )
     state = _state(query, pr)
-    if state is not None and (
-        state.get("head_oid") is not None or state.get("base_oid") is not None
-    ):
-        return current_code_assessment(
-            query.s,
-            pr["change_request_id"],
-            state["object_format"],
-            state["head_oid"],
-            state["base_oid"],
+    if all_ca:
+        max_us = max(
+            (r["observed_at_us"] for r in all_ca if r["observed_at_us"] is not None),
+            default=None,
         )
-    latest = query.s.one(
-        "SELECT object_format,head_oid,base_oid FROM code_assessments WHERE change_request_id=? ORDER BY observed_at_us DESC LIMIT 1",
-        (pr["change_request_id"],),
-    )
-    if latest:
-        return current_code_assessment(
-            query.s,
-            pr["change_request_id"],
-            latest["object_format"],
-            latest["head_oid"],
-            latest["base_oid"],
+        candidates = (
+            [r for r in all_ca if r["observed_at_us"] == max_us]
+            if max_us is not None
+            else all_ca
         )
-    latest_listing = query.s.one(
-        "SELECT * FROM code_listings WHERE change_request_id=? ORDER BY code_listing_id DESC LIMIT 1",
-        (pr["change_request_id"],),
-    )
-    if latest_listing:
-        return {
-            "code_assessment_id": None,
-            "change_request_id": pr["change_request_id"],
-            "repository_uuidv4": pr["repository_uuidv4"],
-            "commit_code_listing_id": (
-                latest_listing["code_listing_id"]
-                if latest_listing["kind"] == "commits"
-                else None
-            ),
-            "file_code_listing_id": (
-                latest_listing["code_listing_id"]
-                if latest_listing["kind"] == "files"
-                else None
-            ),
-            "state": "partial",
-            "object_format": latest_listing["object_format"],
-            "head_oid": latest_listing["head_oid"],
-            "base_oid": latest_listing["base_oid"],
-            "observed_at_us": None,
-            "details_json": "{}",
+        distinct_targets = {
+            (r["object_format"], r["head_oid"], r["base_oid"]) for r in candidates
         }
+        if len(distinct_targets) > 1:
+            return None
+        target_fmt, target_head, target_base = next(iter(distinct_targets))
+        if state is not None and (
+            state.get("head_oid") is not None or state.get("base_oid") is not None
+        ):
+            state_target = (
+                state["object_format"],
+                state["head_oid"],
+                state["base_oid"],
+            )
+            state_us = state.get("observed_at_us")
+            if state_us is not None and max_us is not None:
+                if state_us >= max_us and state_target != (
+                    target_fmt,
+                    target_head,
+                    target_base,
+                ):
+                    return None
+            elif state_target != (target_fmt, target_head, target_base):
+                return None
+        return current_code_assessment(
+            query.s,
+            pr["change_request_id"],
+            target_fmt,
+            target_head,
+            target_base,
+        )
+
+    all_listings = list(
+        query.s.all(
+            "SELECT * FROM code_listings WHERE change_request_id=?",
+            (pr["change_request_id"],),
+        )
+    )
+    if all_listings:
+        distinct_listing_targets = {
+            (r["object_format"], r["head_oid"], r["base_oid"]) for r in all_listings
+        }
+        if len(distinct_listing_targets) == 1:
+            listing = all_listings[0]
+            return {
+                "code_assessment_id": None,
+                "change_request_id": pr["change_request_id"],
+                "repository_uuidv4": pr["repository_uuidv4"],
+                "commit_code_listing_id": (
+                    listing["code_listing_id"] if listing["kind"] == "commits" else None
+                ),
+                "file_code_listing_id": (
+                    listing["code_listing_id"] if listing["kind"] == "files" else None
+                ),
+                "state": "partial",
+                "object_format": listing["object_format"],
+                "head_oid": listing["head_oid"],
+                "base_oid": listing["base_oid"],
+                "observed_at_us": None,
+                "details_json": "{}",
+            }
+        return None
     return None
 
 
@@ -974,17 +1031,21 @@ def pr_query(query, command, options):
             )
             kinds_to_yield = (
                 (
-                    requested_kind,
-                    "code_commits"
-                    if requested_kind == "commits"
-                    else "code_file_changes",
-                    "commit_code_listing_id"
-                    if requested_kind == "commits"
-                    else "file_code_listing_id",
-                ),
-            ) if requested_kind in ("commits", "files") else (
-                ("commits", "code_commits", "commit_code_listing_id"),
-                ("files", "code_file_changes", "file_code_listing_id"),
+                    (
+                        requested_kind,
+                        "code_commits"
+                        if requested_kind == "commits"
+                        else "code_file_changes",
+                        "commit_code_listing_id"
+                        if requested_kind == "commits"
+                        else "file_code_listing_id",
+                    ),
+                )
+                if requested_kind in ("commits", "files")
+                else (
+                    ("commits", "code_commits", "commit_code_listing_id"),
+                    ("files", "code_file_changes", "file_code_listing_id"),
+                )
             )
             for kind, table, column in kinds_to_yield:
                 listing_id = code.get(column)

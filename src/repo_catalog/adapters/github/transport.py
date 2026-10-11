@@ -82,9 +82,7 @@ class GitHubTransport:
 
     def validate_url(self, url):
         if not isinstance(url, str):
-            raise CatalogError(
-                "UNSAFE_API_URL", "API URL must be a string"
-            )
+            raise CatalogError("UNSAFE_API_URL", "API URL must be a string")
         try:
             u = urlsplit(url)
             origin = self.origin(url)
@@ -101,14 +99,16 @@ class GitHubTransport:
                     "UNSAFE_API_URL",
                     "Refusing credential propagation outside configured API origin",
                 )
-            if u.scheme != "https" and u.hostname not in ("localhost", "127.0.0.1", "::1"):
+            if u.scheme != "https" and u.hostname not in (
+                "localhost",
+                "127.0.0.1",
+                "::1",
+            ):
                 raise CatalogError("UNSAFE_API_URL", "Remote API requests require TLS")
         except CatalogError:
             raise
         except (ValueError, TypeError, AttributeError) as err:
-            raise CatalogError(
-                "UNSAFE_API_URL", "Malformed API URL"
-            ) from err
+            raise CatalogError("UNSAFE_API_URL", "Malformed API URL") from err
 
     def request(self, method, url, **kwargs):
         self.validate_url(url)

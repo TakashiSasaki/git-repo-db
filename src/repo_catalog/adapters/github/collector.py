@@ -2161,7 +2161,7 @@ class GitHubCollector:
                 file_listing = None
                 missing.append({"kind": "pr-code", "reason": "INVALID_CODE_LISTING"})
         actual = self.s.one(
-            "SELECT head_oid,base_oid FROM eligible_change_request_state WHERE change_request_id=?",
+            "SELECT head_oid,base_oid,merge_oid FROM eligible_change_request_state WHERE change_request_id=?",
             (pr["change_request_id"],),
         )
         same = (
@@ -2248,7 +2248,16 @@ class GitHubCollector:
                 and captures["completed"] == captures["observed"]
             )
         roles, roles_complete, _ = self.saved_thread_code_input(pr["change_request_id"])
-        role_oids = {"head": head.hex(), "base": base.hex(), **roles}
+        role_oids = {
+            k: v
+            for k, v in {"head": head.hex(), "base": base.hex(), **roles}.items()
+            if v is not None
+        }
+        if actual is not None and actual["merge_oid"] is not None:
+            merge_val = actual["merge_oid"]
+            role_oids["merge"] = (
+                merge_val.hex() if isinstance(merge_val, bytes) else merge_val
+            )
         for row in self.s.all(
             "SELECT target_commit_oid FROM eligible_review_resources WHERE change_request_id=?",
             (pr["change_request_id"],),
@@ -2296,6 +2305,7 @@ class GitHubCollector:
             "code_inputs_complete": bool(
                 inputs_complete and roles_complete and commit_listing and file_listing
             ),
+            "expected_roles": role_oids,
         }
         # Identity names the actual captured inputs, not just their head/base
         # targets. A retry of this capture resumes its pending anchor; a fresh
@@ -2424,7 +2434,11 @@ class GitHubCollector:
                     canonical(
                         details
                         if state == "pending"
-                        else {**details, "missing": missing}
+                        else {
+                            **details,
+                            "missing": missing,
+                            "missing_roles": sorted(required - links.keys()),
+                        }
                     ),
                     assessment,
                 ),
@@ -2670,6 +2684,28 @@ class GitHubCollector:
                     for assessment in assessments
                 )
             )
+            if code_complete:
+                for pr in prs:
+                    st = self.s.one(
+                        "SELECT head_oid,base_oid,object_format FROM eligible_change_request_state WHERE change_request_id=?",
+                        (pr["change_request_id"],),
+                    )
+                    if st and (st["head_oid"] or st["base_oid"]):
+                        if (
+                            current_code_assessment(
+                                self.s,
+                                pr["change_request_id"],
+                                st["object_format"],
+                                st["head_oid"],
+                                st["base_oid"],
+                            )
+                            is None
+                        ):
+                            code_complete = False
+                            failures.append(
+                                {"kind": "pr-code", "reason": "PR_CODE_CONFLICT"}
+                            )
+                            break
             with self.s.transaction():
                 self.facts.fence(job)
                 document_failures = [

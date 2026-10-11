@@ -206,9 +206,10 @@ CREATE TRIGGER root_manifest_entries_immutable BEFORE UPDATE ON root_manifest_en
 CREATE TRIGGER root_manifests_immutable BEFORE UPDATE ON root_manifests WHEN NEW.tree_git_object_id IS NOT OLD.tree_git_object_id OR NEW.entry_count IS NOT OLD.entry_count OR NEW.complete<OLD.complete BEGIN SELECT RAISE(ABORT,'immutable flattened tree manifest'); END;
 
 
-CREATE INDEX repository_object_sources_acquisition ON repository_object_sources(git_acquisition_id,git_object_id);
+CREATE INDEX repository_object_sources_acquisition ON repository_object_sources(repository_uuidv4,git_acquisition_id,git_object_id);
 CREATE INDEX snapshots_predecessor ON snapshots(predecessor_snapshot_id,complete);
 CREATE INDEX snapshots_repository ON snapshots(repository_uuidv4,complete);
+CREATE INDEX snapshots_acquisition ON snapshots(repository_uuidv4,git_acquisition_id);
 CREATE INDEX blob_content_map_content ON blob_content_map(content_id);
 
 CREATE TRIGGER git_objects_immutable BEFORE UPDATE ON git_objects WHEN NEW.git_object_id IS NOT OLD.git_object_id OR NEW.object_format IS NOT OLD.object_format OR NEW.oid IS NOT OLD.oid OR NEW.type IS NOT OLD.type OR NEW.size IS NOT OLD.size OR NEW.verified<OLD.verified BEGIN SELECT RAISE(ABORT,'immutable canonical Git identity'); END;

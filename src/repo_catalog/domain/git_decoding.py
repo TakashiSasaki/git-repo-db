@@ -138,4 +138,3 @@ def validate_decoded_value(family, fmt, body, key, settings, subject, value, met
         raise CatalogError(
             "GIT_DECODER_FACT", "Claimed Git value contradicts raw bytes"
         )
-
