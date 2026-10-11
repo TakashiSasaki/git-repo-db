@@ -219,6 +219,10 @@ class CollectionService:
                         "kind": "manual_git",
                         "endpoint": settings["url"],
                     }
+                    if src["service_instance_uuidv4"] is not None:
+                        scope["service_instance_uuidv4"] = src[
+                            "service_instance_uuidv4"
+                        ]
                     base_revision = s.revision()
                     with s.transaction():
                         ident = admit_repository(
