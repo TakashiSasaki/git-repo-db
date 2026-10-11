@@ -72,53 +72,7 @@ def collect(path):
     save(path, plan)
 
 
-def run_selection(path, name):
-    plan, output = read(path), path.parent
-    item = plan["lanes"][name]
-    if (
-        item["disposition"] != "selected"
-        or item["selection_kind"] != "nodeids"
-        or not item["test_ids"]
-    ):
-        raise ValueError("Lane was not selected/collected before execution")
-    workers = 4 if name != "packaging" and len(item["test_ids"]) >= 20 else 1
-    xml = output / (name + ".xml")
-    command = [
-        "uv",
-        "run",
-        "--no-sync",
-        "pytest",
-        *item["test_files"],
-        "--strict-markers",
-        "-m",
-        MARKER,
-        "--junitxml",
-        str(xml),
-        "--durations=20",
-    ]
-    if workers > 1:
-        command += ["-n", str(workers)]
-    return ci_profile.run(
-        Namespace(
-            command=command,
-            output=output,
-            name=name,
-            junit=xml,
-            mode="xdist" if workers > 1 else "sequential",
-            workers=workers,
-        )
-    )
-
-
-def run_current(output, name):
-    """Run the current manifest during edits; raw profiles retain dirty-tree status."""
-    files = [
-        path
-        for path in ci_plan.current_acceptance_files()
-        if path.startswith("tests/packaging/") == (name == "packaging")
-    ]
-    workers = 1 if name == "packaging" else 4
-    xml = output / (name + ".xml")
+def pytest_command(files, xml, workers):
     command = [
         "uv",
         "run",
@@ -133,7 +87,63 @@ def run_current(output, name):
         "--durations=20",
     ]
     if workers > 1:
-        command += ["-n", str(workers)]
+        command += ["-n", str(workers), "--dist", "worksteal"]
+    return command
+
+
+def positive_workers(value):
+    workers = int(value)
+    if workers < 1:
+        raise argparse.ArgumentTypeError("Workers must be at least one")
+    return workers
+
+
+def selected_workers(name, count, requested=None):
+    if requested is not None:
+        return min(positive_workers(requested), count)
+    if name == "packaging":
+        return min(2, count)
+    return 4 if count >= 20 else 1
+
+
+def run_selection(path, name, workers=None):
+    plan, output = read(path), path.parent
+    item = plan["lanes"][name]
+    if (
+        item["disposition"] != "selected"
+        or item["selection_kind"] != "nodeids"
+        or not item["test_ids"]
+    ):
+        raise ValueError("Lane was not selected/collected before execution")
+    workers = selected_workers(name, len(item["test_ids"]), workers)
+    xml = output / (name + ".xml")
+    command = pytest_command(item["test_files"], xml, workers)
+    return ci_profile.run(
+        Namespace(
+            command=command,
+            output=output,
+            name=name,
+            junit=xml,
+            mode="xdist" if workers > 1 else "sequential",
+            workers=workers,
+        )
+    )
+
+
+def run_current(output, name, workers=None):
+    """Run the current manifest during edits; raw profiles retain dirty-tree status."""
+    files = [
+        path
+        for path in ci_plan.current_acceptance_files()
+        if path.startswith("tests/packaging/") == (name == "packaging")
+    ]
+    workers = (
+        positive_workers(workers)
+        if workers is not None
+        else (2 if name == "packaging" else 4)
+    )
+    xml = output / (name + ".xml")
+    command = pytest_command(files, xml, workers)
     return ci_profile.run(
         Namespace(
             command=command,
@@ -348,6 +358,11 @@ def main():
         "--plan", type=Path, default=Path("artifacts/ci-profile/plan.json")
     )
     parser.add_argument("--lane", choices=ci_plan.TEST_LANES, default="tests")
+    parser.add_argument(
+        "--workers",
+        type=positive_workers,
+        help="Override worker count (one disables xdist)",
+    )
     args = parser.parse_args()
     if args.action == "reports":
         args.plan.parent.mkdir(parents=True, exist_ok=True)
@@ -355,9 +370,9 @@ def main():
     elif args.action == "collect":
         collect(args.plan)
     elif args.action == "run":
-        return run_selection(args.plan, args.lane)
+        return run_selection(args.plan, args.lane, args.workers)
     elif args.action == "current":
-        return run_current(args.plan.parent, args.lane)
+        return run_current(args.plan.parent, args.lane, args.workers)
     else:
         print(json.dumps(gate(args.plan)["coverage"]))
     return 0

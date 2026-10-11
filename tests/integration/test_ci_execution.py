@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import subprocess
@@ -112,22 +113,45 @@ def test_prose_followup_reports_unexecuted_files_without_claiming_full_acceptanc
         ci_execute.gate(output / "plan.json", root)
 
 
-@pytest.mark.parametrize("count,workers", [(4, 1), (24, 4)])
-def test_small_selections_sequential_and_larger_fixed_four(
-    acceptance, monkeypatch, count, workers
+@pytest.mark.parametrize(
+    "lane,count,requested,workers",
+    [
+        ("tests", 4, None, 1),
+        ("tests", 24, None, 4),
+        ("packaging", 1, None, 1),
+        ("packaging", 2, None, 2),
+        ("tests", 24, 2, 2),
+        ("tests", 4, 2, 2),
+        ("packaging", 2, 1, 1),
+        ("tests", 1, 8, 1),
+    ],
+)
+def test_selection_parallelism_keeps_small_defaults_and_bounds_overrides(
+    acceptance, monkeypatch, lane, count, requested, workers
 ):
     _, output = acceptance
     path = output / "plan.json"
     plan = json.loads(path.read_bytes())
-    plan["lanes"]["tests"]["test_ids"] = [f"synthetic::{i}" for i in range(count)]
+    plan["lanes"][lane]["test_ids"] = [f"synthetic::{i}" for i in range(count)]
     path.write_text(json.dumps(plan))
     seen = []
     monkeypatch.setattr(
         ci_execute.ci_profile, "run", lambda args: seen.append(args) or 0
     )
-    assert ci_execute.run_selection(path, "tests") == 0
+    assert ci_execute.run_selection(path, lane, requested) == 0
     assert seen[0].workers == workers
-    assert ("-n" in seen[0].command) == (workers == 4)
+    assert ("-n" in seen[0].command) == (workers > 1)
+    assert ("--dist" in seen[0].command) == (workers > 1)
+    if workers > 1:
+        assert seen[0].command[-2:] == ["--dist", "worksteal"]
+
+
+@pytest.mark.parametrize("workers", [0, -1])
+def test_invalid_worker_count_is_rejected_before_test_execution(workers):
+    with pytest.raises(
+        argparse.ArgumentTypeError, match="Workers must be at least one"
+    ):
+        ci_execute.positive_workers(workers)
 
 
 def test_empty_and_duplicate_collection_are_rejected():
