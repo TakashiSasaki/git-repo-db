@@ -5,7 +5,7 @@
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "27dedcf846f39ce2df6ffb298e899a3249009bd7f6f972b1e3828ee33b341dad",
+    "ddl_sha256": "48c67de0ecd38e21fc7e7b6d27ed7e57cf3bd2f6cfbbfd0a55158ee013a223e6",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -4251,43 +4251,43 @@
       },
       "json_exchange_staging_candidate_change_request_state_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "6fda447347e8033de882618f265fcbf0f28846819be509721ee76b78ca349a62"
+        "sql_sha256": "2785546304260619ac3402eb19e6e4beb588815b5c705e3b9c505b51e04e7d5e"
       },
       "json_exchange_staging_candidate_change_request_state_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "6f0030aefc87ac14c8627a0911ae3f0eba760cca891daf2af2117ae7433397f0"
+        "sql_sha256": "0e43936ac2bb918aee46d00cc1e9a8b50ed474f91819c44163ac1954d9f8595b"
       },
       "json_exchange_staging_candidate_document_state_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "d7899469160a133ea6ebc2ef920390c4eff296cf7d852aa2ad069ae715a095a8"
+        "sql_sha256": "6670c4a511d3e94421d76defc9901fdd1794667395cdb1b450eed4dfdb7c5c7c"
       },
       "json_exchange_staging_candidate_document_state_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "8897fdca7bb32decab14d9f841ff6a3259d8d3b291066abe037041272a558812"
+        "sql_sha256": "b0e5975fddba2f98c87023b90cf46e1a7e69fbd428687f2e3c15fb8364ed9f93"
       },
       "json_exchange_staging_candidate_issue_resources_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "c4e07d925ce7d1da8f6d7e099b874e96040ca3cf6d1c0f750680ed2c8aa64ac4"
+        "sql_sha256": "cc478e6d0709d254148fbea631e6d6efd4944ee1cecd205e6882364eb188c1c4"
       },
       "json_exchange_staging_candidate_issue_resources_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "6472c6a464afe15b5a5e43782fc35053b6854245497509c536596b1d6757dd22"
+        "sql_sha256": "1e970144883cbc26ff8ef03addf6c2ce2a7085e5206f5254230c1273969862b3"
       },
       "json_exchange_staging_candidate_review_resources_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "2d6d9a84a90380a50af3190eca30a507150a72eb7c9c987b3fcddfac6f7f0107"
+        "sql_sha256": "3af8cd86070afe5e6237fb07bf6dc768ae7233bcedb0b7c5850fb9dde8912c07"
       },
       "json_exchange_staging_candidate_review_resources_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "5b1987a237f2f66f5b2f9fb783be0aa5e57b50994b92ddd06b8f7aaad2dd9b6f"
+        "sql_sha256": "bf78c0e7538846601fe2747ee4fc58b9fc661d3f4701e67babf062f2ecb6a617"
       },
       "json_exchange_staging_candidate_review_thread_state_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "b464b6894c5a7f6bd11fd36455e9a24a94efe4e8d01def9748b1aac01a15d32e"
+        "sql_sha256": "93a05e8bc16d38412a41a704ba8c506ebfe47468772be68e8fa6029591c885dc"
       },
       "json_exchange_staging_candidate_review_thread_state_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "2fb8445210857ef91e7b9a8f1ef3e77e5ffd481f6d036670808e3731f903daaf"
+        "sql_sha256": "f2597f75f4ebba797c506d490bffc20c3a2df829e408b04883d8619a52e25eb2"
       },
       "json_exchange_staging_candidate_source_repositories_insert": {
         "owner": "exchange_staging",
@@ -4295,7 +4295,7 @@
       },
       "json_exchange_staging_candidate_source_repositories_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "f1f11ddb34266d56b35b6a364e37d64f505677263839d44476702976535aa8d8"
+        "sql_sha256": "b47b2fa0322ea8f327135c4e5adcaa338ac7444e7ec0184b790d0c605fe04a69"
       },
       "json_exchange_staging_envelope_acquisition_roots_insert": {
         "owner": "exchange_staging",
@@ -4651,43 +4651,43 @@
       },
       "json_exchange_staging_origins_change_request_state_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "ab8095f7b62c0ba9444b2edf947c1ccdc03ada7eb05040372b0411ba405ce394"
+        "sql_sha256": "33089bbca9ec6dc9f1b207caf455ecf3d068fbeb7ba8623bb740e75128810941"
       },
       "json_exchange_staging_origins_change_request_state_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "522f6a984b6327f14e0cc7af52072a1351a3d46add3b5c62042f49b2eef657a4"
+        "sql_sha256": "57f705ba5761dae4704da4f174580a76443e9d40cc03959f215e7c50bfac3590"
       },
       "json_exchange_staging_origins_document_state_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "92eb26a6202836a15f9e32bc96aa183244b084a0ce837a06c42b036758f98172"
+        "sql_sha256": "295274d4717975331fb6b969adb1ad8c89818ece77398273fe7680484d753049"
       },
       "json_exchange_staging_origins_document_state_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "376fa08336e19a46873ce6778580d5e791765f5ab358acdde6c863aedac026ea"
+        "sql_sha256": "ea089d4cb7c65c8ff43876ada1c84c5bcbae624b55fe7641ef225d422fbfa44e"
       },
       "json_exchange_staging_origins_issue_resources_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "061e698e8dfddfc4ae29c15cccd27cc94a6f235b983d4b00e03de2a934799abf"
+        "sql_sha256": "bcc56e41ba4af3670cb173ace40e9c9e62fedd75ae64f5aa047f0d5c2f3c4436"
       },
       "json_exchange_staging_origins_issue_resources_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "ed8375c2b09acaab95f83cf8b84de6616eb03a76d084393d741ace6aaf360f60"
+        "sql_sha256": "01b6797a9e90581dd9869327401c30109992994b3a6673a2adffbaada77483dc"
       },
       "json_exchange_staging_origins_review_resources_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "3c61cbc6fa214c726df706d9d7d2e465eb32ad24daf9f0e8fd4441105227dda0"
+        "sql_sha256": "516a0034649c14a5798cb30869e16975f5d44a9f7009293bebba23ffb7147a5b"
       },
       "json_exchange_staging_origins_review_resources_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "5819a28fc798c2f5eaf632bd528539f9950f49cd6a1fc308376194ed9fd098e8"
+        "sql_sha256": "8cf99ffe63a3878ae8c945ed531b4812ae0b81372b3a4583dfd9ad2679a37a7b"
       },
       "json_exchange_staging_origins_review_thread_state_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "309e7ef158b011cf4ad500558c83b87faa5dcc28a61c4c810e28c90290d7bcee"
+        "sql_sha256": "5e1cccf257f5457194e3a285e1c5598295f1fb2141a0da773cb0e402a8d5d151"
       },
       "json_exchange_staging_origins_review_thread_state_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "14fe9c6fc6cacb823e9c426307fbf2da4109881ac1571f9cfdf566c320d8b453"
+        "sql_sha256": "84aef036ae9d2a01cbc2a90cd4e26f25c767153b72aa130578958f33f0cf342d"
       },
       "json_exchange_staging_origins_source_repositories_insert": {
         "owner": "exchange_staging",
@@ -4695,7 +4695,7 @@
       },
       "json_exchange_staging_origins_source_repositories_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "9050763fcebf28355ed4931b07de7c27c5599a34a3e72d74cc8e606757ee437a"
+        "sql_sha256": "22bae6c487e825996533c36246baf23cb1ce9ae6ee9059a6b9017874479c8575"
       },
       "json_exchange_staging_record_json_insert": {
         "owner": "exchange_staging",

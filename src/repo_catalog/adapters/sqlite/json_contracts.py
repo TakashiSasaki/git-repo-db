@@ -1103,6 +1103,18 @@ def validate_record(db, table, data, *, allow_missing=False):
     if (
         table == "exchange_staging"
         and data.get("reason", "").startswith("current_state:")
+        and data.get("reason") != "current_state:invalid"
+        and data.get("table_name") != "source_repositories"
+    ):
+        candidate = _load(
+            data["record_json"],
+            JSON_REGISTRY["exchange_staging", "record_json"],
+            "staged current candidate",
+        )
+        validate_current_candidate_relationships(db, data["table_name"], candidate)
+    if (
+        table == "exchange_staging"
+        and data.get("reason", "").startswith("current_state:")
         and data.get("table_name") == "source_repositories"
     ):
         candidate = _load(
@@ -2443,6 +2455,13 @@ _STAGED_KINDS = {
     "source_repositories": {"source-repository"},
 }
 
+_CANDIDATE_GIT_OIDS = {
+    "change_request_state": ("head_oid", "base_oid", "merge_oid"),
+    "review_thread_state": ("commit_oid", "original_commit_oid"),
+}
+_BODY_STATUSES = {"present", "provider-null", "missing", "inaccessible"}
+_REVIEW_STATES = {"APPROVED", "CHANGES_REQUESTED", "COMMENTED", "DISMISSED", "PENDING"}
+
 
 def _candidate_required(table, kind):
     if table == "source_repositories":
@@ -2489,6 +2508,10 @@ def validate_current_candidate_shape(table, candidate, *, validation_cache=None)
     kind = candidate.get("kind")
     if table not in _STAGED_KINDS or kind not in _STAGED_KINDS[table]:
         raise JsonContractError("Current candidate kind differs from table")
+    _check_metadata(
+        _candidate_spec(table),
+        {name: value for name, value in candidate.items() if name != "field_evidence"},
+    )
     if "metadata" in candidate and not isinstance(candidate["metadata"], dict):
         raise JsonContractError("Current metadata requires modeled object")
     for name, value in candidate.items():
@@ -2528,6 +2551,7 @@ def validate_current_candidate_shape(table, candidate, *, validation_cache=None)
         raise JsonContractError("Candidate has no comparable provider update clock")
     if table == "issue_resources" and candidate["provider_issue_number"] <= 0:
         raise JsonContractError("Issue number requires positive integer")
+    _candidate_scalar_contract(table, candidate)
     evidence = candidate.get("field_evidence", {})
     if not isinstance(evidence, dict):
         raise JsonContractError("Candidate field evidence requires object")
@@ -2544,6 +2568,161 @@ def validate_current_candidate_shape(table, candidate, *, validation_cache=None)
                 field_origin=True,
                 validation_cache=validation_cache,
             )
+
+
+def _candidate_scalar_contract(table, candidate):
+    kind = candidate["kind"]
+    if table in _CANDIDATE_GIT_OIDS:
+        object_format = candidate.get("object_format")
+        if object_format is not None and object_format not in {"sha1", "sha256"}:
+            raise JsonContractError("Invalid candidate Git object format")
+        for name in _CANDIDATE_GIT_OIDS[table]:
+            oid = candidate.get(name)
+            if oid is not None and (
+                not isinstance(oid, str)
+                or re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", oid) is None
+                or object_format is not None
+                and len(oid) != (40 if object_format == "sha1" else 64)
+            ):
+                raise JsonContractError("Candidate Git OID differs from object format")
+    if "body_status" in candidate:
+        status = candidate["body_status"]
+        if status not in _BODY_STATUSES:
+            raise JsonContractError("Unknown candidate body status")
+        if "body" in candidate and (
+            status == "present"
+            and candidate["body"] is None
+            or table == "document_state"
+            and status != "present"
+            and candidate["body"] is not None
+        ):
+            raise JsonContractError("Candidate body differs from body status")
+    for name in {"deleted", "draft", "merged", "locked", "resolved", "outdated"}:
+        if candidate.get(name) is not None and candidate[name] not in (False, True):
+            raise JsonContractError("Candidate flag requires boolean or 0/1")
+    ids = ()
+    forbidden = ()
+    if table == "issue_resources":
+        ids = ("provider_resource_id", "parent_provider_resource_id")
+        if candidate.get("state") not in {None, "open", "closed"}:
+            raise JsonContractError("Unknown Issue state")
+        forbidden = (
+            ("parent_provider_resource_id",) if kind == "issue" else ("title", "state")
+        )
+    elif table == "review_resources":
+        ids = (
+            "provider_change_request_document_id",
+            "review_provider_resource_id",
+            "in_reply_to_provider_resource_id",
+        )
+        if (
+            candidate.get("state") is not None
+            and candidate["state"] not in _REVIEW_STATES
+        ):
+            raise JsonContractError("Unknown review state")
+        forbidden = (
+            (
+                "review_provider_resource_id",
+                "in_reply_to_provider_resource_id",
+                "review_thread_provider_resource_id",
+                "original_position",
+                "current_position",
+                "raw_path",
+                "diff_hunk",
+            )
+            if kind == "review"
+            else ("state", "submitted_at_us")
+        )
+        if candidate.get("in_reply_to_provider_resource_id") == candidate.get(
+            "provider_change_request_document_id"
+        ):
+            raise JsonContractError("Review comment cannot reply to itself")
+        for name in ("target_commit_oid", "original_commit_oid"):
+            oid = candidate.get(name)
+            if (
+                oid is not None
+                and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", oid) is None
+            ):
+                raise JsonContractError("Review Git OID requires canonical hex")
+        for name in ("original_position", "current_position"):
+            if candidate.get(name) is not None and not 0 <= candidate[name] < 2**63:
+                raise JsonContractError("Review position requires nonnegative int64")
+    if any(candidate.get(name) is not None for name in forbidden):
+        raise JsonContractError("Field does not belong to candidate kind")
+    for name in ids:
+        value = candidate.get(name)
+        if value is not None and re.fullmatch(r"[1-9][0-9]*", value) is None:
+            raise JsonContractError("Provider identity requires canonical positive ID")
+
+
+def validate_current_candidate_relationships(
+    db, table, candidate, *, dependency_cache=None
+):
+    """Reject known contradictions even when another dependency is absent.
+
+    Missing identities can defer admission. They do not excuse contradictions
+    in registrations which already exist, including detached field captures.
+    Dependency lists are intentionally ignored here; the admission engine owns
+    promotion and applies the live versus historical missing-dependency rules.
+    """
+    cache_key = (
+        "candidate owners",
+        table,
+        candidate["repository_binding_id"],
+        candidate["repository_uuidv4"],
+        candidate["service_instance_uuidv4"],
+        candidate.get("change_request_id"),
+    )
+    if dependency_cache is None or cache_key not in dependency_cache:
+        binding = _row(
+            db,
+            "repository_bindings",
+            ("repository_binding_id",),
+            (candidate["repository_binding_id"],),
+        )
+        if binding is not None and any(
+            binding[name] != candidate[name]
+            for name in ("repository_uuidv4", "service_instance_uuidv4")
+        ):
+            raise JsonContractError(
+                "Candidate binding has different repository or service"
+            )
+        if table != "issue_resources":
+            parent = _row(
+                db,
+                "change_requests",
+                ("change_request_id",),
+                (candidate["change_request_id"],),
+            )
+            if parent is not None and any(
+                parent[name] != candidate[name]
+                for name in ("repository_uuidv4", "repository_binding_id")
+            ):
+                raise JsonContractError(
+                    "Review does not match its parent change request"
+                    if table == "review_resources"
+                    else "Typed PR owner mismatch"
+                )
+        if dependency_cache is not None:
+            dependency_cache[cache_key] = ()
+    scopes = [candidate["acquisition_scope"]]
+    scopes.extend(
+        origin["acquisition_scope"]
+        for origin in candidate.get("field_evidence", {}).values()
+    )
+    seen = set()
+    for scope in scopes:
+        token = json.dumps(scope, sort_keys=True)
+        if token in seen:
+            continue
+        seen.add(token)
+        _acquisition_dependencies(
+            db,
+            scope,
+            service_instance_uuidv4=candidate["service_instance_uuidv4"],
+            allow_snapshot=True,
+            dependency_cache=dependency_cache,
+        )
 
 
 def _candidate_capture_shape(
@@ -2771,6 +2950,14 @@ def _candidate_capture_conditions(table, scope, owner, producer, *, field_origin
                 f"EXISTS(SELECT 1 FROM sources s WHERE s.source_registration_uuidv4={source_registration} AND s.source_id IS NOT {source_id})",
             ]
     else:
+        repository = f"json_extract({scope},'$.repository_uuidv4')"
+        binding = f"json_extract({scope},'$.repository_binding_id')"
+        service = f"json_extract({scope},'$.service_instance_uuidv4')"
+        source = f"json_extract({scope},'$.source_registration_uuidv4')"
+        result += [
+            f"EXISTS(SELECT 1 FROM repository_bindings b WHERE b.repository_binding_id={binding} AND (b.repository_uuidv4 IS NOT {repository} OR b.service_instance_uuidv4 IS NOT {service}))",
+            f"EXISTS(SELECT 1 FROM sources s WHERE s.source_registration_uuidv4={source} AND s.service_instance_uuidv4 IS NOT NULL AND s.service_instance_uuidv4 IS NOT {service})",
+        ]
         result.append(
             f"json_extract({scope},'$.service_instance_uuidv4') IS NOT json_extract({owner},'$.service_instance_uuidv4')"
         )
@@ -2836,6 +3023,25 @@ def _candidate_conditions(table, doc):
     scope = f"json_extract({doc},'$.acquisition_scope')"
     result += [f"coalesce(json_type({doc},'$.acquisition_scope'),'')<>'object'"]
     result += _candidate_capture_conditions(table, scope, doc, doc)
+    result += _candidate_scalar_conditions(table, doc)
+    if table != "source_repositories":
+        result.append(
+            f"EXISTS(SELECT 1 FROM repository_bindings b WHERE b.repository_binding_id=json_extract({doc},'$.repository_binding_id') AND (b.repository_uuidv4 IS NOT json_extract({doc},'$.repository_uuidv4') OR b.service_instance_uuidv4 IS NOT json_extract({doc},'$.service_instance_uuidv4')))"
+        )
+        if table != "issue_resources":
+            result.append(
+                f"EXISTS(SELECT 1 FROM change_requests c WHERE c.change_request_id=json_extract({doc},'$.change_request_id') AND (c.repository_uuidv4 IS NOT json_extract({doc},'$.repository_uuidv4') OR c.repository_binding_id IS NOT json_extract({doc},'$.repository_binding_id')))"
+            )
+    if table in _CANDIDATE_GIT_OIDS:
+        object_format = f"json_extract({doc},'$.object_format')"
+        result.append(
+            f"({object_format} IS NOT NULL AND {object_format} NOT IN ('sha1','sha256'))"
+        )
+        for name in _CANDIDATE_GIT_OIDS[table]:
+            oid = f"json_extract({doc},'$.{name}')"
+            result.append(
+                f"({oid} IS NOT NULL AND (NOT ({_sql_hex(oid, '40')} OR {_sql_hex(oid, '64')}) OR ({object_format} IS NOT NULL AND length({oid})<>CASE {object_format} WHEN 'sha1' THEN 40 ELSE 64 END)))"
+            )
     result += [
         f"(json_type({doc},'$.provider_clock_scope') NOT IN ('null') AND json_extract({doc},'$.provider_clock_scope') IS NOT CASE json_extract({doc},'$.kind') "
         + " ".join(
@@ -2853,6 +3059,76 @@ def _candidate_conditions(table, doc):
     result.append(
         f"substr(NEW.record_key,1,{len(prefix)})<>'{prefix}' OR NOT {_sql_hex(suffix, '64')}"
     )
+    return result
+
+
+def _candidate_scalar_conditions(table, doc):
+    def value(name):
+        return f"json_extract({doc},'$.{name}')"
+
+    result = []
+    if table in {"issue_resources", "review_resources", "document_state"}:
+        statuses = ",".join("'" + status + "'" for status in sorted(_BODY_STATUSES))
+        status, body = value("body_status"), value("body")
+        result += [
+            f"(json_type({doc},'$.body_status') IS NOT NULL AND coalesce({status},'') NOT IN ({statuses}))",
+            f"({status}='present' AND json_type({doc},'$.body')='null')",
+        ]
+        if table == "document_state":
+            result.append(f"({status}<>'present' AND {body} IS NOT NULL)")
+    ids = ()
+    if table == "issue_resources":
+        ids = ("provider_resource_id", "parent_provider_resource_id")
+        result += [
+            f"({value('state')} IS NOT NULL AND {value('state')} NOT IN ('open','closed'))",
+            f"({value('kind')}='issue' AND {value('parent_provider_resource_id')} IS NOT NULL)",
+            f"({value('kind')}='issue-comment' AND ({value('title')} IS NOT NULL OR {value('state')} IS NOT NULL))",
+        ]
+    elif table == "review_resources":
+        ids = (
+            "provider_change_request_document_id",
+            "review_provider_resource_id",
+            "in_reply_to_provider_resource_id",
+        )
+        states = ",".join("'" + state + "'" for state in sorted(_REVIEW_STATES))
+        result.append(
+            f"({value('state')} IS NOT NULL AND {value('state')} NOT IN ({states}))"
+        )
+        review_only = " OR ".join(
+            value(name) + " IS NOT NULL" for name in ("state", "submitted_at_us")
+        )
+        comment_only = " OR ".join(
+            value(name) + " IS NOT NULL"
+            for name in (
+                "review_provider_resource_id",
+                "in_reply_to_provider_resource_id",
+                "review_thread_provider_resource_id",
+                "original_position",
+                "current_position",
+                "raw_path",
+                "diff_hunk",
+            )
+        )
+        result += [
+            f"({value('kind')}='review' AND ({comment_only}))",
+            f"({value('kind')}='review-comment' AND ({review_only}))",
+            f"{value('in_reply_to_provider_resource_id')}={value('provider_change_request_document_id')}",
+        ]
+        for name in ("target_commit_oid", "original_commit_oid"):
+            oid = value(name)
+            result.append(
+                f"({oid} IS NOT NULL AND NOT ({_sql_hex(oid, '40')} OR {_sql_hex(oid, '64')}))"
+            )
+        for name in ("original_position", "current_position"):
+            field = value(name)
+            result.append(
+                f"({field} IS NOT NULL AND (typeof({field})<>'integer' OR {field}<0))"
+            )
+    for name in ids:
+        field = value(name)
+        result.append(
+            f"({field} IS NOT NULL AND (length({field})=0 OR length(CAST({field} AS BLOB))<>length({field}) OR {field} GLOB '*[^0-9]*' OR substr({field},1,1) NOT BETWEEN '1' AND '9'))"
+        )
     return result
 
 
@@ -2908,9 +3184,27 @@ def _staging_guard_sql():
     def emit(name, table, current, conditions):
         reason = "LIKE" if current else "NOT LIKE"
         for operation in ("INSERT", "UPDATE"):
+            diagnostic = ""
+            if current and operation == "UPDATE":
+                unchanged = " AND ".join(
+                    f"NEW.{column} IS OLD.{column}"
+                    for column in (
+                        "record_key",
+                        "content_sha256",
+                        "table_name",
+                        "repository_uuidv4",
+                        "origin_catalog_uuidv4",
+                        "record_json",
+                    )
+                )
+                diagnostic = (
+                    " AND NOT (NEW.reason='current_state:invalid' AND "
+                    "OLD.reason IN ('current_state:missing_dependency','current_state:invalid') "
+                    f"AND {unchanged})"
+                )
             output.append(
                 f"CREATE TRIGGER json_exchange_staging_{name}_{operation.lower()} BEFORE {operation} ON exchange_staging\n"
-                f"WHEN NEW.table_name='{table}' AND NEW.reason {reason} 'current_state:%' AND CASE WHEN NOT json_valid({doc}) THEN 1 WHEN json_type({doc})<>'object' THEN 1 ELSE (\n"
+                f"WHEN NEW.table_name='{table}' AND NEW.reason {reason} 'current_state:%'{diagnostic} AND CASE WHEN NOT json_valid({doc}) THEN 1 WHEN json_type({doc})<>'object' THEN 1 ELSE (\n"
                 + "\n OR ".join(conditions)
                 + ") END BEGIN SELECT RAISE(ABORT,'JSON contract violation: exchange_staging.record_json'); END;\n"
             )

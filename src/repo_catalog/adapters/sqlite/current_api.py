@@ -308,6 +308,14 @@ class CurrentApiState(CurrentResources):
         ):
             if candidate.get(name) is None:
                 return "missing resource fields"
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            _candidate_scalar_contract,
+            validate_current_candidate_relationships,
+        )
+
+        table, _, _ = self._table_key(candidate)
+        _candidate_scalar_contract(table, candidate)
+        validate_current_candidate_relationships(self.c, table, candidate)
         parent = self._one(
             "SELECT c.*,b.service_instance_uuidv4 FROM change_requests c JOIN repository_bindings b USING(repository_binding_id) WHERE c.change_request_id=?",
             (candidate["change_request_id"],),

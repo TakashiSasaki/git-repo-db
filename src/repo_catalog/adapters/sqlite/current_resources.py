@@ -311,12 +311,12 @@ class CurrentResources:
             record_key = self._stage_key(candidate)
             if record_key not in cache:
                 cache[record_key] = self._all(
-                    "SELECT * FROM exchange_staging WHERE record_key=? AND reason LIKE 'current_state:%'",
+                    "SELECT * FROM exchange_staging WHERE record_key=? AND reason IN ('current_state:conflict','current_state:missing_dependency')",
                     (record_key,),
                 )
             return cache[record_key]
         return self._all(
-            "SELECT * FROM exchange_staging WHERE record_key=? AND reason LIKE 'current_state:%'",
+            "SELECT * FROM exchange_staging WHERE record_key=? AND reason IN ('current_state:conflict','current_state:missing_dependency')",
             (self._stage_key(candidate),),
         )
 
@@ -329,7 +329,7 @@ class CurrentResources:
             for stage in self._all(
                 "SELECT * FROM exchange_staging WHERE record_key IN ("
                 + placeholders
-                + ") AND reason LIKE 'current_state:%'",
+                + ") AND reason IN ('current_state:conflict','current_state:missing_dependency')",
                 chunk,
             ):
                 rows[stage["record_key"]].append(stage)
@@ -631,6 +631,19 @@ class CurrentResources:
                 required.add("parent_provider_resource_id")
         if any(name not in candidate or candidate[name] is None for name in required):
             return "missing resource fields"
+        from repo_catalog.adapters.sqlite.json_contracts import (
+            _candidate_scalar_contract,
+            validate_current_candidate_relationships,
+        )
+
+        table, _, _ = self._table_key(candidate)
+        _candidate_scalar_contract(table, candidate)
+        validate_current_candidate_relationships(
+            self.c,
+            table,
+            candidate,
+            dependency_cache=getattr(self, "_page_validation_cache", None),
+        )
         binding = self._page_stable_one(
             "SELECT * FROM repository_bindings WHERE repository_binding_id=?",
             (candidate["repository_binding_id"],),
@@ -1353,7 +1366,7 @@ class CurrentResources:
                     self.c.execute("ROLLBACK TO current_resource_promotion")
                     self.c.execute("RELEASE current_resource_promotion")
                     if isinstance(error, CatalogError) and not error.code.startswith(
-                        "INVALID_CURRENT_RESOURCE"
+                        ("INVALID_CURRENT_RESOURCE", "INVALID_JSON_REFERENCE")
                     ):
                         raise
                     # Late ownership resolution can reveal an invalid candidate.
@@ -1365,7 +1378,7 @@ class CurrentResources:
                     page_staging = getattr(self, "_page_staging_cache", None)
                     if page_staging is not None:
                         page_staging[stage["record_key"]] = self._all(
-                            "SELECT * FROM exchange_staging WHERE record_key=? AND reason LIKE 'current_state:%'",
+                            "SELECT * FROM exchange_staging WHERE record_key=? AND reason IN ('current_state:conflict','current_state:missing_dependency')",
                             (stage["record_key"],),
                         )
                     continue
@@ -1419,7 +1432,7 @@ class CurrentResources:
                 for stage in self._stages(candidate):
                     add_stage(stage, candidate)
         for stage in self._all(
-            "SELECT * FROM exchange_staging WHERE repository_uuidv4=? AND table_name IN ('issue_resources','review_resources') AND reason LIKE 'current_state:%'",
+            "SELECT * FROM exchange_staging WHERE repository_uuidv4=? AND table_name IN ('issue_resources','review_resources') AND reason IN ('current_state:conflict','current_state:missing_dependency')",
             (repository_uuidv4,),
         ):
             add_stage(stage)
