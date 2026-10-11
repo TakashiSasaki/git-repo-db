@@ -219,7 +219,10 @@ CREATE TRIGGER git_name_facts_retain BEFORE DELETE ON git_name_facts BEGIN SELEC
 CREATE TRIGGER git_name_facts_no_replace BEFORE INSERT ON git_name_facts WHEN EXISTS(SELECT 1 FROM git_name_facts WHERE tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name AND decoder_key=NEW.decoder_key) BEGIN SELECT RAISE(ABORT,'Git name decoding identity conflict'); END;
 
 CREATE TRIGGER acquisition_roots_complete BEFORE UPDATE ON acquisition_roots WHEN NEW.complete=1 AND OLD.complete=0 AND NOT EXISTS(SELECT 1 FROM available_git_acquisitions a WHERE a.git_acquisition_id=NEW.git_acquisition_id) BEGIN SELECT RAISE(ABORT,'acquired root closure incomplete'); END;
-CREATE TRIGGER acquisition_roots_complete_insert BEFORE INSERT ON acquisition_roots WHEN NEW.complete=1 BEGIN SELECT RAISE(ABORT,'root complete only after exact closure validation'); END;
+CREATE TRIGGER acquisition_roots_complete_insert BEFORE INSERT ON acquisition_roots WHEN NEW.complete=1 AND (
+ NOT EXISTS(SELECT 1 FROM available_git_acquisitions a WHERE a.git_acquisition_id=NEW.git_acquisition_id)
+ OR NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=NEW.git_acquisition_id AND r.repository_uuidv4=NEW.repository_uuidv4 AND g.object_format=NEW.object_format AND g.oid=NEW.oid)
+) BEGIN SELECT RAISE(ABORT,'acquired root closure incomplete'); END;
 
 CREATE TRIGGER root_origins_ref_insert BEFORE INSERT ON root_origins WHEN NEW.origin_kind='ref' AND NOT EXISTS(
  SELECT 1 FROM acquisition_roots r JOIN snapshots s ON s.git_acquisition_id=r.git_acquisition_id

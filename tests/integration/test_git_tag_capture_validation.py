@@ -182,7 +182,7 @@ def test_false_tag_capture_never_grants_native_completion_or_query_provenance(
         assert error.value.code == "GIT_REF_IDENTITY"
         with pytest.raises(sqlite3.IntegrityError, match="closure incomplete"):
             store.execute("UPDATE acquisition_roots SET complete=1")
-        with pytest.raises(sqlite3.IntegrityError, match="after exact closure"):
+        with pytest.raises(sqlite3.IntegrityError, match="closure incomplete"):
             row = dict(store.one("SELECT * FROM acquisition_roots"))
             row.update(acquisition_root_id=root + 1, role="insertion", complete=1)
             put(store, "acquisition_roots", **row)
