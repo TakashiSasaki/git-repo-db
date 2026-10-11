@@ -292,6 +292,34 @@ class GitImporter:
                                     retryable=True,
                                 )
                         refs.append(item)
+                    tags = [ref for ref in refs if ref["type"] == "tag"]
+                    if tags:
+                        # for-each-ref's *objectname dereferences only one tag.
+                        # Resolve all captured tag OIDs to their final non-tag
+                        # objects in one bounded batch, preserving the fixed OID
+                        # even if a remote ref moves afterwards.
+                        peeled = runner.run(
+                            ["cat-file", "--batch-check=%(objectname) %(objecttype)"],
+                            cwd=path,
+                            input=b"".join(
+                                ref["oid"].encode("ascii") + b"^{}\n" for ref in tags
+                            ),
+                        ).splitlines()
+                        if len(peeled) != len(tags):
+                            raise CatalogError(
+                                "GIT_OBJECT_IDENTITY", "Incomplete captured tag peel"
+                            )
+                        for ref, line in zip(tags, peeled, strict=True):
+                            fields = line.split()
+                            if len(fields) != 2 or fields[1] not in {
+                                b"blob",
+                                b"tree",
+                                b"commit",
+                            }:
+                                raise CatalogError(
+                                    "GIT_OBJECT_IDENTITY", "Invalid captured tag peel"
+                                )
+                            ref["peeled"] = fields[0].decode("ascii")
                     observed_at_us = now_us()
                     with s.transaction():
                         s.execute(

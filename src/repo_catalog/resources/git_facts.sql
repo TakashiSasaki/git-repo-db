@@ -104,7 +104,18 @@ CREATE VIEW available_git_acquisitions AS
  -- closure checks use indexed identities/membership, avoiding repeated decoding.
  AND NOT EXISTS(SELECT 1 FROM repository_object_sources r WHERE r.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM available_git_objects g WHERE g.git_object_id=r.git_object_id))
  AND NOT EXISTS(SELECT 1 FROM json_each(a.roots_manifest) ref WHERE NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=a.object_format AND g.oid=repo_catalog_git_oid_bytes(a.object_format,json_extract(ref.value,'$.oid')) AND g.type=json_extract(ref.value,'$.type')))
- AND NOT EXISTS(SELECT 1 FROM json_each(a.roots_manifest) ref WHERE json_extract(ref.value,'$.peeled') IS NOT NULL AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=a.object_format AND g.oid=repo_catalog_git_oid_bytes(a.object_format,json_extract(ref.value,'$.peeled'))))
+ -- A captured peel is the final non-tag target of this exact canonical tag
+ -- chain. Merely retaining an unrelated object with the claimed OID proves
+ -- nothing. UNION terminates even if damaged retained relations contain a cycle.
+ AND NOT EXISTS(SELECT 1 FROM json_each(a.roots_manifest) ref WHERE
+  (json_extract(ref.value,'$.type')<>'tag' AND json_extract(ref.value,'$.peeled') IS NOT NULL)
+  OR (json_extract(ref.value,'$.type')='tag' AND NOT EXISTS(
+   WITH RECURSIVE peel(git_object_id,oid,type) AS (
+    SELECT g.git_object_id,g.oid,g.type FROM git_objects g WHERE g.object_format=a.object_format AND g.oid=repo_catalog_git_oid_bytes(a.object_format,json_extract(ref.value,'$.oid')) AND g.type='tag'
+    UNION
+    SELECT g.git_object_id,g.oid,g.type FROM peel p JOIN tag_objects t ON t.git_object_id=p.git_object_id JOIN git_objects g ON g.object_format=t.target_format AND g.oid=t.target_oid AND g.type=t.target_type WHERE p.type='tag'
+   ) SELECT 1 FROM peel WHERE type<>'tag' AND oid=repo_catalog_git_oid_bytes(a.object_format,json_extract(ref.value,'$.peeled'))
+  )))
  AND NOT EXISTS(SELECT 1 FROM acquisition_roots root WHERE root.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=root.object_format AND g.oid=root.oid))
  AND NOT EXISTS(SELECT 1 FROM repository_object_sources source JOIN commits c ON c.git_object_id=source.git_object_id WHERE source.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=c.tree_format AND g.oid=c.tree_oid AND g.type='tree'))
  AND NOT EXISTS(SELECT 1 FROM repository_object_sources source JOIN commit_parents p ON p.commit_git_object_id=source.git_object_id WHERE source.git_acquisition_id=a.git_acquisition_id AND NOT EXISTS(SELECT 1 FROM git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=a.git_acquisition_id AND g.object_format=p.parent_format AND g.oid=p.parent_oid AND g.type='commit'))
@@ -208,6 +219,7 @@ CREATE TRIGGER git_name_facts_retain BEFORE DELETE ON git_name_facts BEGIN SELEC
 CREATE TRIGGER git_name_facts_no_replace BEFORE INSERT ON git_name_facts WHEN EXISTS(SELECT 1 FROM git_name_facts WHERE tree_git_object_id=NEW.tree_git_object_id AND raw_name=NEW.raw_name AND decoder_key=NEW.decoder_key) BEGIN SELECT RAISE(ABORT,'Git name decoding identity conflict'); END;
 
 CREATE TRIGGER acquisition_roots_complete BEFORE UPDATE ON acquisition_roots WHEN NEW.complete=1 AND OLD.complete=0 AND NOT EXISTS(SELECT 1 FROM available_git_acquisitions a WHERE a.git_acquisition_id=NEW.git_acquisition_id) BEGIN SELECT RAISE(ABORT,'acquired root closure incomplete'); END;
+CREATE TRIGGER acquisition_roots_complete_insert BEFORE INSERT ON acquisition_roots WHEN NEW.complete=1 BEGIN SELECT RAISE(ABORT,'root complete only after exact closure validation'); END;
 
 CREATE TRIGGER root_origins_ref_insert BEFORE INSERT ON root_origins WHEN NEW.origin_kind='ref' AND NOT EXISTS(
  SELECT 1 FROM acquisition_roots r JOIN snapshots s ON s.git_acquisition_id=r.git_acquisition_id

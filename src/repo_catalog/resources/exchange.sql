@@ -30,6 +30,14 @@ CREATE INDEX exchange_staging_record_owner ON exchange_staging(record_key,reposi
 CREATE INDEX exchange_staging_root_origin ON exchange_staging(
  json_extract(record_json,'$.values.acquisition_root_id."$ref"'),repository_uuidv4
 ) WHERE table_name='root_origins';
+-- Selected object closures also retain pending byte mappings and decoder
+-- candidates. These indexes follow their real typed subject, not all intake.
+CREATE INDEX exchange_staging_git_object ON exchange_staging(
+ json_extract(record_json,'$.values.git_object_id."$ref"'),repository_uuidv4
+) WHERE table_name IN ('git_object_payloads','git_commit_facts','git_text_facts');
+CREATE INDEX exchange_staging_git_name ON exchange_staging(
+ json_extract(record_json,'$.values.tree_git_object_id."$ref"'),repository_uuidv4
+) WHERE table_name='git_name_facts';
 -- Qualification barriers describe contested domain claims, not admission seals.
 CREATE TABLE exchange_blocked_coverage_claims(
  coverage_claim_id INTEGER PRIMARY KEY REFERENCES coverage_claims(coverage_claim_id)

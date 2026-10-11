@@ -86,6 +86,37 @@ def validate_git_acquisition(connection, acquisition):
     return GitParsing(_ConnectionStore(connection)).validate_acquisition(acquisition)
 
 
+def validate_git_ref(connection, acquisition, fmt, oid, target_type, peeled_oid):
+    """Resolve a captured ref against canonical bytes in its real acquisition."""
+    return GitParsing(_ConnectionStore(connection)).validate_ref(
+        acquisition, fmt, oid, target_type, peeled_oid
+    )
+
+
+def validate_git_captured_refs(connection, acquisition):
+    """Validate known ref identities while permitting callers to defer missing bytes."""
+    return GitParsing(_ConnectionStore(connection)).validate_captured_refs(acquisition)
+
+
+def git_acquisition_validation_issues(connection):
+    """Audit captures and claimed closure, including externally damaged catalogs."""
+    parser = GitParsing(_ConnectionStore(connection))
+    for run in parser.s.all(
+        "SELECT a.*, EXISTS(SELECT 1 FROM snapshots s WHERE s.git_acquisition_id=a.git_acquisition_id AND s.complete=1) OR EXISTS(SELECT 1 FROM acquisition_roots r WHERE r.git_acquisition_id=a.git_acquisition_id AND r.complete=1) AS claimed_complete FROM git_acquisitions a WHERE a.roots_manifest IS NOT NULL"
+    ):
+        try:
+            if run["claimed_complete"]:
+                parser.validate_acquisition(run["git_acquisition_id"])
+            else:
+                parser.validate_captured_refs(run["git_acquisition_id"], run=run)
+        except CatalogError as error:
+            if run["claimed_complete"] or error.code != "INCOMPLETE_CLOSURE":
+                yield {
+                    "code": error.code,
+                    "git_acquisition_id": run["git_acquisition_id"],
+                }
+
+
 def validate_git_fact(connection, table, row):
     """Verify a claimed decoder value against its real, direct Git subject.
 
@@ -791,6 +822,90 @@ class GitParsing:
             if self.s.connection.total_changes != before:
                 self.s.advance_local_revision()
 
+    def validate_ref(
+        self, acquisition, fmt, oid, target_type, peeled_oid, *, sources=None
+    ):
+        """Check the entire typed tag chain, without trusting the claimed peel.
+
+        Missing objects may arrive later. A contradiction already established by
+        an available canonical object is invalid, including a nonterminal peel.
+        ``sources`` is the acquisition's already checked object map when the
+        caller is validating its whole closure.
+        """
+        is_tag = target_type == "tag"
+        if target_type not in {"blob", "tree", "commit", "tag"} or (
+            not is_tag and peeled_oid is not None
+        ):
+            raise CatalogError("GIT_REF_IDENTITY", "Invalid captured Git ref type/peel")
+        seen = set()
+        while (fmt, oid) not in seen:
+            seen.add((fmt, oid))
+            if target_type != "tag" and peeled_oid != (oid if is_tag else None):
+                raise CatalogError(
+                    "GIT_REF_IDENTITY",
+                    "Captured peel differs from canonical tag target",
+                )
+            obj = (
+                sources.get((fmt, oid))
+                if sources is not None
+                else self.s.one(
+                    "SELECT g.* FROM available_git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=? AND g.object_format=? AND g.oid=?",
+                    (acquisition, fmt, oid),
+                )
+            )
+            if obj is None:
+                actual = self.s.one(
+                    "SELECT type FROM git_objects WHERE object_format=? AND oid=?",
+                    (fmt, oid),
+                )
+                if actual is not None and actual["type"] != target_type:
+                    raise CatalogError(
+                        "GIT_REF_IDENTITY", "Captured Git target type contradicts bytes"
+                    )
+                raise CatalogError(
+                    "INCOMPLETE_CLOSURE", "Captured Git tag chain is unavailable"
+                )
+            if obj["type"] != target_type:
+                raise CatalogError(
+                    "GIT_REF_IDENTITY", "Captured Git target type contradicts bytes"
+                )
+            if target_type != "tag":
+                return oid
+            tag = self.s.one(
+                "SELECT target_format,target_oid,target_type FROM tag_objects WHERE git_object_id=?",
+                (obj["git_object_id"],),
+            )
+            fmt, oid, target_type = (
+                tag["target_format"],
+                tag["target_oid"],
+                tag["target_type"],
+            )
+        raise CatalogError("GIT_REF_IDENTITY", "Canonical tag chain contains a cycle")
+
+    def validate_captured_refs(self, acquisition, *, run=None, sources=None):
+        run = run or self.s.one(
+            "SELECT * FROM git_acquisitions WHERE git_acquisition_id=?", (acquisition,)
+        )
+        if run is None or run["roots_manifest"] is None:
+            raise CatalogError("INCOMPLETE_CLOSURE", "Fixed Git capture is missing")
+        missing = False
+        for ref in json.loads(run["roots_manifest"]):
+            try:
+                self.validate_ref(
+                    acquisition,
+                    run["object_format"],
+                    bytes.fromhex(ref["oid"]),
+                    ref["type"],
+                    bytes.fromhex(ref["peeled"]) if ref.get("peeled") else None,
+                    sources=sources,
+                )
+            except CatalogError as error:
+                if error.code != "INCOMPLETE_CLOSURE":
+                    raise
+                missing = True
+        if missing:
+            raise CatalogError("INCOMPLETE_CLOSURE", "Captured Git targets are missing")
+
     def validate_acquisition(self, acquisition):
         run = self.s.one(
             "SELECT * FROM git_acquisitions WHERE git_acquisition_id=?", (acquisition,)
@@ -805,12 +920,13 @@ class GitParsing:
             if ref.get("peeled")
         )
         sources = {
-            (row["object_format"], row["oid"]): row["git_object_id"]
+            (row["object_format"], row["oid"]): row
             for row in self.s.all(
                 "SELECT g.* FROM repository_object_sources r JOIN available_git_objects g USING(git_object_id) WHERE r.git_acquisition_id=?",
                 (acquisition,),
             )
         }
+        self.validate_captured_refs(acquisition, run=run, sources=sources)
         required.update(
             (root["object_format"], root["oid"])
             for root in self.s.all(
@@ -823,12 +939,13 @@ class GitParsing:
             identity = required.pop()
             if identity in visited:
                 continue
-            obj_id = sources.get(identity)
-            if obj_id is None:
+            obj = sources.get(identity)
+            if obj is None:
                 raise CatalogError(
                     "INCOMPLETE_CLOSURE", "Observed Git target is unavailable"
                 )
             visited.add(identity)
+            obj_id = obj["git_object_id"]
             for row in self.s.all(
                 "SELECT tree_format AS fmt,tree_oid AS oid FROM commits WHERE git_object_id=? "
                 "UNION ALL SELECT parent_format,parent_oid FROM commit_parents WHERE commit_git_object_id=? "
@@ -873,9 +990,16 @@ class GitParsing:
                 )
                 for row in observed
             }
-            if expected != actual:
+            if any(
+                name not in expected or expected[name] != value
+                for name, value in actual.items()
+            ):
                 raise CatalogError(
-                    "INTEGRITY_ERROR", "Ref capture differs from exact observed roots"
+                    "GIT_REF_IDENTITY", "Ref capture differs from exact observed roots"
+                )
+            if expected.keys() != actual.keys():
+                raise CatalogError(
+                    "INCOMPLETE_CLOSURE", "Captured Git refs are missing"
                 )
         return len(visited)
 

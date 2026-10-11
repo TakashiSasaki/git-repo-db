@@ -1,6 +1,7 @@
 """Ordinary catalog validation independent of historical import workspaces."""
 
 from repo_catalog.adapters.git.parsing import (
+    git_acquisition_validation_issues,
     git_fact_validation_issues,
     verify_git_object_structure,
 )
@@ -53,4 +54,5 @@ def check_catalog(store, *, full=False):
                     {"code": error.code, "git_object_id": row["git_object_id"]}
                 )
         issues.extend(git_fact_validation_issues(store.connection))
+        issues.extend(git_acquisition_validation_issues(store.connection))
     return issues

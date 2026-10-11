@@ -1230,6 +1230,28 @@ class Graph:
                         (row["child_fetch_collection_id"],),
                     ),
                 )
+        from repo_catalog.adapters.git.parsing import (
+            validate_git_acquisition,
+            validate_git_captured_refs,
+        )
+
+        complete_acquisitions = {
+            row["git_acquisition_id"]
+            for (table, _), row in selected.items()
+            if table in {"snapshots", "acquisition_roots"} and row["complete"]
+        }
+        for (table, _), row in selected.items():
+            if table != "git_acquisitions":
+                continue
+            acquisition = row["git_acquisition_id"]
+            if acquisition in complete_acquisitions:
+                validate_git_acquisition(self.db, acquisition)
+            else:
+                try:
+                    validate_git_captured_refs(self.db, acquisition)
+                except CatalogError as error:
+                    if error.code != "INCOMPLETE_CLOSURE":
+                        raise
         records = [self.record(table, row) for (table, _), row in selected.items()]
         records.extend(self.record(table, row) for table, row in extra)
         # Retain genuine unresolved wire records for onward delivery. API
@@ -1295,6 +1317,18 @@ class Graph:
                         records.append(record)
                         # Follow the candidate key as well, preserving genuine
                         # alternatives of this selected pending child.
+                        pending.append(record["key"])
+                        pending.extend(typed_references(record))
+                if key.startswith("git_objects:"):
+                    for stage in self.db.execute(
+                        "SELECT record_json FROM exchange_staging WHERE table_name IN ('git_object_payloads','git_commit_facts','git_text_facts') "
+                        "AND json_extract(record_json,'$.values.git_object_id.\"$ref\"')=? AND repository_uuidv4=? "
+                        "UNION ALL SELECT record_json FROM exchange_staging WHERE table_name='git_name_facts' "
+                        "AND json_extract(record_json,'$.values.tree_git_object_id.\"$ref\"')=? AND repository_uuidv4=?",
+                        (key, repository_uuidv4, key, repository_uuidv4),
+                    ):
+                        record = json.loads(stage[0])
+                        records.append(record)
                         pending.append(record["key"])
                         pending.extend(typed_references(record))
         else:
@@ -1768,6 +1802,23 @@ class Graph:
                 or (ref["peeled_oid"] or ref["target_oid"]) != root["oid"]
             ):
                 return "invalid:git_ref_origin"
+            from repo_catalog.adapters.git.parsing import validate_git_ref
+
+            try:
+                validate_git_ref(
+                    self.db,
+                    root["git_acquisition_id"],
+                    ref["object_format"],
+                    ref["target_oid"],
+                    ref["target_type"],
+                    ref["peeled_oid"],
+                )
+            except CatalogError as error:
+                return (
+                    "missing_git_ref_target"
+                    if error.code == "INCOMPLETE_CLOSURE"
+                    else "invalid:git_ref_origin"
+                )
         if table == "code_assessments" and data["state"] == "complete":
             for column in ("commit_code_listing_id", "file_code_listing_id"):
                 listing = self.lookup(
@@ -1932,7 +1983,11 @@ class Graph:
                     tuple(data[c] for c in key_columns),
                 )
                 data["complete"] = 1
-            except (CatalogError, sqlite3.IntegrityError):
+            except CatalogError as error:
+                if error.code == "GIT_REF_IDENTITY":
+                    return "invalid:git_ref_identity"
+                return "deferred:git_closure"
+            except sqlite3.IntegrityError:
                 return "deferred:git_closure"
         self._remember(record, data)
         return None

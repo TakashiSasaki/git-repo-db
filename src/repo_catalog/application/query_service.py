@@ -72,6 +72,7 @@ class QueryService:
             self.deadline = time.monotonic() + timeout
             self.backend = "scan"
             self.literal_cache = {}
+            self.ref_target_cache = {}
             s.connection.set_progress_handler(
                 lambda: self.token.cancelled or time.monotonic() > self.deadline, 1000
             )
@@ -426,6 +427,18 @@ class QueryService:
                     )
                     if current is None:
                         continue
+                if row["snapshot_id"] is not None:
+                    ref = self.s.one(
+                        "SELECT * FROM ref_observations WHERE snapshot_id=? AND raw_ref_name=?",
+                        (row["snapshot_id"], raw),
+                    )
+                    if (
+                        ref is None
+                        or ref["object_format"] != row["object_format"]
+                        or (ref["peeled_oid"] or ref["target_oid"]) != row["oid"]
+                        or not self.captured_ref_valid(row["git_acquisition_id"], ref)
+                    ):
+                        continue
                 if not row["complete"]:
                     self.coverage.add(
                         "git",
@@ -468,6 +481,8 @@ class QueryService:
                     and row["kind"] not in kinds
                 ):
                     continue
+                if not self.captured_ref_valid(snapshot["git_acquisition_id"], row):
+                    continue
                 result.append(
                     {
                         **context,
@@ -484,6 +499,31 @@ class QueryService:
         if missing_refs and snapshots[0] is not None:
             raise CatalogError("NOT_FOUND", "Ref not found in selected snapshot")
         return result
+
+    def captured_ref_valid(self, acquisition, ref):
+        """Never attribute an unrelated acquired root to a captured tag name."""
+        from repo_catalog.adapters.git.parsing import validate_git_ref
+
+        key = (
+            acquisition,
+            ref["object_format"],
+            ref["target_oid"],
+            ref["target_type"],
+            ref["peeled_oid"],
+        )
+        if key not in self.ref_target_cache:
+            try:
+                validate_git_ref(self.s.connection, *key)
+            except CatalogError as error:
+                if error.code not in {"INCOMPLETE_CLOSURE", "GIT_REF_IDENTITY"}:
+                    raise
+                self.ref_target_cache[key] = False
+                self.coverage.add(
+                    "git", "captured_ref_unavailable", git_acquisition_id=acquisition
+                )
+            else:
+                self.ref_target_cache[key] = True
+        return self.ref_target_cache[key]
 
     def peel(self, fmt, oid, context):
         seen = set()
@@ -957,6 +997,8 @@ class QueryService:
                 (snapshot["snapshot_id"],),
             ):
                 if options.get("ref_kinds") and row["kind"] not in options["ref_kinds"]:
+                    continue
+                if not self.captured_ref_valid(snapshot["git_acquisition_id"], row):
                     continue
                 yield (
                     [row["raw_ref_name"].hex()],
