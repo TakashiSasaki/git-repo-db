@@ -1,0 +1,33 @@
+{
+  "actual_sql_results": {
+    "coverage_claim_columns": [
+      "coverage_claim_id",
+      "coverage_scope_id",
+      "coverage_state",
+      "observed_at_us",
+      "details_json"
+    ],
+    "coverage_contract_preserved": true,
+    "duplicate_pr_natural_identity_rejected": true,
+    "duplicate_provider_binding_rejected": true,
+    "empty_scope_state": [
+      [
+        null,
+        "unknown"
+      ]
+    ],
+    "gitlink_missing_target_admitted": true,
+    "nonnumeric_epoch_rejected": true,
+    "null_repository_identity_rejected": true,
+    "same_numeric_issue_comment_identity_admitted": true,
+    "sourceless_publication_unknown_repository_rejected": true,
+    "unknown_plus_complete_state": "complete"
+  },
+  "ddl_sha256": "2de256e74fcc1a7af94a709aff92646cc04517a5322482a950504ffb34e81158",
+  "kind": "independent-candidate-sql-contract-attacks-v1",
+  "limits": [
+    "SQL-only attacks; application validator may reject additional rows.",
+    "Candidate DDL remains illustrative and unapproved."
+  ],
+  "sqlite": "3.53.1"
+}

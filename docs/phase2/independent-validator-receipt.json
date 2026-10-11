@@ -1,0 +1,25 @@
+{
+  "actual_results": {
+    "declared_limits_reproduced": {
+      "publication_seal_exact_membership_not_enforced": true
+    },
+    "validated_constraints": {
+      "current_receipt_before_mutation": true,
+      "field_module_origin_mismatch_rejected": true,
+      "old_current_receipt_does_not_require_edit_history": true,
+      "tampered_retained_head_rejected": true,
+      "valid_modeled_pr_member": true,
+      "wrong_captured_thread_rejected": true
+    }
+  },
+  "files_sha256": {
+    "candidate.sql": "2de256e74fcc1a7af94a709aff92646cc04517a5322482a950504ffb34e81158",
+    "candidate_probe.py": "8a8e2a5ffa5a0089d167936a9b751c44255dc0d597a141cb892b5014f5e28c08"
+  },
+  "kind": "independent-candidate-validator-attacks-v1",
+  "limits": [
+    "Candidate is Proposed/Pending Owner Decision, not production.",
+    "Declared limits require chosen-model admission rules before production use.",
+    "Value digest checks do not validate parser authenticity or new Exchange trust."
+  ]
+}

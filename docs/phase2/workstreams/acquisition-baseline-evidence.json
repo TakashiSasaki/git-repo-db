@@ -1,0 +1,33 @@
+{
+  "kind": "scoped-baseline-characterization",
+  "baseline_sha": "20e0f8d78b77c6c8d37826fd6d639819631e166b",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "source_sha256": {
+    "src/repo_catalog/adapters/github/collector.py": "2d1d68c7690e64ce11140e2a09091f85d6d777420c0079ca682ce4676c98f7e5",
+    "src/repo_catalog/adapters/github/persistence.py": "eb3715db570206a6c97eb1795cd20fef3a860c6ada2398bef56a1ea5c98fa6d4",
+    "src/repo_catalog/application/collection_service.py": "f77d5b6b3c7ec18a7dc8390b906c90915eaf8a58dc84ca68a26a684ce8333a7d",
+    "src/repo_catalog/application/job_service.py": "fa1a3569fe537205763fe4e62641e5d69f220a21fe07bc587b119d34253bf1cd",
+    "src/repo_catalog/application/job_plans.py": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a"
+  },
+  "commands": [
+    {
+      "command": "uv run --no-sync python -m pytest docs/phase2/prototypes/test_acquisition_characterization.py -q --junitxml=/tmp/p2-acquisition-probes.xml",
+      "passed": 6,
+      "seconds": 3.39,
+      "bootstrap": false
+    },
+    {
+      "command": "uv run --no-sync python -m pytest tests/integration/test_catalog3_github_runtime.py tests/integration/test_catalog3_job_plans.py tests/integration/test_catalog3_current_collection.py tests/integration/test_phase1_retirement.py -k 'terminal_page_resume or partial_listing_resumes or watermarks_failed_child or graphql_nested_pagination or 304_never or partial_graphql_retains_merge or unobserved_thread_retry or interrupted_new_pr_head or resumed_thread_coverage or malformed_nested_cursor or missing_graphql_database or observed_rest_rejection or stale or resume_uses_frozen or plan_saves_credential or unresolved_terminal_receipt' -q --junitxml=/tmp/p2-acquisition-existing.xml",
+      "passed": 18,
+      "deselected": 111,
+      "seconds": 24.32,
+      "bootstrap": false
+    }
+  ],
+  "limitations": [
+    "No complete acceptance or package checks for this documentation-only source tree.",
+    "Prototype rejection-boundary cases deliberately characterize a demonstrated gap; a separately authorized fix changes those expected outputs.",
+    "No authenticated collection or retained catalogs used."
+  ]
+}

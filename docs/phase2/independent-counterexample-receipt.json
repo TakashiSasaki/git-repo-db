@@ -1,0 +1,28 @@
+{
+  "kind": "independent-narrow-prototype-falsifiers-v1",
+  "limits": [
+    "These findings concern the generic disposable fixture only.",
+    "Integrated DDL must use typed collection and child keys or equivalent admission checks.",
+    "No production defect or permanent policy is inferred from a deliberately omitted prototype contract."
+  ],
+  "missing_null_empty": {
+    "same_identity_missing_null_empty_digests_distinct": true,
+    "weak_different_identity_test_passes_with_collapsed_status": true
+  },
+  "prototype_files_sha256": {
+    "completeness.sql": "f6b1defbc9d5833adc8cc20a39d90ff3eaa27d4564a197449a5b303afc7d3521",
+    "completeness_probe.py": "3c6ceccfe305f9caf401ed85e142b87b20d0e82ef012312cae1f6914d8d6ebdf"
+  },
+  "unbound_child_parent": {
+    "child_scope_family": "pr",
+    "limit": "Owner equality does not prove the child's natural domain parent.",
+    "narrow_prototype_accepts": true,
+    "parent_resource_key": "thread-T1"
+  },
+  "wrong_member_family": {
+    "limit": "Generic keys do not prove typed collection-family compatibility.",
+    "member_family": "thread",
+    "narrow_prototype_accepts": true,
+    "scope_family": "pr"
+  }
+}
