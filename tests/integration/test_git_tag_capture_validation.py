@@ -274,9 +274,12 @@ def test_matching_wire_peel_copies_cannot_override_raw_tag_chain(tmp_path, fmt):
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-def test_selected_pending_tag_bytes_survive_onward_and_late_delivery(tmp_path, fmt):
+@pytest.mark.parametrize("kind", ["blob", "tree", "commit"])
+def test_selected_pending_tag_bytes_survive_onward_and_late_delivery(
+    tmp_path, fmt, kind
+):
     with runtime(tmp_path) as store:
-        acquisition, _, terminals, _ = capture(store, fmt, "blob")
+        acquisition, _, terminals, _ = capture(store, fmt, kind)
         complete(store)
         unit = export(store)
     obj = next(

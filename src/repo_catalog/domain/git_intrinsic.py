@@ -95,21 +95,16 @@ def tree_structure(object_format, data):
 
 def tag_structure(object_format, data):
     _raw_headers, _message, entries = _headers(data)
-    # Git's tag identity is the mandatory initial object/type pair. Additional
-    # headers cannot redefine it: a dict over all headers would silently let a
-    # later "object" line redirect the tag to unrelated, otherwise valid bytes.
-    if (
-        len(entries) < 2
-        or entries[0][0] != b"object"
-        or entries[0][2] != 0
-        or entries[1][0] != b"type"
-        or entries[1][2] != len(b"object ") + len(entries[0][1]) + 1
-    ):
-        raise CatalogError("GIT_OBJECT_STRUCTURE", "Malformed initial tag target")
+    # Git's initial object/type identity cannot be redefined by later headers.
+    # Preserve the parser's existing header-order and hex-spelling tolerance,
+    # while preventing a repeated field from redirecting the canonical target.
+    fields = {}
+    for key, value, _ in entries:
+        fields.setdefault(key, value)
     try:
-        target = _oid(object_format, entries[0][1])
-        typ = entries[1][1].decode("ascii")
-    except UnicodeError as error:
+        target = _oid(object_format, fields[b"object"])
+        typ = fields[b"type"].decode("ascii")
+    except (KeyError, UnicodeError) as error:
         raise CatalogError("GIT_OBJECT_STRUCTURE", "Malformed tag target") from error
     if typ not in ("blob", "commit", "tree", "tag"):
         raise CatalogError("GIT_OBJECT_STRUCTURE", "Malformed tag target type")
