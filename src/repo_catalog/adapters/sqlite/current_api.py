@@ -947,6 +947,7 @@ class CurrentApiState(CurrentResources):
         from repo_catalog.adapters.sqlite.json_contracts import validate_record
 
         validate_epoch_us(observed_at_us)
+        members_json = _canonical(members)
         if type(terminal) is not bool:
             raise CatalogError(
                 "INVALID_COLLECTION_PROOF", "Terminal evidence must be boolean"
@@ -966,11 +967,14 @@ class CurrentApiState(CurrentResources):
                     "scope_json": _canonical(scope),
                     "state": state,
                     "terminal": int(terminal),
-                    "members_json": _canonical(members),
+                    "members_json": members_json,
                 },
             )
+            # Roster membership is a set. Store one deterministic encoding so
+            # page order does not manufacture a same-clock alternative.
+            members_json = _canonical(sorted(members))
             self.c.execute(
-                "INSERT INTO source_inventory_assessments(source_id,scope_key,scope_json,observed_at_us,state,terminal,members_json,parser_module,parser_version,reason) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(source_id,scope_key,observed_at_us,state) DO NOTHING",
+                "INSERT INTO source_inventory_assessments(source_id,scope_key,scope_json,observed_at_us,state,terminal,members_json,parser_module,parser_version,reason) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(source_id,scope_key,observed_at_us,state,members_json) DO NOTHING",
                 (
                     source_id,
                     scope_key,
@@ -978,7 +982,7 @@ class CurrentApiState(CurrentResources):
                     observed_at_us,
                     state,
                     int(terminal),
-                    _canonical(members),
+                    members_json,
                     parser_module,
                     parser_version,
                     reason,

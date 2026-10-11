@@ -5,7 +5,7 @@
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "3d6ec82024ae7a5369b65a51a47d2b1346ce861cb963a331f38f90e4fc3563ff",
+    "ddl_sha256": "42b82cd7934e49bb7592969ef28923b1805a0ae4401954558ce4231c87004eaf",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -3121,7 +3121,8 @@
           "source_id",
           "scope_key",
           "observed_at_us",
-          "state"
+          "state",
+          "members_json"
         ],
         "foreign_keys": [
           [
@@ -3135,7 +3136,7 @@
             "NONE"
           ]
         ],
-        "sql_sha256": "8854e6d6aa5b68dc8e8a7a4fe11aaa4dca438c956af11eb85a75d8369d24737b"
+        "sql_sha256": "ccae750dfd76a90b3f1a8fdb7c86dec3a36cf7f44e2e87671463e8fdd37978bf"
       },
       "source_repositories": {
         "columns": [

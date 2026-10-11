@@ -5,10 +5,12 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.adapters.sqlite.store import Store
 from repo_catalog.application.collection_service import CollectionService
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.maintenance_service import MaintenanceService
+from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CatalogError
 from tests.support.sqlite_contracts import assert_absent_tables
 
@@ -154,6 +156,39 @@ def test_manual_inventory_has_source_owned_current_roster_and_assessment(state):
             == "complete"
         )
         assert store.all("PRAGMA foreign_key_check") == []
+
+
+def test_equal_clock_inventory_member_sets_remain_ambiguous(state):
+    source = add_manual(state)
+    CollectionService(state).discover(source)
+    with Store(state) as store:
+        original = store.one(
+            "SELECT * FROM source_inventory_assessments WHERE source_id=?",
+            (source,),
+        )
+        CurrentApiState(store).assess_source_inventory(
+            source,
+            scope=json.loads(original["scope_json"]),
+            observed_at_us=original["observed_at_us"],
+            state="complete",
+            members=[],
+            terminal=True,
+            parser_module=original["parser_module"],
+            parser_version=original["parser_version"],
+        )
+        assessments = store.all(
+            "SELECT members_json FROM source_inventory_assessments WHERE source_id=? AND scope_key=? AND observed_at_us=? AND state='complete' ORDER BY members_json",
+            (source, original["scope_key"], original["observed_at_us"]),
+        )
+        assert {tuple(json.loads(row["members_json"])) for row in assessments} == {
+            (),
+            tuple(json.loads(original["members_json"])),
+        }
+    result = QueryService(state).query("repos list", {"source": source}, limit=100)
+    assert result.status == "partial"
+    assert {(gap["kind"], gap["reason"]) for gap in result.coverage.missing} == {
+        ("inventory", "inventory_incomplete")
+    }
 
 
 def test_bulk_zero_usable_sources_creates_no_job(state):

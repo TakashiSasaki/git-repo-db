@@ -250,7 +250,18 @@ class QueryService:
                     "SELECT a.* FROM source_inventory_assessments a WHERE source_id=? AND observed_at_us=(SELECT max(b.observed_at_us) FROM source_inventory_assessments b WHERE b.source_id=a.source_id AND b.scope_key=a.scope_key)",
                     (source[0],),
                 )
-                if not rows or any(r["state"] != "complete" for r in rows):
+                candidates_by_scope = {}
+                for row in rows:
+                    members = tuple(sorted(json.loads(row["members_json"])))
+                    candidates_by_scope.setdefault(row["scope_key"], set()).add(members)
+                conflicting_members = any(
+                    len(candidates) > 1 for candidates in candidates_by_scope.values()
+                )
+                if (
+                    not rows
+                    or any(r["state"] != "complete" for r in rows)
+                    or conflicting_members
+                ):
                     self.coverage.add(
                         "inventory", "inventory_incomplete", source_id=source[0]
                     )
