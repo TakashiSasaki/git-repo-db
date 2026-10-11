@@ -1,4 +1,4 @@
-# Implementation status — Schema 20
+# Implementation status — Schema 21
 
 The active feature implements the owner-approved Publication-independent redesign across composed DDL, current PR/document/thread/Source acquisition, Issue/review preservation, atomic Git structures/decoders, queries/search/index, normalized Exchange, revision fencing and CAS/maintenance. It removes parser profiles/results/selection/certificates and required API originals instead of retaining compatibility authority.
 

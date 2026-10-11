@@ -19,7 +19,7 @@ def response_validator():
     return validator(schema)
 
 
-def run(state, *args, expected=0, env=None):
+def run(state, *args, expected=0, env=None, timeout=60):
     child = {
         k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN")
     }
@@ -36,7 +36,7 @@ def run(state, *args, expected=0, env=None):
         capture_output=True,
         text=True,
         env=child,
-        timeout=60,
+        timeout=timeout,
     )
     try:
         value = json.loads(p.stdout)

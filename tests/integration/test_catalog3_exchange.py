@@ -300,6 +300,20 @@ def test_source_pair_current_attributes_repeat_conflict_and_forward(databases):
         "source_registration_uuidv4": expected["source"],
         "endpoint": "synthetic-inventory",
     }
+
+    def name_evidence(observed_at_us):
+        return {
+            '["name"]': {
+                "provider_updated_at_us": None,
+                "provider_clock_scope": None,
+                "observed_at_us": observed_at_us,
+                "parsed_at_us": observed_at_us,
+                "parser_module": "source-parser",
+                "parser_version": "1",
+                "acquisition_scope": scope,
+            }
+        }
+
     assert (
         api.confirm_source_repository(
             "source",
@@ -311,6 +325,7 @@ def test_source_pair_current_attributes_repeat_conflict_and_forward(databases):
             parser_module="source-parser",
             parser_version="1",
             name="named member",
+            field_evidence=name_evidence(1),
             source="import",
         )
         == "accepted"
@@ -335,6 +350,7 @@ def test_source_pair_current_attributes_repeat_conflict_and_forward(databases):
             parser_module="source-parser",
             parser_version="1",
             name="unordered rename",
+            field_evidence=name_evidence(2),
             source="import",
         )
         == "conflict"

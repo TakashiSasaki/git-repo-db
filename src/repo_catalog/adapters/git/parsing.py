@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import sqlite3
@@ -654,6 +655,28 @@ class GitParsing:
         captured = json.loads(run["roots_manifest"] or "[]")
         if refs is not None and refs != captured:
             raise CatalogError("INTEGRITY_ERROR", "Refs differ from fixed acquisition")
+        captured_names = []
+        if not isinstance(captured, list):
+            raise CatalogError("INTEGRITY_ERROR", "Captured Git refs are not an array")
+        for ref in captured:
+            if not isinstance(ref, dict) or not isinstance(ref.get("name_b64"), str):
+                raise CatalogError("INTEGRITY_ERROR", "Captured Git ref lacks raw name")
+            try:
+                raw_name = base64.b64decode(ref["name_b64"], validate=True)
+            except (ValueError, UnicodeError):
+                raise CatalogError(
+                    "INTEGRITY_ERROR", "Captured Git ref name is invalid"
+                ) from None
+            if (
+                not raw_name
+                or base64.b64encode(raw_name).decode() != ref["name_b64"]
+                or raw_name.decode("utf8", "backslashreplace") != ref.get("name")
+            ):
+                raise CatalogError(
+                    "INTEGRITY_ERROR",
+                    "Captured Git ref display name differs from raw bytes",
+                )
+            captured_names.append(raw_name)
         count = 0
         for row in self.s.execute(
             "SELECT git_object_id FROM repository_object_sources WHERE git_acquisition_id=? AND repository_uuidv4=?",
@@ -682,8 +705,8 @@ class GitParsing:
             )
             self.parse_object(obj, obj["body"])
             count += 1
-        for ref in captured:
-            if ref["name"].startswith("refs/heads/") or ref.get("role") == "head":
+        for ref, raw_name in zip(captured, captured_names, strict=True):
+            if raw_name.startswith(b"refs/heads/") or ref.get("role") == "head":
                 oid = self.object(
                     run["object_format"], bytes.fromhex(ref["oid"]), "commit"
                 )

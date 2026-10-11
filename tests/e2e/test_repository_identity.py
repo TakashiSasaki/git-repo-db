@@ -399,6 +399,12 @@ def test_manual_git_discovery_preserves_optional_service_scope(catalog):
     )
 
     with sqlite3.connect(state / "catalog.sqlite3") as db:
+        registrations = dict(
+            db.execute(
+                "SELECT source_id,source_registration_uuidv4 FROM sources WHERE source_id IN (?,?)",
+                (bound, unbound),
+            )
+        )
         bound_scope = json.loads(
             db.execute(
                 "SELECT scope_json FROM source_repositories WHERE source_id=? AND repository_uuidv4=?",
@@ -412,6 +418,8 @@ def test_manual_git_discovery_preserves_optional_service_scope(catalog):
             ).fetchone()[0]
         )
     assert bound_scope["service_instance_uuidv4"] == service
+    assert bound_scope["source_registration_uuidv4"] == registrations[bound]
+    assert unbound_scope["source_registration_uuidv4"] == registrations[unbound]
     assert "service_instance_uuidv4" not in unbound_scope
 
 

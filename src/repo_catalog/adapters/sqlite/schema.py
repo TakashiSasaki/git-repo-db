@@ -4,7 +4,7 @@ import hashlib
 from importlib.resources import files
 
 FORMAT_ID = "repo-catalog/catalog3"
-SCHEMA_VERSION = 20
+SCHEMA_VERSION = 21
 
 
 def schema_sql():

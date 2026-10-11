@@ -1,5 +1,7 @@
 """Selected review coverage follows terminal evidence, independent of pagination."""
 
+import json
+
 import pytest
 
 from repo_catalog.adapters.github.collector import GitHubCollector
@@ -49,6 +51,54 @@ def start_threads(store):
     job = JobService(store).create("sync", {"kind": "pr"})
     store.expected_attempt = 1
     return job
+
+
+def set_pr_target(store, head, base, clock):
+    pr_id = "00000000-0000-4000-8000-000000000301:41"
+    scope = {
+        "repository_uuidv4": "00000000-0000-4000-8000-000000000301",
+        "repository_binding_id": "binding",
+        "service_instance_uuidv4": "00000000-0000-4000-8000-000000000101",
+        "change_request_id": pr_id,
+        "endpoint": "synthetic-pr-target",
+    }
+    fields = {
+        "object_format": "sha1",
+        "head_oid": head,
+        "base_oid": base,
+    }
+    evidence = {
+        json.dumps([field], separators=(",", ":")): {
+            "provider_updated_at_us": clock,
+            "provider_clock_scope": "github-pr-updated-at",
+            "observed_at_us": clock,
+            "parsed_at_us": clock,
+            "parser_module": __name__,
+            "parser_version": "1",
+            "acquisition_scope": scope,
+        }
+        for field in fields
+    }
+    candidate = {
+        "repository_uuidv4": scope["repository_uuidv4"],
+        "repository_binding_id": scope["repository_binding_id"],
+        "service_instance_uuidv4": scope["service_instance_uuidv4"],
+        "change_request_id": pr_id,
+        "kind": "change-request",
+        "provider_updated_at_us": clock,
+        "provider_clock_scope": "github-pr-updated-at",
+        "observed_at_us": clock,
+        "parsed_at_us": clock,
+        "parser_module": __name__,
+        "parser_version": "1",
+        "acquisition_scope": scope,
+        "field_evidence": evidence,
+        **fields,
+    }
+    result = CurrentApiState(store).admit(
+        "change_request_state", candidate, source="import"
+    )
+    assert result.status == "accepted", result
 
 
 def collect_threads(store, repo, job):
@@ -163,6 +213,63 @@ def test_unobserved_new_root_preserves_terminal_thread(github_runtime, error_typ
     blocked = False
     collect_threads(store, repo, job)
     assert selected_thread(store).status == "complete"
+
+
+def test_failed_root_after_head_change_keeps_thread_bound_to_captured_head(
+    github_runtime,
+):
+    store, repo, fixture, api = github_runtime
+    head_a = fixture.alpha.commits["P"]
+    base_a = fixture.alpha.commits["N"]
+    job_a = start_threads(store)
+    set_pr_target(store, head_a, base_a, 1)
+    collect_threads(store, repo, job_a)
+    assert selected_thread(store).status == "complete"
+    current_thread_before = store.one(
+        "SELECT acquisition_scope_json,field_evidence_json,observed_at_us,parser_module,parser_version FROM eligible_review_thread_state WHERE change_request_id=? AND provider_resource_id='THREAD41-0'",
+        ("00000000-0000-4000-8000-000000000301:41",),
+    )
+    assert current_thread_before is not None
+
+    root_a = store.one(
+        "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind='threads' AND json_extract(f.scope_json,'$.request_context.head_oid')=? AND json_extract(f.scope_json,'$.request_context.base_oid')=? AND p.state='complete'",
+        (head_a, base_a),
+    )
+    assert root_a is not None
+    requirement_a = store.one(
+        "SELECT child_fetch_collection_id,object_format,head_oid,base_oid FROM thread_collection_requirements WHERE fetch_collection_id=? AND provider_resource_id='THREAD41-0'",
+        (root_a[0],),
+    )
+    assert requirement_a is not None
+    assert requirement_a["object_format"] == "sha1"
+    assert requirement_a["head_oid"] == bytes.fromhex(head_a)
+    assert requirement_a["base_oid"] == bytes.fromhex(base_a)
+
+    head_b = fixture.alpha.commit("Q", {b"new-Q.txt": b"changed"}, parents=("P",))
+    set_pr_target(store, head_b, base_a, 2)
+    api.failures["/graphql"] = [404]
+    with pytest.raises(CatalogError):
+        collect_threads(store, repo, start_threads(store))
+
+    assert selected_thread(store).status == "complete"
+    current_thread_after = store.one(
+        "SELECT acquisition_scope_json,field_evidence_json,observed_at_us,parser_module,parser_version FROM eligible_review_thread_state WHERE change_request_id=? AND provider_resource_id='THREAD41-0'",
+        ("00000000-0000-4000-8000-000000000301:41",),
+    )
+    assert tuple(current_thread_after) == tuple(current_thread_before)
+    failed_root = store.one(
+        "SELECT f.fetch_collection_id FROM fetch_collections f WHERE f.kind='threads' AND json_extract(f.scope_json,'$.request_context.head_oid')=? ORDER BY f.observed_at_us DESC LIMIT 1",
+        (head_b,),
+    )
+    assert failed_root is not None
+    assert not store.one(
+        "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+        (failed_root[0],),
+    )
+    assert not store.one(
+        "SELECT 1 FROM thread_collection_requirements WHERE fetch_collection_id=?",
+        (failed_root[0],),
+    )
 
 
 @pytest.mark.parametrize("response_shape", ["partial", "malformed"])
@@ -386,3 +493,25 @@ def test_timeline_failure_is_outside_document_scope(github_runtime):
         assert any(
             gap.get("collection_kind") == "timeline" for gap in result.coverage.missing
         )
+
+
+def test_exact_path_selector_without_code_targets_reports_missing_listing(
+    github_runtime,
+):
+    store, repo, _, _ = github_runtime
+    start_threads(store)
+    result = QueryService(store.path).query(
+        "search pr",
+        {
+            "repo": repo["repository_uuidv4"],
+            "provider_change_request_number": 41,
+            "literal": "marker",
+            "path": "src/unknown.py",
+        },
+    )
+    assert result.status == "partial", result.coverage
+    assert {
+        "kind": "pr",
+        "reason": "code_assessment_missing",
+        "change_request_id": "00000000-0000-4000-8000-000000000301:41",
+    } in result.coverage.missing

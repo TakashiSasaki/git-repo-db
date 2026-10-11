@@ -1,11 +1,11 @@
 {
   "purpose": "Exact composed-DDL structural map; semantic responsibilities in publication-free-implementation.md; not independent review or acceptance",
-  "schema_version": 20,
+  "schema_version": 21,
   "baseline_commit": "0bd5704caca2f6e3723bef22531b065cd4d7bad0",
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "bf6deb09471a361918ab9d9e97ca1ba204060ffc78420972775a914357912f26",
+    "ddl_sha256": "3d6ec82024ae7a5369b65a51a47d2b1346ce861cb963a331f38f90e4fc3563ff",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -1162,7 +1162,7 @@
           "singleton"
         ],
         "foreign_keys": [],
-        "sql_sha256": "a27a3858e1a72d8e38c124e0652cd57aed91b264ecaccc5d5aab0fa8e313dbbc"
+        "sql_sha256": "f5b04d40199257f0229e87ae3b6f8e60df35d232a8522665f18e2547237ac1d4"
       },
       "document_state": {
         "columns": [
@@ -4289,11 +4289,11 @@
       },
       "json_exchange_staging_candidate_source_repositories_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "419a3e4c5295e85c19ba45cb0ff63a444830ab6c3746b715f6b0f2c9a27b0f88"
+        "sql_sha256": "daabe9fb32dfbf9ce00b6f609f3b57784d77dce6fe30ff04b0a27aed0b56aecc"
       },
       "json_exchange_staging_candidate_source_repositories_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "8681a2b9ed53567a25ec7b6b51a5ec91754b9c0fe709f5ed478740bb4673de49"
+        "sql_sha256": "f1f11ddb34266d56b35b6a364e37d64f505677263839d44476702976535aa8d8"
       },
       "json_exchange_staging_envelope_acquisition_roots_insert": {
         "owner": "exchange_staging",
@@ -4689,11 +4689,11 @@
       },
       "json_exchange_staging_origins_source_repositories_insert": {
         "owner": "exchange_staging",
-        "sql_sha256": "805c01f002dbeb7668eac18a733e29063fc1ce91e3f63dfc933413a8a6f1d8d1"
+        "sql_sha256": "5488d84e4c6ab644b04473f3cc9757e325d443fe0ac2a6d85a8e761acf034f20"
       },
       "json_exchange_staging_origins_source_repositories_update": {
         "owner": "exchange_staging",
-        "sql_sha256": "ffed845e76f92ea30d6c48e9c4948a772b2707c7aaa62e3be245de544d58c281"
+        "sql_sha256": "9050763fcebf28355ed4931b07de7c27c5599a34a3e72d74cc8e606757ee437a"
       },
       "json_exchange_staging_record_json_insert": {
         "owner": "exchange_staging",
@@ -5225,19 +5225,19 @@
       },
       "json_source_inventory_assessments_scope_json_insert": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "e6eabd56d8dab64ec186382d128c72b1c7200892cdc0dd0666830cc44e45dc8d"
+        "sql_sha256": "c56a0bc8236d030d7dd2e50d43f62645c94c4fd92362cd55fd20014a961caf4d"
       },
       "json_source_inventory_assessments_scope_json_update": {
         "owner": "source_inventory_assessments",
-        "sql_sha256": "32416c7a35a0abd4724b3308ce6d589bfb98fff4f8d48988f1afe61cc60999b7"
+        "sql_sha256": "d92f7cf91618747489af343d5f4e172c03713dbf6e3960c2de5dd0c19f614edd"
       },
       "json_source_repositories_field_evidence_json_insert": {
         "owner": "source_repositories",
-        "sql_sha256": "8380fc7a643c31ddd8092f227ed91e2af72ec47e822e1192ce09e409a7791ee6"
+        "sql_sha256": "4ef7dfd05a26b4df9c4584924bfe97f2ebe3948bda77f23a8492f09cebe25023"
       },
       "json_source_repositories_field_evidence_json_update": {
         "owner": "source_repositories",
-        "sql_sha256": "d6432d192245fe5ad94ee3184aeafba34cfc0aad5a8ca8dd34af34467fc8e0b4"
+        "sql_sha256": "577268fe77d6e116c58c62ac4a72086fd1543a9fd9d525538cd9cef9eb67569f"
       },
       "json_source_repositories_metadata_json_insert": {
         "owner": "source_repositories",
@@ -5249,11 +5249,11 @@
       },
       "json_source_repositories_scope_json_insert": {
         "owner": "source_repositories",
-        "sql_sha256": "4d93f10ff804b6c630ce9ad1e6852d2b16c8ef9ce05fad4cdc9955667f346daa"
+        "sql_sha256": "a01f4481af916b9da503e113162b086620b77cfdfbb3b3d798a4b5c01d721af8"
       },
       "json_source_repositories_scope_json_update": {
         "owner": "source_repositories",
-        "sql_sha256": "f2710eec5e8d10fb1ad6b72959fc20ab841108806ca83667a19f2c910486f4ef"
+        "sql_sha256": "04663d02d6bf1c9e8f9390473ed9d00763ef85d349c6c97efbe3b8a839e586b1"
       },
       "json_sources_settings_insert": {
         "owner": "sources",

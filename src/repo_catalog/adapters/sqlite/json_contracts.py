@@ -91,8 +91,8 @@ def _dependency(key, value):
     return {"table": table, "columns": (column,), "values": (value,)}
 
 
-def _acquisition_shape(scope, service):
-    validate_capture_shape(scope)
+def _acquisition_shape(scope, service, *, validation_cache=None):
+    validate_capture_shape(scope, validation_cache=validation_cache)
     required = {
         "repository_uuidv4",
         "repository_binding_id",
@@ -160,6 +160,7 @@ def validate_acquisition_scope(
     repository_uuidv4=None,
     repository_binding_id=None,
     allow_snapshot=False,
+    dependency_cache=None,
 ):
     """Check a capture against known registrations without fabricating owners.
 
@@ -167,7 +168,9 @@ def validate_acquisition_scope(
     per-repository receiver. Existing registrations still have to agree.
     Live acquisition requires every captured registration and membership.
     """
-    _acquisition_shape(scope, service_instance_uuidv4)
+    _acquisition_shape(
+        scope, service_instance_uuidv4, validation_cache=dependency_cache
+    )
     return _acquisition_dependencies(
         db,
         scope,
@@ -175,6 +178,7 @@ def validate_acquisition_scope(
         repository_uuidv4=repository_uuidv4,
         repository_binding_id=repository_binding_id,
         allow_snapshot=allow_snapshot,
+        dependency_cache=dependency_cache,
     )
 
 
@@ -186,6 +190,7 @@ def _acquisition_dependencies(
     repository_uuidv4=None,
     repository_binding_id=None,
     allow_snapshot=False,
+    dependency_cache=None,
 ):
     """Check live identities after the caller checked the exact capture shape."""
     if (
@@ -198,6 +203,17 @@ def _acquisition_dependencies(
         and scope["repository_binding_id"] != repository_binding_id
     ):
         raise JsonContractError("Acquisition binding differs from current owner")
+    cache_key = None
+    if dependency_cache is not None:
+        cache_key = (
+            json.dumps(scope, sort_keys=True, separators=(",", ":")),
+            service_instance_uuidv4,
+            repository_uuidv4,
+            repository_binding_id,
+            allow_snapshot,
+        )
+        if cache_key in dependency_cache:
+            return list(dependency_cache[cache_key])
     captured_repository = scope["repository_uuidv4"]
     repository = _row(
         db, "repositories", ("repository_uuidv4",), (captured_repository,)
@@ -250,6 +266,8 @@ def _acquisition_dependencies(
                     "values": (source["source_id"], captured_repository),
                 }
             )
+    if cache_key is not None:
+        dependency_cache[cache_key] = tuple(missing)
     return missing
 
 
@@ -812,7 +830,35 @@ def _check_schema(table, column, value, data, *, check_owner=True):
             if not isinstance(scope, dict) or "source_registration_uuidv4" not in scope:
                 raise JsonContractError("Source capture requires typed Source identity")
             validate_capture_shape(scope)
+            if any(
+                name in scope and scope[name] != evidence[name]
+                for name in ("parser_module", "parser_version")
+            ):
+                raise JsonContractError(
+                    "Source field producer differs from its acquisition capture"
+                )
             _walk(scope)
+            if path[0] == "name" and "name" not in data:
+                raise JsonContractError("Source name evidence requires present value")
+            if path[0] == "metadata":
+                item = _load(
+                    data.get("metadata", data.get("metadata_json", "{}")),
+                    JsonSchema("provider"),
+                    "Source metadata",
+                )
+                for depth, part in enumerate(path[1:], 1):
+                    ancestor = json.dumps(
+                        path[:depth], ensure_ascii=False, separators=(",", ":")
+                    )
+                    if (
+                        ancestor not in value
+                        or not isinstance(item, dict)
+                        or part not in item
+                    ):
+                        raise JsonContractError(
+                            "Source metadata evidence requires present value and ancestors"
+                        )
+                    item = item[part]
         return
     if column == "field_evidence_json":
         allowed = _allowed_fields(table)
@@ -1000,7 +1046,7 @@ def _check_members(value):
         seen.add(key)
 
 
-def validate_field_evidence(db, evidence, candidate):
+def validate_field_evidence(db, evidence, candidate, *, dependency_cache=None):
     if not isinstance(evidence, dict):
         raise JsonContractError("Field evidence requires object")
     _check_schema(
@@ -1019,6 +1065,7 @@ def validate_field_evidence(db, evidence, candidate):
                     scope,
                     service_instance_uuidv4=candidate["service_instance_uuidv4"],
                     allow_snapshot=True,
+                    dependency_cache=dependency_cache,
                 )
             )
     return pending
@@ -1053,6 +1100,96 @@ def validate_record(db, table, data, *, allow_missing=False):
             is None
         ):
             missing.append(dependency)
+    if (
+        table == "exchange_staging"
+        and data.get("reason", "").startswith("current_state:")
+        and data.get("table_name") == "source_repositories"
+    ):
+        candidate = _load(
+            data["record_json"],
+            JSON_REGISTRY["exchange_staging", "record_json"],
+            "staged Source candidate",
+        )
+        scope = candidate["acquisition_scope"]
+        by_id = _row(db, "sources", ("source_id",), (candidate["source_id"],))
+        by_registration = _row(
+            db,
+            "sources",
+            ("source_registration_uuidv4",),
+            (scope["source_registration_uuidv4"],),
+        )
+        if (
+            by_id is not None
+            and (
+                by_id["source_registration_uuidv4"]
+                != scope["source_registration_uuidv4"]
+                or by_id["service_instance_uuidv4"]
+                != scope.get("service_instance_uuidv4")
+            )
+            or by_registration is not None
+            and by_registration["source_id"] != candidate["source_id"]
+        ):
+            raise JsonContractError(
+                "Staged Source capture differs from registered Source"
+            )
+    if table == "source_repositories":
+        owner = _row(db, "sources", ("source_id",), (data["source_id"],))
+        scope = _load(data["scope_json"], JsonSchema("authored"), "Source scope")
+        metadata = _load(
+            data.get("metadata_json", "{}"),
+            JsonSchema("provider"),
+            "Source metadata",
+        )
+        if owner is None:
+            raise JsonContractError(
+                "Source roster scope differs from registered Source"
+            )
+        evidence = _load(
+            data.get("field_evidence_json", "{}"),
+            JsonSchema("current-field-evidence"),
+            "Source field evidence",
+        )
+        unscoped_pair = (
+            not scope
+            and data.get("name") is None
+            and not metadata
+            and not evidence
+            and data.get("parser_module") is None
+            and data.get("parser_version") is None
+        )
+        if not unscoped_pair and (
+            scope.get("source_registration_uuidv4")
+            != owner["source_registration_uuidv4"]
+            or scope.get("service_instance_uuidv4") != owner["service_instance_uuidv4"]
+        ):
+            raise JsonContractError(
+                "Source roster scope differs from registered Source"
+            )
+        if any(
+            name in scope and scope[name] != data.get(name)
+            for name in ("parser_module", "parser_version")
+        ):
+            raise JsonContractError(
+                "Source producer differs from its acquisition capture"
+            )
+        for proof in evidence.values():
+            capture = proof["acquisition_scope"]
+            if (
+                capture.get("source_registration_uuidv4")
+                != owner["source_registration_uuidv4"]
+                or capture.get("service_instance_uuidv4")
+                != owner["service_instance_uuidv4"]
+            ):
+                raise JsonContractError(
+                    "Source field capture differs from registered Source"
+                )
+        required_evidence = set()
+        if data.get("name") is not None:
+            required_evidence.add('["name"]')
+        if metadata:
+            required_evidence.update(_source_metadata_paths(metadata))
+        if required_evidence - evidence.keys():
+            raise JsonContractError("Source current values require field evidence")
     if table == "source_inventory_assessments":
         owner = _row(db, "sources", ("source_id",), (data["source_id"],))
         scope = _load(data["scope_json"], JsonSchema("authored"), "Source scope")
@@ -1060,11 +1197,7 @@ def validate_record(db, table, data, *, allow_missing=False):
             owner is None
             or scope.get("source_registration_uuidv4")
             != owner["source_registration_uuidv4"]
-            or (
-                owner["service_instance_uuidv4"] is not None
-                and scope.get("service_instance_uuidv4")
-                != owner["service_instance_uuidv4"]
-            )
+            or scope.get("service_instance_uuidv4") != owner["service_instance_uuidv4"]
         ):
             raise JsonContractError(
                 "Source inventory scope differs from registered Source"
@@ -1251,9 +1384,16 @@ def guard_sql():
             conditions.extend(_staging_conditions(doc))
         if (table, column) in _SCOPE_COLUMNS:
             conditions.extend(_sql_scope_conditions(doc))
+        if (table, column) == ("source_repositories", "scope_json"):
+            source_scope_owner_mismatch = f"NOT EXISTS(SELECT 1 FROM sources s WHERE s.source_id=NEW.source_id AND s.source_registration_uuidv4=json_extract({doc},'$.source_registration_uuidv4') AND s.service_instance_uuidv4 IS json_extract({doc},'$.service_instance_uuidv4'))"
+            bare_source_pair = f"(NOT EXISTS(SELECT 1 FROM json_each({doc})) AND NEW.name IS NULL AND NOT EXISTS(SELECT 1 FROM json_each(NEW.metadata_json)) AND NOT EXISTS(SELECT 1 FROM json_each(NEW.field_evidence_json)) AND NEW.parser_module IS NULL AND NEW.parser_version IS NULL)"
+            conditions.extend(
+                f"(json_type({doc},'$.{name}') IS NOT NULL AND json_extract({doc},'$.{name}') IS NOT NEW.{name})"
+                for name in ("parser_module", "parser_version")
+            )
         if (table, column) == ("source_inventory_assessments", "scope_json"):
             conditions += [
-                f"NOT EXISTS(SELECT 1 FROM sources s WHERE s.source_id=NEW.source_id AND s.source_registration_uuidv4=json_extract({doc},'$.source_registration_uuidv4') AND (s.service_instance_uuidv4 IS NULL OR s.service_instance_uuidv4=json_extract({doc},'$.service_instance_uuidv4')))",
+                f"NOT EXISTS(SELECT 1 FROM sources s WHERE s.source_id=NEW.source_id AND s.source_registration_uuidv4=json_extract({doc},'$.source_registration_uuidv4') AND s.service_instance_uuidv4 IS json_extract({doc},'$.service_instance_uuidv4'))",
                 "(NEW.state='complete' AND NEW.terminal<>1)",
             ]
         if schema.category == "inventory-members":
@@ -1405,9 +1545,26 @@ def guard_sql():
             conditions.extend(_source_evidence_conditions(doc))
         conditions.extend(_special_conditions(table, column, doc))
         for operation in ("INSERT", "UPDATE"):
+            operation_conditions = list(conditions)
+            if (table, column) == ("source_repositories", "scope_json"):
+                # Preserve a bare positive pair, but never let an update erase
+                # registration ownership from a previously attributed row.
+                allowed_bare = (
+                    bare_source_pair
+                    if operation == "INSERT"
+                    else f"(NOT EXISTS(SELECT 1 FROM json_each(OLD.scope_json)) AND OLD.name IS NULL AND NOT EXISTS(SELECT 1 FROM json_each(OLD.metadata_json)) AND NOT EXISTS(SELECT 1 FROM json_each(OLD.field_evidence_json)) AND OLD.parser_module IS NULL AND OLD.parser_version IS NULL AND {bare_source_pair})"
+                )
+                operation_conditions.append(
+                    f"({source_scope_owner_mismatch} AND NOT {allowed_bare})"
+                )
+            if (table, column) == (
+                "source_repositories",
+                "field_evidence_json",
+            ) and operation == "UPDATE":
+                operation_conditions.extend(_source_update_conditions(doc))
             output.append(
                 f"CREATE TRIGGER json_{table}_{column}_{operation.lower()} BEFORE {operation} ON {table}\nWHEN {doc} IS NOT NULL AND CASE WHEN NOT json_valid({doc}) THEN 1 WHEN json_type({doc})<>'{schema.shape}' THEN 1 ELSE (\n"
-                + "\n OR ".join(conditions)
+                + "\n OR ".join(operation_conditions)
                 + f"\n) END BEGIN SELECT RAISE(ABORT,'JSON contract violation: {table}.{column}'); END;\n"
             )
     output.append(_staging_guard_sql())
@@ -1518,7 +1675,12 @@ _SCOPE_ENUMS = {
 }
 
 
-def validate_capture_shape(scope):
+def validate_capture_shape(scope, *, validation_cache=None):
+    cache_key = None
+    if validation_cache is not None:
+        cache_key = _capture_token(scope)
+        if cache_key in validation_cache:
+            return
     if not isinstance(scope, dict):
         raise JsonContractError("Capture scope requires a modeled object")
     _check_metadata(_CAPTURE_SCOPE, scope)
@@ -1576,6 +1738,8 @@ def validate_capture_shape(scope):
             or re.fullmatch(r"[0-9a-f]+", oid) is None
         ):
             raise JsonContractError("Capture target requires a canonical Git OID")
+    if cache_key is not None:
+        validation_cache[cache_key] = True
 
 
 def _sql_scope_conditions(doc):
@@ -2030,7 +2194,11 @@ def _source_evidence_conditions(doc):
             for name in ("parser_module", "parser_version")
         ],
         "coalesce(json_type(e.value,'$.acquisition_scope'),'')<>'object'",
-        "NOT EXISTS(SELECT 1 FROM sources s WHERE s.source_id=NEW.source_id AND s.source_registration_uuidv4=json_extract(e.value,'$.acquisition_scope.source_registration_uuidv4') AND (s.service_instance_uuidv4 IS NULL OR s.service_instance_uuidv4=json_extract(e.value,'$.acquisition_scope.service_instance_uuidv4')))",
+        *[
+            f"(json_type(e.value,'$.acquisition_scope.{name}') IS NOT NULL AND json_extract(e.value,'$.acquisition_scope.{name}') IS NOT json_extract(e.value,'$.{name}'))"
+            for name in ("parser_module", "parser_version")
+        ],
+        "NOT EXISTS(SELECT 1 FROM sources s WHERE s.source_id=NEW.source_id AND s.source_registration_uuidv4=json_extract(e.value,'$.acquisition_scope.source_registration_uuidv4') AND s.service_instance_uuidv4 IS json_extract(e.value,'$.acquisition_scope.service_instance_uuidv4'))",
         f"EXISTS(SELECT 1 FROM json_tree(e.value,'$.acquisition_scope') j WHERE j.key IN ({forbidden}))",
     ]
     return [
@@ -2040,7 +2208,165 @@ def _source_evidence_conditions(doc):
         + ") END)",
         f"EXISTS(WITH RECURSIVE paths(path,value,type) AS (SELECT json_array('metadata'),NEW.metadata_json,'object' UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type FROM paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{{}}' END) j WHERE p.type='object') SELECT 1 FROM json_each({doc}) e WHERE json_extract(e.key,'$[0]')='metadata' AND NOT EXISTS(SELECT 1 FROM paths p WHERE p.path=e.key))",
         f"EXISTS(SELECT 1 FROM json_each({doc}) e JOIN json_each(e.key) depth WHERE json_extract(e.key,'$[0]')='metadata' AND CAST(depth.key AS INTEGER)>0 AND NOT EXISTS(SELECT 1 FROM json_each({doc}) a WHERE a.key=(SELECT json_group_array(p.value) FROM json_each(e.key) p WHERE CAST(p.key AS INTEGER)<CAST(depth.key AS INTEGER))))",
+        f"(NEW.name IS NOT NULL AND NOT EXISTS(SELECT 1 FROM json_each({doc}) e WHERE e.key='[\"name\"]'))",
+        f"EXISTS(WITH RECURSIVE paths(path,value,type) AS (SELECT json_array('metadata'),NEW.metadata_json,'object' UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type FROM paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{{}}' END) j WHERE p.type='object') SELECT 1 FROM paths p WHERE EXISTS(SELECT 1 FROM json_each(NEW.metadata_json)) AND NOT EXISTS(SELECT 1 FROM json_each({doc}) e WHERE e.key=p.path))",
     ]
+
+
+def _source_metadata_paths(metadata):
+    paths = set()
+
+    def visit(path, value):
+        paths.add(json.dumps(path, ensure_ascii=False, separators=(",", ":")))
+        if isinstance(value, dict):
+            for key, child in value.items():
+                visit([*path, key], child)
+
+    visit(["metadata"], metadata)
+    return paths
+
+
+def _source_update_conditions(doc):
+    """Keep sparse Source updates from erasing or reusing field evidence."""
+    same_evidence = _same_json_document("old_e.value", "new_e.value")
+    same_metadata_value = _same_json_value(
+        "old_path.type",
+        "old_path.value",
+        "new_path.type",
+        "new_path.value",
+        "OLD.metadata_json",
+        "old_path.path",
+        "NEW.metadata_json",
+        "new_path.path",
+    )
+    same_ancestor_evidence = _same_json_document(
+        "old_ancestor.value", "new_ancestor_proof.value"
+    )
+    ancestor_prefix = (
+        "json_array_length(new_ancestor.key)<json_array_length(old_path.path) "
+        "AND json_array_length(new_ancestor.key)>0 "
+        "AND NOT EXISTS(SELECT 1 FROM json_each(old_path.path) old_part "
+        "WHERE CAST(old_part.key AS INTEGER)<json_array_length(new_ancestor.key) "
+        "AND NOT EXISTS(SELECT 1 FROM json_each(new_ancestor.key) prefix_part "
+        "WHERE CAST(prefix_part.key AS INTEGER)=CAST(old_part.key AS INTEGER) "
+        "AND prefix_part.value IS old_part.value))"
+    )
+    refreshed_ancestor = (
+        f"NOT EXISTS(SELECT 1 FROM json_each(OLD.field_evidence_json) old_ancestor "
+        "JOIN json_each(NEW.field_evidence_json) new_ancestor_proof "
+        "ON new_ancestor_proof.key=old_ancestor.key "
+        "WHERE old_ancestor.key=new_ancestor.key "
+        f"AND {same_ancestor_evidence})"
+    )
+    evidence_ancestor_prefix = (
+        "json_array_length(new_ancestor.key)<json_array_length(old_e.key) "
+        "AND json_array_length(new_ancestor.key)>0 "
+        "AND NOT EXISTS(SELECT 1 FROM json_each(old_e.key) old_part "
+        "WHERE CAST(old_part.key AS INTEGER)<json_array_length(new_ancestor.key) "
+        "AND NOT EXISTS(SELECT 1 FROM json_each(new_ancestor.key) prefix_part "
+        "WHERE CAST(prefix_part.key AS INTEGER)=CAST(old_part.key AS INTEGER) "
+        "AND prefix_part.value IS old_part.value))"
+    )
+    same_deleted_evidence_ancestor = _same_json_document(
+        "old_ancestor.value", "new_ancestor_proof.value"
+    )
+    refreshed_evidence_ancestor = (
+        f"NOT EXISTS(SELECT 1 FROM json_each(OLD.field_evidence_json) old_ancestor "
+        f"JOIN json_each({doc}) new_ancestor_proof "
+        "ON new_ancestor_proof.key=old_ancestor.key "
+        "WHERE old_ancestor.key=new_ancestor.key "
+        f"AND {same_deleted_evidence_ancestor})"
+    )
+    old_and_new_metadata_paths = (
+        "WITH RECURSIVE "
+        "old_paths(path,value,type) AS ("
+        "SELECT json_array('metadata'),OLD.metadata_json,'object' "
+        "UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type "
+        "FROM old_paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{}' END) j "
+        "WHERE p.type='object'), "
+        "new_paths(path,value,type) AS ("
+        "SELECT json_array('metadata'),NEW.metadata_json,'object' "
+        "UNION ALL SELECT json_insert(p.path,'$[#]',j.key),j.value,j.type "
+        "FROM new_paths p JOIN json_each(CASE WHEN p.type='object' THEN p.value ELSE '{}' END) j "
+        "WHERE p.type='object') "
+        "SELECT 1 FROM old_paths old_path "
+        "JOIN new_paths new_path ON new_path.path=old_path.path "
+        f"WHERE NOT {same_metadata_value} "
+        "AND EXISTS(SELECT 1 FROM json_each(OLD.field_evidence_json) old_e "
+        "JOIN json_each(NEW.field_evidence_json) new_e ON new_e.key=old_e.key "
+        f"WHERE old_e.key=old_path.path AND {same_evidence}) "
+        "UNION ALL SELECT 1 FROM old_paths old_path "
+        "WHERE json_array_length(old_path.path)>1 "
+        "AND NOT EXISTS(SELECT 1 FROM new_paths new_path WHERE new_path.path=old_path.path) "
+        "AND NOT EXISTS(SELECT 1 FROM json_each(NEW.field_evidence_json) new_ancestor "
+        f"WHERE {ancestor_prefix} AND {refreshed_ancestor})"
+    )
+    return [
+        f"(OLD.name IS NOT NEW.name AND NOT EXISTS(SELECT 1 FROM json_each({doc}) e WHERE e.key='[\"name\"]'))",
+        f"(OLD.name IS NOT NEW.name AND EXISTS(SELECT 1 FROM json_each(OLD.field_evidence_json) old_e JOIN json_each(NEW.field_evidence_json) new_e ON new_e.key=old_e.key WHERE old_e.key='[\"name\"]' AND {same_evidence}))",
+        f"EXISTS({old_and_new_metadata_paths})",
+        f"EXISTS(SELECT 1 FROM json_each(OLD.field_evidence_json) old_e WHERE NOT EXISTS(SELECT 1 FROM json_each({doc}) new_e WHERE new_e.key=old_e.key) AND NOT EXISTS(SELECT 1 FROM json_each({doc}) new_ancestor WHERE {evidence_ancestor_prefix} AND {refreshed_evidence_ancestor}))",
+    ]
+
+
+def _same_json_document(left, right):
+    """Compare JSON values independent of insignificant object-key order."""
+    path = "fullkey,type,CASE WHEN type IN ('array','object') THEN NULL ELSE value END"
+    return (
+        f"(NOT EXISTS(SELECT {path} FROM json_tree({left}) "
+        f"EXCEPT SELECT {path} FROM json_tree({right})) "
+        f"AND NOT EXISTS(SELECT {path} FROM json_tree({right}) "
+        f"EXCEPT SELECT {path} FROM json_tree({left})))"
+    )
+
+
+def _same_json_metadata_document(left, right):
+    """Compare modeled metadata independent of object key order and JSON1 rounding."""
+    paths = "fullkey,type"
+    return (
+        f"(NOT EXISTS(SELECT {paths} FROM json_tree({left}) "
+        f"EXCEPT SELECT {paths} FROM json_tree({right})) "
+        f"AND NOT EXISTS(SELECT {paths} FROM json_tree({right}) "
+        f"EXCEPT SELECT {paths} FROM json_tree({left})) "
+        f"AND NOT EXISTS(SELECT 1 FROM json_tree({left}) old_scalar "
+        f"JOIN json_tree({right}) new_scalar "
+        f"ON new_scalar.fullkey=old_scalar.fullkey AND new_scalar.type=old_scalar.type "
+        f"WHERE old_scalar.type NOT IN ('array','object') AND CASE "
+        f"WHEN old_scalar.type='integer' AND typeof(old_scalar.value)='real' "
+        f"THEN ({left} -> old_scalar.fullkey) IS NOT ({right} -> new_scalar.fullkey) "
+        f"ELSE old_scalar.value IS NOT new_scalar.value END))"
+    )
+
+
+def _same_json_value(
+    left_type,
+    left_value,
+    right_type,
+    right_value,
+    left_document,
+    left_path,
+    right_document,
+    right_path,
+):
+    left_json_path = (
+        f"(SELECT '$'||coalesce('.'||group_concat(json_quote(path_part.value),'.' "
+        f"ORDER BY CAST(path_part.key AS INTEGER)), '') "
+        f"FROM json_each({left_path}) path_part WHERE CAST(path_part.key AS INTEGER)>0)"
+    )
+    right_json_path = (
+        f"(SELECT '$'||coalesce('.'||group_concat(json_quote(path_part.value),'.' "
+        f"ORDER BY CAST(path_part.key AS INTEGER)), '') "
+        f"FROM json_each({right_path}) path_part WHERE CAST(path_part.key AS INTEGER)>0)"
+    )
+    return (
+        f"({left_type} IS {right_type} AND CASE "
+        f"WHEN {left_type} IN ('array','object') "
+        f"THEN {_same_json_metadata_document(left_value, right_value)} "
+        f"WHEN {left_type}='integer' AND typeof({left_value})='real' "
+        f"THEN ({left_document} -> {left_json_path}) IS "
+        f"({right_document} -> {right_json_path}) "
+        f"ELSE {left_value} IS {right_value} END)"
+    )
 
 
 @lru_cache(maxsize=1)
@@ -2154,7 +2480,7 @@ def _candidate_required(table, kind):
     return fields
 
 
-def validate_current_candidate_shape(table, candidate):
+def validate_current_candidate_shape(table, candidate, *, validation_cache=None):
     """Require a typed candidate before any unavailable parent may defer it.
 
     This validates only authored identity and capture correlations. It neither
@@ -2184,7 +2510,13 @@ def validate_current_candidate_shape(table, candidate):
         else:
             _identity(name, candidate.get(name))
     scope = candidate.get("acquisition_scope")
-    _candidate_capture_shape(table, scope, candidate, candidate)
+    _candidate_capture_shape(
+        table,
+        scope,
+        candidate,
+        candidate,
+        validation_cache=validation_cache,
+    )
     if candidate.get("provider_clock_scope") is not None and candidate[
         "provider_clock_scope"
     ] != _CLOCKS.get(kind):
@@ -2205,24 +2537,42 @@ def validate_current_candidate_shape(table, candidate):
     if table == "source_repositories":
         for origin in evidence.values():
             _candidate_capture_shape(
-                table, origin["acquisition_scope"], candidate, origin, field_origin=True
+                table,
+                origin["acquisition_scope"],
+                candidate,
+                origin,
+                field_origin=True,
+                validation_cache=validation_cache,
             )
 
 
-def _candidate_capture_shape(table, scope, owner, producer, *, field_origin=False):
+def _candidate_capture_shape(
+    table,
+    scope,
+    owner,
+    producer,
+    *,
+    field_origin=False,
+    validation_cache=None,
+):
     if table == "source_repositories":
-        validate_capture_shape(scope)
+        validate_capture_shape(scope, validation_cache=validation_cache)
         _identity("source_registration_uuidv4", scope.get("source_registration_uuidv4"))
-        if (
-            field_origin
-            and scope["source_registration_uuidv4"]
+        if field_origin and (
+            scope["source_registration_uuidv4"]
             != owner["acquisition_scope"]["source_registration_uuidv4"]
+            or scope.get("service_instance_uuidv4")
+            != owner["acquisition_scope"].get("service_instance_uuidv4")
         ):
             raise JsonContractError(
                 "Source field capture differs from candidate Source"
             )
     else:
-        _acquisition_shape(scope, owner["service_instance_uuidv4"])
+        _acquisition_shape(
+            scope,
+            owner["service_instance_uuidv4"],
+            validation_cache=validation_cache,
+        )
         if table == "issue_resources":
             if "change_request_id" in scope:
                 raise JsonContractError("Ordinary Issue capture cannot claim PR")
@@ -2407,6 +2757,19 @@ def _candidate_capture_conditions(table, scope, owner, producer, *, field_origin
             result.append(
                 f"json_extract({scope},'$.source_registration_uuidv4') IS NOT json_extract({owner},'$.acquisition_scope.source_registration_uuidv4')"
             )
+            result.append(
+                f"json_extract({scope},'$.service_instance_uuidv4') IS NOT json_extract({owner},'$.acquisition_scope.service_instance_uuidv4')"
+            )
+        else:
+            source_registration = (
+                f"json_extract({scope},'$.source_registration_uuidv4')"
+            )
+            source_service = f"json_extract({scope},'$.service_instance_uuidv4')"
+            source_id = f"json_extract({owner},'$.source_id')"
+            result += [
+                f"EXISTS(SELECT 1 FROM sources s WHERE s.source_id={source_id} AND (s.source_registration_uuidv4 IS NOT {source_registration} OR s.service_instance_uuidv4 IS NOT {source_service}))",
+                f"EXISTS(SELECT 1 FROM sources s WHERE s.source_registration_uuidv4={source_registration} AND s.source_id IS NOT {source_id})",
+            ]
     else:
         result.append(
             f"json_extract({scope},'$.service_instance_uuidv4') IS NOT json_extract({owner},'$.service_instance_uuidv4')"

@@ -400,7 +400,7 @@ class GitHubCollector:
         context = self.facts.current_context(
             repo, pr["change_request_id"], self.http.graphql, "review-comment"
         )
-        members = []
+        candidates, members = [], []
         for position, value in enumerate(nodes):
             candidate = current_parser.review_comment(
                 value,
@@ -409,7 +409,7 @@ class GitHubCollector:
                 graphql=True,
                 thread=review_thread_provider_resource_id,
             )
-            self.facts.admit_current(candidate, base_revision)
+            candidates.append(candidate)
             members.append(
                 {
                     "family": "review",
@@ -421,6 +421,7 @@ class GitHubCollector:
                     "state_digest": fingerprint_candidate(candidate),
                 }
             )
+        self.facts.admit_current_page(candidates, base_revision)
         return members
 
     def sync_issues(self, repo, job):

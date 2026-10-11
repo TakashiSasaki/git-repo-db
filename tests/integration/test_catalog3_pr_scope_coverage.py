@@ -255,12 +255,19 @@ def test_document_queries_retain_document_gaps(pr_catalog, kind, source):
 
 @pytest.mark.parametrize(
     "selector",
-    [("--commit", "sha1:" + "01" * 20), ("--path", "file"), ("--path-b64", "ZmlsZQ==")],
+    [
+        (("--commit", "sha1:" + "01" * 20), "pr-commits"),
+        (("--path", "file"), "pr-files"),
+        (("--path-b64", "ZmlsZQ=="), "pr-files"),
+    ],
 )
-def test_code_filter_requires_code_coverage_even_without_results(pr_catalog, selector):
+def test_metadata_filter_requires_its_provider_listing_even_without_results(
+    pr_catalog, selector
+):
+    args, listing_kind = selector
     state, store = pr_catalog
     with store.transaction():
-        add_gap(store, "pr-commits", "claim")
+        add_gap(store, listing_kind, "claim")
         store.advance_local_revision()
     result = run(
         state,
@@ -270,7 +277,7 @@ def test_code_filter_requires_code_coverage_even_without_results(pr_catalog, sel
         "00000000-0000-4000-8000-000000000401",
         "--literal",
         "needle",
-        *selector,
+        *args,
         expected=3,
     )
     assert result["data"]["items"] == []

@@ -1,6 +1,6 @@
 # Historical checkpoint
 
-This report describes the earlier scoped implementation. Schema 20's current integrated replacement and verification status are in [the Publication-independent handoff](phase2/publication-free-implementation.md). Preserve the earlier receipt as evidence; its pending boundaries do not override later accepted decisions.
+This report describes the earlier scoped implementation. Schema 21's current integrated replacement and verification status are in [the Publication-independent handoff](phase2/publication-free-implementation.md). Preserve the earlier receipt as evidence; its pending boundaries do not override later accepted decisions.
 
 ---
 

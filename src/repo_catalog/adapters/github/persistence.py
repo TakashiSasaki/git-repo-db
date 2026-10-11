@@ -117,6 +117,15 @@ class ApiFacts:
             scope_context=candidate["acquisition_scope"],
         )
 
+    def admit_current_page(self, candidates, base_revision):
+        if not candidates:
+            return []
+        from repo_catalog.adapters.sqlite.current_resources import CurrentResources
+
+        resources = CurrentResources(self.s)
+        parsed = [{**candidate, "parsed_at_us": now_us()} for candidate in candidates]
+        return resources.admit_live_page(parsed, base_revision=base_revision)
+
     def advance_revision(self):
         self.s.advance_local_revision()
 

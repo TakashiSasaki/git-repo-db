@@ -1,8 +1,8 @@
 # repo-catalog
 
 任意のGit取得先とGitHubのPR・通常IssueをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
-Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文・PRタイトル/本文/会話コメントの観測履歴を永続化します。通常Issueとそのコメント、レビュー概要とレビューコメントは、各リソースの最新受理状態を保存します。
-通常ランタイムは catalog3、現在の schema version は **20** です。PR・文書・スレッド・Sourceの現在状態と、Git object・取得範囲の証拠を直接所有者に結び付けます。絶対時刻は Unix epoch マイクロ秒の INTEGER です。[現行実装と検証状況](docs/phase2/publication-free-implementation.md)、[全schema対応表](docs/phase2/publication-free-schema-map.json)、[packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)を参照してください。旧開発 DB と v2 importer は対応しません。過去の検証記録は新形式の最終受入を意味しません。
+Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永続化します。PR・文書・スレッド・Source、通常Issueとそのコメント、レビュー概要とレビューコメントは、必要な証拠を伴う各リソースの最新受理状態を保存します。
+通常ランタイムは catalog3、現在の schema version は **21** です。PR・文書・スレッド・Sourceの現在状態と、Git object・取得範囲の証拠を直接所有者に結び付けます。絶対時刻は Unix epoch マイクロ秒の INTEGER です。[現行実装と検証状況](docs/phase2/publication-free-implementation.md)、[全schema対応表](docs/phase2/publication-free-schema-map.json)、[packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)を参照してください。旧開発 DB と v2 importer は対応しません。過去の検証記録は新形式の最終受入を意味しません。
 
 ## 開発・導入
 
@@ -123,4 +123,4 @@ demoは新規/空directoryにfixtureを生成し、収集、更新、clone実回
 
 詳細は[CLI仕様](docs/cli.md)、[アーキテクチャ](docs/architecture.md)、[データモデル](docs/data-model.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)、[実装状況](docs/implementation-status.md)を参照してください。
 
-Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 20の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。
+Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 21の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。

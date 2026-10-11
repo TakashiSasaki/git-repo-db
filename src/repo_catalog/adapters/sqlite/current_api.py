@@ -581,7 +581,14 @@ class CurrentApiState(CurrentResources):
             if value is not None:
                 validate_epoch_us(value)
         evidence = candidate["field_evidence"]
-        if candidate["name"] is None and not candidate["metadata"] and not evidence:
+        if (
+            candidate["name"] is None
+            and not candidate["metadata"]
+            and not evidence
+            and not candidate["acquisition_scope"]
+            and candidate["parser_module"] is None
+            and candidate["parser_version"] is None
+        ):
             # Older/bootstrap positive associations need no invented producer or
             # observation. Their absence of attributes cannot overwrite knowledge.
             with self._transaction():
@@ -601,7 +608,7 @@ class CurrentApiState(CurrentResources):
                 "Named Source values require observation evidence",
             )
         fields = {"metadata": candidate["metadata"]}
-        if candidate["name"] is not None:
+        if candidate["name"] is not None or '["name"]' in evidence:
             fields["name"] = candidate["name"]
         required = _field_values(fields)
         if not candidate["metadata"] and '["metadata"]' not in evidence:
@@ -621,7 +628,9 @@ class CurrentApiState(CurrentResources):
             parser_version=candidate["parser_version"],
             name=candidate["name"],
             metadata=candidate["metadata"] if '["metadata"]' in evidence else None,
-            parsed_at_us=max(proof["parsed_at_us"] for proof in evidence.values()),
+            parsed_at_us=max(
+                (proof["parsed_at_us"] for proof in evidence.values()), default=None
+            ),
             field_evidence=evidence,
             source=source,
             **options,
@@ -689,8 +698,48 @@ class CurrentApiState(CurrentResources):
                     "INVALID_CURRENT_RESOURCE", "Source member metadata requires object"
                 )
             incoming["metadata"] = metadata
+        if field_evidence is None and source == "live":
+            # Live Source observations such as GitHub redirects and manual-Git
+            # discovery have exact payload values and parser/capture context,
+            # even when no provider-specific field clock exists.
+            observed_fields = _field_values(incoming)
+            if observed_fields:
+                field_evidence = {
+                    path: {
+                        "provider_updated_at_us": None,
+                        "provider_clock_scope": None,
+                        "observed_at_us": observed_at_us,
+                        "parsed_at_us": parsed_at_us,
+                        "parser_module": parser_module,
+                        "parser_version": parser_version,
+                        "acquisition_scope": scope,
+                    }
+                    for path in observed_fields
+                }
+        elif field_evidence is None and _field_values(incoming):
+            raise CatalogError(
+                "INVALID_CURRENT_RESOURCE",
+                "Imported Source values require explicit field evidence",
+            )
         if field_evidence is not None:
+            if not isinstance(field_evidence, dict):
+                raise CatalogError(
+                    "INVALID_CURRENT_RESOURCE",
+                    "Source field evidence requires object",
+                )
             incoming["field_evidence"] = dict(field_evidence)
+            # A proof may make a nullable name explicit even when its value
+            # is null. Metadata remains a required payload object; its proof
+            # never supplies an omitted value.
+            if '["name"]' in field_evidence:
+                incoming.setdefault("name", None)
+            omitted = set(field_evidence) - _field_values(incoming).keys()
+            if omitted:
+                raise CatalogError(
+                    "INVALID_CURRENT_RESOURCE",
+                    "Source field evidence refers to an omitted value",
+                    {"fields": sorted(omitted)},
+                )
         with self._transaction():
             owner = self._one("SELECT * FROM sources WHERE source_id=?", (source_id,))
             if (
@@ -705,11 +754,10 @@ class CurrentApiState(CurrentResources):
                     "INVALID_CURRENT_RESOURCE_OWNER",
                     "Source roster requires registered typed identities",
                 )
-            if scope.get("source_registration_uuidv4") != owner[
-                "source_registration_uuidv4"
-            ] or (
-                owner["service_instance_uuidv4"] is not None
-                and scope.get("service_instance_uuidv4")
+            if (
+                scope.get("source_registration_uuidv4")
+                != owner["source_registration_uuidv4"]
+                or scope.get("service_instance_uuidv4")
                 != owner["service_instance_uuidv4"]
             ):
                 raise CatalogError(
@@ -717,18 +765,28 @@ class CurrentApiState(CurrentResources):
                     "Inventory capture differs from Source",
                 )
             if field_evidence is not None:
-                from repo_catalog.adapters.sqlite.json_contracts import validate_record
-
-                validate_record(
-                    self.c, "source_repositories", self.source_candidate_row(incoming)
+                from repo_catalog.adapters.sqlite.json_contracts import (
+                    JsonContractError,
+                    validate_record,
                 )
+
+                try:
+                    validate_record(
+                        self.c,
+                        "source_repositories",
+                        self.source_candidate_row(incoming),
+                    )
+                except JsonContractError as error:
+                    raise CatalogError(
+                        "INVALID_CURRENT_RESOURCE",
+                        "Source field evidence does not match its current values",
+                    ) from error
                 for proof in field_evidence.values():
                     capture = proof["acquisition_scope"]
-                    if capture.get("source_registration_uuidv4") != owner[
-                        "source_registration_uuidv4"
-                    ] or (
-                        owner["service_instance_uuidv4"] is not None
-                        and capture.get("service_instance_uuidv4")
+                    if (
+                        capture.get("source_registration_uuidv4")
+                        != owner["source_registration_uuidv4"]
+                        or capture.get("service_instance_uuidv4")
                         != owner["service_instance_uuidv4"]
                     ):
                         raise CatalogError(

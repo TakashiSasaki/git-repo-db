@@ -168,6 +168,49 @@ def test_physical_damage_is_unavailable_before_a_quarantine_scan(store):
     )
 
 
+def test_native_sql_ref_display_mismatch_cannot_hide_a_captured_branch(store):
+    store.execute(
+        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'test','{}')",
+        (OWNER,),
+    )
+    raw_name = b"refs/heads/main"
+    tree_raw = b""
+    tree_oid = oid("sha1", "tree", tree_raw)
+    commit_raw = (
+        b"tree "
+        + tree_oid.hex().encode()
+        + b"\nauthor Fixture <fixture@example.invalid> 0 +0000"
+        + b"\ncommitter Fixture <fixture@example.invalid> 0 +0000\n\nroot\n"
+    )
+    commit_oid = oid("sha1", "commit", commit_raw)
+    roots = [
+        {
+            "name": "refs/tags/decoy",
+            "name_b64": base64.b64encode(raw_name).decode(),
+            "oid": commit_oid.hex(),
+            "type": "commit",
+            "peeled": None,
+        }
+    ]
+    store.execute(
+        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,object_format,kind,request,roots_manifest) VALUES('raw-name-mismatch',?,'sha1','git','{}',?)",
+        (OWNER, json.dumps(roots)),
+    )
+    parser = GitParsing(store, OWNER)
+    parser.install_object(
+        "sha1", tree_oid, "tree", tree_raw, acquisition="raw-name-mismatch"
+    )
+    parser.install_object(
+        "sha1", commit_oid, "commit", commit_raw, acquisition="raw-name-mismatch"
+    )
+
+    with pytest.raises(CatalogError, match="display name differs") as raised:
+        parser.parse_acquisition("raw-name-mismatch")
+
+    assert raised.value.code == "INTEGRITY_ERROR"
+    assert not store.one("SELECT 1 FROM root_manifests")
+
+
 @pytest.mark.parametrize("mismatch", ["name", "type", "peeled"])
 def test_completion_and_readers_require_the_same_exact_ref_capture(store, mismatch):
     store.execute(

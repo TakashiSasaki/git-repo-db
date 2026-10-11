@@ -512,7 +512,7 @@ def test_retained_exact_code_assessment_does_not_recreate_api_edit_history(pr_ca
     )
 
 
-def test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope(
+def test_metadata_filters_do_not_hide_missing_code_listings_from_pr_scope(
     pr_catalog,
 ):
     state, store = pr_catalog
@@ -534,6 +534,10 @@ def test_metadata_filters_do_not_hide_code_gaps_from_requested_identity_scope(
         expected=3,
     )
     assert result["data"]["items"] == []
-    assert [gap["reason"] for gap in result["coverage"]["missing"]] == [
-        "code_role_acquisition_missing"
-    ]
+    assert {
+        (gap["reason"], gap.get("change_request_id"))
+        for gap in result["coverage"]["missing"]
+    } == {
+        ("code_assessment_missing", "repo:2:pull_request"),
+        ("code_assessment_missing", "repo:3:pull_request"),
+    }

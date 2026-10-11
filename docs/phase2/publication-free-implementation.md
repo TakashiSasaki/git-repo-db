@@ -1,4 +1,4 @@
-# Publication-independent implementation — Schema 20
+# Publication-independent implementation — Schema 21
 
 This is the implementation handoff for the owner-approved [reconstruction](publication-free-design.md), [decision](no-independent-publication-adr.md) and [implementation instruction](publication-free-implementation-prompt.md). The current branch implements the integrated replacement; independent post-implementation review and exact final acceptance are required before it can be called review-complete. The [fafc checkpoint](reviews/publication-free-fafc/README.md) records four scoped reviews and failed complete hosted gates; subsequent source corrections and final verification remain required. Schema 19 reports remain historical evidence.
 
@@ -42,7 +42,7 @@ The [machine-readable schema map](publication-free-schema-map.json) enumerates e
 
 ## Reexpressed and removed paths
 
-The old result/input/output owner tables, profile/capability/verification/trust registries, selection DAGs, result eligibility/member views and Git acquisition publications are absent from composed Schema 20. Actual parser module/version remains in field/decoder/event evidence. The certificate artifact, generator, test bootstrap and profile administration CLI are removed. Git-only `parser reparse` remains; retrospective API replay does not.
+The old result/input/output owner tables, profile/capability/verification/trust registries, selection DAGs, result eligibility/member views and Git acquisition publications are absent from composed Schema 21. Actual parser module/version remains in field/decoder/event evidence. The certificate artifact, generator, test bootstrap and profile administration CLI are removed. Git-only `parser reparse` remains; retrospective API replay does not.
 
 PR/document/thread full observation series and Source full inventory observations are replaced by direct current rows and scoped evidence. Documents keep their natural key and are the sole title/body authority. The projection uses a closed modeled vocabulary, not opaque provider responses. Typed current merge shares the established sparse/null, comparable/equal/incomparable-clock, inherited origin and scoped live-fence rules. Unconditional old-value history is not a conflict-resolution mechanism.
 
@@ -64,7 +64,7 @@ Selected review-thread completion uses that thread's captured root and required 
 
 Repository-scoped Exchange does not carry a Source-wide inventory assessment. After such an import, explicit repository code queries can be complete while unqualified or Source-wide queries return the same usable hits with `inventory_incomplete`. This follows the actual scope of the received evidence and does not infer absence or a complete Source roster from one repository.
 
-Query/search/index and explicit target diagnostics consume current API state and legitimate Git/event facts directly. API historical/profile options are retired. Git capture/history scope remains meaningful. Backup/restore consumes the same Schema 20 DDL fingerprint and physical integrity contract, independent of domain completeness.
+Query/search/index and explicit target diagnostics consume current API state and legitimate Git/event facts directly. API historical/profile options are retired. Git capture/history scope remains meaningful. Backup/restore consumes the same Schema 21 DDL fingerprint and physical integrity contract, independent of domain completeness.
 
 ## Boundaries and verification
 

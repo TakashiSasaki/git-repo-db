@@ -14,6 +14,7 @@ from repo_catalog.adapters.sqlite.exchange import Graph
 from repo_catalog.adapters.sqlite.json_contracts import (
     JsonContractError,
     validate_catalog,
+    validate_current_candidate_shape,
     validate_record,
 )
 from repo_catalog.domain.models import CatalogError
@@ -124,6 +125,75 @@ def test_pending_capture_owner_must_match_candidate_even_without_parent(
         insert_stage(db, row)
     with pytest.raises(CatalogError):
         CurrentApiState(db).admit("change_request_state", value, source="import")
+    assert db.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
+
+
+def test_staged_source_field_capture_matches_registration_and_service(catalog):
+    db, ids = catalog
+    source_registration = str(uuid.uuid4())
+    other_service = str(uuid.uuid4())
+    source_scope = {
+        "source_registration_uuidv4": source_registration,
+        "service_instance_uuidv4": ids["service_instance_uuidv4"],
+        "endpoint": "inventory",
+    }
+    field_scope = {**source_scope, "service_instance_uuidv4": other_service}
+    value = {
+        "kind": "source-repository",
+        "source_id": "pending-source",
+        "repository_uuidv4": ids["repository_uuidv4"],
+        "first_seen_us": 1,
+        "last_seen_us": 2,
+        "name": "synthetic",
+        "metadata": {},
+        "parser_module": "synthetic",
+        "parser_version": "1",
+        "acquisition_scope": source_scope,
+        "field_evidence": {
+            '["name"]': {
+                "provider_updated_at_us": None,
+                "provider_clock_scope": None,
+                "observed_at_us": 3,
+                "parsed_at_us": 4,
+                "parser_module": "synthetic",
+                "parser_version": "1",
+                "acquisition_scope": field_scope,
+            }
+        },
+    }
+    raw = json.dumps(value)
+    row = {
+        "record_key": "source-current:" + hashlib.sha256(raw.encode()).hexdigest(),
+        "content_sha256": hashlib.sha256(raw.encode()).digest(),
+        "table_name": "source_repositories",
+        "repository_uuidv4": ids["repository_uuidv4"],
+        "origin_catalog_uuidv4": str(uuid.uuid4()),
+        "record_json": raw,
+        "reason": "current_state:missing_dependency",
+    }
+    with pytest.raises(JsonContractError):
+        validate_current_candidate_shape("source_repositories", value)
+    with pytest.raises(JsonContractError):
+        validate_record(db, "exchange_staging", row)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_stage(db, row)
+    assert db.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
+
+    db.execute(
+        "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name,settings) VALUES('pending-source',?,NULL,'manual_git','synthetic','{}')",
+        (source_registration,),
+    )
+    value["field_evidence"]['["name"]']["acquisition_scope"] = source_scope
+    raw = json.dumps(value)
+    row.update(
+        record_key="source-current:" + hashlib.sha256(raw.encode()).hexdigest(),
+        content_sha256=hashlib.sha256(raw.encode()).digest(),
+        record_json=raw,
+    )
+    with pytest.raises(JsonContractError):
+        validate_record(db, "exchange_staging", row)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_stage(db, row)
     assert db.execute("SELECT count(*) FROM exchange_staging").fetchone()[0] == 0
 
 

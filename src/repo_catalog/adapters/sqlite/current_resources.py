@@ -137,7 +137,26 @@ def _field_values(candidate):
     return values
 
 
-def _apply_field(candidate, path, value):
+def _empty_metadata_object(candidate, path):
+    # Source repository inventory captures expose metadata as the complete
+    # selected repository object. The GitHub comment parser builds metadata
+    # from sparse optional fields, so its empty projection means "no fields
+    # observed," not a request to delete the previously known subtree.
+    if (
+        candidate.get("kind") != "source-repository"
+        or not path
+        or path[0] != "metadata"
+    ):
+        return False
+    value = candidate.get("metadata")
+    for part in path[1:]:
+        if not isinstance(value, dict) or part not in value:
+            return False
+        value = value[part]
+    return isinstance(value, dict) and not value
+
+
+def _apply_field(candidate, path, value, *, empty_object=False):
     path = json.loads(path)
     if path == ["body"]:
         candidate["body_status"], candidate["body"] = value
@@ -150,7 +169,7 @@ def _apply_field(candidate, path, value):
                 target[part] = {}
             target = target[part]
         if value == ():
-            if not isinstance(target.get(path[-1]), dict):
+            if empty_object or not isinstance(target.get(path[-1]), dict):
                 target[path[-1]] = {}
         else:
             target[path[-1]] = value
@@ -216,6 +235,15 @@ class CurrentResources:
             else None
         )
 
+    def _page_stable_one(self, sql, args=()):
+        cache = getattr(self, "_page_stable_query_cache", None)
+        if cache is None:
+            return self._one(sql, args)
+        key = (sql, tuple(args))
+        if key not in cache:
+            cache[key] = self._one(sql, args)
+        return cache[key]
+
     def _all(self, sql, args=()):
         cursor = self.c.execute(sql, args)
         names = [col[0] for col in cursor.description]
@@ -278,10 +306,72 @@ class CurrentResources:
         )
 
     def _stages(self, candidate):
+        cache = getattr(self, "_page_staging_cache", None)
+        if cache is not None:
+            record_key = self._stage_key(candidate)
+            if record_key not in cache:
+                cache[record_key] = self._all(
+                    "SELECT * FROM exchange_staging WHERE record_key=? AND reason LIKE 'current_state:%'",
+                    (record_key,),
+                )
+            return cache[record_key]
         return self._all(
             "SELECT * FROM exchange_staging WHERE record_key=? AND reason LIKE 'current_state:%'",
             (self._stage_key(candidate),),
         )
+
+    def _page_staging_rows(self, candidates):
+        rows = {self._stage_key(candidate): [] for candidate in candidates}
+        record_keys = list(rows)
+        for offset in range(0, len(record_keys), 900):
+            chunk = record_keys[offset : offset + 900]
+            placeholders = ",".join("?" for _ in chunk)
+            for stage in self._all(
+                "SELECT * FROM exchange_staging WHERE record_key IN ("
+                + placeholders
+                + ") AND reason LIKE 'current_state:%'",
+                chunk,
+            ):
+                rows[stage["record_key"]].append(stage)
+        return rows
+
+    def _page_forget_staging(self, record_key, content_hash):
+        cache = getattr(self, "_page_staging_cache", None)
+        if cache is None:
+            return
+        rows = cache.get(record_key)
+        if rows is not None:
+            cache[record_key] = [
+                row for row in rows if row["content_sha256"] != content_hash
+            ]
+
+    def _page_current_rows(self, candidates):
+        rows = {}
+        identifiers = {}
+        for candidate in candidates:
+            key = resource_key(candidate)
+            rows[tuple(key)] = None
+            identifiers.setdefault(key.change_request_id, set()).add(
+                key.provider_change_request_document_id
+            )
+        for change_request_id, provider_ids in identifiers.items():
+            values = sorted(provider_ids)
+            for offset in range(0, len(values), 900):
+                chunk = values[offset : offset + 900]
+                placeholders = ",".join("?" for _ in chunk)
+                for row in self._all(
+                    "SELECT * FROM review_resources WHERE change_request_id=? AND kind='review-comment' AND provider_change_request_document_id IN ("
+                    + placeholders
+                    + ")",
+                    (change_request_id, *chunk),
+                ):
+                    key = (
+                        row["change_request_id"],
+                        row["kind"],
+                        row["provider_change_request_document_id"],
+                    )
+                    rows[key] = row
+        return rows
 
     def _project_child_membership(self, candidate):
         """Derive transferred comment membership without rewriting its capture.
@@ -314,10 +404,21 @@ class CurrentResources:
         # One slot per distinct semantic value; repeat captures cannot grow a
         # local observation history. Retain up to sixteen unresolved alternatives.
         content_hash = bytes.fromhex(fingerprint_candidate(candidate))
-        existing = self._one(
-            "SELECT record_json,content_sha256 FROM exchange_staging WHERE record_key=? AND content_sha256=?",
-            (record_key, content_hash),
-        )
+        page_cache = getattr(self, "_page_staging_cache", None)
+        if page_cache is None:
+            existing = self._one(
+                "SELECT record_json,content_sha256 FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+                (record_key, content_hash),
+            )
+        else:
+            existing = next(
+                (
+                    stage
+                    for stage in self._stages(candidate)
+                    if stage["content_sha256"] == content_hash
+                ),
+                None,
+            )
         if existing is None and candidate["kind"] == "issue-comment":
             existing = next(
                 (
@@ -341,6 +442,7 @@ class CurrentResources:
                     evidence[path] = proof
             merged["field_evidence"] = evidence
             if merged != old or existing["content_sha256"] != content_hash:
+                old_hash = existing["content_sha256"]
                 self.c.execute(
                     "UPDATE exchange_staging SET record_json=?,content_sha256=?,repository_uuidv4=? WHERE record_key=? AND content_sha256=?",
                     (
@@ -351,11 +453,21 @@ class CurrentResources:
                         existing["content_sha256"],
                     ),
                 )
+                if page_cache is not None:
+                    if old_hash != content_hash:
+                        self._page_forget_staging(record_key, old_hash)
+                    existing["record_json"] = _canonical(merged)
+                    existing["content_sha256"] = content_hash
+                    existing["repository_uuidv4"] = merged["repository_uuidv4"]
+                    if old_hash != content_hash:
+                        page_cache.setdefault(record_key, []).append(existing)
             if reason == "conflict":
                 self.c.execute(
                     "UPDATE exchange_staging SET reason='current_state:conflict' WHERE record_key=? AND content_sha256=?",
                     (record_key, content_hash),
                 )
+                if page_cache is not None:
+                    existing["reason"] = "current_state:conflict"
             return
         if len(self._stages(candidate)) >= _MAX_STAGED_VARIANTS:
             raise CatalogError(
@@ -363,7 +475,7 @@ class CurrentResources:
                 "Current resource has sixteen unresolved alternatives",
                 {"key": list(key)},
             )
-        catalog = self._one(
+        catalog = self._page_stable_one(
             "SELECT db_instance_id FROM database_identity WHERE singleton=1"
         )
         self.c.execute(
@@ -378,6 +490,18 @@ class CurrentResources:
                 "current_state:" + reason,
             ),
         )
+        if page_cache is not None:
+            page_cache.setdefault(record_key, []).append(
+                {
+                    "record_key": record_key,
+                    "content_sha256": content_hash,
+                    "table_name": table,
+                    "repository_uuidv4": candidate["repository_uuidv4"],
+                    "origin_catalog_uuidv4": catalog["db_instance_id"],
+                    "record_json": _canonical(candidate),
+                    "reason": "current_state:" + reason,
+                }
+            )
 
     def _validate(self, candidate):
         table, key, _ = self._table_key(candidate)
@@ -439,9 +563,12 @@ class CurrentResources:
             _check_schema,
         )
 
+        validation_cache = getattr(self, "_page_validation_cache", None)
         if "acquisition_scope" in candidate:
             _acquisition_shape(
-                candidate["acquisition_scope"], candidate.get("service_instance_uuidv4")
+                candidate["acquisition_scope"],
+                candidate.get("service_instance_uuidv4"),
+                validation_cache=validation_cache,
             )
         if "metadata" in candidate:
             table, _, _ = self._table_key(candidate)
@@ -451,7 +578,12 @@ class CurrentResources:
                 validate_field_evidence,
             )
 
-            validate_field_evidence(self.c, candidate["field_evidence"], candidate)
+            validate_field_evidence(
+                self.c,
+                candidate["field_evidence"],
+                candidate,
+                dependency_cache=validation_cache,
+            )
             if set(candidate["field_evidence"]) - _field_values(candidate).keys():
                 raise CatalogError(
                     "INVALID_CURRENT_RESOURCE", "Evidence refers to an absent field"
@@ -477,7 +609,9 @@ class CurrentResources:
             validate_current_candidate_shape,
         )
 
-        validate_current_candidate_shape(table, candidate)
+        validate_current_candidate_shape(
+            table, candidate, validation_cache=validation_cache
+        )
         return table, key
 
     def _missing(self, candidate, *, source="import"):
@@ -497,7 +631,7 @@ class CurrentResources:
                 required.add("parent_provider_resource_id")
         if any(name not in candidate or candidate[name] is None for name in required):
             return "missing resource fields"
-        binding = self._one(
+        binding = self._page_stable_one(
             "SELECT * FROM repository_bindings WHERE repository_binding_id=?",
             (candidate["repository_binding_id"],),
         )
@@ -535,7 +669,7 @@ class CurrentResources:
                     "Comment does not match its Issue membership",
                 )
         if candidate["kind"] in ("review", "review-comment"):
-            owner = self._one(
+            owner = self._page_stable_one(
                 "SELECT * FROM change_requests WHERE change_request_id=?",
                 (candidate["change_request_id"],),
             )
@@ -565,7 +699,7 @@ class CurrentResources:
             thread = candidate.get("review_thread_provider_resource_id")
             if (
                 thread is not None
-                and self._one(
+                and self._page_stable_one(
                     "SELECT 1 FROM review_threads WHERE change_request_id=? AND provider_resource_id=?",
                     (candidate["change_request_id"], thread),
                 )
@@ -589,6 +723,7 @@ class CurrentResources:
                 "Live capture differs from current membership",
             )
         try:
+            dependency_cache = getattr(self, "_page_validation_cache", None)
             missing_capture = validate_acquisition_scope(
                 self.c,
                 scope,
@@ -598,9 +733,13 @@ class CurrentResources:
                 if detached
                 else candidate["repository_binding_id"],
                 allow_snapshot=detached,
+                dependency_cache=dependency_cache,
             )
             missing_fields = validate_field_evidence(
-                self.c, candidate.get("field_evidence", {}), candidate
+                self.c,
+                candidate.get("field_evidence", {}),
+                candidate,
+                dependency_cache=dependency_cache,
             )
         except JsonContractError as error:
             raise CatalogError(
@@ -666,7 +805,15 @@ class CurrentResources:
 
     def _write(self, table, candidate, previous):
         body = candidate["body"]
-        digest = intern_text_body(self.c, body) if body is not None else None
+        digest = (
+            intern_text_body(
+                self.c,
+                body,
+                identity_cache=getattr(self, "_page_body_identity_cache", None),
+            )
+            if body is not None
+            else None
+        )
         values = dict(candidate)
         values.pop("body")
         values["text_body_sha256"] = digest
@@ -729,6 +876,84 @@ class CurrentResources:
                 scope_context=scope_context,
             )
 
+    def admit_live_page(self, candidates, *, base_revision):
+        """Admit one review-comment page atomically and resolve dependencies once.
+
+        Validation and admission still run for every resource. The surrounding
+        collector page transaction can include its coverage and cursor writes in
+        the same rollback boundary. A page-scoped cache reuses only identity and
+        capture lookups against tables this page cannot mutate; the savepoint
+        also avoids a transaction and staging scan for every comment.
+        """
+        incoming = [dict(candidate) for candidate in candidates]
+        if any(candidate.get("kind") != "review-comment" for candidate in incoming):
+            raise ValueError("Live resource pages only admit review comments")
+        if not incoming:
+            return []
+
+        results = []
+        unset = object()
+        prior_validation_cache = getattr(self, "_page_validation_cache", unset)
+        prior_query_cache = getattr(self, "_page_stable_query_cache", unset)
+        prior_revision = getattr(self, "_page_current_revision", unset)
+        prior_current_rows = getattr(self, "_page_current_rows_cache", unset)
+        prior_body_cache = getattr(self, "_page_body_identity_cache", unset)
+        prior_staging_cache = getattr(self, "_page_staging_cache", unset)
+        self._page_validation_cache = {}
+        self._page_stable_query_cache = {}
+        self._page_body_identity_cache = {}
+        self._page_current_rows_cache = {}
+        self._page_staging_cache = {}
+        try:
+            with self._transaction():
+                self._page_current_revision = self._one(
+                    "SELECT db_instance_id,local_revision FROM database_identity WHERE singleton=1"
+                )
+                for candidate in incoming:
+                    self._validate(candidate)
+                    if "deleted" in candidate:
+                        candidate["deleted"] = int(candidate["deleted"])
+                self._page_current_rows_cache = self._page_current_rows(incoming)
+                self._page_staging_cache = self._page_staging_rows(incoming)
+                for candidate in incoming:
+                    key = tuple(resource_key(candidate))
+                    results.append(
+                        self._admit(
+                            candidate,
+                            source="live",
+                            base_revision=base_revision,
+                            scope_context=candidate["acquisition_scope"],
+                        )
+                    )
+                    self._page_current_rows_cache.pop(key, None)
+                self._promote_staging()
+        finally:
+            if prior_validation_cache is unset:
+                del self._page_validation_cache
+            else:
+                self._page_validation_cache = prior_validation_cache
+            if prior_query_cache is unset:
+                del self._page_stable_query_cache
+            else:
+                self._page_stable_query_cache = prior_query_cache
+            if prior_revision is unset:
+                del self._page_current_revision
+            else:
+                self._page_current_revision = prior_revision
+            if prior_current_rows is unset:
+                del self._page_current_rows_cache
+            else:
+                self._page_current_rows_cache = prior_current_rows
+            if prior_body_cache is unset:
+                del self._page_body_identity_cache
+            else:
+                self._page_body_identity_cache = prior_body_cache
+            if prior_staging_cache is unset:
+                del self._page_staging_cache
+            else:
+                self._page_staging_cache = prior_staging_cache
+        return results
+
     def _observation_evidence(self, incoming):
         if "field_evidence" in incoming:
             return dict(incoming["field_evidence"])
@@ -759,7 +984,9 @@ class CurrentResources:
             )
         )
 
-    def _merge_fields(self, incoming, previous, authoritative):
+    def _merge_fields(
+        self, incoming, previous, authoritative, *, observation_evidence=None
+    ):
         # Defaults permit nullable physical columns; only paths with evidence
         # assert knowledge. Inherited fields keep their own capture and clock.
         context = {
@@ -782,7 +1009,11 @@ class CurrentResources:
         candidate["metadata"] = json.loads(_canonical(candidate.get("metadata", {})))
         evidence = dict(previous.get("field_evidence", {})) if previous else {}
         values = _field_values(incoming)
-        supplied = self._observation_evidence(incoming)
+        supplied = (
+            self._observation_evidence(incoming)
+            if observation_evidence is None
+            else observation_evidence
+        )
         old_values = _field_values(previous) if previous else {}
         conflict = stale = False
         blocked = []
@@ -791,6 +1022,7 @@ class CurrentResources:
             if any(parts[: len(prefix)] == prefix for prefix in blocked):
                 continue
             value, proof = values[path], supplied[path]
+            empty_object = value == () and _empty_metadata_object(incoming, parts)
             old_proof = evidence.get(path)
             old_value = old_values.get(path)
             equal = old_proof is not None and _equal_field(old_value, value)
@@ -803,8 +1035,13 @@ class CurrentResources:
                 if len(json.loads(key)) > len(parts)
                 and json.loads(key)[: len(parts)] == parts
             ]
+            # An explicit empty object removes its previously known descendants.
+            # Treat that as a value change and order it against every removed
+            # proof; an unfenced observation cannot silently clear them.
+            if empty_object and descendants:
+                equal = False
             orders = [order]
-            if value != ():
+            if value != () or empty_object:
                 orders.extend(
                     self._clock_order(proof, evidence[key]) for key in descendants
                 )
@@ -823,8 +1060,8 @@ class CurrentResources:
                 and not self._stronger_evidence(proof, old_proof)
             ):
                 continue
-            _apply_field(candidate, path, value)
-            if value != ():
+            _apply_field(candidate, path, value, empty_object=empty_object)
+            if value != () or empty_object:
                 for key in descendants:
                     evidence.pop(key, None)
             evidence[path] = proof
@@ -915,18 +1152,27 @@ class CurrentResources:
 
     def _admit(self, incoming, *, source, base_revision, scope_context):
         table, key, where = self._table_key(incoming)
-        stored = self._one(f"SELECT * FROM {table} WHERE {where}", tuple(key))
+        page_rows = getattr(self, "_page_current_rows_cache", None)
+        row_key = tuple(key)
+        stored = (
+            page_rows[row_key]
+            if page_rows is not None and row_key in page_rows
+            else self._one(f"SELECT * FROM {table} WHERE {where}", tuple(key))
+        )
         previous = self.candidate_from_row(table, stored) if stored else None
         complete = self._complete(incoming, previous)
-        complete["field_evidence"] = self._observation_evidence(incoming)
+        evidence = self._observation_evidence(incoming)
+        complete["field_evidence"] = evidence
         digest = fingerprint_candidate(incoming)
         missing = self._missing(complete, source=source)
         if missing:
             self._stage(complete, "missing_dependency")
             return AdmissionResult("missing_dependency", key, digest, missing)
-        revision = self._one(
-            "SELECT db_instance_id,local_revision FROM database_identity WHERE singleton=1"
-        )
+        revision = getattr(self, "_page_current_revision", None)
+        if revision is None:
+            revision = self._one(
+                "SELECT db_instance_id,local_revision FROM database_identity WHERE singleton=1"
+            )
         authoritative = (
             source == "live"
             and base_revision is not None
@@ -935,7 +1181,10 @@ class CurrentResources:
             and dict(scope_context) == complete["acquisition_scope"]
         )
         candidate, conflict, stale = self._merge_fields(
-            incoming, previous, authoritative
+            incoming,
+            previous,
+            authoritative,
+            observation_evidence=evidence,
         )
         order = self._clock_order(incoming, previous or {})
         structural_change = previous is not None and any(
@@ -949,8 +1198,8 @@ class CurrentResources:
                 stale = True
             elif not authoritative:
                 conflict = True
-        alternative = self._complete(incoming, None)
-        alternative["field_evidence"] = self._observation_evidence(incoming)
+        alternative = complete if previous is None else self._complete(incoming, None)
+        alternative["field_evidence"] = evidence
         if conflict:
             self._retain_equal_evidence(table, incoming, previous)
             self._stage(alternative, "conflict")
@@ -960,17 +1209,19 @@ class CurrentResources:
         # Refresh the same semantic alternative's evidence even if another
         # candidate remains unordered. Known clocks can also disprove a fork.
         alternative_hash = fingerprint_candidate(alternative)
-        if any(
+        stages = self._stages(alternative)
+        matching_alternative = any(
             stage["content_sha256"].hex() == alternative_hash
             or incoming["kind"] == "issue-comment"
             and fingerprint_candidate(
                 self._project_child_membership(json.loads(stage["record_json"]))
             )
             == alternative_hash
-            for stage in self._stages(alternative)
-        ):
+            for stage in stages
+        )
+        if matching_alternative:
             self._stage(alternative, "conflict")
-        stages = self._stages(candidate)
+            stages = self._stages(candidate)
         unresolved = []
         for stage in stages:
             if stage["reason"] != "current_state:conflict":
@@ -979,7 +1230,7 @@ class CurrentResources:
             if not self._dominates(
                 candidate,
                 other,
-                self._observation_evidence(incoming) if authoritative else (),
+                evidence if authoritative else (),
             ):
                 unresolved.append(stage)
         if unresolved:
@@ -1036,10 +1287,33 @@ class CurrentResources:
                 )
         if previous is None or _canonical(candidate) != _canonical(previous):
             self._write(table, candidate, previous)
-        self.c.execute(
-            "DELETE FROM exchange_staging WHERE record_key=? AND reason IN ('current_state:conflict','current_state:missing_dependency')",
-            (self._stage_key(candidate),),
-        )
+        stage_key = self._stage_key(candidate)
+        page_staging = getattr(self, "_page_staging_cache", None)
+        if page_staging is None:
+            self.c.execute(
+                "DELETE FROM exchange_staging WHERE record_key=? AND reason IN ('current_state:conflict','current_state:missing_dependency')",
+                (stage_key,),
+            )
+        else:
+            staged = self._stages(candidate)
+            if any(
+                stage["reason"]
+                in ("current_state:conflict", "current_state:missing_dependency")
+                for stage in staged
+            ):
+                self.c.execute(
+                    "DELETE FROM exchange_staging WHERE record_key=? AND reason IN ('current_state:conflict','current_state:missing_dependency')",
+                    (stage_key,),
+                )
+                page_staging[stage_key] = [
+                    stage
+                    for stage in staged
+                    if stage["reason"]
+                    not in (
+                        "current_state:conflict",
+                        "current_state:missing_dependency",
+                    )
+                ]
         if equal:
             return AdmissionResult(
                 "stale" if stale and candidate == previous else "identical", key, digest
@@ -1071,6 +1345,9 @@ class CurrentResources:
                         "DELETE FROM exchange_staging WHERE record_key=? AND content_sha256=?",
                         (stage["record_key"], stage["content_sha256"]),
                     )
+                    self._page_forget_staging(
+                        stage["record_key"], stage["content_sha256"]
+                    )
                     result = self.admit(candidate, source="import")
                 except (CatalogError, sqlite3.IntegrityError) as error:
                     self.c.execute("ROLLBACK TO current_resource_promotion")
@@ -1085,6 +1362,12 @@ class CurrentResources:
                         "UPDATE exchange_staging SET reason='current_state:invalid' WHERE record_key=? AND content_sha256=?",
                         (stage["record_key"], stage["content_sha256"]),
                     )
+                    page_staging = getattr(self, "_page_staging_cache", None)
+                    if page_staging is not None:
+                        page_staging[stage["record_key"]] = self._all(
+                            "SELECT * FROM exchange_staging WHERE record_key=? AND reason LIKE 'current_state:%'",
+                            (stage["record_key"],),
+                        )
                     continue
                 self.c.execute("RELEASE current_resource_promotion")
                 if result.status in ("accepted", "identical", "stale"):

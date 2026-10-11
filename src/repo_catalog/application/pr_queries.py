@@ -335,6 +335,24 @@ def _code_observation(query, pr):
     return selected[0] if len(signatures) == 1 else None
 
 
+def _code_listing_complete(query, code, kind):
+    listing_id = code.get(
+        "commit_code_listing_id" if kind == "commits" else "file_code_listing_id"
+    )
+    if listing_id is None:
+        return False
+    progress = query.s.one(
+        "SELECT state,terminal,context_proven FROM code_listing_progress WHERE code_listing_id=?",
+        (listing_id,),
+    )
+    return bool(
+        progress
+        and progress["state"] == "complete"
+        and progress["terminal"] == 1
+        and progress["context_proven"] == 1
+    )
+
+
 def code_role_gaps(store, pr, code, *, check):
     required = {
         role: (code["object_format"], code[role + "_oid"])
@@ -399,15 +417,22 @@ def prepare_pr_coverage(query, command, options):
     from repo_catalog.application.repository_identity import pr_applicable
     from repo_catalog.domain.pr_scope import document_scope_includes
 
-    documents_only = command in {
-        "pr documents",
-        "search pr",
-        "pr thread",
-        "pr threads",
-    } and not any(options.get(k) is not None for k in ("commit", "path", "path_b64"))
+    documents_only = command in {"pr documents", "search pr"} or (
+        command in {"pr thread", "pr threads"}
+        and not any(options.get(k) is not None for k in ("commit", "path", "path_b64"))
+    )
     current_only_review = command in {"pr documents", "search pr"} and options.get(
         "document_kind"
     ) in {"review", "review-comment"}
+    exact_metadata_selector = command in {"pr documents", "search pr"} and any(
+        options.get(key) is not None for key in ("commit", "path", "path_b64")
+    )
+    required_metadata_kinds = set()
+    if exact_metadata_selector:
+        if options.get("commit") is not None:
+            required_metadata_kinds.add("pr-commits")
+        if options.get("path") is not None or options.get("path_b64") is not None:
+            required_metadata_kinds.add("pr-files")
     if command != "pr thread":
         for repo in query.repos(options):
             if not pr_applicable(query.s, repo["repository_uuidv4"]):
@@ -502,6 +527,7 @@ def prepare_pr_coverage(query, command, options):
             if (
                 documents_only
                 and not document_scope_includes(scope["kind"])
+                and scope["kind"] not in required_metadata_kinds
                 or kinds is not None
                 and scope["kind"] not in kinds
                 and scope["kind"]
@@ -536,6 +562,7 @@ def prepare_pr_coverage(query, command, options):
             if (
                 documents_only
                 and not document_scope_includes(collection["kind"])
+                and collection["kind"] not in required_metadata_kinds
                 or kinds is not None
                 and collection["kind"] not in kinds
                 and collection["kind"]
@@ -611,7 +638,32 @@ def prepare_pr_coverage(query, command, options):
                                 "provider_change_request_document_id"
                             ],
                         )
-        if not documents_only:
+        if exact_metadata_selector:
+            code = _code_observation(query, pr)
+            if code is None:
+                query.coverage.add(
+                    "pr",
+                    "code_assessment_missing",
+                    change_request_id=pr["change_request_id"],
+                )
+            else:
+                required_listings = []
+                if options.get("commit") is not None:
+                    required_listings.append("commits")
+                if (
+                    options.get("path") is not None
+                    or options.get("path_b64") is not None
+                ):
+                    required_listings.append("files")
+                for kind in required_listings:
+                    if not _code_listing_complete(query, code, kind):
+                        query.coverage.add(
+                            "pr",
+                            "code_assessment_incomplete",
+                            code_assessment_id=code["code_assessment_id"],
+                            listing_kind=kind,
+                        )
+        elif not documents_only:
             code = _code_observation(query, pr)
             expects_code = bool(
                 state
@@ -677,7 +729,24 @@ def pr_query(query, command, options):
             continue
         if any(options.get(k) is not None for k in ("commit", "path", "path_b64")):
             code = _code_observation(query, pr)
-            if code is None or code["state"] != "complete":
+            metadata_selector = command in {"pr documents", "search pr"}
+            if code is None:
+                continue
+            if metadata_selector:
+                required_listings = []
+                if options.get("commit") is not None:
+                    required_listings.append("commits")
+                if (
+                    options.get("path") is not None
+                    or options.get("path_b64") is not None
+                ):
+                    required_listings.append("files")
+                if any(
+                    not _code_listing_complete(query, code, kind)
+                    for kind in required_listings
+                ):
+                    continue
+            elif code["state"] != "complete":
                 continue
             if options.get("commit"):
                 from repo_catalog.domain.models import GitOid

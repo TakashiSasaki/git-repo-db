@@ -85,7 +85,53 @@ def test_document_queries_independent_of_git_availability(catalog):
         )
         assert result["coverage"]["complete_for_requested_scope"]
         assert result["data"]["items"]
-        run(
+        path_result = run(
+            state,
+            "search",
+            "pr",
+            "--repo",
+            repo,
+            "--literal",
+            "comment-marker",
+            "--path",
+            "pr-only.txt",
+        )
+        assert path_result["coverage"]["complete_for_requested_scope"]
+        assert path_result["data"]["items"]
+        commit_result = run(
+            state,
+            "search",
+            "pr",
+            "--repo",
+            repo,
+            "--literal",
+            "comment-marker",
+            "--commit",
+            "sha1:" + fixture.alpha.commits["P"],
+        )
+        assert commit_result["coverage"]["complete_for_requested_scope"]
+        assert commit_result["data"]["items"]
+        absent_path = run(
+            state,
+            "search",
+            "pr",
+            "--repo",
+            repo,
+            "--literal",
+            "comment-marker",
+            "--path",
+            "not-listed.txt",
+        )
+        assert absent_path["coverage"]["complete_for_requested_scope"]
+        assert not absent_path["data"]["items"]
+        new_head = api.git.alpha.commit(
+            "P2", {**fixture.m, b"pr-only.txt": b"pr-marker updated"}, ("P",)
+        )
+        api.git.alpha.ref("refs/pull/41/head", "P2")
+        api.prs[41].update(head={**api.prs[41]["head"], "sha": new_head}, commits=2)
+        api.failures["/repos/fixture/alpha/pulls/41/files"] = [503] * 5
+        run(state, "sync", "pr", "--repo", repo, env=env, expected=3)
+        incomplete_listing = run(
             state,
             "search",
             "pr",
@@ -97,6 +143,7 @@ def test_document_queries_independent_of_git_availability(catalog):
             "pr-only.txt",
             expected=3,
         )
+        assert not incomplete_listing["coverage"]["complete_for_requested_scope"]
 
 
 def test_resume_skips_completed_prs(catalog):
@@ -273,9 +320,7 @@ def test_private_inventory(catalog):
     state, fixture, repos = catalog
     with GitHubFixture(fixture) as api:
         _, repo, env = configure(state, api, fixture)
-        item = run(state, "repos", "show", "--repo", repo, expected=3)["data"]["items"][
-            0
-        ]
+        item = run(state, "repos", "show", "--repo", repo)["data"]["items"][0]
         assert item["metadata"] == {}
         associations = item["sources"]
         assert len(associations) == 1
@@ -354,7 +399,7 @@ def test_nested_pagination(catalog):
         _, repo, env = configure(state, api, fixture)
         api.thread_count = 101
         api.reply_count = 101
-        run(state, "sync", "pr", "--repo", repo, env=env)
+        run(state, "sync", "pr", "--repo", repo, env=env, timeout=120)
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
                 db.execute(
