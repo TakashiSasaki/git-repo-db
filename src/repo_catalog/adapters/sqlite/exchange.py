@@ -1601,6 +1601,88 @@ class Graph:
                 required.update(code["requires"])
         return required
 
+    def historical_page_boundaries(
+        self, collection_rows, fetch_rows, *, root_collection_id
+    ):
+        """Validate admitted page sequence independently of a marker assertion.
+
+        Flat historical REST pages must form one terminal sequence. Thread roots
+        also contain accepted partial GraphQL responses: their raw advertised
+        cursor can be terminal despite errors. Their paired current receipts
+        carry the interpreted retry/terminal boundary and are checked separately
+        by ``current_page_requirements``. An unrelated current receipt cannot
+        substitute for a flat historical page's continuation.
+        """
+        by_collection = defaultdict(list)
+        for fetch in fetch_rows:
+            by_collection[fetch["fetch_collection_id"]].append(fetch)
+        for collection in collection_rows:
+            collection_id = collection["fetch_collection_id"]
+            pages = by_collection[collection_id]
+            if not pages:
+                if (
+                    collection_id == root_collection_id
+                    or collection["kind"] != "thread-comments"
+                    or not self.matching(
+                        "current_collection_pages",
+                        ("fetch_collection_id",),
+                        (collection_id,),
+                    )
+                ):
+                    return False
+                continue  # Current-only child receipts have their own proof.
+            ordinals = {page["ordinal"] for page in pages}
+            if ordinals != set(range(len(pages))):
+                return False
+            if collection["kind"] == "threads":
+                receipts = self.matching(
+                    "current_collection_pages",
+                    ("fetch_collection_id",),
+                    (collection_id,),
+                )
+                if receipts:
+                    if {page["ordinal"] for page in receipts} != ordinals:
+                        return False
+                    by_ordinal = {page["ordinal"]: page for page in receipts}
+                    for page in pages:
+                        receipt = by_ordinal[page["ordinal"]]
+                        if receipt["observed_at_us"] != page["observed_at_us"]:
+                            return False
+                        if receipt["next_cursor"] == page["next_cursor"]:
+                            continue
+                        # Only an accepted partial root can replace an advertised
+                        # boundary with a nonterminal interpreted retry boundary.
+                        if receipt["next_cursor"] is None:
+                            return False
+                        raw = self.lookup(
+                            "stored_bytes", ("sha256",), (page["payload_sha256"],)
+                        )
+                        from repo_catalog.adapters.sqlite.cas_integrity import (
+                            is_quarantined,
+                        )
+
+                        if (
+                            raw is None
+                            or hashlib.sha256(raw["body"]).digest()
+                            != page["payload_sha256"]
+                            or len(raw["body"]) != raw["byte_length"]
+                            or is_quarantined(self.db, page["payload_sha256"])
+                        ):
+                            return False
+                        try:
+                            payload = json.loads(raw["body"])
+                        except (ValueError, UnicodeError):
+                            return False
+                        if not isinstance(payload, dict) or not payload.get("errors"):
+                            return False
+                    continue
+            if any(
+                (page["next_cursor"] is None) != (page["ordinal"] == len(pages) - 1)
+                for page in pages
+            ):
+                return False
+        return True
+
     def proof_requirements(self, table, row):
         """Derive proof from immutable portable evidence, never envelope hints.
 
@@ -1661,6 +1743,7 @@ class Graph:
                 ("resume_scope_id",),
                 (root_collection["resume_scope_id"],),
             )
+            collection_rows = []
             for collection_id in collection_ids:
                 collection = require(
                     "fetch_collections", ("fetch_collection_id",), (collection_id,)
@@ -1674,6 +1757,7 @@ class Graph:
                     or collection["source_id"] != root_collection["source_id"]
                 ):
                     return None
+                collection_rows.append(collection)
                 if collection_id != row["fetch_collection_id"]:
                     context = self.lookup(
                         "resume_scopes",
@@ -1714,6 +1798,12 @@ class Graph:
             if set(manifest) != {
                 item["fetch_occurrence_uuidv4"] for item in actual_rows
             }:
+                return None
+            if not validation and not self.historical_page_boundaries(
+                collection_rows,
+                actual_rows,
+                root_collection_id=row["fetch_collection_id"],
+            ):
                 return None
             observations = []
             page_manifest = evidence.get("current_page_collections", [])
@@ -3557,6 +3647,11 @@ class Graph:
                             "INSERT OR IGNORE INTO exchange_selection_blocks VALUES(?,?,?)",
                             (kind, scope[col], key),
                         )
+        # Cleanup and pending selection barriers above apply even when there
+        # are no local conflict seeds. Without a seed, dependency propagation
+        # cannot add a result/coverage barrier; avoid materializing the catalog.
+        if not blocked:
+            return
         from repo_catalog.adapters.sqlite.json_contracts import reference_dependencies
 
         # Build dependency edges once, then propagate with a queue. Shared

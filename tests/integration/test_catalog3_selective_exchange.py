@@ -29,7 +29,7 @@ from tests.support.github_runtime import github_runtime as github_runtime
 
 
 def history(db, *, count=3):
-    expected = fixture(db, body=b"F0")
+    expected = fixture(db, body=b"F0", next_cursor="page:1" if count > 1 else None)
     first = db.execute(
         "SELECT fetch_collection_id FROM fetch_occurrences WHERE fetch_occurrence_uuidv4=?",
         (expected["fetch"],),
@@ -44,13 +44,14 @@ def history(db, *, count=3):
         fetch_uuid = uid()
         ref = intern_payload(db, f"F{ordinal}".encode(), representation="decoded_api")
         local = db.execute(
-            "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,'{}',?,0)",
+            "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,?,?,?,'{}',?,?,0)",
             (
                 fetch_uuid,
                 expected["repository"],
                 first,
                 ordinal,
                 *ref.parameters(),
+                f"page:{ordinal + 1}" if ordinal + 1 < count else None,
                 ordinal,
             ),
         ).lastrowid

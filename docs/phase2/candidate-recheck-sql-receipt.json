@@ -1,0 +1,51 @@
+{
+  "actual_sql_results": {
+    "coverage_claim_columns": [
+      "coverage_claim_id",
+      "coverage_scope_id",
+      "coverage_state",
+      "observed_at_us",
+      "details_json"
+    ],
+    "coverage_contract_preserved": true,
+    "duplicate_pr_natural_identity_rejected": true,
+    "duplicate_provider_binding_rejected": true,
+    "empty_scope_state": [
+      [
+        null,
+        "unknown"
+      ]
+    ],
+    "gitlink_missing_target_admitted": true,
+    "nonnumeric_epoch_rejected": true,
+    "null_repository_identity_rejected": true,
+    "same_numeric_issue_comment_identity_admitted": true,
+    "sourceless_publication_unknown_repository_rejected": true,
+    "unknown_plus_complete_state": "complete"
+  },
+  "ddl_sha256": "0d8a03e841f0c2517c2a591943f8d012db9a664b6f9e7a8714f2aaa74643db1e",
+  "execution": {
+    "base_feature_sha": "52a36cab26f2287591ff9296cac151fe135cc55a",
+    "command": "PYTHONPATH=src:. /workspace/test-efficiency/.venv/bin/python docs/phase2/prototypes/independent_schema_attacks.py --ddl docs/phase2/prototypes/candidate.sql --output artifacts/completeness-recheck/sql.json",
+    "executor": "/root/completeness",
+    "exit_code": 0,
+    "role": "Candidate author recheck of an independently authored attack script; not an independent approval.",
+    "runtime": {
+      "python": "3.12.14",
+      "sqlite": "3.53.1"
+    },
+    "scope": "Disposable illustrative candidate only; no production acceptance or performance comparison.",
+    "source_revision": {
+      "head": "a14ae9e9fd8e2a77b1a613298359e5f5341f50d2",
+      "tracked_changes": false,
+      "tree": "3418e52ef4b6038c37363bc7a6cbfc19d1da78b7"
+    }
+  },
+  "kind": "independent-candidate-sql-contract-attacks-v1",
+  "limits": [
+    "SQL-only attacks; application validator may reject additional rows.",
+    "Candidate DDL remains illustrative and unapproved."
+  ],
+  "script_sha256": "59b0a8b1910c4e627013ca331bfb5af99f2f524e271299e56e6a454a7f1c1843",
+  "sqlite": "3.53.1"
+}

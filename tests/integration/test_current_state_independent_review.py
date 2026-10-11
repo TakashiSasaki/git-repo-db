@@ -488,7 +488,7 @@ def test_unexpected_recorder_failure_is_reported_without_blocking_current_admiss
         response.json()[0], context, response.extensions["catalog_observed_at_us"]
     )
     assert projection["parser_module"] == current_parser.__name__
-    assert projection["parser_version"] == "1"
+    assert projection["parser_version"] == current_parser.PARSER_VERSION
     projection["parsed_at_us"] = 0
     assert (
         CurrentResources(catalog.store).admit(projection, source="import").status

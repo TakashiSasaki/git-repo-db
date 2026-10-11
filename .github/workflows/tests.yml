@@ -56,7 +56,7 @@ jobs:
       - name: Current catalog3 checks (offline)
         if: steps.plan.outputs.tests == 'true'
         run: uv run --no-sync python scripts/ci_execute.py run --lane tests
-      - name: Installed wheel and sdist checks (offline, sequential)
+      - name: Installed wheel and sdist checks (offline, isolated parallel workers)
         if: steps.plan.outputs.packaging == 'true'
         run: uv run --no-sync python scripts/ci_execute.py run --lane packaging
       - name: Reconcile selected checks and report unexecuted coverage

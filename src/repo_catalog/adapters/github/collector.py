@@ -125,8 +125,10 @@ class GitHubCollector:
         ordinal = previous["ordinal"] + 1 if previous else 0
         page_url = previous["next_cursor"] if previous else url
         seen = set()
+        response, uncommitted, resource_observed = None, False, False
         try:
             while page_url:
+                response, uncommitted, resource_observed = None, False, False
                 self.token.check()
                 if page_url in seen:
                     raise CatalogError(
@@ -148,12 +150,16 @@ class GitHubCollector:
                         ],
                     },
                 )
-                timestamp = response.extensions.get("catalog_observed_at_us", now_us())
+                uncommitted = True
+                timestamp = self.facts.response_time(response)
                 values = self.rest_json(response)
                 if not isinstance(values, list):
                     raise CatalogError(
                         "API_SCHEMA", "Current collection response must be a list"
                     )
+                resource_observed = not values or any(
+                    self.current_resource_identified(value, kind) for value in values
+                )
                 next_url = self.http.next_url(response)
                 from repo_catalog.adapters.git.runner import hook
 
@@ -199,6 +205,7 @@ class GitHubCollector:
                         (next_url, collection["fetch_collection_id"]),
                     )
                     self.facts.publish()
+                uncommitted = False
                 hook("after_api_page_commit")
                 ordinal += 1
                 page_url = next_url
@@ -220,12 +227,39 @@ class GitHubCollector:
         except CatalogError as error:
             with s.transaction():
                 self.facts.fence(job)
-                self.facts.partial(collection, error.code)
-                self.collection_coverage(
-                    repo, pr, kind, collection, "partial", reason=error.code
+                self.facts.partial(
+                    collection,
+                    error.code,
+                    observed_at_us=self.facts.response_time(response)
+                    if response is not None
+                    and uncommitted
+                    and resource_observed
+                    and error.code
+                    not in ("CANCELLED", "STALE_ATTEMPT", "SCOPE_MISMATCH")
+                    else None,
                 )
+                if error.code not in ("CANCELLED", "STALE_ATTEMPT") or (
+                    self.facts.pending_response(collection)
+                ):
+                    self.collection_coverage(
+                        repo, pr, kind, collection, "partial", reason=error.code
+                    )
                 self.facts.publish()
             raise
+
+    @staticmethod
+    def current_resource_identified(value, kind):
+        """Recognize an observed resource without admitting its rejected values."""
+        if not isinstance(value, dict) or kind == "issue" and "pull_request" in value:
+            return False
+        try:
+            current_parser.resource_id(value)
+        except CatalogError:
+            return False
+        if kind == "issue":
+            number = value.get("number")
+            return type(number) is int and 0 < number < 1 << 63
+        return True
 
     def current_members_unresolved(self, collection_id):
         from repo_catalog.adapters.sqlite.current_collections import (
@@ -2202,8 +2236,16 @@ class GitHubCollector:
             with s.transaction():
                 self.facts.fence(job)
                 observed = s.one(
-                    "SELECT MAX(p.observed_at_us) FROM current_collection_pages p JOIN collection_progress c USING(fetch_collection_id) JOIN fetch_collections f USING(fetch_collection_id) WHERE c.job_id=? AND f.repository_uuidv4=? AND f.kind IN ('issue','ordinary-issue-comment')",
-                    (job, repo["repository_uuidv4"]),
+                    "WITH scoped AS (SELECT f.fetch_collection_id FROM fetch_collections f "
+                    "JOIN collection_progress c USING(fetch_collection_id) "
+                    "WHERE c.job_id=? AND f.repository_uuidv4=? AND f.source_id=? "
+                    "AND f.kind IN ('issue','ordinary-issue-comment')) "
+                    "SELECT MAX(observed_at_us) FROM ("
+                    "SELECT p.observed_at_us FROM scoped JOIN current_collection_pages p "
+                    "USING(fetch_collection_id) UNION ALL "
+                    "SELECT m.observed_at_us FROM scoped JOIN completion_markers m "
+                    "USING(fetch_collection_id) WHERE m.asserted_state='partial' AND ?)",
+                    (job, repo["repository_uuidv4"], repo["source_id"], bool(failures)),
                 )[0]
                 self.coverage_claim(
                     repo["repository_uuidv4"],

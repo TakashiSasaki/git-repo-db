@@ -1,0 +1,43 @@
+{
+  "actual_results": {
+    "declared_limits_reproduced": {
+      "publication_seal_exact_membership_not_enforced": true
+    },
+    "validated_constraints": {
+      "current_receipt_before_mutation": true,
+      "field_module_origin_mismatch_rejected": true,
+      "old_current_receipt_does_not_require_edit_history": true,
+      "tampered_retained_head_rejected": true,
+      "valid_modeled_pr_member": true,
+      "wrong_captured_thread_rejected": true
+    }
+  },
+  "execution": {
+    "base_feature_sha": "52a36cab26f2287591ff9296cac151fe135cc55a",
+    "command": "PYTHONPATH=src:. /workspace/test-efficiency/.venv/bin/python docs/phase2/prototypes/independent_candidate_validation.py --prototype-dir docs/phase2/prototypes --output artifacts/completeness-recheck/validator.json",
+    "executor": "/root/completeness",
+    "exit_code": 0,
+    "role": "Candidate author recheck of an independently authored attack script; not an independent approval.",
+    "runtime": {
+      "python": "3.12.14",
+      "sqlite": "3.53.1"
+    },
+    "scope": "Disposable illustrative candidate only; no production acceptance or performance comparison.",
+    "source_revision": {
+      "head": "a14ae9e9fd8e2a77b1a613298359e5f5341f50d2",
+      "tracked_changes": false,
+      "tree": "3418e52ef4b6038c37363bc7a6cbfc19d1da78b7"
+    }
+  },
+  "files_sha256": {
+    "candidate.sql": "0d8a03e841f0c2517c2a591943f8d012db9a664b6f9e7a8714f2aaa74643db1e",
+    "candidate_probe.py": "cf5317b9ab9dcfbac7d47b79e69b97dc9ca97b5558e98002fa9393f1a23dfd0e"
+  },
+  "kind": "independent-candidate-validator-attacks-v1",
+  "limits": [
+    "Candidate is Proposed/Pending Owner Decision, not production.",
+    "Declared limits require chosen-model admission rules before production use.",
+    "Value digest checks do not validate parser authenticity or new Exchange trust."
+  ],
+  "script_sha256": "e8f89420481478133ccc9d04e2cfe83042c5a0a203ee3949a00efc39d0dc339d"
+}

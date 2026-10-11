@@ -1,0 +1,194 @@
+{
+  "acquisition_component_characterization": {
+    "base_sha": "52a36cab26f2287591ff9296cac151fe135cc55a",
+    "bootstrap_override": false,
+    "branch": "audit/phase2-acquisition-recheck-20261010",
+    "checks": [
+      "targeted Ruff lint passed",
+      "targeted Ruff format check passed",
+      "git diff --check passed"
+    ],
+    "command": "env -u REPO_CATALOG_TEST_BOOTSTRAP PYTHONPATH=/workspace/recheck-acquisition/src:/workspace/recheck-acquisition /workspace/test-efficiency/.venv/bin/python -m pytest docs/phase2/prototypes/test_acquisition_characterization.py -q --junitxml=/tmp/p2-acquisition-recheck-8517b3f.xml",
+    "file_sha256": {
+      "docs/phase2/prototypes/test_acquisition_characterization.py": "6af277d89f64613f7ff47b5a958c59b9d624bbfc906c7607e1c27796baf0f68c"
+    },
+    "kind": "optional-saved-root-role-presence-restart-characterization",
+    "limits": [
+      "No production change or deferred cache/checkpoint decision.",
+      "Focused prototype file only; no full acceptance or benchmark.",
+      "Supplementary receipt is outside the committed tree."
+    ],
+    "loaded_collector": "/workspace/recheck-acquisition/src/repo_catalog/adapters/github/collector.py",
+    "new_nodeids": [
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[merge-omitted]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[merge-null]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[test-merge-omitted]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[test-merge-null]"
+    ],
+    "nodeids": [
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_current_receipts_restart_committed_prefix_without_original",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_is_reused_with_old_observation_for_child_restart",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[merge-omitted]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[merge-null]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[test-merge-omitted]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_saved_root_role_presence_survives_child_restart[test-merge-null]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_current_rest_rejection_boundary_characterization[175]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_current_rest_rejection_boundary_characterization[200]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_current_rest_rejection_boundary_characterization[300]",
+      "docs/phase2/prototypes/test_acquisition_characterization.py::test_conditional_reuse_mismatch_refetches_and_match_adds_no_observation"
+    ],
+    "python": "3.12.14",
+    "results": {
+      "errors": 0,
+      "failures": 0,
+      "reported_seconds": 5.986,
+      "skipped": 0,
+      "tests": 10
+    },
+    "sqlite": "3.53.1",
+    "tested_head_sha": "8517b3f8ee305164ee9e059bd2eda6c328f2dc75",
+    "tested_tree_sha": "5118224c9d155029e4452d98d916a94956b7d479",
+    "worktree_clean": true
+  },
+  "artifacts": {
+    "docs/phase2/completion-dependency-supplement.json": "545add002594130cc905ceda3ce58e4d2115575fe375e2085eb8468f3608ac0d",
+    "docs/phase2/completion-source.json.gz": "2de46e285d53dac4616c202cc80940f474ebda198466a5c36822cb2110740ed8",
+    "docs/phase2/current-typed-field-contract.md": "156b57d1a6734a4ba11ea64cf9b2807adcada320eac64b29a84d9bf760af816d",
+    "docs/phase2/prototypes/candidate_probe.py": "cf5317b9ab9dcfbac7d47b79e69b97dc9ca97b5558e98002fa9393f1a23dfd0e",
+    "docs/phase2/prototypes/exchange_selected_scale.py": "c325026e2f4989c802181f8555f14d7ff816940798c3721860ea9c9ea1151f58"
+  },
+  "base_pr": 24,
+  "base_sha": "52a36cab26f2287591ff9296cac151fe135cc55a",
+  "integrated_focused_checks": {
+    "checks": [
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "scripts/audit_phase2_dependencies.py",
+          "--output",
+          "/workspace/completion-recheck/artifacts/completion-recheck/schema19-dependencies.json",
+          "--source-output",
+          "/workspace/completion-recheck/artifacts/completion-recheck/schema19-source.json.gz"
+        ],
+        "log_sha256": "125459ca59342f5cdca53e72e10425693f73cf7dcf2153c6dd8977e040587111",
+        "returncode": 0
+      },
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "scripts/audit_phase2_fields.py",
+          "--output",
+          "/workspace/completion-recheck/artifacts/completion-recheck/schema19-fields.json"
+        ],
+        "log_sha256": "9d5b493b483198e55e149901c8af284bb0b02257f19d67faeac7f524b42b7c5e",
+        "returncode": 0
+      },
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "scripts/audit_phase2_fields.py",
+          "--check",
+          "--output",
+          "/workspace/completion-recheck/artifacts/completion-recheck/schema19-fields.json"
+        ],
+        "log_sha256": "6ef7da0458d7b374b3743354c951b2791fafef8481e866a1e5ddde28e0267a70",
+        "returncode": 0
+      },
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "scripts/audit_phase2_design.py",
+          "--check"
+        ],
+        "log_sha256": "1db3278667473a87f08f05ce7c6758ae90e7772b038e0d2f94fe80ce999da0c2",
+        "returncode": 0
+      },
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/unit/test_phase2_dependency_audit.py",
+          "tests/unit/test_phase2_field_audit.py",
+          "docs/phase2/prototypes/test_acquisition_characterization.py",
+          "--junitxml=/workspace/completion-recheck/artifacts/completion-recheck/focused.xml"
+        ],
+        "log_sha256": "169f9242b95ce193df48b9cf8555e2cc764cc11cb1227f8a43404a0f72c8ab3d",
+        "returncode": 0
+      },
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "ruff",
+          "check",
+          "src",
+          "tests",
+          "scripts",
+          "docs/phase2/prototypes"
+        ],
+        "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "returncode": 0
+      },
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "ruff",
+          "format",
+          "--check",
+          "src",
+          "tests",
+          "scripts",
+          "docs/phase2/prototypes"
+        ],
+        "log_sha256": "cbf25ae91c68d20f19db932f5e95f200d9f73887d65e4fe6713bac7860b15e79",
+        "returncode": 0
+      },
+      {
+        "command": [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "scripts/ci_execute.py",
+          "reports",
+          "--plan",
+          "/workspace/completion-recheck/artifacts/completion-recheck/reports-plan.json"
+        ],
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "returncode": 0
+      }
+    ],
+    "scope": "Focused integration/schema/audit/syntax checks; not full runtime acceptance or a performance comparison",
+    "sha": "466319ddeaaa47b68f8e842746e8b65c3bba5ccc",
+    "tracked_changes": false,
+    "tree": "193017fc87cb0ec580e9afb9d332c8602c426c24"
+  },
+  "kind": "phase2-completion-recheck-evidence-v1",
+  "limits": [
+    "Focused23 audit/acquisition cases are not fullruntime acceptance. Final hosted feature/effective tree and gate are recorded only afterexecution in the PR body.",
+    "Large selected Exchange counts were measured independently on recorded frozen component, not a clean comparative walltime benchmark.",
+    "Old Schema18 inventory/receipts are preserved; this source supplement and native schema delta reconstruct the actualcurrent Schema19 audit.",
+    "No production src/DDL/dependency/parsercertificate changes or owner-level policy choice.",
+    "Existing same-repository selective preprocessing overhead remains explicitly unoptimized and is not owner-blocked."
+  ]
+}

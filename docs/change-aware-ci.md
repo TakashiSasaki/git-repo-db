@@ -1,6 +1,6 @@
 # 変更に応じた CI
 
-CI は [現在の policy](../scripts/ci_dependencies.json) と有効な Git tree からチェックを選びます。通常の lane は `tests`、installed wheel / sdist は逐次 `packaging`、静的検査は `static`、SQLite 機能と doctor は `smoke` です。一つの Python/SQLite binding を使い、独立した SQLite-minimum lane、過去の phase lane、件数・node ID 下限、GitHub artifact の再利用判定を廃止しました。
+CI は [現在の policy](../scripts/ci_dependencies.json) と有効な Git tree からチェックを選びます。通常の lane は `tests`、installed wheel / sdist は独立した2 workersの `packaging`、静的検査は `static`、SQLite 機能と doctor は `smoke` です。一つの Python/SQLite binding を使い、独立した SQLite-minimum lane、過去の phase lane、件数・node ID 下限、GitHub artifact の再利用判定を廃止しました。
 
 PR の初回・再開などは merge-base から実際に試験する merge tree への差分を使います。`synchronize` は event の直前 head (`before`) から実際の merge tree への差分を使い、今回変わった入力を選びます。`before` が無効・欠落・取得不能、または現在の feature の祖先でなければ全体へ広げます。現在の base 由来の code が直前 head に含まれなければ、その差分も全体を選びます。main push は `before` から試験 tree への差分です。rename の両側と削除も NUL 区切りで読み、path を shell code として実行しません。
 

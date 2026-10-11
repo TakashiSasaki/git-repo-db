@@ -1,0 +1,216 @@
+{
+  "bootstrap_override": false,
+  "current_parser_version": "2",
+  "documentation_base": {
+    "head": "ed5f06cf242bb915ea5be05f8387954fce12bb09",
+    "tree": "927e879406cfa98fd93d426bb5e9ffd84a4a36ac"
+  },
+  "focused_provenance_runs": [
+    {
+      "bootstrap_override": false,
+      "command": "env -u REPO_CATALOG_TEST_BOOTSTRAP PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/workspace/p2-audit/src:/workspace/p2-audit /workspace/p2-design/.venv/bin/python -m pytest -q tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields tests/integration/test_catalog3_current_collection.py::test_changed_parser_rescans_instead_of_reusing_collection_receipts --junitxml=/tmp/p2-independent-integrated-provenance.xml",
+      "cwd": "/workspace/p2-audit",
+      "errors": 0,
+      "failed_node_ids": [
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[rest]",
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[graphql]"
+      ],
+      "failure_reason": "BUILTIN_VERIFICATION_STALE at retained historical publisher",
+      "failures": 2,
+      "junit_seconds": 9.391,
+      "junit_sha256": "e2036eb40cc682970100e7823e4b708e15f4f58ff78def8be1a3fcbd06bdc7bf",
+      "node_ids": [
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-empty-object-issue]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-empty-object-issue-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-empty-object-review]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-empty-object-review-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-empty-object-graphql-review-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-id-only-issue]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-id-only-issue-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-id-only-review]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-id-only-review-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-id-only-graphql-review-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-empty-object-issue]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-empty-object-issue-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-empty-object-review]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-empty-object-review-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-empty-object-graphql-review-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-id-only-issue]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-id-only-issue-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-id-only-review]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-id-only-review-comment]",
+        "tests/integration/test_current_author_presence.py::test_sparse_actor_preserves_value_and_capture_until_explicit_null[null-login-id-only-graphql-review-comment]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested0-pullRequestReview-fullDatabaseId-review_provider_resource_id-11]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested0-replyTo-fullDatabaseId-in_reply_to_provider_resource_id-62]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested0-commit-oid-target_commit_oid-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested0-originalCommit-oid-original_commit_oid-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested1-pullRequestReview-fullDatabaseId-review_provider_resource_id-11]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested1-replyTo-fullDatabaseId-in_reply_to_provider_resource_id-62]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested1-commit-oid-target_commit_oid-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[live-nested1-originalCommit-oid-original_commit_oid-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested0-pullRequestReview-fullDatabaseId-review_provider_resource_id-11]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested0-replyTo-fullDatabaseId-in_reply_to_provider_resource_id-62]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested0-commit-oid-target_commit_oid-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested0-originalCommit-oid-original_commit_oid-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested1-pullRequestReview-fullDatabaseId-review_provider_resource_id-11]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested1-replyTo-fullDatabaseId-in_reply_to_provider_resource_id-62]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested1-commit-oid-target_commit_oid-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+        "tests/integration/test_current_nested_presence.py::test_sparse_child_preserves_known_target_and_original_field_capture[import-nested1-originalCommit-oid-original_commit_oid-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[rest]",
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[graphql]",
+        "tests/integration/test_catalog3_current_collection.py::test_changed_parser_rescans_instead_of_reusing_collection_receipts"
+      ],
+      "passed": 37,
+      "production_source_sha256": {
+        "src/repo_catalog/adapters/github/collector.py": "192e7045bdeb51353c9406ec1ab18925e5ad24e984c871f1fc7e43a34aab1249",
+        "src/repo_catalog/adapters/github/current_parser.py": "e6f60f73fe88748d240c7c4f9e3aaa9b18863dd1d4fb6915d88652f9f69660eb",
+        "src/repo_catalog/adapters/github/persistence.py": "9ba4167af90cc7c4a91e1d9acfea6ebff03a1818dbb0f4b5bb067361531f53b6",
+        "src/repo_catalog/adapters/sqlite/exchange.py": "b63b914c0100f3116c5c549e2c046a897bf065d2ff57c387446362f69af0cc81",
+        "src/repo_catalog/adapters/sqlite/schema.py": "f17d5f53120b10e866a16ce325fce15476c5696379db14eb5e8c3cdefdcc3e40",
+        "src/repo_catalog/resources/catalog3.sql": "6f8afbe4a6a371d03cd781e66a41727dc535570713c6b9de8116e1bad844932c",
+        "src/repo_catalog/resources/identity_relations.sql": "8f5dcad95f63f9dc57618d619ccdb497155514340593278770df5c1d877b7119"
+      },
+      "revision_note": "Started during frozen250cb14 review;47be2fd changes only the unrelated recorder regression and documentation. All selected tests and production fingerprints are identical across those revisions.",
+      "skipped": 0,
+      "tests": 39
+    },
+    {
+      "bootstrap_override": true,
+      "command": "REPO_CATALOG_TEST_BOOTSTRAP=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/workspace/p2-audit/src:/workspace/p2-audit /workspace/p2-design/.venv/bin/python -m pytest -q tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields --junitxml=/tmp/p2-independent-integrated-provenance-bootstrap.xml",
+      "cwd": "/workspace/p2-audit",
+      "errors": 0,
+      "failed_node_ids": [],
+      "failure_reason": null,
+      "failures": 0,
+      "junit_seconds": 1.72,
+      "junit_sha256": "6bc94feae3872aa1b2d2563066ae6ca794864f9630c7698c46fc6e339a87edb6",
+      "node_ids": [
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[rest]",
+        "tests/integration/test_current_collector_projection_followup.py::test_older_complete_response_fills_unknown_fields_without_reverting_newer_fields[graphql]"
+      ],
+      "passed": 2,
+      "production_source_sha256": {
+        "src/repo_catalog/adapters/github/collector.py": "192e7045bdeb51353c9406ec1ab18925e5ad24e984c871f1fc7e43a34aab1249",
+        "src/repo_catalog/adapters/github/current_parser.py": "e6f60f73fe88748d240c7c4f9e3aaa9b18863dd1d4fb6915d88652f9f69660eb",
+        "src/repo_catalog/adapters/github/persistence.py": "9ba4167af90cc7c4a91e1d9acfea6ebff03a1818dbb0f4b5bb067361531f53b6",
+        "src/repo_catalog/adapters/sqlite/exchange.py": "b63b914c0100f3116c5c549e2c046a897bf065d2ff57c387446362f69af0cc81",
+        "src/repo_catalog/adapters/sqlite/schema.py": "f17d5f53120b10e866a16ce325fce15476c5696379db14eb5e8c3cdefdcc3e40",
+        "src/repo_catalog/resources/catalog3.sql": "6f8afbe4a6a371d03cd781e66a41727dc535570713c6b9de8116e1bad844932c",
+        "src/repo_catalog/resources/identity_relations.sql": "8f5dcad95f63f9dc57618d619ccdb497155514340593278770df5c1d877b7119"
+      },
+      "revision_note": "Started during frozen250cb14 review;47be2fd changes only the unrelated recorder regression and documentation. All selected tests and production fingerprints are identical across those revisions.",
+      "skipped": 0,
+      "tests": 2
+    }
+  ],
+  "fresh_schema": {
+    "columns": 665,
+    "ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
+    "explicit_indexes": 113,
+    "foreign_key_constraints": 226,
+    "foreign_keys": [],
+    "generated_json_exact": true,
+    "integrity": "ok",
+    "schema_sql_hash_consistent": true,
+    "schema_version": 19,
+    "tables": 103,
+    "triggers": 498,
+    "views": 48
+  },
+  "initial_production_review": {
+    "head": "250cb14bc9483af772eddf34f87c370dac612512",
+    "tree": "c34995235648ec26bd9f258d48f87162c1f816a6"
+  },
+  "kind": "independent-integrated-current-clock-exchange-v1",
+  "limits": [
+    "Independent structural and focused integration evidence, not final complete acceptance.",
+    "Two cross-endpoint cases require historical certificate regeneration; explicit development bootstrap rerun is not final acceptance.",
+    "No installed wheel/sdist or hosted CI result is claimed here.",
+    "Elapsed test durations may include concurrent workloads and are not comparative benchmarks."
+  ],
+  "probe_command": "env -u REPO_CATALOG_TEST_BOOTSTRAP PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/workspace/p2-audit/src:/workspace/p2-audit /workspace/p2-design/.venv/bin/python docs/phase2/prototypes/independent_integrated_exchange.py --source-root /workspace/p2-audit --state-dir /tmp/p2-independent-integrated-exchange-receipt-20261010 --output /tmp/p2-independent-integrated-correction.json",
+  "probe_cwd": "/workspace/p2-review",
+  "probe_sha256": "78523572a09f8449a43e9179044628302b2423a1f9ad35e4346f864253e8e1da",
+  "python": "3.12.14",
+  "recorder_correction_run": {
+    "bootstrap_override": false,
+    "command": "env -u REPO_CATALOG_TEST_BOOTSTRAP PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/workspace/p2-audit/src:/workspace/p2-audit /workspace/p2-design/.venv/bin/python -m pytest -q tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors --junitxml=/tmp/p2-independent-integrated-recorder.xml",
+    "cwd": "/workspace/p2-audit",
+    "errors": 0,
+    "failures": 0,
+    "junit_seconds": 1.62,
+    "junit_sha256": "7d95866c44dca2d3f24d0b5a6fef1a25f76b7f6d3162699378c8404c1e8c2504",
+    "node_ids": [
+      "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[parser]",
+      "tests/integration/test_recording_followup.py::test_recorder_failure_preserves_actual_parser_and_storage_errors[storage]"
+    ],
+    "passed": 2,
+    "skipped": 0,
+    "source_head": "47be2fd780f0a5278d950d0053cde9ac6fb6f196",
+    "source_tree": "db5f34b664ef33c36a8fedc65276c9b0079a0916",
+    "tests": 2
+  },
+  "source_head": "47be2fd780f0a5278d950d0053cde9ac6fb6f196",
+  "source_sha256": {
+    "src/repo_catalog/adapters/github/collector.py": "192e7045bdeb51353c9406ec1ab18925e5ad24e984c871f1fc7e43a34aab1249",
+    "src/repo_catalog/adapters/github/current_parser.py": "e6f60f73fe88748d240c7c4f9e3aaa9b18863dd1d4fb6915d88652f9f69660eb",
+    "src/repo_catalog/adapters/github/persistence.py": "9ba4167af90cc7c4a91e1d9acfea6ebff03a1818dbb0f4b5bb067361531f53b6",
+    "src/repo_catalog/adapters/sqlite/exchange.py": "b63b914c0100f3116c5c549e2c046a897bf065d2ff57c387446362f69af0cc81",
+    "src/repo_catalog/adapters/sqlite/schema.py": "f17d5f53120b10e866a16ce325fce15476c5696379db14eb5e8c3cdefdcc3e40",
+    "src/repo_catalog/resources/catalog3.sql": "6f8afbe4a6a371d03cd781e66a41727dc535570713c6b9de8116e1bad844932c",
+    "src/repo_catalog/resources/identity_relations.sql": "8f5dcad95f63f9dc57618d619ccdb497155514340593278770df5c1d877b7119"
+  },
+  "source_tree": "db5f34b664ef33c36a8fedc65276c9b0079a0916",
+  "sqlite": "3.53.1",
+  "states": [
+    {
+      "actual_receiver": [
+        100,
+        "complete"
+      ],
+      "expected": [
+        100,
+        "complete"
+      ]
+    },
+    {
+      "actual_receiver": [
+        200,
+        "partial"
+      ],
+      "expected": [
+        200,
+        "partial"
+      ]
+    },
+    {
+      "actual_receiver": [
+        200,
+        "partial"
+      ],
+      "expected": [
+        200,
+        "partial"
+      ]
+    },
+    {
+      "actual_receiver": [
+        300,
+        "complete"
+      ],
+      "expected": [
+        300,
+        "complete"
+      ]
+    }
+  ],
+  "subsequent_test_correction": {
+    "files": [
+      "tests/integration/test_recording_followup.py",
+      "docs/phase2/implementation.md"
+    ],
+    "head": "47be2fd780f0a5278d950d0053cde9ac6fb6f196",
+    "production_source_changed": false,
+    "tree": "db5f34b664ef33c36a8fedc65276c9b0079a0916"
+  }
+}
