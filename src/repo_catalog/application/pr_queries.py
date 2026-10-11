@@ -302,37 +302,15 @@ def _code_observation(query, pr):
     state = _state(query, pr)
     if state is None:
         return None
-    rows = query.s.all(
-        "SELECT * FROM code_assessments WHERE change_request_id=? AND object_format IS ? AND head_oid IS ? AND base_oid IS ? ORDER BY observed_at_us DESC,code_assessment_id",
-        (
-            pr["change_request_id"],
-            state["object_format"],
-            state["head_oid"],
-            state["base_oid"],
-        ),
+    from repo_catalog.adapters.sqlite.code_assessments import current_code_assessment
+
+    return current_code_assessment(
+        query.s,
+        pr["change_request_id"],
+        state["object_format"],
+        state["head_oid"],
+        state["base_oid"],
     )
-    if not rows:
-        return None
-    latest = rows[0]["observed_at_us"]
-    selected = [dict(row) for row in rows if row["observed_at_us"] == latest]
-    signatures = {
-        json.dumps(
-            {
-                k: v.hex() if isinstance(v, bytes) else v
-                for k, v in row.items()
-                if k
-                not in {
-                    "code_assessment_id",
-                    "observed_at_us",
-                    "parser_module",
-                    "parser_version",
-                }
-            },
-            sort_keys=True,
-        )
-        for row in selected
-    }
-    return selected[0] if len(signatures) == 1 else None
 
 
 def _code_listing_complete(query, code, kind):

@@ -15,6 +15,7 @@ from repo_catalog.adapters.github.persistence import (
 )
 from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.adapters.sqlite.cas_integrity import diagnose_admission_failure
+from repo_catalog.adapters.sqlite.code_assessments import current_code_assessment
 from repo_catalog.domain.models import CatalogError, Waiting
 from repo_catalog.domain.pr_scope import NON_DOCUMENT_KINDS
 from repo_catalog.domain.time import format_iso8601_us
@@ -1937,24 +1938,28 @@ class GitHubCollector:
         except (ValueError, TypeError):
             raise CatalogError("API_SCHEMA", "Malformed timeline instant") from None
         actor = (modeled.get("actor") or modeled.get("user") or {}).get("login")
-        self.s.execute(
-            "INSERT INTO change_request_events(change_request_event_uuidv4,change_request_id,repository_uuidv4,provider_event_id,event_kind,actor,created_at_us,object_format,commit_oid,metadata,observed_at_us,parser_module,parser_version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(change_request_event_uuidv4) DO UPDATE SET metadata=excluded.metadata,observed_at_us=excluded.observed_at_us,parser_module=excluded.parser_module,parser_version=excluded.parser_version",
-            (
-                ident,
-                pr,
-                repo["repository_uuidv4"],
-                event_id,
-                kind,
-                actor,
-                created,
-                algorithm,
-                bytes.fromhex(oid) if oid else None,
-                canonical(modeled),
-                timestamp,
-                current_parser.PARSER_MODULE,
-                current_parser.PARSER_VERSION,
-            ),
-        )
+        # A repeated provider occurrence is the same immutable event. The new
+        # collection page records its real re-observation; preserve the event's
+        # original capture and parser attribution for idempotent Exchange.
+        if prior is None:
+            self.s.execute(
+                "INSERT INTO change_request_events(change_request_event_uuidv4,change_request_id,repository_uuidv4,provider_event_id,event_kind,actor,created_at_us,object_format,commit_oid,metadata,observed_at_us,parser_module,parser_version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    ident,
+                    pr,
+                    repo["repository_uuidv4"],
+                    event_id,
+                    kind,
+                    actor,
+                    created,
+                    algorithm,
+                    bytes.fromhex(oid) if oid else None,
+                    canonical(modeled),
+                    timestamp,
+                    current_parser.PARSER_MODULE,
+                    current_parser.PARSER_VERSION,
+                ),
+            )
         return {
             "family": "event",
             "change_request_id": pr,
@@ -2115,23 +2120,6 @@ class GitHubCollector:
         algorithm, head, base = oid_context(before)
         if algorithm is None or head is None or base is None:
             return None
-        scope = self.facts.current_context(
-            repo, pr["change_request_id"], self.http.base
-        )["acquisition_scope"]
-        assessment = (
-            "code:"
-            + hashlib.sha256(
-                canonical(
-                    {
-                        "pr": pr["change_request_id"],
-                        "format": algorithm,
-                        "head": head.hex(),
-                        "base": base.hex(),
-                        "scope": scope,
-                    }
-                ).encode()
-            ).hexdigest()
-        )
         commit_listing = listings[0][1] if listings and listings[0] else None
         file_listing = listings[1][1] if listings and listings[1] else None
         actual = self.s.one(
@@ -2149,8 +2137,8 @@ class GitHubCollector:
             and actual["head_oid"] == head
             and actual["base_oid"] == base
         )
-        previous = self.s.one(
-            "SELECT * FROM code_assessments WHERE code_assessment_id=?", (assessment,)
+        previous = current_code_assessment(
+            self.s, pr["change_request_id"], algorithm, head, base
         )
         relevant_kinds = {
             "pr-detail",
@@ -2191,7 +2179,7 @@ class GitHubCollector:
             and actual["base_oid"] == base
             and not newly_partial
         ):
-            return assessment
+            return previous["code_assessment_id"]
         # A completed older prefix cannot discharge a newer observed gap.
         # Required scoped input coverage uses its latest candidate set.
         inputs_complete = inputs_complete and all(
@@ -2247,33 +2235,83 @@ class GitHubCollector:
             and previous["observed_at_us"] is not None
             and (observed is None or observed < previous["observed_at_us"])
         ):
+            return previous["code_assessment_id"]
+        code_collections = [
+            row[0]
+            for row in self.s.all(
+                "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND p.job_id=? AND f.kind IN ("
+                + ",".join("?" for _ in relevant_kinds)
+                + ")",
+                (
+                    repo["repository_uuidv4"],
+                    pr["change_request_id"],
+                    job,
+                    *sorted(relevant_kinds),
+                ),
+            )
+        ]
+        if listings:
+            code_collections.extend(item[0] for item in listings if item is not None)
+        code_collections = sorted(set(code_collections))
+        details = {
+            "race": not same,
+            "code_inputs_complete": bool(inputs_complete and roles_complete),
+        }
+        # Identity names the actual captured inputs, not just their head/base
+        # targets. A retry of this capture resumes its pending anchor; a fresh
+        # contradictory capture cannot rewrite a finalized portable identity.
+        assessment = (
+            "code:"
+            + hashlib.sha256(
+                canonical(
+                    {
+                        "pr": pr["change_request_id"],
+                        "format": algorithm,
+                        "head": head.hex(),
+                        "base": base.hex(),
+                        "observed_at_us": observed,
+                        "collections": code_collections,
+                        "commits": commit_listing,
+                        "files": file_listing,
+                        "details": details,
+                        "roles": role_oids,
+                    }
+                ).encode()
+            ).hexdigest()
+        )
+        existing = self.s.one(
+            "SELECT state FROM code_assessments WHERE code_assessment_id=?",
+            (assessment,),
+        )
+        if existing and existing["state"] != "pending":
+            if (
+                current_code_assessment(
+                    self.s, pr["change_request_id"], algorithm, head, base
+                )
+                is None
+            ):
+                missing.append({"kind": "pr-code", "reason": "PR_CODE_CONFLICT"})
             return assessment
         with self.s.transaction():
             self.facts.fence(job)
-            self.s.execute(
-                "INSERT INTO code_assessments(code_assessment_id,change_request_id,repository_uuidv4,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,observed_at_us,parser_module,parser_version,details_json) VALUES(?,?,?,?,?,'partial',?,?,?,?,?,?,?) ON CONFLICT(code_assessment_id) DO UPDATE SET commit_code_listing_id=excluded.commit_code_listing_id,file_code_listing_id=excluded.file_code_listing_id,state='partial',observed_at_us=excluded.observed_at_us,details_json=excluded.details_json",
-                (
-                    assessment,
-                    pr["change_request_id"],
-                    repo["repository_uuidv4"],
-                    commit_listing,
-                    file_listing,
-                    algorithm,
-                    head,
-                    base,
-                    observed,
-                    current_parser.PARSER_MODULE,
-                    current_parser.PARSER_VERSION,
-                    canonical(
-                        {
-                            "race": not same,
-                            "code_inputs_complete": bool(
-                                inputs_complete and roles_complete
-                            ),
-                        }
+            if existing is None:
+                self.s.execute(
+                    "INSERT INTO code_assessments(code_assessment_id,change_request_id,repository_uuidv4,commit_code_listing_id,file_code_listing_id,state,object_format,head_oid,base_oid,observed_at_us,parser_module,parser_version,details_json) VALUES(?,?,?,?,?,'pending',?,?,?,?,?,?,?)",
+                    (
+                        assessment,
+                        pr["change_request_id"],
+                        repo["repository_uuidv4"],
+                        commit_listing,
+                        file_listing,
+                        algorithm,
+                        head,
+                        base,
+                        observed,
+                        current_parser.PARSER_MODULE,
+                        current_parser.PARSER_VERSION,
+                        canonical(details),
                     ),
-                ),
-            )
+                )
             self.facts.advance_revision()
         links = {}
         for role, expected in role_oids.items():
@@ -2363,25 +2401,6 @@ class GitHubCollector:
                             links.get(role),
                         ),
                     )
-            code_collections = [
-                row[0]
-                for row in self.s.all(
-                    "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND p.job_id=? AND f.kind IN ("
-                    + ",".join("?" for _ in relevant_kinds)
-                    + ")",
-                    (
-                        repo["repository_uuidv4"],
-                        pr["change_request_id"],
-                        job,
-                        *sorted(relevant_kinds),
-                    ),
-                )
-            ]
-            if listings:
-                code_collections.extend(
-                    item[0] for item in listings if item is not None
-                )
-            code_collections = sorted(set(code_collections))
             marker_ids = (
                 [
                     row[0]
@@ -2395,10 +2414,15 @@ class GitHubCollector:
                 if code_collections
                 else []
             )
+            selected = current_code_assessment(
+                self.s, pr["change_request_id"], algorithm, head, base
+            )
+            if selected is None:
+                missing.append({"kind": "pr-code", "reason": "PR_CODE_CONFLICT"})
             self.coverage_claim(
                 repo["repository_uuidv4"],
                 "pr-code",
-                state,
+                state if selected is not None else "partial",
                 observed,
                 {
                     "code_assessment_ids": [assessment],
@@ -2593,6 +2617,9 @@ class GitHubCollector:
             code_complete = (
                 pr_listing is not None
                 and len(assessments) == len(prs)
+                and not any(
+                    failure["reason"] == "PR_CODE_CONFLICT" for failure in failures
+                )
                 and all(
                     assessment is not None
                     and self.s.one(

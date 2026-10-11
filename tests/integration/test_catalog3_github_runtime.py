@@ -675,7 +675,8 @@ def test_interrupted_new_pr_head_has_no_complete_assessment(
     with pytest.raises(CatalogError) as error:
         sync(store, repo)
     assert error.value.code == "CANCELLED"
-    assert current_code(store)["state"] == "partial"
+    # The captured inputs exist, but interruption prevented final assessment.
+    assert current_code(store)["state"] == "pending"
     assert not store.one(
         "SELECT 1 FROM git_objects WHERE oid=?", (bytes.fromhex(new_head),)
     )

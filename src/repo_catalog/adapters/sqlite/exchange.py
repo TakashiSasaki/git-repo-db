@@ -1910,6 +1910,31 @@ class Graph:
             ):
                 return "conflict:service_identity"
             data = existing
+        elif (
+            table == "code_assessments"
+            and existing
+            and existing["state"] != data["state"]
+            and "pending" in (existing["state"], data["state"])
+        ):
+            from repo_catalog.adapters.sqlite.code_assessments import (
+                finalize_pending_assessment,
+            )
+
+            final = finalize_pending_assessment(existing, data)
+            if final is None:
+                return "conflict:immutable_content"
+            if existing["state"] == "pending":
+                # Complete listing proof was validated above; SQL also checks
+                # both typed listings. No capture field or clock can change.
+                self.db.execute(
+                    "UPDATE code_assessments SET state=?,details_json=? WHERE code_assessment_id=?",
+                    (
+                        final["state"],
+                        final["details_json"],
+                        final["code_assessment_id"],
+                    ),
+                )
+            data = final
         elif existing:
             if table in SCOPES:
                 data.update({c: existing[c] for c in self.keys[table]})
