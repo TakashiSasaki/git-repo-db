@@ -103,3 +103,6 @@ CREATE TRIGGER repository_inventory_uuid BEFORE INSERT ON repository_inventory_o
 -- of each member repository; independent interpretations use independent results.
 CREATE UNIQUE INDEX inventory_observations_result_identity ON inventory_observations(parsed_result_uuidv4);
 CREATE UNIQUE INDEX repository_inventory_result_member ON repository_inventory_observations(parsed_result_uuidv4,repository_uuidv4);
+-- Interpreted names participate in exact output seals; local name evidence has
+-- no result and should not enlarge their indexed publication membership.
+CREATE INDEX repository_names_parsed_result_idx ON repository_name_observations(parsed_result_uuidv4) WHERE parsed_result_uuidv4 IS NOT NULL;

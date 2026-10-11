@@ -12,7 +12,7 @@ from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.time import parse_iso8601_us
 
 PARSER_MODULE = __name__
-PARSER_VERSION = "1"
+PARSER_VERSION = "2"
 
 
 def resource_id(value, field="id"):
@@ -70,7 +70,10 @@ def _common(value, context, observed_at_us, *, graphql=False, update_clock=True)
             and not isinstance(author["login"], str)
         ):
             raise CatalogError("API_SCHEMA", "Malformed GitHub author")
-        result["author"] = author.get("login") if author else None
+        if author is None:
+            result["author"] = None
+        elif "login" in author:
+            result["author"] = author["login"]
     if update_clock:
         _time(
             value,
@@ -200,22 +203,36 @@ def review_comment(value, context, observed_at_us, *, graphql=False, thread=None
     if graphql:
         if "pullRequestReview" in value:
             parent = value["pullRequestReview"]
-            result["review_provider_resource_id"] = (
-                resource_id(parent, "fullDatabaseId") if parent else None
-            )
+            if parent is None:
+                result["review_provider_resource_id"] = None
+            elif not isinstance(parent, dict):
+                raise CatalogError("API_SCHEMA", "Malformed GitHub pullRequestReview")
+            elif "fullDatabaseId" in parent:
+                result["review_provider_resource_id"] = resource_id(
+                    parent, "fullDatabaseId"
+                )
         if "replyTo" in value:
             parent = value["replyTo"]
-            result["in_reply_to_provider_resource_id"] = (
-                resource_id(parent, "fullDatabaseId") if parent else None
-            )
+            if parent is None:
+                result["in_reply_to_provider_resource_id"] = None
+            elif not isinstance(parent, dict):
+                raise CatalogError("API_SCHEMA", "Malformed GitHub replyTo")
+            elif "fullDatabaseId" in parent:
+                result["in_reply_to_provider_resource_id"] = resource_id(
+                    parent, "fullDatabaseId"
+                )
         for source, target in (
             ("commit", "target_commit_oid"),
             ("originalCommit", "original_commit_oid"),
         ):
             if source in value:
-                result[target] = (
-                    _oid(value[source].get("oid")) if value[source] else None
-                )
+                commit = value[source]
+                if commit is None:
+                    result[target] = None
+                elif not isinstance(commit, dict):
+                    raise CatalogError("API_SCHEMA", f"Malformed GitHub {source}")
+                elif "oid" in commit:
+                    result[target] = _oid(commit["oid"])
     else:
         for source, target in (
             ("commit_id", "target_commit_oid"),

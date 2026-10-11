@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from repo_catalog.adapters.github import current_parser
 from repo_catalog.adapters.sqlite.schema import SCHEMA_VERSION
 from tests.support.git_fixture import GitFixture
 from tests.support.github_fixture import GitHubFixture
@@ -130,6 +131,20 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         env=env,
     ).strip()
     assert origin.startswith(str(venv)) and not origin.startswith(str(ROOT))
+    producer = json.loads(
+        checked(
+            [
+                venv / "bin/python",
+                "-c",
+                "import json; from repo_catalog.adapters.github import current_parser; "
+                "print(json.dumps([current_parser.PARSER_MODULE, current_parser.PARSER_VERSION]))",
+            ],
+            cwd=outside,
+            env=env,
+        )
+    )
+    assert producer == [current_parser.PARSER_MODULE, current_parser.PARSER_VERSION]
+    parser_module, parser_version = producer
     resources = json.loads(
         checked(
             [
@@ -541,12 +556,11 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
             }
             assert db.execute(
                 f"SELECT DISTINCT parser_module,parser_version FROM {table}"
-            ).fetchall() == [("repo_catalog.adapters.github.current_parser", "1")]
+            ).fetchall() == [(parser_module, parser_version)]
         for (encoded,) in db.execute("SELECT field_evidence_json FROM issue_resources"):
             assert all(
-                evidence["parser_module"]
-                == "repo_catalog.adapters.github.current_parser"
-                and evidence["parser_version"] == "1"
+                evidence["parser_module"] == parser_module
+                and evidence["parser_version"] == parser_version
                 and "parser_profile_uuidv4" not in evidence
                 for evidence in json.loads(encoded).values()
             )
@@ -752,7 +766,7 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
             )
         assert receiver.execute(
             "SELECT DISTINCT parser_module,parser_version FROM review_resources"
-        ).fetchall() == [("repo_catalog.adapters.github.current_parser", "1")]
+        ).fetchall() == [(parser_module, parser_version)]
         assert (
             receiver.execute(
                 "SELECT count(*) FROM eligible_review_resources"

@@ -43,6 +43,7 @@ def fixture(
     source_registration=None,
     service=None,
     body=b'{"body":"hello"}',
+    next_cursor=None,
 ):
     repository, source_registration, service = (
         repository or uid(),
@@ -91,8 +92,8 @@ def fixture(
     )
     ref = intern_payload(db, body, representation="decoded_api")
     occurrence = db.execute(
-        "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,observed_at_us,parsed_at_us) VALUES(?,?,?,0,?,?,'{}',-1,0)",
-        (fetch, repository, collection, *ref.parameters()),
+        "INSERT INTO fetch_occurrences(fetch_occurrence_uuidv4,repository_uuidv4,fetch_collection_id,ordinal,payload_representation,payload_sha256,request,next_cursor,observed_at_us,parsed_at_us) VALUES(?,?,?,0,?,?,'{}',?,-1,0)",
+        (fetch, repository, collection, *ref.parameters(), next_cursor),
     ).lastrowid
     definition = {
         "implementation": {"test": "exact-fixture"},
