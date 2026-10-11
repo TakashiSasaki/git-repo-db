@@ -9,7 +9,7 @@ PR の初回・再開などは merge-base から実際に試験する merge tree
 - source、共通 fixture、依存 lock、CI policy、importer は現在の acceptance 全体を選びます。
 - 現行 runtime/schema/import contract は `src/**`、CI contract は policy/shared inputs として全体を選びます。
 - policy に明示した過去の schema-hardening SQL/JSON/CSV は report inputs です。実GitHub検証と synthetic 検証の JSON も evidence/report input です。非空の JSON object として検証し、不正な JSON、空 object、非有限数を拒否します。拡張子だけで executable と扱いません。未分類の新規 SQL/JSON/CSV は全体へ広げます。
-- 通常の prose だけの変更は、読み取りと非空検査を行います。
+- 通常の prose と `.agents/skills/**/*.md` のみの変更は、読み取りと非空検査を行います。Skill の `scripts/` や未分類ファイルは prose に分類せず、実行可能な変更として全 acceptance を選択します。Skill の YAML frontmatter・リンク・手順はレビューで検証します。
 - 未知の依存、比較履歴の欠落・不正、explicit full は現在の acceptance 全体へ広げます。
 
 main push だからという理由で無条件の full acceptance は行いません。manual full は明示的な選択です。既知の prose 以外を推測で除外しません。

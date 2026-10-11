@@ -5,10 +5,12 @@ this directory, read `no-independent-publication-adr.md` and the current
 `decision-register.md` before the older proposals or prototypes.
 
 The owner accepted Q01-B, Q02-B, Q03-B and **NO_INDEPENDENT_PUBLICATION** under Q04.
-Further option selection is paused. Review the whole design for consistency
-first; implementation follows that review. Do not reopen these decisions, resume
-the sequential questionnaire, adopt unchosen recommendations, or treat this
-instruction as merge/release authorization.
+Further option selection is paused. The design was reconstructed and a Schema 20
+implementation has been submitted as stacked PRs; use the checked-out sources,
+current integration handoff and exact-tree receipts to distinguish approved design,
+implemented behavior and independently verified behavior. Do not restart the
+old design questionnaire or adopt unchosen recommendations. This document does
+not itself grant or revoke a task-specific merge authorization.
 
 `proposal-before-no-publication.md` and
 `decision-register-before-no-publication.md` are exact preserved snapshots of the
@@ -26,6 +28,12 @@ Publication and must not be deleted by substring matching.
 
 Keep latest-state contracts truthful: do not hide all superseded values inside
 necessary evidence; do not infer deletion from incomplete scans; do not use parser
-version or receipt order as domain freshness. No new cache, collection proof,
-checkpoint, Exchange trust or retention/GC policy is selected. Report genuine
-unresolved requirements without inventing their answers.
+version or receipt order as domain freshness. Preserve already implemented domain
+scope/member/terminal/child proof without inventing a new collection-proof policy.
+No new cache, checkpoint, Exchange trust or retention/GC policy is selected.
+Report genuine unresolved requirements without inventing their answers.
+
+For reproducible Phase 2-specific debugging or review lessons, consult and
+update the repository-local `.agents/skills/` where a validated procedure is
+reusable. Keep immutable historical review receipts unchanged and link them as
+evidence rather than copying whole logs into a skill.
