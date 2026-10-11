@@ -774,6 +774,7 @@ class GitHubCollector:
     ):
         from repo_catalog.adapters.git.runner import hook
 
+        self.http.validate_url(url)
         s = self.s
         if listing_kind:
             context = {**(context or {}), "reported_count": reported}
@@ -832,6 +833,7 @@ class GitHubCollector:
             while page_url:
                 response, uncommitted, identified = None, False, False
                 self.token.check()
+                self.http.validate_url(page_url)
                 if page_url in seen:
                     raise CatalogError("PAGINATION_CYCLE", "Repeated collection page")
                 seen.add(page_url)
@@ -2122,8 +2124,44 @@ class GitHubCollector:
             return None
         commit_listing = listings[0][1] if listings and listings[0] else None
         file_listing = listings[1][1] if listings and listings[1] else None
+        if commit_listing:
+            row = self.s.one(
+                "SELECT l.kind, l.change_request_id, l.object_format, l.head_oid, l.base_oid, f.repository_uuidv4 "
+                "FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) "
+                "WHERE l.code_listing_id=?",
+                (commit_listing,),
+            )
+            if (
+                row is None
+                or row["kind"] != "commits"
+                or row["change_request_id"] != pr["change_request_id"]
+                or row["repository_uuidv4"] != repo["repository_uuidv4"]
+                or (algorithm and row["object_format"] != algorithm)
+                or (head and row["head_oid"] != head)
+                or (base and row["base_oid"] != base)
+            ):
+                commit_listing = None
+                missing.append({"kind": "pr-code", "reason": "INVALID_CODE_LISTING"})
+        if file_listing:
+            row = self.s.one(
+                "SELECT l.kind, l.change_request_id, l.object_format, l.head_oid, l.base_oid, f.repository_uuidv4 "
+                "FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) "
+                "WHERE l.code_listing_id=?",
+                (file_listing,),
+            )
+            if (
+                row is None
+                or row["kind"] != "files"
+                or row["change_request_id"] != pr["change_request_id"]
+                or row["repository_uuidv4"] != repo["repository_uuidv4"]
+                or (algorithm and row["object_format"] != algorithm)
+                or (head and row["head_oid"] != head)
+                or (base and row["base_oid"] != base)
+            ):
+                file_listing = None
+                missing.append({"kind": "pr-code", "reason": "INVALID_CODE_LISTING"})
         actual = self.s.one(
-            "SELECT head_oid,base_oid FROM eligible_change_request_state WHERE change_request_id=?",
+            "SELECT head_oid,base_oid,merge_oid FROM eligible_change_request_state WHERE change_request_id=?",
             (pr["change_request_id"],),
         )
         same = (
@@ -2210,7 +2248,16 @@ class GitHubCollector:
                 and captures["completed"] == captures["observed"]
             )
         roles, roles_complete, _ = self.saved_thread_code_input(pr["change_request_id"])
-        role_oids = {"head": head.hex(), "base": base.hex(), **roles}
+        role_oids = {
+            k: v
+            for k, v in {"head": head.hex(), "base": base.hex(), **roles}.items()
+            if v is not None
+        }
+        if actual is not None and actual["merge_oid"] is not None:
+            merge_val = actual["merge_oid"]
+            role_oids["merge"] = (
+                merge_val.hex() if isinstance(merge_val, bytes) else merge_val
+            )
         for row in self.s.all(
             "SELECT target_commit_oid FROM eligible_review_resources WHERE change_request_id=?",
             (pr["change_request_id"],),
@@ -2255,7 +2302,10 @@ class GitHubCollector:
         code_collections = sorted(set(code_collections))
         details = {
             "race": not same,
-            "code_inputs_complete": bool(inputs_complete and roles_complete),
+            "code_inputs_complete": bool(
+                inputs_complete and roles_complete and commit_listing and file_listing
+            ),
+            "expected_roles": role_oids,
         }
         # Identity names the actual captured inputs, not just their head/base
         # targets. A retry of this capture resumes its pending anchor; a fresh
@@ -2384,7 +2434,11 @@ class GitHubCollector:
                     canonical(
                         details
                         if state == "pending"
-                        else {**details, "missing": missing}
+                        else {
+                            **details,
+                            "missing": missing,
+                            "missing_roles": sorted(required - links.keys()),
+                        }
                     ),
                     assessment,
                 ),
@@ -2630,6 +2684,28 @@ class GitHubCollector:
                     for assessment in assessments
                 )
             )
+            if code_complete:
+                for pr in prs:
+                    st = self.s.one(
+                        "SELECT head_oid,base_oid,object_format FROM eligible_change_request_state WHERE change_request_id=?",
+                        (pr["change_request_id"],),
+                    )
+                    if st and (st["head_oid"] or st["base_oid"]):
+                        if (
+                            current_code_assessment(
+                                self.s,
+                                pr["change_request_id"],
+                                st["object_format"],
+                                st["head_oid"],
+                                st["base_oid"],
+                            )
+                            is None
+                        ):
+                            code_complete = False
+                            failures.append(
+                                {"kind": "pr-code", "reason": "PR_CODE_CONFLICT"}
+                            )
+                            break
             with self.s.transaction():
                 self.facts.fence(job)
                 document_failures = [

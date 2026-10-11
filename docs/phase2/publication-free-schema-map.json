@@ -5,7 +5,7 @@
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "ce47d06fe64494a48ee36e44090016c965be309e3a7f24e826f7fd4d6acac04e",
+    "ddl_sha256": "b3d3421646d3a7b86505e7baebfba4cd772605f6fbf76d3f623cd08ea4597227",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -5913,7 +5913,7 @@
       },
       "repository_object_sources_acquisition": {
         "owner": "repository_object_sources",
-        "sql_sha256": "e7519734a4bf462ec4f59b85385005e987dfff266142f6b337b48126d3a0bd98"
+        "sql_sha256": "9412dc1763005558bfc5ef5ad70dfa74bc6a2967b8eec82bf27d58c4ea4ccdc7"
       },
       "resume_cursors_fk_0": {
         "owner": "resume_cursors",
@@ -5954,6 +5954,10 @@
       "review_threads_fk_0": {
         "owner": "review_threads",
         "sql_sha256": "873450563d330cb1c6914935d3d37d09692efe94e4f6dc3c35f6efeeb97f3989"
+      },
+      "snapshots_acquisition": {
+        "owner": "snapshots",
+        "sql_sha256": "b406722fa92287cbd95ac9d0bf43369fb70cb6edd2c1cf0b955c6895e28520ee"
       },
       "snapshots_predecessor": {
         "owner": "snapshots",
@@ -10003,6 +10007,7 @@
         "exchange_staging_table",
         "repository_object_sources_acquisition",
         "review_thread_state_repository",
+        "snapshots_acquisition",
         "snapshots_predecessor",
         "snapshots_repository"
       ],

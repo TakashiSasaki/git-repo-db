@@ -1190,6 +1190,8 @@ class Graph:
                     and not partial
                     or table == "code_listings"
                     and child in {"code_commits", "code_file_changes"}
+                    or table == "code_assessments"
+                    and child == "code_acquisitions"
                     or table == "git_acquisitions"
                     and child
                     in {"snapshots", "acquisition_roots", "repository_object_sources"}
@@ -1767,6 +1769,24 @@ class Graph:
             return "missing_json_dependency"
         except CatalogError:
             return "invalid:domain_json"
+        if table == "code_acquisitions":
+            assessment = self.lookup(
+                "code_assessments",
+                ("code_assessment_id",),
+                (data["code_assessment_id"],),
+            )
+            if assessment is None:
+                return "missing_dependency"
+            if data.get("acquisition_root_id") is not None:
+                root = self.lookup(
+                    "acquisition_roots",
+                    ("acquisition_root_id",),
+                    (data["acquisition_root_id"],),
+                )
+                if root is None:
+                    return "missing_dependency"
+                if root["repository_uuidv4"] != assessment["repository_uuidv4"]:
+                    return "conflict:code_acquisition_owner"
         if table == "root_origins" and data["origin_kind"] == "ref":
             root = self.lookup(
                 "acquisition_roots",
@@ -1776,10 +1796,10 @@ class Graph:
             snapshot = self.lookup(
                 "snapshots", ("snapshot_id",), (data["snapshot_id"],)
             )
+            if root is None or snapshot is None:
+                return "missing_dependency"
             if (
-                root is None
-                or snapshot is None
-                or root["repository_uuidv4"] != data["repository_uuidv4"]
+                root["repository_uuidv4"] != data["repository_uuidv4"]
                 or snapshot["repository_uuidv4"] != data["repository_uuidv4"]
                 or root["git_acquisition_id"] != snapshot["git_acquisition_id"]
                 or data["change_request_id"] is not None
@@ -1819,13 +1839,57 @@ class Graph:
                     if error.code == "INCOMPLETE_CLOSURE"
                     else "invalid:git_ref_origin"
                 )
-        if table == "code_assessments" and data["state"] == "complete":
-            for column in ("commit_code_listing_id", "file_code_listing_id"):
-                listing = self.lookup(
-                    "code_listings", ("code_listing_id",), (data[column],)
-                )
-                if listing is None or not self._restore_code_progress(listing):
-                    return "missing_code_listing_proof"
+        if table == "code_assessments":
+            if data.get("state") == "complete" and (
+                not data.get("commit_code_listing_id")
+                or not data.get("file_code_listing_id")
+            ):
+                return "missing_code_listing_proof"
+            for column, expected_kind in (
+                ("commit_code_listing_id", "commits"),
+                ("file_code_listing_id", "files"),
+            ):
+                listing_id = data.get(column)
+                if listing_id is not None:
+                    listing = self.lookup(
+                        "code_listings", ("code_listing_id",), (listing_id,)
+                    )
+                    if listing is None:
+                        if data.get("state") == "complete":
+                            return "missing_code_listing_proof"
+                        return "missing_dependency"
+                    if (
+                        listing.get("kind") != expected_kind
+                        or listing.get("change_request_id")
+                        != data.get("change_request_id")
+                        or (
+                            data.get("object_format")
+                            and listing.get("object_format")
+                            != data.get("object_format")
+                        )
+                        or (
+                            data.get("head_oid")
+                            and listing.get("head_oid") != data.get("head_oid")
+                        )
+                        or (
+                            data.get("base_oid")
+                            and listing.get("base_oid") != data.get("base_oid")
+                        )
+                    ):
+                        return "invalid:code_listing_context"
+                    fc = self.lookup(
+                        "fetch_collections",
+                        ("fetch_collection_id",),
+                        (listing.get("fetch_collection_id"),),
+                    )
+                    if fc is not None and fc.get("repository_uuidv4") != data.get(
+                        "repository_uuidv4"
+                    ):
+                        return "invalid:code_listing_context"
+                    if data.get(
+                        "state"
+                    ) == "complete" and not self._restore_code_progress(listing):
+                        return "missing_code_listing_proof"
         if table in {"completion_markers", "coverage_claims"}:
             proof = self.proof_requirements(table, data)
             complete = (
@@ -2203,11 +2267,53 @@ class Graph:
             )
             received += cursor.rowcount
         for key, table in self.db.execute(
-            "SELECT record_key,table_name FROM exchange_staging WHERE reason NOT LIKE 'current_state:%' GROUP BY record_key,table_name HAVING count(*)>1"
+            "SELECT record_key,table_name FROM exchange_staging WHERE reason NOT LIKE 'current_state:%' AND reason NOT LIKE 'invalid:%' GROUP BY record_key,table_name HAVING count(*)>1"
         ).fetchall():
             if table not in CURRENT_RESOURCES | GIT_FACTS:
+                staged_rows = self.db.execute(
+                    "SELECT content_sha256, record_json FROM exchange_staging WHERE record_key=? AND reason NOT LIKE 'invalid:%'",
+                    (key,),
+                ).fetchall()
+                if table == "code_assessments" and len(staged_rows) == 2:
+                    from repo_catalog.adapters.sqlite.code_assessments import (
+                        finalize_pending_assessment,
+                    )
+
+                    r1 = json.loads(staged_rows[0][1])["values"]
+                    r2 = json.loads(staged_rows[1][1])["values"]
+                    final = finalize_pending_assessment(r1, r2)
+                    if final is not None:
+                        pending_digest = (
+                            staged_rows[0][0]
+                            if r1["state"] == "pending"
+                            else staged_rows[1][0]
+                        )
+                        self.db.execute(
+                            "DELETE FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+                            (key, pending_digest),
+                        )
+                        continue
+                elif (
+                    table in {"snapshots", "acquisition_roots"}
+                    and len(staged_rows) == 2
+                ):
+                    r1 = json.loads(staged_rows[0][1])["values"]
+                    r2 = json.loads(staged_rows[1][1])["values"]
+                    if (r1.get("complete") != r2.get("complete")) and all(
+                        r1[k] == r2[k] for k in r1.keys() | r2.keys() if k != "complete"
+                    ):
+                        pending_digest = (
+                            staged_rows[0][0]
+                            if r1.get("complete") == 0
+                            else staged_rows[1][0]
+                        )
+                        self.db.execute(
+                            "DELETE FROM exchange_staging WHERE record_key=? AND content_sha256=?",
+                            (key, pending_digest),
+                        )
+                        continue
                 self.db.execute(
-                    "UPDATE exchange_staging SET reason='conflict:competing_variants' WHERE record_key=?",
+                    "UPDATE exchange_staging SET reason='conflict:competing_variants' WHERE record_key=? AND reason NOT LIKE 'invalid:%'",
                     (key,),
                 )
         admitted = self.promote(unit["origin_catalog_uuidv4"])

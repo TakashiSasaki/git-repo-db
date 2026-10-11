@@ -67,29 +67,48 @@ class GitHubTransport:
 
     @staticmethod
     def origin(url):
-        u = urlsplit(url)
-        return u.scheme, u.hostname, u.port or (443 if u.scheme == "https" else 80)
+        try:
+            u = urlsplit(str(url))
+            if not u.scheme or not u.hostname:
+                return (u.scheme or "", u.hostname, 0)
+            port = u.port or (443 if u.scheme == "https" else 80)
+            return (u.scheme, u.hostname, port)
+        except (ValueError, TypeError, AttributeError):
+            return ("", None, 0)
 
     def close(self):
         if self.owned:
             self.client.close()
 
     def validate_url(self, url):
-        u = urlsplit(url)
-        if (
-            self.origin(url) not in self.origins
-            or u.username
-            or u.password
-            or u.fragment
-            or ".." in u.path.split("/")
-            or not u.path.startswith("/")
-        ):
-            raise CatalogError(
-                "UNSAFE_API_URL",
-                "Refusing credential propagation outside configured API origin",
-            )
-        if u.scheme != "https" and u.hostname not in ("localhost", "127.0.0.1", "::1"):
-            raise CatalogError("UNSAFE_API_URL", "Remote API requests require TLS")
+        if not isinstance(url, str):
+            raise CatalogError("UNSAFE_API_URL", "API URL must be a string")
+        try:
+            u = urlsplit(url)
+            origin = self.origin(url)
+            if (
+                origin not in self.origins
+                or u.scheme not in ("http", "https")
+                or u.username
+                or u.password
+                or u.fragment
+                or ".." in u.path.split("/")
+                or not u.path.startswith("/")
+            ):
+                raise CatalogError(
+                    "UNSAFE_API_URL",
+                    "Refusing credential propagation outside configured API origin",
+                )
+            if u.scheme != "https" and u.hostname not in (
+                "localhost",
+                "127.0.0.1",
+                "::1",
+            ):
+                raise CatalogError("UNSAFE_API_URL", "Remote API requests require TLS")
+        except CatalogError:
+            raise
+        except (ValueError, TypeError, AttributeError) as err:
+            raise CatalogError("UNSAFE_API_URL", "Malformed API URL") from err
 
     def request(self, method, url, **kwargs):
         self.validate_url(url)

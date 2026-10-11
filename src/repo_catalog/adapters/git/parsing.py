@@ -838,44 +838,61 @@ class GitParsing:
         ):
             raise CatalogError("GIT_REF_IDENTITY", "Invalid captured Git ref type/peel")
         seen = set()
-        while (fmt, oid) not in seen:
-            seen.add((fmt, oid))
-            if target_type != "tag" and peeled_oid != (oid if is_tag else None):
+        current_fmt, current_oid, current_type = fmt, oid, target_type
+        while (current_fmt, current_oid) not in seen:
+            seen.add((current_fmt, current_oid))
+            if current_type != "tag" and peeled_oid != (
+                current_oid if is_tag else None
+            ):
                 raise CatalogError(
                     "GIT_REF_IDENTITY",
                     "Captured peel differs from canonical tag target",
                 )
             obj = (
-                sources.get((fmt, oid))
+                sources.get((current_fmt, current_oid))
                 if sources is not None
                 else self.s.one(
                     "SELECT g.* FROM available_git_objects g JOIN repository_object_sources r USING(git_object_id) WHERE r.git_acquisition_id=? AND g.object_format=? AND g.oid=?",
-                    (acquisition, fmt, oid),
+                    (acquisition, current_fmt, current_oid),
                 )
             )
             if obj is None:
                 actual = self.s.one(
-                    "SELECT type FROM git_objects WHERE object_format=? AND oid=?",
-                    (fmt, oid),
+                    "SELECT git_object_id, type FROM git_objects WHERE object_format=? AND oid=?",
+                    (current_fmt, current_oid),
                 )
-                if actual is not None and actual["type"] != target_type:
-                    raise CatalogError(
-                        "GIT_REF_IDENTITY", "Captured Git target type contradicts bytes"
-                    )
+                if actual is not None:
+                    if actual["type"] != current_type:
+                        raise CatalogError(
+                            "GIT_REF_IDENTITY",
+                            "Captured Git target type contradicts bytes",
+                        )
+                    if current_type == "tag":
+                        tag = self.s.one(
+                            "SELECT target_format,target_oid,target_type FROM tag_objects WHERE git_object_id=?",
+                            (actual["git_object_id"],),
+                        )
+                        if tag is not None:
+                            current_fmt, current_oid, current_type = (
+                                tag["target_format"],
+                                tag["target_oid"],
+                                tag["target_type"],
+                            )
+                            continue
                 raise CatalogError(
                     "INCOMPLETE_CLOSURE", "Captured Git tag chain is unavailable"
                 )
-            if obj["type"] != target_type:
+            if obj["type"] != current_type:
                 raise CatalogError(
                     "GIT_REF_IDENTITY", "Captured Git target type contradicts bytes"
                 )
-            if target_type != "tag":
-                return oid
+            if current_type != "tag":
+                return current_oid
             tag = self.s.one(
                 "SELECT target_format,target_oid,target_type FROM tag_objects WHERE git_object_id=?",
                 (obj["git_object_id"],),
             )
-            fmt, oid, target_type = (
+            current_fmt, current_oid, current_type = (
                 tag["target_format"],
                 tag["target_oid"],
                 tag["target_type"],
