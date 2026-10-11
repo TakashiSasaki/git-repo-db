@@ -3,7 +3,7 @@
   "baseline_sha": "6ca31eb95d2dca91adcf20af88fbb54387595375",
   "selection": "tests/unit tests/integration tests/e2e, not live and not benchmark",
   "baseline_collected_count": 1950,
-  "current_collected_count": 2163,
+  "current_collected_count": 2232,
   "mapped_baseline_node_count": 627,
   "still_collected_same_node_count": 1323,
   "removed_or_renamed_baseline_function_count": 195,
@@ -206,7 +206,7 @@
   ],
   "node_list_sha256": {
     "baseline": "48e0222fede0f74ac6146f9b0215cb0d5c73b56199ac065debacc7ab23c04fef",
-    "current": "3b62b25cda279cd9ea58088ab58397535d14e9959be0cb7f6eeb2a2428a1d5c5"
+    "current": "91d74f204939ccb60a1e8c91dec182036b97a81feaa2b24a92db88289ef5181b"
   },
   "limitations": "Exact counterpart existence and explicit rationales are checked. Still-collected names do not imply unchanged implementation. Full execution, assertion sufficiency and fresh independent review remain separate acceptance requirements.",
   "entries": [

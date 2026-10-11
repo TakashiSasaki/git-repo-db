@@ -5,7 +5,7 @@
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "48c67de0ecd38e21fc7e7b6d27ed7e57cf3bd2f6cfbbfd0a55158ee013a223e6",
+    "ddl_sha256": "ce47d06fe64494a48ee36e44090016c965be309e3a7f24e826f7fd4d6acac04e",
     "tables": {
       "acquisition_progress": {
         "columns": [
@@ -3492,7 +3492,7 @@
     },
     "views": {
       "active_identity_relations": "90abaa6abf85c2c0faa2387435b5852c1d1c9cc1c83dc839c7a8327fcfb21053",
-      "available_git_acquisitions": "4bf67be352cc93e00304d343eb8d8b3411b181a6fd12a9b91dbddf3a47ca446c",
+      "available_git_acquisitions": "bb580848b3238ef82172f95c66ed798d4cb46aee48b54815bec171970e7ab392",
       "available_git_objects": "12c8a25107bb8de63cae7d80564dcf004c327be19228aa70c4fa08770e0c9ff2",
       "available_snapshots": "1833d01d68322654f33ede71764df68d5e091a215c2246b97b64ae4e5b72c8a7",
       "current_coverage": "2211055d4d9a6aa544637d4cc903b129581fc85a8e9394cc1b10ab8bf182c4bc",
@@ -3532,6 +3532,10 @@
       "acquisition_roots_complete": {
         "owner": "acquisition_roots",
         "sql_sha256": "7506e282625ba97c6767661163e8889660d0d24eebca087ad36da008cb1f8cf7"
+      },
+      "acquisition_roots_complete_insert": {
+        "owner": "acquisition_roots",
+        "sql_sha256": "a2111c408dc30a633bfc1233dc017fad669bb90c309d77f78021478f9ac4a4cd"
       },
       "acquisition_roots_immutable": {
         "owner": "acquisition_roots",
@@ -5822,6 +5826,14 @@
       "document_state_repository": {
         "owner": "document_state",
         "sql_sha256": "0c79c22d9bc6b955020c2505e816c7eba9e861d31c6c4e1bef91a553819a89b4"
+      },
+      "exchange_staging_git_name": {
+        "owner": "exchange_staging",
+        "sql_sha256": "28eef81bd207f853dbb4e4aae9e0876ae9f2f846c419b76d8cdf7e9e17b41e2a"
+      },
+      "exchange_staging_git_object": {
+        "owner": "exchange_staging",
+        "sql_sha256": "7c50e03b16a83eb9df4a3259432363ee9e15aec7fd5b6ed6b1cd168dc6c732fa"
       },
       "exchange_staging_owner": {
         "owner": "exchange_staging",
@@ -9446,6 +9458,7 @@
       ],
       "added": [
         "acquisition_roots_complete",
+        "acquisition_roots_complete_insert",
         "change_request_state_identity",
         "change_request_state_owner_insert",
         "change_request_state_owner_update",
@@ -9981,6 +9994,8 @@
         "change_request_state_repository",
         "coverage_claim_markers_marker",
         "document_state_repository",
+        "exchange_staging_git_name",
+        "exchange_staging_git_object",
         "exchange_staging_owner",
         "exchange_staging_reason",
         "exchange_staging_record_owner",

@@ -2082,10 +2082,10 @@
     "script": "scripts/audit_publication_free_test_dispositions.py",
     "artifact": "tests/support/publication_free_node_dispositions.json",
     "baseline_nodes": "tests/support/publication_free_baseline_nodes.txt",
-    "status": "All1950 baseline nodes accounted for against actual2148 ordinary nodes: 623 explicit mappings + 1327 same-node survivors; all193 removed/renamed functions mapped. Collection proof only, not full execution acceptance.",
-    "removed_or_renamed_functions": 193,
-    "explicit_mapped_nodes": 623,
-    "still_collected_same_nodes": 1327
+    "status": "All 1950 baseline nodes accounted for against actual 2232 ordinary nodes: 627 explicit mappings + 1323 same-node survivors; all 195 removed/renamed functions mapped. Collection proof only; exact source-bound execution and final independent acceptance are separate gates.",
+    "removed_or_renamed_functions": 195,
+    "explicit_mapped_nodes": 627,
+    "still_collected_same_nodes": 1323
   },
   "corrected_source_narrow_execution": {
     "selection": "tests/integration/test_catalog3_cache.py test_catalog3_job_plans.py test_database.py test_current_boundaries_independent.py test_catalog3_current_exchange.py and test_catalog3_review_coverage.py::test_new_observed_root_gap_supersedes_older_terminal_thread",
@@ -2341,5 +2341,23 @@
       "Nested selected-thread completeness does not depend on unrelated unfinished siblings; incremental reuse preserves original collection start."
     ],
     "execution_limit": "Affected split-run receipts and focused counterexamples do not establish full ordinary/package acceptance."
+  },
+  "historical_exact_node_audits": [
+    {
+      "script": "scripts/audit_publication_free_test_dispositions.py",
+      "artifact": "tests/support/publication_free_node_dispositions.json",
+      "baseline_nodes": "tests/support/publication_free_baseline_nodes.txt",
+      "status": "All1950 baseline nodes accounted for against actual2148 ordinary nodes: 623 explicit mappings + 1327 same-node survivors; all193 removed/renamed functions mapped. Collection proof only, not full execution acceptance.",
+      "removed_or_renamed_functions": 193,
+      "explicit_mapped_nodes": 623,
+      "still_collected_same_nodes": 1327
+    }
+  ],
+  "completion_collection": {
+    "ordinary_selected": 2232,
+    "collection_errors": 0,
+    "node_list_sha256": "91d74f204939ccb60a1e8c91dec182036b97a81feaa2b24a92db88289ef5181b",
+    "artifact": "tests/support/publication_free_node_dispositions.json",
+    "status": "Fresh integrated correction collection. Exact original baseline dispositions are retained; this is collection proof, not execution or final independent acceptance."
   }
 }
