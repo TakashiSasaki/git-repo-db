@@ -189,6 +189,111 @@ def test_saved_root_is_reused_with_old_observation_for_child_restart(
             restarted.connection.set_trace_callback(None)
 
 
+@pytest.mark.parametrize("presence", ["omitted", "null"])
+@pytest.mark.parametrize(
+    "role,field",
+    [("merge", "mergeCommit"), ("test-merge", "potentialMergeCommit")],
+    ids=["merge", "test-merge"],
+)
+def test_saved_root_role_presence_survives_child_restart(
+    github_runtime, monkeypatch, role, field, presence
+):
+    """A later child response cannot turn an omitted root target into null."""
+    store, repo, _, api = github_runtime
+    pr = seed_pr(store, repo)
+    job = new_job(store)
+    api.reply_count = 101
+    stamp, requested = [100], []
+    monkeypatch.setattr(
+        "repo_catalog.adapters.github.persistence.now_us", lambda: stamp[0]
+    )
+    original_route = api.route
+
+    def route(method, path, params, body):
+        value, headers = original_route(method, path, params, body)
+        if method == "POST":
+            variables = body["variables"]
+            location = "child" if "thread" in variables else "root"
+            requested.append((location, variables.copy()))
+            if location == "root":
+                root = value["data"]["repository"]["pullRequest"]
+                if presence == "omitted":
+                    del root[field]
+                else:
+                    root[field] = None
+        return value, headers
+
+    api.route = route
+    expected_roles = {"merge": None, "test-merge": None}
+    if presence == "omitted":
+        del expected_roles[role]
+    expected_input = (expected_roles, presence == "null", 100)
+    current = collector(store)
+    current.http.clock_us = lambda: stamp[0]
+    original_request = current.http.request
+
+    def stop_child(method, url, **kwargs):
+        if kwargs.get("json", {}).get("variables", {}).get("thread"):
+            raise CatalogError(
+                "CANCELLED", "Root target committed before child request"
+            )
+        return original_request(method, url, **kwargs)
+
+    current.http.request = stop_child
+    try:
+        with pytest.raises(CatalogError, match="Root target committed"):
+            current.threads(repo, pr, job)
+        root = store.one("SELECT * FROM fetch_occurrences")
+        assert root["observed_at_us"] == 100
+        assert (
+            current.saved_thread_code_input(pr["change_request_id"]) == expected_input
+        )
+        assert [location for location, _ in requested] == ["root"]
+        assert store.one("SELECT count(*) FROM review_resources")[0] == 100
+        JobService(store).update(job, "interrupted")
+    finally:
+        current.http.close()
+
+    store.close()
+    stamp[0] = 300
+    with Store(store.path) as restarted:
+        JobService(restarted).resume(job)
+        restarted.expected_attempt = 2
+        later = collector(restarted)
+        later.http.clock_us = lambda: stamp[0]
+        try:
+            later.threads(repo, pr, job)
+            assert [location for location, _ in requested] == ["root", "child"]
+            assert requested[-1][1]["thread"] == "THREAD41-0"
+            assert requested[-1][1]["commentCursor"] == "100"
+            assert (
+                later.saved_thread_code_input(pr["change_request_id"]) == expected_input
+            )
+            assert tuple(
+                restarted.one(
+                    "SELECT fetch_occurrence_id,observed_at_us FROM fetch_occurrences"
+                )
+            ) == (root["fetch_occurrence_id"], 100)
+            assert restarted.one("SELECT count(*) FROM fetch_occurrences")[0] == 1
+            assert restarted.one("SELECT count(*) FROM review_resources")[0] == 101
+            assert [
+                row[0]
+                for row in restarted.all(
+                    "SELECT p.observed_at_us FROM current_collection_pages p "
+                    "JOIN fetch_collections f USING(fetch_collection_id) "
+                    "WHERE f.kind='thread-comments' ORDER BY p.ordinal"
+                )
+            ] == [300]
+            assert tuple(
+                restarted.one(
+                    "SELECT coverage_state,observed_at_us FROM current_coverage WHERE kind='threads'"
+                )
+            ) == ("complete", 300)
+            assert restarted.all("PRAGMA foreign_key_check") == []
+        finally:
+            later.http.close()
+
+
 @pytest.mark.parametrize("retry_us", [175, 200, 300])
 def test_current_rest_rejection_boundary_characterization(
     github_runtime, monkeypatch, retry_us

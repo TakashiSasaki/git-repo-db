@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
 import sqlite3
+import subprocess
 import tempfile
 import uuid
 from pathlib import Path
@@ -49,13 +51,16 @@ def valid_utf8(body):
         return 0
 
 
-def connect(path=":memory:"):
+def connect(path=":memory:", *, initialize=True):
     db = sqlite3.connect(path, isolation_level=None)
     db.row_factory = sqlite3.Row
+    db.execute("PRAGMA foreign_keys=ON")
+    db.execute("PRAGMA recursive_triggers=ON")
     db.create_function("sha256", 1, sha, deterministic=True)
     db.create_function("valid_utf8", 1, valid_utf8, deterministic=True)
     db.create_function("valid_git", 5, valid_git, deterministic=True)
-    db.executescript(SQL.read_text())
+    if initialize:
+        db.executescript(SQL.read_text())
     return db
 
 
@@ -488,11 +493,19 @@ def rejected(call):
 
 
 def run():
+    binding = {
+        "sql_sha256": sha(SQL.read_bytes()).hex(),
+        "probe_sha256": sha(Path(__file__).read_bytes()).hex(),
+        "source_revision": source_revision(),
+    }
     results = []
 
     def case(name, function):
-        function()
-        results.append({"case": name, "outcome": "passed"})
+        evidence = function()
+        result = {"case": name, "outcome": "passed"}
+        if evidence is not None:
+            result["evidence"] = evidence
+        results.append(result)
 
     def proof_case(kind):
         with connect() as db:
@@ -633,10 +646,11 @@ def run():
                     "SELECT observed_at_us,coverage_state FROM current_coverage"
                 ).fetchone()
             ) == (None, "unknown")
-            for clock, state in (
-                (100, "complete"),
-                (200, "partial"),
-                (200, "complete"),
+            checkpoints = []
+            for clock, state, expected in (
+                (100, "complete", "complete"),
+                (200, "partial", "partial"),
+                (200, "complete", "conflict"),
             ):
                 put(
                     db,
@@ -645,6 +659,13 @@ def run():
                     observed_at_us=clock,
                     coverage_state=state,
                 )
+                actual = tuple(
+                    db.execute(
+                        "SELECT observed_at_us,coverage_state FROM current_coverage"
+                    ).fetchone()
+                )
+                assert actual == (clock, expected)
+                checkpoints.append({"inserted_state": state, "current": list(actual)})
             assert tuple(
                 db.execute(
                     "SELECT observed_at_us,coverage_state FROM current_coverage"
@@ -674,6 +695,7 @@ def run():
                     "SELECT observed_at_us,coverage_state FROM current_coverage"
                 ).fetchone()
             ) == (300, "complete")
+            return {"checkpoints": checkpoints}
 
     case("coverage_exact_contract_newer_partial_equal_time_unknown", coverage)
 
@@ -681,6 +703,7 @@ def run():
         with connect() as db:
             base(db)
             uid, _ = pr(db, 9)
+            missing_digest = observation_digest(db, "change_request_observations", uid)
             put(
                 db,
                 "pr_observation_fields",
@@ -691,6 +714,14 @@ def run():
                 module="fixture.domain",
                 version="1",
             )
+            null_digest = observation_digest(db, "change_request_observations", uid)
+            db.execute(
+                "UPDATE pr_observation_fields SET state='value',value_json='\"\"' "
+                "WHERE observation_uuid=? AND path='body'",
+                (uid,),
+            )
+            empty_digest = observation_digest(db, "change_request_observations", uid)
+            assert len({missing_digest, null_digest, empty_digest}) == 3
             db.execute(
                 "UPDATE change_request_observations SET title='' WHERE observation_uuid=?",
                 (uid,),
@@ -703,16 +734,6 @@ def run():
             assert not db.execute(
                 "SELECT 1 FROM pr_observation_fields WHERE path='omitted'"
             ).fetchone()
-            assert (
-                len(
-                    {
-                        manifest({"identity": uid}),
-                        manifest({"identity": uid, "body": None}),
-                        manifest({"identity": uid, "body": ""}),
-                    }
-                )
-                == 3
-            )
             rejected(
                 lambda: put(
                     db,
@@ -745,6 +766,14 @@ def run():
                     version="1",
                 )
             )
+            return {
+                "same_observation_uuid": uid,
+                "modeled_body_digests": {
+                    "missing": missing_digest.hex(),
+                    "null": null_digest.hex(),
+                    "empty": empty_digest.hex(),
+                },
+            }
 
     case("identical_identity_missing_null_empty", fields)
 
@@ -916,32 +945,95 @@ def run():
             path = Path(temporary) / "candidate.sqlite"
             db = connect(path)
             base(db)
-            cid = collection(db, 30, terminal=False)
+            prefix = pr(db, 30)
+            cid = collection(db, 30, members=[prefix], terminal=False)
             db.close()
-            db = sqlite3.connect(path, isolation_level=None)
-            db.row_factory = sqlite3.Row
+            db = connect(path, initialize=False)
+            assert db.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+            assert db.execute("PRAGMA recursive_triggers").fetchone()[0] == 1
+            assert (
+                observation_digest(db, "change_request_observations", prefix[0])
+                == prefix[1]
+            )
+            assert (
+                db.execute(
+                    "SELECT member_count FROM repository_collection_fragments WHERE collection_uuid=? AND ordinal=0",
+                    (cid,),
+                ).fetchone()[0]
+                == 1
+            )
             rejected(lambda: validate_collection(db, cid))
+            continuation = pr(db, 31)
+            member_table = "pr_collection_members"
+            row = [0, member_table, continuation[0], continuation[1].hex()]
+            put(
+                db,
+                "repository_collection_fragments",
+                collection_uuid=cid,
+                repository_uuid=ident(11),
+                ordinal=1,
+                observed_at_us=175,
+                module="fixture.domain",
+                version="1",
+                member_count=1,
+                member_digest=manifest([row]),
+            )
+            put(
+                db,
+                member_table,
+                collection_uuid=cid,
+                ordinal=1,
+                position=0,
+                repository_uuid=ident(11),
+                observation_uuid=continuation[0],
+                state_digest=continuation[1],
+            )
+            rejected(
+                lambda: put(
+                    db,
+                    "repository_collection_terminals",
+                    collection_uuid=cid,
+                    repository_uuid=ident(12),
+                    last_ordinal=1,
+                    observed_at_us=175,
+                )
+            )
             put(
                 db,
                 "repository_collection_terminals",
                 collection_uuid=cid,
                 repository_uuid=ident(11),
-                last_ordinal=0,
-                observed_at_us=100,
+                last_ordinal=1,
+                observed_at_us=175,
             )
             put(
                 db,
                 "repository_collection_seals",
                 collection_uuid=cid,
                 repository_uuid=ident(11),
-                member_count=0,
-                member_digest=manifest([]),
+                member_count=2,
+                member_digest=manifest(
+                    [
+                        [0, 0, member_table, prefix[0], prefix[1].hex()],
+                        [1, *row],
+                    ]
+                ),
                 required_child_count=0,
                 required_child_digest=manifest([]),
-                observed_at_us=100,
+                observed_at_us=175,
             )
-            assert validate_collection(db, cid) == 100
+            assert validate_collection(db, cid) == 175
+            assert db.execute("PRAGMA foreign_key_check").fetchall() == []
+            assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
             db.close()
+            return {
+                "prefix_members": 1,
+                "continued_members": 2,
+                "assessment_observed_at_us": 175,
+                "foreign_keys": True,
+                "recursive_triggers": True,
+                "wrong_terminal_owner_rejected_after_reopen": True,
+            }
 
     case("file_close_reopen_committed_prefix", restart)
     with connect() as db:
@@ -956,9 +1048,18 @@ def run():
             "integrity": [row[0] for row in db.execute("PRAGMA integrity_check")],
             "strict_tables": sum(row[5] for row in db.execute("PRAGMA table_list")),
         }
+    assert binding == {
+        "sql_sha256": sha(SQL.read_bytes()).hex(),
+        "probe_sha256": sha(Path(__file__).read_bytes()).hex(),
+        "source_revision": source_revision(),
+    }, "candidate files or tracked source revision changed during the probe"
     return {
         "status": "Proposed/Pending Owner Decision",
-        "sql_sha256": sha(SQL.read_bytes()).hex(),
+        **binding,
+        "runtime": {
+            "python": platform.python_version(),
+            "sqlite": sqlite3.sqlite_version,
+        },
         "cases": results,
         "counts": counts,
         "checks": checks,
@@ -968,6 +1069,26 @@ def run():
             "Source/code/Git interpretation validators and production CAS-41 backup/restore are characterized separately; no prototype pass certifies those runtime paths.",
             "No retention duration, GC, lifecycle or owner decision is implemented.",
         ],
+    }
+
+
+def source_revision():
+    repository = SQL.resolve().parents[3]
+
+    def git(*arguments):
+        return subprocess.run(
+            ["git", *arguments],
+            cwd=repository,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+
+    head, tree = git("rev-parse", "HEAD", "HEAD^{tree}").splitlines()
+    return {
+        "head": head,
+        "tree": tree,
+        "tracked_changes": bool(git("status", "--porcelain", "--untracked-files=no")),
     }
 
 

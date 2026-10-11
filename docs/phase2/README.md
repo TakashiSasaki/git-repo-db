@@ -248,7 +248,7 @@ The [integrated probe](prototypes/candidate_probe.py) checks exact schema shape,
 empty/missing/duplicate/skipped fragments, member tamper/digests, same-owner family
 and cross-owner failures, selective/late members, exact required children,
 file-close/reopen restart, field presence, incomparable candidates and Git SHA-1/
-SHA-256 bytes. Its [receipt](prototypes/candidate-evidence.json) states remaining
+SHA-256 bytes. Its [current recheck receipt](prototypes/candidate-recheck-evidence.json) states remaining
 publication/current/Source/code/Git validator limits. The independent completeness
 [model and results](prototypes/completeness-results.json), production publication
 [characterization](prototypes/characterize_publication.py), acquisition
@@ -303,7 +303,8 @@ GC, archive duration and automatic deletion remain unchosen and unnecessary bloc
 ```sh
 uv sync --locked --group dev
 uv run --no-sync python scripts/audit_phase2_dependencies.py --output artifacts/p2-dependencies.json --source-output artifacts/p2-source.json.gz
-uv run --no-sync python scripts/audit_phase2_fields.py --check
+uv run --no-sync python scripts/audit_phase2_fields.py --output artifacts/current-fields.json
+uv run --no-sync python scripts/audit_phase2_fields.py --check --output artifacts/current-fields.json
 uv run --no-sync python docs/phase2/prototypes/candidate_probe.py
 uv run --no-sync python docs/phase2/prototypes/completeness_probe.py --help
 uv run --no-sync python docs/phase2/prototypes/characterize_publication.py --help
@@ -311,6 +312,13 @@ uv run --no-sync python -m pytest docs/phase2/prototypes/test_acquisition_charac
 uv run --no-sync ruff check src tests scripts docs/phase2/prototypes
 uv run --no-sync ruff format --check src tests scripts docs/phase2/prototypes
 ```
+
+The committed field/dependency/disposition JSON files describe the investigated
+Schema 18 checkpoint. Check the committed field contract directly only from
+PR A's Schema 18 checkout; current Schema 19 generation uses the separate output
+above and does not overwrite that checkpoint. The
+[completion recheck](completion-recheck.md) records additional SQL read paths,
+typed current fields and selected Exchange workloads.
 
 Probe options, exact source SHA/tree and failed setup/development runs are recorded
 in their workstreams and [verification ledger](verification.md). Production

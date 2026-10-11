@@ -18,11 +18,13 @@ named `payload` therefore materially understates the remaining work.
 The [machine-readable contract](../field-contract.json) identifies 20 coherent
 field groups, every JSON column/shape/nullable contract, significant typed
 columns, schema guards/views, AST SQL call sites, and public projection syntax.
-Reproduce it with:
+The committed JSON is the original PR A / Schema 18 snapshot. Its default
+`--check` is meaningful from that checkout. Generate and check the current
+checkout separately, without overwriting the historical snapshot:
 
 ```sh
-PYTHONPATH=src python scripts/audit_phase2_fields.py
-PYTHONPATH=src python scripts/audit_phase2_fields.py --check
+PYTHONPATH=src python scripts/audit_phase2_fields.py --output artifacts/current-fields.json
+PYTHONPATH=src python scripts/audit_phase2_fields.py --check --output artifacts/current-fields.json
 ```
 
 The tool executes `schema_sql()` in an in-memory catalog and calls the production
@@ -32,7 +34,10 @@ chains below establish responsibility. Dynamic SQL and generic Exchange paths
 still require manual tracing. The public key extraction includes nested literal
 dictionaries and cannot infer dynamic keys; it is not an approved new CLI schema.
 No authenticated collection, user catalog, real cached response or private data
-is involved.
+is involved. The [typed current-field supplement](../current-typed-field-contract.md)
+adds explicit Issue/comment scalar and capture groups. Provider remainders and
+event variant vocabularies remain open questions; this inventory is not an
+approved or fully closed retained-field schema.
 
 ## Decision precedence and current boundaries
 

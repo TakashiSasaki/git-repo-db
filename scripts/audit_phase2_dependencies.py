@@ -30,6 +30,70 @@ from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402
 )
 from repo_catalog.cli.main import parser as cli_parser  # noqa: E402
 
+SQL_METHODS = frozenset({"execute", "executemany", "executescript", "one", "all"})
+
+
+def sql_forwarders(tree):
+    """Find local methods that forward their SQL argument to a SQL interface.
+
+    This recognizes CurrentResources._one/_all, ParserModel._row/_rows and
+    GitParsing.write from their ASTs rather than treating every write/rows method
+    as SQL. Forwarding proves syntax, not receiver type or runtime reachability.
+    """
+    result = set()
+    for owner in ast.walk(tree):
+        if not isinstance(owner, ast.ClassDef):
+            continue
+        methods = [
+            item
+            for item in owner.body
+            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
+        changed = True
+        while changed:
+            changed = False
+            known = SQL_METHODS | {
+                method for name, method in result if name == owner.name
+            }
+            for method in methods:
+                parameters = [*method.args.posonlyargs, *method.args.args]
+                if parameters and parameters[0].arg in {"self", "cls"}:
+                    parameters = parameters[1:]
+                if not parameters:
+                    continue
+                sql_name = parameters[0].arg
+                if any(
+                    isinstance(call, ast.Call)
+                    and isinstance(call.func, ast.Attribute)
+                    and call.func.attr in known
+                    and call.args
+                    and isinstance(call.args[0], ast.Name)
+                    and call.args[0].id == sql_name
+                    for call in ast.walk(method)
+                ):
+                    identity = (owner.name, method.name)
+                    if identity not in result:
+                        result.add(identity)
+                        changed = True
+    return result
+
+
+def sql_call_method(node, scope, forwarders):
+    """Recognize a SQL interface candidate without resolving its receiver."""
+    if not isinstance(node.func, ast.Attribute):
+        return None
+    method = node.func.attr
+    if method in SQL_METHODS:
+        return method
+    if (
+        scope
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id in {"self", "cls"}
+        and (scope[0], method) in forwarders
+    ):
+        return method
+    return None
+
 
 def digest(value):
     return hashlib.sha256(value.encode()).hexdigest()
@@ -222,8 +286,9 @@ def source_inventory(root, db, object_names):
         return "<" + type(node).__name__ + ">"
 
     class Visitor(ast.NodeVisitor):
-        def __init__(self, path):
+        def __init__(self, path, forwarders):
             self.path, self.scope = path, []
+            self.forwarders = forwarders
 
         def visit_ClassDef(self, node):
             self.scope.append(node.name)
@@ -247,10 +312,7 @@ def source_inventory(root, db, object_names):
             target = callable_path(node.func)
             caller = self.path + ":" + ".".join(self.scope)
             calls.append({"caller": caller, "target": target, "line": node.lineno})
-            if (
-                target.rsplit(".", 1)[-1] in {"execute", "executemany", "executescript"}
-                and node.args
-            ):
+            if sql_call_method(node, self.scope, self.forwarders) and node.args:
                 expression = node.args[0]
                 literal = (
                     expression.value
@@ -262,6 +324,7 @@ def source_inventory(root, db, object_names):
                     "caller": caller,
                     "line": node.lineno,
                     "target": target,
+                    "evidence": "AST SQL interface/forwarding candidate; compilation is not runtime reachability",
                     "expression": ast.unparse(expression),
                     "literal": literal,
                 }
@@ -309,7 +372,7 @@ def source_inventory(root, db, object_names):
                     if isinstance(node, (ast.Import, ast.ImportFrom))
                 ),
             }
-            Visitor(relative).visit(tree)
+            Visitor(relative, sql_forwarders(tree)).visit(tree)
     resolved = []
     for call in calls:
         path, scope = call["caller"].split(":", 1)
@@ -433,6 +496,7 @@ def build_report(root=ROOT):
             "SQL preparation proves syntactic access, not a reachable product operation.",
             "AST literals and locally resolved calls are static evidence; dispatch, fixture execution and workstream traces supply runtime evidence.",
             "Dynamic SQL and unsuccessful preparation are listed, never inferred to be dead.",
+            "Store/target one/all and local AST SQL-forwarding methods are included; receiver aliases, external/custom interfaces and argument indirection can remain unresolved.",
             "Fresh integrity checks cover the composed schema, not retained catalog contents.",
         ],
     }

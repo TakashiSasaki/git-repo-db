@@ -126,17 +126,22 @@ Code target value/role consistency, exact PR/listing scope, Git acquisition
 membership, field-cell origin clocks/capture and immutable sealed membership
 need concrete validator checks in addition to DDL shape.
 
-The corrected candidate independently passes the SQL attacks, including the
-previously admitted absent-repository/NULL-Source publication. Its executable
-validator now rejects tampered normalized retained values, cross-resource field
+The corrected candidate checkpoint independently passed the SQL attacks, including
+the previously admitted absent-repository/NULL-Source publication. Its executable
+validator rejected tampered normalized retained values, cross-resource field
 origins, contradictory field producer metadata, wrong same-repository PR child
 scope and wrong captured thread identity. An independent current-review receipt
-probe confirms that a later mutable body does not invalidate an old digest
+probe confirmed that a later mutable body does not invalidate an old digest
 attestation or create an edit-history requirement. The precise tested DDL/validator
 fingerprints and distinctions between checks and limitations are recorded in the
-[SQL](independent-sql-receipt.json) and
-[validator](independent-validator-receipt.json) receipts. The prototype does not implement every production
-publication, Source, code, Git interpretation or current-admission rule.
+[historical SQL](independent-sql-receipt.json) and
+[historical validator](independent-validator-receipt.json) receipts. Those receipts
+bind DDL `2de256e74fcc1a7af94a709aff92646cc04517a5322482a950504ffb34e81158`
+and validator probe `8a8e2a5ffa5a0089d167936a9b751c44255dc0d597a141cb892b5014f5e28c08`;
+they do not certify the subsequently submitted or strengthened candidate files.
+They are preserved unchanged as earlier evidence. The prototype does not implement
+every production publication, Source, code, Git interpretation or current-admission
+rule.
 
 The independent [validator attack](prototypes/independent_candidate_validation.py)
 also reproduces an explicitly declared limitation: inserting a publication seal
@@ -145,6 +150,42 @@ the observation visible in the illustrative candidate view. Production admission
 must validate and freeze the exact typed output set before a reader treats seal
 existence as eligible publication. This is a high-severity implementation
 requirement, not a claim that the disposable prototype is a safe replacement.
+
+### Supplemental candidate author recheck
+
+A later Workstream B artifact audit found three weak assertions in the integrated
+candidate probe. The author strengthened those assertions at feature
+`a14ae9e9fd8e2a77b1a613298359e5f5341f50d2`, tree
+`3418e52ef4b6038c37363bc7a6cbfc19d1da78b7`, without changing production
+semantics or the illustrative SQL:
+
+| Scenario | Actual strengthened assertion |
+| --- | --- |
+| Newer partial and equal-time contradiction | Complete100 is checked, partial200 is checked before another claim is inserted, then complete200 derives conflict200. |
+| Omitted, explicit NULL and empty body | One modeled observation identity is held fixed while its actual body field cell changes; `observation_digest` produces three distinct values. |
+| Committed prefix continuation after close/reopen | A real member in ordinal0 survives file close/reopen. Foreign keys and recursive triggers are enabled again; a second member in ordinal1 completes the exact two-member seal at175, while a wrong-owner terminal is rejected. This checks reopen/continuation, not process-kill recovery or a permanent checkpoint policy. |
+
+The [candidate evidence](prototypes/candidate-recheck-evidence.json) records all
+**17 grouped scenarios**, the three concrete intermediate results, clean SQLite
+FK/integrity checks, Python 3.12.14 and SQLite 3.53.1. The author also re-executed
+the independently authored SQL, validator and narrow-fixture counterexample
+scripts. New [SQL](candidate-recheck-sql-receipt.json) and
+[validator](candidate-recheck-validator-receipt.json) receipts bind candidate SQL
+`0d8a03e841f0c2517c2a591943f8d012db9a664b6f9e7a8714f2aaa74643db1e`
+and strengthened probe
+`cf5317b9ab9dcfbac7d47b79e69b97dc9ca97b5558e98002fa9393f1a23dfd0e`.
+The [author recheck record](candidate-recheck-review.json) binds the commands,
+executor role, source revision, runtime, script/receipt hashes and reproduced
+limits. This execution is an author recheck, not a new independent approval.
+
+The validator's current-review receipt check still demonstrates that changing a
+mutable body preserves the earlier receipt, while a mismatched captured thread
+fails. Exact publication sealing/immutability and full current-admission,
+Source, code and Git-interpretation validators remain declared implementation
+obligations. The generic narrow fixture still admits wrong-family members and
+unbound natural child parents; those limitations do not become production or
+integrated-schema guarantees. No full runtime acceptance, hosted CI rerun or
+performance benchmark was performed for this supplemental prototype-only work.
 
 ## Independent review of determined corrections
 
