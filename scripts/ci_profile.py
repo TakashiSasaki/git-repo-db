@@ -15,7 +15,11 @@ import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from pathlib import Path
 
-from scripts import ci_journal
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts import ci_journal  # noqa: E402
 
 
 def junit(path):
