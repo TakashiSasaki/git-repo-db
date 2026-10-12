@@ -1,13 +1,18 @@
 """Execute current selections and report exactly what ran, failed or remained untested."""
 
 import argparse
+import base64
 import glob
 import hashlib
+import io
 import json
 import math
 import os
+import re
 import subprocess
 import sys
+import tempfile
+import zipfile
 from argparse import Namespace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -732,8 +737,304 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
     return receipt
 
 
+def parse_log_receipt_bundle(log_text):
+    """Extract and verify bounded receipt zip archive from GitHub Actions job log."""
+    in_bundle = False
+    digest = None
+    expected_len = None
+    lines = []
+    for line in log_text.splitlines():
+        if not in_bundle:
+            m = re.search(
+                r"(?:^|[\t ])CI_RECEIPTS_BEGIN_V1\s+([0-9a-f]{64})\s+(\d+)", line
+            )
+            if m and "print(" not in line:
+                in_bundle = True
+                digest = m.group(1)
+                expected_len = int(m.group(2))
+                lines = []
+        else:
+            m_end = re.search(r"(?:^|[\t ])CI_RECEIPTS_END_V1\s+([0-9a-f]{64})", line)
+            if m_end and "print(" not in line:
+                if m_end.group(1) != digest:
+                    raise ValueError("CI_RECEIPTS_END_V1 digest mismatch with BEGIN")
+                in_bundle = False
+                break
+            m_data = re.search(r"CI_RECEIPTS_DATA_V1\s+([A-Za-z0-9+/=]+)", line)
+            if m_data:
+                lines.append(m_data.group(1).strip())
+    if not digest or not lines:
+        return None
+    raw = base64.b64decode("".join(lines))
+    if len(raw) != expected_len:
+        raise ValueError(
+            f"Receipt bundle length mismatch: expected {expected_len}, got {len(raw)}"
+        )
+    if hashlib.sha256(raw).hexdigest() != digest:
+        raise ValueError("Receipt bundle sha256 digest mismatch")
+    files = {}
+    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+        for name in zf.namelist():
+            files[name] = zf.read(name)
+    return files
+
+
+def compare_provider_artifact(bundle_dir, provider_source):
+    """Compare local bundle files against provider-retrieved artifact contents."""
+    if isinstance(provider_source, (str, Path)):
+        prov_path = Path(provider_source)
+        if not (prov_path / "validation-manifest.json").is_file():
+            return False, "Provider artifact missing validation-manifest.json"
+        try:
+            prov_manifest = read(prov_path / "validation-manifest.json")
+            local_manifest = read(bundle_dir / "validation-manifest.json")
+        except Exception as err:
+            return False, f"Failed to read manifest for comparison: {err}"
+        if prov_manifest != local_manifest:
+            return (
+                False,
+                "Supplied hosted manifest does not match provider-retrieved artifact",
+            )
+        for name in ("receipt-binding.json", "receipt-index.json"):
+            if (prov_path / name).is_file() and (bundle_dir / name).is_file():
+                if read(bundle_dir / name) != read(prov_path / name):
+                    return (
+                        False,
+                        f"Supplied {name} does not match provider-retrieved artifact",
+                    )
+        return True, None
+    elif isinstance(provider_source, dict):
+        if "validation-manifest.json" not in provider_source:
+            return False, "Provider artifact missing validation-manifest.json"
+        try:
+            prov_raw = provider_source["validation-manifest.json"]
+            prov_manifest = (
+                json.loads(prov_raw) if isinstance(prov_raw, (bytes, str)) else prov_raw
+            )
+            local_manifest = read(bundle_dir / "validation-manifest.json")
+        except Exception as err:
+            return False, f"Failed to read manifest for comparison: {err}"
+        if prov_manifest != local_manifest:
+            return (
+                False,
+                "Supplied hosted manifest does not match provider-retrieved artifact",
+            )
+        for name in ("receipt-binding.json", "receipt-index.json"):
+            if name in provider_source and (bundle_dir / name).is_file():
+                raw = provider_source[name]
+                prov_val = json.loads(raw) if isinstance(raw, (bytes, str)) else raw
+                if read(bundle_dir / name) != prov_val:
+                    return (
+                        False,
+                        f"Supplied {name} does not match provider-retrieved artifact",
+                    )
+        return True, None
+    return False, "Unsupported provider source format"
+
+
+def verify_hosted_provider(
+    run_id, binding, hosted, bundle_dir=None, root=ROOT, gh_runner=None
+):
+    """Retrieve and verify GitHub Actions hosted run metadata and artifact boundary."""
+    runner = gh_runner or subprocess.run
+    try:
+        gh_res = runner(
+            [
+                "gh",
+                "run",
+                "view",
+                str(run_id),
+                "--json",
+                "status,conclusion,headSha,event,workflowName,jobs,name",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except Exception as err:
+        return "gap", f"Authoritative hosted run verification unavailable: {err}", None
+
+    if gh_res.returncode != 0:
+        return (
+            "gap",
+            f"Authoritative hosted run verification unavailable for run ID {run_id}: {gh_res.stderr.strip()}",
+            None,
+        )
+
+    try:
+        gh_info = json.loads(gh_res.stdout)
+    except Exception as err:
+        return False, f"Malformed GitHub Actions run view output: {err}", None
+
+    if gh_info.get("status") != "completed" or gh_info.get("conclusion") != "success":
+        return (
+            False,
+            f"GitHub Actions run not successful: status={gh_info.get('status')}, conclusion={gh_info.get('conclusion')}",
+            None,
+        )
+
+    wf = gh_info.get("workflowName") or gh_info.get("name")
+    if wf not in ("tests", "tests.yml"):
+        return False, f"GitHub Actions run belongs to unexpected workflow: {wf}", None
+
+    expected_head = binding.get("head") or hosted.get("context", {}).get("tested_sha")
+    if expected_head and gh_info.get("headSha") != expected_head:
+        return (
+            False,
+            f"GitHub Actions run commit SHA mismatch: expected {expected_head}, got {gh_info.get('headSha')}",
+            None,
+        )
+
+    event = gh_info.get("event")
+    if event in ("pull_request", "push"):
+        return (
+            False,
+            f"GitHub Actions run was triggered by {event}, which does not execute full release qualification",
+            None,
+        )
+
+    if event == "workflow_dispatch":
+        jobs = gh_info.get("jobs", [])
+        offline_job = next((j for j in jobs if j.get("name") == "offline"), None)
+        if offline_job:
+            steps = {
+                s.get("name"): s.get("conclusion") for s in offline_job.get("steps", [])
+            }
+            t_conc = steps.get("Current catalog3 checks (offline)")
+            p_conc = steps.get(
+                "Installed wheel and sdist checks (offline, isolated parallel workers)"
+            )
+            if t_conc != "success" or p_conc != "success":
+                return (
+                    False,
+                    "GitHub Actions run was triggered by workflow_dispatch in development mode (release test lanes were not executed)",
+                    None,
+                )
+        else:
+            return (
+                False,
+                "GitHub Actions run missing offline job details to confirm release qualification",
+                None,
+            )
+    elif event not in ("schedule", "release"):
+        return (
+            False,
+            f"GitHub Actions run event {event} does not qualify for release validation",
+            None,
+        )
+
+    attempt = (
+        binding.get("run_attempt") or hosted.get("context", {}).get("run_attempt") or 1
+    )
+    artifact_name = f"ci-profile-{run_id}-{attempt}"
+
+    with tempfile.TemporaryDirectory(prefix="hosted-artifact-") as tmpdir:
+        tmp_path = Path(tmpdir)
+        downloaded = False
+        try:
+            dl_res = runner(
+                [
+                    "gh",
+                    "run",
+                    "download",
+                    str(run_id),
+                    "-n",
+                    artifact_name,
+                    "-D",
+                    str(tmp_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            downloaded = dl_res.returncode == 0 and any(tmp_path.iterdir())
+        except Exception:
+            downloaded = False
+
+        if not downloaded:
+            # Fallback: authenticated job log bundle
+            try:
+                log_res = runner(
+                    ["gh", "run", "view", str(run_id), "--log"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if log_res.returncode == 0 and "CI_RECEIPTS_BEGIN_V1" in log_res.stdout:
+                    files = parse_log_receipt_bundle(log_res.stdout)
+                    if files:
+                        for fname, fdata in files.items():
+                            (tmp_path / fname).write_bytes(fdata)
+                        downloaded = True
+            except Exception:
+                downloaded = False
+
+        if not downloaded:
+            return (
+                False,
+                f"Missing or unretrievable provider validation artifact for run ID {run_id}",
+                None,
+            )
+
+        if not (tmp_path / "validation-manifest.json").is_file():
+            return (
+                False,
+                "Downloaded artifact is missing validation-manifest.json",
+                None,
+            )
+
+        prov_manifest = read(tmp_path / "validation-manifest.json")
+        if prov_manifest.get("validation_mode") != "release" or not prov_manifest.get(
+            "full_acceptance"
+        ):
+            return (
+                False,
+                "Provider artifact manifest does not record completed release acceptance",
+                None,
+            )
+
+        if (tmp_path / "receipt-index.json").is_file():
+            prov_idx = read(tmp_path / "receipt-index.json")
+            for fname, fmeta in prov_idx.items():
+                fpath = tmp_path / fname
+                if (
+                    not fpath.is_file()
+                    or hashlib.sha256(fpath.read_bytes()).hexdigest() != fmeta["sha256"]
+                ):
+                    return (
+                        False,
+                        f"Provider artifact internal digest mismatch: {fname}",
+                        None,
+                    )
+
+        if (tmp_path / "receipt-binding.json").is_file():
+            prov_binding = read(tmp_path / "receipt-binding.json")
+            if prov_binding.get("run_attempt") and binding.get("run_attempt"):
+                if str(prov_binding["run_attempt"]) != str(binding["run_attempt"]):
+                    return (
+                        False,
+                        f"GitHub Actions run attempt mismatch: expected {binding['run_attempt']}, got {prov_binding['run_attempt']}",
+                        None,
+                    )
+
+        if bundle_dir is not None:
+            match_ok, match_err = compare_provider_artifact(bundle_dir, tmp_path)
+            if not match_ok:
+                return False, match_err, None
+
+        return (
+            True,
+            None,
+            dict((p.name, p.read_bytes()) for p in tmp_path.iterdir() if p.is_file()),
+        )
+
+
 def reconcile_release(
-    local_receipt_path, hosted_manifest_path, root=ROOT, run_verifier=None
+    local_receipt_path,
+    hosted_manifest_path,
+    root=ROOT,
+    run_verifier=None,
+    gh_runner=None,
 ):
     """Reconcile independent local release receipt and hosted validation manifest."""
     local_receipt_path = Path(local_receipt_path)
@@ -941,58 +1242,52 @@ def reconcile_release(
     # Authoritative run verification check (Tier 3)
     run_verified = False
     if run_verifier is not None:
-        run_verified, ver_err = run_verifier(run_id, binding, hosted)
-        if not run_verified and ver_err:
+        ver_res = run_verifier(run_id, binding, hosted)
+        if isinstance(ver_res, tuple):
+            if ver_res[0] is False:
+                return {
+                    "verdict": "release_rejected",
+                    "reason": ver_res[1],
+                    "acceptance_status": "release_rejected",
+                }
+            elif ver_res[0] == "gap" or ver_res[0] is None:
+                return {
+                    "verdict": "validation_gap_reported",
+                    "reason": ver_res[1]
+                    or "Authoritative hosted run verification unavailable for run ID",
+                    "acceptance_status": "validation_gap_reported",
+                }
+            elif ver_res[0] is True:
+                if len(ver_res) > 2 and ver_res[2] is not None:
+                    match_ok, match_err = compare_provider_artifact(
+                        bundle_dir, ver_res[2]
+                    )
+                    if not match_ok:
+                        return {
+                            "verdict": "release_rejected",
+                            "reason": match_err,
+                            "acceptance_status": "release_rejected",
+                        }
+                run_verified = True
+        elif ver_res is True:
+            run_verified = True
+    else:
+        ver_ok, ver_err, _ = verify_hosted_provider(
+            run_id, binding, hosted, bundle_dir, root=root, gh_runner=gh_runner
+        )
+        if ver_ok == "gap":
+            return {
+                "verdict": "validation_gap_reported",
+                "reason": ver_err,
+                "acceptance_status": "validation_gap_reported",
+            }
+        elif not ver_ok:
             return {
                 "verdict": "release_rejected",
                 "reason": ver_err,
                 "acceptance_status": "release_rejected",
             }
-    else:
-        # Check via gh CLI if available
-        try:
-            gh_res = subprocess.run(
-                [
-                    "gh",
-                    "run",
-                    "view",
-                    str(run_id),
-                    "--json",
-                    "status,conclusion,headSha,event",
-                ],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if gh_res.returncode == 0:
-                gh_info = json.loads(gh_res.stdout)
-                if (
-                    gh_info.get("status") == "completed"
-                    and gh_info.get("conclusion") == "success"
-                    and (
-                        not binding.get("head")
-                        or gh_info.get("headSha") == binding.get("head")
-                    )
-                ):
-                    if gh_info.get("event") not in (
-                        "workflow_dispatch",
-                        "schedule",
-                        "release",
-                    ):
-                        return {
-                            "verdict": "release_rejected",
-                            "reason": f"GitHub Actions run was triggered by {gh_info.get('event')}, which does not execute full release qualification",
-                            "acceptance_status": "release_rejected",
-                        }
-                    run_verified = True
-                else:
-                    return {
-                        "verdict": "release_rejected",
-                        "reason": f"GitHub Actions run not successful: status={gh_info.get('status')}, conclusion={gh_info.get('conclusion')}",
-                        "acceptance_status": "release_rejected",
-                    }
-        except Exception:
-            pass
+        run_verified = True
 
     if not run_verified:
         return {
@@ -1320,10 +1615,21 @@ def main():
         type=Path,
         help="Path to hosted validation-manifest.json for reconciliation",
     )
+    parser.add_argument(
+        "--run-id",
+        type=str,
+        help="GitHub Actions run ID for hosted evidence reconciliation",
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=ROOT,
+        help="Repository root directory",
+    )
     args = parser.parse_args()
     if args.action == "reports":
         args.plan.parent.mkdir(parents=True, exist_ok=True)
-        save(args.plan.parent / "reports.json", reports())
+        save(args.plan.parent / "reports.json", reports(args.root))
     elif args.action == "collect":
         collect(args.plan)
     elif args.action == "run":
@@ -1331,7 +1637,7 @@ def main():
     elif args.action == "current":
         return run_current(args.plan.parent, args.lane, args.workers)
     elif args.action == "receipt":
-        rec = create_receipt(args.output_dir, dest_path=args.dest)
+        rec = create_receipt(args.output_dir, dest_path=args.dest, root=args.root)
         print(
             json.dumps(
                 {
@@ -1347,11 +1653,19 @@ def main():
             parser.error(
                 "reconcile-release requires --local-receipt and --hosted-manifest"
             )
-        res = reconcile_release(args.local_receipt, args.hosted_manifest)
+        res = reconcile_release(
+            args.local_receipt, args.hosted_manifest, root=args.root
+        )
         print(json.dumps(res, indent=2))
         return 0 if res.get("verdict") == "complete_release_passed" else 1
     else:
-        print(json.dumps(gate(args.plan)["coverage"]))
+        res = gate(args.plan, root=args.root)
+        print(json.dumps(res["coverage"]))
+        if (
+            res.get("outcome") != "passed"
+            or res.get("acceptance_status") == "release_rejected"
+        ):
+            return 1
     return 0
 
 
