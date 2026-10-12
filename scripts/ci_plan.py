@@ -257,6 +257,13 @@ def context_from_environment():
     event = json.loads(Path(path).read_bytes()) if path else {}
     pr = event.get("pull_request", {})
     head = git(ROOT, "rev-parse", "HEAD").decode().strip()
+    inputs = event.get("inputs", {})
+    mode = os.environ.get("CI_VALIDATION_MODE") or inputs.get("mode")
+    if not mode:
+        full_in = inputs.get("full", False) in (True, "true")
+        mode = "release" if full_in else "development"
+    if mode not in ("development", "release"):
+        raise ValueError(f"Unsupported validation mode: {mode}")
     return {
         "repository": os.environ.get("GITHUB_REPOSITORY"),
         "event": os.environ.get("GITHUB_EVENT_NAME", "local"),
@@ -267,7 +274,8 @@ def context_from_environment():
         "before_sha": event.get("before"),
         "run_id": os.environ.get("GITHUB_RUN_ID"),
         "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
-        "full": event.get("inputs", {}).get("full", False) in (True, "true"),
+        "mode": mode,
+        "full": mode == "release",
     }
 
 
@@ -326,27 +334,73 @@ def make_plan(context, root=ROOT, runtime_meta=None):
             imported = imported_test_files(root, entries, files)
         except ValueError as error:
             reasons.append(str(error))
-    selected = set()
-    static = smoke = False
+
+    context = dict(context)
+    mode = context.get("mode")
+    if context.get("full") and mode != "release":
+        mode = "release"
+    elif not mode:
+        mode = "release" if context.get("full") else "development"
+    if mode not in ("development", "release"):
+        raise ValueError(f"Unsupported validation mode: {mode}")
+    is_release = mode == "release"
+    context["mode"] = mode
+    context["full"] = is_release
+
+    scope_reasons = []
+    leaf_tests = set()
+    code_or_config_changed = False
+    schema_or_contract_changed = False
+
     for path in paths:
         if matches(path, rules["shared_inputs"] + rules["executable_inputs"]):
-            reasons.append("Shared/executable input: " + path)
+            scope_reasons.append("Shared/executable input: " + path)
+            code_or_config_changed = True
+            if (
+                path.startswith("src/")
+                or "schema" in path
+                or path == "scripts/ci_dependencies.json"
+            ):
+                schema_or_contract_changed = True
         elif path in imported:
-            reasons.append("Imported test helper: " + path)
+            scope_reasons.append("Imported test helper: " + path)
+            code_or_config_changed = True
         elif path in files:
-            selected.add(path)
-            static = True
+            leaf_tests.add(path)
+            code_or_config_changed = True
         elif matches(path, rules.get("report_inputs", [])):
             pass
         elif matches(path, rules["prose"]):
             pass
         else:
-            reasons.append("Unknown dependency path: " + path)
-    if context.get("full"):
-        reasons.append("Explicit full acceptance")
+            scope_reasons.append("Unknown dependency path: " + path)
+            code_or_config_changed = True
+
     if reasons:
+        scope_reasons.extend(reasons)
+        code_or_config_changed = True
+
+    if scope_reasons or is_release:
+        required_files = set(files)
+    elif leaf_tests:
+        required_files = set(leaf_tests)
+    else:
+        required_files = set()
+
+    if is_release:
         selected = set(files)
         static = smoke = True
+    else:
+        static = code_or_config_changed
+        smoke = schema_or_contract_changed or bool(scope_reasons)
+        if leaf_tests and not scope_reasons:
+            selected = set(leaf_tests)
+        else:
+            selected = set()
+
+    if context.get("selected_test_files"):
+        selected.update(context["selected_test_files"])
+
     lanes = {}
     for name in LANES:
         lane_files = (
@@ -374,7 +428,8 @@ def make_plan(context, root=ROOT, runtime_meta=None):
         }
     packaging = lanes["packaging"]["disposition"] == "selected"
     return {
-        "version": 2,
+        "version": 3,
+        "mode": mode,
         "context": context,
         "runtime": runtime_meta or runtime(),
         "policy_hash": digest({p: entries.get(p) for p in rules["policy_inputs"]}),
@@ -390,9 +445,11 @@ def make_plan(context, root=ROOT, runtime_meta=None):
         ),
         "comparison_sha": comparison,
         "changed": changed,
-        "fallback_reasons": reasons,
-        "full": set(files) == selected and static and smoke,
+        "fallback_reasons": scope_reasons,
+        "full": is_release and set(files) == selected and static and smoke,
         "acceptance_files": files,
+        "required_files": sorted(required_files),
+        "selected_files": sorted(selected),
         "excluded_files": excluded,
         "unexecuted_files": sorted(set(files) - selected),
         "lanes": lanes,
@@ -414,7 +471,7 @@ def explain(plan):
     lines = [
         "## Validation plan",
         "",
-        f"Effective SHA `{plan['context']['tested_sha']}`; full acceptance selected: {plan['full']}.",
+        f"Mode: `{plan.get('mode', 'development')}`; Effective SHA `{plan['context']['tested_sha']}`; full acceptance selected: {plan['full']}.",
         f"Acceptance input hash: `{plan['acceptance_input_hash']}`.",
         "",
         "| Lane | Disposition | Test files |",
@@ -426,12 +483,15 @@ def explain(plan):
     ]
     lines += [
         "",
+        f"Required test files: {len(plan.get('required_files', []))}.",
+        f"Selected test files: {len(plan.get('selected_files', []))}.",
         f"Unexecuted acceptance files: {len(plan['unexecuted_files'])}. Earlier test results are never claimed as fresh execution.",
         f"Files outside current acceptance: {len(plan['excluded_files'])}; listed in plan.json.",
         "",
         f"Planner: {plan['selection_wall_seconds']:.3f}s.",
     ]
-    lines += ["", *plan["fallback_reasons"]]
+    if plan["fallback_reasons"]:
+        lines += ["", "### Scope reasons", *plan["fallback_reasons"]]
     return "\n".join(lines) + "\n"
 
 
@@ -459,14 +519,27 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--context", type=Path)
     parser.add_argument("--output", type=Path, default=Path("artifacts/ci-profile"))
-    parser.add_argument("--full", action="store_true")
+    parser.add_argument(
+        "--mode",
+        choices=("development", "release"),
+        help="Validation mode (development or release)",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="(Deprecated) Alias for --mode release",
+    )
     args = parser.parse_args()
     context = (
         json.loads(args.context.read_bytes())
         if args.context
         else context_from_environment()
     )
-    if args.full:
+    if args.mode:
+        context["mode"] = args.mode
+        context["full"] = args.mode == "release"
+    elif args.full:
+        context["mode"] = "release"
         context["full"] = True
     write_plan(make_plan(context), args.output)
 

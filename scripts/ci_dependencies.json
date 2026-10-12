@@ -28,13 +28,15 @@
     "docs/*.md",
     ".agents/skills/**/*.md"
   ],
-  "notes": "All test_*.py and *_test.py files below the four ordinary test directories are current acceptance inputs. Live tests remain explicit opt-in outside those directories. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. Runtime/schema, direct typed domain validity and portable exchange contracts are shared src inputs. Named historical schema-hardening snapshots and validation evidence are report inputs; unclassified files conservatively select full acceptance. Repository-local skill Markdown is prose-only; skill scripts and unknown files conservatively trigger complete acceptance.",
+  "notes": "All test_*.py and *_test.py files below the four ordinary test directories are current acceptance inputs. Live tests remain explicit opt-in outside those directories. Historical phase exports, SQLite minimum bindings, test counts and old node IDs are not acceptance gates. In Development mode, hosted CI executes lightweight static and smoke checks, while full pytest execution is primary locally. In Release mode, complete dual local and hosted execution is required. Named historical schema-hardening snapshots, validation evidence, and receipts are report inputs.",
   "report_inputs": [
     "docs/ci-performance-baseline.json",
     "docs/ci-performance-results.json",
     "docs/ci-selection-results.json",
     "docs/validation/real-world/*.json",
     "docs/validation/synthetic/*.json",
+    "docs/validation/receipts/*.json",
+    "docs/validation/evidence/*.json",
     "docs/schema-hardening/column-conversion.csv",
     "docs/schema-hardening/conversion-contract.json",
     "docs/schema-hardening/current-schema.json",

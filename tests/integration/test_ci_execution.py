@@ -14,7 +14,7 @@ from tests.support.ci_fixture import commit, context, repository, write, write_r
 def acceptance(tmp_path):
     root = tmp_path / "repo"
     base, head = repository(root)
-    plan = ci_plan.make_plan(context(root, base, head), root=root)
+    plan = ci_plan.make_plan(context(root, base, head, mode="release"), root=root)
     output = tmp_path / "result"
     write_results(output, plan, root)
     return root, output
@@ -24,7 +24,7 @@ def test_full_current_acceptance_reports_exact_execution(acceptance):
     root, output = acceptance
     result = ci_execute.gate(output / "plan.json", root)
     assert result["full_acceptance"]
-    assert result["acceptance_status"] == "full_acceptance_passed"
+    assert result["acceptance_status"] == "hosted_release_passed"
     assert result["coverage"]["executed"] == 3
     assert not result["coverage"]["unexecuted_files"]
     assert json.loads((output / "validation-manifest.json").read_bytes()) == result
@@ -104,7 +104,7 @@ def test_prose_followup_reports_unexecuted_files_without_claiming_full_acceptanc
     write_results(output, ci_plan.make_plan(current, root=root), root)
     result = ci_execute.gate(output / "plan.json", root)
     assert not result["full_acceptance"]
-    assert result["acceptance_status"] == "selected_checks_only"
+    assert result["acceptance_status"] == "development_checks_passed"
     assert result["acceptance_input_hash"] == full["acceptance_input_hash"]
     assert result["coverage"]["executed"] == 0
     assert len(result["coverage"]["unexecuted_files"]) == 3
@@ -248,7 +248,7 @@ def test_shared_test_change_runs_consumer_with_broken_import(tmp_path):
     )
     before = commit(root)
     write(root, helper, "renamed = 1\ndef test_synthetic(): pass\n")
-    ctx = context(root, before, commit(root), event="push")
+    ctx = context(root, before, commit(root), event="push", mode="release")
     plan = ci_plan.make_plan(ctx, root=root)
     assert synthetic_pytest(root, [helper]).returncode == 0
     result = synthetic_pytest(root, plan["lanes"]["tests"]["test_files"])
@@ -285,11 +285,11 @@ def test_prose_after_unfinished_source_acceptance_does_not_establish_merge_readi
     plan = ci_plan.make_plan(ctx, root=root)
     write_results(output, plan, root)
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["acceptance_status"] == "selected_checks_only"
+    assert result["acceptance_status"] == "development_checks_passed"
     assert result["acceptance_input_hash"] == prior["acceptance_input_hash"]
     assert result["coverage"]["unexecuted_files"] == prior["acceptance_files"]
     assert (
-        "merge acceptance is not established"
+        "Full runtime acceptance is not established"
         in (output / "validation-summary.md").read_text()
     )
 
@@ -324,3 +324,40 @@ def test_workflow_keeps_one_environment_and_conditions_expensive_checks():
     assert "sqlite-minimum" not in workflow and "evidence-lookup" not in workflow
     for lane in ("dependencies", "wheelhouse", "tests", "packaging", "smoke", "static"):
         assert f"steps.plan.outputs.{lane} == 'true'" in workflow
+
+
+def test_complete_release_reconciliation_with_valid_local_receipt(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = {
+        "acceptance_input_hash": plan["acceptance_input_hash"],
+        "exit_code": 0,
+        "dirty": False,
+        "tracked_changes": False,
+        "passed_nodes": [
+            "tests/unit/test_contracts.py::test_synthetic",
+            "synthetic::1",
+            "synthetic::2",
+        ],
+    }
+    (output / "local-receipt.json").write_text(json.dumps(receipt))
+    result = ci_execute.gate(output / "plan.json", root)
+    assert result["full_acceptance"]
+    assert result["acceptance_status"] == "complete_release_passed"
+    assert result["evidence_status"] == "local_evidence_verified"
+
+
+def test_development_mode_gate_records_development_checks_passed(tmp_path):
+    root = tmp_path / "repo"
+    base, head = repository(root)
+    plan = ci_plan.make_plan(context(root, base, head, mode="development"), root=root)
+    output = tmp_path / "dev-result"
+    write_results(output, plan, root)
+    result = ci_execute.gate(output / "plan.json", root)
+    assert not result["full_acceptance"]
+    assert result["validation_mode"] == "development"
+    assert result["acceptance_status"] == "development_checks_passed"
+    assert (
+        "Development infrastructure checks passed"
+        in (output / "validation-summary.md").read_text()
+    )

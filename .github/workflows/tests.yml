@@ -5,10 +5,17 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
+      mode:
+        description: Validation mode (development or release)
+        type: choice
+        options:
+          - development
+          - release
+        default: development
       full:
-        description: Run the complete current catalog3 acceptance suite
+        description: (Deprecated) Run the complete release acceptance suite
         type: boolean
-        default: true
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -19,6 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CI_VALIDATION_MODE: ${{ github.event.inputs.mode || '' }}
     steps:
       - uses: actions/checkout@v7
         with:
