@@ -100,3 +100,54 @@ def test_compare_reports_median_range_not_single_sample(tmp_path):
         "maximum": 3.0,
         "failures": 0,
     }
+
+
+def test_ci_profile_recovers_from_journal_when_junit_missing(tmp_path, monkeypatch):
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "summary.md"))
+    journal = tmp_path / "events.jsonl"
+    lines = [
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "tests/unit/a.py::test_one",
+                "phase": "setup",
+                "outcome": "passed",
+                "duration": 0.001,
+            }
+        ),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "tests/unit/a.py::test_one",
+                "phase": "call",
+                "outcome": "passed",
+                "duration": 0.020,
+            }
+        ),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "tests/unit/a.py::test_one",
+                "phase": "teardown",
+                "outcome": "passed",
+                "duration": 0.002,
+            }
+        ),
+    ]
+    script = f"from pathlib import Path; Path({repr(str(journal))}).write_text({repr(chr(10).join(lines) + chr(10))})"
+    missing_xml = tmp_path / "does_not_exist.xml"
+    args = Namespace(
+        command=[sys.executable, "-c", script],
+        output=tmp_path,
+        name="profiled_lane",
+        junit=missing_xml,
+        journal=journal,
+        mode="sequential",
+        workers=1,
+    )
+    assert ci_profile.run(args) == 0
+    saved = json.loads((tmp_path / "profiled_lane.json").read_text())
+    assert saved["junit"]["count"] == 1
+    assert saved["measurement_recovered_from_journal"] is True
+    assert "tests/unit/a.py::test_one" in saved["phases"]
+    assert saved["phases"]["tests/unit/a.py::test_one"]["call"] == 0.020

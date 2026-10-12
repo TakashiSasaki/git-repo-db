@@ -2,8 +2,17 @@ from pathlib import Path
 
 import pytest
 
+from scripts import ci_journal
 from tests.support.cli import add_local, run
 from tests.support.git_fixture import GitFixture
+
+
+def pytest_addoption(parser):
+    ci_journal.pytest_addoption(parser)
+
+
+def pytest_configure(config):
+    ci_journal.pytest_configure(config)
 
 
 @pytest.fixture(autouse=True)

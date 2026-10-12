@@ -5,7 +5,8 @@
     "scripts/ci_plan.py",
     "scripts/ci_execute.py",
     "scripts/ci_dependencies.json",
-    "scripts/ci_profile.py"
+    "scripts/ci_profile.py",
+    "scripts/ci_journal.py"
   ],
   "shared_inputs": [
     "src/**",
