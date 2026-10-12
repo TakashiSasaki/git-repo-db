@@ -61,26 +61,41 @@ class GitImporter:
             "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
         )[0]
         if not run:
-            acq_ids = [
-                r[0]
-                for r in s.all(
-                    "SELECT git_acquisition_id FROM git_acquisitions WHERE repository_uuidv4=?",
-                    (repo["repository_uuidv4"],),
-                )
-            ]
-            if acq_ids:
-                ph = ",".join("?" for _ in acq_ids)
-                gen_row = s.operational.one(
-                    f"SELECT coalesce(max(generation),0)+1 FROM acquisition_progress WHERE git_acquisition_id IN ({ph})",
-                    acq_ids,
-                )
-                generation = gen_row[0] if gen_row else 1
-            else:
-                generation = 1
             cache = s.operational.one(
                 "SELECT c.*,l.repository_uuidv4,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_uuidv4=? AND l.access='target_active' AND l.state='available' AND c.state='active' ORDER BY c.generation DESC LIMIT 1",
                 (repo["repository_uuidv4"],),
             )
+            if cache:
+                cache_path = s.path / cache["path"]
+                if not cache_path.exists():
+                    with s.operational.transaction():
+                        s.operational.execute(
+                            "UPDATE cache_locators SET state='missing' WHERE cache_locator_id=?",
+                            (cache["cache_locator_id"],),
+                        )
+                        s.operational.execute(
+                            "UPDATE active_cache_entries SET state='evicted' WHERE active_cache_entry_id=?",
+                            (cache["active_cache_entry_id"],),
+                        )
+                    cache = None
+            if cache:
+                generation = cache["generation"]
+            else:
+                core_gen = s.one(
+                    "SELECT coalesce(max(generation), 0) FROM snapshots WHERE repository_uuidv4=?",
+                    (repo["repository_uuidv4"],),
+                )[0]
+                op_gen = s.operational.one(
+                    "SELECT coalesce(max(c.generation), 0) FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_uuidv4=?",
+                    (repo["repository_uuidv4"],),
+                )[0]
+                disk_gen = 0
+                cache_repo_dir = s.path / "cache" / repo["repository_uuidv4"]
+                if cache_repo_dir.exists() and cache_repo_dir.is_dir():
+                    for item in cache_repo_dir.iterdir():
+                        if item.name.endswith(".git") and item.name[:-4].isdigit():
+                            disk_gen = max(disk_gen, int(item.name[:-4]))
+                generation = max(core_gen, op_gen, disk_gen) + 1
             rid = str(uuid.uuid4())
             if not cache:
                 cid = str(uuid.uuid4())

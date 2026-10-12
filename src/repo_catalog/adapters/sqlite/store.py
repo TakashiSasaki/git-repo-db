@@ -475,10 +475,18 @@ class OperationalStore(BaseConnection):
             "SELECT count(*) as runs, coalesce(avg(duration_ms), 0) as avg_duration_ms, coalesce(avg(duration_ms * 1.0 / max(documents_indexed, 1)), 0.0) as ms_per_doc, coalesce(avg(documents_indexed), 0) as avg_docs FROM search_rebuild_metrics WHERE status='complete'"
         )
         if not row or row["runs"] == 0:
-            return {"runs": 0, "estimated_duration_ms": None, "ms_per_doc": None}
+            return {
+                "runs": 0,
+                "estimated_duration_ms": None,
+                "avg_duration_ms": None,
+                "ms_per_doc": None,
+                "avg_documents_indexed": 0,
+            }
+        avg_dur = round(float(row["avg_duration_ms"]), 2)
         return {
             "runs": row["runs"],
-            "avg_duration_ms": round(float(row["avg_duration_ms"]), 2),
+            "estimated_duration_ms": avg_dur,
+            "avg_duration_ms": avg_dur,
             "ms_per_doc": round(float(row["ms_per_doc"]), 4),
             "avg_documents_indexed": int(row["avg_docs"]),
         }
@@ -566,7 +574,7 @@ class SearchStore(BaseConnection):
             for statement in statements(search_schema_sql()):
                 self.execute(statement)
             self.execute(
-                "INSERT INTO search_identity(singleton,format_id,schema_version,search_instance_id,catalog_db_instance_id,created_at_us,last_rebuilt_at_us,ddl_sha256) VALUES(1,?,?,?,?,?,NULL,?)",
+                "INSERT INTO search_identity(singleton,format_id,schema_version,search_instance_id,catalog_db_instance_id,created_at_us,last_rebuilt_at_us,core_revision_fence,ddl_sha256) VALUES(1,?,?,?,?,?,NULL,NULL,?)",
                 (
                     SEARCH_FORMAT_ID,
                     SEARCH_SCHEMA_VERSION,
@@ -602,11 +610,13 @@ class SearchStore(BaseConnection):
                 f"Search database belongs to catalog instance {row['catalog_db_instance_id']}, expected {self.catalog_db_instance_id}",
             )
 
-    def update_last_rebuilt(self, timestamp_us: int):
+    def update_last_rebuilt(
+        self, timestamp_us: int, core_revision_fence: int | None = None
+    ):
         with self.transaction():
             self.execute(
-                "UPDATE search_identity SET last_rebuilt_at_us=? WHERE singleton=1",
-                (timestamp_us,),
+                "UPDATE search_identity SET last_rebuilt_at_us=?,core_revision_fence=? WHERE singleton=1",
+                (timestamp_us, core_revision_fence),
             )
 
     def index_age_us(self) -> int | None:
@@ -616,3 +626,31 @@ class SearchStore(BaseConnection):
         if not row or row["last_rebuilt_at_us"] is None:
             return None
         return max(0, now_us() - row["last_rebuilt_at_us"])
+
+    def estimate_rebuild_cost(self, operational_store=None) -> dict:
+        op = operational_store
+        close_op = False
+        if op is None:
+            try:
+                op = OperationalStore(
+                    self.path,
+                    catalog_db_instance_id=self.catalog_db_instance_id,
+                    readonly=True,
+                    config=self.config,
+                )
+                close_op = True
+            except CatalogError as e:
+                if e.code == "NOT_INITIALIZED":
+                    return {
+                        "runs": 0,
+                        "estimated_duration_ms": None,
+                        "avg_duration_ms": None,
+                        "ms_per_doc": None,
+                        "avg_documents_indexed": 0,
+                    }
+                raise
+        try:
+            return op.estimate_rebuild_cost()
+        finally:
+            if close_op and op is not None:
+                op.close()

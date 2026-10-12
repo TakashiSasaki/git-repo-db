@@ -226,3 +226,134 @@ def test_acquisition_and_obligation_foreign_keys(cache_store):
         store.execute(
             "INSERT INTO preservation_obligations(git_acquisition_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES('non-existent-acq',0,0,0,0,0)"
         )
+
+
+def test_gc_protects_bytes_after_operational_db_loss_and_permits_cleanup_when_complete(
+    cache_store,
+):
+    store = cache_store
+    repo_id = "10000000-0000-4000-8000-000000000001"
+    acq_id = "20000000-0000-4000-8000-000000000001"
+    # 1. Capture fixed Git roots in Core
+    store.execute(
+        "INSERT INTO preservation_obligations(git_acquisition_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES(?,1,1,1,0,0)",
+        (acq_id,),
+    )
+    # 2. Leave Core preservation obligation incomplete (complete=0)
+    # 3. Lose / reinitialize Operational DB
+    if store._operational_store is not None:
+        store._operational_store.close()
+        store._operational_store = None
+    op_path = store.path / "operational.sqlite3"
+    if op_path.exists():
+        op_path.unlink()
+    # Re-access operational store (recreates empty Operational DB)
+    assert store.operational.one("SELECT count(*) FROM active_cache_entries")[0] == 0
+
+    cache_dir = store.path / f"cache/{repo_id}/1.git"
+    assert (cache_dir / "HEAD").exists()
+
+    # 4. Attempt cache GC under TTL or capacity pressure
+    entries = CacheManager(store).collect(apply=True, pressure=True)
+    assert len(entries) == 1
+    # 5. Verify the needed physical bytes remain protected (action: retained)
+    assert entries[0]["action"] == "retained"
+    assert f"pending_obligations:{acq_id}" in entries[0]["blocked_by"]
+    assert (cache_dir / "HEAD").exists()
+
+    # 6. Complete preservation in Core
+    store.execute(
+        "UPDATE preservation_obligations SET text_done=1,complete=1 WHERE git_acquisition_id=?",
+        (acq_id,),
+    )
+    # Verify that cache cleanup is permitted when all conditions are satisfied
+    entries2 = CacheManager(store).collect(apply=True, pressure=True)
+    assert len(entries2) == 1
+    assert entries2[0]["action"] == "evicted"
+    assert not cache_dir.exists()
+
+
+def test_orphaned_physical_cache_enrolled_and_collision_prevention(
+    cache_store, tmp_path
+):
+    import subprocess
+
+    from repo_catalog.adapters.git.importer import GitImporter
+    from repo_catalog.domain.models import CancellationToken
+
+    store = cache_store
+    repo_id = "10000000-0000-4000-8000-000000000001"
+    seed_job(store, "job-collision", 1)
+
+    # Initialize a valid dummy remote repository
+    dummy_git = tmp_path / "dummy.git"
+    subprocess.run(
+        ["git", "init", "--bare", str(dummy_git)], check=True, capture_output=True
+    )
+    work_git = tmp_path / "work.git"
+    subprocess.run(["git", "init", str(work_git)], check=True, capture_output=True)
+    (work_git / "README").write_text("hello")
+    subprocess.run(
+        ["git", "-C", str(work_git), "config", "user.name", "Tester"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(work_git), "config", "user.email", "test@example.com"],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(work_git), "add", "README"], check=True)
+    subprocess.run(
+        ["git", "-C", str(work_git), "commit", "-m", "init"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(work_git), "push", str(dummy_git), "HEAD:refs/heads/main"],
+        check=True,
+        capture_output=True,
+    )
+
+    # Place an orphaned cache generation 2 on disk
+    orphaned_path = store.path / f"cache/{repo_id}/2.git"
+    orphaned_path.mkdir(parents=True, exist_ok=True)
+    (orphaned_path / "HEAD").write_bytes(b"ref: refs/heads/main\n")
+
+    store.execute(
+        "INSERT INTO repository_endpoints(repository_endpoint_id,repository_uuidv4,url,transport,label,metadata,created_at_us) VALUES('ep-1',?,?,'file',NULL,'{}',0)",
+        (repo_id, dummy_git.as_uri()),
+    )
+    store.execute(
+        "UPDATE repositories SET preferred_repository_endpoint_id='ep-1' WHERE repository_uuidv4=?",
+        (repo_id,),
+    )
+    # Collector enrolls orphaned generation
+    CacheManager(store).collect()
+    row = store.operational.one("SELECT * FROM active_cache_entries WHERE generation=2")
+    assert row is not None
+    assert row["state"] == "active"
+
+    # Now verify GitImporter prevents collision: next generation must be > max(core, op, disk) = 3
+    importer = GitImporter(store, CancellationToken())
+    # Make existing cache entries missing to force allocation of a new generation
+    store.operational.execute("UPDATE active_cache_entries SET state='evicted'")
+    store.operational.execute("UPDATE cache_locators SET state='missing'")
+
+    # Run sync plan
+    result = importer.sync(
+        {"repository_uuidv4": repo_id},
+        "job-collision",
+    )
+    assert result is not None
+    snap_gen = store.one(
+        "SELECT generation FROM snapshots WHERE repository_uuidv4=?", (repo_id,)
+    )[0]
+    assert snap_gen >= 3
+    prog_gen = store.operational.one(
+        "SELECT generation FROM acquisition_progress WHERE job_id='job-collision'"
+    )[0]
+    assert prog_gen >= 3
+    new_cache = store.operational.one(
+        "SELECT * FROM active_cache_entries WHERE generation >= 3"
+    )
+    assert new_cache is not None
+    assert new_cache["generation"] != 1
+    assert new_cache["generation"] != 2

@@ -166,14 +166,15 @@ def rebuild(store, kind="all", token=None):
                 "SELECT coalesce(max(search_document_id),0) FROM search_documents WHERE kind=?",
                 (current,),
             )[0]
+            core_rev = store.revision()["local_revision"]
             with search_store.transaction():
                 ident = search_store.one(
                     "SELECT coalesce(max(index_generation_id),0)+1 FROM index_generations"
                 )[0]
                 table = f"catalog_fts_{ident}"
                 search_store.execute(
-                    "INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,created_at_us) VALUES(?,?,?,?,?,?)",
-                    (ident, current, "building", table, maximum, now_us()),
+                    "INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,core_revision_fence,created_at_us) VALUES(?,?,?,?,?,?,?)",
+                    (ident, current, "building", table, maximum, core_rev, now_us()),
                 )
                 search_store.execute(
                     f"CREATE VIRTUAL TABLE {table} USING fts5(body, tokenize='trigram case_sensitive 1',content='',detail=full)"
@@ -266,7 +267,9 @@ def rebuild(store, kind="all", token=None):
             )
         duration_ms = max(1, int((time.monotonic() - start_time) * 1000))
         ended_at_us = now_us()
-        search_store.update_last_rebuilt(ended_at_us)
+        search_store.update_last_rebuilt(
+            ended_at_us, core_revision_fence=store.revision()["local_revision"]
+        )
         # PF-P16: Measure update duration and record rebuild metrics in operational store
         store.operational.record_rebuild_metric(
             started_at_us=started_at_us,

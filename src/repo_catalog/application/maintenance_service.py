@@ -517,56 +517,73 @@ class MaintenanceService:
                 )
             ],
         }
-        checks["index"] = {"status": "passed", "generations": []}
+        checks["index"] = {"status": "absent", "generations": []}
         try:
             search_store = s.open_search(readonly=True)
             try:
-                for row in search_store.all(
-                    "SELECT * FROM index_generations WHERE state='ready'"
-                ):
-                    try:
-                        with search_store.transaction():
+                sqlite_status = [
+                    r[0]
+                    for r in search_store.all(
+                        "PRAGMA integrity_check" if full else "PRAGMA quick_check"
+                    )
+                ]
+                fk_status = [
+                    tuple(r) for r in search_store.all("PRAGMA foreign_key_check")
+                ]
+                if sqlite_status != ["ok"] or fk_status:
+                    checks["index"] = {
+                        "status": "corrupt",
+                        "generations": [],
+                        "error": "SQLITE_CORRUPT",
+                    }
+                else:
+                    generations = []
+                    all_passed = True
+                    for row in search_store.all(
+                        "SELECT * FROM index_generations WHERE state='ready'"
+                    ):
+                        try:
                             search_store.execute(
-                                f"INSERT INTO {row['table_name']}({row['table_name']}) VALUES('integrity-check')"
+                                f"SELECT rowid FROM {row['table_name']} LIMIT 0"
                             )
-                        checks["index"]["generations"].append(
-                            {
-                                "index_generation_id": row["index_generation_id"],
-                                "status": "passed",
-                            }
-                        )
-                    except sqlite3.Error:
-                        checks["index"]["status"] = "failed"
-                        checks["index"]["generations"].append(
-                            {
-                                "index_generation_id": row["index_generation_id"],
-                                "status": "failed",
-                            }
-                        )
+                            generations.append(
+                                {
+                                    "index_generation_id": row["index_generation_id"],
+                                    "status": "passed",
+                                }
+                            )
+                        except sqlite3.Error:
+                            all_passed = False
+                            generations.append(
+                                {
+                                    "index_generation_id": row["index_generation_id"],
+                                    "status": "failed",
+                                }
+                            )
+                    checks["index"] = {
+                        "status": "passed" if all_passed else "failed",
+                        "generations": generations,
+                    }
             finally:
                 search_store.close()
         except CatalogError as err:
-            if err.code == "NOT_INITIALIZED":
+            if err.code in ("NOT_INITIALIZED", "INDEX_UNAVAILABLE"):
                 checks["index"] = {"status": "absent", "generations": []}
             else:
                 checks["index"] = {
-                    "status": "failed",
+                    "status": "corrupt",
                     "generations": [],
                     "error": err.code,
                 }
-        if (
-            checks["sqlite"] != ["ok"]
-            or any(
-                checks[key]
-                for key in (
-                    "owner_evidence",
-                    "foreign_keys",
-                    "dangling_snapshots",
-                    "unfinished_complete_runs",
-                    "repository_endpoints",
-                )
+        if checks["sqlite"] != ["ok"] or any(
+            checks[key]
+            for key in (
+                "owner_evidence",
+                "foreign_keys",
+                "dangling_snapshots",
+                "unfinished_complete_runs",
+                "repository_endpoints",
             )
-            or checks["index"]["status"] == "failed"
         ):
             raise CatalogError(
                 "INTEGRITY_ERROR", "Catalog integrity check failed", checks

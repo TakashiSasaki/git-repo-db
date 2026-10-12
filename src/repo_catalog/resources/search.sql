@@ -9,6 +9,7 @@ CREATE TABLE search_identity(
     catalog_db_instance_id TEXT NOT NULL,
     created_at_us INTEGER NOT NULL,
     last_rebuilt_at_us INTEGER,
+    core_revision_fence INTEGER,
     ddl_sha256 BLOB NOT NULL CHECK(length(ddl_sha256)=32)
 ) STRICT;
 
@@ -27,7 +28,8 @@ CREATE TABLE index_generations(
     state TEXT NOT NULL CHECK(state IN ('building','ready','retired','removed','unavailable','failed')),
     table_name TEXT NOT NULL CHECK(length(table_name)>0 AND table_name NOT GLOB '*[^a-z0-9_]*'),
     target_max_search_document_id INTEGER NOT NULL CHECK(target_max_search_document_id>=0),
-    created_at_us INTEGER
+    created_at_us INTEGER,
+    core_revision_fence INTEGER
 ) STRICT;
 
 CREATE TABLE index_membership(

@@ -1,70 +1,14 @@
 {
-  "purpose": "Exact composed-DDL structural map; semantic responsibilities in publication-free-implementation.md; not independent review or acceptance",
-  "schema_version": 20,
+  "purpose": "Exact composed-DDL structural map for Three-Store Boundary (Core Schema 21, Operational Schema 1, Search Schema 1); semantic responsibilities in ADR 0002; not independent review or acceptance",
+  "schema_version": 21,
+  "operational_schema_version": 1,
+  "search_schema_version": 1,
   "baseline_commit": "0bd5704caca2f6e3723bef22531b065cd4d7bad0",
   "baseline_tree": "7b191a743feb0a0a28c7c11b606736ccacf43015",
   "baseline_ddl_sha256": "d0fba8d577ffad700b17a7504f67228c375a00c16583e1d1c6a7eef7e12c9415",
   "current": {
-    "ddl_sha256": "b3d3421646d3a7b86505e7baebfba4cd772605f6fbf76d3f623cd08ea4597227",
+    "ddl_sha256": "8ee2631fe083e26cd0346bc71a8a5d1f4d7dab4bf661958d6406c885bc553ff0",
     "tables": {
-      "acquisition_progress": {
-        "columns": [
-          "git_acquisition_id",
-          "job_id",
-          "attempt",
-          "state",
-          "generation",
-          "ended_at_us",
-          "active_cache_entry_id"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "git_acquisition_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "job_attempts",
-            "job_id",
-            "job_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            0,
-            1,
-            "job_attempts",
-            "attempt",
-            "attempt",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            1,
-            0,
-            "active_cache_entries",
-            "active_cache_entry_id",
-            "active_cache_entry_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            2,
-            0,
-            "git_acquisitions",
-            "git_acquisition_id",
-            "git_acquisition_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "c5efa4295cb3bf8a7997d31a5499320b8445d8634e47744faa7b36bfc5628105"
-      },
       "acquisition_roots": {
         "columns": [
           "acquisition_root_id",
@@ -104,33 +48,6 @@
         ],
         "sql_sha256": "47d4c1103345b2c4730c785752f9a8316b512eaa0cdda9be5e99ec70b9f27332"
       },
-      "active_cache_entries": {
-        "columns": [
-          "active_cache_entry_id",
-          "cache_locator_id",
-          "generation",
-          "state",
-          "last_used_us",
-          "bytes"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "active_cache_entry_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "cache_locators",
-            "cache_locator_id",
-            "cache_locator_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "7de32656c7399698c243a08bb079bcbaf4fcf7b0e5005220875180d030fac5d9"
-      },
       "blob_content_map": {
         "columns": [
           "git_object_id",
@@ -163,79 +80,6 @@
           ]
         ],
         "sql_sha256": "d94ea8868a5af5d82b2d107517ba672e6264c09e3439439ec4b683a9ee74466e"
-      },
-      "cache_leases": {
-        "columns": [
-          "active_cache_entry_id",
-          "job_id",
-          "attempt",
-          "acquired_at_us"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "active_cache_entry_id",
-          "job_id",
-          "attempt"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "job_attempts",
-            "job_id",
-            "job_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            0,
-            1,
-            "job_attempts",
-            "attempt",
-            "attempt",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            1,
-            0,
-            "active_cache_entries",
-            "active_cache_entry_id",
-            "active_cache_entry_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "be858d618410d3646159b03c7f0ec9e7f53adc77ab0af4d11f7cc8e57a393e71"
-      },
-      "cache_locators": {
-        "columns": [
-          "cache_locator_id",
-          "repository_uuidv4",
-          "path",
-          "access",
-          "state"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "cache_locator_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "repositories",
-            "repository_uuidv4",
-            "repository_uuidv4",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "889503f52080ec56319f8a351645e8a8b1eb877f51413c1904635306b79e16ff"
       },
       "change_request_events": {
         "columns": [
@@ -780,53 +624,6 @@
         ],
         "sql_sha256": "e5424f4f2c77c9e340969ea35d63203fe1961644d2cc7a06df958cf9159c169e"
       },
-      "collection_progress": {
-        "columns": [
-          "fetch_collection_id",
-          "job_id",
-          "attempt",
-          "state",
-          "cursor",
-          "reason"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "fetch_collection_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "job_attempts",
-            "job_id",
-            "job_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            0,
-            1,
-            "job_attempts",
-            "attempt",
-            "attempt",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            1,
-            0,
-            "fetch_collections",
-            "fetch_collection_id",
-            "fetch_collection_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "59820e1a6d45197281cfe79de8dfdf8a4460c226edc8c8bffe80126e5b5a555e"
-      },
       "commit_parents": {
         "columns": [
           "commit_git_object_id",
@@ -960,44 +757,6 @@
           ]
         ],
         "sql_sha256": "5994dcbce0aec3d8bc8731ba796b2226f7d937e757adbcb8ce3eca711628d7ae"
-      },
-      "content_locations": {
-        "columns": [
-          "content_id",
-          "kind",
-          "locator",
-          "cache_locator_id",
-          "state"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "content_id",
-          "kind",
-          "locator"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "cache_locators",
-            "cache_locator_id",
-            "cache_locator_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            1,
-            0,
-            "contents",
-            "content_id",
-            "content_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "446ecab14d1989ee48d7870417051b04a3a29eaaaaef4d87129ebc6a379883d6"
       },
       "contents": {
         "columns": [
@@ -1162,7 +921,7 @@
           "singleton"
         ],
         "foreign_keys": [],
-        "sql_sha256": "a27a3858e1a72d8e38c124e0652cd57aed91b264ecaccc5d5aab0fa8e313dbbc"
+        "sql_sha256": "f5b04d40199257f0229e87ae3b6f8e60df35d232a8522665f18e2547237ac1d4"
       },
       "document_state": {
         "columns": [
@@ -1792,84 +1551,6 @@
         ],
         "sql_sha256": "2cee4cf59baf4903d4aa959c0e784074d6f5dcfac6d799802ef8f456ec7379c7"
       },
-      "incremental_scans": {
-        "columns": [
-          "incremental_scan_id",
-          "resume_scope_id",
-          "fetch_collection_id",
-          "scan_started_at_us",
-          "safe_watermark_us",
-          "evidence"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "incremental_scan_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "fetch_collections",
-            "fetch_collection_id",
-            "fetch_collection_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "f16062a0514451ed51c14244adf0d8b43b11bfa58ce733aeb59a131973c295d4"
-      },
-      "index_generations": {
-        "columns": [
-          "index_generation_id",
-          "kind",
-          "state",
-          "table_name",
-          "target_max_search_document_id",
-          "created_at_us"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "index_generation_id"
-        ],
-        "foreign_keys": [],
-        "sql_sha256": "9904753beb0f0f6c6b5e3e465aaa4948f20c7dd0e53d8a24ba78cfccdaed34d1"
-      },
-      "index_membership": {
-        "columns": [
-          "index_generation_id",
-          "search_document_id",
-          "input_version"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "index_generation_id",
-          "search_document_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "search_documents",
-            "search_document_id",
-            "search_document_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            1,
-            0,
-            "index_generations",
-            "index_generation_id",
-            "index_generation_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "39bc2ab69c530f6a030ea6acfee819ad558e88e2f04d096b4753b2e14a61d200"
-      },
       "issue_resources": {
         "columns": [
           "service_instance_uuidv4",
@@ -1990,72 +1671,6 @@
         ],
         "sql_sha256": "3b0b815a59fb36b8bb32cf7b6124c355b195783c022f43e4aa83e78500abdf2d"
       },
-      "job_attempts": {
-        "columns": [
-          "job_id",
-          "attempt",
-          "state",
-          "created_at_us",
-          "updated_at_us",
-          "not_before_us",
-          "checkpoint",
-          "reason"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "job_id",
-          "attempt"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "jobs",
-            "job_id",
-            "job_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "b68da1c913bfc262f760414820b7713d905834df40314d4db56198c0c8694081"
-      },
-      "jobs": {
-        "columns": [
-          "job_id",
-          "kind",
-          "request",
-          "current_attempt",
-          "created_at_us"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "job_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "job_attempts",
-            "job_id",
-            "job_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            0,
-            1,
-            "job_attempts",
-            "current_attempt",
-            "attempt",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "bb1a30f2f4d314290ffb5448ef71629f38583019013029e7102f03f662c978e4"
-      },
       "payload_admission_staging": {
         "columns": [
           "stage_uuidv4",
@@ -2133,7 +1748,6 @@
       "preservation_obligations": {
         "columns": [
           "git_acquisition_id",
-          "cache_locator_id",
           "roots_fixed",
           "structure_done",
           "digest_done",
@@ -2148,16 +1762,6 @@
           [
             0,
             0,
-            "cache_locators",
-            "cache_locator_id",
-            "cache_locator_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            1,
-            0,
             "git_acquisitions",
             "git_acquisition_id",
             "git_acquisition_id",
@@ -2166,7 +1770,7 @@
             "NONE"
           ]
         ],
-        "sql_sha256": "1111ef88f743de54e09e9d0126ac215fb918f5a1a6314a5338f7fc541d733467"
+        "sql_sha256": "83cfc597ff76f0117556dc87d7035d3f64aa3ba65cb96d20124cd0862431e49c"
       },
       "ref_observations": {
         "columns": [
@@ -2389,51 +1993,6 @@
           ]
         ],
         "sql_sha256": "5537b82ede440a25d6b1324b6541be64584894c010f3ba76eca063f9849d4a63"
-      },
-      "resume_cursors": {
-        "columns": [
-          "resume_scope_id",
-          "incremental_scan_id",
-          "next_cursor",
-          "reusable"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "resume_scope_id"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "incremental_scans",
-            "incremental_scan_id",
-            "incremental_scan_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            0,
-            1,
-            "incremental_scans",
-            "resume_scope_id",
-            "resume_scope_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            1,
-            0,
-            "resume_scopes",
-            "resume_scope_id",
-            "resume_scope_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "76f9cf7b02a7659b81fa463d0a8d43ff791bd7f7804eea7e9ff319dc7bc30344"
       },
       "resume_scopes": {
         "columns": [
@@ -3013,21 +2572,6 @@
         ],
         "sql_sha256": "e3ad4ffdec7a36a501bbe907db77a8de18c4715b951cbc696a73afcfa52b3fa6"
       },
-      "search_documents": {
-        "columns": [
-          "search_document_id",
-          "kind",
-          "source_key",
-          "body",
-          "metadata"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "search_document_id"
-        ],
-        "foreign_keys": [],
-        "sql_sha256": "e088efd0a9221cce1aa97e63cef9c26e33db65929fcf2044cf84cbb304479d45"
-      },
       "service_instances": {
         "columns": [
           "service_instance_uuidv4",
@@ -3207,42 +2751,6 @@
           ]
         ],
         "sql_sha256": "32b063f04d62acbfe82f78066fcbe69907431eb76ae5f999c9e71ee09fafe284"
-      },
-      "space_reservations": {
-        "columns": [
-          "job_id",
-          "attempt",
-          "reserved",
-          "consumed"
-        ],
-        "generated_columns": [],
-        "primary_key": [
-          "job_id",
-          "attempt"
-        ],
-        "foreign_keys": [
-          [
-            0,
-            0,
-            "job_attempts",
-            "job_id",
-            "job_id",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ],
-          [
-            0,
-            1,
-            "job_attempts",
-            "attempt",
-            "attempt",
-            "RESTRICT",
-            "RESTRICT",
-            "NONE"
-          ]
-        ],
-        "sql_sha256": "e8fff7e2382621d4f0e63f932be1c0d070f310d73af5b83574a1d4bd1a39fc99"
       },
       "stored_bytes": {
         "columns": [
@@ -3513,22 +3021,6 @@
       "valid_ref_captures": "995cba43756a2a380a6312cfc10003da61e36d0261ae91da874fb8faabffbdbd"
     },
     "triggers": {
-      "acquisition_cache_owner_insert": {
-        "owner": "acquisition_progress",
-        "sql_sha256": "c7eda133520299baa1b9399a70e6fa2b85b381c62be6f9a27e7086c1b50a7b0d"
-      },
-      "acquisition_cache_owner_update": {
-        "owner": "acquisition_progress",
-        "sql_sha256": "f9a61aeda1be18f3a743698bd180af7218dd354e4b45ae563f2764cd0cd47bb1"
-      },
-      "acquisition_progress_immutable": {
-        "owner": "acquisition_progress",
-        "sql_sha256": "874d4d4fd961037e52b439479225b4fbf1406d7ae5f06c77e0ec1e7e34716116"
-      },
-      "acquisition_progress_no_replace": {
-        "owner": "acquisition_progress",
-        "sql_sha256": "e1222bc1f451540a568e2661fe79909f1fb98eb8509003f348fff3a22180b6d7"
-      },
       "acquisition_roots_complete": {
         "owner": "acquisition_roots",
         "sql_sha256": "7506e282625ba97c6767661163e8889660d0d24eebca087ad36da008cb1f8cf7"
@@ -3549,22 +3041,6 @@
         "owner": "acquisition_roots",
         "sql_sha256": "3760afe2ab47788f7de9dadef309c30d05e573f12318730dbf60f44430e6d766"
       },
-      "active_cache_entries_immutable": {
-        "owner": "active_cache_entries",
-        "sql_sha256": "5d03ff40805010cc46c28b1f3270d2057bd2036d6f327619813cb9bbf19aee32"
-      },
-      "active_cache_entries_no_replace": {
-        "owner": "active_cache_entries",
-        "sql_sha256": "8bfcf9869ac924faa1dddffaa6174b00e6de152cac03c4c0b4a777ca539a3ce6"
-      },
-      "active_locator_insert": {
-        "owner": "active_cache_entries",
-        "sql_sha256": "b7172520ed74522d07a618df85167d80470b1fa275e87c6338fc4c0a8ffbe7be"
-      },
-      "active_locator_update": {
-        "owner": "active_cache_entries",
-        "sql_sha256": "742cc597bf26b8a4b026924bf80783674eb8d52c48dcdd521eda89a8e1db7e12"
-      },
       "blob_content_map_immutable": {
         "owner": "blob_content_map",
         "sql_sha256": "87d0df6f696455cf84696d59dc4073fadcf10df18a556559fbd59acb9107b48c"
@@ -3576,22 +3052,6 @@
       "blob_content_map_retain": {
         "owner": "blob_content_map",
         "sql_sha256": "8901e860f0d9a7e36b68fd982badacf9388504c1759aca67aa5bbde1525eaa61"
-      },
-      "cache_leases_immutable": {
-        "owner": "cache_leases",
-        "sql_sha256": "a5c16a24295b770ad1f5e024e6813151b4c6a562867c1233900ca6f540a0dd6a"
-      },
-      "cache_leases_no_replace": {
-        "owner": "cache_leases",
-        "sql_sha256": "9e5a3ee4700c22e2c73dc7577f702367a41ff1014655440bb7d61b7ac9315eba"
-      },
-      "cache_locators_immutable": {
-        "owner": "cache_locators",
-        "sql_sha256": "d74c825f50806234d79f3d5895891a1bdebb75928915c411e298710918fe94d3"
-      },
-      "cache_locators_no_replace": {
-        "owner": "cache_locators",
-        "sql_sha256": "b06d7d18906339d1511c85dde027eb4f8602dc6d94809971b034b0176fcda050"
       },
       "change_request_state_identity": {
         "owner": "change_request_state",
@@ -3705,14 +3165,6 @@
         "owner": "collection_memberships",
         "sql_sha256": "cac8120a6e51b167eecde27baf96391876e28a66cfa4374508fbee6b6d5b8d1e"
       },
-      "collection_progress_immutable": {
-        "owner": "collection_progress",
-        "sql_sha256": "bc3dcadbb3748cf0fc1d0518a2ff1b5bc263a5fcdc558829212acf419f581844"
-      },
-      "collection_progress_no_replace": {
-        "owner": "collection_progress",
-        "sql_sha256": "eaf3e155c9c1fba8e4c530ff43b21f962786b1bba50f33b9c5d97013eca7a4a2"
-      },
       "commit_parents_format": {
         "owner": "commit_parents",
         "sql_sha256": "4b93722d6fbb6e1f2e5266d4b46a92a6c1f68bd6010ca8061c20a691fd16b973"
@@ -3800,14 +3252,6 @@
       "content_digests_retain": {
         "owner": "content_digests",
         "sql_sha256": "15616196e72e70966d910d005acc102d56735a3446de0226e333ea70b1df4fc3"
-      },
-      "content_locations_immutable": {
-        "owner": "content_locations",
-        "sql_sha256": "a4f532f137f6721bd936281dbffb436050edd02656ff51a684cd1fa3424f48aa"
-      },
-      "content_locations_no_replace": {
-        "owner": "content_locations",
-        "sql_sha256": "431b512affceff17d73b416f61cb01f044f95699d84ac8d991680dc58635e07e"
       },
       "contents_immutable": {
         "owner": "contents",
@@ -4057,34 +3501,6 @@
         "owner": "identity_relations",
         "sql_sha256": "28aeee584035233084ba9e1836a265b87f6c41d9c3a9408c06b34fcfbe67237a"
       },
-      "incremental_scans_immutable": {
-        "owner": "incremental_scans",
-        "sql_sha256": "26564d0f353b15168a373b4a5ee3872e05a8e1f978ccedde240497592f7e5bd8"
-      },
-      "incremental_scans_no_replace": {
-        "owner": "incremental_scans",
-        "sql_sha256": "5a1ee5b0fb245db7a45be2e90629b3ea4d0df6f1a0ef08a84c3d5dde3550b19a"
-      },
-      "incremental_scans_retain": {
-        "owner": "incremental_scans",
-        "sql_sha256": "337ab1456dd0824124baa29f624210b1516f70fdcfe92ebed8c9ba335ea69669"
-      },
-      "index_generations_immutable": {
-        "owner": "index_generations",
-        "sql_sha256": "da549366204de245e8a2a34b75aa474981ba403adb1bf8dee81cb8b55b22db3f"
-      },
-      "index_generations_no_replace": {
-        "owner": "index_generations",
-        "sql_sha256": "524e2d8b9175aab35c9a970f1c16f43bae6de071d0cdce0932c5827461733bce"
-      },
-      "index_membership_immutable": {
-        "owner": "index_membership",
-        "sql_sha256": "53a2c138f8696b83d98242273a2c3fe84d3f7047306da2adece7d84c96adde37"
-      },
-      "index_membership_no_replace": {
-        "owner": "index_membership",
-        "sql_sha256": "42c7a3520ec600c519e767aa3b2cf7b2b39f2c7a1ce15677d80303b5b6fb8be5"
-      },
       "issue_resources_identity": {
         "owner": "issue_resources",
         "sql_sha256": "46c30a8ac57dacff49bf655e174dcf403d6cd4bb95c2bdfc966bf5dbe8c8ab41"
@@ -4116,22 +3532,6 @@
       "issue_resources_transfer_children": {
         "owner": "issue_resources",
         "sql_sha256": "85ff6d9cb18ca0d414b5b9e29fb6353a61eedf2bbfe17f48eaf424c5bb13cf4f"
-      },
-      "job_attempts_immutable": {
-        "owner": "job_attempts",
-        "sql_sha256": "54ddc539fb991c279dc5b7eed467f1af544141861987d8057761d1e85a7ad9b7"
-      },
-      "job_attempts_no_replace": {
-        "owner": "job_attempts",
-        "sql_sha256": "3f13bbe4a806040f30583ae98927b9f650db7d05a881cb116ae4090fbddbd854"
-      },
-      "jobs_immutable": {
-        "owner": "jobs",
-        "sql_sha256": "203f14d239cd0a1c3d66c9e5cf104a184f97a15e67d763d48d0a3263c3e05fbd"
-      },
-      "jobs_no_replace": {
-        "owner": "jobs",
-        "sql_sha256": "f2052f0625eb82a6ed7c712b1c3f70fc5ac18194de33fb4c15eebf30b5da8242"
       },
       "json_change_request_events_metadata_insert": {
         "owner": "change_request_events",
@@ -5061,14 +4461,6 @@
         "owner": "identity_relations",
         "sql_sha256": "1195fa2d43c53d3a03bdb0ee3aa52810d3b1283f7b9bd5518031b7a8bfe276fe"
       },
-      "json_incremental_scans_evidence_insert": {
-        "owner": "incremental_scans",
-        "sql_sha256": "36bebc4853eda608c17e910d45c71e0ce6833f4a4d3e6ff0d37a536212c2a77b"
-      },
-      "json_incremental_scans_evidence_update": {
-        "owner": "incremental_scans",
-        "sql_sha256": "f08c66896ea7e54268b52a3ee5c1b668202c877566905d529657a803aa82284b"
-      },
       "json_issue_resources_acquisition_scope_json_insert": {
         "owner": "issue_resources",
         "sql_sha256": "14b0d358c0582cb276ea0e7db410f49d1c9e352e194dd7836842ebafd19bc7d8"
@@ -5092,22 +4484,6 @@
       "json_issue_resources_metadata_update": {
         "owner": "issue_resources",
         "sql_sha256": "17aa93cf7049c1bc801da0e44496ce6ee442acf591b5cb59c8a918b84400ce0c"
-      },
-      "json_job_attempts_checkpoint_insert": {
-        "owner": "job_attempts",
-        "sql_sha256": "de4f5d6104d834dba7905b240c895347d5caf37e0780703fbadcf71f5003d1b4"
-      },
-      "json_job_attempts_checkpoint_update": {
-        "owner": "job_attempts",
-        "sql_sha256": "3ce7b2cc10c15d265e5a74c62752932104ab409832bd4b9c4a9f628176583b2f"
-      },
-      "json_jobs_request_insert": {
-        "owner": "jobs",
-        "sql_sha256": "1a3e2a88b8e6c552abdd8b39c1b8483f0fa9bb9ae437a20e1371db5c296dad54"
-      },
-      "json_jobs_request_update": {
-        "owner": "jobs",
-        "sql_sha256": "94586791f53c1d1c1020a718195ea47146e116a3c99385e5ac162fb7a3a69bf0"
       },
       "json_payload_admission_staging_context_json_insert": {
         "owner": "payload_admission_staging",
@@ -5205,14 +4581,6 @@
         "owner": "review_thread_state",
         "sql_sha256": "28dbe791400a295c26b712befd949e93a4efbe424d48eb6145a2b08b0e181432"
       },
-      "json_search_documents_metadata_insert": {
-        "owner": "search_documents",
-        "sql_sha256": "5cb2b8830b84167de5c240eb248b703f80d1b0f6ea8ecb094b559a5006920dce"
-      },
-      "json_search_documents_metadata_update": {
-        "owner": "search_documents",
-        "sql_sha256": "1d5a2b989b7d1b89eaad7d0be3bef1e3d11b08a885b3531e30c39f3930491178"
-      },
       "json_service_instances_metadata_insert": {
         "owner": "service_instances",
         "sql_sha256": "5b373c1c9f10cc9dcc745368739faac9905d5e51ed97710397d73aec268cafa5"
@@ -5300,14 +4668,6 @@
       "membership_owner_update": {
         "owner": "collection_memberships",
         "sql_sha256": "98974810388ab50abb5dab4787cbf174f23818233e363b873f7adafe2090a197"
-      },
-      "obligation_cache_owner_insert": {
-        "owner": "preservation_obligations",
-        "sql_sha256": "8132358355f4e66d8f28d1332f2733041adccd109b7fa6ab776d0e14d14035a9"
-      },
-      "obligation_cache_owner_update": {
-        "owner": "preservation_obligations",
-        "sql_sha256": "e85904da04bdf5604bb40164458c5e66d53ba8cf110a894e16925e5cc701c27f"
       },
       "payload_admission_staging_git_object": {
         "owner": "payload_admission_staging",
@@ -5412,14 +4772,6 @@
       "repository_object_sources_retain": {
         "owner": "repository_object_sources",
         "sql_sha256": "01b83f53cf3cd87d83f021501d9ecf6e06e34d015b08e504f183ed6bea7bfe99"
-      },
-      "resume_cursors_immutable": {
-        "owner": "resume_cursors",
-        "sql_sha256": "f18aec6022cdeb4c84296f70c8d999db1e6a11747bee2166fff34d617d47d7e4"
-      },
-      "resume_cursors_no_replace": {
-        "owner": "resume_cursors",
-        "sql_sha256": "7f873408f9922d9a1f3888733dca17fa3152ede44b2a1c5f0fdc69f279ada75f"
       },
       "resume_scopes_immutable": {
         "owner": "resume_scopes",
@@ -5545,22 +4897,6 @@
         "owner": "root_origins",
         "sql_sha256": "f3d083a618c21b175ae50cd2b21dd8c8138ccbc624a3a29ffad294d82f0e4686"
       },
-      "scan_scope_insert": {
-        "owner": "incremental_scans",
-        "sql_sha256": "492683bbe54cc2a2d3769a4e5b7b9001ae3197a5205715709b7dc60b83510c82"
-      },
-      "scan_scope_update": {
-        "owner": "incremental_scans",
-        "sql_sha256": "532f2a8b948127552a2d768085563b694d7ec40c91dd11f32432f695172ba5a1"
-      },
-      "search_documents_immutable": {
-        "owner": "search_documents",
-        "sql_sha256": "e63c510fd7c579559a6695d1fc1902199c917771323702e8d1f9aa9f5e78db15"
-      },
-      "search_documents_no_replace": {
-        "owner": "search_documents",
-        "sql_sha256": "9feba3da0ce1bc65f94b2ecbc5eb301cd0984d084382a724d00e0618e7164e61"
-      },
       "service_instances_immutable": {
         "owner": "service_instances",
         "sql_sha256": "7304c55fa80aa3622a6402f72f90c7febea85f0c387d16a56f7c49d38860d3d9"
@@ -5608,14 +4944,6 @@
       "sources_no_replace": {
         "owner": "sources",
         "sql_sha256": "72ae3de3e12ef688d6b0a2347b0cd084dcc14d105beeaec94c4ece2a05840e0c"
-      },
-      "space_reservations_immutable": {
-        "owner": "space_reservations",
-        "sql_sha256": "bfd5a983eecbda4cf3cb38f35e70e75a5a7735ad2ba959be8bd055e04bd2ee3c"
-      },
-      "space_reservations_no_replace": {
-        "owner": "space_reservations",
-        "sql_sha256": "170fb3aea54c3a6f70d289fd957507f8898590b9d2d962b6413441ae25d86558"
       },
       "stored_bytes_immutable": {
         "owner": "stored_bytes",
@@ -5743,25 +5071,9 @@
       }
     },
     "indexes": {
-      "acquisition_progress_fk_0": {
-        "owner": "acquisition_progress",
-        "sql_sha256": "e996280758a94ca7803b7401d3d961997f9b020f45f29652dee36a7be17bcefa"
-      },
-      "active_cache_entries_fk_0": {
-        "owner": "active_cache_entries",
-        "sql_sha256": "cd8d295362f6fd46b30ee59caeaad1bbc3f74295eaa178df2bec4e614ab416d2"
-      },
       "blob_content_map_content": {
         "owner": "blob_content_map",
         "sql_sha256": "2ac573fe5631a374ceea122b1fc578f101d171891ff39da1645b9e6a6972ee98"
-      },
-      "cache_leases_fk_0": {
-        "owner": "cache_leases",
-        "sql_sha256": "9ec061538d5073679de1ab558ac49fea6daec56b78bccff2ccf495b324eb5d36"
-      },
-      "cache_locators_fk_0": {
-        "owner": "cache_locators",
-        "sql_sha256": "a7f64bbcc1b5e88daa7f48013832ff199ac4f20a673e50af2a24592cfd06c37e"
       },
       "change_request_state_repository": {
         "owner": "change_request_state",
@@ -5783,10 +5095,6 @@
         "owner": "collection_memberships",
         "sql_sha256": "ec6f0d61ac5ddd6f8b87e6eecd08892f5ce1a4f97cf202204d0615dfc4ed16cc"
       },
-      "collection_progress_fk_0": {
-        "owner": "collection_progress",
-        "sql_sha256": "7926614b3c77734a16eec29e97fcc8d9ee903ab887eef5f3c3ec6c9338272b98"
-      },
       "completion_markers_fk_0": {
         "owner": "completion_markers",
         "sql_sha256": "747b4751b7e1715869147b9923484457b18e83a31443ada6e574cf4f60cbe5e2"
@@ -5794,10 +5102,6 @@
       "completion_markers_fk_1": {
         "owner": "completion_markers",
         "sql_sha256": "cc3fe56a58b17b092735ee8a611f8d760cc2e49aeee684632bb0c37bbd925d88"
-      },
-      "content_locations_fk_0": {
-        "owner": "content_locations",
-        "sql_sha256": "d6ad52f9821c7d676c4b898302a96be863ccdb3eefaffe0e9e6ef2c16a041eec"
       },
       "coverage_claim_markers_marker": {
         "owner": "coverage_claim_markers",
@@ -5871,18 +5175,6 @@
         "owner": "fetch_collections",
         "sql_sha256": "744ddf285fd2e2d188c8bccc8327d3398ac847b1447e0b307bfb790f522dbf01"
       },
-      "incremental_scans_fk_0": {
-        "owner": "incremental_scans",
-        "sql_sha256": "f77cf05a37cfb471294a10fbc23b4dd6a9321c86a5fd08c4175ca0c685863c11"
-      },
-      "incremental_scans_fk_1": {
-        "owner": "incremental_scans",
-        "sql_sha256": "f8076bcc17fa5ad081a365a0e9b377887d570d4fde60369e79d471da608a1994"
-      },
-      "index_membership_fk_0": {
-        "owner": "index_membership",
-        "sql_sha256": "d1ced15ee737eb9cc4482c82b3664f5b83eda08a1f65c2cbe478025815a96831"
-      },
       "issue_resources_current_number": {
         "owner": "issue_resources",
         "sql_sha256": "71b65324dd0e464fa42db678570dd338a854322cbe0f65b6c0219948060a8216"
@@ -5895,17 +5187,9 @@
         "owner": "issue_resources",
         "sql_sha256": "8e439cf62bc0c5e65f14d1d8b29a482fb8cf1804ea106112c79d6699da184ca9"
       },
-      "jobs_fk_0": {
-        "owner": "jobs",
-        "sql_sha256": "27b4e1b2ce4c51925402b395446989d14cf5d95ad3822746223e468464264ac5"
-      },
       "payloads_stored_bytes_fk": {
         "owner": "payloads",
         "sql_sha256": "8c9662e879607855548d34cf9399c0ef5479ed88059c219d56801d68c45a20b0"
-      },
-      "preservation_obligations_fk_0": {
-        "owner": "preservation_obligations",
-        "sql_sha256": "146ab1d8bd1ce9f90546594b57f6363f59998a9b23cc3abf1e6254d32d8e3dd3"
       },
       "repositories_fk_1": {
         "owner": "repositories",
@@ -5914,10 +5198,6 @@
       "repository_object_sources_acquisition": {
         "owner": "repository_object_sources",
         "sql_sha256": "9412dc1763005558bfc5ef5ad70dfa74bc6a2967b8eec82bf27d58c4ea4ccdc7"
-      },
-      "resume_cursors_fk_0": {
-        "owner": "resume_cursors",
-        "sql_sha256": "aa01dc951abe792857d9bbbc60aaa8287ca8a701907c859e906cb4e8f9f7bf77"
       },
       "resume_scopes_fk_0": {
         "owner": "resume_scopes",
@@ -5976,6 +5256,660 @@
         "sql_sha256": "21458ac5f104d45b491b1af81b20ccfbf7c5495dd26c768113f0753b37dfe6fa"
       }
     }
+  },
+  "operational": {
+    "ddl_sha256": "dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def",
+    "tables": {
+      "acquisition_progress": {
+        "columns": [
+          "git_acquisition_id",
+          "job_id",
+          "attempt",
+          "state",
+          "generation",
+          "ended_at_us",
+          "active_cache_entry_id"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "git_acquisition_id"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "job_attempts",
+            "job_id",
+            "job_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "job_attempts",
+            "attempt",
+            "attempt",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "active_cache_entries",
+            "active_cache_entry_id",
+            "active_cache_entry_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "a827b5ae4bc8fef0c3b2ae6693f8aeac0f0790f81ab2bc5094c5d891981ada52"
+      },
+      "active_cache_entries": {
+        "columns": [
+          "active_cache_entry_id",
+          "cache_locator_id",
+          "generation",
+          "state",
+          "last_used_us",
+          "bytes"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "active_cache_entry_id"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "cache_locators",
+            "cache_locator_id",
+            "cache_locator_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "a50a1663ac1d232ad623d0b3da101ba1f09d57104863252290970d068eab3480"
+      },
+      "cache_leases": {
+        "columns": [
+          "active_cache_entry_id",
+          "job_id",
+          "attempt",
+          "acquired_at_us"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "active_cache_entry_id",
+          "job_id",
+          "attempt"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "job_attempts",
+            "job_id",
+            "job_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "job_attempts",
+            "attempt",
+            "attempt",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "active_cache_entries",
+            "active_cache_entry_id",
+            "active_cache_entry_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "2cd8f696714135348d0912e0b088576183698d4c19f333fffdba666962890d0d"
+      },
+      "cache_locators": {
+        "columns": [
+          "cache_locator_id",
+          "repository_uuidv4",
+          "path",
+          "access",
+          "state"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "cache_locator_id"
+        ],
+        "foreign_keys": [],
+        "sql_sha256": "25775dcb91750e2f8d3dcf063d1caca371941d624d836d986ffd429b8dd27d96"
+      },
+      "collection_progress": {
+        "columns": [
+          "fetch_collection_id",
+          "job_id",
+          "attempt",
+          "state",
+          "cursor",
+          "reason"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "fetch_collection_id"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "job_attempts",
+            "job_id",
+            "job_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "job_attempts",
+            "attempt",
+            "attempt",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "9f707e3cdf8b26746111eda3d781f039146b6ff09f47dde6b536145c33349f7c"
+      },
+      "job_attempts": {
+        "columns": [
+          "job_id",
+          "attempt",
+          "state",
+          "created_at_us",
+          "updated_at_us",
+          "not_before_us",
+          "checkpoint",
+          "reason"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "job_id",
+          "attempt"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "jobs",
+            "job_id",
+            "job_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "a6a9f8fa01d9dd6c6c9bad8420a4584f19a4dbfb07de443e02a7f073f411f5e4"
+      },
+      "jobs": {
+        "columns": [
+          "job_id",
+          "kind",
+          "request",
+          "current_attempt",
+          "created_at_us"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "job_id"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "job_attempts",
+            "job_id",
+            "job_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "job_attempts",
+            "current_attempt",
+            "attempt",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "3256e479eddf0e1ce881416dbbe5a7be3f4260760557ed28e11f51f604868363"
+      },
+      "operational_identity": {
+        "columns": [
+          "singleton",
+          "format_id",
+          "schema_version",
+          "operational_instance_id",
+          "catalog_db_instance_id",
+          "created_at_us",
+          "ddl_sha256"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "singleton"
+        ],
+        "foreign_keys": [],
+        "sql_sha256": "e31b663ada5b462bd176160135e00872ce8f673abf03fd18984f6c44f8df3035"
+      },
+      "search_rebuild_metrics": {
+        "columns": [
+          "rebuild_id",
+          "started_at_us",
+          "ended_at_us",
+          "duration_ms",
+          "documents_indexed",
+          "bytes_indexed",
+          "status"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "rebuild_id"
+        ],
+        "foreign_keys": [],
+        "sql_sha256": "ae6197e691ff54050e99f325f4e707235bcd0f3b9a5bb7c94d6eb557238bcdd2"
+      },
+      "space_reservations": {
+        "columns": [
+          "job_id",
+          "attempt",
+          "reserved",
+          "consumed"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "job_id",
+          "attempt"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "job_attempts",
+            "job_id",
+            "job_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "job_attempts",
+            "attempt",
+            "attempt",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "dcd898864ea24494219a22c2aeec047cee7b2c307c8f32cf3e84f10b70032436"
+      }
+    },
+    "views": {},
+    "triggers": {
+      "acquisition_progress_immutable": {
+        "owner": "acquisition_progress",
+        "sql_sha256": "874d4d4fd961037e52b439479225b4fbf1406d7ae5f06c77e0ec1e7e34716116"
+      },
+      "acquisition_progress_no_replace": {
+        "owner": "acquisition_progress",
+        "sql_sha256": "6e4a7d207e65717f6d215d5924acbb69ef9a27034ac936a989b35341d18577f2"
+      },
+      "active_cache_entries_immutable": {
+        "owner": "active_cache_entries",
+        "sql_sha256": "5d03ff40805010cc46c28b1f3270d2057bd2036d6f327619813cb9bbf19aee32"
+      },
+      "active_cache_entries_no_replace": {
+        "owner": "active_cache_entries",
+        "sql_sha256": "f0db106d8d5931135457a43cab6bb2f1b4244a1cc6c72eee6cd352d1b1f290ad"
+      },
+      "active_locator_insert": {
+        "owner": "active_cache_entries",
+        "sql_sha256": "b7172520ed74522d07a618df85167d80470b1fa275e87c6338fc4c0a8ffbe7be"
+      },
+      "active_locator_update": {
+        "owner": "active_cache_entries",
+        "sql_sha256": "742cc597bf26b8a4b026924bf80783674eb8d52c48dcdd521eda89a8e1db7e12"
+      },
+      "cache_leases_immutable": {
+        "owner": "cache_leases",
+        "sql_sha256": "a5c16a24295b770ad1f5e024e6813151b4c6a562867c1233900ca6f540a0dd6a"
+      },
+      "cache_leases_no_replace": {
+        "owner": "cache_leases",
+        "sql_sha256": "a7754896483ff87c458c44f5e24a950a348cfd74a543b6750b39987dd96a2fac"
+      },
+      "cache_locators_immutable": {
+        "owner": "cache_locators",
+        "sql_sha256": "d74c825f50806234d79f3d5895891a1bdebb75928915c411e298710918fe94d3"
+      },
+      "cache_locators_no_replace": {
+        "owner": "cache_locators",
+        "sql_sha256": "c34c7045cb10b66335dd2b5ee6cbfb86947618d2267d9fd07cf16d96d3f4c3c4"
+      },
+      "collection_progress_immutable": {
+        "owner": "collection_progress",
+        "sql_sha256": "bc3dcadbb3748cf0fc1d0518a2ff1b5bc263a5fcdc558829212acf419f581844"
+      },
+      "collection_progress_no_replace": {
+        "owner": "collection_progress",
+        "sql_sha256": "d58fbcbd14081fdf993d8410e2a6ed41f1bed326d736b0916ff5a47926b2187c"
+      },
+      "job_attempts_immutable": {
+        "owner": "job_attempts",
+        "sql_sha256": "54ddc539fb991c279dc5b7eed467f1af544141861987d8057761d1e85a7ad9b7"
+      },
+      "job_attempts_no_replace": {
+        "owner": "job_attempts",
+        "sql_sha256": "7fb2ebfa265c2237c3246e189fa79349b37a94abe2dc55cc48e8565adf710ca2"
+      },
+      "jobs_immutable": {
+        "owner": "jobs",
+        "sql_sha256": "203f14d239cd0a1c3d66c9e5cf104a184f97a15e67d763d48d0a3263c3e05fbd"
+      },
+      "jobs_no_replace": {
+        "owner": "jobs",
+        "sql_sha256": "74b7624635b2338e937d14619b1f9f7911442103327a1e01cebc5458327a2656"
+      },
+      "operational_identity_immutable": {
+        "owner": "operational_identity",
+        "sql_sha256": "850aca0b539eb5e01ea8e46eacf62fa07ed5d243139d7410b7c796aaafc20bed"
+      },
+      "operational_identity_no_replace": {
+        "owner": "operational_identity",
+        "sql_sha256": "694be46bd8026770a88b6cef440f7003b564681802aaf497f52a619875e90a80"
+      },
+      "space_reservations_immutable": {
+        "owner": "space_reservations",
+        "sql_sha256": "bfd5a983eecbda4cf3cb38f35e70e75a5a7735ad2ba959be8bd055e04bd2ee3c"
+      },
+      "space_reservations_no_replace": {
+        "owner": "space_reservations",
+        "sql_sha256": "85d98e8b0b78619740517836d7008d3603a05292c8483a6243d99974b051e873"
+      }
+    },
+    "indexes": {
+      "acquisition_progress_fk_0": {
+        "owner": "acquisition_progress",
+        "sql_sha256": "e996280758a94ca7803b7401d3d961997f9b020f45f29652dee36a7be17bcefa"
+      },
+      "active_cache_entries_fk_0": {
+        "owner": "active_cache_entries",
+        "sql_sha256": "cd8d295362f6fd46b30ee59caeaad1bbc3f74295eaa178df2bec4e614ab416d2"
+      },
+      "cache_leases_fk_0": {
+        "owner": "cache_leases",
+        "sql_sha256": "9ec061538d5073679de1ab558ac49fea6daec56b78bccff2ccf495b324eb5d36"
+      },
+      "collection_progress_fk_0": {
+        "owner": "collection_progress",
+        "sql_sha256": "7926614b3c77734a16eec29e97fcc8d9ee903ab887eef5f3c3ec6c9338272b98"
+      },
+      "jobs_fk_0": {
+        "owner": "jobs",
+        "sql_sha256": "27b4e1b2ce4c51925402b395446989d14cf5d95ad3822746223e468464264ac5"
+      }
+    }
+  },
+  "search": {
+    "ddl_sha256": "1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7",
+    "tables": {
+      "index_generations": {
+        "columns": [
+          "index_generation_id",
+          "kind",
+          "state",
+          "table_name",
+          "target_max_search_document_id",
+          "created_at_us",
+          "core_revision_fence"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "index_generation_id"
+        ],
+        "foreign_keys": [],
+        "sql_sha256": "72a89dea828eaf6c61c2762ec33e5a4515a5e79dbc8b373dc4c04d1090443711"
+      },
+      "index_membership": {
+        "columns": [
+          "index_generation_id",
+          "search_document_id",
+          "input_version"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "index_generation_id",
+          "search_document_id"
+        ],
+        "foreign_keys": [
+          [
+            0,
+            0,
+            "search_documents",
+            "search_document_id",
+            "search_document_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "index_generations",
+            "index_generation_id",
+            "index_generation_id",
+            "RESTRICT",
+            "RESTRICT",
+            "NONE"
+          ]
+        ],
+        "sql_sha256": "eb75cc2f398abf400011413d8d2ba63c39233e9fb38da0663181ae4a18b1b73a"
+      },
+      "search_documents": {
+        "columns": [
+          "search_document_id",
+          "kind",
+          "source_key",
+          "body",
+          "metadata"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "search_document_id"
+        ],
+        "foreign_keys": [],
+        "sql_sha256": "b1f19dac01d2f30017f3375ac555d353ff643bcb37d87249beeeee6b53c7b61b"
+      },
+      "search_identity": {
+        "columns": [
+          "singleton",
+          "format_id",
+          "schema_version",
+          "search_instance_id",
+          "catalog_db_instance_id",
+          "created_at_us",
+          "last_rebuilt_at_us",
+          "core_revision_fence",
+          "ddl_sha256"
+        ],
+        "generated_columns": [],
+        "primary_key": [
+          "singleton"
+        ],
+        "foreign_keys": [],
+        "sql_sha256": "1be52269e60654f36aa64de098ac6fb5114aaba7bcdb7a19df9d1a92a5dd6ada"
+      }
+    },
+    "views": {},
+    "triggers": {
+      "index_generations_immutable": {
+        "owner": "index_generations",
+        "sql_sha256": "da549366204de245e8a2a34b75aa474981ba403adb1bf8dee81cb8b55b22db3f"
+      },
+      "index_generations_no_replace": {
+        "owner": "index_generations",
+        "sql_sha256": "bd73090cdfbb1855e867c4620bfb47e42a184ab010480efef06c284c7f2e01be"
+      },
+      "index_membership_immutable": {
+        "owner": "index_membership",
+        "sql_sha256": "53a2c138f8696b83d98242273a2c3fe84d3f7047306da2adece7d84c96adde37"
+      },
+      "index_membership_no_replace": {
+        "owner": "index_membership",
+        "sql_sha256": "c84a9d57d06402c293cc9e296484048f70222748e50b1f79f3fa55b2e770be0f"
+      },
+      "search_documents_immutable": {
+        "owner": "search_documents",
+        "sql_sha256": "e63c510fd7c579559a6695d1fc1902199c917771323702e8d1f9aa9f5e78db15"
+      },
+      "search_documents_no_replace": {
+        "owner": "search_documents",
+        "sql_sha256": "505f9892aae0191624fa124ba556f0735bf7698466b0497d1116f6c9853521ab"
+      },
+      "search_identity_immutable": {
+        "owner": "search_identity",
+        "sql_sha256": "5783810f5f6afab763693828072fc46d7d9f2985f32045b2b3f8565dfc7de91a"
+      },
+      "search_identity_no_replace": {
+        "owner": "search_identity",
+        "sql_sha256": "723f87205874eedf317c743c833e15e658ad2bd63546ed25a6d07f2ad4f7c784"
+      }
+    },
+    "indexes": {
+      "index_membership_fk_0": {
+        "owner": "index_membership",
+        "sql_sha256": "d1ced15ee737eb9cc4482c82b3664f5b83eda08a1f65c2cbe478025815a96831"
+      }
+    }
+  },
+  "retired_tables": [
+    "content_locations",
+    "incremental_scans",
+    "resume_cursors"
+  ],
+  "store_disposition": {
+    "core": [
+      "acquisition_roots",
+      "blob_content_map",
+      "change_request_events",
+      "change_request_state",
+      "change_requests",
+      "code_acquisitions",
+      "code_assessments",
+      "code_commits",
+      "code_file_changes",
+      "code_listing_progress",
+      "code_listings",
+      "collection_memberships",
+      "commit_parents",
+      "commits",
+      "completion_markers",
+      "content_digests",
+      "contents",
+      "coverage_claim_markers",
+      "coverage_claims",
+      "coverage_scopes",
+      "current_collection_pages",
+      "database_identity",
+      "document_state",
+      "documents",
+      "exchange_admissions",
+      "exchange_blocked_coverage_claims",
+      "exchange_local_identities",
+      "exchange_staging",
+      "fetch_collections",
+      "git_acquisitions",
+      "git_commit_facts",
+      "git_name_facts",
+      "git_object_payloads",
+      "git_objects",
+      "git_text_facts",
+      "identity_relation_cancellations",
+      "identity_relation_staging",
+      "identity_relations",
+      "issue_resources",
+      "payload_admission_staging",
+      "payload_quarantine",
+      "payloads",
+      "preservation_obligations",
+      "ref_observations",
+      "repositories",
+      "repository_bindings",
+      "repository_endpoints",
+      "repository_names",
+      "repository_object_sources",
+      "resume_scopes",
+      "review_resources",
+      "review_thread_state",
+      "review_threads",
+      "root_manifest_entries",
+      "root_manifests",
+      "root_origins",
+      "service_instances",
+      "snapshots",
+      "source_inventory_assessments",
+      "source_repositories",
+      "sources",
+      "stored_bytes",
+      "tag_objects",
+      "text_bodies",
+      "thread_collection_continuations",
+      "thread_collection_requirements",
+      "thread_collection_targets",
+      "tree_entries",
+      "tree_objects",
+      "unresolved_payloads"
+    ],
+    "operational": [
+      "acquisition_progress",
+      "active_cache_entries",
+      "cache_leases",
+      "cache_locators",
+      "collection_progress",
+      "job_attempts",
+      "jobs",
+      "operational_identity",
+      "search_rebuild_metrics",
+      "space_reservations"
+    ],
+    "search": [
+      "index_generations",
+      "index_membership",
+      "search_documents",
+      "search_identity"
+    ],
+    "retired": [
+      "content_locations",
+      "incremental_scans",
+      "resume_cursors"
+    ]
   },
   "changed_table_contracts": {
     "acquisition_progress": {
@@ -6059,16 +5993,6 @@
           "RESTRICT",
           "RESTRICT",
           "NONE"
-        ],
-        [
-          2,
-          0,
-          "git_acquisitions",
-          "git_acquisition_id",
-          "git_acquisition_id",
-          "RESTRICT",
-          "RESTRICT",
-          "NONE"
         ]
       ]
     },
@@ -6140,6 +6064,40 @@
         ]
       ]
     },
+    "active_cache_entries": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "active_cache_entry_id"
+      ],
+      "new_primary_key": [
+        "active_cache_entry_id"
+      ],
+      "old_foreign_keys": [
+        [
+          0,
+          0,
+          "cache_locators",
+          "cache_locator_id",
+          "cache_locator_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ],
+      "new_foreign_keys": [
+        [
+          0,
+          0,
+          "cache_locators",
+          "cache_locator_id",
+          "cache_locator_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ]
+    },
     "blob_content_map": {
       "removed_columns": [
         "git_acquisition_id"
@@ -6205,6 +6163,107 @@
           "NONE"
         ]
       ]
+    },
+    "cache_leases": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "active_cache_entry_id",
+        "job_id",
+        "attempt"
+      ],
+      "new_primary_key": [
+        "active_cache_entry_id",
+        "job_id",
+        "attempt"
+      ],
+      "old_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "attempt",
+          "attempt",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          1,
+          0,
+          "active_cache_entries",
+          "active_cache_entry_id",
+          "active_cache_entry_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ],
+      "new_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "attempt",
+          "attempt",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          1,
+          0,
+          "active_cache_entries",
+          "active_cache_entry_id",
+          "active_cache_entry_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ]
+    },
+    "cache_locators": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "cache_locator_id"
+      ],
+      "new_primary_key": [
+        "cache_locator_id"
+      ],
+      "old_foreign_keys": [
+        [
+          0,
+          0,
+          "repositories",
+          "repository_uuidv4",
+          "repository_uuidv4",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ],
+      "new_foreign_keys": []
     },
     "change_request_events": {
       "removed_columns": [
@@ -6661,6 +6720,70 @@
           "fetch_collections",
           "change_request_id",
           "change_request_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ]
+    },
+    "collection_progress": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "fetch_collection_id"
+      ],
+      "new_primary_key": [
+        "fetch_collection_id"
+      ],
+      "old_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "attempt",
+          "attempt",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          1,
+          0,
+          "fetch_collections",
+          "fetch_collection_id",
+          "fetch_collection_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ],
+      "new_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "attempt",
+          "attempt",
           "RESTRICT",
           "RESTRICT",
           "NONE"
@@ -7573,22 +7696,38 @@
         ]
       ]
     },
-    "incremental_scans": {
+    "index_generations": {
+      "removed_columns": [],
+      "added_columns": [
+        "core_revision_fence"
+      ],
+      "old_primary_key": [
+        "index_generation_id"
+      ],
+      "new_primary_key": [
+        "index_generation_id"
+      ],
+      "old_foreign_keys": [],
+      "new_foreign_keys": []
+    },
+    "index_membership": {
       "removed_columns": [],
       "added_columns": [],
       "old_primary_key": [
-        "incremental_scan_id"
+        "index_generation_id",
+        "search_document_id"
       ],
       "new_primary_key": [
-        "incremental_scan_id"
+        "index_generation_id",
+        "search_document_id"
       ],
       "old_foreign_keys": [
         [
           0,
           0,
-          "fetch_collections",
-          "fetch_collection_id",
-          "fetch_collection_id",
+          "search_documents",
+          "search_document_id",
+          "search_document_id",
           "RESTRICT",
           "RESTRICT",
           "NONE"
@@ -7596,9 +7735,9 @@
         [
           1,
           0,
-          "resume_scopes",
-          "resume_scope_id",
-          "resume_scope_id",
+          "index_generations",
+          "index_generation_id",
+          "index_generation_id",
           "RESTRICT",
           "RESTRICT",
           "NONE"
@@ -7608,9 +7747,109 @@
         [
           0,
           0,
-          "fetch_collections",
-          "fetch_collection_id",
-          "fetch_collection_id",
+          "search_documents",
+          "search_document_id",
+          "search_document_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          1,
+          0,
+          "index_generations",
+          "index_generation_id",
+          "index_generation_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ]
+    },
+    "job_attempts": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "job_id",
+        "attempt"
+      ],
+      "new_primary_key": [
+        "job_id",
+        "attempt"
+      ],
+      "old_foreign_keys": [
+        [
+          0,
+          0,
+          "jobs",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ],
+      "new_foreign_keys": [
+        [
+          0,
+          0,
+          "jobs",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ]
+    },
+    "jobs": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "job_id"
+      ],
+      "new_primary_key": [
+        "job_id"
+      ],
+      "old_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "current_attempt",
+          "attempt",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ],
+      "new_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "current_attempt",
+          "attempt",
           "RESTRICT",
           "RESTRICT",
           "NONE"
@@ -7655,6 +7894,7 @@
     },
     "preservation_obligations": {
       "removed_columns": [
+        "cache_locator_id",
         "published"
       ],
       "added_columns": [
@@ -7691,16 +7931,6 @@
       "new_foreign_keys": [
         [
           0,
-          0,
-          "cache_locators",
-          "cache_locator_id",
-          "cache_locator_id",
-          "RESTRICT",
-          "RESTRICT",
-          "NONE"
-        ],
-        [
-          1,
           0,
           "git_acquisitions",
           "git_acquisition_id",
@@ -8453,6 +8683,18 @@
         ]
       ]
     },
+    "search_documents": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "search_document_id"
+      ],
+      "new_primary_key": [
+        "search_document_id"
+      ],
+      "old_foreign_keys": [],
+      "new_foreign_keys": []
+    },
     "snapshots": {
       "removed_columns": [
         "parsed_result_uuidv4",
@@ -8610,6 +8852,62 @@
           "sources",
           "source_id",
           "source_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ]
+    },
+    "space_reservations": {
+      "removed_columns": [],
+      "added_columns": [],
+      "old_primary_key": [
+        "job_id",
+        "attempt"
+      ],
+      "new_primary_key": [
+        "job_id",
+        "attempt"
+      ],
+      "old_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "attempt",
+          "attempt",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ]
+      ],
+      "new_foreign_keys": [
+        [
+          0,
+          0,
+          "job_attempts",
+          "job_id",
+          "job_id",
+          "RESTRICT",
+          "RESTRICT",
+          "NONE"
+        ],
+        [
+          0,
+          1,
+          "job_attempts",
+          "attempt",
+          "attempt",
           "RESTRICT",
           "RESTRICT",
           "NONE"
@@ -8984,7 +9282,9 @@
       "source_inventory_assessments",
       "thread_collection_requirements",
       "thread_collection_targets",
-      "change_request_events"
+      "change_request_events",
+      "resume_scopes",
+      "thread_collection_continuations"
     ],
     "git_identity_intrinsic_and_capture": [
       "git_acquisitions",
@@ -9018,23 +9318,7 @@
       "unresolved_payloads",
       "preservation_obligations"
     ],
-    "discardable_operations_and_derived_index": [
-      "jobs",
-      "job_attempts",
-      "acquisition_progress",
-      "collection_progress",
-      "resume_scopes",
-      "incremental_scans",
-      "resume_cursors",
-      "thread_collection_continuations",
-      "cache_locators",
-      "content_locations",
-      "active_cache_entries",
-      "cache_leases",
-      "space_reservations",
-      "search_documents",
-      "index_generations",
-      "index_membership",
+    "exchange_staging_and_admissions": [
       "exchange_local_identities",
       "exchange_admissions",
       "exchange_staging",
@@ -9042,6 +9326,24 @@
     ],
     "local_physical_catalog": [
       "database_identity"
+    ],
+    "operational_store": [
+      "operational_identity",
+      "jobs",
+      "job_attempts",
+      "cache_locators",
+      "active_cache_entries",
+      "cache_leases",
+      "space_reservations",
+      "acquisition_progress",
+      "collection_progress",
+      "search_rebuild_metrics"
+    ],
+    "search_store": [
+      "search_identity",
+      "search_documents",
+      "index_generations",
+      "index_membership"
     ]
   },
   "delta": {
@@ -9049,6 +9351,7 @@
       "removed": [
         "change_request_observations",
         "code_observations",
+        "content_locations",
         "document_observations",
         "exchange_blocked_results",
         "exchange_selection_blocks",
@@ -9060,6 +9363,7 @@
         "fact_selection_staging",
         "fetch_occurrences",
         "git_acquisition_publications",
+        "incremental_scans",
         "inventory_observations",
         "local_parser_profile_verification_trust",
         "parsed_result_inputs",
@@ -9076,6 +9380,7 @@
         "parser_profiles",
         "repository_inventory_observations",
         "repository_name_observations",
+        "resume_cursors",
         "review_thread_observations",
         "source_input_observations",
         "validators"
@@ -9087,8 +9392,11 @@
         "document_state",
         "git_commit_facts",
         "git_name_facts",
+        "operational_identity",
         "repository_names",
         "review_thread_state",
+        "search_identity",
+        "search_rebuild_metrics",
         "source_inventory_assessments",
         "thread_collection_continuations",
         "thread_collection_requirements",
@@ -9098,12 +9406,16 @@
       "changed": [
         "acquisition_progress",
         "acquisition_roots",
+        "active_cache_entries",
         "blob_content_map",
+        "cache_leases",
+        "cache_locators",
         "change_request_events",
         "code_acquisitions",
         "code_commits",
         "code_file_changes",
         "code_listings",
+        "collection_progress",
         "commit_parents",
         "commits",
         "completion_markers",
@@ -9117,7 +9429,10 @@
         "git_object_payloads",
         "git_objects",
         "git_text_facts",
-        "incremental_scans",
+        "index_generations",
+        "index_membership",
+        "job_attempts",
+        "jobs",
         "payloads",
         "preservation_obligations",
         "ref_observations",
@@ -9126,8 +9441,10 @@
         "root_manifest_entries",
         "root_manifests",
         "root_origins",
+        "search_documents",
         "snapshots",
         "source_repositories",
+        "space_reservations",
         "tag_objects",
         "tree_entries"
       ]
@@ -9195,6 +9512,8 @@
     },
     "triggers": {
       "removed": [
+        "acquisition_cache_owner_insert",
+        "acquisition_cache_owner_update",
         "acquisition_roots_input_sealed",
         "blob_type_insert",
         "blob_type_update",
@@ -9261,6 +9580,8 @@
         "commits_tree_type",
         "commits_uuid4",
         "completion_marker_uuid",
+        "content_locations_immutable",
+        "content_locations_no_replace",
         "document_observations_immutable",
         "document_observations_no_replace",
         "document_observations_portable_conflict",
@@ -9313,6 +9634,9 @@
         "git_text_facts_object_type",
         "git_text_facts_sealed",
         "git_text_facts_uuid4",
+        "incremental_scans_immutable",
+        "incremental_scans_no_replace",
+        "incremental_scans_retain",
         "inventory_observations_immutable",
         "inventory_observations_no_replace",
         "inventory_observations_portable_uuid4",
@@ -9326,6 +9650,8 @@
         "json_git_acquisition_publications_object_manifest_json_update",
         "json_git_acquisition_publications_root_manifest_json_insert",
         "json_git_acquisition_publications_root_manifest_json_update",
+        "json_incremental_scans_evidence_insert",
+        "json_incremental_scans_evidence_update",
         "json_parsed_results_derivation_json_insert",
         "json_parsed_results_derivation_json_update",
         "json_parsed_results_input_manifest_json_insert",
@@ -9340,6 +9666,8 @@
         "json_repository_name_observations_provenance_json_update",
         "json_source_input_observations_request_context_json_insert",
         "json_source_input_observations_request_context_json_update",
+        "obligation_cache_owner_insert",
+        "obligation_cache_owner_update",
         "origin_pr_insert",
         "origin_pr_update",
         "origin_ref_insert",
@@ -9419,6 +9747,8 @@
         "repository_name_result_sealed",
         "repository_name_source_owner",
         "repository_object_sources_input_sealed",
+        "resume_cursors_immutable",
+        "resume_cursors_no_replace",
         "resume_scopes_retain",
         "review_thread_observations_capability",
         "review_thread_observations_no_replace_guard",
@@ -9439,6 +9769,8 @@
         "root_manifests_object_type",
         "root_manifests_sealed",
         "root_manifests_uuid4",
+        "scan_scope_insert",
+        "scan_scope_update",
         "snapshots_parser_identity",
         "snapshots_result_sealed",
         "source_input_observations_no_replace_guard",
@@ -9727,10 +10059,6 @@
         "json_identity_relation_staging_record_json_update",
         "json_issue_resources_metadata_insert",
         "json_issue_resources_metadata_update",
-        "json_job_attempts_checkpoint_insert",
-        "json_job_attempts_checkpoint_update",
-        "json_jobs_request_insert",
-        "json_jobs_request_update",
         "json_payload_admission_staging_context_json_insert",
         "json_payload_admission_staging_context_json_update",
         "json_repository_names_provenance_json_insert",
@@ -9743,8 +10071,6 @@
         "json_review_thread_state_field_evidence_json_update",
         "json_review_thread_state_metadata_insert",
         "json_review_thread_state_metadata_update",
-        "json_search_documents_metadata_insert",
-        "json_search_documents_metadata_update",
         "json_source_inventory_assessments_members_json_insert",
         "json_source_inventory_assessments_members_json_update",
         "json_source_inventory_assessments_scope_json_insert",
@@ -9759,6 +10085,8 @@
         "json_sources_settings_update",
         "json_unresolved_payloads_diagnostic_json_insert",
         "json_unresolved_payloads_diagnostic_json_update",
+        "operational_identity_immutable",
+        "operational_identity_no_replace",
         "review_thread_state_identity",
         "review_thread_state_owner_insert",
         "review_thread_state_owner_update",
@@ -9767,6 +10095,8 @@
         "root_manifest_entries_target_update",
         "root_origins_ref_insert",
         "root_origins_ref_update",
+        "search_identity_immutable",
+        "search_identity_no_replace",
         "snapshots_complete_insert",
         "snapshots_complete_update",
         "tag_objects_target_insert",
@@ -9787,20 +10117,25 @@
       ],
       "changed": [
         "acquisition_progress_immutable",
+        "acquisition_progress_no_replace",
         "acquisition_roots_immutable",
         "acquisition_roots_no_replace",
         "acquisition_roots_retain",
         "active_cache_entries_immutable",
+        "active_cache_entries_no_replace",
         "blob_content_map_immutable",
         "blob_content_map_no_replace",
         "blob_content_map_retain",
         "cache_leases_immutable",
+        "cache_leases_no_replace",
         "cache_locators_immutable",
+        "cache_locators_no_replace",
         "change_requests_immutable",
         "code_listing_progress_immutable",
         "code_listings_immutable",
         "collection_memberships_immutable",
         "collection_progress_immutable",
+        "collection_progress_no_replace",
         "commit_parents_immutable",
         "commit_parents_no_replace",
         "commit_parents_retain",
@@ -9814,7 +10149,6 @@
         "content_digests_immutable",
         "content_digests_no_replace",
         "content_digests_retain",
-        "content_locations_immutable",
         "contents_immutable",
         "contents_no_replace",
         "contents_retain",
@@ -9838,11 +10172,14 @@
         "git_text_facts_immutable",
         "git_text_facts_no_replace",
         "git_text_facts_retain",
-        "incremental_scans_immutable",
         "index_generations_immutable",
+        "index_generations_no_replace",
         "index_membership_immutable",
+        "index_membership_no_replace",
         "job_attempts_immutable",
+        "job_attempts_no_replace",
         "jobs_immutable",
+        "jobs_no_replace",
         "json_completion_markers_evidence_insert",
         "json_completion_markers_evidence_update",
         "json_coverage_claims_details_json_insert",
@@ -9857,8 +10194,6 @@
         "json_identity_relation_cancellations_evidence_json_update",
         "json_identity_relations_evidence_json_insert",
         "json_identity_relations_evidence_json_update",
-        "json_incremental_scans_evidence_insert",
-        "json_incremental_scans_evidence_update",
         "json_issue_resources_acquisition_scope_json_insert",
         "json_issue_resources_acquisition_scope_json_update",
         "json_issue_resources_field_evidence_json_insert",
@@ -9889,7 +10224,6 @@
         "repository_object_sources_immutable",
         "repository_object_sources_no_replace",
         "repository_object_sources_retain",
-        "resume_cursors_immutable",
         "resume_scopes_immutable",
         "root_manifest_entries_immutable",
         "root_manifest_entries_no_replace",
@@ -9900,15 +10234,15 @@
         "root_origins_immutable",
         "root_origins_no_replace",
         "root_origins_retain",
-        "scan_scope_insert",
-        "scan_scope_update",
         "search_documents_immutable",
+        "search_documents_no_replace",
         "service_instances_immutable",
         "snapshots_immutable",
         "snapshots_no_replace",
         "snapshots_retain",
         "sources_immutable",
         "space_reservations_immutable",
+        "space_reservations_no_replace",
         "tag_objects_immutable",
         "tag_objects_no_replace",
         "tag_objects_object_type",
@@ -9924,6 +10258,7 @@
         "acquisition_roots_fk_0",
         "blob_content_map_fk_0",
         "blob_content_map_fk_1",
+        "cache_locators_fk_0",
         "change_request_events_fk_0",
         "change_request_events_parsed_result_idx",
         "change_request_observations_fk_0",
@@ -9941,6 +10276,7 @@
         "commit_parents_result_owner",
         "commits_fk_0",
         "commits_result_owner",
+        "content_locations_fk_0",
         "document_observations_body_fk",
         "document_observations_document_fk",
         "document_observations_occurrence_fk",
@@ -9955,6 +10291,8 @@
         "git_acquisitions_fk_1",
         "git_acquisitions_fk_2",
         "git_text_facts_result_owner",
+        "incremental_scans_fk_0",
+        "incremental_scans_fk_1",
         "inventory_observations_fk_0",
         "inventory_observations_result_identity",
         "parsed_input_fetch_once",
@@ -9969,11 +10307,13 @@
         "parser_scope_change_request_unique",
         "parser_scope_repository_unique",
         "parser_scope_source_unique",
+        "preservation_obligations_fk_0",
         "ref_observations_parsed_result_idx",
         "repository_inventory_result_member",
         "repository_names_parsed_result_idx",
         "repository_object_sources_fk_0",
         "repository_object_sources_fk_1",
+        "resume_cursors_fk_0",
         "root_manifest_entries_fk_0",
         "root_manifest_entries_result_owner",
         "root_manifests_result_owner",
@@ -10016,8 +10356,11 @@
   },
   "fresh_empty_ddl_checks": [
     "all views compile",
-    "foreign_key_check empty",
-    "integrity_check ok",
-    "generated JSON SQL equal"
+    "foreign_key_check empty on core, operational, and search stores",
+    "integrity_check ok on core, operational, and search stores",
+    "no cross-store foreign key dependencies",
+    "generated JSON SQL equal",
+    "registered git_object sql functions verified",
+    "fts shadow tables distinguished from product tables"
   ]
 }

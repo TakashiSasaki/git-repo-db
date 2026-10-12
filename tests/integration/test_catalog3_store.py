@@ -261,3 +261,147 @@ def test_search_store_lifecycle_and_fallback(tmp_path):
     corrupt_res = qs.query("search code", {"literal": "anything"})
     assert corrupt_res.execution["search_fallback"] is True
     assert corrupt_res.execution["backend"] == "scan"
+
+
+def test_reconcile_core_and_operational_writes_on_resume(tmp_path):
+    from repo_catalog.adapters.github.persistence import ApiFacts
+    from repo_catalog.config import DEFAULTS
+
+    state = tmp_path / "recon_state"
+    initialize(state)
+
+    repo_id = "00000000-0000-4000-8000-000000000001"
+    inst_id = "00000000-0000-4000-8000-000000000101"
+    reg_id = "00000000-0000-4000-8000-000000000201"
+    repo = {
+        "repository_uuidv4": repo_id,
+        "source_id": "src-1",
+        "provider_repository_id": "12345",
+    }
+    with Store(state) as store:
+        store.execute(
+            "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES(?,'github','github','{}')",
+            (inst_id,),
+        )
+        store.execute(
+            "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name,settings) VALUES('src-1',?,?, 'github_inventory','test','{}')",
+            (reg_id, inst_id),
+        )
+        store.execute(
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'test-repo','{}')",
+            (repo_id,),
+        )
+        store.execute(
+            "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('bind-1',?,?,'12345','{}',0)",
+            (repo_id, inst_id),
+        )
+        job_id = "job-recon"
+        with store.operational.transaction():
+            store.operational.execute(
+                "INSERT INTO jobs(job_id,kind,request,current_attempt) VALUES(?,'sync','{}',1)",
+                (job_id,),
+            )
+            store.operational.execute(
+                "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES(?,1,'running','{}')",
+                (job_id,),
+            )
+
+        facts = ApiFacts(store, DEFAULTS["github"])
+
+        # Case 1: Interruption between Operational complete update and Core completion marker commit:
+        # Operational claims 'complete', but Core has NO completion marker.
+        c1 = facts.begin(
+            repo, None, "pr-list", job_id, "https://api.github.com/repos/test/pulls"
+        )
+        fc_id_1 = c1["fetch_collection_id"]
+        # Manually inject false complete in Operational DB
+        store.operational.execute(
+            "UPDATE collection_progress SET state='complete' WHERE fetch_collection_id=?",
+            (fc_id_1,),
+        )
+        # Core has no completion marker!
+        # begin() must reject false completeness and start a safe fresh collection
+        c1_retry = facts.begin(
+            repo, None, "pr-list", job_id, "https://api.github.com/repos/test/pulls"
+        )
+        assert c1_retry["fetch_collection_id"] != fc_id_1
+
+        # Case 2: Interruption after Operational cursor update but before Core page commit:
+        # Operational has cursor='https://api.github.com/page2', but Core has 0 pages!
+        c2 = facts.begin(
+            repo, None, "pr-list", job_id, "https://api.github.com/repos/test/pulls"
+        )
+        fc_id_2 = c2["fetch_collection_id"]
+        store.operational.execute(
+            "UPDATE collection_progress SET cursor='https://api.github.com/page2' WHERE fetch_collection_id=?",
+            (fc_id_2,),
+        )
+        # Core has 0 pages! begin() must reject false progress and start fresh collection
+        c2_retry = facts.begin(
+            repo, None, "pr-list", job_id, "https://api.github.com/repos/test/pulls"
+        )
+        assert c2_retry["fetch_collection_id"] != fc_id_2
+
+        # Case 3: Core has committed completion marker, but Operational DB was lost/recreated:
+        c3 = facts.begin(
+            repo, None, "pr-list", job_id, "https://api.github.com/repos/test/pulls"
+        )
+        fc_id_3 = c3["fetch_collection_id"]
+        store.execute(
+            "INSERT INTO current_collection_pages(fetch_collection_id,ordinal,observed_at_us,has_next,members,status,parser_module,parser_version) VALUES(?,0,100,0,'[]',200,'test','1')",
+            (fc_id_3,),
+        )
+        facts.finish(c3)
+        assert (
+            store.one(
+                "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                (fc_id_3,),
+            )
+            is not None
+        )
+
+        # Wipe Operational DB
+        store.operational.close()
+        store._operational_store = None
+        (state / "operational.sqlite3").unlink()
+
+        # Seed running job in fresh Operational DB
+        with store.operational.transaction():
+            store.operational.execute(
+                "INSERT INTO jobs(job_id,kind,request,current_attempt) VALUES(?,'sync','{}',1)",
+                (job_id,),
+            )
+            store.operational.execute(
+                "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES(?,1,'running','{}')",
+                (job_id,),
+            )
+
+        # Reopen and request with reuse=True: must restore and treat as complete
+        c3_reused = facts.begin(
+            repo,
+            None,
+            "pr-list",
+            job_id,
+            "https://api.github.com/repos/test/pulls",
+            reuse=True,
+        )
+        assert c3_reused["fetch_collection_id"] == fc_id_3
+        assert c3_reused["state"] == "complete"
+        assert (
+            store.operational.one(
+                "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
+                (fc_id_3,),
+            )[0]
+            == "complete"
+        )
+
+    # Case 4: Read-only operations when Operational DB is absent:
+    (state / "operational.sqlite3").unlink()
+    from repo_catalog.application.query_service import QueryService
+
+    qs = QueryService(state)
+    # jobs list and cache status must not crash, but return empty
+    res_jobs = qs.query("jobs list")
+    assert res_jobs.data["items"] == []
+    res_cache = qs.query("cache status")
+    assert res_cache.data["items"] == []

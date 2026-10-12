@@ -192,21 +192,70 @@ class ApiFacts:
         )
         previous = None
         for fc in fc_rows:
+            fc_id = fc["fetch_collection_id"]
+            has_complete_marker = (
+                self.s.one(
+                    "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                    (fc_id,),
+                )
+                is not None
+            )
             p = self.s.operational.one(
                 "SELECT state, cursor, reason FROM collection_progress WHERE fetch_collection_id=? AND job_id=?",
-                (fc["fetch_collection_id"], job),
+                (fc_id, job),
             )
             if p:
-                previous = {**dict(fc), **dict(p)}
-                break
+                p_dict = dict(p)
+                if has_complete_marker:
+                    if p_dict["state"] != "complete":
+                        with self.s.operational.transaction():
+                            self.s.operational.execute(
+                                "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
+                                (fc_id,),
+                            )
+                        p_dict["state"] = "complete"
+                        p_dict["cursor"] = None
+                    previous = {**dict(fc), **p_dict}
+                    break
+                elif p_dict["state"] == "complete":
+                    # Operational claims complete, but Core lacks evidence!
+                    # Do not trust false completeness; fall back safely.
+                    continue
+                else:
+                    # Incomplete: check Core committed pages
+                    core_pages = self.s.one(
+                        "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
+                        (fc_id,),
+                    )[0]
+                    if p_dict["cursor"] is not None and core_pages == 0:
+                        # Operational cursor claims progress, but Core has 0 pages!
+                        continue
+                    previous = {**dict(fc), **p_dict}
+                    break
+
         if previous is None and reuse:
             for fc in fc_rows:
-                p = self.s.operational.one(
-                    "SELECT state, cursor, reason FROM collection_progress WHERE fetch_collection_id=? AND state='complete'",
-                    (fc["fetch_collection_id"],),
+                fc_id = fc["fetch_collection_id"]
+                has_complete_marker = (
+                    self.s.one(
+                        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                        (fc_id,),
+                    )
+                    is not None
                 )
-                if p:
-                    previous = {**dict(fc), **dict(p)}
+                if has_complete_marker:
+                    with self.s.operational.transaction():
+                        self.s.operational.execute(
+                            "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'complete',NULL,NULL) "
+                            "ON CONFLICT(fetch_collection_id) DO UPDATE SET state='complete',cursor=NULL,reason=NULL",
+                            (fc_id, job, self.fence(job)),
+                        )
+                    previous = {
+                        **dict(fc),
+                        "state": "complete",
+                        "cursor": None,
+                        "reason": None,
+                    }
                     break
         if (
             previous
