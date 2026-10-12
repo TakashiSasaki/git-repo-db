@@ -516,30 +516,44 @@ class MaintenanceService:
                     "SELECT r.repository_uuidv4 FROM repositories r LEFT JOIN repository_endpoints e ON e.repository_endpoint_id=r.preferred_repository_endpoint_id WHERE r.preferred_repository_endpoint_id IS NOT NULL AND (e.repository_endpoint_id IS NULL OR e.repository_uuidv4!=r.repository_uuidv4)"
                 )
             ],
-            "index": {"status": "passed", "generations": []},
         }
-        if payloads is not None:
-            checks["payloads"] = payloads
-        for row in s.all("SELECT * FROM index_generations WHERE state='ready'"):
+        checks["index"] = {"status": "passed", "generations": []}
+        try:
+            search_store = s.open_search(readonly=True)
             try:
-                with s.transaction():
-                    s.execute(
-                        f"INSERT INTO {row['table_name']}({row['table_name']}) VALUES('integrity-check')"
-                    )
-                checks["index"]["generations"].append(
-                    {
-                        "index_generation_id": row["index_generation_id"],
-                        "status": "passed",
-                    }
-                )
-            except sqlite3.Error:
-                checks["index"]["status"] = "failed"
-                checks["index"]["generations"].append(
-                    {
-                        "index_generation_id": row["index_generation_id"],
-                        "status": "failed",
-                    }
-                )
+                for row in search_store.all(
+                    "SELECT * FROM index_generations WHERE state='ready'"
+                ):
+                    try:
+                        with search_store.transaction():
+                            search_store.execute(
+                                f"INSERT INTO {row['table_name']}({row['table_name']}) VALUES('integrity-check')"
+                            )
+                        checks["index"]["generations"].append(
+                            {
+                                "index_generation_id": row["index_generation_id"],
+                                "status": "passed",
+                            }
+                        )
+                    except sqlite3.Error:
+                        checks["index"]["status"] = "failed"
+                        checks["index"]["generations"].append(
+                            {
+                                "index_generation_id": row["index_generation_id"],
+                                "status": "failed",
+                            }
+                        )
+            finally:
+                search_store.close()
+        except CatalogError as err:
+            if err.code == "NOT_INITIALIZED":
+                checks["index"] = {"status": "absent", "generations": []}
+            else:
+                checks["index"] = {
+                    "status": "failed",
+                    "generations": [],
+                    "error": err.code,
+                }
         if (
             checks["sqlite"] != ["ok"]
             or any(
@@ -647,20 +661,6 @@ class MaintenanceService:
                     s.execute(
                         "UPDATE database_identity SET db_instance_id=? WHERE singleton=1",
                         (str(uuid.uuid4()),),
-                    )
-                    s.execute(
-                        "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE cache_locator_id IN (SELECT cache_locator_id FROM cache_locators WHERE access='target_active')"
-                    )
-                    s.execute(
-                        "UPDATE cache_locators SET state='missing' WHERE access='target_active'"
-                    )
-                    s.execute("DELETE FROM cache_leases")
-                    s.execute("DELETE FROM space_reservations")
-                    s.execute(
-                        "UPDATE content_locations SET state='unavailable' WHERE kind='cache' AND cache_locator_id IN (SELECT cache_locator_id FROM cache_locators WHERE access='target_active')"
-                    )
-                    s.execute(
-                        "UPDATE job_attempts SET state='interrupted',reason='restored_state_requires_admission' WHERE state='running'"
                     )
                 revision = s.revision()
             (stage / "restore-origin.json").write_text(

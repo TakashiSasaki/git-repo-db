@@ -27,7 +27,7 @@ def allocated_bytes(path):
 
 class Capacity:
     def __init__(self, store):
-        self.store = store
+        self.store = getattr(store, "operational", store)
 
     def used(self):
         return sum(

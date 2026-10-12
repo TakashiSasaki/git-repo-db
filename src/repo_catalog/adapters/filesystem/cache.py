@@ -41,27 +41,45 @@ class CacheManager:
         s = self.s
         if s.config["preservation"]["profile"] != "catalog-text-v1":
             return ["unknown_profile"]
-        obligations = s.all(
-            "SELECT * FROM preservation_obligations WHERE cache_locator_id=?",
-            (
-                row["cache_locator_id"]
-                if "cache_locator_id" in row.keys()
-                else row["active_cache_entry_id"],
-            ),
+        entry_id = (
+            row["active_cache_entry_id"]
+            if "active_cache_entry_id" in row.keys()
+            else None
         )
+        acq_rows = (
+            s.operational.all(
+                "SELECT git_acquisition_id FROM acquisition_progress WHERE active_cache_entry_id=?",
+                (entry_id,),
+            )
+            if entry_id
+            else []
+        )
+        acq_ids = [r["git_acquisition_id"] for r in acq_rows]
         reasons = []
-        for r in obligations:
-            if r["roots_fixed"] and not all(
-                r[k] for k in ("structure_done", "digest_done", "text_done", "complete")
-            ):
-                reasons.append("pending_obligations:" + r["git_acquisition_id"])
+        if acq_ids:
+            placeholders = ",".join("?" for _ in acq_ids)
+            obligations = s.all(
+                f"SELECT * FROM preservation_obligations WHERE git_acquisition_id IN ({placeholders})",
+                acq_ids,
+            )
+            for r in obligations:
+                if r["roots_fixed"] and not all(
+                    r[k]
+                    for k in (
+                        "structure_done",
+                        "digest_done",
+                        "text_done",
+                        "complete",
+                    )
+                ):
+                    reasons.append("pending_obligations:" + r["git_acquisition_id"])
         # No fixed roots means failed transfer work; OS lock must prove all users stopped.
         return reasons
 
     def collect(self, *, apply=False, pressure=False):
         s = self.s
         results = []
-        rows = s.all(
+        rows = s.operational.all(
             "SELECT a.*,l.repository_uuidv4,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.access='target_active' AND a.state IN ('active','evicting') ORDER BY a.last_used_us,a.active_cache_entry_id"
         )
         from repo_catalog.adapters.filesystem.capacity import Capacity
@@ -85,7 +103,7 @@ class CacheManager:
                 with FileLock(
                     s.path / f"locks/cache-{row['active_cache_entry_id']}.lock"
                 ):
-                    latest = s.one(
+                    latest = s.operational.one(
                         "SELECT a.*,l.repository_uuidv4,l.path,l.access FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE a.active_cache_entry_id=? AND l.access='target_active'",
                         (row["active_cache_entry_id"],),
                     )
@@ -96,12 +114,12 @@ class CacheManager:
                     reasons = self.gate(latest)
                     if apply and candidate and not reasons:
                         # Leases of dead parents are safe to clear only after the inherited OS lock is acquired.
-                        with s.transaction():
-                            s.execute(
+                        with s.operational.transaction():
+                            s.operational.execute(
                                 "DELETE FROM cache_leases WHERE active_cache_entry_id=?",
                                 (row["active_cache_entry_id"],),
                             )
-                            s.execute(
+                            s.operational.execute(
                                 "UPDATE active_cache_entries SET state='evicting' WHERE active_cache_entry_id=?",
                                 (row["active_cache_entry_id"],),
                             )
@@ -124,17 +142,13 @@ class CacheManager:
                             raise CatalogError(
                                 "CACHE_INTEGRITY", "Cache deletion not complete"
                             )
-                        with s.transaction():
-                            s.execute(
+                        with s.operational.transaction():
+                            s.operational.execute(
                                 "UPDATE active_cache_entries SET state='evicted',bytes=0 WHERE active_cache_entry_id=?",
                                 (row["active_cache_entry_id"],),
                             )
-                            s.execute(
+                            s.operational.execute(
                                 "UPDATE cache_locators SET state='missing' WHERE cache_locator_id=? AND access='target_active'",
-                                (row["cache_locator_id"],),
-                            )
-                            s.execute(
-                                "UPDATE content_locations SET state='unavailable' WHERE cache_locator_id=?",
                                 (row["cache_locator_id"],),
                             )
                         used -= bytes_used

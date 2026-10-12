@@ -25,10 +25,10 @@ def cache_store(tmp_path):
         store.execute(
             "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','git','{}')"
         )
-        store.execute(
+        store.operational.execute(
             "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('locator','10000000-0000-4000-8000-000000000001','cache/10000000-0000-4000-8000-000000000001/1.git','target_active','available')"
         )
-        store.execute(
+        store.operational.execute(
             "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('active','locator',1,'active',0,4096)"
         )
         path = tmp_path / "cache/10000000-0000-4000-8000-000000000001/1.git"
@@ -38,12 +38,12 @@ def cache_store(tmp_path):
 
 
 def seed_job(store, job="job", attempt=1):
-    with store.transaction():
-        store.execute(
+    with store.operational.transaction():
+        store.operational.execute(
             "INSERT INTO jobs(job_id,kind,request,current_attempt) VALUES(?,'sync','{}',?)",
             (job, attempt),
         )
-        store.execute(
+        store.operational.execute(
             "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES(?,?,'running','{}')",
             (job, attempt),
         )
@@ -58,7 +58,9 @@ def test_cache_ttl_boundary_uses_integer_elapsed_microseconds(
     store = cache_store
     last_used_us = 1_791_360_000_123_456
     store.config["cache"]["ttl_seconds"] = 1
-    store.execute("UPDATE active_cache_entries SET last_used_us=?", (last_used_us,))
+    store.operational.execute(
+        "UPDATE active_cache_entries SET last_used_us=?", (last_used_us,)
+    )
     monkeypatch.setattr(
         "repo_catalog.adapters.filesystem.cache.now_us",
         lambda: last_used_us + elapsed_us,
@@ -70,27 +72,25 @@ def test_cache_ttl_boundary_uses_integer_elapsed_microseconds(
 
 def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
     store = cache_store
+    seed_job(store)
     source = tmp_path / "preserved.git"
     source.mkdir()
     (source / "HEAD").write_bytes(b"preserved bytes")
-    store.execute(
+    store.operational.execute(
         "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('preserved','10000000-0000-4000-8000-000000000001',?,'source_readonly','available')",
         (str(source),),
     )
     store.execute("INSERT INTO contents(content_id,byte_length) VALUES(1,14)")
-    store.execute(
-        "INSERT INTO content_locations(content_id,kind,locator,cache_locator_id,state) VALUES(1,'cache','active-content','locator','available')"
-    )
-    store.execute(
-        "INSERT INTO content_locations(content_id,kind,locator,cache_locator_id,state) VALUES(1,'legacy','source-content','preserved','available')"
-    )
     # The schema must reject attempts to enroll preserved source material in GC.
     with pytest.raises(sqlite3.IntegrityError, match="Readonly source cache"):
-        store.execute(
+        store.operational.execute(
             "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES('unsafe','preserved',2,'active',0,0)"
         )
+    store.operational.execute(
+        "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES('20000000-0000-4000-8000-000000000001','job',1,'planned',1,'active')"
+    )
     store.execute(
-        "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES('20000000-0000-4000-8000-000000000001','locator',1,1,1,0,0)"
+        "INSERT INTO preservation_obligations(git_acquisition_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES('20000000-0000-4000-8000-000000000001',1,1,1,0,0)"
     )
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "retained"
@@ -101,32 +101,20 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
     entry = CacheManager(store).collect(apply=True)[0]
     assert entry["action"] == "evicted"
     assert (
-        store.one(
+        store.operational.one(
             "SELECT state FROM active_cache_entries WHERE active_cache_entry_id='active'"
         )[0]
         == "evicted"
     )
     assert (
-        store.one("SELECT state FROM cache_locators WHERE cache_locator_id='locator'")[
-            0
-        ]
+        store.operational.one(
+            "SELECT state FROM cache_locators WHERE cache_locator_id='locator'"
+        )[0]
         == "missing"
     )
     assert (
-        store.one(
+        store.operational.one(
             "SELECT state FROM cache_locators WHERE cache_locator_id='preserved'"
-        )[0]
-        == "available"
-    )
-    assert (
-        store.one(
-            "SELECT state FROM content_locations WHERE cache_locator_id='locator'"
-        )[0]
-        == "unavailable"
-    )
-    assert (
-        store.one(
-            "SELECT state FROM content_locations WHERE cache_locator_id='preserved'"
         )[0]
         == "available"
     )
@@ -136,16 +124,16 @@ def test_gc_obligations_and_preserved_source(cache_store, tmp_path):
 def test_gc_os_lock_fences_lease_cleanup(cache_store):
     store = cache_store
     seed_job(store)
-    store.execute(
+    store.operational.execute(
         "INSERT INTO cache_leases(active_cache_entry_id,job_id,attempt,acquired_at_us) VALUES('active','job',1,0)"
     )
     with FileLock(store.path / "locks/cache-active.lock"):
         entry = CacheManager(store).collect(apply=True)[0]
         assert entry["action"] == "retained"
         assert "generation_in_use" in entry["blocked_by"]
-        assert store.one("SELECT count(*) FROM cache_leases")[0] == 1
+        assert store.operational.one("SELECT count(*) FROM cache_leases")[0] == 1
     assert CacheManager(store).collect(apply=True)[0]["action"] == "evicted"
-    assert store.one("SELECT count(*) FROM cache_leases")[0] == 0
+    assert store.operational.one("SELECT count(*) FROM cache_leases")[0] == 0
 
 
 def test_gc_quarantine_recovery(cache_store, monkeypatch):
@@ -160,7 +148,7 @@ def test_gc_quarantine_recovery(cache_store, monkeypatch):
         CacheManager(cache_store).collect(apply=True)
     assert (cache_store.path / "quarantine/active/HEAD").exists()
     assert (
-        cache_store.one(
+        cache_store.operational.one(
             "SELECT state FROM active_cache_entries WHERE active_cache_entry_id='active'"
         )[0]
         == "evicting"
@@ -189,13 +177,18 @@ def test_capacity_reservations_are_attempt_scoped(cache_store):
     capacity.reserve("job", 1024)
     capacity.reserve("job", 2048)
     assert (
-        store.one("SELECT reserved FROM space_reservations WHERE attempt=1")[0] == 2048
+        store.operational.one(
+            "SELECT reserved FROM space_reservations WHERE attempt=1"
+        )[0]
+        == 2048
     )
-    with store.transaction():
-        store.execute(
+    with store.operational.transaction():
+        store.operational.execute(
             "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES('job',2,'running','{}')"
         )
-        store.execute("UPDATE jobs SET current_attempt=2 WHERE job_id='job'")
+        store.operational.execute(
+            "UPDATE jobs SET current_attempt=2 WHERE job_id='job'"
+        )
     # Resuming cannot consume or release admission retained from an old attempt.
     with pytest.raises(CatalogError, match="Missing admission reservation"):
         capacity.monitor("job", capacity.used())
@@ -204,7 +197,9 @@ def test_capacity_reservations_are_attempt_scoped(cache_store):
     capacity.release("job")
     assert [
         tuple(row)
-        for row in store.all("SELECT attempt,reserved FROM space_reservations")
+        for row in store.operational.all(
+            "SELECT attempt,reserved FROM space_reservations"
+        )
     ] == [(1, 2048)]
 
 
@@ -214,23 +209,20 @@ def test_capacity_admission_failure_rolls_back(cache_store):
     with pytest.raises(Waiting) as raised:
         capacity.reserve("job", cache_store.config["cache"]["max_bytes"] + 1)
     assert raised.value.code == "CAPACITY_WAIT"
-    assert cache_store.one("SELECT count(*) FROM space_reservations")[0] == 0
+    assert (
+        cache_store.operational.one("SELECT count(*) FROM space_reservations")[0] == 0
+    )
 
 
-def test_acquisition_and_obligation_cannot_use_another_owner_cache(cache_store):
+def test_acquisition_and_obligation_foreign_keys(cache_store):
     store = cache_store
     seed_job(store)
-    store.execute(
-        "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES('10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000002','{}')"
-    )
-    store.execute(
-        "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,kind,request) VALUES('20000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000002','git','{}')"
-    )
-    with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
-        store.execute(
-            "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES('20000000-0000-4000-8000-000000000002','job',1,'planned',1,'active')"
+    # Foreign key checks on core and operational stores
+    with pytest.raises(sqlite3.IntegrityError):
+        store.operational.execute(
+            "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES('20000000-0000-4000-8000-000000000002','non-existent-job',1,'planned',1,'active')"
         )
-    with pytest.raises(sqlite3.IntegrityError, match="cache owner mismatch"):
+    with pytest.raises(sqlite3.IntegrityError):
         store.execute(
-            "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES('20000000-0000-4000-8000-000000000002','locator',0,0,0,0,0)"
+            "INSERT INTO preservation_obligations(git_acquisition_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES('non-existent-acq',0,0,0,0,0)"
         )

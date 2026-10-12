@@ -454,7 +454,7 @@ def dispatch(args, token):
 
         # Read running state first so a live writer reports JOB_RUNNING, not a false successful cancellation.
         with Store(path, readonly=True) as s:
-            row = s.one(
+            row = s.operational.one(
                 "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
                 (args.job_id,),
             )

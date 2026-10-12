@@ -71,6 +71,35 @@ class QueryService:
             self.collection_proof_graph = None
             self.deadline = time.monotonic() + timeout
             self.backend = "scan"
+            self.search_fallback = False
+            self.search_fallback_reason = None
+            self.index_age_us = None
+            if command.startswith("search "):
+                search_kind = command.split(" ", 1)[1]
+                if search_kind in {"pr", "issue", "code", "commits"}:
+                    try:
+                        search_store = s.open_search(readonly=True)
+                        try:
+                            self.index_age_us = search_store.index_age_us()
+                            ready_gen = search_store.one(
+                                "SELECT 1 FROM index_generations WHERE kind=? AND state='ready'",
+                                (search_kind,),
+                            )
+                            if not ready_gen:
+                                self.search_fallback = True
+                                self.search_fallback_reason = (
+                                    "no_ready_index_generation"
+                                )
+                            elif s.config["search"]["backend"] in ("fts", "auto"):
+                                self.backend = "fts"
+                            else:
+                                self.search_fallback = True
+                                self.search_fallback_reason = "configured_scan_backend"
+                        finally:
+                            search_store.close()
+                    except CatalogError as e:
+                        self.search_fallback = True
+                        self.search_fallback_reason = e.code.lower()
             self.literal_cache = {}
             self.ref_target_cache = {}
             s.connection.set_progress_handler(
@@ -164,6 +193,19 @@ class QueryService:
                             "completed": False,
                             "timed_out": True,
                             "backend": self.backend,
+                            **(
+                                {
+                                    "search_fallback": True,
+                                    "search_fallback_reason": self.search_fallback_reason,
+                                }
+                                if self.search_fallback
+                                else {}
+                            ),
+                            **(
+                                {"index_age_us": self.index_age_us}
+                                if self.index_age_us is not None
+                                else {}
+                            ),
                         },
                     )
                 next_cursor = None
@@ -182,6 +224,16 @@ class QueryService:
                         .decode()
                         .rstrip("=")
                     )
+                stats = {
+                    "completed": True,
+                    "timed_out": False,
+                    "backend": self.backend,
+                }
+                if self.search_fallback:
+                    stats["search_fallback"] = True
+                    stats["search_fallback_reason"] = self.search_fallback_reason
+                if self.index_age_us is not None:
+                    stats["index_age_us"] = self.index_age_us
                 return Result(
                     {
                         "items": [item for _, item in items],
@@ -198,7 +250,7 @@ class QueryService:
                     if self.coverage.complete_for_requested_scope
                     else "partial",
                     revision,
-                    {"completed": True, "timed_out": False, "backend": self.backend},
+                    stats,
                 )
 
     def check(self):
@@ -1323,7 +1375,7 @@ class QueryService:
                     },
                 )
         elif command in {"jobs list", "jobs show"}:
-            rows = s.all(
+            rows = s.operational.all(
                 "SELECT j.*,a.state,a.attempt,a.not_before_us,a.checkpoint,a.reason,a.updated_at_us FROM jobs j LEFT JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt"
                 + (" WHERE j.job_id=?" if options.get("job_id") else "")
                 + " ORDER BY j.job_id",
@@ -1347,7 +1399,7 @@ class QueryService:
                 allocated_bytes,
             )
 
-            for row in s.execute(
+            for row in s.operational.execute(
                 "SELECT a.*,l.repository_uuidv4,l.path,l.access FROM active_cache_entries a JOIN cache_locators l USING(cache_locator_id) WHERE l.access='target_active' ORDER BY active_cache_entry_id"
             ):
                 path, quarantine = CacheManager(s).paths(row)
@@ -1359,7 +1411,10 @@ class QueryService:
                         "budget": s.config["cache"],
                         "managed_usage_bytes": Capacity(s).used(),
                         "reservations": [
-                            dict(r) for r in s.all("SELECT * FROM space_reservations")
+                            dict(r)
+                            for r in s.operational.all(
+                                "SELECT * FROM space_reservations"
+                            )
                         ],
                         "blocked_by": CacheManager(s).gate(row),
                     },

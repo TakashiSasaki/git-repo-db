@@ -81,6 +81,15 @@ class GitHubCollector:
         self.observed_partial_scopes = set()
         self.recording_diagnostics = []
 
+    def _job_fetch_collection_ids(self, job):
+        return [
+            r[0]
+            for r in self.s.operational.all(
+                "SELECT fetch_collection_id FROM collection_progress WHERE job_id=?",
+                (job,),
+            )
+        ]
+
     def coverage_claim(
         self,
         repository_uuidv4,
@@ -540,18 +549,27 @@ class GitHubCollector:
                     collections.append(collected[0])
             with s.transaction():
                 self.facts.fence(job)
-                observed = s.one(
-                    "WITH scoped AS (SELECT f.fetch_collection_id FROM fetch_collections f "
-                    "JOIN collection_progress c USING(fetch_collection_id) "
-                    "WHERE c.job_id=? AND f.repository_uuidv4=? AND f.source_id=? "
-                    "AND f.kind IN ('issue','ordinary-issue-comment')) "
-                    "SELECT MAX(observed_at_us) FROM ("
-                    "SELECT p.observed_at_us FROM scoped JOIN current_collection_pages p "
-                    "USING(fetch_collection_id) UNION ALL "
-                    "SELECT m.observed_at_us FROM scoped JOIN completion_markers m "
-                    "USING(fetch_collection_id) WHERE m.asserted_state='partial' AND ?)",
-                    (job, repo["repository_uuidv4"], repo["source_id"], bool(failures)),
-                )[0]
+                job_fc_ids = self._job_fetch_collection_ids(job)
+                if not job_fc_ids:
+                    observed = None
+                else:
+                    ph = ",".join("?" for _ in job_fc_ids)
+                    observed = s.one(
+                        "WITH scoped AS (SELECT f.fetch_collection_id FROM fetch_collections f "
+                        f"WHERE f.fetch_collection_id IN ({ph}) AND f.repository_uuidv4=? AND f.source_id=? "
+                        "AND f.kind IN ('issue','ordinary-issue-comment')) "
+                        "SELECT MAX(observed_at_us) FROM ("
+                        "SELECT p.observed_at_us FROM scoped JOIN current_collection_pages p "
+                        "USING(fetch_collection_id) UNION ALL "
+                        "SELECT m.observed_at_us FROM scoped JOIN completion_markers m "
+                        "USING(fetch_collection_id) WHERE m.asserted_state='partial' AND ?)",
+                        (
+                            *job_fc_ids,
+                            repo["repository_uuidv4"],
+                            repo["source_id"],
+                            bool(failures),
+                        ),
+                    )[0]
                 self.coverage_claim(
                     repo["repository_uuidv4"],
                     "issue",
@@ -626,8 +644,8 @@ class GitHubCollector:
             CurrentCollectionProof,
         )
 
-        candidates = self.s.all(
-            "SELECT f.*,p.job_id,p.state,c.completion_marker_uuidv4,c.asserted_state,c.evidence,c.observed_at_us marker_observed_at_us FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) LEFT JOIN completion_markers c USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.kind=? AND f.source_id=? AND json_extract(f.scope_json,'$.principal_ref') IS ? AND json_extract(f.scope_json,'$.api_version')=? AND json_extract(f.scope_json,'$.request_context.incremental_endpoint')=? ORDER BY f.observed_at_us DESC",
+        raw_candidates = self.s.all(
+            "SELECT f.*,c.completion_marker_uuidv4,c.asserted_state,c.evidence,c.observed_at_us marker_observed_at_us FROM fetch_collections f LEFT JOIN completion_markers c USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.kind=? AND f.source_id=? AND json_extract(f.scope_json,'$.principal_ref') IS ? AND json_extract(f.scope_json,'$.api_version')=? AND json_extract(f.scope_json,'$.request_context.incremental_endpoint')=? ORDER BY f.observed_at_us DESC",
             (
                 repo["repository_uuidv4"],
                 kind,
@@ -637,6 +655,19 @@ class GitHubCollector:
                 endpoint,
             ),
         )
+        candidates = []
+        for row in raw_candidates:
+            p = self.s.operational.one(
+                "SELECT job_id,state FROM collection_progress WHERE fetch_collection_id=?",
+                (row["fetch_collection_id"],),
+            )
+            candidates.append(
+                {
+                    **dict(row),
+                    "job_id": p["job_id"] if p else None,
+                    "state": p["state"] if p else None,
+                }
+            )
         # A resumed operation keeps its original scan boundary even when a
         # different job has since completed a newer scan of the same family.
         candidates = sorted(candidates, key=lambda row: row["job_id"] != job)
@@ -958,10 +989,11 @@ class GitHubCollector:
             self.facts.fence(job)
             diagnose_admission_failure(self.s.connection, error)
             if response is not None:
-                self.s.execute(
-                    "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-                    (url, collection["fetch_collection_id"]),
-                )
+                with self.s.operational.transaction():
+                    self.s.operational.execute(
+                        "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                        (url, collection["fetch_collection_id"]),
+                    )
             self.facts.partial(
                 collection,
                 error.code,
@@ -1102,15 +1134,23 @@ class GitHubCollector:
         self, repo, job, *, documents_only=False, code_only=False
     ):
         kinds = self.summary_kinds(documents_only=documents_only, code_only=code_only)
-        identifiers = {
-            row[0]
-            for row in self.s.all(
-                "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
-                + ",".join("?" for _ in kinds)
-                + ")",
-                (repo["repository_uuidv4"], repo["source_id"], job, *sorted(kinds)),
-            )
-        }
+        job_fc_ids = self._job_fetch_collection_ids(job)
+        identifiers = set()
+        if job_fc_ids:
+            ph = ",".join("?" for _ in job_fc_ids)
+            k_ph = ",".join("?" for _ in kinds)
+            identifiers = {
+                row[0]
+                for row in self.s.all(
+                    f"SELECT f.fetch_collection_id FROM fetch_collections f WHERE f.repository_uuidv4=? AND f.source_id=? AND f.fetch_collection_id IN ({ph}) AND f.kind IN ({k_ph})",
+                    (
+                        repo["repository_uuidv4"],
+                        repo["source_id"],
+                        *job_fc_ids,
+                        *sorted(kinds),
+                    ),
+                )
+            }
         if code_only:
             identifiers.update(
                 item[0]
@@ -1142,15 +1182,22 @@ class GitHubCollector:
         self, repo, job, *, documents_only=False, code_only=False, include_partial=True
     ):
         kinds = self.summary_kinds(documents_only=documents_only, code_only=code_only)
+        job_fc_ids = self._job_fetch_collection_ids(job)
+        if not job_fc_ids:
+            return None
+        ph = ",".join("?" for _ in job_fc_ids)
+        k_ph = ",".join("?" for _ in kinds)
         return self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
-            + ",".join("?" for _ in kinds)
+            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial' AND ?) o JOIN fetch_collections f USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.source_id=? AND f.fetch_collection_id IN ("
+            + ph
+            + ") AND f.kind IN ("
+            + k_ph
             + ")",
             (
                 include_partial,
                 repo["repository_uuidv4"],
                 repo["source_id"],
-                job,
+                *job_fc_ids,
                 *sorted(kinds),
             ),
         )[0]
@@ -1380,12 +1427,17 @@ class GitHubCollector:
         )
 
     def _thread_child(self, repo, pr, requirement, job, query):
-        collection = dict(
-            self.s.one(
-                "SELECT f.*,p.state,p.cursor FROM fetch_collections f LEFT JOIN collection_progress p USING(fetch_collection_id) WHERE f.fetch_collection_id=?",
-                (requirement["child_fetch_collection_id"],),
-            )
+        f = self.s.one(
+            "SELECT * FROM fetch_collections WHERE fetch_collection_id=?",
+            (requirement["child_fetch_collection_id"],),
         )
+        collection = dict(f) if f else {}
+        p = self.s.operational.one(
+            "SELECT state, cursor FROM collection_progress WHERE fetch_collection_id=?",
+            (requirement["child_fetch_collection_id"],),
+        )
+        if p:
+            collection.update(dict(p))
         if collection.get("state") == "complete":
             return
         child_cursor = self.s.one(
@@ -1553,7 +1605,7 @@ class GitHubCollector:
                 "SELECT has_next FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal DESC LIMIT 1",
                 (collection["fetch_collection_id"],),
             )
-            progress = self.s.one(
+            progress = self.s.operational.one(
                 "SELECT cursor FROM collection_progress WHERE fetch_collection_id=?",
                 (collection["fetch_collection_id"],),
             )
@@ -2087,9 +2139,20 @@ class GitHubCollector:
                 )
                 # The rejected boundary never becomes a page. Its already
                 # committed exact-target prefix remains a real domain listing.
+                job_fc_ids = self._job_fetch_collection_ids(job)
+                if not job_fc_ids:
+                    return None
+                ph = ",".join("?" for _ in job_fc_ids)
                 saved = self.s.one(
-                    "SELECT l.fetch_collection_id,l.code_listing_id FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? AND p.job_id=? ORDER BY f.observed_at_us DESC LIMIT 1",
-                    (pr["change_request_id"], listing_kind, algorithm, head, base, job),
+                    f"SELECT l.fetch_collection_id,l.code_listing_id FROM code_listings l JOIN fetch_collections f USING(fetch_collection_id) WHERE l.change_request_id=? AND l.kind=? AND l.object_format=? AND l.head_oid=? AND l.base_oid=? AND f.fetch_collection_id IN ({ph}) ORDER BY f.observed_at_us DESC LIMIT 1",
+                    (
+                        pr["change_request_id"],
+                        listing_kind,
+                        algorithm,
+                        head,
+                        base,
+                        *job_fc_ids,
+                    ),
                 )
                 return tuple(saved) if saved else None
 
@@ -2237,11 +2300,21 @@ class GitHubCollector:
                 "pr-files",
             )
         )
+        job_fc_ids = self._job_fetch_collection_ids(job)
         for kind in ("pr-detail", "pr-code-check"):
-            captures = self.s.one(
-                "SELECT MAX(m.observed_at_us) observed, MAX(CASE WHEN m.asserted_state='complete' THEN m.observed_at_us END) completed FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND p.job_id=? AND f.kind=?",
-                (repo["repository_uuidv4"], pr["change_request_id"], job, kind),
-            )
+            if not job_fc_ids:
+                captures = {"observed": None, "completed": None}
+            else:
+                ph = ",".join("?" for _ in job_fc_ids)
+                captures = self.s.one(
+                    f"SELECT MAX(m.observed_at_us) observed, MAX(CASE WHEN m.asserted_state='complete' THEN m.observed_at_us END) completed FROM completion_markers m JOIN fetch_collections f USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.fetch_collection_id IN ({ph}) AND f.kind=?",
+                    (
+                        repo["repository_uuidv4"],
+                        pr["change_request_id"],
+                        *job_fc_ids,
+                        kind,
+                    ),
+                )
             inputs_complete = (
                 inputs_complete
                 and captures["completed"] is not None
@@ -2265,38 +2338,48 @@ class GitHubCollector:
             if row[0]:
                 oid = row[0] if isinstance(row[0], str) else row[0].hex()
                 role_oids["review-target:" + oid] = oid
-        observed = self.s.one(
-            "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial') o JOIN fetch_collections f USING(fetch_collection_id) JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND p.job_id=? AND f.kind IN ("
-            + ",".join("?" for _ in relevant_kinds)
-            + ")",
-            (
-                repo["repository_uuidv4"],
-                pr["change_request_id"],
-                repo["source_id"],
-                job,
-                *sorted(relevant_kinds),
-            ),
-        )[0]
-        if (
-            previous is not None
-            and previous["observed_at_us"] is not None
-            and (observed is None or observed < previous["observed_at_us"])
-        ):
-            return previous["code_assessment_id"]
-        code_collections = [
-            row[0]
-            for row in self.s.all(
-                "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND p.job_id=? AND f.kind IN ("
-                + ",".join("?" for _ in relevant_kinds)
+        if not job_fc_ids:
+            observed = None
+            code_collections = []
+        else:
+            ph = ",".join("?" for _ in job_fc_ids)
+            k_ph = ",".join("?" for _ in relevant_kinds)
+            observed = self.s.one(
+                "SELECT MAX(o.observed_at_us) FROM (SELECT fetch_collection_id,observed_at_us FROM current_collection_pages UNION ALL SELECT fetch_collection_id,observed_at_us FROM completion_markers WHERE asserted_state='partial') o JOIN fetch_collections f USING(fetch_collection_id) WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.source_id=? AND f.fetch_collection_id IN ("
+                + ph
+                + ") AND f.kind IN ("
+                + k_ph
                 + ")",
                 (
                     repo["repository_uuidv4"],
                     pr["change_request_id"],
-                    job,
+                    repo["source_id"],
+                    *job_fc_ids,
                     *sorted(relevant_kinds),
                 ),
-            )
-        ]
+            )[0]
+            if (
+                previous is not None
+                and previous["observed_at_us"] is not None
+                and (observed is None or observed < previous["observed_at_us"])
+            ):
+                return previous["code_assessment_id"]
+            code_collections = [
+                row[0]
+                for row in self.s.all(
+                    "SELECT f.fetch_collection_id FROM fetch_collections f WHERE f.repository_uuidv4=? AND f.change_request_id=? AND f.fetch_collection_id IN ("
+                    + ph
+                    + ") AND f.kind IN ("
+                    + k_ph
+                    + ")",
+                    (
+                        repo["repository_uuidv4"],
+                        pr["change_request_id"],
+                        *job_fc_ids,
+                        *sorted(relevant_kinds),
+                    ),
+                )
+            ]
         if listings:
             code_collections.extend(item[0] for item in listings if item is not None)
         code_collections = sorted(set(code_collections))

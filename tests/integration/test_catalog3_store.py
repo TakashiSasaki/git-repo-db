@@ -85,7 +85,7 @@ def test_job_attempt_resume_cleans_old_capacity_and_obeys_injected_time(tmp_path
     with Store(tmp_path / "state") as store:
         jobs = JobService(store, clock_us=lambda: 10_000_000)
         job = jobs.create("sync", {"kind": "git"})
-        store.execute(
+        store.operational.execute(
             "INSERT INTO space_reservations(job_id,attempt,reserved,consumed) VALUES(?,1,4096,0)",
             (job,),
         )
@@ -95,16 +95,19 @@ def test_job_attempt_resume_cleans_old_capacity_and_obeys_injected_time(tmp_path
             jobs.resume(job)
         assert waiting.value.details["not_before_us"] == 11_000_000
         assert tuple(
-            store.one("SELECT not_before_us,typeof(not_before_us) FROM job_attempts")
+            store.operational.one(
+                "SELECT not_before_us,typeof(not_before_us) FROM job_attempts"
+            )
         ) == (11_000_000, "integer")
-        assert store.one("SELECT current_attempt FROM jobs")[0] == 1
+        assert store.operational.one("SELECT current_attempt FROM jobs")[0] == 1
         jobs.clock_us = lambda: 12_000_000
         assert jobs.resume(job) == ("sync", {"kind": "git"})
-        assert store.one("SELECT current_attempt FROM jobs")[0] == 2
+        assert store.operational.one("SELECT current_attempt FROM jobs")[0] == 2
         assert (
-            store.one("SELECT state FROM job_attempts WHERE attempt=1")[0] == "waiting"
+            store.operational.one("SELECT state FROM job_attempts WHERE attempt=1")[0]
+            == "waiting"
         )
-        assert not store.one("SELECT 1 FROM space_reservations")
+        assert not store.operational.one("SELECT 1 FROM space_reservations")
         assert store.revision() == before
         legacy = jobs.create("legacy", {})
         jobs.update(legacy, "interrupted")
@@ -121,10 +124,10 @@ def test_job_retry_at_epoch_zero_is_a_real_deadline(tmp_path):
         with pytest.raises(Waiting) as waiting:
             jobs.resume(job)
         assert waiting.value.details["not_before_us"] == 0
-        assert store.one("SELECT current_attempt FROM jobs")[0] == 1
+        assert store.operational.one("SELECT current_attempt FROM jobs")[0] == 1
         jobs.clock_us = lambda: 0
         assert jobs.resume(job) == ("sync", {"kind": "git"})
-        assert store.one("SELECT current_attempt FROM jobs")[0] == 2
+        assert store.operational.one("SELECT current_attempt FROM jobs")[0] == 2
 
 
 def test_runtime_refuses_v2_without_modifying_it(tmp_path):
@@ -167,3 +170,94 @@ def test_previous_catalog3_identity_is_rejected_without_mutation(tmp_path, reado
         Store(state, readonly=readonly)
     assert rejected.value.code == "SCHEMA_ERROR"
     assert database.read_bytes() == before
+
+
+def test_operational_store_lifecycle_and_ownership(tmp_path):
+    state = tmp_path / "state"
+    initialize(state)
+    op_path = state / "operational.sqlite3"
+    assert not op_path.exists()
+
+    with Store(state) as store:
+        # Accessing store.operational automatically creates operational.sqlite3 (PF-P12)
+        op = store.operational
+        assert op_path.exists()
+        row = op.one("SELECT catalog_db_instance_id FROM operational_identity")
+        assert row[0] == store.revision()["db_instance_id"]
+
+    # Test foreign owner rejection (PF-P11, PF-P12)
+    with sqlite3.connect(op_path) as conn:
+        conn.execute("CREATE TABLE IF NOT EXISTS _bypass(id INT)")  # trigger bypass
+        # Operational identity is protected by trigger, so drop triggers or update directly
+        conn.execute("DROP TRIGGER IF EXISTS operational_identity_immutable")
+        conn.execute(
+            "UPDATE operational_identity SET catalog_db_instance_id='foreign-instance-id'"
+        )
+        conn.commit()
+
+    with Store(state) as store:
+        with pytest.raises(CatalogError) as exc_info:
+            _ = store.operational
+        assert exc_info.value.code == "WRONG_CATALOG_OWNER"
+
+    # Test corrupt operational DB failure (PF-P12) - should not silently overwrite
+    op_path.write_bytes(b"corrupt non-sqlite header")
+    with Store(state) as store:
+        with pytest.raises(CatalogError) as exc_info:
+            _ = store.operational
+        assert exc_info.value.code in ("DATABASE_CORRUPT", "DATABASE_ERROR")
+        assert op_path.read_bytes() == b"corrupt non-sqlite header"
+
+
+def test_search_store_lifecycle_and_fallback(tmp_path):
+    from repo_catalog.adapters.sqlite.index import rebuild
+    from repo_catalog.application.query_service import QueryService
+
+    state = tmp_path / "state"
+    initialize(state)
+    search_path = state / "search.sqlite3"
+    assert not search_path.exists()
+
+    with Store(state) as store:
+        # Ordinary read fails closed when search DB does not exist (PF-P17)
+        with pytest.raises(CatalogError) as exc_info:
+            store.open_search(readonly=True)
+        assert exc_info.value.code == "INDEX_UNAVAILABLE"
+        assert not search_path.exists()
+
+    # QueryService falls back to direct scan without creating search DB (PF-P15)
+    qs = QueryService(state)
+    fallback_res = qs.query("search code", {"literal": "anything"})
+    assert fallback_res.execution["search_fallback"] is True
+    assert fallback_res.execution["search_fallback_reason"] == "index_unavailable"
+    assert fallback_res.execution["backend"] == "scan"
+    assert not search_path.exists()
+
+    with Store(state) as store:
+        # Explicit rebuild creates search DB (PF-P16, PF-P17)
+        rebuild(store)
+        assert search_path.exists()
+
+        # Search index is now usable
+        with store.open_search(readonly=True) as search_db:
+            gen_count = search_db.one(
+                "SELECT count(*) FROM index_generations WHERE state='ready'"
+            )[0]
+            assert gen_count == 4
+
+        # Operational store recorded rebuild metrics (PF-P16)
+        estimate = store.operational.estimate_rebuild_cost()
+        assert estimate["runs"] >= 1
+        assert "avg_duration_ms" in estimate
+
+    # QueryService now uses search index without fallback
+    active_res = qs.query("search code", {"literal": "anything"})
+    assert active_res.execution.get("search_fallback") is not True
+    assert active_res.execution["backend"] == "fts"
+    assert "index_age_us" in active_res.execution
+
+    # Corrupt search DB triggers fallback (PF-P15)
+    search_path.write_bytes(b"corrupt search index")
+    corrupt_res = qs.query("search code", {"literal": "anything"})
+    assert corrupt_res.execution["search_fallback"] is True
+    assert corrupt_res.execution["backend"] == "scan"

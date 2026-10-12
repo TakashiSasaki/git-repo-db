@@ -8,7 +8,8 @@ from repo_catalog.domain.time import now_us, validate_epoch_us
 class JobService:
     def __init__(self, store, *, clock_us=now_us):
         """Use an injectable wall clock returning integer Unix epoch microseconds."""
-        self.store, self.clock_us = store, clock_us
+        self.store = getattr(store, "operational", store)
+        self.clock_us = clock_us
 
     def create(self, kind, request):
         job = str(uuid.uuid4())

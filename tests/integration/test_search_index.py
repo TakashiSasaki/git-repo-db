@@ -10,19 +10,26 @@ def test_generation_switch(catalog):
     run(state, "index", "rebuild")
     assert pages(state, "search", "code", "--literal", "observed_in") == before
     with Store(state, readonly=True) as s:
-        assert (
-            s.one("SELECT count(*) FROM index_generations WHERE state='ready'")[0] == 4
-        )
-        for gen in s.all("SELECT * FROM index_generations WHERE state='ready'"):
+        with s.open_search(readonly=True) as search:
             assert (
-                s.one(f"SELECT count(*) FROM {gen['table_name']}")[0]
-                == s.one(
-                    "SELECT count(*) FROM index_membership WHERE index_generation_id=?",
-                    (gen["index_generation_id"],),
+                search.one(
+                    "SELECT count(*) FROM index_generations WHERE state='ready'"
                 )[0]
+                == 4
             )
-            assert (
-                s.one(f"SELECT body FROM {gen['table_name']} LIMIT 1")
-                in (None, (None,))
-                or s.one(f"SELECT body FROM {gen['table_name']} LIMIT 1")[0] is None
-            )
+            for gen in search.all(
+                "SELECT * FROM index_generations WHERE state='ready'"
+            ):
+                assert (
+                    search.one(f"SELECT count(*) FROM {gen['table_name']}")[0]
+                    == search.one(
+                        "SELECT count(*) FROM index_membership WHERE index_generation_id=?",
+                        (gen["index_generation_id"],),
+                    )[0]
+                )
+                assert (
+                    search.one(f"SELECT body FROM {gen['table_name']} LIMIT 1")
+                    in (None, (None,))
+                    or search.one(f"SELECT body FROM {gen['table_name']} LIMIT 1")[0]
+                    is None
+                )

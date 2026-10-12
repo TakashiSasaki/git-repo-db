@@ -355,7 +355,7 @@ def _sql_capture_conditions(doc, service):
 
 _register(
     "authored",
-    "service_instances.metadata repositories.metadata repository_bindings.metadata repository_endpoints.metadata git_acquisitions.request resume_scopes.request_context incremental_scans.evidence completion_markers.evidence identity_relations.evidence_json identity_relation_cancellations.evidence_json repository_names.provenance_json fetch_collections.scope_json code_assessments.details_json source_repositories.scope_json source_inventory_assessments.scope_json",
+    "service_instances.metadata repositories.metadata repository_bindings.metadata repository_endpoints.metadata git_acquisitions.request resume_scopes.request_context completion_markers.evidence identity_relations.evidence_json identity_relation_cancellations.evidence_json repository_names.provenance_json fetch_collections.scope_json code_assessments.details_json source_repositories.scope_json source_inventory_assessments.scope_json",
 )
 _register("authored", "coverage_claims.details_json", nullable=True)
 _register("git-roots", "git_acquisitions.roots_manifest", shape="array", nullable=True)
@@ -378,7 +378,7 @@ _register(
 )
 _register(
     "operational",
-    "jobs.request job_attempts.checkpoint search_documents.metadata payload_admission_staging.context_json unresolved_payloads.diagnostic_json",
+    "payload_admission_staging.context_json unresolved_payloads.diagnostic_json",
 )
 _register("operational", "sources.settings", nullable=True)
 _register(
