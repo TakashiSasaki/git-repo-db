@@ -90,8 +90,90 @@ def profile(ctx, meta, nodes=()):
     }
 
 
+def make_junit_xml(nodes):
+    cases = []
+    for node in nodes:
+        file_part, name_part = node.split("::")
+        classname = file_part.removesuffix(".py").replace("/", ".")
+        cases.append(
+            f'<testcase classname="{classname}" file="{file_part}" name="{name_part}" time="0.01"/>'
+        )
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        f'<testsuites><testsuite name="pytest" tests="{len(nodes)}" errors="0" failures="0" skipped="0">'
+        f"{''.join(cases)}"
+        "</testsuite></testsuites>\n"
+    )
+
+
+def make_journal(nodes):
+    lines = []
+    for node in nodes:
+        lines.append(
+            json.dumps(
+                {
+                    "event": "start",
+                    "nodeid": node,
+                    "worker_id": "master",
+                    "timestamp": 1000.0,
+                }
+            )
+        )
+        lines.append(
+            json.dumps(
+                {
+                    "event": "phase",
+                    "nodeid": node,
+                    "phase": "setup",
+                    "outcome": "passed",
+                    "duration": 0.001,
+                    "worker_id": "master",
+                    "timestamp": 1000.001,
+                }
+            )
+        )
+        lines.append(
+            json.dumps(
+                {
+                    "event": "phase",
+                    "nodeid": node,
+                    "phase": "call",
+                    "outcome": "passed",
+                    "duration": 0.008,
+                    "worker_id": "master",
+                    "timestamp": 1000.009,
+                }
+            )
+        )
+        lines.append(
+            json.dumps(
+                {
+                    "event": "phase",
+                    "nodeid": node,
+                    "phase": "teardown",
+                    "outcome": "passed",
+                    "duration": 0.001,
+                    "worker_id": "master",
+                    "timestamp": 1000.010,
+                }
+            )
+        )
+    lines.append(
+        json.dumps(
+            {
+                "event": "finish",
+                "status": "completed",
+                "exitstatus": 0,
+                "timestamp": 1000.020,
+            }
+        )
+    )
+    return "\n".join(lines) + "\n"
+
+
 def write_results(output, plan, root):
     output.mkdir()
+    tree_sha = command(root, "rev-parse", "HEAD^{tree}")
     selected = []
     for name in ci_plan.TEST_LANES:
         item = plan["lanes"][name]
@@ -105,8 +187,16 @@ def write_results(output, plan, root):
             write(
                 output,
                 name + ".json",
-                json.dumps(profile(plan["context"], plan["runtime"], nodes)),
+                json.dumps(
+                    profile(
+                        plan["context"],
+                        {**plan["runtime"], "tree_sha": tree_sha},
+                        nodes,
+                    )
+                ),
             )
+            write(output, name + ".xml", make_junit_xml(nodes))
+            write(output, name + "-journal.jsonl", make_journal(nodes))
             selected.extend(nodes)
     if selected:
         plan["selected_ids"] = sorted(selected)
@@ -125,5 +215,31 @@ def write_results(output, plan, root):
         write(
             output,
             name + ".json",
-            json.dumps(profile(plan["context"], plan["runtime"])),
+            json.dumps(
+                profile(
+                    plan["context"],
+                    {**plan["runtime"], "tree_sha": tree_sha},
+                )
+            ),
         )
+    binding = {
+        "head": plan["context"]["tested_sha"],
+        "tree": tree_sha,
+        "feature_sha": plan["context"]["feature_sha"],
+        "run_id": plan["context"].get("run_id", "10"),
+        "run_attempt": plan["context"].get("run_attempt", "1"),
+    }
+    write(output, "receipt-binding.json", json.dumps(binding))
+    write(
+        output,
+        "run-verification.json",
+        json.dumps(
+            {
+                "status": "completed",
+                "conclusion": "success",
+                "run_id": plan["context"].get("run_id", "10"),
+                "head_sha": plan["context"]["tested_sha"],
+                "source": "github_actions",
+            }
+        ),
+    )

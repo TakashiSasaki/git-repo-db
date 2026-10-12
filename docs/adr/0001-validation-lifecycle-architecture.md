@@ -219,15 +219,21 @@ Under no circumstances may `development_checks_passed` or a green PR check badge
 
 ### VAL-09: Strict Local Release Evidence Reconciliation Invariants
 
-To eliminate false-positive release acceptance, local evidence reconciliation requires strict structural and semantic verification:
-1. **Explicit clean-tree execution identity:** Working tree must have zero uncommitted tracked changes and zero untracked files (`dirty=false`, `tracked_changes=false`).
-2. **Exact candidate binding:** `acceptance_input_hash` and `commit_sha` must match the evaluated tree.
-3. **Valid collected test-node manifest:** Acceptance files must belong strictly to `tests/unit`, `tests/integration`, `tests/e2e`, and `tests/packaging`.
+To eliminate false-positive release acceptance, local evidence reconciliation requires strict structural, cryptographic, and artifact-level verification:
+1. **Explicit clean-tree execution identity:** Working tree must have zero uncommitted tracked changes and zero untracked files (`dirty=false`, `tracked_changes=false`). Both `commit_sha` (40-char git commit SHA) and `tree_sha` (40-char git tree SHA) must match the evaluated candidate tree.
+2. **Exact candidate binding:** `acceptance_input_hash` (64-char SHA-256 digest over runtime code, tests, dependencies, and CI policies) must match the evaluated tree.
+3. **Valid collected test-node manifest:** Acceptance files must belong strictly to `tests/unit`, `tests/integration`, `tests/e2e`, and `tests/packaging`. Required acceptance node set must be mandatory and non-empty in Release mode.
 4. **Exact selected/executed equality:** Every required node must appear exactly once in the receipt. Missing, extra, or duplicate node IDs cause immediate rejection. Set conversions must not hide duplicates.
-5. **Zero non-passed outcomes:** Zero failures (`failed_count=0`, `failed_nodes=[]`), zero errors, and zero skips (`skipped_count=0`, `skipped_nodes=[]`).
-6. **Explicit success status:** `exit_code: 0` and `status: "passed"` are strictly required; missing exit codes do not default to success.
-7. **Independent lane representation:** Both ordinary tests (`lanes.tests`) and packaging tests (`lanes.packaging`) must be independently represented and verified.
-8. **Verification of supporting artifacts:** JUnit XML SHA-256 and JSONL execution journal SHA-256 must be captured in the receipt.
+5. **Zero non-passed outcomes:** Zero failures (`failed_count=0`, `failed_nodes=[]`), zero errors (`error_count=0`, `error_nodes=[]`), and zero skips (`skipped_count=0`, `skipped_nodes=[]`).
+6. **Explicit success status:** `exit_code: 0` and `status: "passed"` are strictly required; missing or non-zero exit codes fail closed. Receipts marked `interrupted=true` or `measurement_error` are rejected.
+7. **Independent lane representation:** Both ordinary tests (`lanes.tests`) and packaging tests (`lanes.packaging`) must be independently executed, represented, and verified.
+8. **Cryptographic verification of supporting execution artifacts:**
+   - Both `junit_sha256` and `journal_sha256` are mandatory 64-character SHA-256 digests in each lane.
+   - Actual files (`{lane}.xml` and `{lane}-journal.jsonl` or their bundle copies) must exist, be readable, and their on-disk bytes must hash to the exact recorded SHA-256 digests.
+   - Raw JUnit XML must independently reconstruct the claimed passed node IDs, verifying zero failures, zero errors, zero skips, and zero duplicates.
+   - Raw JSONL event journals must be validated for completeness: requiring a successful `finish` event (`exitstatus == 0`), zero interrupted tests, and zero partial tests.
+   - Recovered diagnostic profiles (`measurement_recovered_from_journal=true`) are rejected from release receipts.
+9. **Fail-closed receipt generation:** `create_receipt` validates the plan (must be `mode=release` and `full=true`), verifies clean worktree, matches profile commit/tree SHAs against current HEAD, and independently reconciles raw JUnit and journal artifacts before emitting a receipt.
 
 ### VAL-10: Development vs Release Mode Contract and Truth Table
 
@@ -246,17 +252,31 @@ Validation mode is the single authoritative source of truth:
 | CLI / Script | `development` | `--full` | **Rejected** | (Error: Contradictory inputs) | N/A |
 | CLI / Script | `release` | `--full` | `release` | Full | `complete_release_passed` / `hosted_release_passed` |
 
-### VAL-11: Separation of Provenance from Attestation
+### VAL-11: 3-Tier Trust Boundaries and Separation of Provenance from Attestation
 
-Local execution receipts are developer-generated and agent-asserted evidence. Their SHA-256 digests establish integrity relationships across files and git revisions, not third-party proof of independent execution.
-GitHub Actions hosted CI only attests to tests executed within GitHub Actions runners. When local evidence is not available to hosted CI, hosted Release CI reports `hosted_release_passed` rather than `complete_release_passed`.
+A matching hash is necessary for integrity but does not independently attest to execution. The validation and reconciliation system enforces an explicit 3-tier trust boundary:
+
+1. **Tier 1 — Arbitrary Locally Supplied JSON Declaration:**
+   - Unverified JSON asserting status fields (e.g., claiming `outcome: passed`, `full_acceptance: true`).
+   - Treated as untrusted input. Immediately rejected if presented as evidence of hosted Release qualification without supporting provenance.
+2. **Tier 2 — Internally Consistent Downloaded CI Receipt Bundle:**
+   - Contains `validation-manifest.json`, `receipt-binding.json` (binding `run_id`, `run_attempt`, `head`, `tree`), and optional `receipt-index.json`.
+   - All indexed files must exist and match recorded SHA-256 digests.
+   - Internal consistency verifies that the bundle was assembled without tampering, but does not prove third-party execution on GitHub Actions.
+3. **Tier 3 — Authoritatively Verified Hosted Execution:**
+   - The run identity (`run_id`), completion status (`status: completed`), outcome (`conclusion: success`), and tested commit (`head_sha`) are verified against GitHub Actions, either via cryptographic verification certificate (`run-verification.json`) or authoritative GitHub Actions run inspection (`gh run view`).
+   - If authoritative hosted run verification is unavailable, the reconciliation gate issues `validation_gap_reported` rather than `complete_release_passed`.
+
+**Release Gate Invariant:**
+A complete release verdict (`complete_release_passed`) strictly requires two independent completed test executions, one local and one hosted, whose actual results satisfy the full required acceptance manifest for the same approved candidate inputs.
+
 Complete release qualification is established either by:
 1. Providing a verified clean-tree local receipt matching the exact `acceptance_input_hash` to the hosted gating validator, or
 2. Running the independent local reconciliation CLI command:
    ```bash
    python -m scripts.ci_execute reconcile-release --local-receipt <path> --hosted-manifest <path>
    ```
-   which verifies both local and downloaded hosted receipts and issues `complete_release_passed`.
+   which verifies both local receipt and downloaded hosted bundle and issues `complete_release_passed`.
 
 ### VAL-12: JSONL Execution Journal Event Model, Worker Isolation, and xdist Safety
 
@@ -267,19 +287,18 @@ Test execution journaling records events in append-only JSON Lines format:
 4. **Resilience to crashes:** Recoverable trailing writes (unflushed newline at EOF during process kill) are handled cleanly, while corrupted records in the middle of a journal fail closed.
 5. **Separation of time metrics:** Wall-clock command execution time (`wall_seconds`) is explicitly separated from cumulative test worker duration (`cumulative_test_seconds`).
 
-### VAL-13: Invocation Identity and Non-Destructive Storage Model
+### VAL-13: Invocation Identity and Non-Destructive Evidence Bundle Retention
 
 Every test execution receives a unique invocation identity:
 `{name}-{timestamp}-{uuid[:8]}`
-Execution profiles are written to non-destructive paths under `invocations/{invocation_id}.json` in addition to the active lane summary file. Previous invocation profiles are never overwritten.
-Each profile captures:
-- `invocation_id`
-- `started_at` and `completed_at` ISO-8601 timestamps
-- `tree_sha` and `dirty` working tree status
-- Effective runtime and dependency versions (Python, SQLite, pytest, xdist, Git, Ruff)
-- Worker count and concurrency mode (`sequential`, `xdist`, `sharded`)
-- Command wall time and cumulative test worker seconds
-- Accurate termination status (`exit_code`, `interrupted`)
+
+Each invocation retains its own complete evidence bundle under `invocations/`:
+1. **Profile JSON:** `invocations/{name}-{invocation_id}.json` capturing invocation metadata, runtime environment, command wall time, cumulative test worker seconds, and accurate exit/interruption status.
+2. **Raw JUnit XML:** `invocations/{name}-{invocation_id}.xml` preserved independently of subsequent runs.
+3. **Raw JSONL Event Journal:** `invocations/{name}-{invocation_id}-journal.jsonl` recording every test phase event.
+4. **Artifacts Manifest:** Recorded within the profile JSON with relative paths and SHA-256 digests (`artifacts.junit_sha256`, `artifacts.journal_sha256`).
+5. **Lane Summary Link:** Standard lane summaries (`{name}.json`, `{name}.md`) point to the most recent invocation while prior invocation evidence bundles remain intact and inspectable.
+6. **Bounded Artifact Policy:** Transient test files are retained in `invocations/` within run directories and bounded in size to prevent repository bloat. Diagnostic profiles recovered from interrupted runs (`measurement_recovered_from_journal`) cannot be mistaken for complete passing execution.
 
 ---
 

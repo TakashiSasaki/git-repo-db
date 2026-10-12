@@ -19,6 +19,7 @@ LANES = ("static", "tests", "packaging", "smoke")
 TEST_LANES = ("tests", "packaging")
 REQUIRED_DIRS = ("tests/unit", "tests/integration", "tests/e2e", "tests/packaging")
 SHA = re.compile(r"[0-9a-f]{40}\Z")
+SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def digest(value):
