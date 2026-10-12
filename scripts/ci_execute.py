@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from scripts import ci_plan, ci_profile  # noqa: E402
+from scripts import ci_journal, ci_plan, ci_profile  # noqa: E402
 
 MARKER = "not live and not benchmark"
 
@@ -132,6 +132,13 @@ def run_selection(path, name, workers=None):
             journal=journal,
             mode="xdist" if workers > 1 else "sequential",
             workers=workers,
+            selection={
+                "kind": item.get("selection_kind"),
+                "digest": item.get("selection_digest"),
+                "test_ids": item.get("test_ids"),
+                "test_files": item.get("test_files"),
+            },
+            acceptance_input_hash=plan.get("acceptance_input_hash"),
         )
     )
 
@@ -207,6 +214,7 @@ def successful_profile(path, context, expected_runtime):
         record["exit_code"] != 0
         or record.get("measurement_error")
         or record.get("interrupted")
+        or record.get("measurement_recovered_from_journal")
     ):
         raise ValueError("Selected command failed, interrupted, or output is invalid")
     meta = record["runtime"]
@@ -228,7 +236,31 @@ def successful_profile(path, context, expected_runtime):
     return record
 
 
-def verify_local_receipt(rec, plan, required_nodes=None, root=ROOT):
+def find_artifact(lane_data, key_file, key_path, default_filename, receipt_path, root):
+    target = lane_data.get(key_file) or lane_data.get(key_path) or default_filename
+    target_path = Path(target)
+    if target_path.is_absolute():
+        return None
+    if receipt_path is not None:
+        rec_dir = Path(receipt_path).resolve().parent
+        cand = (rec_dir / target_path).resolve()
+        if rec_dir in cand.parents and cand.is_file():
+            return cand
+        cand_inv = (rec_dir / "invocations" / target_path.name).resolve()
+        if rec_dir in cand_inv.parents and cand_inv.is_file():
+            return cand_inv
+        cand_parent_inv = (rec_dir.parent / "invocations" / target_path.name).resolve()
+        if cand_parent_inv.is_file():
+            return cand_parent_inv
+    cand_root = (Path(root).resolve() / target_path).resolve()
+    if cand_root.is_file() and not str(cand_root).startswith(
+        str(Path(root).resolve() / "artifacts")
+    ):
+        return cand_root
+    return None
+
+
+def verify_local_receipt(rec, plan, required_nodes=None, root=ROOT, receipt_path=None):
     """Strictly verify a local release execution receipt against the required acceptance contract."""
     if not isinstance(rec, dict):
         return False, "Malformed receipt: not a JSON object"
@@ -251,6 +283,24 @@ def verify_local_receipt(rec, plan, required_nodes=None, root=ROOT):
         return False, "Missing commit_sha in receipt"
     if expected_sha and commit_sha != expected_sha:
         return False, "Commit SHA mismatch"
+    tree_sha = rec.get("tree_sha")
+    if not tree_sha or not ci_plan.SHA.fullmatch(tree_sha):
+        return False, "Missing or invalid tree_sha in receipt"
+    expected_tree = plan.get("tree_sha") or plan.get("context", {}).get("tree_sha")
+    if not expected_tree and commit_sha:
+        try:
+            expected_tree = subprocess.check_output(
+                ["git", "-C", str(root), "rev-parse", f"{commit_sha}^{{tree}}"],
+                text=True,
+            ).strip()
+        except Exception:
+            expected_tree = None
+    if expected_tree and tree_sha != expected_tree:
+        return (
+            False,
+            f"Receipt tree SHA mismatch: expected {expected_tree}, got {tree_sha}",
+        )
+
     # 4. Zero failures, errors, skips, or interruptions
     if rec.get("interrupted") or rec.get("measurement_error"):
         return False, "Receipt records an interrupted execution or measurement error"
@@ -294,7 +344,7 @@ def verify_local_receipt(rec, plan, required_nodes=None, root=ROOT):
         file_part = node.split("::")[0]
         if not any(file_part.startswith(d + "/") for d in ci_plan.REQUIRED_DIRS):
             return False, f"Node ID is outside required acceptance directories: {node}"
-        if file_part not in acceptance_files:
+        if acceptance_files and file_part not in acceptance_files:
             return (
                 False,
                 f"Node ID file is not in current acceptance files: {file_part}",
@@ -359,12 +409,6 @@ def verify_local_receipt(rec, plan, required_nodes=None, root=ROOT):
                 f"Overlap between test lanes: {all_lane_passed & set(lane_passed)}",
             )
         all_lane_passed.update(lane_passed)
-        for hash_field in ("junit_sha256", "journal_sha256"):
-            h = lane_data.get(hash_field)
-            if h is not None and (
-                not isinstance(h, str) or not ci_plan.SHA.fullmatch(h)
-            ):
-                return False, f"Lane {lane_name} has invalid {hash_field}"
 
     if all_lane_passed != set(passed):
         return (
@@ -372,14 +416,144 @@ def verify_local_receipt(rec, plan, required_nodes=None, root=ROOT):
             "Mismatch between top-level passed_nodes and lane passed_nodes",
         )
 
-    # 8. Exact reconciliation against collected required node manifest in Release mode
-    if required_nodes:
+    # 8. Exact reconciliation against collected required node manifest in Release mode (Finding B)
+    if required_nodes is not None:
+        if not required_nodes:
+            return False, "Required acceptance node set cannot be empty in Release mode"
         if set(passed) != set(required_nodes):
             missing = set(required_nodes) - set(passed)
             extra = set(passed) - set(required_nodes)
             return (
                 False,
                 f"Node reconciliation mismatch: missing={len(missing)}, extra={len(extra)}",
+            )
+
+    # 9. Artifact hash and supporting file validation (Finding A)
+    for lane_name in ("tests", "packaging"):
+        lane_data = lanes[lane_name]
+        lane_passed = lane_data.get("passed_nodes", [])
+
+        junit_sha = lane_data.get("junit_sha256")
+        if (
+            not junit_sha
+            or not isinstance(junit_sha, str)
+            or not ci_plan.SHA256.fullmatch(junit_sha)
+        ):
+            return False, f"Lane {lane_name} has invalid junit_sha256"
+
+        journal_sha = lane_data.get("journal_sha256")
+        if (
+            not journal_sha
+            or not isinstance(journal_sha, str)
+            or not ci_plan.SHA256.fullmatch(journal_sha)
+        ):
+            return False, f"Lane {lane_name} has invalid journal_sha256"
+
+        found_xml = find_artifact(
+            lane_data,
+            "junit_file",
+            "junit_path",
+            f"{lane_name}.xml",
+            receipt_path,
+            root,
+        )
+        if not found_xml:
+            return (
+                False,
+                f"Supporting JUnit artifact for lane {lane_name} does not exist or is unreadable",
+            )
+
+        xml_bytes = found_xml.read_bytes()
+        actual_xml_sha = hashlib.sha256(xml_bytes).hexdigest()
+        if actual_xml_sha != junit_sha:
+            return (
+                False,
+                f"Lane {lane_name} junit_sha256 digest mismatch: expected {junit_sha}, got {actual_xml_sha}",
+            )
+
+        try:
+            parsed_xml = ci_profile.junit(found_xml)
+        except Exception as err:
+            return (
+                False,
+                f"Supporting JUnit artifact for lane {lane_name} is malformed: {err}",
+            )
+
+        if any(t["status"] != "passed" for t in parsed_xml["tests"]):
+            return (
+                False,
+                f"Supporting JUnit artifact for lane {lane_name} contains failed/error/skipped tests",
+            )
+
+        xml_nodeids = [t["nodeid"] for t in parsed_xml["tests"]]
+        if len(xml_nodeids) != len(set(xml_nodeids)):
+            return (
+                False,
+                f"Supporting JUnit artifact for lane {lane_name} contains duplicate node IDs",
+            )
+        if set(xml_nodeids) != set(lane_passed):
+            return (
+                False,
+                f"Supporting JUnit artifact for lane {lane_name} node set does not match claimed passed_nodes",
+            )
+
+        found_journal = find_artifact(
+            lane_data,
+            "journal_file",
+            "journal_path",
+            f"{lane_name}-journal.jsonl",
+            receipt_path,
+            root,
+        )
+        if not found_journal:
+            return (
+                False,
+                f"Supporting journal artifact for lane {lane_name} does not exist or is unreadable",
+            )
+
+        journal_bytes = found_journal.read_bytes()
+        actual_journal_sha = hashlib.sha256(journal_bytes).hexdigest()
+        if actual_journal_sha != journal_sha:
+            return (
+                False,
+                f"Lane {lane_name} journal_sha256 digest mismatch: expected {journal_sha}, got {actual_journal_sha}",
+            )
+
+        try:
+            events = ci_journal.parse_journal(found_journal)
+            journal_summary = ci_journal.aggregate_journal(events)
+        except Exception as err:
+            return (
+                False,
+                f"Supporting journal artifact for lane {lane_name} is corrupted: {err}",
+            )
+
+        if journal_summary.get("interrupted") or journal_summary.get("partial", 0) > 0:
+            return (
+                False,
+                f"Journal for lane {lane_name} records interrupted or partial execution",
+            )
+        if journal_summary.get("completed_failing", 0) > 0:
+            return False, f"Journal for lane {lane_name} records failing tests"
+        if journal_summary.get("skipped", 0) > 0:
+            return False, f"Journal for lane {lane_name} records skipped tests"
+
+        finish_event = next((e for e in events if e.get("event") == "finish"), None)
+        if not finish_event or finish_event.get("exitstatus") != 0:
+            return (
+                False,
+                f"Journal for lane {lane_name} is incomplete: missing successful finish event",
+            )
+
+        journal_nodeids = {
+            t["nodeid"]
+            for t in journal_summary["tests"]
+            if t["completed"] and t["status"] == "passed"
+        }
+        if journal_nodeids != set(lane_passed):
+            return (
+                False,
+                f"Journal for lane {lane_name} completed passed nodes do not match claimed passed_nodes",
             )
 
     return True, "Verified"
@@ -393,6 +567,15 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
     if not plan_path.is_file():
         raise ValueError(f"Missing plan.json in {output_dir}")
     plan = read(plan_path)
+
+    if plan.get("mode") != "release" or not plan.get("full"):
+        raise ValueError(
+            "create_receipt requires a completed Release mode plan with full acceptance"
+        )
+    if plan.get("unexecuted_files"):
+        raise ValueError(
+            "Cannot generate release receipt with unexecuted acceptance files"
+        )
 
     tracked = bool(
         subprocess.check_output(
@@ -411,59 +594,110 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
             "Cannot generate clean release receipt from dirty working tree"
         )
 
+    tested_sha = plan.get("context", {}).get("tested_sha")
+    if not tested_sha:
+        raise ValueError("Plan is missing context.tested_sha")
+
+    current_tree = subprocess.check_output(
+        ["git", "-C", str(root), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip()
+    tested_tree = subprocess.check_output(
+        ["git", "-C", str(root), "rev-parse", f"{tested_sha}^{{tree}}"],
+        text=True,
+    ).strip()
+    if current_tree != tested_tree:
+        raise ValueError("Working tree does not match plan tested tree")
+
     lanes_data = {}
     all_passed = []
     for lane in ci_plan.TEST_LANES:
+        lane_plan = plan["lanes"][lane]
+        if lane_plan.get("disposition") != "selected" or not lane_plan.get("test_ids"):
+            raise ValueError(f"Plan is missing collected test_ids for lane {lane}")
+
         lane_json = output_dir / f"{lane}.json"
         lane_xml = output_dir / f"{lane}.xml"
         lane_journal = output_dir / f"{lane}-journal.jsonl"
         if not lane_json.is_file():
             raise ValueError(f"Missing profile for required lane: {lane}")
+        if not lane_xml.is_file():
+            raise ValueError(f"Missing JUnit XML for required lane: {lane}")
+        if not lane_journal.is_file():
+            raise ValueError(f"Missing journal for required lane: {lane}")
+
         profile = read(lane_json)
         if (
             profile.get("exit_code") != 0
             or profile.get("interrupted")
             or profile.get("measurement_error")
+            or profile.get("measurement_recovered_from_journal")
         ):
             raise ValueError(f"Lane {lane} did not complete successfully")
 
-        junit_data = profile.get("junit", {})
-        tests = junit_data.get("tests", [])
-        if not tests:
-            raise ValueError(f"No test cases recorded for lane {lane}")
-        passed_nodes = []
-        for t in tests:
-            if t.get("status") != "passed":
-                raise ValueError(
-                    f"Test in {lane} was not passed: {t.get('nodeid')} ({t.get('status')})"
-                )
-            passed_nodes.append(t["nodeid"])
+        meta = profile.get("runtime", {})
+        if meta.get("commit_sha") != tested_sha:
+            raise ValueError(
+                f"Lane {lane} profile commit_sha does not match current candidate HEAD"
+            )
+        if meta.get("tree_sha") != tested_tree:
+            raise ValueError(
+                f"Lane {lane} profile tree_sha does not match current candidate tree"
+            )
+        if meta.get("dirty") or meta.get("tracked_changes"):
+            raise ValueError(f"Lane {lane} profile was recorded on a dirty tree")
 
-        if len(passed_nodes) != len(set(passed_nodes)):
-            raise ValueError(f"Duplicate node IDs in lane {lane}")
+        # Validate JUnit XML
+        xml_parsed = ci_profile.junit(lane_xml)
+        if any(t["status"] != "passed" for t in xml_parsed["tests"]):
+            raise ValueError(
+                f"JUnit XML for lane {lane} contains failed/error/skipped tests"
+            )
+        xml_nodes = sorted(t["nodeid"] for t in xml_parsed["tests"])
+        expected_nodes = sorted(lane_plan["test_ids"])
+        if xml_nodes != expected_nodes:
+            raise ValueError(
+                f"JUnit XML for lane {lane} nodes do not match plan test_ids"
+            )
+        profile_nodes = sorted(
+            t["nodeid"] for t in profile.get("junit", {}).get("tests", [])
+        )
+        if profile_nodes != xml_nodes:
+            raise ValueError(
+                f"Profile JUnit tests do not match raw JUnit XML for lane {lane}"
+            )
 
-        xml_hash = (
-            hashlib.sha256(lane_xml.read_bytes()).hexdigest()
-            if lane_xml.is_file()
-            else None
-        )
-        journal_hash = (
-            hashlib.sha256(lane_journal.read_bytes()).hexdigest()
-            if lane_journal.is_file()
-            else None
-        )
+        # Validate Journal
+        journal_events = ci_journal.parse_journal(lane_journal)
+        journal_summary = ci_journal.aggregate_journal(journal_events)
+        if (
+            journal_summary.get("interrupted")
+            or journal_summary.get("partial", 0) > 0
+            or journal_summary.get("completed_failing", 0) > 0
+            or journal_summary.get("skipped", 0) > 0
+        ):
+            raise ValueError(
+                f"Journal for lane {lane} records incomplete or failed tests"
+            )
+        finish = next((e for e in journal_events if e.get("event") == "finish"), None)
+        if not finish or finish.get("exitstatus") != 0:
+            raise ValueError(f"Journal for lane {lane} missing successful finish event")
+
+        xml_hash = hashlib.sha256(lane_xml.read_bytes()).hexdigest()
+        journal_hash = hashlib.sha256(lane_journal.read_bytes()).hexdigest()
 
         lanes_data[lane] = {
             "exit_code": 0,
             "status": "passed",
-            "passed_nodes": sorted(passed_nodes),
-            "passed_count": len(passed_nodes),
+            "passed_nodes": expected_nodes,
+            "passed_count": len(expected_nodes),
             "failed_nodes": [],
             "skipped_nodes": [],
+            "junit_file": lane_xml.name,
             "junit_sha256": xml_hash,
+            "journal_file": lane_journal.name,
             "journal_sha256": journal_hash,
         }
-        all_passed.extend(passed_nodes)
+        all_passed.extend(expected_nodes)
 
     if len(all_passed) != len(set(all_passed)):
         raise ValueError("Duplicate node IDs across test lanes")
@@ -472,10 +706,8 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
         "schema_version": 1,
         "kind": "local_release_receipt",
         "created_at": datetime.now(UTC).isoformat(),
-        "commit_sha": plan["context"]["tested_sha"],
-        "tree_sha": subprocess.check_output(
-            ["git", "-C", str(root), "rev-parse", "HEAD^{tree}"], text=True
-        ).strip(),
+        "commit_sha": tested_sha,
+        "tree_sha": tested_tree,
         "acceptance_input_hash": plan["acceptance_input_hash"],
         "exit_code": 0,
         "status": "passed",
@@ -491,29 +723,298 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
     }
     dest_path.parent.mkdir(parents=True, exist_ok=True)
     save(dest_path, receipt)
+    valid, reason = verify_local_receipt(
+        receipt, plan, required_nodes=set(all_passed), root=root, receipt_path=dest_path
+    )
+    if not valid:
+        dest_path.unlink(missing_ok=True)
+        raise ValueError(f"Generated receipt failed verification: {reason}")
     return receipt
 
 
-def reconcile_release(local_receipt_path, hosted_manifest_path, root=ROOT):
+def reconcile_release(
+    local_receipt_path, hosted_manifest_path, root=ROOT, run_verifier=None
+):
     """Reconcile independent local release receipt and hosted validation manifest."""
-    local_rec = read(Path(local_receipt_path))
-    hosted = read(Path(hosted_manifest_path))
+    local_receipt_path = Path(local_receipt_path)
+    hosted_manifest_path = Path(hosted_manifest_path)
+    if not local_receipt_path.is_file():
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Local receipt file does not exist: {local_receipt_path}",
+            "acceptance_status": "release_rejected",
+        }
+    if not hosted_manifest_path.is_file():
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest file does not exist: {hosted_manifest_path}",
+            "acceptance_status": "release_rejected",
+        }
+
+    try:
+        local_rec = read(local_receipt_path)
+    except Exception as err:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Malformed local receipt JSON: {err}",
+            "acceptance_status": "release_rejected",
+        }
+    try:
+        hosted = read(hosted_manifest_path)
+    except Exception as err:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Malformed hosted manifest JSON: {err}",
+            "acceptance_status": "release_rejected",
+        }
+
+    if not isinstance(hosted, dict):
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted manifest is not a JSON object",
+            "acceptance_status": "release_rejected",
+        }
 
     if hosted.get("validation_mode") != "release" or not hosted.get("full_acceptance"):
-        raise ValueError("Hosted manifest is not a completed release validation")
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted manifest is not a completed release validation",
+            "acceptance_status": "release_rejected",
+        }
     if hosted.get("outcome") != "passed":
-        raise ValueError("Hosted release validation outcome is not passed")
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted release validation outcome is not passed",
+            "acceptance_status": "release_rejected",
+        }
+
+    test_ids = hosted.get("test_ids")
+    if not isinstance(test_ids, list) or not test_ids:
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted manifest test_ids is empty or missing",
+            "acceptance_status": "release_rejected",
+        }
+    if len(test_ids) != len(set(test_ids)):
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted manifest contains duplicate node IDs",
+            "acceptance_status": "release_rejected",
+        }
+
+    has_pkg = any(t.startswith("tests/packaging/") for t in test_ids)
+    has_ord = any(not t.startswith("tests/packaging/") for t in test_ids)
+    if not has_pkg or not has_ord:
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted manifest claims full acceptance without packaging completion",
+            "acceptance_status": "release_rejected",
+        }
+
+    coverage = hosted.get("coverage", {})
+    if coverage.get("unexecuted_files"):
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest contains unexecuted acceptance files: {coverage.get('unexecuted_files')}",
+            "acceptance_status": "release_rejected",
+        }
+    if coverage.get("excluded_files"):
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest contains excluded acceptance files: {coverage.get('excluded_files')}",
+            "acceptance_status": "release_rejected",
+        }
+
+    required_acceptance_files = set(ci_plan.current_acceptance_files(root))
+    hosted_files = {t.split("::")[0] for t in test_ids}
+    missing_files = required_acceptance_files - hosted_files
+    if missing_files:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest is missing coverage for required acceptance files: {sorted(missing_files)}",
+            "acceptance_status": "release_rejected",
+        }
+
+    # Verify hosted run provenance (Finding C)
+    bundle_dir = hosted_manifest_path.parent
+    binding_file = bundle_dir / "receipt-binding.json"
+    if not binding_file.is_file() and "receipt_binding" not in hosted:
+        return {
+            "verdict": "release_rejected",
+            "reason": "Arbitrary JSON claims successful hosted execution without verifiable run provenance",
+            "acceptance_status": "release_rejected",
+        }
+
+    binding = (
+        read(binding_file)
+        if binding_file.is_file()
+        else hosted.get("receipt_binding", {})
+    )
+    run_id = binding.get("run_id") or hosted.get("context", {}).get("run_id")
+    if not run_id:
+        return {
+            "verdict": "release_rejected",
+            "reason": "Missing run_id in hosted run provenance",
+            "acceptance_status": "release_rejected",
+        }
+    if binding.get("head") and binding["head"] != hosted.get("context", {}).get(
+        "tested_sha"
+    ):
+        return {
+            "verdict": "release_rejected",
+            "reason": "Receipt binding head SHA mismatch",
+            "acceptance_status": "release_rejected",
+        }
+
+    # Verify active repository tree binding and effective merge tree equivalence
+    try:
+        active_commit = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", "HEAD"], text=True
+        ).strip()
+        active_tree = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip()
+    except Exception as err:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Unable to determine active repository HEAD: {err}",
+            "acceptance_status": "release_rejected",
+        }
+
+    tested_sha = hosted.get("context", {}).get("tested_sha")
+    feature_sha = hosted.get("context", {}).get("feature_sha")
+    if tested_sha != active_commit and feature_sha != active_commit:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest tested_sha ({tested_sha}) / feature_sha ({feature_sha}) does not match active repository HEAD ({active_commit})",
+            "acceptance_status": "release_rejected",
+        }
+
+    try:
+        tested_tree = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", f"{tested_sha}^{{tree}}"],
+            text=True,
+        ).strip()
+    except Exception:
+        tested_tree = hosted.get("tree_sha")
+    if tested_tree != active_tree:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest tree ({tested_tree}) does not match active repository tree ({active_tree})",
+            "acceptance_status": "release_rejected",
+        }
+
+    expected_tree = hosted.get("tree_sha") or active_tree
+    if binding.get("tree") and expected_tree and binding["tree"] != expected_tree:
+        return {
+            "verdict": "release_rejected",
+            "reason": "Receipt binding tree SHA mismatch",
+            "acceptance_status": "release_rejected",
+        }
+
+    active_plan = ci_plan.make_plan(hosted["context"], root=root)
+    if hosted.get("acceptance_input_hash") != active_plan["acceptance_input_hash"]:
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted manifest acceptance_input_hash does not match active repository candidate tree",
+            "acceptance_status": "release_rejected",
+        }
+
+    index_file = bundle_dir / "receipt-index.json"
+    if index_file.is_file():
+        index_data = read(index_file)
+        for fname, fmeta in index_data.items():
+            fpath = bundle_dir / fname
+            if not fpath.is_file():
+                return {
+                    "verdict": "release_rejected",
+                    "reason": f"Downloaded receipt bundle missing indexed file: {fname}",
+                    "acceptance_status": "release_rejected",
+                }
+            if hashlib.sha256(fpath.read_bytes()).hexdigest() != fmeta["sha256"]:
+                return {
+                    "verdict": "release_rejected",
+                    "reason": f"Downloaded receipt bundle file digest mismatch: {fname}",
+                    "acceptance_status": "release_rejected",
+                }
+
+    # Authoritative run verification check (Tier 3)
+    run_verified = False
+    if run_verifier is not None:
+        run_verified, ver_err = run_verifier(run_id, binding, hosted)
+        if not run_verified and ver_err:
+            return {
+                "verdict": "release_rejected",
+                "reason": ver_err,
+                "acceptance_status": "release_rejected",
+            }
+    else:
+        # Check via gh CLI if available
+        try:
+            gh_res = subprocess.run(
+                [
+                    "gh",
+                    "run",
+                    "view",
+                    str(run_id),
+                    "--json",
+                    "status,conclusion,headSha,event",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if gh_res.returncode == 0:
+                gh_info = json.loads(gh_res.stdout)
+                if (
+                    gh_info.get("status") == "completed"
+                    and gh_info.get("conclusion") == "success"
+                    and (
+                        not binding.get("head")
+                        or gh_info.get("headSha") == binding.get("head")
+                    )
+                ):
+                    if gh_info.get("event") not in (
+                        "workflow_dispatch",
+                        "schedule",
+                        "release",
+                    ):
+                        return {
+                            "verdict": "release_rejected",
+                            "reason": f"GitHub Actions run was triggered by {gh_info.get('event')}, which does not execute full release qualification",
+                            "acceptance_status": "release_rejected",
+                        }
+                    run_verified = True
+                else:
+                    return {
+                        "verdict": "release_rejected",
+                        "reason": f"GitHub Actions run not successful: status={gh_info.get('status')}, conclusion={gh_info.get('conclusion')}",
+                        "acceptance_status": "release_rejected",
+                    }
+        except Exception:
+            pass
+
+    if not run_verified:
+        return {
+            "verdict": "validation_gap_reported",
+            "reason": "Authoritative hosted run verification unavailable for run ID",
+            "acceptance_status": "validation_gap_reported",
+        }
 
     plan_context = hosted["context"]
     acceptance_input_hash = hosted["acceptance_input_hash"]
-    required_nodes = set(hosted.get("test_ids", []))
     dummy_plan = {
         "context": plan_context,
         "acceptance_input_hash": acceptance_input_hash,
         "acceptance_files": hosted["coverage"].get("required_files", []),
+        "tree_sha": expected_tree,
     }
     valid, reason = verify_local_receipt(
-        local_rec, dummy_plan, required_nodes, root=root
+        local_rec,
+        dummy_plan,
+        required_nodes=set(test_ids),
+        root=root,
+        receipt_path=local_receipt_path,
     )
     if not valid:
         return {
@@ -647,7 +1148,14 @@ def gate(path, root=ROOT):
                 if cand == (output / "local-receipt.json"):
                     corrupted_receipt = True
 
+    failed_receipts = []
     if corrupted_receipt:
+        failed_receipts.append(
+            (
+                output / "local-receipt.json",
+                "Malformed or unparseable local receipt JSON",
+            )
+        )
         evidence_status = "local_evidence_failed"
     elif local_receipts:
         release_required_nodes = None
@@ -655,12 +1163,20 @@ def gate(path, root=ROOT):
             release_required_nodes = set(
                 plan["lanes"]["tests"].get("test_ids", [])
             ) | set(plan["lanes"]["packaging"].get("test_ids", []))
+            if not release_required_nodes:
+                raise ValueError(
+                    "Release mode requires non-empty test selection across tests and packaging lanes"
+                )
 
         receipt_verified = False
         failed_receipts = []
         for cand_path, rec in local_receipts:
             valid, reason = verify_local_receipt(
-                rec, plan, required_nodes=release_required_nodes, root=root
+                rec,
+                plan,
+                required_nodes=release_required_nodes,
+                root=root,
+                receipt_path=cand_path,
             )
             if valid:
                 receipt_verified = True
@@ -695,12 +1211,18 @@ def gate(path, root=ROOT):
             )
         if evidence_status == "local_evidence_verified":
             acceptance_status = "complete_release_passed"
+        elif evidence_status == "local_evidence_failed":
+            acceptance_status = "release_rejected"
         else:
             acceptance_status = "hosted_release_passed"
         status_label = (
             "Complete release acceptance passed (local and hosted validated)."
             if acceptance_status == "complete_release_passed"
-            else "Hosted release test suite passed for the tested inputs (awaiting local reconciliation for complete release)."
+            else (
+                f"Release validation rejected: local evidence failed verification ({failed_receipts[0][1] if failed_receipts else 'unknown'})."
+                if acceptance_status == "release_rejected"
+                else "Hosted release test suite passed for the tested inputs (awaiting local reconciliation for complete release)."
+            )
         )
         summary_text = (
             f"## Validation outcome\n\n**{status_label}**\n\n"
@@ -708,11 +1230,23 @@ def gate(path, root=ROOT):
             f"Acceptance input hash: `{plan['acceptance_input_hash']}`.\n"
         )
 
+    tree_sha = None
+    tested_sha = plan["context"].get("tested_sha")
+    if tested_sha:
+        try:
+            tree_sha = subprocess.check_output(
+                ["git", "-C", str(root), "rev-parse", f"{tested_sha}^{{tree}}"],
+                text=True,
+            ).strip()
+        except Exception:
+            tree_sha = None
+
     result = {
         "version": 3,
-        "outcome": "passed",
+        "outcome": "failed" if acceptance_status == "release_rejected" else "passed",
         "context": plan["context"],
         "runtime": plan["runtime"],
+        "tree_sha": tree_sha,
         "validation_mode": mode,
         "full_acceptance": plan["full"],
         "acceptance_status": acceptance_status,

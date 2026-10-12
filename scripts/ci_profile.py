@@ -1,6 +1,7 @@
 """Run a CI command without hiding its exit status; summarize standard JUnit and journal."""
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -251,10 +252,33 @@ def run(args):
                 "Runner/lane differs; raw timings retained without a regression threshold."
             )
 
+    if getattr(args, "selection", None) is not None:
+        record["selection"] = args.selection
+    if getattr(args, "acceptance_input_hash", None) is not None:
+        record["acceptance_input_hash"] = args.acceptance_input_hash
+
     # Save collision-safe copy in invocations/ directory
     inv_dir = args.output / "invocations"
     inv_dir.mkdir(parents=True, exist_ok=True)
     inv_file = inv_dir / f"{args.name}-{invocation_id}.json"
+
+    artifacts_map = {
+        "profile": str(inv_file.relative_to(args.output)),
+    }
+    if args.junit and args.junit.is_file():
+        inv_xml = inv_dir / f"{args.name}-{invocation_id}.xml"
+        inv_xml.write_bytes(args.junit.read_bytes())
+        artifacts_map["junit"] = str(inv_xml.relative_to(args.output))
+        artifacts_map["junit_sha256"] = hashlib.sha256(inv_xml.read_bytes()).hexdigest()
+    if journal_path and journal_path.is_file():
+        inv_journal = inv_dir / f"{args.name}-{invocation_id}-journal.jsonl"
+        inv_journal.write_bytes(journal_path.read_bytes())
+        artifacts_map["journal"] = str(inv_journal.relative_to(args.output))
+        artifacts_map["journal_sha256"] = hashlib.sha256(
+            inv_journal.read_bytes()
+        ).hexdigest()
+    record["artifacts"] = artifacts_map
+
     inv_file.write_text(json.dumps(record, indent=2) + "\n")
 
     # Save standard output for lane

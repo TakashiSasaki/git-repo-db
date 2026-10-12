@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -326,7 +327,7 @@ def test_workflow_keeps_one_environment_and_conditions_expensive_checks():
         assert f"steps.plan.outputs.{lane} == 'true'" in workflow
 
 
-def make_valid_receipt(plan):
+def make_valid_receipt(plan, output=None, root=None):
     ordinary_nodes = [
         "tests/integration/test_runtime_flow.py::test_synthetic",
         "tests/unit/test_contracts.py::test_synthetic",
@@ -335,10 +336,42 @@ def make_valid_receipt(plan):
         "tests/packaging/test_distribution.py::test_synthetic",
     ]
     all_nodes = sorted(ordinary_nodes + packaging_nodes)
+    tests_xml_sha = "0" * 64
+    tests_journal_sha = "0" * 64
+    pkg_xml_sha = "0" * 64
+    pkg_journal_sha = "0" * 64
+    tree_sha = "0" * 40
+
+    if output is not None:
+        t_xml = output / "tests.xml"
+        if t_xml.is_file():
+            tests_xml_sha = hashlib.sha256(t_xml.read_bytes()).hexdigest()
+        t_j = output / "tests-journal.jsonl"
+        if t_j.is_file():
+            tests_journal_sha = hashlib.sha256(t_j.read_bytes()).hexdigest()
+        p_xml = output / "packaging.xml"
+        if p_xml.is_file():
+            pkg_xml_sha = hashlib.sha256(p_xml.read_bytes()).hexdigest()
+        p_j = output / "packaging-journal.jsonl"
+        if p_j.is_file():
+            pkg_journal_sha = hashlib.sha256(p_j.read_bytes()).hexdigest()
+        b_file = output / "receipt-binding.json"
+        if b_file.is_file():
+            tree_sha = json.loads(b_file.read_bytes()).get("tree", tree_sha)
+
+    if root is not None and (root / ".git").is_dir():
+        try:
+            tree_sha = subprocess.check_output(
+                ["git", "-C", str(root), "rev-parse", "HEAD^{tree}"], text=True
+            ).strip()
+        except Exception:
+            pass
+
     return {
         "schema_version": 1,
         "kind": "local_release_receipt",
         "commit_sha": plan["context"]["tested_sha"],
+        "tree_sha": tree_sha,
         "acceptance_input_hash": plan["acceptance_input_hash"],
         "exit_code": 0,
         "status": "passed",
@@ -355,11 +388,25 @@ def make_valid_receipt(plan):
                 "exit_code": 0,
                 "status": "passed",
                 "passed_nodes": ordinary_nodes,
+                "passed_count": len(ordinary_nodes),
+                "failed_nodes": [],
+                "skipped_nodes": [],
+                "junit_file": "tests.xml",
+                "junit_sha256": tests_xml_sha,
+                "journal_file": "tests-journal.jsonl",
+                "journal_sha256": tests_journal_sha,
             },
             "packaging": {
                 "exit_code": 0,
                 "status": "passed",
                 "passed_nodes": packaging_nodes,
+                "passed_count": len(packaging_nodes),
+                "failed_nodes": [],
+                "skipped_nodes": [],
+                "junit_file": "packaging.xml",
+                "junit_sha256": pkg_xml_sha,
+                "journal_file": "packaging-journal.jsonl",
+                "journal_sha256": pkg_journal_sha,
             },
         },
     }
@@ -368,7 +415,7 @@ def make_valid_receipt(plan):
 def test_complete_release_reconciliation_with_valid_local_receipt(acceptance):
     root, output = acceptance
     plan = json.loads((output / "plan.json").read_bytes())
-    receipt = make_valid_receipt(plan)
+    receipt = make_valid_receipt(plan, output=output, root=root)
     (output / "local-receipt.json").write_text(json.dumps(receipt))
     result = ci_execute.gate(output / "plan.json", root)
     assert result["full_acceptance"]
@@ -565,7 +612,7 @@ def test_adversarial_receipt_tampering_is_rejected(
 ):
     root, output = acceptance
     plan = json.loads((output / "plan.json").read_bytes())
-    receipt = make_valid_receipt(plan)
+    receipt = make_valid_receipt(plan, output=output, root=root)
     tamper(receipt)
 
     valid, reason = ci_execute.verify_local_receipt(
@@ -575,13 +622,15 @@ def test_adversarial_receipt_tampering_is_rejected(
             plan["lanes"]["tests"]["test_ids"] + plan["lanes"]["packaging"]["test_ids"]
         ),
         root=root,
+        receipt_path=output / "local-receipt.json",
     )
     assert not valid
     assert expected_reason_substr.lower() in reason.lower()
 
     (output / "local-receipt.json").write_text(json.dumps(receipt))
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["acceptance_status"] == "release_rejected"
+    assert result["outcome"] == "failed"
     assert result["evidence_status"] == "local_evidence_failed"
 
 
@@ -600,14 +649,31 @@ def test_create_receipt_and_reconcile_release_workflow(acceptance):
 
     manifest_path = output / "validation-manifest.json"
     local_rec_path = output / "local-receipt.json"
-    reconciled = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+
+    # Authoritative Tier 3 verified hosted run
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
     assert reconciled["verdict"] == "complete_release_passed"
     assert reconciled["acceptance_status"] == "complete_release_passed"
+
+    # Unverified hosted run without gh verification yields validation_gap_reported
+    unverified = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+    assert unverified["verdict"] == "validation_gap_reported"
+    assert unverified["acceptance_status"] == "validation_gap_reported"
 
     # Invalid receipt must yield release_rejected for both verdict and acceptance_status
     bad_rec_path = output / "bad-receipt.json"
     bad_rec_path.write_text(json.dumps({"exit_code": 1}))
-    rejected = ci_execute.reconcile_release(bad_rec_path, manifest_path, root=root)
+    rejected = ci_execute.reconcile_release(
+        bad_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
     assert rejected["verdict"] == "release_rejected"
     assert rejected["acceptance_status"] == "release_rejected"
 
@@ -616,24 +682,26 @@ def test_corrupted_local_receipt_fails_closed(acceptance):
     root, output = acceptance
     (output / "local-receipt.json").write_text("{corrupt json")
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["acceptance_status"] == "release_rejected"
+    assert result["outcome"] == "failed"
     assert result["evidence_status"] == "local_evidence_failed"
 
 
 def test_contradictory_candidate_receipts_fail_closed(acceptance):
     root, output = acceptance
     plan = json.loads((output / "plan.json").read_bytes())
-    valid_rec = make_valid_receipt(plan)
+    valid_rec = make_valid_receipt(plan, output=output, root=root)
     receipts_dir = output / "receipts"
     receipts_dir.mkdir(parents=True, exist_ok=True)
     (receipts_dir / "valid.json").write_text(json.dumps(valid_rec))
 
-    failed_rec = make_valid_receipt(plan)
+    failed_rec = make_valid_receipt(plan, output=output, root=root)
     failed_rec["exit_code"] = 1
     (output / "local-receipt.json").write_text(json.dumps(failed_rec))
 
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["acceptance_status"] == "release_rejected"
+    assert result["outcome"] == "failed"
     assert result["evidence_status"] == "local_evidence_failed"
 
 
@@ -658,3 +726,443 @@ def test_development_mode_gate_records_development_checks_passed(tmp_path):
         "Development infrastructure checks passed"
         in (output / "validation-summary.md").read_text()
     )
+
+
+# ==============================================================================
+# Section 6: Explicit Adversarial Regressions (Cases 1 to 15)
+# ==============================================================================
+
+
+def test_adversarial_01_missing_required_junit_hash(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan, output=output, root=root)
+    receipt["lanes"]["tests"].pop("junit_sha256", None)
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(receipt["passed_nodes"]),
+        root=root,
+        receipt_path=output / "local-receipt.json",
+    )
+    assert not valid
+    assert "invalid junit_sha256" in reason.lower()
+
+
+def test_adversarial_02_missing_required_junit_file(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan, output=output, root=root)
+    (output / "tests.xml").unlink(missing_ok=True)
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(receipt["passed_nodes"]),
+        root=root,
+        receipt_path=output / "local-receipt.json",
+    )
+    assert not valid
+    assert "does not exist or is unreadable" in reason.lower()
+
+
+def test_adversarial_03_valid_syntax_incorrect_hash_value(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan, output=output, root=root)
+    receipt["lanes"]["tests"]["junit_sha256"] = "0" * 64
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(receipt["passed_nodes"]),
+        root=root,
+        receipt_path=output / "local-receipt.json",
+    )
+    assert not valid
+    assert "digest mismatch" in reason.lower()
+
+
+def test_adversarial_04_receipt_claims_nodes_absent_from_junit(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan, output=output, root=root)
+    extra_node = "tests/unit/test_contracts.py::test_synthetic_extra"
+    receipt["passed_nodes"].append(extra_node)
+    receipt["passed_count"] = len(receipt["passed_nodes"])
+    receipt["lanes"]["tests"]["passed_nodes"].append(extra_node)
+    receipt["lanes"]["tests"]["passed_count"] = len(
+        receipt["lanes"]["tests"]["passed_nodes"]
+    )
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(receipt["passed_nodes"]),
+        root=root,
+        receipt_path=output / "local-receipt.json",
+    )
+    assert not valid
+    assert "does not match claimed passed_nodes" in reason.lower()
+
+
+def test_adversarial_05_profile_and_junit_report_different_node_sets(acceptance):
+    root, output = acceptance
+    profile_path = output / "tests.json"
+    profile = json.loads(profile_path.read_bytes())
+    profile["junit"]["tests"][0]["nodeid"] = (
+        "tests/unit/test_contracts.py::test_tampered"
+    )
+    profile_path.write_text(json.dumps(profile))
+    with pytest.raises(
+        ValueError, match="Profile JUnit tests do not match raw JUnit XML"
+    ):
+        ci_execute.create_receipt(output, root=root)
+
+
+def test_adversarial_06_empty_hosted_test_ids(acceptance):
+    root, output = acceptance
+    receipt = ci_execute.create_receipt(output, root=root)
+    (output / "local-receipt.json").write_text(json.dumps(receipt))
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["test_ids"] = []
+    manifest_path.write_text(json.dumps(manifest))
+    reconciled = ci_execute.reconcile_release(
+        output / "local-receipt.json", manifest_path, root=root
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "test_ids is empty or missing" in reconciled["reason"].lower()
+
+
+def test_adversarial_07_hosted_manifest_duplicate_node_ids(acceptance):
+    root, output = acceptance
+    receipt = ci_execute.create_receipt(output, root=root)
+    (output / "local-receipt.json").write_text(json.dumps(receipt))
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["test_ids"].append(manifest["test_ids"][0])
+    manifest_path.write_text(json.dumps(manifest))
+    reconciled = ci_execute.reconcile_release(
+        output / "local-receipt.json", manifest_path, root=root
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "duplicate node ids" in reconciled["reason"].lower()
+
+
+def test_adversarial_08_hosted_manifest_missing_packaging_completion(acceptance):
+    root, output = acceptance
+    receipt = ci_execute.create_receipt(output, root=root)
+    (output / "local-receipt.json").write_text(json.dumps(receipt))
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["test_ids"] = [
+        t for t in manifest["test_ids"] if not t.startswith("tests/packaging/")
+    ]
+    manifest_path.write_text(json.dumps(manifest))
+    reconciled = ci_execute.reconcile_release(
+        output / "local-receipt.json", manifest_path, root=root
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "without packaging completion" in reconciled["reason"].lower()
+
+
+def test_adversarial_09_arbitrary_json_without_run_provenance(acceptance):
+    root, output = acceptance
+    receipt = ci_execute.create_receipt(output, root=root)
+    (output / "local-receipt.json").write_text(json.dumps(receipt))
+    ci_execute.gate(output / "plan.json", root)
+    (output / "receipt-binding.json").unlink(missing_ok=True)
+    (output / "run-verification.json").unlink(missing_ok=True)
+    manifest_path = output / "validation-manifest.json"
+    reconciled = ci_execute.reconcile_release(
+        output / "local-receipt.json", manifest_path, root=root
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "verifiable run provenance" in reconciled["reason"].lower()
+
+
+def test_adversarial_10_receipt_refers_to_different_tree(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan, output=output, root=root)
+    receipt["tree_sha"] = "0" * 40
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(receipt["passed_nodes"]),
+        root=root,
+        receipt_path=output / "local-receipt.json",
+    )
+    assert not valid
+    assert "tree sha mismatch" in reason.lower()
+
+
+def test_adversarial_11_receipt_creator_rejects_development_plan(tmp_path):
+    root = tmp_path / "repo"
+    base, head = repository(root)
+    plan = ci_plan.make_plan(context(root, base, head, mode="development"), root=root)
+    output = tmp_path / "dev-result"
+    write_results(output, plan, root)
+    with pytest.raises(
+        ValueError,
+        match="create_receipt requires a completed Release mode plan with full acceptance",
+    ):
+        ci_execute.create_receipt(output, root=root)
+
+
+def test_adversarial_12_incomplete_journal_rejected(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan, output=output, root=root)
+    journal_path = output / "tests-journal.jsonl"
+    journal_lines = [
+        line for line in journal_path.read_text().splitlines() if '"finish"' not in line
+    ]
+    journal_path.write_text("\n".join(journal_lines) + "\n")
+    receipt["lanes"]["tests"]["journal_sha256"] = hashlib.sha256(
+        journal_path.read_bytes()
+    ).hexdigest()
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(receipt["passed_nodes"]),
+        root=root,
+        receipt_path=output / "local-receipt.json",
+    )
+    assert not valid
+    assert "missing successful finish event" in reason.lower()
+
+
+def test_adversarial_13_hidden_failure_or_skip_in_supporting_artifact(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan, output=output, root=root)
+    xml_content = """<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" tests="2" failures="1" errors="0" skipped="0">
+    <testcase classname="tests.unit.test_contracts" name="test_synthetic" file="tests/unit/test_contracts.py" line="10"/>
+    <testcase classname="tests.unit.test_contracts" name="test_hidden_fail" file="tests/unit/test_contracts.py" line="20">
+      <failure message="assertion error">failed</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
+"""
+    xml_path = output / "tests.xml"
+    xml_path.write_text(xml_content)
+    receipt["lanes"]["tests"]["junit_sha256"] = hashlib.sha256(
+        xml_path.read_bytes()
+    ).hexdigest()
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(receipt["passed_nodes"]),
+        root=root,
+        receipt_path=output / "local-receipt.json",
+    )
+    assert not valid
+    assert "failed/error/skipped tests" in reason.lower()
+
+
+def test_adversarial_14_successive_invocations_retain_independent_bundles(tmp_path):
+    from scripts import ci_profile
+
+    out_dir = tmp_path / "profiling"
+    xml_tmp = tmp_path / "lane.xml"
+    journal_tmp = tmp_path / "lane-journal.jsonl"
+
+    cmd1 = [
+        sys.executable,
+        "-c",
+        f'open({repr(str(xml_tmp))}, \'w\').write(\'<testsuites><testsuite name="t" tests="1"><testcase classname="c" name="t1"/></testsuite></testsuites>\'); open({repr(str(journal_tmp))}, \'w\').write(\'{{"event": "finish", "status": "completed", "exitstatus": 0}}\\n\')',
+    ]
+    args1 = argparse.Namespace(
+        name="unit-tests",
+        command=cmd1,
+        output=out_dir,
+        junit=xml_tmp,
+        journal=journal_tmp,
+        mode="release",
+        workers=1,
+        invocation_id="inv-001",
+    )
+    ci_profile.run(args1)
+
+    cmd2 = [
+        sys.executable,
+        "-c",
+        f'open({repr(str(xml_tmp))}, \'w\').write(\'<testsuites><testsuite name="t" tests="2"><testcase classname="c" name="t1"/><testcase classname="c" name="t2"/></testsuite></testsuites>\'); open({repr(str(journal_tmp))}, \'w\').write(\'{{"event": "finish", "status": "completed", "exitstatus": 0}}\\n\')',
+    ]
+    args2 = argparse.Namespace(
+        name="unit-tests",
+        command=cmd2,
+        output=out_dir,
+        junit=xml_tmp,
+        journal=journal_tmp,
+        mode="release",
+        workers=1,
+        invocation_id="inv-002",
+    )
+    ci_profile.run(args2)
+
+    inv_dir = out_dir / "invocations"
+    assert (inv_dir / "unit-tests-inv-001.json").is_file()
+    assert (inv_dir / "unit-tests-inv-001.xml").is_file()
+    assert (inv_dir / "unit-tests-inv-001-journal.jsonl").is_file()
+    assert (inv_dir / "unit-tests-inv-002.json").is_file()
+    assert (inv_dir / "unit-tests-inv-002.xml").is_file()
+    assert (inv_dir / "unit-tests-inv-002-journal.jsonl").is_file()
+
+    assert (inv_dir / "unit-tests-inv-001.xml").read_text() != (
+        inv_dir / "unit-tests-inv-002.xml"
+    ).read_text()
+
+
+def test_adversarial_15_valid_complete_local_and_hosted_evidence_yields_positive_verdict(
+    acceptance,
+):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
+    assert reconciled["verdict"] == "complete_release_passed"
+    assert reconciled["acceptance_status"] == "complete_release_passed"
+    assert reconciled["acceptance_input_hash"] == plan["acceptance_input_hash"]
+
+
+def test_adversarial_16_unauthenticated_run_verification_json_does_not_grant_tier3(
+    acceptance,
+):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    # Write plaintext run-verification.json
+    (output / "run-verification.json").write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "conclusion": "success",
+                "run_id": "10",
+                "source": "unauthenticated",
+            }
+        )
+    )
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    # Without authoritative gh / run_verifier, plaintext file cannot grant Tier 3 attestation
+    reconciled = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+    assert reconciled["verdict"] == "validation_gap_reported"
+    assert reconciled["acceptance_status"] == "validation_gap_reported"
+    assert (
+        "authoritative hosted run verification unavailable"
+        in reconciled["reason"].lower()
+    )
+
+
+def test_adversarial_17_hosted_development_run_rejected_for_release(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    # Verifier reports run was triggered by development pull_request event
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (
+            False,
+            "GitHub Actions run was triggered by pull_request, which does not execute full release qualification",
+        ),
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "does not execute full release qualification" in reconciled["reason"].lower()
+
+
+def test_adversarial_18_stale_commit_or_input_hash_in_hosted_manifest_rejected(
+    acceptance,
+):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["context"]["tested_sha"] = "0" * 40
+    manifest["context"]["feature_sha"] = "0" * 40
+    manifest_path.write_text(json.dumps(manifest))
+    binding_path = output / "receipt-binding.json"
+    binding = json.loads(binding_path.read_bytes())
+    binding["head"] = "0" * 40
+    binding["feature_sha"] = "0" * 40
+    binding_path.write_text(json.dumps(binding))
+    local_rec_path = output / "local-receipt.json"
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "does not match active repository head" in reconciled["reason"].lower()
+
+
+def test_adversarial_19_hosted_manifest_missing_acceptance_files_rejected(
+    acceptance,
+):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["coverage"]["unexecuted_files"] = ["tests/unit/test_contracts.py"]
+    manifest_path.write_text(json.dumps(manifest))
+    local_rec_path = output / "local-receipt.json"
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "unexecuted acceptance files" in reconciled["reason"].lower()
+
+
+def test_adversarial_20_find_artifact_rejects_absolute_path_and_runner_artifacts(
+    tmp_path,
+):
+    root = tmp_path / "repo"
+    root.mkdir()
+    artifacts_dir = root / "artifacts" / "ci-profile"
+    artifacts_dir.mkdir(parents=True)
+    runner_xml = artifacts_dir / "tests.xml"
+    runner_xml.write_text("<testsuites/>")
+
+    # Absolute path must be rejected
+    res_abs = ci_execute.find_artifact(
+        {"junit_file": str(runner_xml.resolve())},
+        "junit_file",
+        "junit_path",
+        "tests.xml",
+        tmp_path / "receipt.json",
+        root,
+    )
+    assert res_abs is None
+
+    # Reference attempting to resolve to artifacts/ci-profile must be rejected
+    res_art = ci_execute.find_artifact(
+        {"junit_file": "tests.xml"},
+        "junit_file",
+        "junit_path",
+        "tests.xml",
+        tmp_path / "receipt.json",
+        root,
+    )
+    assert res_art is None
