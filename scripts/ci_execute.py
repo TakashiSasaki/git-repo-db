@@ -72,7 +72,7 @@ def collect(path):
     save(path, plan)
 
 
-def pytest_command(files, xml, workers):
+def pytest_command(files, xml, workers, journal=None):
     command = [
         "uv",
         "run",
@@ -86,6 +86,8 @@ def pytest_command(files, xml, workers):
         str(xml),
         "--durations=20",
     ]
+    if journal:
+        command += ["--journal", str(journal)]
     if workers > 1:
         command += ["-n", str(workers), "--dist", "worksteal"]
     return command
@@ -117,13 +119,15 @@ def run_selection(path, name, workers=None):
         raise ValueError("Lane was not selected/collected before execution")
     workers = selected_workers(name, len(item["test_ids"]), workers)
     xml = output / (name + ".xml")
-    command = pytest_command(item["test_files"], xml, workers)
+    journal = output / (name + "-journal.jsonl")
+    command = pytest_command(item["test_files"], xml, workers, journal=journal)
     return ci_profile.run(
         Namespace(
             command=command,
             output=output,
             name=name,
             junit=xml,
+            journal=journal,
             mode="xdist" if workers > 1 else "sequential",
             workers=workers,
         )
@@ -143,13 +147,15 @@ def run_current(output, name, workers=None):
         else (2 if name == "packaging" else 4)
     )
     xml = output / (name + ".xml")
-    command = pytest_command(files, xml, workers)
+    journal = output / (name + "-journal.jsonl")
+    command = pytest_command(files, xml, workers, journal=journal)
     return ci_profile.run(
         Namespace(
             command=command,
             output=output,
             name=name,
             junit=xml,
+            journal=journal,
             mode="xdist" if workers > 1 else "sequential",
             workers=workers,
         )

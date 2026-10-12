@@ -15,6 +15,8 @@ import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from pathlib import Path
 
+from scripts import ci_journal
+
 
 def junit(path):
     root = ET.parse(path).getroot()
@@ -98,6 +100,23 @@ def markdown(record):
         lines.append(
             f"| {row['file']} | {row['seconds']:.2f} | {row['tests']} | {row['failures']} |"
         )
+    if record.get("journal", {}).get("tests"):
+        lines += [
+            "",
+            "#### Slowest tests by phase",
+            "",
+            "| Test node | Setup (s) | Call (s) | Teardown (s) | Total (s) | Status |",
+            "|---|---:|---:|---:|---:|:---:|",
+        ]
+        sorted_tests = sorted(
+            record["journal"]["tests"],
+            key=lambda t: -t["duration"],
+        )[:10]
+        for t in sorted_tests:
+            p = t.get("phases", {})
+            lines.append(
+                f"| `{t['nodeid']}` | {p.get('setup', 0.0):.4f} | {p.get('call', 0.0):.4f} | {p.get('teardown', 0.0):.4f} | {t['duration']:.4f} | {t['status']} |"
+            )
     for warning in record.get("warnings", []):
         lines += ["", "Timing warning: " + warning]
     if record.get("measurement_error"):
@@ -117,6 +136,11 @@ def run(args):
     if args.junit:
         args.junit.parent.mkdir(parents=True, exist_ok=True)
         args.junit.unlink(missing_ok=True)
+    journal_path = getattr(args, "journal", None)
+    if journal_path:
+        journal_path = Path(journal_path)
+        journal_path.parent.mkdir(parents=True, exist_ok=True)
+        journal_path.unlink(missing_ok=True)
     start = time.perf_counter()
     completed = subprocess.run(command, check=False)
     record = dict(
@@ -131,13 +155,30 @@ def run(args):
         wall_seconds=time.perf_counter() - start,
         exit_code=completed.returncode,
     )
+    if journal_path and journal_path.is_file():
+        journal_summary = ci_journal.aggregate_journal(journal_path)
+        if journal_summary["count"] > 0:
+            record["journal"] = journal_summary
+            record["phases"] = {
+                t["nodeid"]: t["phases"] for t in journal_summary["tests"]
+            }
+            if journal_summary.get("interrupted"):
+                record["interrupted"] = True
+                record.setdefault("warnings", []).append(
+                    f"Test execution was interrupted; partial results recovered from journal "
+                    f"({journal_summary['completed']}/{journal_summary['count']} tests completed)."
+                )
     if args.junit:
         try:
             record["junit"] = junit(args.junit)
         except (OSError, ValueError, ET.ParseError):
-            record["measurement_error"] = "Missing or malformed JUnit"
-            if record["exit_code"] == 0:
-                record["exit_code"] = 2
+            if record.get("journal", {}).get("count", 0) > 0:
+                record["junit"] = ci_journal.journal_to_junit_summary(record["journal"])
+                record["measurement_recovered_from_journal"] = True
+            else:
+                record["measurement_error"] = "Missing or malformed JUnit"
+                if record["exit_code"] == 0:
+                    record["exit_code"] = 2
     reference = getattr(args, "reference", None)
     if reference:
         baseline = json.loads(reference.read_text())
@@ -228,6 +269,9 @@ def main():
     execute.add_argument("--name", required=True)
     execute.add_argument("--output", type=Path, default=Path("artifacts/ci-profile"))
     execute.add_argument("--junit", type=Path)
+    execute.add_argument(
+        "--journal", type=Path, help="Path to append-only JSONL test event journal"
+    )
     execute.add_argument(
         "--mode", choices=("sequential", "xdist", "sharded"), default="sequential"
     )
