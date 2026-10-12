@@ -50,11 +50,20 @@ def test_main_prose_change_does_not_require_unconditional_acceptance(history, pa
 def test_leaf_test_change_collects_current_selected_file(history):
     path = "tests/integration/test_runtime_flow.py"
     plan = followup(history, path, "def test_synthetic(): pass\n# Changed\n")
-    assert plan["lanes"]["tests"]["test_files"] == [path]
+    # In development mode, leaf tests require local validation without hosted duplicate execution
+    assert plan["required_files"] == [path]
+    assert plan["selected_files"] == []
+    assert plan["lanes"]["tests"]["test_files"] == []
     assert not plan["full"]
+    assert plan["lanes"]["static"]["disposition"] == "selected"
     assert plan["lanes"]["packaging"]["disposition"] == "not_applicable"
     assert plan["preparation"]["wheelhouse"]["disposition"] == "not_applicable"
-    assert len(plan["unexecuted_files"]) == 2
+    assert path in plan["unexecuted_files"]
+
+    # When explicit release mode is chosen, all acceptance files are selected
+    rel_plan = followup(history, path, mode="release")
+    assert rel_plan["full"]
+    assert path in rel_plan["lanes"]["tests"]["test_files"]
 
 
 @pytest.mark.parametrize("directory", ci_plan.REQUIRED_DIRS)
@@ -75,8 +84,11 @@ def test_new_ordinary_tests_are_discovered_in_every_directory(
         mode = "release" if full else "development"
         plan = ci_plan.make_plan(dict(ctx, full=full, mode=mode), root=root)
         lane = "packaging" if directory == "tests/packaging" else "tests"
-        if full or not rename:
+        if full:
             assert path in plan["lanes"][lane]["test_files"]
+        else:
+            assert path in plan["required_files"]
+            assert not plan["lanes"][lane]["test_files"]
         assert not plan["excluded_files"]
         assert path in ci_plan.current_acceptance_files(root)
 
@@ -511,3 +523,156 @@ def test_github_context_retains_synchronize_action_and_before(tmp_path, monkeypa
     assert ctx["before_sha"] == "a" * 40
     assert ctx["feature_sha"] == "b" * 40
     assert ctx["tested_sha"] == "d" * 40
+
+
+@pytest.mark.parametrize("event_name", ["pull_request", "push"])
+def test_normal_events_default_to_development_mode(tmp_path, monkeypatch, event_name):
+    event_file = tmp_path / "event.json"
+    event_file.write_text(json.dumps({}))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_file))
+    monkeypatch.setenv("GITHUB_EVENT_NAME", event_name)
+    monkeypatch.delenv("CI_VALIDATION_MODE", raising=False)
+    monkeypatch.setattr(ci_plan, "git", lambda *args: ("0" * 40 + "\n").encode())
+    ctx = ci_plan.context_from_environment()
+    assert ctx["mode"] == "development"
+    assert ctx["full"] is False
+
+
+def test_explicit_release_remains_release(tmp_path, monkeypatch):
+    event_file = tmp_path / "event.json"
+    event_file.write_text(json.dumps({"inputs": {"mode": "release"}}))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_file))
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "workflow_dispatch")
+    monkeypatch.delenv("CI_VALIDATION_MODE", raising=False)
+    monkeypatch.setattr(ci_plan, "git", lambda *args: ("0" * 40 + "\n").encode())
+    ctx = ci_plan.context_from_environment()
+    assert ctx["mode"] == "release"
+    assert ctx["full"] is True
+
+
+@pytest.mark.parametrize(
+    "invalid_mode", ["staging", "production", "invalid", "dev", "rel"]
+)
+def test_invalid_modes_are_rejected(tmp_path, monkeypatch, invalid_mode):
+    event_file = tmp_path / "event.json"
+    event_file.write_text(json.dumps({"inputs": {"mode": invalid_mode}}))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_file))
+    monkeypatch.delenv("CI_VALIDATION_MODE", raising=False)
+    monkeypatch.setattr(ci_plan, "git", lambda *args: ("0" * 40 + "\n").encode())
+    with pytest.raises(ValueError, match="Unsupported validation mode"):
+        ci_plan.context_from_environment()
+
+
+@pytest.mark.parametrize(
+    "mode_val,full_val",
+    [
+        ("development", True),
+        ("development", "true"),
+        ("release", False),
+    ],
+)
+def test_conflicting_mode_and_legacy_inputs_are_rejected(
+    tmp_path, monkeypatch, mode_val, full_val
+):
+    event_file = tmp_path / "event.json"
+    event_file.write_text(json.dumps({"inputs": {"mode": mode_val, "full": full_val}}))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_file))
+    monkeypatch.delenv("CI_VALIDATION_MODE", raising=False)
+    monkeypatch.setattr(ci_plan, "git", lambda *args: ("0" * 40 + "\n").encode())
+    with pytest.raises(ValueError, match="Contradictory inputs"):
+        ci_plan.context_from_environment()
+
+
+def test_workflow_dispatch_explicit_development_mode(tmp_path, monkeypatch):
+    event_file = tmp_path / "event.json"
+    event_file.write_text(json.dumps({"inputs": {"mode": "development"}}))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_file))
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "workflow_dispatch")
+    monkeypatch.delenv("CI_VALIDATION_MODE", raising=False)
+    monkeypatch.setattr(ci_plan, "git", lambda *args: ("0" * 40 + "\n").encode())
+    ctx = ci_plan.context_from_environment()
+    assert ctx["mode"] == "development"
+    assert ctx["full"] is False
+
+
+def test_cli_rejects_conflicting_mode_and_full(monkeypatch):
+    import sys
+
+    monkeypatch.setattr(sys, "argv", ["ci_plan.py", "--mode", "development", "--full"])
+    with pytest.raises(ValueError, match="Contradictory options"):
+        ci_plan.main()
+
+
+def test_cli_accepts_consistent_mode_release_and_full(tmp_path, monkeypatch):
+    import sys
+
+    ctx_file = tmp_path / "context.json"
+    ctx_file.write_text(
+        json.dumps(
+            {
+                "tested_sha": "0" * 40,
+                "base_sha": "0" * 40,
+                "feature_sha": "0" * 40,
+                "event": "push",
+            }
+        )
+    )
+    out_dir = tmp_path / "out"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "ci_plan.py",
+            "--context",
+            str(ctx_file),
+            "--output",
+            str(out_dir),
+            "--mode",
+            "release",
+            "--full",
+        ],
+    )
+    called = []
+    monkeypatch.setattr(
+        ci_plan,
+        "make_plan",
+        lambda c, **kw: (
+            called.append(c)
+            or {
+                "context": c,
+                "full": True,
+                "mode": "release",
+                "lanes": {},
+                "preparation": {},
+                "unexecuted_files": [],
+                "excluded_files": [],
+                "fallback_reasons": [],
+                "acceptance_input_hash": "h",
+                "selection_wall_seconds": 0.1,
+            }
+        ),
+    )
+    monkeypatch.setattr(ci_plan, "write_plan", lambda p, o: None)
+    ci_plan.main()
+    assert called[0]["mode"] == "release"
+    assert called[0]["full"] is True
+
+
+def test_unknown_changed_input_does_not_trigger_full_hosted_testing_during_development(
+    history,
+):
+    root, _, head = history
+    write(root, "unknown_dir/unknown_file.txt", "unknown dependency\n")
+    ctx = context(root, head, commit(root), event="push", mode="development")
+    plan = ci_plan.make_plan(ctx, root=root)
+    assert not plan["full"]
+    # Unknown dependency path requires full local validation...
+    assert plan["required_files"] == plan["acceptance_files"]
+    assert any("Unknown dependency path" in r for r in plan["fallback_reasons"])
+    # ...but DOES NOT escalate to full hosted testing during Development
+    assert plan["selected_files"] == []
+    assert plan["lanes"]["tests"]["test_files"] == []
+    assert plan["lanes"]["tests"]["disposition"] == "not_applicable"
+    assert plan["unexecuted_files"] == plan["acceptance_files"]
+    assert plan["lanes"]["smoke"]["disposition"] == "selected"
+    assert plan["lanes"]["static"]["disposition"] == "selected"

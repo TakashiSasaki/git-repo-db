@@ -4,6 +4,8 @@ import json
 import subprocess
 import sys
 
+import pytest
+
 from scripts import ci_journal
 
 
@@ -148,7 +150,12 @@ def test_real_pytest_execution_generates_per_phase_journal(tmp_path):
 
     assert journal_file.exists()
     events = ci_journal.parse_journal(journal_file)
-    assert len(events) == 6  # 2 tests * 3 phases
+    phases = [e for e in events if e.get("event") == "phase"]
+    starts = [e for e in events if e.get("event") == "start"]
+    finish = [e for e in events if e.get("event") == "finish"]
+    assert len(phases) == 6  # 2 tests * 3 phases
+    assert len(starts) == 2  # 2 tests start events
+    assert len(finish) == 1  # 1 session finish event
 
     summary = ci_journal.aggregate_journal(events)
     assert summary["count"] == 2
@@ -236,3 +243,174 @@ def test_real_pytest_xdist_parallel_journaling(tmp_path):
     for t in summary["tests"]:
         assert t["phases"]["call"] > 0
         assert t["completed"] is True
+
+
+def test_xdist_records_distinct_worker_identities(tmp_path):
+    test_file = tmp_path / "test_workers.py"
+    test_file.write_text(
+        "import time\n"
+        "def test_w1(): time.sleep(0.02)\n"
+        "def test_w2(): time.sleep(0.02)\n"
+    )
+    journal_file = tmp_path / "worker_events.jsonl"
+    cmd = [
+        sys.executable,
+        "-m",
+        "pytest",
+        str(test_file),
+        "-n",
+        "2",
+        "-q",
+        f"--journal={journal_file}",
+        "-p",
+        "scripts.ci_journal",
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    assert proc.returncode == 0
+    summary = ci_journal.aggregate_journal(journal_file)
+    assert len(summary["workers"]) >= 2
+    assert any("gw" in w for w in summary["workers"])
+
+
+def test_journal_rejects_duplicate_phase_events(tmp_path):
+    events = [
+        {"event": "start", "nodeid": "t1"},
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.01,
+        },
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 0.05,
+        },
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 0.05,
+        },
+    ]
+    import pytest
+
+    with pytest.raises(ValueError, match="Duplicate phase record"):
+        ci_journal.aggregate_journal(events)
+
+
+def test_journal_rejects_invalid_durations(tmp_path):
+    import pytest
+
+    path = tmp_path / "journal.jsonl"
+    writer = ci_journal.JournalWriter(path)
+    with pytest.raises(ValueError, match="Invalid phase duration"):
+        writer.record_phase("t1", "call", "passed", -1.0)
+    with pytest.raises(ValueError, match="Invalid phase duration"):
+        writer.record_phase("t1", "call", "passed", float("nan"))
+    with pytest.raises(ValueError, match="Invalid phase duration"):
+        writer.record_phase("t1", "call", "passed", float("inf"))
+    writer.close()
+
+
+def test_damaged_middle_event_raises_corruption_error(tmp_path):
+    import pytest
+
+    path = tmp_path / "corrupt_mid.jsonl"
+    path.write_text(
+        '{"event": "phase", "nodeid": "t1", "phase": "setup", "outcome": "passed", "duration": 0.01}\n'
+        '{"corrupted_json_mid_stream\n'
+        '{"event": "phase", "nodeid": "t1", "phase": "call", "outcome": "passed", "duration": 0.02}\n'
+    )
+    with pytest.raises(ValueError, match="Corrupted journal record"):
+        ci_journal.parse_journal(path)
+
+
+def test_interruption_before_first_completed_phase(tmp_path):
+    path = tmp_path / "early_crash.jsonl"
+    writer = ci_journal.JournalWriter(path)
+    # Test 1 started but crashed before setup report was written
+    writer.record_start("tests/unit/test_foo.py::test_early_crash", worker_id="gw0")
+    writer.close()
+
+    events = ci_journal.parse_journal(path)
+    assert len(events) == 1
+    assert events[0]["event"] == "start"
+
+    summary = ci_journal.aggregate_journal(events)
+    assert summary["count"] == 1
+    assert summary["completed"] == 0
+    assert summary["partial"] == 1
+    assert summary["interrupted"] is True
+    t = summary["tests"][0]
+    assert t["started"] is True
+    assert t["completed"] is False
+    assert t["status"] == "interrupted"
+
+
+def test_journal_rejects_phase_after_teardown():
+    events = [
+        {"event": "start", "nodeid": "t1"},
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.01,
+        },
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.01,
+        },
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 0.05,
+        },
+    ]
+    with pytest.raises(
+        ValueError, match="Invalid phase order for t1: call after teardown"
+    ):
+        ci_journal.aggregate_journal(events)
+
+
+def test_journal_calculates_wall_seconds_from_timestamps():
+    events = [
+        {"event": "start", "nodeid": "t1", "timestamp": 1000.0},
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.5,
+            "timestamp": 1000.5,
+        },
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 1.0,
+            "timestamp": 1001.5,
+        },
+        {
+            "event": "phase",
+            "nodeid": "t1",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.5,
+            "timestamp": 1002.0,
+        },
+    ]
+    summary = ci_journal.aggregate_journal(events)
+    assert summary["cumulative_test_seconds"] == 2.0
+    assert summary["wall_seconds"] == 2.0

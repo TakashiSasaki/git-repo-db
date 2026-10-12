@@ -209,13 +209,77 @@ Under no circumstances may `development_checks_passed` or a green PR check badge
 
 ### VAL-08: Migration and Compatibility Disposition
 
-1. **Deprecation of `full=true` Workflow Input:**
-   - The workflow input `full: boolean` is deprecated in favor of `mode: string` with allowed values `development` (default) and `release`.
-   - Backward compatibility: if `full=true` is supplied, it is translated to `mode=release`.
+1. **Removal of `full` Workflow Input:**
+   - The workflow input `full: boolean` is removed from `.github/workflows/tests.yml`. Validation mode `mode: string` with allowed values `development` (default) and `release` is the single source of truth.
+   - In CLI tools, contradictory combinations (e.g. `--mode development --full`) are rejected fail-closed with an explicit error.
 
 2. **Retirement of Historical Node ID Bounds:**
    - Fixed historical test counts (e.g. 2,252) and historical node ID lists are retired as gates.
    - The sole authoritative acceptance standard is exact collection against the active tree.
+
+### VAL-09: Strict Local Release Evidence Reconciliation Invariants
+
+To eliminate false-positive release acceptance, local evidence reconciliation requires strict structural and semantic verification:
+1. **Explicit clean-tree execution identity:** Working tree must have zero uncommitted tracked changes and zero untracked files (`dirty=false`, `tracked_changes=false`).
+2. **Exact candidate binding:** `acceptance_input_hash` and `commit_sha` must match the evaluated tree.
+3. **Valid collected test-node manifest:** Acceptance files must belong strictly to `tests/unit`, `tests/integration`, `tests/e2e`, and `tests/packaging`.
+4. **Exact selected/executed equality:** Every required node must appear exactly once in the receipt. Missing, extra, or duplicate node IDs cause immediate rejection. Set conversions must not hide duplicates.
+5. **Zero non-passed outcomes:** Zero failures (`failed_count=0`, `failed_nodes=[]`), zero errors, and zero skips (`skipped_count=0`, `skipped_nodes=[]`).
+6. **Explicit success status:** `exit_code: 0` and `status: "passed"` are strictly required; missing exit codes do not default to success.
+7. **Independent lane representation:** Both ordinary tests (`lanes.tests`) and packaging tests (`lanes.packaging`) must be independently represented and verified.
+8. **Verification of supporting artifacts:** JUnit XML SHA-256 and JSONL execution journal SHA-256 must be captured in the receipt.
+
+### VAL-10: Development vs Release Mode Contract and Truth Table
+
+Validation mode is the single authoritative source of truth:
+- Ordinary pull requests (`pull_request`) and branch pushes (`push`) strictly default to `mode=development`.
+- `mode=development` executes only static lint/format, doctor smoke tests, dependency verification, and report validations. Leaf test files modified in development do not trigger automatic hosted test execution; instead, they are recorded as requiring local validation (`required_files`).
+- `mode=release` is strictly opt-in via manual trigger (`workflow_dispatch` with `mode=release`). It requires 100% hosted suite execution and strict local evidence reconciliation.
+- The obsolete `full` workflow input is removed. In CLI scripts, `--mode` and `--full` are mutually validated: contradictory specifications (e.g. `--mode development --full`) are fail-closed and rejected with an explicit error.
+
+| Event / Trigger | Input `mode` | Deprecated `full` | Effective Mode | Hosted Suite Executed | Acceptance Verdict Target |
+| --- | --- | --- | --- | --- | --- |
+| `pull_request` | (omitted) | (omitted) | `development` | None (Static + Smoke only) | `development_checks_passed` |
+| `push` to `main` | (omitted) | (omitted) | `development` | None (Static + Smoke only) | `development_checks_passed` |
+| `workflow_dispatch` | `development` | (omitted) | `development` | None (Static + Smoke only) | `development_checks_passed` |
+| `workflow_dispatch` | `release` | (omitted) | `release` | Full (100% ordinary + packaging) | `complete_release_passed` (if local receipt verified) / `hosted_release_passed` |
+| CLI / Script | `development` | `--full` | **Rejected** | (Error: Contradictory inputs) | N/A |
+| CLI / Script | `release` | `--full` | `release` | Full | `complete_release_passed` / `hosted_release_passed` |
+
+### VAL-11: Separation of Provenance from Attestation
+
+Local execution receipts are developer-generated and agent-asserted evidence. Their SHA-256 digests establish integrity relationships across files and git revisions, not third-party proof of independent execution.
+GitHub Actions hosted CI only attests to tests executed within GitHub Actions runners. When local evidence is not available to hosted CI, hosted Release CI reports `hosted_release_passed` rather than `complete_release_passed`.
+Complete release qualification is established either by:
+1. Providing a verified clean-tree local receipt matching the exact `acceptance_input_hash` to the hosted gating validator, or
+2. Running the independent local reconciliation CLI command:
+   ```bash
+   python -m scripts.ci_execute reconcile-release --local-receipt <path> --hosted-manifest <path>
+   ```
+   which verifies both local and downloaded hosted receipts and issues `complete_release_passed`.
+
+### VAL-12: JSONL Execution Journal Event Model, Worker Isolation, and xdist Safety
+
+Test execution journaling records events in append-only JSON Lines format:
+1. **Per-test event phases:** `start`, `phase` (`setup`, `call`, `teardown`), and `finish`.
+2. **Worker isolation:** Under `pytest-xdist`, each worker's events record `worker_id` (e.g. `gw0`, `gw1`). A single controller-side reporter or isolated stream handles event ordering without lock corruption.
+3. **Accurate interruption semantics:** A test interrupted during execution (e.g. after `start` but before completion) is recorded with `interrupted: true` rather than being dropped or defaulted to success.
+4. **Resilience to crashes:** Recoverable trailing writes (unflushed newline at EOF during process kill) are handled cleanly, while corrupted records in the middle of a journal fail closed.
+5. **Separation of time metrics:** Wall-clock command execution time (`wall_seconds`) is explicitly separated from cumulative test worker duration (`cumulative_test_seconds`).
+
+### VAL-13: Invocation Identity and Non-Destructive Storage Model
+
+Every test execution receives a unique invocation identity:
+`{name}-{timestamp}-{uuid[:8]}`
+Execution profiles are written to non-destructive paths under `invocations/{invocation_id}.json` in addition to the active lane summary file. Previous invocation profiles are never overwritten.
+Each profile captures:
+- `invocation_id`
+- `started_at` and `completed_at` ISO-8601 timestamps
+- `tree_sha` and `dirty` working tree status
+- Effective runtime and dependency versions (Python, SQLite, pytest, xdist, Git, Ruff)
+- Worker count and concurrency mode (`sequential`, `xdist`, `sharded`)
+- Command wall time and cumulative test worker seconds
+- Accurate termination status (`exit_code`, `interrupted`)
 
 ---
 

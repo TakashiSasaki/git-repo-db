@@ -7,9 +7,11 @@ python scripts/ci_profile.py run --name focused --junit artifacts/ci-profile/foc
 python scripts/ci_profile.py compare artifacts/ci-profile/focused.json
 ```
 
-計測は補助情報です。速さだけで動作や保護境界を落としません。pytest の file 時間は setup/call/teardown の累計で、並列 lane の wall time とは異なります。異なる runner や binding の値を同じ性能保証として比較しません。`--reference` による warning は advisory で、合否条件ではありません。
+計測は補助情報です。速さだけで動作や保護境界を落としません。コマンドの経過実時間（`wall_seconds`）と、各テストワーカーの累積実行時間（`cumulative_test_seconds`）は厳密に区別して記録されます。
+テスト実行イベントは append-only の JSON Lines (`.jsonl`) ジャーナルに記録され、`start`、`phase`（`setup`、`call`、`teardown` と `worker_id`）、`finish` の各フェーズを追跡します。これにより、テストセッションが途中で強制終了やタイムアウトした場合でも、クラッシュ前のイベントと経過時間が保全され、途中で中断されたテストが成功として誤認されることを防止します。
 
-CI artifact は plan、選択 ID、JUnit、command profile、最終の照合結果を保持します。DB、cache、token、取得した payload は upload しません。変更に応じた選択と、full / 部分実行 / 対象外の報告は [変更に応じた CI](change-aware-ci.md) を参照してください。
+各実行には一意な `invocation_id`（`{name}-{timestamp}-{uuid[:8]}`）が付与され、上書きを防止するために `invocations/{invocation_id}.json` に個別プロファイルが非破壊的に保存されます。
+CI artifact は plan、選択 ID、JUnit、command profile、`.jsonl` ジャーナル、最終の照合結果を保持します。DB、cache、token、取得した payload は upload しません。変更に応じた選択と、full / 部分実行 / 対象外の報告は [変更に応じた CI](change-aware-ci.md) を参照してください。
 
 [旧性能結果](ci-performance-results.json)、[旧計測 baseline](ci-performance-baseline.json)、[旧選択結果](ci-selection-results.json) は `historical-only` の参考資料です。過去の phase・SQLite-minimum lane・試験件数・node ID は現行の下限や再実行要求ではありません。今回の最終実行結果は機能 handoff と新しい profile に記録し、未実行項目を明記します。
 

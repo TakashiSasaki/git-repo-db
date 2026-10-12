@@ -1,6 +1,8 @@
 import json
 import sqlite3
 
+import pytest
+
 from repo_catalog.config import load, serialize
 from tests.support.cli import pages, run
 from tests.support.github_fixture import GitHubFixture
@@ -414,6 +416,32 @@ def test_nested_pagination(catalog):
                     (repo + ":41",),
                 ).fetchone()[0]
                 == 201
+            )
+        assert not api.errors
+
+
+@pytest.mark.benchmark
+def test_nested_pagination_stress_workload(catalog):
+    state, fixture, repos = catalog
+    with GitHubFixture(fixture) as api:
+        _, repo, env = configure(state, api, fixture)
+        api.thread_count = 101
+        api.reply_count = {i: 101 for i in range(101)}
+        run(state, "sync", "pr", "--repo", repo, env=env, timeout=120)
+        with sqlite3.connect(state / "catalog.sqlite3") as db:
+            assert (
+                db.execute(
+                    "SELECT count(*) FROM review_threads WHERE change_request_id=?",
+                    (repo + ":41",),
+                ).fetchone()[0]
+                == 101
+            )
+            assert (
+                db.execute(
+                    "SELECT count(*) FROM review_resources WHERE change_request_id=? AND kind='review-comment'",
+                    (repo + ":41",),
+                ).fetchone()[0]
+                == 10201
             )
         assert not api.errors
 

@@ -16,8 +16,22 @@ uv --version
 ```bash
 uv run --no-sync ruff check src tests scripts
 uv run --no-sync ruff format --check src tests scripts
+uv run --no-sync python scripts/ci_profile.py profile tests/unit/test_ci_plan.py
 uv run --no-sync python scripts/ci_execute.py current --lane tests
 uv run --no-sync python scripts/ci_execute.py current --lane packaging
+```
+
+局所的な編集・検証では `scripts/ci_profile.py profile <pytest-args>` を使うことで、独立した出力先と一意な `invocation_id` を持った実行プロファイルおよび append-only JSONL ジャーナルを生成できます。
+また、リリース検証を完了する際は、作業ツリーをコミットして clean な状態にした上で、次のコマンドでローカル release receipt を生成・照合します。
+
+```bash
+# クリーンな作業ツリーでローカル release receipt を生成
+python scripts/ci_execute.py receipt --output-dir artifacts/ci-profile
+
+# ホスト CI の validation-manifest.json と照合して complete_release_passed を確立
+python scripts/ci_execute.py reconcile-release \
+  --local-receipt artifacts/ci-profile/local-receipt.json \
+  --hosted-manifest artifacts/ci-profile/validation-manifest.json
 ```
 
 `current` は作業ツリーに存在する現在のpolicy・manifestから対象を選択します。実際のselected/executed node IDsを照合し、新しいretirement試験が選ばれていない場合も隠しません。編集中の結果は dirty-tree 状態を含む生の profile として保存し、確定した Git tree の CI acceptance manifest と区別します。全履歴の試験や phase export は再実行しません。現在の対象から外した試験は CI plan の `excluded_files` に列挙し、選択されなかった現在の試験は `unexecuted_files` に列挙します。

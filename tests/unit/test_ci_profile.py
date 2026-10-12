@@ -151,3 +151,171 @@ def test_ci_profile_recovers_from_journal_when_junit_missing(tmp_path, monkeypat
     assert saved["measurement_recovered_from_journal"] is True
     assert "tests/unit/a.py::test_one" in saved["phases"]
     assert saved["phases"]["tests/unit/a.py::test_one"]["call"] == 0.020
+
+
+def test_ci_profile_generates_unique_invocation_identity_and_safe_layout(tmp_path):
+    args = Namespace(
+        command=[sys.executable, "-c", "import time; time.sleep(0.01)"],
+        output=tmp_path,
+        name="isolated_run",
+        junit=None,
+        journal=None,
+        mode="sequential",
+        workers=1,
+    )
+    assert ci_profile.run(args) == 0
+    saved = json.loads((tmp_path / "isolated_run.json").read_text())
+    assert "invocation_id" in saved
+    assert saved["invocation_id"].startswith("isolated_run-")
+    assert "started_at" in saved
+    assert "completed_at" in saved
+    assert "tree_sha" in saved["runtime"]
+    assert "dirty" in saved["runtime"]
+    assert "wall_seconds" in saved
+    assert saved["wall_seconds"] > 0
+
+    # Verify collision-safe copy was written to invocations directory
+    inv_dir = tmp_path / "invocations"
+    assert inv_dir.is_dir()
+    inv_files = list(inv_dir.glob("isolated_run-*.json"))
+    assert len(inv_files) == 1
+    assert inv_files[0].name == f"isolated_run-{saved['invocation_id']}.json"
+
+
+def test_ci_profile_focused_subcommand_ergonomics(tmp_path, monkeypatch):
+    test_f = tmp_path / "test_ergonomics.py"
+    test_f.write_text("def test_ok(): pass\n")
+    args = Namespace(
+        name="focused",
+        output=tmp_path,
+        workers=1,
+        pytest_args=[str(test_f)],
+    )
+    assert ci_profile.profile_focused(args) == 0
+    assert (tmp_path / "focused.json").is_file()
+    assert (tmp_path / "focused.md").is_file()
+    record = json.loads((tmp_path / "focused.json").read_text())
+    assert record["name"] == "focused"
+    assert record["exit_code"] == 0
+    assert record["wall_seconds"] > 0
+    assert "cumulative_test_seconds" in record
+
+
+def test_ci_profile_timing_semantics_distinguish_wall_and_cumulative(tmp_path):
+    journal = tmp_path / "events.jsonl"
+    lines = [
+        json.dumps({"event": "start", "nodeid": "t1"}),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "t1",
+                "phase": "setup",
+                "outcome": "passed",
+                "duration": 0.05,
+            }
+        ),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "t1",
+                "phase": "call",
+                "outcome": "passed",
+                "duration": 0.10,
+            }
+        ),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "t1",
+                "phase": "teardown",
+                "outcome": "passed",
+                "duration": 0.05,
+            }
+        ),
+        json.dumps({"event": "start", "nodeid": "t2"}),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "t2",
+                "phase": "setup",
+                "outcome": "passed",
+                "duration": 0.05,
+            }
+        ),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "t2",
+                "phase": "call",
+                "outcome": "passed",
+                "duration": 0.10,
+            }
+        ),
+        json.dumps(
+            {
+                "event": "phase",
+                "nodeid": "t2",
+                "phase": "teardown",
+                "outcome": "passed",
+                "duration": 0.05,
+            }
+        ),
+    ]
+    script = f"from pathlib import Path; Path({repr(str(journal))}).write_text({repr(chr(10).join(lines) + chr(10))})"
+    args = Namespace(
+        command=[sys.executable, "-c", script],
+        output=tmp_path,
+        name="timing_lane",
+        junit=None,
+        journal=journal,
+        mode="sequential",
+        workers=1,
+    )
+    assert ci_profile.run(args) == 0
+    record = json.loads((tmp_path / "timing_lane.json").read_text())
+    # Cumulative test duration is sum of phases (0.20 + 0.20 = 0.40)
+    assert record["cumulative_test_seconds"] == 0.40
+    # Wall seconds is command execution time
+    assert record["wall_seconds"] > 0
+    md = (tmp_path / "timing_lane.md").read_text()
+    assert "Command wall time:" in md
+    assert "Cumulative test duration: 0.40s" in md
+
+
+def test_signal_terminated_command_records_interrupted(tmp_path, monkeypatch):
+    import signal
+    import subprocess
+
+    class FakeCompleted:
+        returncode = -signal.SIGTERM
+
+    monkeypatch.setattr(
+        ci_profile,
+        "runtime",
+        lambda: {
+            "commit_sha": "0" * 40,
+            "tree_sha": "0" * 40,
+            "dirty": False,
+            "tracked_changes": False,
+            "python": "3.12.3",
+            "sqlite": "3.45.1",
+            "git": "git version 2.43.0",
+        },
+    )
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: FakeCompleted())
+    args = Namespace(
+        command=["fake"],
+        output=tmp_path,
+        name="sigterm_test",
+        junit=None,
+        journal=None,
+        mode="sequential",
+        workers=1,
+    )
+    rc = ci_profile.run(args)
+    assert rc == -signal.SIGTERM
+    record = json.loads((tmp_path / "sigterm_test.json").read_text())
+    assert record["interrupted"] is True
+    assert record["exit_code"] == -signal.SIGTERM
+    md = (tmp_path / "sigterm_test.md").read_text()
+    assert "Execution was interrupted; results are partial" in md
