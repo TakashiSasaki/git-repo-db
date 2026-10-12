@@ -161,7 +161,13 @@ class GitHubFixture:
 
             def comments(index, start=0):
                 nodes = []
-                count = self.reply_count if n == 41 else 1
+                if callable(self.reply_count):
+                    raw_count = self.reply_count(index)
+                elif isinstance(self.reply_count, dict):
+                    raw_count = self.reply_count.get(index, 1)
+                else:
+                    raw_count = self.reply_count
+                count = raw_count if n == 41 else 1
                 for reply in range(start, min(count, start + 100)):
                     c = self.comment(
                         n,

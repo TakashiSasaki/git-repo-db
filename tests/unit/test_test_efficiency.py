@@ -8,6 +8,7 @@ import pytest
 
 from tests.support import git_fixture
 from tests.support.distributions import build_once
+from tests.support.github_fixture import GitHubFixture
 
 
 def products(root):
@@ -160,3 +161,29 @@ def test_fixture_cache_keeps_byteslike_inputs_and_observes_mutated_content(
     assert git_fixture.git(repo.path, "cat-file", "blob", first) == b"first"
     assert git_fixture.git(repo.path, "cat-file", "blob", later) == b"later"
     assert later != first
+
+
+def test_github_fixture_per_thread_reply_count(tmp_path):
+    git = git_fixture.GitFixture(tmp_path / "remotes")
+    fixture = GitHubFixture(git)
+    fixture.thread_count = 101
+    fixture.reply_count = {0: 101}
+    payload, _ = fixture.route(
+        "POST", "/graphql", {}, {"query": "query", "variables": {"number": 41}}
+    )
+    threads = payload["data"]["repository"]["pullRequest"]["reviewThreads"]["nodes"]
+    assert len(threads) == 100
+    assert len(threads[0]["comments"]["nodes"]) == 100
+    assert threads[0]["comments"]["pageInfo"]["hasNextPage"] is True
+    assert len(threads[1]["comments"]["nodes"]) == 1
+    assert threads[1]["comments"]["pageInfo"]["hasNextPage"] is False
+
+    page2_comment, _ = fixture.route(
+        "POST",
+        "/graphql",
+        {},
+        {"query": "query", "variables": {"thread": "THREAD41-0", "commentCursor": 100}},
+    )
+    comments = page2_comment["data"]["node"]["comments"]
+    assert len(comments["nodes"]) == 1
+    assert comments["pageInfo"]["hasNextPage"] is False

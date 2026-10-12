@@ -398,7 +398,7 @@ def test_nested_pagination(catalog):
     with GitHubFixture(fixture) as api:
         _, repo, env = configure(state, api, fixture)
         api.thread_count = 101
-        api.reply_count = 101
+        api.reply_count = {0: 101}
         run(state, "sync", "pr", "--repo", repo, env=env, timeout=120)
         with sqlite3.connect(state / "catalog.sqlite3") as db:
             assert (
@@ -413,7 +413,7 @@ def test_nested_pagination(catalog):
                     "SELECT count(*) FROM review_resources WHERE change_request_id=? AND kind='review-comment'",
                     (repo + ":41",),
                 ).fetchone()[0]
-                == 10201
+                == 201
             )
         assert not api.errors
 
