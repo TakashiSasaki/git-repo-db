@@ -1,13 +1,11 @@
 # Phase 2 design work: current owner decisions
 
 The repository-root AGENTS.md remains applicable. For the design artifacts in
-this directory, read `no-independent-publication-adr.md` and the current
+this directory, read `no-independent-publication-adr.md`, `../adr/0002-three-store-boundary-architecture.md`, and the current
 `decision-register.md` before the older proposals or prototypes.
 
-The owner accepted Q01-B, Q02-B, Q03-B and **NO_INDEPENDENT_PUBLICATION** under Q04.
-Further option selection is paused. The design was reconstructed and a Schema 20
-implementation has been submitted as stacked PRs; use the checked-out sources,
-current integration handoff and exact-tree receipts to distinguish approved design,
+The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION** under Q04, and binding decisions **PF-P01–PF-P17** establishing the Three-Store Boundary (Core, Operational, Search).
+Use the checked-out sources, current ADRs, and exact-tree receipts to distinguish approved design,
 implemented behavior and independently verified behavior. Do not restart the
 old design questionnaire or adopt unchosen recommendations. This document does
 not itself grant or revoke a task-specific merge authorization.

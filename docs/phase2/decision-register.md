@@ -1,7 +1,7 @@
 # Phase 2 owner decision register
 
-**Current status: four owner decisions fixed; further option selection paused.**
-Read [No independent Publication](no-independent-publication-adr.md) first.
+**Current status: decisions Q01-B, Q02-B, Q03-B, NO_INDEPENDENT_PUBLICATION, and PF-P01–PF-P17 accepted.**
+Read [No independent Publication](no-independent-publication-adr.md) and [ADR 0002](../adr/0002-three-store-boundary-architecture.md) first.
 The former [questionnaire and recommendations](decision-register-before-no-publication.md)
 are preserved verbatim as a superseded proposal checkpoint, not active choices.
 The original A recommendation is not approved where the owner selected B.
@@ -12,11 +12,10 @@ The original A recommendation is not approved where the owner selected B.
 | P2-Q02 | B accepted | Latest PR title/body/conversation comments and independent thread state plus necessary evidence. |
 | P2-Q03 | B accepted | Current known Source Inventory plus necessary scoped evidence; no historical roster-value service. |
 | P2-Q04 | NO_INDEPENDENT_PUBLICATION accepted | No independent Publication entity/subsystem; reassess the complete design before implementing. |
-| P2-Q05–Q12 | No option selected; interview paused | Reevaluate necessity, formulation and dependencies under the accepted choices. Do not request the next answer during this reassessment. |
+| PF-P01–PF-P17 | Accepted target design | Binding three-store physical boundary (Core, Operational, Search) and lifecycle rules. See [ADR 0002](../adr/0002-three-store-boundary-architecture.md). |
+| P2-Q05–Q12 | Resolved by PF-P01–PF-P17 and Publication-free design | Physical separation, checkpoint policy, cache placement, and index derivation established by binding owner decisions. |
 
-The pause is not approval of a default, and not proof that every remaining
-question is still necessary. It includes Q08-S/G and Q10-T. No new policy is
-chosen merely because a prior prototype or a separate bug-fix PR passes tests.
+The pause on option selection is superseded by binding decisions PF-P01 through PF-P17.
 
 ## P2-Q01 — PR state observation lifecycle
 
