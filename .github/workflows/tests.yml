@@ -12,10 +12,6 @@ on:
           - development
           - release
         default: development
-      full:
-        description: (Deprecated) Run the complete release acceptance suite
-        type: boolean
-        default: false
 permissions:
   contents: read
 concurrency:
@@ -126,6 +122,7 @@ jobs:
           name: ci-profile-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             artifacts/ci-profile/*.json
+            artifacts/ci-profile/*.jsonl
             artifacts/ci-profile/*.md
             artifacts/ci-profile/*.xml
             artifacts/ci-profile/selected-tests.txt

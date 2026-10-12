@@ -26,7 +26,8 @@ packages = ["src/repo_catalog"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers"
+pythonpath = ["src"]
+addopts = "--strict-markers -m 'not live and not benchmark'"
 markers = ["live: opt-in real GitHub requests", "benchmark: opt-in measurements"]
 
 [tool.ruff]

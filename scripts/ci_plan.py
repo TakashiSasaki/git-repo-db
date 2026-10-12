@@ -259,9 +259,22 @@ def context_from_environment():
     head = git(ROOT, "rev-parse", "HEAD").decode().strip()
     inputs = event.get("inputs", {})
     mode = os.environ.get("CI_VALIDATION_MODE") or inputs.get("mode")
+    full_in = inputs.get("full")
+    if full_in is not None:
+        full_val = full_in in (True, "true", "True", "1")
+        if mode:
+            if full_val and mode != "release":
+                raise ValueError(
+                    f"Contradictory inputs: mode is '{mode}' but legacy full is true"
+                )
+            if not full_val and mode == "release":
+                raise ValueError(
+                    "Contradictory inputs: mode is 'release' but legacy full is false"
+                )
+        else:
+            mode = "release" if full_val else "development"
     if not mode:
-        full_in = inputs.get("full", False) in (True, "true")
-        mode = "release" if full_in else "development"
+        mode = "development"
     if mode not in ("development", "release"):
         raise ValueError(f"Unsupported validation mode: {mode}")
     return {
@@ -393,10 +406,7 @@ def make_plan(context, root=ROOT, runtime_meta=None):
     else:
         static = code_or_config_changed
         smoke = schema_or_contract_changed or bool(scope_reasons)
-        if leaf_tests and not scope_reasons:
-            selected = set(leaf_tests)
-        else:
-            selected = set()
+        selected = set()
 
     if context.get("selected_test_files"):
         selected.update(context["selected_test_files"])
@@ -535,7 +545,14 @@ def main():
         if args.context
         else context_from_environment()
     )
-    if args.mode:
+    if args.mode and args.full:
+        if args.mode != "release":
+            raise ValueError(
+                f"Contradictory options: --mode is '{args.mode}' but --full was specified"
+            )
+        context["mode"] = "release"
+        context["full"] = True
+    elif args.mode:
         context["mode"] = args.mode
         context["full"] = args.mode == "release"
     elif args.full:

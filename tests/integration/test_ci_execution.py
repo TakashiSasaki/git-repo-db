@@ -326,25 +326,322 @@ def test_workflow_keeps_one_environment_and_conditions_expensive_checks():
         assert f"steps.plan.outputs.{lane} == 'true'" in workflow
 
 
+def make_valid_receipt(plan):
+    ordinary_nodes = [
+        "tests/integration/test_runtime_flow.py::test_synthetic",
+        "tests/unit/test_contracts.py::test_synthetic",
+    ]
+    packaging_nodes = [
+        "tests/packaging/test_distribution.py::test_synthetic",
+    ]
+    all_nodes = sorted(ordinary_nodes + packaging_nodes)
+    return {
+        "schema_version": 1,
+        "kind": "local_release_receipt",
+        "commit_sha": plan["context"]["tested_sha"],
+        "acceptance_input_hash": plan["acceptance_input_hash"],
+        "exit_code": 0,
+        "status": "passed",
+        "dirty": False,
+        "tracked_changes": False,
+        "passed_nodes": all_nodes,
+        "passed_count": len(all_nodes),
+        "failed_nodes": [],
+        "failed_count": 0,
+        "skipped_nodes": [],
+        "skipped_count": 0,
+        "lanes": {
+            "tests": {
+                "exit_code": 0,
+                "status": "passed",
+                "passed_nodes": ordinary_nodes,
+            },
+            "packaging": {
+                "exit_code": 0,
+                "status": "passed",
+                "passed_nodes": packaging_nodes,
+            },
+        },
+    }
+
+
 def test_complete_release_reconciliation_with_valid_local_receipt(acceptance):
     root, output = acceptance
     plan = json.loads((output / "plan.json").read_bytes())
-    receipt = {
-        "acceptance_input_hash": plan["acceptance_input_hash"],
-        "exit_code": 0,
-        "dirty": False,
-        "tracked_changes": False,
-        "passed_nodes": [
-            "tests/unit/test_contracts.py::test_synthetic",
-            "synthetic::1",
-            "synthetic::2",
-        ],
-    }
+    receipt = make_valid_receipt(plan)
     (output / "local-receipt.json").write_text(json.dumps(receipt))
     result = ci_execute.gate(output / "plan.json", root)
     assert result["full_acceptance"]
     assert result["acceptance_status"] == "complete_release_passed"
     assert result["evidence_status"] == "local_evidence_verified"
+
+
+@pytest.mark.parametrize(
+    "tamper,expected_reason_substr",
+    [
+        (
+            lambda r: r.update(
+                passed_nodes=[
+                    "tests/unit/test_contracts.py::test_synthetic",
+                    "synthetic::1",
+                    "synthetic::2",
+                ]
+            ),
+            "outside required acceptance directories",
+        ),
+        (
+            lambda r: r.update(
+                passed_nodes=[
+                    "tests/unit/test_contracts.py::test_synthetic",
+                    "not_a_valid_node_id",
+                    "tests/packaging/test_distribution.py::test_synthetic",
+                ]
+            ),
+            "Malformed node identifier",
+        ),
+        (
+            lambda r: (
+                r.update(
+                    passed_nodes=[
+                        "tests/unit/test_contracts.py::test_synthetic",
+                        "tests/packaging/test_distribution.py::test_synthetic",
+                    ],
+                    passed_count=2,
+                ),
+                r["lanes"]["tests"].update(
+                    passed_nodes=[
+                        "tests/unit/test_contracts.py::test_synthetic",
+                    ],
+                    passed_count=1,
+                ),
+            ),
+            "Node reconciliation mismatch",
+        ),
+        (
+            lambda r: (
+                r.update(
+                    passed_nodes=[
+                        "tests/unit/test_contracts.py::test_synthetic",
+                        "tests/unit/test_contracts.py::test_other",
+                        "tests/packaging/test_distribution.py::test_synthetic",
+                    ],
+                    passed_count=3,
+                ),
+                r["lanes"]["tests"].update(
+                    passed_nodes=[
+                        "tests/unit/test_contracts.py::test_synthetic",
+                        "tests/unit/test_contracts.py::test_other",
+                    ],
+                    passed_count=2,
+                ),
+            ),
+            "Node reconciliation mismatch",
+        ),
+        (
+            lambda r: r.update(
+                passed_nodes=[
+                    "tests/unit/test_contracts.py::test_synthetic",
+                    "tests/unit/test_contracts.py::test_synthetic",
+                    "tests/packaging/test_distribution.py::test_synthetic",
+                ],
+                passed_count=3,
+            ),
+            "duplicate",
+        ),
+        (
+            lambda r: r.pop("exit_code"),
+            "exit_code",
+        ),
+        (
+            lambda r: r.update(exit_code=1),
+            "exit_code",
+        ),
+        (
+            lambda r: r.update(status="failed"),
+            "status",
+        ),
+        (
+            lambda r: r.update(
+                passed_nodes=[
+                    "tests/unit/test_contracts.py::test_synthetic",
+                    "tests/integration/test_runtime_flow.py::test_synthetic",
+                ],
+                passed_count=2,
+            ),
+            "Packaging validation is missing",
+        ),
+        (
+            lambda r: r.update(
+                passed_nodes=[
+                    "tests/packaging/test_distribution.py::test_synthetic",
+                ],
+                passed_count=1,
+            ),
+            "Ordinary test validation is missing",
+        ),
+        (
+            lambda r: r.update(dirty=True),
+            "dirty",
+        ),
+        (
+            lambda r: r.update(tracked_changes=True),
+            "uncommitted changes",
+        ),
+        (
+            lambda r: r.update(
+                acceptance_input_hash="0000000000000000000000000000000000000000000000000000000000000000"
+            ),
+            "Acceptance input hash mismatch",
+        ),
+        (
+            lambda r: r.update(commit_sha="0000000000000000000000000000000000000000"),
+            "Commit SHA mismatch",
+        ),
+        (
+            lambda r: r.update(
+                failed_nodes=["tests/unit/test_contracts.py::test_synthetic"],
+                failed_count=1,
+            ),
+            "failures",
+        ),
+        (
+            lambda r: r.update(
+                skipped_nodes=["tests/unit/test_contracts.py::test_synthetic"],
+                skipped_count=1,
+            ),
+            "skips",
+        ),
+        (
+            lambda r: r.pop("commit_sha"),
+            "Missing commit_sha",
+        ),
+        (
+            lambda r: r.pop("lanes"),
+            "Lanes mapping is missing",
+        ),
+        (
+            lambda r: r["lanes"].pop("packaging"),
+            "Lanes mapping is missing or must contain",
+        ),
+        (
+            lambda r: r.update(interrupted=True),
+            "interrupted",
+        ),
+        (
+            lambda r: r.update(
+                error_nodes=["tests/unit/test_contracts.py::test_synthetic"],
+                error_count=1,
+            ),
+            "errors",
+        ),
+        (
+            lambda r: r["lanes"]["tests"].update(
+                failed_nodes=["tests/unit/test_contracts.py::test_synthetic"],
+                failed_count=1,
+            ),
+            "records non-empty failed_nodes",
+        ),
+        (
+            lambda r: r["lanes"]["tests"].update(
+                passed_nodes=[
+                    "tests/packaging/test_distribution.py::test_synthetic",
+                    "tests/unit/test_contracts.py::test_synthetic",
+                ]
+            ),
+            "Tests lane contains packaging node",
+        ),
+        (
+            lambda r: r["lanes"]["tests"].update(junit_sha256="invalid_sha"),
+            "invalid junit_sha256",
+        ),
+        (
+            lambda r: r.update(passed_count=999),
+            "Contradictory passed_count",
+        ),
+    ],
+)
+def test_adversarial_receipt_tampering_is_rejected(
+    acceptance, tamper, expected_reason_substr
+):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    receipt = make_valid_receipt(plan)
+    tamper(receipt)
+
+    valid, reason = ci_execute.verify_local_receipt(
+        receipt,
+        plan,
+        required_nodes=set(
+            plan["lanes"]["tests"]["test_ids"] + plan["lanes"]["packaging"]["test_ids"]
+        ),
+        root=root,
+    )
+    assert not valid
+    assert expected_reason_substr.lower() in reason.lower()
+
+    (output / "local-receipt.json").write_text(json.dumps(receipt))
+    result = ci_execute.gate(output / "plan.json", root)
+    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["evidence_status"] == "local_evidence_failed"
+
+
+def test_create_receipt_and_reconcile_release_workflow(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+
+    receipt = ci_execute.create_receipt(output, root=root)
+    assert receipt["exit_code"] == 0
+    assert receipt["passed_count"] == 3
+    assert receipt["acceptance_input_hash"] == plan["acceptance_input_hash"]
+
+    gate_res = ci_execute.gate(output / "plan.json", root)
+    assert gate_res["acceptance_status"] == "complete_release_passed"
+    assert gate_res["evidence_status"] == "local_evidence_verified"
+
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    reconciled = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+    assert reconciled["verdict"] == "complete_release_passed"
+    assert reconciled["acceptance_status"] == "complete_release_passed"
+
+    # Invalid receipt must yield release_rejected for both verdict and acceptance_status
+    bad_rec_path = output / "bad-receipt.json"
+    bad_rec_path.write_text(json.dumps({"exit_code": 1}))
+    rejected = ci_execute.reconcile_release(bad_rec_path, manifest_path, root=root)
+    assert rejected["verdict"] == "release_rejected"
+    assert rejected["acceptance_status"] == "release_rejected"
+
+
+def test_corrupted_local_receipt_fails_closed(acceptance):
+    root, output = acceptance
+    (output / "local-receipt.json").write_text("{corrupt json")
+    result = ci_execute.gate(output / "plan.json", root)
+    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["evidence_status"] == "local_evidence_failed"
+
+
+def test_contradictory_candidate_receipts_fail_closed(acceptance):
+    root, output = acceptance
+    plan = json.loads((output / "plan.json").read_bytes())
+    valid_rec = make_valid_receipt(plan)
+    receipts_dir = output / "receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    (receipts_dir / "valid.json").write_text(json.dumps(valid_rec))
+
+    failed_rec = make_valid_receipt(plan)
+    failed_rec["exit_code"] = 1
+    (output / "local-receipt.json").write_text(json.dumps(failed_rec))
+
+    result = ci_execute.gate(output / "plan.json", root)
+    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["evidence_status"] == "local_evidence_failed"
+
+
+def test_create_receipt_rejects_dirty_worktree(acceptance):
+    root, output = acceptance
+    write(root, "untracked.txt", "dirty\n")
+    with pytest.raises(ValueError, match="dirty working tree"):
+        ci_execute.create_receipt(output, root=root)
 
 
 def test_development_mode_gate_records_development_checks_passed(tmp_path):
