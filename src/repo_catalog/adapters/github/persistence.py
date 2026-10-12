@@ -245,11 +245,19 @@ class ApiFacts:
                 )
                 if has_complete_marker:
                     with self.s.operational.transaction():
-                        self.s.operational.execute(
-                            "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'complete',NULL,NULL) "
-                            "ON CONFLICT(fetch_collection_id) DO UPDATE SET state='complete',cursor=NULL,reason=NULL",
-                            (fc_id, job, self.fence(job)),
-                        )
+                        if self.s.operational.one(
+                            "SELECT 1 FROM collection_progress WHERE fetch_collection_id=?",
+                            (fc_id,),
+                        ):
+                            self.s.operational.execute(
+                                "UPDATE collection_progress SET job_id=?,attempt=?,state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
+                                (job, self.fence(job), fc_id),
+                            )
+                        else:
+                            self.s.operational.execute(
+                                "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'complete',NULL,NULL)",
+                                (fc_id, job, self.fence(job)),
+                            )
                     previous = {
                         **dict(fc),
                         "state": "complete",

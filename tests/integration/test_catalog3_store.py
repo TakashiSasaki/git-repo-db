@@ -264,6 +264,8 @@ def test_search_store_lifecycle_and_fallback(tmp_path):
 
 
 def test_reconcile_core_and_operational_writes_on_resume(tmp_path):
+    import uuid
+
     from repo_catalog.adapters.github.persistence import ApiFacts
     from repo_catalog.config import DEFAULTS
 
@@ -393,6 +395,36 @@ def test_reconcile_core_and_operational_writes_on_resume(tmp_path):
                 (fc_id_3,),
             )[0]
             == "complete"
+        )
+
+        # Case 3b: Collection reuse across DIFFERENT jobs on intact operational DB:
+        # Must update collection_progress without triggering collection_progress_no_replace trigger!
+        job_id_2 = str(uuid.uuid4())
+        with store.operational.transaction():
+            store.operational.execute(
+                "INSERT INTO jobs(job_id,kind,request,current_attempt) VALUES(?,'sync','{}',1)",
+                (job_id_2,),
+            )
+            store.operational.execute(
+                "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES(?,1,'running','{}')",
+                (job_id_2,),
+            )
+        c3_job2 = facts.begin(
+            repo,
+            None,
+            "pr-list",
+            job_id_2,
+            "https://api.github.com/repos/test/pulls",
+            reuse=True,
+        )
+        assert c3_job2["fetch_collection_id"] == fc_id_3
+        assert c3_job2["state"] == "complete"
+        assert (
+            store.operational.one(
+                "SELECT job_id FROM collection_progress WHERE fetch_collection_id=?",
+                (fc_id_3,),
+            )[0]
+            == job_id_2
         )
 
     # Case 4: Read-only operations when Operational DB is absent:
