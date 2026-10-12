@@ -14,6 +14,8 @@ PR の初回・再開などは merge-base から実際に試験する merge tree
 
 main push だからという理由で無条件の full acceptance は行いません。manual full は明示的な選択です。既知の prose 以外を推測で除外しません。
 
+開発時の通常の検証（Development validation）と、明示的なリリース検証（Release acceptance）は明確に分離されます。通常の PR や push ではローカルでの焦点を絞った検証を基本とし、CI では軽量な静的検査・設定検査・スモークを実行して検証状況を報告します。開発 PR でソース変更時に無条件のホスト全件テストを実行したり、ローカル検証済みケースを自動で重複実行したりしません。完全な独立全件実行（ローカルおよびホストでの pytest 全件、isolated wheel/sdist packaging、厳密な node ID 照合）は、明示的に要求されたリリース検証でのみ行われます。
+
 現在の manifest は catalog3 runtime と救出の動作試験を中心に、通常試験と保護境界を含みます。過去の phase export や古い DDL pin の試験は現行 acceptance の下限にしません。不要になった試験の削除も変更として扱い、残る acceptance 全体を選びます。件数の固定下限は設けません。
 
 実行前に選択した file の node ID を収集し、結果の JUnit と exactly once で照合します。失敗、skip、欠落、重複、余分な ID、別 run / attempt / SHA の古い結果、版の違う binding は成功扱いにしません。確定した CI の証跡は clean tree と一致する必要があります。
