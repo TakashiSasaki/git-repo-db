@@ -629,7 +629,8 @@ def test_adversarial_receipt_tampering_is_rejected(
 
     (output / "local-receipt.json").write_text(json.dumps(receipt))
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["acceptance_status"] == "release_rejected"
+    assert result["outcome"] == "failed"
     assert result["evidence_status"] == "local_evidence_failed"
 
 
@@ -648,14 +649,31 @@ def test_create_receipt_and_reconcile_release_workflow(acceptance):
 
     manifest_path = output / "validation-manifest.json"
     local_rec_path = output / "local-receipt.json"
-    reconciled = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+
+    # Authoritative Tier 3 verified hosted run
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
     assert reconciled["verdict"] == "complete_release_passed"
     assert reconciled["acceptance_status"] == "complete_release_passed"
+
+    # Unverified hosted run without gh verification yields validation_gap_reported
+    unverified = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+    assert unverified["verdict"] == "validation_gap_reported"
+    assert unverified["acceptance_status"] == "validation_gap_reported"
 
     # Invalid receipt must yield release_rejected for both verdict and acceptance_status
     bad_rec_path = output / "bad-receipt.json"
     bad_rec_path.write_text(json.dumps({"exit_code": 1}))
-    rejected = ci_execute.reconcile_release(bad_rec_path, manifest_path, root=root)
+    rejected = ci_execute.reconcile_release(
+        bad_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
     assert rejected["verdict"] == "release_rejected"
     assert rejected["acceptance_status"] == "release_rejected"
 
@@ -664,7 +682,8 @@ def test_corrupted_local_receipt_fails_closed(acceptance):
     root, output = acceptance
     (output / "local-receipt.json").write_text("{corrupt json")
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["acceptance_status"] == "release_rejected"
+    assert result["outcome"] == "failed"
     assert result["evidence_status"] == "local_evidence_failed"
 
 
@@ -681,7 +700,8 @@ def test_contradictory_candidate_receipts_fail_closed(acceptance):
     (output / "local-receipt.json").write_text(json.dumps(failed_rec))
 
     result = ci_execute.gate(output / "plan.json", root)
-    assert result["acceptance_status"] == "hosted_release_passed"
+    assert result["acceptance_status"] == "release_rejected"
+    assert result["outcome"] == "failed"
     assert result["evidence_status"] == "local_evidence_failed"
 
 
@@ -1007,7 +1027,142 @@ def test_adversarial_15_valid_complete_local_and_hosted_evidence_yields_positive
     ci_execute.gate(output / "plan.json", root)
     manifest_path = output / "validation-manifest.json"
     local_rec_path = output / "local-receipt.json"
-    reconciled = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
     assert reconciled["verdict"] == "complete_release_passed"
     assert reconciled["acceptance_status"] == "complete_release_passed"
     assert reconciled["acceptance_input_hash"] == plan["acceptance_input_hash"]
+
+
+def test_adversarial_16_unauthenticated_run_verification_json_does_not_grant_tier3(
+    acceptance,
+):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    # Write plaintext run-verification.json
+    (output / "run-verification.json").write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "conclusion": "success",
+                "run_id": "10",
+                "source": "unauthenticated",
+            }
+        )
+    )
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    # Without authoritative gh / run_verifier, plaintext file cannot grant Tier 3 attestation
+    reconciled = ci_execute.reconcile_release(local_rec_path, manifest_path, root=root)
+    assert reconciled["verdict"] == "validation_gap_reported"
+    assert reconciled["acceptance_status"] == "validation_gap_reported"
+    assert (
+        "authoritative hosted run verification unavailable"
+        in reconciled["reason"].lower()
+    )
+
+
+def test_adversarial_17_hosted_development_run_rejected_for_release(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    # Verifier reports run was triggered by development pull_request event
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (
+            False,
+            "GitHub Actions run was triggered by pull_request, which does not execute full release qualification",
+        ),
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "does not execute full release qualification" in reconciled["reason"].lower()
+
+
+def test_adversarial_18_stale_commit_or_input_hash_in_hosted_manifest_rejected(
+    acceptance,
+):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["context"]["tested_sha"] = "0" * 40
+    manifest["context"]["feature_sha"] = "0" * 40
+    manifest_path.write_text(json.dumps(manifest))
+    binding_path = output / "receipt-binding.json"
+    binding = json.loads(binding_path.read_bytes())
+    binding["head"] = "0" * 40
+    binding["feature_sha"] = "0" * 40
+    binding_path.write_text(json.dumps(binding))
+    local_rec_path = output / "local-receipt.json"
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "does not match active repository head" in reconciled["reason"].lower()
+
+
+def test_adversarial_19_hosted_manifest_missing_acceptance_files_rejected(
+    acceptance,
+):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["coverage"]["unexecuted_files"] = ["tests/unit/test_contracts.py"]
+    manifest_path.write_text(json.dumps(manifest))
+    local_rec_path = output / "local-receipt.json"
+    reconciled = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        run_verifier=lambda rid, b, h: (True, None),
+    )
+    assert reconciled["verdict"] == "release_rejected"
+    assert "unexecuted acceptance files" in reconciled["reason"].lower()
+
+
+def test_adversarial_20_find_artifact_rejects_absolute_path_and_runner_artifacts(
+    tmp_path,
+):
+    root = tmp_path / "repo"
+    root.mkdir()
+    artifacts_dir = root / "artifacts" / "ci-profile"
+    artifacts_dir.mkdir(parents=True)
+    runner_xml = artifacts_dir / "tests.xml"
+    runner_xml.write_text("<testsuites/>")
+
+    # Absolute path must be rejected
+    res_abs = ci_execute.find_artifact(
+        {"junit_file": str(runner_xml.resolve())},
+        "junit_file",
+        "junit_path",
+        "tests.xml",
+        tmp_path / "receipt.json",
+        root,
+    )
+    assert res_abs is None
+
+    # Reference attempting to resolve to artifacts/ci-profile must be rejected
+    res_art = ci_execute.find_artifact(
+        {"junit_file": "tests.xml"},
+        "junit_file",
+        "junit_path",
+        "tests.xml",
+        tmp_path / "receipt.json",
+        root,
+    )
+    assert res_art is None

@@ -239,22 +239,24 @@ def successful_profile(path, context, expected_runtime):
 def find_artifact(lane_data, key_file, key_path, default_filename, receipt_path, root):
     target = lane_data.get(key_file) or lane_data.get(key_path) or default_filename
     target_path = Path(target)
-    if target_path.is_absolute() and target_path.is_file():
-        return target_path
+    if target_path.is_absolute():
+        return None
     if receipt_path is not None:
         rec_dir = Path(receipt_path).resolve().parent
-        cand = rec_dir / target_path
-        if cand.is_file():
+        cand = (rec_dir / target_path).resolve()
+        if rec_dir in cand.parents and cand.is_file():
             return cand
-        cand_inv = rec_dir / "invocations" / target_path.name
-        if cand_inv.is_file():
+        cand_inv = (rec_dir / "invocations" / target_path.name).resolve()
+        if rec_dir in cand_inv.parents and cand_inv.is_file():
             return cand_inv
-    cand_root = Path(root).resolve() / target_path
-    if cand_root.is_file():
+        cand_parent_inv = (rec_dir.parent / "invocations" / target_path.name).resolve()
+        if cand_parent_inv.is_file():
+            return cand_parent_inv
+    cand_root = (Path(root).resolve() / target_path).resolve()
+    if cand_root.is_file() and not str(cand_root).startswith(
+        str(Path(root).resolve() / "artifacts")
+    ):
         return cand_root
-    cand_art = Path(root).resolve() / "artifacts" / "ci-profile" / target_path.name
-    if cand_art.is_file():
-        return cand_art
     return None
 
 
@@ -730,7 +732,9 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
     return receipt
 
 
-def reconcile_release(local_receipt_path, hosted_manifest_path, root=ROOT):
+def reconcile_release(
+    local_receipt_path, hosted_manifest_path, root=ROOT, run_verifier=None
+):
     """Reconcile independent local release receipt and hosted validation manifest."""
     local_receipt_path = Path(local_receipt_path)
     hosted_manifest_path = Path(hosted_manifest_path)
@@ -807,6 +811,30 @@ def reconcile_release(local_receipt_path, hosted_manifest_path, root=ROOT):
             "acceptance_status": "release_rejected",
         }
 
+    coverage = hosted.get("coverage", {})
+    if coverage.get("unexecuted_files"):
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest contains unexecuted acceptance files: {coverage.get('unexecuted_files')}",
+            "acceptance_status": "release_rejected",
+        }
+    if coverage.get("excluded_files"):
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest contains excluded acceptance files: {coverage.get('excluded_files')}",
+            "acceptance_status": "release_rejected",
+        }
+
+    required_acceptance_files = set(ci_plan.current_acceptance_files(root))
+    hosted_files = {t.split("::")[0] for t in test_ids}
+    missing_files = required_acceptance_files - hosted_files
+    if missing_files:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest is missing coverage for required acceptance files: {sorted(missing_files)}",
+            "acceptance_status": "release_rejected",
+        }
+
     # Verify hosted run provenance (Finding C)
     bundle_dir = hosted_manifest_path.parent
     binding_file = bundle_dir / "receipt-binding.json"
@@ -837,21 +865,58 @@ def reconcile_release(local_receipt_path, hosted_manifest_path, root=ROOT):
             "reason": "Receipt binding head SHA mismatch",
             "acceptance_status": "release_rejected",
         }
-    tested_sha = hosted.get("context", {}).get("tested_sha")
-    expected_tree = hosted.get("tree_sha") or hosted.get("runtime", {}).get("tree_sha")
-    if not expected_tree and tested_sha:
-        try:
-            expected_tree = subprocess.check_output(
-                ["git", "-C", str(root), "rev-parse", f"{tested_sha}^{{tree}}"],
-                text=True,
-            ).strip()
-        except Exception:
-            expected_tree = None
 
+    # Verify active repository tree binding and effective merge tree equivalence
+    try:
+        active_commit = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", "HEAD"], text=True
+        ).strip()
+        active_tree = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip()
+    except Exception as err:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Unable to determine active repository HEAD: {err}",
+            "acceptance_status": "release_rejected",
+        }
+
+    tested_sha = hosted.get("context", {}).get("tested_sha")
+    feature_sha = hosted.get("context", {}).get("feature_sha")
+    if tested_sha != active_commit and feature_sha != active_commit:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest tested_sha ({tested_sha}) / feature_sha ({feature_sha}) does not match active repository HEAD ({active_commit})",
+            "acceptance_status": "release_rejected",
+        }
+
+    try:
+        tested_tree = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", f"{tested_sha}^{{tree}}"],
+            text=True,
+        ).strip()
+    except Exception:
+        tested_tree = hosted.get("tree_sha")
+    if tested_tree != active_tree:
+        return {
+            "verdict": "release_rejected",
+            "reason": f"Hosted manifest tree ({tested_tree}) does not match active repository tree ({active_tree})",
+            "acceptance_status": "release_rejected",
+        }
+
+    expected_tree = hosted.get("tree_sha") or active_tree
     if binding.get("tree") and expected_tree and binding["tree"] != expected_tree:
         return {
             "verdict": "release_rejected",
             "reason": "Receipt binding tree SHA mismatch",
+            "acceptance_status": "release_rejected",
+        }
+
+    active_plan = ci_plan.make_plan(hosted["context"], root=root)
+    if hosted.get("acceptance_input_hash") != active_plan["acceptance_input_hash"]:
+        return {
+            "verdict": "release_rejected",
+            "reason": "Hosted manifest acceptance_input_hash does not match active repository candidate tree",
             "acceptance_status": "release_rejected",
         }
 
@@ -873,25 +938,14 @@ def reconcile_release(local_receipt_path, hosted_manifest_path, root=ROOT):
                     "acceptance_status": "release_rejected",
                 }
 
-    # Authoritative run verification check
+    # Authoritative run verification check (Tier 3)
     run_verified = False
-    ver_file = bundle_dir / "run-verification.json"
-    if ver_file.is_file():
-        ver_data = read(ver_file)
-        if (
-            ver_data.get("status") == "completed"
-            and ver_data.get("conclusion") == "success"
-            and str(ver_data.get("run_id")) == str(run_id)
-            and (
-                not binding.get("head")
-                or ver_data.get("head_sha") == binding.get("head")
-            )
-        ):
-            run_verified = True
-        else:
+    if run_verifier is not None:
+        run_verified, ver_err = run_verifier(run_id, binding, hosted)
+        if not run_verified and ver_err:
             return {
                 "verdict": "release_rejected",
-                "reason": "Hosted run verification certificate is invalid or recorded failure",
+                "reason": ver_err,
                 "acceptance_status": "release_rejected",
             }
     else:
@@ -904,7 +958,7 @@ def reconcile_release(local_receipt_path, hosted_manifest_path, root=ROOT):
                     "view",
                     str(run_id),
                     "--json",
-                    "status,conclusion,headSha",
+                    "status,conclusion,headSha,event",
                 ],
                 capture_output=True,
                 text=True,
@@ -920,6 +974,16 @@ def reconcile_release(local_receipt_path, hosted_manifest_path, root=ROOT):
                         or gh_info.get("headSha") == binding.get("head")
                     )
                 ):
+                    if gh_info.get("event") not in (
+                        "workflow_dispatch",
+                        "schedule",
+                        "release",
+                    ):
+                        return {
+                            "verdict": "release_rejected",
+                            "reason": f"GitHub Actions run was triggered by {gh_info.get('event')}, which does not execute full release qualification",
+                            "acceptance_status": "release_rejected",
+                        }
                     run_verified = True
                 else:
                     return {
@@ -1084,7 +1148,14 @@ def gate(path, root=ROOT):
                 if cand == (output / "local-receipt.json"):
                     corrupted_receipt = True
 
+    failed_receipts = []
     if corrupted_receipt:
+        failed_receipts.append(
+            (
+                output / "local-receipt.json",
+                "Malformed or unparseable local receipt JSON",
+            )
+        )
         evidence_status = "local_evidence_failed"
     elif local_receipts:
         release_required_nodes = None
@@ -1140,12 +1211,18 @@ def gate(path, root=ROOT):
             )
         if evidence_status == "local_evidence_verified":
             acceptance_status = "complete_release_passed"
+        elif evidence_status == "local_evidence_failed":
+            acceptance_status = "release_rejected"
         else:
             acceptance_status = "hosted_release_passed"
         status_label = (
             "Complete release acceptance passed (local and hosted validated)."
             if acceptance_status == "complete_release_passed"
-            else "Hosted release test suite passed for the tested inputs (awaiting local reconciliation for complete release)."
+            else (
+                f"Release validation rejected: local evidence failed verification ({failed_receipts[0][1] if failed_receipts else 'unknown'})."
+                if acceptance_status == "release_rejected"
+                else "Hosted release test suite passed for the tested inputs (awaiting local reconciliation for complete release)."
+            )
         )
         summary_text = (
             f"## Validation outcome\n\n**{status_label}**\n\n"
@@ -1166,7 +1243,7 @@ def gate(path, root=ROOT):
 
     result = {
         "version": 3,
-        "outcome": "passed",
+        "outcome": "failed" if acceptance_status == "release_rejected" else "passed",
         "context": plan["context"],
         "runtime": plan["runtime"],
         "tree_sha": tree_sha,
