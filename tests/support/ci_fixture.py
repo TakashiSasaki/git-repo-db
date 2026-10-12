@@ -49,7 +49,7 @@ def repository(root):
     return base, commit(root, "feature")
 
 
-def context(root, base, head, run_id="10", event="pull_request"):
+def context(root, base, head, run_id="10", event="pull_request", mode="development"):
     merge = command(
         root,
         "commit-tree",
@@ -60,6 +60,7 @@ def context(root, base, head, run_id="10", event="pull_request"):
         head,
         input=b"synthetic merge\n",
     )
+    is_release = mode == "release"
     return {
         "event": event,
         "base_sha": base,
@@ -68,7 +69,8 @@ def context(root, base, head, run_id="10", event="pull_request"):
         "tested_sha": merge if event == "pull_request" else head,
         "run_id": run_id,
         "run_attempt": "1",
-        "full": False,
+        "mode": mode,
+        "full": is_release,
     }
 
 

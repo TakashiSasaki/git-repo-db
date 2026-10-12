@@ -223,12 +223,15 @@ def gate(path, root=ROOT):
     rebuilt = ci_plan.make_plan(plan["context"], root=root)
     for key in (
         "version",
+        "mode",
         "policy_hash",
         "tree_hash",
         "acceptance_input_hash",
         "runtime",
         "full",
         "acceptance_files",
+        "required_files",
+        "selected_files",
         "excluded_files",
         "unexecuted_files",
         "preparation",
@@ -236,7 +239,7 @@ def gate(path, root=ROOT):
         "changed",
         "comparison_sha",
     ):
-        if rebuilt[key] != plan[key]:
+        if rebuilt.get(key) != plan.get(key):
             raise ValueError("Plan changed after selection: " + key)
     for name in ci_plan.LANES:
         for key in ("disposition", "test_files"):
@@ -305,21 +308,96 @@ def gate(path, root=ROOT):
         profiles[name] = successful_profile(
             output / (name + ".json"), plan["context"], plan["runtime"]
         )
+
+    mode = plan.get("mode", "release" if plan.get("full") else "development")
+    evidence_status = "local_evidence_unavailable"
+    local_receipts = []
+    candidate_paths = [
+        output / "local-receipt.json",
+        *root.glob("docs/validation/receipts/*.json"),
+        *root.glob("docs/validation/evidence/*.json"),
+    ]
+    for cand in candidate_paths:
+        if cand.is_file():
+            try:
+                rec = read(cand)
+                if (
+                    isinstance(rec, dict)
+                    and rec.get("acceptance_input_hash")
+                    == plan["acceptance_input_hash"]
+                ):
+                    local_receipts.append(rec)
+            except Exception:
+                pass
+
+    if local_receipts:
+        local_passed = set()
+        local_failed = set()
+        for rec in local_receipts:
+            if rec.get("tracked_changes") or rec.get("dirty"):
+                continue
+            if rec.get("exit_code", 0) != 0:
+                local_failed.update(rec.get("failed_nodes", []))
+            local_passed.update(rec.get("passed_nodes", []))
+        if local_failed:
+            evidence_status = "local_evidence_failed"
+        elif local_passed:
+            required_nodes_count = len(plan.get("required_files", []))
+            if len(local_passed) >= required_nodes_count and required_nodes_count > 0:
+                evidence_status = "local_evidence_verified"
+            else:
+                evidence_status = "validation_gap_reported"
+
+    if mode == "development":
+        acceptance_status = "development_checks_passed"
+        status_label = (
+            "Development infrastructure checks passed."
+            if not plan["unexecuted_files"]
+            else "Development infrastructure checks passed (unexecuted tests require local validation)."
+        )
+        summary_text = (
+            f"## Validation outcome\n\n"
+            f"**{status_label}**\n\n"
+            f"Validation mode: `development`. Hosted CI validated repository configuration, static analysis, and smoke checks. Full runtime acceptance is not established by this run.\n\n"
+            f"Executed tests in CI: {len(selected)}. Unexecuted acceptance files requiring local validation: {len(plan['unexecuted_files'])}.\n\n"
+            f"Local evidence status: `{evidence_status}`. Acceptance input hash: `{plan['acceptance_input_hash']}`.\n"
+        )
+    else:  # mode == "release"
+        if not plan["full"]:
+            raise ValueError(
+                "Release mode requires full acceptance plan with all lanes selected"
+            )
+        if evidence_status == "local_evidence_verified":
+            acceptance_status = "complete_release_passed"
+        else:
+            acceptance_status = "hosted_release_passed"
+        status_label = (
+            "Complete release acceptance passed (local and hosted validated)."
+            if acceptance_status == "complete_release_passed"
+            else "Hosted release test suite passed for the tested inputs (awaiting local reconciliation for complete release)."
+        )
+        summary_text = (
+            f"## Validation outcome\n\n**{status_label}**\n\n"
+            f"Validation mode: `release`. Executed tests: {len(selected)}. Unexecuted acceptance files: {len(plan['unexecuted_files'])}.\n\n"
+            f"Acceptance input hash: `{plan['acceptance_input_hash']}`.\n"
+        )
+
     result = {
-        "version": 2,
+        "version": 3,
         "outcome": "passed",
         "context": plan["context"],
         "runtime": plan["runtime"],
+        "validation_mode": mode,
         "full_acceptance": plan["full"],
-        "acceptance_status": "full_acceptance_passed"
-        if plan["full"]
-        else "selected_checks_only",
+        "acceptance_status": acceptance_status,
+        "evidence_status": evidence_status,
         "acceptance_input_hash": plan["acceptance_input_hash"],
         "coverage": {
             "executed": len(selected),
             "selected_files": sum(
                 len(plan["lanes"][k]["test_files"]) for k in ci_plan.TEST_LANES
             ),
+            "required_files": plan.get("required_files", []),
             "unexecuted_files": plan["unexecuted_files"],
             "excluded_files": plan["excluded_files"],
         },
@@ -330,22 +408,10 @@ def gate(path, root=ROOT):
         },
     }
     save(manifest_path, result)
-    status = (
-        "Full acceptance passed for the tested inputs."
-        if result["full_acceptance"]
-        else "Selected checks only; merge acceptance is not established by this run."
-    )
-    summary = (
-        f"## Validation outcome\n\n**{status}**\n\n"
-        f"Executed tests: {len(selected)}. Unexecuted acceptance files: {len(plan['unexecuted_files'])}.\n\n"
-        f"Acceptance input hash: `{result['acceptance_input_hash']}`. "
-        "Final integration requires a completed full acceptance with matching inputs; "
-        "an earlier failed, cancelled or in-progress run is insufficient.\n"
-    )
-    (output / "validation-summary.md").write_text(summary)
+    (output / "validation-summary.md").write_text(summary_text)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as handle:
-            handle.write(summary)
+            handle.write(summary_text)
     return result
 
 

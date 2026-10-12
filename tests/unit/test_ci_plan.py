@@ -13,10 +13,10 @@ def history(tmp_path):
     return root, base, head
 
 
-def followup(history, path, text="changed\n", event="push"):
+def followup(history, path, text="changed\n", event="push", mode="development"):
     root, _, head = history
     write(root, path, text)
-    current = context(root, head, commit(root), event=event)
+    current = context(root, head, commit(root), event=event, mode=mode)
     return ci_plan.make_plan(current, root=root)
 
 
@@ -72,16 +72,21 @@ def test_new_ordinary_tests_are_discovered_in_every_directory(
         (root / "tests/unit/test_contracts.py").unlink()
     ctx = context(root, head, commit(root), event="push")
     for full in (False, True):
-        plan = ci_plan.make_plan(dict(ctx, full=full), root=root)
+        mode = "release" if full else "development"
+        plan = ci_plan.make_plan(dict(ctx, full=full, mode=mode), root=root)
         lane = "packaging" if directory == "tests/packaging" else "tests"
-        assert path in plan["lanes"][lane]["test_files"]
+        if full or not rename:
+            assert path in plan["lanes"][lane]["test_files"]
         assert not plan["excluded_files"]
         assert path in ci_plan.current_acceptance_files(root)
 
 
 def test_live_tests_remain_outside_ordinary_full_acceptance(history):
     plan = followup(
-        history, "tests/live/test_opt_in.py", "def test_live(): assert False\n"
+        history,
+        "tests/live/test_opt_in.py",
+        "def test_live(): assert False\n",
+        mode="release",
     )
     assert plan["full"]
     assert "tests/live/test_opt_in.py" not in plan["acceptance_files"]
@@ -107,12 +112,18 @@ def test_changed_imported_test_helper_selects_its_consumers(history, statement):
     write(root, consumer, statement + "\ndef test_synthetic(): pass\n")
     before = commit(root)
     write(root, helper, "renamed = 1\ndef test_synthetic(): pass\n")
-    plan = ci_plan.make_plan(
-        context(root, before, commit(root), event="push"), root=root
+    after = commit(root)
+    dev_plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="development"), root=root
     )
-    assert plan["full"]
-    assert consumer in plan["lanes"]["tests"]["test_files"]
-    assert "Imported test helper: " + helper in plan["fallback_reasons"]
+    assert not dev_plan["full"]
+    assert dev_plan["required_files"] == dev_plan["acceptance_files"]
+    assert "Imported test helper: " + helper in dev_plan["fallback_reasons"]
+    rel_plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="release"), root=root
+    )
+    assert rel_plan["full"]
+    assert consumer in rel_plan["lanes"]["tests"]["test_files"]
 
 
 def test_explicit_shared_test_rule_takes_precedence_over_leaf_selection(history):
@@ -123,10 +134,16 @@ def test_explicit_shared_test_rule_takes_precedence_over_leaf_selection(history)
     write(root, "scripts/ci_dependencies.json", json.dumps(rules))
     before = commit(root)
     write(root, path, "def test_synthetic(): pass\n# shared helper changed\n")
-    plan = ci_plan.make_plan(
-        context(root, before, commit(root), event="push"), root=root
+    after = commit(root)
+    dev_plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="development"), root=root
     )
-    assert plan["full"]
+    assert not dev_plan["full"]
+    assert dev_plan["required_files"] == dev_plan["acceptance_files"]
+    rel_plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="release"), root=root
+    )
+    assert rel_plan["full"]
 
 
 @pytest.mark.parametrize(
@@ -138,9 +155,19 @@ def test_explicit_shared_test_rule_takes_precedence_over_leaf_selection(history)
     ],
 )
 def test_unresolved_test_dependencies_expand_conservatively(history, source):
-    plan = followup(history, "tests/unit/test_contracts.py", source)
-    assert plan["full"]
+    root, _, head = history
+    write(root, "tests/unit/test_contracts.py", source)
+    after = commit(root)
+    plan = ci_plan.make_plan(
+        context(root, head, after, event="push", mode="development"), root=root
+    )
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert plan["fallback_reasons"]
+    rel_plan = ci_plan.make_plan(
+        context(root, head, after, event="push", mode="release"), root=root
+    )
+    assert rel_plan["full"]
 
 
 @pytest.mark.parametrize(
@@ -158,15 +185,24 @@ def test_changed_helper_with_plugin_or_aliased_dynamic_consumer_is_not_a_leaf(
     root, _, _ = history
     write(root, "tests/conftest.py", source)
     before = commit(root)
-    plan = followup(
-        (root, before, before),
+    write(
+        root,
         "tests/unit/test_contracts.py",
         "def test_synthetic(): pass\n# changed helper\n",
     )
-    assert plan["full"]
+    after = commit(root)
+    plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="development"), root=root
+    )
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert any(
         "Dynamic test dependency" in reason for reason in plan["fallback_reasons"]
     )
+    rel_plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="release"), root=root
+    )
+    assert rel_plan["full"]
 
 
 @pytest.mark.parametrize(
@@ -185,9 +221,18 @@ def test_explicit_executable_contract_wins_over_report_selection_and_fingerprint
     prior = ci_plan.make_plan(
         dict(context(root, before, before, event="push"), full=True), root=root
     )
-    plan = followup((root, before, before), contract, '{"contract":2}\n')
-    assert plan["full"]
+    write(root, contract, '{"contract":2}\n')
+    after = commit(root)
+    plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="development"), root=root
+    )
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert plan["acceptance_input_hash"] != prior["acceptance_input_hash"]
+    rel_plan = ci_plan.make_plan(
+        context(root, before, after, event="push", mode="release"), root=root
+    )
+    assert rel_plan["full"]
 
 
 @pytest.mark.parametrize(
@@ -208,25 +253,47 @@ def test_explicit_executable_contract_wins_over_report_selection_and_fingerprint
 def test_shared_executable_and_unknown_inputs_expand_to_current_acceptance(
     history, path
 ):
-    result = followup(history, path)
-    assert result["full"]
-    assert not result["unexecuted_files"]
-    assert result["fallback_reasons"]
+    root, _, head = history
+    write(root, path, "changed\n")
+    after = commit(root)
+    dev = ci_plan.make_plan(
+        context(root, head, after, event="push", mode="development"), root=root
+    )
+    assert not dev["full"]
+    assert dev["required_files"] == dev["acceptance_files"]
+    assert dev["unexecuted_files"] == dev["acceptance_files"]
+    assert dev["lanes"]["tests"]["disposition"] == "not_applicable"
+    assert dev["lanes"]["static"]["disposition"] == "selected"
+    assert dev["fallback_reasons"]
+    rel = ci_plan.make_plan(
+        context(root, head, after, event="push", mode="release"), root=root
+    )
+    assert rel["full"]
+    assert not rel["unexecuted_files"]
+    assert rel["fallback_reasons"]
 
 
 def test_fresh_branch_without_comparison_is_conservative(history):
     root, base, head = history
-    result = ci_plan.make_plan(context(root, base, head, event="local"), root=root)
-    assert result["full"]
+    dev = ci_plan.make_plan(
+        context(root, base, head, event="local", mode="development"), root=root
+    )
+    assert not dev["full"]
+    assert dev["required_files"] == dev["acceptance_files"]
+    rel = ci_plan.make_plan(
+        context(root, base, head, event="local", mode="release"), root=root
+    )
+    assert rel["full"]
 
 
 def test_manual_full_and_truncated_diff_expand(history):
     root, _, head = history
     write(root, "README.md", "# Changed\n")
     ctx = context(root, head, commit(root), event="push")
-    for field in ("full", "diff_complete"):
-        current = dict(ctx, **{field: field == "full"})
-        assert ci_plan.make_plan(current, root=root)["full"]
+    assert ci_plan.make_plan(dict(ctx, full=True), root=root)["full"]
+    trunc = ci_plan.make_plan(dict(ctx, diff_complete=False), root=root)
+    assert trunc["required_files"] == trunc["acceptance_files"]
+    assert not trunc["full"]
 
 
 def test_rename_and_delete_paths_remain_visible(history):
@@ -241,7 +308,9 @@ def test_rename_and_delete_paths_remain_visible(history):
         "src/repo_catalog/new.py",
         "README.md",
     }
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 def test_nul_diff_handles_unicode_shell_metacharacters_and_truncation():
@@ -260,9 +329,11 @@ def test_acceptance_file_removal_conservatively_runs_remaining_tests(history):
     (root / "tests/unit/test_contracts.py").unlink()
     ctx = context(root, head, commit(root), event="push")
     plan = ci_plan.make_plan(ctx, root=root)
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert "tests/unit/test_contracts.py" not in plan["acceptance_files"]
     assert not plan["excluded_files"]
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 def test_policy_cannot_silently_omit_an_ordinary_test_directory(history):
@@ -314,9 +385,11 @@ def test_pr_synchronize_missing_invalid_or_unavailable_before_requires_full(
     root, _, _ = history
     ctx = dict(synchronize_context(history), before_sha=before)
     plan = ci_plan.make_plan(ctx, root=root)
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert plan["comparison_sha"] is None
     assert plan["fallback_reasons"]
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 def test_pr_synchronize_nonancestor_before_requires_full(history):
@@ -326,8 +399,10 @@ def test_pr_synchronize_nonancestor_before_requires_full(history):
     head = commit(root)
     ctx = dict(context(root, base, head), action="synchronize", before_sha=old_head)
     plan = ci_plan.make_plan(ctx, root=root)
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert any("not an ancestor" in reason for reason in plan["fallback_reasons"])
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 def test_pr_synchronize_wrong_effective_merge_parents_require_full(history):
@@ -335,8 +410,10 @@ def test_pr_synchronize_wrong_effective_merge_parents_require_full(history):
     ctx = synchronize_context(history)
     ctx["tested_sha"] = ctx["feature_sha"]
     plan = ci_plan.make_plan(ctx, root=root)
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert any("merge parents" in reason for reason in plan["fallback_reasons"])
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 def test_pr_synchronize_current_base_code_is_in_actual_merge_diff(history):
@@ -363,11 +440,13 @@ def test_pr_synchronize_current_base_code_is_in_actual_merge_diff(history):
     ctx.update(base_sha=current_base, tested_sha=tested)
     plan = ci_plan.make_plan(ctx, root=root)
     assert plan["comparison_sha"] == before
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert {path for change in plan["changed"] for path in change["paths"]} == {
         "docs/schema-hardening/runtime-handoff.md",
         "src/repo_catalog/base_only.py",
     }
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 def test_force_push_cannot_use_before_present_only_in_current_base(history):
@@ -396,8 +475,10 @@ def test_force_push_cannot_use_before_present_only_in_current_base(history):
         tested_sha=tested,
     )
     plan = ci_plan.make_plan(ctx, root=root)
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
     assert any("not an ancestor" in reason for reason in plan["fallback_reasons"])
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 @pytest.mark.parametrize("action", [None, "opened", "reopened"])
@@ -406,7 +487,9 @@ def test_other_pr_actions_keep_cumulative_merge_base_selection(history, action):
     ctx = dict(synchronize_context(history), action=action)
     plan = ci_plan.make_plan(ctx, root=root)
     assert plan["comparison_sha"] == base
-    assert plan["full"]
+    assert not plan["full"]
+    assert plan["required_files"] == plan["acceptance_files"]
+    assert ci_plan.make_plan(dict(ctx, mode="release"), root=root)["full"]
 
 
 def test_github_context_retains_synchronize_action_and_before(tmp_path, monkeypatch):
