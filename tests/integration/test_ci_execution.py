@@ -4,11 +4,14 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 from scripts import ci_execute, ci_plan
 from tests.support.ci_fixture import commit, context, repository, write, write_results
+
+ROOT = ci_execute.ROOT
 
 
 @pytest.fixture
@@ -1166,3 +1169,640 @@ def test_adversarial_20_find_artifact_rejects_absolute_path_and_runner_artifacts
         root,
     )
     assert res_art is None
+
+
+# ==============================================================================
+# Section 7: Provider-Backed Evidence Boundary and CLI Exit Propagation
+# ==============================================================================
+
+
+def make_mock_provider_bundle(manifest, binding, output_dir):
+    """Create a dictionary of artifact files representing provider-retrieved evidence."""
+    files = {}
+    manifest_bytes = json.dumps(manifest, indent=2).encode() + b"\n"
+    binding_bytes = json.dumps(binding, indent=2).encode() + b"\n"
+    files["validation-manifest.json"] = manifest_bytes
+    files["receipt-binding.json"] = binding_bytes
+
+    # Copy lane files from output_dir if present
+    for fname in (
+        "tests.json",
+        "tests.xml",
+        "tests-journal.jsonl",
+        "packaging.json",
+        "packaging.xml",
+        "packaging-journal.jsonl",
+    ):
+        p = output_dir / fname
+        if p.is_file():
+            files[fname] = p.read_bytes()
+
+    index = {
+        fname: {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        for fname, data in files.items()
+    }
+    files["receipt-index.json"] = json.dumps(index, indent=2).encode() + b"\n"
+    return files
+
+
+def mock_gh_runner(
+    run_view_data=None, download_files=None, log_text=None, fail_gh=False
+):
+    """Mock subprocess runner simulating the gh CLI."""
+
+    def runner(cmd, capture_output=True, text=True, check=False):
+        if fail_gh:
+            return subprocess.CompletedProcess(
+                cmd,
+                returncode=1,
+                stdout="",
+                stderr="error: authentication token invalid",
+            )
+        if "view" in cmd and "--log" not in cmd:
+            stdout = json.dumps(run_view_data or {})
+            return subprocess.CompletedProcess(
+                cmd, returncode=0, stdout=stdout, stderr=""
+            )
+        elif "download" in cmd:
+            if download_files is not None:
+                dest = Path(cmd[cmd.index("-D") + 1])
+                for fname, fdata in download_files.items():
+                    (dest / fname).write_bytes(
+                        fdata if isinstance(fdata, bytes) else fdata.encode()
+                    )
+                return subprocess.CompletedProcess(
+                    cmd, returncode=0, stdout="", stderr=""
+                )
+            return subprocess.CompletedProcess(
+                cmd, returncode=1, stdout="", stderr="artifact not found"
+            )
+        elif "view" in cmd and "--log" in cmd:
+            if log_text is not None:
+                return subprocess.CompletedProcess(
+                    cmd, returncode=0, stdout=log_text, stderr=""
+                )
+            return subprocess.CompletedProcess(
+                cmd, returncode=1, stdout="", stderr="logs unavailable"
+            )
+        return subprocess.CompletedProcess(
+            cmd, returncode=1, stdout="", stderr="unknown gh subcommand"
+        )
+
+    return runner
+
+
+def test_adversarial_21_development_run_presented_as_release(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+
+    # Case A: run was triggered by pull_request
+    pr_view = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": json.loads(manifest_path.read_bytes())["context"]["tested_sha"],
+        "event": "pull_request",
+    }
+    res_pr = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=pr_view),
+    )
+    assert res_pr["verdict"] == "release_rejected"
+    assert "does not execute full release qualification" in res_pr["reason"]
+
+    # Case B: run was triggered by workflow_dispatch, but in development mode (test lanes skipped)
+    wf_dev_view = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": json.loads(manifest_path.read_bytes())["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "skipped",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "skipped",
+                    },
+                ],
+            }
+        ],
+    }
+    res_wf_dev = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=wf_dev_view),
+    )
+    assert res_wf_dev["verdict"] == "release_rejected"
+    assert "development mode" in res_wf_dev["reason"]
+
+
+def test_adversarial_22_correct_run_id_with_substituted_local_manifest(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+
+    manifest = json.loads(manifest_path.read_bytes())
+    binding = json.loads((output / "receipt-binding.json").read_bytes())
+    prov_bundle = make_mock_provider_bundle(manifest, binding, output)
+
+    # Operator substitutes local manifest with different content / extra tests
+    tampered_manifest = dict(manifest)
+    tampered_manifest["test_ids"] = list(manifest["test_ids"]) + [
+        "tests/unit/test_tampered.py::test_fake"
+    ]
+    manifest_path.write_text(json.dumps(tampered_manifest))
+
+    view_data = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ],
+    }
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=view_data, download_files=prov_bundle),
+    )
+    assert res["verdict"] == "release_rejected"
+    assert "does not match provider-retrieved artifact" in res["reason"]
+
+
+def test_adversarial_23_correct_commit_wrong_workflow(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    manifest = json.loads(manifest_path.read_bytes())
+
+    wrong_wf_view = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "lint",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+    }
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=wrong_wf_view),
+    )
+    assert res["verdict"] == "release_rejected"
+    assert "belongs to unexpected workflow" in res["reason"]
+
+
+def test_adversarial_24_wrong_run_attempt(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+
+    manifest = json.loads(manifest_path.read_bytes())
+    binding = json.loads((output / "receipt-binding.json").read_bytes())
+    # Binding claims attempt 2
+    binding["run_attempt"] = 2
+    (output / "receipt-binding.json").write_text(json.dumps(binding))
+
+    # Provider artifact bundle has attempt 1
+    prov_binding = dict(binding)
+    prov_binding["run_attempt"] = 1
+    prov_bundle = make_mock_provider_bundle(manifest, prov_binding, output)
+
+    view_data = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ],
+    }
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=view_data, download_files=prov_bundle),
+    )
+    assert res["verdict"] == "release_rejected"
+    assert "run attempt mismatch" in res["reason"].lower()
+
+
+def test_adversarial_25_missing_or_substituted_artifact(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    manifest = json.loads(manifest_path.read_bytes())
+
+    view_data = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ],
+    }
+    # download_files is None -> artifact download fails, no log text -> missing artifact
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(
+            run_view_data=view_data, download_files=None, log_text=None
+        ),
+    )
+    assert res["verdict"] == "release_rejected"
+    assert (
+        "missing or unretrievable provider validation artifact" in res["reason"].lower()
+    )
+
+
+def test_adversarial_26_self_generated_receipt_index_rejected_without_provider(
+    acceptance,
+):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+    manifest = json.loads(manifest_path.read_bytes())
+
+    # Create synthetic self-generated receipt index locally
+    index = {
+        "validation-manifest.json": {
+            "bytes": len(manifest_path.read_bytes()),
+            "sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        }
+    }
+    (output / "receipt-index.json").write_text(json.dumps(index))
+
+    view_data = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ],
+    }
+    # Provider has different artifact content
+    prov_manifest = dict(manifest)
+    prov_manifest["outcome"] = "passed"
+    prov_binding = json.loads((output / "receipt-binding.json").read_bytes())
+    prov_bundle = make_mock_provider_bundle(prov_manifest, prov_binding, output)
+    prov_bundle["other.json"] = b"content"
+    prov_bundle["receipt-index.json"] = json.dumps(
+        {
+            "other.json": {
+                "bytes": len(b"content"),
+                "sha256": hashlib.sha256(b"content").hexdigest(),
+            }
+        }
+    ).encode()
+
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=view_data, download_files=prov_bundle),
+    )
+    assert res["verdict"] == "release_rejected"
+    assert "does not match provider-retrieved artifact" in res["reason"]
+
+
+def test_adversarial_27_mismatched_artifact_and_hosted_manifest(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+
+    manifest = json.loads(manifest_path.read_bytes())
+    binding = json.loads((output / "receipt-binding.json").read_bytes())
+
+    # Provider artifact has different acceptance input hash
+    prov_manifest = dict(manifest)
+    prov_manifest["acceptance_input_hash"] = "0" * 64
+    prov_bundle = make_mock_provider_bundle(prov_manifest, binding, output)
+
+    view_data = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ],
+    }
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=view_data, download_files=prov_bundle),
+    )
+    assert res["verdict"] == "release_rejected"
+    assert "does not match provider-retrieved artifact" in res["reason"]
+
+
+def test_adversarial_28_missing_provider_backed_verification(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+
+    # gh command fails
+    res = ci_execute.reconcile_release(
+        local_rec_path, manifest_path, root=root, gh_runner=mock_gh_runner(fail_gh=True)
+    )
+    assert res["verdict"] == "validation_gap_reported"
+    assert res["acceptance_status"] == "validation_gap_reported"
+    assert "authoritative hosted run verification unavailable" in res["reason"].lower()
+
+
+def test_adversarial_29_genuine_provider_backed_release_artifact_passes(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+
+    manifest = json.loads(manifest_path.read_bytes())
+    binding = json.loads((output / "receipt-binding.json").read_bytes())
+    prov_bundle = make_mock_provider_bundle(manifest, binding, output)
+
+    view_data = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ],
+    }
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(run_view_data=view_data, download_files=prov_bundle),
+    )
+    assert res["verdict"] == "complete_release_passed"
+    assert res["acceptance_status"] == "complete_release_passed"
+
+
+def test_adversarial_30_job_log_receipt_bundle_fallback_and_extraction(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+    local_rec_path = output / "local-receipt.json"
+
+    manifest = json.loads(manifest_path.read_bytes())
+    binding = json.loads((output / "receipt-binding.json").read_bytes())
+    prov_bundle = make_mock_provider_bundle(manifest, binding, output)
+
+    # Package files into zip for job log
+    import base64
+    import io
+    import textwrap
+    import zipfile
+
+    bio = io.BytesIO()
+    with zipfile.ZipFile(bio, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for fname, fdata in prov_bundle.items():
+            zf.writestr(fname, fdata)
+    zip_bytes = bio.getvalue()
+    zip_digest = hashlib.sha256(zip_bytes).hexdigest()
+    b64_data = base64.b64encode(zip_bytes).decode("ascii")
+
+    log_lines = [
+        "2026-10-12T07:32:12Z info: test step starting",
+        f"2026-10-12T07:32:12Z CI_RECEIPTS_BEGIN_V1 {zip_digest} {len(zip_bytes)}",
+    ]
+    for chunk in textwrap.wrap(b64_data, 120):
+        log_lines.append(f"2026-10-12T07:32:12Z CI_RECEIPTS_DATA_V1 {chunk}")
+    log_lines.append(f"2026-10-12T07:32:12Z CI_RECEIPTS_END_V1 {zip_digest}")
+    log_lines.append("2026-10-12T07:32:12Z info: complete")
+    synthetic_log = "\n".join(log_lines) + "\n"
+
+    view_data = {
+        "status": "completed",
+        "conclusion": "success",
+        "workflowName": "tests",
+        "headSha": manifest["context"]["tested_sha"],
+        "event": "workflow_dispatch",
+        "jobs": [
+            {
+                "name": "offline",
+                "steps": [
+                    {
+                        "name": "Current catalog3 checks (offline)",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Installed wheel and sdist checks (offline, isolated parallel workers)",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ],
+    }
+    # download_files is None (simulating unavailable artifact), but log_text is provided
+    res = ci_execute.reconcile_release(
+        local_rec_path,
+        manifest_path,
+        root=root,
+        gh_runner=mock_gh_runner(
+            run_view_data=view_data, download_files=None, log_text=synthetic_log
+        ),
+    )
+    assert res["verdict"] == "complete_release_passed"
+    assert res["acceptance_status"] == "complete_release_passed"
+
+
+def test_cli_exit_status_development_gate_zero(tmp_path):
+    root = tmp_path / "repo"
+    base, head = repository(root)
+    plan = ci_plan.make_plan(context(root, base, head, mode="development"), root=root)
+    output = tmp_path / "dev-result"
+    write_results(output, plan, root)
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci_execute.py",
+            "gate",
+            "--plan",
+            str(output / "plan.json"),
+            "--root",
+            str(root),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(ROOT),
+    )
+    assert proc.returncode == 0
+    coverage = json.loads(proc.stdout)
+    assert "executed" in coverage
+    manifest = json.loads((output / "validation-manifest.json").read_bytes())
+    assert manifest["outcome"] == "passed"
+    assert manifest["acceptance_status"] == "development_checks_passed"
+
+
+def test_cli_exit_status_rejected_release_gate_nonzero(acceptance):
+    root, output = acceptance
+    # Write corrupt local receipt to trigger release_rejected
+    (output / "local-receipt.json").write_text(
+        '{"schema_version": 1, "status": "failed", "exit_code": 1}\n'
+    )
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci_execute.py",
+            "gate",
+            "--plan",
+            str(output / "plan.json"),
+            "--root",
+            str(root),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(ROOT),
+    )
+    assert proc.returncode == 1
+    coverage = json.loads(proc.stdout)
+    assert "executed" in coverage
+    manifest = json.loads((output / "validation-manifest.json").read_bytes())
+    assert manifest["outcome"] == "failed"
+    assert manifest["acceptance_status"] == "release_rejected"
+
+
+def test_cli_exit_status_reconcile_release(acceptance):
+    root, output = acceptance
+    ci_execute.create_receipt(output, root=root)
+    ci_execute.gate(output / "plan.json", root)
+    manifest_path = output / "validation-manifest.json"
+
+    # Corrupt local receipt -> reconcile returns 1
+    corrupt_rec = output / "corrupt-rec.json"
+    corrupt_rec.write_text('{"schema_version": 1, "status": "failed"}\n')
+    proc_rej = subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci_execute.py",
+            "reconcile-release",
+            "--local-receipt",
+            str(corrupt_rec),
+            "--hosted-manifest",
+            str(manifest_path),
+            "--root",
+            str(root),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(ROOT),
+    )
+    assert proc_rej.returncode == 1
+    res_rej = json.loads(proc_rej.stdout)
+    assert res_rej["verdict"] in ("release_rejected", "validation_gap_reported")
