@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -22,6 +23,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402
     register_git_object_sql_function,
@@ -289,16 +292,30 @@ LOGICAL_DEPENDENCIES: list[dict[str, Any]] = [
         "description": "Per-generation index snapshot fence recording Core local_revision at projection time for snapshot pinning.",
     },
     {
-        "id": "log_search_docs_core",
+        "id": "log_search_docs_git_objects",
         "source_store": "search",
         "source_table": "search_documents",
         "source_columns": ["source_key"],
         "target_store": "core",
         "target_table": "git_objects",
-        "target_columns": ["oid_hex"],
+        "target_columns": ["git_object_id"],
         "cardinality": "0..N to 1",
-        "adr_reference": "ADR 0002 §3.3",
-        "description": "Search projection document derived from Core resources (Git blob OID for code, PR doc key for pr, Issue doc key for issue, commit OID for commits). Disposable derivative.",
+        "adr_reference": "ADR 0002 §3.3, §4",
+        "description": "Code and commit search projections (kind IN ('code', 'commits')). The source_key is encoded as 'git:<git_object_id>' derived from Core git_objects.git_object_id via valid git facts. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key.",
+        "is_derivation": True,
+    },
+    {
+        "id": "log_search_docs_text_bodies",
+        "source_store": "search",
+        "source_table": "search_documents",
+        "source_columns": ["source_key"],
+        "target_store": "core",
+        "target_table": "text_bodies",
+        "target_columns": ["sha256"],
+        "cardinality": "0..N to 1",
+        "adr_reference": "ADR 0002 §3.3, §4",
+        "description": "PR and Issue search projections (kind IN ('pr', 'issue')). The source_key is derived from lower hex-encoded text_bodies.sha256 for domain text bodies, or SHA-256 hex digest of standalone issue titles. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key.",
+        "is_derivation": True,
     },
 ]
 
@@ -395,7 +412,8 @@ def introspect_store(
 
         for cid, col_name, col_type, notnull, dflt, pk_pos, hidden in raw_cols:
             is_generated = hidden in (2, 3)
-            gen_type = "STORED" if hidden == 2 else "VIRTUAL" if hidden == 3 else None
+            # In SQLite 3.31+ PRAGMA table_xinfo: hidden==2 is VIRTUAL, hidden==3 is STORED
+            gen_type = "VIRTUAL" if hidden == 2 else "STORED" if hidden == 3 else None
             columns.append(
                 {
                     "cid": cid,
@@ -449,22 +467,42 @@ def introspect_store(
             xinfo = db.execute(f'PRAGMA index_xinfo("{idx_name}")').fetchall()
             # xinfo: seqno, cid, name, desc, coll, key
             idx_cols = [row[2] for row in xinfo if row[1] >= 0 and row[5] == 1]
-            if is_unique and origin != "pk":
+
+            idx_sql_row = db.execute(
+                "SELECT sql FROM sqlite_schema WHERE type='index' AND name=?",
+                (idx_name,),
+            ).fetchone()
+            idx_sql = idx_sql_row[0] if idx_sql_row else None
+            where_clause = None
+            if is_partial and idx_sql:
+                m = re.search(r"\bWHERE\s+(.+)$", idx_sql, re.IGNORECASE)
+                if m:
+                    where_clause = m.group(1).strip()
+
+            # origin 'pk' is the primary key autoindex, handled by primary_key metadata.
+            # Only unconditional unique constraints are added to unique_constraints (C3).
+            if is_unique and origin != "pk" and not is_partial:
                 unique_constraints.append(
                     {
                         "name": idx_name,
                         "columns": idx_cols,
                         "is_composite": len(idx_cols) > 1,
                         "origin": origin,
+                        "partial": False,
+                        "predicate": None,
                     }
                 )
-            if origin in ("c", "u") and not idx_name.startswith("sqlite_autoindex_"):
+
+            # Explicit indexes (origin 'c')
+            if origin == "c":
                 table_indexes.append(
                     {
                         "name": idx_name,
                         "columns": idx_cols,
                         "unique": bool(is_unique),
                         "partial": bool(is_partial),
+                        "predicate": where_clause,
+                        "sql": idx_sql,
                     }
                 )
 
@@ -641,12 +679,11 @@ def _render_mermaid_table_block(
     """Format a table definition for a Mermaid ER diagram block."""
     lines = [f"    {table_meta['name']} {{"]
     if stub:
-        pk_str = (
-            ", ".join(table_meta["primary_key"]) if table_meta["primary_key"] else "id"
-        )
-        lines.append(
-            f'        TEXT {pk_str} PK "External reference from {table_meta["group"]}"'
-        )
+        pk_cols = table_meta["primary_key"] if table_meta["primary_key"] else ["id"]
+        for pk_col in pk_cols:
+            lines.append(
+                f'        TEXT {pk_col} PK "External reference from {table_meta["group"]}"'
+            )
     else:
         for col in table_meta["columns"]:
             c_name = col["name"]
@@ -662,7 +699,8 @@ def _render_mermaid_table_block(
                 badges.append("FK")
             # check if unique constraint
             is_uk = any(
-                [c_name] == u["columns"] for u in table_meta["unique_constraints"]
+                [c_name] == u["columns"] and not u.get("partial", False)
+                for u in table_meta["unique_constraints"]
             )
             if is_uk and not col["is_pk"]:
                 badges.append("UK")
@@ -682,7 +720,7 @@ def _render_mermaid_table_block(
                 comments.append(f"GENERATED {col['generation_type']}")
             elif is_fk and "PK" in badges:
                 comments.append("FK")
-            elif not col["notnull"]:
+            elif not col["notnull"] and not col["is_pk"]:
                 comments.append("nullable")
 
             comment_str = f' "{", ".join(comments)}"' if comments else ""
@@ -703,8 +741,9 @@ def _render_mermaid_relationships(
         t = tables[t_name]
         for fk in t["foreign_keys"]:
             tgt = fk["target_table"]
-            # Cardinality determination:
-            # Check if all from_columns are NOT NULL
+            # Parent side (left end):
+            # If all foreign key columns in child are NOT NULL, exactly one parent row is required (||).
+            # If any foreign key column is nullable, parent reference is zero or one (|o).
             all_not_null = all(
                 next(
                     (c["notnull"] for c in t["columns"] if c["name"] == col),
@@ -714,11 +753,17 @@ def _render_mermaid_relationships(
             )
             parent_card = "||" if all_not_null else "|o"
 
-            # Check if from_columns are unique
-            is_unique = fk["from_columns"] == t["primary_key"] or any(
-                fk["from_columns"] == u["columns"] for u in t["unique_constraints"]
+            # Child side (right end):
+            # A parent never requires at least one child merely due to an FK.
+            # If child FK columns form the PK or match an unconditional UNIQUE constraint,
+            # at most one child can exist (zero or one: "o|").
+            # Unconditional uniqueness cannot be inferred from partial unique indexes.
+            # Otherwise, zero or more children may reference the parent ("o{").
+            is_unique = (fk["from_columns"] == t["primary_key"]) or any(
+                fk["from_columns"] == u["columns"] and not u.get("partial", False)
+                for u in t["unique_constraints"]
             )
-            child_card = "|o" if is_unique else "o{"
+            child_card = "o|" if is_unique else "o{"
 
             cols_label = ", ".join(fk["from_columns"])
             edge = f'    {tgt} {parent_card}--{child_card} {t_name} : "references ({cols_label})"'
@@ -824,11 +869,11 @@ Authoritative domain facts, entities, observations, and evidence under **Core Sc
 
 ## High-Level Module Dependency Map
 
-The 70 Core tables are partitioned into 7 cohesive functional modules. SQLite foreign keys connect these modules hierarchically:
+The 70 Core tables are partitioned into 7 cohesive functional categories (presented across 6 modular ER diagrams, with Local Physical Catalog Identity grouped alongside Portable Identity & Registration). SQLite foreign keys connect these modules hierarchically:
 
 ```mermaid
 flowchart TD
-    c_ident["1. Portable Identity & Registration (14 tables)\\nservice_instances, sources, repositories, change_requests..."]
+    c_ident["1. Portable Identity & Catalog (14 tables)\\n(13 portable identity + 1 local physical catalog identity)"]
     c_api["2. Current API Values (5 tables)\\nissue_resources, review_resources, change_request_state..."]
     c_cov["3. Domain Coverage & Enumeration (19 tables)\\nfetch_collections, coverage_scopes, coverage_claims..."]
     c_git["4. Git Domain & Intrinsic DAG (21 tables)\\ngit_acquisitions, snapshots, git_objects, commits, trees..."]
@@ -848,9 +893,10 @@ flowchart TD
 
 ## Functional Modules Directory
 
-| Module | Tables | Detailed Diagram | Description |
+| Category / Module | Tables | Detailed Diagram | Description |
 |---|---|---|---|
-| **Portable Identity & Registration** | 14 | [core-identity.md](core-identity.md) | Universal portable identities, Sources, repositories, bindings, endpoints, and identity relations. |
+| **Portable Identity & Registration** | 13 | [core-identity.md](core-identity.md) | Universal portable identities, Sources, repositories, bindings, endpoints, and identity relations. |
+| **Local Physical Catalog Identity** | 1 | [core-identity.md](core-identity.md) | Local SQLite database singleton and receiver-local revision counter (`database_identity`, grouped into core-identity diagram). |
 | **Current API Values** | 5 | [core-current-state.md](core-current-state.md) | Current PR/Issue/thread observation states, resource projections, and generated column contracts. |
 | **Domain Coverage & Enumeration** | 19 | [core-coverage.md](core-coverage.md) | API collections, memberships, typed coverage claims/scopes, and code listing evidence. |
 | **Git Domain & Intrinsic DAG** | 21 | [core-git.md](core-git.md) | Git acquisitions, snapshots, objects, tree entries, commit DAG, and verified byte facts. |
@@ -1096,7 +1142,7 @@ CREATE VIRTUAL TABLE catalog_fts_<generation_id> USING fts5(
 | `search_identity` | `catalog_db_instance_id` | `database_identity` | `db_instance_id` | Strict 1:1 ownership binding between Search DB and Core Catalog (ADR 0002 §2 PF-P14). |
 | `search_identity` | `core_revision_fence` | `database_identity` | `local_revision` | Global index freshness fence tracking Core local revision (ADR 0002 §3.3, §4). |
 | `index_generations` | `core_revision_fence` | `database_identity` | `local_revision` | Per-generation snapshot fence recorded during rebuild projection (three-store-invariants §4). |
-| `search_documents` | `source_key` | `git_objects` / resources | `oid_hex` / doc keys | Projections derived from Core Git blobs (code), PR documents (pr), and Issue resources (issue). |
+| `search_documents` | `source_key` | `git_objects` / `text_bodies` | `git_object_id` / `sha256` | Projections derived from Core Git blobs/commits ('git:<id>') and PR/Issue text bodies (SHA-256 hex) (ADR 0002 §3.3, §4). |
 
 [Back to Architecture Overview](overview.md)
 """
@@ -1122,6 +1168,15 @@ def _render_dbml_table(table_meta: dict[str, Any]) -> str:
             settings.append("pk")
         if col["notnull"]:
             settings.append("not null")
+
+        # Single-column unconditional UNIQUE constraint (C2)
+        is_col_unique = any(
+            u["columns"] == [c_name] and not u.get("partial", False)
+            for u in table_meta["unique_constraints"]
+        )
+        if is_col_unique and not col["is_pk"]:
+            settings.append("unique")
+
         if col["default_value"] is not None:
             settings.append(f"default: `{col['default_value']}`")
 
@@ -1137,24 +1192,43 @@ def _render_dbml_table(table_meta: dict[str, Any]) -> str:
         setting_str = f" [{', '.join(settings)}]" if settings else ""
         lines.append(f"  {c_name} {c_type}{setting_str}")
 
-    # Composite PK or composite unique indexes in indexes block
+    # Composite PK or indexes in indexes block
     idx_lines = []
     if table_meta["is_composite_pk"]:
         pk_cols_s = ", ".join(table_meta["primary_key"])
         idx_lines.append(f"    ({pk_cols_s}) [pk]")
 
+    # Composite unconditional UNIQUE constraints
+    emitted_unique_names = set()
     for u in table_meta["unique_constraints"]:
-        if len(u["columns"]) > 1 or table_meta["is_composite_pk"]:
+        if len(u["columns"]) > 1:
             u_cols_s = ", ".join(u["columns"])
-            idx_lines.append(f"    ({u_cols_s}) [unique, name: '{u['name']}']")
+            if not u["name"].startswith("sqlite_autoindex_"):
+                idx_lines.append(f"    ({u_cols_s}) [unique, name: '{u['name']}']")
+            else:
+                idx_lines.append(f"    ({u_cols_s}) [unique]")
+            emitted_unique_names.add(u["name"])
 
+    # Explicit indexes
     for idx in table_meta["indexes"]:
+        if idx["name"] in emitted_unique_names:
+            continue
         cols_s = ", ".join(idx["columns"])
         opt = []
-        if idx["unique"]:
-            opt.append("unique")
+        if idx["name"]:
+            opt.append(f"name: '{idx['name']}'")
         if idx["partial"]:
-            opt.append("note: 'partial index'")
+            # Never export a partial unique index as an unconditional unique constraint in DBML (C3)
+            pred = (
+                f"WHERE {idx['predicate']}" if idx.get("predicate") else "partial index"
+            )
+            pred_escaped = pred.replace("'", "\\'")
+            if idx["unique"]:
+                opt.append(f"note: 'UNIQUE {pred_escaped}'")
+            else:
+                opt.append(f"note: 'partial index: {pred_escaped}'")
+        elif idx["unique"]:
+            opt.append("unique")
         opt_s = f" [{', '.join(opt)}]" if opt else ""
         idx_lines.append(f"    ({cols_s}){opt_s}")
 
@@ -1318,7 +1392,8 @@ Project git_repo_db_search {{
 // Ref: search_identity.catalog_db_instance_id > database_identity.db_instance_id
 // Ref: search_identity.core_revision_fence > database_identity.local_revision
 // Ref: index_generations.core_revision_fence > database_identity.local_revision
-// Ref: search_documents.source_key > git_objects.oid_hex
+// Ref: search_documents.source_key > git_objects.git_object_id (for code/commits, encoded 'git:<id>')
+// Ref: search_documents.source_key > text_bodies.sha256 (for pr/issue, hex-encoded SHA-256)
 """
     outputs["dbml/search.dbml"] = search_dbml.strip() + "\n"
 
@@ -1359,16 +1434,34 @@ Project git_repo_db_three_store {{
             combined_dbml += ref_line + "\n"
         combined_dbml += "\n"
 
+    # TableGroup constructs to explicitly group tables by physical store (ADR 0002)
+    combined_dbml += (
+        "// ==================== Store Groupings (ADR 0002) ====================\n\n"
+    )
+    for group_name, s_data in [
+        ("core_store", core),
+        ("operational_store", op),
+        ("search_store", search),
+    ]:
+        combined_dbml += f"TableGroup {group_name} {{\n"
+        for t_name in sorted(s_data["tables"].keys()):
+            combined_dbml += f"  {t_name}\n"
+        combined_dbml += "}\n\n"
+
     combined_dbml += """// ==================== Logical Cross-Store Dependencies (ADR 0002) ====================
 // These are application-level dependencies across physical SQLite databases.
 // They are NOT enforced by SQLite foreign keys. Loss of Operational or Search never invalidates Core.
 """
     for dep in ir["logical_dependencies"]:
-        src_cols = f"({', '.join(dep['source_columns'])})"
-        tgt_cols = f"({', '.join(dep['target_columns'])})"
+        src_cols = (
+            f"({', '.join(dep['source_columns'])})" if dep.get("source_columns") else ""
+        )
+        tgt_cols = (
+            f"({', '.join(dep['target_columns'])})" if dep.get("target_columns") else ""
+        )
         combined_dbml += (
             f"// Ref {dep['id']}: {dep['source_table']}.{src_cols} > {dep['target_table']}.{tgt_cols} "
-            f"[note: '{dep['adr_reference']}']\n"
+            f"[note: '{dep['adr_reference']} - {dep['description']}']\n"
         )
 
     outputs["dbml/combined.dbml"] = combined_dbml.strip() + "\n"
@@ -1856,11 +1949,38 @@ svg.neighborhood-svg {{
 
 /* Responsive */
 @media (max-width: 768px) {{
-  body {{ overflow: auto; }}
+  body {{ overflow-x: hidden; }}
+  header {{
+    height: auto;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }}
+  .brand {{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }}
+  .store-tabs {{
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }}
+  .header-right {{
+    width: 100%;
+  }}
+  .search-box {{
+    width: 100%;
+  }}
   .layout {{ flex-direction: column; }}
-  aside {{ width: 100%; height: 260px; }}
-  main {{ padding: 16px; }}
-  .search-box {{ width: 160px; }}
+  aside {{ width: 100%; height: 260px; max-height: 40vh; }}
+  main {{ padding: 12px; overflow-x: hidden; }}
+  .card {{ overflow-x: auto; }}
+  .data-table {{ min-width: 100%; }}
 }}
 </style>
 </head>
@@ -2099,13 +2219,13 @@ function renderColumnsTab(t) {{
     if (isFk) badges += `<span class="badge badge-fk">FK</span>`;
     
     // Unique check
-    const isUk = t.unique_constraints.some(u => u.columns.length === 1 && u.columns[0] === col.name);
+    const isUk = t.unique_constraints.some(u => u.columns.length === 1 && u.columns[0] === col.name && !u.partial);
     if (isUk && !col.is_pk) badges += `<span class="badge badge-uk">UK</span>`;
     
     if (col.is_generated) badges += `<span class="badge badge-gen">${{col.generation_type}}</span>`;
 
     const defVal = col.default_value !== null ? `<code>${{escapeHtml(col.default_value)}}</code>` : `<span style="color:var(--text-muted)">NULL</span>`;
-    const notNull = col.notnull ? "YES" : `<span style="color:var(--text-muted)">NO</span>`;
+    const notNull = col.notnull ? "YES" : (col.is_pk ? `<span style="color:var(--accent); font-weight:600" title="Primary Key semantics (rowid/PK)">PK</span>` : `<span style="color:var(--text-muted)">NO</span>`);
 
     rows += `
       <tr>
@@ -2384,12 +2504,16 @@ function drawEdge(svg, x1, y1, x2, y2, labelText, isLogical) {{
 function renderIndexesTab(t) {{
   let idxRows = "";
   t.indexes.forEach(idx => {{
+    const statusBadge = idx.partial
+      ? (idx.unique ? '<span class="badge badge-uk">PARTIAL UNIQUE</span>' : '<span class="badge badge-gen">PARTIAL</span>')
+      : (idx.unique ? '<span class="badge badge-uk">UNIQUE</span>' : 'NON-UNIQUE');
+    const predNote = idx.predicate ? `<br><small style="color:var(--text-muted); font-family:var(--font-mono); font-size:11px">WHERE ${{escapeHtml(idx.predicate)}}</small>` : '';
     idxRows += `
       <tr>
-        <td style="font-family:var(--font-mono); font-weight:600">${{idx.name}}</td>
+        <td style="font-family:var(--font-mono); font-weight:600">${{idx.name}}${{predNote}}</td>
         <td>${{idx.columns.map(c => `<code>${{c}}</code>`).join(", ")}}</td>
-        <td>${{idx.unique ? '<span class="badge badge-uk">UNIQUE</span>' : 'NON-UNIQUE'}}</td>
-        <td>${{idx.partial ? '<span class="badge badge-gen">PARTIAL</span>' : 'FULL'}}</td>
+        <td>${{statusBadge}}</td>
+        <td>${{idx.partial ? 'PARTIAL' : 'FULL'}}</td>
       </tr>
     `;
   }});
@@ -2877,11 +3001,101 @@ def write_artifacts(artifacts: dict[str, str], output_dir: Path) -> list[str]:
     return written
 
 
+def validate_logical_dependencies(ir: dict[str, Any]) -> list[str]:
+    """Validate cross-store logical dependencies against introspected schemas."""
+    errors = []
+    stores = ir["stores"]
+    for dep in ir.get("logical_dependencies", []):
+        dep_id = dep["id"]
+        src_store_slug = dep["source_store"]
+        tgt_store_slug = dep["target_store"]
+        if src_store_slug not in stores:
+            errors.append(f"{dep_id}: unknown source store '{src_store_slug}'")
+            continue
+        if tgt_store_slug not in stores:
+            errors.append(f"{dep_id}: unknown target store '{tgt_store_slug}'")
+            continue
+
+        src_store = stores[src_store_slug]
+        tgt_store = stores[tgt_store_slug]
+        src_table_name = dep["source_table"]
+        tgt_table_name = dep["target_table"]
+
+        if src_table_name not in src_store["tables"]:
+            errors.append(
+                f"{dep_id}: source table '{src_table_name}' not found in {src_store_slug}"
+            )
+            continue
+        if tgt_table_name not in tgt_store["tables"]:
+            errors.append(
+                f"{dep_id}: target table '{tgt_table_name}' not found in {tgt_store_slug}"
+            )
+            continue
+
+        src_table = src_store["tables"][src_table_name]
+        tgt_table = tgt_store["tables"][tgt_table_name]
+        src_col_names = {c["name"] for c in src_table["columns"]}
+        tgt_col_names = {c["name"] for c in tgt_table["columns"]}
+
+        for col in dep.get("source_columns", []):
+            if col not in src_col_names:
+                errors.append(
+                    f"{dep_id}: source column '{col}' not found in {src_table_name}"
+                )
+
+        for col in dep.get("target_columns", []):
+            if col not in tgt_col_names:
+                errors.append(
+                    f"{dep_id}: target column '{col}' not found in {tgt_table_name}"
+                )
+
+    return errors
+
+
+def validate_functional_groups_consistency() -> list[str]:
+    """Verify that CORE_GROUPS, OPERATIONAL_GROUPS, SEARCH_GROUPS match audit_publication_free.py."""
+    errors = []
+    try:
+        from scripts.audit_publication_free import (
+            CORE_GROUPS as AUDIT_CORE,
+        )
+        from scripts.audit_publication_free import (
+            OPERATIONAL_GROUPS as AUDIT_OP,
+        )
+        from scripts.audit_publication_free import (
+            SEARCH_GROUPS as AUDIT_SEARCH,
+        )
+
+        if CORE_GROUPS != AUDIT_CORE:
+            errors.append(
+                "CORE_GROUPS classification differs from audit_publication_free.py"
+            )
+        if OPERATIONAL_GROUPS != AUDIT_OP:
+            errors.append(
+                "OPERATIONAL_GROUPS classification differs from audit_publication_free.py"
+            )
+        if SEARCH_GROUPS != AUDIT_SEARCH:
+            errors.append(
+                "SEARCH_GROUPS classification differs from audit_publication_free.py"
+            )
+    except Exception as exc:
+        errors.append(f"Could not verify audit_publication_free consistency: {exc}")
+    return errors
+
+
 def check_artifacts(
     artifacts: dict[str, str], output_dir: Path
 ) -> tuple[bool, list[str]]:
     """Verify that committed files match generated artifacts byte-for-byte without mutating disk."""
     mismatches: list[str] = []
+
+    # Semantic consistency checks
+    ir = introspect_all()
+    dep_errors = validate_logical_dependencies(ir)
+    mismatches.extend(dep_errors)
+
+    group_errors = validate_functional_groups_consistency()
+    mismatches.extend(group_errors)
 
     for rel_path, expected_content in sorted(artifacts.items()):
         target = output_dir / rel_path

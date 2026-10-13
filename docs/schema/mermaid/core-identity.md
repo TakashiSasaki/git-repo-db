@@ -16,7 +16,7 @@ erDiagram
     }
 
     database_identity {
-        INTEGER singleton PK "nullable"
+        INTEGER singleton PK
         TEXT format_id
         INTEGER schema_version
         TEXT db_instance_id

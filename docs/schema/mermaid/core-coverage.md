@@ -102,7 +102,7 @@ erDiagram
 
     completion_markers {
         TEXT completion_marker_uuidv4 UK
-        INTEGER completion_marker_id PK "nullable"
+        INTEGER completion_marker_id PK
         TEXT resume_scope_id "nullable"
         TEXT fetch_collection_id FK
         TEXT asserted_state
@@ -116,7 +116,7 @@ erDiagram
     }
 
     coverage_claims {
-        INTEGER coverage_claim_id PK "nullable"
+        INTEGER coverage_claim_id PK
         TEXT coverage_scope_id FK
         TEXT coverage_state
         INTEGER observed_at_us
@@ -212,7 +212,9 @@ erDiagram
     }
 
     documents {
-        TEXT change_request_id, kind, provider_change_request_document_id PK "External reference from portable_identity_and_registration"
+        TEXT change_request_id PK "External reference from portable_identity_and_registration"
+        TEXT kind PK "External reference from portable_identity_and_registration"
+        TEXT provider_change_request_document_id PK "External reference from portable_identity_and_registration"
     }
 
     repositories {
@@ -237,7 +239,7 @@ erDiagram
     code_listings |o--o{ code_assessments : "references (file_code_listing_id, change_request_id)"
     code_listings ||--o{ code_commits : "references (code_listing_id)"
     code_listings ||--o{ code_file_changes : "references (code_listing_id)"
-    code_listings ||--|o code_listing_progress : "references (code_listing_id)"
+    code_listings ||--o| code_listing_progress : "references (code_listing_id)"
     completion_markers ||--o{ coverage_claim_markers : "references (completion_marker_uuidv4)"
     coverage_claims ||--o{ coverage_claim_markers : "references (coverage_claim_id)"
     coverage_scopes ||--o{ coverage_claims : "references (coverage_scope_id)"

@@ -55,29 +55,48 @@ Columns declared as `GENERATED ALWAYS AS (...) VIRTUAL` or `STORED` (e.g. `issue
 In SQLite 3.31+, `PRAGMA table_xinfo` reports column hidden rank in column 6 (`hidden`):
 - `0`: Normal column
 - `1`: Hidden column in virtual tables
-- `2`: Stored generated column
-- `3`: Virtual generated column
+- `2`: Virtual generated column (`GENERATED ALWAYS AS (...) VIRTUAL`)
+- `3`: Stored generated column (`GENERATED ALWAYS AS (...) STORED`)
 
 ### Rule & Invariant
 - Check `hidden in (2, 3)` to identify generated columns.
-- Retain generated columns in column inventories, but flag them as `GENERATED` in Mermaid/DBML and document the contract.
+- Correctly map `hidden == 2` to `VIRTUAL` and `hidden == 3` to `STORED`.
+- Retain generated columns in column inventories, but flag them as `GENERATED` in Mermaid/DBML/HTML and document the contract.
 
 ---
 
-## 4. Mermaid ER Syntax & Brace Matching Pitfalls
+## 4. Mermaid ER Syntax, Cardinality Orientation & Stub Rendering
 
 ### Symptom
 - Syntax errors in Mermaid ER renderers due to special characters, spaces, or parentheses in column types (e.g. `VARCHAR(255)`).
+- Cardinality orientation errors: Mermaid ER cardinality markers are direction-sensitive. Using `|o` on the right side (e.g. `stored_bytes ||--|o payload_quarantine`) causes syntax errors in `@mermaid-js/mermaid-cli`.
+- Composite primary keys in external stub tables rendered on a single line (e.g. `TEXT col1, col2 PK`) cause syntax errors.
 - Test assertions checking brace balance (`block.count("{") == block.count("}")`) fail because Mermaid ER diagrams use `o{` and `|{` as relationship cardinality markers ("zero or more", "one or more"), which do not have matching closing braces.
 
 ### Rule & Invariant
+- Cardinality markers are orientation-sensitive:
+  - Left end (parent): `||` (exactly one, NOT NULL) or `|o` (zero or one, nullable).
+  - Right end (child): `o|` (zero or one, unique FK) or `o{` (zero or more, non-unique FK). Never use `|o` on the right end.
+- External stub tables with composite PKs must declare each column on a distinct line with `PK`.
 - Declared types in Mermaid `erDiagram` must be clean alphanumeric tokens (e.g. `INTEGER`, `TEXT`, `BLOB`).
 - Avoid unescaped double quotes inside comments.
 - In structural tests, verify table definition block braces (`table_name { ... }`) separately from relationship cardinality edges (`||--o{`).
 
 ---
 
-## 5. Physical vs. Logical Cross-Store Boundaries
+## 5. Partial UNIQUE Indexes vs. Unconditional Constraints
+
+### Symptom
+Partial UNIQUE indexes with a `WHERE` predicate (e.g. `coverage_scopes(repository_uuidv4, kind) WHERE change_request_id IS NULL`) are exported to DBML as unconditional unique constraints or duplicate indexes, creating false guarantees not enforced by SQLite.
+
+### Rule & Invariant
+- Recover index defining SQL from `sqlite_schema` and extract `WHERE <predicate>`.
+- Exclude partial indexes from unconditional `unique_constraints`.
+- In DBML, annotate partial unique indexes with `[name: '...', note: 'UNIQUE WHERE ...']` and escape inner quotes. Never assert unconditional `unique` on partial indexes.
+
+---
+
+## 6. Physical vs. Logical Cross-Store Boundaries
 
 ### Symptom
 Diagrams represent cross-store references (e.g. `operational_identity.catalog_db_instance_id` -> Core `database_identity.db_instance_id`) as enforced foreign keys, falsely implying that secondary database loss corrupts Core data.
@@ -89,7 +108,7 @@ Diagrams represent cross-store references (e.g. `operational_identity.catalog_db
 
 ---
 
-## 6. Deterministic Generation & Freshness Verification
+## 7. Deterministic Generation & Freshness Verification
 
 ### Verification Commands
 ```bash

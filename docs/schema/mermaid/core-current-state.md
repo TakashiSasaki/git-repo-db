@@ -75,7 +75,7 @@ erDiagram
         TEXT repository_binding_id FK
         INTEGER provider_issue_number
         TEXT parent_provider_resource_id FK "nullable"
-        TEXT parent_kind FK "GENERATED STORED"
+        TEXT parent_kind FK "GENERATED VIRTUAL"
         BLOB text_body_sha256 FK "nullable"
         TEXT body_status
         TEXT title "nullable"
@@ -118,8 +118,8 @@ erDiagram
         TEXT review_provider_resource_id FK "nullable"
         TEXT in_reply_to_provider_resource_id FK "nullable"
         TEXT review_thread_provider_resource_id FK "nullable"
-        TEXT parent_review_kind FK "GENERATED STORED"
-        TEXT reply_kind FK "GENERATED STORED"
+        TEXT parent_review_kind FK "GENERATED VIRTUAL"
+        TEXT reply_kind FK "GENERATED VIRTUAL"
         INTEGER provider_updated_at_us "nullable"
         TEXT provider_clock_scope "nullable"
         INTEGER observed_at_us
@@ -169,7 +169,9 @@ erDiagram
     }
 
     documents {
-        TEXT change_request_id, kind, provider_change_request_document_id PK "External reference from portable_identity_and_registration"
+        TEXT change_request_id PK "External reference from portable_identity_and_registration"
+        TEXT kind PK "External reference from portable_identity_and_registration"
+        TEXT provider_change_request_document_id PK "External reference from portable_identity_and_registration"
     }
 
     repositories {
@@ -181,7 +183,8 @@ erDiagram
     }
 
     review_threads {
-        TEXT change_request_id, provider_resource_id PK "External reference from portable_identity_and_registration"
+        TEXT change_request_id PK "External reference from portable_identity_and_registration"
+        TEXT provider_resource_id PK "External reference from portable_identity_and_registration"
     }
 
     service_instances {
@@ -197,8 +200,8 @@ erDiagram
     change_requests ||--o{ review_resources : "references (change_request_id)"
     change_requests ||--o{ review_resources : "references (change_request_id, repository_uuidv4)"
     change_requests ||--o{ review_thread_state : "references (change_request_id, repository_uuidv4)"
-    change_requests ||--|o change_request_state : "references (change_request_id)"
-    documents ||--|o document_state : "references (change_request_id, kind, provider_change_request_document_id)"
+    change_requests ||--o| change_request_state : "references (change_request_id)"
+    documents ||--o| document_state : "references (change_request_id, kind, provider_change_request_document_id)"
     issue_resources |o--o{ issue_resources : "references (service_instance_uuidv4, parent_kind, parent_provider_resource_id)"
     repositories ||--o{ change_request_state : "references (repository_uuidv4)"
     repositories ||--o{ document_state : "references (repository_uuidv4)"
@@ -215,7 +218,7 @@ erDiagram
     review_resources |o--o{ review_resources : "references (change_request_id, parent_review_kind, review_provider_resource_id)"
     review_resources |o--o{ review_resources : "references (change_request_id, reply_kind, in_reply_to_provider_resource_id)"
     review_threads |o--o{ review_resources : "references (change_request_id, review_thread_provider_resource_id)"
-    review_threads ||--|o review_thread_state : "references (change_request_id, provider_resource_id)"
+    review_threads ||--o| review_thread_state : "references (change_request_id, provider_resource_id)"
     service_instances ||--o{ change_request_state : "references (service_instance_uuidv4)"
     service_instances ||--o{ document_state : "references (service_instance_uuidv4)"
     service_instances ||--o{ issue_resources : "references (service_instance_uuidv4)"

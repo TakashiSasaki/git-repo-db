@@ -8,7 +8,7 @@ Immutable Git acquisitions, snapshots, objects, commits, trees, tags, ref observ
 ```mermaid
 erDiagram
     acquisition_roots {
-        INTEGER acquisition_root_id PK "nullable"
+        INTEGER acquisition_root_id PK
         TEXT git_acquisition_id FK
         TEXT repository_uuidv4 FK
         TEXT object_format
@@ -53,7 +53,7 @@ erDiagram
     }
 
     contents {
-        INTEGER content_id PK "nullable"
+        INTEGER content_id PK
         INTEGER byte_length
         INTEGER created_at_us "nullable"
     }
@@ -107,7 +107,7 @@ erDiagram
     }
 
     git_objects {
-        INTEGER git_object_id PK "nullable"
+        INTEGER git_object_id PK
         TEXT object_format
         BLOB oid
         TEXT type
@@ -163,7 +163,7 @@ erDiagram
     }
 
     root_origins {
-        INTEGER root_origin_id PK "nullable"
+        INTEGER root_origin_id PK
         INTEGER acquisition_root_id FK
         TEXT repository_uuidv4 FK
         TEXT origin_kind
@@ -218,7 +218,8 @@ erDiagram
     }
 
     payloads {
-        TEXT representation, sha256 PK "External reference from retained_content_integrity"
+        TEXT representation PK "External reference from retained_content_integrity"
+        TEXT sha256 PK "External reference from retained_content_integrity"
     }
 
     repositories {
@@ -249,11 +250,11 @@ erDiagram
     git_objects |o--o{ root_manifest_entries : "references (git_object_id)"
     git_objects |o--o{ tag_objects : "references (target_git_object_id)"
     git_objects |o--o{ tree_entries : "references (child_git_object_id)"
-    git_objects |o--|o blob_content_map : "references (git_object_id)"
-    git_objects |o--|o commits : "references (git_object_id)"
-    git_objects |o--|o git_object_payloads : "references (git_object_id)"
-    git_objects |o--|o tag_objects : "references (git_object_id)"
-    git_objects |o--|o tree_objects : "references (git_object_id)"
+    git_objects |o--o| blob_content_map : "references (git_object_id)"
+    git_objects |o--o| commits : "references (git_object_id)"
+    git_objects |o--o| git_object_payloads : "references (git_object_id)"
+    git_objects |o--o| tag_objects : "references (git_object_id)"
+    git_objects |o--o| tree_objects : "references (git_object_id)"
     git_objects ||--o{ git_text_facts : "references (git_object_id)"
     git_objects ||--o{ repository_object_sources : "references (git_object_id)"
     payloads ||--o{ git_object_payloads : "references (payload_representation, payload_sha256)"
@@ -266,7 +267,7 @@ erDiagram
     snapshots ||--o{ ref_observations : "references (snapshot_id, repository_uuidv4)"
     sources |o--o{ git_acquisitions : "references (source_id)"
     tree_entries ||--o{ git_name_facts : "references (tree_git_object_id, raw_name)"
-    tree_objects |o--|o root_manifests : "references (tree_git_object_id)"
+    tree_objects |o--o| root_manifests : "references (tree_git_object_id)"
     tree_objects ||--o{ tree_entries : "references (tree_git_object_id)"
 ```
 

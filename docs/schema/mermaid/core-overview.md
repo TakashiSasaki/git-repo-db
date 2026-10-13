@@ -12,11 +12,11 @@ Authoritative domain facts, entities, observations, and evidence under **Core Sc
 
 ## High-Level Module Dependency Map
 
-The 70 Core tables are partitioned into 7 cohesive functional modules. SQLite foreign keys connect these modules hierarchically:
+The 70 Core tables are partitioned into 7 cohesive functional categories (presented across 6 modular ER diagrams, with Local Physical Catalog Identity grouped alongside Portable Identity & Registration). SQLite foreign keys connect these modules hierarchically:
 
 ```mermaid
 flowchart TD
-    c_ident["1. Portable Identity & Registration (14 tables)\nservice_instances, sources, repositories, change_requests..."]
+    c_ident["1. Portable Identity & Catalog (14 tables)\n(13 portable identity + 1 local physical catalog identity)"]
     c_api["2. Current API Values (5 tables)\nissue_resources, review_resources, change_request_state..."]
     c_cov["3. Domain Coverage & Enumeration (19 tables)\nfetch_collections, coverage_scopes, coverage_claims..."]
     c_git["4. Git Domain & Intrinsic DAG (21 tables)\ngit_acquisitions, snapshots, git_objects, commits, trees..."]
@@ -36,9 +36,10 @@ flowchart TD
 
 ## Functional Modules Directory
 
-| Module | Tables | Detailed Diagram | Description |
+| Category / Module | Tables | Detailed Diagram | Description |
 |---|---|---|---|
-| **Portable Identity & Registration** | 14 | [core-identity.md](core-identity.md) | Universal portable identities, Sources, repositories, bindings, endpoints, and identity relations. |
+| **Portable Identity & Registration** | 13 | [core-identity.md](core-identity.md) | Universal portable identities, Sources, repositories, bindings, endpoints, and identity relations. |
+| **Local Physical Catalog Identity** | 1 | [core-identity.md](core-identity.md) | Local SQLite database singleton and receiver-local revision counter (`database_identity`, grouped into core-identity diagram). |
 | **Current API Values** | 5 | [core-current-state.md](core-current-state.md) | Current PR/Issue/thread observation states, resource projections, and generated column contracts. |
 | **Domain Coverage & Enumeration** | 19 | [core-coverage.md](core-coverage.md) | API collections, memberships, typed coverage claims/scopes, and code listing evidence. |
 | **Git Domain & Intrinsic DAG** | 21 | [core-git.md](core-git.md) | Git acquisitions, snapshots, objects, tree entries, commit DAG, and verified byte facts. |

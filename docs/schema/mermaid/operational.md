@@ -76,7 +76,7 @@ erDiagram
     }
 
     operational_identity {
-        INTEGER singleton PK "nullable"
+        INTEGER singleton PK
         TEXT format_id
         INTEGER schema_version
         TEXT operational_instance_id
@@ -86,7 +86,7 @@ erDiagram
     }
 
     search_rebuild_metrics {
-        INTEGER rebuild_id PK "nullable"
+        INTEGER rebuild_id PK
         INTEGER started_at_us
         INTEGER ended_at_us
         INTEGER duration_ms
@@ -109,7 +109,7 @@ erDiagram
     job_attempts ||--o{ acquisition_progress : "references (job_id, attempt)"
     job_attempts ||--o{ cache_leases : "references (job_id, attempt)"
     job_attempts ||--o{ collection_progress : "references (job_id, attempt)"
-    job_attempts ||--|o space_reservations : "references (job_id, attempt)"
+    job_attempts ||--o| space_reservations : "references (job_id, attempt)"
     jobs ||--o{ job_attempts : "references (job_id)"
 ```
 

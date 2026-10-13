@@ -14,7 +14,7 @@ Rebuildable FTS5 search projections and index generations under **Search Schema 
 ```mermaid
 erDiagram
     index_generations {
-        INTEGER index_generation_id PK "nullable"
+        INTEGER index_generation_id PK
         TEXT kind
         TEXT state
         TEXT table_name
@@ -30,7 +30,7 @@ erDiagram
     }
 
     search_documents {
-        INTEGER search_document_id PK "nullable"
+        INTEGER search_document_id PK
         TEXT kind
         TEXT source_key
         TEXT body
@@ -38,7 +38,7 @@ erDiagram
     }
 
     search_identity {
-        INTEGER singleton PK "nullable"
+        INTEGER singleton PK
         TEXT format_id
         INTEGER schema_version
         TEXT search_instance_id
@@ -77,6 +77,6 @@ CREATE VIRTUAL TABLE catalog_fts_<generation_id> USING fts5(
 | `search_identity` | `catalog_db_instance_id` | `database_identity` | `db_instance_id` | Strict 1:1 ownership binding between Search DB and Core Catalog (ADR 0002 §2 PF-P14). |
 | `search_identity` | `core_revision_fence` | `database_identity` | `local_revision` | Global index freshness fence tracking Core local revision (ADR 0002 §3.3, §4). |
 | `index_generations` | `core_revision_fence` | `database_identity` | `local_revision` | Per-generation snapshot fence recorded during rebuild projection (three-store-invariants §4). |
-| `search_documents` | `source_key` | `git_objects` / resources | `oid_hex` / doc keys | Projections derived from Core Git blobs (code), PR documents (pr), and Issue resources (issue). |
+| `search_documents` | `source_key` | `git_objects` / `text_bodies` | `git_object_id` / `sha256` | Projections derived from Core Git blobs/commits ('git:<id>') and PR/Issue text bodies (SHA-256 hex) (ADR 0002 §3.3, §4). |
 
 [Back to Architecture Overview](overview.md)

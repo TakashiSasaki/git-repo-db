@@ -16,14 +16,22 @@ Validates the 11 structural requirements specified for schema introspection and 
 
 from __future__ import annotations
 
+import hashlib
+import re
 import tempfile
 from pathlib import Path
 
 from scripts.schema_viz import (
+    CORE_GROUPS,
     LOGICAL_DEPENDENCIES,
+    OPERATIONAL_GROUPS,
+    SEARCH_GROUPS,
     check_artifacts,
     generate_all_artifacts,
     introspect_all,
+    introspect_store,
+    validate_functional_groups_consistency,
+    validate_logical_dependencies,
     write_artifacts,
 )
 
@@ -325,3 +333,376 @@ def test_14_dbml_syntax_smoke():
         assert content.count("{") == content.count("}"), f"Unbalanced braces in {path}"
         assert "Project " in content
         assert "Table " in content
+
+
+def test_15_generated_column_classifications():
+    """C1: Generated column types are correctly classified as VIRTUAL or STORED."""
+    ir = introspect_all()
+    core_tables = ir["stores"]["core"]["tables"]
+
+    # 1. Production column verification
+    # issue_resources.parent_kind
+    ir_cols = {c["name"]: c for c in core_tables["issue_resources"]["columns"]}
+    assert ir_cols["parent_kind"]["is_generated"] is True
+    assert ir_cols["parent_kind"]["generation_type"] == "VIRTUAL"
+
+    # review_resources.parent_review_kind and reply_kind
+    rr_cols = {c["name"]: c for c in core_tables["review_resources"]["columns"]}
+    assert rr_cols["parent_review_kind"]["is_generated"] is True
+    assert rr_cols["parent_review_kind"]["generation_type"] == "VIRTUAL"
+    assert rr_cols["reply_kind"]["is_generated"] is True
+    assert rr_cols["reply_kind"]["generation_type"] == "VIRTUAL"
+
+    # 2. Artifact verification (DBML and HTML)
+    artifacts = generate_all_artifacts(ir, "all")
+    core_dbml = artifacts["dbml/core.dbml"]
+    assert "parent_kind text [note: 'GENERATED VIRTUAL']" in core_dbml
+    assert "parent_review_kind text [note: 'GENERATED VIRTUAL']" in core_dbml
+    assert "reply_kind text [note: 'GENERATED VIRTUAL']" in core_dbml
+    assert "GENERATED STORED" not in core_dbml
+
+    html_content = artifacts["index.html"]
+    assert '"generation_type":"VIRTUAL"' in html_content
+    assert '"generation_type":"STORED"' not in html_content
+    start_token = "const SCHEMA_DATA = "
+    start_pos = html_content.find(start_token) + len(start_token)
+    end_pos = html_content.find(";\n", start_pos)
+    import json
+
+    html_data = json.loads(html_content[start_pos:end_pos])
+    html_col_map = {
+        c["name"]: c
+        for c in html_data["stores"]["core"]["tables"]["issue_resources"]["columns"]
+    }
+    assert html_col_map["parent_kind"]["generation_type"] == "VIRTUAL"
+
+    # 3. Synthetic schema verification with both VIRTUAL and STORED columns
+    syn_ddl = """
+    CREATE TABLE syn_gen_test (
+        id INTEGER PRIMARY KEY,
+        raw_val TEXT NOT NULL,
+        virt_val TEXT GENERATED ALWAYS AS (lower(raw_val)) VIRTUAL,
+        stor_val TEXT GENERATED ALWAYS AS (upper(raw_val)) STORED
+    ) STRICT;
+    """
+    syn_hash = hashlib.sha256(syn_ddl.encode()).digest()
+    syn_store = introspect_store(
+        "synthetic",
+        "Synthetic Store",
+        "synthetic.db",
+        "syn-format",
+        1,
+        syn_hash,
+        syn_ddl,
+        {"synthetic_group": ["syn_gen_test"]},
+    )
+    syn_cols = {c["name"]: c for c in syn_store["tables"]["syn_gen_test"]["columns"]}
+    assert syn_cols["virt_val"]["is_generated"] is True
+    assert syn_cols["virt_val"]["generation_type"] == "VIRTUAL"
+    assert syn_cols["stor_val"]["is_generated"] is True
+    assert syn_cols["stor_val"]["generation_type"] == "STORED"
+
+
+def test_16_single_column_unique_and_dbml_fidelity():
+    """C2: Single-column UNIQUE constraints and unique indexes are exported faithfully in DBML."""
+    ir = introspect_all()
+    core_tables = ir["stores"]["core"]["tables"]
+
+    # 1. Regression test on production text_bodies.sha256
+    tb = core_tables["text_bodies"]
+    assert any(
+        u["columns"] == ["sha256"] and not u.get("partial", False)
+        for u in tb["unique_constraints"]
+    )
+
+    artifacts = generate_all_artifacts(ir, "dbml")
+    core_dbml = artifacts["dbml/core.dbml"]
+
+    # text_bodies definition must preserve sha256 uniqueness
+    assert "Table text_bodies {" in core_dbml
+    tb_block = core_dbml.split("Table text_bodies {")[1].split("}")[0]
+    assert "sha256 blob [not null, unique]" in tb_block
+    # Ensure text_body_id is marked pk and not unique
+    assert "text_body_id integer [pk]" in tb_block
+    assert "text_body_id integer [pk, unique]" not in tb_block
+    # Ensure sha256 is not duplicated inside indexes block
+    assert "sha256 [unique]" not in tb_block
+
+    # 2. Synthetic verification of composite PK, composite UNIQUE, and single-column UNIQUE
+    syn_ddl = """
+    CREATE TABLE syn_constraints (
+        org_id INTEGER NOT NULL,
+        repo_id INTEGER NOT NULL,
+        identifier TEXT NOT NULL UNIQUE,
+        code TEXT NOT NULL,
+        tag TEXT NOT NULL,
+        PRIMARY KEY (org_id, repo_id),
+        UNIQUE (code, tag)
+    ) STRICT;
+    """
+    syn_hash = hashlib.sha256(syn_ddl.encode()).digest()
+    syn_store = introspect_store(
+        "synthetic",
+        "Synthetic Store",
+        "synthetic.db",
+        "syn-format",
+        1,
+        syn_hash,
+        syn_ddl,
+        {"synthetic_group": ["syn_constraints"]},
+    )
+    from scripts.schema_viz import _render_dbml_table
+
+    rendered_dbml = _render_dbml_table(syn_store["tables"]["syn_constraints"])
+    assert "identifier text [not null, unique]" in rendered_dbml
+    assert "(org_id, repo_id) [pk]" in rendered_dbml
+    assert "(code, tag) [unique]" in rendered_dbml
+    # Verify identifier is not repeated in the indexes block
+    assert (
+        "indexes {\n    (org_id, repo_id) [pk]\n    (code, tag) [unique]\n  }"
+        in rendered_dbml
+    )
+
+
+def test_17_partial_unique_indexes_not_unconditional():
+    """C3: Partial unique indexes are not misrepresented as unconditional constraints in DBML."""
+    ir = introspect_all()
+    core_tables = ir["stores"]["core"]["tables"]
+
+    # 1. Production coverage_scopes verification
+    cs = core_tables["coverage_scopes"]
+    # Unconditional unique constraints must NOT include the partial index
+    assert not any(
+        u["name"] == "coverage_scope_repository_kind" for u in cs["unique_constraints"]
+    )
+
+    # Indexes list must capture the partial unique index with its predicate
+    cs_idx = {i["name"]: i for i in cs["indexes"]}
+    assert "coverage_scope_repository_kind" in cs_idx
+    assert cs_idx["coverage_scope_repository_kind"]["unique"] is True
+    assert cs_idx["coverage_scope_repository_kind"]["partial"] is True
+    assert "WHERE" in cs_idx["coverage_scope_repository_kind"]["sql"]
+    assert (
+        "change_request_id IS NULL"
+        in cs_idx["coverage_scope_repository_kind"]["predicate"]
+    )
+
+    # DBML must not emit unconditional unique constraint for coverage_scopes
+    artifacts = generate_all_artifacts(ir, "dbml")
+    core_dbml = artifacts["dbml/core.dbml"]
+    cs_block = core_dbml.split("Table coverage_scopes {")[1].split("}")[0]
+    assert "(repository_uuidv4, kind) [unique]" not in cs_block
+    assert (
+        "(repository_uuidv4, kind) [name: 'coverage_scope_repository_kind', note: 'UNIQUE WHERE change_request_id IS NULL']"
+        in cs_block
+    )
+
+    # 2. Synthetic verification of single/composite ordinary vs partial unique indexes
+    syn_ddl = """
+    CREATE TABLE syn_idx_variety (
+        id INTEGER PRIMARY KEY,
+        regular_u TEXT NOT NULL UNIQUE,
+        comp_a TEXT NOT NULL,
+        comp_b TEXT NOT NULL,
+        part_s TEXT,
+        part_c1 TEXT,
+        part_c2 TEXT,
+        non_u TEXT,
+        UNIQUE (comp_a, comp_b)
+    ) STRICT;
+    CREATE UNIQUE INDEX idx_part_single ON syn_idx_variety(part_s) WHERE part_s IS NOT NULL;
+    CREATE UNIQUE INDEX idx_part_comp ON syn_idx_variety(part_c1, part_c2) WHERE non_u = 'active';
+    CREATE INDEX idx_non_unique_part ON syn_idx_variety(non_u) WHERE non_u IS NOT NULL;
+    """
+    syn_hash = hashlib.sha256(syn_ddl.encode()).digest()
+    syn_store = introspect_store(
+        "synthetic",
+        "Synthetic Store",
+        "synthetic.db",
+        "syn-format",
+        1,
+        syn_hash,
+        syn_ddl,
+        {"synthetic_group": ["syn_idx_variety"]},
+    )
+    from scripts.schema_viz import _render_dbml_table
+
+    syn_table = syn_store["tables"]["syn_idx_variety"]
+    syn_dbml = _render_dbml_table(syn_table)
+    # Ordinary single unique on column
+    assert "regular_u text [not null, unique]" in syn_dbml
+    # Ordinary composite unique in indexes
+    assert "(comp_a, comp_b) [unique]" in syn_dbml
+    # Partial unique must have note and not unconditional unique
+    assert (
+        "(part_s) [name: 'idx_part_single', note: 'UNIQUE WHERE part_s IS NOT NULL']"
+        in syn_dbml
+    )
+    assert (
+        "(part_c1, part_c2) [name: 'idx_part_comp', note: 'UNIQUE WHERE non_u = \\'active\\'']"
+        in syn_dbml
+    )
+    assert "(part_s) [unique" not in syn_dbml
+    assert "(part_c1, part_c2) [unique" not in syn_dbml
+    # Non-unique partial index
+    assert (
+        "(non_u) [name: 'idx_non_unique_part', note: 'partial index: WHERE non_u IS NOT NULL']"
+        in syn_dbml
+    )
+
+
+def test_18_mermaid_relationship_cardinality_and_pk_formatting():
+    """C4: Mermaid ER diagrams obey orientation-sensitive cardinality markers and clean PK rendering."""
+    ir = introspect_all()
+    artifacts = generate_all_artifacts(ir, "mermaid")
+
+    rel_pattern = re.compile(
+        r"^\s*([A-Za-z0-9_]+)\s+([|{}o]{2})--([|{}o]{2})\s+([A-Za-z0-9_]+)\s*:\s*\"([^\"]+)\"",
+        re.MULTILINE,
+    )
+    valid_left = {"||", "|o", "}o", "}|"}
+    valid_right = {"||", "o|", "o{", "|{"}
+
+    for path, content in artifacts.items():
+        assert path.startswith("mermaid/")
+        for match in rel_pattern.finditer(content):
+            parent_table, left_marker, right_marker, child_table, label = match.groups()
+            assert left_marker in valid_left, (
+                f"Invalid left cardinality marker '{left_marker}' in {path}: {match.group(0)}"
+            )
+            assert right_marker in valid_right, (
+                f"Invalid right cardinality marker '{right_marker}' in {path}: {match.group(0)}"
+            )
+            # Critical C4 invariant: '|o' must never appear on the right side
+            assert right_marker != "|o", (
+                f"Right-hand cardinality marker '|o' is illegal in Mermaid ER ({path}): {match.group(0)}"
+            )
+
+        # Invariant: No PK column line contains "nullable"
+        lines = content.splitlines()
+        for i, line in enumerate(lines):
+            line_str = line.strip()
+            if "PK" in line_str and "nullable" in line_str:
+                raise AssertionError(
+                    f"PK column line contains 'nullable' in {path}:{i + 1}: {line}"
+                )
+
+        # Invariant: Composite PK in stubs must not concatenate columns onto a single line
+        if "erDiagram" in content:
+            assert "PK" in content
+            for line in lines:
+                if line.strip().startswith("TEXT ") and "PK" in line:
+                    # Stub format: 'TEXT <col> PK "External reference..."'
+                    col_part = line.strip().split()[1]
+                    assert "," not in col_part, (
+                        f"Comma found in stub PK column definition in {path}: {line}"
+                    )
+
+
+def test_19_cross_store_logical_dependencies_and_derivation_semantics():
+    """C5: Cross-store logical relationships have verified semantics, valid columns, and polymorphic notes."""
+    ir = introspect_all()
+
+    # 1. Production logical dependencies validation passes cleanly
+    errors = validate_logical_dependencies(ir)
+    assert errors == [], f"Validation errors found in LOGICAL_DEPENDENCIES: {errors}"
+
+    # 2. Invariants on LOGICAL_DEPENDENCIES
+    for dep in LOGICAL_DEPENDENCIES:
+        # Must not reference non-existent oid_hex column
+        assert "oid_hex" not in dep.get("source_columns", [])
+        assert "oid_hex" not in dep.get("target_columns", [])
+
+    # Verify search_documents derivations
+    git_dep = next(
+        d for d in LOGICAL_DEPENDENCIES if d["id"] == "log_search_docs_git_objects"
+    )
+    assert git_dep["target_table"] == "git_objects"
+    assert git_dep["target_columns"] == ["git_object_id"]
+    assert git_dep.get("is_derivation") is True
+    assert "git:<git_object_id>" in git_dep["description"]
+
+    text_dep = next(
+        d for d in LOGICAL_DEPENDENCIES if d["id"] == "log_search_docs_text_bodies"
+    )
+    assert text_dep["target_table"] == "text_bodies"
+    assert text_dep["target_columns"] == ["sha256"]
+    assert text_dep.get("is_derivation") is True
+    assert "text_bodies.sha256" in text_dep["description"]
+
+    # 3. Validation catches non-existent table or column
+    fake_ir = {
+        "stores": {
+            "core": {"tables": {"t1": {"columns": [{"name": "c1"}]}}},
+            "operational": {"tables": {"t2": {"columns": [{"name": "c2"}]}}},
+        },
+        "logical_dependencies": [
+            {
+                "id": "test_invalid_col",
+                "source_store": "operational",
+                "source_table": "t2",
+                "source_columns": ["missing_col"],
+                "target_store": "core",
+                "target_table": "t1",
+                "target_columns": ["c1"],
+            },
+            {
+                "id": "test_invalid_table",
+                "source_store": "operational",
+                "source_table": "missing_table",
+                "source_columns": ["c2"],
+                "target_store": "core",
+                "target_table": "t1",
+                "target_columns": ["c1"],
+            },
+        ],
+    }
+    fake_errors = validate_logical_dependencies(fake_ir)
+    assert any("source column 'missing_col' not found" in e for e in fake_errors)
+    assert any("source table 'missing_table' not found" in e for e in fake_errors)
+
+
+def test_20_functional_groups_and_tablegroups_consistency():
+    """Section 4: Functional groups match audit_publication_free and TableGroups are emitted in combined DBML."""
+    # 1. Classification matches audit_publication_free
+    errors = validate_functional_groups_consistency()
+    assert errors == [], f"Functional groups mismatch: {errors}"
+
+    # 2. Group counts and table inventory
+    assert len(CORE_GROUPS) == 7
+    total_core_tables = sum(len(tables) for tables in CORE_GROUPS.values())
+    assert total_core_tables == 70
+
+    total_op_tables = sum(len(tables) for tables in OPERATIONAL_GROUPS.values())
+    assert total_op_tables == 10
+
+    total_search_tables = sum(len(tables) for tables in SEARCH_GROUPS.values())
+    assert total_search_tables == 4
+
+    total_tables = total_core_tables + total_op_tables + total_search_tables
+    assert total_tables == 84
+
+    # 3. combined.dbml TableGroup emission
+    ir = introspect_all()
+    artifacts = generate_all_artifacts(ir, "dbml")
+    combined_dbml = artifacts["dbml/combined.dbml"]
+
+    assert "TableGroup core_store {" in combined_dbml
+    assert "TableGroup operational_store {" in combined_dbml
+    assert "TableGroup search_store {" in combined_dbml
+
+    core_group_block = combined_dbml.split("TableGroup core_store {")[1].split("}")[0]
+    for t_name in ir["stores"]["core"]["tables"]:
+        assert f"  {t_name}" in core_group_block
+
+    op_group_block = combined_dbml.split("TableGroup operational_store {")[1].split(
+        "}"
+    )[0]
+    for t_name in ir["stores"]["operational"]["tables"]:
+        assert f"  {t_name}" in op_group_block
+
+    search_group_block = combined_dbml.split("TableGroup search_store {")[1].split("}")[
+        0
+    ]
+    for t_name in ir["stores"]["search"]["tables"]:
+        assert f"  {t_name}" in search_group_block

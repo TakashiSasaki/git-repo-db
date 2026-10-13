@@ -31,8 +31,8 @@ Table acquisition_roots {
   complete integer [not null]
 
   indexes {
-    (git_acquisition_id, object_format, oid, role) [unique, name: 'sqlite_autoindex_acquisition_roots_2']
-    (acquisition_root_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_acquisition_roots_1']
+    (git_acquisition_id, object_format, oid, role) [unique]
+    (acquisition_root_id, repository_uuidv4) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -43,7 +43,7 @@ Table blob_content_map {
   content_id integer [not null]
 
   indexes {
-    (content_id)
+    (content_id) [name: 'blob_content_map_content']
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -65,7 +65,7 @@ Table change_request_events {
   parser_version text [not null]
 
   indexes {
-    (change_request_id, provider_event_id) [unique, name: 'sqlite_autoindex_change_request_events_2']
+    (change_request_id, provider_event_id) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -107,7 +107,7 @@ Table change_request_state {
   field_evidence_json text [not null, default: `'{}'`]
 
   indexes {
-    (repository_uuidv4)
+    (repository_uuidv4) [name: 'change_request_state_repository']
   }
 
   Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
@@ -121,9 +121,9 @@ Table change_requests {
   provider_change_request_number integer [not null]
 
   indexes {
-    (change_request_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_change_requests_3']
-    (repository_binding_id, change_request_kind, provider_change_request_number) [unique, name: 'sqlite_autoindex_change_requests_2']
-    (repository_binding_id, repository_uuidv4)
+    (change_request_id, repository_uuidv4) [unique]
+    (repository_binding_id, change_request_kind, provider_change_request_number) [unique]
+    (repository_binding_id, repository_uuidv4) [name: 'change_requests_fk_1']
   }
 
   Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
@@ -159,7 +159,7 @@ Table code_assessments {
   details_json text [not null]
 
   indexes {
-    (code_assessment_id, change_request_id) [unique, name: 'sqlite_autoindex_code_assessments_2']
+    (code_assessment_id, change_request_id) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -224,10 +224,10 @@ Table code_listings {
   base_oid blob
 
   indexes {
-    (code_listing_id, change_request_id) [unique, name: 'sqlite_autoindex_code_listings_3']
-    (fetch_collection_id, kind) [unique, name: 'sqlite_autoindex_code_listings_2']
-    (resume_scope_id)
-    (fetch_collection_id, change_request_id)
+    (code_listing_id, change_request_id) [unique]
+    (fetch_collection_id, kind) [unique]
+    (resume_scope_id) [name: 'code_listings_fk_1']
+    (fetch_collection_id, change_request_id) [name: 'code_listings_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -242,7 +242,7 @@ Table collection_memberships {
 
   indexes {
     (fetch_collection_id, change_request_id, kind, provider_change_request_document_id) [pk]
-    (change_request_id, kind, provider_change_request_document_id)
+    (change_request_id, kind, provider_change_request_document_id) [name: 'collection_memberships_document_fk']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -258,7 +258,7 @@ Table commit_parents {
 
   indexes {
     (commit_git_object_id, parent_ordinal) [pk]
-    (commit_git_object_id, parent_header_offset) [unique, name: 'sqlite_autoindex_commit_parents_2']
+    (commit_git_object_id, parent_header_offset) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -278,7 +278,7 @@ Table commits {
 }
 
 Table completion_markers {
-  completion_marker_uuidv4 text [not null, default: `lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',(random() & 3)+1,1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))`]
+  completion_marker_uuidv4 text [not null, unique, default: `lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',(random() & 3)+1,1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))`]
   completion_marker_id integer [pk]
   resume_scope_id text
   fetch_collection_id text [not null]
@@ -287,8 +287,8 @@ Table completion_markers {
   observed_at_us integer
 
   indexes {
-    (resume_scope_id)
-    (fetch_collection_id)
+    (resume_scope_id) [name: 'completion_markers_fk_1']
+    (fetch_collection_id) [name: 'completion_markers_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -323,7 +323,7 @@ Table coverage_claim_markers {
 
   indexes {
     (coverage_claim_id, completion_marker_uuidv4) [pk]
-    (completion_marker_uuidv4, coverage_claim_id)
+    (completion_marker_uuidv4, coverage_claim_id) [name: 'coverage_claim_markers_marker']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -337,8 +337,8 @@ Table coverage_claims {
   details_json text
 
   indexes {
-    (coverage_scope_id, observed_at_us, coverage_state) [unique, name: 'sqlite_autoindex_coverage_claims_1']
-    (coverage_scope_id)
+    (coverage_scope_id, observed_at_us, coverage_state) [unique]
+    (coverage_scope_id) [name: 'coverage_claims_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -351,12 +351,10 @@ Table coverage_scopes {
   kind text [not null]
 
   indexes {
-    (change_request_id, kind) [unique, name: 'coverage_scope_change_request_kind']
-    (repository_uuidv4, kind) [unique, name: 'coverage_scope_repository_kind']
-    (repository_uuidv4)
-    (change_request_id, repository_uuidv4)
-    (change_request_id, kind) [unique, note: 'partial index']
-    (repository_uuidv4, kind) [unique, note: 'partial index']
+    (repository_uuidv4) [name: 'coverage_scopes_fk_2']
+    (change_request_id, repository_uuidv4) [name: 'coverage_scopes_fk_1']
+    (change_request_id, kind) [name: 'coverage_scope_change_request_kind', note: 'UNIQUE WHERE change_request_id IS NOT NULL']
+    (repository_uuidv4, kind) [name: 'coverage_scope_repository_kind', note: 'UNIQUE WHERE change_request_id IS NULL']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -416,7 +414,7 @@ Table document_state {
 
   indexes {
     (change_request_id, kind, provider_change_request_document_id) [pk]
-    (repository_uuidv4)
+    (repository_uuidv4) [name: 'document_state_repository']
   }
 
   Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
@@ -452,11 +450,10 @@ Table exchange_blocked_coverage_claims {
 Table exchange_local_identities {
   table_name text [not null, note: 'Composite PK (pos 1)']
   local_key_json text [not null, note: 'Composite PK (pos 2)']
-  record_key text [not null]
+  record_key text [not null, unique]
 
   indexes {
     (table_name, local_key_json) [pk]
-    (record_key) [unique, name: 'sqlite_autoindex_exchange_local_identities_1']
   }
 
   Note: 'STRICT mode enabled. Functional group: Exchange Staging & Admissions.'
@@ -473,13 +470,13 @@ Table exchange_staging {
 
   indexes {
     (record_key, content_sha256) [pk]
-    (repository_uuidv4) [note: 'partial index']
-    (repository_uuidv4) [note: 'partial index']
-    (repository_uuidv4) [note: 'partial index']
-    (record_key, repository_uuidv4)
-    (table_name, record_key)
-    (reason, table_name)
-    (repository_uuidv4, table_name, reason)
+    (repository_uuidv4) [name: 'exchange_staging_git_name', note: 'partial index: WHERE table_name=\'git_name_facts\'']
+    (repository_uuidv4) [name: 'exchange_staging_git_object', note: 'partial index: WHERE table_name IN (\'git_object_payloads\',\'git_commit_facts\',\'git_text_facts\')']
+    (repository_uuidv4) [name: 'exchange_staging_root_origin', note: 'partial index: WHERE table_name=\'root_origins\'']
+    (record_key, repository_uuidv4) [name: 'exchange_staging_record_owner']
+    (table_name, record_key) [name: 'exchange_staging_table']
+    (reason, table_name) [name: 'exchange_staging_reason']
+    (repository_uuidv4, table_name, reason) [name: 'exchange_staging_owner']
   }
 
   Note: 'STRICT mode enabled. Functional group: Exchange Staging & Admissions.'
@@ -496,12 +493,12 @@ Table fetch_collections {
   scope_json text [not null, default: `'{}'`]
 
   indexes {
-    (fetch_collection_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_fetch_collections_3']
-    (fetch_collection_id, change_request_id) [unique, name: 'sqlite_autoindex_fetch_collections_2']
-    (repository_uuidv4)
-    (source_id)
-    (resume_scope_id)
-    (change_request_id, repository_uuidv4)
+    (fetch_collection_id, repository_uuidv4) [unique]
+    (fetch_collection_id, change_request_id) [unique]
+    (repository_uuidv4) [name: 'fetch_collections_fk_3']
+    (source_id) [name: 'fetch_collections_fk_2']
+    (resume_scope_id) [name: 'fetch_collections_fk_1']
+    (change_request_id, repository_uuidv4) [name: 'fetch_collections_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -522,7 +519,7 @@ Table git_acquisitions {
   roots_manifest text
 
   indexes {
-    (git_acquisition_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_git_acquisitions_2']
+    (git_acquisition_id, repository_uuidv4) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -542,7 +539,7 @@ Table git_commit_facts {
   metadata text [not null]
 
   indexes {
-    (git_object_id, decoder_key) [unique, name: 'sqlite_autoindex_git_commit_facts_2']
+    (git_object_id, decoder_key) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -584,7 +581,7 @@ Table git_objects {
   verified integer [not null]
 
   indexes {
-    (object_format, oid) [unique, name: 'sqlite_autoindex_git_objects_1']
+    (object_format, oid) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -605,7 +602,7 @@ Table git_text_facts {
   raw_text text
 
   indexes {
-    (git_object_id, decoder_key) [unique, name: 'sqlite_autoindex_git_text_facts_2']
+    (git_object_id, decoder_key) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -655,7 +652,7 @@ Table issue_resources {
   repository_binding_id text [not null]
   provider_issue_number integer [not null]
   parent_provider_resource_id text
-  parent_kind text [note: 'GENERATED STORED']
+  parent_kind text [note: 'GENERATED VIRTUAL']
   text_body_sha256 blob
   body_status text [not null, default: `'present'`]
   title text
@@ -676,10 +673,9 @@ Table issue_resources {
 
   indexes {
     (service_instance_uuidv4, kind, provider_resource_id) [pk]
-    (repository_binding_id, provider_issue_number) [unique, name: 'issue_resources_current_number']
-    (service_instance_uuidv4, parent_kind, parent_provider_resource_id)
-    (repository_uuidv4, kind, provider_issue_number)
-    (repository_binding_id, provider_issue_number) [unique, note: 'partial index']
+    (service_instance_uuidv4, parent_kind, parent_provider_resource_id) [name: 'issue_resources_parent']
+    (repository_uuidv4, kind, provider_issue_number) [name: 'issue_resources_repository']
+    (repository_binding_id, provider_issue_number) [name: 'issue_resources_current_number', note: 'UNIQUE WHERE kind=\'issue\'']
   }
 
   Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
@@ -699,7 +695,7 @@ Table payload_admission_staging {
 
 Table payload_quarantine {
   sha256 blob [pk, not null]
-  unresolved_payload_id integer [not null]
+  unresolved_payload_id integer [not null, unique]
 
   Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
 }
@@ -710,7 +706,7 @@ Table payloads {
 
   indexes {
     (representation, sha256) [pk]
-    (sha256)
+    (sha256) [name: 'payloads_stored_bytes_fk']
   }
 
   Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
@@ -751,7 +747,7 @@ Table repositories {
   metadata text [not null]
 
   indexes {
-    (preferred_repository_endpoint_id, repository_uuidv4)
+    (preferred_repository_endpoint_id, repository_uuidv4) [name: 'repositories_fk_1']
   }
 
   Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
@@ -766,9 +762,9 @@ Table repository_bindings {
   created_at_us integer
 
   indexes {
-    (repository_binding_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_repository_bindings_4']
-    (service_instance_uuidv4, provider_repository_id) [unique, name: 'sqlite_autoindex_repository_bindings_3']
-    (repository_uuidv4, service_instance_uuidv4) [unique, name: 'sqlite_autoindex_repository_bindings_2']
+    (repository_binding_id, repository_uuidv4) [unique]
+    (service_instance_uuidv4, provider_repository_id) [unique]
+    (repository_uuidv4, service_instance_uuidv4) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
@@ -784,8 +780,8 @@ Table repository_endpoints {
   created_at_us integer
 
   indexes {
-    (repository_endpoint_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_repository_endpoints_3']
-    (repository_uuidv4, url) [unique, name: 'sqlite_autoindex_repository_endpoints_2']
+    (repository_endpoint_id, repository_uuidv4) [unique]
+    (repository_uuidv4, url) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
@@ -811,7 +807,7 @@ Table repository_object_sources {
 
   indexes {
     (repository_uuidv4, git_object_id, git_acquisition_id) [pk]
-    (repository_uuidv4, git_acquisition_id, git_object_id)
+    (repository_uuidv4, git_acquisition_id, git_object_id) [name: 'repository_object_sources_acquisition']
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -830,10 +826,10 @@ Table resume_scopes {
   confidence text [not null]
 
   indexes {
-    (resume_scope_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_resume_scopes_2']
-    (repository_uuidv4)
-    (source_id)
-    (repository_binding_id, repository_uuidv4)
+    (resume_scope_id, repository_uuidv4) [unique]
+    (repository_uuidv4) [name: 'resume_scopes_fk_2']
+    (source_id) [name: 'resume_scopes_fk_1']
+    (repository_binding_id, repository_uuidv4) [name: 'resume_scopes_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
@@ -862,8 +858,8 @@ Table review_resources {
   review_provider_resource_id text
   in_reply_to_provider_resource_id text
   review_thread_provider_resource_id text
-  parent_review_kind text [note: 'GENERATED STORED']
-  reply_kind text [note: 'GENERATED STORED']
+  parent_review_kind text [note: 'GENERATED VIRTUAL']
+  reply_kind text [note: 'GENERATED VIRTUAL']
   provider_updated_at_us integer
   provider_clock_scope text
   observed_at_us integer [not null]
@@ -877,10 +873,10 @@ Table review_resources {
 
   indexes {
     (change_request_id, kind, provider_change_request_document_id) [pk]
-    (change_request_id, review_thread_provider_resource_id)
-    (change_request_id, in_reply_to_provider_resource_id)
-    (change_request_id, review_provider_resource_id)
-    (repository_uuidv4, kind)
+    (change_request_id, review_thread_provider_resource_id) [name: 'review_resources_thread']
+    (change_request_id, in_reply_to_provider_resource_id) [name: 'review_resources_reply']
+    (change_request_id, review_provider_resource_id) [name: 'review_resources_review']
+    (repository_uuidv4, kind) [name: 'review_resources_repository']
   }
 
   Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
@@ -919,7 +915,7 @@ Table review_thread_state {
 
   indexes {
     (change_request_id, provider_resource_id) [pk]
-    (repository_uuidv4)
+    (repository_uuidv4) [name: 'review_thread_state_repository']
   }
 
   Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
@@ -931,7 +927,7 @@ Table review_threads {
 
   indexes {
     (change_request_id, provider_resource_id) [pk]
-    (change_request_id)
+    (change_request_id) [name: 'review_threads_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
@@ -972,7 +968,7 @@ Table root_origins {
   code_assessment_id text
 
   indexes {
-    (acquisition_root_id, origin_kind, source_ordinal) [unique, name: 'sqlite_autoindex_root_origins_1']
+    (acquisition_root_id, origin_kind, source_ordinal) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -1000,10 +996,10 @@ Table snapshots {
   created_at_us integer
 
   indexes {
-    (snapshot_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_snapshots_2']
-    (repository_uuidv4, git_acquisition_id)
-    (repository_uuidv4, complete)
-    (predecessor_snapshot_id, complete)
+    (snapshot_id, repository_uuidv4) [unique]
+    (repository_uuidv4, git_acquisition_id) [name: 'snapshots_acquisition']
+    (repository_uuidv4, complete) [name: 'snapshots_repository']
+    (predecessor_snapshot_id, complete) [name: 'snapshots_predecessor']
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -1042,7 +1038,7 @@ Table source_repositories {
 
   indexes {
     (source_id, repository_uuidv4) [pk]
-    (repository_uuidv4)
+    (repository_uuidv4) [name: 'source_repositories_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
@@ -1050,15 +1046,15 @@ Table source_repositories {
 
 Table sources {
   source_id text [pk, not null]
-  source_registration_uuidv4 text [not null]
+  source_registration_uuidv4 text [not null, unique]
   service_instance_uuidv4 text
   discovery_kind text [not null]
   name text [not null]
   settings text
 
   indexes {
-    (source_id, source_registration_uuidv4) [unique, name: 'sqlite_autoindex_sources_3']
-    (service_instance_uuidv4)
+    (source_id, source_registration_uuidv4) [unique]
+    (service_instance_uuidv4) [name: 'sources_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
@@ -1087,7 +1083,7 @@ Table text_bodies {
   text_body_id integer [pk]
   body text [not null]
   byte_length integer [not null]
-  sha256 blob [not null]
+  sha256 blob [not null, unique]
 
   Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
 }
@@ -1147,7 +1143,7 @@ Table tree_entries {
 
   indexes {
     (tree_git_object_id, raw_name) [pk]
-    (tree_git_object_id, entry_offset) [unique, name: 'sqlite_autoindex_tree_entries_2']
+    (tree_git_object_id, entry_offset) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
@@ -1305,7 +1301,7 @@ Table acquisition_progress {
   active_cache_entry_id text
 
   indexes {
-    (job_id, attempt)
+    (job_id, attempt) [name: 'acquisition_progress_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -1320,7 +1316,7 @@ Table active_cache_entries {
   bytes integer [not null]
 
   indexes {
-    (cache_locator_id)
+    (cache_locator_id) [name: 'active_cache_entries_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -1334,7 +1330,7 @@ Table cache_leases {
 
   indexes {
     (active_cache_entry_id, job_id, attempt) [pk]
-    (job_id, attempt)
+    (job_id, attempt) [name: 'cache_leases_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -1348,7 +1344,7 @@ Table cache_locators {
   state text [not null]
 
   indexes {
-    (cache_locator_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_cache_locators_2']
+    (cache_locator_id, repository_uuidv4) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -1363,7 +1359,7 @@ Table collection_progress {
   reason text
 
   indexes {
-    (job_id, attempt)
+    (job_id, attempt) [name: 'collection_progress_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -1394,7 +1390,7 @@ Table jobs {
   created_at_us integer
 
   indexes {
-    (job_id, current_attempt)
+    (job_id, current_attempt) [name: 'jobs_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -1469,7 +1465,7 @@ Table index_membership {
 
   indexes {
     (index_generation_id, search_document_id) [pk]
-    (search_document_id)
+    (search_document_id) [name: 'index_membership_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
@@ -1483,7 +1479,7 @@ Table search_documents {
   metadata text [not null]
 
   indexes {
-    (kind, source_key) [unique, name: 'sqlite_autoindex_search_documents_1']
+    (kind, source_key) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
@@ -1507,14 +1503,110 @@ Table search_identity {
 Ref fk_index_membership_0: index_membership.search_document_id > search_documents.search_document_id [update: restrict, delete: restrict]
 Ref fk_index_membership_1: index_membership.index_generation_id > index_generations.index_generation_id [update: restrict, delete: restrict]
 
+// ==================== Store Groupings (ADR 0002) ====================
+
+TableGroup core_store {
+  acquisition_roots
+  blob_content_map
+  change_request_events
+  change_request_state
+  change_requests
+  code_acquisitions
+  code_assessments
+  code_commits
+  code_file_changes
+  code_listing_progress
+  code_listings
+  collection_memberships
+  commit_parents
+  commits
+  completion_markers
+  content_digests
+  contents
+  coverage_claim_markers
+  coverage_claims
+  coverage_scopes
+  current_collection_pages
+  database_identity
+  document_state
+  documents
+  exchange_admissions
+  exchange_blocked_coverage_claims
+  exchange_local_identities
+  exchange_staging
+  fetch_collections
+  git_acquisitions
+  git_commit_facts
+  git_name_facts
+  git_object_payloads
+  git_objects
+  git_text_facts
+  identity_relation_cancellations
+  identity_relation_staging
+  identity_relations
+  issue_resources
+  payload_admission_staging
+  payload_quarantine
+  payloads
+  preservation_obligations
+  ref_observations
+  repositories
+  repository_bindings
+  repository_endpoints
+  repository_names
+  repository_object_sources
+  resume_scopes
+  review_resources
+  review_thread_state
+  review_threads
+  root_manifest_entries
+  root_manifests
+  root_origins
+  service_instances
+  snapshots
+  source_inventory_assessments
+  source_repositories
+  sources
+  stored_bytes
+  tag_objects
+  text_bodies
+  thread_collection_continuations
+  thread_collection_requirements
+  thread_collection_targets
+  tree_entries
+  tree_objects
+  unresolved_payloads
+}
+
+TableGroup operational_store {
+  acquisition_progress
+  active_cache_entries
+  cache_leases
+  cache_locators
+  collection_progress
+  job_attempts
+  jobs
+  operational_identity
+  search_rebuild_metrics
+  space_reservations
+}
+
+TableGroup search_store {
+  index_generations
+  index_membership
+  search_documents
+  search_identity
+}
+
 // ==================== Logical Cross-Store Dependencies (ADR 0002) ====================
 // These are application-level dependencies across physical SQLite databases.
 // They are NOT enforced by SQLite foreign keys. Loss of Operational or Search never invalidates Core.
-// Ref log_op_identity_catalog: operational_identity.(catalog_db_instance_id) > database_identity.(db_instance_id) [note: 'ADR 0002 §2 PF-P11, §3.2']
-// Ref log_op_acq_progress_git_acq: acquisition_progress.(git_acquisition_id) > git_acquisitions.(git_acquisition_id) [note: 'ADR 0002 §3.2, PF-P04']
-// Ref log_op_col_progress_fetch_col: collection_progress.(fetch_collection_id) > fetch_collections.(fetch_collection_id) [note: 'ADR 0002 §3.2, PF-P03, PF-P04']
-// Ref log_op_cache_locators_repo: cache_locators.(repository_uuidv4) > repositories.(repository_uuidv4) [note: 'ADR 0002 §3.2, three-store-invariants §1']
-// Ref log_search_identity_catalog: search_identity.(catalog_db_instance_id) > database_identity.(db_instance_id) [note: 'ADR 0002 §2 PF-P14, §3.3']
-// Ref log_search_identity_fence: search_identity.(core_revision_fence) > database_identity.(local_revision) [note: 'ADR 0002 §3.3, §4, PF-P15']
-// Ref log_search_gen_fence: index_generations.(core_revision_fence) > database_identity.(local_revision) [note: 'ADR 0002 §3.3, §4, three-store-invariants §4']
-// Ref log_search_docs_core: search_documents.(source_key) > git_objects.(oid_hex) [note: 'ADR 0002 §3.3']
+// Ref log_op_identity_catalog: operational_identity.(catalog_db_instance_id) > database_identity.(db_instance_id) [note: 'ADR 0002 §2 PF-P11, §3.2 - Strict 1:1 ownership binding between Operational database and Core Catalog instance. Operational DB is disposable without affecting Core domain facts.']
+// Ref log_op_acq_progress_git_acq: acquisition_progress.(git_acquisition_id) > git_acquisitions.(git_acquisition_id) [note: 'ADR 0002 §3.2, PF-P04 - Operational Git acquisition worker progress tracking associated Core Git acquisition entity. Interrupted/uncommitted progress is safely discarded.']
+// Ref log_op_col_progress_fetch_col: collection_progress.(fetch_collection_id) > fetch_collections.(fetch_collection_id) [note: 'ADR 0002 §3.2, PF-P03, PF-P04 - Operational API collection worker progress tracking associated Core fetch collection. Missing progress triggers fallback to fresh full acquisition.']
+// Ref log_op_cache_locators_repo: cache_locators.(repository_uuidv4) > repositories.(repository_uuidv4) [note: 'ADR 0002 §3.2, three-store-invariants §1 - Transient physical Git packfile cache locator mapped to Core repository UUID. Incomplete Core preservation obligations block cache GC even if locator disappears.']
+// Ref log_search_identity_catalog: search_identity.(catalog_db_instance_id) > database_identity.(db_instance_id) [note: 'ADR 0002 §2 PF-P14, §3.3 - Strict 1:1 ownership binding between Search database and Core Catalog instance. Search DB is excluded from backup and rebuildable at any time.']
+// Ref log_search_identity_fence: search_identity.(core_revision_fence) > database_identity.(local_revision) [note: 'ADR 0002 §3.3, §4, PF-P15 - Search database freshness fence tracking Core local_revision counter. Stale fence triggers direct-scan fallback or rebuild notification.']
+// Ref log_search_gen_fence: index_generations.(core_revision_fence) > database_identity.(local_revision) [note: 'ADR 0002 §3.3, §4, three-store-invariants §4 - Per-generation index snapshot fence recording Core local_revision at projection time for snapshot pinning.']
+// Ref log_search_docs_git_objects: search_documents.(source_key) > git_objects.(git_object_id) [note: 'ADR 0002 §3.3, §4 - Code and commit search projections (kind IN ('code', 'commits')). The source_key is encoded as 'git:<git_object_id>' derived from Core git_objects.git_object_id via valid git facts. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key.']
+// Ref log_search_docs_text_bodies: search_documents.(source_key) > text_bodies.(sha256) [note: 'ADR 0002 §3.3, §4 - PR and Issue search projections (kind IN ('pr', 'issue')). The source_key is derived from lower hex-encoded text_bodies.sha256 for domain text bodies, or SHA-256 hex digest of standalone issue titles. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key.']

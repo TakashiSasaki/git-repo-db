@@ -38,7 +38,7 @@ erDiagram
         TEXT coverage_claim_id PK "External reference from domain_enumeration_and_coverage"
     }
 
-    coverage_claims |o--|o exchange_blocked_coverage_claims : "references (coverage_claim_id)"
+    coverage_claims |o--o| exchange_blocked_coverage_claims : "references (coverage_claim_id)"
 ```
 
 ## Cross-Module Foreign Keys

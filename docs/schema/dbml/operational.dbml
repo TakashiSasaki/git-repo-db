@@ -28,7 +28,7 @@ Table acquisition_progress {
   active_cache_entry_id text
 
   indexes {
-    (job_id, attempt)
+    (job_id, attempt) [name: 'acquisition_progress_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -43,7 +43,7 @@ Table active_cache_entries {
   bytes integer [not null]
 
   indexes {
-    (cache_locator_id)
+    (cache_locator_id) [name: 'active_cache_entries_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -57,7 +57,7 @@ Table cache_leases {
 
   indexes {
     (active_cache_entry_id, job_id, attempt) [pk]
-    (job_id, attempt)
+    (job_id, attempt) [name: 'cache_leases_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -71,7 +71,7 @@ Table cache_locators {
   state text [not null]
 
   indexes {
-    (cache_locator_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_cache_locators_2']
+    (cache_locator_id, repository_uuidv4) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -86,7 +86,7 @@ Table collection_progress {
   reason text
 
   indexes {
-    (job_id, attempt)
+    (job_id, attempt) [name: 'collection_progress_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
@@ -117,7 +117,7 @@ Table jobs {
   created_at_us integer
 
   indexes {
-    (job_id, current_attempt)
+    (job_id, current_attempt) [name: 'jobs_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'

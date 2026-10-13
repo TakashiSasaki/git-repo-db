@@ -43,7 +43,7 @@ erDiagram
     }
 
     text_bodies {
-        INTEGER text_body_id PK "nullable"
+        INTEGER text_body_id PK
         TEXT body
         INTEGER byte_length
         BLOB sha256 UK
@@ -53,7 +53,7 @@ erDiagram
         BLOB stored_sha256 FK
         INTEGER detected_at_us
         TEXT diagnostic_json
-        INTEGER unresolved_payload_id PK "nullable"
+        INTEGER unresolved_payload_id PK
         TEXT reason
     }
 
@@ -61,11 +61,11 @@ erDiagram
         TEXT git_acquisition_id PK "External reference from git_identity_intrinsic_and_capture"
     }
 
-    git_acquisitions ||--|o preservation_obligations : "references (git_acquisition_id)"
+    git_acquisitions ||--o| preservation_obligations : "references (git_acquisition_id)"
     stored_bytes ||--o{ payloads : "references (sha256)"
     stored_bytes ||--o{ unresolved_payloads : "references (stored_sha256)"
-    stored_bytes ||--|o payload_quarantine : "references (sha256)"
-    unresolved_payloads ||--|o payload_quarantine : "references (unresolved_payload_id)"
+    stored_bytes ||--o| payload_quarantine : "references (sha256)"
+    unresolved_payloads ||--o| payload_quarantine : "references (unresolved_payload_id)"
 ```
 
 ## Cross-Module Foreign Keys

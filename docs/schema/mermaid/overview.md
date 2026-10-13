@@ -61,7 +61,8 @@ flowchart TD
 | `search.search_identity` | `catalog_db_instance_id` | `core.database_identity` | `db_instance_id` | ADR 0002 §2 PF-P14, §3.3 | Strict 1:1 ownership binding between Search database and Core Catalog instance. Search DB is excluded from backup and rebuildable at any time. |
 | `search.search_identity` | `core_revision_fence` | `core.database_identity` | `local_revision` | ADR 0002 §3.3, §4, PF-P15 | Search database freshness fence tracking Core local_revision counter. Stale fence triggers direct-scan fallback or rebuild notification. |
 | `search.index_generations` | `core_revision_fence` | `core.database_identity` | `local_revision` | ADR 0002 §3.3, §4, three-store-invariants §4 | Per-generation index snapshot fence recording Core local_revision at projection time for snapshot pinning. |
-| `search.search_documents` | `source_key` | `core.git_objects` | `oid_hex` | ADR 0002 §3.3 | Search projection document derived from Core resources (Git blob OID for code, PR doc key for pr, Issue doc key for issue, commit OID for commits). Disposable derivative. |
+| `search.search_documents` | `source_key` | `core.git_objects` | `git_object_id` | ADR 0002 §3.3, §4 | Code and commit search projections (kind IN ('code', 'commits')). The source_key is encoded as 'git:<git_object_id>' derived from Core git_objects.git_object_id via valid git facts. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key. |
+| `search.search_documents` | `source_key` | `core.text_bodies` | `sha256` | ADR 0002 §3.3, §4 | PR and Issue search projections (kind IN ('pr', 'issue')). The source_key is derived from lower hex-encoded text_bodies.sha256 for domain text bodies, or SHA-256 hex digest of standalone issue titles. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key. |
 
 ## Navigation
 

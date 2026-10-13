@@ -37,7 +37,7 @@ Table index_membership {
 
   indexes {
     (index_generation_id, search_document_id) [pk]
-    (search_document_id)
+    (search_document_id) [name: 'index_membership_fk_0']
   }
 
   Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
@@ -51,7 +51,7 @@ Table search_documents {
   metadata text [not null]
 
   indexes {
-    (kind, source_key) [unique, name: 'sqlite_autoindex_search_documents_1']
+    (kind, source_key) [unique]
   }
 
   Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
@@ -85,4 +85,5 @@ Ref fk_index_membership_1: index_membership.index_generation_id > index_generati
 // Ref: search_identity.catalog_db_instance_id > database_identity.db_instance_id
 // Ref: search_identity.core_revision_fence > database_identity.local_revision
 // Ref: index_generations.core_revision_fence > database_identity.local_revision
-// Ref: search_documents.source_key > git_objects.oid_hex
+// Ref: search_documents.source_key > git_objects.git_object_id (for code/commits, encoded 'git:<id>')
+// Ref: search_documents.source_key > text_bodies.sha256 (for pr/issue, hex-encoded SHA-256)
