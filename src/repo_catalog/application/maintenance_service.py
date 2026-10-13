@@ -363,14 +363,106 @@ class MaintenanceService:
             try:
                 data = rebuild(s, kind, token)
                 JobService(s).update(job, "complete")
-                return Result(
-                    {"job_id": job, "generations": data}, catalog=s.revision()
-                )
+                estimate = None
+                age_us = None
+                try:
+                    search_store = s.open_search(readonly=True)
+                    try:
+                        estimate = search_store.estimate_rebuild_cost()
+                        age_us = search_store.index_age_us()
+                    finally:
+                        search_store.close()
+                except Exception:
+                    pass
+                result_payload = {
+                    "job_id": job,
+                    "generations": data,
+                    "duration_ms": getattr(data, "duration_ms", None),
+                    "documents_indexed": getattr(data, "documents_indexed", None),
+                    "bytes_indexed": getattr(data, "bytes_indexed", None),
+                }
+                if getattr(data, "warning", None):
+                    result_payload["warning"] = data.warning
+                if estimate:
+                    result_payload["estimate"] = estimate
+                if age_us is not None:
+                    result_payload["age_us"] = age_us
+                return Result(result_payload, catalog=s.revision())
             except CatalogError as e:
                 JobService(s).update(
                     job, "interrupted" if e.code == "CANCELLED" else "failed", e.code
                 )
                 raise
+
+    def index_status(self):
+        with Store(self.path, readonly=True) as s:
+            core_rev = s.revision()["local_revision"]
+            try:
+                search_store = s.open_search(readonly=True)
+                try:
+                    search_row = search_store.one(
+                        "SELECT format_id, schema_version, last_rebuilt_at_us, core_revision_fence FROM search_identity WHERE singleton=1"
+                    )
+                    fence = search_row["core_revision_fence"] if search_row else None
+                    age_us = search_store.index_age_us()
+                    estimate = search_store.estimate_rebuild_cost()
+                    generations = [
+                        dict(g)
+                        for g in search_store.all(
+                            "SELECT index_generation_id, kind, state, table_name, core_revision_fence, created_at_us FROM index_generations ORDER BY created_at_us"
+                        )
+                    ]
+                    status = "ready"
+                    if fence is None or fence != core_rev:
+                        status = "stale"
+                    data = {
+                        "status": status,
+                        "core_revision": core_rev,
+                        "core_revision_fence": fence,
+                        "stale": fence != core_rev,
+                        "age_us": age_us,
+                        "generations": generations,
+                        "cost_estimate": estimate,
+                    }
+                finally:
+                    search_store.close()
+            except CatalogError as e:
+                if e.code in ("NOT_INITIALIZED", "INDEX_UNAVAILABLE"):
+                    data = {
+                        "status": "absent",
+                        "core_revision": core_rev,
+                        "core_revision_fence": None,
+                        "stale": True,
+                        "age_us": None,
+                        "generations": [],
+                        "cost_estimate": {
+                            "runs": 0,
+                            "estimated_duration_ms": None,
+                            "previous_duration_ms": None,
+                            "avg_duration_ms": None,
+                            "ms_per_doc": None,
+                            "avg_documents_indexed": 0,
+                        },
+                    }
+                else:
+                    data = {
+                        "status": "corrupt",
+                        "error": e.code,
+                        "core_revision": core_rev,
+                        "core_revision_fence": None,
+                        "stale": True,
+                        "age_us": None,
+                        "generations": [],
+                        "cost_estimate": {
+                            "runs": 0,
+                            "estimated_duration_ms": None,
+                            "previous_duration_ms": None,
+                            "avg_duration_ms": None,
+                            "ms_per_doc": None,
+                            "avg_documents_indexed": 0,
+                        },
+                    }
+            return Result(data, catalog=s.revision())
 
     def database(self, action, args):
         if action == "restore":
@@ -538,7 +630,7 @@ class MaintenanceService:
                     }
                 else:
                     generations = []
-                    all_passed = True
+                    all_queryable = True
                     for row in search_store.all(
                         "SELECT * FROM index_generations WHERE state='ready'"
                     ):
@@ -549,29 +641,39 @@ class MaintenanceService:
                             generations.append(
                                 {
                                     "index_generation_id": row["index_generation_id"],
-                                    "status": "passed",
+                                    "probe": "queryable",
                                 }
                             )
                         except sqlite3.Error:
-                            all_passed = False
+                            all_queryable = False
                             generations.append(
                                 {
                                     "index_generation_id": row["index_generation_id"],
-                                    "status": "failed",
+                                    "probe": "failed",
                                 }
                             )
                     checks["index"] = {
-                        "status": "passed" if all_passed else "failed",
+                        "status": "queryable" if all_queryable else "failed",
+                        "checks_performed": [
+                            "sqlite_integrity",
+                            "foreign_keys",
+                            "table_queryable_probe",
+                        ],
                         "generations": generations,
                     }
             finally:
                 search_store.close()
         except CatalogError as err:
             if err.code in ("NOT_INITIALIZED", "INDEX_UNAVAILABLE"):
-                checks["index"] = {"status": "absent", "generations": []}
+                checks["index"] = {
+                    "status": "absent",
+                    "checks_performed": [],
+                    "generations": [],
+                }
             else:
                 checks["index"] = {
                     "status": "corrupt",
+                    "checks_performed": [],
                     "generations": [],
                     "error": err.code,
                 }

@@ -1,5 +1,7 @@
 """Mutable readers, capability boundary and atomic durable runtime jobs."""
 
+import json
+import shutil
 import sqlite3
 
 import pytest
@@ -437,3 +439,277 @@ def test_reconcile_core_and_operational_writes_on_resume(tmp_path):
     assert res_jobs.data["items"] == []
     res_cache = qs.query("cache status")
     assert res_cache.data["items"] == []
+
+
+@pytest.mark.parametrize(
+    "core_pages,op_cursor",
+    [
+        (0, "https://api.github.com/repos/test/pulls?page=2"),
+        (1, "https://api.github.com/repos/test/pulls?page=3"),
+        (2, None),
+        (1, "https://api.github.com/repos/test/pulls?page=2"),
+        (3, "https://api.github.com/repos/test/pulls?page=4"),
+    ],
+)
+def test_multipage_recovery_parameterized_divergence(tmp_path, core_pages, op_cursor):
+    """R1: Interrupted incomplete collections do not trust advanced/diverged cursors and restart cleanly."""
+    from repo_catalog.adapters.github.persistence import ApiFacts
+    from repo_catalog.config import DEFAULTS
+
+    state = tmp_path / f"state_{core_pages}_{abs(hash(str(op_cursor))) % 1000}"
+    initialize(state)
+
+    repo_id = "00000000-0000-4000-8000-000000000001"
+    inst_id = "00000000-0000-4000-8000-000000000101"
+    reg_id = "00000000-0000-4000-8000-000000000201"
+    repo = {
+        "repository_uuidv4": repo_id,
+        "source_id": "src-1",
+        "provider_repository_id": "12345",
+    }
+    with Store(state) as store:
+        store.execute(
+            "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES(?,'github','github','{}')",
+            (inst_id,),
+        )
+        store.execute(
+            "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name,settings) VALUES('src-1',?,?, 'github_inventory','test','{}')",
+            (reg_id, inst_id),
+        )
+        store.execute(
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'test-repo','{}')",
+            (repo_id,),
+        )
+        store.execute(
+            "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('bind-1',?,?,'12345','{}',0)",
+            (repo_id, inst_id),
+        )
+        job_id = "job-mp"
+        with store.operational.transaction():
+            store.operational.execute(
+                "INSERT INTO jobs(job_id,kind,request,current_attempt) VALUES(?,'sync','{}',1)",
+                (job_id,),
+            )
+            store.operational.execute(
+                "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES(?,1,'running','{}')",
+                (job_id,),
+            )
+
+        facts = ApiFacts(store, DEFAULTS["github"])
+        root_url = "https://api.github.com/repos/test/pulls"
+
+        # Begin an initial collection
+        c_old = facts.begin(repo, None, "pr-list", job_id, root_url)
+        old_fc_id = c_old["fetch_collection_id"]
+
+        # Insert committed pages into Core according to core_pages
+        for i in range(core_pages):
+            next_c = f"https://api.github.com/repos/test/pulls?page={i + 2}"
+            facts.page(c_old, 1000 + i, next_c, [])
+
+        # Set Operational cursor to op_cursor
+        with store.operational.transaction():
+            store.operational.execute(
+                "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                (op_cursor, old_fc_id),
+            )
+
+        # Under PF-P04/PF-P07: resuming an incomplete collection MUST NOT trust the cursor.
+        # It must start a fresh collection from the initial endpoint (cursor=None, new fc_id).
+        c_resumed = facts.begin(repo, None, "pr-list", job_id, root_url, reuse=True)
+        assert c_resumed["fetch_collection_id"] != old_fc_id
+        assert c_resumed["cursor"] is None
+        assert c_resumed["state"] == "running"
+
+        # Simulate complete execution of the fresh collection from the root endpoint:
+        facts.page(c_resumed, 2000, "page2", [])
+        facts.page(c_resumed, 2001, None, [])
+        facts.finish(c_resumed)
+
+        # Verify Core has completion marker
+        assert (
+            store.one(
+                "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                (c_resumed["fetch_collection_id"],),
+            )
+            is not None
+        )
+
+
+def test_graphql_thread_child_continuation_divergence(tmp_path):
+    """R1: Thread child boundary raises RESUME_UNAVAILABLE on store divergence or false complete."""
+    from repo_catalog.adapters.github.collector import GitHubCollector
+    from repo_catalog.adapters.github.persistence import ApiFacts
+    from repo_catalog.config import DEFAULTS
+
+    state = tmp_path / "state_gql"
+    initialize(state)
+
+    repo_id = "00000000-0000-4000-8000-000000000001"
+    inst_id = "00000000-0000-4000-8000-000000000101"
+    reg_id = "00000000-0000-4000-8000-000000000201"
+    repo = {
+        "repository_uuidv4": repo_id,
+        "source_id": "src-1",
+        "provider_repository_id": "12345",
+    }
+    with Store(state) as store:
+        store.execute(
+            "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES(?,'github','github','{}')",
+            (inst_id,),
+        )
+        store.execute(
+            "INSERT INTO sources(source_id,source_registration_uuidv4,service_instance_uuidv4,discovery_kind,name,settings) VALUES('src-1',?,?, 'github_inventory','test','{}')",
+            (reg_id, inst_id),
+        )
+        store.execute(
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'test-repo','{}')",
+            (repo_id,),
+        )
+        store.execute(
+            "INSERT INTO repository_bindings(repository_binding_id,repository_uuidv4,service_instance_uuidv4,provider_repository_id,metadata,created_at_us) VALUES('bind-1',?,?,'12345','{}',0)",
+            (repo_id, inst_id),
+        )
+        job_id = "job-gql"
+        with store.operational.transaction():
+            store.operational.execute(
+                "INSERT INTO jobs(job_id,kind,request,current_attempt) VALUES(?,'sync','{}',1)",
+                (job_id,),
+            )
+            store.operational.execute(
+                "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) VALUES(?,1,'running','{}')",
+                (job_id,),
+            )
+
+        facts = ApiFacts(store, DEFAULTS["github"])
+        c_parent = facts.begin(
+            repo, None, "threads", job_id, "https://api.github.com/graphql"
+        )
+        c_child = facts.begin(
+            repo, None, "threads", job_id, "https://api.github.com/graphql"
+        )
+        parent_fc = c_parent["fetch_collection_id"]
+        child_fc = c_child["fetch_collection_id"]
+
+        store.execute(
+            "INSERT INTO thread_collection_continuations(fetch_collection_id,provider_resource_id,child_cursor,observed_at_us) VALUES(?,?,'cursor_core',100)",
+            (parent_fc, "thread-1"),
+        )
+        with store.operational.transaction():
+            store.operational.execute(
+                "UPDATE collection_progress SET cursor='cursor_op_diverged' WHERE fetch_collection_id=?",
+                (child_fc,),
+            )
+
+        collector = GitHubCollector(store, DEFAULTS["github"])
+        requirement = {
+            "fetch_collection_id": parent_fc,
+            "child_fetch_collection_id": child_fc,
+            "provider_resource_id": "thread-1",
+        }
+        with pytest.raises(CatalogError) as exc_info:
+            collector._thread_child(
+                repo, {"change_request_id": "pr-1"}, requirement, job_id, "query"
+            )
+        assert exc_info.value.code == "RESUME_UNAVAILABLE"
+
+
+def test_core_only_backup_restore_and_cas41_quarantine_lifecycle(tmp_path):
+    """R5: Core-only backup/restore lifecycle with absent/corrupt Search DB and CAS-41 quarantine count validation."""
+    from repo_catalog.adapters.sqlite.cas_integrity import diagnose_corruption
+
+    state = tmp_path / "source_state"
+    initialize(state)
+
+    quarantined_bytes = b"corrupted-blob-content"
+    declared_digest = bytes.fromhex("11" * 32)
+    with Store(state) as store:
+        repo_id = "00000000-0000-4000-8000-000000000001"
+        inst_id = "00000000-0000-4000-8000-000000000101"
+        store.execute(
+            "INSERT INTO service_instances(service_instance_uuidv4,service_kind,name,metadata) VALUES(?,'github','github','{}')",
+            (inst_id,),
+        )
+        store.execute(
+            "INSERT INTO repositories(repository_uuidv4,name,metadata) VALUES(?,'test-repo','{}')",
+            (repo_id,),
+        )
+        with store.transaction():
+            store.execute(
+                "INSERT INTO stored_bytes(sha256,body,byte_length) VALUES(?,?,?)",
+                (declared_digest, quarantined_bytes, len(quarantined_bytes)),
+            )
+        diagnose_corruption(store.connection, declared_digest)
+
+        backup_file = tmp_path / "backups/core_backup.sqlite3"
+        maint = MaintenanceService(state)
+        res_backup = maint.backup(store, backup_file)
+        manifest = res_backup.data["manifest"]
+        assert manifest["quarantined_payload_count"] == 1
+
+        # Backup also succeeds when search.sqlite3 is corrupt
+        (state / "search.sqlite3").write_bytes(b"garbage-corrupt-search-db")
+        backup_file_2 = tmp_path / "backups/core_backup_2.sqlite3"
+        res_backup_2 = maint.backup(store, backup_file_2)
+        assert res_backup_2.data["manifest"]["quarantined_payload_count"] == 1
+
+    manifest_path = backup_file.with_name(backup_file.name + ".manifest.json")
+    manifest_data = json.loads(manifest_path.read_text())
+
+    bad_manifest_path = tmp_path / "backups/bad_count.sqlite3.manifest.json"
+    bad_backup_path = tmp_path / "backups/bad_count.sqlite3"
+    shutil.copyfile(backup_file, bad_backup_path)
+
+    # CAS-41: Count mismatch
+    bad_data = {**manifest_data, "quarantined_payload_count": 0}
+    bad_manifest_path.write_text(json.dumps(bad_data))
+
+    dest_bad = tmp_path / "dest_bad"
+    maint_restore = MaintenanceService(dest_bad)
+    with pytest.raises(CatalogError) as exc_mismatch:
+        maint_restore.restore(bad_backup_path)
+    assert exc_mismatch.value.code == "BACKUP_INTEGRITY"
+    assert "quarantine count differs" in str(exc_mismatch.value).lower()
+    assert not dest_bad.exists()
+
+    # CAS-41: Boolean count
+    bad_data_bool = {**manifest_data, "quarantined_payload_count": True}
+    bad_manifest_path.write_text(json.dumps(bad_data_bool))
+    with pytest.raises(CatalogError) as exc_bool:
+        maint_restore.restore(bad_backup_path)
+    assert exc_bool.value.code == "BACKUP_INTEGRITY"
+
+    # CAS-41: Negative count
+    bad_data_neg = {**manifest_data, "quarantined_payload_count": -1}
+    bad_manifest_path.write_text(json.dumps(bad_data_neg))
+    with pytest.raises(CatalogError) as exc_neg:
+        maint_restore.restore(bad_backup_path)
+    assert exc_neg.value.code == "BACKUP_INTEGRITY"
+
+    # Restore to clean destination
+    dest_valid = tmp_path / "dest_valid"
+    maint_valid = MaintenanceService(dest_valid)
+    maint_valid.restore(backup_file)
+    assert dest_valid.is_dir()
+    assert not (dest_valid / "search.sqlite3").exists()
+
+    with Store(dest_valid) as restored_store:
+        check_res = maint_valid.check(restored_store, full=False)
+        checks = check_res.data["checks"]
+        assert checks["sqlite"] == ["ok"]
+        assert checks["index"]["status"] == "absent"
+        assert checks["index"]["checks_performed"] == []
+
+        # Rebuild index on restored catalog
+        maint_valid.rebuild("all")
+        check_res_after = maint_valid.check(restored_store, full=False)
+        checks_after = check_res_after.data["checks"]
+        assert checks_after["index"]["status"] == "queryable"
+        assert checks_after["index"]["checks_performed"] == [
+            "sqlite_integrity",
+            "foreign_keys",
+            "table_queryable_probe",
+        ]
+        assert len(checks_after["index"]["generations"]) > 0
+        for gen in checks_after["index"]["generations"]:
+            assert gen["probe"] == "queryable"

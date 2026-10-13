@@ -75,66 +75,126 @@ class QueryService:
             self.search_fallback_reason = None
             self.index_age_us = None
             self.fts_candidate_keys = None
-            if command.startswith("search "):
-                search_kind = command.split(" ", 1)[1]
-                if search_kind in {"pr", "issue", "code", "commits"}:
-                    try:
-                        search_store = s.open_search(readonly=True)
-                        try:
-                            self.index_age_us = search_store.index_age_us()
-                            ready_gen = search_store.one(
-                                "SELECT * FROM index_generations WHERE kind=? AND state='ready'",
-                                (search_kind,),
-                            )
-                            local_rev = s.revision()["local_revision"]
-                            if not ready_gen:
-                                self.search_fallback = True
-                                self.search_fallback_reason = (
-                                    "no_ready_index_generation"
-                                )
-                            elif ready_gen["core_revision_fence"] != local_rev:
-                                self.search_fallback = True
-                                self.search_fallback_reason = "stale_index"
-                            elif s.config["search"]["backend"] in ("fts", "auto"):
-                                literal = (
-                                    self.literal(opts)
-                                    if search_kind in {"code", "commits"}
-                                    else opts.get("literal") or opts.get("query")
-                                )
-                                if not literal or len(literal) < 3:
-                                    self.search_fallback = True
-                                    self.search_fallback_reason = "unsupported_query"
-                                else:
-                                    table = ready_gen["table_name"]
-                                    escaped = literal.replace('"', '""')
-                                    try:
-                                        rows = search_store.all(
-                                            f"SELECT d.source_key FROM {table} f JOIN search_documents d ON d.search_document_id=f.rowid WHERE f.{table} MATCH ?",
-                                            (f'"{escaped}"',),
-                                        )
-                                        self.fts_candidate_keys = set(
-                                            r["source_key"] for r in rows
-                                        )
-                                        self.backend = "fts"
-                                    except sqlite3.OperationalError:
-                                        self.search_fallback = True
-                                        self.search_fallback_reason = (
-                                            "unsupported_query"
-                                        )
-                            else:
-                                self.search_fallback = True
-                                self.search_fallback_reason = "configured_scan_backend"
-                        finally:
-                            search_store.close()
-                    except CatalogError as e:
-                        self.search_fallback = True
-                        self.search_fallback_reason = e.code.lower()
-            self.literal_cache = {}
-            self.ref_target_cache = {}
-            s.connection.set_progress_handler(
-                lambda: self.token.cancelled or time.monotonic() > self.deadline, 1000
-            )
             with s.transaction(read=True):
+                revision = s.revision()
+                local_rev = revision["local_revision"]
+
+                if getattr(self, "_search_snapshot_barrier", None) is not None:
+                    self._search_snapshot_barrier()
+                elif (
+                    getattr(QueryService, "_search_snapshot_barrier", None) is not None
+                ):
+                    QueryService._search_snapshot_barrier()
+
+                if command.startswith("search "):
+                    search_kind = command.split(" ", 1)[1]
+                    if search_kind in {"code", "commits"}:
+                        if opts.get("decoder") or opts.get("decoder_key"):
+                            self.search_fallback = True
+                            self.search_fallback_reason = "unsupported_decoder"
+                        else:
+                            try:
+                                search_store = s.open_search(readonly=True)
+                                try:
+                                    search_store.connection.set_progress_handler(
+                                        lambda: (
+                                            self.token.cancelled
+                                            or time.monotonic() > self.deadline
+                                        ),
+                                        1000,
+                                    )
+                                    with search_store.transaction(read=True):
+                                        self.index_age_us = search_store.index_age_us()
+                                        ready_gen = search_store.one(
+                                            "SELECT * FROM index_generations WHERE kind=? AND state='ready'",
+                                            (search_kind,),
+                                        )
+                                        if not ready_gen:
+                                            self.search_fallback = True
+                                            self.search_fallback_reason = (
+                                                "no_ready_index_generation"
+                                            )
+                                        elif (
+                                            ready_gen["core_revision_fence"]
+                                            != local_rev
+                                        ):
+                                            self.search_fallback = True
+                                            self.search_fallback_reason = "stale_index"
+                                        elif s.config["search"]["backend"] in (
+                                            "fts",
+                                            "auto",
+                                        ):
+                                            literal = self.literal(opts)
+                                            if not literal or len(literal) < 3:
+                                                self.search_fallback = True
+                                                self.search_fallback_reason = (
+                                                    "unsupported_query"
+                                                )
+                                            else:
+                                                self.token.check()
+                                                table = ready_gen["table_name"]
+                                                escaped = literal.replace('"', '""')
+                                                try:
+                                                    MAX_CANDIDATES = 50000
+                                                    rows = search_store.all(
+                                                        f"SELECT d.source_key FROM {table} f JOIN search_documents d ON d.search_document_id=f.rowid WHERE f.{table} MATCH ? LIMIT ?",
+                                                        (
+                                                            f'"{escaped}"',
+                                                            MAX_CANDIDATES + 1,
+                                                        ),
+                                                    )
+                                                    if len(rows) > MAX_CANDIDATES:
+                                                        self.search_fallback = True
+                                                        self.search_fallback_reason = (
+                                                            "candidate_limit_exceeded"
+                                                        )
+                                                    else:
+                                                        self.fts_candidate_keys = set(
+                                                            r["source_key"]
+                                                            for r in rows
+                                                        )
+                                                        self.backend = "fts"
+                                                except (
+                                                    sqlite3.OperationalError
+                                                ) as op_err:
+                                                    err_msg = str(op_err).lower()
+                                                    self.search_fallback = True
+                                                    if (
+                                                        "malformed" in err_msg
+                                                        or "corrupt" in err_msg
+                                                    ):
+                                                        self.search_fallback_reason = (
+                                                            "corrupt_index"
+                                                        )
+                                                    elif "no such table" in err_msg:
+                                                        self.search_fallback_reason = (
+                                                            "index_unavailable"
+                                                        )
+                                                    else:
+                                                        self.search_fallback_reason = (
+                                                            "unsupported_query"
+                                                        )
+                                        else:
+                                            self.search_fallback = True
+                                            self.search_fallback_reason = (
+                                                "configured_scan_backend"
+                                            )
+                                finally:
+                                    search_store.close()
+                            except CatalogError as e:
+                                if e.code == "CANCELLED":
+                                    raise
+                                self.search_fallback = True
+                                self.search_fallback_reason = e.code.lower()
+                    elif search_kind in {"pr", "issue"}:
+                        self.backend = "scan"
+                        self.search_fallback = False
+                self.literal_cache = {}
+                self.ref_target_cache = {}
+                s.connection.set_progress_handler(
+                    lambda: self.token.cancelled or time.monotonic() > self.deadline,
+                    1000,
+                )
                 if opts.get("source") is not None:
                     opts["source"] = identity.source(s, opts["source"])["source_id"]
                 revision = s.revision()
@@ -1227,6 +1287,9 @@ class QueryService:
                     ):
                         if obj["git_object_id"] not in ids:
                             continue
+                        fields = self.commit_fields(obj, context)
+                        if fields["message"] is None:
+                            continue
                         if (
                             self.backend == "fts"
                             and self.fts_candidate_keys is not None
@@ -1236,11 +1299,7 @@ class QueryService:
                                 not in self.fts_candidate_keys
                             ):
                                 continue
-                        fields = self.commit_fields(obj, context)
-                        if (
-                            fields["message"] is not None
-                            and literal in fields["message"]
-                        ):
+                        if literal in fields["message"]:
                             fields.update(
                                 self.decoder_offsets(
                                     obj["git_object_id"],
@@ -1312,15 +1371,6 @@ class QueryService:
                             continue
                         entry.pop("text")
                     else:
-                        if (
-                            self.backend == "fts"
-                            and self.fts_candidate_keys is not None
-                        ):
-                            if (
-                                f"git:{entry['git_object_id']}"
-                                not in self.fts_candidate_keys
-                            ):
-                                continue
                         text = entry.pop("text")
                         if text is None:
                             if entry["text_state"] in {"nul", "non_utf8", "oversize"}:
@@ -1336,6 +1386,15 @@ class QueryService:
                                     "code", "body_not_saved", **path_fields(raw)
                                 )
                             continue
+                        if (
+                            self.backend == "fts"
+                            and self.fts_candidate_keys is not None
+                        ):
+                            if (
+                                f"git:{entry['git_object_id']}"
+                                not in self.fts_candidate_keys
+                            ):
+                                continue
                         if literal not in text:
                             continue
                         entry.update(

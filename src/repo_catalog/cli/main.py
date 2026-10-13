@@ -321,6 +321,7 @@ def parser():
     index.add_parser("rebuild").add_argument(
         "--kind", choices=("code", "pr", "issue", "commits", "all"), default="all"
     )
+    index.add_parser("status")
     identities = commands.add_parser("identity").add_subparsers(
         dest="action", required=True, parser_class=Parser
     )
@@ -494,6 +495,8 @@ def dispatch(args, token):
     if args.command == "cache" and args.action == "gc":
         return maintenance.gc(args.apply)
     if args.command == "index":
+        if args.action == "status":
+            return maintenance.index_status()
         return maintenance.rebuild(args.kind, token)
     if args.command == "content" and args.action == "hydrate":
         return maintenance.hydrate(args.content_id, args.repo, token)

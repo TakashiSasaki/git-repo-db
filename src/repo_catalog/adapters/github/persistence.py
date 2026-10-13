@@ -222,16 +222,10 @@ class ApiFacts:
                     # Do not trust false completeness; fall back safely.
                     continue
                 else:
-                    # Incomplete: check Core committed pages
-                    core_pages = self.s.one(
-                        "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
-                        (fc_id,),
-                    )[0]
-                    if p_dict["cursor"] is not None and core_pages == 0:
-                        # Operational cursor claims progress, but Core has 0 pages!
-                        continue
-                    previous = {**dict(fc), **p_dict}
-                    break
+                    # Incomplete collection: Core lacks terminal evidence.
+                    # Under PF-P04/PF-P07: do not trust unprovable cursor continuation;
+                    # start a fresh Collection from the initial endpoint.
+                    continue
 
         if previous is None and reuse:
             for fc in fc_rows:

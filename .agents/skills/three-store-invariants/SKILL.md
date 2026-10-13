@@ -1,6 +1,6 @@
 ---
 name: three-store-invariants
-description: Maintain and verify architectural invariants across the Three-Store Boundary (Core, Operational, Search) in git-repo-db under ADR 0002. Use when debugging cross-store isolation, fail-closed cache GC under operational store loss, non-atomic split-write resumption, Core-only maintenance checks, or search freshness fencing.
+description: Maintain and verify architectural invariants across the Three-Store Boundary (Core, Operational, Search) in git-repo-db under ADR 0002. Use when debugging cross-store isolation, fail-closed cache GC under operational store loss, non-atomic split-write resumption, Core-only maintenance checks, search snapshot pinning, or search freshness fencing.
 ---
 
 # Three-Store Boundary Architectural Invariants (ADR 0002)
@@ -47,60 +47,106 @@ If the Operational DB is lost or recreated, Operational mappings (`active_cache_
 - Absent or corrupt Search DB is an optional derivative-state diagnostic condition, never Core corruption.
 - Core-only backup and restore must succeed without Search DB or Operational DB.
 - Read-only diagnostics must never execute mutating statements on secondary stores.
+- Probe descriptions must be truthful: `LIMIT 0` probes do not verify document contents, only schema queryability.
 
 ### Remediation Pattern
 1. **Separated Verdict in `MaintenanceService.check()`:**
    - Execute PRAGMA checks and domain invariants on Core DB.
-   - If Search DB is absent, report `search.status = "absent"`.
-   - Probe Search DB with read-only statements (`SELECT rowid FROM catalog_fts LIMIT 0` and `PRAGMA integrity_check`). If corrupt, report `search.status = "corrupt"`.
+   - If Search DB is absent, report `checks["index"] = {"status": "absent", "checks_performed": [], "generations": []}`.
+   - Probe ready index generations with read-only `SELECT rowid FROM <table> LIMIT 0` probes. Accurately report:
+     ```python
+     checks["index"] = {
+         "status": "queryable" if all_queryable else "failed",
+         "checks_performed": ["sqlite_integrity", "foreign_keys", "table_queryable_probe"],
+         "generations": [{"index_generation_id": gen_id, "probe": "queryable"}],
+     }
+     ```
    - Do not set `status = "failed"` on the overall check unless Core DB itself is corrupt.
-2. **Safe Restoration:**
-   - Restore restores Core DB only, validates quarantine and Core integrity, creates fresh instance identities, and lazily initializes fresh Operational DB. Search DB is created only upon explicit `index rebuild`.
+2. **Safe Restoration & CAS-41 Validation:**
+   - Backup backs up Core DB (`catalog.sqlite3`) and records `quarantined_payload_count` in the manifest.
+   - Restore validates `quarantined_payload_count` against the verified copy before diagnosis, rejects mismatches or malformed counts, restores Core DB only, and initializes fresh instance identities. Search DB is created only upon explicit `index rebuild`.
 
 ---
 
 ## 3. Reconcile Non-Atomic Core and Operational Writes (PF-P04, PF-P07)
 
 ### Symptom
-During collection or Git acquisition, a process crashes after committing Operational cursor/complete state but before committing the Core transaction. A subsequent run trusts Operational `state='complete'` and skips remaining pages, producing missing domain evidence.
+During collection or Git acquisition, a process crashes after committing Operational cursor/complete state but before committing the Core transaction. A subsequent run trusts Operational `state='complete'` and skips remaining pages, or starts from an advanced cursor, producing missing domain evidence.
 
 ### Rule & Invariant
 - PF-P07 rejects distributed transactions across SQLite databases.
 - Core evidence is authoritative; Operational progress is advisory and disposable.
 - Operational progress alone cannot establish a complete Collection or valid resource.
-- An Operational cursor cannot skip a page whose Core evidence did not commit.
+- An interrupted incomplete collection must not be grafted onto: discard unproven progress and start a fresh Collection from the initial endpoint under PF-P04/PF-P07.
+- For nested GraphQL children, divergence between Core continuations and Operational progress raises `CatalogError("RESUME_UNAVAILABLE")`, requiring fresh root acquisition.
 
 ### Remediation Pattern
-1. **Core Verification in `Persistence.begin()`:**
-   Before trusting Operational `state='complete'`, verify that Core DB contains the corresponding `completion_markers` entry for the collection. If Core lacks completion, reject the Operational state and fall back safely to a fresh acquisition (PF-P04).
-2. **Cursor Verification:**
-   Before resuming from an Operational cursor, check that Core DB has committed pages matching that cursor. If Core lacks evidence, reset the cursor to the latest Core-confirmed page or fall back to start.
+1. **No-Grafting Recovery in `ApiFacts.begin()`:**
+   Before trusting Operational progress, check for Core `completion_markers`. If absent, skip incomplete collections and create a new collection from the initial endpoint (`cursor: None`), preserving previously committed valid resources without grafting onto unproven cursors:
+   ```python
+   if not has_complete_marker:
+       # Incomplete collection: Core lacks terminal evidence.
+       # Do not trust unprovable cursor continuation; start fresh.
+       continue
+   ```
+2. **GraphQL Child Divergence Check in `GitHubCollector._thread_child()`:**
+   Verify `thread_collection_continuations` matches `collection_progress.cursor`. If diverged or cursor is missing when response is pending, raise `CatalogError("RESUME_UNAVAILABLE")`.
 3. **Resilient Querying:**
    In `jobs list`, `jobs show`, and `cache status`, catch `CatalogError` with `code == "NOT_INITIALIZED"` when Operational DB is absent, returning empty records rather than raising an unhandled exception.
 
 ---
 
-## 4. Honest Search Backend Reporting & Freshness Fencing (PF-P15, PF-P16)
+## 4. Search Snapshot Pinning, Truthful Backend Reporting, and Telemetry Isolation (PF-P15, PF-P16)
 
 ### Symptom
-Query service reports `backend: "fts"` even when falling back to Core scanning because the index is stale or absent, or query service crashes when Search DB rebuild metrics have no recorded runs.
+- Search reads Core revision, checks index fence, and fetches FTS candidates before opening the Core read transaction. A concurrent writer commits matching resources and advances Core revision, causing subsequent Core iteration to use a newer snapshot with an older candidate set and omit valid results (mixed snapshot).
+- PR/Issue search reports `backend: "fts"` while actually executing `literal_match()` scans.
+- Rebuilding Search DB fails because Operational telemetry insertion failed, even though the FTS index was built successfully.
+- Code search candidate filtering skips objects with decoder conflicts or oversize bodies, suppressing domain coverage diagnostics.
 
 ### Rule & Invariant
-- Queries report `backend: "fts"` only when candidate keys were retrieved from a healthy, fresh FTS5 virtual table.
-- Index freshness is bound by `core_revision_fence == local_revision`.
-- Stale, absent, or corrupt indexes transparently fall back to Core scanning with `backend: "scan"`, `search_fallback: true`, and truthful `search_fallback_reason`.
-- Rebuild cost estimation returns `None` (or null in JSON) when `runs == 0`, never an unvalidated average or crash.
+- Search must establish and pin its Core read transaction snapshot before validating index fence or retrieving FTS candidates. That snapshot is maintained through result production.
+- Producer side: `index.rebuild()` pins Core read snapshot during projection, ensuring `core_revision_fence` matches the actual projected data.
+- Search queries for PR and Issue truthfully report `backend: "scan"` directly, avoiding unused FTS queries.
+- FTS candidates are bounded (max 50,000 keys). Exceeding the bound or requesting explicit non-default decoders falls back cleanly to scan (`candidate_limit_exceeded`, `unsupported_decoder`).
+- Candidate filtering must not suppress domain coverage diagnostics (`body_not_saved`, `decoder_conflict`, `oversize`). Diagnostics are evaluated before candidate filtering.
+- Rebuild telemetry failure in Operational store is non-fatal: it issues a warning and records the rebuild result as successful.
 
 ### Remediation Pattern
-1. In `QueryService.query()`:
-   Check `search_store.is_ready()` and compare `core_revision_fence` against `core.local_revision()`.
-   If stale or unavailable, use Core table scan with:
+1. **Pinned Snapshot in `QueryService.query()`:**
    ```python
-   execution = {
-       "backend": "scan",
-       "search_fallback": True,
-       "search_fallback_reason": "stale_index" if stale else "index_unavailable",
-   }
+   with Store(self.path, readonly=True) as s:
+       with s.transaction(read=True):
+           local_rev = s.revision()["local_revision"]
+           # Validate index fence and fetch FTS candidates while holding Core read snapshot
+           ...
+           for sortkey, item in self.iter_query(command, opts):
+               ...
    ```
-2. In `OperationalStore.estimate_rebuild_cost()` and `SearchStore.estimate_rebuild_cost()`:
-   If recorded runs is zero, return `{"runs": 0, "estimated_duration_ms": None}`.
+2. **Deterministic Concurrency Barrier:**
+   Expose `_search_snapshot_barrier` hook in `QueryService` for barrier-controlled concurrency testing.
+3. **Telemetry Fault Isolation in `index.rebuild()`:**
+   Wrap `store.operational.record_rebuild_metric` on the success path so telemetry errors emit a warning rather than failing index creation.
+4. **Index Status CLI:**
+   Support `repo-catalog index status` returning `status`, `core_revision`, `core_revision_fence`, `stale`, `age_us`, `generations`, and `cost_estimate`.
+
+---
+
+## 5. Verification Evidence & Test Reconciliation
+
+### Discrepancy Note (118 vs 117)
+Earlier PR documentation stated "118 passed" across five suites listing:
+- 12 (`test_catalog3_cache.py`)
+- 11 (`test_catalog3_store.py`)
+- 3 (`test_search_index.py`)
+- 4 (`test_database.py`)
+- 87 (`test_target_schema.py`)
+
+The actual arithmetic sum of unique executed nodes is exactly **117** ($12 + 11 + 3 + 4 + 87 = 117$).
+
+With the addition of targeted correctness and lifecycle tests for R1–R5:
+- `test_catalog3_store.py`: +7 nodes (5 parameterized multi-page recovery cases + 1 GraphQL thread divergence + 1 CAS-41 Core-only lifecycle) = **18**
+- `test_search_index.py`: +3 nodes (1 barrier-controlled snapshot isolation + 1 truthful backend equivalence matrix + 1 telemetry failure & status CLI) = **6**
+
+The full targeted integration suite now executes exactly **127** unique nodes:
+$$12 + 18 + 6 + 4 + 87 = 127\text{ passed}.$$

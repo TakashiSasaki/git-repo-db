@@ -474,10 +474,19 @@ class OperationalStore(BaseConnection):
         row = self.one(
             "SELECT count(*) as runs, coalesce(avg(duration_ms), 0) as avg_duration_ms, coalesce(avg(duration_ms * 1.0 / max(documents_indexed, 1)), 0.0) as ms_per_doc, coalesce(avg(documents_indexed), 0) as avg_docs FROM search_rebuild_metrics WHERE status='complete'"
         )
+        last_row = self.one(
+            "SELECT duration_ms FROM search_rebuild_metrics WHERE status='complete' ORDER BY rebuild_id DESC LIMIT 1"
+        )
+        previous_duration_ms = (
+            int(last_row["duration_ms"])
+            if last_row and last_row["duration_ms"] is not None
+            else None
+        )
         if not row or row["runs"] == 0:
             return {
                 "runs": 0,
                 "estimated_duration_ms": None,
+                "previous_duration_ms": None,
                 "avg_duration_ms": None,
                 "ms_per_doc": None,
                 "avg_documents_indexed": 0,
@@ -486,6 +495,7 @@ class OperationalStore(BaseConnection):
         return {
             "runs": row["runs"],
             "estimated_duration_ms": avg_dur,
+            "previous_duration_ms": previous_duration_ms,
             "avg_duration_ms": avg_dur,
             "ms_per_doc": round(float(row["ms_per_doc"]), 4),
             "avg_documents_indexed": int(row["avg_docs"]),
@@ -644,6 +654,7 @@ class SearchStore(BaseConnection):
                     return {
                         "runs": 0,
                         "estimated_duration_ms": None,
+                        "previous_duration_ms": None,
                         "avg_duration_ms": None,
                         "ms_per_doc": None,
                         "avg_documents_indexed": 0,

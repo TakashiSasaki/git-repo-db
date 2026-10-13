@@ -1438,21 +1438,37 @@ class GitHubCollector:
         )
         if p:
             collection.update(dict(p))
-        if collection.get("state") == "complete":
+        has_complete = (
+            self.s.one(
+                "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                (requirement["child_fetch_collection_id"],),
+            )
+            is not None
+        )
+        if has_complete:
+            if p and p["state"] != "complete":
+                with self.s.operational.transaction():
+                    self.s.operational.execute(
+                        "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
+                        (requirement["child_fetch_collection_id"],),
+                    )
             return
         child_cursor = self.s.one(
             "SELECT child_cursor FROM thread_collection_continuations WHERE fetch_collection_id=? AND provider_resource_id=?",
             (requirement["fetch_collection_id"], requirement["provider_resource_id"]),
         )
-        if self.facts.pending_response(collection) and (
-            child_cursor is None or child_cursor[0] is None
-        ):
+        cursor = child_cursor[0] if child_cursor else None
+        if self.facts.pending_response(collection) and cursor is None:
             raise CatalogError(
                 "RESUME_UNAVAILABLE",
                 "Thread child continuation is unavailable; a fresh root is required",
             )
+        if p and p["cursor"] is not None and p["cursor"] != cursor:
+            raise CatalogError(
+                "RESUME_UNAVAILABLE",
+                "Thread child continuation diverged between Core and Operational; a fresh root is required",
+            )
         try:
-            cursor = child_cursor[0] if child_cursor else None
             seen = set()
             response, node, uncommitted = None, None, False
             while cursor:

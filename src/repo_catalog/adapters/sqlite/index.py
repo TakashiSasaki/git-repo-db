@@ -141,6 +141,33 @@ def _save_documents(search_store, kind, batch):
                 )
 
 
+class RebuildResult(list):
+    """Rebuild outcome that acts as a list of generation records while carrying metrics."""
+
+    def __init__(self, generations, **kwargs):
+        super().__init__(generations)
+        self.generations = generations
+        self.duration_ms = kwargs.get("duration_ms", 0)
+        self.documents_indexed = kwargs.get("documents_indexed", 0)
+        self.bytes_indexed = kwargs.get("bytes_indexed", 0)
+        self.warning = kwargs.get("warning")
+        self._dict = {
+            "generations": generations,
+            "duration_ms": self.duration_ms,
+            "documents_indexed": self.documents_indexed,
+            "bytes_indexed": self.bytes_indexed,
+            "warning": self.warning,
+        }
+
+    def get(self, key, default=None):
+        return self._dict.get(key, default)
+
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            return self._dict[item]
+        return super().__getitem__(item)
+
+
 def rebuild(store, kind="all", token=None):
     token = token or CancellationToken()
     if not fts_available(store):
@@ -156,141 +183,173 @@ def rebuild(store, kind="all", token=None):
     total_bytes = 0
     results = []
     kinds = ("code", "pr", "issue", "commits") if kind == "all" else (kind,)
+    last_projected_fence = None
     try:
-        for current in kinds:
-            token.check()
-            k_docs, k_bytes = refresh_documents(store, search_store, current, token)
-            total_docs += k_docs
-            total_bytes += k_bytes
-            maximum = search_store.one(
-                "SELECT coalesce(max(search_document_id),0) FROM search_documents WHERE kind=?",
-                (current,),
-            )[0]
-            core_rev = store.revision()["local_revision"]
-            with search_store.transaction():
-                ident = search_store.one(
-                    "SELECT coalesce(max(index_generation_id),0)+1 FROM index_generations"
-                )[0]
-                table = f"catalog_fts_{ident}"
-                search_store.execute(
-                    "INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,core_revision_fence,created_at_us) VALUES(?,?,?,?,?,?,?)",
-                    (ident, current, "building", table, maximum, core_rev, now_us()),
-                )
-                search_store.execute(
-                    f"CREATE VIRTUAL TABLE {table} USING fts5(body, tokenize='trigram case_sensitive 1',content='',detail=full)"
-                )
-            last = 0
-            count = 0
-            while True:
-                token.check()
-                batch = []
-                batch_bytes = 0
-                for document in search_store.execute(
-                    "SELECT * FROM search_documents WHERE kind=? AND search_document_id>? AND search_document_id<=? ORDER BY search_document_id LIMIT 200",
-                    (current, last, maximum),
-                ):
-                    document_bytes = len(document["body"].encode("utf8"))
-                    if batch and batch_bytes + document_bytes > 8_388_608:
-                        break
-                    batch.append(document)
-                    batch_bytes += document_bytes
-                if not batch:
-                    break
-                with search_store.transaction():
-                    if (
-                        search_store.one(
-                            "SELECT state FROM index_generations WHERE index_generation_id=?",
-                            (ident,),
-                        )[0]
-                        != "building"
-                    ):
-                        raise CatalogError(
-                            "STALE_INDEX_JOB", "Index generation is no longer building"
-                        )
-                    for doc in batch:
-                        if not search_store.one(
-                            "SELECT 1 FROM index_membership WHERE index_generation_id=? AND search_document_id=?",
-                            (ident, doc["search_document_id"]),
-                        ):
-                            search_store.execute(
-                                f"INSERT INTO {table}(rowid,body) VALUES(?,?)",
-                                (doc["search_document_id"], doc["body"]),
-                            )
-                            search_store.execute(
-                                "INSERT INTO index_membership(index_generation_id,search_document_id,input_version) VALUES(?,?,?)",
-                                (ident, doc["search_document_id"], "utf8-literal-v1"),
-                            )
-                    count += len(batch)
-                    last = batch[-1]["search_document_id"]
-            with search_store.transaction():
-                expected = search_store.one(
-                    "SELECT count(*) FROM search_documents WHERE kind=? AND search_document_id<=?",
-                    (current, maximum),
-                )[0]
-                if count != expected:
-                    raise CatalogError(
-                        "INDEX_INTEGRITY", "Fixed index target not fully built"
-                    )
-                search_store.execute(
-                    "UPDATE index_generations SET state='retired' WHERE kind=? AND state='ready'",
-                    (current,),
-                )
-                search_store.execute(
-                    "UPDATE index_generations SET state='ready' WHERE index_generation_id=?",
-                    (ident,),
-                )
-            # Retired generations cleanup
-            for old in search_store.all(
-                "SELECT * FROM index_generations WHERE kind=? AND state='retired'",
-                (current,),
-            ):
-                try:
-                    with search_store.transaction():
-                        search_store.execute(f"DROP TABLE {old['table_name']}")
-                        search_store.execute(
-                            "DELETE FROM index_membership WHERE index_generation_id=?",
-                            (old["index_generation_id"],),
-                        )
-                        search_store.execute(
-                            "UPDATE index_generations SET state='removed' WHERE index_generation_id=?",
-                            (old["index_generation_id"],),
-                        )
-                except sqlite3.OperationalError:
-                    pass
-            results.append(
-                {
-                    "kind": current,
-                    "generation": ident,
-                    "documents": count,
-                    "state": "ready",
-                }
-            )
-        duration_ms = max(1, int((time.monotonic() - start_time) * 1000))
-        ended_at_us = now_us()
-        search_store.update_last_rebuilt(
-            ended_at_us, core_revision_fence=store.revision()["local_revision"]
-        )
-        # PF-P16: Measure update duration and record rebuild metrics in operational store
-        store.operational.record_rebuild_metric(
-            started_at_us=started_at_us,
-            ended_at_us=ended_at_us,
-            duration_ms=duration_ms,
-            documents_indexed=total_docs,
-            bytes_indexed=total_bytes,
-            status="complete",
-        )
-        return results
-    except Exception:
-        duration_ms = max(1, int((time.monotonic() - start_time) * 1000))
         try:
-            store.operational.record_rebuild_metric(
-                started_at_us=started_at_us,
-                ended_at_us=now_us(),
+            for current in kinds:
+                token.check()
+                with store.transaction(read=True):
+                    core_rev = store.revision()["local_revision"]
+                    last_projected_fence = core_rev
+                    k_docs, k_bytes = refresh_documents(
+                        store, search_store, current, token
+                    )
+                total_docs += k_docs
+                total_bytes += k_bytes
+                maximum = search_store.one(
+                    "SELECT coalesce(max(search_document_id),0) FROM search_documents WHERE kind=?",
+                    (current,),
+                )[0]
+                with search_store.transaction():
+                    ident = search_store.one(
+                        "SELECT coalesce(max(index_generation_id),0)+1 FROM index_generations"
+                    )[0]
+                    table = f"catalog_fts_{ident}"
+                    search_store.execute(
+                        "INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,core_revision_fence,created_at_us) VALUES(?,?,?,?,?,?,?)",
+                        (
+                            ident,
+                            current,
+                            "building",
+                            table,
+                            maximum,
+                            core_rev,
+                            now_us(),
+                        ),
+                    )
+                    search_store.execute(
+                        f"CREATE VIRTUAL TABLE {table} USING fts5(body, tokenize='trigram case_sensitive 1',content='',detail=full)"
+                    )
+                last = 0
+                count = 0
+                while True:
+                    token.check()
+                    batch = []
+                    batch_bytes = 0
+                    for document in search_store.execute(
+                        "SELECT * FROM search_documents WHERE kind=? AND search_document_id>? AND search_document_id<=? ORDER BY search_document_id LIMIT 200",
+                        (current, last, maximum),
+                    ):
+                        document_bytes = len(document["body"].encode("utf8"))
+                        if batch and batch_bytes + document_bytes > 8_388_608:
+                            break
+                        batch.append(document)
+                        batch_bytes += document_bytes
+                    if not batch:
+                        break
+                    with search_store.transaction():
+                        if (
+                            search_store.one(
+                                "SELECT state FROM index_generations WHERE index_generation_id=?",
+                                (ident,),
+                            )[0]
+                            != "building"
+                        ):
+                            raise CatalogError(
+                                "STALE_INDEX_JOB",
+                                "Index generation is no longer building",
+                            )
+                        for doc in batch:
+                            if not search_store.one(
+                                "SELECT 1 FROM index_membership WHERE index_generation_id=? AND search_document_id=?",
+                                (ident, doc["search_document_id"]),
+                            ):
+                                search_store.execute(
+                                    f"INSERT INTO {table}(rowid,body) VALUES(?,?)",
+                                    (doc["search_document_id"], doc["body"]),
+                                )
+                                search_store.execute(
+                                    "INSERT INTO index_membership(index_generation_id,search_document_id,input_version) VALUES(?,?,?)",
+                                    (
+                                        ident,
+                                        doc["search_document_id"],
+                                        "utf8-literal-v1",
+                                    ),
+                                )
+                        count += len(batch)
+                        last = batch[-1]["search_document_id"]
+                with search_store.transaction():
+                    expected = search_store.one(
+                        "SELECT count(*) FROM search_documents WHERE kind=? AND search_document_id<=?",
+                        (current, maximum),
+                    )[0]
+                    if count != expected:
+                        raise CatalogError(
+                            "INDEX_INTEGRITY", "Fixed index target not fully built"
+                        )
+                    search_store.execute(
+                        "UPDATE index_generations SET state='retired' WHERE kind=? AND state='ready'",
+                        (current,),
+                    )
+                    search_store.execute(
+                        "UPDATE index_generations SET state='ready' WHERE index_generation_id=?",
+                        (ident,),
+                    )
+                # Retired generations cleanup
+                for old in search_store.all(
+                    "SELECT * FROM index_generations WHERE kind=? AND state='retired'",
+                    (current,),
+                ):
+                    try:
+                        with search_store.transaction():
+                            search_store.execute(f"DROP TABLE {old['table_name']}")
+                            search_store.execute(
+                                "DELETE FROM index_membership WHERE index_generation_id=?",
+                                (old["index_generation_id"],),
+                            )
+                            search_store.execute(
+                                "UPDATE index_generations SET state='removed' WHERE index_generation_id=?",
+                                (old["index_generation_id"],),
+                            )
+                    except sqlite3.OperationalError:
+                        pass
+                results.append(
+                    {
+                        "kind": current,
+                        "generation": ident,
+                        "documents": count,
+                        "state": "ready",
+                    }
+                )
+            duration_ms = max(0, int((time.monotonic() - start_time) * 1000))
+            ended_at_us = now_us()
+            search_store.update_last_rebuilt(
+                ended_at_us, core_revision_fence=last_projected_fence
+            )
+            telemetry_warning = None
+            try:
+                store.operational.record_rebuild_metric(
+                    started_at_us=started_at_us,
+                    ended_at_us=ended_at_us,
+                    duration_ms=duration_ms,
+                    documents_indexed=total_docs,
+                    bytes_indexed=total_bytes,
+                    status="complete",
+                )
+            except Exception as tel_err:
+                telemetry_warning = (
+                    f"rebuild_telemetry_unavailable: {type(tel_err).__name__}"
+                )
+            return RebuildResult(
+                results,
                 duration_ms=duration_ms,
                 documents_indexed=total_docs,
                 bytes_indexed=total_bytes,
-                status="failed",
+                warning=telemetry_warning,
             )
         except Exception:
-            pass
-        raise
+            duration_ms = max(0, int((time.monotonic() - start_time) * 1000))
+            try:
+                store.operational.record_rebuild_metric(
+                    started_at_us=started_at_us,
+                    ended_at_us=now_us(),
+                    duration_ms=duration_ms,
+                    documents_indexed=total_docs,
+                    bytes_indexed=total_bytes,
+                    status="failed",
+                )
+            except Exception:
+                pass
+            raise
+    finally:
+        search_store.close()
