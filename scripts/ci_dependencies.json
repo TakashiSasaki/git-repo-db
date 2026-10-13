@@ -19,7 +19,8 @@
     ".python-version",
     ".github/**",
     "scripts/**",
-    ".gitignore"
+    ".gitignore",
+    "mkdocs.yml"
   ],
   "executable_inputs": [],
   "prose": [
