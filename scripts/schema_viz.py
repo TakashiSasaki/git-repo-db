@@ -2818,7 +2818,7 @@ The `--check` mode executes in-memory schema introspection, generates expected o
 | **Dependency & Setup Overhead** | Zero dependencies | Zero dependencies | Zero dependencies |
 | **Regeneration & Maintenance** | Deterministic & sub-second | Deterministic & sub-second | Deterministic & sub-second |
 | **Coding Agent Friendliness** | **High** (read directly by agents) | **High** (clean parseable DSL) | Moderate (rendered HTML) |
-| **Output Size & Maintenance** | Compact Markdown (~100 KB total) | Compact DSL (~40 KB total) | Single self-contained file (~220 KB) |
+| **Output Size & Maintenance** | Compact Markdown (~75 KB total across 10 files) | Compact DSL (~122 KB total across 4 files) | Single self-contained file (~700 KB) |
 
 ---
 
