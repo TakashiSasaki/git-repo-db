@@ -139,16 +139,14 @@ class CollectionService:
 
                 def admit_repository(repo):
                     self.token.check()
+                    current_job = s.operational.one(
+                        "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id "
+                        "AND a.attempt=j.current_attempt WHERE j.job_id=?",
+                        (job,),
+                    )
+                    if current_job is None or current_job[0] != "running":
+                        raise CatalogError("STALE_JOB", "Discovery job fence changed")
                     with s.transaction():
-                        current_job = s.one(
-                            "SELECT a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id "
-                            "AND a.attempt=j.current_attempt WHERE j.job_id=?",
-                            (job,),
-                        )
-                        if current_job is None or current_job[0] != "running":
-                            raise CatalogError(
-                                "STALE_JOB", "Discovery job fence changed"
-                            )
                         provider_id = (
                             repo["provider_repository_id"]
                             if src["discovery_kind"] == "github_inventory"
@@ -356,7 +354,7 @@ class CollectionService:
         observed = max(item["observed_at_us"] for item in evidence)
         terminal = bool(evidence[-1].get("terminal")) and reason is None
         with store.transaction():
-            current = store.one(
+            current = store.operational.one(
                 "SELECT state FROM job_attempts WHERE job_id=? AND attempt=?",
                 (collector.inventory_job[0], collector.inventory_job[1]),
             )
@@ -475,7 +473,7 @@ class CollectionService:
 
     def resume(self, job):
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
-            row = s.one("SELECT kind FROM jobs WHERE job_id=?", (job,))
+            row = s.operational.one("SELECT kind FROM jobs WHERE job_id=?", (job,))
             if row is not None and row[0] not in ("discover", "sync"):
                 raise CatalogError("INVALID_ARGUMENT", "Unsupported resumable job kind")
             kind, request = JobService(s).resume(job)
@@ -491,7 +489,7 @@ class CollectionService:
         coverage = CoverageReport()
         acquisition_failed = False
         not_before_us = None
-        s.expected_attempt = s.one(
+        s.expected_attempt = s.operational.one(
             "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
         )[0]
         try:
@@ -523,10 +521,20 @@ class CollectionService:
                     self.token.check()
                     try:
                         if kind == "git":
-                            done = s.one(
-                                "SELECT x.snapshot_id FROM snapshots x JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_uuidv4=? AND a.kind='git' AND p.state='complete' AND x.complete=1",
-                                (job, repo["repository_uuidv4"]),
-                            )
+                            prog_ids = [
+                                r[0]
+                                for r in s.operational.all(
+                                    "SELECT git_acquisition_id FROM acquisition_progress WHERE job_id=? AND state='complete'",
+                                    (job,),
+                                )
+                            ]
+                            done = None
+                            if prog_ids:
+                                ph = ",".join("?" for _ in prog_ids)
+                                done = s.one(
+                                    f"SELECT x.snapshot_id FROM snapshots x JOIN git_acquisitions a ON a.git_acquisition_id=x.git_acquisition_id WHERE a.git_acquisition_id IN ({ph}) AND a.repository_uuidv4=? AND a.kind='git' AND x.complete=1",
+                                    (*prog_ids, repo["repository_uuidv4"]),
+                                )
                             item = (
                                 {
                                     "repository_uuidv4": repo["repository_uuidv4"],

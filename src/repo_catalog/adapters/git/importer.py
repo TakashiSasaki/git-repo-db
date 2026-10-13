@@ -33,42 +33,87 @@ class GitImporter:
         s = self.s
         kind = "pr" if pr_roots else "git"
         request = json.dumps({"roots": pr_roots or []}, sort_keys=True)
-        run = s.one(
-            "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=? AND a.repository_uuidv4=? AND a.kind=? AND a.request=? ORDER BY p.generation DESC LIMIT 1",
-            (job, repo["repository_uuidv4"], kind, request),
+        prog_rows = s.operational.all(
+            "SELECT * FROM acquisition_progress WHERE job_id=? ORDER BY generation DESC",
+            (job,),
         )
+        run = None
+        for p in prog_rows:
+            acq = s.one(
+                "SELECT * FROM git_acquisitions WHERE git_acquisition_id=? AND repository_uuidv4=? AND kind=? AND request=?",
+                (p["git_acquisition_id"], repo["repository_uuidv4"], kind, request),
+            )
+            if acq:
+                run = {
+                    **acq,
+                    "generation": p["generation"],
+                    "attempt": p["attempt"],
+                    "state": p["state"],
+                    "active_cache_entry_id": p["active_cache_entry_id"],
+                }
+                break
         selected = endpoint(
             s,
             repo["repository_uuidv4"],
             (run["repository_endpoint_id"] if run else None) or repository_endpoint_id,
         )
-        attempt = s.one("SELECT current_attempt FROM jobs WHERE job_id=?", (job,))[0]
+        attempt = s.operational.one(
+            "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
+        )[0]
         if not run:
-            generation = s.one(
-                "SELECT coalesce(max(p.generation),0)+1 FROM acquisition_progress p JOIN git_acquisitions a ON a.git_acquisition_id=p.git_acquisition_id WHERE a.repository_uuidv4=?",
-                (repo["repository_uuidv4"],),
-            )[0]
-            cache = s.one(
+            cache = s.operational.one(
                 "SELECT c.*,l.repository_uuidv4,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_uuidv4=? AND l.access='target_active' AND l.state='available' AND c.state='active' ORDER BY c.generation DESC LIMIT 1",
                 (repo["repository_uuidv4"],),
             )
+            if cache:
+                cache_path = s.path / cache["path"]
+                if not cache_path.exists():
+                    with s.operational.transaction():
+                        s.operational.execute(
+                            "UPDATE cache_locators SET state='missing' WHERE cache_locator_id=?",
+                            (cache["cache_locator_id"],),
+                        )
+                        s.operational.execute(
+                            "UPDATE active_cache_entries SET state='evicted' WHERE active_cache_entry_id=?",
+                            (cache["active_cache_entry_id"],),
+                        )
+                    cache = None
+            if cache:
+                generation = cache["generation"]
+            else:
+                core_gen = s.one(
+                    "SELECT coalesce(max(generation), 0) FROM snapshots WHERE repository_uuidv4=?",
+                    (repo["repository_uuidv4"],),
+                )[0]
+                op_gen = s.operational.one(
+                    "SELECT coalesce(max(c.generation), 0) FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_uuidv4=?",
+                    (repo["repository_uuidv4"],),
+                )[0]
+                disk_gen = 0
+                cache_repo_dir = s.path / "cache" / repo["repository_uuidv4"]
+                if cache_repo_dir.exists() and cache_repo_dir.is_dir():
+                    for item in cache_repo_dir.iterdir():
+                        if item.name.endswith(".git") and item.name[:-4].isdigit():
+                            disk_gen = max(disk_gen, int(item.name[:-4]))
+                generation = max(core_gen, op_gen, disk_gen) + 1
             rid = str(uuid.uuid4())
-            with s.transaction():
-                if not cache:
-                    cid = str(uuid.uuid4())
-                    relative = f"cache/{repo['repository_uuidv4']}/{generation}.git"
-                    s.execute(
+            if not cache:
+                cid = str(uuid.uuid4())
+                relative = f"cache/{repo['repository_uuidv4']}/{generation}.git"
+                with s.operational.transaction():
+                    s.operational.execute(
                         "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES(?,?,?,'target_active','available')",
                         (cid, repo["repository_uuidv4"], relative),
                     )
-                    s.execute(
+                    s.operational.execute(
                         "INSERT INTO active_cache_entries(active_cache_entry_id,cache_locator_id,generation,state,last_used_us,bytes) VALUES(?,?,?,'active',?,0)",
                         (cid, cid, generation, now_us()),
                     )
-                    cache = s.one(
-                        "SELECT c.*,l.repository_uuidv4,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
-                        (cid,),
-                    )
+                cache = s.operational.one(
+                    "SELECT c.*,l.repository_uuidv4,l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
+                    (cid,),
+                )
+            with s.transaction():
                 s.execute(
                     "INSERT INTO git_acquisitions(git_acquisition_id,repository_uuidv4,repository_endpoint_id,endpoint_url,source_id,kind,started_at_us,request) VALUES(?,?,?,?,?,?,?,?)",
                     (
@@ -83,12 +128,8 @@ class GitImporter:
                     ),
                 )
                 s.execute(
-                    "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES(?,?,?,'planned',?,?)",
-                    (rid, job, attempt, generation, cache["active_cache_entry_id"]),
-                )
-                s.execute(
-                    "INSERT INTO preservation_obligations(git_acquisition_id,cache_locator_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES(?,?,0,0,0,0,0)",
-                    (rid, cache["cache_locator_id"]),
+                    "INSERT INTO preservation_obligations(git_acquisition_id,roots_fixed,structure_done,digest_done,text_done,complete) VALUES(?,0,0,0,0,0)",
+                    (rid,),
                 )
                 if kind == "git":
                     heads = s.all(
@@ -111,21 +152,33 @@ class GitImporter:
                             now_us(),
                         ),
                     )
-            run = s.one(
-                "SELECT a.*,p.generation,p.attempt,p.state,p.active_cache_entry_id FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE a.git_acquisition_id=?",
+            with s.operational.transaction():
+                s.operational.execute(
+                    "INSERT INTO acquisition_progress(git_acquisition_id,job_id,attempt,state,generation,active_cache_entry_id) VALUES(?,?,?,'planned',?,?)",
+                    (rid, job, attempt, generation, cache["active_cache_entry_id"]),
+                )
+            acq = s.one(
+                "SELECT * FROM git_acquisitions WHERE git_acquisition_id=?",
                 (rid,),
             )
+            run = {
+                **acq,
+                "generation": generation,
+                "attempt": attempt,
+                "state": "planned",
+                "active_cache_entry_id": cache["active_cache_entry_id"],
+            }
         elif run["state"] == "complete":
             return self.result(repo, run, kind)
         elif run["attempt"] != attempt:
-            with s.transaction():
-                s.execute(
+            with s.operational.transaction():
+                s.operational.execute(
                     "UPDATE acquisition_progress SET attempt=? WHERE git_acquisition_id=?",
                     (attempt, run["git_acquisition_id"]),
                 )
         self.parser = GitParsing(s, repo["repository_uuidv4"], token=self.token)
         repo = {**dict(repo), "url": run["endpoint_url"]}
-        cache = s.one(
+        cache = s.operational.one(
             "SELECT c.*,l.repository_uuidv4,l.path,l.access,l.state AS locator_state FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE c.active_cache_entry_id=?",
             (run["active_cache_entry_id"],),
         )
@@ -152,12 +205,12 @@ class GitImporter:
             runner = GitRunner(
                 self.token, lock, lambda: Capacity(s).monitor(job, baseline)
             )
-            with s.transaction():
-                if not s.one(
+            with s.operational.transaction():
+                if not s.operational.one(
                     "SELECT 1 FROM cache_leases WHERE active_cache_entry_id=? AND job_id=? AND attempt=?",
                     (cache["active_cache_entry_id"], job, attempt),
                 ):
-                    s.execute(
+                    s.operational.execute(
                         "INSERT INTO cache_leases(active_cache_entry_id,job_id,attempt,acquired_at_us) VALUES(?,?,?,?)",
                         (cache["active_cache_entry_id"], job, attempt, now_us()),
                     )
@@ -200,12 +253,13 @@ class GitImporter:
                     refs = json.loads(run["roots_manifest"])
                 else:
                     namespace = f"refs/intake/{run['git_acquisition_id']}"
-                    with s.transaction():
-                        s.execute(
+                    with s.operational.transaction():
+                        s.operational.execute(
                             "UPDATE acquisition_progress SET state='fetching' WHERE git_acquisition_id=?",
                             (run["git_acquisition_id"],),
                         )
-                        if run["object_format"] is None:
+                    if run["object_format"] is None:
+                        with s.transaction():
                             s.execute(
                                 "UPDATE git_acquisitions SET object_format=? WHERE git_acquisition_id=?",
                                 (fmt, run["git_acquisition_id"]),
@@ -331,10 +385,12 @@ class GitImporter:
                                 run["git_acquisition_id"],
                             ),
                         )
-                        s.execute(
+                    with s.operational.transaction():
+                        s.operational.execute(
                             "UPDATE acquisition_progress SET state='refs_captured' WHERE git_acquisition_id=?",
                             (run["git_acquisition_id"],),
                         )
+                    with s.transaction():
                         s.execute(
                             "UPDATE preservation_obligations SET roots_fixed=1 WHERE git_acquisition_id=?",
                             (run["git_acquisition_id"],),
@@ -423,31 +479,29 @@ class GitImporter:
                 self.parser.validate_acquisition(run["git_acquisition_id"])
                 hook("before_publish")
                 self.token.check()
+                active = s.operational.one(
+                    "SELECT j.current_attempt,a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
+                    (job,),
+                )
+                progress = s.operational.one(
+                    "SELECT attempt FROM acquisition_progress WHERE git_acquisition_id=?",
+                    (run["git_acquisition_id"],),
+                )
+                if (
+                    not active
+                    or active["current_attempt"] != attempt
+                    or active["state"] != "running"
+                    or not progress
+                    or progress[0] != attempt
+                ):
+                    raise CatalogError(
+                        "STALE_ATTEMPT",
+                        "Refusing publication from obsolete attempt",
+                    )
                 with s.transaction():
-                    active = s.one(
-                        "SELECT j.current_attempt,a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
-                        (job,),
-                    )
-                    progress = s.one(
-                        "SELECT attempt FROM acquisition_progress WHERE git_acquisition_id=?",
-                        (run["git_acquisition_id"],),
-                    )
-                    if (
-                        active["current_attempt"] != attempt
-                        or active["state"] != "running"
-                        or progress[0] != attempt
-                    ):
-                        raise CatalogError(
-                            "STALE_ATTEMPT",
-                            "Refusing publication from obsolete attempt",
-                        )
                     s.execute(
                         "UPDATE preservation_obligations SET structure_done=1,digest_done=1,text_done=1,complete=1 WHERE git_acquisition_id=?",
                         (run["git_acquisition_id"],),
-                    )
-                    s.execute(
-                        "UPDATE acquisition_progress SET state='complete',ended_at_us=? WHERE git_acquisition_id=?",
-                        (now_us(), run["git_acquisition_id"]),
                     )
                     s.execute(
                         "UPDATE acquisition_roots SET complete=1 WHERE git_acquisition_id=?",
@@ -476,18 +530,23 @@ class GitImporter:
                                 observed_at_us=incoming,
                             )
                     s.advance_local_revision()
+                with s.operational.transaction():
+                    s.operational.execute(
+                        "UPDATE acquisition_progress SET state='complete',ended_at_us=? WHERE git_acquisition_id=?",
+                        (now_us(), run["git_acquisition_id"]),
+                    )
                 return self.result(repo, run, kind)
             finally:
-                with s.transaction():
-                    s.execute(
+                with s.operational.transaction():
+                    s.operational.execute(
                         "DELETE FROM cache_leases WHERE active_cache_entry_id=? AND job_id=? AND attempt=?",
                         (cache["active_cache_entry_id"], job, attempt),
                     )
-                    s.execute(
+                    s.operational.execute(
                         "UPDATE active_cache_entries SET last_used_us=? WHERE active_cache_entry_id=?",
                         (now_us(), cache["active_cache_entry_id"]),
                     )
-                    Capacity(s).release(job)
+                Capacity(s).release(job)
 
     @staticmethod
     def result(repo, run, kind):
@@ -539,7 +598,7 @@ class GitImporter:
             if root["role"] == "head" or root["ref"] != root.get("expected"):
                 return False
             if not self.s.one(
-                "SELECT 1 FROM available_git_objects g JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN acquisition_progress r ON r.git_acquisition_id=p.git_acquisition_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repository_uuidv4=? AND r.state='complete' LIMIT 1",
+                "SELECT 1 FROM available_git_objects g JOIN repository_object_sources p ON p.git_object_id=g.git_object_id JOIN preservation_obligations o ON o.git_acquisition_id=p.git_acquisition_id WHERE g.object_format=? AND g.oid=? AND g.type='commit' AND g.verified=1 AND p.repository_uuidv4=? AND o.complete=1 LIMIT 1",
                 (fmt, bytes.fromhex(root["ref"]), repo["repository_uuidv4"]),
             ):
                 return False

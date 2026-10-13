@@ -50,7 +50,7 @@ def test_locks_fencing(catalog):
     state, fixture, repos = catalog
     run(state, "sync", "git")
     expire(state)
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
+    with sqlite3.connect(state / "operational.sqlite3") as db:
         cache = db.execute(
             "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=?",
             (repos["alpha"],),
@@ -124,7 +124,7 @@ def test_orphan_git_holds_lock(catalog, tmp_path):
     state, fixture, repos = catalog
     run(state, "sync", "git")
     expire(state)
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
+    with sqlite3.connect(state / "operational.sqlite3") as db:
         cache = db.execute(
             "SELECT a.active_cache_entry_id FROM active_cache_entries a JOIN cache_locators l ON l.cache_locator_id=a.cache_locator_id WHERE l.repository_uuidv4=?",
             (repos["alpha"],),

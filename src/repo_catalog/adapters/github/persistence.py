@@ -130,7 +130,7 @@ class ApiFacts:
         self.s.advance_local_revision()
 
     def fence(self, job):
-        row = self.s.one(
+        row = self.s.operational.one(
             "SELECT j.current_attempt,a.state FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt WHERE j.job_id=?",
             (job,),
         )
@@ -186,15 +186,79 @@ class ApiFacts:
         if pr is not None:
             scope["change_request_id"] = pr
         scope_json = canonical(scope)
-        previous = self.s.one(
-            "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.scope_json=? AND f.change_request_id IS ? AND f.kind=? AND p.job_id=? ORDER BY f.observed_at_us DESC LIMIT 1",
-            (scope_json, pr, kind, job),
+        fc_rows = self.s.all(
+            "SELECT * FROM fetch_collections WHERE scope_json=? AND change_request_id IS ? AND kind=? ORDER BY observed_at_us DESC",
+            (scope_json, pr, kind),
         )
-        if previous is None and reuse:
-            previous = self.s.one(
-                "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.scope_json=? AND f.change_request_id IS ? AND f.kind=? AND p.state='complete' ORDER BY f.observed_at_us DESC LIMIT 1",
-                (scope_json, pr, kind),
+        previous = None
+        for fc in fc_rows:
+            fc_id = fc["fetch_collection_id"]
+            has_complete_marker = (
+                self.s.one(
+                    "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                    (fc_id,),
+                )
+                is not None
             )
+            p = self.s.operational.one(
+                "SELECT state, cursor, reason FROM collection_progress WHERE fetch_collection_id=? AND job_id=?",
+                (fc_id, job),
+            )
+            if p:
+                p_dict = dict(p)
+                if has_complete_marker:
+                    if p_dict["state"] != "complete":
+                        with self.s.operational.transaction():
+                            self.s.operational.execute(
+                                "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
+                                (fc_id,),
+                            )
+                        p_dict["state"] = "complete"
+                        p_dict["cursor"] = None
+                    previous = {**dict(fc), **p_dict}
+                    break
+                elif p_dict["state"] == "complete":
+                    # Operational claims complete, but Core lacks evidence!
+                    # Do not trust false completeness; fall back safely.
+                    continue
+                else:
+                    # Incomplete collection: Core lacks terminal evidence.
+                    # Under PF-P04/PF-P07: do not trust unprovable cursor continuation;
+                    # start a fresh Collection from the initial endpoint.
+                    continue
+
+        if previous is None and reuse:
+            for fc in fc_rows:
+                fc_id = fc["fetch_collection_id"]
+                has_complete_marker = (
+                    self.s.one(
+                        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                        (fc_id,),
+                    )
+                    is not None
+                )
+                if has_complete_marker:
+                    with self.s.operational.transaction():
+                        if self.s.operational.one(
+                            "SELECT 1 FROM collection_progress WHERE fetch_collection_id=?",
+                            (fc_id,),
+                        ):
+                            self.s.operational.execute(
+                                "UPDATE collection_progress SET job_id=?,attempt=?,state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
+                                (job, self.fence(job), fc_id),
+                            )
+                        else:
+                            self.s.operational.execute(
+                                "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'complete',NULL,NULL)",
+                                (fc_id, job, self.fence(job)),
+                            )
+                    previous = {
+                        **dict(fc),
+                        "state": "complete",
+                        "cursor": None,
+                        "reason": None,
+                    }
+                    break
         if (
             previous
             and kind == "threads"
@@ -203,10 +267,11 @@ class ApiFacts:
             previous = None
         if previous:
             if previous["state"] != "complete":
-                self.s.execute(
-                    "UPDATE collection_progress SET attempt=?,state='running',reason=NULL WHERE fetch_collection_id=?",
-                    (self.fence(job), previous["fetch_collection_id"]),
-                )
+                with self.s.operational.transaction():
+                    self.s.operational.execute(
+                        "UPDATE collection_progress SET attempt=?,state='running',reason=NULL WHERE fetch_collection_id=?",
+                        (self.fence(job), previous["fetch_collection_id"]),
+                    )
             return dict(previous)
         ident = str(uuid.uuid4())
         self.s.execute(
@@ -222,10 +287,11 @@ class ApiFacts:
                 now_us(),
             ),
         )
-        self.s.execute(
-            "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'running',NULL,NULL)",
-            (ident, job, self.fence(job)),
-        )
+        with self.s.operational.transaction():
+            self.s.operational.execute(
+                "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state,cursor,reason) VALUES(?,?,?,'running',NULL,NULL)",
+                (ident, job, self.fence(job)),
+            )
         return {
             "fetch_collection_id": ident,
             "resume_scope_id": scope_id,
@@ -266,10 +332,11 @@ class ApiFacts:
             parser_module=current_parser.PARSER_MODULE,
             parser_version=current_parser.PARSER_VERSION,
         )
-        self.s.execute(
-            "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
-            (next_cursor, collection["fetch_collection_id"]),
-        )
+        with self.s.operational.transaction():
+            self.s.operational.execute(
+                "UPDATE collection_progress SET cursor=? WHERE fetch_collection_id=?",
+                (next_cursor, collection["fetch_collection_id"]),
+            )
         return ordinal
 
     def finish(self, collection, *, evidence=None, observed_at_us=None):
@@ -355,10 +422,11 @@ class ApiFacts:
                 observed_at_us,
             ),
         )
-        self.s.execute(
-            "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
-            (ident,),
-        )
+        with self.s.operational.transaction():
+            self.s.operational.execute(
+                "UPDATE collection_progress SET state='complete',cursor=NULL,reason=NULL WHERE fetch_collection_id=?",
+                (ident,),
+            )
 
     def observed_at_us(self, collection, *, include_partial=True):
         return self.s.one(
@@ -384,10 +452,11 @@ class ApiFacts:
         return row is None or bool(row["has_next"])
 
     def partial(self, collection, reason, *, observed_at_us=None):
-        self.s.execute(
-            "UPDATE collection_progress SET state='partial',reason=? WHERE fetch_collection_id=?",
-            (reason, collection["fetch_collection_id"]),
-        )
+        with self.s.operational.transaction():
+            self.s.operational.execute(
+                "UPDATE collection_progress SET state='partial',reason=? WHERE fetch_collection_id=?",
+                (reason, collection["fetch_collection_id"]),
+            )
         if observed_at_us is not None:
             self.s.execute(
                 "INSERT INTO completion_markers(resume_scope_id,fetch_collection_id,asserted_state,evidence,observed_at_us) VALUES(?,?,'partial',?,?)",

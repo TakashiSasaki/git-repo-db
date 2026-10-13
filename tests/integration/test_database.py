@@ -55,7 +55,7 @@ def test_writer_and_capacity(state):
         job = JobService(s).create("sync", {})
         with pytest.raises(Waiting):
             Capacity(s).reserve(job, 33 * 1024 * 1024)
-        assert s.one("SELECT count(*) FROM space_reservations")[0] == 0
+        assert s.operational.one("SELECT count(*) FROM space_reservations")[0] == 0
 
 
 def test_full_rollback(state):

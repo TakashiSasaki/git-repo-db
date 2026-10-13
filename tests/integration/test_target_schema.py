@@ -217,11 +217,13 @@ def test_reviewed_multi_statement_attack_rolls_back_unit_and_revision(target, fa
         else:
             put(
                 target,
-                "jobs",
-                job_id="deferred",
-                kind="sync",
-                request="{}",
-                current_attempt=1,
+                "snapshots",
+                snapshot_id="deferred",
+                git_acquisition_id="nonexistent-run",
+                repository_uuidv4=repository_uuid(1),
+                complete=0,
+                generation=1,
+                created_at_us=TIME,
             )
     assert (
         target.execute("SELECT local_revision FROM database_identity").fetchone()[0]
@@ -544,28 +546,9 @@ def test_listing_scope_context_partial_complete(target):
 
 
 def test_resume_scope_and_immutable_scan(target):
-    put(
-        target,
-        "incremental_scans",
-        incremental_scan_id="scan",
-        resume_scope_id="scope-1-commits",
-        fetch_collection_id="1-commits",
-        scan_started_at_us=TIME,
-        safe_watermark_us=TIME,
-        evidence="{}",
-    )
     with pytest.raises(sqlite3.IntegrityError):
         target.execute(
-            "UPDATE incremental_scans SET safe_watermark_us=? WHERE incremental_scan_id='scan'",
-            (TIME + 1,),
-        )
-    with pytest.raises(sqlite3.IntegrityError):
-        put(
-            target,
-            "resume_cursors",
-            resume_scope_id="scope-2-commits",
-            incremental_scan_id="scan",
-            reusable=1,
+            "UPDATE resume_scopes SET principal_ref='other' WHERE resume_scope_id='scope-1-commits'"
         )
     assert (
         target.execute("SELECT count(*) FROM eligible_document_state").fetchone()[0]
@@ -574,8 +557,35 @@ def test_resume_scope_and_immutable_scan(target):
 
 
 def test_old_cache_and_job_runtime_are_not_reactivated(target):
+    # Core schema does not contain operational, search, or retired tables (PF-P06, PF-P14)
+    names = {
+        row[0]
+        for row in target.execute("SELECT name FROM sqlite_schema WHERE type='table'")
+    }
+    assert not names & {
+        "jobs",
+        "job_attempts",
+        "cache_locators",
+        "active_cache_entries",
+        "cache_leases",
+        "space_reservations",
+        "acquisition_progress",
+        "collection_progress",
+        "search_rebuild_metrics",
+        "search_documents",
+        "index_generations",
+        "index_membership",
+        "incremental_scans",
+        "resume_cursors",
+        "content_locations",
+    }
+    # Operational tables are tested on dedicated operational schema
+    from repo_catalog.adapters.sqlite.schema import operational_schema_sql
+
+    op_db = sqlite3.connect(":memory:")
+    op_db.executescript(operational_schema_sql())
     put(
-        target,
+        op_db,
         "cache_locators",
         cache_locator_id="old-cache",
         repository_uuidv4=repository_uuid(1),
@@ -585,7 +595,7 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
     )
     with pytest.raises(sqlite3.IntegrityError):
         put(
-            target,
+            op_db,
             "active_cache_entries",
             active_cache_entry_id="active",
             cache_locator_id="old-cache",
@@ -594,28 +604,41 @@ def test_old_cache_and_job_runtime_are_not_reactivated(target):
             last_used_us=TIME,
             bytes=0,
         )
-    put(target, "jobs", job_id="job", kind="legacy", request="{}")
+    put(
+        op_db,
+        "jobs",
+        job_id="job",
+        kind="legacy",
+        request="{}",
+        current_attempt=1,
+        created_at_us=TIME,
+    )
     with pytest.raises(sqlite3.IntegrityError):
         put(
-            target,
+            op_db,
             "job_attempts",
             job_id="job",
             attempt=0,
             state="running",
+            created_at_us=TIME,
+            updated_at_us=TIME,
             checkpoint="{}",
         )
     put(
-        target,
+        op_db,
         "job_attempts",
         job_id="job",
         attempt=5,
         state="interrupted",
+        created_at_us=TIME,
+        updated_at_us=TIME,
         checkpoint="{}",
     )
-    target.execute("UPDATE jobs SET current_attempt=5 WHERE job_id='job'")
-    assert target.execute(
+    op_db.execute("UPDATE jobs SET current_attempt=5 WHERE job_id='job'")
+    assert op_db.execute(
         "SELECT attempt FROM job_attempts WHERE job_id='job'"
     ).fetchall() == [(5,)]
+    op_db.close()
 
 
 def test_distinct_natural_documents_survive_shared_body(target):

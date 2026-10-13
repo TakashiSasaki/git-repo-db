@@ -1,6 +1,6 @@
 # 検証方法
 
-Catalog3 schema 20 の通常動作とPhase 1のAPI原本依存機能廃止を、一つの Python/SQLite binding で検証します。v2 importerと救出workspaceは廃止済みです。最小 SQLite 版の独立 lane と過去の phase 互換性・試験件数・node ID 下限は廃止しました。実行時の版と機能を記録し、FK、recursive triggers、FTS、WAL の既知の修正条件など、必要な正しさの条件は維持します。
+Catalog3 Core Schema 21 / Operational Schema 1 / Search Schema 1 の通常動作とPhase 1のAPI原本依存機能廃止、および Three-Store 境界（Core, Operational, Search）を、一つの Python/SQLite binding で検証します。v2 importerと救出workspaceは廃止済みです。最小 SQLite 版の独立 lane と過去の phase 互換性・試験件数・node ID 下限は廃止しました。実行時の版と機能を記録し、FK、recursive triggers、FTS、WAL の既知の修正条件など、必要な正しさの条件は維持します。
 
 依存取得は試験より先に行います。
 
@@ -11,7 +11,7 @@ uv run --no-sync python -c 'import platform, sqlite3; print(platform.python_vers
 uv --version
 ```
 
-編集中は変更した機能の試験を実行します。仕上げでは [現在の acceptance policy](../scripts/ci_dependencies.json) の機能試験を一度実行し、installed package を独立した lane で確認します。wheel版とsdist由来版は別プロセスの2 workersで並列実行し、ビルド入力だけをこのpytest実行内で共有します。
+編集中は変更した機能の試験を実行します。ADR 0001（Development and Release Validation Lifecycle Architecture）に基づき、開発時の検証（Development Validation）とリリース受入（Release Acceptance）を明確に分離します。開発時の pull request や通常編集では、局所的な対象試験（focused tests）および軽量な静的検査（Ruff check/format、構成検証、schema audit、CLI doctor smoke）を実行し、編集ごとに全試験（full-suite）の網羅実行を要求しません。リリース検証を完了する際のみ、クリーンな作業ツリーで完全な受入試験を実施し、ローカル release receipt を生成・照合します。
 
 ```bash
 uv run --no-sync ruff check src tests scripts
@@ -40,12 +40,12 @@ python scripts/ci_execute.py reconcile-release \
 
 API原本・Publication/profile/selection/certificateの本番経路不在、closed modeled JSON、値と項目別根拠の同時更新・COMMIT失敗・revision fence、10,000回更新後の現在状態と未参照shared text、Sourceのpartial scan非削除、latest Coverage候補、empty/nested/foreign scope、stale head A/B、Git SHA-1/SHA-256・途中失敗・missing targets、Exchangeの再送/反転/後着/current drift、CAS共有bytes・CAS-41・no-overwrite restoreを検証します。廃止した機構だけのテストと存続する振る舞いの対応は[exact node対応表](phase2/publication-free-test-disposition.json)に記録します。除去したparser certificateとbootstrapは受入条件ではありません。
 
-実装者とは別のfresh subagentがarchitecture/DDL、acquisition/completeness、Git/Exchange/CAS/scale、最終統合の四範囲を実行検証します。findingは再現・root-cause修正・回帰テスト・元reviewerの再検証を繰り返します。異なる名前のself-reviewを独立レビューとは扱いません。
+四範囲の独立サブエージェント検証（architecture/DDL、acquisition/completeness、Git/Exchange/CAS/scale、最終統合）は、大規模な Schema 20 再設計など明示的に要求されたタスクまたはリリース受入（Release Acceptance）時に適用され、通常の開発 PR（Development PR）ごとに機械的に義務付けられるものではありません。開発 PR では変更の影響範囲に応じた独立レビューを実施し、finding は再現・root-cause修正・回帰テスト・再検証を繰り返します。異なる名前のself-reviewを独立レビューとは扱いません。
 
 通常の pytest は外部通信と実 token を遮断します。親と子 Python の guard は合成 HTTP fixture 用の loopback だけを許し、Git transport は file に限定します。依存準備と合成fixture通信を、実Source取得の許可とは扱いません。すべての stateful command は disposable な `--state-dir` を指定します。
 
 package 試験は lock と SHA で検証した wheelhouse を `--offline --no-index --find-links` で使います。wheel と sdist 由来 wheel を新しい venv に導入し、source 外の CWD から console script と `python -m` を実行します。complete packaged DDL、JSON guardとgeneratorの一致、新規catalog初期化、取得・検索・再構築・交換・Git再解析・整合性・backup/restoreを確認します。廃止された公開操作と依存がdistributionからも利用できないことを検証します。
 
-以前のcheckpoint環境は Python 3.12.14、SQLite 3.53.1、uv 0.12.19 でした。今回の実行環境はコマンドで改めて測定し、下限版の保証と区別します。最終結果・失敗・skip・未実行項目は[Schema 20実装記録](phase2/publication-free-implementation.md)とexact-revision receiptsに記録します。CI の選択と結果照合は [変更に応じた CI](change-aware-ci.md)、計測は [CI 性能](ci-performance.md) を参照してください。
+以前のcheckpoint環境は Python 3.12.14、SQLite 3.53.1、uv 0.12.19 でした。今回の実行環境はコマンドで改めて測定し、下限版の保証と区別します。最終結果・失敗・skip・未実行項目は [Three-Store Boundary ADR 0002](adr/0002-three-store-boundary-architecture.md)、[Schema 20実装記録](phase2/publication-free-implementation.md)、および exact-revision receipts に記録します。CI の選択と結果照合は [変更に応じた CI](change-aware-ci.md)、計測は [CI 性能](ci-performance.md) を参照してください。
 
 Phase 2のexact-tree受入と独立reviewの対象・修正・再検証は[実装記録](phase2/publication-free-implementation.md)、提出PRとそのCI artifactsに記録します。Schema 18の調査snapshotは書き換えません。
