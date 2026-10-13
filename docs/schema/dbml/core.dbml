@@ -1,0 +1,1292 @@
+// git-repo-db Core Store Schema (catalog.sqlite3)
+// Schema Version: 21
+// DDL SHA-256: 8ee2631fe083e26cd0346bc71a8a5d1f4d7dab4bf661958d6406c885bc553ff0
+// Authoritative domain facts, entities, observations, and evidence.
+// Compatible with https://dbdiagram.io/ and https://dbdocs.io/
+
+Project git_repo_db_core {
+  database_type: 'SQLite'
+  Note: '''
+    # git-repo-db Core Store (catalog.sqlite3)
+    Schema Version: 21
+    Tables: 70
+    Physical Foreign Keys: 121
+    DDL SHA-256: 8ee2631fe083e26cd0346bc71a8a5d1f4d7dab4bf661958d6406c885bc553ff0
+    
+    Authoritative domain facts, entities, observations, coverage claims, Git DAG, and Exchange staging.
+    Physical boundary: strictly isolated inside catalog.sqlite3 under ADR 0002.
+  '''
+}
+
+Table acquisition_roots {
+  acquisition_root_id integer [pk]
+  git_acquisition_id text [not null]
+  repository_uuidv4 text [not null]
+  object_format text [not null]
+  oid blob [not null]
+  role text [not null]
+  expected_oid blob
+  complete integer [not null]
+
+  indexes {
+    (git_acquisition_id, object_format, oid, role) [unique, name: 'sqlite_autoindex_acquisition_roots_2']
+    (acquisition_root_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_acquisition_roots_1']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table blob_content_map {
+  git_object_id integer [pk]
+  content_id integer [not null]
+
+  indexes {
+    (content_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table change_request_events {
+  change_request_event_uuidv4 text [pk, not null]
+  change_request_id text [not null]
+  repository_uuidv4 text [not null]
+  provider_event_id text
+  event_kind text [not null]
+  actor text
+  created_at_us integer
+  object_format text
+  commit_oid blob
+  metadata text [not null]
+  observed_at_us integer
+  parser_module text [not null]
+  parser_version text [not null]
+
+  indexes {
+    (change_request_id, provider_event_id) [unique, name: 'sqlite_autoindex_change_request_events_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table change_request_state {
+  change_request_id text [pk, not null]
+  kind text [not null]
+  provider_resource_id text
+  state text
+  draft integer
+  merged integer
+  locked integer
+  author text
+  url text
+  object_format text
+  head_oid blob
+  base_oid blob
+  merge_oid blob
+  head_ref text
+  base_ref text
+  head_repository_binding_id text
+  base_repository_binding_id text
+  created_at_us integer
+  closed_at_us integer
+  merged_at_us integer
+  repository_uuidv4 text [not null]
+  repository_binding_id text [not null]
+  service_instance_uuidv4 text [not null]
+  provider_updated_at_us integer
+  provider_clock_scope text
+  observed_at_us integer [not null]
+  last_checked_at_us integer
+  parsed_at_us integer [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+  metadata text [not null, default: `'{}'`]
+  acquisition_scope_json text [not null]
+  field_evidence_json text [not null, default: `'{}'`]
+
+  indexes {
+    (repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
+}
+
+Table change_requests {
+  change_request_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  repository_binding_id text [not null]
+  change_request_kind text [not null]
+  provider_change_request_number integer [not null]
+
+  indexes {
+    (change_request_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_change_requests_3']
+    (repository_binding_id, change_request_kind, provider_change_request_number) [unique, name: 'sqlite_autoindex_change_requests_2']
+    (repository_binding_id, repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table code_acquisitions {
+  code_assessment_id text [not null, note: 'Composite PK (pos 1)']
+  role text [not null, note: 'Composite PK (pos 2)']
+  object_format text [not null]
+  oid blob [not null]
+  acquisition_root_id integer
+
+  indexes {
+    (code_assessment_id, role) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table code_assessments {
+  code_assessment_id text [pk, not null]
+  change_request_id text [not null]
+  repository_uuidv4 text [not null]
+  commit_code_listing_id text
+  file_code_listing_id text
+  state text [not null]
+  object_format text
+  head_oid blob
+  base_oid blob
+  observed_at_us integer
+  parser_module text [not null]
+  parser_version text [not null]
+  details_json text [not null]
+
+  indexes {
+    (code_assessment_id, change_request_id) [unique, name: 'sqlite_autoindex_code_assessments_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table code_commits {
+  code_listing_id text [not null, note: 'Composite PK (pos 1)']
+  position integer [not null, note: 'Composite PK (pos 2)']
+  repository_uuidv4 text [not null]
+  object_format text [not null]
+  oid blob [not null]
+  metadata text [not null]
+
+  indexes {
+    (code_listing_id, position) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table code_file_changes {
+  code_listing_id text [not null, note: 'Composite PK (pos 1)']
+  position integer [not null, note: 'Composite PK (pos 2)']
+  repository_uuidv4 text [not null]
+  raw_path blob [not null]
+  previous_path blob
+  status text
+  object_format text
+  oid blob
+  additions integer
+  deletions integer
+  changes integer
+  patch text
+  patch_status text
+  metadata text [not null]
+
+  indexes {
+    (code_listing_id, position) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table code_listing_progress {
+  code_listing_id text [pk, not null]
+  state text [not null]
+  terminal integer [not null]
+  page_count integer [not null]
+  context_proven integer [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table code_listings {
+  code_listing_id text [pk, not null]
+  change_request_id text [not null]
+  fetch_collection_id text [not null]
+  kind text [not null]
+  resume_scope_id text
+  object_format text
+  head_oid blob
+  base_oid blob
+
+  indexes {
+    (code_listing_id, change_request_id) [unique, name: 'sqlite_autoindex_code_listings_3']
+    (fetch_collection_id, kind) [unique, name: 'sqlite_autoindex_code_listings_2']
+    (resume_scope_id)
+    (fetch_collection_id, change_request_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table collection_memberships {
+  fetch_collection_id text [not null, note: 'Composite PK (pos 1)']
+  change_request_id text [not null, note: 'Composite PK (pos 2)']
+  kind text [not null, note: 'Composite PK (pos 3)']
+  provider_change_request_document_id text [not null, note: 'Composite PK (pos 4)']
+  ordinal integer [not null]
+
+  indexes {
+    (fetch_collection_id, change_request_id, kind, provider_change_request_document_id) [pk]
+    (change_request_id, kind, provider_change_request_document_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table commit_parents {
+  commit_git_object_id integer [not null, note: 'Composite PK (pos 1)']
+  parent_ordinal integer [not null, note: 'Composite PK (pos 2)']
+  parent_header_offset integer [not null]
+  parent_format text [not null]
+  parent_oid blob [not null]
+  parent_git_object_id integer
+
+  indexes {
+    (commit_git_object_id, parent_ordinal) [pk]
+    (commit_git_object_id, parent_header_offset) [unique, name: 'sqlite_autoindex_commit_parents_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table commits {
+  git_object_id integer [pk]
+  tree_format text [not null]
+  tree_oid blob [not null]
+  tree_git_object_id integer
+  tree_header_offset integer [not null]
+  parent_count integer [not null]
+  raw_headers blob [not null]
+  raw_message blob [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table completion_markers {
+  completion_marker_uuidv4 text [not null, default: `lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',(random() & 3)+1,1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))`]
+  completion_marker_id integer [pk]
+  resume_scope_id text
+  fetch_collection_id text [not null]
+  asserted_state text [not null]
+  evidence text [not null]
+  observed_at_us integer
+
+  indexes {
+    (resume_scope_id)
+    (fetch_collection_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table content_digests {
+  content_id integer [not null, note: 'Composite PK (pos 1)']
+  representation text [not null, note: 'Composite PK (pos 2)']
+  algorithm text [not null, note: 'Composite PK (pos 3)']
+  digest blob [not null]
+  verified_at_us integer
+  pipeline_version text [not null]
+
+  indexes {
+    (content_id, representation, algorithm) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table contents {
+  content_id integer [pk]
+  byte_length integer [not null]
+  created_at_us integer
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table coverage_claim_markers {
+  coverage_claim_id integer [not null, note: 'Composite PK (pos 1)']
+  completion_marker_uuidv4 text [not null, note: 'Composite PK (pos 2)']
+
+  indexes {
+    (coverage_claim_id, completion_marker_uuidv4) [pk]
+    (completion_marker_uuidv4, coverage_claim_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table coverage_claims {
+  coverage_claim_id integer [pk]
+  coverage_scope_id text [not null]
+  coverage_state text [not null]
+  observed_at_us integer [not null]
+  details_json text
+
+  indexes {
+    (coverage_scope_id, observed_at_us, coverage_state) [unique, name: 'sqlite_autoindex_coverage_claims_1']
+    (coverage_scope_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table coverage_scopes {
+  coverage_scope_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  change_request_id text
+  kind text [not null]
+
+  indexes {
+    (change_request_id, kind) [unique, name: 'coverage_scope_change_request_kind']
+    (repository_uuidv4, kind) [unique, name: 'coverage_scope_repository_kind']
+    (repository_uuidv4)
+    (change_request_id, repository_uuidv4)
+    (change_request_id, kind) [unique, note: 'partial index']
+    (repository_uuidv4, kind) [unique, note: 'partial index']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table current_collection_pages {
+  fetch_collection_id text [not null, note: 'Composite PK (pos 1)']
+  ordinal integer [not null, note: 'Composite PK (pos 2)']
+  observed_at_us integer [not null]
+  has_next integer [not null]
+  members text [not null]
+  status integer [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+
+  indexes {
+    (fetch_collection_id, ordinal) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table database_identity {
+  singleton integer [pk]
+  format_id text [not null]
+  schema_version integer [not null]
+  db_instance_id text [not null]
+  local_revision integer [not null]
+  ddl_sha256 blob [not null]
+  lifecycle text [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Local Physical Catalog Identity.'
+}
+
+Table document_state {
+  change_request_id text [not null, note: 'Composite PK (pos 1)']
+  kind text [not null, note: 'Composite PK (pos 2)']
+  provider_change_request_document_id text [not null, note: 'Composite PK (pos 3)']
+  body_status text [not null]
+  text_body_sha256 blob
+  author text
+  url text
+  deleted integer [not null, default: `0`]
+  repository_uuidv4 text [not null]
+  repository_binding_id text [not null]
+  service_instance_uuidv4 text [not null]
+  provider_updated_at_us integer
+  provider_clock_scope text
+  observed_at_us integer [not null]
+  last_checked_at_us integer
+  parsed_at_us integer [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+  metadata text [not null, default: `'{}'`]
+  acquisition_scope_json text [not null]
+  field_evidence_json text [not null, default: `'{}'`]
+
+  indexes {
+    (change_request_id, kind, provider_change_request_document_id) [pk]
+    (repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
+}
+
+Table documents {
+  change_request_id text [not null, note: 'Composite PK (pos 1)']
+  kind text [not null, note: 'Composite PK (pos 2)']
+  provider_change_request_document_id text [not null, note: 'Composite PK (pos 3)']
+
+  indexes {
+    (change_request_id, kind, provider_change_request_document_id) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table exchange_admissions {
+  record_key text [pk, not null]
+  table_name text [not null]
+  local_key_json text [not null]
+  content_sha256 blob [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Exchange Staging & Admissions.'
+}
+
+Table exchange_blocked_coverage_claims {
+  coverage_claim_id integer [pk]
+
+  Note: 'STRICT mode enabled. Functional group: Exchange Staging & Admissions.'
+}
+
+Table exchange_local_identities {
+  table_name text [not null, note: 'Composite PK (pos 1)']
+  local_key_json text [not null, note: 'Composite PK (pos 2)']
+  record_key text [not null]
+
+  indexes {
+    (table_name, local_key_json) [pk]
+    (record_key) [unique, name: 'sqlite_autoindex_exchange_local_identities_1']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Exchange Staging & Admissions.'
+}
+
+Table exchange_staging {
+  record_key text [not null, note: 'Composite PK (pos 1)']
+  content_sha256 blob [not null, note: 'Composite PK (pos 2)']
+  table_name text [not null]
+  repository_uuidv4 text [not null]
+  origin_catalog_uuidv4 text [not null]
+  record_json text [not null]
+  reason text [not null]
+
+  indexes {
+    (record_key, content_sha256) [pk]
+    (repository_uuidv4) [note: 'partial index']
+    (repository_uuidv4) [note: 'partial index']
+    (repository_uuidv4) [note: 'partial index']
+    (record_key, repository_uuidv4)
+    (table_name, record_key)
+    (reason, table_name)
+    (repository_uuidv4, table_name, reason)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Exchange Staging & Admissions.'
+}
+
+Table fetch_collections {
+  fetch_collection_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  change_request_id text
+  source_id text
+  kind text [not null]
+  resume_scope_id text
+  observed_at_us integer
+  scope_json text [not null, default: `'{}'`]
+
+  indexes {
+    (fetch_collection_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_fetch_collections_3']
+    (fetch_collection_id, change_request_id) [unique, name: 'sqlite_autoindex_fetch_collections_2']
+    (repository_uuidv4)
+    (source_id)
+    (resume_scope_id)
+    (change_request_id, repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table git_acquisitions {
+  git_acquisition_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  repository_endpoint_id text
+  endpoint_url text
+  object_format text
+  refs_observed_at_us integer
+  source_id text
+  kind text [not null]
+  started_at_us integer
+  observed_at_us integer
+  request text [not null]
+  roots_manifest text
+
+  indexes {
+    (git_acquisition_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_git_acquisitions_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table git_commit_facts {
+  git_fact_uuidv4 text [pk, not null]
+  git_object_id integer [not null]
+  decoder_key text [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+  metadata_encoding text [not null]
+  metadata_errors text [not null]
+  text_encoding text [not null]
+  max_text_blob_bytes integer [not null]
+  message_text text [not null]
+  metadata text [not null]
+
+  indexes {
+    (git_object_id, decoder_key) [unique, name: 'sqlite_autoindex_git_commit_facts_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table git_name_facts {
+  tree_git_object_id integer [not null, note: 'Composite PK (pos 1)']
+  raw_name blob [not null, note: 'Composite PK (pos 2)']
+  decoder_key text [not null, note: 'Composite PK (pos 3)']
+  parser_module text [not null]
+  parser_version text [not null]
+  metadata_encoding text [not null]
+  metadata_errors text [not null]
+  text_encoding text [not null]
+  max_text_blob_bytes integer [not null]
+  decoded_name text [not null]
+
+  indexes {
+    (tree_git_object_id, raw_name, decoder_key) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table git_object_payloads {
+  git_object_id integer [pk]
+  payload_representation text [not null]
+  payload_sha256 blob [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table git_objects {
+  git_object_id integer [pk]
+  object_format text [not null]
+  oid blob [not null]
+  type text [not null]
+  size integer [not null]
+  verified integer [not null]
+
+  indexes {
+    (object_format, oid) [unique, name: 'sqlite_autoindex_git_objects_1']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table git_text_facts {
+  git_fact_uuidv4 text [pk, not null]
+  git_object_id integer [not null]
+  content_id integer [not null]
+  decoder_key text [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+  text_encoding text [not null]
+  max_text_blob_bytes integer [not null]
+  metadata_encoding text [not null]
+  metadata_errors text [not null]
+  text_state text [not null]
+  raw_text text
+
+  indexes {
+    (git_object_id, decoder_key) [unique, name: 'sqlite_autoindex_git_text_facts_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table identity_relation_cancellations {
+  cancellation_uuidv4 text [pk, not null]
+  relation_uuidv4 text [not null]
+  evidence_json text [not null]
+  asserted_at_us integer
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table identity_relation_staging {
+  record_uuidv4 text [not null, note: 'Composite PK (pos 1)']
+  content_sha256 blob [not null, note: 'Composite PK (pos 2)']
+  kind text [not null]
+  record_json text [not null]
+  reason text [not null]
+
+  indexes {
+    (record_uuidv4, content_sha256) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table identity_relations {
+  relation_uuidv4 text [pk, not null]
+  entity_kind text [not null]
+  left_repository_uuidv4 text
+  right_repository_uuidv4 text
+  left_service_instance_uuidv4 text
+  right_service_instance_uuidv4 text
+  evidence_json text [not null]
+  asserted_at_us integer
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table issue_resources {
+  service_instance_uuidv4 text [not null, note: 'Composite PK (pos 1)']
+  kind text [not null, note: 'Composite PK (pos 2)']
+  provider_resource_id text [not null, note: 'Composite PK (pos 3)']
+  repository_uuidv4 text [not null]
+  repository_binding_id text [not null]
+  provider_issue_number integer [not null]
+  parent_provider_resource_id text
+  parent_kind text [note: 'GENERATED STORED']
+  text_body_sha256 blob
+  body_status text [not null, default: `'present'`]
+  title text
+  state text
+  author text
+  url text
+  deleted integer [not null, default: `0`]
+  provider_updated_at_us integer
+  provider_clock_scope text
+  observed_at_us integer [not null]
+  last_checked_at_us integer
+  parsed_at_us integer [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+  metadata text [not null]
+  acquisition_scope_json text [not null]
+  field_evidence_json text [not null, default: `'{}'`]
+
+  indexes {
+    (service_instance_uuidv4, kind, provider_resource_id) [pk]
+    (repository_binding_id, provider_issue_number) [unique, name: 'issue_resources_current_number']
+    (service_instance_uuidv4, parent_kind, parent_provider_resource_id)
+    (repository_uuidv4, kind, provider_issue_number)
+    (repository_binding_id, provider_issue_number) [unique, note: 'partial index']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
+}
+
+Table payload_admission_staging {
+  stage_uuidv4 text [pk, not null]
+  representation text [not null]
+  sha256 blob [not null]
+  body blob [not null]
+  context_json text [not null]
+  reason text [not null]
+  received_at_us integer [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
+}
+
+Table payload_quarantine {
+  sha256 blob [pk, not null]
+  unresolved_payload_id integer [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
+}
+
+Table payloads {
+  representation text [not null, note: 'Composite PK (pos 1)']
+  sha256 blob [not null, note: 'Composite PK (pos 2)']
+
+  indexes {
+    (representation, sha256) [pk]
+    (sha256)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
+}
+
+Table preservation_obligations {
+  git_acquisition_id text [pk, not null]
+  roots_fixed integer [not null]
+  structure_done integer [not null]
+  digest_done integer [not null]
+  text_done integer [not null]
+  complete integer [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
+}
+
+Table ref_observations {
+  repository_uuidv4 text [not null]
+  snapshot_id text [not null, note: 'Composite PK (pos 1)']
+  raw_ref_name blob [not null, note: 'Composite PK (pos 2)']
+  kind text [not null]
+  object_format text [not null]
+  target_oid blob [not null]
+  peeled_oid blob
+  target_type text
+
+  indexes {
+    (snapshot_id, raw_ref_name) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table repositories {
+  repository_uuidv4 text [pk, not null]
+  name text [not null]
+  preferred_repository_endpoint_id text
+  metadata text [not null]
+
+  indexes {
+    (preferred_repository_endpoint_id, repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table repository_bindings {
+  repository_binding_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  service_instance_uuidv4 text [not null]
+  provider_repository_id text
+  metadata text [not null]
+  created_at_us integer
+
+  indexes {
+    (repository_binding_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_repository_bindings_4']
+    (service_instance_uuidv4, provider_repository_id) [unique, name: 'sqlite_autoindex_repository_bindings_3']
+    (repository_uuidv4, service_instance_uuidv4) [unique, name: 'sqlite_autoindex_repository_bindings_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table repository_endpoints {
+  repository_endpoint_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  url text [not null]
+  transport text [not null]
+  label text
+  metadata text [not null]
+  created_at_us integer
+
+  indexes {
+    (repository_endpoint_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_repository_endpoints_3']
+    (repository_uuidv4, url) [unique, name: 'sqlite_autoindex_repository_endpoints_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table repository_names {
+  repository_uuidv4 text [not null, note: 'Composite PK (pos 1)']
+  name text [not null, note: 'Composite PK (pos 2)']
+  observed_at_us integer
+  provenance_json text [not null]
+
+  indexes {
+    (repository_uuidv4, name) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table repository_object_sources {
+  repository_uuidv4 text [not null, note: 'Composite PK (pos 1)']
+  git_object_id integer [not null, note: 'Composite PK (pos 2)']
+  git_acquisition_id text [not null, note: 'Composite PK (pos 3)']
+
+  indexes {
+    (repository_uuidv4, git_object_id, git_acquisition_id) [pk]
+    (repository_uuidv4, git_acquisition_id, git_object_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table resume_scopes {
+  resume_scope_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  repository_binding_id text
+  source_id text
+  principal_ref text
+  api_version text
+  endpoint text
+  request_context text [not null]
+  parser_version text [not null]
+  confidence text [not null]
+
+  indexes {
+    (resume_scope_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_resume_scopes_2']
+    (repository_uuidv4)
+    (source_id)
+    (repository_binding_id, repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table review_resources {
+  change_request_id text [not null, note: 'Composite PK (pos 1)']
+  kind text [not null, note: 'Composite PK (pos 2)']
+  provider_change_request_document_id text [not null, note: 'Composite PK (pos 3)']
+  repository_uuidv4 text [not null]
+  repository_binding_id text [not null]
+  service_instance_uuidv4 text [not null]
+  text_body_sha256 blob
+  body_status text [not null, default: `'present'`]
+  state text
+  author text
+  url text
+  deleted integer [not null, default: `0`]
+  submitted_at_us integer
+  target_commit_oid text
+  original_commit_oid text
+  original_position integer
+  current_position integer
+  raw_path text
+  diff_hunk text
+  review_provider_resource_id text
+  in_reply_to_provider_resource_id text
+  review_thread_provider_resource_id text
+  parent_review_kind text [note: 'GENERATED STORED']
+  reply_kind text [note: 'GENERATED STORED']
+  provider_updated_at_us integer
+  provider_clock_scope text
+  observed_at_us integer [not null]
+  last_checked_at_us integer
+  parsed_at_us integer [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+  metadata text [not null]
+  acquisition_scope_json text [not null]
+  field_evidence_json text [not null, default: `'{}'`]
+
+  indexes {
+    (change_request_id, kind, provider_change_request_document_id) [pk]
+    (change_request_id, review_thread_provider_resource_id)
+    (change_request_id, in_reply_to_provider_resource_id)
+    (change_request_id, review_provider_resource_id)
+    (repository_uuidv4, kind)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
+}
+
+Table review_thread_state {
+  change_request_id text [not null, note: 'Composite PK (pos 1)']
+  provider_resource_id text [not null, note: 'Composite PK (pos 2)']
+  kind text [not null]
+  resolved integer
+  outdated integer
+  raw_path blob
+  line integer
+  start_line integer
+  original_line integer
+  original_start_line integer
+  side text
+  start_side text
+  object_format text
+  commit_oid blob
+  original_commit_oid blob
+  diff_hunk text
+  repository_uuidv4 text [not null]
+  repository_binding_id text [not null]
+  service_instance_uuidv4 text [not null]
+  provider_updated_at_us integer
+  provider_clock_scope text
+  observed_at_us integer [not null]
+  last_checked_at_us integer
+  parsed_at_us integer [not null]
+  parser_module text [not null]
+  parser_version text [not null]
+  metadata text [not null, default: `'{}'`]
+  acquisition_scope_json text [not null]
+  field_evidence_json text [not null, default: `'{}'`]
+
+  indexes {
+    (change_request_id, provider_resource_id) [pk]
+    (repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Current API Values & Projections.'
+}
+
+Table review_threads {
+  change_request_id text [not null, note: 'Composite PK (pos 1)']
+  provider_resource_id text [not null, note: 'Composite PK (pos 2)']
+
+  indexes {
+    (change_request_id, provider_resource_id) [pk]
+    (change_request_id)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table root_manifest_entries {
+  tree_git_object_id integer [not null, note: 'Composite PK (pos 1)']
+  raw_path blob [not null, note: 'Composite PK (pos 2)']
+  mode integer [not null]
+  git_object_id integer
+  object_format text [not null]
+  oid blob [not null]
+
+  indexes {
+    (tree_git_object_id, raw_path) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table root_manifests {
+  tree_git_object_id integer [pk]
+  complete integer [not null]
+  entry_count integer [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table root_origins {
+  root_origin_id integer [pk]
+  acquisition_root_id integer [not null]
+  repository_uuidv4 text [not null]
+  origin_kind text [not null]
+  raw_ref_name blob
+  source_ordinal integer [not null]
+  snapshot_id text
+  change_request_id text
+  code_assessment_id text
+
+  indexes {
+    (acquisition_root_id, origin_kind, source_ordinal) [unique, name: 'sqlite_autoindex_root_origins_1']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table service_instances {
+  service_instance_uuidv4 text [pk, not null]
+  service_kind text [not null]
+  name text [not null]
+  web_base_url text
+  api_base_url text
+  metadata text [not null]
+  created_at_us integer
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table snapshots {
+  snapshot_id text [pk, not null]
+  git_acquisition_id text [not null]
+  repository_uuidv4 text [not null]
+  predecessor_snapshot_id text
+  complete integer [not null]
+  generation integer [not null]
+  created_at_us integer
+
+  indexes {
+    (snapshot_id, repository_uuidv4) [unique, name: 'sqlite_autoindex_snapshots_2']
+    (repository_uuidv4, git_acquisition_id)
+    (repository_uuidv4, complete)
+    (predecessor_snapshot_id, complete)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table source_inventory_assessments {
+  source_id text [not null, note: 'Composite PK (pos 1)']
+  scope_key text [not null]
+  scope_json text [not null, note: 'Composite PK (pos 2)']
+  observed_at_us integer [not null, note: 'Composite PK (pos 3)']
+  state text [not null, note: 'Composite PK (pos 4)']
+  terminal integer [not null, note: 'Composite PK (pos 5)']
+  members_json text [not null, note: 'Composite PK (pos 6)']
+  parser_module text [not null]
+  parser_version text [not null]
+  reason text
+
+  indexes {
+    (source_id, scope_json, observed_at_us, state, terminal, members_json) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table source_repositories {
+  source_id text [not null, note: 'Composite PK (pos 1)']
+  repository_uuidv4 text [not null, note: 'Composite PK (pos 2)']
+  first_seen_us integer
+  last_seen_us integer
+  name text
+  metadata_json text [not null, default: `'{}'`]
+  scope_json text [not null, default: `'{}'`]
+  parser_module text
+  parser_version text
+  field_evidence_json text [not null, default: `'{}'`]
+
+  indexes {
+    (source_id, repository_uuidv4) [pk]
+    (repository_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table sources {
+  source_id text [pk, not null]
+  source_registration_uuidv4 text [not null]
+  service_instance_uuidv4 text
+  discovery_kind text [not null]
+  name text [not null]
+  settings text
+
+  indexes {
+    (source_id, source_registration_uuidv4) [unique, name: 'sqlite_autoindex_sources_3']
+    (service_instance_uuidv4)
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Portable Identity & Registration.'
+}
+
+Table stored_bytes {
+  sha256 blob [pk, not null]
+  body blob [not null]
+  byte_length integer [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
+}
+
+Table tag_objects {
+  git_object_id integer [pk]
+  target_format text [not null]
+  target_oid blob [not null]
+  target_type text [not null]
+  target_git_object_id integer
+  raw_payload blob [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table text_bodies {
+  text_body_id integer [pk]
+  body text [not null]
+  byte_length integer [not null]
+  sha256 blob [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
+}
+
+Table thread_collection_continuations {
+  fetch_collection_id text [not null, note: 'Composite PK (pos 1)']
+  provider_resource_id text [not null, note: 'Composite PK (pos 2)']
+  child_cursor text
+  observed_at_us integer [not null]
+
+  indexes {
+    (fetch_collection_id, provider_resource_id) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table thread_collection_requirements {
+  fetch_collection_id text [not null, note: 'Composite PK (pos 1)']
+  provider_resource_id text [not null, note: 'Composite PK (pos 2)']
+  child_fetch_collection_id text
+  required_observed_at_us integer [not null]
+  object_format text
+  head_oid blob
+  base_oid blob
+
+  indexes {
+    (fetch_collection_id, provider_resource_id) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table thread_collection_targets {
+  fetch_collection_id text [not null, note: 'Composite PK (pos 1)']
+  role text [not null, note: 'Composite PK (pos 2)']
+  object_format text
+  oid blob
+  observed_at_us integer [not null]
+
+  indexes {
+    (fetch_collection_id, role) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Domain Enumeration & Coverage Evidence.'
+}
+
+Table tree_entries {
+  tree_git_object_id integer [not null, note: 'Composite PK (pos 1)']
+  raw_name blob [not null, note: 'Composite PK (pos 2)']
+  entry_offset integer [not null]
+  entry_length integer [not null]
+  mode integer [not null]
+  child_format text [not null]
+  child_oid blob [not null]
+  child_git_object_id integer
+
+  indexes {
+    (tree_git_object_id, raw_name) [pk]
+    (tree_git_object_id, entry_offset) [unique, name: 'sqlite_autoindex_tree_entries_2']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table tree_objects {
+  git_object_id integer [pk]
+  entry_count integer [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Git Identity, Intrinsic DAG & Capture.'
+}
+
+Table unresolved_payloads {
+  stored_sha256 blob [not null]
+  detected_at_us integer [not null]
+  diagnostic_json text [not null]
+  unresolved_payload_id integer [pk]
+  reason text [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Retained Content Integrity & CAS.'
+}
+
+// Physical Foreign Keys (enforced by SQLite PRAGMA foreign_keys=ON)
+Ref fk_acquisition_roots_0: acquisition_roots.(git_acquisition_id, repository_uuidv4) > git_acquisitions.(git_acquisition_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_blob_content_map_0: blob_content_map.content_id > contents.content_id [update: no action, delete: no action]
+Ref fk_blob_content_map_1: blob_content_map.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_change_request_events_0: change_request_events.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_change_request_state_0: change_request_state.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_change_request_state_1: change_request_state.(repository_binding_id, repository_uuidv4) > repository_bindings.(repository_binding_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_change_request_state_2: change_request_state.service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: no action, delete: no action]
+Ref fk_change_request_state_3: change_request_state.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_change_request_state_4: change_request_state.base_repository_binding_id > repository_bindings.repository_binding_id [update: no action, delete: no action]
+Ref fk_change_request_state_5: change_request_state.head_repository_binding_id > repository_bindings.repository_binding_id [update: no action, delete: no action]
+Ref fk_change_request_state_6: change_request_state.change_request_id > change_requests.change_request_id [update: no action, delete: no action]
+Ref fk_change_requests_0: change_requests.(repository_binding_id, repository_uuidv4) > repository_bindings.(repository_binding_id, repository_uuidv4) [update: restrict, delete: restrict]
+Ref fk_code_acquisitions_0: code_acquisitions.acquisition_root_id > acquisition_roots.acquisition_root_id [update: no action, delete: no action]
+Ref fk_code_acquisitions_1: code_acquisitions.code_assessment_id > code_assessments.code_assessment_id [update: no action, delete: no action]
+Ref fk_code_assessments_0: code_assessments.(file_code_listing_id, change_request_id) > code_listings.(code_listing_id, change_request_id) [update: no action, delete: no action]
+Ref fk_code_assessments_1: code_assessments.(commit_code_listing_id, change_request_id) > code_listings.(code_listing_id, change_request_id) [update: no action, delete: no action]
+Ref fk_code_assessments_2: code_assessments.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_code_commits_0: code_commits.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_code_commits_1: code_commits.code_listing_id > code_listings.code_listing_id [update: no action, delete: no action]
+Ref fk_code_file_changes_0: code_file_changes.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_code_file_changes_1: code_file_changes.code_listing_id > code_listings.code_listing_id [update: no action, delete: no action]
+Ref fk_code_listing_progress_0: code_listing_progress.code_listing_id > code_listings.code_listing_id [update: restrict, delete: restrict]
+Ref fk_code_listings_0: code_listings.(fetch_collection_id, change_request_id) > fetch_collections.(fetch_collection_id, change_request_id) [update: restrict, delete: restrict]
+Ref fk_collection_memberships_0: collection_memberships.(change_request_id, kind, provider_change_request_document_id) > documents.(change_request_id, kind, provider_change_request_document_id) [update: restrict, delete: restrict]
+Ref fk_collection_memberships_1: collection_memberships.fetch_collection_id > fetch_collections.fetch_collection_id [update: restrict, delete: restrict]
+Ref fk_commit_parents_0: commit_parents.parent_git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_commit_parents_1: commit_parents.commit_git_object_id > commits.git_object_id [update: no action, delete: no action]
+Ref fk_commits_0: commits.tree_git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_commits_1: commits.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_completion_markers_0: completion_markers.fetch_collection_id > fetch_collections.fetch_collection_id [update: restrict, delete: restrict]
+Ref fk_content_digests_0: content_digests.content_id > contents.content_id [update: no action, delete: no action]
+Ref fk_coverage_claim_markers_0: coverage_claim_markers.completion_marker_uuidv4 > completion_markers.completion_marker_uuidv4 [update: no action, delete: no action]
+Ref fk_coverage_claim_markers_1: coverage_claim_markers.coverage_claim_id > coverage_claims.coverage_claim_id [update: no action, delete: no action]
+Ref fk_coverage_claims_0: coverage_claims.coverage_scope_id > coverage_scopes.coverage_scope_id [update: restrict, delete: restrict]
+Ref fk_coverage_scopes_0: coverage_scopes.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: restrict, delete: restrict]
+Ref fk_coverage_scopes_1: coverage_scopes.repository_uuidv4 > repositories.repository_uuidv4 [update: restrict, delete: restrict]
+Ref fk_current_collection_pages_0: current_collection_pages.fetch_collection_id > fetch_collections.fetch_collection_id [update: no action, delete: no action]
+Ref fk_document_state_0: document_state.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_document_state_1: document_state.(change_request_id, kind, provider_change_request_document_id) > documents.(change_request_id, kind, provider_change_request_document_id) [update: no action, delete: no action]
+Ref fk_document_state_2: document_state.(repository_binding_id, repository_uuidv4) > repository_bindings.(repository_binding_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_document_state_3: document_state.service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: no action, delete: no action]
+Ref fk_document_state_4: document_state.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_document_state_5: document_state.text_body_sha256 > text_bodies.sha256 [update: no action, delete: no action]
+Ref fk_documents_0: documents.change_request_id > change_requests.change_request_id [update: no action, delete: no action]
+Ref fk_exchange_blocked_coverage_claims_0: exchange_blocked_coverage_claims.coverage_claim_id > coverage_claims.coverage_claim_id [update: no action, delete: no action]
+Ref fk_fetch_collections_0: fetch_collections.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: restrict, delete: restrict]
+Ref fk_fetch_collections_1: fetch_collections.source_id > sources.source_id [update: restrict, delete: restrict]
+Ref fk_fetch_collections_2: fetch_collections.repository_uuidv4 > repositories.repository_uuidv4 [update: restrict, delete: restrict]
+Ref fk_git_acquisitions_0: git_acquisitions.(repository_endpoint_id, repository_uuidv4) > repository_endpoints.(repository_endpoint_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_git_acquisitions_1: git_acquisitions.source_id > sources.source_id [update: no action, delete: no action]
+Ref fk_git_acquisitions_2: git_acquisitions.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_git_commit_facts_0: git_commit_facts.git_object_id > commits.git_object_id [update: no action, delete: no action]
+Ref fk_git_name_facts_0: git_name_facts.(tree_git_object_id, raw_name) > tree_entries.(tree_git_object_id, raw_name) [update: no action, delete: no action]
+Ref fk_git_object_payloads_0: git_object_payloads.(payload_representation, payload_sha256) > payloads.(representation, sha256) [update: no action, delete: no action]
+Ref fk_git_object_payloads_1: git_object_payloads.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_git_text_facts_0: git_text_facts.content_id > contents.content_id [update: no action, delete: no action]
+Ref fk_git_text_facts_1: git_text_facts.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_identity_relation_cancellations_0: identity_relation_cancellations.relation_uuidv4 > identity_relations.relation_uuidv4 [update: no action, delete: no action]
+Ref fk_identity_relations_0: identity_relations.right_service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: no action, delete: no action]
+Ref fk_identity_relations_1: identity_relations.left_service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: no action, delete: no action]
+Ref fk_identity_relations_2: identity_relations.right_repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_identity_relations_3: identity_relations.left_repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_issue_resources_0: issue_resources.(service_instance_uuidv4, parent_kind, parent_provider_resource_id) > issue_resources.(service_instance_uuidv4, kind, provider_resource_id) [update: no action, delete: no action]
+Ref fk_issue_resources_1: issue_resources.(repository_binding_id, repository_uuidv4) > repository_bindings.(repository_binding_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_issue_resources_2: issue_resources.text_body_sha256 > text_bodies.sha256 [update: no action, delete: no action]
+Ref fk_issue_resources_3: issue_resources.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_issue_resources_4: issue_resources.service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: no action, delete: no action]
+Ref fk_payload_quarantine_0: payload_quarantine.unresolved_payload_id > unresolved_payloads.unresolved_payload_id [update: restrict, delete: restrict]
+Ref fk_payload_quarantine_1: payload_quarantine.sha256 > stored_bytes.sha256 [update: restrict, delete: restrict]
+Ref fk_payloads_0: payloads.sha256 > stored_bytes.sha256 [update: restrict, delete: restrict]
+Ref fk_preservation_obligations_0: preservation_obligations.git_acquisition_id > git_acquisitions.git_acquisition_id [update: restrict, delete: restrict]
+Ref fk_ref_observations_0: ref_observations.(snapshot_id, repository_uuidv4) > snapshots.(snapshot_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_repositories_0: repositories.(preferred_repository_endpoint_id, repository_uuidv4) > repository_endpoints.(repository_endpoint_id, repository_uuidv4) [update: restrict, delete: restrict]
+Ref fk_repository_bindings_0: repository_bindings.service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: restrict, delete: restrict]
+Ref fk_repository_bindings_1: repository_bindings.repository_uuidv4 > repositories.repository_uuidv4 [update: restrict, delete: restrict]
+Ref fk_repository_endpoints_0: repository_endpoints.repository_uuidv4 > repositories.repository_uuidv4 [update: restrict, delete: restrict]
+Ref fk_repository_names_0: repository_names.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_repository_object_sources_0: repository_object_sources.(git_acquisition_id, repository_uuidv4) > git_acquisitions.(git_acquisition_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_repository_object_sources_1: repository_object_sources.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_repository_object_sources_2: repository_object_sources.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_resume_scopes_0: resume_scopes.(repository_binding_id, repository_uuidv4) > repository_bindings.(repository_binding_id, repository_uuidv4) [update: restrict, delete: restrict]
+Ref fk_resume_scopes_1: resume_scopes.source_id > sources.source_id [update: restrict, delete: restrict]
+Ref fk_resume_scopes_2: resume_scopes.repository_uuidv4 > repositories.repository_uuidv4 [update: restrict, delete: restrict]
+Ref fk_review_resources_0: review_resources.(change_request_id, review_thread_provider_resource_id) > review_threads.(change_request_id, provider_resource_id) [update: no action, delete: no action]
+Ref fk_review_resources_1: review_resources.(change_request_id, reply_kind, in_reply_to_provider_resource_id) > review_resources.(change_request_id, kind, provider_change_request_document_id) [update: no action, delete: no action]
+Ref fk_review_resources_2: review_resources.(change_request_id, parent_review_kind, review_provider_resource_id) > review_resources.(change_request_id, kind, provider_change_request_document_id) [update: no action, delete: no action]
+Ref fk_review_resources_3: review_resources.(repository_binding_id, repository_uuidv4) > repository_bindings.(repository_binding_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_review_resources_4: review_resources.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_review_resources_5: review_resources.text_body_sha256 > text_bodies.sha256 [update: no action, delete: no action]
+Ref fk_review_resources_6: review_resources.service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: no action, delete: no action]
+Ref fk_review_resources_7: review_resources.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_review_resources_8: review_resources.change_request_id > change_requests.change_request_id [update: no action, delete: no action]
+Ref fk_review_thread_state_0: review_thread_state.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_review_thread_state_1: review_thread_state.(change_request_id, provider_resource_id) > review_threads.(change_request_id, provider_resource_id) [update: no action, delete: no action]
+Ref fk_review_thread_state_2: review_thread_state.(repository_binding_id, repository_uuidv4) > repository_bindings.(repository_binding_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_review_thread_state_3: review_thread_state.service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: no action, delete: no action]
+Ref fk_review_thread_state_4: review_thread_state.repository_uuidv4 > repositories.repository_uuidv4 [update: no action, delete: no action]
+Ref fk_review_threads_0: review_threads.change_request_id > change_requests.change_request_id [update: no action, delete: no action]
+Ref fk_root_manifest_entries_0: root_manifest_entries.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_root_manifest_entries_1: root_manifest_entries.tree_git_object_id > root_manifests.tree_git_object_id [update: no action, delete: no action]
+Ref fk_root_manifests_0: root_manifests.tree_git_object_id > tree_objects.git_object_id [update: no action, delete: no action]
+Ref fk_root_origins_0: root_origins.(code_assessment_id, change_request_id) > code_assessments.(code_assessment_id, change_request_id) [update: no action, delete: no action]
+Ref fk_root_origins_1: root_origins.(change_request_id, repository_uuidv4) > change_requests.(change_request_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_root_origins_2: root_origins.(snapshot_id, repository_uuidv4) > snapshots.(snapshot_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_root_origins_3: root_origins.(acquisition_root_id, repository_uuidv4) > acquisition_roots.(acquisition_root_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_snapshots_0: snapshots.(predecessor_snapshot_id, repository_uuidv4) > snapshots.(snapshot_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_snapshots_1: snapshots.(git_acquisition_id, repository_uuidv4) > git_acquisitions.(git_acquisition_id, repository_uuidv4) [update: no action, delete: no action]
+Ref fk_source_inventory_assessments_0: source_inventory_assessments.source_id > sources.source_id [update: no action, delete: no action]
+Ref fk_source_repositories_0: source_repositories.repository_uuidv4 > repositories.repository_uuidv4 [update: restrict, delete: restrict]
+Ref fk_source_repositories_1: source_repositories.source_id > sources.source_id [update: restrict, delete: restrict]
+Ref fk_sources_0: sources.service_instance_uuidv4 > service_instances.service_instance_uuidv4 [update: restrict, delete: restrict]
+Ref fk_tag_objects_0: tag_objects.target_git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_tag_objects_1: tag_objects.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_thread_collection_continuations_0: thread_collection_continuations.fetch_collection_id > fetch_collections.fetch_collection_id [update: no action, delete: no action]
+Ref fk_thread_collection_requirements_0: thread_collection_requirements.child_fetch_collection_id > fetch_collections.fetch_collection_id [update: no action, delete: no action]
+Ref fk_thread_collection_requirements_1: thread_collection_requirements.fetch_collection_id > fetch_collections.fetch_collection_id [update: no action, delete: no action]
+Ref fk_thread_collection_targets_0: thread_collection_targets.fetch_collection_id > fetch_collections.fetch_collection_id [update: no action, delete: no action]
+Ref fk_tree_entries_0: tree_entries.child_git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_tree_entries_1: tree_entries.tree_git_object_id > tree_objects.git_object_id [update: no action, delete: no action]
+Ref fk_tree_objects_0: tree_objects.git_object_id > git_objects.git_object_id [update: no action, delete: no action]
+Ref fk_unresolved_payloads_0: unresolved_payloads.stored_sha256 > stored_bytes.sha256 [update: no action, delete: no action]

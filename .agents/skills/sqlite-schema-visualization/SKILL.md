@@ -1,0 +1,105 @@
+---
+name: sqlite-schema-visualization
+description: Introspect, validate, and generate non-destructive database visualizations (Mermaid ER diagrams, DBML exports, and standalone HTML workbenches) for multi-store SQLite architectures under ADR 0002. Use when extracting composite foreign keys, filtering FTS shadow tables, handling generated columns, or validating schema documentation freshness.
+---
+
+# SQLite Schema Introspection and Visualization Invariants
+
+When inspecting and generating schema documentation for multi-store SQLite databases (such as `git-repo-db`'s Core, Operational, and Search stores under ADR 0002), follow these verified procedures to avoid silent misclassification, broken diagrams, or nondeterministic diffs.
+
+---
+
+## 1. Composite Foreign Key Extraction
+
+### Symptom
+Naive introspection treats every row in `PRAGMA foreign_key_list(table)` as an independent foreign key constraint. For composite keys like `acquisition_roots(git_acquisition_id, repository_uuidv4) REFERENCES git_acquisitions(...)`, this produces two separate single-column foreign key edges in diagrams, misrepresenting the database constraint and generating invalid DBML/Mermaid syntax.
+
+### Rule & Invariant
+- Rows returned by `PRAGMA foreign_key_list(table)` share a constraint ID in column 0 (`id`).
+- All rows sharing the same `id` constitute a single composite foreign key.
+- Sort column pairs within each constraint by sequence rank column 1 (`seq`).
+
+### Remediation Pattern
+```python
+fk_rows = db.execute(f'PRAGMA foreign_key_list("{table_name}")').fetchall()
+fk_groups = {}
+for row in fk_rows:
+    # row: (id, seq, table, from, to, on_update, on_delete, match)
+    fk_groups.setdefault(row[0], []).append(row)
+
+for fk_id, rows in sorted(fk_groups.items()):
+    ordered = sorted(rows, key=lambda r: r[1])
+    target_table = ordered[0][2]
+    from_cols = [r[3] for r in ordered]
+    to_cols = [r[4] for r in ordered]
+```
+
+---
+
+## 2. Product Table vs. Virtual / Shadow Table Distinction
+
+### Symptom
+SQLite FTS5 virtual tables (e.g. `catalog_fts_<generation_id>`) create internal shadow tables: `_data`, `_idx`, `_content`, `_docsize`, `_config`. Introspecting `sqlite_schema WHERE type='table'` without filtering includes these implementation details in product table counts, corrupting baseline inventories.
+
+### Rule & Invariant
+- Product tables are static tables declared in authoritative packaged DDL.
+- Filter out SQLite internal tables (`sqlite_%`) AND virtual table shadow tables (`catalog_fts_%`).
+- Virtual tables created dynamically at runtime must be classified as runtime derivatives, not static product tables.
+
+---
+
+## 3. Generated Columns and SQLite STRICT Mode
+
+### Symptom
+Columns declared as `GENERATED ALWAYS AS (...) VIRTUAL` or `STORED` (e.g. `issue_resources.parent_kind`) fail to render or break third-party tools if treated as regular mutable columns.
+In SQLite 3.31+, `PRAGMA table_xinfo` reports column hidden rank in column 6 (`hidden`):
+- `0`: Normal column
+- `1`: Hidden column in virtual tables
+- `2`: Stored generated column
+- `3`: Virtual generated column
+
+### Rule & Invariant
+- Check `hidden in (2, 3)` to identify generated columns.
+- Retain generated columns in column inventories, but flag them as `GENERATED` in Mermaid/DBML and document the contract.
+
+---
+
+## 4. Mermaid ER Syntax & Brace Matching Pitfalls
+
+### Symptom
+- Syntax errors in Mermaid ER renderers due to special characters, spaces, or parentheses in column types (e.g. `VARCHAR(255)`).
+- Test assertions checking brace balance (`block.count("{") == block.count("}")`) fail because Mermaid ER diagrams use `o{` and `|{` as relationship cardinality markers ("zero or more", "one or more"), which do not have matching closing braces.
+
+### Rule & Invariant
+- Declared types in Mermaid `erDiagram` must be clean alphanumeric tokens (e.g. `INTEGER`, `TEXT`, `BLOB`).
+- Avoid unescaped double quotes inside comments.
+- In structural tests, verify table definition block braces (`table_name { ... }`) separately from relationship cardinality edges (`||--o{`).
+
+---
+
+## 5. Physical vs. Logical Cross-Store Boundaries
+
+### Symptom
+Diagrams represent cross-store references (e.g. `operational_identity.catalog_db_instance_id` -> Core `database_identity.db_instance_id`) as enforced foreign keys, falsely implying that secondary database loss corrupts Core data.
+
+### Rule & Invariant
+- Physical foreign keys operate strictly within each SQLite database file.
+- SQLite foreign keys never cross physical store boundaries.
+- Cross-store relationships must be depicted as non-enforced logical dependencies (dashed lines, distinct badges, and ADR 0002 references).
+
+---
+
+## 6. Deterministic Generation & Freshness Verification
+
+### Verification Commands
+```bash
+# Verify that generated outputs match authoritative DDL without writing to disk:
+uv run --no-sync python scripts/schema_viz.py --check
+
+# Regenerate all visual representations:
+uv run --no-sync python scripts/schema_viz.py --format all
+
+# Run focused structural tests:
+uv run --no-sync pytest tests/unit/test_schema_viz.py
+```
+Outputs must be byte-for-byte reproducible with deterministic sorting, UTF-8 encoding, and no runtime timestamps.
