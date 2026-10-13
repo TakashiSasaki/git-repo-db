@@ -1,0 +1,89 @@
+// git-repo-db Search Store Schema (search.sqlite3)
+// Schema Version: 1
+// DDL SHA-256: 1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7
+// Rebuildable FTS5 search projections and index generations.
+// Compatible with https://dbdiagram.io/ and https://dbdocs.io/
+
+Project git_repo_db_search {
+  database_type: 'SQLite'
+  Note: '''
+    # git-repo-db Search Store (search.sqlite3)
+    Schema Version: 1
+    Fixed Tables: 4
+    Physical Foreign Keys: 2
+    DDL SHA-256: 1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7
+    
+    Rebuildable FTS5 trigram virtual tables, document projections, and index generations (ADR 0002).
+    Physical boundary: completely isolated inside search.sqlite3. Excluded from normal backups.
+  '''
+}
+
+Table index_generations {
+  index_generation_id integer [pk]
+  kind text [not null]
+  state text [not null]
+  table_name text [not null]
+  target_max_search_document_id integer [not null]
+  created_at_us integer
+  core_revision_fence integer
+
+  Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
+}
+
+Table index_membership {
+  index_generation_id integer [not null, note: 'Composite PK (pos 1)']
+  search_document_id integer [not null, note: 'Composite PK (pos 2)']
+  input_version text [not null]
+
+  indexes {
+    (index_generation_id, search_document_id) [pk]
+    (search_document_id) [name: 'index_membership_fk_0']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
+}
+
+Table search_documents {
+  search_document_id integer [pk]
+  kind text [not null]
+  source_key text [not null]
+  body text [not null]
+  metadata text [not null]
+
+  indexes {
+    (kind, source_key) [unique]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
+}
+
+Table search_identity {
+  singleton integer [pk]
+  format_id text [not null]
+  schema_version integer [not null]
+  search_instance_id text [not null]
+  catalog_db_instance_id text [not null]
+  created_at_us integer [not null]
+  last_rebuilt_at_us integer
+  core_revision_fence integer
+  ddl_sha256 blob [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Search Projections & FTS5 Derivatives.'
+}
+
+// Physical Foreign Keys (enforced by SQLite PRAGMA foreign_keys=ON)
+Ref fk_index_membership_0: index_membership.search_document_id > search_documents.search_document_id [update: restrict, delete: restrict]
+Ref fk_index_membership_1: index_membership.index_generation_id > index_generations.index_generation_id [update: restrict, delete: restrict]
+
+// Dynamic FTS5 Virtual Tables (instantiated at runtime by index rebuild command)
+// Table catalog_fts_generation_id {
+//   body text
+//   Note: 'SQLite FTS5 virtual table with tokenize=trigram case_sensitive 1'
+// }
+
+// Logical Cross-Store References to Core (ADR 0002, application-enforced, NOT SQLite FKs)
+// Ref: search_identity.catalog_db_instance_id > database_identity.db_instance_id
+// Ref: search_identity.core_revision_fence > database_identity.local_revision
+// Ref: index_generations.core_revision_fence > database_identity.local_revision
+// Ref: search_documents.source_key > git_objects.git_object_id (for code/commits, encoded 'git:<id>')
+// Ref: search_documents.source_key > text_bodies.sha256 (for pr/issue, hex-encoded SHA-256)

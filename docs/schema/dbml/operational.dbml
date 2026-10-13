@@ -1,0 +1,178 @@
+// git-repo-db Operational Store Schema (operational.sqlite3)
+// Schema Version: 1
+// DDL SHA-256: dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def
+// Disposable jobs, attempts, packfile cache leases, reservations, and progress.
+// Compatible with https://dbdiagram.io/ and https://dbdocs.io/
+
+Project git_repo_db_operational {
+  database_type: 'SQLite'
+  Note: '''
+    # git-repo-db Operational Store (operational.sqlite3)
+    Schema Version: 1
+    Tables: 10
+    Physical Foreign Keys: 9
+    DDL SHA-256: dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def
+    
+    Transient execution state, jobs, job attempts, space reservations, and cache leases (ADR 0002).
+    Physical boundary: completely isolated inside operational.sqlite3. Loss never compromises Core facts.
+  '''
+}
+
+Table acquisition_progress {
+  git_acquisition_id text [pk, not null]
+  job_id text [not null]
+  attempt integer [not null]
+  state text [not null]
+  generation integer [not null]
+  ended_at_us integer
+  active_cache_entry_id text
+
+  indexes {
+    (job_id, attempt) [name: 'acquisition_progress_fk_0']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table active_cache_entries {
+  active_cache_entry_id text [pk, not null]
+  cache_locator_id text [not null]
+  generation integer [not null]
+  state text [not null]
+  last_used_us integer [not null]
+  bytes integer [not null]
+
+  indexes {
+    (cache_locator_id) [name: 'active_cache_entries_fk_0']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table cache_leases {
+  active_cache_entry_id text [not null, note: 'Composite PK (pos 1)']
+  job_id text [not null, note: 'Composite PK (pos 2)']
+  attempt integer [not null, note: 'Composite PK (pos 3)']
+  acquired_at_us integer [not null]
+
+  indexes {
+    (active_cache_entry_id, job_id, attempt) [pk]
+    (job_id, attempt) [name: 'cache_leases_fk_0']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table cache_locators {
+  cache_locator_id text [pk, not null]
+  repository_uuidv4 text [not null]
+  path text [not null]
+  access text [not null]
+  state text [not null]
+
+  indexes {
+    (cache_locator_id, repository_uuidv4) [unique]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table collection_progress {
+  fetch_collection_id text [pk, not null]
+  job_id text [not null]
+  attempt integer [not null]
+  state text [not null]
+  cursor text
+  reason text
+
+  indexes {
+    (job_id, attempt) [name: 'collection_progress_fk_0']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table job_attempts {
+  job_id text [not null, note: 'Composite PK (pos 1)']
+  attempt integer [not null, note: 'Composite PK (pos 2)']
+  state text [not null]
+  created_at_us integer
+  updated_at_us integer
+  not_before_us integer
+  checkpoint text [not null]
+  reason text
+
+  indexes {
+    (job_id, attempt) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table jobs {
+  job_id text [pk, not null]
+  kind text [not null]
+  request text [not null]
+  current_attempt integer
+  created_at_us integer
+
+  indexes {
+    (job_id, current_attempt) [name: 'jobs_fk_0']
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table operational_identity {
+  singleton integer [pk]
+  format_id text [not null]
+  schema_version integer [not null]
+  operational_instance_id text [not null]
+  catalog_db_instance_id text [not null]
+  created_at_us integer [not null]
+  ddl_sha256 blob [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table search_rebuild_metrics {
+  rebuild_id integer [pk]
+  started_at_us integer [not null]
+  ended_at_us integer [not null]
+  duration_ms integer [not null]
+  documents_indexed integer [not null]
+  bytes_indexed integer [not null]
+  status text [not null]
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+Table space_reservations {
+  job_id text [not null, note: 'Composite PK (pos 1)']
+  attempt integer [not null, note: 'Composite PK (pos 2)']
+  reserved integer [not null]
+  consumed integer [not null]
+
+  indexes {
+    (job_id, attempt) [pk]
+  }
+
+  Note: 'STRICT mode enabled. Functional group: Operational Execution Store.'
+}
+
+// Physical Foreign Keys (enforced by SQLite PRAGMA foreign_keys=ON)
+Ref fk_acquisition_progress_0: acquisition_progress.(job_id, attempt) > job_attempts.(job_id, attempt) [update: restrict, delete: restrict]
+Ref fk_acquisition_progress_1: acquisition_progress.active_cache_entry_id > active_cache_entries.active_cache_entry_id [update: restrict, delete: restrict]
+Ref fk_active_cache_entries_0: active_cache_entries.cache_locator_id > cache_locators.cache_locator_id [update: restrict, delete: restrict]
+Ref fk_cache_leases_0: cache_leases.(job_id, attempt) > job_attempts.(job_id, attempt) [update: restrict, delete: restrict]
+Ref fk_cache_leases_1: cache_leases.active_cache_entry_id > active_cache_entries.active_cache_entry_id [update: restrict, delete: restrict]
+Ref fk_collection_progress_0: collection_progress.(job_id, attempt) > job_attempts.(job_id, attempt) [update: restrict, delete: restrict]
+Ref fk_job_attempts_0: job_attempts.job_id > jobs.job_id [update: restrict, delete: restrict]
+Ref fk_jobs_0: jobs.(job_id, current_attempt) > job_attempts.(job_id, attempt) [update: restrict, delete: restrict]
+Ref fk_space_reservations_0: space_reservations.(job_id, attempt) > job_attempts.(job_id, attempt) [update: restrict, delete: restrict]
+
+// Logical Cross-Store References to Core (ADR 0002, application-enforced, NOT SQLite FKs)
+// Ref: operational_identity.catalog_db_instance_id > database_identity.db_instance_id
+// Ref: acquisition_progress.git_acquisition_id > git_acquisitions.git_acquisition_id
+// Ref: collection_progress.fetch_collection_id > fetch_collections.fetch_collection_id
+// Ref: cache_locators.repository_uuidv4 > repositories.repository_uuidv4
