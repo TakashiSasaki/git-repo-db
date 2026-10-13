@@ -298,12 +298,16 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
 
     # 5.1 Transform docs/schema/README.md -> schema/index.md
     schema_readme_raw = (DOCS_SCHEMA_DIR / "README.md").read_text(encoding="utf-8")
+    # Convert inline-code source paths into actual website links. Replacing
+    # only substrings inside code spans would leave inert Markdown link text.
     schema_index_content = (
         schema_readme_raw.replace(
-            "docs/schema/index.html", "[インタラクティブビューアー](viewer/)"
+            "`docs/schema/mermaid/overview.md`", "[Mermaid 全体俯瞰](mermaid/overview/)"
         )
-        .replace("docs/schema/dbml/", "[DBML エクスポートガイド](dbml/)")
-        .replace("docs/schema/mermaid/", "[Mermaid ダイアグラム一覧](mermaid/)")
+        .replace("`docs/schema/dbml/core.dbml`", "[core.dbml](dbml/core.dbml)")
+        .replace("`docs/schema/index.html`", "[インタラクティブビューアー](viewer/)")
+        .replace("`docs/schema/dbml/`", "[DBML エクスポートガイド](dbml/)")
+        .replace("`docs/schema/mermaid/`", "[Mermaid ダイアグラム一覧](mermaid/)")
     )
     (schema_staging / "index.md").write_text(schema_index_content, encoding="utf-8")
 

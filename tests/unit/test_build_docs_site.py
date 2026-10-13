@@ -73,6 +73,16 @@ def test_staging_allowlist_and_transformation():
         # 5. Schema section
         schema_dir = staging_dir / "schema"
         assert (schema_dir / "index.md").is_file()
+        schema_index = (schema_dir / "index.md").read_text(encoding="utf-8")
+        for target in (
+            "[インタラクティブビューアー](viewer/)",
+            "[Mermaid ダイアグラム一覧](mermaid/)",
+            "[Mermaid 全体俯瞰](mermaid/overview/)",
+            "[DBML エクスポートガイド](dbml/)",
+            "[core.dbml](dbml/core.dbml)",
+        ):
+            assert target in schema_index
+            assert f"`{target}`" not in schema_index
 
         # 5.1 Standalone HTML viewer
         viewer_html = schema_dir / "viewer" / "index.html"
