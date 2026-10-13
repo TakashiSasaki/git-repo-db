@@ -9,7 +9,10 @@ site_dir: site
 
 theme:
   name: material
+  custom_dir: overrides
   language: ja
+  logo: assets/images/icons/icon.svg
+  favicon: assets/images/icons/icon.svg
   features:
     - navigation.tabs
     - navigation.sections
@@ -30,6 +33,9 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+
+extra_javascript:
+  - pwa.js
 
 plugins:
   - search

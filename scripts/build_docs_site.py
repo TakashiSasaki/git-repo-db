@@ -52,6 +52,7 @@ PUBLIC_ALLOWLIST_EXTENSIONS = {
     ".ttf",
     ".dbml",
     ".json",
+    ".webmanifest",
     ".map",
     ".txt",
     ".xml",
@@ -225,6 +226,20 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
 
     meta = get_git_metadata()
 
+    # 0. PWA Assets (Manifests, Service Worker, Client Script, Icons)
+    for pwa_file in ["manifest.webmanifest", "manifest.json", "sw.js", "pwa.js"]:
+        src_pwa = DOCS_SITE_DIR / pwa_file
+        if src_pwa.is_file():
+            shutil.copy2(src_pwa, staging_dir / pwa_file)
+
+    icons_src = DOCS_SITE_DIR / "assets" / "images" / "icons"
+    if icons_src.is_dir():
+        icons_dst = staging_dir / "assets" / "images" / "icons"
+        icons_dst.mkdir(parents=True, exist_ok=True)
+        for icon_file in icons_src.glob("*"):
+            if icon_file.is_file():
+                shutil.copy2(icon_file, icons_dst / icon_file.name)
+
     # 1. Homepage
     homepage_src = DOCS_SITE_DIR / "index.md"
     if not homepage_src.is_file():
@@ -310,7 +325,24 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
     # 5.2 Standalone Interactive HTML Viewer -> schema/viewer/index.html
     viewer_staging = schema_staging / "viewer"
     viewer_staging.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(DOCS_SCHEMA_DIR / "index.html", viewer_staging / "index.html")
+    viewer_raw = (DOCS_SCHEMA_DIR / "index.html").read_text(encoding="utf-8")
+    pwa_head_tags = (
+        '  <link rel="manifest" href="/manifest.webmanifest">\n'
+        '  <link rel="icon" type="image/svg+xml" href="/assets/images/icons/icon.svg">\n'
+        '  <link rel="apple-touch-icon" href="/assets/images/icons/icon-180.png">\n'
+        '  <meta name="theme-color" content="#0f172a">\n'
+        '  <meta name="mobile-web-app-capable" content="yes">\n'
+        '  <meta name="apple-mobile-web-app-capable" content="yes">\n'
+        '  <meta name="apple-mobile-web-app-title" content="git-repo-db">\n'
+        '  <script src="/pwa.js"></script>'
+    )
+    if "</head>" in viewer_raw:
+        viewer_transformed = viewer_raw.replace(
+            "</head>", f"{pwa_head_tags}\n</head>", 1
+        )
+    else:
+        viewer_transformed = viewer_raw
+    (viewer_staging / "index.html").write_text(viewer_transformed, encoding="utf-8")
 
     # 5.3 DBML Downloads -> schema/dbml/
     dbml_staging = schema_staging / "dbml"
@@ -401,11 +433,24 @@ def run_mkdocs_build(config_path: Path, strict: bool = True) -> None:
         cfg["strict"] = True
     build(cfg)
 
-    # Ensure root favicon.ico exists for standard browser requests
+    # Ensure root favicon.ico and PWA assets exist for standard browser requests
     site_dir = Path(cfg["site_dir"])
-    fav_png = site_dir / "assets" / "images" / "favicon.png"
+    icons_src = DOCS_SITE_DIR / "assets" / "images" / "icons"
+    fav_png = icons_src / "favicon-32.png"
     if fav_png.is_file():
         shutil.copy2(fav_png, site_dir / "favicon.ico")
+
+    for pwa_file in ["manifest.webmanifest", "manifest.json", "sw.js", "pwa.js"]:
+        src_pwa = DOCS_SITE_DIR / pwa_file
+        if src_pwa.is_file() and not (site_dir / pwa_file).is_file():
+            shutil.copy2(src_pwa, site_dir / pwa_file)
+
+    if icons_src.is_dir():
+        icons_dst = site_dir / "assets" / "images" / "icons"
+        icons_dst.mkdir(parents=True, exist_ok=True)
+        for icon_file in icons_src.glob("*"):
+            if icon_file.is_file():
+                shutil.copy2(icon_file, icons_dst / icon_file.name)
 
     print("✓ MkDocs build completed successfully.")
 
@@ -519,6 +564,16 @@ def validate_critical_endpoints(output_dir: Path) -> List[str]:
         "adr/0001-validation-lifecycle-architecture/index.html",
         "adr/0002-three-store-boundary-architecture/index.html",
         "development/index.html",
+        "manifest.webmanifest",
+        "manifest.json",
+        "sw.js",
+        "pwa.js",
+        "assets/images/icons/icon.svg",
+        "assets/images/icons/icon-maskable.svg",
+        "assets/images/icons/icon-192.png",
+        "assets/images/icons/icon-512.png",
+        "assets/images/icons/icon-180.png",
+        "assets/images/icons/favicon-32.png",
     ]
     missing = []
     for rel in critical_rel_paths:

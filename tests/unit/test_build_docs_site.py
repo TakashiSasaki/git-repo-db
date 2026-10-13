@@ -37,6 +37,18 @@ def test_staging_allowlist_and_transformation():
         staging_dir = Path(td)
         stage_documentation(staging_dir, skip_mermaid_render=True)
 
+        # 0. PWA Assets
+        assert (staging_dir / "manifest.webmanifest").is_file()
+        assert (staging_dir / "manifest.json").is_file()
+        assert (staging_dir / "sw.js").is_file()
+        assert (staging_dir / "pwa.js").is_file()
+        icons_dir = staging_dir / "assets" / "images" / "icons"
+        assert (icons_dir / "icon.svg").is_file()
+        assert (icons_dir / "icon-maskable.svg").is_file()
+        assert (icons_dir / "icon-192.png").is_file()
+        assert (icons_dir / "icon-512.png").is_file()
+        assert (icons_dir / "icon-180.png").is_file()
+
         # 1. Homepage
         home_md = staging_dir / "index.md"
         assert home_md.is_file()
@@ -77,8 +89,10 @@ def test_staging_allowlist_and_transformation():
         # 5.1 Standalone HTML viewer
         viewer_html = schema_dir / "viewer" / "index.html"
         assert viewer_html.is_file()
-        orig_html = DOCS_SCHEMA_DIR / "index.html"
-        assert viewer_html.read_bytes() == orig_html.read_bytes()
+        viewer_text = viewer_html.read_text(encoding="utf-8")
+        assert 'href="/manifest.webmanifest"' in viewer_text
+        assert 'href="/assets/images/icons/icon.svg"' in viewer_text
+        assert 'src="/pwa.js"' in viewer_text
 
         # 5.2 DBML files
         dbml_dir = schema_dir / "dbml"
@@ -111,6 +125,12 @@ def test_publication_safety_validator():
         (out_dir / "bundle.js").write_text("console.log();", encoding="utf-8")
         (out_dir / "diag.svg").write_text("<svg></svg>", encoding="utf-8")
         (out_dir / "schema.dbml").write_text("Table t {}", encoding="utf-8")
+        (out_dir / "manifest.webmanifest").write_text(
+            '{"name": "test"}', encoding="utf-8"
+        )
+        (out_dir / "sw.js").write_text(
+            "self.addEventListener('fetch', () => {});", encoding="utf-8"
+        )
 
         assert len(validate_publication_safety(out_dir)) == 0
 
@@ -155,3 +175,5 @@ def test_critical_endpoints_validator():
         assert len(missing) > 0
         assert any("index.html" in m for m in missing)
         assert any("schema/viewer/index.html" in m for m in missing)
+        assert any("manifest.webmanifest" in m for m in missing)
+        assert any("sw.js" in m for m in missing)

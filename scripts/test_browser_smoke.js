@@ -15,6 +15,7 @@ const MIME_TYPES = {
   ".js": "application/javascript",
   ".svg": "image/svg+xml",
   ".json": "application/json",
+  ".webmanifest": "application/manifest+json",
   ".dbml": "text/plain",
   ".png": "image/png",
   ".jpg": "image/jpeg",
@@ -253,6 +254,60 @@ server.listen(PORT, async () => {
         throw new Error("Development guide missing expected build commands");
       }
       console.log("   ✓ Development Guide verified.");
+
+      // 8. PWA Installability, Manifest & Service Worker
+      console.log("8. Testing PWA Installability & Web App Manifest");
+      await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: "networkidle0" });
+
+      const manifestHref = await page.evaluate(() => {
+        const link = document.querySelector('link[rel="manifest"]');
+        return link ? link.href : null;
+      });
+      console.log(`   Manifest link in DOM: ${manifestHref}`);
+      if (!manifestHref) {
+        throw new Error("Missing <link rel=\"manifest\"> in DOM");
+      }
+
+      const appleTouchIconHref = await page.evaluate(() => {
+        const link = document.querySelector('link[rel="apple-touch-icon"]');
+        return link ? link.href : null;
+      });
+      console.log(`   Apple touch icon in DOM: ${appleTouchIconHref}`);
+      if (!appleTouchIconHref) {
+        throw new Error("Missing <link rel=\"apple-touch-icon\"> in DOM");
+      }
+
+      const manifestResp = await page.goto(`http://127.0.0.1:${PORT}/manifest.webmanifest`);
+      if (manifestResp.status() !== 200) {
+        throw new Error(`Failed to load manifest.webmanifest: HTTP ${manifestResp.status()}`);
+      }
+      const manifestJson = await manifestResp.json();
+      if (!manifestJson.name || !manifestJson.short_name || !manifestJson.start_url || manifestJson.display !== "standalone") {
+        throw new Error(`Invalid manifest fields: ${JSON.stringify(manifestJson)}`);
+      }
+      console.log(`   ✓ manifest.webmanifest validated (name: "${manifestJson.name}", display: "${manifestJson.display}")`);
+
+      if (!Array.isArray(manifestJson.icons) || manifestJson.icons.length < 4) {
+        throw new Error("Manifest icons array missing expected entries");
+      }
+      for (const icon of manifestJson.icons) {
+        const cleanSrc = icon.src.replace(/^\//, "");
+        const iconResp = await page.goto(`http://127.0.0.1:${PORT}/${cleanSrc}`);
+        if (iconResp.status() !== 200) {
+          throw new Error(`Manifest icon ${icon.src} failed to load: HTTP ${iconResp.status()}`);
+        }
+      }
+      console.log(`   ✓ All ${manifestJson.icons.length} manifest icons verified (SVG, 192x192, 512x512, maskable)`);
+
+      const swResp = await page.goto(`http://127.0.0.1:${PORT}/sw.js`);
+      if (swResp.status() !== 200) {
+        throw new Error(`Failed to load sw.js: HTTP ${swResp.status()}`);
+      }
+      const swCode = await swResp.text();
+      if (!swCode.includes("addEventListener('fetch'") || !swCode.includes("CACHE_NAME")) {
+        throw new Error("Service worker code missing expected fetch event listener");
+      }
+      console.log(`   ✓ sw.js validated (${swCode.length} bytes, fetch handler confirmed).`);
     }
 
     await browser.close();

@@ -20,7 +20,9 @@
     ".github/**",
     "scripts/**",
     ".gitignore",
-    "mkdocs.yml"
+    "mkdocs.yml",
+    "overrides/**",
+    "docs/site/**"
   ],
   "executable_inputs": [],
   "prose": [
