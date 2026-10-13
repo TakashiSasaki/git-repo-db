@@ -1,0 +1,111 @@
+name: pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'scripts/build_docs_site.py'
+      - 'scripts/schema_viz.py'
+      - 'scripts/audit_publication_free.py'
+      - 'scripts/test_browser_smoke.js'
+      - 'tests/unit/test_build_docs_site.py'
+      - 'src/repo_catalog/adapters/sqlite/schema.py'
+      - 'src/repo_catalog/resources/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'mkdocs.yml'
+      - '.github/workflows/pages.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'scripts/build_docs_site.py'
+      - 'scripts/schema_viz.py'
+      - 'scripts/audit_publication_free.py'
+      - 'scripts/test_browser_smoke.js'
+      - 'tests/unit/test_build_docs_site.py'
+      - 'src/repo_catalog/adapters/sqlite/schema.py'
+      - 'src/repo_catalog/resources/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'mkdocs.yml'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    name: build-and-validate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          version: '0.12.19'
+
+      - name: Set up Node.js for Mermaid CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies (locked docs group)
+        run: uv sync --locked --group dev --group docs --python "$(command -v python)"
+
+      - name: Verify schema visualization freshness
+        run: uv run --no-sync python scripts/schema_viz.py --check
+
+      - name: Build documentation site
+        run: uv run --no-sync python scripts/build_docs_site.py
+
+      - name: Run documentation site unit tests
+        run: uv run --no-sync pytest tests/unit/test_build_docs_site.py
+
+      - name: Retain preview artifact for review
+        uses: actions/upload-artifact@v7
+        with:
+          name: pages-preview-${{ github.event.pull_request.number || github.sha }}
+          path: site/
+          retention-days: 7
+
+      - name: Configure GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy:
+    name: deploy-to-pages
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
