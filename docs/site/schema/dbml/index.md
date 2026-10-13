@@ -143,7 +143,83 @@ index_membership.search_document_id > search_documents.search_document_id
 
 ---
 
-### 4. ローカル VS Code で見る方法
+### 4. SchemaSpy で見る方法（詳細な HTML レポート・関係性解析・異常検出）
+
+[**SchemaSpy** (https://schemaspy.org/)](https://schemaspy.org/) は、データベースメタデータを解析して、インタラクティブな Graphviz ER 図や孤立テーブル・制約アノマリーを含む包括的な HTML ドキュメントを生成するオープンソースツールです。
+
+`git-repo-db` の SQLite データベースに対して SchemaSpy を実行する手順は以下の通りです：
+
+#### ステップ 1: 正本 DDL から実体 SQLite データベースをエクスポート
+
+SchemaSpy は実際のデータベースファイル（JDBC 接続）を必要とするため、リポジトリ付属のエクスポートツールで 3 つの SQLite ファイルを生成します：
+
+```bash
+uv run --no-sync python scripts/export_sqlite_databases.py
+```
+これにより、`.build/databases/` に以下の空の正本データベースが生成されます：
+- `catalog.sqlite3` (Core Store Schema 21 / 70 テーブル)
+- `operational.sqlite3` (Operational Store Schema 1 / 10 テーブル)
+- `search.sqlite3` (Search Store Schema 1 / 4 テーブル)
+
+#### ステップ 2: Docker で SchemaSpy を実行する（最も手軽・推奨）
+
+Docker を利用すると、Java や Graphviz をローカルに導入することなくワンライナーでレポートを出力できます：
+
+```bash
+# Core Store のレポートを生成
+docker run --rm \
+  -v "$PWD/.build/databases:/db" \
+  -v "$PWD/schemaspy-report/core:/output" \
+  schemaspy/schemaspy:latest \
+  -t sqlite-xerial \
+  -db /db/catalog.sqlite3 \
+  -s catalog \
+  -o /output \
+  -cat %
+
+# Operational Store のレポートを生成
+docker run --rm \
+  -v "$PWD/.build/databases:/db" \
+  -v "$PWD/schemaspy-report/operational:/output" \
+  schemaspy/schemaspy:latest \
+  -t sqlite-xerial \
+  -db /db/operational.sqlite3 \
+  -s operational \
+  -o /output \
+  -cat %
+```
+
+#### ステップ 3: ネイティブ Java / CLI で実行する場合
+
+ローカル環境に Java (JRE 11+) と Graphviz (`dot`) がインストールされている場合：
+
+1. **SchemaSpy JAR と SQLite JDBC ドライバーのダウンロード**:
+   ```bash
+   curl -L -o schemaspy.jar https://github.com/schemaspy/schemaspy/releases/download/v6.2.4/schemaspy-6.2.4.jar
+   curl -L -o sqlite-jdbc.jar https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar
+   ```
+2. **レポートの実行**:
+   ```bash
+   java -jar schemaspy.jar \
+     -t sqlite-xerial \
+     -dp sqlite-jdbc.jar \
+     -db .build/databases/catalog.sqlite3 \
+     -s catalog \
+     -o ./schemaspy-report/core \
+     -cat %
+   ```
+
+#### ステップ 4: 生成された HTML レポートの閲覧
+
+`schemaspy-report/core/index.html` をブラウザで開くと、以下の情報が閲覧できます：
+- **Relationships**: Graphviz によるテーブル間リレーション図（大・中・小のズーム、テーブル個別リレーション）
+- **Tables**: 全 70 テーブルのカラム定義、型、デフォルト値、コメント
+- **Constraints**: 主キー、外部キー制約、CASCADE ルール一覧
+- **Anomalies**: 外部キーを持たない孤立テーブル、NULL 許容制約の分析
+
+---
+
+### 5. ローカル VS Code で見る方法
 
 外部クラウドサービスを使用せず、完全ローカルで DBML を閲覧・編集することも可能です：
 
