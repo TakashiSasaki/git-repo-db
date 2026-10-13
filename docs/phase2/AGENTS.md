@@ -1,37 +1,44 @@
 # Phase 2 design work: current owner decisions
 
-The repository-root AGENTS.md remains applicable. For the design artifacts in
-this directory, read `no-independent-publication-adr.md`, `../adr/0002-three-store-boundary-architecture.md`, and the current
-`decision-register.md` before the older proposals or prototypes.
+The repository-root AGENTS.md remains applicable. For this directory, read the
+current `decision-register.md` and `documentation-status-audit.md`, then
+`no-independent-publication-adr.md` and `../adr/0002-three-store-boundary-architecture.md`
+for their accepted decisions before consulting older proposals or prototypes.
 
-The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION** under Q04, and binding decisions **PF-P01–PF-P17** establishing the Three-Store Boundary (Core, Operational, Search).
-Use the checked-out sources, current ADRs, and exact-tree receipts to distinguish approved design,
-implemented behavior and independently verified behavior. Do not restart the
-old design questionnaire or adopt unchosen recommendations. This document does
-not itself grant or revoke a task-specific merge authorization.
+The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and binding
+**PF-P01–PF-P17**. Publication removal and Three-Store implementation are already
+integrated; an old "implementation pending" statement is not current status.
+Implementation, independent review evidence and release acceptance are separate.
+This document itself grants no merge, release, deployment or data-operation permission.
 
-`proposal-before-no-publication.md` and
-`decision-register-before-no-publication.md` are exact preserved snapshots of the
-previous proposal. The 69-table candidate, old workstream recommendations,
-conditional schema disposition and old probe/review receipts are evidence of that
-checkpoint, not current target DDL or proof of this redesign. Update active
-narrative/design separately and preserve historical receipts with their hashes.
+The old blanket pause on Q05–Q12 is superseded only within the explicit scope of
+later accepted decisions. Do not replace it with blanket approval of every old
+alternative. Core/Operational/Search placement, best-effort resume, Core-only
+backup, transport-owned HTTP caching, Job retention and Search lifecycle are
+settled. Stronger Exchange trust, additional Git interpretation policy, future
+manual-GC rules and other residual boundaries are not approved by implication.
+Consult the register before calling a question either "resolved" or "unselected".
 
-No independent generic Publication/bundle/member-seal owner or eligibility layer
-may be recreated under another name. Local transaction atomicity, domain validity,
+`proposal-before-no-publication.md`, `decision-register-before-no-publication.md`
+and `decision-register-before-status-reconciliation.md` are exact preserved
+checkpoints. Their old status words, option letters, 69-table candidate,
+recommendations and probe/review receipts are not current target DDL or proof of
+later execution. Preserve their bytes and hashes. Read pre-PF-P design work
+sequences as historical instructions, not orders to repeat completed work.
+
+No generic Publication/bundle/member-seal owner or eligibility layer may be
+recreated under another name. Local transaction atomicity, domain validity,
 collection completeness, current conflicts, Git content/acquisition/targets,
-operational fences and receiver validation require separate reasoning. A local
-revision counter or domain-specific completion predicate is not automatically a
-Publication and must not be deleted by substring matching.
+operational fences and receiver validation require separate reasoning. Do not
+delete meaningful completion markers or local revisions by substring matching.
 
-Keep latest-state contracts truthful: do not hide all superseded values inside
-necessary evidence; do not infer deletion from incomplete scans; do not use parser
-version or receipt order as domain freshness. Preserve already implemented domain
-scope/member/terminal/child proof without inventing a new collection-proof policy.
-No new cache, checkpoint, Exchange trust or retention/GC policy is selected.
-Report genuine unresolved requirements without inventing their answers.
+Keep latest-state contracts truthful: do not hide superseded values as generic
+history, infer deletion from incomplete scans, or rank domain values by parser
+version or receipt order. Preserve required scope/member/terminal/child evidence.
+Current evidence layout does not imply unlimited retention or deletion permission.
+CAS-41 remains established; CAS-76/CAS-77 need original-source clarification and
+must not be assigned guessed meanings or marked accepted.
 
-For reproducible Phase 2-specific debugging or review lessons, consult and
-update the repository-local `.agents/skills/` where a validated procedure is
-reusable. Keep immutable historical review receipts unchanged and link them as
-evidence rather than copying whole logs into a skill.
+For verified reusable audit/debugging lessons, consult and improve the relevant
+repository-local `.agents/skills/`. Keep execution receipts separate from skills;
+never invent independent approval or a test run from a documentation status label.

@@ -1,36 +1,78 @@
 # Phase 2: Publication-independent reconstruction
 
-The owner accepted Q01-B/Q02-B/Q03-B (latest accepted API resource state and current known Source inventory plus necessary evidence) and Q04 **NO_INDEPENDENT_PUBLICATION**. Further option selection is paused. The old Publication-centered 69-table sketch is not the target.
+**Current status:** Q01-B/Q02-B/Q03-B, **NO_INDEPENDENT_PUBLICATION**, and
+**PF-P01–PF-P17** are accepted. Publication removal and the later Three-Store
+implementation have been integrated into `main`. The old Publication-centered
+69-table sketch is not the target. This page reconciles status, not policy.
 
 ## Current design and implementation instructions
 
-1. [Accepted decision](no-independent-publication-adr.md) and [actual decision register](decision-register.md).
-2. [Reconstructed whole architecture](publication-free-design.md): direct domain ownership, current values and field evidence, local transaction atomicity, separate collection/Git completeness, operational fences, normalized Exchange and retained-content maintenance.
-3. [Implementation and independent-review prompt](publication-free-implementation-prompt.md): substantial integrated changes, required independent post-implementation subagent reviews, corrective iterations and exact-tree acceptance.
-4. [Schema 20 implementation handoff](publication-free-implementation.md), [complete schema map](publication-free-schema-map.json) and [test disposition](publication-free-test-disposition.json): current implementation and outstanding verification gates.
-
-The reconstruction is a logical/implementation contract under the accepted decisions, not an executed complete replacement DDL. It does not mark paused Q05-Q12 recommendations accepted, implement a new retention/cache/trust policy, claim independent subagent approval already happened, or authorize merging/releasing.
+1. Start with the [decision register](decision-register.md) and
+   [documentation status audit](documentation-status-audit.md). They separate
+   accepted scope, implementation facts, deferred extensions and historical labels.
+2. Read [No independent Publication](no-independent-publication-adr.md) for the
+   accepted Q01–Q04 decisions and [ADR 0002](../adr/0002-three-store-boundary-architecture.md)
+   for the canonical PF-P01–PF-P17 Three-Store policy. The old pause and
+   pre-implementation work sequence are not instructions to repeat completed work.
+3. Use the [packaged schema composition](../../src/repo_catalog/adapters/sqlite/schema.py)
+   and [schema map](publication-free-schema-map.json) for current structures.
+   The inspected baseline uses Core Schema 21, Operational Schema 1 and Search
+   Schema 1. [Implementation status](../implementation-status.md) distinguishes
+   integration from verification and release acceptance.
+4. The [Publication-free architecture](publication-free-design.md),
+   [implementation prompt](publication-free-implementation-prompt.md),
+   [Schema 20 handoff](publication-free-implementation.md) and
+   [test disposition](publication-free-test-disposition.json) explain the earlier
+   reconstruction. Preserve their domain guarantees where not superseded, but do
+   not mistake dated progress, old DB placement or review instructions for current
+   status. [ADR 0001](../adr/0001-validation-lifecycle-architecture.md) governs the
+   current development/release validation distinction.
 
 ## The decisive boundary
 
-No independent Publication ID, generic input/output manifest, member/seal registry, selected interpretation or universal publish transition may own or enable ordinary domain resources. A renamed batch/bundle/generation/receipt with the same role is also excluded.
+No independent Publication ID, generic input/output manifest, member/seal
+registry, selected interpretation or universal publish transition may own or
+enable ordinary domain resources. Renaming the same abstraction does not help.
 
-Identity and ownership belong to the actual resource. A coherent local update commits its values, field evidence and applicable conflict/revision state atomically. Completeness belongs to the exact requested collection, child tree, Git closure or code target. Normalized Exchange validates real typed dependencies, not sender transaction groups. Valid individual resources are not hidden merely because a larger acquisition is incomplete.
+Identity and ownership belong to the actual resource. A coherent local update
+commits values, field evidence and applicable conflict/revision state atomically.
+Completeness belongs to the exact collection, required children, Git closure or
+code target. Exchange validates actual typed dependencies. A valid resource does
+not become unusable merely because a larger acquisition is incomplete.
 
-Latest-state choices must not become full edit/roster history stored under evidence. Required current origins, genuine unresolved candidates and minimal still-used target/scope evidence remain. Generic raw provider JSON is not an alternative to API-original deletion. Required Git content, exact domain text and CAS-41 remain protected.
-
-Schema 20 names the local revision fence `advance_local_revision()` / `local_revision`; it has no commit-history table. Physical catalog validation and atomic installation are likewise separate.
+Latest-state choices must not become full edit/roster history hidden in evidence.
+Necessary current origins, unresolved candidates and still-used target/scope
+evidence remain. Git bytes, exact domain text and CAS-41 remain protected.
+`advance_local_revision()` / `local_revision` and atomic catalog installation are
+mechanical responsibilities, not independent domain Publications.
 
 ## Integration baseline
 
-At reconstruction, main was `20e0f8d78b77c6c8d37826fd6d639819631e166b`, Schema 18. The runtime/audit stack is #22 -> #23 -> #24 -> #25; #23 supplies Schema 19 correctness fixes, #24 test efficiency and #25 corrected dependency/selected-scale evidence. #26 is the accepted decision overlay on a sibling of #23 based on #22. The reconstruction is stacked on #26.
+The original reconstruction began against Schema 18 and the #22–#29 stack. That
+sequence is historical, not a pending integration task. The later Three-Store
+stack was [PR #38](https://github.com/TakashiSasaki/git-repo-db/pull/38) followed by
+[PR #39](https://github.com/TakashiSasaki/git-repo-db/pull/39).
 
-Re-fetch actual state and integrate the decision documents without losing the separately submitted runtime/test corrections. No branch is rewritten, retargeted or merged by these design documents. An implementation must not regress to the older source tree merely because the design branch has it.
+This status audit inspected `fb3b1fb4d5e1436c58677d2e867708502fbbc64b`. Fetch the
+actual current refs for any new work; do not reset to an old design branch.
+Neither these links nor an old merge permission authorizes another merge.
 
 ## Evidence and remaining policy boundaries
 
-The [previous proposal](proposal-before-no-publication.md), [previous questionnaire](decision-register-before-no-publication.md), workstreams, inventories and prototypes remain checkpoint evidence. Static hits, SQL preparation, a synthetic counterexample and production acceptance are different evidence classes. Do not rewrite old validation receipts to claim new behavior.
+The [previous proposal](proposal-before-no-publication.md),
+[pre-no-Publication questionnaire](decision-register-before-no-publication.md),
+[pre-reconciliation register](decision-register-before-status-reconciliation.md),
+workstreams, prototypes and dated receipts remain checkpoint evidence. Do not
+rewrite old failures or old non-execution as later successful tests.
 
-The reconstruction specifies dependency direction, ownership, atomicity and required observable outcomes. Permanent fragment/final-set representation, stronger Exchange trust, new negative-membership rules, Git decoder/current-selection policy, cache/checkpoint lifetime and GC are not implicitly chosen. Preserve established semantics and report an exact irreducible policy conflict; do not restart the multiple-choice sequence or silently invent a policy.
+Q05–Q12 are not one undifferentiated pending or resolved bundle. Accepted later
+choices settle storage, restart, backup, HTTP ownership, attribute admission and
+Search lifecycle. Evidence reclamation, stronger trust, richer disputed-ownership
+Exchange and new Git interpretation policies remain separate deferred extensions;
+adapter/deployment settings and source-unclear CAS identifiers have different
+statuses. See [remaining boundaries](documentation-status-audit.md#remaining-boundaries).
 
-Implementation may use a fresh incompatible development schema. After the integrated candidate is implemented, independent subagents must test it, the lead must correct findings, and affected reviewers must reverify the corrected tree. Final ordinary/package/hosted checks must identify that exact tree. This document update runs no runtime tests and claims no implementation or merge.
+For a documentation-only status correction, perform relevant prose/link/scope
+checks. A full suite or four-reviewer cycle is not required merely because those
+steps appear in the old large-reconstruction handoff. No new runtime validation
+or independent approval is asserted by this page.
