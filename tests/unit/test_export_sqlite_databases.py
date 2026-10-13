@@ -15,6 +15,12 @@ def test_export_databases():
         assert "catalog.sqlite3" in dbs
         assert "operational.sqlite3" in dbs
         assert "search.sqlite3" in dbs
+        assert "catalog.sql" in dbs
+        assert "operational.sql" in dbs
+        assert "search.sql" in dbs
+        assert dbs["catalog.sql"].is_file()
+        assert dbs["operational.sql"].is_file()
+        assert dbs["search.sql"].is_file()
 
         # Core Store
         core_conn = sqlite3.connect(dbs["catalog.sqlite3"])

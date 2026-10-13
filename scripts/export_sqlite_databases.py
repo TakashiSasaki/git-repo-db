@@ -30,18 +30,22 @@ def export_databases(output_dir: Path) -> dict[str, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     targets = {
-        "catalog.sqlite3": ("Core Store (Schema 21)", schema_sql()),
-        "operational.sqlite3": (
+        "catalog": ("Core Store (Schema 21)", schema_sql()),
+        "operational": (
             "Operational Store (Schema 1)",
             operational_schema_sql(),
         ),
-        "search.sqlite3": ("Search Store (Schema 1)", search_schema_sql()),
+        "search": ("Search Store (Schema 1)", search_schema_sql()),
     }
 
     created_paths = {}
 
-    for filename, (desc, ddl) in targets.items():
-        db_path = output_dir / filename
+    for stem, (desc, ddl) in targets.items():
+        db_filename = f"{stem}.sqlite3"
+        sql_filename = f"{stem}.sql"
+        db_path = output_dir / db_filename
+        sql_path = output_dir / sql_filename
+
         if db_path.exists():
             db_path.unlink()
 
@@ -55,9 +59,15 @@ def export_databases(output_dir: Path) -> dict[str, Path]:
         finally:
             conn.close()
 
-        created_paths[filename] = db_path
+        sql_path.write_text(ddl, encoding="utf-8")
+
+        created_paths[db_filename] = db_path
+        created_paths[sql_filename] = sql_path
         print(
-            f"  ✓ Exported {filename}: {desc} ({table_count} tables, {db_path.stat().st_size:,} bytes)"
+            f"  ✓ Exported {db_filename}: {desc} ({table_count} tables, {db_path.stat().st_size:,} bytes)"
+        )
+        print(
+            f"  ✓ Exported {sql_filename}: {desc} DDL ({len(ddl.splitlines()):,} lines, {len(ddl):,} bytes)"
         )
 
     return created_paths

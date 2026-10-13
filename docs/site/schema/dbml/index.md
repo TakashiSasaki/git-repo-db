@@ -219,7 +219,51 @@ docker run --rm \
 
 ---
 
-### 5. ローカル VS Code で見る方法
+### 5. Azimutt で見る方法（大規模スキーマのための探索型ビジュアルキャンバス）
+
+[**Azimutt** (https://azimutt.app/)](https://azimutt.app/) は、数十〜数百テーブルを持つ複雑なデータベーススキーマを、情報過多に圧倒されることなく段階的に探索（Exploration）するために設計されたオープンソースの次世代 ERD ツールです。
+
+全 70 テーブルを持つ `git-repo-db` の Core Store のような大規模スキーマでは、すべてのテーブルを一度にキャンバス上に並べると線が交錯して解読が難しくなりますが、Azimutt は **「関心のあるテーブルを検索して配置し、外部キーのリレーションを + ボタンで辿って必要なサブセットだけを展開・可視化する」** という極めて優れたワークフローを提供します。
+
+#### 方法 A: Azimutt Web に SQL DDL をインポートする（最も手軽・推奨）
+
+1. **正本 SQL DDL の出力**:
+   ```bash
+   uv run --no-sync python scripts/export_sqlite_databases.py
+   ```
+   `.build/databases/` に `catalog.sql`（Core 70テーブル）、`operational.sql`、`search.sql` が出力されます。
+2. ブラウザで [**Azimutt Web** (https://azimutt.app/new)](https://azimutt.app/new) を開きます（アカウント不要で利用可能）。
+3. プロジェクト作成画面で **「Import SQL」**（または SQLite）を選択します。
+4. `.build/databases/catalog.sql`（または `operational.sql`、`search.sql`）をドラッグ＆ドロップまたは貼り付けます。
+5. スキーマが即座に読み込まれます。
+
+#### 方法 B: Azimutt Web に DBML をインポートする
+
+1. [https://azimutt.app/new](https://azimutt.app/new) で **「Import DBML」** を選択します。
+2. 本サイトからダウンロードした [core.dbml](core.dbml) などのファイルをアップロードまたは貼り付けます。
+
+#### 方法 C: Azimutt Local Gateway によるローカル SQLite への直接接続
+
+Azimutt 公式の CLI Gateway を使用すると、ブラウザ上の Azimutt からローカルの `.sqlite3` ファイルに安全に直接接続して探索できます：
+
+```bash
+# 1. データベースファイルをエクスポート
+uv run --no-sync python scripts/export_sqlite_databases.py
+
+# 2. Azimutt ゲートウェイを起動（npm または bun）
+npx azimutt@latest gateway --allow-origin "https://azimutt.app"
+```
+ブラウザの Azimutt で「Database Connection」を選び、`sqlite://.build/databases/catalog.sqlite3` を指定することで、リアルタイムにスキーマを解析・可視化できます。
+
+#### Azimutt でのおすすめの探索方法
+
+- **テーブル検索**: キャンバス上部の検索バーに `stored_bytes` や `change_requests` と入力してテーブルをダブルクリック配置。
+- **リレーション辿り**: テーブルノード上の外部キー列の横に表示されるバッジ（参照元・参照先テーブル数）をクリックすると、接続されたテーブルが自動的にキャンバスに展開されます。
+- **マルチレイアウト**: 「Git DAG 構造」「Change Request & Review 構造」「CAS・整合性構造」などの目的に応じた複数のレイアウトを作成して切り替えられます。
+
+---
+
+### 6. ローカル VS Code で見る方法
 
 外部クラウドサービスを使用せず、完全ローカルで DBML を閲覧・編集することも可能です：
 
