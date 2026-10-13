@@ -111,6 +111,10 @@ During collection or Git acquisition, a process crashes after committing Operati
 - FTS candidates are bounded (max 50,000 keys). Exceeding the bound or requesting explicit non-default decoders falls back cleanly to scan (`candidate_limit_exceeded`, `unsupported_decoder`).
 - Candidate filtering must not suppress domain coverage diagnostics (`body_not_saved`, `decoder_conflict`, `oversize`). Diagnostics are evaluated before candidate filtering.
 - Rebuild telemetry failure in Operational store is non-fatal: it issues a warning and records the rebuild result as successful.
+- Per-kind index freshness: individual index generations contain their own `core_revision_fence`. Partial rebuild (e.g. `rebuild --kind code`) updates only that kind's generation. Aggregate index status is computed from per-kind results (`ready`, `partial`, `stale`, `incomplete`, `absent`, `corrupt`), never assuming global freshness from a single kind's rebuild.
+- Separation of Search health from Operational telemetry: Operational DB corruption or query errors must never cause a healthy Search DB to be reported as corrupt or absent. Telemetry status (`available`, `unavailable`, `uninitialized`) and diagnostics are strictly isolated.
+- Job bookkeeping fault tolerance: after index generation is successfully built and committed in Search DB, failures during subsequent Job completion bookkeeping (`JobService.update`) or metrics logging must not mask primary success or report rebuild failure. Truthful warnings are attached to the result.
+- Truthful duration estimates: distinguish previous measured duration from historical averages (`estimate_basis: "historical_average"`), returning `None` when zero runs exist.
 
 ### Remediation Pattern
 1. **Pinned Snapshot in `QueryService.query()`:**
@@ -125,16 +129,16 @@ During collection or Git acquisition, a process crashes after committing Operati
    ```
 2. **Deterministic Concurrency Barrier:**
    Expose `_search_snapshot_barrier` hook in `QueryService` for barrier-controlled concurrency testing.
-3. **Telemetry Fault Isolation in `index.rebuild()`:**
-   Wrap `store.operational.record_rebuild_metric` on the success path so telemetry errors emit a warning rather than failing index creation.
-4. **Index Status CLI:**
-   Support `repo-catalog index status` returning `status`, `core_revision`, `core_revision_fence`, `stale`, `age_us`, `generations`, and `cost_estimate`.
+3. **Telemetry Fault Isolation in `index.rebuild()` and `MaintenanceService`:**
+   Wrap `store.operational.record_rebuild_metric` and `JobService(s).update(job, "complete")` on the success path so secondary errors attach warnings (`rebuild_telemetry_unavailable`, `job_bookkeeping_unavailable`) rather than aborting index creation.
+4. **Per-Kind Index Status in `MaintenanceService.index_status()`:**
+   Inspect each kind (`code`, `commits`, `pr`, `issue`) against its ready generation fence, report per-kind status, and derive aggregate status (`ready` when all 4 are fresh; `partial` when some are fresh; `stale` when all are stale; `incomplete` when not fully built).
 
 ---
 
 ## 5. Verification Evidence & Test Reconciliation
 
-### Discrepancy Note (118 vs 117)
+### Discrepancy Note & Cumulative Verification
 Earlier PR documentation stated "118 passed" across five suites listing:
 - 12 (`test_catalog3_cache.py`)
 - 11 (`test_catalog3_store.py`)
@@ -142,11 +146,14 @@ Earlier PR documentation stated "118 passed" across five suites listing:
 - 4 (`test_database.py`)
 - 87 (`test_target_schema.py`)
 
-The actual arithmetic sum of unique executed nodes is exactly **117** ($12 + 11 + 3 + 4 + 87 = 117$).
+The actual arithmetic sum of unique executed nodes was **117** ($12 + 11 + 3 + 4 + 87 = 117$).
 
 With the addition of targeted correctness and lifecycle tests for R1–R5:
 - `test_catalog3_store.py`: +7 nodes (5 parameterized multi-page recovery cases + 1 GraphQL thread divergence + 1 CAS-41 Core-only lifecycle) = **18**
-- `test_search_index.py`: +3 nodes (1 barrier-controlled snapshot isolation + 1 truthful backend equivalence matrix + 1 telemetry failure & status CLI) = **6**
+- `test_search_index.py`: +3 nodes (1 barrier-controlled snapshot isolation + 1 truthful backend equivalence matrix + 1 telemetry failure & status CLI) = **6** (bringing the intermediate total to 127).
 
-The full targeted integration suite now executes exactly **127** unique nodes:
-$$12 + 18 + 6 + 4 + 87 = 127\text{ passed}.$$
+With the subsequent additions for F1–F4:
+- `test_search_index.py`: +4 nodes (`test_per_kind_freshness_and_aggregate_status`, `test_search_health_separated_from_operational_telemetry`, `test_rebuild_tolerates_job_bookkeeping_failures`, `test_rebuild_estimate_truthful_and_distinguished`) = **10** nodes.
+
+The full targeted integration suite now executes exactly **131** unique nodes:
+$$12 + 18 + 10 + 4 + 87 = 131\text{ passed}.$$

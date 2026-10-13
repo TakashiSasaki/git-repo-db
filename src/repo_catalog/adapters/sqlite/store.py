@@ -485,20 +485,28 @@ class OperationalStore(BaseConnection):
         if not row or row["runs"] == 0:
             return {
                 "runs": 0,
+                "historical_average_duration_ms": None,
+                "previous_measured_duration_ms": None,
                 "estimated_duration_ms": None,
                 "previous_duration_ms": None,
                 "avg_duration_ms": None,
                 "ms_per_doc": None,
                 "avg_documents_indexed": 0,
+                "estimate_basis": "historical_average",
+                "scope_note": "across_all_recorded_rebuilds",
             }
         avg_dur = round(float(row["avg_duration_ms"]), 2)
         return {
             "runs": row["runs"],
+            "historical_average_duration_ms": avg_dur,
+            "previous_measured_duration_ms": previous_duration_ms,
             "estimated_duration_ms": avg_dur,
             "previous_duration_ms": previous_duration_ms,
             "avg_duration_ms": avg_dur,
             "ms_per_doc": round(float(row["ms_per_doc"]), 4),
             "avg_documents_indexed": int(row["avg_docs"]),
+            "estimate_basis": "historical_average",
+            "scope_note": "across_all_recorded_rebuilds",
         }
 
 
@@ -650,18 +658,51 @@ class SearchStore(BaseConnection):
                 )
                 close_op = True
             except CatalogError as e:
-                if e.code == "NOT_INITIALIZED":
-                    return {
-                        "runs": 0,
-                        "estimated_duration_ms": None,
-                        "previous_duration_ms": None,
-                        "avg_duration_ms": None,
-                        "ms_per_doc": None,
-                        "avg_documents_indexed": 0,
-                    }
-                raise
+                is_uninit = e.code == "NOT_INITIALIZED"
+                return {
+                    "runs": 0,
+                    "historical_average_duration_ms": None,
+                    "previous_measured_duration_ms": None,
+                    "estimated_duration_ms": None,
+                    "previous_duration_ms": None,
+                    "avg_duration_ms": None,
+                    "ms_per_doc": None,
+                    "avg_documents_indexed": 0,
+                    "telemetry_status": "uninitialized" if is_uninit else "unavailable",
+                    "telemetry_diagnostic": "Operational database not initialized"
+                    if is_uninit
+                    else f"Operational database error: {e.code}",
+                }
+            except Exception as e:
+                return {
+                    "runs": 0,
+                    "historical_average_duration_ms": None,
+                    "previous_measured_duration_ms": None,
+                    "estimated_duration_ms": None,
+                    "previous_duration_ms": None,
+                    "avg_duration_ms": None,
+                    "ms_per_doc": None,
+                    "avg_documents_indexed": 0,
+                    "telemetry_status": "unavailable",
+                    "telemetry_diagnostic": f"Operational database error: {type(e).__name__}",
+                }
         try:
-            return op.estimate_rebuild_cost()
+            res = op.estimate_rebuild_cost()
+            res["telemetry_status"] = "available"
+            return res
+        except Exception as e:
+            return {
+                "runs": 0,
+                "historical_average_duration_ms": None,
+                "previous_measured_duration_ms": None,
+                "estimated_duration_ms": None,
+                "previous_duration_ms": None,
+                "avg_duration_ms": None,
+                "ms_per_doc": None,
+                "avg_documents_indexed": 0,
+                "telemetry_status": "unavailable",
+                "telemetry_diagnostic": f"Telemetry query error: {type(e).__name__}",
+            }
         finally:
             if close_op and op is not None:
                 op.close()

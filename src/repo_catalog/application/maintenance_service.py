@@ -359,44 +359,82 @@ class MaintenanceService:
         from repo_catalog.application.job_service import JobService
 
         with FileLock(self.path / "locks/writer.lock"), Store(self.path) as s:
-            job = JobService(s).create("index", {"kind": kind})
+            job = None
+            job_warning = None
+            try:
+                job = JobService(s).create("index", {"kind": kind})
+            except Exception as job_create_err:
+                job_warning = (
+                    f"job_bookkeeping_unavailable: {type(job_create_err).__name__}"
+                )
             try:
                 data = rebuild(s, kind, token)
-                JobService(s).update(job, "complete")
-                estimate = None
-                age_us = None
-                try:
-                    search_store = s.open_search(readonly=True)
-                    try:
-                        estimate = search_store.estimate_rebuild_cost()
-                        age_us = search_store.index_age_us()
-                    finally:
-                        search_store.close()
-                except Exception:
-                    pass
-                result_payload = {
-                    "job_id": job,
-                    "generations": data,
-                    "duration_ms": getattr(data, "duration_ms", None),
-                    "documents_indexed": getattr(data, "documents_indexed", None),
-                    "bytes_indexed": getattr(data, "bytes_indexed", None),
-                }
-                if getattr(data, "warning", None):
-                    result_payload["warning"] = data.warning
-                if estimate:
-                    result_payload["estimate"] = estimate
-                if age_us is not None:
-                    result_payload["age_us"] = age_us
-                return Result(result_payload, catalog=s.revision())
             except CatalogError as e:
-                JobService(s).update(
-                    job, "interrupted" if e.code == "CANCELLED" else "failed", e.code
-                )
+                if job:
+                    try:
+                        JobService(s).update(
+                            job,
+                            "interrupted" if e.code == "CANCELLED" else "failed",
+                            e.code,
+                        )
+                    except Exception:
+                        pass
                 raise
+            except Exception as e:
+                if job:
+                    try:
+                        JobService(s).update(job, "failed", str(e))
+                    except Exception:
+                        pass
+                raise
+
+            # Primary rebuild succeeded! Update job status safely without failing rebuild.
+            if job:
+                try:
+                    JobService(s).update(job, "complete")
+                except Exception as job_err:
+                    job_warning = (
+                        f"job_bookkeeping_unavailable: {type(job_err).__name__}"
+                    )
+
+            estimate = None
+            age_us = None
+            try:
+                search_store = s.open_search(readonly=True)
+                try:
+                    estimate = search_store.estimate_rebuild_cost()
+                    age_us = search_store.index_age_us()
+                finally:
+                    search_store.close()
+            except Exception:
+                pass
+
+            result_payload = {
+                "job_id": job,
+                "generations": data,
+                "duration_ms": getattr(data, "duration_ms", None),
+                "documents_indexed": getattr(data, "documents_indexed", None),
+                "bytes_indexed": getattr(data, "bytes_indexed", None),
+            }
+            warnings = []
+            if getattr(data, "warning", None):
+                warnings.append(data.warning)
+            if job_warning:
+                warnings.append(job_warning)
+            if warnings:
+                result_payload["warning"] = "; ".join(warnings)
+                result_payload["warnings"] = warnings
+            if estimate:
+                result_payload["estimate"] = estimate
+            if age_us is not None:
+                result_payload["age_us"] = age_us
+            return Result(result_payload, catalog=s.revision())
 
     def index_status(self):
         with Store(self.path, readonly=True) as s:
             core_rev = s.revision()["local_revision"]
+            search_data = None
+            search_error = None
             try:
                 search_store = s.open_search(readonly=True)
                 try:
@@ -405,63 +443,186 @@ class MaintenanceService:
                     )
                     fence = search_row["core_revision_fence"] if search_row else None
                     age_us = search_store.index_age_us()
-                    estimate = search_store.estimate_rebuild_cost()
                     generations = [
                         dict(g)
                         for g in search_store.all(
                             "SELECT index_generation_id, kind, state, table_name, core_revision_fence, created_at_us FROM index_generations ORDER BY created_at_us"
                         )
                     ]
-                    status = "ready"
-                    if fence is None or fence != core_rev:
+                    config_backend = s.config.get("search", {}).get("backend", "auto")
+                    kinds_info = {}
+                    for k in ("code", "commits", "pr", "issue"):
+                        ready_gen = search_store.one(
+                            "SELECT index_generation_id, kind, state, table_name, core_revision_fence, created_at_us FROM index_generations WHERE kind=? AND state='ready' ORDER BY index_generation_id DESC LIMIT 1",
+                            (k,),
+                        )
+                        if ready_gen:
+                            is_fresh = bool(
+                                ready_gen["core_revision_fence"] is not None
+                                and ready_gen["core_revision_fence"] == core_rev
+                            )
+                            uses_fts = bool(
+                                k in ("code", "commits")
+                                and is_fresh
+                                and config_backend in ("fts", "auto")
+                            )
+                            query_backend = "fts" if uses_fts else "scan"
+                            kinds_info[k] = {
+                                "kind": k,
+                                "ready": True,
+                                "generation_id": ready_gen["index_generation_id"],
+                                "indexed_core_revision": ready_gen[
+                                    "core_revision_fence"
+                                ],
+                                "current_core_revision": core_rev,
+                                "fresh": is_fresh,
+                                "last_rebuilt_at_us": ready_gen["created_at_us"],
+                                "query_backend": query_backend,
+                                "uses_fts": uses_fts,
+                            }
+                        else:
+                            kinds_info[k] = {
+                                "kind": k,
+                                "ready": False,
+                                "generation_id": None,
+                                "indexed_core_revision": None,
+                                "current_core_revision": core_rev,
+                                "fresh": False,
+                                "last_rebuilt_at_us": None,
+                                "query_backend": "scan",
+                                "uses_fts": False,
+                            }
+
+                    ready_count = sum(1 for k in kinds_info.values() if k["ready"])
+                    fresh_count = sum(1 for k in kinds_info.values() if k["fresh"])
+
+                    if ready_count == 4 and fresh_count == 4:
+                        status = "ready"
+                        stale = False
+                    elif fresh_count > 0:
+                        status = "partial"
+                        stale = True
+                    elif ready_count == 4 and fresh_count == 0:
                         status = "stale"
-                    data = {
+                        stale = True
+                    else:
+                        status = "incomplete"
+                        stale = True
+
+                    min_fence = (
+                        min(
+                            (
+                                k["indexed_core_revision"]
+                                for k in kinds_info.values()
+                                if k["indexed_core_revision"] is not None
+                            ),
+                            default=None,
+                        )
+                        if ready_count == 4
+                        else None
+                    )
+
+                    search_data = {
                         "status": status,
                         "core_revision": core_rev,
-                        "core_revision_fence": fence,
-                        "stale": fence != core_rev,
+                        "core_revision_fence": min_fence,
+                        "global_fence": fence,
+                        "stale": stale,
                         "age_us": age_us,
+                        "kinds": kinds_info,
                         "generations": generations,
-                        "cost_estimate": estimate,
                     }
                 finally:
                     search_store.close()
             except CatalogError as e:
-                if e.code in ("NOT_INITIALIZED", "INDEX_UNAVAILABLE"):
-                    data = {
-                        "status": "absent",
-                        "core_revision": core_rev,
-                        "core_revision_fence": None,
-                        "stale": True,
-                        "age_us": None,
-                        "generations": [],
-                        "cost_estimate": {
-                            "runs": 0,
-                            "estimated_duration_ms": None,
-                            "previous_duration_ms": None,
-                            "avg_duration_ms": None,
-                            "ms_per_doc": None,
-                            "avg_documents_indexed": 0,
-                        },
+                search_error = e.code
+            except Exception as e:
+                search_error = type(e).__name__
+
+            # Telemetry is strictly decoupled from Search DB health
+            cost_estimate = None
+            try:
+                # Use safely isolated SearchStore.estimate_rebuild_cost or direct OperationalStore
+                op_store = None
+                try:
+                    op_store = s.operational
+                    cost_estimate = op_store.estimate_rebuild_cost()
+                    cost_estimate["telemetry_status"] = "available"
+                except CatalogError as op_err:
+                    is_uninit = op_err.code == "NOT_INITIALIZED"
+                    cost_estimate = {
+                        "runs": 0,
+                        "historical_average_duration_ms": None,
+                        "previous_measured_duration_ms": None,
+                        "estimated_duration_ms": None,
+                        "previous_duration_ms": None,
+                        "avg_duration_ms": None,
+                        "ms_per_doc": None,
+                        "avg_documents_indexed": 0,
+                        "telemetry_status": (
+                            "uninitialized" if is_uninit else "unavailable"
+                        ),
+                        "telemetry_diagnostic": (
+                            "Operational database not initialized"
+                            if is_uninit
+                            else f"Operational database error: {op_err.code}"
+                        ),
                     }
-                else:
-                    data = {
-                        "status": "corrupt",
-                        "error": e.code,
-                        "core_revision": core_rev,
-                        "core_revision_fence": None,
-                        "stale": True,
-                        "age_us": None,
-                        "generations": [],
-                        "cost_estimate": {
-                            "runs": 0,
-                            "estimated_duration_ms": None,
-                            "previous_duration_ms": None,
-                            "avg_duration_ms": None,
-                            "ms_per_doc": None,
-                            "avg_documents_indexed": 0,
-                        },
+                except Exception as op_err:
+                    cost_estimate = {
+                        "runs": 0,
+                        "historical_average_duration_ms": None,
+                        "previous_measured_duration_ms": None,
+                        "estimated_duration_ms": None,
+                        "previous_duration_ms": None,
+                        "avg_duration_ms": None,
+                        "ms_per_doc": None,
+                        "avg_documents_indexed": 0,
+                        "telemetry_status": "unavailable",
+                        "telemetry_diagnostic": f"Operational database error: {type(op_err).__name__}",
                     }
+            except Exception as e:
+                cost_estimate = {
+                    "runs": 0,
+                    "historical_average_duration_ms": None,
+                    "previous_measured_duration_ms": None,
+                    "estimated_duration_ms": None,
+                    "previous_duration_ms": None,
+                    "avg_duration_ms": None,
+                    "ms_per_doc": None,
+                    "avg_documents_indexed": 0,
+                    "telemetry_status": "unavailable",
+                    "telemetry_diagnostic": f"Operational telemetry error: {type(e).__name__}",
+                }
+
+            if search_data is not None:
+                data = search_data
+                data["cost_estimate"] = cost_estimate
+                data["telemetry_status"] = cost_estimate.get(
+                    "telemetry_status", "available"
+                )
+                if "telemetry_diagnostic" in cost_estimate:
+                    data["telemetry_diagnostic"] = cost_estimate["telemetry_diagnostic"]
+            else:
+                is_absent = search_error in ("NOT_INITIALIZED", "INDEX_UNAVAILABLE")
+                data = {
+                    "status": "absent" if is_absent else "corrupt",
+                    "core_revision": core_rev,
+                    "core_revision_fence": None,
+                    "stale": True,
+                    "age_us": None,
+                    "kinds": {},
+                    "generations": [],
+                    "cost_estimate": cost_estimate,
+                    "telemetry_status": cost_estimate.get(
+                        "telemetry_status", "unavailable"
+                    ),
+                }
+                if not is_absent:
+                    data["error"] = search_error
+                if "telemetry_diagnostic" in cost_estimate:
+                    data["telemetry_diagnostic"] = cost_estimate["telemetry_diagnostic"]
+
             return Result(data, catalog=s.revision())
 
     def database(self, action, args):

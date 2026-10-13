@@ -502,10 +502,25 @@ def test_multipage_recovery_parameterized_divergence(tmp_path, core_pages, op_cu
         c_old = facts.begin(repo, None, "pr-list", job_id, root_url)
         old_fc_id = c_old["fetch_collection_id"]
 
-        # Insert committed pages into Core according to core_pages
+        def make_member(cr_id):
+            if not store.one(
+                "SELECT 1 FROM change_requests WHERE change_request_id=?",
+                (f"cr-{cr_id}",),
+            ):
+                store.execute(
+                    "INSERT INTO change_requests(change_request_id, repository_uuidv4, repository_binding_id, change_request_kind, provider_change_request_number) VALUES(?,?,'bind-1','pull_request',?)",
+                    (f"cr-{cr_id}", repo_id, cr_id),
+                )
+            return {
+                "family": "change-request",
+                "change_request_id": f"cr-{cr_id}",
+                "state_digest": f"{cr_id:064x}",
+            }
+
+        # Insert committed pages into Core according to core_pages with concrete members
         for i in range(core_pages):
             next_c = f"https://api.github.com/repos/test/pulls?page={i + 2}"
-            facts.page(c_old, 1000 + i, next_c, [])
+            facts.page(c_old, 1000 + i, next_c, [make_member(i + 1)])
 
         # Set Operational cursor to op_cursor
         with store.operational.transaction():
@@ -521,9 +536,9 @@ def test_multipage_recovery_parameterized_divergence(tmp_path, core_pages, op_cu
         assert c_resumed["cursor"] is None
         assert c_resumed["state"] == "running"
 
-        # Simulate complete execution of the fresh collection from the root endpoint:
-        facts.page(c_resumed, 2000, "page2", [])
-        facts.page(c_resumed, 2001, None, [])
+        # Simulate complete execution of the fresh collection from the root endpoint with fresh members:
+        facts.page(c_resumed, 2000, "page2", [make_member(101)])
+        facts.page(c_resumed, 2001, None, [make_member(102)])
         facts.finish(c_resumed)
 
         # Verify Core has completion marker
@@ -534,6 +549,16 @@ def test_multipage_recovery_parameterized_divergence(tmp_path, core_pages, op_cu
             )
             is not None
         )
+        # Verify actual final membership in Core contains the full fresh pages, not grafted old prefix
+        fresh_pages = store.all(
+            "SELECT members FROM current_collection_pages WHERE fetch_collection_id=? ORDER BY ordinal",
+            (c_resumed["fetch_collection_id"],),
+        )
+        assert len(fresh_pages) == 2
+        import json
+
+        assert json.loads(fresh_pages[0]["members"]) == [make_member(101)]
+        assert json.loads(fresh_pages[1]["members"]) == [make_member(102)]
 
 
 def test_graphql_thread_child_continuation_divergence(tmp_path):
