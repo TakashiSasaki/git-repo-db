@@ -122,3 +122,30 @@ uv run --no-sync python scripts/build_docs_site.py --check
 2. `mkdocs.yml` の `nav` セクションにページタイトルと相対パスを追加します。
 3. `scripts/build_docs_site.py` を実行して、リンク切れや構文エラーがないかを検証します。
 4. 過去の記録と現在の仕様を混同しないよう、最新のアーキテクチャ（Three-Store, Core 21 / Op 1 / Search 1）に基づいていることを確認してください。
+
+---
+
+## 6. PWA (Progressive Web App) 対応とアイコン管理
+
+本ドキュメントサイトは、オフライン閲覧およびデスクトップ／モバイルへのインストール（PWA）に対応しています。
+
+### PWA 構成ファイル
+- **Web App Manifest**: `docs/site/manifest.webmanifest`（および互換用 `docs/site/manifest.json`）
+- **Service Worker**: `docs/site/sw.js`（静的アセットおよびナビゲーションキャッシュ、オフラインフォールバック）
+- **クライアント登録スクリプト**: `docs/site/pwa.js`（全ページで自動ロード）
+- **テンプレートカスタマイズ**: `overrides/main.html`（マニフェスト、アイコン、テーマカラータグの注入）
+
+### アイコン仕様と生成ツール
+アイコンは SVG を正本とし、`scripts/generate_pwa_icons.js` により各解像度の PNG を生成します。
+- `icon.svg`: 512x512 マスターベクターアイコン（Git DAG と Three-Store 円筒スタックのモダンデザイン）
+- `icon-maskable.svg`: 512x512 マスカブルベクターアイコン（80% セーフゾーン設計）
+- `icon-512.png`, `icon-192.png`: 標準 PWA インストール用 PNG
+- `icon-maskable-512.png`, `icon-maskable-192.png`: Android アダプティブアイコン用 PNG
+- `icon-180.png`: iOS / iPadOS 用 Apple Touch Icon
+- `favicon-32.png`, `favicon-16.png`, `favicon.ico`: 標準ブラウザタブ用ファビコン
+
+SVG アイコンを更新した場合は、以下のコマンドで PNG 群を再生成します：
+```bash
+bun run scripts/generate_pwa_icons.js
+```
+

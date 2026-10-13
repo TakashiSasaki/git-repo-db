@@ -102,3 +102,22 @@ Writing `site/` without a leading slash in `.gitignore` causes Git to ignore any
    - Deploy only the prepared static directory (`site/`) using official `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`.
    - Never push directly to a `gh-pages` branch. Never upload repository root.
    - Do not commit or upload a `CNAME` file when Pages custom domain is already managed via repository settings.
+
+---
+
+## 8. PWA Installability & Web App Manifest Assets
+
+### Invariants for PWA Support
+1. **Web App Manifest**:
+   - Provide `manifest.webmanifest` (and `manifest.json`) at the site root with `name`, `short_name`, `start_url: "/"`, `display: "standalone"`, and icons.
+   - Whitelist `.webmanifest` in `PUBLIC_ALLOWLIST_EXTENSIONS`.
+2. **Icons Specification**:
+   - Vector master: SVG icon (`icon.svg`) and maskable SVG (`icon-maskable.svg` with 80% safe zone).
+   - High-resolution PNGs: 192x192, 512x512, 180x180 (Apple touch icon), 32x32, 16x16.
+   - Generated reproducibly via `scripts/generate_pwa_icons.js` using Puppeteer.
+3. **Template & Viewer Injection**:
+   - Inject `<link rel="manifest">`, `<link rel="apple-touch-icon">`, and `<meta name="theme-color">` via `overrides/main.html` for MkDocs pages.
+   - Inject identical head tags during staging for the standalone schema viewer at `/schema/viewer/index.html`.
+4. **Service Worker (`sw.js`)**:
+   - Register at root scope `/` via `pwa.js`.
+   - Provide network-first navigation caching with offline fallback and stale-while-revalidate for static assets.
