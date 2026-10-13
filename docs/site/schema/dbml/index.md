@@ -22,13 +22,30 @@
 
 ---
 
+## どんな可視化においても適用される大原則：3つの物理データベース分離の反映
+
+本プロジェクトのデータベースアーキテクチャ（[ADR 0002](../../adr/0002-three-store-boundary-architecture/)）は、単一の巨大な RDBMS ではなく、**責務の異なる 3 つの独立した SQLite データベースファイルに物理分離** されています。
+
+いかなるツールや可視化方法（DBML, dbdiagram, Azimutt, SchemaSpy, Eraser, Mermaid, インタラクティブビューアー）においても、**「複数のデータベースに分かれている事実」** が視覚的に明確に反映されます：
+
+| 可視化ツール / 手法 | 複数データベース分離の反映方法 | 物理境界の保証 |
+|---|---|---|
+| **dbdiagram.io / dbdocs.io** | 個別ストアの DBML (`core`, `operational`, `search`) は完全分離。<br>全体図 (`combined.dbml`) では **`TableGroup core_store` / `operational_store` / `search_store`** の枠線コンテナで所属 DB を厳格に分離表示。 | 物理外部キー（実線）はストア境界を**絶対に越えない**。ストア間は論理依存（コメント）としてのみ表現。 |
+| **Azimutt** | `catalog.sql` / `operational.sql` / `search.sql` を 3 つの独立データソース（Sources）として取り込み。<br>各テーブルノードに所属 DB のバッジと色分けが付与される。 | ストアをまたぐテーブル探査時も、どの物理データベースに属するテーブルかが一目で識別可能。 |
+| **SchemaSpy** | `catalog.sqlite3` / `operational.sqlite3` / `search.sqlite3` ごとに完全に独立した HTML レポートディレクトリを出力。 | データベースファイル単位のメタデータ解析により、ストア間の物理的混濁がゼロ。 |
+| **Eraser.io** | ダイアグラム内の `group` 構文およびカラーパレット（青 / 藍 / 緑）により、3 つの物理ストアを独立したコンテナで囲んで表示。 | ドキュメント上でも 3 つの物理境界が視覚的に分離。 |
+| **インタラクティブビューアー** | 画面最上部のストア切り替えタブ（Core 70 / Operational 10 / Search 4）およびストア別アクセントカラー。 | 同一画面に混在させず、ストアごとにスコープされた探索ワークベンチを提供。 |
+| **Mermaid ダイアグラム** | `subgraph CoreStore` / `OpStore` / `SearchStore` による明示的コンテナ分離。<br>ストア内は実線（物理 FK）、ストア間は点線（論理依存）。 | 図の構造自体が ADR 0002 の 3 ストア物理境界を表現。 |
+
+---
+
 ## 重要：combined.dbml の位置付け
 
 > [!WARNING]
 > **物理的な単一データベースではありません**:  
 > `combined.dbml` は、システム全体に存在するテーブル群の関係性を俯瞰するための**概念的な表現（Conceptual Representation）**です。
 > 
-> [ADR 0002](../../adr/0002-three-store-boundary-architecture/) に規定されているとおり、実際の本番環境では `catalog.sqlite3`、`operational.sqlite3`、`search.sqlite3` の **3 つの独立した SQLite ファイルに物理分離** されており、ストアをまたぐ物理外部キー制約は存在しません。
+> [ADR 0002](../../adr/0002-three-store-boundary-architecture/) に規定されているとおり、実際の本番環境では `catalog.sqlite3`、`operational.sqlite3`、`search.sqlite3` の **3 つの独立した SQLite ファイルに物理分離** されており、ストアをまたぐ物理外部キー制約は存在しません。dbdiagram.io などにインポートした際も、`TableGroup` によって 3 つの物理ストアの境界が維持されます。
 
 ---
 
