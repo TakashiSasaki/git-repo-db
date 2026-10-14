@@ -4,6 +4,8 @@
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永続化します。PR・文書・スレッド・Source、通常Issueとそのコメント、レビュー概要とレビューコメントは、必要な証拠を伴う各リソースの最新受理状態を保存します。
 通常ランタイムは catalog3、現在の schema version は **21** です。PR・文書・スレッド・Sourceの現在状態と、Git object・取得範囲の証拠を直接所有者に結び付けます。絶対時刻は Unix epoch マイクロ秒の INTEGER です。[現行実装と検証状況](docs/phase2/publication-free-implementation.md)、[全schema対応表](docs/phase2/publication-free-schema-map.json)、[packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)を参照してください。旧開発 DB と v2 importer は対応しません。過去の検証記録は新形式の最終受入を意味しません。
 
+設計上の制約・ADR運用規範とその採択状態は、開発者・コーディングエージェント共通の入口である [docs/adr/README.md](docs/adr/README.md) を参照してください。
+
 ## ドキュメント・スキーマ可視化
 
 公式ドキュメントおよびインタラクティブなスキーマ可視化ワークベンチを公開しています：

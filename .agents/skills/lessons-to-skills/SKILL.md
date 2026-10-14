@@ -35,8 +35,12 @@ When capturing a correction of this kind:
    alone is not supersession, and implementation existence is not owner approval
    of its permanent retention or a broader guarantee.
 2. Update the current register, overview and applicable agent instructions
-   together. Preserve old choices/receipts verbatim in an explicitly referenced
-   snapshot or historical section; never relabel an old failed execution as PASS.
+   together. For ADR decision text, first check the [shared ADR policy](../../../docs/adr/policy.md)
+   and its adoption/migration status: use its approved retirement workflow rather
+   than copying superseded decisions into a new HEAD snapshot. Preserve actual
+   execution receipts with their original meaning and explicit historical scope;
+   never relabel an old failed execution as PASS. A policy proposal alone does not
+   authorize bulk retirement of existing ADRs.
 3. Separate accepted policy, implementation/integration and actually executed
    verification. Keep source-unclear IDs unresolved rather than guessing their
    meaning. A preserved word such as "paused" is not itself a current defect.

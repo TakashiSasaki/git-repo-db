@@ -2,6 +2,8 @@
 
 This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese.
 
+Before design, implementation or review, consult [the ADR index](docs/adr/README.md) for applicable decisions and the shared operating policy's adoption status.
+
 ## Product and authorization
 
 **Latest accepted physical-integrity assurance: [ADR 0010 / GCTX-M07](docs/adr/0010-operation-scoped-cas-physical-integrity.md).** Apply operation-specific guarantees: metadata-only and historical canonical queries need no per-read raw-body rehash, but successful verified raw-byte export and requests for current physical integrity MUST validate the actual selected/emitted bytes with consistent instance/snapshot scope; old admission or last scan cannot certify healthy-now. Known faults/quarantine fail closed for byte-dependent operations; explicit audits report as-of scope. Never emit unverified bytes as a successful verified output or verify A then output unprotected B. Keep Core append-only, no generic scan-success history, CAS-41 active physical quarantine accounting. GCTX-M08 append-only physical repair and exact output/snapshot implementation remain undecided.
@@ -65,6 +67,8 @@ For substantial architectural changes, record owner-approved decisions in a focu
 Use one controlled workload at a time for comparative performance; concurrent test timings are not sequential benchmark evidence. Historical reports remain intact. Update active docs for materially changed behavior. Submit actual PR dependencies and review findings. Merges require explicit authorization for the named stack and independent verification of integration ancestry and effective trees.
 
 ## Reuse lessons as repository Agent Skills
+
+For ADR authoring, replacement or review, consult the optional [ADR workflow skill](.agents/skills/adr-workflow/SKILL.md); the shared policy and its adoption state remain at the ADR index above.
 
 Repository-local skills live in `.agents/skills/<skill-name>/SKILL.md` with YAML `name` and `description`; optional `references/` and `scripts/` belong beside the skill. At task start, discover and read **relevant** skills rather than loading every skill. Agents without automatic skill discovery should consult this directory explicitly. Skills describe reusable procedures, not policy changes or additional tool permissions.
 
