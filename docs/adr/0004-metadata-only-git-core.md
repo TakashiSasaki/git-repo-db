@@ -7,6 +7,7 @@
 - **Design baseline:** ADR 0003 in PR #44, commit `2dc0e438c3d029866b847f4e3404a3b7dbaa2b26`, tree `181ab8ef9b1239f1e95e8a6ce61f43d8e46b1840`. The implemented baseline remains Three-Store Core Schema 21 / Operational Schema 1 / Search Schema 1.
 - **Predecessor:** [ADR 0003](0003-append-only-git-core-and-context-store.md), narrowly superseded as specified below.
 - **Implementation planning:** [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md).
+- **Subsequent identity decision:** [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) selects one common nominal identity keyed by `(object_format, oid)` with separate attributed metadata; physical schema and observation grouping remain open.
 
 ## 1. Binding requirement, not an optional optimization
 
@@ -116,7 +117,7 @@ These are requirements for subsequent implementation tests, **not tests executed
 
 ## 8. Still unresolved; do not infer owner approval
 
-Physical table names/counts and DDL; whether `git_objects` becomes a nominal registry or a separate registry is introduced; exact typed assertion/provenance representation; conflict-read policy; grouping of partial relationship observations; verification service/result location (including the Context proposal); detailed completion scopes; append-only physical repair and revision/fence protocols; Exchange wire versions; cross-store transaction and backup algorithms; GC-03/GC-04.
+Physical table names/counts and DDL; whether `git_objects` implements the common nominal registry chosen by GCTX-M02 or a separate table is introduced; exact typed assertion/provenance representation; conflict-read policy; grouping of partial relationship observations; verification service/result location (including the Context proposal); detailed completion scopes; append-only physical repair and revision/fence protocols; Exchange wire versions; cross-store transaction and backup algorithms; GC-03/GC-04.
 
 The next design decisions should address nominal identity versus attributed metadata and conflicting observations before fixing late-FK resolution or deleting `verified`. A conceptual registry/assertions/optional-proof separation is a candidate, not an approved DDL or generic proof system.
 
