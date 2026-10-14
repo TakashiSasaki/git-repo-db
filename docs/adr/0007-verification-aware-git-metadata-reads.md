@@ -85,11 +85,11 @@ This ADR makes no final choice about whether a historical byte-backed projection
 9. Exchange reversed/repeated or a sender-asserted verification cannot create receiver-local verified status or update old claims. Git-only/Context-absent backup and Search direct-read fallback still return appropriately qualified metadata.
 10. Query results, alternatives and their proofs use consistent read snapshots and cannot splice incompatible group versions or unrelated provider scopes.
 
-## 7. Deliberately unresolved: next GCTX-M05
+## 7. Subsequent owner decision: GCTX-M05 accepted; next GCTX-M06
 
-**GCTX-M05:** Separate **who executes** Git byte identity verification, **where its locally valid evidence must remain durable**, and **who owns source/Provider-specific verification assessments**. Compare Core-owned Git intrinsic verification/evidence, a Context-led verification record with self-contained Core admission checks, and explicit division among Core intrinsic checks, Context-specific assessments and Operational scheduling. Maintain Git-only Core independence and exact optional byte admission. A verification-result placement is NOT fixed by GCTX-M04.
+[ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md) fixes Git-intrinsic verification and necessary durable evidence in Core, Provider-specific assessments in Context, and execution/Jobs in Operational. A shared verification library does not make Context the Core admission authority. GCTX-M06 will decide immutable evidence granularity and current physical-health guarantees.
 
-Other open decisions include: exact physical schemas, metadata types and relation-group identity; verified-evidence record layout; completeness proofs; health/recheck policy and append-only CAS repair; local revision/read fences; two-DB transactions/backup pairing; Exchange wire identity; GC-03/GC-04. This ADR does not select any of those.
+Other open decisions include: exact physical schemas, metadata types and relation-group identity; GCTX-M05 verifier domain ownership fixed by ADR 0008 while exact evidence record layout is still open; completeness proofs; health/recheck policy and append-only CAS repair; local revision/read fences; two-DB transactions/backup pairing; Exchange wire identity; GC-03/GC-04. This ADR does not select any of those.
 
 ## 8. Work scope
 

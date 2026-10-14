@@ -7,7 +7,7 @@
 - **Predecessors:** [ADR 0002](0002-three-store-boundary-architecture.md), [ADR 0001](0001-validation-lifecycle-architecture.md), [No independent Publication](../phase2/no-independent-publication-adr.md).
 - **Implementation preparation:** [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md).
 
-**Later owner decision, GCTX-M01:** [ADR 0004](0004-metadata-only-git-core.md) requires Git Core alone to catalog commit/parent/tree/blob attributes and relationships with no raw object bytes. It overrides verified-only metadata admission, not append-only storage, Context independence or exact checks on optional byte-verified representations. Verification placement and concrete schema remain undecided. Read the scoped supersession before applying earlier verified-byte wording below or in historical handoffs.
+**Later owner decision, GCTX-M01:** [ADR 0004](0004-metadata-only-git-core.md) requires Git Core alone to catalog commit/parent/tree/blob attributes and relationships with no raw object bytes. It overrides verified-only metadata admission, not append-only storage, Context independence or exact checks on optional byte-verified representations. Verifier domain responsibility was later fixed by [ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md): Core owns Git intrinsic verification and necessary durable evidence; Context owns Provider assessments; Operational owns Jobs. Exact evidence/health schema remains open. Read the scoped supersession before applying earlier verified-byte wording below or in historical handoffs.
 
 ## Motivation and conceptual boundary
 

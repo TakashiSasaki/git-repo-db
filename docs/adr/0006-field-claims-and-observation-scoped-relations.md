@@ -73,7 +73,7 @@ If verified raw bytes for `C` later contain `[P,Q]`, the verified canonical stru
 
 [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md) adopts verification-aware canonical read projections while preserving all source-attributed alternatives. Compatible unverified reports remain reported/unverified; unresolved contradictions return an explicit conflict, never a source/time/decoder-selected winner. Receiver-verified bytes justify only the specifically checked intrinsic field or relation. This is a query policy, not a record mutation, implicit group union, mandatory raw fetch, or determination of verification-result ownership. Next GCTX-M05 addresses the latter.
 
-Still unresolved: concrete DDL and table names/counts; exact field/relationship schemas, group IDs and portable provenance; detailed complete/partial evidence admission; implementation details of ADR 0007 query projections/graph traversal; verification service/evidence ownership (including the user's earlier Context suggestion); append-only-safe CAS repair, read fences, cross-store transactions/backups, Exchange wire shape and GC-03/GC-04.
+Still unresolved: concrete DDL and table names/counts; exact field/relationship schemas, group IDs and portable provenance; detailed complete/partial evidence admission; implementation details of ADR 0007 query projections/graph traversal; verification domain ownership fixed by ADR 0008 while exact evidence record layout/current-health policy remain open; append-only-safe CAS repair, read fences, cross-store transactions/backups, Exchange wire shape and GC-03/GC-04.
 
 ## 6. Work scope
 
