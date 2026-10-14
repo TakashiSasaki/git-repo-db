@@ -10,6 +10,7 @@ This directory contains formal Architecture Decision Records for the `git-repo-d
 | [ADR 0002](0002-three-store-boundary-architecture.md) | Three-Store Boundary Architecture (PF-P01–PF-P17) | 2026-10-12 | Accepted historical baseline; store placement/backup scope superseded by ADR 0003 |
 | [ADR 0003](0003-append-only-git-core-and-context-store.md) | Append-only Git Core and Durable Context Store | 2026-10-14 | Accepted **target** design; metadata admission narrowly superseded by ADR 0004; implementation pending |
 | [ADR 0004](0004-metadata-only-git-core.md) | Mandatory Metadata-only Git Core (GCTX-M01) | 2026-10-14 | Accepted owner requirement; detailed design and implementation pending |
-| [ADR 0005](0005-common-oid-identity-with-attributed-metadata.md) | Common OID Identity with Attributed Git Metadata (GCTX-M02) | 2026-10-14 | Accepted identity strategy; observation grouping and DDL pending |
+| [ADR 0005](0005-common-oid-identity-with-attributed-metadata.md) | Common OID Identity with Attributed Git Metadata (GCTX-M02) | 2026-10-14 | Accepted common identity; grouping fixed by ADR 0006 |
+| [ADR 0006](0006-field-claims-and-observation-scoped-relations.md) | Field-level Claims and Observation-scoped Git Relation Groups (GCTX-M03) | 2026-10-14 | Accepted hybrid recording granularity; DDL and conflict-read policy pending |
 | [Transport-Independent Core](../transport-independent-core-adr.md) | Transport-independent core persistence and minimal parser provenance | 2026-10-10 | Accepted target design |
 | [Phase 2 No Independent Publication](../phase2/no-independent-publication-adr.md) | No Independent Publication in Phase 2 Architecture | 2026-10-10 | Accepted target design |

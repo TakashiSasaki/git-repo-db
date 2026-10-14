@@ -74,13 +74,11 @@ The following are *future implementation tests*, not executed by this design-onl
 6. Repeated and reversed Exchange, backup/restore and re-ingestion preserve nominal identity and distinct attributed reports; sender-local surrogate IDs and sender's verification declarations do not grant receiver-local authority.
 7. SHA-1 and SHA-256 OID namespaces remain separate, including in foreign references; malformed, shortened and mixed-format identifiers do not enter the nominal full-OID registry.
 
-## 6. Deliberately unresolved: next design question GCTX-M03
+## 6. Subsequent owner decision: GCTX-M03 accepted, next GCTX-M04
 
-**How should reported scalar attributes and multi-valued ordered Git relationships be grouped and attributed, especially for incomplete or conflicting observations?**
+[ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) adopts the typed hybrid: attributed per-field claims for logically scalar Git attributes and observation-scoped typed groups for multi-valued ordered relationships. Incomplete/unknown/complete-empty groups remain distinct; unrelated captures are never silently combined into a complete list. This fixes **metadata recording granularity** only. GCTX-M04 will decide how ordinary reads surface corroborating or conflicting reports and verified-byte evidence. Arrival order, source preference and parser version are not implicitly selected as winners.
 
-Compare source/capture-bounded object reports, individually attributed properties/edges, and a typed hybrid (scalar field claims plus observation-scoped ordered-list groups). No option is accepted until the owner decides. In particular, an independently reported parent edge is not evidence of a complete parent list, and a partial tree page is not a complete tree manifest. Mere arrival order, source preference and parser version do not establish authoritative truth.
-
-Still unresolved: table names/counts/DDL; physical registry layout; provenance record details; conflict and ordinary-read policy; verification execution/result placement (including the prior Context suggestion); metadata/byte/completeness scope semantics; append-only-safe CAS recovery; cross-store transactions, revisions/fences, backup pairing; exact Exchange format; GC-03/GC-04.
+Still unresolved: table names/counts/DDL; physical registry layout; exact provenance and typed claim/group layouts under ADR 0006; conflict and ordinary-read policy; verification execution/result placement (including the prior Context suggestion); metadata/byte/completeness scope semantics; append-only-safe CAS recovery; cross-store transactions, revisions/fences, backup pairing; exact Exchange format; GC-03/GC-04.
 
 ## 7. Design-only scope
 

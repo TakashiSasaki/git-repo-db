@@ -7,7 +7,8 @@
 - **Design baseline:** ADR 0003 in PR #44, commit `2dc0e438c3d029866b847f4e3404a3b7dbaa2b26`, tree `181ab8ef9b1239f1e95e8a6ce61f43d8e46b1840`. The implemented baseline remains Three-Store Core Schema 21 / Operational Schema 1 / Search Schema 1.
 - **Predecessor:** [ADR 0003](0003-append-only-git-core-and-context-store.md), narrowly superseded as specified below.
 - **Implementation planning:** [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md).
-- **Subsequent identity decision:** [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) selects one common nominal identity keyed by `(object_format, oid)` with separate attributed metadata; physical schema and observation grouping remain open.
+- **Subsequent identity decision:** [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) selects one common nominal identity keyed by `(object_format, oid)` with separate attributed metadata.
+- **Subsequent recording-granularity decision:** [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) selects per-field attributed scalar claims and observation-scoped, typed relationship groups. Physical schema and conflict-read policy remain open.
 
 ## 1. Binding requirement, not an optional optimization
 
