@@ -1,5 +1,7 @@
 # Documentation status audit — scoped decision reconciliation
 
+**Subsequent design decision:** This audit examined the implemented Three-Store format before the owner's 2026-10-14 acceptance of [ADR 0003](../adr/0003-append-only-git-core-and-context-store.md). Its original classification remains evidence of that checkpoint; the **current target** is Git Core (strictly append-only) + durable Context + Operational + Search, while the current production implementation remains Three-Store. ADR 0003 supersedes conflicting placement/full-backup assumptions, not the whole earlier decision set. Future manual Provider-text GC belongs to Context, not Git Core.
+
 - **Audit date:** 2026-10-14.
 - **Inspected baseline:** `fb3b1fb4d5e1436c58677d2e867708502fbbc64b`.
 - **Baseline tree:** `ac15a5c264daa55c15f6a3a5c22b7705e7046da8`.

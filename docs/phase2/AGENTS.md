@@ -3,7 +3,7 @@
 The repository-root AGENTS.md remains applicable. For this directory, read the
 current `decision-register.md` and `documentation-status-audit.md`, then
 `no-independent-publication-adr.md` and `../adr/0002-three-store-boundary-architecture.md`
-for their accepted decisions before consulting older proposals or prototypes.
+for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read [ADR 0003](../adr/0003-append-only-git-core-and-context-store.md) and the [Git Core / Context implementation plan](../architecture/git-core-context-transition-plan.md); these narrowly supersede older physical placement/full-catalog backup assumptions without invalidating other Q/PF decisions.
 
 The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and binding
 **PF-P01–PF-P17**. Publication removal and Three-Store implementation are already
@@ -13,9 +13,10 @@ This document itself grants no merge, release, deployment or data-operation perm
 
 The old blanket pause on Q05–Q12 is superseded only within the explicit scope of
 later accepted decisions. Do not replace it with blanket approval of every old
-alternative. Core/Operational/Search placement, best-effort resume, Core-only
-backup, transport-owned HTTP caching, Job retention and Search lifecycle are
-settled. Stronger Exchange trust, additional Git interpretation policy, future
+alternative. The old Core/Operational/Search placement and Core-only full-backup assumption
+were settled in ADR 0002 **for the implemented baseline**, but are **superseded as
+future target architecture by ADR 0003**. Best-effort resume, transport-owned
+HTTP caching, Job retention and explicit Search lifecycle remain settled. Stronger Exchange trust, additional Git interpretation policy, future
 manual-GC rules and other residual boundaries are not approved by implication.
 Consult the register before calling a question either "resolved" or "unselected".
 

@@ -1,4 +1,6 @@
-# Architecture — Catalog3 Schema 20
+# Architecture — preserved Schema 20 architectural explanation
+
+**Current implementation and newer target:** The implemented three-store/Schema 21 status is summarized in [implementation status](implementation-status.md). The later owner-accepted **target**, [ADR 0003](adr/0003-append-only-git-core-and-context-store.md), separates **strictly append-only Git Core** from **durable Context** (PR/Issue/comment/Provider facts), while retaining Operational and Search. Read its [transition plan](architecture/git-core-context-transition-plan.md). The remainder of this page is a preserved older design explanation; its physical placement and mutable-Core assumptions do not define the new target.
 
 The active architecture implements the [accepted Publication-independent reconstruction](phase2/publication-free-design.md). The [implementation handoff](phase2/publication-free-implementation.md) distinguishes implementation from independent review and final acceptance. Earlier boundary/audit receipts remain historical evidence; the 69-table proposal is superseded.
 
