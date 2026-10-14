@@ -13,6 +13,7 @@ This directory contains formal Architecture Decision Records for the `git-repo-d
 | [ADR 0005](0005-common-oid-identity-with-attributed-metadata.md) | Common OID Identity with Attributed Git Metadata (GCTX-M02) | 2026-10-14 | Accepted common identity; grouping fixed by ADR 0006 |
 | [ADR 0006](0006-field-claims-and-observation-scoped-relations.md) | Field-level Claims and Observation-scoped Git Relation Groups (GCTX-M03) | 2026-10-14 | Accepted hybrid granularity; normal reads fixed by ADR 0007 |
 | [ADR 0007](0007-verification-aware-git-metadata-reads.md) | Verification-aware Canonical Git Metadata Reads (GCTX-M04) | 2026-10-14 | Accepted normal-query policy; verifier responsibility fixed by ADR 0008 |
-| [ADR 0008](0008-domain-split-git-verification-ownership.md) | Domain-split Git Verification Ownership (GCTX-M05) | 2026-10-14 | Accepted responsibility split; evidence/health representation pending |
+| [ADR 0008](0008-domain-split-git-verification-ownership.md) | Domain-split Git Verification Ownership (GCTX-M05) | 2026-10-14 | Accepted responsibility split; admission proof fixed by ADR 0009 |
+| [ADR 0009](0009-bounded-byte-admission-and-physical-health.md) | Bounded Verified-byte Admission Evidence and Independent Physical Health (GCTX-M06) | 2026-10-14 | Accepted bounded immutable proof; current-health policy and DDL pending |
 | [Transport-Independent Core](../transport-independent-core-adr.md) | Transport-independent core persistence and minimal parser provenance | 2026-10-10 | Accepted target design |
 | [Phase 2 No Independent Publication](../phase2/no-independent-publication-adr.md) | No Independent Publication in Phase 2 Architecture | 2026-10-10 | Accepted target design |

@@ -67,7 +67,9 @@ This decision fixes **domain ownership**, not DDL/table names, concrete validati
 9. Reversed/repeated Exchange and Core-only / paired backup restore preserve provenance and receiver-trust boundaries.
 10. No generic success-event/Publication ledger, unapproved parser-winner policy or Core mutation bypasses prior decisions.
 
-## 6. Next unresolved design decision: GCTX-M06
+## 6. Subsequent owner decision: GCTX-M06 accepted; next GCTX-M07
+
+[ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md) selects Option B: bounded immutable per-representation admission evidence, separate from current physical-byte health. The following alternatives document the original question, not a still-open owner choice. GCTX-M07 will settle the read/scan current-health assurance protocol.
 
 How should Git Core represent immutable admission of verified original bytes and separate it from **current** physical availability?
 
@@ -75,7 +77,7 @@ How should Git Core represent immutable admission of verified original bytes and
 - **B: Bounded immutable per-representation admission evidence with separate physical-health evaluation.** Atomically bind verified real bytes, identity and intrinsic structure; that committed binding proves historical admission. Physical instance health and current byte availability require their own truthful validation/diagnostics. Do not log every successful periodic rescan.
 - **C: Append-only per-attempt verification history.** Every verification success/failure becomes a separate durable record, independent of bytes, with detailed timing/input; evaluate the storage, stale-result and generic-ledger risks.
 
-**No GCTX-M06 option is decided here.** Do not claim that historical admission proves current healthy bytes. Exact on-read hash frequency/scan freshness, physical-instance identity, quarantine closure, append-only-safe CAS repair and backup integrity are still unresolved.
+**GCTX-M06 is decided by ADR 0009 (Option B).** Do not claim that historical admission proves current healthy bytes. Exact on-read hash frequency/scan freshness, physical-instance identity, quarantine closure, append-only-safe CAS repair and backup integrity are still unresolved.
 
 Other open design work: full 70-table impact/DDL model, typed metadata/provenance and group-completeness evidence, local revision and read fences, Core/Context transaction and backup pairing, Exchange wire format and GC-03/GC-04.
 
