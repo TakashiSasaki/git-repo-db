@@ -8,7 +8,8 @@
 - **Predecessor:** [ADR 0003](0003-append-only-git-core-and-context-store.md), narrowly superseded as specified below.
 - **Implementation planning:** [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md).
 - **Subsequent identity decision:** [ADR 0005 / GCTX-M02](0005-common-oid-identity-with-attributed-metadata.md) selects one common nominal identity keyed by `(object_format, oid)` with separate attributed metadata.
-- **Subsequent recording-granularity decision:** [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) selects per-field attributed scalar claims and observation-scoped, typed relationship groups. Physical schema and conflict-read policy remain open.
+- **Subsequent recording-granularity decision:** [ADR 0006 / GCTX-M03](0006-field-claims-and-observation-scoped-relations.md) selects per-field attributed scalar claims and observation-scoped, typed relationship groups.
+- **Subsequent read decision:** [ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md) selects receiver-verification-aware normal reads, with unverified/conflicting alternatives explicitly retained. Physical schema and verification placement remain open.
 
 ## 1. Binding requirement, not an optional optimization
 

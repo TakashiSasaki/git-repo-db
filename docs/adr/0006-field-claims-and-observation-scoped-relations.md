@@ -69,11 +69,11 @@ If verified raw bytes for `C` later contain `[P,Q]`, the verified canonical stru
 7. After conflicting metadata arrives, admit exact verified canonical bytes. Keep all previous claims and groups, do not falsely promote their validation, and preserve byte-integrity/CAS-41 safeguards.
 8. Retain actual acquisition/ref and repository-membership facts separately; neither a group nor a nominal OID implies that a repository obtained the referenced bytes or completed Git closure.
 
-## 5. Deferred decisions; next GCTX-M04
+## 5. Subsequent owner decision: GCTX-M04 accepted; next GCTX-M05
 
-**GCTX-M04:** Define ordinary read semantics for multiple corroborating or contradictory scalar claims/relation groups, with and without receiver-validated original Git bytes. Compare returning alternatives only, verification-aware projection with visible alternatives, or source/time priority. This ADR does **not** select a winning value, source precedence, verification-result location or group-merging policy.
+[ADR 0007 / GCTX-M04](0007-verification-aware-git-metadata-reads.md) adopts verification-aware canonical read projections while preserving all source-attributed alternatives. Compatible unverified reports remain reported/unverified; unresolved contradictions return an explicit conflict, never a source/time/decoder-selected winner. Receiver-verified bytes justify only the specifically checked intrinsic field or relation. This is a query policy, not a record mutation, implicit group union, mandatory raw fetch, or determination of verification-result ownership. Next GCTX-M05 addresses the latter.
 
-Still unresolved: concrete DDL and table names/counts; exact field/relationship schemas, group IDs and portable provenance; detailed complete/partial evidence admission; ordinary conflict-read/graph traversal policy; verification service/evidence ownership (including the user's earlier Context suggestion); append-only-safe CAS repair, read fences, cross-store transactions/backups, Exchange wire shape and GC-03/GC-04.
+Still unresolved: concrete DDL and table names/counts; exact field/relationship schemas, group IDs and portable provenance; detailed complete/partial evidence admission; implementation details of ADR 0007 query projections/graph traversal; verification service/evidence ownership (including the user's earlier Context suggestion); append-only-safe CAS repair, read fences, cross-store transactions/backups, Exchange wire shape and GC-03/GC-04.
 
 ## 6. Work scope
 
