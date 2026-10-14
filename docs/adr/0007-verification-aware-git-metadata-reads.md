@@ -87,7 +87,7 @@ This ADR makes no final choice about whether a historical byte-backed projection
 
 ## 7. Subsequent owner decision: GCTX-M05 accepted; next GCTX-M06
 
-[ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md) fixes Git-intrinsic verification and necessary durable evidence in Core, Provider-specific assessments in Context, and execution/Jobs in Operational. A shared verification library does not make Context the Core admission authority. [ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md) fixes bounded immutable admission evidence, separate from current physical health. GCTX-M07 will settle current-health assurance/freshness.
+[ADR 0008 / GCTX-M05](0008-domain-split-git-verification-ownership.md) fixes Git-intrinsic verification and necessary durable evidence in Core, Provider-specific assessments in Context, and execution/Jobs in Operational. A shared verification library does not make Context the Core admission authority. [ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md) fixes bounded immutable admission evidence, separate from current physical health. [ADR 0010 / GCTX-M07](0010-operation-scoped-cas-physical-integrity.md) fixes operation-scoped assurance, leaving low-level snapshot/locking and GCTX-M08 physical repair open.
 
 Other open decisions include: exact physical schemas, metadata types and relation-group identity; GCTX-M05 verifier domain ownership fixed by ADR 0008 while exact evidence record layout is still open; completeness proofs; health/recheck policy and append-only CAS repair; local revision/read fences; two-DB transactions/backup pairing; Exchange wire identity; GC-03/GC-04. This ADR does not select any of those.
 

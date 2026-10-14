@@ -39,7 +39,7 @@ The implications are intentionally one-way:
 - `historically_admitted(C)` does not imply `currently_healthy(C)`.
 - `verified_parent(C,P)` does not imply `bytes_present(P)` or complete closure.
 - `historically_admitted(C)` does not turn every previously reported field/parent/entry concerning `C` into a verified claim.
-- An older scan reporting `OK` does not by itself prove **now**; health can be `unknown` or `as_of_snapshot`. The contract for what evidence is sufficiently current remains explicitly open (GCTX-M07).
+- An older scan reporting `OK` does not by itself prove **now**; health can be `unknown` or `as_of_snapshot`. [ADR 0010 / GCTX-M07](0010-operation-scoped-cas-physical-integrity.md) now fixes operation-scoped assurance tiers while the precise snapshot/locking implementation remains open.
 
 In particular, **metadata-only queries do not require original bytes or a full rehash**. Historical validated intrinsic metadata may remain useful even if its original bytes are presently inaccessible, as long as its historical/admission provenance and current byte availability are truthfully distinguished under the GCTX-M04 read contract. No current raw export or successful byte-verified checkout may be inferred solely from a historical admission fact.
 
@@ -62,7 +62,7 @@ In particular, **metadata-only queries do not require original bytes or a full r
 | T4 | A storage error corrupts the previously admitted physical bytes | T2 acceptance remains true historically; current physical-byte integrity cannot be claimed from T2/T3 alone |
 | T5 | Correct bytes are reacquired | Later append-only-safe restoration will require additional physical/evidence facts; must not rewrite T2 bytes or erase T4 diagnosis |
 
-At T4, a Core-only metadata query may still show P as historical byte-derived canonical structure, qualified by the separate physical availability status. It must not mislabel the currently corrupt bytes as healthy. That precise read assurance/recheck policy is GCTX-M07, not decided here.
+At T4, a Core-only metadata query may still show P as historical byte-derived canonical structure, qualified by the separate physical availability status. It must not mislabel the currently corrupt bytes as healthy. That operation-scoped assurance policy is fixed by ADR 0010 / GCTX-M07; exact reader snapshots and recovery are still open.
 
 ## 5. Reconciliation with all prior constraints
 
@@ -92,11 +92,13 @@ At T4, a Core-only metadata query may still show P as historical byte-derived ca
 11. Back up and restore an admitted raw object with a known quarantined physical instance: do not claim healthy/complete by relying on historical admission alone.
 12. Confirm no generic Publication/seal, winning decoder, mutable verified flag or unconditional scan success-history table is introduced.
 
-## 7. Next unresolved decision GCTX-M07
+## 7. Subsequent owner decision: GCTX-M07 accepted; next GCTX-M08
+
+[ADR 0010 / GCTX-M07](0010-operation-scoped-cas-physical-integrity.md) selects Option B: explicit operation-specific integrity assurance. Historical metadata/verified structure does not mandate rehash; operations claiming current verified bytes must check the actual emitted bytes in a coherent scope; audits are as-of. The following A/B/C choices document the original question rather than an unresolved owner decision.
 
 **What current physical-integrity assurance level should each read/operation require, and what freshness/snapshot language is truthful?**
 
-Compare **A: rehash on every byte-backed use**, **B: operation-specific assurance tiers (metadata views may use historical proof; actual byte export or `currently verified` claims require matching current checks; explicit scoped/full audit separately)**, and **C: periodic full scans with as-of health snapshots/cached status**. Distinguish performance, stale scan risk, byte output correctness, known quarantine, read consistency and lock/scan time. This ADR selects none of A/B/C and does not permit historical admission or old `scan OK` to masquerade as current physical health.
+Compare **A: rehash on every byte-backed use**, **B: operation-specific assurance tiers (metadata views may use historical proof; actual byte export or `currently verified` claims require matching current checks; explicit scoped/full audit separately)**, and **C: periodic full scans with as-of health snapshots/cached status**. Distinguish performance, stale scan risk, byte output correctness, known quarantine, read consistency and lock/scan time. ADR 0010 selects B. Neither historical admission nor old `scan OK` may masquerade as current physical health; GCTX-M08 physical repair is still open.
 
 Still unresolved: final nominal/claim/group and representation tables/FKs/DDL, source evidence and complete-list proof, physical CAS instance keys and append-only-safe repair/quarantine, health check/recheck protocol and scan fences, cross-store transaction/backup matching, local revision/fence, Exchange wire, GC-03/GC-04.
 
