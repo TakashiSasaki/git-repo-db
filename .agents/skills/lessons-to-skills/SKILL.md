@@ -19,3 +19,34 @@ Use this procedure when a repeated failure, difficult investigation, or independ
 Reviewers inspecting a frozen read-only tree can recommend lessons but should not alter that tree. The implementing agent owns the subsequent skill edit and revalidation.
 
 The goal is to help the next agent avoid repeating the same failed investigation, **not** to store an exhaustive transcript.
+
+## Status-reconciliation lessons are scope-sensitive
+
+**Observed failure pattern:** a decision register's overview says a whole group
+is resolved while individual sections still say selection is paused. Old
+implementation handoffs can also be mistaken for current pending work. The root
+cause is updating only an umbrella label without mapping the scope and evidence
+of each superseding decision.
+
+When capturing a correction of this kind:
+
+1. Pin the source revision. Map each old question to the explicit later decision,
+   retained implementation guarantee and residual policy separately. A newer date
+   alone is not supersession, and implementation existence is not owner approval
+   of its permanent retention or a broader guarantee.
+2. Update the current register, overview and applicable agent instructions
+   together. Preserve old choices/receipts verbatim in an explicitly referenced
+   snapshot or historical section; never relabel an old failed execution as PASS.
+3. Separate accepted policy, implementation/integration and actually executed
+   verification. Keep source-unclear IDs unresolved rather than guessing their
+   meaning. A preserved word such as "paused" is not itself a current defect.
+4. Check links, unchanged decision text and the final diff. Verify a copied
+   snapshot with `git rev-parse BASE:path/to/original.md` against
+   `git rev-parse HEAD:path/to/snapshot.md`; verify documentation scope with
+   `git diff --name-only BASE...HEAD` and whitespace with `git diff --check`.
+   Replace BASE/HEAD and paths with the inspected revisions and files.
+
+Do not apply this procedure to silently settle a genuine new policy conflict,
+rewrite immutable evidence, or claim runtime acceptance from prose checks. The
+[status audit](../../../docs/phase2/documentation-status-audit.md) records the
+concrete diagnosis and source map; keep run-specific checks in the PR evidence.
