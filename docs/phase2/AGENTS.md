@@ -3,7 +3,7 @@
 The repository-root AGENTS.md remains applicable. For this directory, read the
 current `decision-register.md` and `documentation-status-audit.md`, then
 `no-independent-publication-adr.md` and `../adr/0002-three-store-boundary-architecture.md`
-for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read [ADR 0003](../adr/0003-append-only-git-core-and-context-store.md) and the [Git Core / Context implementation plan](../architecture/git-core-context-transition-plan.md); these narrowly supersede older physical placement/full-catalog backup assumptions without invalidating other Q/PF decisions.
+for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read the [current ADR index](../adr/README.md) and [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md), including ADR 0003–0027 and their scoped replacements. ADR 0026 fixes recovery without quarantine/count/release; ADR 0027 fixes unauthenticated external-origin reports without application PKI/signatures. Unaffected Q/PF guarantees remain; target decisions do not certify their implementation.
 
 The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and binding
 **PF-P01–PF-P17**. Publication removal and Three-Store implementation are already
@@ -37,8 +37,13 @@ Keep latest-state contracts truthful: do not hide superseded values as generic
 history, infer deletion from incomplete scans, or rank domain values by parser
 version or receipt order. Preserve required scope/member/terminal/child evidence.
 Current evidence layout does not imply unlimited retention or deletion permission.
-CAS-41 remains established; CAS-76/CAS-77 need original-source clarification and
-must not be assigned guessed meanings or marked accepted.
+Preserve actual retained-byte/domain, database/manifest/identity and required
+Core+Context pairing validation. ADR 0026 retires the old CAS-41 active-quarantine
+count/order for the new target and requires immediate recovery on authoritative
+corruption; do not reintroduce that baseline mechanism through its old ID.
+Mutable Core revision updates likewise require the append-only-safe/fenced target
+replacement, without a counter-history authority. CAS-76/CAS-77 need original-source
+clarification and must not be assigned guessed meanings or marked accepted.
 
 For verified reusable audit/debugging lessons, consult and improve the relevant
 repository-local `.agents/skills/`. Keep execution receipts separate from skills;
