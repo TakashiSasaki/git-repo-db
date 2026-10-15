@@ -241,7 +241,10 @@ def test_committed_resource_does_not_need_collection_or_operation_success(facts)
     assert facts.execute(
         "SELECT state FROM eligible_change_request_state WHERE change_request_id='pr1'"
     ).fetchone() == ("open",)
-    assert facts.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
+    # Operational jobs are physically absent from this Core-only fixture.
+    assert not facts.execute(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='jobs'"
+    ).fetchall()
     assert facts.execute("SELECT count(*) FROM completion_markers").fetchone()[0] == 0
     assert not facts.execute(
         "SELECT 1 FROM sqlite_schema WHERE name='parsed_results'"
