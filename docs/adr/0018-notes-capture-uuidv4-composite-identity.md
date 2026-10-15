@@ -10,7 +10,7 @@ refines:
 
 # ADR 0018: Origin UUIDv4 and capture UUIDv4 as the direct notes-capture key
 
-**Current refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) accepts direct semantic composite claim/group keys using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance, without surrogates. B02-R01 structural role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 resource policy, exact proof grammar, B03 completeness, GCTX-M10 and concrete DDL/trust remain open; earlier choices below retain their historical scope.
+**Current refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) accepts direct semantic composite claim/group keys using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance, without surrogates. B02-R01 structural role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 configurable finite budget policy is fixed by [ADR 0023](0023-configurable-finite-notes-resource-budgets.md); resource measurement/charging/defaults, exact proof grammar, B03 completeness, GCTX-M10 and concrete DDL/trust remain open; earlier choices below retain their historical scope.
 
 - **Decision ID:** B01-R03.
 - **Owner decision:** **D-1** — one stable issuer/`capture_origin_uuidv4` and one independent `capture_uuidv4` per genuine Git notes-ref observation, directly forming the composite domain primary key; **no receiver-local surrogate**. Both UUIDs are version 4.
@@ -80,7 +80,7 @@ This ADR **does** decide:
 - **B01-R05 is now fixed by [ADR 0020](0020-immutable-competing-notes-member-claims.md):** eligible conflicting member reports become separately attributed immutable alternatives with derived conflict. Forged capture identity still fails closed; direct semantic claim/group keys are fixed by ADR 0021 / B01-R06 A.
 - **B03:** exact complete/partial/known-empty group/list evidence and whether/when a separately supported complete-scope claim can be admitted; no generic mutable completeness promotion.
 - Direct semantic identity/equality is fixed by ADR 0021 / B01-R06 A; concrete member/group grammar, origin authentication/registry, producer takeover/clone security, Exchange wire serialization, schema constraints, locking/read fences and transaction protocols.
-- **B02-R01:** role-evidence strength fixed by ADR 0022; **B02-R02:** budgets and exact proof grammar remain open; **GCTX-M10:** active physical quarantine/disposition predicate.
+- **B02-R01:** role-evidence strength fixed by ADR 0022; **B02-R02:** configurable finite budget policy fixed by ADR 0023; exact measurement/defaults and proof grammar remain open; **GCTX-M10:** active physical quarantine/disposition predicate.
 
 ## 4. Worked cross-catalog example
 
@@ -139,7 +139,7 @@ This is a **capture-specific UUIDv4 issuance rule**, not an authorization to add
 15. Independently validated Git note bytes remain under CAS-41/physical instance checks; UUIDv4 is not a digest or a physical-health certificate.
 16. Confirm B02 note limits, B03 exact completion evidence and GCTX-M10 remain pending and are not accidentally decided via an ID schema.
 
-## 7. Subsequent owner decisions: B01-R04 A, B01-R05 A and B01-R06 A accepted; next B02-R02
+## 7. Subsequent owner decisions: B01-R04 A, B01-R05 A and B01-R06 A accepted; next B02-R03
 
 [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) accepts **Option A**: compatible, source-attributed typed facts/coherent new immutable groups can be appended under the original capture UUIDv4 pair; exact repeated accepted facts are idempotent. Do not modify previously accepted groups, infer complete coverage by union, or replace conflicting claims. ADR 0020 / B01-R05 fixes separately attributed immutable competing member reports and derived conflicts; direct semantic keys are fixed by [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md). The original A/B/C comparison below is historical, not an unselected B01-R04 question.
 
@@ -149,7 +149,7 @@ This is a **capture-specific UUIDv4 issuance rule**, not an authorization to add
 - **B — Single atomic frozen capture snapshot.** Stage incomplete messages outside authoritative Core and admit one fixed capture representation only when final/ready (or admit a deliberately partial frozen result and refuse later extension under the same key). Benefits: simple once-admitted immutability and dedup; costs: delayed partial Core usability and potentially rejecting genuine late-arriving same-capture evidence, contrary to the spirit of metadata-only acceptance.
 - **C — Immutable named fragments within the same capture.** Each separately issued genuine fragment has its own domain-level identity/evidence under the parent capture, with out-of-order/idempotent fragment handling. Benefits: explicit transfer chunk boundaries and provenance; costs: additional justified domain identities, fragmentation/consistency and completion interpretation complexity. Fragments must not become a generic Publication or a storage-only surrogate.
 
-ADR 0019 fixes B01-R04 Option A. Retain a stable capture identity across compatible partial deliveries; never mutate prior coherent groups, fabricate an independent capture for retry, silently overwrite contradictory evidence or use a generic successful batch seal. ADR 0020 / B01-R05 fixes conflicting member reports as immutable attributed alternatives; ADR 0021 / B01-R06 A fixes their direct semantic keys; B03 determines precise completeness evidence; ADR 0022 / B02-R01 fixes required structural role-evidence strength; B02-R02 resource policy and exact proof grammar remain open.
+ADR 0019 fixes B01-R04 Option A. Retain a stable capture identity across compatible partial deliveries; never mutate prior coherent groups, fabricate an independent capture for retry, silently overwrite contradictory evidence or use a generic successful batch seal. ADR 0020 / B01-R05 fixes conflicting member reports as immutable attributed alternatives; ADR 0021 / B01-R06 A fixes their direct semantic keys; B03 determines precise completeness evidence; ADR 0022 / B02-R01 fixes required structural role-evidence strength; B02-R02 configurable finite budget policy is fixed by ADR 0023; exact measurement/defaults and proof grammar remain open.
 
 ## 8. Design-only permissions and references
 

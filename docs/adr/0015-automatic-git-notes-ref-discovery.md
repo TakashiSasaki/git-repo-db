@@ -8,7 +8,7 @@ refines:
 
 # ADR 0015: Automatically discover Git notes refs and allow explicit additional namespaces
 
-**Current refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) accepts direct semantic composite claim/group keys using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance, without surrogates. B02-R01 structural role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 resource policy, exact proof grammar, B03 completeness, GCTX-M10 and concrete DDL/trust remain open; earlier choices below retain their historical scope.
+**Current refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) accepts direct semantic composite claim/group keys using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance, without surrogates. B02-R01 structural role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 configurable finite budget policy is fixed by [ADR 0023](0023-configurable-finite-notes-resource-budgets.md); resource measurement/charging/defaults, exact proof grammar, B03 completeness, GCTX-M10 and concrete DDL/trust remain open; earlier choices below retain their historical scope.
 
 - **Decision ID:** B01-R01 (B01 notes-ref discovery-scope decision; capture/observation identity is subsequently fixed by ADR 0016/0018).
 - **Owner choice:** **Option B** — discover all observable refs under `refs/notes/*`, and permit additional explicitly designated notes refs.
@@ -37,7 +37,7 @@ The product must distinguish:
 
 These are **separate** from ordinary repository-file body retention, native Git object OID identity, Provider context and whole-repository closure. A discovered notes namespace can be cataloged without acquiring every root/tree or note body. Do not silently equate “found ref” with “complete note listing” or “all note bodies retained”.
 
-This decision establishes a *discovery policy*, not a concrete portable observation/capture primary key, source identity grammar, a particular notion of complete enumeration, a minimum/full root proof, or permission to turn malformed/unsupported note-tree entries into canonical notes. Capture/claim identity is subsequently fixed by ADR 0016/0018/0021 and required role-evidence strength by ADR 0022. Exact proof grammar, source trust and B02-R02/B03 acquisition/coverage contracts remain open.
+This decision establishes a *discovery policy*, not a concrete portable observation/capture primary key, source identity grammar, a particular notion of complete enumeration, a minimum/full root proof, or permission to turn malformed/unsupported note-tree entries into canonical notes. Capture/claim identity is subsequently fixed by ADR 0016/0018/0021 and required role-evidence strength by ADR 0022. B02-R02 finite configurable budget policy is fixed by ADR 0023; exact proof grammar, source trust, resource measurement/defaults and B03 acquisition/coverage contracts remain open.
 
 ## 3. Example: multiple namespaces and observations
 
@@ -92,7 +92,7 @@ Git notes namespace enumeration neither implies all notes bodies were preserved 
 14. Validate actual retained note bytes independently of sender success flags; retain CAS-41 fault evidence, allowing zero-byte metadata-only catalogs.
 15. Validate exact ref-name matching, nested notes prefixes and explicit names without leaking remote credentials into Core or relying on a global Git notes display configuration.
 
-## 6. Subsequent owner decisions: B01-R02–R06 accepted; next B02-R02
+## 6. Subsequent owner decisions: B01-R02–R06 accepted; next B02-R03
 
 [ADR 0020 / B01-R05](0020-immutable-competing-notes-member-claims.md) accepts immutable competing notes member reports and derived conflict while preserving B01-R01 ref discovery, capture-scope identity, atomic groups and no ordinary file-body archival. Direct semantic claim/group keys and replay equality are fixed by [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md).
 
@@ -110,6 +110,6 @@ ADR 0016 has now fixed B01-R02 Option B while preserving B01-R01. ADR 0018 / B01
 
 - Git notes primary reference: https://git-scm.com/docs/git-notes (default `refs/notes/commits`, notes namespaces, alternate notes refs, direct-tree notes roots, binary note blobs).
 - Owner-selected scope: B01 Option B in this conversation, after ADR 0014 and GCTX-M01–M09.
-- Follow-on blocking topics: B01-R02 capture-scoped identity is fixed by ADR 0016; B01-R03 direct UUIDv4 key fixed by ADR 0018; B01-R04 monotonic fact admission fixed by ADR 0019; B01-R05 competing member report preservation fixed by ADR 0020; B01-R06 direct semantic claim/group keys fixed by ADR 0021; B02-R01 role-evidence strength fixed by ADR 0022; B02-R02 note-body budgets and exact proof grammar open; B03 notes enumeration/list completeness; GCTX-M10 physical quarantine; physical Core/Context schema, Exchange and backup pairing.
+- Follow-on blocking topics: B01-R02 capture-scoped identity is fixed by ADR 0016; B01-R03 direct UUIDv4 key fixed by ADR 0018; B01-R04 monotonic fact admission fixed by ADR 0019; B01-R05 competing member report preservation fixed by ADR 0020; B01-R06 direct semantic claim/group keys fixed by ADR 0021; B02-R01 role-evidence strength fixed by ADR 0022; B02-R02 finite configurable budget policy fixed by ADR 0023; resource measurement/defaults and exact proof grammar open; B03 notes enumeration/list completeness; GCTX-M10 physical quarantine; physical Core/Context schema, Exchange and backup pairing.
 
 Do not implement, change SQL/DDL or schema version, mutate catalogs, merge PRs, run authenticated acquisition, release or deploy as part of this design-only PR. Counterexamples here are future implementation test requirements, not executed tests; no local runtime/CI verification success is implied.

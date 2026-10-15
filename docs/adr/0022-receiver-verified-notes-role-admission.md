@@ -11,6 +11,8 @@ refines:
 
 # ADR 0022: Require receiver-verified structural notes-role evidence before retaining note bodies
 
+**Subsequent accepted refinement:** [ADR 0023 / B02-R02 A](0023-configurable-finite-notes-resource-budgets.md) fixes finite configurable individual raw-note, aggregate-work and proof-traversal budgets, honest limit stops and explicit finite-increase retry. The resource comparison below is historical; B02-R03 measurement/charging, numeric defaults, exact notes grammar, B03 and GCTX-M10 remain open.
+
 - **Decision ID:** B02-R01, the first B02 body-admissibility choice; **owner selected Option A**, accepted 2026-10-15. This does not settle all B02 questions.
 - **Direct base:** [PR #62 / ADR 0021](https://github.com/TakashiSasaki/git-repo-db/pull/62), verified HEAD `51093022b50d773b0620fb5bec9b0a7b4a7e1544`, branch `codex/adr-0021-semantic-notes-claim-keys`. Documentation-only direct successor; implementation and merge remain forbidden.
 - **Inherited decisions:** ADR 0014–0021, KEY-P01, GCTX-M01–M09 and strictly append-only Git Core. Proposed [PR #52 / ADR 0011 governance](https://github.com/TakashiSasaki/git-repo-db/pull/52) remains unadopted.
@@ -64,7 +66,7 @@ Later ref deletion/rewrite, source distrust, a different resource limit or a com
 | Input/evidence | Required result |
 | --- | --- |
 | API reports C1→N1; only N1's bytes/OID are checked | Keep eligible attributed report, withhold durable N1 body; no fake quarantine or completeness |
-| Relevant captured commit/tree path is locally checked and establishes C1→N1; N1 body checks pass | Role evidence threshold is met for N1; retain exact body only through valid atomic admission and still-unsettled applicable resource rules |
+| Relevant captured commit/tree path is locally checked and establishes C1→N1; N1 body checks pass | Role evidence threshold is met for N1; retain exact body only through valid atomic admission and ADR 0023 finite configurable budgets, with exact accounting/defaults still open |
 | Captured root is directly a tree; relevant mapping/body checks pass | Same role threshold; no fabricated notes commit |
 | Relevant one-note path is checked, other subtrees and C1 body are absent | Do not require whole-list/target-body acquisition; do not infer full inventory or remote absence |
 | Source reports C1→N9 but checked structure proves C1→N1 | Preserve attributable alternatives; only the precisely checked association supports structural role proof. Checking N9's blob alone cannot repair its missing mapping proof |
@@ -90,7 +92,7 @@ Later ref deletion/rewrite, source distrust, a different resource limit or a com
 | GCTX-M08/M09 / ADR 0012/0013 | Immutable copies, durable fault evidence and evidence-derived candidate selection preserved; no repair overwrite/cleanup |
 | Other fixed decisions | Strict Core INSERT-only/no UPDATE/DELETE/REPLACE/GC; permanent repository UUIDv4, known-positive Source, five-column/latest-observation Coverage, Unix epoch microseconds, NO_INDEPENDENT_PUBLICATION, Q01-B/Q02-B/Q03-B, unaffected PF-P01–PF-P17, durable Context, paired full backup and ADR 0001 |
 
-No prior accepted decision needs reversal. Resource policy/numbers, exact supported notes grammar/proof format, source authentication, B03 completeness, GCTX-M10 quarantine/count, physical DDL/wire/fences/backup pairing and Context GC-03/04 remain open. Role proof alone is not a claim that every operational admission prerequisite has been finalized.
+No prior accepted decision needs reversal. Resource policy is fixed by ADR 0023 / B02-R02 A; resource measurement/charging/numeric defaults, exact supported notes grammar/proof format, source authentication, B03 completeness, GCTX-M10 quarantine/count, physical DDL/wire/fences/backup pairing and Context GC-03/04 remain open. Role proof alone is not a claim that every operational admission prerequisite has been finalized.
 
 ## 7. Future adversarial cases (NOT executed product tests)
 
@@ -109,9 +111,9 @@ No prior accepted decision needs reversal. Resource policy/numbers, exact suppor
 13. Ref rewrite/deletion or a later lower budget cannot delete admitted Core data or silently decrement CAS-41 counts.
 14. Core-only metadata backup/restore remains valid without Context/bodies; full Context backup still requires both authoritative stores.
 
-## 8. Next owner blocker: B02-R02 resource-limit policy (OPEN)
+## 8. Historical B02-R02 resource-policy comparison; Option A now accepted by ADR 0023
 
-How should body size, total acquisition work and proof traversal be bounded? A structurally valid note can be huge, and many valid notes can exhaust resources even when each is small. This is a **new unaccepted choice**; no limit or default is fixed here.
+How should body size, total acquisition work and proof traversal be bounded? A structurally valid note can be huge, and many valid notes can exhaust resources even when each is small. The owner subsequently selected **Option A**, fixed by **ADR 0023 / B02-R02**. This comparison is historical; no numeric default was or is fixed here, and B/C are unselected alternatives.
 
 Illustrative workload only: a valid 20 MiB note, 10,000 smaller notes and a proof traversal exceeding the caller's budget. Illustrative policy values such as 8 MiB per note or 128 MiB per operation are examples, **not adopted defaults**.
 
@@ -123,6 +125,6 @@ Under every option, never silently truncate an exact note, represent a stopped s
 
 ## 9. Authorization and verification boundary
 
-The owner selected **B02 Option A**, recorded as **B02-R01 A** only. Options B/C are historical unselected alternatives; B02-R02 is a separate next decision. This PR changes design Markdown and current agent/index/transition guidance only.
+The owner selected **B02 role-admissibility Option A**, recorded as **B02-R01 A**, and subsequently **B02-R02 A**, fixed separately by ADR 0023. Their respective B/C alternatives remain historical and unselected; B02-R03 measurement/charging is next. This ADR changes design Markdown and current agent/index/transition guidance only.
 
 No implementation, Python/application source, SQL/DDL/schema label, executable product test, workflow/dependency, live source acquisition, real-catalog mutation/migration, deployment, release, merge or auto-merge is authorized. Static documentation checks and hosted documentation/development CI are not runtime acceptance of the target. The cases above remain future requirements; no independent review or execution success is implied by listing them. No reusable skill is added for this individual design choice.
