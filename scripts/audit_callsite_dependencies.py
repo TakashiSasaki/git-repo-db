@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -32,9 +33,43 @@ ISOLATED_P1_MODULES = frozenset(
     )
 )
 
+# These explicit optional paths belong to the opt-in P2/P3 implementations.
+# A sibling branch need not contain the other stage's modules. Their presence
+# does not change the historical Schema 21 call-site inventory or activate them.
+ISOLATED_NEXT_STAGE_MODULES = frozenset(
+    "src/repo_catalog/" + relative
+    for relative in (
+        "adapters/git/native.py",
+        "adapters/sqlite/git_core.py",
+        "domain/git_native.py",
+        "adapters/sqlite/production_context.py",
+        "domain/production_context.py",
+    )
+)
+ISOLATED_TARGET_MODULES = ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES
+
+
+def isolated_runtime_imports(source: str, package: str) -> set[str]:
+    """Find direct imports of isolated targets, including relative/from forms."""
+    targets = {
+        path.removeprefix("src/").removesuffix(".py").replace("/", ".")
+        for path in ISOLATED_TARGET_MODULES
+    }
+    imported = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            if node.level:
+                module = importlib.util.resolve_name("." * node.level + module, package)
+            imported.add(module)
+            imported.update(module + "." + alias.name for alias in node.names)
+    return imported & targets
+
 
 def is_baseline_source(path: Path) -> bool:
-    return path.relative_to(ROOT).as_posix() not in ISOLATED_P1_MODULES
+    return path.relative_to(ROOT).as_posix() not in ISOLATED_TARGET_MODULES
 
 
 def build():
