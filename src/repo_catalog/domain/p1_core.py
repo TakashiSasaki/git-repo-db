@@ -615,7 +615,21 @@ def register_functions(connection: sqlite3.Connection) -> None:
     )
     connection.create_function("p1_claim", 2, check_claim, deterministic=True)
     connection.create_function("p1_group", 4, valid_group, deterministic=True)
-    connection.create_function("p1_native", 6, valid_native, deterministic=True)
+
+    def retained_native(fmt, oid, kind, body, size, digest):
+        if not valid_native(fmt, oid, kind, body, size, digest):
+            return False
+        if kind == "blob":
+            return True  # Physical notes-role FK separately restricts this body.
+        try:
+            from repo_catalog.domain.git_native import parse_metadata
+
+            parse_metadata(fmt, kind, body)
+            return True
+        except (ValueError, TypeError, IndexError, UnicodeError):
+            return False
+
+    connection.create_function("p1_native", 6, retained_native, deterministic=True)
     connection.create_function("p1_note_role", 6, valid_note_role, deterministic=True)
     connection.create_function("p1_notes_group", 3, _notes_group, deterministic=True)
     connection.create_function(

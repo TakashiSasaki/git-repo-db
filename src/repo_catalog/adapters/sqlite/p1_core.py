@@ -35,10 +35,14 @@ from repo_catalog.domain.p1_core import (
     RepositoryClaim,
     ScalarClaim,
     ScalarField,
+    _notes_group,
     account_verification,
+    claim_value,
     encode,
     intrinsic_members,
     uuid4_value,
+    valid_coverage_members,
+    valid_group,
     valid_native,
     valid_note_role,
 )
@@ -50,6 +54,14 @@ from repo_catalog.domain.p1_coverage import (
 from repo_catalog.domain.ports.p1_core import WorkBudget
 
 
+def _sqlite_authority_failure(error):
+    """Extended engine codes retain their authoritative primary failure scope."""
+    return isinstance(error, sqlite3.DatabaseError) and (
+        getattr(error, "sqlite_errorcode", 0) & 255
+        in (sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_IOERR)
+    )
+
+
 def _completed_read(method):
     """Linearize successful result delivery against the persistent stop fence."""
 
@@ -59,6 +71,27 @@ def _completed_read(method):
         return self._complete_read(result)
 
     return completed
+
+
+def _decoded_read(method):
+    """Only fixed typed readers may diagnose stored text/JSON decode failures."""
+
+    @wraps(method)
+    def decoded(self, *args, **kwargs):
+        prior_depth = getattr(self, "_typed_read_depth", 0)
+        self._typed_read_depth = prior_depth + 1
+        try:
+            return method(self, *args, **kwargs)
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            self._integrity_stop((method.__name__, "stored-decode", str(error)))
+        except sqlite3.OperationalError as error:
+            if "Could not decode to UTF-8" in str(error):
+                self._integrity_stop((method.__name__, "stored-utf8"))
+            raise
+        finally:
+            self._typed_read_depth = prior_depth
+
+    return decoded
 
 
 class Core:
@@ -81,9 +114,7 @@ class Core:
             try:
                 self._db = connect(path, "core")
             except sqlite3.DatabaseError as error:
-                if Path(path).is_file() and getattr(
-                    error, "sqlite_errorcode", None
-                ) in (sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_CORRUPT):
+                if Path(path).is_file() and _sqlite_authority_failure(error):
                     persist_catalog_stop(
                         self._directory, "Core open corruption: " + str(error)
                     )
@@ -109,6 +140,13 @@ class Core:
         if not db.in_transaction:
             raise CoreFailure(
                 "TRANSACTION", "core", "active coordinator transaction required"
+            )
+        rows = db.execute("SELECT store_role FROM store_identity").fetchall()
+        if len(rows) != 1 or rows[0][0] != "core":
+            raise CoreFailure(
+                "STORE_ROLE",
+                "core",
+                "Core capability requires a Core store transaction",
             )
         result = cls.__new__(cls)
         result._directory = None
@@ -191,10 +229,12 @@ class Core:
         try:
             return self._db.execute(statement, parameters).fetchall()
         except sqlite3.DatabaseError as error:
-            if getattr(error, "sqlite_errorcode", None) in (
-                sqlite3.SQLITE_NOTADB,
-                sqlite3.SQLITE_CORRUPT,
+            if _sqlite_authority_failure(error) or (
+                getattr(self, "_typed_read_depth", 0)
+                and str(error).startswith("Could not decode to UTF-8")
             ):
+                # A fixed typed query identified corruption. Publish before
+                # snapshot rollback/unwinding can admit another completion.
                 self._integrity_stop(("Core read", str(error)))
             raise
 
@@ -229,13 +269,23 @@ class Core:
                         with catalog_completion(self._directory):
                             self._available()
                             self._db.execute("COMMIT")
-                except BaseException:
-                    if self._external:
-                        self._db.execute("ROLLBACK TO p1_core_unit")
-                        self._db.execute("RELEASE p1_core_unit")
-                    else:
-                        self._db.execute("ROLLBACK")
+                except BaseException as error:
+                    try:
+                        if _sqlite_authority_failure(error):
+                            self._integrity_stop(("Core transaction", str(error)))
+                    finally:
+                        if self._db.in_transaction:
+                            if self._external:
+                                self._db.execute("ROLLBACK TO p1_core_unit")
+                                self._db.execute("RELEASE p1_core_unit")
+                            else:
+                                self._db.execute("ROLLBACK")
                     raise
+            except sqlite3.DatabaseError as error:
+                # BEGIN/SAVEPOINT may itself fail before the inner unit exists.
+                if _sqlite_authority_failure(error):
+                    self._integrity_stop(("Core transaction open", str(error)))
+                raise
             finally:
                 self._admitting = False
 
@@ -268,6 +318,22 @@ class Core:
                 self._db.execute("ROLLBACK")
             finally:
                 self._reading = False
+
+    def _stored(self, scope, decoder, *values):
+        """Validate only values fetched from authority, never caller arguments."""
+        try:
+            return decoder(*values)
+        except (ValueError, TypeError, KeyError, IndexError) as error:
+            self._integrity_stop((scope, "invalid-stored-value", str(error)))
+
+    def _provenance_value(self, scope, encoded):
+        def decode(value):
+            result = Provenance(*json.loads(value))
+            if result.encoded != value:
+                raise ValueError("noncanonical stored provenance")
+            return result
+
+        return self._stored(scope, decode, encoded)
 
     def _insert(self, table: str, values: tuple) -> None:
         # Every caller supplies a fixed internal table name; no user SQL reaches here.
@@ -525,14 +591,26 @@ class Core:
                     before_commit()
 
     @_completed_read
+    @_decoded_read
     def scalar(self, oid: OID, field: ScalarField) -> Projection:
         rows = self.sql(
             "SELECT c.*, EXISTS(SELECT 1 FROM intrinsic_claims i WHERE i.object_format=c.object_format AND i.full_oid=c.full_oid AND i.field=c.field AND i.value=c.value AND i.provenance=c.provenance) checked FROM scalar_claims c WHERE object_format=? AND full_oid=? AND field=?",
             (*oid.key, field),
         )
+
+        def decode_claim(row):
+            value = json.loads(row["value"])
+            original = None if value == ["unknown"] else value[1]
+            if claim_value(field, original) != row["value"]:
+                raise ValueError("invalid stored scalar claim")
+            provenance = self._provenance_value((oid, field), row["provenance"])
+            if row["checked"] and provenance.qualification != "receiver_intrinsic":
+                raise ValueError("reported assertion has invalid intrinsic link")
+            return value
+
         alternatives = tuple(
             {
-                "value": json.loads(r["value"]),
+                "value": self._stored((oid, field), decode_claim, r),
                 "provenance": json.loads(r["provenance"]),
                 "checked": bool(r["checked"]),
             }
@@ -548,6 +626,7 @@ class Core:
         )
 
     @_completed_read
+    @_decoded_read
     def relations(
         self, oid: OID, relation: str, scope: str | None = None
     ) -> Projection:
@@ -555,10 +634,21 @@ class Core:
             "SELECT g.*, EXISTS(SELECT 1 FROM intrinsic_groups i WHERE i.object_format=g.object_format AND i.full_oid=g.full_oid AND i.relation=g.relation AND i.scope=g.scope AND i.status=g.status AND i.membership=g.membership AND i.provenance=g.provenance) checked FROM relation_groups g WHERE object_format=? AND full_oid=? AND relation=?",
             (*oid.key, relation),
         )
+
+        def decode_group(row):
+            if not row["scope"] or not valid_group(
+                oid.object_format, row["relation"], row["status"], row["membership"]
+            ):
+                raise ValueError("invalid stored relation group")
+            provenance = self._provenance_value((oid, relation), row["provenance"])
+            if row["checked"] and provenance.qualification != "receiver_intrinsic":
+                raise ValueError("reported group has invalid intrinsic link")
+            return json.loads(row["membership"])
+
         alternatives = tuple(
             {
                 "status": r["status"],
-                "membership": json.loads(r["membership"]),
+                "membership": self._stored((oid, relation), decode_group, r),
                 "scope": r["scope"],
                 "provenance": json.loads(r["provenance"]),
                 "checked": bool(r["checked"]),
@@ -707,13 +797,17 @@ class Core:
             )
 
     @_completed_read
+    @_decoded_read
     def coverage(self, scope: CoreCoverageScope) -> CoverageProjection:
         with self._snapshot():
             rows = self.sql(
                 "SELECT observed_at_us,coverage_state,details_json FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=(SELECT max(observed_at_us) FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=?) ORDER BY coverage_state",
                 (scope.owner_kind, scope.encoded, scope.owner_kind, scope.encoded),
             )
-            claims = tuple(CoverageClaim(scope, row[0], row[1], row[2]) for row in rows)
+            claims = tuple(
+                self._stored(scope, CoverageClaim, scope, row[0], row[1], row[2])
+                for row in rows
+            )
             state = derive_coverage_state(claim.state for claim in claims)
             proofs = (
                 self.sql(
@@ -723,6 +817,8 @@ class Core:
                 if rows and state == "complete"
                 else []
             )
+            if any(not valid_coverage_members(row[0]) for row in proofs):
+                self._integrity_stop((scope, "invalid-stored-coverage-proof"))
             if state == "complete" and not proofs:
                 state = "unknown"
             return CoverageProjection(
@@ -737,7 +833,7 @@ class Core:
         failure = CoreFailure(
             "AUTHORITATIVE_CORRUPTION",
             scope,
-            "retained-byte corruption; stop catalog and restore fresh",
+            "authoritative integrity failure; stop catalog and restore fresh",
         )
         if self._directory is not None:
             from repo_catalog.adapters.sqlite.p1_coordination import (
@@ -750,6 +846,7 @@ class Core:
         raise failure
 
     @_completed_read
+    @_decoded_read
     def read_metadata(self, oid: OID) -> bytes:
         rows = self.sql(
             "SELECT * FROM retained_metadata WHERE object_format=? AND full_oid=? ORDER BY physical_copy_uuidv4",
@@ -766,9 +863,16 @@ class Core:
             *oid.key, row["native_type"], row["body"], row["size"], row["digest_sha256"]
         ):
             self._integrity_stop((oid, row["physical_copy_uuidv4"]))
+        from repo_catalog.domain.git_native import parse_metadata
+
+        try:
+            parse_metadata(oid.object_format, row["native_type"], row["body"])
+        except (ValueError, TypeError):
+            self._integrity_stop((oid, row["physical_copy_uuidv4"], "native-syntax"))
         return row["body"]
 
     @_completed_read
+    @_decoded_read
     def notes_projection(self, capture: Capture, target: OID) -> NotesProjection:
         """Metadata-only alternatives and precisely relevant checked mapping.
 
@@ -798,7 +902,9 @@ class Core:
                 (*capture.pair, target.object_format, target.full_oid),
             )
             for row in claims:
-                note = OID(target.object_format, row[0])
+                note = self._stored(
+                    (capture.pair, target), OID, target.object_format, row[0]
+                )
                 positive.add(note)
                 alternatives.append(
                     NotesAlternative(
@@ -809,7 +915,7 @@ class Core:
                         None,
                         None,
                         (),
-                        Provenance(*json.loads(row[1])),
+                        self._provenance_value((capture.pair, target), row[1]),
                         None,
                         False,
                     )
@@ -820,6 +926,10 @@ class Core:
                 (*capture.pair, target.object_format),
             )
             for row in groups:
+                if not row[0] or not _notes_group(target.object_format, row[1], row[2]):
+                    self._integrity_stop(
+                        (capture.pair, target, "invalid-stored-notes-group")
+                    )
                 members = tuple(tuple(m) for m in json.loads(row[2]))
                 relevant = [m for m in members if m[0] == target.full_oid]
                 # Groups preserve their asserted scope; complete/empty excludes
@@ -845,7 +955,7 @@ class Core:
                         row[0],
                         row[1],
                         members,
-                        Provenance(*json.loads(row[3])),
+                        self._provenance_value((capture.pair, target), row[3]),
                         relevant[0][2] if relevant else None,
                         False,
                     )
@@ -892,6 +1002,7 @@ class Core:
             )
 
     @_completed_read
+    @_decoded_read
     def read_note(self, capture: Capture, target: OID, note: OID) -> bytes:
         with self._snapshot():
             bindings = self.sql(

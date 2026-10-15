@@ -85,3 +85,21 @@ native grammar, typed exception scopes, portable identities, retained byte gates
 notes foundation, field encodings and ownership. P4 may consume the stable notes
 foundation; P5/P6 should use the coordinator's combined compatibility evidence and
 the same reviewed dependency SHAs. There is no ordinary-file body endpoint.
+
+## Final audit-only dependency rebind
+
+The final common dependency is
+`c37916edebb142459c63455c1d13e08db5ded086`. P2 preserves it through merge commit
+`88f8b00c57e008f86c222ba3043234167aa6303c`, tree
+`ddd8fb7e5925a1699daf3419d1e755e00a42b185`. This dependency follow-up adds the
+explicit optional P3 production port path to the historical-runtime isolation
+check and one corresponding synthetic import adversary. **98 runtime and
+production-test input hashes are byte-identical to `cd30f76`.**
+
+On that exact merged revision, targeted disposition plus intrinsic-provenance
+regressions executed **21/21 passed**, zero failed/skipped. P1 build/disposition,
+historical call-site audit, global Ruff check/format and whitespace checks also
+passed. This is a targeted audit-only rebind of the earlier 553-node batch and
+independent 318-node review, not a claim to have rerun the full batch on the
+follow-up tree. The coordinator separately validates the final committed P2/P3
+combination. Subsequent evidence-only commits preserve this executable binding.

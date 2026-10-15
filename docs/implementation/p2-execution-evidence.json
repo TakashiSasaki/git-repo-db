@@ -91,5 +91,22 @@
     "failed": 0,
     "skipped": 0,
     "open_material_findings": 0
+  },
+  "final_shared_dependency": "c37916edebb142459c63455c1d13e08db5ded086",
+  "audit_only_rebind": {
+    "source_commit": "88f8b00c57e008f86c222ba3043234167aa6303c",
+    "source_tree": "ddd8fb7e5925a1699daf3419d1e755e00a42b185",
+    "changed_runtime_inputs": [],
+    "byte_identical_runtime_and_production_test_inputs": 98,
+    "command": "uv run --no-sync pytest tests/integration/p1/test_disposition.py tests/integration/p1/test_intrinsic_provenance.py -q -o junit_family=xunit1 --junitxml=/workspace/evidence/p2/rebind.xml --journal=/workspace/evidence/p2/rebind-journal.jsonl",
+    "executed": 21,
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "details": "Additional optional P3 production port path is explicitly isolated from historical Schema21 index, with strengthened synthetic runtime-import guard. All production inputs unchanged from cd30f76; affected disposition tests and shared provenance guards rerun. Build, disposition and callsite audits plus global Ruff and format passed. This is a targeted rebind, not another full 553-node execution.",
+    "artifact_sha256": {
+      "rebind.xml": "24c93f5658373062e52c72053b9f6e7a3bd25d2e55968a9e2633d902efec1475",
+      "rebind-journal.jsonl": "2eae7230ce23c3672164be595b616aeb6afc12f2a8ea48ef80b0127a05210572"
+    }
   }
 }

@@ -558,3 +558,311 @@ def test_large_folded_signature_header_preserves_exact_bytes_with_linear_bufferi
     assert parsed.scalars["message"] == "message\n"
     assert bytes.fromhex(parsed.scalars["header_data"]) == body.partition(b"\n\n")[0]
     assert parsed.relations["commit_tree"] == [[0, *oid().key]]
+
+
+def test_core_transaction_binding_refuses_context_even_for_shared_coverage_tables(
+    tmp_path,
+):
+    from repo_catalog.adapters.sqlite.p1_context import ContextStore
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.domain.p1_context import CoverageScope
+    from repo_catalog.domain.p1_core import CoreCoverageScope
+    from repo_catalog.domain.p1_coverage import CoverageClaim
+
+    repository = str(uuid4())
+    path = tmp_path / "context.sqlite3"
+    initialize(path, "context", repository, str(uuid4()))
+    db = connect(path, "context")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        db.execute("INSERT INTO repository_context VALUES(?,?)", (repository, "{}"))
+        ContextStore(db).scope(
+            CoverageScope.repository(repository, "git-object-inventory")
+        )
+        claim = CoverageClaim(
+            CoreCoverageScope("repository", (repository, "git-object-inventory")),
+            1,
+            "unknown",
+        )
+        entered = False
+        with pytest.raises(CoreFailure) as error:
+            with GitCore.for_transaction(db) as unit:
+                entered = True
+                unit.admit_coverage(claim)
+        assert error.value.code == "STORE_ROLE"
+        assert not entered
+        assert db.in_transaction
+        assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 0
+        assert not (tmp_path / "p1-recovery-stop.json").exists()
+        # Refusal has not installed an authorizer or consumed the Context tx.
+        ContextStore(db).admit_coverage(
+            CoverageClaim(
+                CoverageScope.repository(repository, "git-object-inventory"),
+                1,
+                "unknown",
+            )
+        )
+        assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 1
+    finally:
+        db.rollback()
+        db.close()
+
+
+def test_production_core_transaction_binding_preserves_savepoint_and_expiry(core):
+    c, path, _ = core
+    db = connect(path, "core")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        with GitCore.for_transaction(db) as unit:
+            assert isinstance(unit, GitCore)
+            unit.admit_claim(ScalarClaim(oid(), "type", "commit", provenance()))
+            assert db.in_transaction
+        with pytest.raises(CoreFailure) as error:
+            unit.admit_object(oid("b"))
+        assert error.value.code == "CAPABILITY_EXPIRED"
+        db.rollback()
+        assert c.scalar(oid(), "type").alternatives == ()
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        "CAST(x'ff' AS TEXT)",
+        "'{broken'",
+        "'[]'",
+        "'[\"known\",17]'",
+        "'[\"unknown\",3]'",
+    ],
+)
+def test_typed_scalar_read_stops_on_stored_utf8_json_or_semantic_corruption(
+    core, replacement
+):
+    c, path, _ = core
+    c.admit_claim(ScalarClaim(oid(), "type", "commit", provenance()))
+    db = sqlite3.connect(path)
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute("DROP TRIGGER p1_immutable_scalar_claims_update")
+    db.execute("UPDATE scalar_claims SET value=" + replacement)
+    db.commit()
+    db.close()
+    with pytest.raises(CoreFailure) as error:
+        c.scalar(oid(), "type")
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("membership", ["{broken", "{}", '[[0,"sha1","invalid"]]'])
+def test_typed_relation_read_stops_on_stored_semantic_corruption(core, membership):
+    from repo_catalog.domain.p1_core import RelationGroup
+
+    c, path, _ = core
+    c.admit_group(
+        RelationGroup(oid(), "commit_parents", "reported", "unknown", (), provenance())
+    )
+    db = sqlite3.connect(path)
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute("DROP TRIGGER p1_immutable_relation_groups_update")
+    db.execute("UPDATE relation_groups SET membership=?", (membership,))
+    db.commit()
+    db.close()
+    with pytest.raises(CoreFailure) as error:
+        c.relations(oid(), "commit_parents")
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_generic_sql_expression_error_does_not_diagnose_catalog_corruption(core):
+    c, path, _ = core
+    for query in ("SELECT json('{broken')", "SELECT CAST(x'ff' AS TEXT)"):
+        with pytest.raises(sqlite3.OperationalError):
+            c.sql(query)
+        assert not (path.parent / "p1-recovery-stop.json").exists()
+    c.admit_object(oid())
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("kind", ["commit", "tree", "tag"])
+def test_raw_coordinator_callback_rejects_hash_matching_malformed_native_metadata(
+    tmp_path, fmt, kind
+):
+    from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.domain.p1_coordination import AdmissionFailure, PairAdmission
+
+    repository, instance = str(uuid4()), str(uuid4())
+    for store in ("core", "context"):
+        initialize(tmp_path / (store + ".sqlite3"), store, repository, instance)
+    incoming = native(kind, b"not a native metadata structure", fmt)
+    incoming.validate()  # Intentionally passes digest/OID to reach grammar CHECK.
+
+    def admit(tx):
+        tx.execute("INSERT INTO git_objects VALUES(?,?)", incoming.oid.key)
+        tx.execute(
+            "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
+            (
+                *incoming.oid.key,
+                str(uuid4()),
+                kind,
+                incoming.body,
+                incoming.declared_size,
+                incoming.digest_sha256,
+            ),
+        )
+
+    with pytest.raises(AdmissionFailure) as error:
+        PairCoordinator(tmp_path).admit(admit, lambda tx: None)
+    assert error.value.outcome == PairAdmission(False, False)
+    assert not (tmp_path / "p1-recovery-stop.json").exists()
+    c = GitCore(tmp_path / "core.sqlite3")
+    try:
+        assert c.sql("SELECT * FROM git_objects") == []
+    finally:
+        c.close()
+
+
+@pytest.mark.parametrize("kind", ["commit", "tree", "tag"])
+def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_syntax(
+    core, kind
+):
+    c, path, _ = core
+    incoming = native(kind, b"invalid native syntax")
+    c.admit_object(incoming.oid)
+    db = connect(path, "core")
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute(
+        "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
+        (
+            *incoming.oid.key,
+            str(uuid4()),
+            kind,
+            incoming.body,
+            incoming.declared_size,
+            incoming.digest_sha256,
+        ),
+    )
+    db.close()
+    with pytest.raises(CoreFailure) as error:
+        c.read_metadata(incoming.oid)
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_typed_utf8_corruption_persists_stop_before_snapshot_rollback(core):
+    from repo_catalog.domain.p1_core import NotesClaim
+    from tests.integration.p1.test_notes import mapping
+
+    c, path, repository = core
+    proof, _ = mapping(repository)
+    c.admit_notes_claim(
+        NotesClaim(proof.capture, proof.target, proof.note, provenance())
+    )
+    db = sqlite3.connect(path)
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute("DROP TRIGGER p1_immutable_notes_claims_update")
+    db.execute("UPDATE notes_claims SET note=CAST(x'ff' AS TEXT)")
+    db.commit()
+    db.close()
+    rollback_stop_states = []
+
+    def trace(statement):
+        if statement == "ROLLBACK":
+            rollback_stop_states.append(
+                (path.parent / "p1-recovery-stop.json").exists()
+            )
+
+    c._db.set_trace_callback(trace)
+    with pytest.raises(CoreFailure) as error:
+        c.notes_projection(proof.capture, proof.target)
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert rollback_stop_states == [True]
+    assert not c._db.in_transaction
+
+
+def test_caller_text_encoding_error_is_not_stored_corruption(core):
+    c, path, _ = core
+    with pytest.raises(UnicodeEncodeError):
+        c.scalar(oid(), "unsupported-\udcff")
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+    c.admit_object(oid())
+
+
+@pytest.mark.parametrize(
+    "code", [sqlite3.SQLITE_CORRUPT_INDEX, sqlite3.SQLITE_CORRUPT_VTAB]
+)
+@pytest.mark.parametrize("boundary", ["open", "read"])
+def test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries(
+    core, monkeypatch, code, boundary
+):
+    c, path, _ = core
+    error = sqlite3.DatabaseError("injected extended SQLite corruption")
+    error.sqlite_errorcode = code
+    if boundary == "open":
+        from repo_catalog.adapters.sqlite import p1_schema
+
+        def fail(*args, **kwargs):
+            raise error
+
+        monkeypatch.setattr(p1_schema, "connect", fail)
+        with pytest.raises(sqlite3.DatabaseError) as raised:
+            GitCore(path)
+        assert raised.value.sqlite_errorcode == code
+    else:
+        original = c._db
+
+        class FailingRead:
+            def execute(self, *args, **kwargs):
+                raise error
+
+        c._db = FailingRead()
+        try:
+            with pytest.raises(CoreFailure) as raised:
+                c.sql("SELECT full_oid FROM git_objects")
+            assert raised.value.code == "AUTHORITATIVE_CORRUPTION"
+        finally:
+            c._db = original
+    assert (path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        c.admit_object(oid())
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+@pytest.mark.parametrize(
+    "code",
+    [sqlite3.SQLITE_CORRUPT_INDEX, sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_IOERR_WRITE],
+)
+@pytest.mark.parametrize("failure_at", ["BEGIN", "INSERT", "COMMIT"])
+def test_standalone_core_engine_failure_stops_before_transaction_cleanup(
+    core, code, failure_at
+):
+    c, path, _ = core
+    original = c._db
+    error = sqlite3.DatabaseError("injected authoritative engine failure")
+    error.sqlite_errorcode = code
+    rollback_stop_states = []
+
+    class FailingEngine:
+        def __getattr__(self, name):
+            return getattr(original, name)
+
+        def execute(self, statement, *args, **kwargs):
+            if statement.startswith(failure_at):
+                raise error
+            if statement == "ROLLBACK":
+                rollback_stop_states.append(
+                    (path.parent / "p1-recovery-stop.json").exists()
+                )
+            return original.execute(statement, *args, **kwargs)
+
+    c._db = FailingEngine()
+    try:
+        with pytest.raises(CoreFailure) as raised:
+            c.admit_object(oid())
+        assert raised.value.code == "AUTHORITATIVE_CORRUPTION"
+    finally:
+        c._db = original
+    assert (path.parent / "p1-recovery-stop.json").exists()
+    assert not original.in_transaction
+    assert rollback_stop_states == ([] if failure_at == "BEGIN" else [True])
+    assert original.execute("SELECT count(*) FROM git_objects").fetchone()[0] == 0
