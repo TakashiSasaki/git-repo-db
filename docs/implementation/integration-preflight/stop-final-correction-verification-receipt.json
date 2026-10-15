@@ -1,0 +1,85 @@
+{
+  "kind": "independent-correction-preflight-extension",
+  "release_acceptance": false,
+  "original_pr72_sha": "67e8be65c3061b494c2c7373e2fd151398435f62",
+  "correction_sha": "06a4ccd432476af15ee942e8cfcd9fbdf42357c7",
+  "correction_tree": "58f627ff6acc5171d8620f606e366543eb3c7d02",
+  "tested_merge_sha": "0d16aa746c444f6c8c17d3092144612b6237df90",
+  "tested_merge_tree": "819178212290bc8473bbc31e4a78e95bf125ebc0",
+  "merge_parents": [
+    "22b81cc47088f5fde293993c970f706605119ff2",
+    "06a4ccd432476af15ee942e8cfcd9fbdf42357c7"
+  ],
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "git": "2.52.0",
+    "uv": "0.12.19",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10"
+  },
+  "cwd": "/workspace/preflight-stop-final",
+  "command": "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python -m pytest tests/integration/p1/test_disposition.py tests/integration/p1/test_intrinsic_provenance.py tests/integration/p1/test_validation_stop.py -q -o junit_family=xunit1 --junitxml=/workspace/evidence/preflight/stop-final-correction.xml --journal=/workspace/evidence/preflight/stop-final-correction.jsonl",
+  "counts": {
+    "selected": 26,
+    "executed": 26,
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0
+  },
+  "nodes": [
+    "tests/integration/p1/test_disposition.py::test_all_84_tables_and_every_physical_column_are_reconciled",
+    "tests/integration/p1/test_disposition.py::test_audit_command_checks_recorded_constraints",
+    "tests/integration/p1/test_disposition.py::test_omitted_baseline_evidence_fails_closed[table]",
+    "tests/integration/p1/test_disposition.py::test_omitted_baseline_evidence_fails_closed[column]",
+    "tests/integration/p1/test_disposition.py::test_stale_target_column_is_not_accepted_as_a_concrete_successor",
+    "tests/integration/p1/test_disposition.py::test_new_target_table_requires_ownership_and_retention_contract",
+    "tests/integration/p1/test_disposition.py::test_elimination_cannot_silently_discard_a_mapped_fact",
+    "tests/integration/p1/test_disposition.py::test_authoritative_context_cannot_be_reclassified_as_disposable",
+    "tests/integration/p1/test_disposition.py::test_isolated_target_exclusion_does_not_hide_production_runtime_imports",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[import repo_catalog.domain.p1_core as core]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.domain import p1_core]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.adapters.sqlite.git_core import GitCore]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.adapters.sqlite import production_context]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from ..domain import git_native]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from .sqlite.production_context import Context]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.domain.ports.production_context import ContextPersistence]",
+    "tests/integration/p1/test_disposition.py::test_alias_removal_does_not_erase_semantic_table_successor",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[scalar-sha1]",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[scalar-sha256]",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[group-sha1]",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[group-sha256]",
+    "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[False-provider]",
+    "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[False-field]",
+    "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[True-provider]",
+    "tests/integration/p1/test_validation_stop.py::test_paired_validation_udf_failure_persists_stop[True-field]",
+    "tests/integration/p1/test_validation_stop.py::test_cancelled_validation_does_not_diagnose_corruption"
+  ],
+  "artifacts": {
+    "stop-final-correction.xml": {
+      "bytes": 5887,
+      "sha256": "97a186d1027faaa1a4e2ad998d1c7b8c5bdb40d61fbde0c157ddf7a500aa8810"
+    },
+    "stop-final-correction.jsonl": {
+      "bytes": 24837,
+      "sha256": "8ce9b7860ab5bd3782cbd9b40d6972ac1cb3f92d9d555f0e4c9e67575206d46a"
+    }
+  },
+  "static_checks": [
+    "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python scripts/build_p1_schema.py --check",
+    "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python scripts/audit_p1_schema.py --check",
+    "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python scripts/audit_callsite_dependencies.py --check"
+  ],
+  "static_result": "build fingerprints, schema reconciliation and call-site audit all pass; no broad tests or lint rerun in this final extension",
+  "review_limit": "Independent final26case disposition/provenance/validation-stop execution plus narrow source inspection; no broad runtime/package/browser repetition. Final GitHub REST reinspection succeeded after transient401 credentials refresh; latest exact06a offline and Pages both success.",
+  "pr73_ci": {
+    "tests_run": 38817542233,
+    "tests_status": "completed",
+    "tests_conclusion": "success",
+    "pages_run": 38817542357,
+    "pages_status": "completed",
+    "pages_conclusion": "success",
+    "pages_deploy": "skipped",
+    "hosted_runtime_tests": "skipped under development policy"
+  }
+}

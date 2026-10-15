@@ -110,3 +110,31 @@ gh run view RUN_ID --log > "$receipt_work_dir/job.log"
    an alternative retrieval of the workflow's existing receipt, not a new receipt
    format or permission to bypass a blocked destination, re-sign evidence, claim
    unavailable artifacts were downloaded or launch release qualification.
+
+## Bind child Python processes to the intended worktree
+
+In parallel worktrees, use a separate editable environment for each tested tree:
+
+```sh
+uv sync --locked --group dev
+uv run --no-sync python -c 'import repo_catalog; print(repo_catalog.__file__)'
+uv run --no-sync pytest <focused-targets> -q
+```
+
+P2/P3 review reproduced a misleading failure when a reviewer launched pytest with
+another worktree's venv and supplied only `PYTHONPATH`: the repository's autouse
+network fixture replaced `PYTHONPATH` for child processes. Main-process imports
+used the intended source, but child audit commands imported the other editable
+checkout. Repeating with the tested worktree's own `uv` environment corrected the
+binding and passed the unchanged tests. Record the working directory, interpreter,
+actual imported module paths and child environment behavior when diagnosing this.
+Do not infer subprocess source identity from the parent's import path or a passed
+`PYTHONPATH` alone. This procedure retains the network guard; do not remove it to
+force another checkout to import.
+
+For imported contract replay tests, reconcile collected node IDs with JUnit
+`classname` and test `name`, not its `file` attribute alone. P2's imported P1 test
+functions correctly run with the production fixture under a P2 collection module,
+while JUnit `file` still identifies the original P1 function definition. Counting
+by that attribute would misclassify production verification. The paired receipts
+verify all selected IDs against journal starts, each phase and JUnit identities.

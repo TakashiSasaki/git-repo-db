@@ -1,0 +1,158 @@
+{
+  "source_commit": "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b",
+  "source_tree": "f61a7d9053e73d2fdf4761577012c9f989b2ca92",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "git": "git version 2.52.0",
+  "selected": 594,
+  "executed": 594,
+  "passed": 594,
+  "failed": 0,
+  "skipped": 0,
+  "categories": {
+    "tests/integration/p1": 266,
+    "tests/integration/p2": 194,
+    "tests/integration/architecture_spikes": 128,
+    "tests/packaging/test_p1_distribution.py": 2,
+    "tests/packaging/test_p2_distribution.py": 4
+  },
+  "artifact_sha256": {
+    "hardened-final-selected.txt": "e4112f5cbdadcf459e5bce696c7397c38887f6aa5c5ec19ee979d0f0486192ec",
+    "hardened-final.xml": "2b4299de8e619e7a764cee635567848cd992ff13f5abadeb1c50c09269f26677",
+    "hardened-final-journal.jsonl": "26a95f1700a2386ba35c7805a0b260c57562af9579c2c26e89d66d645cdb196c"
+  },
+  "production_and_test_input_sha256": {
+    "src/repo_catalog/adapters/git/native.py": "06e1f4efc9f37ddd110c9d774f1fe291a8377632a69720ea4e73bb7974d41383",
+    "src/repo_catalog/adapters/sqlite/git_core.py": "e2ea4ab6352ce2ddb8eb6e7804224eb16a5e864730c69809114cb52412074df3",
+    "src/repo_catalog/adapters/sqlite/p1_coordination.py": "907d7756083f572238d27a7356b5a8fff9f7d32dbc6fec954ea03d90ac9777de",
+    "src/repo_catalog/adapters/sqlite/p1_core.py": "f7a5f77e8a1c52cead6969bb8ffbe540e407e80db92e0972f1f7f73ad9dbd5f2",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql": "b18fbcd22ef9b787528361cbc298a62e47004d6ea13deaa0e0865ff05f0d50e7",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": "acdce877b12e70fc385ef202d43eeefb0a7f709fd586baa7e5abbc942bdb6e31",
+    "src/repo_catalog/domain/git_native.py": "4796b88f41ec7b3dc22d64df80d65c0cd4b6208f69d9935032bec53ce0664c87",
+    "src/repo_catalog/domain/p1_core.py": "600cf16fcbf090e14aac692981577947bb6f834d958117a6d3a20ccea8c41238",
+    "src/repo_catalog/domain/p1_coverage.py": "da45bf6c23917e7a0261eb40932fdea498edec31d49893d8286729f807a7903e",
+    "tests/integration/p2/conftest.py": "da25c41be6f38f6f9fb2fbe504b15e41e2b52a52e08b4794f205ca877edf4d8a",
+    "tests/integration/p2/test_contract_replays.py": "b33bda07eff45d965d1888c42c3bc47dd7bb28fa363a4e8f55cecf2960e1afbb",
+    "tests/integration/p2/test_native.py": "eeaa9c231b128041f8581a87a8008118bbdd262ab91397659009d91e262f4f6d",
+    "tests/packaging/test_p2_distribution.py": "dde9660d814b26955b833454c56330399e924625536496ee0bb08a7e48d0535a"
+  },
+  "format": "git-repo-db/p2-development-evidence-v1",
+  "scope": "focused-development-not-release",
+  "common_dependency": "06a4ccd432476af15ee942e8cfcd9fbdf42357c7",
+  "commands": [
+    "uv sync --locked --group dev",
+    "uv run --no-sync pytest tests/integration/p1 tests/integration/p2 tests/integration/architecture_spikes tests/packaging/test_p1_distribution.py tests/packaging/test_p2_distribution.py --collect-only -q > /workspace/evidence/p2/hardened-final-selected.txt",
+    "uv run --no-sync pytest tests/integration/p1 tests/integration/p2 tests/integration/architecture_spikes tests/packaging/test_p1_distribution.py tests/packaging/test_p2_distribution.py -q -o junit_family=xunit1 --junitxml=/workspace/evidence/p2/hardened-final.xml --journal=/workspace/evidence/p2/hardened-final-journal.jsonl",
+    "uv run --no-sync ruff check src tests scripts",
+    "uv run --no-sync ruff format --check src tests scripts",
+    "uv run --no-sync python scripts/build_p1_schema.py --check",
+    "uv run --no-sync python scripts/audit_p1_schema.py --check",
+    "uv run --no-sync python scripts/audit_callsite_dependencies.py --check",
+    "git diff --check"
+  ],
+  "reconciliation": {
+    "selected_junit_journal_multisets_equal": true,
+    "each_node_exactly_once": true,
+    "journal_finish_exitstatus": 0
+  },
+  "known_previous_failures": [
+    {
+      "source": "8b73322c10a79929f3023f9947d400aa0f666f6a",
+      "selected": 519,
+      "passed": 518,
+      "failed": 1,
+      "failure": "P1 historical-runtime audit treated opt-in next-stage production modules as public Schema21 imports. Corrected once in reviewed shared audit dependency; final focused run passes."
+    },
+    {
+      "source": "unchanged main; separately verified by coordinator",
+      "node": "tests/integration/test_catalog3_schema.py::test_committed_resource_does_not_need_collection_or_operation_success",
+      "failure": "Existing Core-only fixture queried Operational jobs. Independent PR71 repair deliberately not cherry-picked into P2."
+    }
+  ],
+  "hosted": {
+    "executed_by_this_agent": false,
+    "release_acceptance_claimed": false
+  },
+  "unexecuted": [
+    "full dual local/hosted release acceptance",
+    "live Provider/network acquisition",
+    "P4 complete notes acquisition and additional proof grammar",
+    "P5 acquisition/Exchange orchestration",
+    "P6 public CLI/Search switch",
+    "P7 host-power-loss recovery/fresh restore/activation",
+    "P8 public four-store initializer/runtime switch"
+  ],
+  "independent_review": {
+    "review": "p2-independent-review.md",
+    "receipt": "p2-independent-review/receipt.json",
+    "external_tests": "p2-independent-review/test_adversarial.py",
+    "full_corrected_selection": {
+      "source": "4e2f61338ac16ecc92ce1c603b8f0aeb4d4bd1c7",
+      "selected_executed_passed": 339,
+      "failed": 0,
+      "skipped": 0
+    },
+    "immediate_stop_delta": {
+      "source": "b878b4eec86bffc2a0011c97cff6454062130bb5",
+      "selected_executed_passed": 34,
+      "failed": 0,
+      "skipped": 0
+    },
+    "final_engine_delta": {
+      "source": "fb0f87ca71d2a9a292179054c30be8e11607f175",
+      "selected_executed_passed": 48,
+      "failed": 0,
+      "skipped": 0
+    },
+    "open_material_findings": 0,
+    "common_dependency": "Separately independently reviewed 06a4ccd; final combined compatibility review is coordinator-owned."
+  },
+  "final_shared_dependency": "06a4ccd432476af15ee942e8cfcd9fbdf42357c7",
+  "audit_only_rebind": {
+    "source_commit": "88f8b00c57e008f86c222ba3043234167aa6303c",
+    "source_tree": "ddd8fb7e5925a1699daf3419d1e755e00a42b185",
+    "changed_runtime_inputs": [],
+    "byte_identical_runtime_and_production_test_inputs": 98,
+    "command": "uv run --no-sync pytest tests/integration/p1/test_disposition.py tests/integration/p1/test_intrinsic_provenance.py -q -o junit_family=xunit1 --junitxml=/workspace/evidence/p2/rebind.xml --journal=/workspace/evidence/p2/rebind-journal.jsonl",
+    "executed": 21,
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "details": "Additional optional P3 production port path is explicitly isolated from historical Schema21 index, with strengthened synthetic runtime-import guard. All production inputs unchanged from cd30f76; affected disposition tests and shared provenance guards rerun. Build, disposition and callsite audits plus global Ruff and format passed. This is a targeted rebind, not another full 553-node execution.",
+    "artifact_sha256": {
+      "rebind.xml": "24c93f5658373062e52c72053b9f6e7a3bd25d2e55968a9e2633d902efec1475",
+      "rebind-journal.jsonl": "2eae7230ce23c3672164be595b616aeb6afc12f2a8ea48ef80b0127a05210572"
+    }
+  },
+  "previous_full_source": {
+    "commit": "cd30f7638a3d7e7b9d5f690a7b7b734693c20044",
+    "tree": "91375d1d1c8d28b9a87589d3f2dc76c604caf162",
+    "selected": 553,
+    "passed": 553,
+    "failed": 0,
+    "skipped": 0,
+    "artifact_sha256": {
+      "final-selected.txt": "b39456d7c4cd5750db2aa6504c7800c8600cf6b16d028258855c00118b1097ec",
+      "final.xml": "5062905febc181436ca46ce361e5deb2ae8acf44e35be25b1d9b00bef3e9f702",
+      "final-journal.jsonl": "b5e38de4f086d5e263db037a919a8b717b7fb953685e41a8eeec120b8d5c3323"
+    }
+  },
+  "execution_worktree_state": "All production, test and common dependency inputs committed at source_commit; only owned evidence prose and coordinator skill/ownership documentation were uncommitted during execution. No uncommitted implementation combination is claimed.",
+  "hardening_controls": {
+    "physical_store_role": "Wrong Context transaction cannot accept Core shared-Coverage writes; no authorizer installed and original Context transaction remains usable.",
+    "typed_stored_metadata": "UTF8, JSON, semantic scalar/group/provenance corruption stops; arbitrary generic SQL and caller encoding errors do not.",
+    "callback_and_emitted_native": "Matching OID/digest never permits malformed retained commit/tree/tag; selected emitted metadata reparses grammar.",
+    "immediate_stop": "Fixed typed UTF8 failure persists stop before snapshot rollback.",
+    "engine_failures": "Normalized CORRUPT/NOTADB/IOERR families stop at open/read/BEGIN/body/COMMIT; injected engine failures persist before rollback and gate unwind; constraint control does not stop."
+  },
+  "combined_verification": {
+    "coordinator_reported_commit": "b1b5f9c",
+    "core_input": "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b",
+    "context_input": "5e3b373",
+    "selected_executed_passed": 691,
+    "failed": 0,
+    "skipped": 0,
+    "independent_cross_selected_executed_passed": 107,
+    "evidence_owner": "Coordinator common compatibility report and exact full-SHA receipt; not claimed as execution by P2 author."
+  }
+}

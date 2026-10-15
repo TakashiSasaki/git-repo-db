@@ -1,0 +1,79 @@
+{
+  "kind": "independent-correction-preflight-extension",
+  "release_acceptance": false,
+  "original_pr72_sha": "67e8be65c3061b494c2c7373e2fd151398435f62",
+  "correction_sha": "c37916edebb142459c63455c1d13e08db5ded086",
+  "correction_tree": "de0ab1a4507821bc497abd9df8d6ebeb2917fd56",
+  "tested_merge_sha": "a7c820f2cd7b1d5487290dc6177b3f4c2b6634a9",
+  "tested_merge_tree": "002c4d10874b32e6e0fbbe0fffeccc5a2450b10b",
+  "merge_parents": [
+    "25416059d351c8f1583037ec3094c10eea2a7a1b",
+    "c37916edebb142459c63455c1d13e08db5ded086"
+  ],
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "git": "2.52.0",
+    "uv": "0.12.19",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10"
+  },
+  "cwd": "/workspace/preflight-final",
+  "command": "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python -m pytest tests/integration/p1/test_disposition.py tests/integration/p1/test_intrinsic_provenance.py -q -o junit_family=xunit1 --junitxml=/workspace/evidence/preflight/final-correction.xml --journal=/workspace/evidence/preflight/final-correction.jsonl",
+  "counts": {
+    "selected": 21,
+    "executed": 21,
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0
+  },
+  "nodes": [
+    "tests/integration/p1/test_disposition.py::test_all_84_tables_and_every_physical_column_are_reconciled",
+    "tests/integration/p1/test_disposition.py::test_audit_command_checks_recorded_constraints",
+    "tests/integration/p1/test_disposition.py::test_omitted_baseline_evidence_fails_closed[table]",
+    "tests/integration/p1/test_disposition.py::test_omitted_baseline_evidence_fails_closed[column]",
+    "tests/integration/p1/test_disposition.py::test_stale_target_column_is_not_accepted_as_a_concrete_successor",
+    "tests/integration/p1/test_disposition.py::test_new_target_table_requires_ownership_and_retention_contract",
+    "tests/integration/p1/test_disposition.py::test_elimination_cannot_silently_discard_a_mapped_fact",
+    "tests/integration/p1/test_disposition.py::test_authoritative_context_cannot_be_reclassified_as_disposable",
+    "tests/integration/p1/test_disposition.py::test_isolated_target_exclusion_does_not_hide_production_runtime_imports",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[import repo_catalog.domain.p1_core as core]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.domain import p1_core]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.adapters.sqlite.git_core import GitCore]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.adapters.sqlite import production_context]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from ..domain import git_native]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from .sqlite.production_context import Context]",
+    "tests/integration/p1/test_disposition.py::test_public_runtime_guard_detects_every_isolated_stage[from repo_catalog.domain.ports.production_context import ContextPersistence]",
+    "tests/integration/p1/test_disposition.py::test_alias_removal_does_not_erase_semantic_table_successor",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[scalar-sha1]",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[scalar-sha256]",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[group-sha1]",
+    "tests/integration/p1/test_intrinsic_provenance.py::test_callback_cannot_promote_original_report[group-sha256]"
+  ],
+  "artifacts": {
+    "final-correction.xml": {
+      "bytes": 4840,
+      "sha256": "e3f186077b88b383df8dc6f573c593e8e00e823922a280387766bc86a94a3818"
+    },
+    "final-correction.jsonl": {
+      "bytes": 20254,
+      "sha256": "c0296935f7d7e9c0e4afaa264ba8bc0d5b69a8f1fec4eac23001ecd70094d8c0"
+    }
+  },
+  "static_checks": [
+    "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python scripts/build_p1_schema.py --check",
+    "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python scripts/audit_p1_schema.py --check",
+    "PYTHONPATH=src /workspace/preflight-effective/.venv/bin/python scripts/audit_callsite_dependencies.py --check"
+  ],
+  "static_result": "build fingerprints, schema reconciliation and call-site audit all pass; no broad tests or lint rerun in this final extension",
+  "review_limit": "Narrow final audit-extension review plus21 actual tests; prior shared independent reviews closed; PR73 offline CI passed; Pages initially pending, then authoritatively requeried completed success; no prior broad baseline failure rerun.",
+  "pr73_ci": {
+    "tests_run": 38816113218,
+    "tests_status": "completed",
+    "tests_conclusion": "success",
+    "pages_run": 38816113288,
+    "pages_status": "completed",
+    "pages_conclusion": "success",
+    "hosted_runtime_tests": "skipped under development policy"
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "common": "06a4ccd432476af15ee942e8cfcd9fbdf42357c7",
+  "p2": "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b",
+  "p3": "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320",
+  "combination": "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137",
+  "combination_tree": "50f53c648425fa19515f63f514991f9d76c21656",
+  "merge_base": "06a4ccd432476af15ee942e8cfcd9fbdf42357c7",
+  "shared_exact_blobs": {
+    "src/repo_catalog/adapters/sqlite/p1_schema.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "3250711469936ab08e622c98bfb1e4132912c892",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "3250711469936ab08e622c98bfb1e4132912c892",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "3250711469936ab08e622c98bfb1e4132912c892",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "3250711469936ab08e622c98bfb1e4132912c892"
+    },
+    "src/repo_catalog/domain/p1_context.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "b2cf1f2f1b9c74a0a7ff20a821b3f191778aeb61",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "b2cf1f2f1b9c74a0a7ff20a821b3f191778aeb61",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "b2cf1f2f1b9c74a0a7ff20a821b3f191778aeb61",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "b2cf1f2f1b9c74a0a7ff20a821b3f191778aeb61"
+    },
+    "src/repo_catalog/domain/p1_coverage.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "d9edc0f98359fb7169193ea1b12ef54d88ba5706",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "d9edc0f98359fb7169193ea1b12ef54d88ba5706",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "d9edc0f98359fb7169193ea1b12ef54d88ba5706",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "d9edc0f98359fb7169193ea1b12ef54d88ba5706"
+    },
+    "src/repo_catalog/domain/p1_coordination.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "bd102117ecd1be1a6f24afe1afbbc1c8602f036c",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "bd102117ecd1be1a6f24afe1afbbc1c8602f036c",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "bd102117ecd1be1a6f24afe1afbbc1c8602f036c",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "bd102117ecd1be1a6f24afe1afbbc1c8602f036c"
+    },
+    "src/repo_catalog/domain/ports/p1_core.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "777221602be8982674e7d19aeb08790532fca3a3",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "777221602be8982674e7d19aeb08790532fca3a3",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "777221602be8982674e7d19aeb08790532fca3a3",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "777221602be8982674e7d19aeb08790532fca3a3"
+    },
+    "src/repo_catalog/domain/ports/p1_context.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "4eb53a77e4d191777ab73fa615a00612940a6cec",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "4eb53a77e4d191777ab73fa615a00612940a6cec",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "4eb53a77e4d191777ab73fa615a00612940a6cec",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "4eb53a77e4d191777ab73fa615a00612940a6cec"
+    },
+    "src/repo_catalog/domain/ports/p1_coordination.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "6600503d3df603308fb6fa03b8c865255afeda3c",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "6600503d3df603308fb6fa03b8c865255afeda3c",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "6600503d3df603308fb6fa03b8c865255afeda3c",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "6600503d3df603308fb6fa03b8c865255afeda3c"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_coordination.py": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "c5491041ffeebb35b58fc4fa1306717ac5610d86",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "c5491041ffeebb35b58fc4fa1306717ac5610d86",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "c5491041ffeebb35b58fc4fa1306717ac5610d86",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "c5491041ffeebb35b58fc4fa1306717ac5610d86"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "a3ac15341f4e38d86e0fc7dfc50ec5ef69fc5eb1",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "a3ac15341f4e38d86e0fc7dfc50ec5ef69fc5eb1",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "a3ac15341f4e38d86e0fc7dfc50ec5ef69fc5eb1",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "a3ac15341f4e38d86e0fc7dfc50ec5ef69fc5eb1"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "5256005f3edae720228c104e08e98b724c2aa4bb",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "5256005f3edae720228c104e08e98b724c2aa4bb",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "5256005f3edae720228c104e08e98b724c2aa4bb",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "5256005f3edae720228c104e08e98b724c2aa4bb"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "ac4aabd6e36330d00f75a9a286d807b748936719",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "ac4aabd6e36330d00f75a9a286d807b748936719",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "ac4aabd6e36330d00f75a9a286d807b748936719",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "ac4aabd6e36330d00f75a9a286d807b748936719"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "0ae96fb697e2424aa779196a6f1b294610419add",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "0ae96fb697e2424aa779196a6f1b294610419add",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "0ae96fb697e2424aa779196a6f1b294610419add",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "0ae96fb697e2424aa779196a6f1b294610419add"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "83fe29af1fd5ad0516f4f8e748efaab9123be960",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "83fe29af1fd5ad0516f4f8e748efaab9123be960",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "83fe29af1fd5ad0516f4f8e748efaab9123be960",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "83fe29af1fd5ad0516f4f8e748efaab9123be960"
+    },
+    "src/repo_catalog/adapters/sqlite/p1_ddl/search.sql": {
+      "06a4ccd432476af15ee942e8cfcd9fbdf42357c7": "4b2f7165e2397fcfbe84f2ad26b28dce5a812db2",
+      "8ce2fc4b41f2f7f5a1da9f2fcfbddb4c5cbabc8b": "4b2f7165e2397fcfbe84f2ad26b28dce5a812db2",
+      "5e3b373bfc16ff1cad8d8f093af42a7f00d3d320": "4b2f7165e2397fcfbe84f2ad26b28dce5a812db2",
+      "b1b5f9cf11d9c0dd21302c5e22b881e1fcc39137": "4b2f7165e2397fcfbe84f2ad26b28dce5a812db2"
+    }
+  },
+  "p1_core_classes_unchanged": [
+    "Capture",
+    "CoreCoverageScope",
+    "CoreFailure",
+    "GitObservation",
+    "NativeObject",
+    "NotesAlternative",
+    "NotesClaim",
+    "NotesGroup",
+    "NotesProjection",
+    "NotesProof",
+    "OID",
+    "Projection",
+    "Provenance",
+    "RelationGroup",
+    "RelationMember",
+    "RepositoryClaim",
+    "ScalarClaim"
+  ],
+  "sibling_file_collisions": [],
+  "public_runtime_isolated": true,
+  "accepted_adrs_workflows_cli_unchanged": true,
+  "review_script_sha256": "e87c6e1c1c6c145b45e4c1d71feed9a0ae217e97544e66e0680a481ea4b50423"
+}

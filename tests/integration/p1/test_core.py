@@ -217,7 +217,7 @@ def test_verified_commit_bounded_canonical_preserves_reports_and_no_closure(core
         [[0, *parent.key]],
     ]
     assert c.read_metadata(commit.oid) == body
-    assert len(c.sql("SELECT * FROM retained_metadata")) == 1
+    assert len(c.sql("SELECT physical_copy_uuidv4 FROM retained_metadata")) == 1
     assert len(c.sql("SELECT * FROM git_objects")) == 3
 
 
@@ -320,7 +320,7 @@ def test_retained_physical_copies_are_real_distinct_domain_occurrences(core):
     c.admit_metadata(metadata, first, Budget())
     c.admit_metadata(metadata, first, Budget())
     c.admit_metadata(metadata, second, Budget())
-    assert len(c.sql("SELECT * FROM retained_metadata")) == 2
+    assert len(c.sql("SELECT physical_copy_uuidv4 FROM retained_metadata")) == 2
     assert len(c.sql("SELECT * FROM git_objects")) == 1
 
 

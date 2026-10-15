@@ -514,24 +514,10 @@ def valid_group(fmt: str, relation: str, status: str, membership: str) -> bool:
 
 
 def tree_entries(body: bytes, fmt: str) -> dict[bytes, tuple[bytes, str]]:
-    width, offset = {"sha1": 20, "sha256": 32}[fmt], 0
-    result = {}
-    while offset < len(body):
-        space, zero = body.index(b" ", offset), body.index(b"\0", offset)
-        mode, name = body[offset:space], body[space + 1 : zero]
-        end = zero + 1 + width
-        if (
-            space > zero
-            or not re.fullmatch(rb"[0-7]+", mode)
-            or not name
-            or b"/" in name
-            or name in result
-            or end > len(body)
-        ):
-            raise ValueError("malformed native tree")
-        result[name] = mode, body[zero + 1 : end].hex()
-        offset = end
-    return result
+    """Production native tree grammar; P1 semantic-key representations unchanged."""
+    from repo_catalog.domain.git_native import parse_tree
+
+    return parse_tree(fmt, body)
 
 
 def valid_note_role(
@@ -553,12 +539,11 @@ def valid_note_role(
                 or native_oid(fmt, kind, body) != oid
             ):
                 return False
+            from repo_catalog.domain.git_native import parse_metadata
+
+            parsed = parse_metadata(fmt, kind, body)
             if index == 0 and kind == "commit":
-                first = body.partition(b"\n")[0]
-                if not first.startswith(b"tree "):
-                    return False
-                expected = first[5:].decode("ascii")
-                OID(fmt, expected)  # type: ignore[arg-type]
+                expected = parsed.relations["commit_tree"][0][2]
                 continue
             if kind != "tree":
                 return False
@@ -630,7 +615,21 @@ def register_functions(connection: sqlite3.Connection) -> None:
     )
     connection.create_function("p1_claim", 2, check_claim, deterministic=True)
     connection.create_function("p1_group", 4, valid_group, deterministic=True)
-    connection.create_function("p1_native", 6, valid_native, deterministic=True)
+
+    def retained_native(fmt, oid, kind, body, size, digest):
+        if not valid_native(fmt, oid, kind, body, size, digest):
+            return False
+        if kind == "blob":
+            return True  # Physical notes-role FK separately restricts this body.
+        try:
+            from repo_catalog.domain.git_native import parse_metadata
+
+            parse_metadata(fmt, kind, body)
+            return True
+        except (ValueError, TypeError, IndexError, UnicodeError):
+            return False
+
+    connection.create_function("p1_native", 6, retained_native, deterministic=True)
     connection.create_function("p1_note_role", 6, valid_note_role, deterministic=True)
     connection.create_function("p1_notes_group", 3, _notes_group, deterministic=True)
     connection.create_function(
@@ -685,62 +684,36 @@ def register_functions(connection: sqlite3.Connection) -> None:
 
 
 def intrinsic_members(fmt: str, kind: str, body: bytes, relation: str) -> list[object]:
-    """Validate just the named intrinsic relation, never inferred closure."""
-    if kind == "commit":
-        headers, separator, _ = body.partition(b"\n\n")
-        lines = headers.split(b"\n")
-        if not separator or not lines[0].startswith(b"tree "):
-            raise ValueError("unsupported commit structure")
-        tree = OID(fmt, lines[0][5:].decode("ascii"))  # type: ignore[arg-type]
-        parents = []
-        index = 1
-        while index < len(lines) and lines[index].startswith(b"parent "):
-            parent = OID(fmt, lines[index][7:].decode("ascii"))  # type: ignore[arg-type]
-            parents.append([len(parents), *parent.key])
-            index += 1
-        if (
-            len(lines[index:]) != 2
-            or re.fullmatch(
-                rb"author [^\n\x00<>]*<[^\n\x00<>]*> -?[0-9]+ [+-][0-9]{4}",
-                lines[index],
-            )
-            is None
-            or re.fullmatch(
-                rb"committer [^\n\x00<>]*<[^\n\x00<>]*> -?[0-9]+ [+-][0-9]{4}",
-                lines[index + 1],
-            )
-            is None
-        ):
-            raise ValueError("unsupported commit headers")
-        if relation == "commit_parents":
-            return parents
-        if relation == "commit_tree":
-            return [[0, *tree.key]]
-    if kind == "tree" and relation == "tree_entries":
-        return [
-            [[mode.decode("ascii"), name.hex()], fmt, oid]
-            for name, (mode, oid) in tree_entries(body, fmt).items()
-        ]
-    if kind == "tag" and relation == "tag_target":
-        headers, separator, _ = body.partition(b"\n\n")
-        lines = headers.split(b"\n")
-        if (
-            not separator
-            or len(lines) < 3
-            or not lines[0].startswith(b"object ")
-            or lines[1] not in (b"type commit", b"type tree", b"type tag", b"type blob")
-            or not lines[2].startswith(b"tag ")
-        ):
-            raise ValueError("unsupported tag structure")
-        target = OID(fmt, lines[0][7:].decode("ascii"))  # type: ignore[arg-type]
-        return [[0, *target.key]]
-    raise ValueError("relation not checked by this native grammar")
+    """Check the named relation using the production whole-native grammar."""
+    from repo_catalog.domain.git_native import parse_metadata
+
+    parsed = parse_metadata(fmt, kind, body)
+    if relation not in parsed.relations:
+        raise ValueError("relation not checked by this native grammar")
+    return parsed.relations[relation]
 
 
 def _intrinsic_claim(field: str, value: str, kind: str, body: bytes) -> bool:
-    return (field == "type" and value == claim_value("type", kind)) or (
-        field == "size" and value == claim_value("size", len(body))
-    )
+    if field == "type":
+        return value == claim_value("type", kind)
+    if field == "size":
+        return value == claim_value("size", len(body))
+    # The frozen four-argument SQL guard lacks an object-format parameter.
+    # Commit/tag headers carry their full typed width intrinsically. Tree count
+    # is derived from the checked tree_entries group, never guessed here.
+    if kind not in ("commit", "tag"):
+        return False
+    try:
+        from repo_catalog.domain.git_native import parse_metadata
+
+        first = body.partition(b"\n")[0].partition(b" ")[2]
+        fmt = {40: "sha1", 64: "sha256"}.get(len(first))
+        if fmt is None:
+            return False
+        scalars = parse_metadata(fmt, kind, body).scalars
+        return field in scalars and value == claim_value(field, scalars[field])
+    except (ValueError, TypeError, IndexError, UnicodeError):
+        return False
 
 
 def _intrinsic_group(
