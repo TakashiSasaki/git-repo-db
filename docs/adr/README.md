@@ -15,8 +15,8 @@ This directory contains formal Architecture Decision Records for the `git-repo-d
 | [ADR 0007](0007-verification-aware-git-metadata-reads.md) | Verification-aware Canonical Git Metadata Reads (GCTX-M04) | 2026-10-14 | Accepted normal-query policy; verifier responsibility fixed by ADR 0008 |
 | [ADR 0008](0008-domain-split-git-verification-ownership.md) | Domain-split Git Verification Ownership (GCTX-M05) | 2026-10-14 | Accepted responsibility split; admission proof fixed by ADR 0009 |
 | [ADR 0009](0009-bounded-byte-admission-and-physical-health.md) | Bounded Verified-byte Admission Evidence and Independent Physical Health (GCTX-M06) | 2026-10-14 | Accepted immutable proof; operation-scoped health policy fixed by ADR 0010 |
-| [ADR 0010](0010-operation-scoped-cas-physical-integrity.md) | Operation-scoped Physical Integrity Assurance for Git Core CAS (GCTX-M07) | 2026-10-15 | Accepted assurance tiers; alternate-instance recovery fixed by ADR 0011 |
-| [ADR 0011](0012-append-only-multiple-cas-physical-instances.md) | Append-only Physical-instance Variants and Git CAS Recovery (GCTX-M08) | 2026-10-15 | Accepted immutable alternate copies/recovery; selection/quarantine projection and DDL pending |
+| [ADR 0010](0010-operation-scoped-cas-physical-integrity.md) | Operation-scoped Physical Integrity Assurance for Git Core CAS (GCTX-M07) | 2026-10-15 | Accepted assurance tiers; alternate-instance recovery fixed by ADR 0012 |
+| [ADR 0012](0012-append-only-multiple-cas-physical-instances.md) | Append-only Physical-instance Variants and Git CAS Recovery (GCTX-M08) | 2026-10-15 | Accepted immutable alternate copies/recovery; selection/quarantine projection and DDL pending |
 | [Transport-Independent Core](../transport-independent-core-adr.md) | Transport-independent core persistence and minimal parser provenance | 2026-10-10 | Accepted target design |
 | [Phase 2 No Independent Publication](../phase2/no-independent-publication-adr.md) | No Independent Publication in Phase 2 Architecture | 2026-10-10 | Accepted target design |
 
