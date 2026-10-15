@@ -112,7 +112,8 @@ CREATE TABLE intrinsic_claims (
  FOREIGN KEY(object_format,full_oid,physical_copy_uuidv4) REFERENCES retained_metadata
 ) STRICT, WITHOUT ROWID;
 CREATE TRIGGER intrinsic_claim_guard BEFORE INSERT ON intrinsic_claims
-WHEN NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid
+WHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'
+ OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid
  AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_claim(NEW.field,NEW.value,r.native_type,r.body))
 BEGIN SELECT RAISE(ABORT,'field outside checked intrinsic scope'); END;
 CREATE TABLE intrinsic_groups (
@@ -124,7 +125,8 @@ CREATE TABLE intrinsic_groups (
  FOREIGN KEY(object_format,full_oid,physical_copy_uuidv4) REFERENCES retained_metadata
 ) STRICT, WITHOUT ROWID;
 CREATE TRIGGER intrinsic_group_guard BEFORE INSERT ON intrinsic_groups
-WHEN NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid
+WHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'
+ OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid
  AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_group(NEW.object_format,NEW.relation,NEW.status,NEW.membership,r.native_type,r.body))
 BEGIN SELECT RAISE(ABORT,'relation outside checked intrinsic scope'); END;
 CREATE TABLE note_roles (

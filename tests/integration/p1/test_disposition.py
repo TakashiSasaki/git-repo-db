@@ -91,8 +91,6 @@ def test_authoritative_context_cannot_be_reclassified_as_disposable(evidence):
 
 
 def test_isolated_target_exclusion_does_not_hide_production_runtime_imports():
-    import ast
-
     spec = importlib.util.spec_from_file_location(
         "callsite_audit", ROOT / "scripts/audit_callsite_dependencies.py"
     )
@@ -105,18 +103,31 @@ def test_isolated_target_exclusion_does_not_hide_production_runtime_imports():
     for path in (ROOT / "src/repo_catalog").rglob("*.py"):
         if not baseline.is_baseline_source(path):
             continue
-        for node in ast.walk(ast.parse(path.read_text())):
-            if isinstance(node, ast.Import):
-                imports = [alias.name for alias in node.names]
-            elif isinstance(node, ast.ImportFrom):
-                imports = [node.module or "", *(alias.name for alias in node.names)]
-            else:
-                continue
-            assert not any(
-                part.startswith("p1_")
-                for imported in imports
-                for part in imported.split(".")
-            ), f"P1 target imported by production runtime: {path}:{node.lineno}"
+        package = ".".join(path.parent.relative_to(ROOT / "src").parts)
+        assert not baseline.isolated_runtime_imports(path.read_text(), package), (
+            f"Isolated target imported by public runtime: {path}"
+        )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import repo_catalog.domain.p1_core as core",
+        "from repo_catalog.domain import p1_core",
+        "from repo_catalog.adapters.sqlite.git_core import GitCore",
+        "from repo_catalog.adapters.sqlite import production_context",
+        "from ..domain import git_native",
+        "from .sqlite.production_context import Context",
+        "from repo_catalog.domain.ports.production_context import ContextPersistence",
+    ],
+)
+def test_public_runtime_guard_detects_every_isolated_stage(source):
+    spec = importlib.util.spec_from_file_location(
+        "callsite_audit", ROOT / "scripts/audit_callsite_dependencies.py"
+    )
+    baseline = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(baseline)
+    assert baseline.isolated_runtime_imports(source, "repo_catalog.adapters")
 
 
 def test_alias_removal_does_not_erase_semantic_table_successor(evidence):

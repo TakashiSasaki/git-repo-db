@@ -155,6 +155,62 @@ def validate_dependencies(core: sqlite3.Connection, context: sqlite3.Connection)
 def validate_pair(
     core: sqlite3.Connection, context: sqlite3.Connection
 ) -> SnapshotToken:
+    """Validate persisted authorities, including failures of semantic CHECK UDFs.
+
+    Invalid stored UTF-8/JSON can make integrity_check raise SQLITE_ERROR instead
+    of returning a corruption row. It is still failed authoritative validation,
+    not a rejected incoming unit. Transient cancellation/locking or a denied
+    capability is not evidence of storage corruption.
+    """
+    try:
+        return _validate_pair(core, context)
+    except sqlite3.DatabaseError as error:
+        code = getattr(error, "sqlite_errorcode", 0) & 255
+        detail = str(error)
+        storage_fault = code in {
+            sqlite3.SQLITE_CORRUPT,
+            sqlite3.SQLITE_NOTADB,
+            sqlite3.SQLITE_IOERR,
+        }
+        semantic_fault = (
+            code == sqlite3.SQLITE_ERROR
+            and detail == "user-defined function raised exception"
+        ) or detail.startswith("Could not decode to UTF-8 column")
+        if not (storage_fault or semantic_fault):
+            # Locking, cancellation, resource exhaustion and capability misuse
+            # do not establish persisted corruption. IOERR during these reads
+            # is an authoritative storage fault preventing required validation.
+            raise
+        failure = CoordinationError(
+            "CORRUPTION",
+            "core+context",
+            "authoritative validation failed: " + str(error),
+        )
+        _notify_validation_corruption(core, context, failure)
+        raise failure from error
+    except Exception as error:
+        _notify_validation_corruption(core, context, error)
+        raise
+
+
+def _notify_validation_corruption(core, context, error):
+    if getattr(error, "code", None) in {
+        "CORRUPTION",
+        "FOREIGN_KEY",
+        "MISSING_CORE_REFERENCE",
+        "AUTHORITATIVE_CORRUPTION",
+    }:
+        # A caller may catch validation failure inside an already pinned pair.
+        # Notify its owning capability now, before outer context unwinding.
+        # Raw connections rely on their coordinator's initial validation catch.
+        for db in (core, context):
+            if isinstance(db, ReadSnapshot):
+                db._on_error(error)
+
+
+def _validate_pair(
+    core: sqlite3.Connection, context: sqlite3.Connection
+) -> SnapshotToken:
     identity = _identity(core, "core")
     if identity != _identity(context, "context"):
         raise CoordinationError("PAIR_IDENTITY", "core+context")
