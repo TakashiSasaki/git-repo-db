@@ -35,7 +35,7 @@ Examples of prohibited final-target patterns when the actual domain key is known
 | --- | --- |
 | Git nominal object | `(object_format, full_oid)` |
 | Notes namespace/ref | Permanent `repository_uuidv4` with full exact ref name and real source scope where necessary |
-| Notes ref capture | **Now fixed by [ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md)**: direct `(capture_origin_uuidv4, capture_uuidv4)` composite PK/FK; compatible same-capture fact admission fixed by [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md); incompatible member reports remain B01-R05 |
+| Notes ref capture | **Now fixed by [ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md)**: direct `(capture_origin_uuidv4, capture_uuidv4)` composite PK/FK; compatible same-capture fact admission fixed by [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md); B01-R05 competing member report preservation fixed by ADR 0020; B01-R06 semantic keys remain open |
 | PR document | Existing accepted `(change_request_id, kind, provider_change_request_document_id)` |
 | Source ↔ repository membership | Meaningful Source and repository identifiers in a composite key |
 | Notes mapping/member | Capture composite key, relation kind and genuinely evidenced member identity/order/path/fragment as applicable |
@@ -65,14 +65,14 @@ If the owner's intended prohibition also literally forbids **all newly generated
 | Decision | Preserved/changed detail |
 | --- | --- |
 | ADR 0014 and B01-R01 / ADR 0015 | History/tree/tag/notes catalog, no ordinary file blob archival; auto-discover observable `refs/notes/*` and explicitly nominated notes refs |
-| B01-R02 / ADR 0016 | Preserve immutable, separate genuine captures and idempotent replay of the *same* capture. [ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md) now fixes D-1: direct origin UUIDv4 plus capture UUIDv4 as PK/FK with no receiver-local surrogate; B01-R04 monotonic compatible-fact admission fixed by ADR 0019; contradictory member reports remain B01-R05 |
+| B01-R02 / ADR 0016 | Preserve immutable, separate genuine captures and idempotent replay of the *same* capture. [ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md) now fixes D-1: direct origin UUIDv4 plus capture UUIDv4 as PK/FK with no receiver-local surrogate; B01-R04 monotonic compatible-fact admission fixed by ADR 0019; ADR 0020 / B01-R05 now preserves attributed competing member reports; exact claim keys B01-R06 remain open |
 | GCTX-M01/M02 | Metadata-only Core without Context/bytes and common Git full `(object_format,oid)`, not local `git_object_id` |
 | GCTX-M03/M04 | Preserve independently attributed typed field claims, observation-scoped ordered relation groups, unknown/partial/known-empty, and truthful verification-aware reads |
 | GCTX-M05–M07 | Exact local byte/representation verification, immutable admission proof and byte-dependent physical checks remain for permitted retained bodies |
 | GCTX-M08/M09 | Distinct immutable physical instances with evidence-derived eligible-set selection. A real per-copy domain identity is required; its format is still open, with no extra storage-only surrogate |
 | ADR 0003 | Strictly append-only Git Core and Context independence. No UPDATE, DELETE, REPLACE, Core GC or generic Publication |
 | Other accepted rules | Permanent repository UUIDv4, Source known-positive, five-column/latest-observation Coverage, Unix epoch `_us`, NO_INDEPENDENT_PUBLICATION, CAS-41, ADR 0001, durable Context and derived Operational/Search |
-| Still open | B01-R04 compatible monotonic fact admission fixed by ADR 0019; B01-R05 conflicting same-capture member reports, origin authentication and clone/fork identity lifecycle detail, B02 note-body admission/resources, B03 completeness, GCTX-M10 quarantine, exact DDL, cross-store fences/backups and Exchange |
+| Still open | B01-R04 compatible monotonic fact admission fixed by ADR 0019; B01-R05 competing immutable member reports fixed by ADR 0020; B01-R06 exact semantic keys, origin authentication and clone/fork identity lifecycle detail, B02 note-body admission/resources, B03 completeness, GCTX-M10 quarantine, exact DDL, cross-store fences/backups and Exchange |
 
 A key policy is not a substitute for provenance/trust, verification, integrity, exact source attribution or Exchange idempotency.
 
@@ -106,8 +106,8 @@ No compatibility shim or temporary promise to keep old surrogate columns is nece
 11. An entity that cannot be distinguished using an actual domain contract triggers design review, not a silent auto-increment.
 12. Core and Context stay separate, physical integrity/CAS-41 checks remain and omitted ordinary file bytes are not corruption.
 
-## 6. Subsequent B01-R03 D-1 and B01-R04 A accepted; next B01-R05; implementation and merge forbidden
+## 6. Subsequent B01-R03 D-1, B01-R04 A, B01-R05 A accepted; next B01-R06; implementation and merge forbidden
 
-[ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md) accepts **D-1**: direct **`(capture_origin_uuidv4,capture_uuidv4)`** composite PK/FK, both UUID version 4. Each genuine origin/capture occurrence has its semantic identity; exact retransmission retains the pair, and no receiver-local row surrogate is permitted. The earlier B01-R03 B proposal (receiver-local surrogate) stays disallowed. [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) now fixes append-only admission of compatible new facts/groups and exact replay under the same capture. **B01-R05** must fix preservation/rejection/isolation of contradictory member reports. No generic UUID-as-natural-key exception is implied for unrelated domain tables.
+[ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md) accepts **D-1**: direct **`(capture_origin_uuidv4,capture_uuidv4)`** composite PK/FK, both UUID version 4. Each genuine origin/capture occurrence has its semantic identity; exact retransmission retains the pair, and no receiver-local row surrogate is permitted. The earlier B01-R03 B proposal (receiver-local surrogate) stays disallowed. [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) now fixes append-only admission of compatible new facts/groups and exact replay under the same capture. [ADR 0020 / B01-R05](0020-immutable-competing-notes-member-claims.md) accepts immutable competing reported member alternatives and derived conflicts; **B01-R06** must settle exact semantic claim/group keys. No generic UUID-as-natural-key exception is implied for unrelated domain tables.
 
 No code/SQL/DDL, tests, migration, live-catalog mutation, release, deployment or merge is authorized. This decision must appear in the repository and agent instructions before dependent coding work. The tests above are future specifications, not executed results.

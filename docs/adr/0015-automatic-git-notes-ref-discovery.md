@@ -90,9 +90,11 @@ Git notes namespace enumeration neither implies all notes bodies were preserved 
 14. Validate actual retained note bytes independently of sender success flags; retain CAS-41 fault evidence, allowing zero-byte metadata-only catalogs.
 15. Validate exact ref-name matching, nested notes prefixes and explicit names without leaking remote credentials into Core or relying on a global Git notes display configuration.
 
-## 6. Subsequent owner decisions: B01-R02, B01-R03 and B01-R04 accepted; next B01-R05
+## 6. Subsequent owner decisions: B01-R02–R05 accepted; next B01-R06
 
-[ADR 0016 / B01-R02](0016-immutable-notes-ref-capture-observations.md) accepts Option B: each genuine notes-ref observation has a separate immutable, portable capture-scoped identity, even when its ref/root matches an earlier observation. Exact replay of the same capture is idempotent; [ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md) now fixes issuer UUIDv4 plus capture UUIDv4 as a direct composite PK; [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) fixes monotonic compatible-fact admission and exact replay; contradictory member handling is the next B01-R05 choice. The original A/B/C options below document the already answered question, not an open B01-R02 choice.
+[ADR 0020 / B01-R05](0020-immutable-competing-notes-member-claims.md) accepts immutable competing notes member reports and derived conflict while preserving B01-R01 ref discovery, capture-scope identity, atomic groups and no ordinary file-body archival. Exact semantic claim keys are B01-R06.
+
+[ADR 0016 / B01-R02](0016-immutable-notes-ref-capture-observations.md) accepts Option B: each genuine notes-ref observation has a separate immutable, portable capture-scoped identity, even when its ref/root matches an earlier observation. Exact replay of the same capture is idempotent; [ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md) now fixes issuer UUIDv4 plus capture UUIDv4 as a direct composite PK; [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) fixes monotonic compatible-fact admission and exact replay; contradictory member reports are now preserved as immutable attributed alternatives by ADR 0020 / B01-R05; exact semantic claim keys are the next B01-R06 choice. The original A/B/C options below document the already answered question, not an open B01-R02 choice.
 
 **What is the durable identity of a notes-ref observation/capture, especially when the same ref+root recurs or is reported by different sources?**
 
@@ -100,12 +102,12 @@ Git notes namespace enumeration neither implies all notes bodies were preserved 
 - **B — Immutable capture-scoped observation identity (recommended candidate).** One genuine capture/observation has a distinct portable ID plus exact ref name, observed root if known, source and capture scope; notes mapping groups attach to that observation. A replay of the **same** capture is idempotent; a distinct observation of an identical root remains representable. More provenance storage and idempotency requirements; not a generic record per background scan attempt.
 - **C — Target/note-scoped identity as the primary unit.** Key each note relation by target/note OIDs and ref name, with observation details as annotations. Compact for individual lookup but risks conflating reappearances, incomplete inventory, ref changes and source-level provenance.
 
-ADR 0016 has now fixed B01-R02 Option B while preserving B01-R01. ADR 0018 / B01-R03 fixes the direct two-UUIDv4 capture key; B01-R04 compatible-fact/group replay is fixed by ADR 0019; B01-R05 contradictory member report grammar, final tables/FKs and notes completeness (B03) remain open; the original alternatives above are historical.
+ADR 0016 has now fixed B01-R02 Option B while preserving B01-R01. ADR 0018 / B01-R03 fixes the direct two-UUIDv4 capture key; B01-R04 compatible-fact/group replay is fixed by ADR 0019; B01-R05 competing member report preservation is fixed by ADR 0020; B01-R06 semantic claim identity, final tables/FKs and B03 completeness remain open; the original alternatives above are historical.
 
 ## 7. Authorization and references
 
 - Git notes primary reference: https://git-scm.com/docs/git-notes (default `refs/notes/commits`, notes namespaces, alternate notes refs, direct-tree notes roots, binary note blobs).
 - Owner-selected scope: B01 Option B in this conversation, after ADR 0014 and GCTX-M01–M09.
-- Follow-on blocking topics: B01-R02 capture-scoped identity is fixed by ADR 0016; B01-R03 direct UUIDv4 key fixed by ADR 0018; B01-R04 monotonic fact admission fixed by ADR 0019; next B01-R05 contradictory member report policy; B02 note-body budget and role-provenance grammar; B03 notes enumeration/list completeness; GCTX-M10 physical quarantine; physical Core/Context schema, Exchange and backup pairing.
+- Follow-on blocking topics: B01-R02 capture-scoped identity is fixed by ADR 0016; B01-R03 direct UUIDv4 key fixed by ADR 0018; B01-R04 monotonic fact admission fixed by ADR 0019; B01-R05 competing member report preservation fixed by ADR 0020; next B01-R06 semantic member claim keys; B02 note-body budget and role-provenance grammar; B03 notes enumeration/list completeness; GCTX-M10 physical quarantine; physical Core/Context schema, Exchange and backup pairing.
 
 Do not implement, change SQL/DDL or schema version, mutate catalogs, merge PRs, run authenticated acquisition, release or deploy as part of this design-only PR. Counterexamples here are future implementation test requirements, not executed tests; no local runtime/CI verification success is implied.

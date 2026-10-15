@@ -11,7 +11,7 @@ refines:
 # ADR 0019: Monotonic, idempotent notes-capture fact admission
 
 - **Decision ID:** B01-R04.
-- **Owner choice:** **Option A** — admit new compatible immutable notes-member/observation evidence under the **same genuine capture**, treat exact repeats as idempotent, and never mutate previously accepted facts. Contradictory facts must not silently overwrite, be chosen by arrival order, or acquire unearned verification; their exact persistent conflict/admission representation is a separate **B01-R05** choice.
+- **Owner choice:** **Option A** — admit new compatible immutable notes-member/observation evidence under the **same genuine capture**, treat exact repeats as idempotent, and never mutate previously accepted facts. Contradictory facts must not silently overwrite, be chosen by arrival order, or acquire unearned verification; their immutable attributed alternative preservation is fixed by [ADR 0020 / B01-R05](0020-immutable-competing-notes-member-claims.md); exact semantic keys remain B01-R06.
 - **Accepted date:** 2026-10-15.
 - **Stacking base:** Unmerged [PR #59 / ADR 0018 / B01-R03](https://github.com/TakashiSasaki/git-repo-db/pull/59), HEAD `799f1052ece4b02d0ed2d8ace70c2deddc6ddcbf`. Inherited design: ADRs 0014–0018 / KEY-P01, GCTX-M01–M09, and ADR 0003 strictly append-only Git Core. Sibling [PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) / proposed ADR 0011 governance remains unaccepted and is not a prerequisite.
 - **Implementation baseline:** Three-Store Catalog3 Core Schema 21, Operational 1, Search 1. No production schema, application code, migrations, tests, real catalog or GitHub merge is changed by this ADR.
@@ -23,7 +23,7 @@ refines:
 1. **Accept genuinely new, compatible typed member/evidence facts** using the original capture key, actual ref/root observation scope, source attribution and supported typed note-target/notes-blob/path evidence. New data may arrive in later transactions, in any order, via local acquisition or Exchange, without changing the capture key or retroactively rewriting earlier facts.
 2. **Make replay of the identical accepted fact idempotent.** Equality is about the **same capture-scoped typed assertion with its actual provenance and meaning**, not merely matching text, Git object OID, ref root or a digest of concatenated received messages. Do not add another authoritative fact or fabricated independent capture solely for retry, exchange loop, re-import or rearranged transport.
 3. **Retain prior accepted facts unchanged** under strict application-level Git Core `INSERT`-only. No `UPDATE`, `DELETE`, `REPLACE`, upsert-mutating a fact, late FK backfill, mutable `complete` flag, per-scan success ledger, generic Publication, local row surrogate or implicit ref-current pointer.
-4. **Do not treat contradictory input as a compatible extension.** At minimum, an existing immutable capture identity associated with repository/ref/root/source evidence cannot be silently rebound. Overlapping same-slot notes assertions with different values require a truthful non-success/qualified conflict decision and must not result in a falsely verified or complete notes view. **B01-R05** determines whether eligible contradictory *member reports* are admitted as separately qualified alternatives, rejected with diagnostic, or cause a capture-local conflict isolation; this ADR selects none of these. Capture issuer spoofing/UUID replay with incompatible identity is an identity/provenance failure, not evidence that two captures are automatically one.
+4. **Do not treat contradictory input as a compatible extension.** At minimum, an existing immutable capture identity associated with repository/ref/root/source evidence cannot be silently rebound. Overlapping same-slot notes assertions with different values require a truthful non-success/qualified conflict decision and must not result in a falsely verified or complete notes view. ADR 0020 / B01-R05 now accepts genuinely attributable competing *member reports* as separate immutable alternatives with a derived conflict, never as compatible additions to an old coherent group. Exact claim identity B01-R06 remains open. Capture issuer spoofing/UUID replay with incompatible identity is an identity/provenance failure, not evidence that two captures are automatically one.
 5. **Do not infer completeness from accumulation.** A growing collection of successfully accepted partial members is not automatically a complete mapping for the notes ref, notes root, annotated target, or remote inventory. B03 controls exact complete/partial/known-empty/unknown claims and any accepted closure evidence.
 
 This is a **fact-admission policy under an already fixed capture**, not a mandate that every member has its own random UUID, not a normalized all-scan history and not a general-purpose event-store/Publication layer.
@@ -54,7 +54,7 @@ Thus, **same capture** does not imply **same immutable relation group**, and **m
 
 **Atomic/crash behavior:** Publication of each accepted immutable fact/group must be atomic with its required capture FK and actual evidence. Failed transaction retries cannot produce a partially visible **complete** group, duplicate a successful fact, manufacture a new capture, discard a previously admitted fact or make an incomplete transfer “complete”. A reader uses a consistent visibility snapshot and qualifying provenance; the exact lock/fence and Exchange wire implementation remain open.
 
-**Identity collisions:** A repeated captured pair with a different repository/ref or incompatible immutable observed root/source evidence must **fail closed** rather than be relabeled or overwritten. The policy for separately representing member-level contradictory source claims is B01-R05; credential/origin authentication and fork/copy issuer protocols remain separate implementation decisions.
+**Identity collisions:** A repeated captured pair with a different repository/ref or incompatible immutable observed root/source evidence must **fail closed** rather than be relabeled or overwritten. ADR 0020 / B01-R05 fixes separately attributed immutable alternative member reports; credential/origin authentication and fork/copy issuer protocols remain separate implementation decisions.
 
 ## 4. Four message sequence
 
@@ -65,7 +65,7 @@ Let `P/K100` be one genuine notes-ref observation of `refs/notes/review` whose o
 | T1 | Source-attributed partial `C1→N1` | Preserve K100; admit one qualified atomic partial group/fact G1 |
 | T2 | Same capture; independent compatible partial `C2→N2` | Keep K100 and G1 unchanged; admit **new** qualified immutable group/fact G2 |
 | T3 | Repeat the **same G1 assertion and provenance** (`C1→N1`) through Exchange | Idempotent no duplicate G1; do **not** invent capture K101 |
-| T4 | Same K100, same claimed C1 notes mapping slot, `C1→N9` | **Not** an ordinary compatible append. Report/handle contradiction honestly; no overwrite, winner or fabricated canonical/complete group. Final persistent conflict disposition is B01-R05 |
+| T4 | Same K100, same claimed C1 notes mapping slot, `C1→N9` | **Not** an ordinary compatible append. Report/handle contradiction honestly; no overwrite, winner or fabricated canonical/complete group. ADR 0020 / B01-R05 preserves immutable alternative claims and derives conflict; semantic member keys remain B01-R06 |
 
 G1 and G2 can be queried with their actual partial-scope qualifications. **The display set `{C1→N1,C2→N2}` alone is not evidence that all note entries were enumerated.** A supported full list, terminal/empty inventory and completeness acknowledgment require separately scoped B03 proof, not a generic status flag attached to K100.
 
@@ -97,7 +97,7 @@ A new observation made later of the same root A uses **P/K101**, not K100, even 
 2. Receive T2 before T1: compatible facts must not force false empty/list closure or arbitrary winner. Correct identity and qualification survive reordering.
 3. Replay G1 verbatim with identical attributable assertion identity via different Exchange path: no duplicate authoritative G1 and no new capture.
 4. Report same note C1→N1 under a truly different origin's independent capture: do not collapse actual separate observation evidence.
-5. Send same K100 with C1→N9 as T4: no overwriting, silent first/last winner, false verified complete map; B01-R05 dictates persistent conflict treatment.
+5. Send same K100 with C1→N9 as T4: no overwriting, silent first/last winner, false verified complete map; ADR 0020 / B01-R05 fixes competing member reports and derived conflict; semantic claim key B01-R06 remains open.
 6. Send same capture UUID but a different repository/ref or falsely rebound root: fail closed on immutable capture identity/provenance violation.
 7. Attempt to add member to an already admitted **complete frozen relation group**: no in-place extension or silently changed original group. Later facts use legitimately new groups as permitted by source/scope.
 8. Show two compatible partial groups at K100. The interface must not label their aggregate **complete** absent B03-specified proof.
@@ -112,7 +112,9 @@ A new observation made later of the same root A uses **P/K101**, not K100, even 
 17. Concurrent inserts of the same member identity cannot create duplicate accepted facts or corrupt the capture; concurrent compatible new facts remain independently qualified.
 18. Do not treat a notes-ref name, root OID, member digest or decoder version as a universal completeness proof or a chronological capture winner.
 
-## 7. Next owner decision: B01-R05 (not accepted)
+## 7. Subsequent owner decision: B01-R05 Option A accepted; next B01-R06
+
+[ADR 0020 / B01-R05](0020-immutable-competing-notes-member-claims.md) selects **Option A**: preserve eligible contradictory notes member reports as separately attributed immutable Git Core alternatives and derive explicit unresolved conflict for ordinary reads. Only precisely relevant receiver-checked Git notes mapping evidence can support a canonical value; historical reports remain queryable. Capture origin/repository/ref/root identity misuse still fails closed, not as a member alternative. B01-R06 exact semantic claim/group identity is next. The following A/B/C alternatives are *historical*, not an open B01-R05 choice.
 
 **How should a contradictory *member-level report* for the same logical note association inside one immutable capture be persisted/represented after B01-R04 has recognized it as incompatible?**
 

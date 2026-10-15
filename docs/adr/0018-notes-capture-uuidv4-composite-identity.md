@@ -75,7 +75,7 @@ This ADR **does** decide:
 
 **Still not decided by ADRs 0018–0019:**
 
-- **B01-R05:** exact admission/retention/reporting of incompatible same-slot member claims, including conflict diagnostics and preventing a forged sender key from overriding captured identity.
+- **B01-R05 is now fixed by [ADR 0020](0020-immutable-competing-notes-member-claims.md):** eligible conflicting member reports become separately attributed immutable alternatives with derived conflict. Forged capture identity still fails closed; exact semantic claim/group keys are B01-R06.
 - **B03:** exact complete/partial/known-empty group/list evidence and whether/when a separately supported complete-scope claim can be admitted; no generic mutable completeness promotion.
 - Exact semantic identity/duplicate grammar for member facts and new coherent groups, origin authentication/registry, producer takeover/clone security, Exchange wire serialization, schema constraints, locking/read fences and transaction protocols.
 - **B02:** notes content role admission and budget; **GCTX-M10:** active physical quarantine/disposition predicate.
@@ -137,9 +137,9 @@ This is a **capture-specific UUIDv4 issuance rule**, not an authorization to add
 15. Independently validated Git note bytes remain under CAS-41/physical instance checks; UUIDv4 is not a digest or a physical-health certificate.
 16. Confirm B02 note limits, B03 exact completion evidence and GCTX-M10 remain pending and are not accidentally decided via an ID schema.
 
-## 7. Subsequent owner decision: B01-R04 Option A accepted; next B01-R05
+## 7. Subsequent owner decisions: B01-R04 A and B01-R05 A accepted; next B01-R06
 
-[ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) accepts **Option A**: compatible, source-attributed typed facts/coherent new immutable groups can be appended under the original capture UUIDv4 pair; exact repeated accepted facts are idempotent. Do not modify previously accepted groups, infer complete coverage by union, or replace conflicting claims. How eligible contradictory member reports are persisted/represented remains B01-R05. The original A/B/C comparison below is historical, not an unselected B01-R04 question.
+[ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) accepts **Option A**: compatible, source-attributed typed facts/coherent new immutable groups can be appended under the original capture UUIDv4 pair; exact repeated accepted facts are idempotent. Do not modify previously accepted groups, infer complete coverage by union, or replace conflicting claims. ADR 0020 / B01-R05 fixes separately attributed immutable competing member reports and derived conflicts; exact semantic keys are B01-R06. The original A/B/C comparison below is historical, not an unselected B01-R04 question.
 
 **How should multiple partial deliveries, replay of accepted fragments and conflicting facts for the *same* `(origin_uuidv4, capture_uuidv4)` be admitted to append-only Core?**
 
@@ -147,7 +147,7 @@ This is a **capture-specific UUIDv4 issuance rule**, not an authorization to add
 - **B — Single atomic frozen capture snapshot.** Stage incomplete messages outside authoritative Core and admit one fixed capture representation only when final/ready (or admit a deliberately partial frozen result and refuse later extension under the same key). Benefits: simple once-admitted immutability and dedup; costs: delayed partial Core usability and potentially rejecting genuine late-arriving same-capture evidence, contrary to the spirit of metadata-only acceptance.
 - **C — Immutable named fragments within the same capture.** Each separately issued genuine fragment has its own domain-level identity/evidence under the parent capture, with out-of-order/idempotent fragment handling. Benefits: explicit transfer chunk boundaries and provenance; costs: additional justified domain identities, fragmentation/consistency and completion interpretation complexity. Fragments must not become a generic Publication or a storage-only surrogate.
 
-ADR 0019 fixes B01-R04 Option A. Retain a stable capture identity across compatible partial deliveries; never mutate prior coherent groups, fabricate an independent capture for retry, silently overwrite contradictory evidence or use a generic successful batch seal. B01-R05 decides conflicting member reports; B03 determines precise completeness evidence; B02 determines notes body permission and resource limits.
+ADR 0019 fixes B01-R04 Option A. Retain a stable capture identity across compatible partial deliveries; never mutate prior coherent groups, fabricate an independent capture for retry, silently overwrite contradictory evidence or use a generic successful batch seal. ADR 0020 / B01-R05 fixes conflicting member reports as immutable attributed alternatives; B01-R06 decides their keys; B03 determines precise completeness evidence; B02 determines notes body permission and resource limits.
 
 ## 8. Design-only permissions and references
 
