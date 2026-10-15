@@ -336,3 +336,64 @@ transition and restart with Operational absent. The catalog stop is independent
 of per-object state; it must not create quarantine counts or clear itself when
 another byte copy is available. The complete source-preservation and fresh
 activation engine remains P7 work.
+
+## 9. Verify the production adapters at every supported admission and read boundary
+
+Use these target-specific procedures with the P2/P3 adapters and their common P1
+contracts. They do not activate the public runtime or establish P7 recovery.
+The [production compatibility report](../../../docs/implementation/p2-p3-compatibility.md)
+records the actual source revisions, independent findings and executed tests.
+
+- Test direct typed admission **and** supported coordinator callback SQL. A
+  correctly hashed native representation can still have malformed commit/tree/tag
+  syntax. Construct negative fixtures with matching native OID, type, size and
+  body digest so they reach the grammar/role guard. `git hash-object --literally`
+  is explicit malformed/legacy fixture construction, not evidence that normal Git
+  fsck accepted it. Preserve folded headers losslessly with buffered joins;
+  repeatedly concatenating a growing header makes bounded inputs quadratic.
+- Do not permit generic SQL to emit retained body or proof byte columns around
+  checked typed readers. Exercise direct columns, aliases and SQL expressions.
+  Use semantic coordinates or `count(*)` for introspection assertions. Check the
+  **selected** native representation again before output, rather than trusting an
+  old verified bit. Validate persisted metadata's typed shape/provenance as well
+  as JSON syntax; `[]` and a known type value of integer 17 are not valid claims.
+- Separate immutable original reports from receiver checks in physical intrinsic
+  link guards. Matching local bytes cannot mark the old `reported` alternative
+  checked. Test scalar and whole-group links through actual callback SQL, with
+  unchanged report projections, atomic rollback and genuine receiver replay.
+- Diagnose stored-data failures in their real scope. SQLite `integrity_check`
+  can raise `SQLITE_ERROR` when a semantic CHECK UDF encounters invalid persisted
+  UTF-8, rather than returning corruption rows. Translate that validated storage
+  failure and notify pinned read owners **before** a caller can catch it. Keep
+  incoming malformed units, cancelled validation and resource/capability errors
+  separate from persisted corruption; a generic user SQL error is not evidence
+  of a damaged catalog.
+- Inject corruption or a stop at the last SQL step/deferred fetch and before
+  snapshot rollback. Persist the external stop before cleanup or caller error
+  handling, and recheck completion after producing a typed result. Acquire the
+  short completion fence after SQL stepping, not while a same-process trace can
+  publish a stop and recursively take that fence. Verify both read and replay
+  when a known retained-text FK loses its body: replay must not silently repair
+  the stopped source. Unknown unreferenced digests remain unavailable evidence.
+- Bind transaction/read capabilities to the actual `store_identity.store_role`.
+  Context and Core have identically named Coverage tables; accepting the wrong
+  database capability can otherwise change physical ownership without an SQL
+  error. Reject the caller's wrong role before installing a writer capability,
+  preserving the caller transaction and avoiding a false corruption stop.
+- Compare required proof scope with the **persisted** evidence selected by its
+  full semantic key. Comparing two agreeing caller-supplied objects is insufficient
+  when the terminal FK omits immutable `scope_json`; it allowed head A evidence
+  to certify head C. Include normalized parent-child ownership in collection and
+  relationship admission so PR B's review cannot certify PR A's review list.
+- Preserve unavailable attributed Core-reference candidates separately from
+  validated required cross-store links. Retain their actual original field clock,
+  observation time, role, provenance and full typed OID. A normal paired read must
+  report that acquisition dependency honestly, without turning nonacquisition
+  into catalog corruption. Validate reserved reference fields through ordinary
+  field admission too, not just the convenience method.
+
+Use the committed production suites under `tests/integration/p2/` and
+`tests/integration/p3/`, the P1 contract regressions, and the committed disposable
+combined test tree identified by the compatibility report. Independent reviewers
+must revalidate corrected material findings against exact commits; a green earlier
+suite does not cover a newly demonstrated counterexample.
