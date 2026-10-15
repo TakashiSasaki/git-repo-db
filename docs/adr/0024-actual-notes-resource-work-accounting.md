@@ -13,7 +13,7 @@ refines:
 
 **Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
 
-**Subsequent accepted refinement:** [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative actual work for one explicit request across continuation/resume/retry. Resource settings, counters/defaults and progress mechanics are engineering work, not further owner blockers. Section 8 preserves the historical comparison with A now selected.
+**Subsequent accepted refinement:** [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative actual work for one explicit request across continuation/resume/retry. Resource settings, counters/defaults and progress mechanics are engineering work, not further owner blockers. [ADR 0027 / Option A](0027-unauthenticated-external-capture-origin-reports.md) accepts unauthenticated external-origin reports without PKI/signatures; ADR 0026 fixes recovery without quarantine/count. The current scope has provisionally 0 known owner blockers. Section 8 preserves the historical comparison with A now selected.
 
 - **Decision ID:** B02-R03; **owner selected Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #64 / ADR 0023](https://github.com/TakashiSasaki/git-repo-db/pull/64), verified HEAD `6975fbda577323291b922ddc6a89369dcdab0bbb`, branch `codex/adr-0023-configurable-notes-resource-budgets`. Direct documentation-only successor; no implementation or merge.
@@ -87,7 +87,7 @@ At a limit, ADR 0023 still preserves independently admissible metadata and compl
 | GCTX-M07–M09 | Actual-output checks, immutable copies/diagnoses and evidence-derived candidates preserved; budget accounting is not physical health |
 | Other fixed rules | Strict Core INSERT-only/no UPDATE/DELETE/REPLACE/GC, permanent repository UUIDv4, known-positive Source, five-column/latest-observation Coverage, Unix epoch microseconds, NO_INDEPENDENT_PUBLICATION, Q01-B/Q02-B/Q03-B, unaffected PF-P01–PF-P17, durable Context, paired full backup and ADR 0001 |
 
-No prior accepted decision requires reversal. B02-R03 A and B02-R04 A are accepted by ADR 0024/0025. Counter/default/resume details are engineering work, not owner blockers. Remaining scoped work includes notes proof grammar, B03 completeness, origin trust, GCTX-M10 quarantine/count, exact DDL/wire/fences/backup pairing and Context GC-03/04.
+No prior accepted decision requires reversal. B02-R03 A and B02-R04 A are accepted by ADR 0024/0025. Counter/default/resume details are engineering work, not owner blockers. ADR 0026 fixes recovery without quarantine/count; ADR 0027 fixes unauthenticated external-origin reports without PKI/signatures. Notes proof grammar, B03 completeness encoding and exact DDL/wire/fences/backup pairing remain engineering work under accepted meanings; Context GC-03/04 is deferred outside the current migration prerequisites.
 
 ## 7. Future adversarial cases (NOT executed product tests)
 

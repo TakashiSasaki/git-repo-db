@@ -42,7 +42,7 @@ Earlier current summaries incorrectly promoted a sequence of resource questions 
 
 Open work is not automatically an architectural owner blocker. For a proposed blocker in this design stack, identify the unresolved domain meaning, trust/admission authority or serialized backup meaning, show the concrete conflicting outcomes, and name the affected dependent stage. Routine values, counters, algorithms and synchronization mechanisms can be designed and tested by the implementing agent within accepted policy. Escalate a concrete policy conflict if one is discovered; do not manufacture a new owner questionnaire from every unfinished parameter.
 
-This correction does not claim all notes/wire/DDL, origin trust, cross-store consistency or Context GC-03/04 work is finished, nor automatically authorize any of it. It scopes actual dependencies and preserves accepted requirements. It does not adopt the sibling governance proposal or introduce a new repository-wide approval process.
+This correction does not claim notes/wire/DDL, cross-store consistency or Context GC-03/04 work is finished, nor automatically authorize any of it. ADR 0027 subsequently fixes unauthenticated external-origin admission without PKI/signatures and estimates provisionally 0 known owner blockers in the current migration scope; deferred features and engineering work are distinct from those blockers. It scopes actual dependencies and preserves accepted requirements. It does not adopt the sibling governance proposal or introduce a new repository-wide approval process.
 
 ## 3. Consistency with accepted decisions
 
