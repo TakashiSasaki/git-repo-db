@@ -624,3 +624,126 @@ def test_production_core_transaction_binding_preserves_savepoint_and_expiry(core
         assert c.scalar(oid(), "type").alternatives == ()
     finally:
         db.close()
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        "CAST(x'ff' AS TEXT)",
+        "'{broken'",
+        "'[]'",
+        "'[\"known\",17]'",
+        "'[\"unknown\",3]'",
+    ],
+)
+def test_typed_scalar_read_stops_on_stored_utf8_json_or_semantic_corruption(
+    core, replacement
+):
+    c, path, _ = core
+    c.admit_claim(ScalarClaim(oid(), "type", "commit", provenance()))
+    db = sqlite3.connect(path)
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute("DROP TRIGGER p1_immutable_scalar_claims_update")
+    db.execute("UPDATE scalar_claims SET value=" + replacement)
+    db.commit()
+    db.close()
+    with pytest.raises(CoreFailure) as error:
+        c.scalar(oid(), "type")
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("membership", ["{broken", "{}", '[[0,"sha1","invalid"]]'])
+def test_typed_relation_read_stops_on_stored_semantic_corruption(core, membership):
+    from repo_catalog.domain.p1_core import RelationGroup
+
+    c, path, _ = core
+    c.admit_group(
+        RelationGroup(oid(), "commit_parents", "reported", "unknown", (), provenance())
+    )
+    db = sqlite3.connect(path)
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute("DROP TRIGGER p1_immutable_relation_groups_update")
+    db.execute("UPDATE relation_groups SET membership=?", (membership,))
+    db.commit()
+    db.close()
+    with pytest.raises(CoreFailure) as error:
+        c.relations(oid(), "commit_parents")
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_generic_sql_expression_error_does_not_diagnose_catalog_corruption(core):
+    c, path, _ = core
+    for query in ("SELECT json('{broken')", "SELECT CAST(x'ff' AS TEXT)"):
+        with pytest.raises(sqlite3.OperationalError):
+            c.sql(query)
+        assert not (path.parent / "p1-recovery-stop.json").exists()
+    c.admit_object(oid())
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("kind", ["commit", "tree", "tag"])
+def test_raw_coordinator_callback_rejects_hash_matching_malformed_native_metadata(
+    tmp_path, fmt, kind
+):
+    from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.domain.p1_coordination import AdmissionFailure, PairAdmission
+
+    repository, instance = str(uuid4()), str(uuid4())
+    for store in ("core", "context"):
+        initialize(tmp_path / (store + ".sqlite3"), store, repository, instance)
+    incoming = native(kind, b"not a native metadata structure", fmt)
+    incoming.validate()  # Intentionally passes digest/OID to reach grammar CHECK.
+
+    def admit(tx):
+        tx.execute("INSERT INTO git_objects VALUES(?,?)", incoming.oid.key)
+        tx.execute(
+            "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
+            (
+                *incoming.oid.key,
+                str(uuid4()),
+                kind,
+                incoming.body,
+                incoming.declared_size,
+                incoming.digest_sha256,
+            ),
+        )
+
+    with pytest.raises(AdmissionFailure) as error:
+        PairCoordinator(tmp_path).admit(admit, lambda tx: None)
+    assert error.value.outcome == PairAdmission(False, False)
+    assert not (tmp_path / "p1-recovery-stop.json").exists()
+    c = GitCore(tmp_path / "core.sqlite3")
+    try:
+        assert c.sql("SELECT * FROM git_objects") == []
+    finally:
+        c.close()
+
+
+@pytest.mark.parametrize("kind", ["commit", "tree", "tag"])
+def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_syntax(
+    core, kind
+):
+    c, path, _ = core
+    incoming = native(kind, b"invalid native syntax")
+    c.admit_object(incoming.oid)
+    db = connect(path, "core")
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute(
+        "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
+        (
+            *incoming.oid.key,
+            str(uuid4()),
+            kind,
+            incoming.body,
+            incoming.declared_size,
+            incoming.digest_sha256,
+        ),
+    )
+    db.close()
+    with pytest.raises(CoreFailure) as error:
+        c.read_metadata(incoming.oid)
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()
