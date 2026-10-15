@@ -476,3 +476,26 @@ def test_receiver_detected_corruption_in_admission_stops_after_gate_release(tmp_
         PairCoordinator(directory).admit(detected, context_unit)
     assert failure.value.outcome == PairAdmission(False, False)
     assert (directory / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("operation", ["admission", "core_read", "pair_read", "backup"])
+def test_corruption_during_connection_open_stops_before_transaction_exists(
+    tmp_path, operation
+):
+    directory = tmp_path / "live"
+    build(directory)
+    (directory / "core.sqlite3").write_bytes(b"broken sqlite header")
+    with pytest.raises(sqlite3.DatabaseError) as failure:
+        coordinator = PairCoordinator(directory)
+        if operation == "admission":
+            coordinator.admit(core_unit, context_unit)
+        elif operation == "core_read":
+            with coordinator.core_snapshot():
+                pass
+        elif operation == "pair_read":
+            with coordinator.snapshots():
+                pass
+        else:
+            coordinator.backup_candidate(tmp_path / "candidate")
+    assert failure.value.sqlite_errorcode == sqlite3.SQLITE_NOTADB
+    assert (directory / "p1-recovery-stop.json").exists()

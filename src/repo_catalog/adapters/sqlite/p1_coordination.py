@@ -318,6 +318,12 @@ class PairCoordinator:
                 # Do not recursively acquire the exclusive gate while holding it.
                 self.stop(str(error.cause))
             raise
+        except Exception as error:
+            # Opening/validating a damaged database can fail before a local
+            # admission transaction exists; the external stop still applies.
+            if _sqlite_corruption(error):
+                self.stop(str(error))
+            raise
 
     def _admit(self, core_unit, context_unit, *, cut) -> PairAdmission:
         with catalog_gate(self.directory, exclusive=True), ExitStack() as stack:
@@ -402,6 +408,16 @@ class PairCoordinator:
 
     @contextmanager
     def core_snapshot(self) -> Iterator[ReadSnapshot]:
+        try:
+            with self._core_snapshot() as core:
+                yield core
+        except Exception as error:
+            if _sqlite_corruption(error):
+                self.stop(str(error))
+            raise
+
+    @contextmanager
+    def _core_snapshot(self) -> Iterator[ReadSnapshot]:
         with ExitStack() as stack:
             with catalog_gate(self.directory, exclusive=False):
                 self._check_running()
