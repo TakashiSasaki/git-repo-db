@@ -546,3 +546,15 @@ def test_stop_published_during_last_read_prevents_ordinary_completion(core, oper
     assert fired
     assert error.value.code == "RECOVERY_STOP"
     assert not c._db.in_transaction
+
+
+def test_large_folded_signature_header_preserves_exact_bytes_with_linear_buffering():
+    continuation = b" signature-block\xff\n" * 20_000
+    body = commit_body(
+        oid(),
+        extra=b"gpgsig first-line\n" + continuation + b"x-extra after-signature\n",
+    )
+    parsed = parse_metadata("sha1", "commit", body)
+    assert parsed.scalars["message"] == "message\n"
+    assert bytes.fromhex(parsed.scalars["header_data"]) == body.partition(b"\n\n")[0]
+    assert parsed.relations["commit_tree"] == [[0, *oid().key]]

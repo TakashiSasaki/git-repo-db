@@ -31,20 +31,21 @@ def headers(body: bytes, kind: str) -> tuple[list[tuple[bytes, bytes]], bytes, b
     raw, separator, message = body.partition(b"\n\n")
     if not separator or b"\0" in body:
         _fail(kind, "native metadata requires a blank separator and no NUL")
-    fields: list[tuple[bytes, bytes]] = []
+    fields: list[tuple[bytes, list[bytes]]] = []
     for line in raw.split(b"\n"):
         _performed("metadata_units", 1)
         if line.startswith(b" "):
             if not fields:
                 _fail(kind, "orphan native header continuation")
-            key, value = fields[-1]
-            fields[-1] = key, value + b"\n" + line
+            fields[-1][1].append(line)
             continue
         key, space, value = line.partition(b" ")
         if not space or re.fullmatch(rb"[A-Za-z0-9-]+", key) is None:
             _fail(kind, "malformed native header")
-        fields.append((key, value))
-    return fields, raw, message
+        fields.append((key, [value]))
+    # Join each folded value once: repeated bytes concatenation is quadratic
+    # for large signatures and is amplified by independent SQL guard checks.
+    return [(key, b"\n".join(parts)) for key, parts in fields], raw, message
 
 
 def _oid(fmt: str, raw: bytes, kind: str) -> OID:
