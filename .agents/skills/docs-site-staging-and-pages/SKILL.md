@@ -5,6 +5,13 @@ description: Stage, build, and publish developer documentation sites for multi-s
 
 # Documentation Staging, Build, and GitHub Pages Invariants
 
+This procedure grants no publication permission. Follow the explicit current
+task and the existing approved staging allowlist in
+[`scripts/build_docs_site.py`](../../../scripts/build_docs_site.py). New accepted
+ADRs, implementation reports, executable spikes or skill updates do not become
+public automatically. Do not broaden that allowlist or change Pages settings
+while merely reconciling accepted architecture or documenting experiments.
+
 When deploying public developer documentation websites containing database schema visualizations, standalone HTML workbenches, and Architecture Decision Records (ADRs), adhere to these verified engineering procedures.
 
 ---
@@ -16,7 +23,7 @@ Directly pointing MkDocs `docs_dir` to the repository `docs/` or building the re
 
 ### Rule & Invariant
 - **Never publish unvetted repository files**: Build through an explicit staging directory (`.build/docs-source/`).
-- Only allowlist approved public technical documents: homepage, architecture overview, ADR 0001/0002, schema README, and schema workbench assets.
+- Preserve the approved public document set selected by the current staging code. Its baseline homepage, architecture overview, ADR 0001/0002 and schema assets do not imply that every later ADR or implementation report is approved for publication.
 - Validate the generated distribution (`site/`) with an automated allowlist checker verifying file extensions (`.html`, `.css`, `.js`, `.svg`, `.dbml`, `.json`) and rejecting forbidden patterns (`*.sqlite3`, `*.py`, `*.sh`, `*.key`, `*.pem`, `*.env*`).
 
 ---
@@ -110,7 +117,7 @@ Writing `site/` without a leading slash in `.gitignore` causes Git to ignore any
 ### Invariants for PWA Support
 1. **Web App Manifest**:
    - Provide `manifest.webmanifest` (and `manifest.json`) at the site root with `name`, `short_name`, `start_url: "/"`, `display: "standalone"`, and icons.
-   - Whitelist `.webmanifest` in `PUBLIC_ALLOWLIST_EXTENSIONS`.
+   - The existing builder includes `.webmanifest` in `PUBLIC_ALLOWLIST_EXTENSIONS`; verify the approved setting rather than treating this recipe as authorization to expand the list.
 2. **Icons Specification**:
    - Vector master: SVG icon (`icon.svg`) and maskable SVG (`icon-maskable.svg` with 80% safe zone).
    - High-resolution PNGs: 192x192, 512x512, 180x180 (Apple touch icon), 32x32, 16x16.

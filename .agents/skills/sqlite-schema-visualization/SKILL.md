@@ -1,9 +1,20 @@
 ---
 name: sqlite-schema-visualization
-description: Introspect, validate, and generate non-destructive database visualizations (Mermaid ER diagrams, DBML exports, and standalone HTML workbenches) for multi-store SQLite architectures under ADR 0002. Use when extracting composite foreign keys, filtering FTS shadow tables, handling generated columns, or validating schema documentation freshness.
+description: Introspect, validate, and generate non-destructive database visualizations (Mermaid ER diagrams, DBML exports, and standalone HTML workbenches) for the implemented multi-store SQLite schema, while distinguishing accepted four-store target contracts. Use when extracting composite foreign keys, filtering FTS shadow tables, handling generated columns, or validating schema documentation freshness.
 ---
 
 # SQLite Schema Introspection and Visualization Invariants
+
+Read the [ADR index](../../../docs/adr/README.md) before interpreting ownership.
+The production visualization commands below introspect the implemented Schema 21
+Core / Operational 1 / Search 1 baseline. ADR 0003's independent Context and the
+later metadata/notes/key/recovery decisions are accepted targets, not already
+implemented merely because a diagram can be generated. Legacy table names and
+IDs below are introspection examples, not approved target DDL. In particular,
+ADR 0017 requires semantic PKs/FKs; a visualization must expose storage-only
+surrogates and cross-domain tables rather than silently validating them. Target
+Core is INSERT-only; no diagram implies mutable verified/revision/quarantine
+states or ordinary file-body archival is permitted.
 
 When inspecting and generating schema documentation for multi-store SQLite databases (such as `git-repo-db`'s Core, Operational, and Search stores under ADR 0002), follow these verified procedures to avoid silent misclassification, broken diagrams, or nondeterministic diffs.
 
@@ -104,7 +115,7 @@ Diagrams represent cross-store references (e.g. `operational_identity.catalog_db
 ### Rule & Invariant
 - Physical foreign keys operate strictly within each SQLite database file.
 - SQLite foreign keys never cross physical store boundaries.
-- Cross-store relationships must be depicted as non-enforced logical dependencies (dashed lines, distinct badges, and ADR 0002 references).
+- Cross-store relationships must be depicted as non-enforced logical dependencies (dashed lines, distinct badges, and the applicable baseline/target ADR references). Context is independently durable in the accepted target; it is not a disposable secondary. A missing cross-store FK does not waive application validation or paired full-backup requirements.
 
 ---
 

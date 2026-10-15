@@ -1,0 +1,993 @@
+{
+  "additional_baseline_checks": {
+    "command": "uv run --no-sync pytest tests/unit/test_schema_viz.py tests/integration/test_catalog3_schema.py -q -o junit_family=xunit1 --junitxml=<disposable>/baseline-schema-tests.xml --journal <disposable>/baseline-schema-journal.jsonl",
+    "detached_main_reproduction": {
+      "command": "python -m pytest tests/integration/test_catalog3_schema.py::test_committed_resource_does_not_need_collection_or_operation_success -q",
+      "commit": "57de60b65c2ef29420a885b0c2102dc90e11fa75",
+      "exit_code": 1,
+      "summary": {
+        "errors": 0,
+        "failures": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    },
+    "diagnosis": "Unchanged baseline Core-only facts fixture queries Operational jobs at test_catalog3_schema.py:244; no such table: jobs",
+    "exit_code": 1,
+    "failure_nodeid": "tests/integration/test_catalog3_schema.py::test_committed_resource_does_not_need_collection_or_operation_success",
+    "summary": {
+      "errors": 0,
+      "failures": 1,
+      "skipped": 0,
+      "tests": 36
+    }
+  },
+  "baseline_main": "57de60b65c2ef29420a885b0c2102dc90e11fa75",
+  "environment": {
+    "git": "git version 2.52.0",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "sqlite_compile_options": [
+      "ATOMIC_INTRINSICS=1",
+      "COMPILER=clang-22.1.3",
+      "DEFAULT_AUTOVACUUM",
+      "DEFAULT_CACHE_SIZE=-2000",
+      "DEFAULT_FILE_FORMAT=4",
+      "DEFAULT_JOURNAL_SIZE_LIMIT=-1",
+      "DEFAULT_MMAP_SIZE=0",
+      "DEFAULT_PAGE_SIZE=4096",
+      "DEFAULT_PCACHE_INITSZ=20",
+      "DEFAULT_RECURSIVE_TRIGGERS",
+      "DEFAULT_SECTOR_SIZE=4096",
+      "DEFAULT_SYNCHRONOUS=2",
+      "DEFAULT_WAL_AUTOCHECKPOINT=1000",
+      "DEFAULT_WAL_SYNCHRONOUS=2",
+      "DEFAULT_WORKER_THREADS=0",
+      "DIRECT_OVERFLOW_READ",
+      "ENABLE_DBSTAT_VTAB",
+      "ENABLE_FTS3",
+      "ENABLE_FTS3_PARENTHESIS",
+      "ENABLE_FTS4",
+      "ENABLE_FTS5",
+      "ENABLE_GEOPOLY",
+      "ENABLE_MATH_FUNCTIONS",
+      "ENABLE_PERCENTILE",
+      "ENABLE_RTREE",
+      "MALLOC_SOFT_LIMIT=1024",
+      "MAX_ATTACHED=10",
+      "MAX_COLUMN=2000",
+      "MAX_COMPOUND_SELECT=500",
+      "MAX_DEFAULT_PAGE_SIZE=8192",
+      "MAX_EXPR_DEPTH=1000",
+      "MAX_FUNCTION_ARG=1000",
+      "MAX_LENGTH=1000000000",
+      "MAX_LIKE_PATTERN_LENGTH=50000",
+      "MAX_MMAP_SIZE=0x7fff0000",
+      "MAX_PAGE_COUNT=0xfffffffe",
+      "MAX_PAGE_SIZE=65536",
+      "MAX_SQL_LENGTH=1000000000",
+      "MAX_TRIGGER_DEPTH=1000",
+      "MAX_VARIABLE_NUMBER=32766",
+      "MAX_VDBE_OP=250000000",
+      "MAX_WORKER_THREADS=8",
+      "MUTEX_PTHREADS",
+      "SYSTEM_MALLOC",
+      "TEMP_STORE=1",
+      "THREADSAFE=1"
+    ],
+    "uv": "uv 0.12.19 (x86_64-unknown-linux-gnu)"
+  },
+  "focused": {
+    "command": "uv run --no-sync pytest tests/integration/architecture_spikes -q -o junit_family=xunit1 --junitxml=<disposable>/architecture-spikes-frozen.xml --journal <disposable>/architecture-spikes-frozen-journal.jsonl",
+    "executed_phases": {
+      "tests/integration/architecture_spikes/test_audit.py::test_all_production_tables_columns_and_guards_are_accounted_for": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_audit.py::test_check_reports_stale_ddl_fingerprint_without_overwriting": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_audit.py::test_new_column_requires_explicit_routing": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_audit.py::test_new_production_table_fails_instead_of_silently_omitting": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_context_transaction_failure_never_leaks_partial_unit": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[after_context_commit-expected3]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[after_core_commit-expected1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[before_core_commit-expected0]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[during_context-expected2]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_interrupted_pair_backup_has_no_certificate": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_invalid_pair_never_receives_full_backup_manifest[core_dependency]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_invalid_pair_never_receives_full_backup_manifest[foreign_key]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_invalid_pair_never_receives_full_backup_manifest[repository]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_missing_context_is_not_full_backup_or_invalid_core": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_naive_unfenced_snapshots_can_mix_authoritative_states": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_pair_backup_fence_blocks_writer_and_rejects_mismatch": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_pinned_pair_stays_coherent_during_writer": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_consistency.py::test_reader_cannot_enter_between_core_and_context_commit": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[False-0]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[False-1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[True-0]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[True-1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[0-unknown-0]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[1-partial-0]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[1-partial-1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[1-unknown-0]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_exact_replay_and_genuine_independent_observation": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_frozen_group_cannot_be_mutated_or_extended": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_full_composite_fk_prevents_cross_group_member_reference": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_inconsistent_group_evidence_coordinate_rejected": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_inconsistent_scalar_evidence_coordinate_rejected_without_inventing_identity": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_commit_and_group_input_cannot_manufacture_complete_verified_metadata": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[-1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[9223372036854775808]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[True]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_metadata_only_blob_unknown_size_no_bytes_no_context": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_multirow_group_failure_is_invisible_and_rolls_back_all_facts": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_native_blob_body_cannot_be_retained_through_commit_verifier": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_nominal_full_typed_identity_is_unique_without_type_or_membership": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_parent_references_are_nominal_not_fabricated_verified_objects": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_partial_then_separate_complete_group_never_extends_or_unions_prior": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_persistent_core_reopen_without_context": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_receiver_verified_commit_adds_precise_canonical_evidence_preserving_reports[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_receiver_verified_commit_adds_precise_canonical_evidence_preserving_reports[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_reject_abbreviated_uppercase_unsupported_oid[sha1-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_reject_abbreviated_uppercase_unsupported_oid[sha1-aaaaaaaaaaaa]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_reject_abbreviated_uppercase_unsupported_oid[sha512-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_report_api_cannot_self_assert_receiver_derivation_qualification": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_sender_claiming_receiver_identity_is_still_unverified": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_sqlite_triggers_reject_update_delete_replace_on_separate_writer": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[DELETE FROM objects]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[DROP TRIGGER immutable_objects_DELETE]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[INSERT INTO checked_claims SELECT * FROM checked_claims]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[INSERT OR REPLACE INTO objects VALUES ('sha1', ?)]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[PRAGMA foreign_keys=OFF]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[REPLACE INTO objects VALUES ('sha1', ?)]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[UPDATE objects SET full_oid=full_oid]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_two_genuinely_attributed_scalar_and_relation_alternatives": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_unknown_known_empty_and_absent_are_distinct": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_core.py::test_unverified_spoofed_local_coordinate_cannot_poison_later_intrinsic_admission": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_atomic_admission_rollback_does_not_erase_work[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_atomic_admission_rollback_does_not_erase_work[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_capture_rebinding_and_insert_only_guards[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_capture_rebinding_and_insert_only_guards[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_competing_reports_kept_but_only_relevant_proof_authorizes[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_competing_reports_kept_but_only_relevant_proof_authorizes[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha1-input_bytes]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha1-metadata_units]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha1-proof_objects]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha256-input_bytes]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha256-metadata_units]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha256-proof_objects]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_discovery_has_finite_actual_work_envelope[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_discovery_has_finite_actual_work_envelope[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-digest]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-format]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-size]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-type]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-digest]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-format]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-size]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-type]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_external_sender_verified_report_cannot_authorize_then_later_local_proof[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_external_sender_verified_report_cannot_authorize_then_later_local_proof[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_fanout_proof_only_walks_relevant_mapping[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_fanout_proof_only_walks_relevant_mapping[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_finite_note_limit_preserves_metadata_explicit_increase_and_lower_limit[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_finite_note_limit_preserves_metadata_explicit_increase_and_lower_limit[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[-1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[0]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[1.5]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[True]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[inf]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-100644-short]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-100644-upper]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-100755-full]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-120000-full]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-160000-full]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-100644-short]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-100644-upper]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-100755-full]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-120000-full]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-160000-full]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_missing_operational_counters_refuse_resume_without_invalidating_core[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_missing_operational_counters_refuse_resume_without_invalidating_core[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_namespace_discovery_nested_and_explicit_refs[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_namespace_discovery_nested_and_explicit_refs[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_ordinary_file_metadata_allowed_body_refused[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_ordinary_file_metadata_allowed_body_refused[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_output_rejects_capture_rebinding[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_output_rejects_capture_rebinding[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_real_corrupted_loose_blob_fails_receiver_native_oid_check[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_real_corrupted_loose_blob_fails_receiver_native_oid_check[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_ref_update_delete_preserves_prior_capture_and_genuine_observations[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_ref_update_delete_preserves_prior_capture_and_genuine_observations[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_same_blob_file_and_note_roles_do_not_create_file_service[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_same_blob_file_and_note_roles_do_not_create_file_service[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standalone_hash_and_notes_prefix_do_not_prove_attachment[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standalone_hash_and_notes_prefix_do_not_prove_attachment[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha1-\\x00\\xff\\xfe\\x00binary\\r\\n]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha1-]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha1-review note\\n]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha256-\\x00\\xff\\xfe\\x00binary\\r\\n]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha256-]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha256-review note\\n]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_target_not_available_direct_tree_and_unrelated_missing_subtree[sha1]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      },
+      "tests/integration/architecture_spikes/test_notes.py::test_target_not_available_direct_tree_and_unrelated_missing_subtree[sha256]": {
+        "call": "passed",
+        "setup": "passed",
+        "teardown": "passed"
+      }
+    },
+    "exit_code": 0,
+    "persisted_crash_properties": {
+      "test_crash_cuts_and_identity_preserving_retry[after_context_commit-expected3]": {
+        "crash_cut": "after_context_commit",
+        "persisted": "{\"issues\": [[\"provider.example\", \"issue-7\", 12, \"source title\"]], \"links\": [[\"provider.example\", \"issue-7\", 12, \"head\", \"sha1\", \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]], \"objects\": [[\"sha1\", \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]], \"resolved\": true}"
+      },
+      "test_crash_cuts_and_identity_preserving_retry[after_core_commit-expected1]": {
+        "crash_cut": "after_core_commit",
+        "persisted": "{\"issues\": [], \"links\": [], \"objects\": [[\"sha1\", \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]], \"resolved\": true}"
+      },
+      "test_crash_cuts_and_identity_preserving_retry[before_core_commit-expected0]": {
+        "crash_cut": "before_core_commit",
+        "persisted": "{\"issues\": [], \"links\": [], \"objects\": [], \"resolved\": true}"
+      },
+      "test_crash_cuts_and_identity_preserving_retry[during_context-expected2]": {
+        "crash_cut": "during_context",
+        "persisted": "{\"issues\": [], \"links\": [], \"objects\": [[\"sha1\", \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]], \"resolved\": true}"
+      }
+    },
+    "selected_equals_executed_exactly_once": true,
+    "selected_nodeids": [
+      "tests/integration/architecture_spikes/test_audit.py::test_all_production_tables_columns_and_guards_are_accounted_for",
+      "tests/integration/architecture_spikes/test_audit.py::test_new_production_table_fails_instead_of_silently_omitting",
+      "tests/integration/architecture_spikes/test_audit.py::test_new_column_requires_explicit_routing",
+      "tests/integration/architecture_spikes/test_audit.py::test_check_reports_stale_ddl_fingerprint_without_overwriting",
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[before_core_commit-expected0]",
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[after_core_commit-expected1]",
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[during_context-expected2]",
+      "tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[after_context_commit-expected3]",
+      "tests/integration/architecture_spikes/test_consistency.py::test_naive_unfenced_snapshots_can_mix_authoritative_states",
+      "tests/integration/architecture_spikes/test_consistency.py::test_pinned_pair_stays_coherent_during_writer",
+      "tests/integration/architecture_spikes/test_consistency.py::test_reader_cannot_enter_between_core_and_context_commit",
+      "tests/integration/architecture_spikes/test_consistency.py::test_context_transaction_failure_never_leaks_partial_unit",
+      "tests/integration/architecture_spikes/test_consistency.py::test_interrupted_pair_backup_has_no_certificate",
+      "tests/integration/architecture_spikes/test_consistency.py::test_pair_backup_fence_blocks_writer_and_rejects_mismatch",
+      "tests/integration/architecture_spikes/test_consistency.py::test_missing_context_is_not_full_backup_or_invalid_core",
+      "tests/integration/architecture_spikes/test_consistency.py::test_invalid_pair_never_receives_full_backup_manifest[repository]",
+      "tests/integration/architecture_spikes/test_consistency.py::test_invalid_pair_never_receives_full_backup_manifest[foreign_key]",
+      "tests/integration/architecture_spikes/test_consistency.py::test_invalid_pair_never_receives_full_backup_manifest[core_dependency]",
+      "tests/integration/architecture_spikes/test_core.py::test_metadata_only_blob_unknown_size_no_bytes_no_context",
+      "tests/integration/architecture_spikes/test_core.py::test_nominal_full_typed_identity_is_unique_without_type_or_membership",
+      "tests/integration/architecture_spikes/test_core.py::test_reject_abbreviated_uppercase_unsupported_oid[sha1-aaaaaaaaaaaa]",
+      "tests/integration/architecture_spikes/test_core.py::test_reject_abbreviated_uppercase_unsupported_oid[sha1-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+      "tests/integration/architecture_spikes/test_core.py::test_reject_abbreviated_uppercase_unsupported_oid[sha512-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+      "tests/integration/architecture_spikes/test_core.py::test_parent_references_are_nominal_not_fabricated_verified_objects",
+      "tests/integration/architecture_spikes/test_core.py::test_exact_replay_and_genuine_independent_observation",
+      "tests/integration/architecture_spikes/test_core.py::test_two_genuinely_attributed_scalar_and_relation_alternatives",
+      "tests/integration/architecture_spikes/test_core.py::test_inconsistent_scalar_evidence_coordinate_rejected_without_inventing_identity",
+      "tests/integration/architecture_spikes/test_core.py::test_partial_then_separate_complete_group_never_extends_or_unions_prior",
+      "tests/integration/architecture_spikes/test_core.py::test_unknown_known_empty_and_absent_are_distinct",
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[UPDATE objects SET full_oid=full_oid]",
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[DELETE FROM objects]",
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[REPLACE INTO objects VALUES ('sha1', ?)]",
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[INSERT OR REPLACE INTO objects VALUES ('sha1', ?)]",
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[PRAGMA foreign_keys=OFF]",
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[DROP TRIGGER immutable_objects_DELETE]",
+      "tests/integration/architecture_spikes/test_core.py::test_supported_sql_cannot_mutate_core_or_borrow_prior_admission[INSERT INTO checked_claims SELECT * FROM checked_claims]",
+      "tests/integration/architecture_spikes/test_core.py::test_sqlite_triggers_reject_update_delete_replace_on_separate_writer",
+      "tests/integration/architecture_spikes/test_core.py::test_frozen_group_cannot_be_mutated_or_extended",
+      "tests/integration/architecture_spikes/test_core.py::test_full_composite_fk_prevents_cross_group_member_reference",
+      "tests/integration/architecture_spikes/test_core.py::test_multirow_group_failure_is_invisible_and_rolls_back_all_facts",
+      "tests/integration/architecture_spikes/test_core.py::test_receiver_verified_commit_adds_precise_canonical_evidence_preserving_reports[sha1]",
+      "tests/integration/architecture_spikes/test_core.py::test_receiver_verified_commit_adds_precise_canonical_evidence_preserving_reports[sha256]",
+      "tests/integration/architecture_spikes/test_core.py::test_sender_claiming_receiver_identity_is_still_unverified",
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[-1]",
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[True]",
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[9223372036854775808]",
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_scalar_input_does_not_create_identity_or_verification[1]",
+      "tests/integration/architecture_spikes/test_core.py::test_invalid_commit_and_group_input_cannot_manufacture_complete_verified_metadata",
+      "tests/integration/architecture_spikes/test_core.py::test_persistent_core_reopen_without_context",
+      "tests/integration/architecture_spikes/test_core.py::test_unverified_spoofed_local_coordinate_cannot_poison_later_intrinsic_admission",
+      "tests/integration/architecture_spikes/test_core.py::test_report_api_cannot_self_assert_receiver_derivation_qualification",
+      "tests/integration/architecture_spikes/test_core.py::test_inconsistent_group_evidence_coordinate_rejected",
+      "tests/integration/architecture_spikes/test_core.py::test_native_blob_body_cannot_be_retained_through_commit_verifier",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[False-0]",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[False-1]",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[True-0]",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_conflicts_with_partial_extra_slot[True-1]",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[1-unknown-0]",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[1-partial-0]",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[1-partial-1]",
+      "tests/integration/architecture_spikes/test_core.py::test_closed_parent_group_does_not_conflict_with_compatible_partial_or_unknown[0-unknown-0]",
+      "tests/integration/architecture_spikes/test_notes.py::test_ordinary_file_metadata_allowed_body_refused[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_ordinary_file_metadata_allowed_body_refused[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha1-review note\\n]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha1-]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha1-\\x00\\xff\\xfe\\x00binary\\r\\n]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha256-review note\\n]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha256-]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standard_git_notes_actual_commit_root_and_exact_binary[sha256-\\x00\\xff\\xfe\\x00binary\\r\\n]",
+      "tests/integration/architecture_spikes/test_notes.py::test_target_not_available_direct_tree_and_unrelated_missing_subtree[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_target_not_available_direct_tree_and_unrelated_missing_subtree[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_same_blob_file_and_note_roles_do_not_create_file_service[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_same_blob_file_and_note_roles_do_not_create_file_service[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_namespace_discovery_nested_and_explicit_refs[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_namespace_discovery_nested_and_explicit_refs[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_fanout_proof_only_walks_relevant_mapping[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_fanout_proof_only_walks_relevant_mapping[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_ref_update_delete_preserves_prior_capture_and_genuine_observations[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_ref_update_delete_preserves_prior_capture_and_genuine_observations[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_external_sender_verified_report_cannot_authorize_then_later_local_proof[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_external_sender_verified_report_cannot_authorize_then_later_local_proof[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_competing_reports_kept_but_only_relevant_proof_authorizes[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_competing_reports_kept_but_only_relevant_proof_authorizes[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-100755-full]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-120000-full]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-160000-full]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-100644-short]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha1-100644-upper]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-100755-full]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-120000-full]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-160000-full]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-100644-short]",
+      "tests/integration/architecture_spikes/test_notes.py::test_malformed_path_or_unsupported_relevant_mode[sha256-100644-upper]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standalone_hash_and_notes_prefix_do_not_prove_attachment[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_standalone_hash_and_notes_prefix_do_not_prove_attachment[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-size]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-digest]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-type]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha1-format]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-size]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-digest]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-type]",
+      "tests/integration/architecture_spikes/test_notes.py::test_exact_native_identity_and_supplied_size_digest_required[sha256-format]",
+      "tests/integration/architecture_spikes/test_notes.py::test_atomic_admission_rollback_does_not_erase_work[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_atomic_admission_rollback_does_not_erase_work[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_finite_note_limit_preserves_metadata_explicit_increase_and_lower_limit[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_finite_note_limit_preserves_metadata_explicit_increase_and_lower_limit[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha1-proof_objects]",
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha1-input_bytes]",
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha1-metadata_units]",
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha256-proof_objects]",
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha256-input_bytes]",
+      "tests/integration/architecture_spikes/test_notes.py::test_cumulative_limits_survive_failed_attempt_and_reopen[sha256-metadata_units]",
+      "tests/integration/architecture_spikes/test_notes.py::test_missing_operational_counters_refuse_resume_without_invalidating_core[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_missing_operational_counters_refuse_resume_without_invalidating_core[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_capture_rebinding_and_insert_only_guards[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_capture_rebinding_and_insert_only_guards[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[0]",
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[-1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[inf]",
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[1.5]",
+      "tests/integration/architecture_spikes/test_notes.py::test_invalid_unbounded_settings_refused[True]",
+      "tests/integration/architecture_spikes/test_notes.py::test_real_corrupted_loose_blob_fails_receiver_native_oid_check[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_real_corrupted_loose_blob_fails_receiver_native_oid_check[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_discovery_has_finite_actual_work_envelope[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_discovery_has_finite_actual_work_envelope[sha256]",
+      "tests/integration/architecture_spikes/test_notes.py::test_output_rejects_capture_rebinding[sha1]",
+      "tests/integration/architecture_spikes/test_notes.py::test_output_rejects_capture_rebinding[sha256]"
+    ],
+    "summary": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 128
+    }
+  },
+  "independent_review": {
+    "major_findings_closed": 2,
+    "minor_findings_closed": 6,
+    "open_material_findings": 0,
+    "prototype_integrated_summary": {
+      "failed": 0,
+      "passed": 128,
+      "skipped": 0
+    },
+    "read_only": true,
+    "roles": [
+      "review_prototypes",
+      "review_audit"
+    ]
+  },
+  "input_sha256": {
+    ".agents/skills/adr-workflow/SKILL.md": "eea29824cb7ab57fdb2a1dba1a403aa71929915752851ecc325a390879b1f8d8",
+    ".agents/skills/ci-final-tree-verification/SKILL.md": "2fbc9ea1f2abf3c6593d04c8e2a80a71412ff8195f0bb31ff65f2a90c7941d7c",
+    ".agents/skills/docs-site-staging-and-pages/SKILL.md": "03064845b25132ab729886a72a9b351fd240f414daa495d717313b973c911b1c",
+    ".agents/skills/lessons-to-skills/SKILL.md": "4041241c23eefdbdf0f166576681223a440274a4bb123a8e61427dc250406468",
+    ".agents/skills/lessons-to-skills/references/design-only-adr-stack-updates.md": "44f0a35221413bc704e324185db792fa4d4704d152b92f2e27a714115a701264",
+    ".agents/skills/sqlite-schema-visualization/SKILL.md": "c57966f8e84e61f9687668a18f10af53f5404161287072066efcedd7bc43209c",
+    ".agents/skills/three-store-invariants/SKILL.md": "dbce5f6c98294945d035629412f42bdb2d0941810a7d8a43e157a0e0010940fb",
+    "docs/implementation/callsite-dependencies.json": "cf38a6b967a559f79c0c3aeb9b7c104d22a67747fb5729bc7721466a02c6b6b8",
+    "docs/implementation/schema-inventory.json": "7c7e634d1d1d3783b47cc3a3be43ed4cd72a769bb7b3b7d9d64816b9699b234e",
+    "docs/implementation/table-disposition.json": "bb0dd80815f5ceb87b9c78b9e419f6bee18d18f4dcfcaf87c8230b2b61b34c1a",
+    "scripts/audit_callsite_dependencies.py": "be01fe0573652bb364fc432f55acfeeb52349c20d3b094a5ca55831de696bb6b",
+    "scripts/audit_implementation_boundary.py": "0af521a1f5429378c40ae04d39843787b541401283cf806551b5c817d34461b5",
+    "tests/integration/architecture_spikes/__init__.py": "02a8605b0531e597d1912b0264b0cc007c48266ce4b0fd81988d5f2af55f8708",
+    "tests/integration/architecture_spikes/consistency.py": "685e5157e385f8dea1f3bcb1e38a355c1c9759b2c14bb379e1f5ae407f569611",
+    "tests/integration/architecture_spikes/core.py": "87c82b7b149046e65e0b9f623dfc1186e9010dad34d887a3e9e46b26d05d646a",
+    "tests/integration/architecture_spikes/notes.py": "4b9efb530af104255a170ae27d1d8350287624504d17247d28466be1b9eb2476",
+    "tests/integration/architecture_spikes/test_audit.py": "27bdcf2839afda55348e5969921da6a14983b582dc11b34eb15ec6c49375093e",
+    "tests/integration/architecture_spikes/test_consistency.py": "1b68946c6d92e80977470cfc86a76ec73ca11328cc2f97382c8416eb9d739627",
+    "tests/integration/architecture_spikes/test_core.py": "23fb758b387dec15904d8c0acf6007efa0ff45d771c3dcf0f74e3e0aaac91055",
+    "tests/integration/architecture_spikes/test_notes.py": "53ed9b5ed0ab73d2781b69bdd53ea2e8dba640b00dacdf508fe482475967734d"
+  },
+  "kind": "focused-development-execution-receipt",
+  "limits": [
+    "Not a full product/release receipt",
+    "Process death is not power loss",
+    "Production four-store conversion and recovery not wired",
+    "C post-I/O accounting kill gap requires conservative production reservations",
+    "Final feature/report commit identity is supplied by Git/PR; this receipt binds exact executable inputs to source_commit"
+  ],
+  "modified_or_new_files_at_source_commit": [
+    ".agents/skills/adr-workflow/SKILL.md",
+    ".agents/skills/ci-final-tree-verification/SKILL.md",
+    ".agents/skills/docs-site-staging-and-pages/SKILL.md",
+    ".agents/skills/lessons-to-skills/SKILL.md",
+    ".agents/skills/lessons-to-skills/references/design-only-adr-stack-updates.md",
+    ".agents/skills/sqlite-schema-visualization/SKILL.md",
+    ".agents/skills/three-store-invariants/SKILL.md",
+    "AGENTS.md",
+    "docs/implementation/README.md",
+    "docs/implementation/audit-notes.md",
+    "docs/implementation/callsite-dependencies.json",
+    "docs/implementation/callsite-dependencies.md",
+    "docs/implementation/execution-report.md",
+    "docs/implementation/implementation-stack.json",
+    "docs/implementation/implementation-stack.md",
+    "docs/implementation/independent-review.md",
+    "docs/implementation/legacy-operations.md",
+    "docs/implementation/prototype-a.md",
+    "docs/implementation/prototype-b.md",
+    "docs/implementation/prototype-c.md",
+    "docs/implementation/schema-inventory.json",
+    "docs/implementation/table-disposition.json",
+    "docs/implementation/table-disposition.md",
+    "scripts/audit_callsite_dependencies.py",
+    "scripts/audit_implementation_boundary.py",
+    "tests/integration/architecture_spikes/__init__.py",
+    "tests/integration/architecture_spikes/consistency.py",
+    "tests/integration/architecture_spikes/core.py",
+    "tests/integration/architecture_spikes/notes.py",
+    "tests/integration/architecture_spikes/test_audit.py",
+    "tests/integration/architecture_spikes/test_consistency.py",
+    "tests/integration/architecture_spikes/test_core.py",
+    "tests/integration/architecture_spikes/test_notes.py"
+  ],
+  "production_src_diff_empty": true,
+  "profile_bootstrap_failure": {
+    "collected_tests": 0,
+    "diagnosis": "ci_profile profile explicitly loads scripts.ci_journal while tests/conftest.py delegates same hooks, registering --journal twice; direct pytest journal workaround verified",
+    "exit_code": 1
+  },
+  "release_acceptance": false,
+  "source_commit": "db5775f792a30e259ba9e742c12635d34b5a098c",
+  "source_tree": "5b3f0b04b10ead94bbb80bf1920f45aac2c74f65",
+  "source_worktree_clean_at_execution": true,
+  "static_and_audit_checks": [
+    {
+      "command": "uv run --no-sync ruff check src tests scripts",
+      "exit_code": 0
+    },
+    {
+      "command": "uv run --no-sync ruff format --check src tests scripts",
+      "exit_code": 0
+    },
+    {
+      "command": "uv run --no-sync python scripts/audit_implementation_boundary.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "uv run --no-sync python scripts/audit_callsite_dependencies.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff origin/main --check",
+      "exit_code": 0
+    }
+  ]
+}
