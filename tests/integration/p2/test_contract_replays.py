@@ -25,10 +25,18 @@ from tests.integration.p1.test_core import (  # noqa: F401
     test_untrusted_report_cannot_assert_local_verification,
 )
 from tests.integration.p1.test_notes import (  # noqa: F401
+    test_atomic_note_admission_work_survives_rollback_and_budget_stop,
     test_capture_binding_immutable_no_new_retry_identity,
+    test_direct_tree_binary_empty_unknown_targets_and_native_git_hash,
     test_false_relevant_mode_or_name_rejects_body,
+    test_invalid_body_exact_checks_without_irrelevant_lexical_failure,
+    test_metadata_only_notes_projection_preserves_reports_groups_and_local_role,
     test_metadata_only_notes_role_obeys_zero_proof_step_budget,
+    test_notes_commit_root_and_fanout_relevant_only,
     test_notes_projection_closed_scope_does_not_borrow_other_scope_absence,
+    test_raw_non_utf8_ref_is_losslessly_encoded_without_alias,
+    test_recovery_stop_on_retained_corruption_never_sibling_failover,
+    test_same_blob_file_role_and_multiple_namespaces,
     test_same_capture_reports_alternatives_groups_and_replay,
     test_sender_claim_hash_prefix_and_ref_do_not_authorize_retention,
 )

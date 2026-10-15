@@ -495,3 +495,19 @@ def test_native_messages_with_nul_are_rejected_not_silently_truncated(core):
         c.admit_metadata(incoming, str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     assert c.sql("SELECT * FROM git_objects") == []
+
+
+def test_loss_of_admitted_metadata_copy_is_corruption_not_optional_nonacquisition(core):
+    c, path, _ = core
+    incoming = native("tree", b"")
+    c.admit_metadata(incoming, str(uuid4()), Budget())
+    db = connect(path, "core")
+    db.execute("PRAGMA foreign_keys=OFF")
+    db.execute("DROP TRIGGER p1_immutable_retained_metadata_delete")
+    db.execute("DELETE FROM retained_metadata")
+    db.close()
+    assert c.relations(incoming.oid, "tree_entries").canonical == ["known_empty", []]
+    with pytest.raises(CoreFailure) as error:
+        c.read_metadata(incoming.oid)
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (path.parent / "p1-recovery-stop.json").exists()

@@ -11,6 +11,7 @@ from repo_catalog.adapters.sqlite.p1_core import Core
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.p1_core import (
     OID,
+    CoreFailure,
     NativeObject,
     NotesProof,
     Provenance,
@@ -44,9 +45,14 @@ class GitCore(Core):
         return super()._authorize(action, table, column, database, trigger)
 
     def _metadata(self, native: NativeObject, copy: str) -> None:
-        parsed = parse_metadata(
-            native.oid.object_format, native.native_type, native.body
-        )
+        try:
+            parsed = parse_metadata(
+                native.oid.object_format, native.native_type, native.body
+            )
+        except CoreFailure as error:
+            if error.code == "NATIVE_SYNTAX":
+                raise CoreFailure(error.code, native.oid, str(error)) from error
+            raise
         # The inherited entire unit installs the physical copy, type/size and
         # whole checked relation groups in this same Core transaction.
         super()._metadata(native, copy)
@@ -68,7 +74,21 @@ class GitCore(Core):
     def read_metadata(self, oid: OID) -> bytes:
         self._checked_byte_read = True
         try:
-            return super().read_metadata(oid)
+            with self._snapshot():
+                missing = self.sql(
+                    "SELECT 1 FROM intrinsic_claims i LEFT JOIN retained_metadata r "
+                    "ON r.object_format=i.object_format AND r.full_oid=i.full_oid "
+                    "AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 "
+                    "WHERE i.object_format=? AND i.full_oid=? AND r.physical_copy_uuidv4 IS NULL "
+                    "UNION ALL SELECT 1 FROM intrinsic_groups i LEFT JOIN retained_metadata r "
+                    "ON r.object_format=i.object_format AND r.full_oid=i.full_oid "
+                    "AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 "
+                    "WHERE i.object_format=? AND i.full_oid=? AND r.physical_copy_uuidv4 IS NULL",
+                    (*oid.key, *oid.key),
+                )
+                if missing:
+                    self._integrity_stop((oid, "lost-retained-metadata-copy"))
+                return super().read_metadata(oid)
         finally:
             self._checked_byte_read = False
 
