@@ -30,7 +30,7 @@ For each actual retained-byte instance:
 - Publish an **immutable, narrowly typed association/recovery fact** between the expected payload and independently verified candidate instance(s), with provenance of actual acquisition/recovery and the required evidence. This is not a generic `repair succeeded` ledger for all domains; it is not a replacement for original verified object admission.
 - A correction or recovery MUST NOT mutate the originally admitted per-representation proof, replace old physical bytes under the same `physical_instance_id`, delete diagnosis, mark damaged `I1` healthy because `I2` is healthy, or silently select an instance by insertion order or latest timestamp.
 - The **logical payload** may regain usable byte availability through a valid candidate even though an older physical instance remains damaged or quarantined. Conversely, a healthy-looking logical payload does not prove every stored physical instance is healthy.
-- Diagnoses and optional recovery facts are immutable; their **current/effective projection**, including any active physical quarantine and candidate eligibility, is a derived view over relevant admitted evidence. The precise selection algorithm, isolation/retirement event types, simultaneous-fault handling and live active-quarantine definition are reserved for **GCTX-M09**.
+- Diagnoses and optional recovery facts are immutable; their **current/effective projection**, including any active physical quarantine and candidate eligibility, is a derived view over relevant admitted evidence. The physical candidate eligibility and deterministic selection contract is now fixed by [ADR 0013 / GCTX-M09](0013-deterministic-cas-instance-eligibility.md). Isolation/retirement event types, simultaneous-fault disposition and exact active-quarantine predicate remain reserved for **GCTX-M10**.
 
 **Atomicity requirement:** A verified alternate instance and its durable logical association must not become *available for verified reads* until all required bytes and checks are committed consistently. If bodies live outside SQLite, a staged immutable publication/fence protocol must prevent partially published or orphaned physical instances from being accepted; this ADR does NOT authorize an external fifth authoritative store. Crash/retry cases must be fail-closed and idempotent.
 
@@ -44,7 +44,7 @@ The existing implementation's `repair_payload()` path temporarily drops an immut
 | T2 | External damage changes actual bytes in `I1` so `SHA256(I1.body) != H` | Append instance-scoped fault/quarantine diagnosis. Keep historical `I1` and its distinct identity; trusted raw output using `I1` fails |
 | T3 | Correct original bytes are independently reacquired, validated against `H` and Git OID `O`, and stored as `I2` | Add an immutable `I2` with verified association/evidence; do not rewrite or replace `I1` and do not erase the T2 event |
 | T4 | Caller requests `B`'s historical Git metadata | Core may use historical admission evidence and source-attributed metadata with truthful current-byte qualification, no Context or mandatory rehash |
-| T5 | Caller requests a *currently verified* raw export of `B` | A candidate may be used only if eligible under the future GCTX-M09 projection and the **actual emitted bytes** pass GCTX-M07's operation-scope checks |
+| T5 | Caller requests a *currently verified* raw export of `B` | A candidate may be used only if eligible under the evidence-derived GCTX-M09 projection in ADR 0013 and the **actual emitted bytes** pass GCTX-M07's operation-scope checks |
 | T6 | Audit and backup are requested | Report each applicable physical instance, its known diagnoses and the current scoped physical quarantine count; distinguish logical `B` availability from damaged `I1` |
 
 Thus, **logical restoration** through `I2` is not equivalent to **physical repair of I1**. If both copies live in the same SQLite database, low-level database-file/page failure may still make the entire Core unreadable; in that exceptional case external verified-backup restoration remains an independently necessary recovery path. The choice of A does not guarantee self-healing from an unreadable database.
@@ -53,7 +53,7 @@ Thus, **logical restoration** through `I2` is not equivalent to **physical repai
 
 **CAS-41 remains binding.** Before restore-time diagnosis changes any effective diagnosis state, verify the archived **active physical quarantine count** against the count in the *copied and verified source database*, under a coherent matching scope. The accumulated number of immutable fault events is NOT that active count.
 
-GCTX-M08 makes physical-instance scope explicit; it does **not yet fix** whether/how a physically damaged original may ever be formally retired from an active quarantine projection when a healthy alternative is available. That policy must be decided for GCTX-M09 and made consistent with CAS-41 and prior integrity guarantees. Specifically:
+GCTX-M08 makes physical-instance scope explicit; it does **not yet fix** whether/how a physically damaged original may ever be formally retired from an active quarantine projection when a healthy alternative is available. ADR 0013 / GCTX-M09 fixes evidence-derived candidate eligibility and deterministic selection; the separate **GCTX-M10** decision must define active quarantine/retirement and exact CAS-41 instance-count rules. Specifically:
 
 - Newly validated `I2` cannot itself delete, erase or implicitly resolve a fault on `I1`. Unless an explicitly defined disposition of `I1` applies, `I1`'s physical fault remains represented as a fault of that retained instance.
 - A payload can be logically usable via `I2` while active fault accounting may still include `I1`. Backups/restores and diagnostics must convey both truths and must not reduce the active **physical** quarantine count merely because logical byte availability was recovered.
@@ -88,7 +88,7 @@ This does not fix an automatic canonical physical **winner**, ref-current policy
 4. Independently acquire correct bytes as `I2` and check CAS digest plus declared Git OID/type/size. New candidate admission succeeds without repairing the old row or declaring old `I1` healthy.
 5. Inject an invalid `I2` candidate and a claimed matching digest: reject promotion, quarantine/diagnose actual bad input as appropriate, and preserve no false verified-byte success.
 6. Crash between byte staging and logical recovery association: no partial or uncommitted instance is eligible for verified output. Retry is idempotent, and old Core evidence remains readable.
-7. Two valid alternatives `I2` and `I3` coexist; absent GCTX-M09 policy, no hidden newest/timestamp/ID ranking may claim an authoritative physical winner. Raw export always rechecks actual chosen bytes under GCTX-M07.
+7. Two valid alternatives `I2` and `I3` coexist; ADR 0013 / GCTX-M09 permits stable physical-ID-based try-order **only among evidence-eligible candidates**, never an authoritative semantic winner or newest-first selection. Raw export always rechecks actual chosen bytes under GCTX-M07.
 8. Logical payload availability via `I2` can coexist with `I1`'s recorded physical damage. CAS-41 active physical quarantine manifest/count must not silently change to zero just because logical availability is restored.
 9. Full/Core-only metadata backup and paired Core+Context backup preserve truthful scopes and required fault/physical instance evidence; restore must reject invented current health, inconsistent counts and fabricated raw-byte completeness.
 10. A database file/page is actually unreadable despite multiple BLOB rows; do not promise recovery through intra-DB alternatives. A verified backup/external reacquisition path may be needed, with the same append-only truth requirements for any restored catalog.
@@ -98,7 +98,9 @@ This does not fix an automatic canonical physical **winner**, ref-current policy
 14. Test unexpected digest/OID collision or conflicting same-digest data; do not silently select, overwrite or certify either under a false identity.
 15. Confirm all physical instances remain retained with no new Git Core GC authorization; quantify growth/capacity effects as part of later implementation planning.
 
-## 7. Next unresolved question: GCTX-M09
+## 7. Subsequent owner decision: GCTX-M09 accepted; next GCTX-M10
+
+[ADR 0013 / GCTX-M09](0013-deterministic-cas-instance-eligibility.md) adopts Option A. Eligibility is a Core-snapshot-derived set of locally admitted physical instances without known effective blocks, not a claim of current health. Selection is by stable, non-authoritative physical identity order; validated byte use and failover follow GCTX-M07, and diagnosed faults remain immutable. The following A/B/C alternatives document the original question, not a still-open selection.
 
 **How should current physical-instance eligibility, candidate selection and active quarantine state be *derived* without mutable Core pointers or inaccurate CAS-41 counts?**
 
@@ -107,9 +109,9 @@ Compare:
 - **B: Append-only explicit activation/retirement decisions.** Record narrowly typed immutable, causally linked selection/activation facts and derive an effective chosen instance, without UPDATE. Avoid time-as-truth or an unapproved generic revision log; manage forks/conflicting activations.
 - **C: Caller-selected explicit physical instance.** Require explicit instance selection or manual intervention for any payload with multiple copies, even if an alternative passes validation. Avoid an automatic winner at the cost of ergonomics and restored logical availability.
 
-Any option must keep instance-scoped corruption, actual active **physical** quarantine accounting and its CAS-41 backup comparison distinct from derived logical-payload availability. GCTX-M09 may need separate explicit decisions on quarantine retirement and the exact count predicate. No option is accepted by GCTX-M08.
+Any option must keep instance-scoped corruption, actual active **physical** quarantine accounting and its CAS-41 backup comparison distinct from derived logical-payload availability. ADR 0013 fixes GCTX-M09 Option A. The exact retirement/active-quarantine count predicate is deliberately **GCTX-M10**, not settled by choosing a healthy alternate instance.
 
-Other open decisions: physical instance IDs/tables/keys and on-disk layout; whether a corrupted instance may be retired from active isolation without mutation or GC; exact repair atomicity/revision/fence and backup/restore; typed Git complete-list evidence; Core–Context consistency; Exchange wire; GC-03/GC-04.
+Other open decisions: physical instance IDs/tables/keys and on-disk layout; GCTX-M10 rules for whether a corrupted instance may be retired from active isolation without mutation or GC; exact repair atomicity/revision/fence and backup/restore; typed Git complete-list evidence; Core–Context consistency; Exchange wire; GC-03/GC-04.
 
 ## 8. Design-only scope and explicit permissions
 

@@ -100,7 +100,7 @@ At T4, a Core-only metadata query may still show P as historical byte-derived ca
 
 Compare **A: rehash on every byte-backed use**, **B: operation-specific assurance tiers (metadata views may use historical proof; actual byte export or `currently verified` claims require matching current checks; explicit scoped/full audit separately)**, and **C: periodic full scans with as-of health snapshots/cached status**. Distinguish performance, stale scan risk, byte output correctness, known quarantine, read consistency and lock/scan time. ADR 0010 selects B. Neither historical admission nor old `scan OK` may masquerade as current physical health; GCTX-M08 physical repair is still open.
 
-Still unresolved: final nominal/claim/group and representation tables/FKs/DDL, source evidence and complete-list proof, physical CAS instance keys and GCTX-M09 active quarantine/selection under ADR 0012's immutable alternate-instance recovery, precise health scan/read fences, cross-store transaction/backup matching, local revision/fence, Exchange wire, GC-03/GC-04.
+Still unresolved: final nominal/claim/group and representation tables/FKs/DDL, source evidence and complete-list proof, physical CAS instance keys and ADR 0013 / GCTX-M09 evidence-derived eligibility/selection, with GCTX-M10 active quarantine/retirement still open under ADR 0012's immutable alternate-instance recovery, precise health scan/read fences, cross-store transaction/backup matching, local revision/fence, Exchange wire, GC-03/GC-04.
 
 ## 8. Scope, permissions and implementation status
 
