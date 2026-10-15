@@ -11,6 +11,8 @@ refines:
 
 # ADR 0020: Preserve conflicting Git notes member reports as immutable attributed alternatives
 
+**Subsequent accepted refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) fixes direct semantic composite claim/group PKs and matching FKs using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance. Whole-group membership/scope is part of group identity; no surrogate or digest replaces it. B02 note-body admissibility is the next owner blocker; B03 and GCTX-M10 remain open.
+
 - **Decision ID:** B01-R05; **owner choice: Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #60 / ADR 0019](https://github.com/TakashiSasaki/git-repo-db/pull/60), HEAD `c1c5bf580bdb0383ed9b5df613b73c70753f73d9`; design-only, no implementation/merge. Inherits ADR 0014–0019, KEY-P01 and GCTX-M01–M09.
 - **Concurrent sibling:** Proposed ADR 0011 governance PR #52 remains **unadopted**.
@@ -38,7 +40,7 @@ For an existing immutable notes-ref Capture identified directly by `(capture_ori
 - **GCTX-M03:** competing notes reports are **distinct typed attributed evidence units or distinct coherent immutable groups**. Do not append N9 into an earlier atomically accepted N1 group or silently union two partial groups into one complete notes listing.
 - **GCTX-M04:** canonical read preference is **local field/group-specific intrinsic byte verification**; when absent, expose an unresolved conflict and every alternative. A verified N9 blob alone is insufficient to verify `C1→N9`. The read projection never changes old claims.
 - **GCTX-M05–M09:** Core owns Git-intrinsic verification and immutable facts; Context owns Provider assessments; Operational owns jobs; retained note/metadata body admission, physical health, multiple immutable copies and candidate selection remain separate.
-- **KEY-P01 / ADR 0017:** no storage-only `claim_id`, `conflict_id` or extra fragment UUID is authorized. Use real domain-semantic/attribution/value components to identify and deduplicate individual claims; **the exact composite claim/group-key grammar remains B01-R06**.
+- **KEY-P01 / ADR 0017:** no storage-only `claim_id`, `conflict_id` or extra fragment UUID is authorized. [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) now fixes direct semantic composite claim/group identity and replay equality; concrete lossless encodings and DDL must preserve that choice.
 - **ADR 0014–0019:** no ordinary file-content archive; all observable `refs/notes/*` plus explicitly nominated notes refs; genuinely distinct immutable captures; direct version-4 `(capture_origin_uuidv4,capture_uuidv4)`; compatible facts under the same capture with idempotent replay and separately atomic groups.
 - **Other fixed decisions:** permanent repository UUIDv4, Source known-positive, Unix epoch microsecond `_us`, Coverage exactly five columns/latest-observation semantics, NO_INDEPENDENT_PUBLICATION, Q01-B/Q02-B/Q03-B, unaffected PF-P01–PF-P17, full Core+Context paired backup, Git-only metadata backup, ADR 0001 and strictly INSERT-only Core (no UPDATE/DELETE/REPLACE/GC) all remain binding.
 - **GCTX-M10:** precise active physical quarantine count and retirement remain open. A metadata conflict neither quarantines bytes nor changes CAS-41 physical instance accounting.
@@ -64,7 +66,7 @@ Two notes for C1 in **different notes refs** or genuinely different Captures are
 
 Exact replay of the same source-attributed assertion must remain idempotent. A distinct value/evidenced assertion for the same member slot is not an exact replay merely because the capture, root and target match. Independently observed identical-value claims can have different genuine evidence; neither arrival order nor equal hashes should erase that meaningful provenance.
 
-**Open B01-R06:** define a true **non-surrogate** semantic identity for a source-attributed member claim/coherent group, including its capture pair, real relation kind/slot/path/position, value and source/evidence coordinate where known; settle whether values/provenance are composite key fields, canonical typed hashes, or genuinely issued domain occurrence IDs. How to handle an unidentifiable same-coordinate inconsistent input without fabricating source evidence is part of that decision. Unknown is not zero/null-as-fact, and ordinals/offsets cannot be invented to fill a key.
+**Accepted B01-R06 A / ADR 0021:** use the actual Capture UUIDv4 pair, real typed relation/member slot, asserted value and genuine original provenance directly as composite PK/FK components. Coherent group identity includes its entire immutable typed membership and scope. Exact source-attributed replay deduplicates; different genuine evidence remains distinct. Missing information uses truthful typed states, never fabricated ordinals/offsets. A same-coordinate inconsistent input without sufficient genuine identity fails closed rather than acquiring invented evidence. Hash-only keys and new per-claim occurrence IDs are not selected.
 
 The role/provenance gate for retaining **note body bytes** and resource limits remain **B02**, list/ref-inventory completeness remains **B03**, issuer-authentication/Exchange/backup fences and concrete DDL remain future contracts.
 
@@ -86,7 +88,7 @@ The role/provenance gate for retaining **note body bytes** and resource limits r
 14. No synthetic per-claim/fragment surrogate or per-conflict state-owner table merely to simplify composite FKs.
 15. Concurrent insertion and crash/retry cannot discard an eligible competing report, mutate G1, report success for half an atomic group or fabricate a preferred winner.
 
-## 6. Next blocking choice: B01-R06 (not accepted)
+## 6. Historical B01-R06 comparison; Option A now accepted by ADR 0021
 
 **How should the separate immutable report/group be directly keyed and deduplicated without storage-only surrogates?**
 
@@ -94,7 +96,7 @@ The role/provenance gate for retaining **note body bytes** and resource limits r
 - **B — Canonical typed assertion hash:** derive a fixed digest of the full source-attributed typed statement and scope. Pros: compact and deterministic; cons: canonical encoding/version, collision rules, false collapsing of distinct evidence with equal content, and hash alone proves no origin.
 - **C — Separate genuinely issued assertion-occurrence UUID:** only if source actually identifies a claim occurrence; pros: straightforward replay/Exchange, cons: another issuer/trust protocol, IDs unavailable in normal Git reads, and serious risk of disguising a forbidden surrogate under KEY-P01.
 
-No B01-R06 option is selected. The exact key/attribution contract must preserve B01-R04's compatible monotonic facts, B01-R05's competing alternatives and GCTX-M03 atomic groups. B02/B03/GCTX-M10 remain separately blocking.
+The owner subsequently selected **B01-R06 Option A**, fixed by [ADR 0021](0021-direct-semantic-notes-claim-group-keys.md). The comparison above is historical, not an open choice. The accepted key/equality contract preserves B01-R04's compatible monotonic facts, B01-R05's competing alternatives and GCTX-M03 atomic groups. **B02 note-body retention admissibility** is the next owner blocker; B03/GCTX-M10 remain separately open.
 
 ## 7. Design-only authorization
 
