@@ -1,0 +1,95 @@
+{
+  "source_commit": "cd30f7638a3d7e7b9d5f690a7b7b734693c20044",
+  "source_tree": "91375d1d1c8d28b9a87589d3f2dc76c604caf162",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "git": "git version 2.52.0",
+  "selected": 553,
+  "executed": 553,
+  "passed": 553,
+  "failed": 0,
+  "skipped": 0,
+  "categories": {
+    "tests/integration/p1": 260,
+    "tests/integration/p2": 159,
+    "tests/integration/architecture_spikes": 128,
+    "tests/packaging/test_p1_distribution.py": 2,
+    "tests/packaging/test_p2_distribution.py": 4
+  },
+  "artifact_sha256": {
+    "final-selected.txt": "b39456d7c4cd5750db2aa6504c7800c8600cf6b16d028258855c00118b1097ec",
+    "final.xml": "5062905febc181436ca46ce361e5deb2ae8acf44e35be25b1d9b00bef3e9f702",
+    "final-journal.jsonl": "b5e38de4f086d5e263db037a919a8b717b7fb953685e41a8eeec120b8d5c3323"
+  },
+  "production_and_test_input_sha256": {
+    "src/repo_catalog/adapters/git/native.py": "06e1f4efc9f37ddd110c9d774f1fe291a8377632a69720ea4e73bb7974d41383",
+    "src/repo_catalog/adapters/sqlite/git_core.py": "e2ea4ab6352ce2ddb8eb6e7804224eb16a5e864730c69809114cb52412074df3",
+    "src/repo_catalog/adapters/sqlite/p1_coordination.py": "be20e988794d6773701ddd1c6c19f0573ba6c52e5d2b4b9c14a161c244dd675b",
+    "src/repo_catalog/adapters/sqlite/p1_core.py": "a8828d34ca303ea608da89e27e8138775d0f3811d0192dbdb6e3efd2ad0ae8da",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql": "b18fbcd22ef9b787528361cbc298a62e47004d6ea13deaa0e0865ff05f0d50e7",
+    "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql": "acdce877b12e70fc385ef202d43eeefb0a7f709fd586baa7e5abbc942bdb6e31",
+    "src/repo_catalog/domain/git_native.py": "4796b88f41ec7b3dc22d64df80d65c0cd4b6208f69d9935032bec53ce0664c87",
+    "src/repo_catalog/domain/p1_core.py": "95c3b8a1226e25d1ee1dfc6c75411e7819aeb76e065a4e4d413d6b5e5309ea47",
+    "src/repo_catalog/domain/p1_coverage.py": "da45bf6c23917e7a0261eb40932fdea498edec31d49893d8286729f807a7903e",
+    "tests/integration/p2/conftest.py": "da25c41be6f38f6f9fb2fbe504b15e41e2b52a52e08b4794f205ca877edf4d8a",
+    "tests/integration/p2/test_contract_replays.py": "b33bda07eff45d965d1888c42c3bc47dd7bb28fa363a4e8f55cecf2960e1afbb",
+    "tests/integration/p2/test_native.py": "d354aea1382e6d5666664b45fc77fd93182383e6c91b40d6715f611dea224262",
+    "tests/packaging/test_p2_distribution.py": "dde9660d814b26955b833454c56330399e924625536496ee0bb08a7e48d0535a"
+  },
+  "format": "git-repo-db/p2-development-evidence-v1",
+  "scope": "focused-development-not-release",
+  "common_dependency": "e7caf31b367242021e1304ae1209d1dda3d78a7e",
+  "commands": [
+    "uv sync --locked --group dev",
+    "uv run --no-sync pytest tests/integration/p1 tests/integration/p2 tests/integration/architecture_spikes tests/packaging/test_p1_distribution.py tests/packaging/test_p2_distribution.py --collect-only -q > /workspace/evidence/p2/final-selected.txt",
+    "uv run --no-sync pytest tests/integration/p1 tests/integration/p2 tests/integration/architecture_spikes tests/packaging/test_p1_distribution.py tests/packaging/test_p2_distribution.py -q -o junit_family=xunit1 --junitxml=/workspace/evidence/p2/final.xml --journal=/workspace/evidence/p2/final-journal.jsonl",
+    "uv run --no-sync ruff check src tests scripts",
+    "uv run --no-sync ruff format --check src tests scripts",
+    "uv run --no-sync python scripts/build_p1_schema.py --check",
+    "uv run --no-sync python scripts/audit_p1_schema.py --check",
+    "uv run --no-sync python scripts/audit_callsite_dependencies.py --check",
+    "git diff --check"
+  ],
+  "reconciliation": {
+    "selected_junit_journal_multisets_equal": true,
+    "each_node_exactly_once": true,
+    "journal_finish_exitstatus": 0
+  },
+  "known_previous_failures": [
+    {
+      "source": "8b73322c10a79929f3023f9947d400aa0f666f6a",
+      "selected": 519,
+      "passed": 518,
+      "failed": 1,
+      "failure": "P1 historical-runtime audit treated opt-in next-stage production modules as public Schema21 imports. Corrected once in reviewed shared audit dependency; final focused run passes."
+    },
+    {
+      "source": "unchanged main; separately verified by coordinator",
+      "node": "tests/integration/test_catalog3_schema.py::test_committed_resource_does_not_need_collection_or_operation_success",
+      "failure": "Existing Core-only fixture queried Operational jobs. Independent PR71 repair deliberately not cherry-picked into P2."
+    }
+  ],
+  "hosted": {
+    "executed_by_this_agent": false,
+    "release_acceptance_claimed": false
+  },
+  "unexecuted": [
+    "full dual local/hosted release acceptance",
+    "live Provider/network acquisition",
+    "P4 complete notes acquisition and additional proof grammar",
+    "P5 acquisition/Exchange orchestration",
+    "P6 public CLI/Search switch",
+    "P7 host-power-loss recovery/fresh restore/activation",
+    "P8 public four-store initializer/runtime switch"
+  ],
+  "independent_review": {
+    "review": "p2-independent-review.md",
+    "receipt": "p2-independent-review/receipt.json",
+    "external_tests": "p2-independent-review/test_adversarial.py",
+    "final_corrected_source": "cd30f7638a3d7e7b9d5f690a7b7b734693c20044",
+    "selected_executed_passed": 318,
+    "failed": 0,
+    "skipped": 0,
+    "open_material_findings": 0
+  }
+}

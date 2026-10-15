@@ -1,0 +1,95 @@
+{
+  "production_sha": "8b73322c10a79929f3023f9947d400aa0f666f6a",
+  "production_tree": "2d5d465296cb856413bb72ec659db7dba0dc90c2",
+  "shared_fix_sha": "2e8618428bea482ececef580045066cd49552455",
+  "shared_fix_tree": "9f50e3be6bdf92cfc33ccb490b04a369f74e1609",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "git": "git version 2.52.0",
+  "commands": {
+    "independent-adversaries": "/workspace/git-repo-db/.venv/bin/python -m pytest -c pyproject.toml /workspace/evidence/p2-review/test_adversarial.py -q --junitxml=/workspace/evidence/p2-review/independent-adversaries.xml",
+    "production-p1": "/workspace/git-repo-db/.venv/bin/python -m pytest tests/integration/p2 tests/integration/p1/test_core.py tests/integration/p1/test_notes.py -q --junitxml=/workspace/evidence/p2-review/production-p1.xml",
+    "shared-fix": "/workspace/git-repo-db/.venv/bin/python -m pytest tests/integration/p1/test_intrinsic_provenance.py -q --junitxml=/workspace/evidence/p2-review/shared-fix.xml"
+  },
+  "results": {
+    "independent-adversaries": {
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "production-p1": {
+      "tests": 239,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "shared-fix": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "external_test_sha256": "72d093236ce32e34e977862749e29c068ba9c493a3218493b1657c9521a86609",
+  "cwd": "/workspace/p2",
+  "pytest_source_binding": "pyproject.toml pythonpath=[src], explicit -c pyproject.toml for external cases",
+  "actual_import_files": {
+    "parser": "/workspace/p2/src/repo_catalog/domain/git_native.py",
+    "adapter": "/workspace/p2/src/repo_catalog/adapters/sqlite/git_core.py",
+    "p1_values": "/workspace/p2/src/repo_catalog/domain/p1_core.py"
+  },
+  "source_after_first_review": {
+    "sha": "bd3cb33ccaba14f2bcde28e15ebe039c2cf69dba",
+    "tree": "02337b30c5fc2c56b1be44d03189646cff33f784"
+  },
+  "corrected": {
+    "sha": "999f8a55575b8d18018b91c404ed1e53d57e3c00",
+    "tree": "25096b68839ed718f00589419dc5cff647640ae3",
+    "cwd": "/workspace/p2",
+    "command": "uv run --no-sync python -m pytest tests/integration/p2 tests/integration/p1/test_core.py tests/integration/p1/test_notes.py /workspace/evidence/p2-review/test_adversarial.py -q --junitxml=/workspace/evidence/p2-review/corrected-production-p1-external.xml",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "imports": {
+      "adapter": "/workspace/p2/src/repo_catalog/adapters/sqlite/git_core.py",
+      "parser": "/workspace/p2/src/repo_catalog/domain/git_native.py"
+    },
+    "results": {
+      "tests": 293,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "original_stop_reproducer": {
+      "exit": 0,
+      "stdout": "{\n  \"raised\": \"CoreFailure\",\n  \"code\": \"RECOVERY_STOP\",\n  \"message\": \"normal catalog operation stopped\",\n  \"stop_exists\": true\n}\n",
+      "stderr": ""
+    }
+  },
+  "final": {
+    "sha": "cd30f7638a3d7e7b9d5f690a7b7b734693c20044",
+    "tree": "91375d1d1c8d28b9a87589d3f2dc76c604caf162",
+    "cwd": "/workspace/p2",
+    "command": "uv run --no-sync python -m pytest tests/integration/p2 tests/integration/p1/test_core.py tests/integration/p1/test_notes.py tests/integration/p1/test_intrinsic_provenance.py tests/integration/p1/test_disposition.py tests/packaging/test_p2_distribution.py /workspace/evidence/p2-review/test_adversarial.py -q --junitxml=/workspace/evidence/p2-review/final-p2-shared-external.xml",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "actual_imports": {
+      "core": "/workspace/p2/src/repo_catalog/adapters/sqlite/git_core.py",
+      "parser": "/workspace/p2/src/repo_catalog/domain/git_native.py"
+    },
+    "results": {
+      "executed": 318,
+      "passed": 318,
+      "failed": 0,
+      "skipped": 0
+    },
+    "categories": {
+      "P2": 159,
+      "P1CoreNotes": 104,
+      "P1SharedCorrection": 4,
+      "P1DispositionSchema": 16,
+      "PackagingInstalledVariants": 4,
+      "ExternalAdversaries": 31
+    }
+  }
+}
