@@ -1,0 +1,75 @@
+{
+  "format": "repo-catalog/p1-isolated-1",
+  "stores": {
+    "context": {
+      "ddl_sha256": "1d542892b201b559beea5f052cf527a1691ed4b82aea77d69c3b033ebdd0f9d1",
+      "sqlite_schema_sha256": "d20aafedbc9de84a6b9c80d2c27354a41f8ad23c7ea265f225222e3505ee8f98",
+      "tables": [
+        "collection_terminals",
+        "collections",
+        "core_references",
+        "coverage_claims",
+        "coverage_proofs",
+        "coverage_scopes",
+        "field_candidates",
+        "providers",
+        "repository_context",
+        "resource_relations",
+        "resources",
+        "source_coverage_proofs",
+        "source_inventory_evidence",
+        "source_repositories",
+        "sources",
+        "store_identity",
+        "text_bodies"
+      ]
+    },
+    "core": {
+      "ddl_sha256": "9e62ff460a14f051e57befc9c83b08aea0f6c6b9b0ade647c77464e7d0f2c54e",
+      "sqlite_schema_sha256": "bc7e86d4763035d1bcf60739da5c065f95208ccc575603318644952dcb47c34f",
+      "tables": [
+        "captures",
+        "core_coverage_proofs",
+        "coverage_claims",
+        "coverage_scopes",
+        "git_objects",
+        "git_observations",
+        "intrinsic_claims",
+        "intrinsic_groups",
+        "note_roles",
+        "notes_claims",
+        "notes_groups",
+        "relation_groups",
+        "repositories",
+        "repository_claims",
+        "retained_metadata",
+        "retained_notes",
+        "scalar_claims",
+        "store_identity"
+      ]
+    },
+    "operational": {
+      "ddl_sha256": "b7d649ef02eb8024a0f23266faed6e2c97b7556a7b6a891bf5a38e12540881a9",
+      "sqlite_schema_sha256": "729ac864c1cb883bf18359828a06069212c593a9431aa4c47cff90f0222008b1",
+      "tables": [
+        "acquisition_attempts",
+        "acquisition_requests",
+        "cache_locators",
+        "request_budgets",
+        "request_continuations",
+        "retry_state",
+        "store_identity",
+        "work_accounting"
+      ]
+    },
+    "search": {
+      "ddl_sha256": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303",
+      "sqlite_schema_sha256": "d432248c191d1d5a5a1b74be6b0fb2a5923a794cf9c75e38ccb7483a6089ed2e",
+      "tables": [
+        "search_documents",
+        "search_projections",
+        "store_identity"
+      ]
+    }
+  }
+}

@@ -288,3 +288,51 @@ This procedure tests a claimed group's actual comparable parent-list scope. It
 is not permission to infer negative membership for Source known-positive pairs,
 change Coverage's five-column/latest-observation contract, or treat a reported
 complete group as receiver-verified.
+
+## 8. Check all returned SQL capabilities and mirrored domain projections
+
+For an isolated target adapter, a read-only method name or `query_only=ON` is not
+an enforceable capability boundary by itself. Exercise actual supported operations:
+
+1. Try transaction termination and `PRAGMA query_only=OFF` through both the
+   connection facade and a returned cursor's `.connection`. Return the same
+   restricted facade from cursors; never accidentally expose the trusted factory
+   connection. Compose the domain admission authorizer with the coordinator's
+   outer-transaction guard so a typed unit cannot commit its caller transaction.
+2. Fetch from a cursor after its snapshot capability expires or a persistent
+   catalog stop appears. Check both execution and deferred result consumption;
+   protecting only `execute()` leaves a second path. Disable SQLite statement
+   caching when authorizer decisions depend on a scoped admission capability.
+3. Where Core and Context implement the same multi-SELECT projection, run a
+   deterministic concurrent-writer counterexample against **both** implementations.
+   A pinned Context Coverage test does not protect an unpinned Core implementation.
+   Inject a writer between claims and proof reads using a trace/callback instrument;
+   require one real before/after SQLite snapshot, never a mixed result. The test
+   instrument may use private hooks, but competing writes must use supported APIs.
+4. Count physical contract columns with `PRAGMA table_xinfo`, not just
+   `table_info`: generated/hidden columns count too. Inspect generated-column
+   values and SQLite `typeof`, including oversized JSON integer inputs; STRICT
+   alone does not establish every computed expression's domain range.
+
+The P1 regressions are under `tests/integration/p1/`. Reproduce with:
+
+```sh
+uv run --no-sync pytest tests/integration/p1/test_core.py tests/integration/p1/test_context.py tests/integration/p1/test_coverage.py tests/integration/p1/test_coordination.py -q
+```
+
+These procedures cover supported application capabilities and local snapshots.
+They do not protect against arbitrary Python-private access, privileged DDL/file
+replacement, or establish P7 power-loss-safe recovery/activation. Apply current
+ADRs; the baseline recipes above are not permission to restore quarantine counts.
+
+When testing corruption-stop transitions, place the contender at the actual
+transition, rather than checking only that a marker exists after an exception.
+A post-unwind handler that releases the writer gate before persisting the stop
+allows another cooperating writer to commit in between. Persist the external
+stop before releasing the owned fence, avoid recursively acquiring that same
+lock, and serialize final COMMIT/candidate certification with stop publication
+for faults detected from already pinned readers. Exercise process death at the
+transition and restart with Operational absent. The catalog stop is independent
+of per-object state; it must not create quarantine counts or clear itself when
+another byte copy is available. The complete source-preservation and fresh
+activation engine remains P7 work.
