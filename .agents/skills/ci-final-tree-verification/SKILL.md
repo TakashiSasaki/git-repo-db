@@ -76,3 +76,37 @@ separately, and remove this workaround only after verifying that option
 registration has one owner and the wrapper succeeds. The implementation-preparation
 run diagnosed the duplicate registration and verified this direct invocation; it
 did not repair unrelated production CI tooling or claim release acceptance.
+
+## Recover bounded CI receipts from the job log
+
+If a completed run's artifact download is unavailable (for example, the artifact
+blob endpoint returns HTTP 403), do not infer receipt contents from a green badge
+or change network policy. This repository's tests workflow also emits a bounded
+receipt ZIP in its job log. Retrieve the normal GitHub log through the supported
+CLI and inspect the actual emitted `CI_RECEIPTS_BEGIN_V1`, `CI_RECEIPTS_DATA_V1`
+and `CI_RECEIPTS_END_V1` records. The implementation-preparation run verified this
+fallback after an artifact-endpoint 403; the same completed run's log was readable.
+
+```bash
+receipt_work_dir=$(mktemp -d)
+gh run view RUN_ID --log > "$receipt_work_dir/job.log"
+```
+
+1. Parse actual timestamp-prefixed output records, excluding the echoed shell
+   script that contains the marker names. Concatenate DATA payloads in order and
+   strictly base64-decode them. Verify the exact BEGIN byte length and SHA-256;
+   require a matching END digest. Fail closed on missing/duplicate/truncated blocks.
+2. Read the ZIP in memory; do not execute contents or blindly extract paths.
+   Check every `receipt-index.json` entry's byte count and SHA-256 against its
+   archive member. Read `receipt-binding.json` and `validation-manifest.json`.
+3. Check run ID/attempt, feature SHA, checkout HEAD and tree. Fetch the actual
+   PR merge ref and compare its effective tree with the feature tree; GitHub's
+   temporary merge commit SHA normally differs. The manifest's acceptance input
+   hash is a separate input contract, not a replacement for identity checks.
+4. Report `acceptance_status`, `full_acceptance`, actual hosted executed tests
+   and unexecuted coverage. `development_checks_passed` with zero hosted runtime
+   tests does not establish full acceptance or validate every local test file.
+5. Preserve the verified receipt digest and run URL in the PR/handoff. This is
+   an alternative retrieval of the workflow's existing receipt, not a new receipt
+   format or permission to bypass a blocked destination, re-sign evidence, claim
+   unavailable artifacts were downloaded or launch release qualification.

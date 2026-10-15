@@ -8,8 +8,9 @@ Author review alone was not treated as independent approval. Both reviewers rebo
 `db5775f792a30e259ba9e742c12635d34b5a098c`, tree
 `5b3f0b04b10ead94bbb80bf1920f45aac2c74f65`. Prototype source/test hashes matched
 independent execution; both checkers and four audit tests were independently
-rerun after the generator whitespace normalization. Final evidence-followup
-changes only report content and retains the input hashes in
+rerun after the generator whitespace normalization. Later documentation-only follow-ups retain executable input hashes and may
+expand verified CI retrieval procedures in an existing skill. Frozen source/skill
+hashes remain identified as source-commit hashes in
 `execution-evidence.json`.
 
 ## Findings and disposition
