@@ -554,9 +554,11 @@ class Core:
             for member in alternative["membership"]:
                 logical = slot(member)
                 if logical is not None:
-                    slots.setdefault((group_scope, encode(logical)), set()).add(
-                        asserted(member)
-                    )
+                    # Positive claims identify the same intrinsic slot even
+                    # when independent observations cover different fragments.
+                    # Scope restricts negative closure below, not a real ordinal
+                    # or raw name that both observations explicitly supplied.
+                    slots.setdefault(encode(logical), set()).add(asserted(member))
             if alternative["status"] in ("complete", "known_empty"):
                 normalized = sorted(
                     (encode(slot(m)), asserted(m)) for m in alternative["membership"]

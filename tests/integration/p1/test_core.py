@@ -709,3 +709,91 @@ def test_parent_group_transport_reorder_is_exact_replay_not_new_claim(core):
             [None, *oid("e").key],
         ]
     )
+
+
+@pytest.mark.parametrize("relation", ["commit_parents", "tree_entries"])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_explicit_intrinsic_slot_conflicts_across_observation_scopes(
+    core, relation, reverse
+):
+    c, _, _ = core
+    coordinate = 0 if relation == "commit_parents" else ("100644", "61")
+    first = RelationGroup(
+        oid(),
+        relation,
+        "source-A fragment",
+        "partial",
+        (RelationMember(coordinate, oid("b")),),
+        provenance("source-A"),
+    )
+    second = RelationGroup(
+        oid(),
+        relation,
+        "source-B fragment",
+        "partial",
+        (RelationMember(coordinate, oid("c")),),
+        provenance("source-B"),
+    )
+    for group in (second, first) if reverse else (first, second):
+        c.admit_group(group)
+    assert c.relations(oid(), relation).reported_conflict
+    assert len(c.relations(oid(), relation).alternatives) == 2
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_explicit_tree_mode_conflicts_across_observation_scopes(core, reverse):
+    c, _, _ = core
+    first = RelationGroup(
+        oid(),
+        "tree_entries",
+        "source-A fragment",
+        "partial",
+        (RelationMember(("100644", "61"), oid("b")),),
+        provenance("source-A"),
+    )
+    second = RelationGroup(
+        oid(),
+        "tree_entries",
+        "source-B fragment",
+        "partial",
+        (RelationMember(("100755", "61"), oid("b")),),
+        provenance("source-B"),
+    )
+    for group in (second, first) if reverse else (first, second):
+        c.admit_group(group)
+    assert c.relations(oid(), "tree_entries").reported_conflict
+
+
+@pytest.mark.parametrize("relation", ["commit_parents", "tree_entries"])
+@pytest.mark.parametrize("same_slot", [False, True])
+def test_cross_observation_compatible_positive_slots_do_not_conflict(
+    core, relation, same_slot
+):
+    c, _, _ = core
+    first_slot = 0 if relation == "commit_parents" else ("100644", "61")
+    second_slot = (
+        first_slot
+        if same_slot
+        else (1 if relation == "commit_parents" else ("100644", "62"))
+    )
+    c.admit_group(
+        RelationGroup(
+            oid(),
+            relation,
+            "source-A fragment",
+            "partial",
+            (RelationMember(first_slot, oid("b")),),
+            provenance("source-A"),
+        )
+    )
+    c.admit_group(
+        RelationGroup(
+            oid(),
+            relation,
+            "source-B fragment",
+            "partial",
+            (RelationMember(second_slot, oid("b")),),
+            provenance("source-B"),
+        )
+    )
+    assert not c.relations(oid(), relation).reported_conflict

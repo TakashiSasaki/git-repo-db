@@ -1,6 +1,7 @@
 """Derivative loss and finite cumulative actual-work contracts."""
 
 import contextlib
+import json
 import sqlite3
 from uuid import uuid4
 
@@ -293,3 +294,99 @@ def test_search_rejects_ordinary_file_content_projection(tmp_path):
                 (pair.token.encode(),),
             )
         assert db.execute("SELECT count(*) FROM search_documents").fetchone()[0] == 0
+
+
+def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_path):
+    from repo_catalog.adapters.sqlite.p1_context import ContextStore
+    from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey
+    from tests.integration.p1.test_coordination import PROVIDER
+
+    directory = tmp_path / "live"
+    build(directory)
+    coordinator = PairCoordinator(directory)
+    coordinator.admit(core_unit, context_unit)
+    actual = ResourceKey(PROVIDER, "issue", "7")
+    reported = ResourceKey(PROVIDER, "issue", "reported")
+    null = ResourceKey(PROVIDER, "issue", "null")
+    provenance = '{"evidence":"provider-body-event","source":"provider.example"}'
+
+    def candidate(resource, field, value, clock):
+        return FieldCandidate(
+            resource,
+            field,
+            json.dumps(value),
+            FieldClock("provider.edit", clock),
+            provenance,
+            clock,
+        )
+
+    with contextlib.closing(
+        connect(directory / "context.sqlite3", "context")
+    ) as authority:
+        store = ContextStore(authority)
+        body = "provider-only needle 😀"
+        digest = store.text(body)
+        store.admit_field(candidate(actual, "text_body_sha256", digest, 1))
+        store.resource(reported, REPOSITORY)
+        store.admit_field(candidate(reported, "reported_text_sha256", digest, 1))
+        store.resource(null, REPOSITORY)
+        store.admit_field(candidate(null, "text_body_sha256", None, 1))
+
+    with (
+        contextlib.closing(connect(directory / "search.sqlite3", "search")) as db,
+        coordinator.snapshots() as old,
+    ):
+        rows = SearchProjection.context_documents(old)
+        body_rows = {key: text for key, text in rows.items() if "needle" in text}
+        assert list(body_rows.values()) == [body]
+        assert json.loads(next(iter(body_rows)))[2:4] == ["7", "text_body_sha256"]
+        reported_rows = {
+            key: text for key, text in rows.items() if json.loads(key)[2] == "reported"
+        }
+        assert list(reported_rows.values()) == [digest]
+        assert not any(json.loads(key)[2] == "null" for key in rows)
+
+        def fallback():
+            return SearchProjection.context_documents(old)
+
+        assert SearchProjection(None).read(
+            "context_text", old.token, "needle", fallback
+        ) == ("authority_scan", body_rows)
+        search = SearchProjection(db)
+        search.rebuild_context(old)
+        assert search.read("context_text", old.token, "needle", fallback) == (
+            "projection",
+            body_rows,
+        )
+
+        def update(context):
+            store = ContextStore(context)
+            newer_digest = store.text("replacement new-token")
+            store.admit_field(candidate(actual, "text_body_sha256", newer_digest, 2))
+
+        coordinator.admit(lambda core: None, update)
+        # Both projection and direct fallback retain the actual pinned body.
+        assert search.read("context_text", old.token, "needle", fallback) == (
+            "projection",
+            body_rows,
+        )
+        with coordinator.snapshots() as newer:
+
+            def direct():
+                return SearchProjection.context_documents(newer)
+
+            assert search.read("context_text", newer.token, "needle", direct) == (
+                "authority_scan",
+                {},
+            )
+            backend, matches = search.read(
+                "context_text", newer.token, "new-token", direct
+            )
+            assert backend == "authority_scan" and list(matches.values()) == [
+                "replacement new-token"
+            ]
+            search.rebuild_context(newer)
+            assert search.read("context_text", newer.token, "new-token", direct) == (
+                "projection",
+                matches,
+            )

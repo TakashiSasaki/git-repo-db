@@ -753,12 +753,15 @@ class SearchProjection:
             raise CoordinationError("SNAPSHOT_CONTENT", "search")
         documents = {}
         for row in pair.context.execute(
-            "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,field_name,"
-            "clock_json,value_json,provenance_json FROM field_candidates"
+            "SELECT c.service_instance_uuidv4,c.resource_kind,c.provider_resource_id,c.field_name,"
+            "c.clock_json,c.value_json,c.provenance_json,b.text_value "
+            "FROM field_candidates c LEFT JOIN text_bodies b ON c.text_body_sha256=b.sha256"
         ):
-            value = json.loads(row[5])
+            # Only this named local FK denotes retained text. Reported digests
+            # remain qualified metadata even if equal bytes happen to be local.
+            value = row[7] if row[3] == "text_body_sha256" else json.loads(row[5])
             if isinstance(value, str):
-                documents[_json(tuple(row))] = value
+                documents[_json(tuple(row[:7]))] = value
         return documents
 
     def rebuild_context(self, pair: PairedSnapshot):
