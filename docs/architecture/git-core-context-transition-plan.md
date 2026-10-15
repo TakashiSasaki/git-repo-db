@@ -1,6 +1,6 @@
 # Transition plan: Git history, structure and notes catalog without file archival
 
-**Accepted target scope:** [ADR 0014 / GCTX-S01](../adr/0014-history-and-notes-catalog-without-file-archive.md), refined for notes-ref discovery by [ADR 0015 / B01-R01](../adr/0015-automatic-git-notes-ref-discovery.md).
+**Accepted target scope:** [ADR 0014 / GCTX-S01](../adr/0014-history-and-notes-catalog-without-file-archive.md), refined for notes-ref discovery by [ADR 0015 / B01-R01](../adr/0015-automatic-git-notes-ref-discovery.md) and immutable capture-scoped notes-ref observation identity by [ADR 0016 / B01-R02](../adr/0016-immutable-notes-ref-capture-observations.md).
 **Design base:** PR #54, `0301fcc8aeef427e2b9e2a3197a4ed993dcdf657`.
 **Implemented source format:** Three-Store Core 21 / Operational 1 / Search 1. No implementation, schema version or runtime change is made by this plan.
 
@@ -27,7 +27,7 @@ Notes are a role of Git blobs, not a native `note` object type. Native type chec
 | Context | Provider/Source/PR/Issue/review state, associations, text and conflicts | Independently durable and mutable where already permitted; not a file archive escape hatch |
 | Operational / Search | Retry/cache state and rebuildable metadata/notes indices | Deletion cannot erase canonical evidence; excluded ordinary file text is not retained in either |
 
-A conceptual notes observation is scoped by `(repository, notes_ref, observed_root, annotated_oid)` plus actual capture attribution. This is not a final primary key: duplicate observations, partial groups, path evidence and conflicts need their own accepted design. A notes ref may point directly to a tree, and source-reported captures may lack a verified root; do not invent a notes commit or call an unverified association intrinsic.
+ADR 0016 / B01-R02 fixes a **distinct immutable capture-scoped identity per genuine notes-ref observation**, even when repository/ref/root and member reports match another capture; associated notes member groups must reference their original observation. A replay of the same genuine capture is idempotent. Repository/ref/root/annotated OID are **not** a sufficient natural key for the observation. Exact portable origin and receiver-local keys, ID issuance, cross-source replay and conflict checks remain B01-R03; table names/FKs, member grammar, path evidence and completeness remain later design work. A notes ref may point directly to a tree, and source-reported captures may lack a verified root; do not invent a notes commit or call an unverified association intrinsic.
 
 Same-OID file/note reuse shares nominal identity, while the retention-purpose relation remains explicit. It is legitimate to store bytes in their evidenced annotation role without reintroducing a general API for restoring repository files. Untrusted strings such as `is_note=true` are not a substitute for the typed notes ingestion contract.
 
@@ -80,7 +80,7 @@ Search remains reproducible from appropriate canonical stores. Index commit/tag 
 | Stage | Dependencies | Deliverable |
 | --- | --- | --- |
 | D-Scope | Existing design stack through PR #54 | ADR 0014 and this scope/transition map, documentation only |
-| D-Notes | D-Scope, ADR 0015 / B01-R01 | Final capture/observation identity B01-R02, typed notes association and body admission, resource limits, retained-representation layout and B03 incomplete-scope contracts; do not reopen automatic refs/notes discovery |
+| D-Notes | D-Scope, ADR 0015 / B01-R01, ADR 0016 / B01-R02 | B01-R03 origin/receiver capture key and replay semantics; typed notes association and body admission, resource limits, retained-representation layout and B03 incomplete-scope contracts; do not reopen notes discovery or capture-scoped observation identity |
 | I-Boundary | D-Scope, relevant D-Notes choices | Complete table/call-site audit and tests prohibiting ordinary blob archival; no real-data migration |
 | I-Core | I-Boundary | Nominal OIDs, claims, ordered relations, refs, commit/tree/tag and notes; append-only checks and allowed-body integrity |
 | I-Context | Core identity contract | Existing durable Context separation and known-positive Source semantics; may proceed in parallel where independent |

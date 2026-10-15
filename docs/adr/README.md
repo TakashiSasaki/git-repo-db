@@ -2,7 +2,7 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Latest product scope: [ADR 0014 / GCTX-S01](0014-history-and-notes-catalog-without-file-archive.md).** The product does not archive ordinary repository-file blob bodies. It retains Git metadata, commit/tree/tag representations when acquired, and purpose-bound Git notes content. Notes are blobs at the Git object layer, so a blanket blob ban is incorrect. [ADR 0015 / B01-R01](0015-automatic-git-notes-ref-discovery.md) fixes automatic notes namespace discovery plus explicit additional ref names, **not** note-body admission or complete enumeration. Earlier raw-body admission/repair decisions apply only to retained metadata/notes and legacy obligations. B01 observation identity and GCTX-M10 remain unresolved.
+**Latest product scope: [ADR 0014 / GCTX-S01](0014-history-and-notes-catalog-without-file-archive.md).** The product does not archive ordinary repository-file blob bodies. It retains Git metadata, commit/tree/tag representations when acquired, and purpose-bound Git notes content. Notes are blobs at the Git object layer, so a blanket blob ban is incorrect. [ADR 0015 / B01-R01](0015-automatic-git-notes-ref-discovery.md) fixes automatic notes namespace discovery plus explicit additional ref names, **not** note-body admission or complete enumeration. Earlier raw-body admission/repair decisions apply only to retained metadata/notes and legacy obligations. B01-R02 observation identity is fixed by [ADR 0016](0016-immutable-notes-ref-capture-observations.md); B01-R03 capture issuance/replay rules and GCTX-M10 remain unresolved.
 
 ## Accepted Records
 
@@ -21,7 +21,8 @@ Read the current scope before implementation. This index describes accepted targ
 | [0012](0012-append-only-multiple-cas-physical-instances.md) | GCTX-M08: append-only physical recovery | 2026-10-15 | Retained bodies and legacy obligations; no general blob archival API |
 | [0013](0013-deterministic-cas-instance-eligibility.md) | GCTX-M09: evidence-derived candidate selection | 2026-10-15 | Retained bodies; GCTX-M10 quarantine/count predicate still open |
 | [0014](0014-history-and-notes-catalog-without-file-archive.md) | GCTX-S01: history/structure/notes catalog, no ordinary file archive | 2026-10-15 | Accepted scope revision; notes ref discovery refined by 0015 |
-| [0015](0015-automatic-git-notes-ref-discovery.md) | B01-R01: auto-discover `refs/notes/*` and explicitly nominated notes refs | 2026-10-15 | Accepted discovery policy; observation identity B01-R02, B02 resource/admission and B03 completeness still open |
+| [0015](0015-automatic-git-notes-ref-discovery.md) | B01-R01: auto-discover `refs/notes/*` and explicitly nominated notes refs | 2026-10-15 | Accepted discovery policy; capture identity refined by 0016 |
+| [0016](0016-immutable-notes-ref-capture-observations.md) | B01-R02: immutable capture-scoped notes-ref observation identity | 2026-10-15 | Accepted distinct genuine captures and idempotent same-capture replay; B01-R03 portable origin/replay key, B02 and B03 still open |
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
 

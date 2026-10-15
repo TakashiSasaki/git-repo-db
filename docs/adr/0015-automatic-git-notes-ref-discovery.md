@@ -90,7 +90,9 @@ Git notes namespace enumeration neither implies all notes bodies were preserved 
 14. Validate actual retained note bytes independently of sender success flags; retain CAS-41 fault evidence, allowing zero-byte metadata-only catalogs.
 15. Validate exact ref-name matching, nested notes prefixes and explicit names without leaking remote credentials into Core or relying on a global Git notes display configuration.
 
-## 6. Remaining B01 identity question (NOT accepted): B01-R02
+## 6. Subsequent owner decision: B01-R02 accepted; next B01-R03
+
+[ADR 0016 / B01-R02](0016-immutable-notes-ref-capture-observations.md) accepts Option B: each genuine notes-ref observation has a separate immutable, portable capture-scoped identity, even when its ref/root matches an earlier observation. Exact replay of the same capture is idempotent; capture issuance/origin-key mapping and conflicting/partial replay handling remain the next B01-R03 choice. The original A/B/C options below document the already answered question, not an open B01-R02 choice.
 
 **What is the durable identity of a notes-ref observation/capture, especially when the same ref+root recurs or is reported by different sources?**
 
@@ -98,12 +100,12 @@ Git notes namespace enumeration neither implies all notes bodies were preserved 
 - **B — Immutable capture-scoped observation identity (recommended candidate).** One genuine capture/observation has a distinct portable ID plus exact ref name, observed root if known, source and capture scope; notes mapping groups attach to that observation. A replay of the **same** capture is idempotent; a distinct observation of an identical root remains representable. More provenance storage and idempotency requirements; not a generic record per background scan attempt.
 - **C — Target/note-scoped identity as the primary unit.** Key each note relation by target/note OIDs and ref name, with observation details as annotations. Compact for individual lookup but risks conflating reappearances, incomplete inventory, ref changes and source-level provenance.
 
-All alternatives keep the common nominal OID identity, distinct root/observations and immutable fact requirements. The precise table names/FKs and notes group-completeness evidence are later design work; this ADR fixes only B01-R01 Option B.
+ADR 0016 has now fixed B01-R02 Option B while preserving B01-R01. The precise capture key issuance and idempotency grammar (B01-R03), tables/FKs, and notes completeness (B03) remain open; the original alternatives above are historical.
 
 ## 7. Authorization and references
 
 - Git notes primary reference: https://git-scm.com/docs/git-notes (default `refs/notes/commits`, notes namespaces, alternate notes refs, direct-tree notes roots, binary note blobs).
 - Owner-selected scope: B01 Option B in this conversation, after ADR 0014 and GCTX-M01–M09.
-- Follow-on blocking topics: B01-R02 durable notes observation identity; B02 note-body budget and role-provenance grammar; B03 notes enumeration/list completeness; GCTX-M10 physical quarantine; physical Core/Context schema, Exchange and backup pairing.
+- Follow-on blocking topics: B01-R02 capture-scoped identity is fixed by ADR 0016; next B01-R03 portable origin/receiver key and idempotency; B02 note-body budget and role-provenance grammar; B03 notes enumeration/list completeness; GCTX-M10 physical quarantine; physical Core/Context schema, Exchange and backup pairing.
 
 Do not implement, change SQL/DDL or schema version, mutate catalogs, merge PRs, run authenticated acquisition, release or deploy as part of this design-only PR. Counterexamples here are future implementation test requirements, not executed tests; no local runtime/CI verification success is implied.
