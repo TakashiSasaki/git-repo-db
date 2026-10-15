@@ -173,11 +173,31 @@ def validate_pair(
             sqlite3.SQLITE_PERM,
         }:
             raise
-        raise CoordinationError(
+        failure = CoordinationError(
             "CORRUPTION",
             "core+context",
             "authoritative validation failed: " + str(error),
-        ) from error
+        )
+        _notify_validation_corruption(core, context, failure)
+        raise failure from error
+    except Exception as error:
+        _notify_validation_corruption(core, context, error)
+        raise
+
+
+def _notify_validation_corruption(core, context, error):
+    if getattr(error, "code", None) in {
+        "CORRUPTION",
+        "FOREIGN_KEY",
+        "MISSING_CORE_REFERENCE",
+        "AUTHORITATIVE_CORRUPTION",
+    }:
+        # A caller may catch validation failure inside an already pinned pair.
+        # Notify its owning capability now, before outer context unwinding.
+        # Raw connections rely on their coordinator's initial validation catch.
+        for db in (core, context):
+            if isinstance(db, ReadSnapshot):
+                db._on_error(error)
 
 
 def _validate_pair(

@@ -5,7 +5,11 @@ from contextlib import closing
 import pytest
 
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
-from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+from repo_catalog.adapters.sqlite.p1_coordination import (
+    PairCoordinator,
+    ReadSnapshot,
+    validate_pair,
+)
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
@@ -23,7 +27,8 @@ from tests.integration.p1.test_coordination import (
 
 
 @pytest.mark.parametrize("damaged", ["provider", "field"])
-def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged):
+@pytest.mark.parametrize("capability", [False, True])
+def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capability):
     directory = tmp_path / "catalog"
     build(directory)
     coordinator = PairCoordinator(directory)
@@ -52,9 +57,27 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged):
             db.execute("UPDATE providers SET configuration_json=CAST(X'ff' AS TEXT)")
         else:
             db.execute("UPDATE field_candidates SET value_json=CAST(X'ff' AS TEXT)")
-    with pytest.raises(CoordinationError, match="CORRUPTION"):
-        with coordinator.snapshots():
-            pytest.fail("damaged authority was certified")
+    if capability:
+        # Exercise owner notification before a caller can swallow the error.
+        # Trusted test connections avoid initial validation intercepting this
+        # already damaged fixture before testing the capability validation path.
+        with (
+            closing(connect(directory / "core.sqlite3", "core")) as core,
+            closing(connect(directory / "context.sqlite3", "context")) as context,
+        ):
+            readers = [
+                ReadSnapshot(
+                    db, coordinator._check_running, coordinator._record_corruption
+                )
+                for db in (core, context)
+            ]
+            with pytest.raises(CoordinationError, match="CORRUPTION"):
+                validate_pair(*readers)
+            assert (directory / "p1-recovery-stop.json").exists()
+    else:
+        with pytest.raises(CoordinationError, match="CORRUPTION"):
+            with coordinator.snapshots():
+                pytest.fail("damaged authority was certified")
     assert (directory / "p1-recovery-stop.json").exists()
     for role in ("operational", "search"):
         (directory / f"{role}.sqlite3").unlink()
