@@ -11,11 +11,11 @@ from contextlib import closing
 from uuid import uuid4
 
 import pytest
-from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.production_context import Context
 
+from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator, validate_pair
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
+from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.p1_context import (
     CoverageScope,
     FieldCandidate,
@@ -390,8 +390,8 @@ def test_forbidden_git_blob_retention_does_not_poison_legitimate_context_text(
     try:
         with pytest.raises(CoreFailure):
             core.admit_metadata(native, str(uuid4()), Budget())
-        assert not core.sql("SELECT * FROM retained_metadata")
-        assert not core.sql("SELECT * FROM retained_notes")
+        assert core.sql("SELECT count(*) FROM retained_metadata")[0][0] == 0
+        assert core.sql("SELECT count(*) FROM retained_notes")[0][0] == 0
     finally:
         core.close()
     assert not (directory / "p1-recovery-stop.json").exists()
