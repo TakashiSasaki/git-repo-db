@@ -91,5 +91,111 @@
       "PackagingInstalledVariants": 4,
       "ExternalAdversaries": 31
     }
+  },
+  "final_integrity": {
+    "sha": "4e2f61338ac16ecc92ce1c603b8f0aeb4d4bd1c7",
+    "tree": "7c4431fad82da645283003086fbf43d82faee8d1",
+    "cwd": "/workspace/p2",
+    "command": "uv run --no-sync python -m pytest tests/integration/p2 tests/integration/p1/test_core.py tests/integration/p1/test_notes.py tests/integration/p1/test_intrinsic_provenance.py tests/integration/p1/test_disposition.py tests/packaging/test_p2_distribution.py /workspace/evidence/p2-review/test_adversarial.py -q --junitxml=/workspace/evidence/p2-review/final-integrity-p2.xml",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "imports": {
+      "adapter": "/workspace/p2/src/repo_catalog/adapters/sqlite/git_core.py",
+      "domain": "/workspace/p2/src/repo_catalog/domain/p1_core.py"
+    },
+    "testclasses": {
+      "tests.integration.p2.test_contract_replays": 85,
+      "tests.integration.p2.test_native": 94,
+      "tests.integration.p1.test_core": 74,
+      "tests.integration.p1.test_notes": 30,
+      "tests.integration.p1.test_intrinsic_provenance": 4,
+      "tests.integration.p1.test_disposition": 17,
+      "tests.packaging.test_p2_distribution": 4,
+      "external": 31
+    },
+    "selected": 339,
+    "executed": 339,
+    "passed": 339,
+    "failed": 0,
+    "skipped": 0,
+    "decode_after": {
+      "exit": 0,
+      "stdout": "{\"case\": \"invalid_utf8\", \"raised\": \"CoreFailure\", \"code\": \"AUTHORITATIVE_CORRUPTION\", \"sqlite_errorcode\": null, \"message\": \"authoritative integrity failure; stop catalog and restore fresh\", \"stop_exists\": true}\n{\"case\": \"invalid_json\", \"raised\": \"CoreFailure\", \"code\": \"AUTHORITATIVE_CORRUPTION\", \"sqlite_errorcode\": null, \"message\": \"authoritative integrity failure; stop catalog and restore fresh\", \"stop_exists\": true}\n{\"case\": \"invalid_json_shape\", \"raised\": \"CoreFailure\", \"code\": \"AUTHORITATIVE_CORRUPTION\", \"sqlite_errorcode\": null, \"message\": \"authoritative integrity failure; stop catalog and restore fresh\", \"stop_exists\": true}\n{\"case\": \"wrong_typed_value\", \"raised\": \"CoreFailure\", \"code\": \"AUTHORITATIVE_CORRUPTION\", \"sqlite_errorcode\": null, \"message\": \"authoritative integrity failure; stop catalog and restore fresh\", \"stop_exists\": true}\n",
+      "stderr": ""
+    },
+    "native_callback_after": {
+      "exit": 0,
+      "stdout": "[\n  {\n    \"format\": \"sha1\",\n    \"type\": \"commit\",\n    \"refused_incoming_syntax\": true,\n    \"fully_rolled_back\": true,\n    \"stop\": false\n  },\n  {\n    \"format\": \"sha1\",\n    \"type\": \"tree\",\n    \"refused_incoming_syntax\": true,\n    \"fully_rolled_back\": true,\n    \"stop\": false\n  },\n  {\n    \"format\": \"sha1\",\n    \"type\": \"tag\",\n    \"refused_incoming_syntax\": true,\n    \"fully_rolled_back\": true,\n    \"stop\": false\n  },\n  {\n    \"format\": \"sha256\",\n    \"type\": \"commit\",\n    \"refused_incoming_syntax\": true,\n    \"fully_rolled_back\": true,\n    \"stop\": false\n  },\n  {\n    \"format\": \"sha256\",\n    \"type\": \"tree\",\n    \"refused_incoming_syntax\": true,\n    \"fully_rolled_back\": true,\n    \"stop\": false\n  },\n  {\n    \"format\": \"sha256\",\n    \"type\": \"tag\",\n    \"refused_incoming_syntax\": true,\n    \"fully_rolled_back\": true,\n    \"stop\": false\n  }\n]\n",
+      "stderr": ""
+    },
+    "store_role_after": {
+      "exit": 0,
+      "stdout": "[\n  {\n    \"role\": \"context\",\n    \"failure\": \"STORE_ROLE\",\n    \"transaction_still_usable\": true,\n    \"stop\": false\n  },\n  {\n    \"role\": \"operational\",\n    \"failure\": \"STORE_ROLE\",\n    \"transaction_still_usable\": true,\n    \"stop\": false\n  },\n  {\n    \"role\": \"search\",\n    \"failure\": \"STORE_ROLE\",\n    \"transaction_still_usable\": true,\n    \"stop\": false\n  },\n  {\n    \"role\": \"core\",\n    \"accepted_real_core\": true,\n    \"transaction_still_active\": true\n  }\n]\n",
+      "stderr": ""
+    }
+  },
+  "immediate_stop": {
+    "sha": "b878b4eec86bffc2a0011c97cff6454062130bb5",
+    "tree": "c0bd739c058e0a13668e61895eaf20de8b42ee67",
+    "cwd": "/workspace/p2",
+    "command": "uv run --no-sync python -m pytest tests/integration/p2/test_native.py::test_typed_utf8_corruption_persists_stop_before_snapshot_rollback tests/integration/p2/test_native.py::test_caller_text_encoding_error_is_not_stored_corruption tests/integration/p2/test_native.py::test_generic_sql_expression_error_does_not_diagnose_catalog_corruption /workspace/evidence/p2-review/test_adversarial.py -q --junitxml=/workspace/evidence/p2-review/immediate-stop.xml",
+    "selected": 34,
+    "executed": 34,
+    "passed": 34,
+    "failed": 0,
+    "skipped": 0,
+    "original_ordering_counterexample_after": {
+      "rollback_observed_stop": [
+        true
+      ],
+      "transaction_closed": true
+    }
+  },
+  "engine_boundaries": {
+    "sha": "fb0f87ca71d2a9a292179054c30be8e11607f175",
+    "tree": "84a8b9eab3213e99d39dfa55c58b339632a585e2",
+    "cwd": "/workspace/p2",
+    "command": "uv run --no-sync python -m pytest tests/integration/p2/test_native.py::test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries tests/integration/p2/test_native.py::test_standalone_core_engine_failure_stops_before_transaction_cleanup tests/integration/p2/test_native.py::test_generic_sql_expression_error_does_not_diagnose_catalog_corruption tests/integration/p2/test_native.py::test_native_atomic_failure_after_intrinsic_install_rolls_back tests/integration/p2/test_contract_replays.py::test_ordered_groups_are_whole_atomic_and_never_union tests/integration/p2/test_contract_replays.py::test_atomic_note_admission_work_survives_rollback_and_budget_stop /workspace/evidence/p2-review/test_adversarial.py -q --junitxml=/workspace/evidence/p2-review/engine-boundaries.xml",
+    "selected": 48,
+    "executed": 48,
+    "passed": 48,
+    "failed": 0,
+    "skipped": 0,
+    "independent_engine_controls": [
+      {
+        "boundary": "BEGIN",
+        "code": 1034,
+        "stop": true,
+        "rollback_stop_observation": [],
+        "rolled_back": true
+      },
+      {
+        "boundary": "INSERT",
+        "code": 1034,
+        "stop": true,
+        "rollback_stop_observation": [
+          true
+        ],
+        "rolled_back": true
+      },
+      {
+        "boundary": "COMMIT",
+        "code": 1034,
+        "stop": true,
+        "rollback_stop_observation": [
+          true
+        ],
+        "rolled_back": true
+      },
+      {
+        "boundary": "INSERT",
+        "code": 2067,
+        "stop": false,
+        "rollback_stop_observation": [
+          false
+        ],
+        "rolled_back": true
+      }
+    ]
   }
 }

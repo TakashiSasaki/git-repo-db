@@ -145,3 +145,24 @@ completion lock while doing SQL or parsing. Stops published before completion
 withhold the result and allow transaction rollback cleanup. This does not promise
 revocation after an operation has already completed. Transaction-bound Core
 capabilities rely on the coordinator's enclosing completion boundary.
+
+Additional production-boundary verification closes three late implementation
+holes. Transaction-bound Core capabilities verify the physical store role before
+installing an authorizer, so shared Coverage table names cannot redirect a Core
+admission into Context. Typed readers validate stored scalar/group/provenance
+encodings and stop on corrupted UTF-8, JSON or semantic shapes; arbitrary generic
+SQL expression failures and caller encoding errors do not diagnose corruption.
+The fixed typed SQL path publishes a detected UTF-8 stop before snapshot rollback.
+
+The SQLite native-body guard also checks supported commit/tree/tag grammar after
+exact native hashing. A trusted coordinator callback cannot durably insert a
+hash-matching malformed representation; actual selected metadata byte reads repeat
+the grammar check and stop if privileged storage damage left such a row. Native
+blob hashing remains separate from its mandatory notes-role retention FK.
+
+Authoritative SQLite engine failure classification normalizes extended error
+codes to their primary CORRUPT, NOTADB or IOERR family. Standalone transaction
+BEGIN, body and COMMIT failures publish the persistent stop before rollback or
+gate release; constraint, input and budget failures retain ordinary local rollback
+semantics. Engine-boundary fault injection exercises real adapter calls and actual
+SQLite rollback state, without claiming to reproduce physical media failures.
