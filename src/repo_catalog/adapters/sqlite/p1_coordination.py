@@ -155,6 +155,34 @@ def validate_dependencies(core: sqlite3.Connection, context: sqlite3.Connection)
 def validate_pair(
     core: sqlite3.Connection, context: sqlite3.Connection
 ) -> SnapshotToken:
+    """Validate persisted authorities, including failures of semantic CHECK UDFs.
+
+    Invalid stored UTF-8/JSON can make integrity_check raise SQLITE_ERROR instead
+    of returning a corruption row. It is still failed authoritative validation,
+    not a rejected incoming unit. Transient cancellation/locking or a denied
+    capability is not evidence of storage corruption.
+    """
+    try:
+        return _validate_pair(core, context)
+    except sqlite3.DatabaseError as error:
+        if getattr(error, "sqlite_errorcode", 0) & 255 in {
+            sqlite3.SQLITE_BUSY,
+            sqlite3.SQLITE_LOCKED,
+            sqlite3.SQLITE_INTERRUPT,
+            sqlite3.SQLITE_AUTH,
+            sqlite3.SQLITE_PERM,
+        }:
+            raise
+        raise CoordinationError(
+            "CORRUPTION",
+            "core+context",
+            "authoritative validation failed: " + str(error),
+        ) from error
+
+
+def _validate_pair(
+    core: sqlite3.Connection, context: sqlite3.Connection
+) -> SnapshotToken:
     identity = _identity(core, "core")
     if identity != _identity(context, "context"):
         raise CoordinationError("PAIR_IDENTITY", "core+context")
