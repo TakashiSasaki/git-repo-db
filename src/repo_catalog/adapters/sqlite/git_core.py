@@ -7,7 +7,7 @@ scalar admission; it intentionally exposes no public initializer or file archive
 
 from __future__ import annotations
 
-from repo_catalog.adapters.sqlite.p1_core import Core
+from repo_catalog.adapters.sqlite.p1_core import Core, _completed_read
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.p1_core import (
     OID,
@@ -71,6 +71,7 @@ class GitCore(Core):
             self._claim(claim)
             self._insert("intrinsic_claims", (*claim.key, copy))
 
+    @_completed_read
     def read_metadata(self, oid: OID) -> bytes:
         self._checked_byte_read = True
         try:
@@ -92,6 +93,7 @@ class GitCore(Core):
         finally:
             self._checked_byte_read = False
 
+    @_completed_read
     def read_note(self, capture, target: OID, note: OID) -> bytes:
         self._checked_byte_read = True
         try:
@@ -99,6 +101,7 @@ class GitCore(Core):
         finally:
             self._checked_byte_read = False
 
+    @_completed_read
     def notes_projection(self, capture, target: OID):
         self._checked_byte_read = True
         try:

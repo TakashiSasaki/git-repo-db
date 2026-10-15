@@ -13,6 +13,7 @@ import json
 import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager, nullcontext
+from functools import wraps
 from pathlib import Path
 
 from repo_catalog.domain.p1_core import (
@@ -47,6 +48,17 @@ from repo_catalog.domain.p1_coverage import (
     derive_coverage_state,
 )
 from repo_catalog.domain.ports.p1_core import WorkBudget
+
+
+def _completed_read(method):
+    """Linearize successful result delivery against the persistent stop fence."""
+
+    @wraps(method)
+    def completed(self, *args, **kwargs):
+        result = method(self, *args, **kwargs)
+        return self._complete_read(result)
+
+    return completed
 
 
 class Core:
@@ -141,11 +153,35 @@ class Core:
                 "RECOVERY_STOP", "catalog", "normal catalog operation stopped"
             )
 
+    def _complete_read(self, result):
+        """A stop detected while reading forbids ordinary result completion.
+
+        No completion lock is held during parsing/SQL: a corruption detector may
+        need to publish its stop from that very operation. Transaction-bound
+        capabilities use the coordinator's outer completion boundary.
+        """
+        self._available()
+        if self._directory is None:
+            return result
+        from repo_catalog.adapters.sqlite.p1_coordination import catalog_completion
+        from repo_catalog.domain.p1_coordination import CoordinationError
+
+        try:
+            with catalog_completion(self._directory):
+                self._available()
+                return result
+        except CoordinationError:
+            # Translate a stop that raced between the availability check and
+            # fence acquisition to this port's normal typed stopped failure.
+            self._available()
+            raise
+
     def close(self) -> None:
         self._active = False
         if not self._external:
             self._db.close()
 
+    @_completed_read
     def sql(self, statement: str, parameters: tuple = ()) -> list[sqlite3.Row]:
         self._available()
         if self._admitting:
@@ -488,6 +524,7 @@ class Core:
                 if before_commit is not None:
                     before_commit()
 
+    @_completed_read
     def scalar(self, oid: OID, field: ScalarField) -> Projection:
         rows = self.sql(
             "SELECT c.*, EXISTS(SELECT 1 FROM intrinsic_claims i WHERE i.object_format=c.object_format AND i.full_oid=c.full_oid AND i.field=c.field AND i.value=c.value AND i.provenance=c.provenance) checked FROM scalar_claims c WHERE object_format=? AND full_oid=? AND field=?",
@@ -510,6 +547,7 @@ class Core:
             f"native-{field}" if checked else None,
         )
 
+    @_completed_read
     def relations(
         self, oid: OID, relation: str, scope: str | None = None
     ) -> Projection:
@@ -668,6 +706,7 @@ class Core:
                 ),
             )
 
+    @_completed_read
     def coverage(self, scope: CoreCoverageScope) -> CoverageProjection:
         with self._snapshot():
             rows = self.sql(
@@ -710,6 +749,7 @@ class Core:
             self._on_corruption(failure)
         raise failure
 
+    @_completed_read
     def read_metadata(self, oid: OID) -> bytes:
         rows = self.sql(
             "SELECT * FROM retained_metadata WHERE object_format=? AND full_oid=? ORDER BY physical_copy_uuidv4",
@@ -728,6 +768,7 @@ class Core:
             self._integrity_stop((oid, row["physical_copy_uuidv4"]))
         return row["body"]
 
+    @_completed_read
     def notes_projection(self, capture: Capture, target: OID) -> NotesProjection:
         """Metadata-only alternatives and precisely relevant checked mapping.
 
@@ -850,6 +891,7 @@ class Core:
                 "relevant-root-to-target-mapping" if checked else None,
             )
 
+    @_completed_read
     def read_note(self, capture: Capture, target: OID, note: OID) -> bytes:
         with self._snapshot():
             bindings = self.sql(

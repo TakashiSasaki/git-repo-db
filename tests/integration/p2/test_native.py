@@ -511,3 +511,38 @@ def test_loss_of_admitted_metadata_copy_is_corruption_not_optional_nonacquisitio
         c.read_metadata(incoming.oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("operation", ["scalar", "relations", "bytes", "sql"])
+def test_stop_published_during_last_read_prevents_ordinary_completion(core, operation):
+    from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
+
+    c, path, _ = core
+    incoming = native("tree", b"")
+    c.admit_metadata(incoming, str(uuid4()), Budget())
+    patterns = {
+        "scalar": "FROM scalar_claims c",
+        "relations": "FROM relation_groups g",
+        "bytes": "SELECT * FROM retained_metadata",
+        "sql": "SELECT full_oid FROM git_objects",
+    }
+    fired = []
+
+    def trace(statement):
+        if patterns[operation] in statement and not fired:
+            fired.append(True)
+            persist_catalog_stop(path.parent, "independent detector during last read")
+
+    c._db.set_trace_callback(trace)
+    with pytest.raises(CoreFailure) as error:
+        if operation == "scalar":
+            c.scalar(incoming.oid, "size")
+        elif operation == "relations":
+            c.relations(incoming.oid, "tree_entries")
+        elif operation == "bytes":
+            c.read_metadata(incoming.oid)
+        else:
+            c.sql("SELECT full_oid FROM git_objects")
+    assert fired
+    assert error.value.code == "RECOVERY_STOP"
+    assert not c._db.in_transaction
