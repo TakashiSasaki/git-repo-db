@@ -11,7 +11,7 @@ refines:
 
 # ADR 0020: Preserve conflicting Git notes member reports as immutable attributed alternatives
 
-**Subsequent accepted refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) fixes direct semantic composite claim/group PKs and matching FKs using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance. Whole-group membership/scope is part of group identity; no surrogate or digest replaces it. B02-R01 role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 configurable finite budget policy is fixed by ADR 0023; B02-R03 resource measurement/charging is next; B03 and GCTX-M10 remain open.
+**Subsequent accepted refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) fixes direct semantic composite claim/group PKs and matching FKs using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance. Whole-group membership/scope is part of group identity; no surrogate or digest replaces it. B02-R01 role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 configurable finite budget policy is fixed by ADR 0023; B02-R03 actual-work accounting is fixed by ADR 0024; B02-R04 work scope/resume/reset is next; B03 and GCTX-M10 remain open.
 
 - **Decision ID:** B01-R05; **owner choice: Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #60 / ADR 0019](https://github.com/TakashiSasaki/git-repo-db/pull/60), HEAD `c1c5bf580bdb0383ed9b5df613b73c70753f73d9`; design-only, no implementation/merge. Inherits ADR 0014–0019, KEY-P01 and GCTX-M01–M09.
@@ -96,7 +96,7 @@ The required structural role-evidence strength for retaining **note body bytes**
 - **B — Canonical typed assertion hash:** derive a fixed digest of the full source-attributed typed statement and scope. Pros: compact and deterministic; cons: canonical encoding/version, collision rules, false collapsing of distinct evidence with equal content, and hash alone proves no origin.
 - **C — Separate genuinely issued assertion-occurrence UUID:** only if source actually identifies a claim occurrence; pros: straightforward replay/Exchange, cons: another issuer/trust protocol, IDs unavailable in normal Git reads, and serious risk of disguising a forbidden surrogate under KEY-P01.
 
-The owner subsequently selected **B01-R06 Option A**, fixed by [ADR 0021](0021-direct-semantic-notes-claim-group-keys.md). The comparison above is historical, not an open choice. The accepted key/equality contract preserves B01-R04's compatible monotonic facts, B01-R05's competing alternatives and GCTX-M03 atomic groups. **B02-R01 role-evidence strength** is fixed by ADR 0022; **B02-R02 finite budget policy** is fixed by ADR 0023; **B02-R03 measurement/charging** is the next owner blocker; B03/GCTX-M10 remain separately open.
+The owner subsequently selected **B01-R06 Option A**, fixed by [ADR 0021](0021-direct-semantic-notes-claim-group-keys.md). The comparison above is historical, not an open choice. The accepted key/equality contract preserves B01-R04's compatible monotonic facts, B01-R05's competing alternatives and GCTX-M03 atomic groups. **B02-R01 role-evidence strength** is fixed by ADR 0022; **B02-R02 finite budget policy** is fixed by ADR 0023; **B02-R03 actual-work accounting** is fixed by ADR 0024; **B02-R04 work scope/resume/reset** is the next owner blocker; B03/GCTX-M10 remain separately open.
 
 ## 7. Design-only authorization
 

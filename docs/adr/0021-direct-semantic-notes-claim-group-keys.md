@@ -12,7 +12,7 @@ refines:
 
 # ADR 0021: Direct semantic composite keys for Git notes claims and coherent groups
 
-**Subsequent accepted refinement:** [ADR 0022 / B02-R01 A](0022-receiver-verified-notes-role-admission.md) requires receiver-verified relevant notes structure plus exact body checks before durable note-body retention. The B02 comparison below is historical; B02-R02 finite configurable budget policy is fixed by ADR 0023; B02-R03 measurement/charging is next, while exact proof grammar, B03 completeness and GCTX-M10 remain open.
+**Subsequent accepted refinement:** [ADR 0022 / B02-R01 A](0022-receiver-verified-notes-role-admission.md) requires receiver-verified relevant notes structure plus exact body checks before durable note-body retention. The B02 comparison below is historical; B02-R02 finite configurable budget policy is fixed by ADR 0023; B02-R03 actual-work accounting is fixed by ADR 0024; B02-R04 work scope/resume/reset is next, while exact proof grammar, B03 completeness and GCTX-M10 remain open.
 
 - **Decision ID:** B01-R06; **owner choice: Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #61 / ADR 0020](https://github.com/TakashiSasaki/git-repo-db/pull/61), verified HEAD `d12e54b114b48167898ee6e9789d0ec9d63b60fe`, branch `docs/adr-0020-competing-notes-member-claims`. This is its direct documentation-only successor, not a sibling or an implementation PR.
@@ -78,7 +78,7 @@ Receiver-local verification is **separate immutable evidence referring to the ex
 
 | Accepted decision | Preserved constraint |
 | --- | --- |
-| ADR 0014 / GCTX-S01 | History/structure/notes catalog; no ordinary file-body archive, including in keys, evidence, Exchange staging or Search. ADR 0022 / B02-R01 A fixes required receiver-verified structural role evidence; B02-R02 finite configurable budget policy is fixed by ADR 0023; resource measurement/defaults and exact proof grammar remain open |
+| ADR 0014 / GCTX-S01 | History/structure/notes catalog; no ordinary file-body archive, including in keys, evidence, Exchange staging or Search. ADR 0022 / B02-R01 A fixes required receiver-verified structural role evidence; B02-R02 finite configurable budget policy is fixed by ADR 0023; precise resource counter units/defaults and exact proof grammar remain open |
 | ADR 0015 / B01-R01 | All observable `refs/notes/*` plus explicit additional refs; selection alone is not notes proof |
 | ADR 0016 / B01-R02 | Genuine repeated observations remain separate; replay preserves original capture |
 | ADR 0017 / KEY-P01 | Direct semantic PK and matching full FKs; no storage-only row surrogate across stores |

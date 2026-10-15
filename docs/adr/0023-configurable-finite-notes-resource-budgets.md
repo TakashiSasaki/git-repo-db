@@ -11,6 +11,8 @@ refines:
 
 # ADR 0023: Configurable finite budgets for Git notes body admission and proof work
 
+**Subsequent accepted refinement:** [ADR 0024 / B02-R03 A](0024-actual-notes-resource-work-accounting.md) fixes actual-work accounting: reprocessing costs work despite domain replay, and safe reuse avoids fictitious body charges while real reference/proof work still counts. The accounting comparison below is historical; B02-R04 work scope/counter carry/reset, precise units/defaults, proof grammar, B03 and GCTX-M10 remain open.
+
 - **Decision ID:** B02-R02; **owner selected Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #63 / ADR 0022](https://github.com/TakashiSasaki/git-repo-db/pull/63), verified HEAD `8bf737152033902063eac7513840a210c06bbfbb`, branch `codex/adr-0022-verified-notes-role-admission`. Direct documentation-only successor; no implementation or merge.
 - **Inherited:** ADR 0014–0022, KEY-P01, GCTX-M01–M09 and strictly append-only Git Core. Proposed [PR #52 / ADR 0011 governance](https://github.com/TakashiSasaki/git-repo-db/pull/52) remains unadopted.
@@ -23,7 +25,7 @@ Use **explicit finite defaults and configurable finite limits** for notes acquis
 | Dimension | Required protection; details still open |
 | --- | --- |
 | Individual note body | A bound on the exact raw note body size, applicable to empty/binary notes without text normalization; exact numeric default/configuration contract remains open |
-| Total bounded acquisition operation | A finite aggregate bytes/work envelope so many individually small notes cannot create unbounded work; operation scope, units and shared/replayed-content charging remain open |
+| Total bounded acquisition operation | A finite aggregate bytes/work envelope so many individually small notes cannot create unbounded work; ADR 0024 fixes actual-work charging, while precise operation scope, units and carry/reset remain open |
 | Notes-role proof traversal | Finite structural-proof exploration/work, including unsuccessful or incomplete searches; precise units/charging and numeric defaults remain open |
 
 Configuration may deliberately raise a finite limit and permit retry under the revised finite envelope. A hard-coded product-wide size ceiling with no configurable increase (prior Option B) and an uncapped note-size mode relying only on streaming/system failure (prior Option C) are **not selected**. Streaming can be an implementation technique but cannot replace the selected bounds.
@@ -66,7 +68,7 @@ No mutable Core configuration/counter, storage-only budget row ID, per-retry suc
 | 10,000 small proven notes individually fit, but aggregate operation budget is exhausted | Preserve complete admissible units and honest remaining availability; do not claim all bodies or all members were acquired |
 | Notes proof traversal reaches its limit before the relevant mapping is established | Metadata remains useful; body withheld even if its standalone OID check could pass; no conclusion of missing/empty notes |
 | One coherent group is unfinished when the work stops | No partial visibility as a complete group or arbitrary extension of a prior group |
-| Same 2 MiB blob is referenced by 100 mappings or delivered again through Exchange | No duplicate nominal OID/domain fact solely for replay; precise budget charging is the next B02-R03 question, not fixed here |
+| Same 2 MiB blob is referenced by 100 mappings or delivered again through Exchange | No duplicate nominal OID/domain fact solely for replay; ADR 0024 / B02-R03 A requires actual-work charging, with precise units and B02-R04 scope/carry/reset still open |
 | A previously retained 20 MiB note encounters a later 8 MiB setting | Keep historical admitted bytes/evidence; no deletion, false omission or quarantine reclassification |
 
 ## 5. Consistency with inherited decisions
@@ -85,7 +87,7 @@ No mutable Core configuration/counter, storage-only budget row ID, per-retry suc
 | GCTX-M07–M09 | Check actual output bytes; preserve historical admission, immutable physical copies/diagnoses and evidence-derived candidates. Budget refusal is not physical corruption |
 | Other fixed rules | Strict Core INSERT-only/no UPDATE/DELETE/REPLACE/GC, permanent repository UUIDv4, known-positive Source, Unix epoch microseconds, five-column/latest-observation Coverage, NO_INDEPENDENT_PUBLICATION, Q01-B/Q02-B/Q03-B, unaffected PF-P01–PF-P17, durable Context, paired full backup and ADR 0001 |
 
-No prior accepted decision requires reversal. **B02-R02 A is accepted; resource units/counting and numeric defaults remain open.** Exact notes proof grammar, B03 completeness, origin trust, GCTX-M10 quarantine/count, settings/DDL/wire/fences/backup pairing and Context GC-03/04 remain unresolved. The implemented format is unchanged.
+No prior accepted decision requires reversal. **B02-R02 A and B02-R03 A are accepted; precise counter units/defaults and B02-R04 work scope/carry/reset remain open.** Exact notes proof grammar, B03 completeness, origin trust, GCTX-M10 quarantine/count, settings/DDL/wire/fences/backup pairing and Context GC-03/04 remain unresolved. The implemented format is unchanged.
 
 ## 6. Future adversarial cases (NOT executed product tests)
 
@@ -97,24 +99,24 @@ No prior accepted decision requires reversal. **B02-R02 A is accepted; resource 
 6. Lower settings preserve already admitted bytes/evidence, backup obligations and actual physical diagnoses; no Core GC or CAS-41 adjustment.
 7. Reported size differs from observed bytes; do not fabricate verification or use claimed compression/size as a structural-role shortcut.
 8. Resource stop leaves no durable unproven-body archive in retry/cache/Exchange/Context/Search paths.
-9. Shared blobs and repeated deliveries preserve nominal identity, provenance and fact idempotency; test charging after B02-R03 is separately fixed.
+9. Shared blobs and repeated deliveries preserve nominal identity, provenance and fact idempotency; future charging tests must follow ADR 0024's actual-work basis and the separately fixed precise metrics/scope.
 10. Core-only metadata remains usable while Operational/Search are absent/rebuilt; no mandatory fetch, body or Context.
 11. Budget exhaustion is distinct from actual retained-byte loss/corruption and source identity misuse.
 12. Exact configuration/scope and retry accounting, once fixed, cannot be bypassed by silent resets, new fake capture keys or hidden unlimited settings.
 
-## 7. Next owner blocker: B02-R03 resource measurement and shared/replay accounting (OPEN)
+## 7. Historical B02-R03 accounting comparison; Option A now accepted by ADR 0024
 
-Before selecting numbers, **what does the aggregate budget count when one blob supports many mappings, proof dependencies are shared, or Exchange/retry repeats input?** Both options below retain B02-R02's finite configurable raw-note, aggregate-work and proof-traversal bounds. Neither is selected here.
+Before selecting numbers, **what does the aggregate budget count when one blob supports many mappings, proof dependencies are shared, or Exchange/retry repeats input?** Both options below retain B02-R02's finite configurable raw-note, aggregate-work and proof-traversal bounds. The owner subsequently selected **A**, fixed by **ADR 0024 / B02-R03**; B is historical and unselected.
 
 Example: a 2 MiB N1 is attached to 100 targets. It may be read/checked once and reused, or arrive in 100 separate body-bearing messages. Both can represent 100 real mappings, but their actual byte-processing work differs. The same distinction applies to reused versus freshly read proof trees.
 
 - **A — Charge actual bounded work (recommended):** aggregate byte/work counters reflect input actually read/decoded/checked and actual proof exploration. Sharing already checked data within the relevant coherent work scope does not pretend another full body read occurred; a newly read repeated body consumes work again even if its final Core insertion is idempotent. Keep an independent raw-note size limit. **Pros:** tracks resource cost, handles shared notes naturally, and does not treat SQL deduplication as free validation. **Cons:** exact work scope, units, reuse fences and retry carry/reset rules need precise definitions before numeric defaults.
 - **B — Charge a conservative logical allowance for every mapping/delivery:** reserve a full relevant body/proof allowance for each reference/report even where implementation reuse avoids processing it again, while still bounding actual work. **Pros:** simpler conservative planning and less dependence on reuse optimizations. **Cons:** the single 2 MiB body may consume 200 MiB of logical allowance across 100 references; repeated metadata references can exhaust budgets despite little byte work, and proof-only work still needs explicit accounting.
 
-Recommendation A chooses the basis of accounting, not free cross-operation trust or a complete counter protocol. Numeric defaults, precise counter units, parallel/resume boundaries, handling repeated independently attributable evidence and exact acquisition/proof grammar remain follow-up decisions. B03 and GCTX-M10 are not resolved by either option.
+Accepted A / ADR 0024 fixes the basis of accounting, not free cross-operation trust or a complete counter protocol. Numeric defaults, precise counter units, parallel/resume boundaries, handling repeated independently attributable evidence and exact acquisition/proof grammar remain follow-up decisions. B03 and GCTX-M10 are not resolved by this choice; next is B02-R04 work scope/carry/reset.
 
 ## 8. Authorization and verification boundary
 
-The owner selected **B02-R02 A** after B02-R01 A. ADR 0022's B/C resource-policy alternatives are historical unselected choices. This is a documentation-only design PR, and the B02-R03 comparison is unaccepted.
+The owner selected **B02-R02 A** after B02-R01 A, and subsequently **B02-R03 A**, fixed by ADR 0024. ADR 0022's B/C resource-policy alternatives and this ADR's B accounting alternative remain historical and unselected. This is a documentation-only design ADR; B02-R04 is the next unaccepted choice.
 
 No implementation, application source/SQL/DDL/schema labels, executable product tests, workflows/dependencies, live source acquisition, real catalog mutation/migration, deployment, release, merge or auto-merge is authorized. Static document checks and selected hosted development/documentation CI are distinct from product runtime/release acceptance. Future cases above are not executed tests. No independent review is implied; no new reusable skill is needed for this individual design choice.
