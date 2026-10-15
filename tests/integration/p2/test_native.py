@@ -558,3 +558,69 @@ def test_large_folded_signature_header_preserves_exact_bytes_with_linear_bufferi
     assert parsed.scalars["message"] == "message\n"
     assert bytes.fromhex(parsed.scalars["header_data"]) == body.partition(b"\n\n")[0]
     assert parsed.relations["commit_tree"] == [[0, *oid().key]]
+
+
+def test_core_transaction_binding_refuses_context_even_for_shared_coverage_tables(
+    tmp_path,
+):
+    from repo_catalog.adapters.sqlite.p1_context import ContextStore
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.domain.p1_context import CoverageScope
+    from repo_catalog.domain.p1_core import CoreCoverageScope
+    from repo_catalog.domain.p1_coverage import CoverageClaim
+
+    repository = str(uuid4())
+    path = tmp_path / "context.sqlite3"
+    initialize(path, "context", repository, str(uuid4()))
+    db = connect(path, "context")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        db.execute("INSERT INTO repository_context VALUES(?,?)", (repository, "{}"))
+        ContextStore(db).scope(
+            CoverageScope.repository(repository, "git-object-inventory")
+        )
+        claim = CoverageClaim(
+            CoreCoverageScope("repository", (repository, "git-object-inventory")),
+            1,
+            "unknown",
+        )
+        entered = False
+        with pytest.raises(CoreFailure) as error:
+            with GitCore.for_transaction(db) as unit:
+                entered = True
+                unit.admit_coverage(claim)
+        assert error.value.code == "STORE_ROLE"
+        assert not entered
+        assert db.in_transaction
+        assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 0
+        assert not (tmp_path / "p1-recovery-stop.json").exists()
+        # Refusal has not installed an authorizer or consumed the Context tx.
+        ContextStore(db).admit_coverage(
+            CoverageClaim(
+                CoverageScope.repository(repository, "git-object-inventory"),
+                1,
+                "unknown",
+            )
+        )
+        assert db.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 1
+    finally:
+        db.rollback()
+        db.close()
+
+
+def test_production_core_transaction_binding_preserves_savepoint_and_expiry(core):
+    c, path, _ = core
+    db = connect(path, "core")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        with GitCore.for_transaction(db) as unit:
+            assert isinstance(unit, GitCore)
+            unit.admit_claim(ScalarClaim(oid(), "type", "commit", provenance()))
+            assert db.in_transaction
+        with pytest.raises(CoreFailure) as error:
+            unit.admit_object(oid("b"))
+        assert error.value.code == "CAPABILITY_EXPIRED"
+        db.rollback()
+        assert c.scalar(oid(), "type").alternatives == ()
+    finally:
+        db.close()

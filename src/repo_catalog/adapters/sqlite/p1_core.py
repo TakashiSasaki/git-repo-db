@@ -110,6 +110,13 @@ class Core:
             raise CoreFailure(
                 "TRANSACTION", "core", "active coordinator transaction required"
             )
+        rows = db.execute("SELECT store_role FROM store_identity").fetchall()
+        if len(rows) != 1 or rows[0][0] != "core":
+            raise CoreFailure(
+                "STORE_ROLE",
+                "core",
+                "Core capability requires a Core store transaction",
+            )
         result = cls.__new__(cls)
         result._directory = None
         result._db, result._external, result._active = db, True, True
