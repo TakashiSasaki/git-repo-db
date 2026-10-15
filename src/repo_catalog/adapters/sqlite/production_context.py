@@ -169,10 +169,17 @@ class Context(ContextStore):
 
     @staticmethod
     def _record_corruption(directory: Path, error: BaseException):
-        code = getattr(error, "sqlite_errorcode", 0)
+        code = getattr(error, "sqlite_errorcode", 0) or 0
+        # sqlite3's stored-TEXT decoding failure may carry no SQLite errorcode.
+        # This precise read error establishes malformed persisted UTF-8, unlike
+        # an incoming Python value or generic SQLite operational/input error.
+        invalid_utf8 = isinstance(error, sqlite3.OperationalError) and str(
+            error
+        ).startswith("Could not decode to UTF-8 column")
         if (
             code & 255 in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB)
             or getattr(error, "code", None) == "AUTHORITATIVE_CORRUPTION"
+            or invalid_utf8
         ):
             persist_catalog_stop(directory, str(error))
 
