@@ -902,3 +902,46 @@ def test_context_cannot_bind_core_shared_coverage_tables(directory, mode):
         assert (
             pair.core.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 0
         )
+
+
+@pytest.mark.parametrize("operation", ["read", "replay"])
+def test_known_retained_text_loss_stops_without_silent_repair(directory, operation):
+    content = "previously retained exact Context body"
+    with Context.transaction(directory) as store:
+        store.provider(SERVICE, "github")
+        store.resource(KEY)
+        store.admit_text(
+            KEY, content, FieldClock("provider.updated_at", 1), PROVENANCE, 10
+        )
+        digest = json.loads(store.candidates(KEY, "text_body_sha256")[0].value_json)
+    db = connect(directory / "context.sqlite3", "context")
+    trigger = db.execute(
+        "SELECT sql FROM sqlite_schema WHERE name='text_bodies_no_delete'"
+    ).fetchone()[0]
+    db.execute("PRAGMA foreign_keys=OFF")
+    db.execute("DROP TRIGGER text_bodies_no_delete")
+    db.execute("DELETE FROM text_bodies WHERE sha256=?", (digest,))
+    db.execute(trigger)
+    db.close()
+    with pytest.raises(ContextError, match="AUTHORITATIVE_CORRUPTION"):
+        with Context.transaction(directory) as store:
+            if operation == "read":
+                store.read_text(digest)
+            else:
+                store.text(content)
+    assert (directory / "p1-recovery-stop.json").exists()
+    db = connect(directory / "context.sqlite3", "context")
+    try:
+        assert db.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 0
+    finally:
+        db.close()
+
+
+def test_unknown_text_digest_is_unavailable_without_false_corruption(context):
+    _, store, path = context
+    with pytest.raises(ContextError) as failure:
+        store.read_text("a" * 64)
+    assert failure.value.code == "TEXT_UNAVAILABLE"
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+    digest = store.text("genuinely new Context text")
+    assert store.read_text(digest) == "genuinely new Context text"
