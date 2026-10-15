@@ -135,3 +135,13 @@ actual OID. Trusted local SQLite semantic FK/CHECK rejections remain
 Git process/start/read failures use `GIT_INPUT` or `OBJECT_UNAVAILABLE` with the
 actual path/OID. No assertion claims every SQLite infrastructure failure is a
 `CoreFailure`.
+
+Successful ordinary reads also have a final completion linearization against the
+persistent stop fence. An independent review published a stop from the final
+scalar SELECT and originally observed a normal projection; all public Core read
+methods, SQL inspection and outer production byte/notes methods now check final
+completion after cleanup. A detector is never blocked behind a read-held
+completion lock while doing SQL or parsing. Stops published before completion
+withhold the result and allow transaction rollback cleanup. This does not promise
+revocation after an operation has already completed. Transaction-bound Core
+capabilities rely on the coordinator's enclosing completion boundary.
