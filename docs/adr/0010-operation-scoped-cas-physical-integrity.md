@@ -91,7 +91,7 @@ No “last success wins”, no cryptographic certification of Provider authentic
 
 ## 7. Subsequent owner decision: GCTX-M08 accepted; next GCTX-M09
 
-[ADR 0011 / GCTX-M08](0011-append-only-multiple-cas-physical-instances.md) selects Option A: multiple immutable physical instances per logical CAS payload, with appended instance-specific corruption and recovery evidence; original damaged bytes are not overwritten or garbage-collected. The following A/B/C comparison records the original alternatives, not an open owner choice. GCTX-M09 will settle eligible instance selection and active quarantine derivation.
+[ADR 0011 / GCTX-M08](0012-append-only-multiple-cas-physical-instances.md) selects Option A: multiple immutable physical instances per logical CAS payload, with appended instance-specific corruption and recovery evidence; original damaged bytes are not overwritten or garbage-collected. The following A/B/C comparison records the original alternatives, not an open owner choice. GCTX-M09 will settle eligible instance selection and active quarantine derivation.
 
 **How should physical CAS corruption and repair be modeled under an absolutely append-only Git Core while preserving CAS-41?** Compare:
 
