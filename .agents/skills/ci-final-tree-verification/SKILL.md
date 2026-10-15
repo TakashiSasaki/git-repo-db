@@ -41,3 +41,34 @@ Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.j
 - A raw SQLite fixture omits native UDF registration required by the composed production DDL.
 
 Use actual receipts and explicit validation modes, not historical counts or prose claims, to resolve these issues.
+
+
+## Focused-profile bootstrap failure: preserve evidence and use direct pytest
+
+If `scripts/ci_profile.py profile ...` fails before collection with
+`ValueError: option names {'--journal'} already added`, inspect both registrations
+before interpreting the run as a product-test failure. The current wrapper loads
+`-p scripts.ci_journal`; `tests/conftest.py` also delegates `pytest_addoption` to
+that module. Loading both registers the same option twice. A missing JUnit file
+then reflects failed bootstrap, not passing or failing test assertions.
+
+Preserve the failed profile's output, command and exit status. When this duplicate
+registration is present and CI-infrastructure changes are outside the task's
+scope, use the existing conftest registration once through direct pytest:
+
+```bash
+focused_artifact_dir=$(mktemp -d)
+uv run --no-sync pytest tests/integration/architecture_spikes -q \
+  -o junit_family=xunit1 \
+  --junitxml "$focused_artifact_dir/junit.xml" \
+  --journal "$focused_artifact_dir/journal.jsonl"
+```
+
+Use the task's actual focused targets. Do not add `-p scripts.ci_journal` to this
+fallback. Check the exit status, selected/executed node IDs, JUnit and journal;
+record HEAD/tree and commands with these raw artifacts. A direct run does not
+create a wrapper profile/complete release receipt. Report the wrapper failure
+separately, and remove this workaround only after verifying that option
+registration has one owner and the wrapper succeeds. The implementation-preparation
+run diagnosed the duplicate registration and verified this direct invocation; it
+did not repair unrelated production CI tooling or claim release acceptance.

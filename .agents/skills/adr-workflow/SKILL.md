@@ -64,6 +64,7 @@ file. Never run a mutating cleanup command merely because a filename looks old.
 
 Do not use this skill to automatically migrate the existing ADR collection,
 reopen GCTX decisions, enforce a universal technology ban, purge execution receipts,
-or claim that every agent automatically discovers skills. ADR 0011 and its policy are now owner-accepted; never treat their adoption as
+or claim that every agent automatically discovers skills. ADR 0011 and its policy
+are now owner-accepted; never treat their adoption as
 completion of the bounded pre-adoption migration or permission to retire accepted
 clauses or implement unrelated design work.

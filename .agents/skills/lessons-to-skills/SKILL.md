@@ -47,10 +47,12 @@ When capturing a correction of this kind:
    verification. Keep source-unclear IDs unresolved rather than guessing their
    meaning. A preserved word such as "paused" is not itself a current defect.
 4. Check links, unchanged decision text and the final diff. Verify a copied
-   snapshot with `git rev-parse BASE:path/to/original.md` against
+   non-ADR evidence snapshot with `git rev-parse BASE:path/to/original.md` against
    `git rev-parse HEAD:path/to/snapshot.md`; verify documentation scope with
    `git diff --name-only BASE...HEAD` and whitespace with `git diff --check`.
-   Replace BASE/HEAD and paths with the inspected revisions and files.
+   Replace BASE/HEAD and paths with the inspected revisions and files. This
+   byte-equality check does not authorize creating a second active ADR archive;
+   use Git history for retired ADR text under the accepted governance policy.
 
 Do not apply this procedure to silently settle a genuine new policy conflict,
 rewrite immutable evidence, or claim runtime acceptance from prose checks. The
