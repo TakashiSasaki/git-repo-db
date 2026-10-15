@@ -1,8 +1,8 @@
 # ADR operating policy for developers and coding agents
 
-**Status: proposed for owner review; adoption is recorded in [ADR 0011](0011-adr-governance.md).**
-This is the single policy text; the [ADR index](README.md) is the common entry point.
-Installing this proposal does not approve its repository-specific extensions, alter an accepted product decision, or authorize implementation or merging.
+**Status: owner-accepted on 2026-10-15 in [ADR 0011](0011-adr-governance.md).**
+This is the single normative ADR governance policy; the [ADR index](README.md) is the common entry point.
+Adoption includes the section 10 repository-specific adaptations, but changes no accepted product-domain contract and grants no general implementation, merge or release permission.
 
 ## 1. Purpose and principles
 
@@ -112,17 +112,20 @@ For documentation-only changes, perform appropriate static/diff/link checks and 
 
 ## 9. Existing-repository migration: explicit, not completed here
 
-The bootstrap baseline is PR #51 at `a79924f36ddb03c2f5472f14f0233531bd7788a2`, above design PRs #44-#50. This policy proposal does **not** rewrite, renumber, delete or re-accept ADRs 0001-0010 or the older external-path decisions. Those decisions remain authoritative in their surviving scope. In particular, GCTX-M01-M07 stay fixed; GCTX-M08 and other identified open questions stay open.
+The proposal was originally authored against PR #51 at `a79924f36ddb03c2f5472f14f0233531bd7788a2` before [PR #69](https://github.com/TakashiSasaki/git-repo-db/pull/69) integrated the accepted Git Core/Context design stack through ADR 0027. At adoption, ADRs 0001–0010 and 0012–0027 plus older accepted external-path decisions already exist. This governance policy **does not rewrite, renumber, delete, re-accept or reverse** any of their settled substantive clauses. The accepted source/identity/notes/retained-byte and GCTX-M01–M09 contracts remain intact; ADR 0026's recovery-without-quarantine and ADR 0027's unauthenticated-origin policy govern their affected scope. Existing pre-policy decisions may contain historical alternatives and partial scoped supersessions. These are enumerated migration exceptions, **not** instructions to remove still-binding requirements or reopen completed choices.
 
 | Existing material | Known mismatch with the target policy | Required follow-up before retiring or relocating it |
 | --- | --- | --- |
 | ADR 0002 | Contains the implemented Three-Store baseline and clauses partially superseded by ADR 0003 | Map each retained PF clause and implementation-only statement to its correct successor/reference; do not erase still-binding semantics |
 | ADR 0003 | Verified-only metadata admission was narrowly replaced by ADR 0004; append-only and four-store boundaries remain binding | Preserve the valid boundary/backup rules and map only the replaced admission clauses |
 | ADR 0004-0010 | Pre-policy format and refinement chains; some records contain old pending-status text and discussed alternatives | Audit current versus historical statements without changing chosen GCTX options or claiming pending implementations passed |
+| ADR 0012–0013 | Earlier physical-instance and active-quarantine/count material partially superseded by accepted ADR 0026 | Carry forward still-valid immutable copy identity and byte-validation rules; treat old quarantine/count or same-suspect-DB continuation as historical, not current authority |
+| ADR 0014–0025 | Existing scope/notes/capture/claim/budget ADRs contain choice alternatives, old unresolved-status text and successive scoped refinements | Audit current versus historical statements against actual accepted successors through ADR 0027; retain binding clauses until separately reviewed carry-forward; do not mass delete |
+| ADR 0026–0027 | Current accepted recovery and origin-report ADRs include historical evidence, examples and supersession explanations | Preserve current binding meaning, including the no-quarantine rule and no-PKI external-origin acceptance; any optional active-only cleanup needs an independent scoped review |
 | Transport-independent Core and No Independent Publication decisions | Accepted records outside `docs/adr/`, with historical baseline/status text | Keep them discoverable from the common index until an explicit semantics-preserving relocation/replacement updates inbound links |
 | Root/nested agent guides, handoffs and skills | Existing repeated summaries and historical-snapshot advice | Remove duplication incrementally after checking authoritative coverage; ADR decision snapshots must not become a new archive in HEAD |
 
-This enumerated legacy exception MUST NOT be expanded silently. Close entries through separately scoped, reviewed documentation work, preserving original history and approvals. A reviewer must not certify the repository as fully migrated or free of stale context after this bootstrap PR. No product implementation, four-store migration, website-publication expansion or mass historical cleanup is included.
+This expressly updated pre-adoption exception covers the existing ADRs through 0027 and MUST NOT be expanded silently for later design work. Close entries through separately scoped, reviewed documentation work, preserving original history and approvals. A reviewer must not certify the repository as fully migrated or free of stale context after this bootstrap PR. No product implementation, four-store migration, website-publication expansion or mass historical cleanup is included.
 
 ## 10. Source basis and repository-specific adaptations
 
@@ -134,7 +137,7 @@ The owner supplied three DOCX guidelines on 2026-10-15. Similar filenames do not
 | S2: `ADR運用規範（人間・コーディングエージェント共通ガイドライン）`, subtitle containing `協調開発` | Non-reused IDs, repository-resident Mini-ADRs, related-link maintenance and lifecycle guidance |
 | S3: `Architecture Decision Record (ADR) 運用規範`, subtitle containing `双方に最適化` | Same core rules; explicit Level 3 design-first versus Level 2 same-PR distinction |
 
-**Adaptations proposed here, not quotations or already-approved product decisions:**
+**Repository-specific adaptations accepted with ADR 0011, not direct quotations or new product-domain decisions:**
 
 - Mini-ADRs are repository files (S2/S3), not Issue-only records permitted by S1. Shared frontmatter normalizes the differing Mini-ADR examples.
 - The five-question threshold uses one week, consistent with all checklists; S1's full-ADR matrix says several weeks. The checklist governs the overlap.

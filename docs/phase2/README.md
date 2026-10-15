@@ -5,6 +5,8 @@
 implementation have been integrated into `main`. The old Publication-centered
 69-table sketch is not the target. This page reconciles status, not policy.
 
+**Accepted newer target, not implemented:** Start with the [current ADR index](../adr/README.md) and [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md). ADR 0003–0027 narrowly supersede the baseline where stated: INSERT-only Git Core, independently durable Context, metadata-only operation and purpose-bound notes without ordinary file archival. ADR 0026 replaces quarantine/count/release and known-corrupt normal restore with immediate recovery, read-only preservation, fresh verified restore and validated salvage merge. ADR 0027 accepts unauthenticated external-origin reports without application PKI/electronic signatures. These decisions do not certify implementation or authorize execution.
+
 ## Current design and implementation instructions
 
 1. Start with the [decision register](decision-register.md) and
@@ -12,10 +14,11 @@ implementation have been integrated into `main`. The old Publication-centered
    accepted scope, implementation facts, deferred extensions and historical labels.
 2. Read [No independent Publication](no-independent-publication-adr.md) for the
    accepted Q01–Q04 decisions and [ADR 0002](../adr/0002-three-store-boundary-architecture.md)
-   for the canonical PF-P01–PF-P17 Three-Store policy. The old pause and
+   for the implemented PF-P01–PF-P17 Three-Store baseline and unaffected guarantees;
+   apply the current ADR index for scoped target replacements. The old pause and
    pre-implementation work sequence are not instructions to repeat completed work.
 3. Use the [packaged schema composition](../../src/repo_catalog/adapters/sqlite/schema.py)
-   and [schema map](publication-free-schema-map.json) for current structures.
+   and [schema map](publication-free-schema-map.json) for implemented structures.
    The inspected baseline uses Core Schema 21, Operational Schema 1 and Search
    Schema 1. [Implementation status](../implementation-status.md) distinguishes
    integration from verification and release acceptance.
@@ -42,9 +45,13 @@ not become unusable merely because a larger acquisition is incomplete.
 
 Latest-state choices must not become full edit/roster history hidden in evidence.
 Necessary current origins, unresolved candidates and still-used target/scope
-evidence remain. Git bytes, exact domain text and CAS-41 remain protected.
-`advance_local_revision()` / `local_revision` and atomic catalog installation are
-mechanical responsibilities, not independent domain Publications.
+evidence remain. Exact retained bytes, domain text and actual database/manifest/
+identity/pairing checks remain protected. ADR 0014 scopes retained bodies and ADR
+0026 retires the old CAS-41 active-quarantine counter/order for the target.
+`advance_local_revision()` / mutable Core `local_revision` describe baseline
+mechanisms; the INSERT-only target requires an append-only-safe/fenced replacement.
+Revision fencing and atomic installation remain mechanical responsibilities,
+not independent domain Publications or a new counter-history authority.
 
 ## Integration baseline
 

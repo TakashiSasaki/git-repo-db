@@ -1,34 +1,15 @@
 ---
-status: proposed
-date: null
+status: accepted
+date: 2026-10-15
 replaces: []
 refines: []
 ---
 
-# ADR-0011: Shared ADR policy with an optional procedural skill
+# ADR 0011: Shared ADR policy and an optional procedural skill
 
-- **Decision & Context:** Propose the shared developer/agent [ADR policy](policy.md),
-  discovered through the [single index](README.md), with repository-resident full
-  and Mini-ADR templates and an optional ADR workflow skill. The owner requested
-  repository placement on 2026-10-15 and supplied three guidelines. Their common
-  principles are the source basis; the repository-specific reconciliations in
-  policy section 10 are explicitly proposed for review, not assumed approved.
-  This is a Level 2 repository development-workflow decision, not a product
-  architecture change. Existing ADRs 0001-0010 and GCTX-M01-M07 retain their exact
-  decision scope; legacy migration is separately bounded in policy section 9.
-- **Constraints / Do NOT:** Do not make a skill, a vendor-specific instruction
-  file or an external Issue the only policy authority. Do not duplicate the policy
-  or templates in the skill, promote a proposal by silence, reuse an issued ID,
-  discard still-binding clauses during retirement, or convert an unchosen option
-  into a blanket prohibition. Do not infer implementation, merge or deployment
-  permission from adopting this documentation workflow. Do not silently expand
-  the legacy exception or claim the existing tree has already been migrated.
-- **Reason & Ref:** A normal Markdown policy serves humans and every agent;
-  a thin, optional procedure aids discoverability without tool lock-in or another
-  source of truth. The cost is keeping the index and lifecycle metadata synchronized
-  and performing a scoped follow-up migration instead of unsafe bulk deletion.
-  Source identification, differences and rationale are in policy section 10.
-  The documentation base is PR #51, commit
-  `a79924f36ddb03c2f5472f14f0233531bd7788a2`, above PRs #44-#50.
-  No approval of these adaptations, implementation, runtime test execution,
-  legacy ADR removal, merge or website publication is asserted by this record.
+- **Decision & owner acceptance:** The owner explicitly adopts the [governance proposal PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, including the specific repository adaptations reconciled in [policy section 10](policy.md). This is a repository-wide **Level 2 developer/agent workflow decision**, not a product-data-model change.
+- **Single authority:** The [ADR operating policy](policy.md) is the normative text. The [common ADR index](README.md) is the entry point; [full](template.md) and [Mini-ADR](template-mini.md) templates are repository files; the optional [adr-workflow skill](../../.agents/skills/adr-workflow/SKILL.md) is procedural, not another authority. Humans and coding agents without plugin/skill support can use these Markdown files.
+- **Existing history:** PR #52's original proposal commit `8337cef911e664b1a2c267c837a05ddaa0c762f9` was based on PR #51 before the owner accepted the additional GCTX and notes design stack. PR #69 subsequently integrated accepted ADRs through 0027 into main. This governance adoption explicitly keeps their original historical Git commits and all still-applicable design authority. Adopted policy section 9 enumerates pre-adoption migration exceptions **through ADR 0027**; it does not perform or authorize blanket ADR file retirement.
+- **Constraints / Do NOT:** Do not make an agent-specific skill, external Issue or template the sole norm; infer approval from silence; reuse retired/reserved ADR IDs; replace by newest-number-wins; turn one rejected alternative into a universal prohibition; delete an ADR containing still-binding clauses before reviewed carry-forward; treat old provisional alternatives as reopened owner questions; confuse accepted target with implemented runtime or executed release tests; or adopt an unrelated product redesign through this workflow.
+- **Decision process:** Choose full ADR/Mini-ADR/short implementation rationale by actual project impact; keep four-digit allocation monotonic and coordinate active branches; record explicit acceptance, provenance, scoped refinements/replacements and Do NOT reasons; prefer design-first Stacked PRs with independent review as applicable. Separate decision acceptance, branch integration, runtime implementation and executed verification.
+- **Consequences and remaining work:** The policy is accessible from a checkout and keeps one source of truth, but requires index/metadata maintenance and a **separate future reviewed, semantics-preserving migration** of historical partial overrides and old formats. Current main is not certified to satisfy every prospective active-only ADR-file lifecycle rule. No automatic product implementation, migration, release, extra publication allowlist, Pages configuration change or future unrestricted merge permission follows this adoption.

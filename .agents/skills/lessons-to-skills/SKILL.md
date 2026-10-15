@@ -1,11 +1,11 @@
 ---
 name: lessons-to-skills
-description: Capture reusable, verified engineering lessons as repo-local Agent Skills after repeated failed attempts, non-obvious review corrections, or difficult investigations. Use during debugging retrospectives and before handoff; prefer improving an existing skill.
+description: Capture verified reusable procedures as repo-local Agent Skills after repeated trial-and-error, recurring successful workflows, non-obvious review corrections, or difficult investigations. Use at stable checkpoints and before handoff, including repeated design-only ADR stack updates; prefer improving an existing skill.
 ---
 
 # Turn debugging lessons into reusable skills
 
-Use this procedure when a repeated failure, difficult investigation, or independently discovered defect produced a **verified and generalizable** technique other agents could reuse. Do not create a new skill for every test failure, private incident, speculative workaround, or ordinary one-off change.
+Use this procedure when repeated trial-and-error, a recurring successful workflow, a difficult investigation, or an independently discovered defect produced a **verified and generalizable** technique other agents could reuse. At stable checkpoints, actively assess and record that technique within the task's authorized scope instead of only proposing that someone remember it. Do not create a new skill for every test failure, private incident, speculative workaround, or ordinary one-off change.
 
 1. Search existing `.agents/skills/*/SKILL.md` descriptions and the current docs for the same procedure. Improve a matching skill instead of creating a near-duplicate.
 2. Establish evidence: exact observed symptom, root cause, successful correction or reliable diagnosis, verified commands and tests, affected environments, and a counterexample or exclusion. Attribute old results to their actual commit/tree; distinguish development checks from full release acceptance.
@@ -19,6 +19,8 @@ Use this procedure when a repeated failure, difficult investigation, or independ
 Reviewers inspecting a frozen read-only tree can recommend lessons but should not alter that tree. The implementing agent owns the subsequent skill edit and revalidation.
 
 The goal is to help the next agent avoid repeating the same failed investigation, **not** to store an exhaustive transcript.
+
+For repeated design-only ADR stack work, read [the verified stack-update procedure](references/design-only-adr-stack-updates.md). It covers live parent pinning, current-versus-historical decision reconciliation, avoiding stale patches after broad replacements, and binding documentation checks to the published feature tree. Use it when that workflow recurs; it is not ADR governance adoption or implementation/merge permission.
 
 ## Status-reconciliation lessons are scope-sensitive
 
@@ -35,12 +37,12 @@ When capturing a correction of this kind:
    alone is not supersession, and implementation existence is not owner approval
    of its permanent retention or a broader guarantee.
 2. Update the current register, overview and applicable agent instructions
-   together. For ADR decision text, first check the [shared ADR policy](../../../docs/adr/policy.md)
-   and its adoption/migration status: use its approved retirement workflow rather
-   than copying superseded decisions into a new HEAD snapshot. Preserve actual
-   execution receipts with their original meaning and explicit historical scope;
-   never relabel an old failed execution as PASS. A policy proposal alone does not
-   authorize bulk retirement of existing ADRs.
+   together. Under the accepted [ADR 0011](../../../docs/adr/0011-adr-governance.md)
+   and [ADR policy](../../../docs/adr/policy.md), retire superseded ADR decision
+   text only after a reviewed carry-forward of all still-binding clauses; use
+   Git history for retired text rather than copying it into another active file.
+   Historical execution receipts are distinct evidence and must keep their exact
+   original meanings; never relabel an old failed execution as PASS.
 3. Separate accepted policy, implementation/integration and actually executed
    verification. Keep source-unclear IDs unresolved rather than guessing their
    meaning. A preserved word such as "paused" is not itself a current defect.
