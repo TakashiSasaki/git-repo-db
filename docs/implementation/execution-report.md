@@ -7,6 +7,12 @@ feature SHA/tree and GitHub development CI URLs are reported in the PR/final
 handoff. A commit cannot embed its own resulting hash. This evidence does not
 claim unexecuted full-product tests or release qualification.
 
+The clean frozen execution and both independent final rechecks target source
+commit `db5775f792a30e259ba9e742c12635d34b5a098c`, tree
+`5b3f0b04b10ead94bbb80bf1920f45aac2c74f65`. Final clean integrated rerun:
+**128 passed in 4.34s**, exactly-once selected/executed node reconciliation passed.
+Later report-only commits do not imply these tests were reexecuted.
+
 ## Baseline and environment
 
 - Repository: `https://github.com/TakashiSasaki/git-repo-db`.
