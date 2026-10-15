@@ -314,7 +314,7 @@ def test_detected_core_byte_corruption_permanently_fences_context_success(tmp_pa
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-def test_durable_unavailable_context_reference_is_not_a_certified_pair(tmp_path, fmt):
+def test_durable_unavailable_context_reference_keeps_pair_sound(tmp_path, fmt):
     from repo_catalog.domain.production_context import CoreReference
 
     directory = tmp_path / "catalog"
@@ -453,4 +453,40 @@ def test_partial_and_empty_source_inventories_preserve_positive_cross_store_stat
                 "SELECT repository_uuidv4 FROM source_repositories"
             ).fetchone()[0]
             == REPOSITORY
+        )
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+@pytest.mark.parametrize("kind", ["commit", "tree", "tag"])
+def test_coordinated_raw_admission_cannot_retain_malformed_native_representation(
+    tmp_path, fmt, kind
+):
+    directory = tmp_path / "catalog"
+    build(directory)
+    body = b"not-a-valid-native-structure"
+    oid = OID(fmt, native_oid(fmt, kind, body))
+
+    def malformed(tx):
+        tx.execute("INSERT INTO git_objects VALUES(?,?)", oid.key)
+        tx.execute(
+            "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
+            (
+                *oid.key,
+                str(uuid4()),
+                kind,
+                body,
+                len(body),
+                hashlib.sha256(body).hexdigest(),
+            ),
+        )
+
+    with pytest.raises(AdmissionFailure) as rejected:
+        PairCoordinator(directory).admit(malformed, lambda tx: None)
+    assert rejected.value.outcome == PairAdmission(False, False)
+    assert not (directory / "p1-recovery-stop.json").exists()
+    with PairCoordinator(directory).snapshots() as pair:
+        assert pair.core.execute("SELECT count(*) FROM git_objects").fetchone()[0] == 0
+        assert (
+            pair.core.execute("SELECT count(*) FROM retained_metadata").fetchone()[0]
+            == 0
         )
