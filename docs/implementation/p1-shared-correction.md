@@ -45,7 +45,7 @@ remove isolation when the coherent public runtime is activated.
 
 Guard source: `2e8618428bea482ececef580045066cd49552455`, tree
 `9f50e3be6bdf92cfc33ccb490b04a369f74e1609`.
-Final executable source including audit correction:
+Reviewed executable source including the initial audit correction:
 `fe925cc61ad6cf09c826b36dec0854ad44bd8e27`, tree
 `010e09014f860cf012c13346b9dc19d419affb76`.
 
@@ -68,6 +68,15 @@ also passed all 16 disposition tests at final audit source using its own worktre
 environment. These are task-specific read-only reviews, not GitHub approvals or
 full release acceptance. Subsequent evidence-only commits do not claim repeated
 runtime execution.
+
+The final extension-port audit follow-up is
+`bc6c2c18e05b0c77c0d928626f28518727318a52`, tree
+`180f34e68df72d19a443982ad8dca03eece175dd`. It adds the exact optional
+`domain/ports/production_context.py` path and seventh import form. It changes no
+production source or DDL. Root passed all 21 disposition/guard tests, Ruff and
+the call-site audit; the independent cross-domain reviewer passed all 17
+disposition tests and approved the narrow diff. The 390-node receipt above
+remains bound to its original source; it is not relabeled as a 391-node run.
 
 ## Dependency and integration boundary
 
