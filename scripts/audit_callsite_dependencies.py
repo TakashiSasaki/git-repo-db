@@ -12,6 +12,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs/implementation/callsite-dependencies.json"
 
+# This explicit list is the isolated P1 target, not the normal Schema 21 runtime.
+# Do not expand it to a filename-prefix ignore: newly integrated runtime paths
+# must enter the baseline source audit when P8 switches the application.
+ISOLATED_P1_MODULES = frozenset(
+    "src/repo_catalog/" + relative
+    for relative in (
+        "adapters/sqlite/p1_schema.py",
+        "adapters/sqlite/p1_core.py",
+        "adapters/sqlite/p1_context.py",
+        "adapters/sqlite/p1_coordination.py",
+        "domain/p1_core.py",
+        "domain/p1_context.py",
+        "domain/p1_coverage.py",
+        "domain/p1_coordination.py",
+        "domain/ports/p1_core.py",
+        "domain/ports/p1_context.py",
+        "domain/ports/p1_coordination.py",
+    )
+)
+
+
+def is_baseline_source(path: Path) -> bool:
+    return path.relative_to(ROOT).as_posix() not in ISOLATED_P1_MODULES
+
 
 def build():
     source = ROOT / "src/repo_catalog"
@@ -29,7 +53,11 @@ def build():
     paths = sorted(source.rglob("*.py")) + sorted(resources.glob("*.sql"))
     # Prototypes deliberately do not become baseline production dependencies.
     paths = [
-        p for p in paths if "spikes" not in p.parts and "experimental" not in p.parts
+        p
+        for p in paths
+        if "spikes" not in p.parts
+        and "experimental" not in p.parts
+        and is_baseline_source(p)
     ]
     for path in paths:
         relative = path.relative_to(ROOT).as_posix()

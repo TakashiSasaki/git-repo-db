@@ -1,5 +1,7 @@
 # Implementation-boundary audit and executable architecture probes
 
+**P1 executable successor:** [isolated four-store schemas and typed contracts](p1-schema-contracts.md), [complete physical reconciliation](p1-reconciliation.md), and independent [P2](p2-git-core-handoff.md)/[P3](p3-context-handoff.md) briefs. The historical PR #70 audit and prototype evidence below retain their original scope; P1 does not switch the Schema 21 runtime.
+
 **Verdict: READY FOR IMPLEMENTATION STACK.** The boundary audit and executable
 probes are complete; the four-store production runtime remains unimplemented.
 This PR changes no packaged production schema or runtime, opens no user catalog,
