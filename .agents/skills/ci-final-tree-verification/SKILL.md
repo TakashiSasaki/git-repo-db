@@ -14,7 +14,11 @@ Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.j
    uv run --no-sync ruff check src tests scripts
    uv run --no-sync ruff format --check src tests scripts
    ```
-   Passing `ruff check` alone does not imply format compliance.
+   Passing `ruff check` alone does not imply format compliance. Before committing
+   newly generated/untracked artifacts, stage the intended files and run
+   `git diff --cached --check`; plain `git diff --check` does not inspect untracked
+   content. Fix whitespace in the generator and regenerate instead of hand-editing
+   an output that the deterministic checker will later reject.
 2. Freeze the corrected commit and record `git rev-parse HEAD` and `git rev-parse HEAD^{tree}`. Distinguish GitHub's temporary test merge commit from the PR feature commit; compare their effective trees.
 3. In ordinary development, local verification is the primary correctness method. Hosted GitHub Actions runs inexpensive static checks, formatting/lint, configuration verification, and smoke checks. Do not require or expect complete hosted test suite execution for ordinary development PRs.
 4. Verify that hosted development CI passed its planned checks. A passing development CI run (`acceptance_status=development_checks_passed`) confirms development infrastructure integrity; it does not represent complete release acceptance.

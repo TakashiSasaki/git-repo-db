@@ -262,7 +262,7 @@ def render(inventory: dict) -> str:
                 "- Required regressions: " + "; ".join(p["required_tests"]) + ".",
                 "",
             ]
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def main() -> int:

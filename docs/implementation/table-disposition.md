@@ -1542,4 +1542,3 @@ Physical derivative-store identity and snapshot fences. Baseline authority: deri
 - Views: none; triggers (2): search_identity_immutable, search_identity_no_replace. Full guard SQL in JSON.
 - ADRs: 0003, 0017; dependent implementation: **P6**.
 - Required regressions: Exact semantic replay and conflicting alternatives preserve original attribution; Matching composite FK ownership; no storage-only key leaks through Exchange; Store loss does not invalidate either authority; reconstruction uses proper owner.
-
