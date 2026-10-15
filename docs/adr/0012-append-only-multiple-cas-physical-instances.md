@@ -1,6 +1,6 @@
 # ADR 0012: Append-only physical-instance variants and Git CAS recovery
 
-**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
+**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. The owner clarification removes quarantine flags, active sets/counts and release/retirement from the new target; earlier CAS-41 count/order requirements below are historical. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
 
 - **Status:** Accepted physical-copy identity/evidence design; post-corruption operation superseded by ADR 0026 / GCTX-M10. Detailed DDL and implementation pending.
 - **Decision date:** 2026-10-15.
@@ -25,7 +25,7 @@ This explicitly supersedes the old target-shape assumption that `stored_bytes(sh
 
 ## 2. Immutable physical diagnosis and recovery
 
-**Scoped successor:** ADR 0026 replaces the post-corruption in-service I1/I2 recovery path below with stop/read-only salvage/fresh restore/validated merge. Copy identity distinctions remain; never append a replacement into the stopped source or require damaged I1 in the new operational database.
+**Scoped successor:** ADR 0026 replaces the post-corruption in-service I1/I2 recovery path below with stop/read-only salvage/fresh restore/validated merge. Copy identity distinctions remain, without a per-copy quarantine state/count/release lifecycle. Never append a replacement into the stopped source or require damaged I1 in the new operational database.
 
 For each actual retained-byte instance:
 
@@ -55,7 +55,7 @@ Thus, **logical restoration** through `I2` is not equivalent to **physical repai
 
 ## 4. CAS-41 preservation and backup/restore obligations
 
-**Scoped successor:** ADR 0026 preserves format/count consistency and check ordering but replaces acceptance of known-corrupt normal restore baselines with separately qualified forensic/salvage preservation. No continuation or retirement option can bypass the catalog stop.
+**Current scoped successor:** ADR 0026 removes the quarantine state, active predicate/count and pre-diagnosis count comparison from the new target format. Preserve actual database/manifest/domain/pairing validation, and keep known-corrupt artifacts as forensic/salvage evidence. The CAS-41 count/order text below is historical; no continuation or retirement option can bypass immediate recovery mode.
 
 **CAS-41 remains binding.** Before restore-time diagnosis changes any effective diagnosis state, verify the archived **active physical quarantine count** against the count in the *copied and verified source database*, under a coherent matching scope. The accumulated number of immutable fault events is NOT that active count.
 

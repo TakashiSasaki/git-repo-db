@@ -1,6 +1,6 @@
 # ADR 0013: Evidence-derived eligible CAS instances and deterministic byte selection
 
-**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
+**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. The owner clarification removes quarantine flags, active sets/counts and release/retirement from the new target; earlier CAS-41 count/order requirements below are historical. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
 
 - **Status:** Accepted candidate-selection design in sound operation; post-corruption continuation superseded by ADR 0026 / GCTX-M10. Exact DDL and implementation pending.
 - **Decision date:** 2026-10-15.
@@ -28,7 +28,7 @@ The final logical payload bytes must still be the correct validated content rega
 
 ## 2. Selected read and failover behavior
 
-**Current limit:** ADR 0026 supersedes the failure-to-sibling continuation below once authoritative corruption is detected. Stop ordinary service and perform read-only salvage/fresh restore/validated merge. Candidate ordering and actual-byte checks still apply in sound target operation.
+**Current limit:** ADR 0026 supersedes the failure-to-sibling continuation below once authoritative corruption is detected. Stop ordinary service and perform read-only salvage/fresh restore/validated merge. Candidate ordering and actual-byte checks still apply in ordinary sound operation; there is no per-instance quarantine state/count/release in the new target.
 
 For a byte-dependent operation:
 
@@ -60,7 +60,7 @@ If correct I2 and I3 have identical expected real bytes, the deterministic try-o
 
 ## 4. Quarantine and CAS-41: what M09 fixes and leaves for M10
 
-**Historical open scope:** GCTX-M10 is now resolved by ADR 0026's recovery workflow. The pending disposition discussion below records the earlier policy and cannot authorize continuing a suspect catalog. The heading is retained for existing links.
+**Historical scope:** GCTX-M10 is resolved by ADR 0026's immediate recovery mode, without quarantine states/counts/release/retirement. Earlier CAS-41 predicate/count/order and disposition text below is historical, not a new-format requirement. Actual database/manifest/domain/pairing validation remains. The heading is retained for existing links.
 
 GCTX-M09 fixes that **per-instance disqualification is derived from immutable physical evidence**, never from a mutable `verified` or `preferred_instance` row or from the count of logical payloads. It also fixes that logical availability via a healthy candidate is separate from damage, known quarantine, and the **active physical quarantine count** on retained old instances.
 
