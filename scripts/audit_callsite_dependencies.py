@@ -44,6 +44,7 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/git_native.py",
         "adapters/sqlite/production_context.py",
         "domain/production_context.py",
+        "domain/ports/production_context.py",
     )
 )
 ISOLATED_TARGET_MODULES = ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES

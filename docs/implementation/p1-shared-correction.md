@@ -33,11 +33,11 @@ and generated disposition/schema evidence were regenerated; Context,
 Operational and Search fingerprints remain unchanged. No data migration or
 backward-compatibility path is introduced for this fresh isolated format.
 
-The separate audit correction explicitly identifies the five optional P2/P3
+The separate audit correction explicitly identifies the six optional P2/P3
 modules as isolated from the historical Schema 21 lexical call-site inventory.
 It preserves the existing P1 module existence checks and strengthens the public
 runtime import guard: absolute, relative and `from` imports of **any** isolated
-P1/P2/P3 module are rejected. Six adversarial forms exercise that boundary.
+P1/P2/P3 module are rejected. Seven adversarial forms exercise that boundary.
 Neither sibling needs to contain the other implementation. P8 must deliberately
 remove isolation when the coherent public runtime is activated.
 
