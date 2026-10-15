@@ -37,8 +37,12 @@ When capturing a correction of this kind:
    alone is not supersession, and implementation existence is not owner approval
    of its permanent retention or a broader guarantee.
 2. Update the current register, overview and applicable agent instructions
-   together. Preserve old choices/receipts verbatim in an explicitly referenced
-   snapshot or historical section; never relabel an old failed execution as PASS.
+   together. Under the accepted [ADR 0011](../../../docs/adr/0011-adr-governance.md)
+   and [ADR policy](../../../docs/adr/policy.md), retire superseded ADR decision
+   text only after a reviewed carry-forward of all still-binding clauses; use
+   Git history for retired text rather than copying it into another active file.
+   Historical execution receipts are distinct evidence and must keep their exact
+   original meanings; never relabel an old failed execution as PASS.
 3. Separate accepted policy, implementation/integration and actually executed
    verification. Keep source-unclear IDs unresolved rather than guessing their
    meaning. A preserved word such as "paused" is not itself a current defect.

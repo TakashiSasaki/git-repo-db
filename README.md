@@ -11,6 +11,7 @@ Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永�
 - **開発者ドキュメント**: [https://git-repo-db.moukaeritai.work/](https://git-repo-db.moukaeritai.work/)
 - **インタラクティブ スキーマビューアー**: [https://git-repo-db.moukaeritai.work/schema/viewer/](https://git-repo-db.moukaeritai.work/schema/viewer/)
 - **New accepted architecture (design-only, not yet implemented)**: [ADR 0003 — append-only Git Core + durable Context](docs/adr/0003-append-only-git-core-and-context-store.md); see [transition plan](docs/architecture/git-core-context-transition-plan.md).
+- **Accepted ADR governance (not a runtime change)**: [ADR 0011](docs/adr/0011-adr-governance.md), [shared operating policy](docs/adr/policy.md) and [ADR index](docs/adr/README.md); the optional skill and templates are documented there.
 - **Currently implemented Three-Store baseline (ADR 0002)**: [docs/adr/0002-three-store-boundary-architecture.md](docs/adr/0002-three-store-boundary-architecture.md)
 - **サイト運用保守ガイド**: [docs/developer-site.md](docs/developer-site.md)
 
