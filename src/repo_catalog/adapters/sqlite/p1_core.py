@@ -572,7 +572,13 @@ class Core:
             closed_slots = {encode(slot(m)) for m in closed_group["membership"]}
             closed_targets = {(m[1], m[2]) for m in closed_group["membership"]}
             for other in alternatives:
-                if other["scope"] != closed_group["scope"]:
+                # Locally checked native groups enumerate the whole intrinsic
+                # relation, so their exclusions apply to every observation.
+                # Reported bounded scopes retain only their own negative scope.
+                if (
+                    not closed_group["checked"]
+                    and other["scope"] != closed_group["scope"]
+                ):
                     continue
                 for member in other["membership"]:
                     logical = slot(member)

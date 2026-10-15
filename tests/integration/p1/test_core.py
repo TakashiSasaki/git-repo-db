@@ -797,3 +797,42 @@ def test_cross_observation_compatible_positive_slots_do_not_conflict(
         )
     )
     assert not c.relations(oid(), relation).reported_conflict
+
+
+@pytest.mark.parametrize(
+    "has_parent,report_slot,report_target,conflict",
+    [
+        (False, 0, "c", True),
+        (True, 1, "c", True),
+        (True, 0, "b", False),
+        (True, None, "b", False),
+        (True, None, "c", True),
+    ],
+)
+@pytest.mark.parametrize("reverse", [False, True])
+def test_checked_native_full_parent_group_excludes_across_observation_scopes(
+    core, has_parent, report_slot, report_target, conflict, reverse
+):
+    c, _, _ = core
+    parent_line = f"parent {oid('b').full_oid}\n" if has_parent else ""
+    body = f"tree {oid().full_oid}\n{parent_line}author A <a@invalid> 0 +0000\ncommitter C <c@invalid> 0 +0000\n\nmessage\n".encode()
+    commit = native("commit", body)
+    report = RelationGroup(
+        commit.oid,
+        "commit_parents",
+        "source-observation-A",
+        "partial",
+        (RelationMember(report_slot, oid(report_target)),),
+        provenance("separate-source"),
+    )
+    if reverse:
+        c.admit_group(report)
+        c.admit_metadata(commit, str(uuid4()), Budget())
+    else:
+        c.admit_metadata(commit, str(uuid4()), Budget())
+        c.admit_group(report)
+    projection = c.relations(commit.oid, "commit_parents")
+    expected = ["complete", [[0, *oid("b").key]]] if has_parent else ["known_empty", []]
+    assert projection.canonical == expected
+    assert projection.reported_conflict is conflict
+    assert len(projection.alternatives) == 2
