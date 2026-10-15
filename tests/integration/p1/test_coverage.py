@@ -183,6 +183,8 @@ def test_known_empty_requires_actual_terminal_not_absence(context):
     claim = CoverageClaim(scope, 10, "complete")
     store.admit_coverage(claim)
     assert not store.coverage(scope).known_empty
+    assert store.coverage(scope).state == "unknown"
+    assert store.coverage(scope).claims == (claim,)
     terminal = collection(db)
     proof(db, claim, terminal)
     assert store.coverage(scope).known_empty
@@ -258,24 +260,32 @@ def test_source_known_positive_survives_unknown_and_disposable_loss(context):
 def test_source_inventory_scope_needs_no_fabricated_resource_or_membership(context):
     db, store, _ = context
     scope = CoverageScope.source_inventory(
-        SOURCE, '{"filter":"actual"}', "repositories"
+        SOURCE, '{"coverage_kind":"repositories","filter":"actual"}', "repositories"
     )
     store.scope(scope)
     store.admit_coverage(CoverageClaim(scope, 3, "complete"))
     assert db.execute("SELECT count(*) FROM source_repositories").fetchone()[0] == 0
-    assert store.coverage(scope).state == "complete"
+    assert store.coverage(scope).state == "unknown"
 
 
 def test_known_empty_source_inventory_has_exact_source_proof(context):
     db, store, _ = context
     scope = CoverageScope.source_inventory(
-        SOURCE, '{"filter":"actual"}', "repositories"
+        SOURCE, '{"coverage_kind":"repositories","filter":"actual"}', "repositories"
     )
     store.scope(scope)
     claim = CoverageClaim(scope, 3, "complete")
     store.admit_coverage(claim)
     assert not store.coverage(scope).known_empty
-    inventory = (SOURCE, '{"filter":"actual"}', 3, "complete", 1, "[]", PROVENANCE)
+    inventory = (
+        SOURCE,
+        '{"coverage_kind":"repositories","filter":"actual"}',
+        3,
+        "complete",
+        1,
+        "[]",
+        PROVENANCE,
+    )
     db.execute("INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)", inventory)
     db.execute(
         "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
@@ -302,7 +312,8 @@ def test_coverage_projection_pins_one_local_snapshot(context):
     def between(statement):
         nonlocal inserted
         if (
-            statement.startswith("SELECT members_json FROM coverage_proofs")
+            statement.startswith("SELECT members_json,")
+            and " FROM coverage_proofs " in statement
             and not inserted
         ):
             inserted = True
@@ -316,3 +327,175 @@ def test_coverage_projection_pins_one_local_snapshot(context):
         db.set_trace_callback(None)
         other.close()
     assert store.coverage(scope).known_empty
+
+
+@pytest.mark.parametrize(
+    "owner_kind", ["repository", "source", "resource", "field", "collection"]
+)
+def test_every_collection_proof_matches_actual_coverage_kind(context, owner_kind):
+    db, store, _ = context
+    db.execute("INSERT INTO source_repositories VALUES(?,?,?)", (SOURCE, REPO, "{}"))
+    actual_scope = canonical(
+        {
+            "repository_uuidv4": REPO,
+            "source_registration_uuidv4": SOURCE,
+            "coverage_kind": "issues",
+            "field_name": "title",
+        }
+    )
+    db.execute(
+        "INSERT INTO collections VALUES(?,?,?,?,?,?)",
+        (*KEY.coordinates(), "issues", PROVENANCE, actual_scope),
+    )
+    terminal = (*KEY.coordinates(), "issues", PROVENANCE, 10, "complete", "[]")
+    db.execute("INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)", terminal)
+    scopes = {
+        "repository": CoverageScope.repository(REPO, "all-notes"),
+        "source": CoverageScope.source(SOURCE, REPO, "all-notes"),
+        "resource": CoverageScope.resource(KEY, "all-notes"),
+        "field": CoverageScope.field(KEY, "title", "all-notes"),
+        "collection": CoverageScope.collection(KEY, "issues", PROVENANCE, "all-notes"),
+    }
+    scope = scopes[owner_kind]
+    store.scope(scope)
+    claim = CoverageClaim(scope, 20, "complete")
+    store.admit_coverage(claim)
+    with pytest.raises(sqlite3.IntegrityError, match="owner mismatch"):
+        proof(db, claim, terminal)
+    assert not store.coverage(scope).known_empty
+
+
+@pytest.mark.parametrize(
+    "stamp,state,members,expected",
+    [
+        (19, "partial", '["not-empty"]', "unknown"),
+        (19, "unknown", "[]", "unknown"),
+        (19, "complete", '["not-empty"]', "unknown"),
+        (10, "partial", '["not-empty"]', "conflict"),
+        (10, "complete", '["not-empty"]', "conflict"),
+        (10, "unknown", "[]", "complete"),
+        (25, "partial", "[]", "unknown"),
+    ],
+)
+def test_proof_read_rechecks_latest_terminal_candidates(
+    context, stamp, state, members, expected
+):
+    db, store, _ = context
+    scope = CoverageScope.resource(KEY, "reviews")
+    store.scope(scope)
+    claim = CoverageClaim(scope, 20, "complete")
+    store.admit_coverage(claim)
+    terminal = collection(db)
+    proof(db, claim, terminal)
+    assert store.coverage(scope).known_empty
+    db.execute(
+        "INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)",
+        (*terminal[:5], stamp, state, members),
+    )
+    result = store.coverage(scope)
+    assert result.state == expected
+    assert result.known_empty == (expected == "complete")
+    assert result.claims == (claim,)
+    assert result.observed_at_us == 20
+
+
+@pytest.mark.parametrize(
+    "new_stamp,new_state,new_members",
+    [
+        (19, "partial", '["not-empty"]'),
+        (10, "partial", "[]"),
+        (10, "complete", '["other"]'),
+    ],
+)
+def test_proof_insert_rejects_superseded_or_conflicting_terminal(
+    context, new_stamp, new_state, new_members
+):
+    db, store, _ = context
+    scope = CoverageScope.resource(KEY, "reviews")
+    store.scope(scope)
+    claim = CoverageClaim(scope, 20, "complete")
+    store.admit_coverage(claim)
+    terminal = collection(db)
+    db.execute(
+        "INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)",
+        (*terminal[:5], new_stamp, new_state, new_members),
+    )
+    with pytest.raises(sqlite3.IntegrityError, match="superseded or conflicting"):
+        proof(db, claim, terminal)
+
+
+def test_source_proof_rechecks_latest_inventory_with_original_scope(context):
+    db, store, _ = context
+    actual_scope = canonical({"coverage_kind": "repositories", "filter": "actual"})
+    scope = CoverageScope.source_inventory(SOURCE, actual_scope, "repositories")
+    store.scope(scope)
+    claim = CoverageClaim(scope, 20, "complete")
+    store.admit_coverage(claim)
+    original = (SOURCE, actual_scope, 10, "complete", 1, "[]", PROVENANCE)
+    db.execute("INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)", original)
+    db.execute(
+        "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        (scope.owner_kind, scope.encoded, 20, "complete", *original),
+    )
+    assert store.coverage(scope).known_empty
+    later_provenance = canonical({"source": "provider.example", "evidence": "event-19"})
+    db.execute(
+        "INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)",
+        (SOURCE, actual_scope, 19, "partial", 1, '["not-empty"]', later_provenance),
+    )
+    result = store.coverage(scope)
+    assert result.state == "unknown" and not result.known_empty
+    assert result.claims == (claim,)
+    with pytest.raises(sqlite3.IntegrityError, match="superseded or conflicting"):
+        db.execute(
+            "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (scope.owner_kind, scope.encoded, 20, "complete", *original),
+        )
+
+
+def test_source_inventory_proof_cannot_change_actual_kind(context):
+    db, store, _ = context
+    actual_scope = canonical({"coverage_kind": "repositories"})
+    scope = CoverageScope.source_inventory(SOURCE, actual_scope, "all-notes")
+    store.scope(scope)
+    claim = CoverageClaim(scope, 20, "complete")
+    store.admit_coverage(claim)
+    terminal = (SOURCE, actual_scope, 10, "complete", 1, "[]", PROVENANCE)
+    db.execute("INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)", terminal)
+    with pytest.raises(sqlite3.IntegrityError, match="owner mismatch"):
+        db.execute(
+            "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (scope.owner_kind, scope.encoded, 20, "complete", *terminal),
+        )
+
+
+def test_new_genuine_current_proof_supersedes_old_proof_without_mutation(context):
+    db, store, _ = context
+    scope = CoverageScope.resource(KEY, "reviews")
+    store.scope(scope)
+    claim = CoverageClaim(scope, 20, "complete")
+    store.admit_coverage(claim)
+    original = collection(db)
+    proof(db, claim, original)
+    newer = (*original[:5], 19, "complete", "[]")
+    db.execute("INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)", newer)
+    assert not store.coverage(scope).known_empty
+    proof(db, claim, newer)
+    assert store.coverage(scope).known_empty
+    assert db.execute("SELECT count(*) FROM coverage_proofs").fetchone()[0] == 2
+
+
+def test_explicit_scope_kind_cannot_be_overridden_by_collection_name(context):
+    db, store, _ = context
+    scope = CoverageScope.resource(KEY, "reviews")
+    store.scope(scope)
+    claim = CoverageClaim(scope, 20, "complete")
+    store.admit_coverage(claim)
+    db.execute(
+        "INSERT INTO collections VALUES(?,?,?,?,?,?)",
+        (*KEY.coordinates(), "reviews", PROVENANCE, '{"coverage_kind":"issues"}'),
+    )
+    terminal = (*KEY.coordinates(), "reviews", PROVENANCE, 10, "complete", "[]")
+    db.execute("INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)", terminal)
+    with pytest.raises(sqlite3.IntegrityError, match="owner mismatch"):
+        proof(db, claim, terminal)

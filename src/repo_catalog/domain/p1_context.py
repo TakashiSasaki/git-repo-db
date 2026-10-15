@@ -11,9 +11,17 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
+from repo_catalog.domain.p1_coverage import (
+    CoverageClaim as CoverageClaim,
+)
+from repo_catalog.domain.p1_coverage import (
+    CoverageProjection as CoverageProjection,
+)
+from repo_catalog.domain.p1_coverage import (
+    CoverageState as CoverageState,
+)
 from repo_catalog.domain.time import validate_epoch_us
 
-CoverageState = Literal["unknown", "partial", "complete", "not_applicable"]
 OwnerKind = Literal[
     "repository", "source", "resource", "collection", "field", "source_inventory"
 ]
@@ -168,29 +176,3 @@ class CoverageScope:
             "collection",
             (*resource.coordinates(), collection_kind, original_provenance_json, kind),
         )
-
-
-@dataclass(frozen=True)
-class CoverageClaim:
-    scope: CoverageScope
-    observed_at_us: int
-    state: CoverageState
-    details_json: str | None = None
-
-    def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
-        if self.state not in {"unknown", "partial", "complete", "not_applicable"}:
-            raise ValueError("Invalid authoritative coverage state")
-        if (
-            self.details_json is not None
-            and canonical(json.loads(self.details_json)) != self.details_json
-        ):
-            raise ValueError("Details must be canonical JSON")
-
-
-@dataclass(frozen=True)
-class CoverageProjection:
-    state: str
-    observed_at_us: int | None
-    claims: tuple[CoverageClaim, ...]
-    known_empty: bool

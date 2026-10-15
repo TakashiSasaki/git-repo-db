@@ -478,3 +478,234 @@ def test_core_typed_observation_ddl_rejects_opaque_payload_and_false_terminal(co
         db.close()
     with pytest.raises(CoreFailure):
         ScalarClaim(oid(), "raw_text", "ordinary file text", provenance())
+
+
+def test_coverage_projection_pins_claims_and_proofs_across_concurrent_write(core):
+    from repo_catalog.domain.p1_core import CoreCoverageScope
+    from repo_catalog.domain.p1_coverage import CoverageClaim
+
+    c, path, repository = core
+    scope = CoreCoverageScope("repository", (repository, "git-ref-inventory"))
+    c.admit_coverage_scope(scope)
+    claim = CoverageClaim(scope, 10, "complete")
+    c.admit_coverage(claim)
+    c.admit_coverage_proof(claim, (), provenance("terminal"))
+    writer = Core(path)
+    injected = []
+
+    def concurrent_write(statement):
+        if (
+            "SELECT members_json FROM core_coverage_proofs" in statement
+            and not injected
+        ):
+            writer.admit_coverage(CoverageClaim(scope, 11, "unknown"))
+            injected.append(True)
+
+    c._db.set_trace_callback(concurrent_write)
+    try:
+        snapshot = c.coverage(scope)
+        assert injected == [True]
+        assert (snapshot.state, snapshot.observed_at_us, snapshot.known_empty) == (
+            "complete",
+            10,
+            True,
+        )
+    finally:
+        c._db.set_trace_callback(None)
+        writer.close()
+    assert c.coverage(scope).state == "unknown"
+    assert c.coverage(scope).observed_at_us == 11
+
+
+@pytest.mark.parametrize(
+    "membership", ['[["sha1","not-an-oid"]]', '[{"storage_row_id":42}]']
+)
+def test_core_coverage_rejects_malformed_members_on_supported_transaction(
+    core, membership
+):
+    from repo_catalog.adapters.sqlite.p1_coordination import AdmissionTransaction
+    from repo_catalog.domain.p1_core import CoreCoverageScope
+    from repo_catalog.domain.p1_coverage import CoverageClaim
+
+    c, path, repository = core
+    scope = CoreCoverageScope("repository", (repository, "git-ref-inventory"))
+    c.admit_coverage_scope(scope)
+    c.admit_coverage(CoverageClaim(scope, 1, "complete"))
+    db = connect(path, "core")
+    try:
+        db.execute("BEGIN IMMEDIATE")
+        with pytest.raises(sqlite3.IntegrityError, match="CHECK"):
+            AdmissionTransaction(db).execute(
+                "INSERT INTO core_coverage_proofs VALUES(?,?,?,?,?,?)",
+                (
+                    scope.owner_kind,
+                    scope.encoded,
+                    1,
+                    "complete",
+                    membership,
+                    provenance().encoded,
+                ),
+            )
+    finally:
+        db.set_authorizer(None)
+        db.rollback()
+        db.close()
+
+
+def test_core_coverage_rejects_valid_typed_missing_nominal_member(core):
+    from repo_catalog.adapters.sqlite.p1_coordination import AdmissionTransaction
+    from repo_catalog.domain.p1_core import CoreCoverageScope
+    from repo_catalog.domain.p1_coverage import CoverageClaim
+
+    c, path, repository = core
+    scope = CoreCoverageScope("repository", (repository, "git-ref-inventory"))
+    c.admit_coverage_scope(scope)
+    claim = CoverageClaim(scope, 1, "complete")
+    c.admit_coverage(claim)
+    assert c.coverage(scope).state == "unknown"  # no actual terminal proof
+    db = connect(path, "core")
+    try:
+        db.execute("BEGIN IMMEDIATE")
+        with pytest.raises(
+            sqlite3.IntegrityError, match="missing nominal Core Coverage member"
+        ):
+            AdmissionTransaction(db).execute(
+                "INSERT INTO core_coverage_proofs VALUES(?,?,?,?,?,?)",
+                (
+                    scope.owner_kind,
+                    scope.encoded,
+                    1,
+                    "complete",
+                    encode([oid().key]),
+                    provenance().encoded,
+                ),
+            )
+    finally:
+        db.set_authorizer(None)
+        db.rollback()
+        db.close()
+    c.admit_coverage_proof(claim, (oid(),), provenance())
+    assert c.coverage(scope).state == "complete"
+    assert not c.coverage(scope).known_empty
+
+
+@pytest.mark.parametrize(
+    "mode,target", [("100755", "c"), ("100755", "b"), ("100644", "c")]
+)
+@pytest.mark.parametrize("reverse", [False, True])
+def test_tree_entry_conflicts_use_name_slot_and_mode_target_values(
+    core, mode, target, reverse
+):
+    c, _, _ = core
+    first = RelationGroup(
+        oid(),
+        "tree_entries",
+        "native tree",
+        "partial",
+        (RelationMember(("100644", "61"), oid("b")),),
+        provenance("first"),
+    )
+    second = RelationGroup(
+        oid(),
+        "tree_entries",
+        "native tree",
+        "partial",
+        (RelationMember((mode, "61"), oid(target)),),
+        provenance("second"),
+    )
+    for group in (second, first) if reverse else (first, second):
+        c.admit_group(group)
+    assert c.relations(oid(), "tree_entries").reported_conflict
+
+
+def test_unknown_position_and_out_of_order_parents_preserve_actual_evidence(core):
+    c, _, _ = core
+    group = RelationGroup(
+        oid(),
+        "commit_parents",
+        "observed membership",
+        "partial",
+        (
+            RelationMember(None, oid("b")),
+            RelationMember(7, oid("c")),
+            RelationMember(2, oid("d")),
+        ),
+        provenance(),
+    )
+    c.admit_group(group)
+    c.admit_group(group)
+    projection = c.relations(oid(), "commit_parents")
+    assert projection.alternatives[0]["membership"] == [
+        [2, *oid("d").key],
+        [7, *oid("c").key],
+        [None, *oid("b").key],
+    ]
+    assert not projection.reported_conflict
+    assert projection.canonical is None
+
+
+@pytest.mark.parametrize("unknown_target,conflict", [("b", False), ("c", True)])
+def test_unknown_parent_position_compares_membership_without_fake_slot(
+    core, unknown_target, conflict
+):
+    c, _, _ = core
+    closed = RelationGroup(
+        oid(),
+        "commit_parents",
+        "same scope",
+        "complete",
+        (RelationMember(0, oid("b")),),
+        provenance("closed"),
+    )
+    unpositioned = RelationGroup(
+        oid(),
+        "commit_parents",
+        "same scope",
+        "partial",
+        (RelationMember(None, oid(unknown_target)),),
+        provenance("unpositioned"),
+    )
+    c.admit_group(closed)
+    c.admit_group(unpositioned)
+    assert c.relations(oid(), "commit_parents").reported_conflict is conflict
+
+
+def test_corrupt_core_open_persists_catalog_stop_before_propagating(tmp_path):
+    path = tmp_path / "core.sqlite3"
+    path.write_bytes(b"not a SQLite database" * 100)
+    with pytest.raises(sqlite3.DatabaseError):
+        Core(path)
+    assert (tmp_path / "p1-recovery-stop.json").is_file()
+    with pytest.raises(CoreFailure) as error:
+        Core(path)
+    assert error.value.code == "RECOVERY_STOP"
+
+
+def test_parent_group_transport_reorder_is_exact_replay_not_new_claim(core):
+    c, _, _ = core
+    group = RelationGroup(
+        oid(),
+        "commit_parents",
+        "membership subset",
+        "partial",
+        (
+            RelationMember(7, oid("c")),
+            RelationMember(None, oid("e")),
+            RelationMember(2, oid("d")),
+            RelationMember(None, oid("b")),
+        ),
+        provenance(),
+    )
+    reversed_group = replace(group, members=tuple(reversed(group.members)))
+    assert group.key == reversed_group.key
+    c.admit_group(group)
+    c.admit_group(reversed_group)
+    assert len(c.relations(oid(), "commit_parents").alternatives) == 1
+    assert group.membership == encode(
+        [
+            [2, *oid("d").key],
+            [7, *oid("c").key],
+            [None, *oid("b").key],
+            [None, *oid("e").key],
+        ]
+    )

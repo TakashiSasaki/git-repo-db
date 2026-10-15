@@ -33,11 +33,17 @@ from repo_catalog.domain.p1_coordination import (
 @contextmanager
 def catalog_gate(directory: Path, *, exclusive: bool) -> Iterator[None]:
     """One permanent gate inode per catalog; callers must not replace its file."""
+    with _file_gate(directory / "p1-writer.lock", exclusive=exclusive):
+        yield
+
+
+@contextmanager
+def _file_gate(path: Path, *, exclusive: bool) -> Iterator[None]:
     if os.name != "posix":
         raise CoordinationError("UNSUPPORTED_PLATFORM", "catalog", os.name)
     import fcntl
 
-    with (directory / "p1-writer.lock").open("a+b") as handle:
+    with path.open("a+b") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
         try:
             yield
@@ -52,6 +58,42 @@ def _json(value) -> str:
 def _sqlite_corruption(error: BaseException) -> bool:
     code = getattr(error, "sqlite_errorcode", 0)
     return code & 255 in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB)
+
+
+def persist_catalog_stop(directory: Path, reason: str) -> None:
+    """Fence immediately, including while the detecting operation owns a gate.
+
+    The separate short completion fence avoids recursively acquiring the main
+    gate. Atomic sentinel creation precedes reason/fsync work: even process loss
+    during that work leaves ordinary operations stopped. Full host-power-loss
+    recovery and journal preservation remain P7 responsibilities.
+    """
+    directory = Path(directory)
+    with _file_gate(directory / "p1-stop-fence.lock", exclusive=True):
+        path = directory / "p1-recovery-stop.json"
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            return
+        with os.fdopen(fd, "w") as handle:
+            handle.write(_json({"reason": reason, "scope": "catalog"}))
+            handle.flush()
+            os.fsync(handle.fileno())
+        fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+
+@contextmanager
+def catalog_completion(directory: Path) -> Iterator[None]:
+    """Serialize a final commit/certificate with the immediate stop transition."""
+    directory = Path(directory)
+    with _file_gate(directory / "p1-stop-fence.lock", exclusive=False):
+        if (directory / "p1-recovery-stop.json").exists():
+            raise CoordinationError("RECOVERY_REQUIRED", "catalog")
+        yield
 
 
 def _digest(db: sqlite3.Connection) -> str:
@@ -121,6 +163,10 @@ def validate_pair(
             raise CoordinationError("CORRUPTION", role)
         if db.execute("PRAGMA foreign_key_check").fetchall():
             raise CoordinationError("FOREIGN_KEY", role)
+    # SQLite does not re-evaluate insertion triggers for an existing snapshot.
+    from repo_catalog.adapters.sqlite.p1_core import validate_embedded_references
+
+    validate_embedded_references(core)
     validate_dependencies(core, context)
     return SnapshotToken(*identity, _digest(core), _digest(context))
 
@@ -147,35 +193,33 @@ class _Cursor:
         return self._cursor.description
 
     def fetchone(self):
-        if hasattr(self.connection, "_available"):
-            self.connection._available()
-        return self._cursor.fetchone()
+        return self._run(self._cursor.fetchone)
 
     def fetchall(self):
-        if hasattr(self.connection, "_available"):
-            self.connection._available()
-        return self._cursor.fetchall()
+        return self._run(self._cursor.fetchall)
 
     def fetchmany(self, size=1):
-        if hasattr(self.connection, "_available"):
-            self.connection._available()
-        return self._cursor.fetchmany(size)
+        return self._run(self._cursor.fetchmany, size)
+
+    def _run(self, operation, *args):
+        if hasattr(self.connection, "_read_call"):
+            return self.connection._read_call(operation, *args)
+        return operation(*args)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if hasattr(self.connection, "_available"):
-            self.connection._available()
-        return next(self._cursor)
+        return self._run(next, self._cursor)
 
 
 class ReadSnapshot:
     """Pinned read capability; no public authorizer or transaction mutation."""
 
-    def __init__(self, db, running):
+    def __init__(self, db, running, on_error):
         self._db = db
         self._running, self._active = running, True
+        self._on_error = on_error
 
     def _available(self):
         if not self._active:
@@ -188,8 +232,15 @@ class ReadSnapshot:
         return self._db.in_transaction
 
     def execute(self, sql, parameters=()):
+        return _Cursor(self._read_call(self._db.execute, sql, parameters), self)
+
+    def _read_call(self, operation, *args):
         self._available()
-        return _Cursor(self._db.execute(sql, parameters), self)
+        try:
+            return operation(*args)
+        except Exception as error:
+            self._on_error(error)
+            raise
 
 
 class AdmissionTransaction:
@@ -254,7 +305,19 @@ class PairCoordinator:
         path = self.directory / f"{role}.sqlite3"
         if not path.is_file():
             raise CoordinationError("AUTHORITY_UNAVAILABLE", role)
-        return connect(path, role)
+        try:
+            return connect(path, role)
+        except Exception as error:
+            self._record_corruption(error)
+            raise
+
+    def _record_corruption(self, error: Exception, *, existing: bool = True):
+        codes = {"AUTHORITATIVE_CORRUPTION"}
+        if existing:
+            codes |= {"CORRUPTION", "FOREIGN_KEY", "MISSING_CORE_REFERENCE"}
+        if getattr(error, "code", None) in codes or _sqlite_corruption(error):
+            # Persist before stack unwinding, rollback, callback or gate release.
+            persist_catalog_stop(self.directory, str(error))
 
     def _guard_read(self, db: sqlite3.Connection):
         def authorize(action, _first, _second, _database, _trigger):
@@ -286,21 +349,7 @@ class PairCoordinator:
         This only fences cooperating application operations; it is not forensic
         source capture or a promise to make filesystem bytes read-only.
         """
-        with catalog_gate(self.directory, exclusive=True):
-            path = self.directory / "p1-recovery-stop.json"
-            try:
-                fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-            except FileExistsError:
-                return
-            with os.fdopen(fd, "w") as handle:
-                handle.write(_json({"reason": reason, "scope": "catalog"}))
-                handle.flush()
-                os.fsync(handle.fileno())
-            fd = os.open(self.directory, os.O_RDONLY | os.O_DIRECTORY)
-            try:
-                os.fsync(fd)
-            finally:
-                os.close(fd)
+        persist_catalog_stop(self.directory, reason)
 
     def admit(
         self,
@@ -309,20 +358,20 @@ class PairCoordinator:
         *,
         cut: Callable[[str], None] = lambda point: None,
     ) -> PairAdmission:
+        self._check_running()
         try:
             return self._admit(core_unit, context_unit, cut=cut)
         except AdmissionFailure as error:
             if getattr(
                 error.cause, "code", None
             ) == "AUTHORITATIVE_CORRUPTION" or _sqlite_corruption(error.cause):
-                # Do not recursively acquire the exclusive gate while holding it.
-                self.stop(str(error.cause))
+                self._record_corruption(error.cause, existing=False)
             raise
         except Exception as error:
             # Opening/validating a damaged database can fail before a local
             # admission transaction exists; the external stop still applies.
             if _sqlite_corruption(error):
-                self.stop(str(error))
+                self._record_corruption(error)
             raise
 
     def _admit(self, core_unit, context_unit, *, cut) -> PairAdmission:
@@ -330,15 +379,20 @@ class PairCoordinator:
             self._check_running()
             core = stack.enter_context(closing(self._open("core")))
             context = stack.enter_context(closing(self._open("context")))
-            if _identity(core, "core") != _identity(context, "context"):
-                raise CoordinationError("PAIR_IDENTITY", "core+context")
+            try:
+                if _identity(core, "core") != _identity(context, "context"):
+                    raise CoordinationError("PAIR_IDENTITY", "core+context")
+            except Exception as error:
+                self._record_corruption(error)
+                raise
             core_committed, context_committed = False, False
             try:
                 core.execute("BEGIN IMMEDIATE")
                 core_unit(AdmissionTransaction(core))
                 core.set_authorizer(None)
                 cut("before_core_commit")
-                core.commit()
+                with catalog_completion(self.directory):
+                    core.commit()
                 core_committed = True
                 cut("after_core_commit")
                 context.execute("BEGIN IMMEDIATE")
@@ -346,10 +400,13 @@ class PairCoordinator:
                 context.set_authorizer(None)
                 cut("during_context")
                 validate_dependencies(core, context)
-                context.commit()
+                with catalog_completion(self.directory):
+                    context.commit()
                 context_committed = True
                 cut("after_context_commit")
+                self._check_running()
             except Exception as error:
+                self._record_corruption(error, existing=False)
                 core.set_authorizer(None)
                 context.set_authorizer(None)
                 core.rollback()
@@ -367,6 +424,7 @@ class PairCoordinator:
 
     @contextmanager
     def snapshots(self) -> Iterator[PairedSnapshot]:
+        self._check_running()
         try:
             with self._snapshots() as pair:
                 yield pair
@@ -376,7 +434,7 @@ class PairCoordinator:
                 "FOREIGN_KEY",
                 "MISSING_CORE_REFERENCE",
             ) or _sqlite_corruption(error):
-                self.stop(str(error))
+                self._record_corruption(error)
             raise
 
     @contextmanager
@@ -386,16 +444,20 @@ class PairCoordinator:
                 self._check_running()
                 core = stack.enter_context(closing(self._open("core")))
                 context = stack.enter_context(closing(self._open("context")))
-                for db in (core, context):
-                    db.execute("PRAGMA query_only=ON")
-                    db.execute("BEGIN")
-                    db.execute("SELECT * FROM store_identity").fetchall()
-                    self._guard_read(db)
-                token = validate_pair(core, context)
+                try:
+                    for db in (core, context):
+                        db.execute("PRAGMA query_only=ON")
+                        db.execute("BEGIN")
+                        db.execute("SELECT * FROM store_identity").fetchall()
+                        self._guard_read(db)
+                    token = validate_pair(core, context)
+                except Exception as error:
+                    self._record_corruption(error)
+                    raise
             try:
                 reads = (
-                    ReadSnapshot(core, self._check_running),
-                    ReadSnapshot(context, self._check_running),
+                    ReadSnapshot(core, self._check_running, self._record_corruption),
+                    ReadSnapshot(context, self._check_running, self._record_corruption),
                 )
                 yield PairedSnapshot(*reads, token)
             finally:
@@ -408,12 +470,13 @@ class PairCoordinator:
 
     @contextmanager
     def core_snapshot(self) -> Iterator[ReadSnapshot]:
+        self._check_running()
         try:
             with self._core_snapshot() as core:
                 yield core
         except Exception as error:
             if _sqlite_corruption(error):
-                self.stop(str(error))
+                self._record_corruption(error)
             raise
 
     @contextmanager
@@ -424,10 +487,14 @@ class PairCoordinator:
                 core = stack.enter_context(closing(self._open("core")))
                 core.execute("PRAGMA query_only=ON")
                 core.execute("BEGIN")
-                _identity(core, "core")  # SELECT pins a real SQLite snapshot.
+                try:
+                    _identity(core, "core")  # SELECT pins a real SQLite snapshot.
+                except Exception as error:
+                    self._record_corruption(error)
+                    raise
                 self._guard_read(core)
             try:
-                read = ReadSnapshot(core, self._check_running)
+                read = ReadSnapshot(core, self._check_running, self._record_corruption)
                 yield read
             finally:
                 read._active = False
@@ -440,6 +507,7 @@ class PairCoordinator:
         *,
         cut: Callable[[str], None] = lambda point: None,
     ) -> SnapshotToken:
+        self._check_running()
         try:
             return self._backup_candidate(destination, cut=cut)
         except Exception as error:
@@ -448,7 +516,7 @@ class PairCoordinator:
                 "FOREIGN_KEY",
                 "MISSING_CORE_REFERENCE",
             ) or _sqlite_corruption(error):
-                self.stop(str(error))
+                self._record_corruption(error)
             raise
 
     def _backup_candidate(self, destination: Path, *, cut) -> SnapshotToken:
@@ -466,10 +534,18 @@ class PairCoordinator:
                     closing(self._open(role)) as source,
                     closing(sqlite3.connect(destination / f"{role}.sqlite3")) as target,
                 ):
-                    source.backup(target)
+                    try:
+                        source.backup(target)
+                    except Exception as error:
+                        self._record_corruption(error)
+                        raise
                 cut(f"after_{role}_backup")
-            with PairCoordinator(destination).snapshots() as pair:
-                token = pair.token
+            try:
+                with PairCoordinator(destination).snapshots() as pair:
+                    token = pair.token
+            except Exception as error:
+                self._record_corruption(error)
+                raise
             certificate = {
                 "scope": "core+context",
                 "token": token.__dict__,
@@ -482,7 +558,8 @@ class PairCoordinator:
                 "power_loss_safe": False,
             }
             cut("before_certificate")
-            (destination / "p1-pair-candidate.json").write_text(_json(certificate))
+            with catalog_completion(self.directory):
+                (destination / "p1-pair-candidate.json").write_text(_json(certificate))
             return token
 
     @staticmethod

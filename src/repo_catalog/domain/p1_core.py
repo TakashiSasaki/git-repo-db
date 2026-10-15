@@ -204,9 +204,14 @@ class ScalarClaim:
 
 @dataclass(frozen=True)
 class RelationMember:
-    """Actual slot: ordinal for parents, [mode,name-hex] for native tree entry."""
+    """Actual ordinal, None when genuinely unreported, or tree mode/name coordinates.
 
-    coordinate: int | tuple[object, ...]
+    Parent encodings use real ordinals; unpositioned members stay explicitly None.
+    Transport tuple order is not a new fact. Complete ordered parent lists require
+    all actual contiguous ordinals.
+    """
+
+    coordinate: int | None | tuple[object, ...]
     target: OID
 
     @property
@@ -235,7 +240,11 @@ class RelationGroup:
 
     @property
     def membership(self) -> str:
-        return encode([member.value for member in self.members])
+        return encode(
+            canonical_relation_members(
+                self.relation, [member.value for member in self.members]
+            )
+        )
 
     @property
     def key(self) -> tuple[str, ...]:
@@ -420,6 +429,21 @@ def valid_native(
         return False
 
 
+def canonical_relation_members(relation: str, members: list) -> list:
+    """Normalize packaging order only where explicit coordinates own ordering."""
+    if relation == "commit_parents":
+        return sorted(
+            members,
+            key=lambda member: (
+                member[0] is None,
+                member[0] if member[0] is not None else 0,
+                member[1],
+                member[2],
+            ),
+        )
+    return members
+
+
 def valid_group(fmt: str, relation: str, status: str, membership: str) -> bool:
     try:
         members = json.loads(membership)
@@ -433,7 +457,10 @@ def valid_group(fmt: str, relation: str, status: str, membership: str) -> bool:
             return False
         if status in ("unknown", "known_empty") and members:
             return False
+        if encode(canonical_relation_members(relation, members)) != membership:
+            return False
         slots = []
+        unknown_targets = set()
         for coordinate, target_format, target_oid in members:
             OID(target_format, target_oid)
             if target_format != fmt:
@@ -460,15 +487,21 @@ def valid_group(fmt: str, relation: str, status: str, membership: str) -> bool:
                 ):
                     return False
                 slots.append(name_hex)
+            elif relation == "commit_parents" and coordinate is None:
+                if target_oid in unknown_targets or status == "complete":
+                    return False
+                unknown_targets.add(target_oid)
+                continue
             else:
                 if type(coordinate) is not int or coordinate < 0:
                     return False
                 slots.append(coordinate)
         if len(set(slots)) != len(slots):
             return False
-        if relation == "commit_parents" and (
-            slots != sorted(slots)
-            or (status == "complete" and slots != list(range(len(slots))))
+        if (
+            relation == "commit_parents"
+            and status == "complete"
+            and sorted(slots) != list(range(len(members)))
         ):
             return False
         if relation in ("commit_tree", "tag_target") and (
@@ -476,7 +509,7 @@ def valid_group(fmt: str, relation: str, status: str, membership: str) -> bool:
         ):
             return False
         return status != "complete" or bool(members)
-    except (ValueError, TypeError, KeyError):
+    except (ValueError, TypeError, KeyError, IndexError):
         return False
 
 
@@ -552,6 +585,20 @@ def valid_note_role(
         return False
 
 
+def valid_coverage_members(value: str) -> bool:
+    try:
+        members = json.loads(value)
+        if not isinstance(members, list) or encode(members) != value:
+            return False
+        for member in members:
+            if not isinstance(member, list) or len(member) != 2:
+                return False
+            OID(*member)
+        return len({encode(m) for m in members}) == len(members)
+    except (ValueError, TypeError):
+        return False
+
+
 def register_functions(connection: sqlite3.Connection) -> None:
     """Checks are repeatable at SQLite admission; no trust in a verified flag."""
 
@@ -578,6 +625,9 @@ def register_functions(connection: sqlite3.Connection) -> None:
             return False
 
     connection.create_function("p1_ref", 1, native_ref, deterministic=True)
+    connection.create_function(
+        "p1_coverage_members", 1, valid_coverage_members, deterministic=True
+    )
     connection.create_function("p1_claim", 2, check_claim, deterministic=True)
     connection.create_function("p1_group", 4, valid_group, deterministic=True)
     connection.create_function("p1_native", 6, valid_native, deterministic=True)
@@ -1118,3 +1168,27 @@ class CoreCoverageScope:
     @property
     def encoded(self) -> str:
         return encode(self.coordinates)
+
+
+@dataclass(frozen=True)
+class NotesAlternative:
+    kind: Literal["claim", "group", "receiver_role"]
+    capture_pair: tuple[str, str]
+    target: OID
+    note: OID | None
+    scope: str | None
+    status: str | None
+    membership: tuple[tuple[str, str, str | None], ...]
+    provenance: Provenance | None
+    path: str | None
+    checked: bool
+
+
+@dataclass(frozen=True)
+class NotesProjection:
+    capture: Capture
+    target: OID
+    canonical: OID | None
+    alternatives: tuple[NotesAlternative, ...]
+    reported_conflict: bool
+    checked_scope: str | None

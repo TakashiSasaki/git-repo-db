@@ -52,13 +52,15 @@ CREATE TABLE field_candidates(
  value_json TEXT NOT NULL CHECK(p1_json(value_json)),
  clock_json TEXT NOT NULL CHECK(p1_json(clock_json) AND json_type(clock_json)='object'
    AND COALESCE(json_type(clock_json,'$.domain')='text',0) AND length(json_extract(clock_json,'$.domain'))>0
-   AND COALESCE(json_type(clock_json,'$.at_us') IN('integer','null'),0) AND json_remove(clock_json,'$.domain','$.at_us')='{}'),
+   AND COALESCE(json_type(clock_json,'$.at_us') IN('integer','null'),0) AND typeof(json_extract(clock_json,'$.at_us')) IN('integer','null') AND json_remove(clock_json,'$.domain','$.at_us')='{}'),
  provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),
  observed_at_us INTEGER NOT NULL,
  clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,
  source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,
  repository_uuidv4 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='repository_uuidv4' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES repository_context,
- CHECK(field_name!='repository_uuidv4' OR (json_type(value_json)='text' AND p1_uuid4(json_extract(value_json,'$')))),
+ text_body_sha256 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='text_body_sha256' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES text_bodies(sha256),
+ CHECK(field_name!='text_body_sha256' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND length(json_extract(value_json,'$'))=64 AND json_extract(value_json,'$') NOT GLOB '*[^0-9a-f]*')),
+ CHECK(field_name!='repository_uuidv4' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND p1_uuid4(json_extract(value_json,'$')))),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources
 ) STRICT, WITHOUT ROWID;
@@ -169,11 +171,11 @@ CREATE TRIGGER coverage_proof_owner BEFORE INSERT ON coverage_proofs WHEN NOT EX
  c.service_instance_uuidv4=NEW.service_instance_uuidv4 AND c.resource_kind=NEW.resource_kind AND c.provider_resource_id=NEW.provider_resource_id AND c.collection_kind=NEW.collection_kind AND c.provenance_json=NEW.provenance_json
  WHERE s.owner_kind=NEW.owner_kind AND s.owner_coordinates_json=NEW.owner_coordinates_json
  AND CASE s.owner_kind
- WHEN 'repository' THEN json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND (s.coverage_kind=NEW.collection_kind OR json_extract(c.scope_json,'$.coverage_kind')=s.coverage_kind)
- WHEN 'source' THEN json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND json_extract(c.scope_json,'$.source_registration_uuidv4')=s.source_registration_uuidv4 AND EXISTS(SELECT 1 FROM sources src WHERE src.source_registration_uuidv4=s.source_registration_uuidv4 AND src.service_instance_uuidv4=NEW.service_instance_uuidv4)
- WHEN 'resource' THEN s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND (s.coverage_kind=NEW.collection_kind OR json_extract(c.scope_json,'$.coverage_kind')=s.coverage_kind)
- WHEN 'field' THEN s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND json_extract(c.scope_json,'$.field_name')=s.field_name
- WHEN 'collection' THEN s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND s.collection_kind=NEW.collection_kind AND s.collection_provenance_json=NEW.provenance_json
+ WHEN 'repository' THEN json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind)
+ WHEN 'source' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND json_extract(c.scope_json,'$.source_registration_uuidv4')=s.source_registration_uuidv4 AND EXISTS(SELECT 1 FROM sources src WHERE src.source_registration_uuidv4=s.source_registration_uuidv4 AND src.service_instance_uuidv4=NEW.service_instance_uuidv4)
+ WHEN 'resource' THEN s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind)
+ WHEN 'field' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND json_extract(c.scope_json,'$.field_name')=s.field_name
+ WHEN 'collection' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND s.collection_kind=NEW.collection_kind AND s.collection_provenance_json=NEW.provenance_json
  ELSE 0 END)
  BEGIN SELECT RAISE(ABORT,'Coverage proof owner mismatch'); END;
 CREATE TRIGGER resources_no_update BEFORE UPDATE ON resources BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
@@ -219,7 +221,7 @@ CREATE TABLE source_coverage_proofs(
 ) STRICT, WITHOUT ROWID;
 CREATE TRIGGER source_coverage_owner BEFORE INSERT ON source_coverage_proofs WHEN NOT EXISTS(
  SELECT 1 FROM coverage_scopes WHERE owner_kind=NEW.owner_kind AND owner_coordinates_json=NEW.owner_coordinates_json
- AND source_registration_uuidv4=NEW.source_registration_uuidv4 AND source_scope_json=NEW.scope_json)
+ AND source_registration_uuidv4=NEW.source_registration_uuidv4 AND source_scope_json=NEW.scope_json AND json_extract(NEW.scope_json,'$.coverage_kind')=coverage_kind)
  BEGIN SELECT RAISE(ABORT,'Source Coverage proof owner mismatch'); END;
 CREATE TRIGGER source_coverage_no_update BEFORE UPDATE ON source_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Source Coverage proof'); END;
 CREATE TRIGGER source_coverage_no_delete BEFORE DELETE ON source_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Source Coverage proof'); END;
@@ -229,3 +231,15 @@ CREATE TRIGGER provider_identity BEFORE UPDATE ON providers WHEN NEW.service_ins
 BEGIN SELECT RAISE(ABORT,'registered Provider identity'); END;
 CREATE TRIGGER source_identity BEFORE UPDATE ON sources WHEN NEW.source_registration_uuidv4!=OLD.source_registration_uuidv4 OR NEW.service_instance_uuidv4!=OLD.service_instance_uuidv4
 BEGIN SELECT RAISE(ABORT,'registered Source identity'); END;
+
+-- Dependent completeness may only cite the current genuine terminal candidate
+-- set. Later terminals preserve old reports; readers recheck them dynamically.
+CREATE TRIGGER coverage_proof_current_terminal BEFORE INSERT ON coverage_proofs
+WHEN NEW.terminal_observed_at_us!=(SELECT MAX(t.observed_at_us) FROM collection_terminals t
+ WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json)
+ OR EXISTS(SELECT 1 FROM collection_terminals t WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json AND t.observed_at_us=NEW.terminal_observed_at_us AND t.terminal_state!='unknown' AND (t.terminal_state!=NEW.terminal_state OR t.members_json!=NEW.members_json))
+BEGIN SELECT RAISE(ABORT,'Coverage proof terminal is superseded or conflicting'); END;
+CREATE TRIGGER source_coverage_current_terminal BEFORE INSERT ON source_coverage_proofs
+WHEN NEW.inventory_observed_at_us!=(SELECT MAX(i.observed_at_us) FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json)
+ OR EXISTS(SELECT 1 FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json AND i.observed_at_us=NEW.inventory_observed_at_us AND i.coverage_state!='unknown' AND (i.coverage_state!=NEW.inventory_state OR i.members_json!=NEW.members_json OR i.terminal!=NEW.terminal))
+BEGIN SELECT RAISE(ABORT,'Source Coverage terminal is superseded or conflicting'); END;

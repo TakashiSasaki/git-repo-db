@@ -22,8 +22,10 @@ from repo_catalog.domain.p1_core import (
     CoreFailure,
     GitObservation,
     NativeObject,
+    NotesAlternative,
     NotesClaim,
     NotesGroup,
+    NotesProjection,
     NotesProof,
     Projection,
     Provenance,
@@ -54,12 +56,28 @@ class Core:
         from repo_catalog.adapters.sqlite.p1_schema import connect
 
         self._directory = Path(path).parent
-        if (self._directory / "p1-recovery-stop.json").exists():
-            raise CoreFailure(
-                "RECOVERY_STOP", "catalog", "normal catalog operation stopped"
-            )
-        self._db = connect(path, "core")
+        from repo_catalog.adapters.sqlite.p1_coordination import (
+            catalog_gate,
+            persist_catalog_stop,
+        )
+
+        with catalog_gate(self._directory, exclusive=False):
+            if (self._directory / "p1-recovery-stop.json").exists():
+                raise CoreFailure(
+                    "RECOVERY_STOP", "catalog", "normal catalog operation stopped"
+                )
+            try:
+                self._db = connect(path, "core")
+            except sqlite3.DatabaseError as error:
+                if Path(path).is_file() and getattr(
+                    error, "sqlite_errorcode", None
+                ) in (sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_CORRUPT):
+                    persist_catalog_stop(
+                        self._directory, "Core open corruption: " + str(error)
+                    )
+                raise
         self._admitting = False
+        self._reading = False
         self._external = False
         self._active = True
         self._stopped = False
@@ -84,6 +102,7 @@ class Core:
         result._directory = None
         result._db, result._external, result._active = db, True, True
         result._admitting, result._stopped, result._on_corruption = False, False, None
+        result._reading = False
         db.set_authorizer(result._authorize)
         try:
             yield result
@@ -95,6 +114,8 @@ class Core:
         self, action: int, _a: str, _b: str, _database: str, _trigger: str
     ) -> int:
         allowed = {sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_FUNCTION}
+        if self._reading:
+            allowed.add(sqlite3.SQLITE_TRANSACTION)
         if self._admitting:
             allowed |= {
                 sqlite3.SQLITE_INSERT,
@@ -131,7 +152,15 @@ class Core:
             raise CoreFailure(
                 "CAPABILITY", "sql", "generic SQL cannot borrow admission capability"
             )
-        return self._db.execute(statement, parameters).fetchall()
+        try:
+            return self._db.execute(statement, parameters).fetchall()
+        except sqlite3.DatabaseError as error:
+            if getattr(error, "sqlite_errorcode", None) in (
+                sqlite3.SQLITE_NOTADB,
+                sqlite3.SQLITE_CORRUPT,
+            ):
+                self._integrity_stop(("Core read", str(error)))
+            raise
 
     @contextmanager
     def _transaction(self) -> Iterator[None]:
@@ -154,9 +183,16 @@ class Core:
                 )
                 try:
                     yield
-                    self._db.execute(
-                        "RELEASE p1_core_unit" if self._external else "COMMIT"
-                    )
+                    if self._external:
+                        self._db.execute("RELEASE p1_core_unit")
+                    else:
+                        from repo_catalog.adapters.sqlite.p1_coordination import (
+                            catalog_completion,
+                        )
+
+                        with catalog_completion(self._directory):
+                            self._available()
+                            self._db.execute("COMMIT")
                 except BaseException:
                     if self._external:
                         self._db.execute("ROLLBACK TO p1_core_unit")
@@ -166,6 +202,36 @@ class Core:
                     raise
             finally:
                 self._admitting = False
+
+    @contextmanager
+    def _snapshot(self) -> Iterator[None]:
+        """Pin once under the cooperative gate, then release the gate for writers.
+
+        Every SELECT for one projection reads this transaction. Coordinator-owned
+        transactions already supply the pinned authoritative snapshot.
+        """
+        self._available()
+        if self._db.in_transaction:
+            yield
+            return
+        from repo_catalog.adapters.sqlite.p1_coordination import catalog_gate
+
+        with catalog_gate(self._directory, exclusive=False):
+            self._available()
+            self._reading = True
+            try:
+                self._db.execute("BEGIN")
+                self._db.execute("SELECT * FROM store_identity").fetchall()
+            finally:
+                self._reading = False
+        try:
+            yield
+        finally:
+            self._reading = True
+            try:
+                self._db.execute("ROLLBACK")
+            finally:
+                self._reading = False
 
     def _insert(self, table: str, values: tuple) -> None:
         # Every caller supplies a fixed internal table name; no user SQL reaches here.
@@ -352,6 +418,20 @@ class Core:
             with self._transaction():
                 self._metadata(native, physical_copy_uuidv4)
 
+    def admit_notes_role(self, proof: NotesProof, work: WorkBudget) -> None:
+        """Check one relevant structural mapping without acquiring note bytes."""
+        self._available()
+        with account_verification(work):
+            for structure in proof.structures:
+                self._charge(work, "input_bytes", len(structure.body))
+            proof.validate()
+            self._charge(work, "metadata_units", 1)
+            with self._transaction():
+                self._capture(proof.capture)
+                self._object(proof.target)
+                self._object(proof.note)
+                self._insert("note_roles", proof.key)
+
     def admit_note(
         self,
         proof: NotesProof,
@@ -451,27 +531,55 @@ class Core:
         checked = {
             encode([a["status"], a["membership"]]) for a in alternatives if a["checked"]
         }
-        closed = {
-            encode(a["membership"])
-            for a in alternatives
-            if a["status"] in ("complete", "known_empty")
-        }
-        conflict = len(closed) > 1
+
+        def slot(member):
+            coordinate = member[0]
+            if relation == "tree_entries":
+                return coordinate[1]  # Raw name is the logical slot; mode is a value.
+            return coordinate
+
+        def asserted(member):
+            coordinate, fmt, target = member
+            return (
+                (coordinate[0], fmt, target)
+                if relation == "tree_entries"
+                else (fmt, target)
+            )
+
         slots = {}
+        closed_values = {}
+        conflict = False
         for alternative in alternatives:
-            for coordinate, fmt, target in alternative["membership"]:
-                slots.setdefault(encode(coordinate), set()).add((fmt, target))
+            group_scope = alternative["scope"]
+            for member in alternative["membership"]:
+                logical = slot(member)
+                if logical is not None:
+                    slots.setdefault((group_scope, encode(logical)), set()).add(
+                        asserted(member)
+                    )
+            if alternative["status"] in ("complete", "known_empty"):
+                normalized = sorted(
+                    (encode(slot(m)), asserted(m)) for m in alternative["membership"]
+                )
+                closed_values.setdefault(group_scope, set()).add(encode(normalized))
         conflict |= any(len(values) > 1 for values in slots.values())
+        conflict |= any(len(values) > 1 for values in closed_values.values())
         for closed_group in alternatives:
             if closed_group["status"] not in ("complete", "known_empty"):
                 continue
-            closed_slots = {encode(member[0]) for member in closed_group["membership"]}
+            closed_slots = {encode(slot(m)) for m in closed_group["membership"]}
+            closed_targets = {(m[1], m[2]) for m in closed_group["membership"]}
             for other in alternatives:
-                if other["scope"] == closed_group["scope"] and any(
-                    encode(member[0]) not in closed_slots
-                    for member in other["membership"]
-                ):
-                    conflict = True
+                if other["scope"] != closed_group["scope"]:
+                    continue
+                for member in other["membership"]:
+                    logical = slot(member)
+                    if (
+                        logical is not None and encode(logical) not in closed_slots
+                    ) or (
+                        logical is None and (member[1], member[2]) not in closed_targets
+                    ):
+                        conflict = True
         return Projection(
             json.loads(next(iter(checked))) if len(checked) == 1 else None,
             alternatives,
@@ -553,26 +661,29 @@ class Core:
             )
 
     def coverage(self, scope: CoreCoverageScope) -> CoverageProjection:
-        rows = self.sql(
-            "SELECT observed_at_us,coverage_state,details_json FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=(SELECT max(observed_at_us) FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=?) ORDER BY coverage_state",
-            (scope.owner_kind, scope.encoded, scope.owner_kind, scope.encoded),
-        )
-        claims = tuple(CoverageClaim(scope, row[0], row[1], row[2]) for row in rows)
-        state = derive_coverage_state(claim.state for claim in claims)
-        proofs = (
-            self.sql(
-                "SELECT members_json FROM core_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state='complete'",
-                (scope.owner_kind, scope.encoded, rows[0][0]),
+        with self._snapshot():
+            rows = self.sql(
+                "SELECT observed_at_us,coverage_state,details_json FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=(SELECT max(observed_at_us) FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=?) ORDER BY coverage_state",
+                (scope.owner_kind, scope.encoded, scope.owner_kind, scope.encoded),
             )
-            if rows and state == "complete"
-            else []
-        )
-        return CoverageProjection(
-            state,
-            rows[0][0] if rows else None,
-            claims,
-            bool(proofs) and all(row[0] == "[]" for row in proofs),
-        )
+            claims = tuple(CoverageClaim(scope, row[0], row[1], row[2]) for row in rows)
+            state = derive_coverage_state(claim.state for claim in claims)
+            proofs = (
+                self.sql(
+                    "SELECT members_json FROM core_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state='complete'",
+                    (scope.owner_kind, scope.encoded, rows[0][0]),
+                )
+                if rows and state == "complete"
+                else []
+            )
+            if state == "complete" and not proofs:
+                state = "unknown"
+            return CoverageProjection(
+                state,
+                rows[0][0] if rows else None,
+                claims,
+                bool(proofs) and all(row[0] == "[]" for row in proofs),
+            )
 
     def _integrity_stop(self, scope: object) -> None:
         self._stopped = True
@@ -582,9 +693,11 @@ class Core:
             "retained-byte corruption; stop catalog and restore fresh",
         )
         if self._directory is not None:
-            from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+            from repo_catalog.adapters.sqlite.p1_coordination import (
+                persist_catalog_stop,
+            )
 
-            PairCoordinator(self._directory).stop(str(failure))
+            persist_catalog_stop(self._directory, str(failure))
         if self._on_corruption is not None:
             self._on_corruption(failure)
         raise failure
@@ -607,37 +720,217 @@ class Core:
             self._integrity_stop((oid, row["physical_copy_uuidv4"]))
         return row["body"]
 
-    def read_note(self, capture: Capture, target: OID, note: OID) -> bytes:
-        bindings = self.sql(
-            "SELECT * FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-            capture.pair,
-        )
-        if bindings and tuple(bindings[0]) != capture.key:
+    def notes_projection(self, capture: Capture, target: OID) -> NotesProjection:
+        """Metadata-only alternatives and precisely relevant checked mapping.
+
+        Proven roles prefer only Capture+target association, never provenance,
+        ref freshness, completeness of groups, target bytes or body availability.
+        All genuine reports/groups remain available and conflicts stay explicit.
+        """
+        if target.object_format != capture.root.object_format:
             raise CoreFailure(
-                "INCOMPATIBLE_REPLAY",
+                "NOTES_SCOPE", (capture.pair, target), "Capture object-format mismatch"
+            )
+        with self._snapshot():
+            bindings = self.sql(
+                "SELECT * FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
                 capture.pair,
-                "immutable Capture binding conflict",
             )
-        rows = self.sql(
-            "SELECT n.*,r.root AS requested_root,r.path AS requested_path,r.proof_bundle AS requested_proof FROM retained_notes n JOIN note_roles r ON r.object_format=n.object_format AND r.note=n.full_oid WHERE r.capture_origin_uuidv4=? AND r.capture_uuidv4=? AND r.object_format=? AND r.target=? AND r.note=? ORDER BY n.physical_copy_uuidv4",
-            (*capture.pair, target.object_format, target.full_oid, note.full_oid),
+            if bindings and tuple(bindings[0]) != capture.key:
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY",
+                    capture.pair,
+                    "immutable Capture binding conflict",
+                )
+            alternatives = []
+            positive = set()
+            claims = self.sql(
+                "SELECT note,provenance FROM notes_claims WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND target=?",
+                (*capture.pair, target.object_format, target.full_oid),
+            )
+            for row in claims:
+                note = OID(target.object_format, row[0])
+                positive.add(note)
+                alternatives.append(
+                    NotesAlternative(
+                        "claim",
+                        capture.pair,
+                        target,
+                        note,
+                        None,
+                        None,
+                        (),
+                        Provenance(*json.loads(row[1])),
+                        None,
+                        False,
+                    )
+                )
+            absent_closed = False
+            groups = self.sql(
+                "SELECT scope,status,membership,provenance FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=?",
+                (*capture.pair, target.object_format),
+            )
+            for row in groups:
+                members = tuple(tuple(m) for m in json.loads(row[2]))
+                relevant = [m for m in members if m[0] == target.full_oid]
+                # Groups preserve their asserted scope; complete/empty excludes
+                # unlisted targets only when explicitly scoped to all mappings.
+                applicable = row[0] == "all-notes-mappings" or row[0] == encode(
+                    ["target", target.full_oid]
+                )
+                if not relevant and not applicable:
+                    continue
+                for member in relevant:
+                    positive.add(OID(target.object_format, member[1]))
+                absent_closed |= (
+                    applicable
+                    and row[1] in ("complete", "known_empty")
+                    and not relevant
+                )
+                alternatives.append(
+                    NotesAlternative(
+                        "group",
+                        capture.pair,
+                        target,
+                        OID(target.object_format, relevant[0][1]) if relevant else None,
+                        row[0],
+                        row[1],
+                        members,
+                        Provenance(*json.loads(row[3])),
+                        relevant[0][2] if relevant else None,
+                        False,
+                    )
+                )
+            checked = set()
+            roles = self.sql(
+                "SELECT root,note,path,proof_bundle FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND target=?",
+                (*capture.pair, target.object_format, target.full_oid),
+            )
+            for row in roles:
+                if not valid_note_role(
+                    target.object_format,
+                    row[0],
+                    target.full_oid,
+                    row[1],
+                    row[2],
+                    row[3],
+                ):
+                    self._integrity_stop((capture.pair, target, "notes-role"))
+                note = OID(target.object_format, row[1])
+                checked.add(note)
+                alternatives.append(
+                    NotesAlternative(
+                        "receiver_role",
+                        capture.pair,
+                        target,
+                        note,
+                        "relevant-root-to-target-mapping",
+                        None,
+                        (),
+                        None,
+                        row[2],
+                        True,
+                    )
+                )
+            return NotesProjection(
+                capture,
+                target,
+                next(iter(checked)) if len(checked) == 1 else None,
+                tuple(alternatives),
+                len(positive | checked) > 1
+                or (absent_closed and bool(positive | checked)),
+                "relevant-root-to-target-mapping" if checked else None,
+            )
+
+    def read_note(self, capture: Capture, target: OID, note: OID) -> bytes:
+        with self._snapshot():
+            bindings = self.sql(
+                "SELECT * FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                capture.pair,
+            )
+            if bindings and tuple(bindings[0]) != capture.key:
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY",
+                    capture.pair,
+                    "immutable Capture binding conflict",
+                )
+            rows = self.sql(
+                "SELECT n.*,r.root AS requested_root,r.path AS requested_path,r.proof_bundle AS requested_proof FROM retained_notes n JOIN note_roles r ON r.object_format=n.object_format AND r.note=n.full_oid WHERE r.capture_origin_uuidv4=? AND r.capture_uuidv4=? AND r.object_format=? AND r.target=? AND r.note=? ORDER BY n.physical_copy_uuidv4",
+                (*capture.pair, target.object_format, target.full_oid, note.full_oid),
+            )
+            if not rows:
+                raise CoreFailure(
+                    "NOTES_ROLE_UNAVAILABLE",
+                    (capture.pair, target, note),
+                    "no receiver-proven note role/body for requested scope",
+                )
+            row = rows[0]
+            if not valid_note_role(
+                target.object_format,
+                row["requested_root"],
+                target.full_oid,
+                note.full_oid,
+                row["requested_path"],
+                row["requested_proof"],
+            ) or not valid_native(
+                *note.key, "blob", row["body"], row["size"], row["digest_sha256"]
+            ):
+                self._integrity_stop((note, row["physical_copy_uuidv4"]))
+            return row["body"]
+
+
+def validate_embedded_references(db) -> None:
+    """Revalidate semantic embedded FKs for backup/read certification.
+
+    SQLite integrity_check does not execute INSERT triggers on existing rows.
+    Embedded whole-value keys must therefore be shape- and referent-checked
+    alongside ordinary composite FKs, including after untrusted restoration.
+    """
+    from repo_catalog.domain.p1_core import (
+        _notes_group,
+        valid_coverage_members,
+        valid_group,
+    )
+
+    def nominal(fmt, oid):
+        return (
+            db.execute(
+                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                (fmt, oid),
+            ).fetchone()
+            is not None
         )
-        if not rows:
-            raise CoreFailure(
-                "NOTES_ROLE_UNAVAILABLE",
-                (capture.pair, target, note),
-                "no receiver-proven note role/body for requested scope",
-            )
-        row = rows[0]
-        if not valid_note_role(
-            target.object_format,
-            row["requested_root"],
-            target.full_oid,
-            note.full_oid,
-            row["requested_path"],
-            row["requested_proof"],
-        ) or not valid_native(
-            *note.key, "blob", row["body"], row["size"], row["digest_sha256"]
+
+    for fmt, relation, status, membership in db.execute(
+        "SELECT object_format,relation,status,membership FROM relation_groups"
+    ):
+        if not valid_group(fmt, relation, status, membership) or any(
+            not nominal(member[1], member[2]) for member in json.loads(membership)
         ):
-            self._integrity_stop((note, row["physical_copy_uuidv4"]))
-        return row["body"]
+            raise CoreFailure(
+                "AUTHORITATIVE_CORRUPTION",
+                "relation_groups",
+                "invalid embedded relation reference",
+            )
+    for fmt, status, membership in db.execute(
+        "SELECT object_format,status,membership FROM notes_groups"
+    ):
+        if not _notes_group(fmt, status, membership) or any(
+            not nominal(fmt, member[0]) or not nominal(fmt, member[1])
+            for member in json.loads(membership)
+        ):
+            raise CoreFailure(
+                "AUTHORITATIVE_CORRUPTION",
+                "notes_groups",
+                "invalid embedded notes reference",
+            )
+    for row in db.execute("SELECT members_json FROM core_coverage_proofs"):
+        membership = row[0]
+        if not valid_coverage_members(membership) or any(
+            not nominal(*member) for member in json.loads(membership)
+        ):
+            raise CoreFailure(
+                "AUTHORITATIVE_CORRUPTION",
+                "core_coverage_proofs",
+                "invalid embedded Coverage reference",
+            )

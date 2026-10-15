@@ -11,7 +11,6 @@ import json
 import sqlite3
 from collections.abc import Callable
 
-from repo_catalog.domain.coverage import derive_coverage_state
 from repo_catalog.domain.p1_context import (
     CoverageClaim,
     CoverageProjection,
@@ -20,6 +19,7 @@ from repo_catalog.domain.p1_context import (
     FieldClock,
     ResourceKey,
 )
+from repo_catalog.domain.p1_coverage import derive_coverage_state
 
 
 def register_functions(db: sqlite3.Connection) -> None:
@@ -69,7 +69,7 @@ class ContextStore:
     def admit_repository(
         self,
         resource: ResourceKey,
-        repository_uuidv4: str,
+        repository_uuidv4: str | None,
         clock: FieldClock,
         provenance_json: str,
         observed_at_us: int,
@@ -255,20 +255,96 @@ class ContextStore:
             empty = False
             if state == "complete":
                 proofs = self.db.execute(
-                    "SELECT members_json FROM coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
+                    "SELECT members_json,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state FROM coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
                     (scope.owner_kind, scope.encoded, rows[0][0], "complete"),
                 ).fetchall()
                 source_proofs = self.db.execute(
-                    "SELECT members_json FROM source_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
+                    "SELECT members_json,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state FROM source_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
                     (scope.owner_kind, scope.encoded, rows[0][0], "complete"),
                 ).fetchall()
-                proofs = [*proofs, *source_proofs]
-                empty = bool(proofs) and all(row[0] == "[]" for row in proofs)
+                dependencies: dict[tuple, list[tuple[str, str]]] = {}
+                for proof in proofs:
+                    current = self.db.execute(
+                        """SELECT observed_at_us,terminal_state,members_json,1 FROM collection_terminals WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=? AND observed_at_us=(SELECT MAX(observed_at_us) FROM collection_terminals WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=?)""",
+                        (*proof[1:6], *proof[1:6]),
+                    ).fetchall()
+                    dependencies.setdefault(("collection", *proof[1:6]), []).append(
+                        (
+                            self._proof_qualification(
+                                proof[6], proof[7], proof[0], current
+                            ),
+                            proof[0],
+                        )
+                    )
+                for proof in source_proofs:
+                    current = self.db.execute(
+                        """SELECT observed_at_us,coverage_state,members_json,terminal FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=? AND observed_at_us=(SELECT MAX(observed_at_us) FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=?)""",
+                        (*proof[1:3], *proof[1:3]),
+                    ).fetchall()
+                    dependencies.setdefault(("source", *proof[1:3]), []).append(
+                        (
+                            self._proof_qualification(
+                                proof[3], proof[4], proof[0], current
+                            ),
+                            proof[0],
+                        )
+                    )
+                qualifications = []
+                members = []
+                for alternatives in dependencies.values():
+                    statuses = {status for status, _ in alternatives}
+                    qualifications.append(
+                        "conflict"
+                        if "conflict" in statuses
+                        else "valid"
+                        if "valid" in statuses
+                        else "unknown"
+                    )
+                    members.extend(
+                        value for status, value in alternatives if status == "valid"
+                    )
+                if "conflict" in qualifications:
+                    state = "conflict"
+                elif not qualifications or "unknown" in qualifications:
+                    state = "unknown"
+                empty = (
+                    bool(qualifications)
+                    and all(q == "valid" for q in qualifications)
+                    and all(value == "[]" for value in members)
+                )
             return CoverageProjection(
                 state, rows[0][0] if rows else None, claims, empty
             )
         finally:
             self.db.execute("RELEASE p1_coverage_read")
+
+    @staticmethod
+    def _proof_qualification(
+        observed_at_us: int, state: str, members_json: str, current: list
+    ) -> str:
+        """Qualify immutable dependencies against current actual terminal evidence.
+
+        A blocked proof does not rewrite the original claim. Equal-time unknown
+        is weaker than a determinate observation, matching Coverage semantics.
+        """
+        if not current:
+            return "unknown"
+        determinate = [row for row in current if row[1] != "unknown"]
+        if (
+            derive_coverage_state(row[1] for row in current) == "conflict"
+            or len({(row[2], row[3]) for row in determinate}) > 1
+        ):
+            return "conflict"
+        if (
+            current[0][0] != observed_at_us
+            or any(
+                row[1] != state or row[2] != members_json or not row[3]
+                for row in determinate
+            )
+            or not determinate
+        ):
+            return "unknown"
+        return "valid"
 
     def link_core(
         self,

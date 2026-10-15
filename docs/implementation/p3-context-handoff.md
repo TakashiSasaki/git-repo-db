@@ -45,7 +45,7 @@ Keep each current field's actual original clock/provenance/observation. Missing
 is absent evidence; explicit null is a candidate. Comparable newer clocks replace
 only dominated current candidates; equal or incomparable clocks retain alternatives.
 Never substitute local processing time or a receiver verification conclusion for
-a genuine source observation. Repository transfers change current evidence,
+a genuine source observation. Repository attachment, transfer and explicit observed null detachment change current evidence,
 preserve Issue identity and do not rewrite original captures. Do not recreate a
 full normalized Provider edit history or retain API originals as pending state.
 

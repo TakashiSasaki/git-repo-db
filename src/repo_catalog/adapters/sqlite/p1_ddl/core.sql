@@ -178,9 +178,14 @@ BEGIN SELECT RAISE(ABORT,'Capture object-format mismatch'); END;
 CREATE TABLE core_coverage_proofs (
  owner_kind TEXT NOT NULL, owner_coordinates_json TEXT NOT NULL,
  observed_at_us INTEGER NOT NULL, coverage_state TEXT NOT NULL,
- members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),
+ members_json TEXT NOT NULL CHECK(p1_coverage_members(members_json)),
  provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),
  PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,members_json,provenance),
  FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state)
  REFERENCES coverage_claims(owner_kind,owner_coordinates_json,observed_at_us,coverage_state)
 ) STRICT, WITHOUT ROWID;
+
+CREATE TRIGGER core_coverage_members BEFORE INSERT ON core_coverage_proofs
+WHEN p1_coverage_members(NEW.members_json) AND EXISTS(SELECT 1 FROM json_each(NEW.members_json) j WHERE NOT EXISTS(
+ SELECT 1 FROM git_objects o WHERE o.object_format=json_extract(j.value,'$[0]') AND o.full_oid=json_extract(j.value,'$[1]')))
+BEGIN SELECT RAISE(ABORT,'missing nominal Core Coverage member'); END;

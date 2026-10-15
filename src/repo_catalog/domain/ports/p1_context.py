@@ -24,7 +24,7 @@ class ContextAdmission(Protocol):
     def admit_repository(
         self,
         resource: ResourceKey,
-        repository_uuidv4: str,
+        repository_uuidv4: str | None,
         clock: FieldClock,
         provenance_json: str,
         observed_at_us: int,

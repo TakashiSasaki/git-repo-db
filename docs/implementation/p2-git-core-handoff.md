@@ -29,7 +29,7 @@ synthetic `--state-dir`.
 
 `domain/p1_core.py` provides `OID`, `Provenance`, `ScalarClaim`, `RelationMember`,
 `RelationGroup`, `Capture`, `GitObservation`, `RepositoryClaim`, `NativeObject`,
-`NotesClaim`, `NotesGroup`, `NotesProof`, `Projection` and scope-qualified
+`NotesClaim`, `NotesGroup`, `NotesProof`, `NotesProjection`, `Projection` and scope-qualified
 `CoreFailure`. `domain/ports/p1_core.py` fixes Core admission/read and work-budget
 ports. Shared Coverage value types have neutral domain ownership; Core-specific
 scope construction belongs to Core. Preserve exact accepted signatures and
@@ -48,7 +48,13 @@ Git closure. Whole ordered groups preserve actually supplied coordinates,
 unknown/partial/known-empty/complete status and original source evidence. Exact
 replay deduplicates; changed immutable evidence coordinates fail closed; genuinely
 independent conflicting reports remain separate and yield explicit alternatives.
-Do not union groups or choose a report by clock/arrival/source/decoder.
+Do not union groups or choose a report by clock/arrival/source/decoder. Parent
+positions may be genuinely unknown (`None`); known ordinals and unpositioned
+members normalize to the same semantic replay independently of delivery order.
+Tree conflict slots use the actual raw name, while mode and target remain values.
+`notes_projection(capture,target)` exposes metadata-only notes reports/groups and
+conflicts; `admit_notes_role(proof,work)` checks structural mapping without requiring
+a note body. A receiver role proves only its relevant mapping, not list completion.
 
 Canonical projections require receiver-checked exact relevant native structure.
 An earlier wrong report cannot poison later correct representation admission, and

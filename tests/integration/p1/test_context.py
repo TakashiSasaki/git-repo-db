@@ -316,3 +316,136 @@ def test_permanent_context_registered_identities_cannot_be_rebound(context):
             db.execute(sql, ("5b020945-03ed-4332-851d-d04726d6dc43",))
     with pytest.raises(sqlite3.IntegrityError):
         db.execute("UPDATE providers SET provider_kind='different-provider'")
+
+
+def test_raw_sql_source_clock_json_overflow_is_rejected_at_actual_type(context):
+    db, _, _ = context
+    for clock in [
+        '{"at_us":9223372036854775808,"domain":"actual-source"}',
+        '{"at_us":-9223372036854775809,"domain":"actual-source"}',
+    ]:
+        assert db.execute(
+            "SELECT json_type(?,'$.at_us'),typeof(json_extract(?,'$.at_us'))",
+            (clock, clock),
+        ).fetchone() == ("integer", "real")
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute(
+                "INSERT INTO field_candidates(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,value_json,clock_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+                (*KEY.coordinates(), "title", "null", clock, PROVENANCE, 0),
+            )
+
+
+def test_attached_issue_explicit_detach_preserves_null_original_source_and_rollback(
+    context,
+):
+    db, store, _ = context
+    store.admit_repository(
+        KEY, REPO, FieldClock("provider.updated_at", 1), PROVENANCE, 10
+    )
+    detached = canonical({"source": "provider.example", "evidence": "detached-20"})
+    db.execute("BEGIN")
+    store.admit_repository(
+        KEY, None, FieldClock("provider.updated_at", 2), detached, 20
+    )
+    assert store.repository_candidates(KEY)[0].value_json == "null"
+    db.rollback()
+    assert store.repository_candidates(KEY)[0].value_json == canonical(REPO)
+    store.admit_repository(
+        KEY, None, FieldClock("provider.updated_at", 2), detached, 20
+    )
+    current = store.repository_candidates(KEY)
+    assert len(current) == 1 and current[0].value_json == "null"
+    assert current[0].provenance_json == detached and current[0].observed_at_us == 20
+    assert (
+        db.execute(
+            "SELECT repository_uuidv4 FROM field_candidates WHERE field_name=?",
+            ("repository_uuidv4",),
+        ).fetchone()[0]
+        is None
+    )
+    assert (
+        store.repository_candidates(ResourceKey(SERVICE, "issue", "unobserved")) == ()
+    )
+
+
+def test_exact_text_reference_fk_differs_from_attributed_digest_metadata(context):
+    db, store, _ = context
+    nonexistent = "a" * 64
+    with pytest.raises(sqlite3.IntegrityError):
+        store.admit_field(
+            FieldCandidate(
+                KEY,
+                "text_body_sha256",
+                canonical(nonexistent),
+                FieldClock("provider.updated_at", 1),
+                PROVENANCE,
+                1,
+            )
+        )
+    assert (
+        store.admit_field(
+            FieldCandidate(
+                KEY,
+                "reported_text_sha256",
+                canonical(nonexistent),
+                FieldClock("provider.updated_at", 1),
+                PROVENANCE,
+                1,
+            )
+        )
+        == "insert"
+    )
+    digest = store.text("exact actual UTF8 body")
+    assert (
+        store.admit_field(
+            FieldCandidate(
+                KEY,
+                "text_body_sha256",
+                canonical(digest),
+                FieldClock("provider.updated_at", 1),
+                PROVENANCE,
+                1,
+            )
+        )
+        == "insert"
+    )
+    assert (
+        db.execute(
+            "SELECT text_body_sha256 FROM field_candidates WHERE field_name=?",
+            ("text_body_sha256",),
+        ).fetchone()[0]
+        == digest
+    )
+
+
+def test_exact_text_reference_explicit_null_is_distinct_from_missing(context):
+    _, store, _ = context
+    assert store.candidates(KEY, "text_body_sha256") == ()
+    digest = store.text("previous body")
+    store.admit_field(
+        FieldCandidate(
+            KEY,
+            "text_body_sha256",
+            canonical(digest),
+            FieldClock("provider.updated_at", 1),
+            PROVENANCE,
+            10,
+        )
+    )
+    removed = canonical({"source": "provider.example", "evidence": "body-now-null"})
+    store.admit_field(
+        FieldCandidate(
+            KEY,
+            "text_body_sha256",
+            "null",
+            FieldClock("provider.updated_at", 2),
+            removed,
+            20,
+        )
+    )
+    current = store.candidates(KEY, "text_body_sha256")
+    assert (
+        len(current) == 1
+        and current[0].value_json == "null"
+        and current[0].provenance_json == removed
+    )

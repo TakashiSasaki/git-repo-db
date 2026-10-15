@@ -75,8 +75,9 @@ are trusted infrastructure, never plugin or user SQL APIs.
 transaction, uses savepoints for individual units and never commits the outer
 transaction. The capability expires at block exit. Context methods participate
 in a caller-owned transaction; field candidate replacement has an internal
-savepoint. No transaction spans network acquisition. Scalar claims and whole
-relation groups are separate immutable units; admitting a nominal relation does
+savepoint. Parent positions may be explicitly unreported; known ordinals and unpositioned
+membership normalize without inventing an order. No transaction spans network
+acquisition. Scalar claims and whole relation groups are separate immutable units; admitting a nominal relation does
 not require child bodies or entire Git closure.
 
 ## Coverage: five actual authoritative columns
@@ -106,7 +107,10 @@ The latest actual observation time determines the complete candidate set. A
 newer unknown or partial observation cannot borrow an older complete result.
 Equal-time different states remain a conflict. No terminal evidence is unknown;
 a real complete empty terminal may establish known-empty only for its actual
-owning scope. Source known-positive pairs survive a partial or empty inventory.
+owning scope. Source known-positive pairs survive a partial or empty inventory. Actual proof
+ownership/category and latest terminal candidates are checked at admission and
+again in the pinned projection; a complete report alone does not establish a
+complete observed scope. Superseded or conflicting terminals cannot prove empty.
 Required nested/head/base/child scopes remain separate, rather than borrowing
 another resource's terminal or a prior head's evidence.
 
@@ -123,8 +127,10 @@ provenance and observation time. Missing has no candidate; explicit JSON null is
 an observed value. Comparable later source clocks replace dominated candidates;
 equal and incomparable alternatives remain accessible. No local processing time,
 sender verification flag or receiver check overwrites original source evidence.
-Current repository membership supports attachment and transfer without changing
-Issue identity. P1 stores current necessary alternatives, not full API originals
+Current repository membership supports attachment, transfer and explicit observed
+null detachment without changing Issue identity. Exact retained-text-reference
+fields have a real FK; supplied digest reports are separately qualified. Generated
+source clocks check SQLite result types as well as JSON syntax/int64 API ranges. P1 stores current necessary alternatives, not full API originals
 or a normalized history of every Provider edit.
 
 ## Coordination, snapshots, partial success and recovery
@@ -150,6 +156,11 @@ state that P1 does **not** implement the power-loss-safe P7 installation/activat
 engine. Revalidation of candidate content is required even if file hashes match.
 Git-only read availability and absent Context are tested independently.
 
+COMMIT and candidate certification use a separate short completion fence with a
+final stop check, so a fault detected by an already pinned reader can stop an
+in-flight completion. The persistent marker is published before unwinding the
+writer gate; it is never delayed until an exception handler can reacquire it.
+
 Detected authoritative corruption requires a catalog-wide stop outside the suspect
 database and outside Operational. Ordinary service cannot resume after restart or
 loss of derivatives. There is no quarantine flag/count, byte repair in place,
@@ -170,6 +181,9 @@ target-to-note mapping and native body format/OID/type/size/digest. The narrow
 reference grammar supports direct-tree or commit roots, standard hex/fanout paths
 and appropriate Git tree modes. Unsupported grammar fails closed. It needs no
 annotated target body, complete notes enumeration or implicit network request.
+`notes_projection(capture, target)` returns metadata-only attributed claims/groups,
+explicit conflicts and only precisely relevant receiver-checked mapping preference.
+`admit_notes_role` can check one structural mapping without retaining a note body.
 Binary and empty notes, multiple namespaces, unknown target possession and a
 shared file/note OID are valid. Retention permission stays attached to the proven
 notes role; it does not authorize a file-body API.

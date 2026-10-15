@@ -361,3 +361,85 @@ def test_raw_non_utf8_ref_is_losslessly_encoded_without_alias(core):
     c.admit_note(proof, note, str(uuid4()), Budget())
     assert c.sql("SELECT ref FROM captures")[0][0] == encode(["native-ref", raw.hex()])
     assert c.read_note(proof.capture, proof.target, proof.note) == b"note"
+
+
+def test_metadata_only_notes_projection_preserves_reports_groups_and_local_role(core):
+    c, _, repository = core
+    proof, note = mapping(repository)
+    other = native("blob", b"contradictory report")
+    first = NotesClaim(proof.capture, proof.target, proof.note, provenance("original"))
+    c.admit_notes_claim(first)
+    c.admit_notes_claim(
+        replace(first, note=other.oid, provenance=provenance("independent"))
+    )
+    group = NotesGroup(
+        proof.capture,
+        "all-notes-mappings",
+        "partial",
+        ((proof.target.full_oid, proof.note.full_oid, proof.path),),
+        provenance("group"),
+    )
+    c.admit_notes_group(group)
+    before = c.notes_projection(proof.capture, proof.target)
+    assert before.reported_conflict
+    assert before.canonical is None
+    assert len(before.alternatives) == 3
+    assert {a.kind for a in before.alternatives} == {"claim", "group"}
+    assert c.sql("SELECT * FROM retained_notes") == []
+    c.admit_notes_role(proof, Budget())
+    after = c.notes_projection(proof.capture, proof.target)
+    assert after.canonical == proof.note
+    assert after.reported_conflict
+    assert after.checked_scope == "relevant-root-to-target-mapping"
+    assert len(after.alternatives) == 4
+    assert [a for a in after.alternatives if a.kind == "claim"] == [
+        a for a in before.alternatives if a.kind == "claim"
+    ]
+    assert {a.provenance.qualification for a in after.alternatives if a.provenance} == {
+        "reported"
+    }
+    with pytest.raises(CoreFailure, match="role/body"):
+        c.read_note(proof.capture, proof.target, proof.note)
+    missing = c.notes_projection(proof.capture, oid("f"))
+    assert missing.canonical is None and not missing.reported_conflict
+
+
+@pytest.mark.parametrize(
+    "scope,expected", [("all-notes-mappings", True), ("unrelated subset", False)]
+)
+def test_notes_projection_closed_scope_does_not_borrow_other_scope_absence(
+    core, scope, expected
+):
+    c, _, repository = core
+    proof, _ = mapping(repository)
+    c.admit_notes_claim(
+        NotesClaim(proof.capture, proof.target, proof.note, provenance("positive"))
+    )
+    c.admit_notes_group(
+        NotesGroup(proof.capture, scope, "known_empty", (), provenance("empty"))
+    )
+    assert c.notes_projection(proof.capture, proof.target).reported_conflict is expected
+
+
+def test_metadata_only_notes_role_obeys_zero_proof_step_budget(core):
+    c, _, repository = core
+    proof, _ = mapping(repository)
+    c.admit_notes_claim(
+        NotesClaim(
+            proof.capture, proof.target, proof.note, provenance("independent metadata")
+        )
+    )
+
+    class NoProofBudget(Budget):
+        def require(self, unit, amount=1):
+            if unit == "proof_steps" and amount:
+                raise CoreFailure("BUDGET", unit, "proof_steps exhausted")
+            super().require(unit, amount)
+
+    budget = NoProofBudget()
+    with pytest.raises(CoreFailure, match="proof_steps exhausted"):
+        c.admit_notes_role(proof, budget)
+    assert budget.counts["input_bytes"] > 0
+    assert len(c.notes_projection(proof.capture, proof.target).alternatives) == 1
+    assert c.sql("SELECT * FROM note_roles") == []
+    assert c.sql("SELECT * FROM retained_notes") == []

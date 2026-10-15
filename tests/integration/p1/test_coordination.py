@@ -499,3 +499,209 @@ def test_corruption_during_connection_open_stops_before_transaction_exists(
             coordinator.backup_candidate(tmp_path / "candidate")
     assert failure.value.sqlite_errorcode == sqlite3.SQLITE_NOTADB
     assert (directory / "p1-recovery-stop.json").exists()
+
+
+def test_corruption_stop_precedes_gate_release_even_if_detector_dies(tmp_path):
+    directory = tmp_path / "live"
+    build(directory)
+    detector_code = """
+import sys
+from pathlib import Path
+import repo_catalog.adapters.sqlite.p1_coordination as c
+from repo_catalog.domain.p1_core import CoreFailure
+original=c.persist_catalog_stop
+def stopped(directory,reason):
+    original(directory,reason)
+    print('marker-persisted',flush=True)
+    sys.stdin.readline()
+c.persist_catalog_stop=stopped
+def detect(db):
+    raise CoreFailure('AUTHORITATIVE_CORRUPTION','retained bytes','mismatch')
+c.PairCoordinator(Path(sys.argv[1])).admit(detect,lambda db:None)
+"""
+    writer_code = """
+import sys
+from pathlib import Path
+from tests.integration.p1.test_coordination import core_unit,context_unit
+from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+from repo_catalog.domain.p1_coordination import CoordinationError
+try: PairCoordinator(Path(sys.argv[1])).admit(core_unit,context_unit)
+except CoordinationError as error: print(error.code,flush=True)
+else: print('COMMITTED',flush=True)
+"""
+    detector = child_code(detector_code, directory, stdin=subprocess.PIPE)
+    writer = None
+    try:
+        assert detector.stdout.readline().strip() == "marker-persisted"
+        assert (directory / "p1-recovery-stop.json").exists()
+        writer = child_code(writer_code, directory)
+        # Die at the formerly unsafe transition: before rollback/gate release.
+        detector.kill()
+        detector.communicate(timeout=15)
+        output, error = writer.communicate(timeout=15)
+        assert writer.returncode == 0, error
+        assert output.strip() == "RECOVERY_REQUIRED"
+        for role, table in (("core", "git_objects"), ("context", "resources")):
+            with contextlib.closing(connect(directory / f"{role}.sqlite3", role)) as db:
+                assert db.execute(f"SELECT count(*) FROM {table}").fetchone()[0] == 0
+        for role in ("operational", "search"):
+            (directory / f"{role}.sqlite3").unlink()
+        with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
+            PairCoordinator(directory).admit(core_unit, context_unit)
+    finally:
+        for process in (detector, writer):
+            if process is not None and process.poll() is None:
+                process.kill()
+                process.communicate()
+
+
+def test_next_supported_writer_cannot_enter_during_stop_transition(
+    tmp_path, monkeypatch
+):
+    import repo_catalog.adapters.sqlite.p1_coordination as coordination
+    from repo_catalog.domain.p1_core import CoreFailure
+
+    directory = tmp_path / "live"
+    build(directory)
+    original, observed = coordination.persist_catalog_stop, []
+
+    def transition(directory, reason):
+        original(directory, reason)
+        with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
+            PairCoordinator(directory).admit(core_unit, context_unit)
+        observed.append("refused before detector unwinds")
+
+    monkeypatch.setattr(coordination, "persist_catalog_stop", transition)
+
+    def detected(db):
+        raise CoreFailure("AUTHORITATIVE_CORRUPTION", "retained bytes", "mismatch")
+
+    with pytest.raises(AdmissionFailure):
+        PairCoordinator(directory).admit(detected, context_unit)
+    assert observed
+
+
+@pytest.mark.parametrize(
+    "point,core_count", [("before_core_commit", 0), ("during_context", 1)]
+)
+def test_stop_outside_writer_gate_fences_inflight_commit(tmp_path, point, core_count):
+    directory = tmp_path / "live"
+    build(directory)
+    code = """
+import json,sys
+from pathlib import Path
+from tests.integration.p1.test_coordination import core_unit,context_unit
+from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+from repo_catalog.domain.p1_coordination import AdmissionFailure
+def cut(point):
+    if point==sys.argv[2]:
+        print('before-commit',flush=True)
+        sys.stdin.readline()
+try: PairCoordinator(Path(sys.argv[1])).admit(core_unit,context_unit,cut=cut)
+except AdmissionFailure as error:
+    print(json.dumps([error.cause.code,error.outcome.core_committed,error.outcome.context_committed]),flush=True)
+else: print('COMMITTED',flush=True)
+"""
+    process = child_code(code, directory, point, stdin=subprocess.PIPE)
+    try:
+        assert process.stdout.readline().strip() == "before-commit"
+        # A pinned read detects corruption after releasing the initial gate.
+        # stop() must publish its fence immediately without waiting for writer.
+        PairCoordinator(directory).stop("authoritative corruption detected by reader")
+        output, error = process.communicate("continue\n", timeout=15)
+        assert process.returncode == 0, error
+        assert json.loads(output.strip()) == [
+            "RECOVERY_REQUIRED",
+            bool(core_count),
+            False,
+        ]
+        with contextlib.closing(connect(directory / "core.sqlite3", "core")) as db:
+            assert (
+                db.execute("SELECT count(*) FROM git_objects").fetchone()[0]
+                == core_count
+            )
+        with contextlib.closing(
+            connect(directory / "context.sqlite3", "context")
+        ) as db:
+            assert db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.communicate()
+
+
+def test_stop_outside_backup_gate_prevents_certificate(tmp_path):
+    directory, destination = tmp_path / "live", tmp_path / "candidate"
+    build(directory)
+    code = """
+import sys
+from pathlib import Path
+from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+from repo_catalog.domain.p1_coordination import CoordinationError
+def cut(point):
+    if point=='before_certificate':
+        print('before-certificate',flush=True)
+        sys.stdin.readline()
+try: PairCoordinator(Path(sys.argv[1])).backup_candidate(Path(sys.argv[2]),cut=cut)
+except CoordinationError as error: print(error.code,flush=True)
+else: print('CERTIFIED',flush=True)
+"""
+    process = child_code(code, directory, destination, stdin=subprocess.PIPE)
+    try:
+        assert process.stdout.readline().strip() == "before-certificate"
+        PairCoordinator(directory).stop("authoritative corruption detected by reader")
+        output, error = process.communicate("continue\n", timeout=15)
+        assert process.returncode == 0, error
+        assert output.strip() == "RECOVERY_REQUIRED"
+        assert not (destination / "p1-pair-candidate.json").exists()
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.communicate()
+
+
+@pytest.mark.parametrize("operation", ["snapshot", "backup"])
+def test_existing_embedded_reference_is_revalidated_before_certification(
+    tmp_path, operation
+):
+    from repo_catalog.adapters.sqlite.p1_core import Core
+    from repo_catalog.domain.p1_core import CoreFailure, RelationGroup, RelationMember
+    from tests.integration.p1.test_core import oid, provenance
+
+    directory = tmp_path / "live"
+    build(directory)
+    core = Core(directory / "core.sqlite3")
+    core.admit_group(
+        RelationGroup(
+            oid(),
+            "commit_parents",
+            "entire list",
+            "complete",
+            (RelationMember(0, oid("b")),),
+            provenance(),
+        )
+    )
+    core.close()
+    # Simulate persisted corruption with the final schema restored exactly.
+    # Ordinary SQLite checks cannot see a foreign key embedded in whole JSON.
+    with contextlib.closing(connect(directory / "core.sqlite3", "core")) as db:
+        trigger = db.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_git_objects_delete'"
+        ).fetchone()[0]
+        db.execute("PRAGMA foreign_keys=OFF")
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("DROP TRIGGER p1_immutable_git_objects_delete")
+        db.execute("DELETE FROM git_objects WHERE full_oid=?", ("b" * 40,))
+        db.execute(trigger)
+        db.commit()
+        assert [tuple(row) for row in db.execute("PRAGMA integrity_check")] == [("ok",)]
+        assert db.execute("PRAGMA foreign_key_check").fetchall() == []
+    with pytest.raises(CoreFailure) as error:
+        if operation == "snapshot":
+            with PairCoordinator(directory).snapshots():
+                pass
+        else:
+            PairCoordinator(directory).backup_candidate(tmp_path / "candidate")
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (directory / "p1-recovery-stop.json").exists()
+    assert not (tmp_path / "candidate/p1-pair-candidate.json").exists()
