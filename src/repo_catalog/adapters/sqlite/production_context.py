@@ -149,6 +149,9 @@ class Context(ContextStore):
         self._writable = writable
         self._active = True
         self._check()
+        roles = self.db.execute("SELECT store_role FROM store_identity").fetchall()
+        if roles != [("context",)]:
+            raise ContextError("STORE_ROLE", "context", "Context authority required")
 
     def _check(self, *, write: bool = False):
         if not self._active:
@@ -622,7 +625,21 @@ class Context(ContextStore):
             # Replaying an incoming body must not mask corruption in the actual
             # retained copy as an ordinary untrusted-input collision rejection.
             self.read_text(digest)
+        else:
+            self._check_missing_text(digest)
         return super().text(text_value)
+
+    def _check_missing_text(self, digest: str):
+        # Canonical field JSON equals the real generated text FK coordinate.
+        # Compare stored values directly so an unrelated malformed JSON field
+        # cannot mask this actual retained-text dependency.
+        expected = self.db.execute(
+            "SELECT 1 FROM field_candidates WHERE field_name='text_body_sha256' AND value_json=? LIMIT 1",
+            (canonical(digest),),
+        ).fetchone()
+        if expected:
+            persist_catalog_stop(self.directory, "Context retained text is missing")
+            raise ContextError("AUTHORITATIVE_CORRUPTION", "text", digest)
 
     def read_text(self, digest: str) -> str:
         self._check()
@@ -630,6 +647,7 @@ class Context(ContextStore):
             "SELECT CAST(text_value AS BLOB) FROM text_bodies WHERE sha256=?", (digest,)
         ).fetchone()
         if row is None:
+            self._check_missing_text(digest)
             raise ContextError("TEXT_UNAVAILABLE", "text", digest)
         if hashlib.sha256(row[0]).hexdigest() != digest:
             persist_catalog_stop(
