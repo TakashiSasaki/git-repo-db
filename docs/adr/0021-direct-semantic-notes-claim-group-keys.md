@@ -12,6 +12,8 @@ refines:
 
 # ADR 0021: Direct semantic composite keys for Git notes claims and coherent groups
 
+**Subsequent accepted refinement:** [ADR 0022 / B02-R01 A](0022-receiver-verified-notes-role-admission.md) requires receiver-verified relevant notes structure plus exact body checks before durable note-body retention. The B02 comparison below is historical; B02-R02 resource policy is next, while exact proof grammar, B03 completeness and GCTX-M10 remain open.
+
 - **Decision ID:** B01-R06; **owner choice: Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #61 / ADR 0020](https://github.com/TakashiSasaki/git-repo-db/pull/61), verified HEAD `d12e54b114b48167898ee6e9789d0ec9d63b60fe`, branch `docs/adr-0020-competing-notes-member-claims`. This is its direct documentation-only successor, not a sibling or an implementation PR.
 - **Inherited decisions:** ADR 0014–0020, KEY-P01 and GCTX-M01–M09. Proposed [PR #52 / ADR 0011 governance](https://github.com/TakashiSasaki/git-repo-db/pull/52) remains unadopted.
@@ -76,7 +78,7 @@ Receiver-local verification is **separate immutable evidence referring to the ex
 
 | Accepted decision | Preserved constraint |
 | --- | --- |
-| ADR 0014 / GCTX-S01 | History/structure/notes catalog; no ordinary file-body archive, including in keys, evidence, Exchange staging or Search. B02 still decides note-role body admission |
+| ADR 0014 / GCTX-S01 | History/structure/notes catalog; no ordinary file-body archive, including in keys, evidence, Exchange staging or Search. ADR 0022 / B02-R01 A fixes required receiver-verified structural role evidence; B02-R02 resources and exact proof grammar remain open |
 | ADR 0015 / B01-R01 | All observable `refs/notes/*` plus explicit additional refs; selection alone is not notes proof |
 | ADR 0016 / B01-R02 | Genuine repeated observations remain separate; replay preserves original capture |
 | ADR 0017 / KEY-P01 | Direct semantic PK and matching full FKs; no storage-only row surrogate across stores |
@@ -112,12 +114,12 @@ No contradiction requiring a prior decision reversal was identified. Wide keys a
 12. Same-coordinate inconsistent values retain genuine attribution or fail explicitly when unidentifiable; no source-coordinate fabrication or capture rebinding.
 13. Hash/index collisions trigger full component comparison; no digest-only authoritative PK/FK or exported sender-local row key.
 14. Core-only metadata backup/restore/Exchange preserves keys and alternatives without Context, Git bodies or mandatory API originals; Operational/Search rebuild loses no authoritative evidence.
-15. Same file/note nominal OID stays one identity, but no body is retained by a claim key or generic upload flag. B02 admission remains required.
+15. Same file/note nominal OID stays one identity, but no body is retained by a claim key or generic upload flag. ADR 0022 / B02-R01 structural role evidence and exact body checks remain required.
 16. Key design cannot clear a damaged physical instance, reduce CAS-41 quarantine counts or weaken M06–M09 byte checks.
 
-## 6. Next blocking owner choice: B02 note-body retention admissibility (OPEN)
+## 6. Historical B02 role-admissibility comparison; Option A now accepted by ADR 0022
 
-**Which evidence is sufficient to retain supplied blob bytes in the Git notes role?** This is separate from accepting source-attributed metadata, checking a blob's own OID, and B03 list completeness. No option below is accepted by this ADR.
+**Which evidence is sufficient to retain supplied blob bytes in the Git notes role?** This is separate from accepting source-attributed metadata, checking a blob's own OID, and B03 list completeness. The owner subsequently selected **A**, fixed as **B02-R01 by ADR 0022**. The unselected B/C options below remain historical, not body-admission alternatives still available to implementers.
 
 Example: K reports `refs/notes/review`, target C1 and note N1. N1's own bytes/OID can be checked, but the receiver has not checked a Git notes root/tree path establishing C1→N1. Is the reported association enough for durable retention? Ordinary target file bytes remain excluded under every option.
 
@@ -125,10 +127,10 @@ Example: K reports `refs/notes/review`, target C1 and note N1. N1's own bytes/OI
 - **B — Accept a sufficiently attributed typed source report as role evidence:** require actual Capture/ref/target/note/provenance and locally validate the supplied blob, retaining the association as reported/unverified. **Pros:** permits notes-body preservation from API/Exchange reports without root/tree proof. **Cons:** a false typed report could admit arbitrary ordinary file data; source authenticity/eligibility must be specified, and metadata attribution is not structural proof. A simple caller `is_note` flag is insufficient even here.
 - **C — Two explicitly distinguished evidence tiers:** A by default; separately allow B only for owner-selected authenticated/trusted sources and mark the admitted role basis accurately. **Pros:** supports selected providers while retaining explicit evidence levels. **Cons:** introduces trust configuration, provenance-preserving Exchange and policy-change questions; it cannot make source assertions receiver-verified or delete already admitted Core facts on later distrust.
 
-Recommendation **A** concerns the required strength of role evidence only. It does not fix the exact fanout/path/mode grammar, a maximum body size, per-capture budgets, traversal limits, binary decoding, completeness B03, physical GC or retention cancellation. Empty/binary notes, unknown/unavailable targets, same-OID file/note reuse and direct-tree roots must remain expressible. Resource-limit behavior must report honest metadata/availability and never silently truncate or disguise durable file-body staging; its detailed policy is subsequent B02 work.
+Accepted **A / ADR 0022** fixes the required strength of role evidence only. It does not fix the exact fanout/path/mode grammar, a maximum body size, per-capture budgets, traversal limits, binary decoding, completeness B03, physical GC or retention cancellation. Empty/binary notes, unknown/unavailable targets, same-OID file/note reuse and direct-tree roots must remain expressible. Resource-limit behavior must report honest metadata/availability and never silently truncate or disguise durable file-body staging; its detailed policy is the next **B02-R02** choice in ADR 0022.
 
 ## 7. Authorization and verification boundary
 
-Owner accepted **B01-R06 A** after B01-R01 B, R02 B, R03 D-1, R04 A and R05 A. This PR fixes that design only and presents B02 for a separate owner decision. Prior alternatives remain historical; none is implemented.
+Owner accepted **B01-R06 A** after B01-R01 B, R02 B, R03 D-1, R04 A and R05 A. This ADR fixes that design; the owner subsequently selected **B02-R01 A**, fixed separately by ADR 0022. Prior alternatives remain historical; none is implemented.
 
 Only Markdown design/agent/index/transition guidance changes are authorized. No Python/application code, SQL/DDL, schema labels, executable tests, workflows, dependencies, source acquisition, real-catalog mutation or migration, deployment, release, implementation, merge or auto-merge is authorized. Static document checks and independent design review are distinct from the future product cases above; no runtime or hosted-CI success is implied. No reusable procedural skill is added for this one design choice.

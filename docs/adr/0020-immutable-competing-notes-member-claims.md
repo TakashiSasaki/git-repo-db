@@ -11,7 +11,7 @@ refines:
 
 # ADR 0020: Preserve conflicting Git notes member reports as immutable attributed alternatives
 
-**Subsequent accepted refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) fixes direct semantic composite claim/group PKs and matching FKs using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance. Whole-group membership/scope is part of group identity; no surrogate or digest replaces it. B02 note-body admissibility is the next owner blocker; B03 and GCTX-M10 remain open.
+**Subsequent accepted refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) fixes direct semantic composite claim/group PKs and matching FKs using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance. Whole-group membership/scope is part of group identity; no surrogate or digest replaces it. B02-R01 role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 resource policy is next; B03 and GCTX-M10 remain open.
 
 - **Decision ID:** B01-R05; **owner choice: Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #60 / ADR 0019](https://github.com/TakashiSasaki/git-repo-db/pull/60), HEAD `c1c5bf580bdb0383ed9b5df613b73c70753f73d9`; design-only, no implementation/merge. Inherits ADR 0014–0019, KEY-P01 and GCTX-M01–M09.
@@ -31,7 +31,7 @@ For an existing immutable notes-ref Capture identified directly by `(capture_ori
 
 **MUST NOT:** use this member-claim policy to redefine a Capture's immutable origin UUID, repository, exact notes-ref name, original root identity or source attribution. A sender reusing a Capture key with a different repository/ref/root/origin is an **identity or provenance violation**, which must fail closed under capture admission rules. A UUID alone neither authenticates the sender nor turns a claim into byte-verified Git truth.
 
-**No other permission implied:** neither a reported note OID nor a conflict grants access to ordinary repository-file raw blob storage. Notes-content body admission still requires separate role evidence (ADR 0014/B02) and actual CAS/OID checks (GCTX-M05–M09). Metadata disagreement is **not** physical CAS corruption and does not increase CAS-41 quarantine counts.
+**No other permission implied:** neither a reported note OID nor a conflict grants access to ordinary repository-file raw blob storage. Notes-content body admission still requires receiver-verified structural role evidence (ADR 0022 / B02-R01) and actual CAS/OID checks (GCTX-M05–M09). Metadata disagreement is **not** physical CAS corruption and does not increase CAS-41 quarantine counts.
 
 ## 2. GCTX-M03/GCTX-M04/GCTX-M01 and KEY-P01 reconciliation
 
@@ -68,7 +68,7 @@ Exact replay of the same source-attributed assertion must remain idempotent. A d
 
 **Accepted B01-R06 A / ADR 0021:** use the actual Capture UUIDv4 pair, real typed relation/member slot, asserted value and genuine original provenance directly as composite PK/FK components. Coherent group identity includes its entire immutable typed membership and scope. Exact source-attributed replay deduplicates; different genuine evidence remains distinct. Missing information uses truthful typed states, never fabricated ordinals/offsets. A same-coordinate inconsistent input without sufficient genuine identity fails closed rather than acquiring invented evidence. Hash-only keys and new per-claim occurrence IDs are not selected.
 
-The role/provenance gate for retaining **note body bytes** and resource limits remain **B02**, list/ref-inventory completeness remains **B03**, issuer-authentication/Exchange/backup fences and concrete DDL remain future contracts.
+The required structural role-evidence strength for retaining **note body bytes** is fixed by **ADR 0022 / B02-R01 A**; resource policy and exact proof grammar remain further **B02** work, list/ref-inventory completeness remains **B03**, issuer-authentication/Exchange/backup fences and concrete DDL remain future contracts.
 
 ## 5. Required future adversarial tests (NOT executed)
 
@@ -96,7 +96,7 @@ The role/provenance gate for retaining **note body bytes** and resource limits r
 - **B — Canonical typed assertion hash:** derive a fixed digest of the full source-attributed typed statement and scope. Pros: compact and deterministic; cons: canonical encoding/version, collision rules, false collapsing of distinct evidence with equal content, and hash alone proves no origin.
 - **C — Separate genuinely issued assertion-occurrence UUID:** only if source actually identifies a claim occurrence; pros: straightforward replay/Exchange, cons: another issuer/trust protocol, IDs unavailable in normal Git reads, and serious risk of disguising a forbidden surrogate under KEY-P01.
 
-The owner subsequently selected **B01-R06 Option A**, fixed by [ADR 0021](0021-direct-semantic-notes-claim-group-keys.md). The comparison above is historical, not an open choice. The accepted key/equality contract preserves B01-R04's compatible monotonic facts, B01-R05's competing alternatives and GCTX-M03 atomic groups. **B02 note-body retention admissibility** is the next owner blocker; B03/GCTX-M10 remain separately open.
+The owner subsequently selected **B01-R06 Option A**, fixed by [ADR 0021](0021-direct-semantic-notes-claim-group-keys.md). The comparison above is historical, not an open choice. The accepted key/equality contract preserves B01-R04's compatible monotonic facts, B01-R05's competing alternatives and GCTX-M03 atomic groups. **B02-R01 role-evidence strength** is fixed by ADR 0022; **B02-R02 resource policy** is the next owner blocker; B03/GCTX-M10 remain separately open.
 
 ## 7. Design-only authorization
 

@@ -10,7 +10,7 @@ refines:
 
 # ADR 0017: Prefer domain primary keys; prohibit storage-only surrogates
 
-**Current refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) accepts direct semantic composite claim/group keys using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance, without surrogates. B02 note-body admission, B03 completeness, GCTX-M10 and concrete grammar/DDL/trust remain open; earlier choices below retain their historical scope.
+**Current refinement:** [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) accepts direct semantic composite claim/group keys using the actual Capture UUIDv4 pair, typed slot, asserted value and genuine provenance, without surrogates. B02-R01 structural role-evidence strength is fixed by [ADR 0022](0022-receiver-verified-notes-role-admission.md); B02-R02 resource policy, exact proof grammar, B03 completeness, GCTX-M10 and concrete DDL/trust remain open; earlier choices below retain their historical scope.
 
 - **Decision ID:** KEY-P01 (repository-wide primary/foreign-key policy).
 - **Owner directive:** For the entire future design, do not introduce surrogate keys. Prefer real natural/domain identities and their composite keys over extra row identifiers.
@@ -74,7 +74,7 @@ If the owner's intended prohibition also literally forbids **all newly generated
 | GCTX-M08/M09 | Distinct immutable physical instances with evidence-derived eligible-set selection. A real per-copy domain identity is required; its format is still open, with no extra storage-only surrogate |
 | ADR 0003 | Strictly append-only Git Core and Context independence. No UPDATE, DELETE, REPLACE, Core GC or generic Publication |
 | Other accepted rules | Permanent repository UUIDv4, Source known-positive, five-column/latest-observation Coverage, Unix epoch `_us`, NO_INDEPENDENT_PUBLICATION, CAS-41, ADR 0001, durable Context and derived Operational/Search |
-| Still open | B01-R04 compatible monotonic fact admission fixed by ADR 0019; B01-R05 competing immutable member reports fixed by ADR 0020; B01-R06 direct semantic keys fixed by ADR 0021; origin authentication and clone/fork identity lifecycle detail, B02 note-body admission/resources, B03 completeness, GCTX-M10 quarantine, exact DDL, cross-store fences/backups and Exchange |
+| Still open | B01-R04 compatible monotonic fact admission fixed by ADR 0019; B01-R05 competing immutable member reports fixed by ADR 0020; B01-R06 direct semantic keys fixed by ADR 0021; origin authentication and clone/fork identity lifecycle detail, B02-R01 role-evidence strength fixed by ADR 0022; B02-R02 resources and exact proof grammar open, B03 completeness, GCTX-M10 quarantine, exact DDL, cross-store fences/backups and Exchange |
 
 A key policy is not a substitute for provenance/trust, verification, integrity, exact source attribution or Exchange idempotency.
 
@@ -108,7 +108,7 @@ No compatibility shim or temporary promise to keep old surrogate columns is nece
 11. An entity that cannot be distinguished using an actual domain contract triggers design review, not a silent auto-increment.
 12. Core and Context stay separate, physical integrity/CAS-41 checks remain and omitted ordinary file bytes are not corruption.
 
-## 6. Subsequent B01-R03 D-1, B01-R04 A, B01-R05 A, B01-R06 A accepted; next B02; implementation and merge forbidden
+## 6. Subsequent B01-R03 D-1, B01-R04 A, B01-R05 A, B01-R06 A accepted; next B02-R02; implementation and merge forbidden
 
 [ADR 0018 / B01-R03](0018-notes-capture-uuidv4-composite-identity.md) accepts **D-1**: direct **`(capture_origin_uuidv4,capture_uuidv4)`** composite PK/FK, both UUID version 4. Each genuine origin/capture occurrence has its semantic identity; exact retransmission retains the pair, and no receiver-local row surrogate is permitted. The earlier B01-R03 B proposal (receiver-local surrogate) stays disallowed. [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) now fixes append-only admission of compatible new facts/groups and exact replay under the same capture. [ADR 0020 / B01-R05](0020-immutable-competing-notes-member-claims.md) accepts immutable competing reported member alternatives and derived conflicts; [ADR 0021 / B01-R06 A](0021-direct-semantic-notes-claim-group-keys.md) fixes direct semantic claim/group keys and replay equality. No generic UUID-as-natural-key exception is implied for unrelated domain tables.
 
