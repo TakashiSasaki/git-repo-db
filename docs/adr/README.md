@@ -2,7 +2,7 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
-**Latest scope: [ADR 0014 / GCTX-S01](0014-history-and-notes-catalog-without-file-archive.md).** The product does not archive ordinary repository-file blob bodies. It retains Git metadata, commit/tree/tag representations when acquired, and purpose-bound Git notes content. Notes are blobs at the Git object layer, so a blanket blob ban is incorrect. Earlier raw-body admission/repair decisions apply only to retained metadata/notes and legacy obligations, not a general file-archive feature. GCTX-M10 remains unresolved.
+**Latest product scope: [ADR 0014 / GCTX-S01](0014-history-and-notes-catalog-without-file-archive.md).** The product does not archive ordinary repository-file blob bodies. It retains Git metadata, commit/tree/tag representations when acquired, and purpose-bound Git notes content. Notes are blobs at the Git object layer, so a blanket blob ban is incorrect. [ADR 0015 / B01-R01](0015-automatic-git-notes-ref-discovery.md) fixes automatic notes namespace discovery plus explicit additional ref names, **not** note-body admission or complete enumeration. Earlier raw-body admission/repair decisions apply only to retained metadata/notes and legacy obligations. B01 observation identity and GCTX-M10 remain unresolved.
 
 ## Accepted Records
 
@@ -20,10 +20,11 @@ Read the current scope before implementation. This index describes accepted targ
 | [0010](0010-operation-scoped-cas-physical-integrity.md) | GCTX-M07: operation-scoped physical integrity | 2026-10-15 | Actual allowed-body output verified; whole repository restoration is out of scope |
 | [0012](0012-append-only-multiple-cas-physical-instances.md) | GCTX-M08: append-only physical recovery | 2026-10-15 | Retained bodies and legacy obligations; no general blob archival API |
 | [0013](0013-deterministic-cas-instance-eligibility.md) | GCTX-M09: evidence-derived candidate selection | 2026-10-15 | Retained bodies; GCTX-M10 quarantine/count predicate still open |
-| [0014](0014-history-and-notes-catalog-without-file-archive.md) | GCTX-S01: history/structure/notes catalog, no ordinary file archive | 2026-10-15 | Accepted scope revision; no implementation or migration yet |
+| [0014](0014-history-and-notes-catalog-without-file-archive.md) | GCTX-S01: history/structure/notes catalog, no ordinary file archive | 2026-10-15 | Accepted scope revision; notes ref discovery refined by 0015 |
+| [0015](0015-automatic-git-notes-ref-discovery.md) | B01-R01: auto-discover `refs/notes/*` and explicitly nominated notes refs | 2026-10-15 | Accepted discovery policy; observation identity B01-R02, B02 resource/admission and B03 completeness still open |
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
 
-**Concurrent allocation:** ADR 0011 is reserved by proposed [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52). Its policy/templates are not adopted or merged here. ADR 0014 is allocated after accepted ADR 0013; the shared index and AGENTS.md changes require reconciliation during a later explicitly authorized sibling-stack integration. No ADR is deleted and no historical decision ID is reused.
+**Concurrent allocation:** ADR 0011 is reserved by proposed [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52). Its policy/templates are not adopted or merged here. ADRs 0014 and 0015 follow accepted ADR 0013; the shared index and AGENTS.md changes require reconciliation during a later explicitly authorized sibling-stack integration. No ADR is deleted and no historical decision ID is reused.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.

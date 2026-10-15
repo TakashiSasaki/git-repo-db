@@ -55,7 +55,7 @@ A changing notes ref and later removal/rewrite do not erase previously observed 
 
 Notes can contain arbitrary binary bytes, and a single blob OID can be used both as ordinary file content and as a note body. Preserve one nominal OID and separate roles; do not create contradictory duplicate Git identities. Retention in the demonstrated note role does not re-enable a general file archive API. Conversely, it is impossible to guarantee that no retained annotation ever has the same bytes as a repository file. This is a **product-purpose boundary**, not a proof that arbitrary binary data cannot occur in notes.
 
-The supported notes-ref discovery scope, resource limits and admission proof grammar still need concrete design. Do not invent a maximum size, assume all notes are UTF-8/small, silently truncate an accepted note, or recursively retain every blob reachable from an arbitrary notes-like ref. Preserve the exact captured bytes where claimed; decoded display/search is separately attributed.
+[ADR 0015 / B01-R01](0015-automatic-git-notes-ref-discovery.md) now fixes **automatic discovery of all observed `refs/notes/*` refs plus explicitly nominated additional ref names**. The exact observation/capture identity (B01-R02), resource limits and note-body admission proof grammar still need concrete design. Do not invent a maximum size, assume all notes are UTF-8/small, silently truncate an accepted note, or recursively retain every blob reachable from an arbitrary notes-like ref. Preserve the exact captured bytes where claimed; decoded display/search is separately attributed.
 
 ## Precise supersession and preserved contracts
 
@@ -88,7 +88,7 @@ Future product tests must cover excluded ordinary blob bytes, note-role admissio
 
 A disposable upstream-Git fixture was run during this design work using Git 2.47.3. It confirmed: commit/tree/annotated-tag native types; note content is `blob`; a notes ref may directly reference a tree; binary note bytes round-trip unchanged; one blob OID may be used as both a file and a note. It did not execute `git-repo-db`, production DDL, migrations, remote collection or any runtime acceptance suite.
 
-Still open: exact notes-ref selection and resource limits, detailed attribution/verification grammar, physical table layout and instance keys, GCTX-M10 quarantine lifecycle/count, append-only revision/fences, cross-store transactions and backup pairing, Exchange wire evolution, and GC-03/GC-04 for Context text. Temporary inspection of ordinary file bytes is not required or newly authorized as a product feature; any later verifier-only path must explicitly distinguish observed-and-not-retained evidence from historical retained-byte admission.
+Still open: B01-R02 observation/capture identity, exact notes-ref inventory snapshot/fencing and resource limits, detailed attribution/verification grammar, physical table layout and instance keys, GCTX-M10 quarantine lifecycle/count, append-only revision/fences, cross-store transactions and backup pairing, Exchange wire evolution, and GC-03/GC-04 for Context text. Temporary inspection of ordinary file bytes is not required or newly authorized as a product feature; any later verifier-only path must explicitly distinguish observed-and-not-retained evidence from historical retained-byte admission.
 
 ## References and work boundary
 

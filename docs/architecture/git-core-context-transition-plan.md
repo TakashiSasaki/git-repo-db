@@ -1,6 +1,6 @@
 # Transition plan: Git history, structure and notes catalog without file archival
 
-**Accepted target scope:** [ADR 0014 / GCTX-S01](../adr/0014-history-and-notes-catalog-without-file-archive.md).
+**Accepted target scope:** [ADR 0014 / GCTX-S01](../adr/0014-history-and-notes-catalog-without-file-archive.md), refined for notes-ref discovery by [ADR 0015 / B01-R01](../adr/0015-automatic-git-notes-ref-discovery.md).
 **Design base:** PR #54, `0301fcc8aeef427e2b9e2a3197a4ed993dcdf657`.
 **Implemented source format:** Three-Store Core 21 / Operational 1 / Search 1. No implementation, schema version or runtime change is made by this plan.
 
@@ -61,7 +61,7 @@ Read source metadata without content filters that manufacture different object b
 
 Transport may make it impossible to avoid every incidental input byte; this decision excludes **durable product archival**, not all transient network buffers. Any incidental ordinary body must not be committed to authoritative tables, replay logs, long-lived caches, failed-admission storage or a user-visible retrieval service. The concrete acquisition adapter must expose and bound such behavior. A new transient file-body verifier is not selected or necessary here.
 
-Notes import needs explicit supported namespace discovery, root/capture provenance, fanout-path interpretation, binary-safe content and resource limits. A notes-tree entry qualifies as annotation only through the accepted notes mapping semantics, not because a filename or ref contains the word `notes`. Arbitrary files in a notes-like tree, malformed names and unsupported modes cannot automatically authorize blob archival. API-reported notes remain attributed reports when the exact Git association is not verified.
+Notes import uses the **accepted B01-R01 selector**: enumerate all observable `refs/notes/*` names (including nested suffixes), and add explicitly nominated additional notes ref names. Scope enumeration to the actual repository/source observation; absent local refs do not prove absent remote refs, and selecting a ref is not proof of a notes mapping or permission to archive arbitrary blobs. The **B01-R02 durable observation identity**, root/capture provenance, fanout-path interpretation, binary-safe content and resource limits remain open. A notes-tree entry qualifies as annotation only through the accepted notes mapping semantics, not because a filename or ref contains the word `notes`. Arbitrary files in a notes-like tree, malformed names and unsupported modes cannot automatically authorize blob archival. API-reported notes remain attributed reports when the exact Git association is not verified.
 
 A source may supply an empty note, a binary note, a huge note, a note about an unavailable target, or the same note OID under multiple namespaces. Keep these distinctions; do not silently strip whitespace, decode destructively, truncate or coalesce targets. Hard resource limits and namespace defaults remain an explicit design question, not guessed acceptance conditions.
 
@@ -80,7 +80,7 @@ Search remains reproducible from appropriate canonical stores. Index commit/tag 
 | Stage | Dependencies | Deliverable |
 | --- | --- | --- |
 | D-Scope | Existing design stack through PR #54 | ADR 0014 and this scope/transition map, documentation only |
-| D-Notes | D-Scope | Final typed notes identity/namespace/admission/limits, retained-representation layout and necessary incomplete-scope contracts |
+| D-Notes | D-Scope, ADR 0015 / B01-R01 | Final capture/observation identity B01-R02, typed notes association and body admission, resource limits, retained-representation layout and B03 incomplete-scope contracts; do not reopen automatic refs/notes discovery |
 | I-Boundary | D-Scope, relevant D-Notes choices | Complete table/call-site audit and tests prohibiting ordinary blob archival; no real-data migration |
 | I-Core | I-Boundary | Nominal OIDs, claims, ordered relations, refs, commit/tree/tag and notes; append-only checks and allowed-body integrity |
 | I-Context | Core identity contract | Existing durable Context separation and known-positive Source semantics; may proceed in parallel where independent |
