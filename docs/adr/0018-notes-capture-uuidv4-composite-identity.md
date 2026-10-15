@@ -71,13 +71,14 @@ This ADR **does** decide:
 - An incoming equal capture key cannot overwrite accepted immutable Core repository/ref/root/provenance/notes evidence or be treated as intrinsically trusted.
 - Whether a note body was acquired and byte-verified is independent of the capture UUID, and never authorizes ordinary file-blob archival.
 
-This ADR deliberately **does not** decide:
+**Subsequently fixed by [ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md), not by the original B01-R03 selection:** independent compatible, source-attributed immutable facts and separately atomic coherent relation groups can be appended under the same Capture; exact repeated typed facts are idempotent. Existing groups are never mutated, and partial groups are not silently merged into a complete list.
 
-- Whether/how *new distinct immutable member facts* arriving later with the **same capture key** extend its first accepted partial observation, or instead must be staged, partitioned, or rejected.
-- What constitutes a member-level exact duplicate, a contradictory assertion of the same member, or a new independent observation with ambiguous source metadata. Later delivery of an **actual new observation** MUST use a new capture UUID, but a partial transfer of a **single original observation** MUST NOT silently become an invented separate observation.
-- Whether non-conflicting partial Exchange deliveries commit in any order, whether a terminal complete claim can be promoted, and which source/evidence proves completeness; these are B01-R04 and B03 decisions.
-- The exact error/report/immutable diagnostic presentation for conflicting repeated capture keys, durable origin registry layout, producer takeover/clone security, wire serialization, schema constraints and transaction fences; no overwriting, false success or fabricated trusted identity is allowed meanwhile.
-- B02 notes content admission/budget and GCTX-M10 CAS-41 retirement/count predicate.
+**Still not decided by ADRs 0018–0019:**
+
+- **B01-R05:** exact admission/retention/reporting of incompatible same-slot member claims, including conflict diagnostics and preventing a forged sender key from overriding captured identity.
+- **B03:** exact complete/partial/known-empty group/list evidence and whether/when a separately supported complete-scope claim can be admitted; no generic mutable completeness promotion.
+- Exact semantic identity/duplicate grammar for member facts and new coherent groups, origin authentication/registry, producer takeover/clone security, Exchange wire serialization, schema constraints, locking/read fences and transaction protocols.
+- **B02:** notes content role admission and budget; **GCTX-M10:** active physical quarantine/disposition predicate.
 
 ## 4. Worked cross-catalog example
 
@@ -128,15 +129,17 @@ This is a **capture-specific UUIDv4 issuance rule**, not an authorization to add
 7. Present a self-proclaimed verified Provider root with correct UUID pair but no bytes; retain only appropriately qualified report, not byte-verified canonical truth.
 8. Let a local Git-only adapter originate captures with no Context or registered remote Provider IDs; the issued origin/capture pair and provenance remain Core-owned.
 9. Recreate Operational/Search or restore a metadata-only Core: identities and valid accepted capture observations remain intact.
-10. Crash/retry after generating an origin/capture token but before a durable accepted capture is established; do not silently fabricate a duplicate accepted observation on retry. Precise allocation/commit/retry sequencing to be tested after B01-R04 and transaction design.
+10. Crash/retry after generating an origin/capture token but before a durable accepted capture is established; do not silently fabricate a duplicate accepted observation on retry. ADR 0019 fixes monotonic immutable fact/group retries; precise first-admission and transaction fencing still require implementation design.
 11. Attempt to use UUID sorting/receipt ordering to declare the current notes-ref root. This violates established provenance/read policy.
 12. Inject a copied catalog with accidentally shared issuer state: independent captures must not be mislabeled as the same actual capture when conflicting keys appear. Exact clone-origin policy remains a separate implementation contract.
-13. Supply partial mapping K1 and later more K1 members: classify according to the subsequent B01-R04 admission policy, without modifying earlier Core rows or generating fake K2.
+13. Supply partial mapping K1 and later more K1 members: ADR 0019 / B01-R04 admits compatible new typed immutable facts/groups under K1, deduplicates exact replay, and never modifies an already accepted group or invents K2.
 14. Feed a note-to-file relation referencing a normal blob: no file-body archival occurs just because the note capture has a valid UUID pair.
 15. Independently validated Git note bytes remain under CAS-41/physical instance checks; UUIDv4 is not a digest or a physical-health certificate.
 16. Confirm B02 note limits, B03 exact completion evidence and GCTX-M10 remain pending and are not accidentally decided via an ID schema.
 
-## 7. Next unresolved blocking question: B01-R04
+## 7. Subsequent owner decision: B01-R04 Option A accepted; next B01-R05
+
+[ADR 0019 / B01-R04](0019-monotonic-notes-capture-fact-admission.md) accepts **Option A**: compatible, source-attributed typed facts/coherent new immutable groups can be appended under the original capture UUIDv4 pair; exact repeated accepted facts are idempotent. Do not modify previously accepted groups, infer complete coverage by union, or replace conflicting claims. How eligible contradictory member reports are persisted/represented remains B01-R05. The original A/B/C comparison below is historical, not an unselected B01-R04 question.
 
 **How should multiple partial deliveries, replay of accepted fragments and conflicting facts for the *same* `(origin_uuidv4, capture_uuidv4)` be admitted to append-only Core?**
 
@@ -144,7 +147,7 @@ This is a **capture-specific UUIDv4 issuance rule**, not an authorization to add
 - **B — Single atomic frozen capture snapshot.** Stage incomplete messages outside authoritative Core and admit one fixed capture representation only when final/ready (or admit a deliberately partial frozen result and refuse later extension under the same key). Benefits: simple once-admitted immutability and dedup; costs: delayed partial Core usability and potentially rejecting genuine late-arriving same-capture evidence, contrary to the spirit of metadata-only acceptance.
 - **C — Immutable named fragments within the same capture.** Each separately issued genuine fragment has its own domain-level identity/evidence under the parent capture, with out-of-order/idempotent fragment handling. Benefits: explicit transfer chunk boundaries and provenance; costs: additional justified domain identities, fragmentation/consistency and completion interpretation complexity. Fragments must not become a generic Publication or a storage-only surrogate.
 
-No alternative is selected by B01-R03. Each must preserve a stable capture identity across partial deliveries; never fabricate an independent capture for a retry, silently overwrite contradictory evidence or use a generic successful batch seal. B03 determines precise completeness evidence; B02 determines notes body permission and resource limits.
+ADR 0019 fixes B01-R04 Option A. Retain a stable capture identity across compatible partial deliveries; never mutate prior coherent groups, fabricate an independent capture for retry, silently overwrite contradictory evidence or use a generic successful batch seal. B01-R05 decides conflicting member reports; B03 determines precise completeness evidence; B02 determines notes body permission and resource limits.
 
 ## 8. Design-only permissions and references
 
