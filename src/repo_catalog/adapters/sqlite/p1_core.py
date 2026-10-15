@@ -70,14 +70,18 @@ def _decoded_read(method):
 
     @wraps(method)
     def decoded(self, *args, **kwargs):
+        prior_depth = getattr(self, "_typed_read_depth", 0)
+        self._typed_read_depth = prior_depth + 1
         try:
             return method(self, *args, **kwargs)
-        except (json.JSONDecodeError, UnicodeError) as error:
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
             self._integrity_stop((method.__name__, "stored-decode", str(error)))
         except sqlite3.OperationalError as error:
             if "Could not decode to UTF-8" in str(error):
                 self._integrity_stop((method.__name__, "stored-utf8"))
             raise
+        finally:
+            self._typed_read_depth = prior_depth
 
     return decoded
 
@@ -222,7 +226,12 @@ class Core:
             if getattr(error, "sqlite_errorcode", None) in (
                 sqlite3.SQLITE_NOTADB,
                 sqlite3.SQLITE_CORRUPT,
+            ) or (
+                getattr(self, "_typed_read_depth", 0)
+                and str(error).startswith("Could not decode to UTF-8")
             ):
+                # A fixed typed query identified corruption. Publish before
+                # snapshot rollback/unwinding can admit another completion.
                 self._integrity_stop(("Core read", str(error)))
             raise
 

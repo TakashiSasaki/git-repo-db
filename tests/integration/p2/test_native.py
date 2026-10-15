@@ -747,3 +747,42 @@ def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_synt
         c.read_metadata(incoming.oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_typed_utf8_corruption_persists_stop_before_snapshot_rollback(core):
+    from repo_catalog.domain.p1_core import NotesClaim
+    from tests.integration.p1.test_notes import mapping
+
+    c, path, repository = core
+    proof, _ = mapping(repository)
+    c.admit_notes_claim(
+        NotesClaim(proof.capture, proof.target, proof.note, provenance())
+    )
+    db = sqlite3.connect(path)
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute("DROP TRIGGER p1_immutable_notes_claims_update")
+    db.execute("UPDATE notes_claims SET note=CAST(x'ff' AS TEXT)")
+    db.commit()
+    db.close()
+    rollback_stop_states = []
+
+    def trace(statement):
+        if statement == "ROLLBACK":
+            rollback_stop_states.append(
+                (path.parent / "p1-recovery-stop.json").exists()
+            )
+
+    c._db.set_trace_callback(trace)
+    with pytest.raises(CoreFailure) as error:
+        c.notes_projection(proof.capture, proof.target)
+    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert rollback_stop_states == [True]
+    assert not c._db.in_transaction
+
+
+def test_caller_text_encoding_error_is_not_stored_corruption(core):
+    c, path, _ = core
+    with pytest.raises(UnicodeEncodeError):
+        c.scalar(oid(), "unsupported-\udcff")
+    assert not (path.parent / "p1-recovery-stop.json").exists()
+    c.admit_object(oid())
