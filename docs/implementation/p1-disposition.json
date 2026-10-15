@@ -11525,7 +11525,7 @@
       }
     },
     "core": {
-      "ddl_sha256": "9e62ff460a14f051e57befc9c83b08aea0f6c6b9b0ade647c77464e7d0f2c54e",
+      "ddl_sha256": "039af0855aa9ed4610e29502c6285e45eae1d8a501f11aef1401d00f23e677ab",
       "tables": {
         "captures": {
           "columns": [
@@ -12221,7 +12221,7 @@
           ],
           "sql": "CREATE TABLE intrinsic_claims (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n field TEXT NOT NULL, value TEXT NOT NULL, provenance TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL,\n PRIMARY KEY(object_format,full_oid,field,value,provenance,physical_copy_uuidv4),\n FOREIGN KEY(object_format,full_oid,field,value,provenance) REFERENCES scalar_claims,\n FOREIGN KEY(object_format,full_oid,physical_copy_uuidv4) REFERENCES retained_metadata\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "intrinsic_claim_guard": "CREATE TRIGGER intrinsic_claim_guard BEFORE INSERT ON intrinsic_claims\nWHEN NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_claim(NEW.field,NEW.value,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'field outside checked intrinsic scope'); END",
+            "intrinsic_claim_guard": "CREATE TRIGGER intrinsic_claim_guard BEFORE INSERT ON intrinsic_claims\nWHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'\n OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_claim(NEW.field,NEW.value,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'field outside checked intrinsic scope'); END",
             "p1_immutable_intrinsic_claims_delete": "CREATE TRIGGER p1_immutable_intrinsic_claims_delete BEFORE DELETE ON intrinsic_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_intrinsic_claims_update": "CREATE TRIGGER p1_immutable_intrinsic_claims_update BEFORE UPDATE ON intrinsic_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
@@ -12405,7 +12405,7 @@
           ],
           "sql": "CREATE TABLE intrinsic_groups (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n relation TEXT NOT NULL, scope TEXT NOT NULL, status TEXT NOT NULL,\n membership TEXT NOT NULL, provenance TEXT NOT NULL, physical_copy_uuidv4 TEXT NOT NULL,\n PRIMARY KEY(object_format,full_oid,relation,scope,status,membership,provenance,physical_copy_uuidv4),\n FOREIGN KEY(object_format,full_oid,relation,scope,status,membership,provenance) REFERENCES relation_groups,\n FOREIGN KEY(object_format,full_oid,physical_copy_uuidv4) REFERENCES retained_metadata\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "intrinsic_group_guard": "CREATE TRIGGER intrinsic_group_guard BEFORE INSERT ON intrinsic_groups\nWHEN NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_group(NEW.object_format,NEW.relation,NEW.status,NEW.membership,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'relation outside checked intrinsic scope'); END",
+            "intrinsic_group_guard": "CREATE TRIGGER intrinsic_group_guard BEFORE INSERT ON intrinsic_groups\nWHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'\n OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_group(NEW.object_format,NEW.relation,NEW.status,NEW.membership,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'relation outside checked intrinsic scope'); END",
             "p1_immutable_intrinsic_groups_delete": "CREATE TRIGGER p1_immutable_intrinsic_groups_delete BEFORE DELETE ON intrinsic_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_intrinsic_groups_update": "CREATE TRIGGER p1_immutable_intrinsic_groups_update BEFORE UPDATE ON intrinsic_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
