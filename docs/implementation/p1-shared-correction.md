@@ -97,3 +97,44 @@ merge, Pages publication, production migration or real-catalog operation occurre
 
 Owner-level architectural blockers remain **0**: the defect contradicted an
 implementation guarantee, not two accepted architectural requirements.
+
+## Final shared corruption-validation correction
+
+A second High common defect was independently reproduced on committed combined
+source `a83a233f2e84053795c98a5c01f7c4b2e8be9d64` and on P3's source: actual
+persisted invalid UTF-8 in Provider configuration or a current field makes
+`PRAGMA integrity_check` raise `SQLITE_ERROR` from its semantic CHECK UDF. The
+old coordinator recognized only explicit corrupt/not-a-database codes or returned
+corruption rows, so this confirmed authoritative failure did not persist a stop.
+Two new real-storage regressions failed before correction. Read-only reviewers
+independently reproduced both Provider and field variants.
+
+The coordinator now translates observed persisted semantic-UDF/UTF-8 failures,
+SQLite corruption and authoritative read I/O faults into scoped corruption
+validation failures. It persists the existing catalog stop before releasing the
+initial read gate. Already pinned read capabilities immediately notify their
+owner before raising, including when the caller catches the error inside its
+snapshot. No new stop state, schema, identity or port is introduced. Incoming
+unit failures keep their existing treatment; cancellation, resource exhaustion,
+locking and capability failures do not falsely diagnose damaged storage. A real
+SQLite progress-handler cancellation proves that healthy validation can retry
+without a stop. Authoritative I/O faults follow ADR 0026's explicit requirement
+when storage prevents establishing required integrity.
+
+Final reviewed executable common source:
+`7ac94a9183eb18f54273fcaeb0a561b01d25048c`, tree
+`6905cd58843759333577adb6fe30dce4d2f9d25b`. Root selected/executed/reconciled
+**396 passing nodes**, zero failures/skips: 266 P1, 128 architecture-spike/audit
+and two installed distribution variants. Ruff lint/format, packaged fingerprints
+and full disposition audits pass. [Final receipt](p1-shared-validation-evidence.json)
+preserves exact commands, nodes and artifact hashes independently of the earlier
+390-node receipt. Independent cross-domain review passed all 51 coordination and
+new validation-stop cases, reran its actual corrupt-Provider probe, inspected the
+narrow classification/notification changes and reported no remaining material
+common finding. All earlier execution identities above remain historical.
+
+Both siblings consume this same reviewed common history. Additional production
+parser, typed persisted-row validation, physical-role binding and selected-body
+read corrections belong to their separately reviewed production implementations;
+the P1 reference parser is not relabeled as the full production parser. All work
+remains opt-in with the public Schema 21 initializer unchanged.
