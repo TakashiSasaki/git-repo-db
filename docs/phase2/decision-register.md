@@ -1,8 +1,8 @@
 # Phase 2 owner decision register
 
-**Policy status:** Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and **PF-P01–PF-P17 are accepted**. This register reconciles their scope; it does not make a new owner decision.
+**Policy status:** Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and **PF-P01–PF-P17** were accepted; the later [ADR 0003](../adr/0003-append-only-git-core-and-context-store.md) **now fixes a new target boundary** (append-only Git Core / durable Context / Operational / Search). ADR 0003 explicitly supersedes the incompatible physical-placement and full-backup assumptions of ADR 0002. This register reconciles the earlier Q/PF scope; it does not make an additional owner decision.
 
-**Implementation status:** Publication removal and the later Three-Store implementation have reached `main`. The inspected baseline is `fb3b1fb4d5e1436c58677d2e867708502fbbc64b` (Core Schema 21, Operational Schema 1, Search Schema 1). This is not a statement of full release acceptance or a new runtime test result.
+**Implementation status:** Publication removal and Three-Store implementation reached `main`. The status-audit baseline is `fb3b1fb4d5e1436c58677d2e867708502fbbc64b` (Core Schema 21, Operational Schema 1, Search Schema 1); this remains the *implemented* format at ADR 0003's decision point. **The four-store target is not implemented by this documentation PR.** This is not full release acceptance or a new runtime result.
 
 Read [No independent Publication](no-independent-publication-adr.md) for Q01–Q04 and [ADR 0002](../adr/0002-three-store-boundary-architecture.md) for the canonical PF-P01–PF-P17 decisions. The [documentation status audit](documentation-status-audit.md) records the evidence, remaining boundaries and reading rules for dated documents.
 
@@ -33,7 +33,7 @@ The old [pre-no-Publication questionnaire](decision-register-before-no-publicati
 | P2-Q10 / Q10-T | Existing Exchange checks retained; stronger guarantees deferred | Actual typed closure and current conflicts are handled without Publication. Stronger sender trust and richer disputed-ownership transfer remain separate extensions. |
 | P2-Q11 | Preservation/no-current-text-GC boundary settled | Keep genuine domain bytes and CAS-41; PF-P05 plans future manual text GC but authorizes no current deletion machinery. PF-P08/PF-P14 settle normal backup scope. |
 | P2-Q12 | Settled by PF-P04/PF-P06/PF-P07/PF-P11–PF-P13 | Dedicated Operational SQLite; best-effort same-Job resume; no cross-store atomic commit requirement; explicit corruption recovery; no automatic Job TTL. |
-| PF-P01–PF-P17 | Accepted; implementation integrated | [ADR 0002](../adr/0002-three-store-boundary-architecture.md) remains canonical. PF-P14–PF-P17 also settle Search separation, fallback, notification, explicit updates and creation/recovery. |
+| PF-P01–PF-P17 | Accepted earlier; implementation integrated | [ADR 0002](../adr/0002-three-store-boundary-architecture.md) records the implemented Three-Store baseline. **ADR 0003** supersedes its former physical domain allocation and full-catalog backup scope and adapts domain-specific Search fallback; preserve unaffected PF guarantees. |
 
 The blanket pause ended when the subsequent decisions were accepted. Conversely, **not every question embedded in old Q05–Q12 was resolved by those decisions**. Use the per-item scope below, not an umbrella "all resolved" statement.
 
@@ -116,6 +116,10 @@ This does not expand future text GC to Git bytes, evidence or quarantine, and gr
 Missing Operational DB is automatically created when needed. Corruption or foreign ownership is not silently overwritten; explicit administrator recovery includes deletion of a corrupt DB under a safe procedure. Existing Job records have no automatic TTL and may be explicitly cleaned up without invalidating domain facts.
 
 The former same-DB/separate-journal/fresh-scan choice is no longer open. Specific progress rows or retry algorithms are implementation details subject to the settled guarantees, not a new exact-resume promise. Search has a deliberately different explicit-creation lifecycle under PF-P14–PF-P17.
+
+## Subsequent Git Core / Context decision (2026-10-14)
+
+The [new accepted ADR 0003](../adr/0003-append-only-git-core-and-context-store.md) divides permanent Git facts (strict application-level append-only Git Core) from separately durable, updateable Provider/Source/PR/Issue/review text and metadata (Context). Operational and Search remain separate. **This is a new target architecture, not a claim that 70 Core tables have been moved.** Original Q01/Q02 latest-only and all other preserved contracts continue unless ADR 0003 explicitly narrows prior physical assumptions. GC-01/GC-02 conservative future manual-GC principles now concern Context text; Git Core has no admitted-fact GC. GC-03 mechanism depends on the final Context constraints; GC-04 remains undecided. See the [transition plan](../architecture/git-core-context-transition-plan.md).
 
 ## Recommended decision order and implementation impact
 

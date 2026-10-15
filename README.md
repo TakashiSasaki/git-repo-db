@@ -10,7 +10,8 @@ Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永�
 
 - **開発者ドキュメント**: [https://git-repo-db.moukaeritai.work/](https://git-repo-db.moukaeritai.work/)
 - **インタラクティブ スキーマビューアー**: [https://git-repo-db.moukaeritai.work/schema/viewer/](https://git-repo-db.moukaeritai.work/schema/viewer/)
-- **Three-Store Boundary (ADR 0002)**: [docs/adr/0002-three-store-boundary-architecture.md](docs/adr/0002-three-store-boundary-architecture.md)
+- **New accepted architecture (design-only, not yet implemented)**: [ADR 0003 — append-only Git Core + durable Context](docs/adr/0003-append-only-git-core-and-context-store.md); see [transition plan](docs/architecture/git-core-context-transition-plan.md).
+- **Currently implemented Three-Store baseline (ADR 0002)**: [docs/adr/0002-three-store-boundary-architecture.md](docs/adr/0002-three-store-boundary-architecture.md)
 - **サイト運用保守ガイド**: [docs/developer-site.md](docs/developer-site.md)
 
 ## 開発・導入

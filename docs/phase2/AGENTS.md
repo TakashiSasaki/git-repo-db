@@ -3,7 +3,7 @@
 The repository-root AGENTS.md remains applicable. For this directory, read the
 current `decision-register.md` and `documentation-status-audit.md`, then
 `no-independent-publication-adr.md` and `../adr/0002-three-store-boundary-architecture.md`
-for their accepted decisions before consulting older proposals or prototypes.
+for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read the [current ADR index](../adr/README.md) and [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md), including ADR 0003–0027 and their scoped replacements. ADR 0026 fixes recovery without quarantine/count/release; ADR 0027 fixes unauthenticated external-origin reports without application PKI/signatures. Unaffected Q/PF guarantees remain; target decisions do not certify their implementation.
 
 The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and binding
 **PF-P01–PF-P17**. Publication removal and Three-Store implementation are already
@@ -13,9 +13,10 @@ This document itself grants no merge, release, deployment or data-operation perm
 
 The old blanket pause on Q05–Q12 is superseded only within the explicit scope of
 later accepted decisions. Do not replace it with blanket approval of every old
-alternative. Core/Operational/Search placement, best-effort resume, Core-only
-backup, transport-owned HTTP caching, Job retention and Search lifecycle are
-settled. Stronger Exchange trust, additional Git interpretation policy, future
+alternative. The old Core/Operational/Search placement and Core-only full-backup assumption
+were settled in ADR 0002 **for the implemented baseline**, but are **superseded as
+future target architecture by ADR 0003**. Best-effort resume, transport-owned
+HTTP caching, Job retention and explicit Search lifecycle remain settled. Stronger Exchange trust, additional Git interpretation policy, future
 manual-GC rules and other residual boundaries are not approved by implication.
 Consult the register before calling a question either "resolved" or "unselected".
 
@@ -36,8 +37,13 @@ Keep latest-state contracts truthful: do not hide superseded values as generic
 history, infer deletion from incomplete scans, or rank domain values by parser
 version or receipt order. Preserve required scope/member/terminal/child evidence.
 Current evidence layout does not imply unlimited retention or deletion permission.
-CAS-41 remains established; CAS-76/CAS-77 need original-source clarification and
-must not be assigned guessed meanings or marked accepted.
+Preserve actual retained-byte/domain, database/manifest/identity and required
+Core+Context pairing validation. ADR 0026 retires the old CAS-41 active-quarantine
+count/order for the new target and requires immediate recovery on authoritative
+corruption; do not reintroduce that baseline mechanism through its old ID.
+Mutable Core revision updates likewise require the append-only-safe/fenced target
+replacement, without a counter-history authority. CAS-76/CAS-77 need original-source
+clarification and must not be assigned guessed meanings or marked accepted.
 
 For verified reusable audit/debugging lessons, consult and improve the relevant
 repository-local `.agents/skills/`. Keep execution receipts separate from skills;

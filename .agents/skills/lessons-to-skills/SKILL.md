@@ -1,11 +1,11 @@
 ---
 name: lessons-to-skills
-description: Capture reusable, verified engineering lessons as repo-local Agent Skills after repeated failed attempts, non-obvious review corrections, or difficult investigations. Use during debugging retrospectives and before handoff; prefer improving an existing skill.
+description: Capture verified reusable procedures as repo-local Agent Skills after repeated trial-and-error, recurring successful workflows, non-obvious review corrections, or difficult investigations. Use at stable checkpoints and before handoff, including repeated design-only ADR stack updates; prefer improving an existing skill.
 ---
 
 # Turn debugging lessons into reusable skills
 
-Use this procedure when a repeated failure, difficult investigation, or independently discovered defect produced a **verified and generalizable** technique other agents could reuse. Do not create a new skill for every test failure, private incident, speculative workaround, or ordinary one-off change.
+Use this procedure when repeated trial-and-error, a recurring successful workflow, a difficult investigation, or an independently discovered defect produced a **verified and generalizable** technique other agents could reuse. At stable checkpoints, actively assess and record that technique within the task's authorized scope instead of only proposing that someone remember it. Do not create a new skill for every test failure, private incident, speculative workaround, or ordinary one-off change.
 
 1. Search existing `.agents/skills/*/SKILL.md` descriptions and the current docs for the same procedure. Improve a matching skill instead of creating a near-duplicate.
 2. Establish evidence: exact observed symptom, root cause, successful correction or reliable diagnosis, verified commands and tests, affected environments, and a counterexample or exclusion. Attribute old results to their actual commit/tree; distinguish development checks from full release acceptance.
@@ -19,6 +19,8 @@ Use this procedure when a repeated failure, difficult investigation, or independ
 Reviewers inspecting a frozen read-only tree can recommend lessons but should not alter that tree. The implementing agent owns the subsequent skill edit and revalidation.
 
 The goal is to help the next agent avoid repeating the same failed investigation, **not** to store an exhaustive transcript.
+
+For repeated design-only ADR stack work, read [the verified stack-update procedure](references/design-only-adr-stack-updates.md). It covers live parent pinning, current-versus-historical decision reconciliation, avoiding stale patches after broad replacements, and binding documentation checks to the published feature tree. Use it when that workflow recurs; it is not ADR governance adoption or implementation/merge permission.
 
 ## Status-reconciliation lessons are scope-sensitive
 

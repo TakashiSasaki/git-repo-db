@@ -1,9 +1,11 @@
 ---
 name: three-store-invariants
-description: Maintain and verify architectural invariants across the Three-Store Boundary (Core, Operational, Search) in git-repo-db under ADR 0002. Use when debugging cross-store isolation, fail-closed cache GC under operational store loss, non-atomic split-write resumption, Core-only maintenance checks, search snapshot pinning, or search freshness fencing.
+description: Diagnose the implemented Schema 21 Three-Store baseline under ADR 0002, including cross-store isolation, cache GC, split-write resumption, Core-only maintenance and search fencing. For the newer Git Core/Context target, first apply the current ADR index and scoped replacements; baseline quarantine-count and full-backup recipes are not target requirements.
 ---
 
 # Three-Store Boundary Architectural Invariants (ADR 0002)
+
+**Applicability:** The concrete tables, methods and recipes below describe the **implemented Core Schema 21 / Operational 1 / Search 1 baseline**. For target work, read the [ADR index](../../../docs/adr/README.md) and [transition plan](../../../docs/architecture/git-core-context-transition-plan.md). [ADR 0003](../../../docs/adr/0003-append-only-git-core-and-context-store.md) separates independently durable Context from INSERT-only Git Core; [ADR 0014](../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md) excludes ordinary file-body archival. [ADR 0026](../../../docs/adr/0026-stop-salvage-restore-merge-after-corruption.md) replaces quarantine/count/release and same-DB continuation with immediate catalog recovery. [ADR 0027](../../../docs/adr/0027-unauthenticated-external-capture-origin-reports.md) fixes unauthenticated external-origin reports without application PKI/signatures. Preserve unaffected safety principles; do not copy superseded baseline mechanisms into the target or infer new execution permission from this skill.
 
 Under binding decisions PF-P01–PF-P17, `git-repo-db` enforces physical separation across three distinct SQLite stores:
 - **Core Store (`catalog.sqlite3`)**: Authoritative domain facts, entities, immutable observations, coverage claims, code listings, Git DAG and intrinsic structures, and Exchange staging.
@@ -62,9 +64,11 @@ If the Operational DB is lost or recreated, Operational mappings (`active_cache_
      }
      ```
    - Do not set `status = "failed"` on the overall check unless Core DB itself is corrupt.
-2. **Safe Restoration & CAS-41 Validation:**
+2. **Historical implemented restoration & CAS-41 recipe (not target requirements):**
    - Backup backs up Core DB (`catalog.sqlite3`) and records `quarantined_payload_count` in the manifest.
    - Restore validates `quarantined_payload_count` against the verified copy before diagnosis, rejects mismatches or malformed counts, restores Core DB only, and initializes fresh instance identities. Search DB is created only upon explicit `index rebuild`.
+
+   **Current target:** Retire the active-quarantine counter and pre-diagnosis comparison under ADR 0026. Preserve actual database, manifest, identity, retained-byte/domain and pairing validation. A Core-only backup is Git-only; full Context scope requires a consistent Core+Context pair. Authoritative corruption stops ordinary catalog use, preserves the source read-only and requires fresh verified restore plus validated salvage merge. No zero counter, sibling copy or diagnosis INSERT clears that stop.
 
 ---
 
@@ -138,7 +142,10 @@ During collection or Git acquisition, a process crashes after committing Operati
 
 ## 5. Verification Evidence & Test Reconciliation
 
-### Discrepancy Note & Cumulative Verification
+### Historical discrepancy note and cumulative verification
+
+The receipt text below is preserved from the implemented-baseline skill at [commit f5c92d0](https://github.com/TakashiSasaki/git-repo-db/commit/f5c92d0509284cb559c882e61c9703542c78257d). Its counts describe that historical report, not tests executed against a later design/integration HEAD. Consult exact-revision execution evidence before using it for acceptance.
+
 Earlier PR documentation stated "118 passed" across five suites listing:
 - 12 (`test_catalog3_cache.py`)
 - 11 (`test_catalog3_store.py`)
@@ -155,5 +162,5 @@ With the addition of targeted correctness and lifecycle tests for R1–R5:
 With the subsequent additions for F1–F4:
 - `test_search_index.py`: +4 nodes (`test_per_kind_freshness_and_aggregate_status`, `test_search_health_separated_from_operational_telemetry`, `test_rebuild_tolerates_job_bookkeeping_failures`, `test_rebuild_estimate_truthful_and_distinguished`) = **10** nodes.
 
-The full targeted integration suite now executes exactly **131** unique nodes:
+That historical report records a full targeted integration suite of **131** unique nodes:
 $$12 + 18 + 10 + 4 + 87 = 131\text{ passed}.$$
