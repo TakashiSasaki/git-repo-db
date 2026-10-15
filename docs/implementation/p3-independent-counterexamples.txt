@@ -1,0 +1,230 @@
+"""Independent review counterexamples, outside the production worktree."""
+import sqlite3
+
+import pytest
+
+from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.p1_context import CoverageClaim, CoverageScope, FieldCandidate, FieldClock, ResourceKey, canonical
+from repo_catalog.domain.production_context import CollectionObservation, ContextError, CoreReference, ResourceObservation, SourceInventory
+from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_coordination import CoordinationError
+
+REPO='9ebbe38a-f937-40e6-a99c-701835ebcf10'
+OTHER_REPO='a1a5dfd6-69a3-4274-bbc7-2e7f6bcd39a4'
+SERVICE='aad25448-03eb-4f83-a578-ceec84375b5a'
+OTHER_SERVICE='5b020945-03ed-4332-851d-d04726d6dc43'
+SOURCE='80f5c4f9-6d6b-4691-af3c-00ab02ad9f53'
+INSTANCE='14cc711a-9b43-4a6f-9c88-70efe24dc294'
+KEY=ResourceKey(SERVICE,'pull_request','7')
+PROVENANCE=canonical({'source':'provider.example','evidence':'collection-7'})
+
+@pytest.fixture
+def directory(tmp_path):
+ initialize(tmp_path/'context.sqlite3','context',REPO,INSTANCE)
+ with Context.transaction(tmp_path) as ctx:
+  ctx.provider(SERVICE,'github');ctx.provider(OTHER_SERVICE,'github');ctx.repository(REPO);ctx.repository(OTHER_REPO);ctx.source(SOURCE,SERVICE);ctx.resource(KEY)
+ return tmp_path
+
+@pytest.mark.parametrize('operation',['transaction','snapshot'])
+def test_corrupt_existing_context_open_persists_catalog_stop(tmp_path, operation):
+ (tmp_path/'context.sqlite3').write_bytes(b'not a sqlite database')
+ with pytest.raises(sqlite3.DatabaseError):
+  with getattr(Context,operation)(tmp_path): pass
+ assert (tmp_path/'p1-recovery-stop.json').exists()
+
+
+def test_retained_text_corruption_detected_by_replay_stops(directory):
+ with Context.transaction(directory) as ctx: digest=ctx.text('real retained body')
+ db=connect(directory/'context.sqlite3','context')
+ trigger=db.execute("SELECT sql FROM sqlite_schema WHERE name='text_bodies_no_update'").fetchone()[0]
+ db.execute('PRAGMA ignore_check_constraints=ON');db.execute('DROP TRIGGER text_bodies_no_update');db.execute('UPDATE text_bodies SET text_value=?',('corrupt substituted text',));db.execute(trigger);db.commit();db.close()
+ with pytest.raises((ContextError,ValueError)):
+  with Context.transaction(directory) as ctx: ctx.text('real retained body')
+ assert (directory/'p1-recovery-stop.json').exists()
+
+
+def test_scope_rebind_cannot_prove_wrong_head_without_admission(directory):
+ first=canonical({'head':'a'*40,'base':'b'*40});changed=canonical({'head':'c'*40,'base':'b'*40})
+ with Context.transaction(directory) as ctx:
+  ctx.collection(CollectionObservation(KEY,'files',PROVENANCE,first,10,'complete'))
+  forged=CollectionObservation(KEY,'files',PROVENANCE,changed,10,'complete')
+  scope=CoverageScope.collection(KEY,'files',PROVENANCE,'files')
+  with pytest.raises(ContextError): ctx.prove_collection(CoverageClaim(scope,10,'complete'),forged,required_scope_json=changed)
+  assert ctx.coverage(scope).state=='unknown'
+
+
+def test_source_inventory_never_erases_known_positive(directory):
+ scope=canonical({'coverage_kind':'repositories','service_instance_uuidv4':SERVICE})
+ with Context.transaction(directory) as ctx:
+  ctx.inventory(SourceInventory(SOURCE,scope,1,'partial',False,(REPO,),PROVENANCE))
+  ctx.inventory(SourceInventory(SOURCE,scope,2,'complete',True,(),PROVENANCE))
+  assert ctx.source_repositories(SOURCE)==(REPO,)
+ with Context.snapshot(directory) as ctx: assert ctx.source_repositories(SOURCE)==(REPO,)
+
+
+def test_failed_multi_field_observation_rolls_back_new_resource_and_prior_field(directory):
+ key=ResourceKey(SERVICE,'issue','atomic')
+ first=FieldCandidate(key,'title','"good"',FieldClock('provider.updated',1),PROVENANCE,10)
+ bad=FieldCandidate(key,'repository_uuidv4',canonical('00000000-0000-4000-8000-000000000000'),FieldClock('provider.updated',1),PROVENANCE,10)
+ with Context.transaction(directory) as ctx:
+  with pytest.raises(sqlite3.IntegrityError):ctx.observe(ResourceObservation(key,(first,bad)))
+  assert key not in ctx.resources()
+  assert ctx.candidates(key,'title')==()
+
+
+def test_same_provider_child_id_has_parent_and_service_identity(directory):
+ with Context.transaction(directory) as ctx:
+  other=ResourceKey(SERVICE,'pull_request','8');foreign=ResourceKey(OTHER_SERVICE,'pull_request','7')
+  ctx.resource(other);ctx.resource(foreign)
+  children=tuple(ResourceKey.document(p,'review','review','same-provider-doc') for p in (KEY,other,foreign))
+  for child in children:ctx.resource(child)
+  assert len(set(children))==3
+  for child in children:assert child in ctx.resources()
+
+
+def test_inheritance_preserves_original_field_evidence_and_missing(directory):
+ with Context.transaction(directory) as ctx:
+  child=ResourceKey.document(KEY,'document','body','7');ctx.resource(child)
+  original=FieldCandidate(KEY,'title','null',FieldClock('provider.updated',None),PROVENANCE,13)
+  ctx.admit_field(original);ctx.inherit_fields(KEY,child,['title','missing'])
+  inherited=ctx.candidates(child,'title')[0]
+  assert (inherited.value_json,inherited.clock,inherited.provenance_json,inherited.observed_at_us)==(original.value_json,original.clock,original.provenance_json,original.observed_at_us)
+  assert ctx.candidates(child,'missing')==()
+
+
+def test_context_standalone_preserves_unavailable_core_reference(directory):
+ with Context.transaction(directory) as ctx:
+  original=CoreReference(KEY,'head',OID('sha256','a'*64),PROVENANCE);ctx.report_core_reference(original, clock=FieldClock("provider.updated",1), observed_at_us=10)
+ with Context.snapshot(directory) as ctx:
+  deps=ctx.core_dependencies(KEY)
+  assert len(deps)==1 and deps[0].reference==original and deps[0].available is False
+  assert ctx.core_dependencies(KEY,lambda *_:True)[0].available is True
+ assert not (directory/'core.sqlite3').exists()
+
+
+def test_complete_without_terminal_never_manufactures_known_empty(directory):
+ with Context.transaction(directory) as ctx:
+  scope=CoverageScope.resource(KEY,'reviews');ctx.scope(scope);ctx.admit_coverage(CoverageClaim(scope,10,'complete'))
+  projection=ctx.coverage(scope)
+  assert projection.state=='unknown' and projection.known_empty is False
+
+
+def test_swallowed_sqlite_corruption_still_stops_before_other_methods(directory):
+ class FaultConnection:
+  def __init__(self, real):self.real=real;self.fault=True
+  @property
+  def in_transaction(self):return self.real.in_transaction
+  def execute(self, sql, params=()):
+   if self.fault and ' FROM resources ' in sql:
+    self.fault=False
+    error=sqlite3.DatabaseError('database disk image is malformed')
+    error.sqlite_errorcode=sqlite3.SQLITE_CORRUPT
+    raise error
+   return self.real.execute(sql,params)
+ db=connect(directory/'context.sqlite3','context');db.execute('BEGIN IMMEDIATE')
+ try:
+  with pytest.raises(CoordinationError, match='RECOVERY_REQUIRED'):
+   with Context.for_transaction(FaultConnection(db),directory) as ctx:
+    try:ctx.resources()
+    except sqlite3.DatabaseError:pass
+    assert (directory/'p1-recovery-stop.json').exists()
+ finally:db.rollback();db.close()
+
+
+def test_valid_unavailable_report_does_not_corrupt_otherwise_sound_pair(directory):
+ from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+ initialize(directory/'core.sqlite3','core',REPO,INSTANCE)
+ with Context.transaction(directory) as ctx:
+  ctx.report_core_reference(CoreReference(KEY,'head',OID('sha1','a'*40),PROVENANCE), clock=FieldClock('provider.updated',1), observed_at_us=10)
+ with PairCoordinator(directory).snapshots() as pair:
+  with Context.for_snapshot(pair.context,directory) as ctx:
+   assert ctx.core_dependencies(KEY)[0].available is False
+ assert not (directory/'p1-recovery-stop.json').exists()
+
+
+@pytest.mark.parametrize('operation',['relation','collection'])
+def test_normalized_child_cannot_be_member_of_other_parent(directory,operation):
+ from repo_catalog.domain.production_context import ResourceRelation
+ with Context.transaction(directory) as ctx:
+  other=ResourceKey(SERVICE,'pull_request','other');ctx.resource(other)
+  child=ResourceKey.document(other,'review','review','7');ctx.resource(child)
+  with pytest.raises(ContextError):
+   if operation=='relation':ctx.relation(ResourceRelation(KEY,'reviews',(child,),PROVENANCE,'{}',10))
+   else:ctx.collection(CollectionObservation(KEY,'reviews',PROVENANCE,'{}',10,'complete',(child,)))
+
+
+def test_invalid_utf8_retained_text_stops(directory):
+ with Context.transaction(directory) as ctx:digest=ctx.text('original')
+ db=connect(directory/'context.sqlite3','context')
+ trigger=db.execute("SELECT sql FROM sqlite_schema WHERE name='text_bodies_no_update'").fetchone()[0]
+ db.execute('DROP TRIGGER text_bodies_no_update');db.execute('PRAGMA ignore_check_constraints=ON');db.execute("UPDATE text_bodies SET text_value=CAST(X'80' AS TEXT)");db.execute(trigger);db.commit();db.close()
+ with pytest.raises((sqlite3.DatabaseError,ContextError)):
+  with Context.snapshot(directory) as ctx:ctx.read_text(digest)
+ assert (directory/'p1-recovery-stop.json').exists()
+
+
+@pytest.mark.parametrize('field,value',[('reported_core_reference:', ['sha1','a'*40]),('reported_core_reference:head',['sha1','bad']),('reported_core_reference:head',{'oid':'a'*40}),('reported_core_reference:head',['sha256','a'*40])])
+def test_invalid_reserved_reference_never_poison_pair(directory,field,value):
+ from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+ initialize(directory/'core.sqlite3','core',REPO,INSTANCE)
+ with Context.transaction(directory) as ctx:
+  bad=FieldCandidate(KEY,field,canonical(value),FieldClock('provider.updated',1),PROVENANCE,10)
+  with pytest.raises(ValueError):ctx.admit_field(bad)
+  assert ctx.candidates(KEY,field)==()
+ with PairCoordinator(directory).snapshots():pass
+ assert not (directory/'p1-recovery-stop.json').exists()
+
+
+def test_invalid_utf8_stored_field_stops(directory):
+ with Context.transaction(directory) as ctx:
+  ctx.admit_field(FieldCandidate(KEY,'title','"original"',FieldClock('provider.updated',1),PROVENANCE,10))
+ db=connect(directory/'context.sqlite3','context');db.execute('PRAGMA ignore_check_constraints=ON');db.execute("UPDATE field_candidates SET value_json=CAST(X'80' AS TEXT)");db.commit();db.close()
+ with pytest.raises((sqlite3.DatabaseError,ContextError)):
+  with Context.snapshot(directory) as ctx:ctx.candidates(KEY,'title')
+ assert (directory/'p1-recovery-stop.json').exists()
+
+
+@pytest.mark.parametrize('factory',['for_transaction','for_snapshot'])
+def test_context_factory_rejects_wrong_store_role(directory,factory):
+ initialize(directory/'core.sqlite3','core',REPO,INSTANCE)
+ db=connect(directory/'core.sqlite3','core');db.execute('BEGIN')
+ try:
+  with pytest.raises(ContextError):
+   with getattr(Context,factory)(db,directory):pass
+ finally:db.rollback();db.close()
+
+
+@pytest.mark.parametrize('target',['provider','field'])
+def test_paired_existing_authority_invalid_utf8_integrity_failure_stops(directory,target):
+ from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+ initialize(directory/'core.sqlite3','core',REPO,INSTANCE)
+ if target=='field':
+  with Context.transaction(directory) as ctx:ctx.admit_field(FieldCandidate(KEY,'title','"original"',FieldClock('provider.updated',1),PROVENANCE,10))
+ db=connect(directory/'context.sqlite3','context');db.execute('PRAGMA ignore_check_constraints=ON')
+ if target=='provider':db.execute("UPDATE providers SET configuration_json=CAST(X'80' AS TEXT)")
+ else:db.execute("UPDATE field_candidates SET value_json=CAST(X'80' AS TEXT)")
+ db.commit();db.close()
+ with pytest.raises(CoordinationError) as error:
+  with PairCoordinator(directory).snapshots():pass
+ assert error.value.code=='CORRUPTION'
+ assert (directory/'p1-recovery-stop.json').exists()
+
+
+@pytest.mark.parametrize('operation',['read','replay'])
+def test_known_referenced_text_loss_stops_but_unknown_digest_does_not(directory,operation):
+ with Context.transaction(directory) as ctx:
+  ctx.admit_text(KEY,'original',FieldClock('provider.updated',1),PROVENANCE,10)
+  digest=__import__('hashlib').sha256(b'original').hexdigest()
+  with pytest.raises(ContextError) as error:ctx.read_text('b'*64)
+  assert error.value.code=='TEXT_UNAVAILABLE'
+  assert not (directory/'p1-recovery-stop.json').exists()
+ db=connect(directory/'context.sqlite3','context')
+ trigger=db.execute("SELECT sql FROM sqlite_schema WHERE name='text_bodies_no_delete'").fetchone()[0]
+ db.execute('DROP TRIGGER text_bodies_no_delete');db.execute('PRAGMA foreign_keys=OFF');db.execute('DELETE FROM text_bodies');db.execute(trigger);db.commit();db.close()
+ with pytest.raises(ContextError) as error:
+  with getattr(Context, 'snapshot' if operation=='read' else 'transaction')(directory) as ctx:
+   if operation=='read':ctx.read_text(digest)
+   else:ctx.text('original')
+ assert error.value.code=='AUTHORITATIVE_CORRUPTION'
+ assert (directory/'p1-recovery-stop.json').exists()
