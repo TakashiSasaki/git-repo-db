@@ -1,9 +1,11 @@
 """Existing authority validation failures stop before releasing its read gate."""
 
+import sqlite3
 from contextlib import closing
 
 import pytest
 
+from repo_catalog.adapters.sqlite import p1_coordination
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     PairCoordinator,
@@ -86,3 +88,26 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capabili
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
         with PairCoordinator(directory).core_snapshot():
             pytest.fail("derivative loss cleared the stop")
+
+
+def test_cancelled_validation_does_not_diagnose_corruption(tmp_path, monkeypatch):
+    directory = tmp_path / "catalog"
+    build(directory)
+    original = p1_coordination.validate_pair
+
+    def interrupted(core, context):
+        core.set_progress_handler(lambda: 1, 1)
+        try:
+            return original(core, context)
+        finally:
+            core.set_progress_handler(None, 0)
+
+    monkeypatch.setattr(p1_coordination, "validate_pair", interrupted)
+    with pytest.raises(sqlite3.OperationalError) as error:
+        with PairCoordinator(directory).snapshots():
+            pytest.fail("cancelled validation returned success")
+    assert error.value.sqlite_errorcode == sqlite3.SQLITE_INTERRUPT
+    assert not (directory / "p1-recovery-stop.json").exists()
+    monkeypatch.setattr(p1_coordination, "validate_pair", original)
+    with PairCoordinator(directory).snapshots():
+        pass

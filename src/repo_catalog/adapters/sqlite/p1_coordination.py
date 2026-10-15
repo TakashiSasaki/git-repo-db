@@ -165,13 +165,21 @@ def validate_pair(
     try:
         return _validate_pair(core, context)
     except sqlite3.DatabaseError as error:
-        if getattr(error, "sqlite_errorcode", 0) & 255 in {
-            sqlite3.SQLITE_BUSY,
-            sqlite3.SQLITE_LOCKED,
-            sqlite3.SQLITE_INTERRUPT,
-            sqlite3.SQLITE_AUTH,
-            sqlite3.SQLITE_PERM,
-        }:
+        code = getattr(error, "sqlite_errorcode", 0) & 255
+        detail = str(error)
+        storage_fault = code in {
+            sqlite3.SQLITE_CORRUPT,
+            sqlite3.SQLITE_NOTADB,
+            sqlite3.SQLITE_IOERR,
+        }
+        semantic_fault = (
+            code == sqlite3.SQLITE_ERROR
+            and detail == "user-defined function raised exception"
+        ) or detail.startswith("Could not decode to UTF-8 column")
+        if not (storage_fault or semantic_fault):
+            # Locking, cancellation, resource exhaustion and capability misuse
+            # do not establish persisted corruption. IOERR during these reads
+            # is an authoritative storage fault preventing required validation.
             raise
         failure = CoordinationError(
             "CORRUPTION",
