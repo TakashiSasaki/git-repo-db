@@ -854,3 +854,20 @@ def test_stopped_snapshot_finalizer_cannot_report_normal_completion(directory):
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
         with Context.snapshot(directory):
             PairCoordinator(directory).stop("stop during result computation")
+
+
+def test_invalid_utf8_stored_field_stops_before_caller_can_swallow(directory):
+    with Context.transaction(directory) as store:
+        store.provider(SERVICE, "github")
+        store.observe(ResourceObservation(KEY, (field(),)))
+    db = connect(directory / "context.sqlite3", "context")
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute("UPDATE field_candidates SET provenance_json=CAST(X'80' AS TEXT)")
+    db.close()
+    with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
+        with Context.snapshot(directory) as store:
+            with pytest.raises(sqlite3.OperationalError, match="decode to UTF-8"):
+                store.candidates(KEY, "title")
+            assert (directory / "p1-recovery-stop.json").exists()
+            with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
+                store.candidates(KEY, "missing")
