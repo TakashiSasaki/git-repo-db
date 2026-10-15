@@ -56,7 +56,7 @@ def test_direct_tree_binary_empty_unknown_targets_and_native_git_hash(core, fmt,
     work = Budget()
     c.admit_note(proof, note, str(uuid4()), work)
     assert c.read_note(proof.capture, proof.target, proof.note) == body
-    assert c.sql("SELECT * FROM retained_metadata") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_metadata") == []
     assert len(c.sql("SELECT * FROM git_objects")) == 3
     # Independent Git's implementation agrees on the native byte identity.
     actual = subprocess.run(
@@ -101,7 +101,7 @@ def test_notes_commit_root_and_fanout_relevant_only(core, fmt):
     )
     c.admit_note(proof, note, str(uuid4()), Budget())
     assert c.read_note(proof.capture, proof.target, proof.note) == b"fanout"
-    assert len(c.sql("SELECT * FROM note_roles")) == 1
+    assert len(c.sql("SELECT capture_origin_uuidv4 FROM note_roles")) == 1
 
 
 def test_same_capture_reports_alternatives_groups_and_replay(core):
@@ -127,7 +127,7 @@ def test_same_capture_reports_alternatives_groups_and_replay(core):
         c.admit_notes_group(replace(group, status="complete"))
     assert len(c.sql("SELECT * FROM captures")) == 1
     assert len(c.sql("SELECT * FROM notes_claims")) == 2
-    assert c.sql("SELECT * FROM retained_notes") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
     with pytest.raises(CoreFailure, match="receiver-proven"):
         c.read_note(proof.capture, proof.target, proof.note)
     c.admit_note(proof, note, str(uuid4()), Budget())
@@ -168,7 +168,7 @@ def test_same_blob_file_role_and_multiple_namespaces(core):
         )
         == 1
     )
-    assert len(c.sql("SELECT * FROM note_roles")) == 2
+    assert len(c.sql("SELECT capture_origin_uuidv4 FROM note_roles")) == 2
     assert not hasattr(c, "read_blob")
 
 
@@ -199,7 +199,7 @@ def test_false_relevant_mode_or_name_rejects_body(core, mode, name):
     )
     with pytest.raises(CoreFailure, match="relevant notes mapping"):
         c.admit_note(proof, note, str(uuid4()), Budget())
-    assert c.sql("SELECT * FROM retained_notes") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
 
 
 def test_sender_claim_hash_prefix_and_ref_do_not_authorize_retention(core):
@@ -237,7 +237,7 @@ def test_sender_claim_hash_prefix_and_ref_do_not_authorize_retention(core):
             db.execute("INSERT INTO note_roles VALUES(?,?,?,?,?,?,?,?)", invalid.key)
     finally:
         db.close()
-    assert c.sql("SELECT * FROM retained_notes") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
 
 
 @pytest.mark.parametrize("bad", ["oid", "size", "digest", "kind", "format"])
@@ -256,7 +256,7 @@ def test_invalid_body_exact_checks_without_irrelevant_lexical_failure(core, bad)
         proof = replace(proof, target=oid("a", "sha256"))
     with pytest.raises(CoreFailure):
         c.admit_note(proof, note, str(uuid4()), Budget())
-    assert c.sql("SELECT * FROM retained_notes") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
 
 
 def test_capture_binding_immutable_no_new_retry_identity(core):
@@ -280,7 +280,7 @@ def test_capture_binding_immutable_no_new_retry_identity(core):
     c.admit_note(proof, note, copy, budget)
     assert budget.counts["input_bytes"] == 2 * before["input_bytes"]
     assert len(c.sql("SELECT * FROM captures")) == 1
-    assert len(c.sql("SELECT * FROM retained_notes")) == 1
+    assert len(c.sql("SELECT physical_copy_uuidv4 FROM retained_notes")) == 1
 
 
 def test_atomic_note_admission_work_survives_rollback_and_budget_stop(core):
@@ -297,8 +297,8 @@ def test_atomic_note_admission_work_survives_rollback_and_budget_stop(core):
     with pytest.raises(RuntimeError):
         c.admit_note(proof, note, str(uuid4()), budget, before_commit=crash)
     assert budget.counts["input_bytes"] > 0
-    assert c.sql("SELECT * FROM retained_notes") == []
-    assert c.sql("SELECT * FROM note_roles") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
+    assert c.sql("SELECT capture_origin_uuidv4 FROM note_roles") == []
     assert len(c.sql("SELECT * FROM notes_claims")) == 1
 
     class SmallBudget(Budget):
@@ -385,7 +385,7 @@ def test_metadata_only_notes_projection_preserves_reports_groups_and_local_role(
     assert before.canonical is None
     assert len(before.alternatives) == 3
     assert {a.kind for a in before.alternatives} == {"claim", "group"}
-    assert c.sql("SELECT * FROM retained_notes") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
     c.admit_notes_role(proof, Budget())
     after = c.notes_projection(proof.capture, proof.target)
     assert after.canonical == proof.note
@@ -441,5 +441,5 @@ def test_metadata_only_notes_role_obeys_zero_proof_step_budget(core):
         c.admit_notes_role(proof, budget)
     assert budget.counts["input_bytes"] > 0
     assert len(c.notes_projection(proof.capture, proof.target).alternatives) == 1
-    assert c.sql("SELECT * FROM note_roles") == []
-    assert c.sql("SELECT * FROM retained_notes") == []
+    assert c.sql("SELECT capture_origin_uuidv4 FROM note_roles") == []
+    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
