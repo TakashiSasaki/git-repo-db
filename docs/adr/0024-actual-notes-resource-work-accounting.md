@@ -11,6 +11,8 @@ refines:
 
 # ADR 0024: Account for actual notes-processing work, including reprocessed deliveries
 
+**Subsequent accepted refinement:** [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative actual work for one explicit request across continuation/resume/retry. Resource settings, counters/defaults and progress mechanics are engineering work, not further owner blockers. Section 8 preserves the historical comparison with A now selected.
+
 - **Decision ID:** B02-R03; **owner selected Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #64 / ADR 0023](https://github.com/TakashiSasaki/git-repo-db/pull/64), verified HEAD `6975fbda577323291b922ddc6a89369dcdab0bbb`, branch `codex/adr-0023-configurable-notes-resource-budgets`. Direct documentation-only successor; no implementation or merge.
 - **Inherited:** ADR 0014–0023, KEY-P01, GCTX-M01–M09 and strictly append-only Git Core. Proposed [PR #52 / ADR 0011 governance](https://github.com/TakashiSasaki/git-repo-db/pull/52) remains unadopted.
@@ -18,12 +20,12 @@ refines:
 
 ## 1. Binding decision: actual work, not logical multiplicity or new rows
 
-Aggregate resource accounting MUST reflect **work actually performed**: pertinent input actually read/decoded/checked, actual relation/metadata processing, and actual proof exploration within the eventual bounded work scope. Preserve ADR 0023's independent finite configurable individual raw-note, aggregate-work and proof-traversal limits.
+Aggregate resource accounting MUST reflect **work actually performed**: pertinent input actually read/decoded/checked, actual relation/metadata processing, and actual proof exploration within the explicit acquisition-request scope fixed by ADR 0025. Preserve ADR 0023's independent finite configurable individual raw-note, aggregate-work and proof-traversal limits.
 
 - A newly read or rechecked repeated body costs processing work **again**, even when its accepted OID, semantic assertion or SQL insertion is an exact idempotent replay. Domain-fact deduplication does not erase already performed input/verification work.
 - Reusing already checked data without another body read/check must not invent another full-body processing charge merely because many mappings reference the same blob. The actual reference handling, lookups and proof exploration still have their own real work; this is not free processing for an arbitrary number of mappings.
 - Shared proof dependencies follow the same distinction: reuse can avoid work, while a real revisit/read/check consumes work again. A common tree OID, claimed digest or sender-local row key alone does not establish that reuse was valid.
-- Work actually spent on a rejected, interrupted or unsuccessful input/proof attempt is still spent. Failure, nonadmission, SQL rollback or duplicate detection cannot retroactively turn that performed work into zero. Exact carry/reset/resume boundaries remain B02-R04, not an implicit permanent lifetime budget.
+- Work actually spent on a rejected, interrupted or unsuccessful input/proof attempt is still spent. Failure, nonadmission, SQL rollback or duplicate detection cannot retroactively turn that performed work into zero. ADR 0025 / B02-R04 A makes one explicit request cumulative across continuation/resume/retry; remaining mechanics are engineering work, not an implicit permanent lifetime budget.
 - Do not charge a hypothetical full body solely from an unverified sender size claim or a metadata-only reference. Such claims retain their attribution and may inform conservative acquisition planning, but actual-work reporting must not call unperformed work performed.
 
 The unselected Option B, a full logical body/proof allowance for every mapping/delivery regardless of actual reuse, is not the adopted accounting basis. Internal planning reservations may be distinct from actual charges, but cannot be mislabeled as performed work or silently replace this decision.
@@ -32,7 +34,7 @@ The unselected Option B, a full logical body/proof allowance for every mapping/d
 
 This ADR chooses **the basis of accounting**, not a concrete counter implementation. Wire bytes, decoded/raw bytes, verifier passes, object reads, relation operations, proof steps, wall time and storage growth are different dimensions. Do not add unlike units into an unexplained single number or present newly retained CAS bytes as all processing cost.
 
-The individual-note size limit continues to concern the exact raw note body under ADR 0023. Precise aggregate/proof counter units, which processing stages are measured separately, charging of partial/failed reads, numeric defaults, configuration encoding, concurrency reservations and durable progress mechanics remain follow-up contracts. The choice of actual work must hold under those contracts; it does not authorize selecting optimistic units that leave the required work envelope unbounded.
+The individual-note size limit continues to concern the exact raw note body under ADR 0023. Precise aggregate/proof counter units, which processing stages are measured separately, charging of partial/failed reads, numeric defaults, configuration encoding, concurrency reservations and durable progress mechanics are agent-owned follow-up engineering choices under ADR 0025, not architectural owner blockers. The choice of actual work must hold under those contracts; it does not authorize selecting optimistic units that leave the required work envelope unbounded.
 
 The examples below illustrate an explicitly stated **body-read byte component**, not a complete CPU/I/O benchmark or adopted counter/default. Per-operation finite limits are not a new global catalog-size quota, retention deletion policy or Core GC mechanism.
 
@@ -51,7 +53,7 @@ No required Context registration, hidden live fetch, all-attempt Core verificati
 
 Keep original Capture UUIDv4 pair, immutable source/ref/root and ADR 0021 semantic claim/group composites. Actual repeated work is **not** a new source observation, claim occurrence, group member or physical instance merely because another attempt happened.
 
-Operational owns scoped work counters/progress/retries under the eventual protocol. Git Core retains actual eligible immutable domain/admission/physical facts; no mutable Core resource counter, per-replay success ledger, receiver-only accounting surrogate or lifetime Capture budget owner is selected. Losing/rebuilding Operational cannot invalidate or delete admitted Core evidence. What may truthfully count as resumed work after lost accounting is a later protocol question, not permission to fabricate zero prior cost.
+Operational owns scoped work counters/progress/retries under ADR 0025's cumulative request rule; the implementing agent owns their concrete mechanics. Git Core retains actual eligible immutable domain/admission/physical facts; no mutable Core resource counter, per-replay success ledger, receiver-only accounting surrogate or lifetime Capture budget owner is selected. Losing/rebuilding Operational cannot invalidate or delete admitted Core evidence. The implementing agent must handle lost accounting truthfully under ADR 0025, never fabricate zero prior cost for the same resumed request; this is not another owner-option question.
 
 At a limit, ADR 0023 still preserves independently admissible metadata and complete atomic units, withholds unfinished/oversize/unproven bodies or units, and reports the actual stop. No truncation, false complete/empty inventory, in-place group extension or durable unproven-body staging is permitted. Ref rewrites, budget changes and replay do not authorize Core deletion, physical fault reclassification or CAS-41 changes.
 
@@ -65,7 +67,7 @@ At a limit, ADR 0023 still preserves independently admissible metadata and compl
 | A proof tree is safely reused, then a later step actually rereads it | Only actually avoided work is avoided; the later real read/check counts again under the eventual metric |
 | Input is read/checked and then rejected, or admission rolls back | Count work already performed within the applicable scope, without accepting the failed body or inventing a new Core success event |
 | A retained instance is damaged after earlier verification | Old work/reuse claims do not prove health. Apply M07–M09 diagnosis/selection; no zero-cost or healthy-now claim from OID equality |
-| Work stops and resumes or retries | B02-R03 actual-work basis applies, but budget scope and counter carry/reset are the next B02-R04 owner choice |
+| Work stops and resumes or retries | ADR 0025 / B02-R04 A keeps one explicit request cumulative; concrete counters/recovery/fences are engineering work |
 
 ## 6. Consistency with inherited decisions
 
@@ -83,7 +85,7 @@ At a limit, ADR 0023 still preserves independently admissible metadata and compl
 | GCTX-M07–M09 | Actual-output checks, immutable copies/diagnoses and evidence-derived candidates preserved; budget accounting is not physical health |
 | Other fixed rules | Strict Core INSERT-only/no UPDATE/DELETE/REPLACE/GC, permanent repository UUIDv4, known-positive Source, five-column/latest-observation Coverage, Unix epoch microseconds, NO_INDEPENDENT_PUBLICATION, Q01-B/Q02-B/Q03-B, unaffected PF-P01–PF-P17, durable Context, paired full backup and ADR 0001 |
 
-No prior accepted decision requires reversal. B02-R03 A is accepted; precise units/defaults and **B02-R04 work scope/counter carry/reset** remain open, alongside notes proof grammar, B03 completeness, origin trust, GCTX-M10 quarantine/count, exact DDL/wire/fences/backup pairing and Context GC-03/04.
+No prior accepted decision requires reversal. B02-R03 A and B02-R04 A are accepted by ADR 0024/0025. Counter/default/resume details are engineering work, not owner blockers. Remaining scoped work includes notes proof grammar, B03 completeness, origin trust, GCTX-M10 quarantine/count, exact DDL/wire/fences/backup pairing and Context GC-03/04.
 
 ## 7. Future adversarial cases (NOT executed product tests)
 
@@ -98,19 +100,19 @@ No prior accepted decision requires reversal. B02-R03 A is accepted; precise uni
 9. Work stopping preserves eligible metadata/atomic units, exact body meaning and honest coverage; no hidden durable pending body.
 10. Operational loss/rebuild preserves Core validity; subsequent resumed/fresh accounting must follow an explicit protocol rather than fabricated zero cost.
 
-## 8. Next owner blocker: B02-R04 budget scope across interruption/resume/retry (OPEN)
+## 8. Historical B02-R04 comparison; A accepted by ADR 0025, budget details are not owner blockers
 
-What bounded work does one aggregate budget cover, and when may its actual-work counter reset? This is not Capture identity or a new domain-validity owner. **No option below is selected.**
+The prior question asked what bounded work one aggregate budget covers and when its actual-work counter may reset. The owner subsequently selected **A**, fixed by ADR 0025, and corrected the classification of remaining resource details as architectural blockers. This is not Capture identity or a new domain-validity owner; B remains historical and unselected.
 
 Illustrative numbers only: a caller requests one acquisition with a 128 MiB aggregate allowance, spends 80 MiB before interruption, and a retry would process 70 MiB more. Does it have 48 MiB remaining or a fresh allowance? These are not adopted defaults or a precise byte metric.
 
 - **A — One explicit acquisition request, cumulative across its continuations/resumes/retries (recommended):** keep spent actual work within that declared work scope; an explicit higher finite allowance may permit more work. A genuinely separate caller-requested acquisition can have its own finite budget; Capture identities remain independent. **Pros:** automatic retry cannot evade a request's limit; reporting explains actual total work. **Cons:** requires reliable scoped Operational progress, restart/loss rules and fences; exact persistence/concurrency mechanics remain follow-up work.
 - **B — Each attempt has a fresh budget, with a separate finite outer retry/work bound:** make the reset explicit and independently bound the whole request's retry count/time/work. **Pros:** attempts are easier to isolate and restart. **Cons:** 80+70 MiB may exceed the nominal single-attempt allowance for the request as a whole; another outer bound/configuration is needed to prevent unbounded repeated attempts, with more coordination and reporting.
 
-Both options preserve actual-work charging, finite configurable limits, semantic replay, atomic groups and Core/Operational separation. Recommendation A does not fix lost-progress recovery, precise units/numbers, settings storage, concurrent worker reservations, proof grammar, B03 or GCTX-M10.
+Both options preserve actual-work charging, finite configurable limits, semantic replay, atomic groups and Core/Operational separation. Accepted A does not fix concrete lost-progress recovery, units/defaults, settings storage or worker reservations; these are agent-owned engineering choices under ADR 0025. Proof grammar/B03 remain scoped work under accepted semantics; GCTX-M10 is still an unselected disposition/count/backup policy.
 
 ## 9. Authorization and verification boundary
 
-The owner selected **B02-R03 A** after B02-R01 A and B02-R02 A. ADR 0023's alternative logical-per-reference accounting is historical and unselected. This is a documentation-only design PR; B02-R04 is a new unaccepted choice. The owner additionally requested proactive skill capture for verified repeated workflows, so this PR also updates the existing `lessons-to-skills` Markdown instructions and adds a linked procedural reference; this does not adopt a product decision or authorize implementation.
+The owner selected **B02-R03 A** after B02-R01 A and B02-R02 A. ADR 0023's alternative logical-per-reference accounting is historical and unselected. This is a documentation-only design PR; B02-R04 A is subsequently accepted by ADR 0025 together with the owner's correction of the blocker classification. The owner additionally requested proactive skill capture for verified repeated workflows, so this PR also updates the existing `lessons-to-skills` Markdown instructions and adds a linked procedural reference; this does not adopt a product decision or authorize implementation.
 
 No implementation, application source/SQL/DDL/schema labels, executable product tests, workflows/dependencies, live-source acquisition, real-catalog mutation/migration, deployment, release, merge or auto-merge is authorized. Static document/skill checks and selected hosted development/documentation CI are distinct from product runtime/release acceptance. The future cases above are not executed tests. No independent review is implied; the existing skill update captures a verified procedure, not this individual design choice as reusable policy.
