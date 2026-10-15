@@ -11,6 +11,7 @@ Successive design PRs exposed two repeatable traps: updating only the newest ADR
 - Read the live parent PR's state, head branch and full SHA. Compare them with the owner's intended base; use that head as the sole parent of the new branch. If it moved, inspect the new state before continuing. Do not silently stack on `main`, the parent's base branch, or a nearby sibling.
 - Inspect the actual checkout, root/applicable agent guidance, ADR index and relevant accepted records. Preserve uncommitted work and read-only synced references. Reuse a suitable authorized checkout or worktree; do not create another merely for this procedure.
 - Separate the one accepted option from remaining units, numbers, trust rules, fences and other choices. A recommended option is not accepted. A proposed governance sibling does not become binding through inclusion in a stack or a newer date.
+- Before offering lifecycle/status options, trace their actual consumers and state the failure/trust model they assume. Successful queries, a structural check or an isolated corruption test do not prove the rest of a database is sound; another copy in the same database is not independent fault isolation. If the owner challenges that premise, resolve it before comparing counters or retirement states. Show the operational consequences and distinguish preservation evidence, salvage candidates and validated service data. This lesson governs the review method, not a reusable authorization to stop or recover real catalogs.
 
 ## Reconcile current state without rewriting history
 

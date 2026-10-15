@@ -9,6 +9,8 @@ refines:
 
 # ADR 0025: Cumulative acquisition-request budgets and scoped architectural blockers
 
+**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
+
 - **Decision ID:** B02-R04; **owner selected Option A**, accepted 2026-10-15, with the explicit correction that resource limits and their implementation details are not architectural owner blockers.
 - **Direct base:** [PR #65 / ADR 0024](https://github.com/TakashiSasaki/git-repo-db/pull/65), verified HEAD `45f7da24924caa8d4da7a00107e32dc03c6bb416`, branch `codex/adr-0024-actual-notes-resource-accounting`. Direct documentation-only successor; no implementation or merge.
 - **Inherited:** ADR 0014–0024, KEY-P01 and GCTX-M01–M09. Proposed [PR #52 / ADR 0011 governance](https://github.com/TakashiSasaki/git-repo-db/pull/52) remains unadopted.
@@ -36,7 +38,7 @@ Earlier current summaries incorrectly promoted a sequence of resource questions 
 | Numeric defaults, precise counters/units, configuration representation and validation | Agent-owned tunable engineering choices within the accepted policies; document and verify in the affected authorized implementation |
 | Partial-read charging, progress persistence/recovery, concurrency reservations and resume mechanics | Agent-owned engineering work that must enforce finite cumulative accounting truthfully; not successive owner-option questions merely because details remain unfinished |
 | Supported notes proof/parser representation and concrete completeness evidence | Remaining scoped design/engineering work under B02-R01 and GCTX-M03/M04; do not reopen accepted partial/complete/known-empty/unknown or canonical/report distinctions without a concrete conflict |
-| Active physical-quarantine disposition and CAS-41 counted set | Genuine unresolved persistent meaning in GCTX-M10; blocks finalizing the affected changed backup/restore manifest contract, not all independent work |
+| Post-corruption operation and recovery, formerly GCTX-M10 disposition/count | Subsequently fixed by ADR 0026: stop, preserve read-only, salvage candidates, fresh verified restore, validated merge. No further owner selection among the former A/B/C options |
 
 Open work is not automatically an architectural owner blocker. For a proposed blocker in this design stack, identify the unresolved domain meaning, trust/admission authority or serialized backup meaning, show the concrete conflicting outcomes, and name the affected dependent stage. Routine values, counters, algorithms and synchronization mechanisms can be designed and tested by the implementing agent within accepted policy. Escalate a concrete policy conflict if one is discovered; do not manufacture a new owner questionnaire from every unfinished parameter.
 
@@ -60,7 +62,9 @@ This correction does not claim all notes/wire/DDL, origin trust, cross-store con
 
 No accepted product policy is reversed. The superseded material is the **classification** of unfinished budget details as owner blockers and any current statement that B02-R04 remains unselected. No numeric defaults, exact DDL/wire or GCTX-M10 disposition option is selected here.
 
-## 4. Next genuine owner choice: GCTX-M10 active quarantine and CAS-41
+## 4. Historical GCTX-M10 active-quarantine question, superseded by ADR 0026
+
+**Subsequent owner decision:** ADR 0026 replaces the continuing-operation premise of this comparison. It selects the recovery workflow, not A/B/C retirement, and retains the budget-detail correction above. The comparison below is historical.
 
 [ADR 0013 sections 4 and 7](0013-deterministic-cas-instance-eligibility.md#4-quarantine-and-cas-41-what-m09-fixes-and-leaves-for-m10) already leave this decision explicitly open. A damaged physical copy I1 stays retained with its immutable diagnosis; independently validated I2 can supply the same logical payload. I2 never repairs I1, makes it eligible or automatically lowers its count. What remains undecided is whether a separate terminal disposition can remove I1 from **active outstanding quarantine**. This changes the counted physical-instance set serialized and checked by backup/restore, so that affected manifest contract cannot be finalized by choosing a tunable number.
 

@@ -11,6 +11,8 @@ refines:
 
 # ADR 0024: Account for actual notes-processing work, including reprocessed deliveries
 
+**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
+
 **Subsequent accepted refinement:** [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative actual work for one explicit request across continuation/resume/retry. Resource settings, counters/defaults and progress mechanics are engineering work, not further owner blockers. Section 8 preserves the historical comparison with A now selected.
 
 - **Decision ID:** B02-R03; **owner selected Option A**, accepted 2026-10-15.

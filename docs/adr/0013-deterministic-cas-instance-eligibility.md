@@ -1,6 +1,8 @@
 # ADR 0013: Evidence-derived eligible CAS instances and deterministic byte selection
 
-- **Status:** Accepted owner design decision; exact DDL, quarantine-disposition policy and implementation pending.
+**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
+
+- **Status:** Accepted candidate-selection design in sound operation; post-corruption continuation superseded by ADR 0026 / GCTX-M10. Exact DDL and implementation pending.
 - **Decision date:** 2026-10-15.
 - **Decision ID:** GCTX-M09.
 - **Owner selection:** Option A — derive a physical-instance eligibility set from immutable Git Core evidence, and choose a candidate for byte access by a stable, explicitly non-authoritative deterministic ordering; revalidate the bytes actually used under GCTX-M07.
@@ -25,6 +27,8 @@ Among eligible candidates, a stable deterministic order using immutable, catalog
 The final logical payload bytes must still be the correct validated content regardless of which valid instance supplied them. A proven physical/hash collision, conflicting actual body, or ambiguous logical identity is an integrity failure requiring fail-closed diagnosis; it is NOT solved by tie-breaking between unequal alleged contents.
 
 ## 2. Selected read and failover behavior
+
+**Current limit:** ADR 0026 supersedes the failure-to-sibling continuation below once authoritative corruption is detected. Stop ordinary service and perform read-only salvage/fresh restore/validated merge. Candidate ordering and actual-byte checks still apply in sound target operation.
 
 For a byte-dependent operation:
 
@@ -55,6 +59,8 @@ If I3 is unavailable, the logical payload is unavailable for **currently verifie
 If correct I2 and I3 have identical expected real bytes, the deterministic try-order is a physical optimization and not an evidence ranking or arbitration of competing Git histories.
 
 ## 4. Quarantine and CAS-41: what M09 fixes and leaves for M10
+
+**Historical open scope:** GCTX-M10 is now resolved by ADR 0026's recovery workflow. The pending disposition discussion below records the earlier policy and cannot authorize continuing a suspect catalog. The heading is retained for existing links.
 
 GCTX-M09 fixes that **per-instance disqualification is derived from immutable physical evidence**, never from a mutable `verified` or `preferred_instance` row or from the count of logical payloads. It also fixes that logical availability via a healthy candidate is separate from damage, known quarantine, and the **active physical quarantine count** on retained old instances.
 
@@ -104,7 +110,9 @@ GCTX-M09 fixes an eligibility/selection **algorithmic contract**, not a producti
 14. Re-creating Search/Operational or omitting Context does not change the authoritative eligible-set evidence.
 15. Ensure no generic eligibility/Publication gate, timestamp winner, mutable local Core revision, physical byte UPDATE/DELETE or unauthorized Git Core GC is introduced.
 
-## 7. Next unresolved decision: GCTX-M10
+## 7. Historical GCTX-M10 alternatives, superseded by ADR 0026
+
+**Subsequent owner decision:** ADR 0026 replaces this A/B/C question with stop/read-only salvage/fresh restore/validated merge; none of A/B/C was selected.
 
 **When a permanently damaged physical instance remains retained, what is its relationship to “active quarantine” and the CAS-41 active physical quarantine count?**
 

@@ -1,6 +1,8 @@
 # ADR 0012: Append-only physical-instance variants and Git CAS recovery
 
-- **Status:** Accepted owner design decision; active-quarantine selection, detailed DDL and implementation pending.
+**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
+
+- **Status:** Accepted physical-copy identity/evidence design; post-corruption operation superseded by ADR 0026 / GCTX-M10. Detailed DDL and implementation pending.
 - **Decision date:** 2026-10-15.
 - **Decision ID:** GCTX-M08.
 - **Owner selection:** Option A — retain immutable physical CAS instances, add independently identified verified replacement instance(s), and append narrowly scoped physical-corruption/recovery evidence. Never UPDATE or DELETE admitted Git Core facts or bytes.
@@ -22,6 +24,8 @@ A physical instance is an **application-addressable storage entity**, such as a 
 This explicitly supersedes the old target-shape assumption that `stored_bytes(sha256 PRIMARY KEY, body)` is sufficient to distinguish all independently retained byte instances, and that `payload_quarantine(sha256 PRIMARY KEY)` can directly encode all per-instance physical faults. Their exact replacement tables/keys/triggers remain pending. [ADR 0017 / KEY-P01](0017-domain-keys-without-storage-surrogates.md) now disallows storage-only surrogate PKs, while preserving the genuine independent physical-instance identities required here; the format and origin of those identities still need domain justification. No backward-compatibility schema retention is required before release.
 
 ## 2. Immutable physical diagnosis and recovery
+
+**Scoped successor:** ADR 0026 replaces the post-corruption in-service I1/I2 recovery path below with stop/read-only salvage/fresh restore/validated merge. Copy identity distinctions remain; never append a replacement into the stopped source or require damaged I1 in the new operational database.
 
 For each actual retained-byte instance:
 
@@ -50,6 +54,8 @@ The existing implementation's `repair_payload()` path temporarily drops an immut
 Thus, **logical restoration** through `I2` is not equivalent to **physical repair of I1**. If both copies live in the same SQLite database, low-level database-file/page failure may still make the entire Core unreadable; in that exceptional case external verified-backup restoration remains an independently necessary recovery path. The choice of A does not guarantee self-healing from an unreadable database.
 
 ## 4. CAS-41 preservation and backup/restore obligations
+
+**Scoped successor:** ADR 0026 preserves format/count consistency and check ordering but replaces acceptance of known-corrupt normal restore baselines with separately qualified forensic/salvage preservation. No continuation or retirement option can bypass the catalog stop.
 
 **CAS-41 remains binding.** Before restore-time diagnosis changes any effective diagnosis state, verify the archived **active physical quarantine count** against the count in the *copied and verified source database*, under a coherent matching scope. The accumulated number of immutable fault events is NOT that active count.
 
