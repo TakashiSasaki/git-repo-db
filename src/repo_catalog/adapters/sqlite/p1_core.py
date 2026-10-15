@@ -54,6 +54,14 @@ from repo_catalog.domain.p1_coverage import (
 from repo_catalog.domain.ports.p1_core import WorkBudget
 
 
+def _sqlite_authority_failure(error):
+    """Extended engine codes retain their authoritative primary failure scope."""
+    return isinstance(error, sqlite3.DatabaseError) and (
+        getattr(error, "sqlite_errorcode", 0) & 255
+        in (sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_IOERR)
+    )
+
+
 def _completed_read(method):
     """Linearize successful result delivery against the persistent stop fence."""
 
@@ -106,9 +114,7 @@ class Core:
             try:
                 self._db = connect(path, "core")
             except sqlite3.DatabaseError as error:
-                if Path(path).is_file() and getattr(
-                    error, "sqlite_errorcode", None
-                ) in (sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_CORRUPT):
+                if Path(path).is_file() and _sqlite_authority_failure(error):
                     persist_catalog_stop(
                         self._directory, "Core open corruption: " + str(error)
                     )
@@ -223,10 +229,7 @@ class Core:
         try:
             return self._db.execute(statement, parameters).fetchall()
         except sqlite3.DatabaseError as error:
-            if getattr(error, "sqlite_errorcode", None) in (
-                sqlite3.SQLITE_NOTADB,
-                sqlite3.SQLITE_CORRUPT,
-            ) or (
+            if _sqlite_authority_failure(error) or (
                 getattr(self, "_typed_read_depth", 0)
                 and str(error).startswith("Could not decode to UTF-8")
             ):
@@ -266,13 +269,23 @@ class Core:
                         with catalog_completion(self._directory):
                             self._available()
                             self._db.execute("COMMIT")
-                except BaseException:
-                    if self._external:
-                        self._db.execute("ROLLBACK TO p1_core_unit")
-                        self._db.execute("RELEASE p1_core_unit")
-                    else:
-                        self._db.execute("ROLLBACK")
+                except BaseException as error:
+                    try:
+                        if _sqlite_authority_failure(error):
+                            self._integrity_stop(("Core transaction", str(error)))
+                    finally:
+                        if self._db.in_transaction:
+                            if self._external:
+                                self._db.execute("ROLLBACK TO p1_core_unit")
+                                self._db.execute("RELEASE p1_core_unit")
+                            else:
+                                self._db.execute("ROLLBACK")
                     raise
+            except sqlite3.DatabaseError as error:
+                # BEGIN/SAVEPOINT may itself fail before the inner unit exists.
+                if _sqlite_authority_failure(error):
+                    self._integrity_stop(("Core transaction open", str(error)))
+                raise
             finally:
                 self._admitting = False
 

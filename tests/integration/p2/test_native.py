@@ -786,3 +786,83 @@ def test_caller_text_encoding_error_is_not_stored_corruption(core):
         c.scalar(oid(), "unsupported-\udcff")
     assert not (path.parent / "p1-recovery-stop.json").exists()
     c.admit_object(oid())
+
+
+@pytest.mark.parametrize(
+    "code", [sqlite3.SQLITE_CORRUPT_INDEX, sqlite3.SQLITE_CORRUPT_VTAB]
+)
+@pytest.mark.parametrize("boundary", ["open", "read"])
+def test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries(
+    core, monkeypatch, code, boundary
+):
+    c, path, _ = core
+    error = sqlite3.DatabaseError("injected extended SQLite corruption")
+    error.sqlite_errorcode = code
+    if boundary == "open":
+        from repo_catalog.adapters.sqlite import p1_schema
+
+        def fail(*args, **kwargs):
+            raise error
+
+        monkeypatch.setattr(p1_schema, "connect", fail)
+        with pytest.raises(sqlite3.DatabaseError) as raised:
+            GitCore(path)
+        assert raised.value.sqlite_errorcode == code
+    else:
+        original = c._db
+
+        class FailingRead:
+            def execute(self, *args, **kwargs):
+                raise error
+
+        c._db = FailingRead()
+        try:
+            with pytest.raises(CoreFailure) as raised:
+                c.sql("SELECT full_oid FROM git_objects")
+            assert raised.value.code == "AUTHORITATIVE_CORRUPTION"
+        finally:
+            c._db = original
+    assert (path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(CoreFailure) as stopped:
+        c.admit_object(oid())
+    assert stopped.value.code == "RECOVERY_STOP"
+
+
+@pytest.mark.parametrize(
+    "code",
+    [sqlite3.SQLITE_CORRUPT_INDEX, sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_IOERR_WRITE],
+)
+@pytest.mark.parametrize("failure_at", ["BEGIN", "INSERT", "COMMIT"])
+def test_standalone_core_engine_failure_stops_before_transaction_cleanup(
+    core, code, failure_at
+):
+    c, path, _ = core
+    original = c._db
+    error = sqlite3.DatabaseError("injected authoritative engine failure")
+    error.sqlite_errorcode = code
+    rollback_stop_states = []
+
+    class FailingEngine:
+        def __getattr__(self, name):
+            return getattr(original, name)
+
+        def execute(self, statement, *args, **kwargs):
+            if statement.startswith(failure_at):
+                raise error
+            if statement == "ROLLBACK":
+                rollback_stop_states.append(
+                    (path.parent / "p1-recovery-stop.json").exists()
+                )
+            return original.execute(statement, *args, **kwargs)
+
+    c._db = FailingEngine()
+    try:
+        with pytest.raises(CoreFailure) as raised:
+            c.admit_object(oid())
+        assert raised.value.code == "AUTHORITATIVE_CORRUPTION"
+    finally:
+        c._db = original
+    assert (path.parent / "p1-recovery-stop.json").exists()
+    assert not original.in_transaction
+    assert rollback_stop_states == ([] if failure_at == "BEGIN" else [True])
+    assert original.execute("SELECT count(*) FROM git_objects").fetchone()[0] == 0
