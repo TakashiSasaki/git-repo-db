@@ -2,6 +2,8 @@
 
 Read the current scope before implementation. This index describes accepted target decisions, not implemented or verified behavior.
 
+**Latest repository-wide key policy: [ADR 0017 / KEY-P01](0017-domain-keys-without-storage-surrogates.md).** Prefer actual natural/domain composite PKs and prohibit storage-only surrogate row IDs across Core, Context, Operational and Search-facing authority. Permanent repository UUID and real capture/physical instance distinctions still apply; B01-R03 issuer-key rules remain open.
+
 **Latest product scope: [ADR 0014 / GCTX-S01](0014-history-and-notes-catalog-without-file-archive.md).** The product does not archive ordinary repository-file blob bodies. It retains Git metadata, commit/tree/tag representations when acquired, and purpose-bound Git notes content. Notes are blobs at the Git object layer, so a blanket blob ban is incorrect. [ADR 0015 / B01-R01](0015-automatic-git-notes-ref-discovery.md) fixes automatic notes namespace discovery plus explicit additional ref names, **not** note-body admission or complete enumeration. Earlier raw-body admission/repair decisions apply only to retained metadata/notes and legacy obligations. B01-R02 observation identity is fixed by [ADR 0016](0016-immutable-notes-ref-capture-observations.md); B01-R03 capture issuance/replay rules and GCTX-M10 remain unresolved.
 
 ## Accepted Records
@@ -22,7 +24,8 @@ Read the current scope before implementation. This index describes accepted targ
 | [0013](0013-deterministic-cas-instance-eligibility.md) | GCTX-M09: evidence-derived candidate selection | 2026-10-15 | Retained bodies; GCTX-M10 quarantine/count predicate still open |
 | [0014](0014-history-and-notes-catalog-without-file-archive.md) | GCTX-S01: history/structure/notes catalog, no ordinary file archive | 2026-10-15 | Accepted scope revision; notes ref discovery refined by 0015 |
 | [0015](0015-automatic-git-notes-ref-discovery.md) | B01-R01: auto-discover `refs/notes/*` and explicitly nominated notes refs | 2026-10-15 | Accepted discovery policy; capture identity refined by 0016 |
-| [0016](0016-immutable-notes-ref-capture-observations.md) | B01-R02: immutable capture-scoped notes-ref observation identity | 2026-10-15 | Accepted distinct genuine captures and idempotent same-capture replay; B01-R03 portable origin/replay key, B02 and B03 still open |
+| [0016](0016-immutable-notes-ref-capture-observations.md) | B01-R02: immutable capture-scoped notes-ref observation identity | 2026-10-15 | Accepted distinct genuine captures; direct composite key preferred by ADR 0017; B01-R03 issuer/replay still open |
+| [0017](0017-domain-keys-without-storage-surrogates.md) | KEY-P01: Domain keys without storage-only surrogates | 2026-10-15 | Accepted repository-wide PK/FK policy; existing final DDL and issued-domain-identity details pending |
 | [Transport-independent Core](../transport-independent-core-adr.md) | Domain persistence and provenance independent of transport replay | 2026-10-10 | Preserved in unsuperseded scope |
 | [No Independent Publication](../phase2/no-independent-publication-adr.md) | Publication-free domain authority | 2026-10-10 | Preserved; no new generic notes/retention seal |
 

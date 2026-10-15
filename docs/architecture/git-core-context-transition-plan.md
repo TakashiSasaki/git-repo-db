@@ -2,6 +2,7 @@
 
 **Accepted target scope:** [ADR 0014 / GCTX-S01](../adr/0014-history-and-notes-catalog-without-file-archive.md), refined for notes-ref discovery by [ADR 0015 / B01-R01](../adr/0015-automatic-git-notes-ref-discovery.md) and immutable capture-scoped notes-ref observation identity by [ADR 0016 / B01-R02](../adr/0016-immutable-notes-ref-capture-observations.md).
 **Design base:** PR #54, `0301fcc8aeef427e2b9e2a3197a4ed993dcdf657`.
+**Repository-wide key rule:** [ADR 0017 / KEY-P01](../adr/0017-domain-keys-without-storage-surrogates.md) prohibits storage-only surrogate PKs: use natural/domain composites and preserve already-fixed permanent repository, genuine capture and physical-instance identities. Exact B01-R03 issuance and physical instance encoding remain open.
 **Implemented source format:** Three-Store Core 21 / Operational 1 / Search 1. No implementation, schema version or runtime change is made by this plan.
 
 ## 1. Product boundary before physical tables
@@ -27,13 +28,13 @@ Notes are a role of Git blobs, not a native `note` object type. Native type chec
 | Context | Provider/Source/PR/Issue/review state, associations, text and conflicts | Independently durable and mutable where already permitted; not a file archive escape hatch |
 | Operational / Search | Retry/cache state and rebuildable metadata/notes indices | Deletion cannot erase canonical evidence; excluded ordinary file text is not retained in either |
 
-ADR 0016 / B01-R02 fixes a **distinct immutable capture-scoped identity per genuine notes-ref observation**, even when repository/ref/root and member reports match another capture; associated notes member groups must reference their original observation. A replay of the same genuine capture is idempotent. Repository/ref/root/annotated OID are **not** a sufficient natural key for the observation. Exact portable origin and receiver-local keys, ID issuance, cross-source replay and conflict checks remain B01-R03; table names/FKs, member grammar, path evidence and completeness remain later design work. A notes ref may point directly to a tree, and source-reported captures may lack a verified root; do not invent a notes commit or call an unverified association intrinsic.
+ADR 0016 / B01-R02 fixes a **distinct immutable capture-scoped identity per genuine notes-ref observation**, even when repository/ref/root and member reports match another capture; associated notes member groups must reference their original observation. A replay of the same genuine capture is idempotent. Repository/ref/root/annotated OID are **not** a sufficient natural key for the observation. ADR 0017 forbids a separate receiver-local storage surrogate and makes a direct origin/capture composite key the preferred shape; exact portable-origin issuance, cross-source replay and conflict checks remain B01-R03; table names/FKs, member grammar, path evidence and completeness remain later design work. A notes ref may point directly to a tree, and source-reported captures may lack a verified root; do not invent a notes commit or call an unverified association intrinsic.
 
 Same-OID file/note reuse shares nominal identity, while the retention-purpose relation remains explicit. It is legitimate to store bytes in their evidenced annotation role without reintroducing a general API for restoring repository files. Untrusted strings such as `is_note=true` are not a substitute for the typed notes ingestion contract.
 
 ## 3. Source-schema and call-site impact audit
 
-The existing inventory is **70 Core, 10 Operational, 4 Search product tables**, not a target count. `src/repo_catalog/adapters/sqlite/schema.py` composes production SQL. Implementation MUST inventory every source table, column, FK, view, trigger, index, writer, reader, validator and Exchange key; this grouped map is a starting point, not a completed exhaustive audit.
+The existing inventory is **70 Core, 10 Operational, 4 Search product tables**, not a target count. Each final table's genuine domain PK and every child FK must be audited under ADR 0017; legacy `*_id INTEGER PRIMARY KEY` storage-only surrogates are not grandfathered. Typed immutable occurrence/physical-instance identity must be justified, not invented for convenient joins. `src/repo_catalog/adapters/sqlite/schema.py` composes production SQL. Implementation MUST inventory every source table, column, FK, view, trigger, index, writer, reader, validator and Exchange key; this grouped map is a starting point, not a completed exhaustive audit.
 
 | Existing group | Redesign action | Required counterexample |
 | --- | --- | --- |

@@ -19,7 +19,7 @@ Three separate identity levels MUST remain distinguishable:
 
 A physical instance is an **application-addressable storage entity**, such as a future distinct SQLite BLOB row, **not** a disk sector, SQLite page, host, network replica or proof of hardware fault-domain independence. Separate instances inside one SQLite DB do not by themselves provide storage-device redundancy. GCTX-M08 selects the logical physical-copy model, not a mandatory disk/file layout or extra authoritative store.
 
-This explicitly supersedes the old target-shape assumption that `stored_bytes(sha256 PRIMARY KEY, body)` is sufficient to distinguish all independently retained byte instances, and that `payload_quarantine(sha256 PRIMARY KEY)` can directly encode all per-instance physical faults. Their exact replacement tables/keys/triggers remain pending. No backward-compatibility schema retention is required before release.
+This explicitly supersedes the old target-shape assumption that `stored_bytes(sha256 PRIMARY KEY, body)` is sufficient to distinguish all independently retained byte instances, and that `payload_quarantine(sha256 PRIMARY KEY)` can directly encode all per-instance physical faults. Their exact replacement tables/keys/triggers remain pending. [ADR 0017 / KEY-P01](0017-domain-keys-without-storage-surrogates.md) now disallows storage-only surrogate PKs, while preserving the genuine independent physical-instance identities required here; the format and origin of those identities still need domain justification. No backward-compatibility schema retention is required before release.
 
 ## 2. Immutable physical diagnosis and recovery
 

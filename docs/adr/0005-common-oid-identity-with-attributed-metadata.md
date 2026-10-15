@@ -24,7 +24,7 @@ Within a Git Core catalog, each **nominal full Git OID** has one common logical 
 - Attributes and relationships must preserve attribution to their actual source/observation and their epistemic status. Independent reports and byte-derived facts can coexist against the same nominal identity. A later report or verified byte representation must not UPDATE, DELETE or REPLACE earlier admitted reports.
 - A reference to an OID without retained bytes may use the common nominal identity, but the presence of that identity never satisfies a requirement for verified object bytes, verified intrinsic structure, source membership or complete graph closure.
 
-This establishes **logical identity** and **domain separation**, not a mandatory physical table name. Using the existing `git_objects` name as a nominal registry, introducing a separate registry, surrogate key choices and concrete foreign-key layouts are *not decided here*.
+This establishes **logical identity** and **domain separation**, not a mandatory physical table name. Using the existing `git_objects` name as a nominal registry, introducing a separate registry and concrete foreign-key layouts are *not decided here*. [ADR 0017 / KEY-P01](0017-domain-keys-without-storage-surrogates.md) subsequently prohibits database-only surrogate keys and requires the full typed `(object_format,oid)` domain identity to be the authoritative key.
 
 ## 2. Metadata and optional verification
 
