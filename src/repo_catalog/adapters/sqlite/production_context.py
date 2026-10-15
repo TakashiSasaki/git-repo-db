@@ -149,6 +149,9 @@ class Context(ContextStore):
         self._writable = writable
         self._active = True
         self._check()
+        roles = self.db.execute("SELECT store_role FROM store_identity").fetchall()
+        if roles != [("context",)]:
+            raise ContextError("STORE_ROLE", "context", "Context authority required")
 
     def _check(self, *, write: bool = False):
         if not self._active:

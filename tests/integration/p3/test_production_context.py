@@ -685,6 +685,8 @@ def test_swallowed_sqlite_corruption_stops_immediately(directory, deferred):
         in_transaction = True
 
         def execute(self, sql, parameters=()):
+            if sql == "SELECT store_role FROM store_identity":
+                return db.execute(sql, parameters)
             if deferred:
                 return FaultCursor()
             raise error
@@ -871,3 +873,32 @@ def test_invalid_utf8_stored_field_stops_before_caller_can_swallow(directory):
             assert (directory / "p1-recovery-stop.json").exists()
             with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
                 store.candidates(KEY, "missing")
+
+
+@pytest.mark.parametrize("mode", ["transaction", "snapshot"])
+def test_context_cannot_bind_core_shared_coverage_tables(directory, mode):
+    initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
+    coordinator = PairCoordinator(directory)
+    if mode == "transaction":
+
+        def wrong_core_unit(db):
+            with Context.for_transaction(db, directory) as context:
+                scope = CoverageScope.repository(REPO, "provider-inventory")
+                context.scope(scope)
+                context.admit_coverage(CoverageClaim(scope, 10, "complete"))
+
+        with pytest.raises(AdmissionFailure) as failure:
+            coordinator.admit(wrong_core_unit, lambda db: None)
+        assert isinstance(failure.value.cause, ContextError)
+        assert failure.value.cause.code == "STORE_ROLE"
+        assert not failure.value.outcome.core_committed
+    else:
+        with coordinator.snapshots() as pair:
+            with pytest.raises(ContextError, match="STORE_ROLE"):
+                with Context.for_snapshot(pair.core, directory):
+                    pytest.fail("Core claims mislabeled as Context")
+    assert not (directory / "p1-recovery-stop.json").exists()
+    with coordinator.snapshots() as pair:
+        assert (
+            pair.core.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 0
+        )
