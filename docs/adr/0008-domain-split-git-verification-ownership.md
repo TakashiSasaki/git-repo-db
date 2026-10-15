@@ -69,7 +69,7 @@ This decision fixes **domain ownership**, not DDL/table names, concrete validati
 
 ## 6. Subsequent owner decision: GCTX-M06 accepted; next GCTX-M07
 
-[ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md) selects Option B: bounded immutable per-representation admission evidence, separate from current physical-byte health. The following alternatives document the original question, not a still-open owner choice. ADR 0010 / GCTX-M07 now fixes operation-scoped assurance tiers, while the exact snapshot/locking implementation and GCTX-M08 append-only CAS repair remain open.
+[ADR 0009 / GCTX-M06](0009-bounded-byte-admission-and-physical-health.md) selects Option B: bounded immutable per-representation admission evidence, separate from current physical-byte health. The following alternatives document the original question, not a still-open owner choice. ADR 0010 / GCTX-M07 now fixes operation-scoped assurance tiers, while the exact snapshot/locking implementation remains open. [ADR 0011 / GCTX-M08](0011-append-only-multiple-cas-physical-instances.md) selects append-only alternate-instance recovery; GCTX-M09 selection/active quarantine remain open.
 
 How should Git Core represent immutable admission of verified original bytes and separate it from **current** physical availability?
 

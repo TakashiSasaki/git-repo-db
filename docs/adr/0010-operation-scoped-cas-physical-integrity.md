@@ -54,7 +54,7 @@ This is a **semantic assurance contract**; exact scan cadence, mandatory low-lev
 | T4 | Physical instance I storing C suffers an external bit flip (not yet detected) | T2 admission remains true, T3 audit becomes stale for T4; lack of diagnosis is not proof of present health |
 | T5a | User requests only C's historical verified parent | Core may return P with historical-canonical qualifier, preserve alternative Q and avoid mandatory rehash; do not claim current raw bytes are healthy |
 | T5b | User requests C's original bytes as verified Git object | Verify the exact bytes to be emitted under the operation's consistency contract. If corrupted, deny successful verified export and retain appropriate fault diagnosis |
-| T6 | Correct bytes are independently reacquired | Future append-only-safe recovery must not rewrite I or erase its history. Whether recovery introduces another physical instance and how active quarantine is derived is GCTX-M08, still open |
+| T6 | Correct bytes are independently reacquired | Future append-only-safe recovery must not rewrite I or erase its history. Recovery via a new independently validated physical instance is fixed by ADR 0011 / GCTX-M08; candidate selection and active quarantine derivation remain open for GCTX-M09 |
 
 A verified edge C→P does not prove P's raw bytes exist or that whole-graph closure is complete. A metadata-only catalog must remain usable after Operational/Search recreation and Context omission.
 
@@ -89,7 +89,9 @@ No “last success wins”, no cryptographic certification of Provider authentic
 11. Verify Git-only metadata backup/restore with no byte bodies and full paired backup with Core+Context, without confusing physical integrity, metadata completeness or graph closure.
 12. Ensure no new universal verification ledger, mutable preferred-result pointer, new decoder winner or arbitrary Core UPDATE/DELETE/REPLACE path is introduced.
 
-## 7. Next unresolved decision GCTX-M08
+## 7. Subsequent owner decision: GCTX-M08 accepted; next GCTX-M09
+
+[ADR 0011 / GCTX-M08](0011-append-only-multiple-cas-physical-instances.md) selects Option A: multiple immutable physical instances per logical CAS payload, with appended instance-specific corruption and recovery evidence; original damaged bytes are not overwritten or garbage-collected. The following A/B/C comparison records the original alternatives, not an open owner choice. GCTX-M09 will settle eligible instance selection and active quarantine derivation.
 
 **How should physical CAS corruption and repair be modeled under an absolutely append-only Git Core while preserving CAS-41?** Compare:
 
@@ -99,7 +101,7 @@ No “last success wins”, no cryptographic certification of Provider authentic
 
 For all options, distinguish *logical payload availability* from *physical-instance quarantine* and preserve the CAS-41 manifest's active **physical** quarantine accounting, which cannot be substituted by the count of historical diagnostic rows. Detailed per-instance keys, collision resolution, active-quarantine projection, atomic promotion, alternate-byte validation and crash/restore protocols are **not** accepted yet.
 
-Other open work: final Core/Context tables/FKs, relation-group completeness evidence, append-only revision/fences and cross-authoritative transactions/backups, Exchange wire, GC-03/GC-04. No GCTX-M08 option is selected by this ADR.
+Other open work: final Core/Context tables/FKs, relation-group completeness evidence, append-only revision/fences and cross-authoritative transactions/backups, Exchange wire, GC-03/GC-04. ADR 0011 selects GCTX-M08 Option A; physical-instance selection and quarantine counting details remain open for GCTX-M09.
 
 ## 8. Permissions and implementation scope
 
