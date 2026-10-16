@@ -32,6 +32,7 @@ from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
+    NotesAcquisitionSpec,
     ProviderIntakeBatch,
     ProviderPullRequestIntake,
     ProviderRegistration,
@@ -39,11 +40,13 @@ from repo_catalog.domain.acquisition import (
     make_provenance,
 )
 from repo_catalog.domain.exchange import (
+    ExchangeSelectionScope,
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey
 from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.production_context import ResourceObservation
 from repo_catalog.domain.production_query import SearchQuery
 
 
@@ -75,8 +78,8 @@ def _setup_git_repo(git_dir: Path, fmt: str = "sha1") -> dict[str, str]:
     tree_oid = write_obj("tree", b"")
     c1_raw = (
         f"tree {tree_oid}\n"
-        f"author Alice <alice@example.com> 1700000000 +0000\n"
-        f"committer Alice <alice@example.com> 1700000000 +0000\n\n"
+        f"author Alice <alice@example.com> -1 +0000\n"
+        f"committer Alice <alice@example.com> 0 +0000\n\n"
         f"commit 1 needle_kw\n"
     ).encode("utf-8")
     c1_oid = write_obj("commit", c1_raw)
@@ -97,17 +100,39 @@ def _setup_git_repo(git_dir: Path, fmt: str = "sha1") -> dict[str, str]:
         check=True,
     )
 
-    return {"tree": tree_oid, "commit1": c1_oid, "commit2": c2_oid}
+    note_oid = write_obj("blob", "日本語 needle_kw note\n".encode())
+    notes_root = write_obj(
+        "tree", b"100644 " + c1_oid.encode() + b"\0" + bytes.fromhex(note_oid)
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(git_dir),
+            "update-ref",
+            "refs/notes/nested/review",
+            notes_root,
+        ],
+        check=True,
+    )
+    return {
+        "tree": tree_oid,
+        "commit1": c1_oid,
+        "commit2": c2_oid,
+        "note": note_oid,
+        "notes_root": notes_root,
+    }
 
 
-def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path) -> None:
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) -> None:
     repo_uuid = str(uuid4())
     inst_uuid = str(uuid4())
     cat_dir = tmp_path / "catalog"
     _init_catalog(cat_dir, repo_uuid, inst_uuid)
 
     git_dir = tmp_path / "git_repo"
-    oids = _setup_git_repo(git_dir, "sha1")
+    oids = _setup_git_repo(git_dir, fmt)
 
     # 1. P5 Git acquisition
     git_src = GitNativeSource(git_dir)
@@ -117,12 +142,22 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path) -> None:
         capture_uuidv4=str(uuid4()),
         source_attribution="test-git",
         observed_at_us=1_700_000_000_000_000,
-        select_oids=(OID("sha1", oids["commit1"]), OID("sha1", oids["commit2"])),
+        select_oids=(OID(fmt, oids["commit1"]), OID(fmt, oids["commit2"])),
         retain_bytes=True,
+        notes=NotesAcquisitionSpec(
+            discover_notes=True,
+            acquire_inventories=True,
+            target_oids=(OID(fmt, oids["commit1"]),),
+        ),
     )
     git_acq = GitAcquisition(cat_dir)
-    git_rep = git_acq.acquire_from_native(git_src, git_req)
+    git_rep = git_acq.acquire_from_native(git_src, git_req, new_request=True)
     assert git_rep.status == "complete"
+    assert len(git_rep.note_acquisitions) == 1
+    note_result = git_rep.note_acquisitions[0]
+    assert note_result.role_verified and note_result.body_retained
+    replay = git_acq.acquire_from_native(git_src, git_req)
+    assert replay.notes_discoveries[0].captures == git_rep.notes_discoveries[0].captures
 
     # 2. P5 Provider intake
     service_uuid = str(uuid4())
@@ -156,10 +191,17 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path) -> None:
 
     # 3. P6 Query Service verification
     qs = ProductionQueryService(cat_dir)
-    obj1 = qs.get_git_object(OID("sha1", oids["commit1"]), include_bytes=True)
+    obj1 = qs.get_git_object(OID(fmt, oids["commit1"]), include_bytes=True)
     assert obj1.oid.full_oid == oids["commit1"]
     assert obj1.native_type == "commit"
     assert obj1.metadata_retained is True
+    exact = qs.read_metadata_bytes(OID(fmt, oids["commit1"]))
+    assert b"-1 +0000" in exact.body_bytes and b" 0 +0000" in exact.body_bytes
+    capture = git_rep.notes_discoveries[0].captures[0]
+    note_read = qs.read_note_bytes(
+        capture, OID(fmt, oids["commit1"]), OID(fmt, oids["note"])
+    )
+    assert note_read.body_bytes == "日本語 needle_kw note\n".encode()
 
     # P6 Paired Resource query
     pr_key = ResourceKey(service_uuid, "pull_request", "501")
@@ -190,7 +232,8 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path) -> None:
     assert all(hit.snapshot_token == res.snapshot_token for hit in res.hits)
 
 
-def test_multi_hop_exchange_into_query(tmp_path: Path) -> None:
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
     repo_uuid = str(uuid4())
     inst_a = str(uuid4())
     inst_b = str(uuid4())
@@ -204,7 +247,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path) -> None:
     _init_catalog(cat_c, repo_uuid, inst_c)
 
     git_dir = tmp_path / "git_repo"
-    oids = _setup_git_repo(git_dir, "sha1")
+    oids = _setup_git_repo(git_dir, fmt)
 
     # Acquire into A
     git_acq = GitAcquisition(cat_a)
@@ -216,9 +259,10 @@ def test_multi_hop_exchange_into_query(tmp_path: Path) -> None:
             capture_uuidv4=str(uuid4()),
             source_attribution="src-a",
             observed_at_us=1_700_000_000_000_000,
-            select_oids=(OID("sha1", oids["commit1"]),),
+            select_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
         ),
+        new_request=True,
     )
 
     # Export A -> Import B
@@ -227,7 +271,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path) -> None:
     wire_a = encode_package(pkg_a)
 
     svc_b = ExchangeService(cat_b)
-    rep_b = svc_b.import_package(decode_package(wire_a))
+    rep_b = svc_b.import_package(decode_package(wire_a), new_request=True)
     assert rep_b.admitted_core_objects >= 1
 
     # Export B -> Import C
@@ -235,21 +279,23 @@ def test_multi_hop_exchange_into_query(tmp_path: Path) -> None:
     wire_b = encode_package(pkg_b)
 
     svc_c = ExchangeService(cat_c)
-    rep_c = svc_c.import_package(decode_package(wire_b))
+    rep_c = svc_c.import_package(decode_package(wire_b), new_request=True)
     assert rep_c.admitted_core_objects >= 1
 
     # Query catalog C with P6 QueryService
     qs_c = ProductionQueryService(cat_c)
-    obj = qs_c.get_git_object(OID("sha1", oids["commit1"]), include_bytes=True)
+    obj = qs_c.get_git_object(OID(fmt, oids["commit1"]), include_bytes=True)
     assert obj.metadata_retained is True
-    byte_res = qs_c.read_metadata_bytes(OID("sha1", oids["commit1"]))
+    byte_res = qs_c.read_metadata_bytes(OID(fmt, oids["commit1"]))
     assert byte_res.available is True
     assert byte_res.verified is True
     assert byte_res.body_bytes is not None
 
 
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_deferred_core_dependency_reconciliation_into_paired_queries(
     tmp_path: Path,
+    fmt: str,
 ) -> None:
     repo_uuid = str(uuid4())
     inst_uuid = str(uuid4())
@@ -257,7 +303,7 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
     _init_catalog(cat_dir, repo_uuid, inst_uuid)
 
     git_dir = tmp_path / "git_repo"
-    oids = _setup_git_repo(git_dir, "sha1")
+    oids = _setup_git_repo(git_dir, fmt)
 
     # 1. Admit Context first with PR referencing commit1 (which is NOT in Core yet!)
     service_uuid = str(uuid4())
@@ -304,9 +350,10 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
             capture_uuidv4=str(uuid4()),
             source_attribution="src-git-late",
             observed_at_us=1_700_000_100_000_000,
-            select_oids=(OID("sha1", oids["commit1"]),),
+            select_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
         ),
+        new_request=True,
     )
 
     # 3. Reconcile dependencies via PairedAcquisitionCoordinator
@@ -323,14 +370,17 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
     assert resolved_deps[0].object_view.oid.full_oid == oids["commit1"]
 
 
-def test_derivative_loss_resilience_and_transparent_fallback(tmp_path: Path) -> None:
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+def test_derivative_loss_resilience_and_transparent_fallback(
+    tmp_path: Path, fmt: str
+) -> None:
     repo_uuid = str(uuid4())
     inst_uuid = str(uuid4())
     cat_dir = tmp_path / "cat_fallback"
     _init_catalog(cat_dir, repo_uuid, inst_uuid)
 
     git_dir = tmp_path / "git_repo"
-    oids = _setup_git_repo(git_dir, "sha1")
+    oids = _setup_git_repo(git_dir, fmt)
 
     git_acq = GitAcquisition(cat_dir)
     git_acq.acquire_from_native(
@@ -341,16 +391,24 @@ def test_derivative_loss_resilience_and_transparent_fallback(tmp_path: Path) -> 
             capture_uuidv4=str(uuid4()),
             source_attribution="src-git",
             observed_at_us=1_700_000_000_000_000,
-            select_oids=(OID("sha1", oids["commit1"]),),
+            select_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
         ),
+        new_request=True,
     )
 
     qs = ProductionQueryService(cat_dir)
     qs.rebuild_search()
     res1 = qs.search(SearchQuery(query_text="needle_kw"))
-    assert res1.backend == "projection"
+    assert res1.backend in ("verified_projection_scan", "authority_scan")
     assert res1.total_count >= 1
+    # Search is disposable; unknown/lost state uses the same authority semantics.
+    (cat_dir / "operational.sqlite3").unlink()
+    (cat_dir / "search.sqlite3").unlink()
+    after_loss = qs.search(SearchQuery(query_text="needle_kw"))
+    assert after_loss.backend == "authority_scan"
+    assert after_loss.total_count == res1.total_count
+    assert qs.get_git_object(OID(fmt, oids["commit1"])).metadata_retained
 
     # Corrupt search.sqlite3 by writing garbage
     search_path = cat_dir / "search.sqlite3"
@@ -364,14 +422,15 @@ def test_derivative_loss_resilience_and_transparent_fallback(tmp_path: Path) -> 
     assert not (cat_dir / "p1-recovery-stop.json").exists()
 
 
-def test_authoritative_corruption_immediate_stop(tmp_path: Path) -> None:
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> None:
     repo_uuid = str(uuid4())
     inst_uuid = str(uuid4())
     cat_dir = tmp_path / "cat_corrupt"
     _init_catalog(cat_dir, repo_uuid, inst_uuid)
 
     git_dir = tmp_path / "git_repo"
-    oids = _setup_git_repo(git_dir, "sha1")
+    oids = _setup_git_repo(git_dir, fmt)
 
     git_acq = GitAcquisition(cat_dir)
     git_acq.acquire_from_native(
@@ -382,9 +441,10 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path) -> None:
             capture_uuidv4=str(uuid4()),
             source_attribution="src-git",
             observed_at_us=1_700_000_000_000_000,
-            select_oids=(OID("sha1", oids["commit1"]),),
+            select_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
         ),
+        new_request=True,
     )
 
     # Tamper with retained_metadata body in core.sqlite3
@@ -404,7 +464,7 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path) -> None:
 
     qs = ProductionQueryService(cat_dir, mode="core_only")
     with pytest.raises(CoreFailure) as exc_info:
-        qs.read_metadata_bytes(OID("sha1", oids["commit1"]))
+        qs.read_metadata_bytes(OID(fmt, oids["commit1"]))
     assert exc_info.value.code == "AUTHORITATIVE_CORRUPTION"
 
     # Verify stop file was written
@@ -412,5 +472,86 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path) -> None:
 
     # Subsequent reads fail closed immediately with RECOVERY_STOP
     with pytest.raises(CoreFailure) as fenced:
-        qs.get_git_object(OID("sha1", oids["commit1"]))
+        qs.get_git_object(OID(fmt, oids["commit1"]))
     assert fenced.value.code == "RECOVERY_STOP"
+
+
+@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
+def test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks(
+    tmp_path: Path,
+    fmt: str,
+) -> None:
+    """Original field identity/NULL and native bytes survive actual P5→P6 use."""
+    repository = str(uuid4())
+    catalogs = [tmp_path / name for name in ("a", "b", "c")]
+    for catalog in catalogs:
+        _init_catalog(catalog, repository, str(uuid4()))
+    a, b, c = catalogs
+    service = str(uuid4())
+    resource = ResourceKey(service, "issue", "unknown-clock")
+    first = FieldCandidate(
+        resource,
+        "state",
+        '"open"',
+        FieldClock("provider:unknown", None),
+        make_provenance("synthetic-provider", "first"),
+        None,
+    )
+    explicit_null = FieldCandidate(
+        resource,
+        "body",
+        "null",
+        FieldClock("provider:unknown", None),
+        make_provenance("synthetic-provider", "explicit-null"),
+        None,
+    )
+    acquisition = ProviderAcquisition(a)
+    acquisition.admit_batch(
+        ProviderIntakeBatch(
+            service,
+            providers=(ProviderRegistration(service, "synthetic"),),
+            observations=(ResourceObservation(resource, (first, explicit_null)),),
+        )
+    )
+    exporter = ExchangeService(a)
+    subset = ExchangeSelectionScope(include_core=False, resource_keys=(resource,))
+    earlier = exporter.export_package(selection=subset, exported_at_us=1)
+    later = FieldCandidate(
+        resource,
+        "state",
+        '"closed"',
+        FieldClock("provider:unknown", None),
+        make_provenance("synthetic-provider", "second"),
+        None,
+    )
+    acquisition.admit_batch(
+        ProviderIntakeBatch(
+            service,
+            observations=(ResourceObservation(resource, (later,)),),
+        )
+    )
+    newer = exporter.export_package(selection=subset, exported_at_us=2)
+    receiver = ExchangeService(b)
+    receiver.import_package(newer, new_request=True)
+    receiver.import_package(earlier, new_request=True)
+    receiver.import_package(newer)  # Lost acknowledgement retry, not new request.
+    query_b = ProductionQueryService(b)
+    view = query_b.get_context_resource(resource)
+    assert set(view.fields["state"]) == {first, later}
+    assert view.fields["body"] == (explicit_null,)
+    assert "title" not in view.fields  # Missing was never synthesized as null.
+    reverse = receiver.export_package(selection=subset, exported_at_us=3)
+    exporter.import_package(reverse, new_request=True)
+    assert set(
+        ProductionQueryService(a).get_context_resource(resource).fields["state"]
+    ) == {first, later}
+    onward = receiver.export_package(exported_at_us=4)
+    ExchangeService(c).import_package(onward, new_request=True)
+    view_c = ProductionQueryService(c).get_context_resource(resource)
+    assert view_c.fields == view.fields
+    # Derivatives disappear without invalidating the admitted Context authority.
+    (c / "operational.sqlite3").unlink()
+    (c / "search.sqlite3").unlink()
+    assert (
+        ProductionQueryService(c).get_context_resource(resource).fields == view.fields
+    )
