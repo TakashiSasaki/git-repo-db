@@ -267,3 +267,94 @@ def verify_inventory(inventory: NotesInventory, work: WorkBudget) -> NotesInvent
             "inventory does not match receiver structural checks",
         )
     return inventory
+
+
+class _InventoryValidationWork:
+    """Read/schema checks outside acquisition have no request accounting ledger."""
+
+    def require(self, unit, amount=1):
+        pass
+
+    def charge(self, unit, amount):
+        pass
+
+
+def decode_inventory_group(
+    capture_key_json: str,
+    scope: str,
+    status: str,
+    membership_json: str,
+    provenance_json: str,
+    work: WorkBudget | None = None,
+) -> NotesInventory:
+    """Decode and recheck an intrinsic whole group at SQL and typed-read edges.
+
+    The Capture key comes from the actual persisted composite FK owner, never
+    from the provenance's own claimed observation. Native evidence establishes
+    only the checked mapping/terminal scope; reserved words confer no authority.
+    """
+    import json
+
+    from repo_catalog.domain.p1_core import NotesGroup, Provenance, encode
+
+    fields = json.loads(capture_key_json)
+    origin, capture_uuid, repository, source, encoded_ref, fmt, root = fields
+    kind, raw_hex = json.loads(encoded_ref)
+    raw_ref = bytes.fromhex(raw_hex)
+    if kind != "native-ref" or raw_ref.hex() != raw_hex:
+        raise ValueError("invalid native Capture ref encoding")
+    capture = Capture(
+        origin,
+        capture_uuid,
+        repository,
+        source,
+        raw_ref.decode("utf-8", "surrogateescape"),
+        OID(fmt, root),
+    )
+    if encode(capture.key) != capture_key_json:
+        raise ValueError("noncanonical or inconsistent Capture key")
+    provenance = Provenance(*json.loads(provenance_json))
+    if (
+        provenance.encoded != provenance_json
+        or provenance.source != "receiver-intrinsic"
+        or provenance.observation != capture_key_json
+        or provenance.decoder != "git-native-notes-inventory"
+        or provenance.decoder_version != "1"
+        or provenance.qualification != "receiver_intrinsic"
+        or scope != "all-notes-mappings"
+    ):
+        raise ValueError("invalid receiver inventory provenance")
+    coordinate = json.loads(provenance.coordinate)
+    kind, grammar, evidence, diagnostic = coordinate
+    if (
+        kind != "inventory"
+        or grammar != GRAMMAR
+        or encode(coordinate) != provenance.coordinate
+    ):
+        raise ValueError("unsupported or noncanonical inventory evidence")
+    structures = tuple(
+        NativeObject(OID(fmt, oid), native_type, bytes.fromhex(body), size, digest)
+        for fmt, oid, native_type, body, size, digest in evidence
+    )
+    if any(
+        native.body.hex() != entry[3]
+        for native, entry in zip(structures, evidence, strict=True)
+    ):
+        raise ValueError("noncanonical structural byte encoding")
+    if diagnostic is not None and (
+        not isinstance(diagnostic, list)
+        or len(diagnostic) != 2
+        or any(not isinstance(value, str) or not value for value in diagnostic)
+    ):
+        raise ValueError("invalid inventory diagnostic")
+    failure = (
+        None
+        if diagnostic is None
+        else CoreFailure(diagnostic[0], capture.pair, diagnostic[1])
+    )
+    members = tuple(tuple(member) for member in json.loads(membership_json))
+    group = NotesGroup(capture, scope, status, members, provenance)
+    if encode(group.members) != membership_json:
+        raise ValueError("noncanonical inventory membership")
+    inventory = NotesInventory(capture, group.status, members, structures, failure)
+    return verify_inventory(inventory, work or _InventoryValidationWork())
