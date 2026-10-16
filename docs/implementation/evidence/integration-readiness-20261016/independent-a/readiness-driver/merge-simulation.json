@@ -1,0 +1,60 @@
+{
+  "base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "strategy": "merge commits; preserve first parent main and feature second parent",
+  "steps": [
+    {
+      "pr": 89,
+      "first_parent": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "second_parent": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "ed80623514a5e574d1e24e908b95504f60b815db",
+      "synthetic_commit": "9160be67b72f8c9d38d4a2191a19e4c0abfb3ebf",
+      "conflicts": false
+    },
+    {
+      "pr": 87,
+      "first_parent": "9160be67b72f8c9d38d4a2191a19e4c0abfb3ebf",
+      "second_parent": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "6ebd07cf4d6846e7d964c1be571c8507c037b9be",
+      "synthetic_commit": "dfd96f4a57a7ddd272b88e88eba76b752ce2017a",
+      "conflicts": false
+    },
+    {
+      "pr": 88,
+      "first_parent": "dfd96f4a57a7ddd272b88e88eba76b752ce2017a",
+      "second_parent": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "merge_base": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "tree": "e250fe0ad801013fb9c59e929cfc7f875fabb5b8",
+      "synthetic_commit": "1fda233c821e82aec5cae8da2eaa6246521e6d41",
+      "conflicts": false
+    }
+  ],
+  "final_vs_pr88_paths": [
+    ".agents/skills/docs-site-staging-and-pages/SKILL.md",
+    ".github/workflows/pages.yml",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/REPORT.md",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/check_import_trigger.py",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/checks-final.json",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/committed-journal.jsonl",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/committed-junit.xml",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/committed-ruff-check.log",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/committed-ruff-format.log",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/committed-tests.log",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/evidence-files.json",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/node-reconciliation.json",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/pages-final-hosted-excerpt.log",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/pages-final-run.json",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/pages-hosted-excerpt.log",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/pages-pre-skip-hosted-excerpt.log",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/pages-run-history.json",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/publication-inputs.json",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/source-before.txt",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/source-final.txt",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/transitive-after.log",
+    "docs/implementation/evidence/pages-ci/2026-10-16-independent-review/transitive-before.log",
+    "scripts/build_docs_site.py",
+    "tests/unit/test_build_docs_site.py"
+  ],
+  "limits": "Local objects only; no refs, branches or remote merges changed. Synthetic commit IDs are not predicted GitHub merge IDs."
+}

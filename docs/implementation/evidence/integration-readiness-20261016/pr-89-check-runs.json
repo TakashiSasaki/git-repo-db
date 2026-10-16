@@ -1,0 +1,422 @@
+{
+  "total_count": 3,
+  "check_runs": [
+    {
+      "id": 117033302324,
+      "name": "deploy-to-pages",
+      "node_id": "CR_kwDOU78qEs8AAAAbP7p5NA",
+      "head_sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "external_id": "3c6f34a4-c16e-51a2-9c5b-24283e028072",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/check-runs/117033302324",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117033302324",
+      "details_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117033302324",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-16T14:49:18Z",
+      "completed_at": "2026-10-16T14:49:17Z",
+      "output": {
+        "title": null,
+        "summary": null,
+        "text": null,
+        "annotations_count": 0,
+        "annotations_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/check-runs/117033302324/annotations"
+      },
+      "check_suite": {
+        "id": 105472586522
+      },
+      "app": {
+        "id": 15368,
+        "client_id": "Iv1.05c79e9ad1f6bdfa",
+        "slug": "github-actions",
+        "node_id": "MDM6QXBwMTUzNjg=",
+        "owner": {
+          "login": "github",
+          "id": 9919,
+          "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+          "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/github",
+          "html_url": "https://github.com/github",
+          "followers_url": "https://api.github.com/users/github/followers",
+          "following_url": "https://api.github.com/users/github/following{/other_user}",
+          "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+          "organizations_url": "https://api.github.com/users/github/orgs",
+          "repos_url": "https://api.github.com/users/github/repos",
+          "events_url": "https://api.github.com/users/github/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/github/received_events",
+          "type": "Organization",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "name": "GitHub Actions",
+        "description": "Automate your workflow from idea to production",
+        "external_url": "https://help.github.com/en/actions",
+        "html_url": "https://github.com/apps/github-actions",
+        "created_at": "2018-07-30T09:30:17Z",
+        "updated_at": "2026-06-18T16:17:48Z",
+        "permissions": {
+          "actions": "write",
+          "administration": "read",
+          "artifact_metadata": "write",
+          "attestations": "write",
+          "checks": "write",
+          "code_quality": "write",
+          "contents": "write",
+          "copilot_requests": "write",
+          "deployments": "write",
+          "discussions": "write",
+          "drives": "write",
+          "issues": "write",
+          "merge_queues": "write",
+          "metadata": "read",
+          "models": "read",
+          "packages": "write",
+          "pages": "write",
+          "pull_requests": "write",
+          "repository_hooks": "write",
+          "repository_projects": "write",
+          "security_events": "write",
+          "statuses": "write",
+          "vulnerability_alerts": "read"
+        },
+        "events": [
+          "branch_protection_rule",
+          "check_run",
+          "check_suite",
+          "create",
+          "delete",
+          "deployment",
+          "deployment_status",
+          "discussion",
+          "discussion_comment",
+          "fork",
+          "gollum",
+          "issues",
+          "issue_comment",
+          "label",
+          "merge_group",
+          "milestone",
+          "page_build",
+          "public",
+          "pull_request",
+          "pull_request_review",
+          "pull_request_review_comment",
+          "push",
+          "registry_package",
+          "release",
+          "repository",
+          "repository_dispatch",
+          "status",
+          "watch",
+          "workflow_dispatch",
+          "workflow_run"
+        ]
+      },
+      "pull_requests": [
+        {
+          "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/pulls/89",
+          "id": 4886149665,
+          "number": 89,
+          "head": {
+            "ref": "feat/optimize-pages-trigger-paths",
+            "sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+            "repo": {
+              "id": 1405037074,
+              "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db",
+              "name": "git-repo-db"
+            }
+          },
+          "base": {
+            "ref": "main",
+            "sha": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+            "repo": {
+              "id": 1405037074,
+              "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db",
+              "name": "git-repo-db"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 117032747783,
+      "name": "build-and-validate",
+      "node_id": "CR_kwDOU78qEs8AAAAbP7IDBw",
+      "head_sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "external_id": "b143ec79-af1f-5c07-9939-406ee6e81cf1",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/check-runs/117032747783",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117032747783",
+      "details_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117032747783",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-16T14:48:08Z",
+      "completed_at": "2026-10-16T14:49:17Z",
+      "output": {
+        "title": null,
+        "summary": null,
+        "text": null,
+        "annotations_count": 1,
+        "annotations_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/check-runs/117032747783/annotations"
+      },
+      "check_suite": {
+        "id": 105472586522
+      },
+      "app": {
+        "id": 15368,
+        "client_id": "Iv1.05c79e9ad1f6bdfa",
+        "slug": "github-actions",
+        "node_id": "MDM6QXBwMTUzNjg=",
+        "owner": {
+          "login": "github",
+          "id": 9919,
+          "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+          "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/github",
+          "html_url": "https://github.com/github",
+          "followers_url": "https://api.github.com/users/github/followers",
+          "following_url": "https://api.github.com/users/github/following{/other_user}",
+          "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+          "organizations_url": "https://api.github.com/users/github/orgs",
+          "repos_url": "https://api.github.com/users/github/repos",
+          "events_url": "https://api.github.com/users/github/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/github/received_events",
+          "type": "Organization",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "name": "GitHub Actions",
+        "description": "Automate your workflow from idea to production",
+        "external_url": "https://help.github.com/en/actions",
+        "html_url": "https://github.com/apps/github-actions",
+        "created_at": "2018-07-30T09:30:17Z",
+        "updated_at": "2026-06-18T16:17:48Z",
+        "permissions": {
+          "actions": "write",
+          "administration": "read",
+          "artifact_metadata": "write",
+          "attestations": "write",
+          "checks": "write",
+          "code_quality": "write",
+          "contents": "write",
+          "copilot_requests": "write",
+          "deployments": "write",
+          "discussions": "write",
+          "drives": "write",
+          "issues": "write",
+          "merge_queues": "write",
+          "metadata": "read",
+          "models": "read",
+          "packages": "write",
+          "pages": "write",
+          "pull_requests": "write",
+          "repository_hooks": "write",
+          "repository_projects": "write",
+          "security_events": "write",
+          "statuses": "write",
+          "vulnerability_alerts": "read"
+        },
+        "events": [
+          "branch_protection_rule",
+          "check_run",
+          "check_suite",
+          "create",
+          "delete",
+          "deployment",
+          "deployment_status",
+          "discussion",
+          "discussion_comment",
+          "fork",
+          "gollum",
+          "issues",
+          "issue_comment",
+          "label",
+          "merge_group",
+          "milestone",
+          "page_build",
+          "public",
+          "pull_request",
+          "pull_request_review",
+          "pull_request_review_comment",
+          "push",
+          "registry_package",
+          "release",
+          "repository",
+          "repository_dispatch",
+          "status",
+          "watch",
+          "workflow_dispatch",
+          "workflow_run"
+        ]
+      },
+      "pull_requests": [
+        {
+          "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/pulls/89",
+          "id": 4886149665,
+          "number": 89,
+          "head": {
+            "ref": "feat/optimize-pages-trigger-paths",
+            "sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+            "repo": {
+              "id": 1405037074,
+              "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db",
+              "name": "git-repo-db"
+            }
+          },
+          "base": {
+            "ref": "main",
+            "sha": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+            "repo": {
+              "id": 1405037074,
+              "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db",
+              "name": "git-repo-db"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 117032747536,
+      "name": "offline",
+      "node_id": "CR_kwDOU78qEs8AAAAbP7ICEA",
+      "head_sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "external_id": "18d56df6-eb09-5eb8-8709-717dbb3fc6b7",
+      "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/check-runs/117032747536",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703695/job/117032747536",
+      "details_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703695/job/117032747536",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-16T14:48:08Z",
+      "completed_at": "2026-10-16T14:48:21Z",
+      "output": {
+        "title": null,
+        "summary": null,
+        "text": null,
+        "annotations_count": 0,
+        "annotations_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/check-runs/117032747536/annotations"
+      },
+      "check_suite": {
+        "id": 105472586452
+      },
+      "app": {
+        "id": 15368,
+        "client_id": "Iv1.05c79e9ad1f6bdfa",
+        "slug": "github-actions",
+        "node_id": "MDM6QXBwMTUzNjg=",
+        "owner": {
+          "login": "github",
+          "id": 9919,
+          "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+          "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/github",
+          "html_url": "https://github.com/github",
+          "followers_url": "https://api.github.com/users/github/followers",
+          "following_url": "https://api.github.com/users/github/following{/other_user}",
+          "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+          "organizations_url": "https://api.github.com/users/github/orgs",
+          "repos_url": "https://api.github.com/users/github/repos",
+          "events_url": "https://api.github.com/users/github/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/github/received_events",
+          "type": "Organization",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "name": "GitHub Actions",
+        "description": "Automate your workflow from idea to production",
+        "external_url": "https://help.github.com/en/actions",
+        "html_url": "https://github.com/apps/github-actions",
+        "created_at": "2018-07-30T09:30:17Z",
+        "updated_at": "2026-06-18T16:17:48Z",
+        "permissions": {
+          "actions": "write",
+          "administration": "read",
+          "artifact_metadata": "write",
+          "attestations": "write",
+          "checks": "write",
+          "code_quality": "write",
+          "contents": "write",
+          "copilot_requests": "write",
+          "deployments": "write",
+          "discussions": "write",
+          "drives": "write",
+          "issues": "write",
+          "merge_queues": "write",
+          "metadata": "read",
+          "models": "read",
+          "packages": "write",
+          "pages": "write",
+          "pull_requests": "write",
+          "repository_hooks": "write",
+          "repository_projects": "write",
+          "security_events": "write",
+          "statuses": "write",
+          "vulnerability_alerts": "read"
+        },
+        "events": [
+          "branch_protection_rule",
+          "check_run",
+          "check_suite",
+          "create",
+          "delete",
+          "deployment",
+          "deployment_status",
+          "discussion",
+          "discussion_comment",
+          "fork",
+          "gollum",
+          "issues",
+          "issue_comment",
+          "label",
+          "merge_group",
+          "milestone",
+          "page_build",
+          "public",
+          "pull_request",
+          "pull_request_review",
+          "pull_request_review_comment",
+          "push",
+          "registry_package",
+          "release",
+          "repository",
+          "repository_dispatch",
+          "status",
+          "watch",
+          "workflow_dispatch",
+          "workflow_run"
+        ]
+      },
+      "pull_requests": [
+        {
+          "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/pulls/89",
+          "id": 4886149665,
+          "number": 89,
+          "head": {
+            "ref": "feat/optimize-pages-trigger-paths",
+            "sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+            "repo": {
+              "id": 1405037074,
+              "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db",
+              "name": "git-repo-db"
+            }
+          },
+          "base": {
+            "ref": "main",
+            "sha": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+            "repo": {
+              "id": 1405037074,
+              "url": "https://api.github.com/repos/TakashiSasaki/git-repo-db",
+              "name": "git-repo-db"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "method": "independent git merge-tree/commit-tree; only local disposable objects; no ref changed",
+  "steps": [
+    {
+      "pr": 89,
+      "first_parent": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "second_parent": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "ed80623514a5e574d1e24e908b95504f60b815db",
+      "synthetic_commit": "95ecf8debdbbc356def0e1147ba5ef7c6cdfc185",
+      "conflicts": false
+    },
+    {
+      "pr": 87,
+      "first_parent": "95ecf8debdbbc356def0e1147ba5ef7c6cdfc185",
+      "second_parent": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "6ebd07cf4d6846e7d964c1be571c8507c037b9be",
+      "synthetic_commit": "75911311147610124a3ee99302e506d9a6dd6ebe",
+      "conflicts": false
+    },
+    {
+      "pr": 88,
+      "first_parent": "75911311147610124a3ee99302e506d9a6dd6ebe",
+      "second_parent": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "merge_base": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "tree": "e250fe0ad801013fb9c59e929cfc7f875fabb5b8",
+      "synthetic_commit": "f21215070277b76bf72d058398821001b2a83f7f",
+      "conflicts": false
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "run_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38926458613",
+  "archive_bytes": 76206,
+  "archive_sha256": "c934ed37d70a2192eaa2d858fc7aaa36000164f27288831b57fe896b0c79405a",
+  "verified_members": 21,
+  "binding": {
+    "feature_sha": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "head": "80c3f278592e73efc2fd4049b96c17afb3d17257",
+    "run_attempt": "1",
+    "run_id": "38926458613",
+    "tree": "87cd5817c5e945b0f29b8501bfa3fda6d2674dc4"
+  },
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "executed_runtime_tests": 0,
+  "retrieval": "gh run view --log returned empty; REST run logs ZIP fetched successfully, bounded receipt strictly decoded from actual timestamped output"
+}
