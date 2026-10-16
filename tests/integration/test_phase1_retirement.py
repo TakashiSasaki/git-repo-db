@@ -25,6 +25,7 @@ from repo_catalog.adapters.sqlite.payloads import intern_payload
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from repo_catalog.domain.payload import PayloadRef
+from tests.support.github_runtime import collection_rows
 from tests.support.github_runtime import github_runtime as github_runtime
 from tests.support.sqlite_contracts import assert_absent_tables
 
@@ -114,7 +115,7 @@ def resume_job(store, identifier, reason):
     jobs = JobService(store)
     jobs.update(identifier, "waiting", reason)
     jobs.resume(identifier)
-    store.expected_attempt = store.one(
+    store.expected_attempt = store.operational.one(
         "SELECT current_attempt FROM jobs WHERE job_id=?", (identifier,)
     )[0]
 
@@ -135,12 +136,7 @@ def collector_for(store, responder, clock):
 
 
 def rejected_collection(store, kind):
-    row = store.one(
-        "SELECT f.*,p.state,p.cursor,p.reason FROM fetch_collections f "
-        "JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind=? "
-        "ORDER BY f.observed_at_us DESC LIMIT 1",
-        (kind,),
-    )
+    row = next(iter(collection_rows(store, "kind=?", (kind,))), None)
     assert row is not None and row["state"] == "partial"
     assert (
         store.one(
@@ -234,11 +230,15 @@ def test_rejected_rest_original_is_absent_and_retry_makes_a_new_request(
         blocked[0], clock[0] = False, 300
         acquire()
     assert requests == [url, url]
-    state = store.one(
-        "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
+    completed = collection_rows(
+        store, "kind=?", (boundary,), job_id=job, state="complete"
+    )
+    assert len(completed) == 1
+    assert completed[0]["fetch_collection_id"] != failed["fetch_collection_id"]
+    assert not store.one(
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
         (failed["fetch_collection_id"],),
-    )[0]
-    assert state == "complete"
+    )
     assert_absent_tables(store.connection, "fetch_occurrences")
     assert store.one("SELECT count(*) FROM payload_admission_staging")[0] == 0
     assert store.one("SELECT count(*) FROM unresolved_payloads")[0] == 0
@@ -393,7 +393,7 @@ def test_unknown_incremental_parent_needs_fresh_response_before_watermark(
             acquire()
         assert raised.value.code == "COMMENT_PARENT_UNKNOWN"
         failed = rejected_collection(store, "issue-comment-incremental")
-        assert store.one("SELECT count(*) FROM incremental_scans")[0] == 0
+        assert_absent_tables(store.connection, "incremental_scans")
         assert store.one("SELECT count(*) FROM document_state")[0] == 0
         assert_no_raw_intake(store)
         registered_pr(store, repo)
@@ -408,7 +408,12 @@ def test_unknown_incremental_parent_needs_fresh_response_before_watermark(
         )[0]
         == failed["observed_at_us"]
     )
-    assert store.one(
+    fresh = collection_rows(
+        store, "kind='issue-comment-incremental'", job_id=job, state="complete"
+    )
+    assert len(fresh) == 1
+    assert fresh[0]["fetch_collection_id"] != failed["fetch_collection_id"]
+    assert not store.one(
         "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
         (failed["fetch_collection_id"],),
     )
@@ -493,8 +498,8 @@ def test_rejected_graphql_root_has_no_saved_original_or_fake_completion(
         blocked[0], clock[0] = False, 300
         collector.threads(repo, pr, job)
     assert requested == [None, None]
-    assert store.one(
-        "SELECT 1 FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind='threads' AND p.state='complete'"
+    assert next(
+        iter(collection_rows(store, "kind='threads'", (), state="complete")), None
     )
     assert tuple(
         store.one(
@@ -602,7 +607,7 @@ def test_rejected_graphql_child_retries_its_safe_cursor_without_original(
         resume_job(store, job, "API_SCHEMA")
         blocked[0], clock[0] = False, retry_clock
         collector.threads(repo, pr, job)
-    assert requested == ["root", "safe-child-cursor", "safe-child-cursor"]
+    assert requested == ["root", "safe-child-cursor", "root", "safe-child-cursor"]
     assert store.one("SELECT body FROM text_bodies WHERE body=?", (DOMAIN_BODY,))
     assert tuple(
         store.one(
@@ -615,10 +620,19 @@ def test_rejected_graphql_child_retries_its_safe_cursor_without_original(
         if failure == "shape" and retry_clock <= 200
         else (retry_clock, "complete")
     )
+    fresh = collection_rows(
+        store, "kind='thread-comments'", job_id=job, state="complete"
+    )
+    assert len(fresh) == 1
+    assert fresh[0]["fetch_collection_id"] != failed["fetch_collection_id"]
+    assert not store.one(
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+        (failed["fetch_collection_id"],),
+    )
     marker = store.one(
         "SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=? "
         "AND asserted_state='complete'",
-        (failed["fetch_collection_id"],),
+        (fresh[0]["fetch_collection_id"],),
     )
     assert marker[0] == retry_clock
     assert_marker_absent(store)
@@ -691,9 +705,21 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
         assert_marker_absent(store)
         resume_job(store, job, raised.value.code)
         blocked[0] = False
-        assert collector.sync(repo, job)["state"] == "complete"
+        if retry_clock <= 200:
+            # Freshly completed pages cannot promote the whole job while the
+            # selected current coverage is newer-partial or equal-time conflict.
+            with pytest.raises(CatalogError) as retry:
+                collector.sync(repo, job)
+            assert retry.value.code == "PR_PARTIAL"
+        else:
+            assert collector.sync(repo, job)["state"] == "complete"
 
-    assert requested == [("root", None), ("child", "100"), ("child", "100")]
+    assert requested == [
+        ("root", None),
+        ("child", "100"),
+        ("root", None),
+        ("child", "100"),
+    ]
     expected = (
         (200, "partial" if retry_clock < 200 else "conflict")
         if retry_clock <= 200
@@ -715,11 +741,13 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
         }
         assert complete_clocks == (
             set()
-            if retry_clock < 200 or kind == "pr-code" and retry_clock == 200
+            if retry_clock < 200 or kind in ("pr-code", "pr") and retry_clock == 200
             else {retry_clock}
         ), kind
         assert current_claim(kind, parent) == (
-            (200, "partial") if kind == "pr-code" and retry_clock == 200 else expected
+            (200, "partial")
+            if kind in ("pr-code", "pr") and retry_clock == 200
+            else expected
         ), kind
     assert {
         row[0]

@@ -9,6 +9,7 @@ from repo_catalog.adapters.github import current_parser
 from repo_catalog.adapters.github.collector import GitHubCollector
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
+from tests.support.github_runtime import collection_rows
 from tests.support.github_runtime import github_runtime as github_runtime
 from tests.support.sqlite_contracts import assert_absent_tables
 
@@ -33,13 +34,7 @@ def _job(store):
 
 
 def _rejected(store, kind, reason="API_SCHEMA"):
-    row = store.one(
-        "SELECT f.fetch_collection_id,p.state,p.cursor,p.reason "
-        "FROM fetch_collections f "
-        "JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id "
-        "WHERE f.kind=?",
-        (kind,),
-    )
+    row = next(iter(collection_rows(store, "kind=?", (kind,))), None)
     assert row["state"] == "partial"
     assert row["reason"] == reason
     assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
@@ -126,9 +121,7 @@ def test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume(
         with pytest.raises(CatalogError) as raised:
             collect()
         assert raised.value.code == "API_SCHEMA"
-        row = store.one(
-            "SELECT f.fetch_collection_id,p.state,p.reason,p.cursor FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind='review'"
-        )
+        row = next(iter(collection_rows(store, "kind='review'", ())), None)
         assert row["state"] == "partial" and row["reason"] == "API_SCHEMA"
         assert row["cursor"] == second_url
         assert [
@@ -144,12 +137,16 @@ def test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume(
         store.expected_attempt = 2
         blocked = False
         collection_id, _ = collect()
-        assert collection_id == row["fetch_collection_id"]
-        assert requested == ["1", "2", "2"]
+        assert collection_id != row["fetch_collection_id"]
+        assert not store.one(
+            "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+            (row["fetch_collection_id"],),
+        )
+        assert requested == ["1", "2", "1", "2"]
         assert store.one("SELECT count(*) FROM review_resources")[0] == 3
         assert_absent_tables(store.connection, "document_observations")
         assert (
-            store.one(
+            store.operational.one(
                 "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
                 (collection_id,),
             )[0]
@@ -242,12 +239,12 @@ def test_malformed_pr_shapes_discard_originals_and_retry(
         acquire()
         assert requests == 2
         assert store.one("SELECT count(*) FROM change_request_state")[0] == 1
-        assert (
-            store.one(
-                "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
-                (row["fetch_collection_id"],),
-            )[0]
-            == "complete"
+        complete = collection_rows(store, "kind=?", (boundary,), state="complete")
+        assert len(complete) == 1
+        assert complete[0]["fetch_collection_id"] != row["fetch_collection_id"]
+        assert not store.one(
+            "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+            (row["fetch_collection_id"],),
         )
         assert not store.all("PRAGMA foreign_key_check")
     finally:
@@ -303,12 +300,12 @@ def test_invalid_json_detail_discards_bytes_and_reacquires(
         row = _rejected(store, boundary)
         assert row["cursor"] in (None, url)
         acquire()
-        assert (
-            store.one(
-                "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
-                (row["fetch_collection_id"],),
-            )[0]
-            == "complete"
+        complete = collection_rows(store, "kind=?", (boundary,), state="complete")
+        assert len(complete) == 1
+        assert complete[0]["fetch_collection_id"] != row["fetch_collection_id"]
+        assert not store.one(
+            "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+            (row["fetch_collection_id"],),
         )
     finally:
         collector.http.close()
@@ -379,7 +376,7 @@ def test_incremental_parent_number_is_checked_before_sqlite_lookup(github_runtim
                 (row["fetch_collection_id"],),
             )[0]
         )
-        assert store.one("SELECT count(*) FROM incremental_scans")[0] == 0
+        assert_absent_tables(store.connection, "incremental_scans")
         value["issue_url"] = api.url + "/repos/fixture/alpha/issues/41"
         collector.incremental_comments(
             repo, job, "issue-comment", endpoint, "issue_url"

@@ -1,0 +1,5 @@
+{"event":"start","nodeid":"tests/integration/test_catalog3_github_runtime.py::test_collection_progress_is_operational_and_never_domain_completion","worker_id":"master","timestamp":1792173505.619078}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_github_runtime.py::test_collection_progress_is_operational_and_never_domain_completion","phase":"setup","outcome":"passed","duration":2.604288,"worker_id":"master","timestamp":1792173508.227943}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_github_runtime.py::test_collection_progress_is_operational_and_never_domain_completion","phase":"call","outcome":"passed","duration":0.17254,"worker_id":"master","timestamp":1792173508.427931}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_github_runtime.py::test_collection_progress_is_operational_and_never_domain_completion","phase":"teardown","outcome":"passed","duration":0.202437,"worker_id":"master","timestamp":1792173508.638654}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792173508.648417}

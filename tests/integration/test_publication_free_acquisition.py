@@ -166,7 +166,9 @@ def test_empty_thread_terminal_and_observed_null_targets(github_runtime):
     assert store.one("SELECT count(*) FROM stored_bytes")[0] == 0
 
 
-def test_thread_children_resume_from_normalized_committed_prefix(github_runtime):
+def test_thread_children_restart_with_retained_normalized_committed_prefix(
+    github_runtime,
+):
     store, repo, fixture, api = github_runtime
     value, ident, task = seed_pr(store, repo, fixture.alpha.commits["N"])
     attempts = {"root": 0, "child": 0}
@@ -234,8 +236,17 @@ def test_thread_children_resume_from_normalized_committed_prefix(github_runtime)
     with pytest.raises(CatalogError):
         value.threads(repo, parent, task)
     assert store.one("SELECT count(*) FROM review_resources")[0] == 1
+    original_root = store.one(
+        "SELECT fetch_collection_id FROM fetch_collections WHERE kind='threads'"
+    )[0]
     value.threads(repo, parent, task)
-    assert attempts["root"] == 1
+    assert attempts["root"] == 2
+    assert (
+        store.one("SELECT count(*) FROM fetch_collections WHERE kind='threads'")[0] == 2
+    )
+    assert not store.one(
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=?", (original_root,)
+    )
     assert attempts["child"] == 2
     assert store.one("SELECT count(*) FROM review_resources")[0] == 2
     assert (
@@ -550,7 +561,7 @@ def test_source_discovery_midpage_callback_failure_rolls_back_members(github_run
     assert not store.one(
         "SELECT 1 FROM source_repositories WHERE name='fixture/alpha-renamed'"
     )
-    latest = store.one(
+    latest = store.operational.one(
         "SELECT checkpoint FROM job_attempts ORDER BY rowid DESC LIMIT 1"
     )
     assert latest is None or latest[0] is None or "alpha-renamed" not in latest[0]
@@ -947,11 +958,13 @@ def test_cancelled_rest_prefix_survives_loss_of_operational_cursor(github_runtim
     value, parent, task, data = prepared_detail(github_runtime)
     url = api.url + "/repos/fixture/alpha/pulls?state=all"
 
+    interrupt = True
+
     def route(method, path, params, body):
         assert not store.connection.in_transaction
         if not params.get("page"):
             return [data], {"Link": f'<{url}&page=2>; rel="next"'}
-        value.token.cancelled = True
+        value.token.cancelled = interrupt
         return [], {}
 
     api.route = route
@@ -971,12 +984,24 @@ def test_cancelled_rest_prefix_survives_loss_of_operational_cursor(github_runtim
         == 1
     )
     value.token.cancelled = False
-    store.execute("UPDATE collection_progress SET cursor=NULL WHERE state='partial'")
-    with pytest.raises(CatalogError) as failed:
-        value.collection(
-            repo, None, "pr-list", task, url, normalize, context={"state": "all"}
-        )
-    assert failed.value.code == "RESUME_UNAVAILABLE"
+    before_restart = store.one(
+        "SELECT count(*) FROM fetch_collections WHERE kind='pr-list'"
+    )[0]
+    store.operational.execute(
+        "UPDATE collection_progress SET cursor=NULL WHERE state='partial'"
+    )
+    interrupt = False
+    fresh, _ = value.collection(
+        repo, None, "pr-list", task, url, normalize, context={"state": "all"}
+    )
+    assert (
+        store.one("SELECT count(*) FROM fetch_collections WHERE kind='pr-list'")[0]
+        == before_restart + 1
+    )
+    assert store.one(
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+        (fresh,),
+    )
     assert (
         store.one("SELECT count(*) FROM eligible_document_state WHERE kind='pr-body'")[
             0
