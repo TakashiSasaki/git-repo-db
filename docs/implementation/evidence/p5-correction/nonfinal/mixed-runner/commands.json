@@ -1,0 +1,218 @@
+[
+  {
+    "argv": [
+      "uv",
+      "sync",
+      "--locked",
+      "--group",
+      "dev"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.027713537216186523
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "-c",
+      "import repo_catalog,sys; print(sys.executable);print(repo_catalog.__file__)"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.07442212104797363
+  },
+  {
+    "argv": [
+      "uv",
+      "--version"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.00943303108215332
+  },
+  {
+    "argv": [
+      "git",
+      "--version"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.0034775733947753906
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "--version"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.025499820709228516
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.050263404846191406
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.026979923248291016
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.1824202537536621
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.254594087600708
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 2.0498883724212646
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 1.5457897186279297
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/integration/p1",
+      "tests/integration/p2",
+      "tests/integration/p3",
+      "tests/integration/p4",
+      "tests/integration/p5",
+      "tests/integration/test_snapshot_read_limits.py",
+      "--collect-only",
+      "-q"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 1.6231095790863037
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/integration/p1",
+      "tests/integration/p2",
+      "tests/integration/p3",
+      "tests/integration/p4",
+      "tests/integration/p5",
+      "tests/integration/test_snapshot_read_limits.py",
+      "-q",
+      "--tb=short",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/work/p5/work/p5-evidence/final/junit.xml",
+      "--journal",
+      "/workspace/work/p5/work/p5-evidence/final/journal.jsonl"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 129.0057773590088
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/packaging/test_p5_distribution.py",
+      "--collect-only",
+      "-q"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 1.2572526931762695
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/packaging/test_p5_distribution.py",
+      "-q",
+      "--tb=short",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/work/p5/work/p5-evidence/final/packaging-junit.xml",
+      "--journal",
+      "/workspace/work/p5/work/p5-evidence/final/packaging-journal.jsonl"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 1,
+    "elapsed_seconds": 8.158668518066406
+  }
+]
