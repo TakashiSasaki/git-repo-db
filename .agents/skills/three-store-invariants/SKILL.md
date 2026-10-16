@@ -549,7 +549,10 @@ corrected execution and Provider-order cases that already passed the baseline.
 - Place a separate writer contender during real source I/O and during export
   extraction. Verify input preparation allows the writer lock, paired extraction
   blocks conflicting writes, and a stop injected before final return prevents
-  completion. A snapshot opened and closed before extraction does not fence it.
+  completion. Exercise an actual subprocess `LOCK_EX | LOCK_NB` at the cut, as in
+  `tests/integration/p5_p6_compatibility/test_export_gate.py`; an Event set before
+  a lock call and a short incomplete wait alone are scheduling evidence. A
+  snapshot opened and closed before extraction does not fence it.
 - Inspect built sdist members. The current backend includes untracked `work/`
   scratch despite local Git excludes. Build distribution acceptance artifacts
   from a clean committed archive with evidence stored outside that source tree;

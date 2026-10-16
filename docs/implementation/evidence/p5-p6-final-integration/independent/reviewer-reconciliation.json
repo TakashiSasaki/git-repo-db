@@ -1,0 +1,101 @@
+{
+  "kind": "independent_combined_development_review_not_release",
+  "commit": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c",
+  "tree": "443c4b25478c1e406136c77d6689e87bd72231f9",
+  "acceptance_input_hash": "60c94caae7eed9d7045ccf98127481da31a1100f93ae54b2f588c65096d3535b",
+  "clean_tree": true,
+  "integration_and_compatibility": {
+    "selected": 49,
+    "executed_unique": 49,
+    "passed": 49,
+    "failed": 0,
+    "skipped": 0,
+    "phases": 147,
+    "reconciled": true,
+    "nodeids": [
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha256]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_multi_hop_exchange_into_query[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_multi_hop_exchange_into_query[sha256]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha256]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_derivative_loss_resilience_and_transparent_fallback[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_derivative_loss_resilience_and_transparent_fallback[sha256]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_authoritative_corruption_immediate_stop[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_authoritative_corruption_immediate_stop[sha256]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks",
+      "tests/integration/p5_p6_compatibility/test_export_gate.py::test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_declared_digest_required",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_missing_repository_provider_id_rejected",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_native_external_io_outside_write_transaction",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_selected_object_never_repository_complete",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_retry_preserves_physical_copy",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_missing_request_after_operational_loss_refuses_resume[False]",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_missing_request_after_operational_loss_refuses_resume[True]",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_exchange_retains_partial_admission_outcome",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_exchange_export_uses_one_paired_snapshot",
+      "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py::test_exchange_export_refuses_stop_before_return",
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order0]",
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order1]",
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order2]",
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order3]",
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order4]",
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_provider_late_reordered_repeat_reverse_onward_preserves_candidates[order5]",
+      "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py::test_exchange_preserves_non_time_json_real",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_original_capture_retry_after_core_success_context_rollback[sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_original_capture_retry_after_core_success_context_rollback[sha256]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_pair_snapshot_keeps_old_two_authority_state_during_production_write[sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_pair_snapshot_keeps_old_two_authority_state_during_production_write[sha256]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_derivative_loss_preserves_production_pair[sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_derivative_loss_preserves_production_pair[sha256]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_both_authorities_keep_exact_five_column_coverage_with_own_scope",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_core_only_and_context_only_are_independently_durable",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_detected_core_byte_corruption_permanently_fences_context_success",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_durable_unavailable_context_reference_keeps_pair_sound[sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_durable_unavailable_context_reference_keeps_pair_sound[sha256]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_forbidden_git_blob_retention_does_not_poison_legitimate_context_text[sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_forbidden_git_blob_retention_does_not_poison_legitimate_context_text[sha256]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_partial_and_empty_source_inventories_preserve_positive_cross_store_state",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_coordinated_raw_admission_cannot_retain_malformed_native_representation[commit-sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_coordinated_raw_admission_cannot_retain_malformed_native_representation[commit-sha256]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_coordinated_raw_admission_cannot_retain_malformed_native_representation[tree-sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_coordinated_raw_admission_cannot_retain_malformed_native_representation[tree-sha256]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_coordinated_raw_admission_cannot_retain_malformed_native_representation[tag-sha1]",
+      "tests/integration/p2_p3_compatibility/test_production_pair.py::test_coordinated_raw_admission_cannot_retain_malformed_native_representation[tag-sha256]"
+    ]
+  },
+  "artifacts": {
+    "journal.jsonl": {
+      "sha256": "3e48a31a13367f6e1eb9c785f7d20e509907063f97b15a7b14f617b4a5e57327",
+      "bytes": 50067
+    },
+    "uv-sync.log": {
+      "sha256": "f58ff88f4c800f52cc332583c8685c3df2234355f3bb9ed632f291d622d6b7ef",
+      "bytes": 58
+    },
+    "pr-state.json": {
+      "sha256": "1e97e99eea8f3f7775a8f0499fe84e83dbc14002c50fb0b8bb911a210f2a1f43",
+      "bytes": 1833
+    },
+    "pytest.log": {
+      "sha256": "2a5cd5cd37c5e0df0d3d2567c34c672a8711a4bf6d0f53a6aeb738d1ce39089c",
+      "bytes": 100
+    },
+    "dag-and-tree-review.json": {
+      "sha256": "92b69921cf26b4d4fbccf0b2b24cd44e81b782d4d1035dd682db778ad279e77e",
+      "bytes": 931
+    },
+    "selected.txt": {
+      "sha256": "ea8d331598227929466d50dc693750e13299645d3addd2960e1d6f47b7025a11",
+      "bytes": 6570
+    },
+    "junit.xml": {
+      "sha256": "f8e5c462d4d8abdf4a662a8394a31a19165a2a12155a666aae38ba7fd2f5faa6",
+      "bytes": 12879
+    }
+  },
+  "limits": [
+    "Results apply to this exact committed tree; final source/test updates require revalidation or exact input identity.",
+    "No hosted Release Acceptance or actual recovery/activation was run."
+  ]
+}

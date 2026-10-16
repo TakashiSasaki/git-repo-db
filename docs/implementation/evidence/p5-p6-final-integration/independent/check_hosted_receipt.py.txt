@@ -1,0 +1,45 @@
+"""Independently decode actual bounded log records and verify all indexed receipts."""
+import base64
+import gzip
+import hashlib
+import io
+import json
+import pathlib
+import re
+import subprocess
+import sys
+import zipfile
+
+folder=pathlib.Path(sys.argv[1]);target=pathlib.Path(sys.argv[2])
+log=gzip.decompress((folder/'job.log.gz').read_bytes())
+records=[]
+for line in log.decode().splitlines():
+    found=re.search(r'Z CI_RECEIPTS_(BEGIN|DATA|END)_V1 ([A-Za-z0-9+/= ]+)$',line)
+    if found:records.append(found.groups())
+assert records[0][0]=='BEGIN' and records[-1][0]=='END'
+assert sum(kind=='BEGIN' for kind,_ in records)==sum(kind=='END' for kind,_ in records)==1
+expected_hash,length=records[0][1].split()
+assert records[-1][1]==expected_hash
+body=base64.b64decode(''.join(value for kind,value in records if kind=='DATA'),validate=True)
+assert len(body)==int(length) and hashlib.sha256(body).hexdigest()==expected_hash
+with zipfile.ZipFile(io.BytesIO(body)) as z:
+    index=json.loads(z.read('receipt-index.json'))
+    assert len(index)==21
+    for path,entry in index.items():
+        value=z.read(path)
+        assert len(value)==entry['bytes'] and hashlib.sha256(value).hexdigest()==entry['sha256']
+    binding=json.loads(z.read('receipt-binding.json'))
+    manifest=json.loads(z.read('validation-manifest.json'))
+    assert json.loads((folder/'receipt-index.json').read_bytes())==index
+    assert json.loads((folder/'receipt-binding.json').read_bytes())==binding
+    assert json.loads((folder/'validation-manifest.json').read_bytes())==manifest
+assert binding['feature_sha']=='0cb51d46d87d99c035f5162f4a7ed11970cf3b4c'
+assert binding['tree']=='443c4b25478c1e406136c77d6689e87bd72231f9'
+api=json.loads(subprocess.check_output(['gh','api','repos/TakashiSasaki/git-repo-db/git/commits/'+binding['head'],'--jq','{sha:.sha,tree:.tree.sha}'],text=True))
+assert api['tree']==binding['tree']
+summary=json.loads((folder/'verification-summary.json').read_text())
+assert summary['acceptance_status']=='development_checks_passed' and summary['full_acceptance'] is False and summary['hosted_runtime_nodes_executed']==0
+assert summary['verified_zip_sha256']==expected_hash and summary['raw_log_sha256']==hashlib.sha256(log).hexdigest()
+result={'feature_sha':binding['feature_sha'],'hosted_head':binding['head'],'hosted_head_tree_from_github_git_api':api['tree'],'matches_executed_feature_tree':True,'verified_indexed_receipts':21,'zip_sha256':expected_hash,'zip_bytes':len(body),'raw_log_sha256':hashlib.sha256(log).hexdigest(),'acceptance_status':summary['acceptance_status'],'full_acceptance':False,'hosted_runtime_nodes_executed':0,'run_id':summary['run_id'],'live_ci_acceptance_input_hash':summary['acceptance_input_hash'],'limits':'Hosted development checks and feature/merge-tree binding verified; no hosted runtime or Release Acceptance execution inferred.'}
+target.write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(result,indent=2))

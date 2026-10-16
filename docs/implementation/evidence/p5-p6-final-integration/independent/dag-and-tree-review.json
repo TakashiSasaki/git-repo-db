@@ -1,0 +1,26 @@
+{
+  "heads": {
+    "common": "96db618285d5ce7b0d0c276d18f81bdbc50c34c1",
+    "p5": "48b60231b1ef7075c55ff6f43aca0c68ad95e5a8",
+    "p6": "76489443687123ef99fb33510c77fd40ce739d28",
+    "assembly": "f67e9298ff7915b4f7b1f0bef0c344f56d2cc064",
+    "combined": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c"
+  },
+  "checks": {
+    "common_in_p5": true,
+    "common_in_p6": true,
+    "p5_in_p6": false,
+    "p6_in_p5": false,
+    "p5_in_assembly": true,
+    "p6_in_assembly": true,
+    "assembly_in_combined": true
+  },
+  "assembly_to_combined_diff": [
+    "tests/integration/p5_p6_compatibility/__init__.py",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+    "tests/integration/p5_p6_compatibility/test_export_gate.py",
+    "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py"
+  ],
+  "production_diff": false
+}
