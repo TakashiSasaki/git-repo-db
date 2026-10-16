@@ -3,6 +3,7 @@
 import argparse
 import collections
 import gzip
+import itertools
 import json
 import sys
 import xml.etree.ElementTree as ET
@@ -101,8 +102,12 @@ def summarize(args):
         "phases": sum(phases.values()),
         "junit_results": dict(results),
         "checks": checks,
-        "missing_start_examples": list((expected - starts).elements())[:8],
-        "extra_start_examples": list((starts - expected).elements())[:8],
+        "missing_start_examples": [
+            node[:200] for node in itertools.islice((expected - starts).elements(), 8)
+        ],
+        "extra_start_examples": [
+            node[:200] for node in itertools.islice((starts - expected).elements(), 8)
+        ],
         "execution_source": {key: execution.get(key) for key in ("head", "tree")},
         "scope": "Evidence consistency only; not source binding, authenticity or Release Acceptance.",
     }

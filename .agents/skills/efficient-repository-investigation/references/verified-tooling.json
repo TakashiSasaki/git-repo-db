@@ -19,7 +19,7 @@
     "bounded_summary_bytes": 1924
   },
   "evidence_helper": {
-    "helper_sha256": "67c4f9faca722f4a90887096f0e6b8c804926b65403e687a00e4e23ec8f4fc5a",
+    "helper_sha256": "9af7d7a005aafdc56922a48ccca6de4974397235bdb384d6861d1993906138fb",
     "existing_full_evidence": {
       "consistent_success": true,
       "selected": 3755,
@@ -134,6 +134,12 @@
       "malformed_json": {
         "exit_code": 2
       }
+    },
+    "bounded_failure_control": {
+      "input_node_characters": 10040,
+      "maximum_example_characters": 200,
+      "output_bytes": 908,
+      "exit_code": 1
     }
   },
   "limits": [
