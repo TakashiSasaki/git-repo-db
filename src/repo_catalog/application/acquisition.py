@@ -32,9 +32,7 @@ from repo_catalog.adapters.github.production_intake import (
     normalize_timeline_event,
 )
 from repo_catalog.adapters.sqlite.acquisition import (
-    InMemoryNotesProgress,
     OperationalAcquisitionLedger,
-    UnlimitedWorkBudget,
 )
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
@@ -53,12 +51,11 @@ from repo_catalog.domain.acquisition import (
     PairedAcquisitionResult,
     ProviderAcquisitionReport,
     ProviderIntakeBatch,
-    make_provenance,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import FieldClock, ResourceKey
-from repo_catalog.domain.p1_coordination import RequestIdentity
+from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 from repo_catalog.domain.p1_core import (
     OID,
     Capture,
@@ -84,9 +81,59 @@ def _charge(work: WorkBudget, unit: str, amount: int = 1) -> None:
     work.charge(unit, amount)
 
 
+class _PreparedCore:
+    """Finite in-memory typed admission plan; confers no database capability."""
+
+    _methods = frozenset(
+        (
+            "admit_repository",
+            "admit_repository_claim",
+            "admit_object",
+            "admit_claim",
+            "admit_group",
+            "admit_observation",
+            "admit_metadata",
+            "admit_capture",
+            "admit_notes_claim",
+            "admit_notes_group",
+            "admit_notes_inventory",
+            "admit_notes_role",
+            "admit_note",
+            "admit_coverage_scope",
+            "admit_coverage",
+            "admit_coverage_proof",
+        )
+    )
+
+    def __init__(self, core: GitCore):
+        self.core = core
+        self.operations = []
+
+    def ensure_available(self):
+        self.core.ensure_available()
+
+    def catalog_identity(self):
+        return self.core.catalog_identity()
+
+    def __getattr__(self, name):
+        if name not in self._methods:
+            raise AttributeError(name)
+
+        def prepare(*args, **kwargs):
+            if len(self.operations) >= 200_000:
+                raise CoreFailure("BUDGET", "admission-plan", "finite operation count")
+            self.operations.append((name, args, kwargs))
+
+        return prepare
+
+    def apply(self, core: GitCore):
+        for name, args, kwargs in self.operations:
+            getattr(core, name)(*args, **kwargs)
+
+
 @contextmanager
 def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
-    if isinstance(target, GitCore):
+    if isinstance(target, (GitCore, _PreparedCore)):
         yield target
         return
     path = Path(target)
@@ -156,6 +203,8 @@ class GitAcquisition:
         progress: Any | None,
         *,
         custom_scope: Any | None = None,
+        new_request: bool = False,
+        request_identity: RequestIdentity | None = None,
     ) -> Iterator[tuple[WorkBudget, Any]]:
         if work is not None and progress is not None:
             yield work, progress
@@ -167,7 +216,7 @@ class GitAcquisition:
             catalog_instance_uuidv4=instance_uuid,
         ) as ledger:
             if ledger is not None and (work is None and self.work is None):
-                req = RequestIdentity(origin_uuidv4, unit_uuidv4)
+                req = request_identity or RequestIdentity(origin_uuidv4, unit_uuidv4)
                 target_scope = (
                     custom_scope
                     if custom_scope is not None
@@ -176,6 +225,7 @@ class GitAcquisition:
                 _, _, op_work, op_progress = ledger.create_budget(
                     scope=target_scope,
                     request=req,
+                    new_request=new_request,
                 )
                 yield (
                     op_work,
@@ -184,21 +234,11 @@ class GitAcquisition:
                     else (self.progress if self.progress is not None else op_progress),
                 )
                 return
-            active_work = (
-                work
-                if work is not None
-                else (self.work if self.work is not None else UnlimitedWorkBudget())
+            raise CoordinationError(
+                "CONTINUATION_UNAVAILABLE",
+                "request",
+                "durable Operational ledger or explicit cumulative work and progress required",
             )
-            active_progress = (
-                progress
-                if progress is not None
-                else (
-                    self.progress
-                    if self.progress is not None
-                    else InMemoryNotesProgress()
-                )
-            )
-            yield active_work, active_progress
 
     def _admit_metadata_claims_only(
         self,
@@ -274,7 +314,7 @@ class GitAcquisition:
         repository_uuidv4: str,
         source_attribution: str,
         origin_uuidv4: str,
-        observed_at_us: int,
+        observed_at_us: int | None,
         notes_source: NotesSource | None,
         work: WorkBudget,
         progress: Any,
@@ -320,7 +360,17 @@ class GitAcquisition:
                 source_attribution=source_attribution,
             )
             if spec.discover_notes:
-                disc_obs_id = spec.discovery_observation_uuidv4 or str(uuid4())
+                disc_obs_id = spec.discovery_observation_uuidv4
+                if disc_obs_id is None:
+                    allocation_scope = encode(
+                        ["p5-discovery-allocation", origin_uuidv4, observed_at_us]
+                    )
+                    saved = progress.load(allocation_scope)
+                    if saved is None:
+                        saved = progress.save_once(
+                            allocation_scope, {"observation_uuidv4": str(uuid4())}
+                        )
+                    disc_obs_id = saved["observation_uuidv4"]
                 disc = notes_app.discover(
                     repository_uuidv4,
                     source_attribution,
@@ -370,6 +420,8 @@ class GitAcquisition:
         *,
         work: WorkBudget | None = None,
         progress: Any | None = None,
+        new_request: bool = False,
+        request_identity: RequestIdentity | None = None,
     ) -> GitAcquisitionReport:
         """Execute selective metadata-first acquisition against a local GitNativeSource."""
         with ExitStack() as stack:
@@ -400,10 +452,41 @@ class GitAcquisition:
                     work,
                     progress,
                     custom_scope=notes_scope,
+                    new_request=new_request,
+                    request_identity=request_identity,
                 )
             )
 
             _charge(active_work, "metadata_units", 1)
+            intent_scope = encode(
+                [
+                    "p5-native-intent",
+                    request.capture_origin_uuidv4,
+                    request.capture_uuidv4,
+                ]
+            )
+            intent = {
+                "source": [
+                    str(source.path),
+                    source.object_format,
+                    request.source_attribution,
+                ],
+                "observed_at_us": request.observed_at_us,
+                "selected": [list(oid.key) for oid in request.select_oids],
+                "retention": [
+                    request.retain_bytes,
+                    None
+                    if request.retain_oids is None
+                    else sorted([list(oid.key) for oid in request.retain_oids]),
+                ],
+                "refs": [request.include_refs, list(request.ref_prefixes)],
+                "traverse_structural_targets": request.traverse_structural_targets,
+                "notes": repr(request.notes),
+            }
+            if active_progress.save_once(intent_scope, intent) != intent:
+                raise CoreFailure(
+                    "INCOMPATIBLE_REPLAY", intent_scope, "request intent changed"
+                )
             core_cap.admit_repository(request.repository_uuidv4)
 
             for repo_claim in request.repository_claims:
@@ -422,7 +505,7 @@ class GitAcquisition:
 
             if request.include_refs:
                 _charge(active_work, "metadata_units", 1)
-                all_refs = source.refs()
+                all_refs = source.refs(active_work)
                 selected_refs = []
                 for ref_bytes, target_oid, kind, peeled_oid in all_refs:
                     ref_name = ref_bytes.decode("utf-8", "surrogateescape")
@@ -496,8 +579,31 @@ class GitAcquisition:
                     metadata_only_order.append(missing_oid)
 
             for oid in request.select_oids:
+                should_retain = (
+                    oid in request.retain_oids
+                    if request.retain_oids is not None
+                    else request.retain_bytes
+                )
+                copy_id = None
+                if should_retain:
+                    copy_id = request.physical_copy_uuidv4s.get(oid)
+                    if copy_id is None:
+                        key = encode(
+                            [
+                                "p5-native-copy",
+                                request.capture_origin_uuidv4,
+                                request.capture_uuidv4,
+                                *oid.key,
+                            ]
+                        )
+                        saved = active_progress.load(key)
+                        if saved is None:
+                            saved = active_progress.save_once(
+                                key, {"copy": str(uuid4())}
+                            )
+                        copy_id = saved["copy"]
                 try:
-                    native = source.metadata(oid)
+                    native = source.metadata(oid, active_work)
                 except CoreFailure as err:
                     if err.code == "OBJECT_UNAVAILABLE":
                         _charge(active_work, "metadata_units", 1)
@@ -512,13 +618,7 @@ class GitAcquisition:
                         continue
                     raise
 
-                should_retain = (
-                    oid in request.retain_oids
-                    if request.retain_oids is not None
-                    else request.retain_bytes
-                )
                 if should_retain:
-                    copy_id = request.physical_copy_uuidv4s.get(oid) or str(uuid4())
                     core_cap.admit_metadata(native, copy_id, active_work)
                     _record_admitted(oid)
                     if oid not in retained_order:
@@ -625,7 +725,20 @@ class GitAcquisition:
                 cov_state = "partial" if non_missing_admitted else "unknown"
             else:
                 status = "complete" if admitted_order else "known_empty"
-                cov_state = "complete"
+                # Selected objects do not prove repository-wide metadata closure.
+                cov_state = "partial" if admitted_order else "unknown"
+
+            for discovery in notes_discoveries:
+                if discovery.observation.value["enumeration_state"] in (
+                    "partial",
+                    "unknown",
+                ):
+                    status = "partial" if admitted_order else "unknown"
+                    failure_code = failure_code or "NOTES_INCOMPLETE"
+            for inventory in notes_inventories:
+                if inventory.status in ("partial", "unknown"):
+                    status = "partial" if admitted_order else "unknown"
+                    failure_code = failure_code or "NOTES_INCOMPLETE"
 
             cov_scope = CoreCoverageScope(
                 "repository", (request.repository_uuidv4, "git_metadata")
@@ -686,6 +799,8 @@ class GitAcquisition:
         work: WorkBudget | None = None,
         progress: Any | None = None,
         notes_source: NotesSource | None = None,
+        new_request: bool = False,
+        request_identity: RequestIdentity | None = None,
     ) -> GitAcquisitionReport:
         """Admit a GitMetadataInput unit (with optional retained NativeObjects and Notes)."""
         with ExitStack() as stack:
@@ -706,6 +821,8 @@ class GitAcquisition:
                     unit.capture_uuidv4,
                     work,
                     progress,
+                    new_request=new_request,
+                    request_identity=request_identity,
                 )
             )
 
@@ -736,7 +853,20 @@ class GitAcquisition:
                     metadata_only_order.append(nom_oid)
 
             for native in unit.native_objects:
-                copy_id = unit.physical_copy_uuidv4s.get(native.oid) or str(uuid4())
+                copy_id = unit.physical_copy_uuidv4s.get(native.oid)
+                if copy_id is None:
+                    key = encode(
+                        [
+                            "p5-native-copy",
+                            unit.capture_origin_uuidv4,
+                            unit.capture_uuidv4,
+                            *native.oid.key,
+                        ]
+                    )
+                    saved = active_progress.load(key)
+                    if saved is None:
+                        saved = active_progress.save_once(key, {"copy": str(uuid4())})
+                    copy_id = saved["copy"]
                 core_cap.admit_metadata(native, copy_id, active_work)
                 _record_admitted(native.oid)
                 if native.oid not in retained_order:
@@ -920,7 +1050,7 @@ class ProviderAcquisition:
         ctx: Context,
         core_ref: CoreReference,
         clock: FieldClock,
-        observed_at_us: int,
+        observed_at_us: int | None,
         validate_core: Callable[[str, str], bool],
         linked_list: list[CoreReference],
         pending_list: list[CoreReference],
@@ -1091,7 +1221,7 @@ class ProviderAcquisition:
                 (batch.service_instance_uuidv4,),
             ).fetchone()
             if not has_default_provider:
-                ctx.provider(batch.service_instance_uuidv4, "github", "{}")
+                raise ValueError("explicit Provider registration required")
 
             admitted_resources: list[ResourceKey] = []
             admitted_texts: list[str] = []
@@ -1104,16 +1234,12 @@ class ProviderAcquisition:
             for repo in batch.repositories:
                 ctx.repository(repo.repository_uuidv4, repo.configuration_json)
                 if repo.raw_metadata is not None:
-                    obs_us = (
-                        repo.observed_at_us if repo.observed_at_us is not None else 0
-                    )
-                    prov_json = (
-                        repo.provenance_json
-                        if repo.provenance_json is not None
-                        else make_provenance(
-                            "github-rest", {"repository": repo.repository_uuidv4}
+                    obs_us = repo.observed_at_us
+                    if repo.provenance_json is None:
+                        raise ValueError(
+                            "repository metadata requires original provenance"
                         )
-                    )
+                    prov_json = repo.provenance_json
                     unit = normalize_repository_fields(
                         batch.service_instance_uuidv4,
                         repo.repository_uuidv4,
@@ -1138,7 +1264,7 @@ class ProviderAcquisition:
                     (src.service_instance_uuidv4,),
                 ).fetchone()
                 if not has_src_prov:
-                    ctx.provider(src.service_instance_uuidv4, "github", "{}")
+                    raise ValueError("Source requires registered Provider identity")
                 ctx.source(
                     src.source_registration_uuidv4,
                     src.service_instance_uuidv4,
@@ -1503,6 +1629,8 @@ class PairedAcquisitionCoordinator:
         context_fn: Callable[[Context], ProviderAcquisitionReport | None] | None = None,
         cut: Callable[[str], None] = lambda point: None,
         reconcile_dependencies: bool = True,
+        new_request: bool = False,
+        request_identity: RequestIdentity | None = None,
     ) -> PairedAcquisitionResult:
         """Execute Core-first, Context-second paired admission via PairCoordinator.admit."""
         git_report_holder: list[GitAcquisitionReport | None] = [None]
@@ -1513,11 +1641,17 @@ class PairedAcquisitionCoordinator:
                 git_acq = GitAcquisition(core_cap, operational=self.operational)
                 if git_source is not None and git_request is not None:
                     git_report_holder[0] = git_acq.acquire_from_native(
-                        git_source, git_request
+                        git_source,
+                        git_request,
+                        new_request=new_request,
+                        request_identity=request_identity,
                     )
                 elif git_input is not None:
                     git_report_holder[0] = git_acq.acquire_metadata_only(
-                        git_input, notes_source=notes_source
+                        git_input,
+                        notes_source=notes_source,
+                        new_request=new_request,
+                        request_identity=request_identity,
                     )
                 elif core_fn is not None:
                     git_report_holder[0] = core_fn(core_cap)
@@ -1541,12 +1675,69 @@ class PairedAcquisitionCoordinator:
                         ctx_cap, self._core_validator_on_disk()
                     )
 
-        admission = self.coordinator.admit(_core_unit, _context_unit, cut=cut)
-        return PairedAcquisitionResult(
-            admission=admission,
-            git_report=git_report_holder[0],
-            provider_report=provider_report_holder[0],
-        )
+        # Fetch/parse bounded external Git input before the short Core transaction.
+        # Operational permits remain live until the prepared typed admissions finish.
+        with ExitStack() as preparation:
+            prepared = None
+            if git_source is not None or git_input is not None:
+                actual = preparation.enter_context(_open_core(self.directory))
+                prepared = _PreparedCore(actual)
+                unit = git_request if git_source is not None else git_input
+                if unit is None:
+                    raise ValueError("Git source requires a request")
+                acq = GitAcquisition(prepared, operational=self.operational)
+                custom_scope = None
+                if git_source is not None and unit.notes is not None:
+                    custom_scope = request_scope(
+                        unit.repository_uuidv4,
+                        actual.catalog_identity()[1],
+                        unit.source_attribution,
+                        GitNotesSource(git_source).scope,
+                    )
+                budget, progress = preparation.enter_context(
+                    acq._resolve_budget_and_progress(
+                        actual,
+                        "p5-git-native"
+                        if git_source is not None
+                        else "p5-git-metadata-input",
+                        unit.capture_origin_uuidv4,
+                        unit.capture_uuidv4,
+                        None,
+                        None,
+                        custom_scope=custom_scope,
+                        new_request=new_request,
+                        request_identity=request_identity,
+                    )
+                )
+                if git_source is not None:
+                    git_report_holder[0] = acq.acquire_from_native(
+                        git_source,
+                        git_request,
+                        work=budget,
+                        progress=progress,
+                    )
+                else:
+                    git_report_holder[0] = acq.acquire_metadata_only(
+                        git_input,
+                        notes_source=notes_source,
+                        work=budget,
+                        progress=progress,
+                    )
+
+            def _prepared_core_unit(core_tx):
+                if prepared is None:
+                    return _core_unit(core_tx)
+                with GitCore.for_transaction(core_tx) as core_cap:
+                    prepared.apply(core_cap)
+
+            admission = self.coordinator.admit(
+                _prepared_core_unit, _context_unit, cut=cut
+            )
+            return PairedAcquisitionResult(
+                admission=admission,
+                git_report=git_report_holder[0],
+                provider_report=provider_report_holder[0],
+            )
 
     def reconcile_core_dependencies(self) -> DependencyReconciliationReport:
         """Promote unresolved `reported_core_reference:*` candidates once their OIDs exist in Core."""

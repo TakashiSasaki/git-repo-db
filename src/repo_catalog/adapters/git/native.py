@@ -77,7 +77,11 @@ class GitNativeSource:
             )
         return result.stdout
 
-    def metadata(self, oid: OID) -> NativeObject:
+    def metadata(self, oid: OID, work=None) -> NativeObject:
+        if work is not None:
+            from repo_catalog.adapters.git.notes import GitNotesSource
+
+            return GitNotesSource(self).metadata(oid, work)
         if oid.object_format != self.object_format:
             raise CoreFailure(
                 "NATIVE_FORMAT", oid, "Git storage format differs from requested OID"
@@ -160,15 +164,31 @@ class GitNativeSource:
         parse_metadata(oid.object_format, kind, body)
         return native
 
-    def refs(self) -> tuple[tuple[bytes, OID, str, OID | None], ...]:
-        """Actual local full ref observations; no remote freshness/completeness."""
-        raw = self._run(
-            "for-each-ref",
-            "--format=%(refname)%00%(objectname)%00%(objecttype)%00%(*objectname)",
+    def refs(self, work=None) -> tuple[tuple[bytes, OID, str, OID | None], ...]:
+        """Finite local enumeration, prepaid before reads and record parsing."""
+        from repo_catalog.adapters.git.notes import GitNotesSource
+        from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+
+        active = work if work is not None else UnlimitedWorkBudget()
+        source = GitNotesSource(self)
+        raw = source._output(
+            (
+                "for-each-ref",
+                "--format=%(refname)%00%(objectname)%00%(objecttype)%00%(*objectname)",
+            ),
+            source.discovery_bytes,
+            active,
         )
         result = []
         for line in raw.splitlines():
-            name, target, kind, peeled = line.split(b"\0")
+            active.require("metadata_units", 1)
+            active.charge("metadata_units", 1)
+            if len(result) >= source.discovery_refs:
+                raise CoreFailure("BUDGET", "refs", "finite ref count")
+            pieces = line.split(b"\0")
+            if len(pieces) != 4:
+                raise CoreFailure("GIT_INPUT", "refs", "malformed ref record")
+            name, target, kind, peeled = pieces
             result.append(
                 (
                     name,
