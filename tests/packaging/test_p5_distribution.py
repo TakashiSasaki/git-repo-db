@@ -119,7 +119,7 @@ git_req = GitNativeAcquisitionRequest(
     select_oids=(OID("FORMAT", commit1),),
     retain_bytes=True,
 )
-git_acq = GitAcquisition(cat_a)
+git_acq = GitAcquisition(cat_a, operational=cat_a)
 git_report = git_acq.acquire_from_native(git_source, git_req, new_request=True)
 assert git_report.status == "complete"
 assert len(git_report.admitted_objects) >= 1
