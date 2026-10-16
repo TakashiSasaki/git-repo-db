@@ -703,7 +703,7 @@ def test_interrupted_new_pr_head_has_no_complete_assessment(
 
 
 @pytest.mark.parametrize("newer_sync", [False, True])
-def test_partial_listing_resumes_same_items_and_no_completed_pages(
+def test_partial_listing_restarts_with_retained_items_and_fresh_pages(
     github_runtime, newer_sync
 ):
     store, repo, fixture, api = github_runtime
@@ -761,8 +761,11 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(
         }
         assert all(state == "complete" for state, _ in latest.values())
         api.failures[commit_path] = [503] * 5
-        with pytest.raises(CatalogError):
-            sync(store, repo, job=partial.value.details["job_id"])
+        resumed_at = len(api.requests)
+        sync(store, repo, job=partial.value.details["job_id"])
+        # A valid terminal Core collection from the newer job is safe reuse;
+        # the obsolete partial job need not refetch it or lower its coverage.
+        assert not any(path == commit_path for _, path, _ in api.requests[resumed_at:])
         assert {
             row["coverage_scope_id"]: (row["coverage_state"], row["observed_at_us"])
             for row in store.all(
@@ -772,6 +775,29 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(
         return
     first = len(api.requests)
     sync(store, repo, job=partial.value.details["job_id"])
+    fresh_listing = store.one(
+        "SELECT l.code_listing_id,l.fetch_collection_id FROM code_listings l "
+        "JOIN fetch_collections f USING(fetch_collection_id) "
+        "WHERE l.change_request_id=? AND l.kind='commits' AND l.code_listing_id<>? "
+        "ORDER BY f.observed_at_us DESC LIMIT 1",
+        (PR, listing["code_listing_id"]),
+    )
+    assert fresh_listing is not None
+    assert (
+        store.one(
+            "SELECT count(*) FROM code_commits WHERE code_listing_id=?",
+            (listing["code_listing_id"],),
+        )[0]
+        == 1
+    )
+    assert (
+        store.one(
+            "SELECT state FROM code_listing_progress WHERE code_listing_id=?",
+            (listing["code_listing_id"],),
+        )[0]
+        == "partial"
+    )
+    listing = fresh_listing
     current_claim = store.one(
         "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='pr-commits'"
     )
@@ -787,7 +813,7 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(
     requests = api.requests[first:]
     assert [
         params.get("page") for _, path, params in requests if path == commit_path
-    ] == [["2"]]
+    ] == [None, ["2"]]
     assert not any(
         path.startswith(
             ("/repos/fixture/alpha/pulls/42", "/repos/fixture/alpha/pulls/43")
@@ -798,7 +824,7 @@ def test_partial_listing_resumes_same_items_and_no_completed_pages(
         store.one(
             "SELECT count(*) FROM code_listings WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='commits'"
         )[0]
-        == 1
+        == 2
     )
     assert (
         store.one(
@@ -1160,17 +1186,25 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
         JobService(store).update(job, "interrupted")
         JobService(store).resume(job)
         collector.threads(repo, pr, job)
-        assert requested == ["root-1", "child", "root-2"]
+        assert requested == ["root-1", "child", "root-1", "child", "root-2"]
         claim = store.one(
             "SELECT coverage_state,observed_at_us FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
         )
         # The interrupted capture and resumed completion both observed 300.
         # Equal-clock differing completeness remains an explicit conflict.
         assert tuple(claim) == ("conflict", 300)
+        assert not store.one(
+            "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+            (root["fetch_collection_id"],),
+        )
+        fresh_root = collection_rows(
+            store, "kind='threads'", job_id=job, state="complete"
+        )
+        assert len(fresh_root) == 1
         assert (
             store.one(
-                "SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=?",
-                (root["fetch_collection_id"],),
+                "SELECT observed_at_us FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+                (fresh_root[0]["fetch_collection_id"],),
             )[0]
             == 300
         )
@@ -1226,18 +1260,20 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
         )[0]
     )
     assert child_requests == ["100", "100"]
-    assert (
-        store.operational.one(
-            "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
-            (child["fetch_collection_id"],),
-        )[0]
-        == "complete"
+    fresh_child = collection_rows(
+        store, "kind='thread-comments' AND change_request_id=?", (PR,), state="complete"
+    )
+    assert len(fresh_child) == 1
+    assert fresh_child[0]["fetch_collection_id"] != child["fetch_collection_id"]
+    assert not store.one(
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+        (child["fetch_collection_id"],),
     )
     assert (
         store.one(
             "SELECT count(*) FROM current_collection_pages o JOIN fetch_collections f ON f.fetch_collection_id=o.fetch_collection_id WHERE f.kind='threads'"
         )[0]
-        == root_pages
+        == root_pages + 1
     )
 
 
@@ -1288,19 +1324,21 @@ def test_malformed_current_rest_page_keeps_retry_boundary_without_required_archi
     assert not (store.path / "transport-archive").exists()
     sync(store, repo, job=partial.value.details["job_id"])
     assert requests == 2
+    assert not store.one(
+        "SELECT 1 FROM current_collection_pages WHERE fetch_collection_id=?",
+        (row["fetch_collection_id"],),
+    )
+    fresh = collection_rows(
+        store, "kind='review' AND change_request_id=?", (PR,), state="complete"
+    )
+    assert len(fresh) == 1
+    assert fresh[0]["fetch_collection_id"] != row["fetch_collection_id"]
     assert (
         store.one(
             "SELECT count(*) FROM current_collection_pages WHERE fetch_collection_id=?",
-            (row["fetch_collection_id"],),
+            (fresh[0]["fetch_collection_id"],),
         )[0]
         == 1
-    )
-    assert (
-        store.operational.one(
-            "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
-            (row["fetch_collection_id"],),
-        )[0]
-        == "complete"
     )
 
 
