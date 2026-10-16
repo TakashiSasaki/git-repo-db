@@ -616,7 +616,9 @@ element counts before `json.loads`, then validate the parsed shape. Bound base64
 and proof hex representations before decoding. Charge malformed/rejected input
 as actual request work. At a limit, stop reading; do not scan an arbitrary suffix
 just to count omissions. Mark omitted counts as lower bounds and enumeration as
-incomplete. An oversized partial candidate must also make the extraction receipt
+incomplete. Count an unread suffix only when prefetched/buffered bytes or the
+regular file's size and current offset establish that it exists; uncertainty
+alone cannot justify inventing another omitted candidate. An oversized partial candidate must also make the extraction receipt
 partial. Keep serialization/output budgets separate from proof of completeness.
 
 Reproduce these boundaries with `python -m pytest

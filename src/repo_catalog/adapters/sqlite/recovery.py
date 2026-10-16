@@ -475,13 +475,17 @@ def _decode_proof_bundle(
 
 
 def _bounded_jsonl_records(
-    stream, *, max_line_bytes: int, max_bytes: int, reserve, settle=None
+    stream, *, max_line_bytes: int, max_bytes: int, reserve, settle=None, state=None
 ):
     """Read finite chunks, reserving their upper bound before the actual read.
 
     No suffix scan is performed to compute a fictitiously precise omitted count.
-    A caller receiving _InputLimit knows at least one input unit remains unknown.
+    The shared state counts only bytes not yet yielded as a candidate; callers
+    can report known omissions without inventing a nonexistent suffix at EOF.
     """
+    if state is None:
+        state = {}
+    state.update(buffered_bytes=0, prefetched_bytes=0)
     buffered = bytearray()
     scanned = 0
     while True:
@@ -493,9 +497,13 @@ def _bounded_jsonl_records(
         if settle is not None:
             settle("input_scan_bytes", len(block))
         scanned += len(block)
+        state["prefetched_bytes"] = len(block)
         if not block:
             if buffered:
-                yield bytes(buffered)
+                line = bytes(buffered)
+                buffered.clear()
+                state["buffered_bytes"] = 0
+                yield line
             return
         offset = 0
         while offset < len(block):
@@ -506,10 +514,24 @@ def _bounded_jsonl_records(
                     "JSONL line exceeds finite envelope; unread suffix unknown"
                 )
             buffered.extend(block[offset:end])
+            state["buffered_bytes"] = len(buffered)
             offset = end
+            state["prefetched_bytes"] = len(block) - offset
             if newline >= 0:
-                yield bytes(buffered)
+                line = bytes(buffered)
                 buffered.clear()
+                state["buffered_bytes"] = 0
+                yield line
+
+
+def _has_known_unread_input(stream, state) -> bool:
+    """A lower bound only: do not read an unbounded suffix to count omissions."""
+    if state.get("buffered_bytes", 0) or state.get("prefetched_bytes", 0):
+        return True
+    try:
+        return os.fstat(stream.fileno()).st_size > stream.tell()
+    except (OSError, AttributeError):
+        return False
 
 
 def _open_salvage_input(path: Path):
@@ -2238,6 +2260,7 @@ class SQLiteRecoveryAdapter:
                 work_budget.charge(unit, amount)
 
             with _open_salvage_input(salvage_file) as f:
+                input_state = {}
                 records = _bounded_jsonl_records(
                     f,
                     max_line_bytes=b.max_payload_bytes * 8 + 8192,
@@ -2245,12 +2268,11 @@ class SQLiteRecoveryAdapter:
                     - work_budget.usage.get("input_scan_bytes", 0),
                     reserve=reserve_input,
                     settle=settle_input,
+                    state=input_state,
                 )
                 while True:
                     if budget_exhausted or processed >= b.max_input_records:
-                        unprocessed += (
-                            1  # lower bound; unread suffix deliberately unknown
-                        )
+                        unprocessed += int(_has_known_unread_input(f, input_state))
                         break
                     try:
                         line = next(records)
@@ -2258,7 +2280,7 @@ class SQLiteRecoveryAdapter:
                         break
                     except (_InputLimit, CoreFailure) as e:
                         budget_exhausted = True
-                        unprocessed += 1
+                        unprocessed += int(_has_known_unread_input(f, input_state))
                         rejections.append({"reason": f"Input incomplete: {e}"})
                         break
                     try:

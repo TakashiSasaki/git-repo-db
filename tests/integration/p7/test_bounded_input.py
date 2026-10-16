@@ -373,3 +373,89 @@ def test_native_header_limit_precedes_all_line_materialization():
     # would require substantially more memory before the second work check.
     assert peak < len(body) * 2
     assert work.usage["metadata_units"] == 1
+
+
+@pytest.mark.parametrize("trailing_newline", [False, True])
+def test_one_refused_candidate_does_not_invent_another_at_eof(
+    synthetic_catalog, tmp_path, trailing_newline
+):
+    salvage = tmp_path / "single-refused.jsonl"
+    row = json.dumps(
+        {
+            "candidate_type": "context_document",
+            "payload": {"text_value": "body too costly"},
+        }
+    )
+    salvage.write_text(row + ("\n" if trailing_newline else ""))
+    receipt = RecoveryService().merge_salvage(
+        synthetic_catalog,
+        salvage,
+        budget=RecoveryBudget(max_work_units={"verification_bytes": 1}),
+    )
+    assert receipt.candidates_processed == 1
+    assert receipt.unprocessed_units == 1
+    assert receipt.admitted_units == receipt.rejected_units == 0
+    assert not receipt.input_complete
+
+
+@pytest.mark.parametrize("trailing_newline", [False, True])
+def test_record_limit_at_exact_eof_does_not_invent_omission(
+    synthetic_catalog, tmp_path, trailing_newline
+):
+    salvage = tmp_path / "exact-records.jsonl"
+    rows = [json.dumps({"candidate_type": "context_resource", "payload": {}})] * 2
+    salvage.write_text("\n".join(rows) + ("\n" if trailing_newline else ""))
+    receipt = RecoveryService().merge_salvage(
+        synthetic_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
+    )
+    assert receipt.candidates_processed == receipt.observation_units == 2
+    assert receipt.unprocessed_units == 0
+
+
+def test_record_limit_counts_known_prefetched_suffix_only(synthetic_catalog, tmp_path):
+    salvage = tmp_path / "prefetched-records.jsonl"
+    row = json.dumps({"candidate_type": "context_resource", "payload": {}}) + "\n"
+    salvage.write_text(row * 3)
+    receipt = RecoveryService().merge_salvage(
+        synthetic_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
+    )
+    assert receipt.candidates_processed == 2
+    assert receipt.unprocessed_units == 1
+    assert not receipt.unprocessed_count_exact
+
+
+def test_byte_limit_at_exact_eof_does_not_invent_unread_candidate(
+    synthetic_catalog, tmp_path
+):
+    salvage = tmp_path / "exact-bytes.jsonl"
+    row = json.dumps({"candidate_type": "context_resource", "payload": {}}) + "\n"
+    salvage.write_text(row)
+    receipt = RecoveryService().merge_salvage(
+        synthetic_catalog,
+        salvage,
+        budget=RecoveryBudget(max_input_bytes=len(row.encode())),
+    )
+    assert receipt.candidates_processed == receipt.observation_units == 1
+    assert receipt.unprocessed_units == 0
+
+
+def test_already_exhausted_retry_counts_known_nonempty_input(
+    synthetic_catalog, tmp_path
+):
+    salvage = tmp_path / "retry-records.jsonl"
+    row = (
+        json.dumps(
+            {
+                "candidate_type": "context_document",
+                "payload": {"text_value": "body too costly"},
+            }
+        )
+        + "\n"
+    )
+    salvage.write_text(row)
+    budget = RecoveryBudget(max_work_units={"verification_bytes": 1})
+    service = RecoveryService()
+    service.merge_salvage(synthetic_catalog, salvage, budget=budget)
+    retry = service.merge_salvage(synthetic_catalog, salvage, budget=budget)
+    assert retry.candidates_processed == 0
+    assert retry.unprocessed_units == 1
