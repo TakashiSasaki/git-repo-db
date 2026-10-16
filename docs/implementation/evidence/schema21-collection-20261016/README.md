@@ -29,3 +29,28 @@ Explicit replacement-node map (parameter suffixes preserved):
   -> `test_thread_children_restart_with_retained_normalized_committed_prefix`.
 
 No production implementation or schema has changed.
+
+Additional replacement-node map (parameter suffixes preserved):
+
+- `test_partial_listing_resumes_same_items_and_no_completed_pages`
+  -> `test_partial_listing_restarts_with_retained_items_and_fresh_pages`.
+- `test_current_incremental_watermark_stays_at_original_scan_start`
+  -> `test_current_incremental_watermark_uses_actual_fresh_scan_start`.
+
+Layered counterexamples after fixing store selection also demonstrate why mere
+SQL relocation is insufficient: old partial collection IDs must stay partial,
+new collection IDs receive terminal proofs, fresh root pages are requested before
+children, and an incremental restart's watermark uses its actual new start time.
+A later valid terminal Core collection can safely be reused by an older job.
+The initial diagnostic runs are preserved externally until the final receipt;
+they include failed expectations rather than hidden skips or xfails.
+
+- `test_current_terminal_cancellation_finishes_locally_without_false_partial`
+  -> `test_current_terminal_cancellation_reacquires_without_false_partial`.
+
+A further layered check distinguishes page-level completion from job-level
+acceptance: when a retried child is older than a rejected observation, or equal in
+time with conflicting completeness, new terminal pages do not make aggregate PR
+sync complete. The public sync correctly retains `PR_PARTIAL`; equal-time thread
+coverage stays conflicted and PR/code summaries stay partial. No rejected clock
+is borrowed to manufacture a successful completion.

@@ -198,6 +198,7 @@ def test_known_current_resource_rejection_preserves_latest_candidate_set(
             ("initial", "1"),
             ("rejected", "1"),
             ("rejected", "2"),
+            ("retry", "1"),
             ("retry", "2"),
         ]
         assert_no_original(store)
@@ -285,7 +286,7 @@ def test_out_of_scope_incremental_current_parent_adds_no_observation(github_runt
         assert_no_original(store)
 
 
-def test_current_terminal_cancellation_finishes_locally_without_false_partial(
+def test_current_terminal_cancellation_reacquires_without_false_partial(
     github_runtime, monkeypatch
 ):
     store, repo, _, api = github_runtime
@@ -316,13 +317,14 @@ def test_current_terminal_cancellation_finishes_locally_without_false_partial(
         current.current_collection(
             repo, pr, "review", job, endpoint, current_parser.review
         )
-        assert len(requested) == 1
+        assert len(requested) == 2
         assert tuple(
             store.one(
                 "SELECT observed_at_us,coverage_state FROM current_coverage WHERE kind='review'"
             )
-        ) == (100, "complete")
-        assert store.one("SELECT observed_at_us FROM completion_markers")[0] == 100
+        ) == (300, "complete")
+        assert store.one("SELECT observed_at_us FROM completion_markers")[0] == 300
+        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 2
         assert_no_original(store)
 
 
@@ -447,7 +449,7 @@ def test_issue_summary_does_not_borrow_another_sources_clock(github_runtime):
         assert_no_original(store)
 
 
-def test_current_incremental_watermark_stays_at_original_scan_start(
+def test_current_incremental_watermark_uses_actual_fresh_scan_start(
     github_runtime, monkeypatch
 ):
     store, repo, _, api = github_runtime
@@ -495,9 +497,9 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
         resume_job(store, job)
         blocked[0] = False
         current.current_incremental_reviews(repo, job, endpoint)
-        assert requested == ["1", "2", "2"]
+        assert requested == ["1", "2", "1", "2"]
         collection = next(iter(collection_rows(store, "1", (), job_id=job)), None)
-        assert collection["observed_at_us"] == 100
+        assert collection["observed_at_us"] == 200
         scope = json.loads(collection["scope_json"])
         assert (
             scope["request_context"]["incremental_endpoint"]
@@ -514,10 +516,10 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
         JobService(store).update(job, "complete")
         clock[0] = 400
         current.current_incremental_reviews(repo, new_job(store), endpoint)
-        assert requested == ["1", "2", "2", "1", "2"]
-        assert since[:3] == [None, None, None]
-        assert since[3] == format_iso8601_us(100 - 300_000_000)
-        assert since[4] is None  # Follow the provider's page-two Link exactly.
+        assert requested == ["1", "2", "1", "2", "1", "2"]
+        assert since[:4] == [None, None, None, None]
+        assert since[4] == format_iso8601_us(200 - 300_000_000)
+        assert since[5] is None  # Follow the provider's page-two Link exactly.
         assert_no_original(store)
 
 
