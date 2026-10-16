@@ -674,3 +674,20 @@ selected copy under the writer cut; reserve allocation before fetching bodies
 and use the existing actual-verification meter. Finite proof-parser refusals must
 remain typed resource refusals, never confirmed stored corruption. Regression
 controls are `tests/integration/p7/test_stored_copy_corruption_stop.py`.
+### P7 trusted CHECK and TEXT revalidation
+
+Do not equate read-only `PRAGMA integrity_check` with application-domain CHECK
+validation. A disposable Core with exact schema but invalid `captures.ref`
+returned `ok` through a read-only connection while a writable connection exposed
+its failed UDF CHECK. Decode bounded chunks of actual stored TEXT bytes before
+SQLite/Python UDF decoding, then explicitly evaluate every CHECK expression from
+the trusted packaged CREATE TABLE SQL. Parse balanced parentheses and SQL quoting
+and comments; never execute recovered SQL. Use `WHERE NOT(expression)` so NULL
+retains SQLite's CHECK meaning. Keep binary Notes/native BLOBs outside UTF-8
+validation and preserve empty text and split multibyte sequences.
+
+Reproduce with `uv run pytest tests/integration/p7/test_stored_constraints.py -q`.
+Those regressions retain exact schema, corrupt Capture refs and metadata TEXT,
+exercise a valid-UTF8 false UDF CHECK, and include binary Notes/empty/long Unicode
+positive controls. The procedure verifies stored authority; it grants no source
+attribution authenticity or host power-loss guarantee.

@@ -50,8 +50,9 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 )
 from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
 from repo_catalog.adapters.sqlite.recovery_validation import (
-    validate_context_text_encoding,
     validate_stored_admission_guards,
+    validate_stored_checks,
+    validate_stored_text_encoding,
     verify_existing_context_text,
 )
 from repo_catalog.domain.git_native import parse_metadata
@@ -1132,6 +1133,18 @@ class SQLiteRecoveryAdapter:
         conn = sqlite3.connect(f"file:{core_db.resolve()}?mode=ro", uri=True)
         try:
             register_functions(conn)
+            # Strict P1 schema validation
+            try:
+                p1_schema_validate(conn, "core")
+            except Exception as e:
+                raise BackupValidationError(f"Core physical schema invalid: {e}") from e
+            if schema_rows(conn) != expected_schema("core"):
+                raise BackupValidationError(
+                    "Core physical schema rows differ from packaged expectation"
+                )
+
+            validate_stored_text_encoding(conn, "core")
+
             # PRAGMA integrity_check
             result = conn.execute("PRAGMA integrity_check").fetchall()
             if not result or result[0][0] != "ok":
@@ -1142,16 +1155,6 @@ class SQLiteRecoveryAdapter:
             if fk_result:
                 raise BackupValidationError(
                     f"Core foreign key check failed: {fk_result}"
-                )
-
-            # Strict P1 schema validation
-            try:
-                p1_schema_validate(conn, "core")
-            except Exception as e:
-                raise BackupValidationError(f"Core physical schema invalid: {e}") from e
-            if schema_rows(conn) != expected_schema("core"):
-                raise BackupValidationError(
-                    "Core physical schema rows differ from packaged expectation"
                 )
 
             # Verify store_identity
@@ -1308,6 +1311,7 @@ class SQLiteRecoveryAdapter:
                 notes += 1
                 total_bytes += len(body)
 
+            validate_stored_checks(conn, "core")
             validate_stored_admission_guards(conn, "core")
 
             return RetainedByteSummary(
@@ -1338,7 +1342,7 @@ class SQLiteRecoveryAdapter:
                     "Context physical schema rows differ from packaged expectation"
                 )
 
-            validate_context_text_encoding(conn)
+            validate_stored_text_encoding(conn, "context")
             validate_stored_admission_guards(conn, "context")
 
             result = conn.execute("PRAGMA integrity_check").fetchall()
@@ -1377,6 +1381,8 @@ class SQLiteRecoveryAdapter:
                         f"Context text body SHA-256 mismatch: recorded {expected_sha}, actual {actual_sha}"
                     )
                 total_bytes += len(text_value.encode("utf-8"))
+
+            validate_stored_checks(conn, "context")
 
             return RetainedByteSummary(total_retained_bytes=total_bytes)
         except sqlite3.Error as e:
