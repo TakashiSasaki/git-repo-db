@@ -69,8 +69,30 @@ class WorkPermit:
 
 @dataclass(frozen=True)
 class NotesLimits:
-    note_bytes: int
+    note_bytes: int = 16 * 1024 * 1024
+
+    @staticmethod
+    def work_limits() -> dict[str, int]:
+        """Finite production request defaults; each request persists its settings.
+
+        Bytes count actual input and actual verification passes separately.
+        Metadata units count each inspected/emitted ref, field or relation;
+        proof steps count each structural node/edge examined.
+        """
+        return {
+            "input_bytes": 256 * 1024 * 1024,
+            "verification_bytes": 2 * 1024 * 1024 * 1024,
+            "metadata_units": 1_000_000,
+            "proof_steps": 100_000,
+        }
 
     def __post_init__(self):
         if type(self.note_bytes) is not int or not 0 <= self.note_bytes <= 2**63 - 1:
             raise ValueError("finite nonnegative signed int64 note byte limit required")
+
+
+@dataclass
+class WorkMeasurement:
+    """Actual measured work; None preserves a conservative full reservation."""
+
+    actual: int | None = None

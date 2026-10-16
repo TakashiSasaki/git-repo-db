@@ -26,8 +26,10 @@ from repo_catalog.domain.p1_coordination import (
     PairAdmission,
     RequestIdentity,
     SnapshotToken,
+    WorkMeasurement,
     WorkPermit,
 )
+from repo_catalog.domain.p1_core import CoreFailure
 
 
 @contextmanager
@@ -643,8 +645,98 @@ class WorkLedger:
     or retained bytes are inferred from this discardable state.
     """
 
-    def __init__(self, db: sqlite3.Connection):
+    def __init__(
+        self,
+        db: sqlite3.Connection,
+        *,
+        repository_uuidv4: str | None = None,
+        catalog_instance_uuidv4: str | None = None,
+    ):
         self.db = db
+        self._issued_permits: dict[int, WorkPermit] = {}
+        self._path = Path(db.execute("PRAGMA database_list").fetchone()[2])
+        self._file_identity = self._stat_identity()
+        self._ready()
+        repository, instance = _identity(db, "operational")
+        if (repository_uuidv4 is not None and repository != repository_uuidv4) or (
+            catalog_instance_uuidv4 is not None and instance != catalog_instance_uuidv4
+        ):
+            raise CoordinationError("STORE_IDENTITY", "operational")
+
+    def _stat_identity(self):
+        try:
+            stat = self._path.stat()
+        except OSError as error:
+            raise CoordinationError("CONTINUATION_UNAVAILABLE", "request") from error
+        return stat.st_dev, stat.st_ino
+
+    def _ready(self):
+        # Returning an uncommitted reservation would permit work before the
+        # accounting survives process loss. Reject unsupported connections and
+        # settings rather than silently changing caller transaction ownership.
+        if self.db.in_transaction:
+            raise CoordinationError("ACCOUNTING_TRANSACTION", "request")
+        if (
+            self.db.isolation_level is not None
+            or self.db.execute("PRAGMA synchronous").fetchone()[0] < 2
+            or self.db.execute("PRAGMA journal_mode").fetchone()[0] != "wal"
+            or self.db.execute("PRAGMA foreign_keys").fetchone()[0] != 1
+        ):
+            raise CoordinationError("ACCOUNTING_DURABILITY", "request")
+        if self._stat_identity() != self._file_identity:
+            raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+
+    def validate_continuation(
+        self, request: RequestIdentity, attempt_uuidv4=None, *, scope=None
+    ):
+        """Missing accounting never means a resumed request has spent zero."""
+        self._ready()
+        self._validate_continuation(request, attempt_uuidv4, scope=scope)
+
+    def _validate_continuation(self, request, attempt_uuidv4=None, *, scope=None):
+        row = self.db.execute(
+            "SELECT state,request_scope_json FROM acquisition_requests WHERE request_origin_uuidv4=? "
+            "AND request_uuidv4=?",
+            request.values(),
+        ).fetchone()
+        kinds = {
+            row[0]
+            for row in self.db.execute(
+                "SELECT work_kind FROM request_budgets WHERE request_origin_uuidv4=? "
+                "AND request_uuidv4=?",
+                request.values(),
+            )
+        }
+        if row is None or row[0] != "open" or kinds != set(NotesLimits.work_limits()):
+            raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+        if scope is not None and _json(json.loads(row[1])) != _json(json.loads(scope)):
+            raise CoordinationError("REQUEST_SCOPE", "request")
+        if (
+            attempt_uuidv4 is not None
+            and not self.db.execute(
+                "SELECT 1 FROM acquisition_attempts WHERE request_origin_uuidv4=? "
+                "AND request_uuidv4=? AND attempt_uuidv4=?",
+                (*request.values(), attempt_uuidv4),
+            ).fetchone()
+        ):
+            raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+
+    def usage(self, request: RequestIdentity) -> dict[str, int]:
+        """Conservative expenditure, including each unsettled full reservation."""
+        self._ready()
+        self.db.execute("BEGIN")
+        try:
+            self._validate_continuation(request)
+            result = dict.fromkeys(NotesLimits.work_limits(), 0)
+            for kind, reserved, actual in self.db.execute(
+                "SELECT work_kind,reserved,actual FROM work_accounting "
+                "WHERE request_origin_uuidv4=? AND request_uuidv4=?",
+                request.values(),
+            ):
+                result[kind] += reserved if actual is None else actual
+            return result
+        finally:
+            self.db.rollback()
 
     def new_request(self, request: RequestIdentity, scope: str, limits: dict[str, int]):
         required = {
@@ -658,6 +750,7 @@ class WorkLedger:
         for limit in limits.values():
             if type(limit) is not int or not 0 <= limit <= 2**63 - 1:
                 raise ValueError("finite signed int64 nonnegative limit required")
+        self._ready()
         self.db.execute("BEGIN IMMEDIATE")
         try:
             self.db.execute(
@@ -674,17 +767,18 @@ class WorkLedger:
             raise
 
     def attempt(self, request: RequestIdentity, attempt_uuidv4: str, continuation="{}"):
-        row = self.db.execute(
-            "SELECT state FROM acquisition_requests WHERE request_origin_uuidv4=? "
-            "AND request_uuidv4=?",
-            request.values(),
-        ).fetchone()
-        if row is None or row[0] != "open":
-            raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
-        self.db.execute(
-            "INSERT INTO acquisition_attempts VALUES(?,?,?,?)",
-            (*request.values(), attempt_uuidv4, continuation),
-        )
+        self._ready()
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            self._validate_continuation(request)
+            self.db.execute(
+                "INSERT INTO acquisition_attempts VALUES(?,?,?,?)",
+                (*request.values(), attempt_uuidv4, continuation),
+            )
+            self.db.commit()
+        except BaseException:
+            self.db.rollback()
+            raise
 
     def increase_limit(
         self, request: RequestIdentity, work_kind: str, finite_limit: int
@@ -692,8 +786,8 @@ class WorkLedger:
         """Explicit finite increase; existing accounting is never reset."""
         if type(finite_limit) is not int or not 0 <= finite_limit <= 2**63 - 1:
             raise ValueError("finite nonnegative signed int64 limit required")
-        if self.db.in_transaction:
-            raise CoordinationError("ACCOUNTING_TRANSACTION", "request")
+        self._ready()
+        self._validate_continuation(request)
         cursor = self.db.execute(
             "UPDATE request_budgets SET finite_limit=? WHERE request_origin_uuidv4=? "
             "AND request_uuidv4=? AND work_kind=? AND finite_limit<?",
@@ -710,29 +804,103 @@ class WorkLedger:
         work_coordinate: str,
         upper_bound: int,
     ) -> WorkPermit:
-        if self.db.in_transaction:
-            raise CoordinationError("ACCOUNTING_TRANSACTION", "request")
+        self._ready()
         if type(upper_bound) is not int or not 0 <= upper_bound <= 2**63 - 1:
             raise ValueError("finite nonnegative upper bound required")
-        self.db.execute(
-            "INSERT INTO work_accounting VALUES(?,?,?,?,?,?,NULL)",
-            (
-                *request.values(),
-                attempt_uuidv4,
-                work_kind,
-                work_coordinate,
-                upper_bound,
-            ),
-        )
-        return WorkPermit(
+        self._validate_continuation(request, attempt_uuidv4)
+        self._insert_reservation(
             request, attempt_uuidv4, work_kind, work_coordinate, upper_bound
         )
+        return self._issue(
+            WorkPermit(request, attempt_uuidv4, work_kind, work_coordinate, upper_bound)
+        )
+
+    def _issue(self, permit):
+        self._issued_permits[id(permit)] = permit
+        return permit
+
+    def abandon(self, permit: WorkPermit):
+        """Discard a live settlement capability without refunding its charge."""
+        self._check_permit(permit)
+        del self._issued_permits[id(permit)]
+
+    def _check_permit(self, permit):
+        # A reconstructed row value is not evidence of measured work. In
+        # particular, no new process may settle a formerly uncertain permit.
+        if self._issued_permits.get(id(permit)) is not permit:
+            raise CoordinationError("PERMIT_ALREADY_SETTLED_OR_LOST", "request")
+
+    def _insert_reservation(self, request, attempt, kind, coordinate, amount):
+        self.db.execute(
+            "INSERT INTO work_accounting VALUES(?,?,?,?,?,?,NULL)",
+            (*request.values(), attempt, kind, coordinate, amount),
+        )
+
+    def reserve_processing_step(self, request, attempt, kind, amount) -> WorkPermit:
+        """Allocate a real processing occurrence and reserve it in one commit.
+
+        Counting rows is insufficient after failed reservations or noncontiguous
+        prior coordinates. The write lock also serializes budget instances using
+        the same request/attempt; no process-local counter is authoritative.
+        """
+        self._ready()
+        if type(amount) is not int or not 0 <= amount <= 2**63 - 1:
+            raise ValueError("finite nonnegative upper bound required")
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            self._validate_continuation(request, attempt)
+            allocation_scope = _json(
+                {
+                    "attempt_uuidv4": attempt,
+                    "purpose": "processing-step-allocation",
+                }
+            )
+            cursor = self.db.execute(
+                "SELECT cursor_json FROM request_continuations "
+                "WHERE request_origin_uuidv4=? AND request_uuidv4=? "
+                "AND continuation_scope_json=?",
+                (*request.values(), allocation_scope),
+            ).fetchone()
+            if cursor is None:
+                # Recover only the coordinate allocator from existing work,
+                # never expenditure from a missing accounting history. This
+                # scan happens once; the Operational cursor avoids O(n²) work.
+                last = self.db.execute(
+                    "SELECT coalesce(max(CAST(substr(work_coordinate,17) AS INTEGER)),0) "
+                    "FROM work_accounting WHERE request_origin_uuidv4=? "
+                    "AND request_uuidv4=? AND attempt_uuidv4=? "
+                    "AND work_coordinate GLOB 'processing-step:[0-9]*'",
+                    (*request.values(), attempt),
+                ).fetchone()[0]
+            else:
+                last = json.loads(cursor[0])["last_processing_step"]
+            if type(last) is not int or not 0 <= last < 2**63 - 1:
+                raise CoordinationError("ACCOUNTING_STATE", "request")
+            step = last + 1
+            coordinate = f"processing-step:{step}"
+            self._insert_reservation(request, attempt, kind, coordinate, amount)
+            self.db.execute(
+                "INSERT INTO request_continuations VALUES(?,?,?,?) "
+                "ON CONFLICT(request_origin_uuidv4,request_uuidv4,continuation_scope_json) "
+                "DO UPDATE SET cursor_json=excluded.cursor_json",
+                (
+                    *request.values(),
+                    allocation_scope,
+                    _json({"last_processing_step": step}),
+                ),
+            )
+            self.db.commit()
+            return self._issue(WorkPermit(request, attempt, kind, coordinate, amount))
+        except BaseException:
+            self.db.rollback()
+            raise
 
     def finish(self, permit: WorkPermit, actual: int):
+        self._check_permit(permit)
         if type(actual) is not int or not 0 <= actual <= permit.reserved:
             raise ValueError("actual work exceeds reserved bound")
-        if self.db.in_transaction:
-            raise CoordinationError("ACCOUNTING_TRANSACTION", "request")
+        self._ready()
+        self._validate_continuation(permit.request, permit.attempt_uuidv4)
         cursor = self.db.execute(
             "UPDATE work_accounting SET actual=? WHERE request_origin_uuidv4=? "
             "AND request_uuidv4=? AND attempt_uuidv4=? AND work_kind=? "
@@ -748,6 +916,7 @@ class WorkLedger:
         )
         if cursor.rowcount != 1:
             raise CoordinationError("PERMIT_ALREADY_SETTLED_OR_LOST", "request")
+        del self._issued_permits[id(permit)]
 
 
 class NotesWorkBudget:
@@ -767,30 +936,59 @@ class NotesWorkBudget:
         self.ledger, self.request = ledger, request
         self.attempt_uuidv4, self.limits = attempt_uuidv4, limits
         self.pending: dict[str, WorkPermit] = {}
-        self.step = ledger.db.execute(
-            "SELECT count(*) FROM work_accounting WHERE request_origin_uuidv4=? "
-            "AND request_uuidv4=? AND attempt_uuidv4=?",
-            (*request.values(), attempt_uuidv4),
-        ).fetchone()[0]
+        ledger._ready()
+        ledger.validate_continuation(request, attempt_uuidv4)
 
-    def require(self, unit: str, amount: int):
+    def require(self, unit: str, amount: int = 1):
         if unit in self.pending:
             raise CoordinationError("UNSETTLED_WORK", "request", unit)
-        self.step += 1
-        permit = self.ledger.reserve(
-            self.request,
-            self.attempt_uuidv4,
-            unit,
-            f"processing-step:{self.step}",
-            amount,
-        )
+        try:
+            permit = self.ledger.reserve_processing_step(
+                self.request, self.attempt_uuidv4, unit, amount
+            )
+        except sqlite3.IntegrityError as error:
+            if str(error) != "finite cumulative request budget":
+                raise
+            raise CoreFailure("BUDGET", (self.request, unit), str(error)) from error
         self.pending[unit] = permit
+
+    def abandon(self, unit: str):
+        """Forget a local pending handle, retaining its full durable charge.
+
+        Use only when precise performed work cannot be measured (e.g. a failed
+        input operation). This never settles or refunds the reservation.
+        """
+        if unit not in self.pending:
+            raise CoordinationError("UNRESERVED_WORK", "request", unit)
+        self.ledger.abandon(self.pending[unit])
+        del self.pending[unit]
 
     def charge(self, unit: str, amount: int):
         if unit not in self.pending:
             raise CoordinationError("UNRESERVED_WORK", "request", unit)
         self.ledger.finish(self.pending[unit], amount)
         del self.pending[unit]
+
+    @contextmanager
+    def measured(self, unit: str, upper_bound: int) -> Iterator[WorkMeasurement]:
+        """Reserve before work; settle measured success, retain failed uncertainty.
+
+        Set meter.actual only after counting performed work. Any exceptional
+        exit, including process interruption, retains the full reservation.
+        Failure to obtain a permit prevents entry into the work block.
+        """
+        self.require(unit, upper_bound)
+        meter = WorkMeasurement()
+        try:
+            yield meter
+        except BaseException:
+            self.abandon(unit)
+            raise
+        else:
+            if meter.actual is None:
+                self.abandon(unit)
+            else:
+                self.charge(unit, meter.actual)
 
 
 class SearchProjection:
