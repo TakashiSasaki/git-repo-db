@@ -1,0 +1,8 @@
+{
+  "head": "31b7bf3d734c92ad10d22cca233d4318932dfce3",
+  "tree": "e18c5e02ea6878f484b56229eb45453904093d47",
+  "module": "/workspace/reviewer-d-jobs/src/repo_catalog/adapters/sqlite/index.py",
+  "module_sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
+  "status": "",
+  "command": "PATH=/workspace/baseline-main/.venv/bin:$PATH /workspace/baseline-main/.venv/bin/python -m pytest -q tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel --junitxml=/workspace/reviewer-d-evidence/search.xml --journal=/workspace/reviewer-d-evidence/search.jsonl"
+}

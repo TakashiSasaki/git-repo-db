@@ -1,0 +1,5 @@
+ERROR: not found: /workspace/review-c/tests/integration/test_current_collection_rejection_clocks.py::test_current_incremental_watermark_stays_at_original_scan_start
+(no match in any of [<Module test_current_collection_rejection_clocks.py>])
+
+
+230 tests collected in 2.71s

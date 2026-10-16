@@ -1,0 +1,41 @@
+{
+  "final_PR90_head": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+  "final_PR90_tree": "71a8187a42de547f9f4bf8063632bc908e8e48ba",
+  "base_ref": "feat/p7-production-recovery",
+  "base_pr88_sha": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+  "ordinary_merge_commit": "e8628d4ace76e9cf587288602ad9b82682ccb216",
+  "merge_parents": [
+    "9f5634536c54cc372b320ef1485d3a83fc90ba91",
+    "e956cd50b1f25bd95427301cced4741bb68e24f8"
+  ],
+  "all_368_declared_PR88_executable_inputs_match": true,
+  "focused_diff": "Readiness docs/evidence and17skilllines only; no source/test/script/workflow/project/lock change versus PR88. Incoming skill clauses all preserved in order.",
+  "frozen_public74_runtime_stack_tree": "5795e1ed9d0224d74600c7e9988229ebb39a20ba",
+  "frozen_runtime_stack_plus_final_PR90_tree": "d1f83a722e8fcd1b88b7c8b96cf3b5ecd00155ba",
+  "conflicts": false,
+  "production_diff_from_frozen_runtime_stack": [],
+  "CI": {
+    "Development": {
+      "run_id": "38947443376",
+      "conclusion": "SUCCESS"
+    },
+    "Pages": {
+      "run_id": "38947443446",
+      "conclusion": "SUCCESS"
+    },
+    "deploy": "SKIPPED",
+    "earlier_superseded_attempts": "CANCELLED by normal PR concurrency after base retarget; not acceptance evidence"
+  },
+  "runtime_rerun": false,
+  "independent_resolution_review": "Reviewer A external signoff will be archived by root separately; original approval remains historical",
+  "owner_order": [
+    89,
+    87,
+    88,
+    93,
+    91,
+    92,
+    90
+  ],
+  "limits": "Runtime stack tree is frozen source74 plus named originals. Later PR92 evidence commits require a fresh final-tree preflight. No remote merge, auto-merge or deployment."
+}

@@ -1,0 +1,85 @@
+[
+  {
+    "file": "tests/integration/test_catalog3_git_runtime.py",
+    "line": 223,
+    "receiver": "store.operational.one",
+    "tables": [
+      "cache_leases"
+    ],
+    "sql_or_text": "SELECT count(*) FROM cache_leases"
+  },
+  {
+    "file": "tests/integration/test_catalog3_git_runtime.py",
+    "line": 224,
+    "receiver": "store.operational.one",
+    "tables": [
+      "space_reservations"
+    ],
+    "sql_or_text": "SELECT count(*) FROM space_reservations"
+  },
+  {
+    "file": "tests/integration/test_catalog3_pr_scope_coverage.py",
+    "line": 178,
+    "receiver": "store.operational.execute",
+    "tables": [
+      "collection_progress"
+    ],
+    "sql_or_text": "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state) VALUES('query-collection','query-job',1,'partial')"
+  },
+  {
+    "file": "tests/integration/test_catalog3_pr_scope_coverage.py",
+    "line": 155,
+    "receiver": "store.operational.execute",
+    "tables": [
+      "jobs"
+    ],
+    "sql_or_text": "INSERT INTO jobs(job_id,kind,request,current_attempt,created_at_us) VALUES('query-job','sync','{}',1,0)"
+  },
+  {
+    "file": "tests/integration/test_catalog3_pr_scope_coverage.py",
+    "line": 158,
+    "receiver": "store.operational.execute",
+    "tables": [
+      "job_attempts"
+    ],
+    "sql_or_text": "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('query-job',1,'failed',0,'{}')"
+  },
+  {
+    "file": "tests/integration/test_git_decoder_byte_validation.py",
+    "line": 318,
+    "receiver": "store.all",
+    "tables": [
+      "search_documents"
+    ],
+    "sql_or_text": "SELECT body FROM search_documents WHERE kind='code'"
+  },
+  {
+    "file": "tests/integration/test_git_decoder_byte_validation.py",
+    "line": 333,
+    "receiver": "store.all",
+    "tables": [
+      "search_documents"
+    ],
+    "sql_or_text": "SELECT body FROM search_documents WHERE kind='commits'"
+  },
+  {
+    "file": "tests/integration/test_git_direct_objects.py",
+    "line": 271,
+    "receiver": "store.operational.one",
+    "tables": [
+      "acquisition_progress"
+    ],
+    "sql_or_text": "SELECT git_acquisition_id FROM acquisition_progress WHERE job_id=?"
+  },
+  {
+    "file": "tests/integration/test_publication_free_current_api.py",
+    "line": 256,
+    "receiver": "adapter.c.execute",
+    "tables": [
+      "jobs",
+      "job_attempts",
+      "collection_progress"
+    ],
+    "sql_or_text": "SELECT name FROM sqlite_schema WHERE name IN ('jobs','job_attempts','collection_progress')"
+  }
+]

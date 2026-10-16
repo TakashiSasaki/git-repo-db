@@ -1,0 +1,18 @@
+{
+  "FINAL-SOURCE-SUPPLEMENT.md": {
+    "bytes": 5101,
+    "sha256": "fdbc69b603ae46f5d300e884d23299aba29254fef4330d3f9b0d338c86ae916c"
+  },
+  "FINAL-BINDING.json": {
+    "bytes": 10398,
+    "sha256": "6804691f4be929d64de2323aae444b7fee528277014ae512cbcb777392c9dbc2"
+  },
+  "final-bound-inputs.json": {
+    "bytes": 71003,
+    "sha256": "d4aa08b4c33a6cc35075fd5c28ba5c563801b68d41243e5945a083b86a98ad09"
+  },
+  "final-binding-supplement.py": {
+    "bytes": 7301,
+    "sha256": "29b81c765219fc37407b411ec25fcd7c2297470d2b526c338bc20ced166fe57a"
+  }
+}

@@ -19,6 +19,59 @@ durable Context; Git Core keeps permitted Git facts and representations. No
 baseline table, surrogate ID, mutable revision or quarantine mechanism is
 implicitly grandfathered by a recipe below.
 
+## Diagnose public-runtime test observations before changing storage
+
+For Schema 21 `no such table` failures, first identify the actual connection and
+the packaged DDL owner. `JobService(Store(...))` already writes to Operational;
+a test reading `jobs` through `Store.one()` is inspecting Core. Use
+`store.operational` for jobs, attempts, collection/acquisition progress, leases
+and locators, and an explicitly opened `store.open_search()` context for index
+generations and projections. Install failure-injection triggers on the same
+physical connection used by the production writer.
+
+Never repair these tests by adding Core tables/views, SQL-routing wrappers,
+implicit ATTACH or duplicate state. After the operation is quiescent, read
+Operational identifiers and inspect matching Core evidence with separate queries.
+Do not claim this test observation is a cross-store atomic snapshot. Use real
+JobService creation or an Operational transaction for the deferred job/attempt
+foreign-key pair. Assert schema absence for retired `incremental_scans` and
+`content_locations`; keep their original behavioral coverage through actual
+request watermarks, retained Core facts and excluded backup cache state.
+
+An incomplete Core collection cannot become complete merely because Operational
+has a cursor or success flag. On retry, check the new root request, distinct
+collection identity, retained admitted resources, and genuine new terminal
+evidence. Do not require reuse of an incomplete collection's cursor or observation
+time. A genuinely complete Core terminal can still support safe reuse after
+Operational loss. Preserve old-to-new node mapping if renaming obsolete mechanism
+tests. See the [Schema 21 checkpoint](../../../docs/implementation/evidence/schema21-baseline-20261016/ROOT-CHECKPOINT.md)
+for real loss and split-write counterexamples; this procedure does not apply the
+four-store target to the public runtime.
+
+Run the entire affected lifecycle cohort after correcting a connection: a missing
+table can mask a second stale continuation assertion. Check old partial versus
+fresh collection IDs, preserved admitted prefixes and actual fresh scan times.
+Do not report aggregate sync as complete while newer or equal-clock selected
+Coverage remains partial/conflicting. Classify both layers in per-node evidence.
+
+For repeated Search rebuilds, scanning public PR/Issue queries alone cannot prove
+projection correctness. Retain documents referenced by an old generation until
+replacement succeeds, but admit only the pinned Core snapshot's current keys to
+the new generation. Test a stale-only 200-row batch before current documents, real cancellation
+with the old ready index intact, repeated and empty rebuilds, and retained Core
+text. Unreferenced Search derivatives may be removed after promotion; this does
+not authorize deleting authoritative text or promise atomicity of all rebuild
+and cleanup phases.
+
+Use a dedicated workspace `TMPDIR` and `--basetemp` for sustained/parallel full
+suites when `/tmp` has a smaller capacity. Record disk exhaustion separately from
+product errors; preserve JUnit/journals and rerun the affected exact nodes with
+sufficient capacity. Remove only confirmed completed disposable test directories,
+never another active worktree's fixtures or real catalogs.
+Run pytest through the intended worktree's `uv run --no-sync`, or prepend that
+venv's `bin` to `PATH` when invoking its Python directly: CLI helpers spawn
+`repo-catalog` by name. A correct parent import alone does not bind child commands.
+
 ---
 
 ## Classified time and checksum policy for target work

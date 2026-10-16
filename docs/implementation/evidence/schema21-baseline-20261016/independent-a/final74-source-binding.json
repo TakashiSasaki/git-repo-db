@@ -1,0 +1,18 @@
+{
+  "candidate": "74f90adae40ae60076dca33629fa2edbf5763474",
+  "tree": "b11075b53eb0bda4febc710c46c059dc6edf4054",
+  "source_subtree": "3d5062665a71d2365cb222a6f3e05eb483d99997",
+  "independently_executed_source": "31b7bf3d734c92ad10d22cca233d4318932dfce3",
+  "tested_source_subtree": "3d5062665a71d2365cb222a6f3e05eb483d99997",
+  "source_subtrees_equal": true,
+  "source_diff": [],
+  "skill_precision_correction": "56e7b7032bdb2eb8cc34f746b414719d280c0690",
+  "decoder_diff_against_approved0aab": [],
+  "ancestors_verified": [
+    "0aab23e08eba6e8ed5b62a826f3b879203e14d64",
+    "56e7b7032bdb2eb8cc34f746b414719d280c0690",
+    "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "7dc31256907aff4412170bc3f3ce3069b2ad89f2"
+  ],
+  "review_sha256": "8ac7b57c03f313c8dd59d4ac100acc6240ba5dc3f1b7711ad8d6fa1ec44ddf29"
+}

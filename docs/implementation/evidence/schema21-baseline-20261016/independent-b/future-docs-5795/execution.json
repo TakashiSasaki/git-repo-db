@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "tests/unit/test_build_docs_site.py",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml",
+    "/workspace/reviewer-b-evidence/future-docs-5795/junit.xml",
+    "--journal",
+    "/workspace/reviewer-b-evidence/future-docs-5795/journal.jsonl",
+    "--basetemp",
+    "/workspace/reviewer-b-evidence/future-docs-5795/pytest-tmp"
+  ],
+  "cwd": "/workspace/review-b-future",
+  "started_at_utc": "2026-10-16T18:28:23.300749+00:00",
+  "elapsed_seconds": 2.166243699000006,
+  "exit_code": 0,
+  "sha": "7a520297f9a12db8c7386baa8e5d0cda55d4dfb4",
+  "tree": "5795e1ed9d0224d74600c7e9988229ebb39a20ba",
+  "TMPDIR": "/workspace/reviewer-b-evidence/future-docs-5795/tmp-root",
+  "publication_inputs_sha256_match_PR89": 74,
+  "scope": "Targeted documentation unit suite only. No actual browser, benchmark or complete combined-suite rerun."
+}

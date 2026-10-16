@@ -1,0 +1,32 @@
+{
+  "head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "tree": "1b16e6589b0e7931f0eb24322127684479771c79",
+  "search_tables": [
+    "search_identity",
+    "search_documents",
+    "index_generations",
+    "index_membership"
+  ],
+  "operational_tables": [
+    "operational_identity",
+    "jobs",
+    "job_attempts",
+    "cache_locators",
+    "active_cache_entries",
+    "cache_leases",
+    "space_reservations",
+    "acquisition_progress",
+    "collection_progress",
+    "search_rebuild_metrics",
+    "sqlite_sequence"
+  ],
+  "job_reopened_persisted": true,
+  "checks": {
+    "core_excludes_operational_and_search": true,
+    "no_implicit_attach": true,
+    "read_only_jobs_does_not_create_operational": true,
+    "search_creation_explicit": true,
+    "operational_commit_survives_core_rollback": true,
+    "core_rollback_discards_core_unit": true
+  }
+}

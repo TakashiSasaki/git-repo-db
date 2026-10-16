@@ -1,0 +1,54 @@
+{
+  "merged_commit": "e8628d4ace76e9cf587288602ad9b82682ccb216",
+  "parents": [
+    "9f5634536c54cc372b320ef1485d3a83fc90ba91",
+    "e956cd50b1f25bd95427301cced4741bb68e24f8"
+  ],
+  "tree": "6b4889e679845b7b05d2040fd8bedc29ccf81248",
+  "base_pr88": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+  "verified_executable_inputs": 368,
+  "all_sha256_match_base": true,
+  "focused_production_diff": [],
+  "incoming_skill_all_lines_preserved_in_order": true,
+  "retained_local_verified_lessons": [
+    "empty successful gh log uses supported REST run-log ZIP",
+    "duplicate-free installed collection/JUnit/journal equality and exactly-once phases"
+  ],
+  "skill_frontmatter_valid": true,
+  "markdown_local_links_checked": [
+    {
+      "source": "docs/implementation/evidence/integration-readiness-20261016/README.md",
+      "target": "owner-merge-plan.md"
+    },
+    {
+      "source": "docs/implementation/evidence/integration-readiness-20261016/README.md",
+      "target": "independent-a/READINESS-REVIEW.md"
+    }
+  ],
+  "future_main_synthetic_commit": "7a520297f9a12db8c7386baa8e5d0cda55d4dfb4",
+  "future_main_tree": "5795e1ed9d0224d74600c7e9988229ebb39a20ba",
+  "future_main_plus_PR90_tree": "b600d8ec87ab852e911c545dd993bf84d9bf7be6",
+  "future_main_plus_PR90_conflicts": false,
+  "future_main_plus_PR90_production_test_script_workflow_project_diff": [],
+  "whitespace": {
+    "unscoped_staged_check": "exit2 on unchanged incoming PR88 p7-replay historical raw log/XML whitespace, preserved verbatim",
+    "focused_diff_against_pr88": "exit0; only PR90 changed scope checked",
+    "historical_raw_evidence_edited": false,
+    "artifact": {
+      "path": "inherited-whitespace.log.gz",
+      "stored_sha256": "457ce60b2050fdd54171fa52e9fa05eb710c069883dfe52b1edc63b03f0b6cad",
+      "original_sha256": "f75f4d28546b98badfd2f909c4ac250aa36ff424921807a520defd400f5f89a2",
+      "original_bytes": 696,
+      "compression": "gzip mtime0, original bytes unchanged"
+    }
+  },
+  "runtime_rerun": false,
+  "limits": "All368 PR88 declared executable inputs checked, not a new full runtime execution. Initial A approval remains historical; separate A resolution signoff required. Future tree assumes exact source-bound frozen runtime heads; any new evidence commit requires recomputation.",
+  "focused_validation": {
+    "readonly_evidence_driver": "passed:368 executable inputs/443 transported artifacts/74 publication inputs; original merge trees unchanged; stored installed node identities verified",
+    "ruff_check": "exit0 on readiness verify.py",
+    "ruff_format_check": "exit0 on readiness verify.py",
+    "markdown_links": "all local README/owner-plan links exist",
+    "runtime_pytest": "not rerun; executable inputs exactly unchanged vs reviewed PR88"
+  }
+}

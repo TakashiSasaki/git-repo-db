@@ -1,0 +1,208 @@
+{
+  "reviewer": "/root/readiness independent Reviewer B",
+  "tested_combined_commit": "98c818a1cd292bcaf10e0aad851545787d3816b0",
+  "tested_combined_tree": "3659919159bae1aee4530c3380493c62eefed425",
+  "final_public_candidate": "74f90adae40ae60076dca33629fa2edbf5763474",
+  "final_public_tree": "b11075b53eb0bda4febc710c46c059dc6edf4054",
+  "heads": {
+    "89": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+    "87": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+    "88": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "93": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+    "91": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "92": "74f90adae40ae60076dca33629fa2edbf5763474",
+    "90": "9f5634536c54cc372b320ef1485d3a83fc90ba91"
+  },
+  "direct_combination": [
+    {
+      "label": "final74 plus PR88",
+      "first_parent": "74f90adae40ae60076dca33629fa2edbf5763474",
+      "second_parent": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "8dcc1f022c50977ad10530b6e2baa24941b15e2f",
+      "synthetic_commit": "46cf99e3cbd9b7e7892c56e72ef03367499f5c57",
+      "conflicts": false
+    },
+    {
+      "label": "previous plus PR89",
+      "first_parent": "46cf99e3cbd9b7e7892c56e72ef03367499f5c57",
+      "second_parent": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "5795e1ed9d0224d74600c7e9988229ebb39a20ba",
+      "synthetic_commit": "f40b6ec079105cf8d46a6a09e937566580b2f5e6",
+      "conflicts": false
+    }
+  ],
+  "owner_order": [
+    {
+      "label": "owner sequence PR89",
+      "first_parent": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "second_parent": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "ed80623514a5e574d1e24e908b95504f60b815db",
+      "synthetic_commit": "6394223af169243f54c46b36a70ec927e2ec1b91",
+      "conflicts": false
+    },
+    {
+      "label": "owner sequence PR87",
+      "first_parent": "6394223af169243f54c46b36a70ec927e2ec1b91",
+      "second_parent": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "6ebd07cf4d6846e7d964c1be571c8507c037b9be",
+      "synthetic_commit": "64a298c258234fe7f4925471c5b98c8101436542",
+      "conflicts": false
+    },
+    {
+      "label": "owner sequence PR88",
+      "first_parent": "64a298c258234fe7f4925471c5b98c8101436542",
+      "second_parent": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "merge_base": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "tree": "e250fe0ad801013fb9c59e929cfc7f875fabb5b8",
+      "synthetic_commit": "e4912894680191d5b1dbc43bfad1d331c966cab5",
+      "conflicts": false
+    },
+    {
+      "label": "owner sequence PR93",
+      "first_parent": "e4912894680191d5b1dbc43bfad1d331c966cab5",
+      "second_parent": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+      "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "d4bf2253eed2ea7df26336c681c5a5241dd36bf6",
+      "synthetic_commit": "712be67d63c55559608d3d398298890b79b75037",
+      "conflicts": false
+    },
+    {
+      "label": "owner sequence PR91",
+      "first_parent": "712be67d63c55559608d3d398298890b79b75037",
+      "second_parent": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+      "merge_base": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+      "tree": "f749d63fb1162520b21512a0690bf2015441ba91",
+      "synthetic_commit": "6a151172fb2b401c5806e82b5f077411b89e9769",
+      "conflicts": false
+    },
+    {
+      "label": "owner sequence PR92",
+      "first_parent": "6a151172fb2b401c5806e82b5f077411b89e9769",
+      "second_parent": "74f90adae40ae60076dca33629fa2edbf5763474",
+      "merge_base": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+      "tree": "5795e1ed9d0224d74600c7e9988229ebb39a20ba",
+      "synthetic_commit": "7a520297f9a12db8c7386baa8e5d0cda55d4dfb4",
+      "conflicts": false
+    }
+  ],
+  "final_combined_tree": "5795e1ed9d0224d74600c7e9988229ebb39a20ba",
+  "binding_contract": "Exact byte equality for all src, all tests/scripts except three explicitly excluded nonselected publication/public-decoder files, tests workflow, locked project/dependencies, and immediate implementation audit/design inputs. This is a declared conservative pool, not an all-repository or observed dynamic import closure claim.",
+  "verified_input_count": 424,
+  "verified_production_files": 124,
+  "selected_test_and_conftest_files": [
+    "tests/integration/p2_p3_compatibility/test_production_pair.py",
+    "tests/integration/p5_p6_compatibility/__init__.py",
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py",
+    "tests/integration/p5_p6_compatibility/test_export_gate.py",
+    "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py",
+    "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py",
+    "tests/integration/p7/__init__.py",
+    "tests/integration/p7/conftest.py",
+    "tests/integration/p7/test_adversarial_contract_cases.py",
+    "tests/integration/p7/test_bounded_input.py",
+    "tests/integration/p7/test_consistent_backup.py",
+    "tests/integration/p7/test_context_corruption_stop.py",
+    "tests/integration/p7/test_corruption_stop.py",
+    "tests/integration/p7/test_durable_budget.py",
+    "tests/integration/p7/test_exact_replay.py",
+    "tests/integration/p7/test_filesystem_hardening.py",
+    "tests/integration/p7/test_fresh_restore_merge.py",
+    "tests/integration/p7/test_missing_required_authority.py",
+    "tests/integration/p7/test_process_isolation.py",
+    "tests/integration/p7/test_read_only_salvage.py",
+    "tests/integration/p7/test_safe_activation.py",
+    "tests/integration/p7/test_source_diagnosis.py",
+    "tests/integration/p7/test_stored_constraints.py",
+    "tests/integration/p7/test_stored_copy_corruption_stop.py",
+    "tests/integration/p7/test_work_dimensions.py"
+  ],
+  "input_manifest_sha256": "1720da1515fd51afca022bb42ccfe63e5d2480f98976d23d5d52916745a29b17",
+  "actual_executable_delta": [
+    ".github/workflows/pages.yml",
+    "scripts/build_docs_site.py",
+    "tests/integration/test_git_decoder_byte_validation.py",
+    "tests/unit/test_build_docs_site.py"
+  ],
+  "excluded_from_runtime_binding": {
+    "scripts/build_docs_site.py": "PR89 publication builder; no selected P7/compatibility test imports or invokes it",
+    "tests/unit/test_build_docs_site.py": "PR89 documentation tests; outside the executed304",
+    "tests/integration/test_git_decoder_byte_validation.py": "final public decoder Search-store SQL correction; outside the executed304"
+  },
+  "selected_explicit_test_imports": [
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_p5_independent_counterexamples.py",
+      "import": "from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores"
+    },
+    {
+      "path": "tests/integration/p5_p6_compatibility/test_provider_exchange_matrix.py",
+      "import": "from tests.integration.p5.conftest import init_catalog_stores"
+    },
+    {
+      "path": "tests/integration/p7/test_adversarial_contract_cases.py",
+      "import": "from tests.integration.p7.conftest import make_commit, make_tree"
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "import": "from tests.integration.p7.test_context_corruption_stop import ("
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "import": "from tests.integration.p7.test_context_corruption_stop import _text"
+    },
+    {
+      "path": "tests/integration/p7/test_missing_required_authority.py",
+      "import": "from tests.integration.p7.test_exact_replay import _authority, _candidate, _merge"
+    },
+    {
+      "path": "tests/integration/p7/test_process_isolation.py",
+      "import": "from tests.integration.p5.conftest import build_sample_git_repo"
+    },
+    {
+      "path": "tests/integration/p7/test_process_isolation.py",
+      "import": "from tests.integration.p7.conftest import make_commit, make_tree"
+    },
+    {
+      "path": "tests/integration/p7/test_stored_copy_corruption_stop.py",
+      "import": "from tests.integration.p7.test_exact_replay import _authority, _candidate, _merge"
+    },
+    {
+      "path": "tests/conftest.py",
+      "import": "from tests.support.cli import add_local, run"
+    },
+    {
+      "path": "tests/conftest.py",
+      "import": "from tests.support.git_fixture import GitFixture"
+    }
+  ],
+  "modern_audit_scripts_unchanged": [
+    "scripts/audit_implementation_boundary.py",
+    "scripts/audit_callsite_dependencies.py",
+    "scripts/audit_p1_schema.py",
+    "scripts/audit_publication_free.py"
+  ],
+  "original_audit_results": "All four passed on B-tested combined98; exact source/resource/script/generated audit input bytes in binding pool remain unchanged. No new execution claimed.",
+  "previous_execution_results": {
+    "P7": 255,
+    "P2_P3_compatibility": 20,
+    "P5_P6_compatibility": 29,
+    "junit_journal_collection_nodes": 304,
+    "passed_phases": 912,
+    "exit_status": 0
+  },
+  "runtime_rerun": false,
+  "optional_PR90_after_runtime_stack": {
+    "merge_tree_exit_status": 1,
+    "output": "1fe1243f4ba2d6ceba0f0da1f388bc2472b14203\n100644 70232052ed13520e0a5586c30c3c86713ef9389c 1\t.agents/skills/ci-final-tree-verification/SKILL.md\n100644 d546fa5110475e20a4ca796ab0145bec4864c7ec 2\t.agents/skills/ci-final-tree-verification/SKILL.md\n100644 5de370adbcac05b74744942960969b102328f301 3\t.agents/skills/ci-final-tree-verification/SKILL.md\n\nAuto-merging .agents/skills/ci-final-tree-verification/SKILL.md\nCONFLICT (content): Merge conflict in .agents/skills/ci-final-tree-verification/SKILL.md\n",
+    "stderr": "",
+    "meaning": "Only exit0 is a conflict-free effective tree. Exit1 output is a conflict report and must not be treated as an accepted merge tree."
+  },
+  "limitations": [
+    "Public decoder corrected test and Pages builder/unit tests have changed outside B304; root final74 full-suite and existing exact PR89 evidence cover their own scope.",
+    "No claim that every executable input is unchanged: actual delta and excluded files are explicit.",
+    "No remote merge/ref update or runtime activation, no actual new pytest/audit execution, no full release acceptance. Synthetic IDs are not predicted GitHub merge SHAs."
+  ]
+}

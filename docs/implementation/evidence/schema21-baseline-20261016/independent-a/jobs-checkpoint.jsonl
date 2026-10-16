@@ -1,0 +1,17 @@
+{"event":"start","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","worker_id":"master","timestamp":1792173574.953929}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","phase":"setup","outcome":"passed","duration":2.071229,"worker_id":"master","timestamp":1792173577.029424}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","phase":"call","outcome":"passed","duration":2.229697,"worker_id":"master","timestamp":1792173579.295334}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","phase":"teardown","outcome":"passed","duration":0.000343,"worker_id":"master","timestamp":1792173579.301867}
+{"event":"start","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","worker_id":"master","timestamp":1792173579.302593}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","phase":"setup","outcome":"passed","duration":2.403159,"worker_id":"master","timestamp":1792173581.706208}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","phase":"call","outcome":"passed","duration":0.021982,"worker_id":"master","timestamp":1792173581.735696}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","phase":"teardown","outcome":"passed","duration":0.18875,"worker_id":"master","timestamp":1792173581.925624}
+{"event":"start","nodeid":"tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir","worker_id":"master","timestamp":1792173581.934248}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir","phase":"setup","outcome":"passed","duration":10.501105,"worker_id":"master","timestamp":1792173592.439216}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir","phase":"call","outcome":"passed","duration":9.979397,"worker_id":"master","timestamp":1792173602.426661}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir","phase":"teardown","outcome":"passed","duration":0.000159,"worker_id":"master","timestamp":1792173602.427715}
+{"event":"start","nodeid":"tests/e2e/test_search.py::test_fts_fallback","worker_id":"master","timestamp":1792173602.428356}
+{"event":"phase","nodeid":"tests/e2e/test_search.py::test_fts_fallback","phase":"setup","outcome":"passed","duration":10.497433,"worker_id":"master","timestamp":1792173612.92651}
+{"event":"phase","nodeid":"tests/e2e/test_search.py::test_fts_fallback","phase":"call","outcome":"passed","duration":57.615949,"worker_id":"master","timestamp":1792173670.550001}
+{"event":"phase","nodeid":"tests/e2e/test_search.py::test_fts_fallback","phase":"teardown","outcome":"passed","duration":0.000275,"worker_id":"master","timestamp":1792173670.555621}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792173670.556756}

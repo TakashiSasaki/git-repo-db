@@ -1,0 +1,43 @@
+{
+  "source": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "tree": "1b16e6589b0e7931f0eb24322127684479771c79",
+  "initial_complete_run": {
+    "selected": 3491,
+    "passed": 2848,
+    "failed": 332,
+    "errors": 311,
+    "environment": "/tmp8.8GB exhausted. Preserve failed raw result."
+  },
+  "supplemental_environment_retry": {
+    "selected": 415,
+    "passed": 413,
+    "failed": 2,
+    "errors": 0,
+    "scope": "Workspace TMPDIR/basetemp and correct CLI PATH. Residual: inherited gitdirect Core SQL and missing Chrome."
+  },
+  "supplemental_original_runtime_retry": {
+    "selected": 34,
+    "passed": 0,
+    "failed": 34,
+    "errors": 0,
+    "scope": "Original228 whose first failure was masked by git-init/other disk exhaustion setup errors without literal No-space message."
+  },
+  "reconciled_across_attempts": {
+    "passed_nodes": 3261,
+    "inherited_runtime_nodes": 228,
+    "additional_main_only_runtime_nodes": 1,
+    "documentation_environment_failure_nodes": 1,
+    "total_selected_unique_nodes": 3491,
+    "note": "Per-node reconciliation across real attempts; not one clean passing fullrun."
+  },
+  "inherited_runtime_binding_counts": {
+    "full.xml": 193,
+    "runtime-retry.xml": 34,
+    "environment-retry.xml": 1
+  },
+  "default_marker_exclusions": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "failed_runner_experiment": "environment-retry-missing-path.* interrupted and preserved; not mixed with correctly provisioned retry."
+}

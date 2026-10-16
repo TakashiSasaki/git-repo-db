@@ -1,0 +1,31 @@
+{
+  "head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "tree": "1b16e6589b0e7931f0eb24322127684479771c79",
+  "selected_nodes": 3491,
+  "junit_nodes": 3491,
+  "journal_starts": 3491,
+  "status_counts": {
+    "passed": 2848,
+    "failure": 332,
+    "error": 311
+  },
+  "selected_equals_junit": true,
+  "selected_equals_journal": true,
+  "junit_exactly_once": true,
+  "journal_starts_exactly_once": true,
+  "prior_runtime_cohort_reproduced": 228,
+  "prior_runtime_cohort_missing": [],
+  "artifacts": {
+    "full.xml": "f8296cb156fe0c12de2b354616097f648b5a9fcb38d67ccb0c87c4285d0b4b45",
+    "full-journal.jsonl": "6053882930c14bde999fa08e7f4adfe3251ce310422f972674ef79b9bb201a84",
+    "full.log": "429a3551cdcfc6db922e82361a88c80b6d833eb7025beeb432f3b1c59891e9fb",
+    "execution.json": "4eddd89050921650f973193c28d622d99a801f51da163cc8ff97b49a3a8df298",
+    "marker-selection.json": "d7cb5a7c39d4900a77ba3ecad7f47fa391a6d750f980fc136a2f36bf68d11af8",
+    "selected-nodes.txt": "936c466fce0ea27da6769b2e11607fdba0d2846c93b0c0f99ab76c46818f2d87",
+    "collection.txt": "ea0bc7f554b8ba2f791d053b1fc9e4aa8b80521e36ed49020a3cf06559a68f5f",
+    "collection-all.txt": "fc5523a729b4039cc1cc34c46206e73af8e16409ccda07ca6d94c8b85b7c87ae",
+    "revision.txt": "3658f1bd9851966c1b877f249c7687f19277b2544bb91640d16ad94c67d78ff6"
+  },
+  "scope": "Initial complete raw run only; many failures/errors caused by temp exhaustion. See baseline-reconciled.json for cross-attempt product failure classification.",
+  "all_failure_error_node_count": 639
+}

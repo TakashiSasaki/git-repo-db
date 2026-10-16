@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="0" skipped="0" tests="3" time="1.325" timestamp="2026-10-16T17:58:50.229853+00:00" hostname="f0db5daff0a7"><testcase classname="tests.integration.test_schema21_runtime_contract" name="test_completed_collection_survives_operational_loss_without_shadow_state" time="0.002"><error message="failed on setup with &quot;FileNotFoundError: [Errno 2] No such file or directory: '/workspace/reviewer-a-temp/root'&quot;">self = PosixPath('/workspace/reviewer-a-temp/root'), mode = 448, parents = False
+exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+&gt;           os.mkdir(self, mode)
+E           FileNotFoundError: [Errno 2] No such file or directory: '/workspace/reviewer-a-temp/root'
+
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1311: FileNotFoundError</error></testcase><testcase classname="tests.integration.test_schema21_runtime_contract" name="test_operational_complete_cannot_certify_rolled_back_core_collection" time="0.001"><error message="failed on setup with &quot;FileNotFoundError: [Errno 2] No such file or directory: '/workspace/reviewer-a-temp/root'&quot;">self = PosixPath('/workspace/reviewer-a-temp/root'), mode = 448, parents = False
+exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+&gt;           os.mkdir(self, mode)
+E           FileNotFoundError: [Errno 2] No such file or directory: '/workspace/reviewer-a-temp/root'
+
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1311: FileNotFoundError</error></testcase><testcase classname="tests.integration.test_catalog3_current_collection" name="test_unresolved_terminal_receipt_does_not_become_complete_on_resume" time="0.001"><error message="failed on setup with &quot;FileNotFoundError: [Errno 2] No such file or directory: '/workspace/reviewer-a-temp/root'&quot;">self = PosixPath('/workspace/reviewer-a-temp/root'), mode = 448, parents = False
+exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+&gt;           os.mkdir(self, mode)
+E           FileNotFoundError: [Errno 2] No such file or directory: '/workspace/reviewer-a-temp/root'
+
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1311: FileNotFoundError</error></testcase></testsuite></testsuites>

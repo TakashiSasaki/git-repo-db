@@ -1,0 +1,133 @@
+{
+  "method": "disposable Git history; current ci_plan and policy; synthetic acceptance file inventory",
+  "results": [
+    {
+      "path": "src/repo_catalog/adapters/sqlite/store.py",
+      "mode": "development",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [],
+      "full": false,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/adapters/sqlite/store.py"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/store.py",
+      "mode": "release",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "full": true,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/adapters/sqlite/store.py"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/persistence.py",
+      "mode": "development",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [],
+      "full": false,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/adapters/github/persistence.py"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/persistence.py",
+      "mode": "release",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "full": true,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/adapters/github/persistence.py"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/resources/operational.sql",
+      "mode": "development",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [],
+      "full": false,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/resources/operational.sql"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/resources/operational.sql",
+      "mode": "release",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "full": true,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/resources/operational.sql"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/p7/recovery.py",
+      "mode": "development",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [],
+      "full": false,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/p7/recovery.py"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/p7/recovery.py",
+      "mode": "release",
+      "required_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "selected_files": [
+        "tests/integration/test_runtime_flow.py",
+        "tests/packaging/test_distribution.py",
+        "tests/unit/test_contracts.py"
+      ],
+      "full": true,
+      "scope_reasons": [
+        "Shared/executable input: src/repo_catalog/p7/recovery.py"
+      ]
+    }
+  ]
+}

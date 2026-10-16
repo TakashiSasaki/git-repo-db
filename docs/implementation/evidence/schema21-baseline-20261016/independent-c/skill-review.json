@@ -1,0 +1,8 @@
+{
+  "path": ".agents/skills/three-store-invariants/SKILL.md",
+  "sha256": "2f523722aa8a9372791f061330c4a205298195183d15f34f763df4deafc59f84",
+  "frontmatter_valid": true,
+  "checkpoint_link_resolves": true,
+  "scope": "Current public Schema21 diagnosis only; no target activation, policy or permission changes",
+  "review": "Independent C static procedural review passed"
+}

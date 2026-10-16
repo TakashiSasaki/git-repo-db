@@ -1,0 +1,5 @@
+{"event":"start","nodeid":"::test_real_search_reader_lock_after_promotion_reports_failed_rebuild","worker_id":"master","timestamp":1792174022.759499}
+{"event":"phase","nodeid":"::test_real_search_reader_lock_after_promotion_reports_failed_rebuild","phase":"setup","outcome":"passed","duration":2.505893,"worker_id":"master","timestamp":1792174025.30778}
+{"event":"phase","nodeid":"::test_real_search_reader_lock_after_promotion_reports_failed_rebuild","phase":"call","outcome":"passed","duration":0.154626,"worker_id":"master","timestamp":1792174025.493648}
+{"event":"phase","nodeid":"::test_real_search_reader_lock_after_promotion_reports_failed_rebuild","phase":"teardown","outcome":"passed","duration":0.124755,"worker_id":"master","timestamp":1792174025.619085}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792174025.622255}

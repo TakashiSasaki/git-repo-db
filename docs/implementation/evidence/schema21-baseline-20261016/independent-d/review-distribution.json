@@ -1,0 +1,74 @@
+{
+  "reviewer": "D independent (no production or tests modified)",
+  "packaging_source": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+  "final_source_binding": "74f90adae40ae60076dca33629fa2edbf5763474",
+  "all_120_package_inputs_unchanged": true,
+  "scope": "Cleanarchive build + independent installed wheel and sdist-wheel CLI execution + installed Search correction regressions",
+  "findings": [],
+  "results": {
+    "distribution": {
+      "junit_counts": {
+        "passed": 2
+      },
+      "nodes": [
+        "tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]",
+        "tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]"
+      ],
+      "journal_start_exact_once": true,
+      "all_phases_passed": true
+    },
+    "installed-wheel-search": {
+      "junit_counts": {
+        "passed": 2
+      },
+      "nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+        "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel"
+      ],
+      "journal_start_exact_once": true,
+      "all_phases_passed": true
+    },
+    "installed-sdist-wheel-search": {
+      "junit_counts": {
+        "passed": 2
+      },
+      "nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+        "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel"
+      ],
+      "journal_start_exact_once": true,
+      "all_phases_passed": true
+    }
+  },
+  "total_case_executions": 6,
+  "failed_experiments": [
+    "Both installed regression harnesses initially failed during conftest import because jsonschema testdependency was omitted; logs preserved, then locked jsonschema4.26.0 installed offline and complete cases passed."
+  ],
+  "limitations": [
+    "Final74 full source tree differs from archived83 in tests/evidence; no claim that whole archive bytes are final74. Package production/build inputs match exactly.",
+    "P7 code is absent from this main-derived distribution; separate B regression evidence covers P7.",
+    "Timing observed during concurrent workloads; not benchmark results."
+  ],
+  "artifacts": {
+    "distribution-artifacts.json": "ad45ed6f9d5ca6c593465083b57ff82a739e81959fb3d89eef96df5b3548b75c",
+    "distribution-execution.json": "7fddeb588dd2ba915f6352de44f389e7fc5ef2fab7cfa63cb499ce7ee811834a",
+    "distribution-final-binding.json": "ade1792b9c35e3581777399b2de571f5e630ea487060eb2f5a6d5c001f412ac1",
+    "distribution-source-manifest.json": "7d3f19c020a7ef4495e50b7a3025172a7cfcc17e04799d84c66655af7cdfb341",
+    "distribution.jsonl": "6fdf26bb5da3b4a88343331770764c4071a8f24f6690aa046484b8f06c378b5f",
+    "distribution.log": "2ff3d85446e9190f3cf2fcc4823a3f6febc840ddc90d5e645342a2062221a647",
+    "distribution.xml": "9a75d0a7aaa27069fd4a3f494701c332ff5dc317b0de4920c8366145944bb83d",
+    "installed-harness-manifest.json": "4584865cf50c398a9e6b27ddcbb8b7736a31e4e1b2e390efb985a8a39d863831",
+    "installed-sdist-wheel-jsonschema-setup.log": "890b91dc0add64bdbd9308fbf982a3280f6c69e3d67d8fff2d8a21e7624adb7d",
+    "installed-sdist-wheel-pytest-setup.log": "e1d64904f5535ab17ff5b16eb6c73bdff3f4c3daae532583d90766c8e8f017f4",
+    "installed-sdist-wheel-search-missing-jsonschema.log": "9c4b2409b99c2f7536e0946987d5889efbc71e60349937412d066bd52690682a",
+    "installed-sdist-wheel-search.jsonl": "27dba8321b919781a2aac0452ea841e38790acc2eb9cc3225abe064d137a9ef7",
+    "installed-sdist-wheel-search.log": "88c98830cea579263b6279293ee68abda8c4fdce0b622d78d31ba5c1a366a5d0",
+    "installed-sdist-wheel-search.xml": "c074b2b5e42ef65d05a59f4be1e2311a60dc0b17c8209b2ae15909a82a881836",
+    "installed-wheel-jsonschema-setup.log": "81a2dd9de833963bc8151bea57e502a4f2c370732d25c735a73efb27a9b663e8",
+    "installed-wheel-pytest-setup.log": "1a5cc16ef5c234f4f529480f3f90b8d05dad0598f07f775a20cffe2853620f70",
+    "installed-wheel-search-missing-jsonschema.log": "9c4b2409b99c2f7536e0946987d5889efbc71e60349937412d066bd52690682a",
+    "installed-wheel-search.jsonl": "ad8d5af1618f3cd3e7d3b41eed10ce24dcb42961e856fb90266cb76249406793",
+    "installed-wheel-search.log": "f2a7f2be05220980d57b553eeecdb82e8e3e66be3dc260173787ad367be7fc87",
+    "installed-wheel-search.xml": "85fa8326edb3e1ed54725d45841f79ea08cc13393fe4f7aa0664b2d0d522e51b"
+  }
+}

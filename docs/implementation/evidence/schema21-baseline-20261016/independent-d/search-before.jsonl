@@ -1,0 +1,5 @@
+{"event":"start","nodeid":"tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text","worker_id":"master","timestamp":1792173858.927073}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text","phase":"setup","outcome":"passed","duration":1.392752,"worker_id":"master","timestamp":1792173860.323091}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text","phase":"call","outcome":"failed","duration":2.203019,"worker_id":"master","timestamp":1792173862.629488}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text","phase":"teardown","outcome":"passed","duration":0.117225,"worker_id":"master","timestamp":1792173862.759395}
+{"event":"finish","status":"failed","exitstatus":1,"timestamp":1792173862.768199}

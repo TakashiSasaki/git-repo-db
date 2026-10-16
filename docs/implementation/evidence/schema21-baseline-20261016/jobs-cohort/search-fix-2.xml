@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="6.293" timestamp="2026-10-16T18:02:15.975288+00:00" hostname="f0db5daff0a7"><testcase classname="tests.integration.test_catalog3_current_queries" name="test_issue_family_keeps_each_comment_and_search_replaces_superseded_text" time="3.905" /><testcase classname="tests.integration.test_catalog3_current_queries" name="test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel" time="1.748"><failure message="sqlite3.IntegrityError: UNIQUE constraint failed: issue_resources.repository_binding_id, issue_resources.provider_issue_number">tests/integration/test_catalog3_current_queries.py:504: in test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel
+    assert catalog.admit(candidate).status == "accepted"
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_catalog3_current_queries.py:76: in admit
+    admitted = CurrentResources(self.store).admit(candidate, source="import")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/current_resources.py:885: in admit
+    return self._admit(
+src/repo_catalog/adapters/sqlite/current_resources.py:1302: in _admit
+    self._write(table, candidate, previous)
+src/repo_catalog/adapters/sqlite/current_resources.py:838: in _write
+    self.c.execute(
+E   sqlite3.IntegrityError: UNIQUE constraint failed: issue_resources.repository_binding_id, issue_resources.provider_issue_number</failure></testcase></testsuite></testsuites>

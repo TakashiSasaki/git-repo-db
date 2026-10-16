@@ -1,0 +1,69 @@
+"""Bind already executed B inputs to final candidate; create local Git objects only."""
+import collections
+import hashlib
+import json
+import os
+import subprocess
+from pathlib import Path
+
+OUT = Path('/workspace/reviewer-b-evidence')
+MAIN = 'b86c46761ec0c3f3843a19edd4f3e106ef5ef58c'
+TESTED = '98c818a1cd292bcaf10e0aad851545787d3816b0'
+FINAL = '74f90adae40ae60076dca33629fa2edbf5763474'
+HEADS = {89:'660178ff1a881e4482b7a3cde02b51dc50cf2603',87:'c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75',88:'e956cd50b1f25bd95427301cced4741bb68e24f8',93:'7dc31256907aff4412170bc3f3ce3069b2ad89f2',91:'1700ed37e82a6028cfa40c86b35db7621dd50404',92:FINAL,90:'9f5634536c54cc372b320ef1485d3a83fc90ba91'}
+ENV = dict(os.environ, GIT_AUTHOR_NAME='Independent B binding', GIT_AUTHOR_EMAIL='binding@example.invalid', GIT_COMMITTER_NAME='Independent B binding', GIT_COMMITTER_EMAIL='binding@example.invalid', GIT_AUTHOR_DATE='2026-10-16T19:00:00Z', GIT_COMMITTER_DATE='2026-10-16T19:00:00Z')
+
+def git(*args):
+    return subprocess.check_output(['git',*args]).decode().strip()
+
+def content(ref,path):
+    return subprocess.check_output(['git','show',f'{ref}:{path}'])
+
+def merge(first,second,label):
+    result=subprocess.run(['git','merge-tree','--write-tree',first,second],text=True,capture_output=True)
+    assert result.returncode==0,(label,result.stdout,result.stderr)
+    tree=result.stdout.strip()
+    commit=subprocess.check_output(['git','commit-tree',tree,'-p',first,'-p',second],input=(label+' local nonremote simulation\n').encode(),env=ENV).decode().strip()
+    return {'label':label,'first_parent':first,'second_parent':second,'merge_base':git('merge-base',first,second),'tree':tree,'synthetic_commit':commit,'conflicts':False}
+
+p7=merge(FINAL,HEADS[88],'final74 plus PR88')
+pages=merge(p7['synthetic_commit'],HEADS[89],'previous plus PR89')
+sequence=[]
+parent=MAIN
+for number in (89,87,88,93,91,92):
+    step=merge(parent,HEADS[number],f'owner sequence PR{number}')
+    sequence.append(step)
+    parent=step['synthetic_commit']
+assert pages['tree']==sequence[-1]['tree']
+# Compare a declared conservative runtime/helper pool, not the entire repo.
+excluded={'scripts/build_docs_site.py':'PR89 publication builder; no selected P7/compatibility test imports or invokes it','tests/unit/test_build_docs_site.py':'PR89 documentation tests; outside the executed304','tests/integration/test_git_decoder_byte_validation.py':'final public decoder Search-store SQL correction; outside the executed304'}
+def pool(ref):
+    return {p for p in git('ls-tree','-r','--name-only',ref).splitlines() if (p.startswith(('src/','tests/','scripts/')) or p in ('pyproject.toml','uv.lock','.github/workflows/tests.yml') or (p.startswith('docs/implementation/') and p.count('/')==2)) and p not in excluded}
+inputs=pool(TESTED)
+assert inputs==pool(pages['tree'])
+records=[]
+for path in sorted(inputs):
+    before=content(TESTED,path);after=content(pages['tree'],path)
+    assert before==after,path
+    records.append({'path':path,'bytes':len(before),'sha256':hashlib.sha256(before).hexdigest()})
+source_count=sum(item['path'].startswith('src/') for item in records)
+selected_tests=[item['path'] for item in records if item['path'].startswith(('tests/integration/p7/','tests/integration/p2_p3_compatibility/','tests/integration/p5_p6_compatibility/'))]
+# Verify exclusions are outside the selected source and fixture import chain by
+# preserving actual explicit imports. All other test/helper files are in pool.
+selected_sources=selected_tests+['tests/conftest.py','tests/integration/p5/conftest.py']
+references=[]
+for path in selected_sources:
+    source=content(pages['tree'],path).decode()
+    assert 'test_git_decoder_byte_validation' not in source and 'test_build_docs_site' not in source and 'build_docs_site' not in source,path
+    references.extend({'path':path,'import':line.strip()} for line in source.splitlines() if line.startswith(('from tests','import tests')))
+modern=['scripts/audit_implementation_boundary.py','scripts/audit_callsite_dependencies.py','scripts/audit_p1_schema.py','scripts/audit_publication_free.py']
+assert all(path in inputs for path in modern)
+actual_delta=git('diff','--name-only',TESTED,pages['tree']).splitlines()
+executable_delta=[p for p in actual_delta if p.startswith(('src/','tests/','scripts/','.github/workflows/')) or p in ('pyproject.toml','uv.lock')]
+assert set(executable_delta)==set(excluded)|{'.github/workflows/pages.yml'},executable_delta
+optional=subprocess.run(['git','merge-tree','--write-tree',parent,HEADS[90]],capture_output=True,text=True)
+manifest_raw=json.dumps(records,sort_keys=True,separators=(',',':')).encode()
+(OUT/'final-bound-inputs.json').write_text(json.dumps(records,indent=2)+'\n')
+obj={'reviewer':'/root/readiness independent Reviewer B','tested_combined_commit':TESTED,'tested_combined_tree':git('rev-parse',TESTED+'^{tree}'),'final_public_candidate':FINAL,'final_public_tree':git('rev-parse',FINAL+'^{tree}'),'heads':HEADS,'direct_combination':[p7,pages],'owner_order':sequence,'final_combined_tree':pages['tree'],'binding_contract':'Exact byte equality for all src, all tests/scripts except three explicitly excluded nonselected publication/public-decoder files, tests workflow, locked project/dependencies, and immediate implementation audit/design inputs. This is a declared conservative pool, not an all-repository or observed dynamic import closure claim.','verified_input_count':len(records),'verified_production_files':source_count,'selected_test_and_conftest_files':selected_tests,'input_manifest_sha256':hashlib.sha256(manifest_raw).hexdigest(),'actual_executable_delta':executable_delta,'excluded_from_runtime_binding':excluded,'selected_explicit_test_imports':references,'modern_audit_scripts_unchanged':modern,'original_audit_results':'All four passed on B-tested combined98; exact source/resource/script/generated audit input bytes in binding pool remain unchanged. No new execution claimed.','previous_execution_results':{'P7':255,'P2_P3_compatibility':20,'P5_P6_compatibility':29,'junit_journal_collection_nodes':304,'passed_phases':912,'exit_status':0},'runtime_rerun':False,'optional_PR90_after_runtime_stack':{'merge_tree_exit_status':optional.returncode,'output':optional.stdout,'stderr':optional.stderr,'meaning':'Only exit0 is a conflict-free effective tree. Exit1 output is a conflict report and must not be treated as an accepted merge tree.'},'limitations':['Public decoder corrected test and Pages builder/unit tests have changed outside B304; root final74 full-suite and existing exact PR89 evidence cover their own scope.','No claim that every executable input is unchanged: actual delta and excluded files are explicit.','No remote merge/ref update or runtime activation, no actual new pytest/audit execution, no full release acceptance. Synthetic IDs are not predicted GitHub merge SHAs.']}
+(OUT/'FINAL-BINDING.json').write_text(json.dumps(obj,indent=2)+'\n')
+print(json.dumps({'final_public_tree':obj['final_public_tree'],'final_plus_P7_tree':p7['tree'],'plus_Pages_final_tree':pages['tree'],'bound_inputs':len(records),'production_files':source_count,'modern_audits_unchanged':len(modern),'optional90_exit':optional.returncode,'owner_sequence_trees':[{'pr':n,'tree':s['tree']} for n,s in zip((89,87,88,93,91,92),sequence)]},indent=2))

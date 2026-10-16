@@ -1,0 +1,7 @@
+{
+  "nodeid": "tests/e2e/test_jobs.py::test_cancel_resume",
+  "reason": "Already-recorded missing Core jobs observation prevented signal/release cleanup in stale test",
+  "action": "Released disposable hook only after failed phase recorded",
+  "hook": "/tmp/pytest-of-agent/pytest-0/popen-gw0/test_cancel_resume0/hooks/before_publish.release",
+  "timestamp": 1792174118.5303357
+}

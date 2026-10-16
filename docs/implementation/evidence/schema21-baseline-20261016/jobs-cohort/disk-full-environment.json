@@ -1,0 +1,9 @@
+{
+  "time_utc": "2026-10-16T18:13:14.874004+00:00",
+  "df": "Filesystem      Size  Used Avail Use% Mounted on\nnone            8.8G  8.8G  4.0K 100% /tmp\noverlay          32G  2.0G   28G   7% /\n",
+  "removed_completed_disposable_directory": "/tmp/pytest-of-agent/pytest-36",
+  "size": "459M\t/tmp/pytest-of-agent/pytest-36\n",
+  "failed_run": "frozen-final-cohort",
+  "result": "87 passed,3 failed,14 setup errors; disk full environmental contamination; not acceptance",
+  "rerun_basetemp": "/workspace/jobs-test-temp"
+}

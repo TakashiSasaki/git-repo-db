@@ -1,0 +1,5 @@
+{"event":"start","nodeid":"::test_cleanup_fault_after_ready","worker_id":"master","timestamp":1792174020.632892}
+{"event":"phase","nodeid":"::test_cleanup_fault_after_ready","phase":"setup","outcome":"passed","duration":2.664005,"worker_id":"master","timestamp":1792174023.307594}
+{"event":"phase","nodeid":"::test_cleanup_fault_after_ready","phase":"call","outcome":"passed","duration":0.031967,"worker_id":"master","timestamp":1792174023.399467}
+{"event":"phase","nodeid":"::test_cleanup_fault_after_ready","phase":"teardown","outcome":"passed","duration":0.126016,"worker_id":"master","timestamp":1792174023.532058}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792174023.546461}

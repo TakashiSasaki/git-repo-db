@@ -1,0 +1,15 @@
+{
+  "time": "2026-10-16T18:13:42.302726+00:00",
+  "removed": [
+    {
+      "directory": "/tmp/pytest-of-agent/pytest-4",
+      "size": "392M\t/tmp/pytest-of-agent/pytest-4\n",
+      "reason": "completed/interrupted own exploratory cohort; XML/journals/logs retained externally"
+    },
+    {
+      "directory": "/tmp/pytest-of-agent/pytest-8",
+      "size": "230M\t/tmp/pytest-of-agent/pytest-8\n",
+      "reason": "completed/interrupted own exploratory cohort; XML/journals/logs retained externally"
+    }
+  ]
+}

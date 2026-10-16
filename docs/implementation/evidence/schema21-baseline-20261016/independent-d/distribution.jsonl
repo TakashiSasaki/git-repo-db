@@ -1,0 +1,9 @@
+{"event":"start","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]","worker_id":"master","timestamp":1792173969.831385}
+{"event":"phase","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]","phase":"setup","outcome":"passed","duration":30.562265,"worker_id":"master","timestamp":1792174000.408377}
+{"event":"phase","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]","phase":"call","outcome":"passed","duration":163.232227,"worker_id":"master","timestamp":1792174163.658224}
+{"event":"phase","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]","phase":"teardown","outcome":"passed","duration":0.000261,"worker_id":"master","timestamp":1792174163.666424}
+{"event":"start","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]","worker_id":"master","timestamp":1792174163.697736}
+{"event":"phase","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]","phase":"setup","outcome":"passed","duration":0.001609,"worker_id":"master","timestamp":1792174163.703788}
+{"event":"phase","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]","phase":"call","outcome":"passed","duration":142.55717,"worker_id":"master","timestamp":1792174306.262196}
+{"event":"phase","nodeid":"tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]","phase":"teardown","outcome":"passed","duration":0.000395,"worker_id":"master","timestamp":1792174306.30623}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792174306.314469}

@@ -1,0 +1,36 @@
+# Independent reviewer A — public Schema21 architecture
+
+Reviewer: `/root/review_a`; no author of production changes in this remediation.
+Reviewed integrated candidate `83d3c1401891b62eb98724262dd8709f6b3c44eb`, tree `faf2190f4909e8ca61431b512dd2840fcc3ec4cc`.
+Production Search correction independently reviewed/executed at `31b7bf3d734c92ad10d22cca233d4318932dfce3`, tree `e18c5e02ea6878f484b56229eb45453904093d47`. `git diff 31b7bf3..83d3c140 -- src` is empty. Reviewed collection corrections through `76d3389`, root real-store regressions at `510484a`, job/cache/Search test correction at `b6e0ba5` and the final combined test/skill/disposition differences.
+
+Architecture disposition: **APPROVE in inspected public-runtime scope**, subject to separately recorded final execution/reconciliation results. No accepted design reversal or merge permission required for these corrections; owner merge authorization remains pending. This sign-off is not whole-repository release acceptance.
+
+## Binding interpretation and inspected scope
+
+Read repository AGENTS, ADR index, scoped ADR0001/0002/0003/0022/0026–0028 and relevant three-store/CI verification skills. Public Schema21 remains Core `catalog.sqlite3`, transient Operational `operational.sqlite3`, rebuildable Search `search.sqlite3`; opt-in append-only GitCore/durable Context architecture is not activated or migrated.
+
+Core facts, identity, terminal collection proof and immutable text remain authoritative. Production JobService, Capacity, ApiFacts, collector and importer already route jobs/attempts/progress/leases/cache to Operational; dominant missing-table failures came from Core test SQL, one shared test helper and cross-store monolithic joins. Corrected observation helpers combine actual IDs in quiescent independent read transactions, never ATTACH or cross-store atomicity. Failure triggers and fencing now target the same physical database as production writers. Direct public behavior, source request freezing, attempt/job-result transaction semantics and original request/coverage assertions remain exercised.
+
+Incomplete/unproven collection progress cannot certify completion; fresh acquisition after interruption is permitted by PF-P04/P07. Changed tests preserve old committed resources/partial captures and require genuine distinct collection/new observed terminal evidence. Successful completed Core terminals still support explicit safe reuse after Operational loss. Clock/conflict tests keep newer partial/equal-time conflict protections and cannot borrow a rejected or old root's clock. Retired incremental_scans/content_locations are asserted absent; request watermarks and Core-only backup/fresh-owner cache behavior replace obsolete mechanism assertions. Old-to-new node mappings are preserved in disposition records.
+
+## Actual production defect beneath stale Search observation
+
+After test SQL was corrected to inspect Search, a genuine defect surfaced: refresh preserved obsolete search_documents still referenced by an old generation; rebuild then indexed every retained row, perpetuating superseded text in each new current generation. The source correction snapshots current eligible source keys under the pinned Core read, filters new-generation inputs to those keys, and checks the unique expected input count. The scanner advances over stale-only SQL batches, including >200 retained obsolete inputs, without truncating later current entries. A prior ready generation survives cancellation before replacement. Retirement/pruning happen only in Search; historical Core text is unchanged and no domain-text GC is introduced. No DDL, Core/Operational routing, compatibility view, duplicate data, alias or Publication machinery is added.
+
+Reviewed generated audit updates reflect relocated SQL/function line references rather than a new schema allocation. The updated three-store Agent Skill records verified test-observation/loss/restart lessons with current applicability and no new architecture authority.
+
+## Independent evidence and limits
+
+- Original main `b86c46761ec0c3f3843a19edd4f3e106ef5ef58c` / tree `1b16e6589b0e7931f0eb24322127684479771c79`: CI planner unit90 passed; real disposable public API physical-boundary probe confirms no Core Operational/Search tables, no attached DB, read-only jobs query does not create Operational, explicit Search creation, Core rollback independent of committed Operational state and reopened job persistence.
+- At root checkpoint510484a: three passed nodes (completed terminal survives Operational loss, Operational complete cannot certify rolled-back Core, unresolved terminal retry remains unadmitted with distinct observations). First attempt failed only because reviewer --basetemp parent was absent; that failed JUnit/journal is retained separately and not counted as runtime execution success.
+- At jobs checkpointb6e0ba5: four passed nodes (job loss preserves Core, job result/terminal update atomicity, Core-only backup/fresh Operational ownership, actual CLI FTS fallback with correct physical Search corruption). JUnit/journal adjacent.
+- Production correction31b7bf3: independent affected-query/Search/store regression **42 passed**, duplicate-free collection/XML/journal identity equality and exactly-once126 passed phases, exit0; recorded in search31b7.xml/jsonl/log and independent-execution-reconciliation.json. Separate worktree-local locked editable environment ensures parent and CLI source resolve to reviewed checkout.
+- A real SQLite reader-lock diagnostic reproduces post-ready cleanup failure: new ready FTS remains valid (new1/old0), prune raises SQLITE_LOCKED and overall rebuild records failed. This is an explicitly observed boundary, not an unaddressed architectural defect: rebuild never promised global transactional completion across all Search phases, and prior implementation also had post-ready failure points. Cleanup did fail, no SQL error is silenced, and no production expansion is requested. Expected-counterexample probe1 passed; an initial plugin import-path bootstrap failure is retained separately.
+- Baseline83d3c140 plus P7e956cd50 `git merge-tree --write-tree` exits0 without textual conflicts, resulting tree `3659919159bae1aee4530c3380493c62eefed425` (without PR89). Combined generated audits still require normal final-tree revalidation. This is a disposable local object/preflight, not a merge/ref update.
+
+No CI selection gap found: public and opt-in source paths are src/** shared inputs. Independent disposable-history planner probes require all ordinary acceptance files locally, static/smoke hosted in Development and full tests/packaging only in explicit Release. Green Development cannot certify runtime acceptance. No weakening of checks proposed.
+
+Full inherited-node classification, full final-suite results, P1–P7 compatibility, distribution packaging and final SHA/JUnit/journal reconciliation belong to the independent integration evidence; this reviewer does not replace those results with source inspection. Real catalogs, backups, owner policy, PR merging, release/tag/deployment and P8 were untouched.
+
+Final sign-off: APPROVE architecture at83d3c140/treefaf2190f, with all42 independent affected-source nodes passing at identical production31b7. Reviewer-authored diagnostic probes are separate from product acceptance counts.

@@ -1,0 +1,19 @@
+{
+  "source_tested_combined_commit": "98c818a1cd292bcaf10e0aad851545787d3816b0",
+  "final_public_candidate": "74f90adae40ae60076dca33629fa2edbf5763474",
+  "final_PR90_head": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+  "frozen_owner_order": [
+    89,
+    87,
+    88,
+    93,
+    91,
+    92,
+    90
+  ],
+  "resolved_full_frozen_tree": "d1f83a722e8fcd1b88b7c8b96cf3b5ecd00155ba",
+  "declared_B_424_input_pool_all_match": true,
+  "scope_manifest": "final-bound-inputs.json",
+  "runtime_rerun": false,
+  "meaning": "Resolved PR90 skill/docs additions preserve all424 declared already-executed B runtime/helper/audit inputs. Current root evidence-only final HEAD may advance later; recompute actual full tree before owner merge."
+}

@@ -148,8 +148,16 @@ def test_unresolved_terminal_receipt_does_not_become_complete_on_resume(github_r
             with pytest.raises(CatalogError, match="unresolved") as error:
                 collect()
             assert error.value.code == "CURRENT_STATE_UNRESOLVED"
-        assert requests == [path]
-        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 1
+        # Without a complete Core terminal, retry starts a fresh enumeration
+        # (PF-P04/PF-P07); the earlier unresolved receipt remains evidence only.
+        assert requests == [path, path]
+        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 2
+        assert (
+            store.one(
+                "SELECT count(DISTINCT fetch_collection_id) FROM current_collection_pages"
+            )[0]
+            == 2
+        )
         assert store.one("SELECT count(*) FROM completion_markers")[0] == 0
         assert store.one("SELECT count(*) FROM issue_resources")[0] == 0
         assert (

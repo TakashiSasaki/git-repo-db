@@ -1,0 +1,22 @@
+{
+  "approval-outcome.json": {
+    "bytes": 1078,
+    "sha256": "f6d4b59f8daef390b7cc153a34528bae9105cef9678cccb39fd337cf0ebfe167"
+  },
+  "binding.json": {
+    "bytes": 2761,
+    "sha256": "cc696e26d00e2e75faf7f1d9564bf49d90b552b1cf9e3beda42d3315a61c2d57"
+  },
+  "final-pr-metadata.json": {
+    "bytes": 1923,
+    "sha256": "19fe42683a981a6becdcd7afb997b758e1fdfb6a238b419fe06456ea0ecd118d"
+  },
+  "inherited-whitespace.log.gz": {
+    "bytes": 146,
+    "sha256": "457ce60b2050fdd54171fa52e9fa05eb710c069883dfe52b1edc63b03f0b6cad"
+  },
+  "resolution-outcome.json": {
+    "bytes": 1674,
+    "sha256": "f6a64d1d2b785d83dc1627edd4f71284ca53a4165ed0cc11a211073328cfdbf7"
+  }
+}

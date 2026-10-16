@@ -268,9 +268,14 @@ def test_ref_predecessors_keep_sequential_capture_and_divergent_resume_honest(
     monkeypatch.setattr(GitImporter, "import_objects", fail)
     with pytest.raises(CatalogError, match="Interrupted fixed"):
         collect(store, repo, job=job)
-    interrupted = store.one(
-        "SELECT a.git_acquisition_id,a.refs_observed_at_us FROM git_acquisitions a JOIN acquisition_progress p USING(git_acquisition_id) WHERE p.job_id=?",
+    progress = store.operational.one(
+        "SELECT git_acquisition_id FROM acquisition_progress WHERE job_id=?",
         (job,),
+    )
+    assert progress is not None
+    interrupted = store.one(
+        "SELECT git_acquisition_id,refs_observed_at_us FROM git_acquisitions WHERE git_acquisition_id=?",
+        (progress["git_acquisition_id"],),
     )
     JobService(store).update(job, "interrupted")
     monkeypatch.setattr(GitImporter, "import_objects", real_import)
