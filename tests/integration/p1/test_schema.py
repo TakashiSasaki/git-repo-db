@@ -116,10 +116,10 @@ def test_sqlite_signed_epoch_microsecond_boundaries(value):
     # Target typed contracts additionally reject bool; SQLite enforces int64/STRICT.
     db = sqlite3.connect(":memory:")
     db.execute(
-        "CREATE TABLE clocks(observed_at_us INTEGER PRIMARY KEY) STRICT, WITHOUT ROWID"
+        "CREATE TABLE clocks(git_author_time_us INTEGER PRIMARY KEY) STRICT, WITHOUT ROWID"
     )
     db.execute("INSERT INTO clocks VALUES(?)", (value,))
-    assert db.execute("SELECT observed_at_us FROM clocks").fetchone()[0] == value
+    assert db.execute("SELECT git_author_time_us FROM clocks").fetchone()[0] == value
     with pytest.raises(OverflowError):
         db.execute("INSERT INTO clocks VALUES(?)", (2**63,))
     with pytest.raises(sqlite3.IntegrityError):
