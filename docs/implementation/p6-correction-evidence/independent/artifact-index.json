@@ -138,5 +138,15 @@
     "sha256": "21b14d1544a6e3775cc091cc42820d3882200ee16260e70d73b5b9fe5eb282dd",
     "bytes": 3637,
     "uncompressed_sha256": "21b14d1544a6e3775cc091cc42820d3882200ee16260e70d73b5b9fe5eb282dd"
+  },
+  "final/independent-review.md": {
+    "sha256": "683fc9981ef039e3fbb7239c09d10070c51888999525f6ec6f6ca11a4d175925",
+    "bytes": 6855,
+    "uncompressed_sha256": "683fc9981ef039e3fbb7239c09d10070c51888999525f6ec6f6ca11a4d175925"
+  },
+  "final/handoff-manifest.json": {
+    "sha256": "ce7a7e358d829c016a9b164a7d97ee5d3a162075934631d83f6514cf882f9328",
+    "bytes": 1692,
+    "uncompressed_sha256": "ce7a7e358d829c016a9b164a7d97ee5d3a162075934631d83f6514cf882f9328"
   }
 }
