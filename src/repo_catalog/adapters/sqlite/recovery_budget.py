@@ -104,6 +104,27 @@ class DurableRecoveryRequest:
         _write(self.path, updated)
         self.failed = False
 
+    def settle(self, usage: dict[str, int]) -> None:
+        """Settle a live successful measurement; lost acknowledgements never refund.
+
+        The report leads a decrease, so any crash before checkpoint publication
+        conservatively restores the previous greater reservation on reopening.
+        """
+        if self.failed:
+            raise RecoveryError("Recovery accounting persistence previously failed")
+        old = self.usage
+        if set(old) != set(usage) or any(
+            type(value) is not int or not 0 <= value <= old[key]
+            for key, value in usage.items()
+        ):
+            raise RecoveryError("Invalid live recovery settlement")
+        updated = dict(self.state, cumulative_usage=dict(usage))
+        self.failed = True
+        _write(self.path, updated)
+        _write(self.reservation_path, dict(updated, budget_exhausted=False))
+        self.state = updated
+        self.failed = False
+
     def mark_exhausted(self, exhausted: bool) -> None:
         updated = dict(self.state, budget_exhausted=bool(exhausted))
         if self.failed:

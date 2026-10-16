@@ -591,7 +591,8 @@ Operational/Search. Bind a canonical path-safe request ID to one immutable finit
 contract; serialize its complete attempts with a permanent process lock. Reserve
 before input or admission work, fsync the reservation checkpoint before updating
 its report, and retain the greater checkpoint expenditure after interrupted
-report publication. A missing/corrupt record refuses continuation; never interpret
+report publication. Settle a successful live measurement with the reverse order
+(report first, checkpoint second), so interruption cannot refund uncertain work. A missing/corrupt record refuses continuation; never interpret
 it as zero. Explicit new work must use a distinct ID. Do not infer that removing
 all external accounting evidence is detectable or that process-crash tests prove
 host power-loss durability.

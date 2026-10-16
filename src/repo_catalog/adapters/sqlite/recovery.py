@@ -471,6 +471,7 @@ class RecoveryWorkBudget:
         work_limits: Mapping[str, int] | None = None,
         initial_usage: Mapping[str, int] | None = None,
         reserve: Callable[[dict[str, int]], None] | None = None,
+        settle: Callable[[dict[str, int]], None] | None = None,
     ) -> None:
         self.limits = NotesLimits(note_bytes=note_bytes)
         self._max = dict(NotesLimits.work_limits())
@@ -483,6 +484,7 @@ class RecoveryWorkBudget:
                     self.usage[k] = v
         self._pending: dict[str, int] = {}
         self._reserve = reserve
+        self._settle = settle
 
     def is_exhausted(self, unit: str | None = None) -> bool:
         if unit is not None:
@@ -519,9 +521,15 @@ class RecoveryWorkBudget:
     def charge(self, unit: str, amount: int) -> None:
         if unit not in self._pending:
             raise CoordinationError("UNRESERVED_WORK", "recovery", unit)
-        reserved = self._pending.pop(unit)
+        reserved = self._pending[unit]
         if type(amount) is not int or amount < 0 or amount > reserved:
             raise ValueError("invalid charged work amount")
+        updated = dict(self.usage)
+        updated[unit] -= reserved - amount
+        if self._settle is not None:
+            self._settle(updated)
+        self.usage = updated
+        del self._pending[unit]
 
 
 def _confirmed_integrity_failure(error: Exception) -> str | None:
@@ -2036,6 +2044,7 @@ class SQLiteRecoveryAdapter:
             },
             initial_usage=request.usage,
             reserve=request.reserve,
+            settle=request.settle,
         )
         budget_already_exhausted = request.state["budget_exhausted"]
 

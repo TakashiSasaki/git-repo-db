@@ -272,3 +272,72 @@ def test_lowered_usage_report_cannot_reset_reservation(catalog, tmp_path):
         _state(catalog)["cumulative_usage"][key] >= value
         for key, value in original_usage.items()
     )
+
+
+def _settlement_worker(directory, crash_during_settlement):
+    import io
+
+    import repo_catalog.adapters.sqlite.recovery_budget as module
+    from repo_catalog.adapters.sqlite.p1_coordination import NotesLimits
+    from repo_catalog.adapters.sqlite.recovery import RecoveryWorkBudget
+
+    budget = RecoveryBudget(max_work_units={"input_bytes": 10})
+    limits = dict(NotesLimits.work_limits(), input_bytes=10)
+    if crash_during_settlement:
+        original = module._write
+
+        def write(path, data):
+            original(path, data)
+            if (
+                path.name == "p1-recovery-request-settle-request.json"
+                and data["cumulative_usage"]["input_bytes"] == 2
+            ):
+                os.kill(os.getpid(), signal.SIGKILL)
+
+        module._write = write
+    with module.recovery_request(
+        directory, "settle-request", budget, limits
+    ) as request:
+        work = RecoveryWorkBudget(
+            work_limits=budget.max_work_units,
+            initial_usage=request.usage,
+            reserve=request.reserve,
+            settle=request.settle,
+        )
+        work.require("input_bytes", 10)
+        actual = io.BytesIO(b"ab").read(10)
+        work.charge("input_bytes", len(actual))
+        os.kill(os.getpid(), signal.SIGKILL)
+
+
+@pytest.mark.parametrize("during", [False, True])
+def test_live_settlement_order_is_conservative_after_sigkill(catalog, during):
+    from repo_catalog.adapters.sqlite.p1_coordination import NotesLimits
+    from repo_catalog.adapters.sqlite.recovery import RecoveryWorkBudget
+    from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
+    from repo_catalog.domain.p1_coordination import CoordinationError
+
+    process = multiprocessing.get_context("spawn").Process(
+        target=_settlement_worker, args=(catalog, during)
+    )
+    process.start()
+    process.join(15)
+    assert process.exitcode == -signal.SIGKILL
+    budget = RecoveryBudget(max_work_units={"input_bytes": 10})
+    with recovery_request(
+        catalog,
+        "settle-request",
+        budget,
+        dict(NotesLimits.work_limits(), input_bytes=10),
+    ) as request:
+        # A killed partial settlement keeps the full uncertain upper bound;
+        # completed settlement keeps only actual successful bytes.
+        assert request.usage["input_bytes"] == (10 if during else 2)
+        work = RecoveryWorkBudget(
+            work_limits=budget.max_work_units,
+            initial_usage=request.usage,
+            reserve=request.reserve,
+            settle=request.settle,
+        )
+        with pytest.raises(CoordinationError):
+            work.charge("input_bytes", 0)
