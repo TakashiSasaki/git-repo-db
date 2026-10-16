@@ -94,10 +94,17 @@ class RecoveryService:
         fresh_destination_dir: Path | str,
         salvage_file: Path | str,
         budget: RecoveryBudget | None = None,
+        request_id: str | None = None,
+        *,
+        fault_stage: str | None = None,
     ) -> MergeReceipt:
         """Merge untrusted salvaged candidates into the fresh destination with receiver verification."""
         return self.adapter.merge_salvage(
-            Path(fresh_destination_dir), Path(salvage_file), budget=budget
+            Path(fresh_destination_dir),
+            Path(salvage_file),
+            budget=budget,
+            request_id=request_id,
+            fault_stage=fault_stage,
         )
 
     def activate_catalog(

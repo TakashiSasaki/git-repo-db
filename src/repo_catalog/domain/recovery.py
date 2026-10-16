@@ -79,14 +79,21 @@ class RecoveryBudget:
     )
 
     def __post_init__(self):
-        if not (isinstance(self.max_input_records, int) and self.max_input_records > 0):
-            raise ValueError("max_input_records must be a positive integer")
-        if not (isinstance(self.max_input_bytes, int) and self.max_input_bytes > 0):
-            raise ValueError("max_input_bytes must be a positive integer")
-        if not (isinstance(self.max_payload_bytes, int) and self.max_payload_bytes > 0):
-            raise ValueError("max_payload_bytes must be a positive integer")
-        if not (isinstance(self.max_json_depth, int) and self.max_json_depth > 0):
-            raise ValueError("max_json_depth must be a positive integer")
+        for field_name, value in [
+            ("max_input_records", self.max_input_records),
+            ("max_input_bytes", self.max_input_bytes),
+            ("max_payload_bytes", self.max_payload_bytes),
+            ("max_json_depth", self.max_json_depth),
+        ]:
+            if type(value) is not int or value <= 0:
+                raise ValueError(
+                    f"{field_name} must be a positive integer, got {type(value).__name__}: {value}"
+                )
+        for k, v in self.max_work_units.items():
+            if type(v) is not int or v <= 0:
+                raise ValueError(
+                    f"max_work_units['{k}'] must be a positive integer, got {type(v).__name__}: {v}"
+                )
 
 
 @dataclass(frozen=True)

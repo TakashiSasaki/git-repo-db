@@ -6,6 +6,7 @@ import concurrent.futures
 import fcntl
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 from uuid import uuid4
@@ -24,6 +25,7 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 )
 from repo_catalog.adapters.sqlite.recovery import (
     _sha256_file,
+    is_catalog_stopped,
 )
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.p1_core import (
@@ -35,7 +37,9 @@ from repo_catalog.domain.recovery import (
     BackupValidationError,
     CandidateType,
     CatalogStoppedError,
+    CorruptionDetectedError,
     ExtractionStatus,
+    RecoveryBudget,
     RestoreValidationError,
 )
 from tests.integration.p7.conftest import make_commit, make_tree
@@ -455,6 +459,11 @@ def test_case_09_original_capture_and_provenance_survive_replay(
         "FROM retained_notes WHERE full_oid=?",
         (cand["payload"]["full_oid"],),
     ).fetchone()
+    # Assert original Capture binding preserved without inventing arbitrary replacement
+    cap_row = conn.execute(
+        "SELECT source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+        (cand["capture_origin_uuidv4"], cand["capture_uuidv4"]),
+    ).fetchone()
     conn.close()
 
     assert row is not None
@@ -465,6 +474,15 @@ def test_case_09_original_capture_and_provenance_survive_replay(
     assert row[4] == cand["payload"]["target"]
     assert row[5] == cand["payload"]["path"]
 
+    assert cap_row is not None
+    assert cap_row[0] == "local-notes"
+    ref_decoded = cap_row[1]
+    if not ref_decoded.startswith("refs/"):
+        parsed = json.loads(ref_decoded)
+        if isinstance(parsed, list) and len(parsed) == 2 and parsed[0] == "native-ref":
+            ref_decoded = bytes.fromhex(parsed[1]).decode("utf-8")
+    assert ref_decoded == "refs/notes/commits"
+
 
 def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_path):
     """Case 10: Read-only salvage preserves the original SQLite DB/WAL/journal evidence."""
@@ -473,32 +491,48 @@ def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_p
     wal_path = synthetic_catalog / "core.sqlite3-wal"
     shm_path = synthetic_catalog / "core.sqlite3-shm"
 
-    # Ensure WAL and SHM exist with active uncheckpointed state
+    # Ensure WAL and SHM exist with active uncheckpointed state by disabling autocheckpoint
+    # and keeping the connection active during the read-only salvage
     conn = sqlite3.connect(str(core_path))
     register_functions(conn)
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
+    conn.execute("PRAGMA wal_autocheckpoint = 0;")
     conn.execute("CREATE TABLE IF NOT EXISTS _wal_test (x INT);")
     conn.execute("INSERT INTO _wal_test VALUES (42);")
     conn.commit()
-    conn.close()
 
-    if not wal_path.exists():
-        wal_path.write_bytes(b"\x37\x7f\x06\x82" + b"\x00" * 28)
-    if not shm_path.exists():
-        shm_path.write_bytes(b"\x00" * 32)
+    assert wal_path.exists(), "WAL file must exist after committed transaction"
+    assert wal_path.stat().st_size > 0, "WAL file must have non-zero size"
 
     pre_core_sha = _sha256_file(core_path)
     pre_wal_sha = _sha256_file(wal_path)
-    pre_shm_sha = _sha256_file(shm_path)
+    pre_shm_sha = _sha256_file(shm_path) if shm_path.exists() else None
 
     salvage_file = tmp_path / "salvage_case10.jsonl"
     service.extract_salvage(synthetic_catalog, salvage_file)
 
+    # Recheck source files: extract_salvage must not touch source files
     assert _sha256_file(core_path) == pre_core_sha
     assert _sha256_file(wal_path) == pre_wal_sha
     if pre_shm_sha is not None:
         assert _sha256_file(shm_path) == pre_shm_sha
+
+    # Verify that candidates were extracted from the WAL-committed state
+    lines = [
+        json.loads(line)
+        for line in salvage_file.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    wal_test_cands = [
+        c
+        for c in lines
+        if c.get("extraction_provenance", {}).get("table") == "_wal_test"
+    ]
+    assert len(wal_test_cands) == 1
+    assert wal_test_cands[0]["payload"]["x"] == 42
+
+    conn.close()
 
 
 def test_case_11_writer_cannot_cross_declared_backup_cut(synthetic_catalog, tmp_path):
@@ -999,3 +1033,350 @@ def test_case_23_legitimately_unresolved_context_references_admitted(
     merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
     assert merge_receipt.admitted_units == 1
     assert merge_receipt.rejected_units == 0
+
+
+def test_case_24_confirmed_source_corruption_stops_catalog_and_raises(
+    synthetic_catalog, tmp_path
+):
+    """Case 24: Confirmed corruption in authoritative source stops catalog and raises CorruptionDetectedError."""
+    service = RecoveryService()
+    core_path = synthetic_catalog / "core.sqlite3"
+
+    # Intentionally corrupt authoritative stored core database bytes
+    conn = sqlite3.connect(str(core_path))
+    register_functions(conn)
+    conn.execute("PRAGMA ignore_check_constraints = ON;")
+    conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
+    row = conn.execute(
+        "SELECT full_oid, body FROM retained_metadata WHERE native_type='commit'"
+    ).fetchone()
+    full_oid, body = row
+    tampered_body = b"X" + body[1:]
+    conn.execute(
+        "UPDATE retained_metadata SET body=? WHERE full_oid=?",
+        (tampered_body, full_oid),
+    )
+    conn.execute(
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+    )
+    conn.commit()
+    conn.close()
+
+    backup_path = tmp_path / "backups" / "case24_backup"
+    with pytest.raises(CorruptionDetectedError):
+        service.create_consistent_backup(
+            synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+        )
+
+    # Assert source catalog is persistently stopped with stop sentinel
+    assert is_catalog_stopped(synthetic_catalog)
+    stop_file = synthetic_catalog / "p1-recovery-stop.json"
+    assert stop_file.exists()
+
+
+def test_case_25_staging_copy_defect_raises_validation_error_without_stopping_sound_source(
+    synthetic_catalog, tmp_path
+):
+    """Case 25: Isolated staging copy defect raises BackupValidationError without stopping sound source catalog."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case25_backup"
+
+    # Inject damage only to staged files during snapshot cut callback
+    def damage_staging():
+        for staged_core in backup_path.parent.glob("**/stores/core.sqlite3"):
+            conn = sqlite3.connect(str(staged_core))
+            register_functions(conn)
+            conn.execute("PRAGMA ignore_check_constraints = ON;")
+            conn.execute(
+                "DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;"
+            )
+            row = conn.execute(
+                "SELECT full_oid, body FROM retained_metadata WHERE native_type='commit'"
+            ).fetchone()
+            full_oid, body = row
+            conn.execute(
+                "UPDATE retained_metadata SET body=? WHERE full_oid=?",
+                (b"X" + body[1:], full_oid),
+            )
+            conn.execute(
+                "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+            )
+            conn.commit()
+            conn.close()
+
+    with pytest.raises(BackupValidationError):
+        service.create_consistent_backup(
+            synthetic_catalog,
+            backup_path,
+            scope=BackupScope.PAIRED,
+            snapshot_cut_callback=damage_staging,
+        )
+
+    # Authoritative source catalog MUST remain healthy and unstopped
+    assert not is_catalog_stopped(synthetic_catalog)
+    assert not (synthetic_catalog / "p1-recovery-stop.json").exists()
+
+
+def test_case_26_completion_fence_aborts_backup_publication_if_stopped(
+    synthetic_catalog, tmp_path
+):
+    """Case 26: Backup publication fence aborts publication if catalog stops in flight."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case26_backup"
+
+    def stop_during_cut():
+        service.stop_suspect_catalog(synthetic_catalog, "Emergency stop during backup")
+
+    with pytest.raises(CatalogStoppedError):
+        service.create_consistent_backup(
+            synthetic_catalog,
+            backup_path,
+            scope=BackupScope.PAIRED,
+            snapshot_cut_callback=stop_during_cut,
+        )
+
+    assert not backup_path.exists()
+
+
+def test_case_27_conflicting_immutable_capture_rebinding_rejected(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 27: Conflicting immutable Capture rebinding is rejected closed."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case27_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+    fresh_dest = tmp_path / "fresh_case27"
+    service.restore_backup(backup_path, fresh_dest, repo_uuid)
+
+    salvage_file = tmp_path / "salvage_case27.jsonl"
+    cand = {
+        "candidate_id": "conflicting-cap-1",
+        "candidate_type": CandidateType.GIT_METADATA.value,
+        "capture_origin_uuidv4": "66666666-6666-4666-8666-666666666666",
+        "capture_uuidv4": "77777777-7777-4777-8777-777777777777",
+        "extraction_provenance": {"store": "core", "table": "captures"},
+        "payload": {
+            "capture_origin_uuidv4": "66666666-6666-4666-8666-666666666666",
+            "capture_uuidv4": "77777777-7777-4777-8777-777777777777",
+            "repository_uuidv4": repo_uuid,
+            "source": "evil-source",
+            "ref": "refs/heads/main",
+            "object_format": "sha1",
+            "root": "1" * 40,
+        },
+        "extraction_status": ExtractionStatus.CLEAN.value,
+        "error": None,
+    }
+    salvage_file.write_text(json.dumps(cand) + "\n", encoding="utf-8")
+
+    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
+    assert merge_receipt.rejected_units == 1
+    assert merge_receipt.admitted_units == 0
+
+
+def test_case_28_missing_capture_binding_records_qualified_observation(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 28: Missing Capture binding records qualified observation without authoritative mutation."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case28_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+    fresh_dest = tmp_path / "fresh_case28"
+    service.restore_backup(backup_path, fresh_dest, repo_uuid)
+
+    salvage_file = tmp_path / "salvage_case28.jsonl"
+    unknown_origin = str(uuid4())
+    unknown_id = str(uuid4())
+    note_blob = make_commit("sha1", "0" * 40, [], message="Unbound note\n")
+    cand = {
+        "candidate_id": "unbound-note-1",
+        "candidate_type": CandidateType.NOTES_MAPPING.value,
+        "capture_origin_uuidv4": unknown_origin,
+        "capture_uuidv4": unknown_id,
+        "extraction_provenance": {"store": "core", "table": "retained_notes"},
+        "payload": {
+            "object_format": "sha1",
+            "full_oid": note_blob.oid.full_oid,
+            "physical_copy_uuidv4": str(uuid4()),
+            "native_type": "blob",
+            "size": len(note_blob.body),
+            "digest_sha256": hashlib.sha256(note_blob.body).hexdigest(),
+            "root": "0" * 40,
+            "target": "1" * 40,
+            "path": "0" * 40,
+            "proof_bundle": json.dumps([]),
+            "body_base64": "dGVzdA==",
+        },
+        "extraction_status": ExtractionStatus.CLEAN.value,
+        "error": None,
+    }
+    salvage_file.write_text(json.dumps(cand) + "\n", encoding="utf-8")
+
+    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
+    assert merge_receipt.observation_units == 1
+    assert merge_receipt.admitted_units == 0
+
+
+def test_case_29_cumulative_request_budget_persists_across_retries(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 29: Cumulative request budget persists across retries without resetting."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case29_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+    fresh_dest = tmp_path / "fresh_case29"
+    service.restore_backup(backup_path, fresh_dest, repo_uuid)
+
+    salvage_file = tmp_path / "salvage_case29.jsonl"
+    import base64
+
+    conn = sqlite3.connect(
+        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+    )
+    register_functions(conn)
+    tree_oid = conn.execute(
+        "SELECT full_oid FROM retained_metadata WHERE native_type='tree'"
+    ).fetchone()[0]
+    conn.close()
+
+    commit1 = make_commit("sha1", tree_oid, [], message="Commit 1\n")
+    cand1 = {
+        "candidate_id": f"commit-1-{uuid4()}",
+        "candidate_type": CandidateType.RETAINED_BODY.value,
+        "capture_origin_uuidv4": None,
+        "capture_uuidv4": None,
+        "extraction_provenance": {"store": "core", "table": "retained_metadata"},
+        "payload": {
+            "object_format": "sha1",
+            "full_oid": commit1.oid.full_oid,
+            "physical_copy_uuidv4": str(uuid4()),
+            "native_type": "commit",
+            "size": len(commit1.body),
+            "digest_sha256": hashlib.sha256(commit1.body).hexdigest(),
+            "body_base64": base64.b64encode(commit1.body).decode("ascii"),
+        },
+        "extraction_status": ExtractionStatus.CLEAN.value,
+        "error": None,
+    }
+    salvage_file = tmp_path / "salvage_case29.jsonl"
+    salvage_file.write_text(json.dumps(cand1) + "\n", encoding="utf-8")
+
+    # Set budget enough for one commit (~120 bytes) but not two (< 240 bytes)
+    budget = RecoveryBudget(max_work_units={"input_bytes": len(commit1.body) + 30})
+    receipt1 = service.merge_salvage(
+        fresh_dest, salvage_file, budget=budget, request_id="req-persist-1"
+    )
+    assert receipt1.admitted_units == 1
+
+    # Check budget state file was written with cumulative usage
+    budget_state_file = fresh_dest / "p1-recovery-request-req-persist-1.json"
+    assert budget_state_file.exists()
+    state_data1 = json.loads(budget_state_file.read_text(encoding="utf-8"))
+    assert state_data1["cumulative_usage"]["input_bytes"] >= len(commit1.body)
+
+    # Second commit under the same request_id exhausts budget
+    commit2 = make_commit("sha1", tree_oid, [], message="Commit 2\n")
+    cand2 = {
+        "candidate_id": f"commit-2-{uuid4()}",
+        "candidate_type": CandidateType.RETAINED_BODY.value,
+        "capture_origin_uuidv4": None,
+        "capture_uuidv4": None,
+        "extraction_provenance": {"store": "core", "table": "retained_metadata"},
+        "payload": {
+            "object_format": "sha1",
+            "full_oid": commit2.oid.full_oid,
+            "physical_copy_uuidv4": str(uuid4()),
+            "native_type": "commit",
+            "size": len(commit2.body),
+            "digest_sha256": hashlib.sha256(commit2.body).hexdigest(),
+            "body_base64": base64.b64encode(commit2.body).decode("ascii"),
+        },
+        "extraction_status": ExtractionStatus.CLEAN.value,
+        "error": None,
+    }
+    salvage_file2 = tmp_path / "salvage_case29_b.jsonl"
+    salvage_file2.write_text(json.dumps(cand2) + "\n", encoding="utf-8")
+
+    receipt2 = service.merge_salvage(
+        fresh_dest, salvage_file2, budget=budget, request_id="req-persist-1"
+    )
+    assert receipt2.unprocessed_units >= 1
+    assert receipt2.admitted_units == 0
+    state_data2 = json.loads(budget_state_file.read_text(encoding="utf-8"))
+    assert state_data2.get("budget_exhausted") is True
+
+
+def test_case_30_restore_validation_rejects_mismatches_hardlinks_and_extraneous_files(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 30: Restore validation rejects mismatched identities, hardlinks, and unexpected root files."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case30_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+
+    # 1. Hardlink rejection in stores
+    hardlink_path = backup_path / "stores" / "core_hl.sqlite3"
+    try:
+        os.link(backup_path / "stores" / "core.sqlite3", hardlink_path)
+        with pytest.raises(
+            RestoreValidationError, match="Hardlink forbidden|Unexpected or undeclared"
+        ):
+            service.restore_backup(backup_path, tmp_path / "dest1", repo_uuid)
+    finally:
+        if hardlink_path.exists():
+            hardlink_path.unlink()
+
+    # 2. Unexpected extraneous file in backup root
+    extra_file = backup_path / "unexpected_root_file.txt"
+    extra_file.write_text("evil")
+    try:
+        with pytest.raises(
+            RestoreValidationError, match="Unexpected.*files in backup root directory"
+        ):
+            service.restore_backup(backup_path, tmp_path / "dest2", repo_uuid)
+    finally:
+        extra_file.unlink()
+
+    # 3. Mismatched catalog instance UUIDv4
+    manifest_file = backup_path / "manifest.json"
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    manifest_data["catalog_instance_uuidv4"] = str(uuid4())
+    manifest_file.write_text(json.dumps(manifest_data) + "\n", encoding="utf-8")
+    (backup_path / "manifest.json.sha256").write_text(
+        _sha256_file(manifest_file) + "  manifest.json\n", encoding="utf-8"
+    )
+
+    with pytest.raises(RestoreValidationError, match="catalog instance UUID mismatch"):
+        service.restore_backup(backup_path, tmp_path / "dest3", repo_uuid)
+
+
+def test_case_31_recovery_budget_rejects_boolean_negative_and_float_limits():
+    """Case 31: RecoveryBudget strictly validates types, rejecting booleans, floats, and negative integers."""
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        RecoveryBudget(max_input_records=True)
+
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        RecoveryBudget(max_input_bytes=False)
+
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        RecoveryBudget(max_payload_bytes=-100)
+
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        RecoveryBudget(max_json_depth=0)
+
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        RecoveryBudget(max_input_records=10.5)
+
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        RecoveryBudget(max_work_units={"input_bytes": True})
+
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        RecoveryBudget(max_work_units={"metadata_units": -5})

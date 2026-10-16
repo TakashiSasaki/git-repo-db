@@ -22,6 +22,7 @@ from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     NotesLimits,
     _file_gate,
+    catalog_completion,
     catalog_gate,
     persist_catalog_stop,
 )
@@ -64,6 +65,7 @@ from repo_catalog.domain.recovery import (
     BackupValidationError,
     CandidateType,
     CatalogStoppedError,
+    CorruptionDetectedError,
     ExtractionStatus,
     MergeReceipt,
     RecoveryBudget,
@@ -71,12 +73,27 @@ from repo_catalog.domain.recovery import (
     RestoreReceipt,
     RestoreValidationError,
     RetainedByteSummary,
+    SalvageError,
     SalvageReceipt,
     StoreManifest,
 )
 
 AT_FDCWD = -100
 RENAME_NOREPLACE = 1
+
+
+def _decode_native_ref(raw_ref: str | None) -> str | None:
+    if not raw_ref:
+        return raw_ref
+    if raw_ref.startswith("refs/"):
+        return raw_ref
+    try:
+        parsed = json.loads(raw_ref)
+        if isinstance(parsed, list) and len(parsed) == 2 and parsed[0] == "native-ref":
+            return bytes.fromhex(parsed[1]).decode("utf-8", "surrogateescape")
+    except Exception:
+        pass
+    return raw_ref
 
 
 def _atomic_publish_noreplace(staging_dir: Path, destination_path: Path) -> None:
@@ -142,17 +159,39 @@ def _atomic_publish_noreplace(staging_dir: Path, destination_path: Path) -> None
     )
 
 
-def _check_json_depth(obj: Any, current_depth: int = 1, max_depth: int = 16) -> None:
+def _check_json_depth(
+    obj: Any,
+    current_depth: int = 1,
+    max_depth: int = 16,
+    max_elements: int = 10_000,
+    element_counter: list[int] | None = None,
+) -> None:
     if current_depth > max_depth:
         raise ValueError(
             f"JSON nesting depth exceeds maximum allowed limit of {max_depth}"
         )
+    if element_counter is None:
+        element_counter = [0]
     if isinstance(obj, dict):
+        element_counter[0] += len(obj)
+        if element_counter[0] > max_elements:
+            raise ValueError(
+                f"JSON element count exceeds maximum allowed limit of {max_elements}"
+            )
         for v in obj.values():
-            _check_json_depth(v, current_depth + 1, max_depth)
+            _check_json_depth(
+                v, current_depth + 1, max_depth, max_elements, element_counter
+            )
     elif isinstance(obj, list):
+        element_counter[0] += len(obj)
+        if element_counter[0] > max_elements:
+            raise ValueError(
+                f"JSON element count exceeds maximum allowed limit of {max_elements}"
+            )
         for v in obj:
-            _check_json_depth(v, current_depth + 1, max_depth)
+            _check_json_depth(
+                v, current_depth + 1, max_depth, max_elements, element_counter
+            )
 
 
 class RecoveryWorkBudget:
@@ -163,13 +202,24 @@ class RecoveryWorkBudget:
         *,
         note_bytes: int = 16 * 1024 * 1024,
         work_limits: Mapping[str, int] | None = None,
+        initial_usage: Mapping[str, int] | None = None,
     ) -> None:
         self.limits = NotesLimits(note_bytes=note_bytes)
         self._max = dict(NotesLimits.work_limits())
         if work_limits is not None:
             self._max.update(work_limits)
         self.usage: dict[str, int] = dict.fromkeys(self._max, 0)
+        if initial_usage:
+            for k, v in initial_usage.items():
+                if k in self.usage and type(v) is int and v >= 0:
+                    self.usage[k] = v
         self._pending: dict[str, int] = {}
+
+    def is_exhausted(self, unit: str | None = None) -> bool:
+        if unit is not None:
+            limit = self._max.get(unit)
+            return limit is not None and self.usage.get(unit, 0) >= limit
+        return any(self.usage[u] >= self._max[u] for u in self._max if u in self.usage)
 
     def require(self, unit: str, amount: int = 1) -> None:
         if type(amount) is not int or amount < 0:
@@ -301,33 +351,52 @@ class SQLiteRecoveryAdapter:
         staging_dir.mkdir(parents=True, exist_ok=False)
 
         try:
-            with catalog_gate(catalog_dir, exclusive=True):
-                assert_catalog_not_stopped(catalog_dir)
+            try:
+                with catalog_gate(catalog_dir, exclusive=True):
+                    assert_catalog_not_stopped(catalog_dir)
 
-                stores_dir = staging_dir / "stores"
-                stores_dir.mkdir()
+                    stores_dir = staging_dir / "stores"
+                    stores_dir.mkdir()
 
-                # Snapshot Core
-                staged_core = stores_dir / "core.sqlite3"
-                self._snapshot_database(core_db_path, staged_core)
+                    # Snapshot Core
+                    staged_core = stores_dir / "core.sqlite3"
+                    self._snapshot_database(core_db_path, staged_core)
 
-                # Snapshot Context if paired
-                staged_context = None
-                if scope == BackupScope.PAIRED:
-                    staged_context = stores_dir / "context.sqlite3"
-                    self._snapshot_database(context_db_path, staged_context)
+                    # Snapshot Context if paired
+                    staged_context = None
+                    if scope == BackupScope.PAIRED:
+                        staged_context = stores_dir / "context.sqlite3"
+                        self._snapshot_database(context_db_path, staged_context)
 
-                # Execute cut callback while lock is actively held, if provided
-                if snapshot_cut_callback is not None:
-                    snapshot_cut_callback()
+                    # Execute cut callback while lock is actively held, if provided
+                    if snapshot_cut_callback is not None:
+                        snapshot_cut_callback()
+            except sqlite3.Error as e:
+                self._diagnose_and_stop_if_source_corrupt(
+                    catalog_dir, core_db_path, "core", e
+                )
+                raise BackupValidationError(str(e)) from e
 
             # Deep Domain and Retained-Byte Validation outside writer lock
-            core_summary = self._validate_and_summarize_core(staged_core)
-            context_summary = (
-                self._validate_and_summarize_context(staged_context)
-                if staged_context
-                else RetainedByteSummary()
-            )
+            try:
+                core_summary = self._validate_and_summarize_core(staged_core)
+            except (BackupValidationError, sqlite3.Error) as e:
+                self._diagnose_and_stop_if_source_corrupt(
+                    catalog_dir, core_db_path, "core", e
+                )
+                raise BackupValidationError(str(e)) from e
+
+            context_summary = RetainedByteSummary()
+            if staged_context:
+                try:
+                    context_summary = self._validate_and_summarize_context(
+                        staged_context
+                    )
+                except (BackupValidationError, sqlite3.Error) as e:
+                    self._diagnose_and_stop_if_source_corrupt(
+                        catalog_dir, context_db_path, "context", e
+                    )
+                    raise BackupValidationError(str(e)) from e
 
             total_summary = RetainedByteSummary(
                 commit_count=core_summary.commit_count,
@@ -438,8 +507,15 @@ class SQLiteRecoveryAdapter:
             _fsync_dir(stores_dir)
             _fsync_dir(staging_dir)
 
-            # Atomic publication with no-overwrite primitive
-            _atomic_publish_noreplace(staging_dir, destination_path)
+            # Atomic publication with no-overwrite primitive under catalog completion fence
+            try:
+                with catalog_completion(catalog_dir):
+                    assert_catalog_not_stopped(catalog_dir)
+                    _atomic_publish_noreplace(staging_dir, destination_path)
+            except CoordinationError as ce:
+                raise CatalogStoppedError(
+                    f"Catalog at {catalog_dir} entered recovery stop; normal backup publication prevented: {ce}"
+                ) from ce
 
             return BackupReceipt(
                 backup_id=backup_id,
@@ -453,6 +529,44 @@ class SQLiteRecoveryAdapter:
         finally:
             if staging_dir.exists():
                 shutil.rmtree(staging_dir, ignore_errors=True)
+
+    def _diagnose_and_stop_if_source_corrupt(
+        self,
+        catalog_dir: Path,
+        source_db_path: Path,
+        store_role: str,
+        staging_error: Exception,
+    ) -> None:
+        """Distinguish confirmed authoritative source corruption from staging-only copy defects.
+
+        Under ADR 0026: if authoritative source exhibits integrity, schema or retained-data
+        corruption, immediately persist catalog recovery stop and fence ordinary operations.
+        If source is sound (staging copy defect only), do not stop healthy authoritative catalog.
+        """
+        is_source_corrupt = False
+        source_err: Exception | None = None
+        try:
+            with catalog_gate(catalog_dir, exclusive=True):
+                if store_role == "core":
+                    self._validate_and_summarize_core(source_db_path)
+                elif store_role == "context":
+                    self._validate_and_summarize_context(source_db_path)
+        except Exception as e:
+            is_source_corrupt = True
+            source_err = e
+
+        if is_source_corrupt and source_err is not None:
+            reason = f"Confirmed authoritative {store_role} corruption: {source_err}"
+            stop_catalog(
+                catalog_dir,
+                reason,
+                details={
+                    "store": store_role,
+                    "staging_error": str(staging_error),
+                    "source_error": str(source_err),
+                },
+            )
+            raise CorruptionDetectedError(reason) from source_err
 
     def _snapshot_database(self, source_path: Path, target_path: Path) -> None:
         source_uri = f"file:{source_path.resolve()}?mode=ro"
@@ -696,6 +810,8 @@ class SQLiteRecoveryAdapter:
                 notes_body_count=notes,
                 total_retained_bytes=total_bytes,
             )
+        except sqlite3.Error as e:
+            raise BackupValidationError(f"Core database error: {e}") from e
         finally:
             conn.close()
 
@@ -755,6 +871,8 @@ class SQLiteRecoveryAdapter:
                 total_bytes += len(text_value.encode("utf-8"))
 
             return RetainedByteSummary(total_retained_bytes=total_bytes)
+        except sqlite3.Error as e:
+            raise BackupValidationError(f"Context database error: {e}") from e
         finally:
             conn.close()
 
@@ -783,61 +901,45 @@ class SQLiteRecoveryAdapter:
         total_bytes = 0
         is_partial = False
 
+        # Finite resource bound: total forensic copy size must not exceed limit_bytes
+        total_copy_bytes = sum(
+            f.stat().st_size for f in catalog_dir.glob("*.sqlite3*") if f.is_file()
+        )
+        if total_copy_bytes > limit_bytes:
+            raise SalvageError(
+                f"Suspect catalog total size {total_copy_bytes} exceeds recovery budget max_input_bytes {limit_bytes}"
+            )
+
         # Forensic preservation: create isolated working copy of suspect files
-        # to ensure the original suspect directory files (db, wal, shm) are never mutated
-        with tempfile.TemporaryDirectory() as forensic_tmp:
-            forensic_dir = Path(forensic_tmp)
-            for f in catalog_dir.glob("*.sqlite3*"):
-                if f.is_file():
-                    shutil.copy2(f, forensic_dir / f.name)
+        # under stop fence or exclusive writer lock so concurrent writers cannot cross the cut
+        with (
+            _file_gate(catalog_dir / "p1-stop-fence.lock", exclusive=False)
+            if is_catalog_stopped(catalog_dir)
+            else catalog_gate(catalog_dir, exclusive=True)
+        ):
+            with tempfile.TemporaryDirectory() as forensic_tmp:
+                forensic_dir = Path(forensic_tmp)
+                for f in catalog_dir.glob("*.sqlite3*"):
+                    if f.is_file():
+                        shutil.copy2(f, forensic_dir / f.name)
 
-            temp_out = output_file.parent / f"{output_file.name}.tmp.{uuid.uuid4().hex}"
-            with temp_out.open("w", encoding="utf-8") as out_f:
-                core_db = forensic_dir / "core.sqlite3"
-                if core_db.exists():
-                    (
-                        c_cnt,
-                        c_bytes,
-                        c_unread,
-                        c_cl,
-                        c_pt,
-                        c_cr,
-                        c_stopped,
-                    ) = self._salvage_store_stream(
-                        core_db,
-                        "core",
-                        out_f,
-                        max_records=limit_records,
-                        max_bytes=limit_bytes,
-                        max_payload_bytes=max_payload_bytes,
-                        records_offset=total_records,
-                        bytes_offset=total_bytes,
-                    )
-                    total_records += c_cnt
-                    total_bytes += c_bytes
-                    unreadable.extend(c_unread)
-                    clean += c_cl
-                    partial += c_pt
-                    corrupt += c_cr
-                    if c_stopped:
-                        is_partial = True
-
-                ctx_db = forensic_dir / "context.sqlite3"
-                if ctx_db.exists() and not is_partial:
-                    rem_records = limit_records - total_records
-                    rem_bytes = limit_bytes - total_bytes
-                    if rem_records > 0 and rem_bytes > 0:
+                temp_out = (
+                    output_file.parent / f"{output_file.name}.tmp.{uuid.uuid4().hex}"
+                )
+                with temp_out.open("w", encoding="utf-8") as out_f:
+                    core_db = forensic_dir / "core.sqlite3"
+                    if core_db.exists():
                         (
-                            cx_cnt,
-                            cx_bytes,
-                            cx_unread,
-                            cx_cl,
-                            cx_pt,
-                            cx_cr,
-                            cx_stopped,
+                            c_cnt,
+                            c_bytes,
+                            c_unread,
+                            c_cl,
+                            c_pt,
+                            c_cr,
+                            c_stopped,
                         ) = self._salvage_store_stream(
-                            ctx_db,
-                            "context",
+                            core_db,
+                            "core",
                             out_f,
                             max_records=limit_records,
                             max_bytes=limit_bytes,
@@ -845,18 +947,50 @@ class SQLiteRecoveryAdapter:
                             records_offset=total_records,
                             bytes_offset=total_bytes,
                         )
-                        total_records += cx_cnt
-                        total_bytes += cx_bytes
-                        unreadable.extend(cx_unread)
-                        clean += cx_cl
-                        partial += cx_pt
-                        corrupt += cx_cr
-                        if cx_stopped:
+                        total_records += c_cnt
+                        total_bytes += c_bytes
+                        unreadable.extend(c_unread)
+                        clean += c_cl
+                        partial += c_pt
+                        corrupt += c_cr
+                        if c_stopped:
                             is_partial = True
 
-            _fsync_file(temp_out)
-            os.replace(temp_out, output_file)
-            _fsync_dir(output_file.parent)
+                    ctx_db = forensic_dir / "context.sqlite3"
+                    if ctx_db.exists() and not is_partial:
+                        rem_records = limit_records - total_records
+                        rem_bytes = limit_bytes - total_bytes
+                        if rem_records > 0 and rem_bytes > 0:
+                            (
+                                cx_cnt,
+                                cx_bytes,
+                                cx_unread,
+                                cx_cl,
+                                cx_pt,
+                                cx_cr,
+                                cx_stopped,
+                            ) = self._salvage_store_stream(
+                                ctx_db,
+                                "context",
+                                out_f,
+                                max_records=limit_records,
+                                max_bytes=limit_bytes,
+                                max_payload_bytes=max_payload_bytes,
+                                records_offset=total_records,
+                                bytes_offset=total_bytes,
+                            )
+                            total_records += cx_cnt
+                            total_bytes += cx_bytes
+                            unreadable.extend(cx_unread)
+                            clean += cx_cl
+                            partial += cx_pt
+                            corrupt += cx_cr
+                            if cx_stopped:
+                                is_partial = True
+
+                _fsync_file(temp_out)
+                os.replace(temp_out, output_file)
+                _fsync_dir(output_file.parent)
 
         if corrupt > 0 or len(unreadable) > 0:
             is_partial = True
@@ -915,7 +1049,21 @@ class SQLiteRecoveryAdapter:
                     break
 
                 try:
-                    cursor = conn.execute(f'SELECT * FROM "{table}"')
+                    if store_name == "core" and table == "retained_metadata":
+                        cursor = conn.execute(
+                            "SELECT object_format, full_oid, physical_copy_uuidv4, native_type, size, digest_sha256, "
+                            "(CASE WHEN length(body) > ? THEN NULL ELSE body END) AS body FROM retained_metadata",
+                            (max_payload_bytes,),
+                        )
+                    elif store_name == "core" and table == "retained_notes":
+                        cursor = conn.execute(
+                            "SELECT object_format, full_oid, physical_copy_uuidv4, size, digest_sha256, "
+                            "capture_origin_uuidv4, capture_uuidv4, root, target, path, proof_bundle, "
+                            "(CASE WHEN length(body) > ? THEN NULL ELSE body END) AS body FROM retained_notes",
+                            (max_payload_bytes,),
+                        )
+                    else:
+                        cursor = conn.execute(f'SELECT * FROM "{table}"')
                     columns = [d[0] for d in cursor.description]
 
                     while row := cursor.fetchone():
@@ -942,9 +1090,13 @@ class SQLiteRecoveryAdapter:
                             c_id = f"{row_dict.get('object_format')}:{row_dict.get('full_oid')}:{row_dict.get('physical_copy_uuidv4')}"
                             raw_body = row_dict.get("body")
                             body_len = (
-                                len(raw_body) if isinstance(raw_body, bytes) else 0
+                                row_dict.get("size")
+                                if row_dict.get("size") is not None
+                                else (
+                                    len(raw_body) if isinstance(raw_body, bytes) else 0
+                                )
                             )
-                            if body_len > max_payload_bytes:
+                            if raw_body is None and body_len > max_payload_bytes:
                                 cand_record = {
                                     "candidate_id": c_id,
                                     "candidate_type": c_type.value,
@@ -996,9 +1148,13 @@ class SQLiteRecoveryAdapter:
                             )
                             raw_body = row_dict.get("body")
                             body_len = (
-                                len(raw_body) if isinstance(raw_body, bytes) else 0
+                                row_dict.get("size")
+                                if row_dict.get("size") is not None
+                                else (
+                                    len(raw_body) if isinstance(raw_body, bytes) else 0
+                                )
                             )
-                            if body_len > max_payload_bytes:
+                            if raw_body is None and body_len > max_payload_bytes:
                                 cand_record = {
                                     "candidate_id": c_id,
                                     "candidate_type": c_type.value,
@@ -1041,6 +1197,36 @@ class SQLiteRecoveryAdapter:
                                 if isinstance(raw_body, bytes)
                                 else None,
                             }
+                            # Preserve original Capture source and nominated ref if present in captures table
+                            try:
+                                cap_row = conn.execute(
+                                    "SELECT source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=?",
+                                    (
+                                        cap_origin,
+                                        cap_id,
+                                        row_dict.get("object_format"),
+                                        row_dict.get("root"),
+                                    ),
+                                ).fetchone()
+                                if cap_row:
+                                    payload["source"] = cap_row[0]
+                                    payload["ref"] = _decode_native_ref(cap_row[1])
+                            except Exception:
+                                pass
+                        elif store_name == "core" and table == "captures":
+                            c_type = CandidateType.GIT_METADATA
+                            c_id = f"{row_dict.get('capture_origin_uuidv4')}:{row_dict.get('capture_uuidv4')}"
+                            cap_origin = (
+                                str(row_dict.get("capture_origin_uuidv4"))
+                                if row_dict.get("capture_origin_uuidv4")
+                                else None
+                            )
+                            cap_id = (
+                                str(row_dict.get("capture_uuidv4"))
+                                if row_dict.get("capture_uuidv4")
+                                else None
+                            )
+                            payload = dict(row_dict)
                         elif store_name == "context" and table == "text_bodies":
                             c_type = CandidateType.CONTEXT_DOCUMENT
                             c_id = str(row_dict.get("sha256"))
@@ -1149,6 +1335,14 @@ class SQLiteRecoveryAdapter:
                 f"Backup manifest or sha256 missing at {backup_path}"
             )
 
+        # Verify no unexpected files exist in backup root directory
+        actual_root_files = {p.name for p in backup_path.iterdir() if p.is_file()}
+        allowed_root_files = {"manifest.json", "manifest.json.sha256"}
+        if actual_root_files != allowed_root_files:
+            raise RestoreValidationError(
+                f"Unexpected files in backup root directory: {actual_root_files - allowed_root_files}"
+            )
+
         # Verify manifest hash
         expected_manifest_sha = manifest_sha_file.read_text(encoding="utf-8").split()[0]
         actual_manifest_sha = _sha256_file(manifest_file)
@@ -1176,6 +1370,12 @@ class SQLiteRecoveryAdapter:
         if repo_uuid != expected_repository_uuidv4:
             raise RestoreValidationError(
                 f"Repository UUID mismatch: expected {expected_repository_uuidv4}, got {repo_uuid}"
+            )
+
+        manifest_inst_uuid = manifest_data.get("catalog_instance_uuidv4")
+        if not manifest_inst_uuid or not uuid4(str(manifest_inst_uuid)):
+            raise RestoreValidationError(
+                f"Invalid or missing catalog_instance_uuidv4 in manifest: {manifest_inst_uuid}"
             )
 
         stores = manifest_data.get("stores", {})
@@ -1233,6 +1433,10 @@ class SQLiteRecoveryAdapter:
             if not store_file.exists():
                 raise RestoreValidationError(
                     f"Store file missing from backup: {store_file}"
+                )
+            if store_file.stat().st_nlink > 1:
+                raise RestoreValidationError(
+                    f"Hardlink forbidden for store file: {store_file}"
                 )
             if store_file.stat().st_size != info["bytes"]:
                 raise RestoreValidationError(
@@ -1303,6 +1507,10 @@ class SQLiteRecoveryAdapter:
                 raise RestoreValidationError(
                     f"Restored core repository UUID mismatch: expected {expected_repository_uuidv4}, got {core_repo_uuid}"
                 )
+            if core_inst_uuid != manifest_inst_uuid:
+                raise RestoreValidationError(
+                    f"Restored core catalog instance UUID mismatch: manifest {manifest_inst_uuid} vs actual {core_inst_uuid}"
+                )
             if dst_ctx:
                 ctx_repo_uuid, ctx_inst_uuid = self._extract_identities(
                     dst_ctx, "context"
@@ -1315,6 +1523,23 @@ class SQLiteRecoveryAdapter:
             total_retained = (
                 core_summary.total_retained_bytes + context_summary.total_retained_bytes
             )
+
+            # Reconcile restored retained byte summary against manifest
+            manifest_summary = manifest_data.get("retained_byte_summary", {})
+            if (
+                core_summary.commit_count != manifest_summary.get("commit_count")
+                or core_summary.tree_count != manifest_summary.get("tree_count")
+                or core_summary.tag_count != manifest_summary.get("tag_count")
+                or core_summary.notes_body_count
+                != manifest_summary.get("notes_body_count")
+                or total_retained != manifest_summary.get("total_retained_bytes")
+            ):
+                raise RestoreValidationError(
+                    f"Retained byte summary mismatch: manifest {manifest_summary} vs restored "
+                    f"(commits={core_summary.commit_count}, trees={core_summary.tree_count}, "
+                    f"tags={core_summary.tag_count}, notes={core_summary.notes_body_count}, "
+                    f"total_bytes={total_retained})"
+                )
 
             _fsync_dir(staging_dir)
 
@@ -1341,6 +1566,9 @@ class SQLiteRecoveryAdapter:
         fresh_destination_dir: Path,
         salvage_file: Path,
         budget: RecoveryBudget | None = None,
+        request_id: str | None = None,
+        *,
+        fault_stage: str | None = None,
     ) -> MergeReceipt:
         fresh_destination_dir = Path(fresh_destination_dir)
         salvage_file = Path(salvage_file)
@@ -1352,10 +1580,23 @@ class SQLiteRecoveryAdapter:
         if not salvage_file.exists():
             raise RecoveryError(f"Salvage file {salvage_file} does not exist")
 
+        req_id = request_id or "default"
+        budget_file = fresh_destination_dir / f"p1-recovery-request-{req_id}.json"
+        initial_usage = {}
+        budget_already_exhausted = False
+        if budget_file.exists():
+            try:
+                state_data = json.loads(budget_file.read_text(encoding="utf-8"))
+                initial_usage = state_data.get("cumulative_usage", {})
+                budget_already_exhausted = state_data.get("budget_exhausted", False)
+            except Exception:
+                pass
+
         b = budget or RecoveryBudget()
         work_budget = RecoveryWorkBudget(
             note_bytes=b.max_payload_bytes,
             work_limits=b.max_work_units,
+            initial_usage=initial_usage,
         )
 
         processed = 0
@@ -1366,7 +1607,7 @@ class SQLiteRecoveryAdapter:
         deferred = 0
         unprocessed = 0
         rejections: list[dict] = []
-        budget_exhausted = False
+        budget_exhausted = budget_already_exhausted or work_budget.is_exhausted()
 
         # Connect to fresh core via GitCore production admission interface
         core_db = fresh_destination_dir / "core.sqlite3"
@@ -1379,6 +1620,19 @@ class SQLiteRecoveryAdapter:
         if ctx_db.exists():
             ctx_conn = p1_connect(ctx_db, "context")
             ctx_store = ContextStore(ctx_conn)
+
+        def _save_budget_state():
+            tmp = fresh_destination_dir / f"{budget_file.name}.tmp.{uuid.uuid4().hex}"
+            data = {
+                "request_id": req_id,
+                "cumulative_usage": dict(work_budget.usage),
+                "budget_exhausted": budget_exhausted,
+                "updated_at_us": int(time.time() * 1_000_000),
+            }
+            tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            _fsync_file(tmp)
+            os.replace(tmp, budget_file)
+            _fsync_dir(fresh_destination_dir)
 
         try:
             with salvage_file.open("r", encoding="utf-8") as f:
@@ -1419,16 +1673,23 @@ class SQLiteRecoveryAdapter:
                     payload = record.get("payload", {})
                     cand_id = record.get("candidate_id", str(processed))
 
-                    # 1. Reject if candidate has corrupt status
-                    if (
-                        record.get("extraction_status")
-                        == ExtractionStatus.CORRUPT_BOUNDARY.value
-                    ):
+                    # 1. Reject if candidate has corrupt status; treat partial candidate as qualified observation
+                    status_val = record.get("extraction_status")
+                    if status_val == ExtractionStatus.CORRUPT_BOUNDARY.value:
                         rejected += 1
                         rejections.append(
                             {
                                 "candidate_id": cand_id,
                                 "reason": "Corrupt boundary extraction status",
+                            }
+                        )
+                        continue
+                    if status_val == ExtractionStatus.PARTIAL.value:
+                        observation += 1
+                        rejections.append(
+                            {
+                                "candidate_id": cand_id,
+                                "reason": f"Partial extraction candidate ({record.get('error') or 'incomplete'}); admitted only as qualified non-authoritative observation",
                             }
                         )
                         continue
@@ -1455,6 +1716,11 @@ class SQLiteRecoveryAdapter:
                                 }
                             )
                             continue
+
+                    # Injected fault stage check after work is performed
+                    if fault_stage == "after_partial_work" and processed >= 1:
+                        _save_budget_state()
+                        raise RecoveryError("Injected failure after partial work")
 
                     # 3. Admitting Retained Metadata Bodies (commits, trees, tags)
                     if c_type in (
@@ -1511,18 +1777,36 @@ class SQLiteRecoveryAdapter:
                         obj_fmt = payload.get("object_format", "sha1")
                         ntype = payload["native_type"]
                         full_oid = payload["full_oid"]
-                        copy_uuid = payload.get("physical_copy_uuidv4") or str(
-                            uuid.uuid4()
-                        )
+                        copy_uuid = payload.get("physical_copy_uuidv4")
 
                         # Check if this exact unit is already admitted in core
-                        exists = core.sql(
-                            "SELECT 1 FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                            (obj_fmt, full_oid, copy_uuid),
-                        )
-                        if exists:
-                            replayed += 1
-                            continue
+                        if copy_uuid:
+                            exists = core.sql(
+                                "SELECT digest_sha256 FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                                (obj_fmt, full_oid, copy_uuid),
+                            )
+                            if exists:
+                                ex_digest = exists[0][0]
+                                if ex_digest == actual_sha:
+                                    replayed += 1
+                                else:
+                                    rejected += 1
+                                    rejections.append(
+                                        {
+                                            "candidate_id": cand_id,
+                                            "reason": "Conflicting exact metadata representation for physical copy",
+                                        }
+                                    )
+                                continue
+                        else:
+                            exists = core.sql(
+                                "SELECT physical_copy_uuidv4, digest_sha256 FROM retained_metadata WHERE object_format=? AND full_oid=?",
+                                (obj_fmt, full_oid),
+                            )
+                            if exists and any(row[1] == actual_sha for row in exists):
+                                replayed += 1
+                                continue
+                            copy_uuid = str(uuid.uuid4())
 
                         try:
                             native = NativeObject(
@@ -1610,12 +1894,78 @@ class SQLiteRecoveryAdapter:
                                 )
                                 continue
 
+                            orig_source = payload.get("source")
+                            orig_ref = _decode_native_ref(payload.get("ref"))
+                            if not orig_source or not orig_ref:
+                                cap_query = core.sql(
+                                    "SELECT source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=?",
+                                    (
+                                        cap_orig_id,
+                                        cap_val_id,
+                                        obj_fmt,
+                                        payload["root"],
+                                    ),
+                                )
+                                if cap_query:
+                                    orig_source, orig_ref = (
+                                        cap_query[0][0],
+                                        _decode_native_ref(cap_query[0][1]),
+                                    )
+
+                            if not orig_source or not orig_ref:
+                                observation += 1
+                                rejections.append(
+                                    {
+                                        "candidate_id": cand_id,
+                                        "reason": "Cannot establish original Capture binding; withheld from authoritative admission as qualified observation",
+                                    }
+                                )
+                                continue
+
+                            existing_cap = core.sql(
+                                "SELECT repository_uuidv4, source, ref, object_format, root FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                                (cap_orig_id, cap_val_id),
+                            )
+                            if existing_cap:
+                                ex_repo, ex_source, ex_ref, ex_fmt, ex_root = (
+                                    existing_cap[0]
+                                )
+                                if (
+                                    ex_source,
+                                    _decode_native_ref(ex_ref),
+                                    ex_fmt,
+                                    ex_root,
+                                ) != (
+                                    orig_source,
+                                    orig_ref,
+                                    obj_fmt,
+                                    payload["root"],
+                                ):
+                                    rejected += 1
+                                    rejections.append(
+                                        {
+                                            "candidate_id": cand_id,
+                                            "reason": f"Conflicting immutable Capture binding: existing ({ex_source}, {_decode_native_ref(ex_ref)}) vs candidate ({orig_source}, {orig_ref})",
+                                        }
+                                    )
+                                    continue
+                            else:
+                                cap = Capture(
+                                    cap_orig_id,
+                                    cap_val_id,
+                                    repo_uuid,
+                                    orig_source,
+                                    orig_ref,
+                                    OID(obj_fmt, payload["root"]),
+                                )
+                                core.admit_capture(cap)
+
                             cap = Capture(
                                 cap_orig_id,
                                 cap_val_id,
                                 repo_uuid,
-                                "salvaged-notes",
-                                "refs/notes/commits",
+                                orig_source,
+                                orig_ref,
                                 OID(obj_fmt, payload["root"]),
                             )
                             proof = NotesProof(
@@ -1625,20 +1975,48 @@ class SQLiteRecoveryAdapter:
                                 path=payload["path"],
                                 structures=structures,
                             )
-                            copy_uuid = payload.get("physical_copy_uuidv4") or str(
-                                uuid.uuid4()
-                            )
+                            copy_uuid = payload.get("physical_copy_uuidv4")
 
                             # Check if already admitted
-                            exists = core.sql(
-                                "SELECT 1 FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                                (obj_fmt, payload["full_oid"], copy_uuid),
-                            )
-                            if exists:
-                                replayed += 1
+                            if copy_uuid:
+                                exists = core.sql(
+                                    "SELECT digest_sha256 FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                                    (obj_fmt, payload["full_oid"], copy_uuid),
+                                )
+                                if exists:
+                                    ex_digest = exists[0][0]
+                                    actual_sha = hashlib.sha256(body_bytes).hexdigest()
+                                    if ex_digest == actual_sha:
+                                        replayed += 1
+                                    else:
+                                        rejected += 1
+                                        rejections.append(
+                                            {
+                                                "candidate_id": cand_id,
+                                                "reason": "Conflicting exact notes representation for physical copy",
+                                            }
+                                        )
+                                    continue
+                            else:
+                                exists = core.sql(
+                                    "SELECT digest_sha256 FROM retained_notes WHERE object_format=? AND full_oid=?",
+                                    (obj_fmt, payload["full_oid"]),
+                                )
+                                actual_sha = hashlib.sha256(body_bytes).hexdigest()
+                                if exists and any(
+                                    row[0] == actual_sha for row in exists
+                                ):
+                                    replayed += 1
+                                    continue
+                                observation += 1
+                                rejections.append(
+                                    {
+                                        "candidate_id": cand_id,
+                                        "reason": "Missing original physical copy UUID; withheld from authoritative admission",
+                                    }
+                                )
                                 continue
 
-                            core.admit_capture(cap)
                             native_note = NativeObject(
                                 oid=OID(obj_fmt, payload["full_oid"]),
                                 native_type="blob",
@@ -1738,7 +2116,7 @@ class SQLiteRecoveryAdapter:
                             )
                             continue
 
-                    # 6. Admitting Git Metadata Objects (repositories, git_objects)
+                    # 6. Admitting Git Metadata Objects (repositories, git_objects, captures)
                     elif c_type == CandidateType.GIT_METADATA.value:
                         prov_tbl = record.get("extraction_provenance", {}).get(
                             "table"
@@ -1770,6 +2148,71 @@ class SQLiteRecoveryAdapter:
                                 else:
                                     core.admit_object(OID(obj_f, f_oid))
                                     admitted += 1
+                            elif prov_tbl == "captures":
+                                cap_orig = payload.get("capture_origin_uuidv4")
+                                cap_id = payload.get("capture_uuidv4")
+                                repo_id = payload.get("repository_uuidv4")
+                                src = payload.get("source")
+                                rf = payload.get("ref")
+                                rf = _decode_native_ref(payload.get("ref"))
+                                obj_f = payload.get("object_format", "sha1")
+                                rt = payload.get("root")
+                                if not (
+                                    cap_orig
+                                    and cap_id
+                                    and repo_id
+                                    and src
+                                    and rf
+                                    and rt
+                                ):
+                                    rejected += 1
+                                    rejections.append(
+                                        {
+                                            "candidate_id": cand_id,
+                                            "reason": "Missing required field in captures candidate",
+                                        }
+                                    )
+                                    continue
+                                existing_cap = core.sql(
+                                    "SELECT repository_uuidv4, source, ref, object_format, root FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                                    (cap_orig, cap_id),
+                                )
+                                if existing_cap:
+                                    ex_repo, ex_source, ex_ref, ex_fmt, ex_root = (
+                                        existing_cap[0]
+                                    )
+                                    if (
+                                        ex_source,
+                                        _decode_native_ref(ex_ref),
+                                        ex_fmt,
+                                        ex_root,
+                                    ) == (
+                                        src,
+                                        rf,
+                                        obj_f,
+                                        rt,
+                                    ):
+                                        replayed += 1
+                                    else:
+                                        rejected += 1
+                                        rejections.append(
+                                            {
+                                                "candidate_id": cand_id,
+                                                "reason": "Conflicting immutable Capture binding",
+                                            }
+                                        )
+                                else:
+                                    core.admit_capture(
+                                        Capture(
+                                            cap_orig,
+                                            cap_id,
+                                            repo_id,
+                                            src,
+                                            rf,
+                                            OID(obj_f, rt),
+                                        )
+                                    )
+                                    admitted += 1
                             else:
                                 # Candidate is accepted as a qualified recovery observation without authoritative mutation
                                 observation += 1
@@ -1793,6 +2236,7 @@ class SQLiteRecoveryAdapter:
                             }
                         )
         finally:
+            _save_budget_state()
             if ctx_conn:
                 ctx_conn.close()
 
