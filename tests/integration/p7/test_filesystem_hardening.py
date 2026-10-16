@@ -401,3 +401,50 @@ def test_activation_catalog_path_swap_is_not_acknowledged(
         assert (locator / "identity").read_text() == "previous"
     else:
         assert not locator.exists() and not locator.is_symlink()
+
+
+@pytest.mark.parametrize("previous", [False, True])
+def test_activation_locator_parent_swap_is_not_acknowledged(
+    synthetic_catalog, tmp_path, monkeypatch, previous
+):
+    parent = tmp_path / "locators"
+    parent.mkdir()
+    locator = parent / "active"
+    old = tmp_path / "old-active"
+    old.mkdir()
+    if previous:
+        locator.symlink_to(old)
+    moved = tmp_path / "original-locators"
+    evil = tmp_path / "evil"
+    evil.mkdir()
+    (evil / "core.sqlite3").write_bytes(b"UNVALIDATED EVIL")
+    identity = parent.stat()
+    original_fsync = module.os.fsync
+
+    def fsync(fd):
+        original_fsync(fd)
+        info = os.fstat(fd)
+        if (
+            (info.st_dev, info.st_ino) == (identity.st_dev, identity.st_ino)
+            and locator.resolve() == synthetic_catalog
+            and not moved.exists()
+        ):
+            parent.rename(moved)
+            parent.mkdir()
+            (parent / "active").symlink_to(evil)
+
+    monkeypatch.setattr(module.os, "fsync", fsync)
+    with pytest.raises(
+        ActivationError, match="Locator parent directory identity changed"
+    ):
+        RecoveryService().activate_catalog(synthetic_catalog, locator)
+    assert moved.exists()
+    # Rollback touches only the pinned original directory, never the untrusted
+    # replacement namespace supplied by the racing process.
+    assert locator.resolve() == evil
+    assert (locator / "core.sqlite3").read_bytes() == b"UNVALIDATED EVIL"
+    if previous:
+        assert (moved / "active").resolve() == old
+    else:
+        assert not (moved / "active").exists()
+        assert not (moved / "active").is_symlink()

@@ -136,20 +136,20 @@ def _open_directory_nofollow(path: Path, *, create: bool = False) -> int:
         raise
 
 
-def _assert_directory_identity(path: Path, expected_fd: int) -> None:
+def _assert_directory_identity(
+    path: Path, expected_fd: int, *, label: str = "Validated catalog"
+) -> None:
     try:
         named_fd = _open_directory_nofollow(path)
         try:
             named = os.fstat(named_fd)
             pinned = os.fstat(expected_fd)
             if (named.st_dev, named.st_ino) != (pinned.st_dev, pinned.st_ino):
-                raise ActivationError("Validated catalog directory identity changed")
+                raise ActivationError(f"{label} directory identity changed")
         finally:
             os.close(named_fd)
     except OSError as error:
-        raise ActivationError(
-            "Validated catalog directory identity unavailable"
-        ) from error
+        raise ActivationError(f"{label} directory identity unavailable") from error
 
 
 def _open_regular_at(directory_fd: int, name: str) -> int:
@@ -3156,6 +3156,9 @@ class SQLiteRecoveryAdapter:
             try:
                 with catalog_completion(fresh_catalog_dir):
                     _assert_directory_identity(advertised_catalog_dir, directory_fd)
+                    _assert_directory_identity(
+                        target_locator_path.parent, parent_fd, label="Locator parent"
+                    )
                     if fault_stage == "during_locator_replacement":
                         raise ActivationError(
                             "Injected failure during locator replacement"
@@ -3237,6 +3240,11 @@ class SQLiteRecoveryAdapter:
                     try:
                         os.fsync(parent_fd)
                         _assert_directory_identity(advertised_catalog_dir, directory_fd)
+                        _assert_directory_identity(
+                            target_locator_path.parent,
+                            parent_fd,
+                            label="Locator parent",
+                        )
                     except BaseException:
                         # A stale pathname must not remain as the active locator.
                         # Preserve the preceding locator on a detected swap.
