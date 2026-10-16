@@ -1,0 +1,22 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_typed_core_reader_refuses_foreign_catalog_directory ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-26/test_typed_core_reader_refuses0')
+
+    def test_typed_core_reader_refuses_foreign_catalog_directory(tmp_path):
+        source = tmp_path / 'source'
+        other = tmp_path / 'other'
+        source.mkdir()
+        other.mkdir()
+        initialize(source / 'core.sqlite3', 'core', str(uuid4()), str(uuid4()))
+        initialize(other / 'core.sqlite3', 'core', str(uuid4()), str(uuid4()))
+        with PairCoordinator(source).core_snapshot() as read:
+>           with pytest.raises((CoreFailure, ValueError)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (CoreFailure, ValueError)
+
+../review-shared-scratch/test_snapshot_binding.py:18: Failed
+=========================== short test summary info ============================
+FAILED ../review-shared-scratch/test_snapshot_binding.py::test_typed_core_reader_refuses_foreign_catalog_directory
+1 failed in 0.14s

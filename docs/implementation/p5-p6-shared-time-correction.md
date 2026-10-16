@@ -52,3 +52,55 @@ required. Existing fingerprint and full disposition audits continue to run.
 P5 separately owns Provider/Exchange input and P6 separately owns query/search
 behavior. Their integration and independently reproduced five inherited Schema
 21 fixture failures must be reported against their final exact combined tree.
+
+## Committed validation and independent recheck
+
+Exact corrected implementation `2d4f5d4e30903a4ddd9f1f7977560b47cfe29e6b`, tree
+`5829799cb8ab0da0dad5306f74df82ff9f84cd31`, passed **828** selected/executed
+unique nodes (P1–P4, 20 P2/P3 compatibility, snapshot helpers and installed P1–P4
+wheel/sdist-wheel variants). Zero failures/skips. Locked sync, ruff check/format,
+schema fingerprint/disposition, implementation-boundary and callsite audits all
+passed. Source hashes and real before/after Git status remained unchanged/clean.
+
+Final executable source `f17dd2154f22f965883d8a1943c140f9cc439ae8`, tree
+`952c18132b11f393715e67baad33b730e3404e12`, adds disjoint authority-validation
+and snapshot-token timing instrumentation and clarifies the synthetic generic
+SQLite signed-storage fixture's column name. Its focused **77** nodes passed,
+with the same requested checks. This is a focused rerun, not a claim to have
+rerun the full 828 selection at that SHA. The root's final combined-tree run
+covers both siblings and this final common source separately.
+
+Independent final review executed **119** committed focused nodes and **74**
+reviewer-owned counterexamples on exact `f17dd21`, all passing with three passing
+phases each, no failures/skips. Those selections overlap local coverage and the
+earlier independent **816** impact nodes at `2d4f5d4`; their counts are not added
+into a fabricated unique total. The independent source binding, initial
+counterexamples, fixes and final executions are recorded in
+[evidence/p5-p6-shared/independent-review/shared-review.md](evidence/p5-p6-shared/independent-review/shared-review.md).
+The independently reviewed owner design note is retained alongside that report.
+
+Shared material finding **SHARED-R1** was independently reproduced at `3e82802`:
+a typed Core snapshot accepted catalog A's read with caller directory B, allowing
+corruption stop misrouting. `2d4f5d4` binds trusted snapshot ownership, rejects
+foreign/unbound readers and preserves owner notification; Context rejects foreign
+snapshot ownership too. A real retained-byte counterexample independently
+confirms source A is stopped and unrelated B is untouched after a valid A read.
+The new regression also exercises caught fault completion fencing. No material
+shared review finding remains.
+
+Raw evidence is under [evidence/p5-p6-shared/](evidence/p5-p6-shared/): exact
+commands, environment versions, full source hashes, collected/executed IDs,
+setup/call/teardown journal, JUnit, logs and artifact hashes. `.gz` files are
+losslessly compressed originals (use `gzip -dc`). The earlier exact `3e82802`
+run deliberately remains: **826 passed, 1 failed** because a cancellation-control
+monkeypatch did not forward the new `metadata_only` option, plus a legitimately
+stale source-index audit. Both were corrected, not skipped. Its first runner
+hardcoded `status_before="clean"` while untracked scratch `work/` existed; do not
+use that field as a clean-worktree assertion. Tracked source hashes stayed
+unchanged. Later receipts capture actual status and put scratch outside the tree.
+
+The old input mapping above preserves the signed-native and provenance/overflow
+purposes explicitly. The existing cancellation test now forwards optional
+validation arguments and continues asserting actual SQLITE_INTERRUPT without a
+corruption stop. No inherited Schema 21 failure is hidden or counted as passing;
+the final combined evidence owns their exact-revision reclassification.
