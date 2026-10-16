@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import concurrent.futures
+import fcntl
 import hashlib
 import json
 import shutil
@@ -12,7 +14,6 @@ import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.p1_coordination import catalog_gate
 from repo_catalog.adapters.sqlite.p1_core import Core
 from repo_catalog.adapters.sqlite.p1_schema import (
     connect as p1_connect,
@@ -98,6 +99,9 @@ def test_case_02_retained_byte_modified_without_digest_update_detected(
         "UPDATE retained_metadata SET body=? WHERE full_oid=?",
         (tampered_body, full_oid),
     )
+    conn.execute(
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+    )
     conn.commit()
     conn.close()
 
@@ -107,6 +111,10 @@ def test_case_02_retained_byte_modified_without_digest_update_detected(
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
     manifest_data["stores"]["core"]["sha256"] = new_core_sha
     manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    overall_h = hashlib.sha256()
+    for s in sorted(manifest_data["stores"].keys()):
+        overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
+    manifest_data["overall_sha256"] = overall_h.hexdigest()
     manifest_file.write_text(
         json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
     )
@@ -140,6 +148,9 @@ def test_case_03_forged_backup_with_recalculated_manifest_sha_rejected(
     conn.execute(
         "UPDATE retained_metadata SET size = size + 100 WHERE native_type='commit'"
     )
+    conn.execute(
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+    )
     conn.commit()
     conn.close()
 
@@ -149,6 +160,10 @@ def test_case_03_forged_backup_with_recalculated_manifest_sha_rejected(
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
     manifest_data["stores"]["core"]["sha256"] = new_core_sha
     manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    overall_h = hashlib.sha256()
+    for s in sorted(manifest_data["stores"].keys()):
+        overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
+    manifest_data["overall_sha256"] = overall_h.hexdigest()
     manifest_file.write_text(
         json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
     )
@@ -396,7 +411,7 @@ def test_case_08_rejected_candidates_cause_no_mutation(
 
 
 def test_case_09_original_capture_and_provenance_survive_replay(
-    synthetic_catalog, tmp_path
+    synthetic_catalog, tmp_path, repo_uuid
 ):
     """Case 9: Original Capture and provenance survive replay when supported."""
     service = RecoveryService()
@@ -416,20 +431,70 @@ def test_case_09_original_capture_and_provenance_survive_replay(
     cand = note_candidates[0]
     assert cand["capture_origin_uuidv4"] is not None
     assert cand["capture_uuidv4"] is not None
-    assert cand["provenance"] == {"store": "core", "table": "retained_notes"}
+    # Forensic extraction coordinates are separated from domain provenance
+    assert cand["extraction_provenance"] == {"store": "core", "table": "retained_notes"}
+
+    # Reopen fresh destination and replay salvage candidates
+    backup_path = tmp_path / "backup_case9"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+    fresh_dest = tmp_path / "fresh_case9"
+    service.restore_backup(backup_path, fresh_dest, repo_uuid)
+
+    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
+    assert merge_receipt.replayed_units >= 1
+
+    # Reopen database to verify original domain coordinates survive replay intact
+    conn = sqlite3.connect(
+        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+    )
+    register_functions(conn)
+    row = conn.execute(
+        "SELECT capture_origin_uuidv4, capture_uuidv4, full_oid, root, target, path "
+        "FROM retained_notes WHERE full_oid=?",
+        (cand["payload"]["full_oid"],),
+    ).fetchone()
+    conn.close()
+
+    assert row is not None
+    assert row[0] == cand["capture_origin_uuidv4"]
+    assert row[1] == cand["capture_uuidv4"]
+    assert row[2] == cand["payload"]["full_oid"]
+    assert row[3] == cand["payload"]["root"]
+    assert row[4] == cand["payload"]["target"]
+    assert row[5] == cand["payload"]["path"]
 
 
 def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_path):
     """Case 10: Read-only salvage preserves the original SQLite DB/WAL/journal evidence."""
     service = RecoveryService()
     core_path = synthetic_catalog / "core.sqlite3"
-    pre_sha = _sha256_file(core_path)
+    wal_path = synthetic_catalog / "core.sqlite3-wal"
+    shm_path = synthetic_catalog / "core.sqlite3-shm"
+
+    # Ensure WAL and SHM exist with active uncheckpointed state
+    conn = sqlite3.connect(str(core_path))
+    register_functions(conn)
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
+    conn.execute("CREATE TABLE IF NOT EXISTS _wal_test (x INT);")
+    conn.execute("INSERT INTO _wal_test VALUES (42);")
+    conn.commit()
+    conn.close()
+
+    assert wal_path.exists(), "WAL file must exist to verify preservation"
+    pre_core_sha = _sha256_file(core_path)
+    pre_wal_sha = _sha256_file(wal_path)
+    pre_shm_sha = _sha256_file(shm_path) if shm_path.exists() else None
 
     salvage_file = tmp_path / "salvage_case10.jsonl"
     service.extract_salvage(synthetic_catalog, salvage_file)
 
-    post_sha = _sha256_file(core_path)
-    assert pre_sha == post_sha
+    assert _sha256_file(core_path) == pre_core_sha
+    assert _sha256_file(wal_path) == pre_wal_sha
+    if pre_shm_sha is not None:
+        assert _sha256_file(shm_path) == pre_shm_sha
 
 
 def test_case_11_writer_cannot_cross_declared_backup_cut(synthetic_catalog, tmp_path):
@@ -437,17 +502,29 @@ def test_case_11_writer_cannot_cross_declared_backup_cut(synthetic_catalog, tmp_
     service = RecoveryService()
     backup_path = tmp_path / "backups" / "case11_backup"
 
-    # Verify writer exclusion during backup
-    with catalog_gate(synthetic_catalog, exclusive=True):
-        # A concurrent backup or writer cannot acquire exclusive catalog_gate simultaneously
-        with pytest.raises(Exception):
-            with catalog_gate(synthetic_catalog, exclusive=True, timeout=0.01):
-                pass
+    callback_executed = False
 
-    # Normal backup succeeds cleanly after writer lock is released
+    def cut_callback() -> None:
+        nonlocal callback_executed
+        callback_executed = True
+        # Verify cross-process writer exclusion: while backup cut is held, non-blocking lock fails
+        lock_file = synthetic_catalog / "p1-writer.lock"
+        assert lock_file.exists(), "p1-writer.lock must exist during backup cut"
+        fd = lock_file.open("r")
+        try:
+            with pytest.raises(BlockingIOError):
+                fcntl.flock(fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        finally:
+            fd.close()
+
+    # Normal backup succeeds cleanly and executes snapshot cut under lock
     receipt = service.create_consistent_backup(
-        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+        synthetic_catalog,
+        backup_path,
+        scope=BackupScope.PAIRED,
+        snapshot_cut_callback=cut_callback,
     )
+    assert callback_executed
     assert receipt.verified_clean
 
 
@@ -457,20 +534,66 @@ def test_case_12_concurrent_destination_creation_no_overwrite(
     """Case 12: Concurrent destination creation cannot be overwritten."""
     service = RecoveryService()
 
-    # Destination already exists for backup
-    existing_dest = tmp_path / "existing_backup_dest"
-    existing_dest.mkdir()
-    with pytest.raises(BackupValidationError, match="already exists"):
-        service.create_consistent_backup(synthetic_catalog, existing_dest)
+    # 1. Concurrent racing backup publishers to the exact same destination
+    race_backup_path = tmp_path / "race_backup_dest"
+    num_threads = 4
 
-    # Destination already exists for restore
-    valid_backup = tmp_path / "backups" / "valid_b"
-    service.create_consistent_backup(synthetic_catalog, valid_backup)
+    def run_concurrent_backup():
+        return service.create_consistent_backup(
+            synthetic_catalog, race_backup_path, scope=BackupScope.GIT_ONLY
+        )
 
-    existing_restore_dest = tmp_path / "existing_restore_dest"
-    existing_restore_dest.mkdir()
-    with pytest.raises(RestoreValidationError, match="already exists"):
-        service.restore_backup(valid_backup, existing_restore_dest, repo_uuid)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = [executor.submit(run_concurrent_backup) for _ in range(num_threads)]
+        successes = 0
+        conflicts = 0
+        for f in futures:
+            try:
+                receipt = f.result()
+                if receipt.verified_clean:
+                    successes += 1
+            except BackupValidationError as e:
+                if "already exists" in str(e):
+                    conflicts += 1
+                else:
+                    raise
+
+    assert successes == 1, (
+        f"Expected exactly 1 winning backup publisher, got {successes}"
+    )
+    assert conflicts == num_threads - 1, (
+        f"Expected {num_threads - 1} no-overwrite rejections, got {conflicts}"
+    )
+    assert (race_backup_path / "manifest.json").exists()
+
+    # 2. Concurrent racing restore publishers to the exact same destination
+    race_restore_path = tmp_path / "race_restore_dest"
+
+    def run_concurrent_restore():
+        return service.restore_backup(race_backup_path, race_restore_path, repo_uuid)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = [executor.submit(run_concurrent_restore) for _ in range(num_threads)]
+        successes = 0
+        conflicts = 0
+        for f in futures:
+            try:
+                receipt = f.result()
+                if receipt.revalidated_clean:
+                    successes += 1
+            except RestoreValidationError as e:
+                if "already exists" in str(e):
+                    conflicts += 1
+                else:
+                    raise
+
+    assert successes == 1, (
+        f"Expected exactly 1 winning restore publisher, got {successes}"
+    )
+    assert conflicts == num_threads - 1, (
+        f"Expected {num_threads - 1} no-overwrite restore rejections, got {conflicts}"
+    )
+    assert (race_restore_path / "core.sqlite3").exists()
 
 
 def test_case_13_symlink_and_path_traversal_rejection(
@@ -608,3 +731,267 @@ def test_case_17_sha1_and_sha256_git_formats(tmp_path):
     restore_dest = tmp_path / "restored_sha256"
     rest_receipt = service.restore_backup(backup_path, restore_dest, repo_256)
     assert rest_receipt.revalidated_clean
+
+
+def test_case_18_wrong_ddl_with_valid_file_hashes_rejected(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 18: A database with tampered DDL but recomputed file and manifest hashes is rejected."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case18_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
+    )
+
+    core_file = backup_path / "stores" / "core.sqlite3"
+    conn = sqlite3.connect(str(core_file))
+    register_functions(conn)
+    # Alter DDL by adding an unauthorized table
+    conn.execute("CREATE TABLE rogue_table (id INT PRIMARY KEY);")
+    conn.commit()
+    conn.close()
+
+    # Recalculate file hash and update manifest so file-level checks pass
+    new_core_sha = _sha256_file(core_file)
+    manifest_file = backup_path / "manifest.json"
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    manifest_data["stores"]["core"]["sha256"] = new_core_sha
+    manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    overall_h = hashlib.sha256()
+    for s in sorted(manifest_data["stores"].keys()):
+        overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
+    manifest_data["overall_sha256"] = overall_h.hexdigest()
+    manifest_file.write_text(
+        json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
+    )
+
+    manifest_sha_file = backup_path / "manifest.json.sha256"
+    manifest_sha_file.write_text(
+        _sha256_file(manifest_file) + "  manifest.json\n", encoding="utf-8"
+    )
+
+    restore_dest = tmp_path / "restored_case18"
+    with pytest.raises(
+        RestoreValidationError, match="schema differs from packaged target"
+    ):
+        service.restore_backup(backup_path, restore_dest, repo_uuid)
+
+
+def test_case_19_inconsistent_store_identities_rejected(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 19: Stores with inconsistent catalog_instance_uuidv4 are rejected during restore."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case19_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+
+    ctx_file = backup_path / "stores" / "context.sqlite3"
+    conn = sqlite3.connect(str(ctx_file))
+    register_functions(conn)
+    conn.execute("PRAGMA ignore_check_constraints = ON;")
+    conn.execute("DROP TRIGGER IF EXISTS p1_immutable_store_identity_update;")
+    # Tamper catalog_instance_uuidv4 in context store_identity
+    conn.execute("UPDATE store_identity SET catalog_instance_uuidv4=?", (str(uuid4()),))
+    conn.execute(
+        "CREATE TRIGGER p1_immutable_store_identity_update BEFORE UPDATE ON store_identity BEGIN SELECT RAISE(ABORT,'immutable context fact'); END;"
+    )
+    conn.commit()
+    conn.close()
+
+    # Recompute file and manifest hashes
+    new_ctx_sha = _sha256_file(ctx_file)
+    manifest_file = backup_path / "manifest.json"
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    manifest_data["stores"]["context"]["sha256"] = new_ctx_sha
+    manifest_data["stores"]["context"]["bytes"] = ctx_file.stat().st_size
+    overall_h = hashlib.sha256()
+    for s in sorted(manifest_data["stores"].keys()):
+        overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
+    manifest_data["overall_sha256"] = overall_h.hexdigest()
+    manifest_file.write_text(
+        json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
+    )
+
+    manifest_sha_file = backup_path / "manifest.json.sha256"
+    manifest_sha_file.write_text(
+        _sha256_file(manifest_file) + "  manifest.json\n", encoding="utf-8"
+    )
+
+    restore_dest = tmp_path / "restored_case19"
+    with pytest.raises(RestoreValidationError, match="Paired store identity mismatch"):
+        service.restore_backup(backup_path, restore_dest, repo_uuid)
+
+
+def test_case_20_wrong_native_oid_rejected(synthetic_catalog, tmp_path, repo_uuid):
+    """Case 20: Tampered native OID calculation mismatch is detected during restore."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case20_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
+    )
+
+    core_file = backup_path / "stores" / "core.sqlite3"
+    conn = sqlite3.connect(str(core_file))
+    register_functions(conn)
+    conn.execute("PRAGMA ignore_check_constraints = ON;")
+    conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
+    row = conn.execute(
+        "SELECT full_oid, body FROM retained_metadata WHERE native_type='commit'"
+    ).fetchone()
+    full_oid, body = row
+    tampered_body = b"X" + body[1:]
+    tampered_digest = hashlib.sha256(tampered_body).hexdigest()
+    # Update body and digest so digest check passes, but native OID check fails
+    conn.execute(
+        "UPDATE retained_metadata SET body=?, digest_sha256=? WHERE full_oid=?",
+        (tampered_body, tampered_digest, full_oid),
+    )
+    conn.execute(
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+    )
+    conn.commit()
+    conn.close()
+
+    # Recompute file and manifest hashes
+    new_core_sha = _sha256_file(core_file)
+    manifest_file = backup_path / "manifest.json"
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    manifest_data["stores"]["core"]["sha256"] = new_core_sha
+    manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    overall_h = hashlib.sha256()
+    for s in sorted(manifest_data["stores"].keys()):
+        overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
+    manifest_data["overall_sha256"] = overall_h.hexdigest()
+    manifest_file.write_text(
+        json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
+    )
+
+    manifest_sha_file = backup_path / "manifest.json.sha256"
+    manifest_sha_file.write_text(
+        _sha256_file(manifest_file) + "  manifest.json\n", encoding="utf-8"
+    )
+
+    restore_dest = tmp_path / "restored_case20"
+    with pytest.raises(RestoreValidationError, match="Native OID calculation mismatch"):
+        service.restore_backup(backup_path, restore_dest, repo_uuid)
+
+
+def test_case_21_invalid_context_text_digest_rejected(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 21: Tampered context text payload with mismatched sha256 is detected."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case21_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+
+    ctx_file = backup_path / "stores" / "context.sqlite3"
+    conn = sqlite3.connect(str(ctx_file))
+    register_functions(conn)
+    row = conn.execute("SELECT sha256, text_value FROM text_bodies LIMIT 1").fetchone()
+    assert row is not None
+    sha, text_val = row
+    conn.execute("PRAGMA ignore_check_constraints = ON;")
+    conn.execute("DROP TRIGGER IF EXISTS text_bodies_no_update;")
+    conn.execute(
+        "UPDATE text_bodies SET text_value = ? WHERE sha256 = ?",
+        (text_val + " TAMPERED", sha),
+    )
+    conn.execute(
+        "CREATE TRIGGER text_bodies_no_update BEFORE UPDATE ON text_bodies BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;"
+    )
+    conn.commit()
+    conn.close()
+
+    # Recompute file and manifest hashes
+    new_ctx_sha = _sha256_file(ctx_file)
+    manifest_file = backup_path / "manifest.json"
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    manifest_data["stores"]["context"]["sha256"] = new_ctx_sha
+    manifest_data["stores"]["context"]["bytes"] = ctx_file.stat().st_size
+    overall_h = hashlib.sha256()
+    for s in sorted(manifest_data["stores"].keys()):
+        overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
+    manifest_data["overall_sha256"] = overall_h.hexdigest()
+    manifest_file.write_text(
+        json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
+    )
+
+    manifest_sha_file = backup_path / "manifest.json.sha256"
+    manifest_sha_file.write_text(
+        _sha256_file(manifest_file) + "  manifest.json\n", encoding="utf-8"
+    )
+
+    restore_dest = tmp_path / "restored_case21"
+    with pytest.raises(
+        RestoreValidationError, match="Context text body SHA-256 mismatch"
+    ):
+        service.restore_backup(backup_path, restore_dest, repo_uuid)
+
+
+def test_case_22_inconsistent_core_context_pairing_rejected(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 22: Inconsistent Core/Context scope declaration and store set is rejected."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case22_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+
+    # Change scope to git_only while retaining context in stores map
+    manifest_file = backup_path / "manifest.json"
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    manifest_data["scope"] = BackupScope.GIT_ONLY.value
+    manifest_file.write_text(
+        json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
+    )
+
+    manifest_sha_file = backup_path / "manifest.json.sha256"
+    manifest_sha_file.write_text(
+        _sha256_file(manifest_file) + "  manifest.json\n", encoding="utf-8"
+    )
+
+    restore_dest = tmp_path / "restored_case22"
+    with pytest.raises(RestoreValidationError, match="do not match expected scope"):
+        service.restore_backup(backup_path, restore_dest, repo_uuid)
+
+
+def test_case_23_legitimately_unresolved_context_references_admitted(
+    synthetic_catalog, tmp_path, repo_uuid
+):
+    """Case 23: Context documents with legitimately unresolved Git references under P3/P5 remain admissible."""
+    service = RecoveryService()
+    backup_path = tmp_path / "backups" / "case23_backup"
+    service.create_consistent_backup(
+        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
+    )
+
+    fresh_dest = tmp_path / "fresh_case23"
+    restore_receipt = service.restore_backup(backup_path, fresh_dest, repo_uuid)
+    assert restore_receipt.revalidated_clean
+
+    # Salvage candidate referencing an unresolved OID
+    salvage_file = tmp_path / "salvage_case23.jsonl"
+    cand_sha = hashlib.sha256(b"Unresolved external doc").hexdigest()
+    context_cand = {
+        "candidate_id": cand_sha,
+        "candidate_type": CandidateType.CONTEXT_DOCUMENT.value,
+        "capture_origin_uuidv4": str(uuid4()),
+        "capture_uuidv4": str(uuid4()),
+        "extraction_provenance": {"store": "context", "table": "text_bodies"},
+        "payload": {
+            "sha256": cand_sha,
+            "text_value": "Unresolved external doc",
+        },
+        "extraction_status": ExtractionStatus.CLEAN.value,
+        "error": None,
+    }
+    salvage_file.write_text(json.dumps(context_cand) + "\n", encoding="utf-8")
+
+    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
+    assert merge_receipt.admitted_units == 1
+    assert merge_receipt.rejected_units == 0

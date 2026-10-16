@@ -21,9 +21,20 @@ def test_fresh_restore_and_merge(synthetic_catalog, tmp_path, repo_uuid):
     restore_receipt = service.restore_backup(backup_path, fresh_dir, repo_uuid)
     assert restore_receipt.revalidated_clean
 
-    # 3. Create a synthetic salvage file with 1 clean candidate and 1 corrupt candidate
+    # 3. Create a synthetic salvage file with 1 admitted candidate, 1 observation candidate, and 2 corrupt candidates
     salvage_file = tmp_path / "salvage.jsonl"
-    clean_cand = {
+    new_repo_id = str(uuid4())
+    admitted_cand = {
+        "candidate_id": str(uuid4()),
+        "candidate_type": CandidateType.GIT_METADATA.value,
+        "capture_origin_uuidv4": str(uuid4()),
+        "capture_uuidv4": str(uuid4()),
+        "extraction_provenance": {"store": "core", "table": "repositories"},
+        "payload": {"repository_uuidv4": new_repo_id},
+        "extraction_status": ExtractionStatus.CLEAN.value,
+        "error": None,
+    }
+    observation_cand = {
         "candidate_id": str(uuid4()),
         "candidate_type": CandidateType.GIT_METADATA.value,
         "capture_origin_uuidv4": str(uuid4()),
@@ -55,15 +66,28 @@ def test_fresh_restore_and_merge(synthetic_catalog, tmp_path, repo_uuid):
     }
 
     with salvage_file.open("w", encoding="utf-8") as f:
-        for c in (clean_cand, corrupt_cand, invalid_uuid_cand):
+        for c in (admitted_cand, observation_cand, corrupt_cand, invalid_uuid_cand):
             f.write(json.dumps(c) + "\n")
 
     # 4. Merge salvage into fresh destination
     merge_receipt = service.merge_salvage(fresh_dir, salvage_file)
-    assert merge_receipt.candidates_processed == 3
+    assert merge_receipt.candidates_processed == 4
     assert merge_receipt.admitted_units == 1
+    assert merge_receipt.observation_units == 1
     assert merge_receipt.rejected_units == 2
     assert len(merge_receipt.rejections) == 2
+
+    # 5. Verify actual authoritative row exists in reopened database
+    import sqlite3
+
+    conn = sqlite3.connect(fresh_dir / "core.sqlite3")
+    assert (
+        conn.execute(
+            "SELECT 1 FROM repositories WHERE repository_uuidv4=?", (new_repo_id,)
+        ).fetchone()
+        is not None
+    )
+    conn.close()
 
 
 def test_merge_rejects_unproven_note_body(synthetic_catalog, tmp_path, repo_uuid):

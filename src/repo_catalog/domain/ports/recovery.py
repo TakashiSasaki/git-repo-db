@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol
+from typing import Callable, Protocol
 
 from repo_catalog.domain.recovery import (
     ActivationReceipt,
     BackupReceipt,
     BackupScope,
     MergeReceipt,
+    RecoveryBudget,
     RestoreReceipt,
     SalvageReceipt,
 )
@@ -31,6 +32,8 @@ class BackupPort(Protocol):
         catalog_dir: Path,
         destination_path: Path,
         scope: BackupScope = BackupScope.PAIRED,
+        *,
+        snapshot_cut_callback: Callable[[], None] | None = None,
     ) -> BackupReceipt: ...
 
 
@@ -41,6 +44,7 @@ class SalvagePort(Protocol):
         output_file: Path,
         max_records: int | None = None,
         max_bytes: int | None = None,
+        budget: RecoveryBudget | None = None,
     ) -> SalvageReceipt: ...
 
 
@@ -58,6 +62,7 @@ class SalvageMergePort(Protocol):
         self,
         fresh_destination_dir: Path,
         salvage_file: Path,
+        budget: RecoveryBudget | None = None,
     ) -> MergeReceipt: ...
 
 

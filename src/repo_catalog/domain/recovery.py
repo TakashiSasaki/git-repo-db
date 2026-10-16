@@ -54,6 +54,41 @@ class ActivationError(RecoveryError):
     """Raised when fresh catalog activation fails validation or no-overwrite guards."""
 
 
+class CandidateDisposition(str, enum.Enum):
+    ADMITTED = "admitted"
+    REPLAYED = "replayed"
+    OBSERVATION = "observation"
+    REJECTED = "rejected"
+    DEFERRED = "deferred"
+    UNPROCESSED = "unprocessed"
+
+
+@dataclass(frozen=True)
+class RecoveryBudget:
+    max_input_records: int = 100_000
+    max_input_bytes: int = 512 * 1024 * 1024  # 512 MB
+    max_payload_bytes: int = 16 * 1024 * 1024  # 16 MB
+    max_json_depth: int = 16
+    max_work_units: Mapping[str, int] = field(
+        default_factory=lambda: {
+            "input_bytes": 256 * 1024 * 1024,
+            "verification_bytes": 2 * 1024 * 1024 * 1024,
+            "metadata_units": 1_000_000,
+            "proof_steps": 100_000,
+        }
+    )
+
+    def __post_init__(self):
+        if not (isinstance(self.max_input_records, int) and self.max_input_records > 0):
+            raise ValueError("max_input_records must be a positive integer")
+        if not (isinstance(self.max_input_bytes, int) and self.max_input_bytes > 0):
+            raise ValueError("max_input_bytes must be a positive integer")
+        if not (isinstance(self.max_payload_bytes, int) and self.max_payload_bytes > 0):
+            raise ValueError("max_payload_bytes must be a positive integer")
+        if not (isinstance(self.max_json_depth, int) and self.max_json_depth > 0):
+            raise ValueError("max_json_depth must be a positive integer")
+
+
 @dataclass(frozen=True)
 class StoreManifest:
     path: str
@@ -111,9 +146,10 @@ class SalvageCandidate:
     candidate_type: CandidateType
     capture_origin_uuidv4: str | None
     capture_uuidv4: str | None
-    provenance: Mapping[str, Any]
+    extraction_provenance: Mapping[str, Any]
     payload: Mapping[str, Any]
     extraction_status: ExtractionStatus
+    provenance: Mapping[str, Any] | None = None
     error: str | None = None
 
 
@@ -126,6 +162,7 @@ class SalvageReceipt:
     corrupt_count: int
     unreadable_scope: list[str]
     output_file: str
+    partial: bool = False
 
 
 @dataclass(frozen=True)
@@ -134,6 +171,10 @@ class MergeReceipt:
     candidates_processed: int
     admitted_units: int
     rejected_units: int
+    replayed_units: int = 0
+    observation_units: int = 0
+    deferred_units: int = 0
+    unprocessed_units: int = 0
     rejections: list[Mapping[str, Any]] = field(default_factory=list)
 
 
@@ -144,3 +185,4 @@ class ActivationReceipt:
     reconstructed_stores: list[str]
     timestamp_us: int
     clean_operational: bool
+    search_derivative_state: str = "initialized_empty"
