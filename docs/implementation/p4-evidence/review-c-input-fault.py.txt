@@ -1,0 +1,33 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+from p4.conftest import acquisition,fixture_note
+import repo_catalog.adapters.git.notes as source_module
+from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget,WorkLedger
+from repo_catalog.adapters.sqlite.p1_schema import connect
+from repo_catalog.adapters.sqlite.notes import NotesProgress
+from repo_catalog.application.notes import NotesAcquisition
+from repo_catalog.domain.p1_coordination import NotesLimits
+with TemporaryDirectory() as d:
+ gen=acquisition.__wrapped__(Path(d),SimpleNamespace(param=('sha1',True))); a=next(gen)
+ try:
+  app,path,fmt,repository,origin,core_path,op_path=a
+  capture,target,note=fixture_note(a)
+  old_read=source_module.os.read
+  def failed_read(*args):
+   chunk=old_read(*args)
+   if args[1] == 129 and chunk:
+    raise OSError('lost read acknowledgment after actual input')
+   return chunk
+  source_module.os.read=failed_read
+  try: result=app.acquire_note(capture,target)
+  finally: source_module.os.read=old_read
+  print('failed scope',result.failure_code,'usage',app.work.ledger.usage(app.work.request))
+  db=connect(op_path,'operational'); ledger=WorkLedger(db)
+  work=NotesWorkBudget(ledger,app.work.request,app.work.attempt_uuidv4,NotesLimits())
+  resumed=NotesAcquisition(app.core,app.source,work,NotesProgress(work))
+  result=resumed.acquire_note(capture,target)
+  print('resume retained',result.body_retained,'usage',ledger.usage(work.request))
+  print('catalog stop',(Path(d)/'p1-recovery-stop.json').exists())
+  assert result.body_retained and ledger.usage(work.request)['input_bytes']>=129
+ finally: gen.close()

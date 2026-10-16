@@ -1,5 +1,21 @@
 # Next-stage DAG after independently reviewed production siblings
 
+## Current stage update — 2026-10-16
+
+P1/P2/P3 integration subsequently completed on main
+`5e778bf61ef660f65bf5fb22bdb08840503b8464` (tree
+`2c6eca80e6432a1b4f89a2111e7ded69c6b9a507`); #71/#70/#72/#73/#74/#75/#76
+are merged and there were zero open task PRs at the P4 start. The historical
+pre-integration instructions below preserve their original scope.
+
+P4 is now implemented as an opt-in stacked proposal over
+[design #77](https://github.com/TakashiSasaki/git-repo-db/pull/77), with
+[production interfaces and handoff](p4-production-notes.md) and
+[exact execution evidence](p4-execution-evidence.json). P5/P6 may consume those
+interfaces subject to their explicit P4 implementation dependency. Neither P7
+recovery/activation nor the P8 public switch is included. Schema 21 remains public.
+
+
 The same corrected P1 dependency is common authority for both siblings. Their
 branches remain separate; merge neither production PR as part of this task.
 

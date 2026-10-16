@@ -1,0 +1,23 @@
+........................................................................ [  8%]
+........................................................................ [ 16%]
+........................................................................ [ 24%]
+........................................................................ [ 32%]
+........................................................................ [ 40%]
+........................................................................ [ 48%]
+........................................................................ [ 56%]
+........................................................................ [ 64%]
+........................................................................ [ 72%]
+........................................................................ [ 80%]
+........................................................................ [ 88%]
+........................................................................ [ 96%]
+.................................                                        [100%]
+=============================== warnings summary ===============================
+tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[before_core_commit-expected0]
+tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[after_core_commit-expected1]
+tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[during_context-expected2]
+tests/integration/architecture_spikes/test_consistency.py::test_crash_cuts_and_identity_preserving_retry[after_context_commit-expected3]
+  tests/integration/architecture_spikes/test_consistency.py:37: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    @pytest.mark.parametrize(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+897 passed, 4 warnings in 50.61s

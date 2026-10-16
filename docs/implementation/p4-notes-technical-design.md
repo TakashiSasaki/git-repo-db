@@ -236,3 +236,29 @@ revalidation at exact corrected SHA/tree. Local agent reviews are not GitHub
 approvals. Final evidence records actual selected/executed nodes and outcomes,
 packaging, Ruff, four audits and hosted Development CI separately. Full Release
 Acceptance is outside scope. No tests are skipped/xfail'd to conceal a failure.
+
+
+## Executable implementation refinements — 2026-10-16
+
+Independent counterexamples required two focused opt-in DDL refinements: a
+`notes_inventory_guard` trigger locally validates actual receiver-intrinsic
+inventory evidence through supported coordinator SQL, and Operational
+`request_budgets.spent_or_reserved` maintains finite conservative expenditure
+without scanning all earlier work for every reservation. These are receiving
+checks and resource mechanics under accepted ADRs, not new owner decisions.
+No table or domain key is added; the single new mutable column belongs only to
+Operational. Core remains INSERT-only. Generated schema fingerprints and authored
+physical disposition evidence are reconciled; public Schema 21 is unchanged.
+
+WorkLedger mandatory loss-detecting checkpoints cover actual work, budgets,
+attempts, allocator and progress rows. NotesProgress accesses them only through
+`get_progress` / `set_progress_once`. App composition requires actual matching
+Core/Operational repository/catalog identity and `request_scope` for the selected
+local path, object format and Notes source intent. An externally attributed
+Capture keeps its original source when the receiver checks it from a local mirror.
+
+Typed inventory readers use trusted stored-value decoding for UTF-8 and nested
+JSON errors before publishing output, and supported raw callbacks cannot claim
+intrinsic inventory without its real native evidence. The
+[production handoff](p4-production-notes.md) and [execution receipt](p4-execution-evidence.json)
+record final executable interfaces, limits, reviewed corrections and test evidence.

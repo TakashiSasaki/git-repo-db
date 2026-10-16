@@ -1,0 +1,24 @@
+import os,pathlib,tempfile,subprocess
+from uuid import uuid4
+from repo_catalog.adapters.git.native import GitNativeSource
+from repo_catalog.adapters.git.notes import GitNotesSource
+from repo_catalog.domain.p1_core import Capture,CoreFailure
+from repo_catalog.domain.notes import mapping_proof
+from tests.integration.p1.test_core import Budget
+exec(open('/tmp/p4-review-a-checks.py').read().split('count=0')[0])
+for fmt in ('sha1','sha256'):
+ d=pathlib.Path(tempfile.mkdtemp()); p=d/'local'; p.mkdir(); remote=d/'remote';
+ run(p,'init','--bare','--object-format='+fmt)
+ target=OID(fmt,'b'*(40 if fmt=='sha1' else 64)); note=write(p,fmt,'blob',b'body missing locally')
+ root=write(p,fmt,'tree',ent(b'100644',target.full_oid.encode(),note)); run(p,'update-ref','refs/notes/test',root.full_oid)
+ subprocess.run(['git','clone','--bare',str(p),str(remote)],check=True,capture_output=True)
+ run(p,'config','extensions.partialClone','origin'); run(p,'config','remote.origin.url',str(remote));run(p,'config','remote.origin.promisor','true')
+ trace=d/'trace.json';os.environ['GIT_TRACE2_EVENT']=str(trace)
+ source=GitNotesSource(GitNativeSource(p)); cap=Capture(str(uuid4()),str(uuid4()),str(uuid4()),'local','refs/notes/test',root)
+ proof=mapping_proof(cap,target,lambda oid:source.metadata(oid,Budget()),Budget())
+ (p/'objects'/note.full_oid[:2]/note.full_oid[2:]).unlink()
+ try: source.note_body(proof,Budget())
+ except CoreFailure as e: assert e.code=='OBJECT_UNAVAILABLE', e.code
+ else: raise AssertionError('unexpectedly fetched missing body')
+ assert 'fetch' not in trace.read_text(), trace.read_text()
+print('Real promisor missing-body tests passed in both formats; no fetch process in Git trace')

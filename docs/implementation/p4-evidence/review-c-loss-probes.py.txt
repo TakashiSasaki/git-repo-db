@@ -1,0 +1,58 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+from uuid import uuid4
+from p4.conftest import acquisition,fixture_note
+from repo_catalog.adapters.sqlite.p1_schema import initialize,connect
+from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger,NotesWorkBudget
+from repo_catalog.adapters.sqlite.notes import NotesProgress
+from repo_catalog.application.notes import NotesAcquisition
+from repo_catalog.domain.p1_coordination import RequestIdentity,NotesLimits,CoordinationError
+from repo_catalog.domain.p1_core import encode
+from repo_catalog.domain.ports.notes import request_scope
+
+def refused(fn):
+ try: fn()
+ except CoordinationError as e:
+  assert e.code in ('CONTINUATION_UNAVAILABLE','STORE_IDENTITY','REQUEST_SCOPE'),(e.code,e)
+  return e.code
+ raise AssertionError('unsafe continuation accepted')
+
+for loss in ['all_work','one_settled','one_unsettled','allocator','progress','budget','attempt']:
+ with TemporaryDirectory() as d:
+  p=Path(d)/'operational.sqlite3'; initialize(p,'operational',str(uuid4()),str(uuid4())); db=connect(p,'operational'); ledger=WorkLedger(db)
+  request=RequestIdentity(str(uuid4()),str(uuid4())); attempt=str(uuid4())
+  ledger.new_request(request,'{}',{k:10 for k in NotesLimits.work_limits()}); ledger.attempt(request,attempt)
+  settled=ledger.reserve(request,attempt,'input_bytes','settled',5);ledger.finish(settled,5)
+  ledger.reserve(request,attempt,'input_bytes','unsettled',5)
+  ledger.set_progress_once(request,'["example"]',{'original':'identity'})
+  sql={'all_work':'DELETE FROM work_accounting', 'one_settled':"DELETE FROM work_accounting WHERE work_coordinate='settled'",'one_unsettled':"DELETE FROM work_accounting WHERE work_coordinate='unsettled'",'allocator':"DELETE FROM request_continuations WHERE continuation_scope_json LIKE '%processing-step-allocation%'",'progress':"DELETE FROM request_continuations WHERE continuation_scope_json='[\"example\"]'",'budget':"DELETE FROM request_budgets WHERE work_kind='metadata_units'",'attempt':'DELETE FROM acquisition_attempts'}[loss]
+  # Foreign keys need disabling only to simulate loss of rows that still have genuine dependents.
+  db.execute('PRAGMA foreign_keys=OFF');db.execute(sql);db.execute('PRAGMA foreign_keys=ON')
+  print(loss,'live',refused(lambda:ledger.validate_continuation(request,attempt)))
+  db.close();db=connect(p,'operational');ledger=WorkLedger(db)
+  print(loss,'reopen',refused(lambda:NotesWorkBudget(ledger,request,attempt,NotesLimits())))
+  assert not (Path(d)/'p1-recovery-stop.json').exists()
+
+for fmt in ['sha1','sha256']:
+ with TemporaryDirectory() as d:
+  gen=acquisition.__wrapped__(Path(d),SimpleNamespace(param=(fmt,True)));a=next(gen)
+  try:
+   app,path,fmt,repository,origin,*_=a;capture,target,note=fixture_note(a)
+   original=str(uuid4());args=(repository,'local-test',origin,original,1000000)
+   first=app.discover(*args)
+   before=len(app.core.sql('SELECT * FROM captures'))
+   app.work.ledger.db.execute('DELETE FROM request_continuations WHERE continuation_scope_json=?',(encode(['p4-discovery',origin,original]),))
+   print(fmt,'discovery-loss',refused(lambda:app.discover(*args)))
+   assert len(app.core.sql('SELECT * FROM captures'))==before
+  finally:gen.close()
+ with TemporaryDirectory() as d:
+  gen=acquisition.__wrapped__(Path(d),SimpleNamespace(param=(fmt,True)));a=next(gen)
+  try:
+   app,path,fmt,repository,origin,*_=a;capture,target,note=fixture_note(a)
+   p=Path(d)/'other.sqlite3'; initialize(p,'operational',str(uuid4()),str(uuid4())); db=connect(p,'operational');ledger=WorkLedger(db)
+   req=RequestIdentity(str(uuid4()),str(uuid4()));attempt=str(uuid4());ledger.new_request(req,'{"other":"intent"}',NotesLimits.work_limits());ledger.attempt(req,attempt)
+   work=NotesWorkBudget(ledger,req,attempt,NotesLimits())
+   print(fmt,'wrong-op',refused(lambda:NotesAcquisition(app.core,app.source,work,NotesProgress(work),source_attribution='local-test')))
+   assert app.core.sql('SELECT count(*) FROM retained_notes')[0][0] == 0
+  finally:gen.close()

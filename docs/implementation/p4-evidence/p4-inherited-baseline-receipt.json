@@ -1,0 +1,30 @@
+{
+  "baseline_sha": "5e778bf61ef660f65bf5fb22bdb08840503b8464",
+  "baseline_tree": "2c6eca80e6432a1b4f89a2111e7ded69c6b9a507",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "selected": [
+    "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation",
+    "tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+    "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
+    "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]",
+    "tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir"
+  ],
+  "counts": {
+    "collected": 5,
+    "executed": 5,
+    "passed": 0,
+    "failed": 5,
+    "errors": 0,
+    "skipped": 0
+  },
+  "reconciliation": "Exact selected/start/JUnit identity equality, exactly one setup/call/teardown per node",
+  "source_binding": "PYTHONPATH=/workspace/p4-baseline-review/src parent; external CLI shim inserts same source after offline fixture replaces child PYTHONPATH",
+  "artifacts": {
+    "p4-inherited-baseline-selected.txt": "4c81c5d93f8bf18ae266fe520b63ebac55995d408add55d9e15aa640b0e98ce3",
+    "p4-inherited-baseline-corrected-journal.jsonl": "d1ba582220cabc3630ecc5da4d59be62482093dafd2914480ce72925aa3873bb",
+    "p4-inherited-baseline-corrected-junit.xml": "781714e75a8ee403b93f6eed4b8051f080c871500b0e7590da92c968dd94eb03",
+    "p4-inherited-baseline-corrected.log": "332d8ad93489770ab5672ebfaca048184a06fd3fb4cf18ca53ce3daa3832dd90"
+  },
+  "initial_harness_failure": "First external shim imported cli package instead of cli.main function; 4 product failures plus 1 harness error preserved separately in /workspace/p4-inherited-baseline* without corrected infix"
+}
