@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import re
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -307,3 +310,43 @@ def test_pages_trigger_paths_decision_matrix():
         assert actual == expected, (
             f"Decision matrix mismatch for '{desc}': files={changed_files}, expected={expected}, actual={actual}"
         )
+
+
+def test_pages_trigger_covers_executed_schema_dependencies():
+    """A schema-check dependency change must trigger the complete Pages build."""
+    root = Path(__file__).resolve().parents[2]
+    probe = """
+import json, runpy, sys
+from pathlib import Path
+root = Path.cwd()
+sys.argv = ['scripts/schema_viz.py', '--check']
+try:
+    runpy.run_path('scripts/schema_viz.py', run_name='__main__')
+except SystemExit as error:
+    assert error.code in (None, 0)
+loaded = sorted({
+    Path(module.__file__).relative_to(root).as_posix()
+    for module in tuple(sys.modules.values())
+    if getattr(module, '__file__', None)
+    and str(root / 'src/repo_catalog') in module.__file__
+})
+print('DEPENDENCIES=' + json.dumps(loaded))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    loaded = json.loads(result.stdout.split("DEPENDENCIES=", 1)[1])
+    assert "src/repo_catalog/adapters/sqlite/git_intrinsic.py" in loaded
+    cfg = yaml.safe_load((root / ".github/workflows/pages.yml").read_text())
+    triggers = cfg.get("on") or cfg[True]
+    for event in ("push", "pull_request"):
+        missing = [
+            path
+            for path in loaded
+            if not _eval_github_workflow_trigger(triggers[event]["paths"], [path])
+        ]
+        assert not missing, f"{event} misses executed schema dependencies: {missing}"
