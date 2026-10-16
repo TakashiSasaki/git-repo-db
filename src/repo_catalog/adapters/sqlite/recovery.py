@@ -15,6 +15,7 @@ import tempfile
 import time
 import uuid
 from collections.abc import Callable, Mapping
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
@@ -100,67 +101,146 @@ def _decode_native_ref(raw_ref: str | None) -> str | None:
     return raw_ref
 
 
-def _atomic_publish_noreplace(staging_dir: Path, destination_path: Path) -> None:
-    """Publish staging_dir to destination_path atomically without overwriting destination.
-
-    Uses renameat2(RENAME_NOREPLACE) on Linux POSIX filesystems. Fails closed if
-    destination exists, if crossing filesystem boundary, or if atomic primitive is unsupported.
-    """
-    staging_dir = Path(staging_dir).resolve()
-    destination_path = Path(destination_path)
-
-    if staging_dir == destination_path:
-        raise RecoveryError(
-            f"Staging and destination paths are identical: {staging_dir}"
-        )
-    if not staging_dir.exists():
-        raise RecoveryError(f"Staging directory missing: {staging_dir}")
-    if destination_path.parent.resolve() != staging_dir.parent.resolve():
-        raise RecoveryError(
-            f"Staging {staging_dir} and destination {destination_path} must share the same parent directory"
-        )
-
-    if destination_path.exists() or destination_path.is_symlink():
-        raise BackupValidationError(
-            f"Destination {destination_path} already exists; no-overwrite publication prevented clobbering"
-        )
-
-    if os.name == "posix":
-        try:
-            libc = ctypes.CDLL(None, use_errno=True)
-            if hasattr(libc, "renameat2"):
-                libc.renameat2.argtypes = [
-                    ctypes.c_int,
-                    ctypes.c_char_p,
-                    ctypes.c_int,
-                    ctypes.c_char_p,
-                    ctypes.c_uint,
-                ]
-                libc.renameat2.restype = ctypes.c_int
-                src_bytes = os.fsencode(str(staging_dir))
-                dst_bytes = os.fsencode(str(destination_path))
-                res = libc.renameat2(
-                    AT_FDCWD, src_bytes, AT_FDCWD, dst_bytes, RENAME_NOREPLACE
+def _open_directory_nofollow(path: Path, *, create: bool = False) -> int:
+    """Pin each directory component; never follow a substituted symlink."""
+    absolute = Path(os.path.abspath(path))
+    fd = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for part in absolute.parts[1:]:
+            try:
+                child = os.open(
+                    part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd
                 )
-                if res != 0:
-                    err = ctypes.get_errno()
-                    if err == errno.EEXIST:
-                        raise BackupValidationError(
-                            f"Destination {destination_path} already exists; no-overwrite publication prevented clobbering"
-                        )
-                    raise RecoveryError(
-                        f"renameat2 failed with errno {err}: {os.strerror(err)}"
-                    )
-                _fsync_dir(destination_path.parent)
-                return
-        except (AttributeError, OSError) as e:
-            if isinstance(e, BackupValidationError):
-                raise
-            raise RecoveryError(f"Atomic no-overwrite renameat2 failed: {e}") from e
+            except FileNotFoundError:
+                if not create:
+                    raise
+                try:
+                    os.mkdir(part, mode=0o700, dir_fd=fd)
+                    os.fsync(fd)
+                except FileExistsError:
+                    pass
+                child = os.open(
+                    part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd
+                )
+            os.close(fd)
+            fd = child
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
 
-    raise RecoveryError(
-        "Atomic no-overwrite renameat2(RENAME_NOREPLACE) is not available on this platform; failing closed"
+
+def _open_regular_at(directory_fd: int, name: str) -> int:
+    try:
+        fd = os.open(
+            name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory_fd
+        )
+    except OSError as error:
+        if error.errno == errno.ELOOP:
+            raise RestoreValidationError(f"Symlink store forbidden: {name}") from error
+        raise
+    info = os.fstat(fd)
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        os.close(fd)
+        raise RestoreValidationError(f"Nonregular file or hardlink forbidden: {name}")
+    return fd
+
+
+def _read_bounded_fd(fd: int, limit: int) -> bytes:
+    if os.fstat(fd).st_size > limit:
+        raise RestoreValidationError("Manifest input exceeds finite byte limit")
+    os.lseek(fd, 0, os.SEEK_SET)
+    value = os.read(fd, limit + 1)
+    if len(value) > limit:
+        raise RestoreValidationError("Manifest input exceeds finite byte limit")
+    return value
+
+
+def _copy_verified_fd(fd: int, target: Path, size: int, digest: str) -> None:
+    """Hash exactly the copied bytes; bounded chunks also detect growth."""
+    before = os.fstat(fd)
+    if before.st_size != size:
+        raise RestoreValidationError("Store file size mismatch before copying")
+    os.lseek(fd, 0, os.SEEK_SET)
+    hasher = hashlib.sha256()
+    remaining = size
+    with target.open("xb") as output:
+        while remaining:
+            chunk = os.read(fd, min(1024 * 1024, remaining))
+            if not chunk:
+                raise RestoreValidationError("Store truncated during copying")
+            output.write(chunk)
+            hasher.update(chunk)
+            remaining -= len(chunk)
+        if os.read(fd, 1):
+            raise RestoreValidationError("Store grew during copying")
+        after = os.fstat(fd)
+        if (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (
+            after.st_size,
+            after.st_mtime_ns,
+            after.st_ctime_ns,
+        ) or hasher.hexdigest() != digest:
+            raise RestoreValidationError(
+                "Store mutation or SHA-256 mismatch during copying"
+            )
+        output.flush()
+        os.fsync(output.fileno())
+
+
+def _atomic_publish_noreplace(
+    staging_dir: Path, destination_path: Path, *, parent_fd: int | None = None
+) -> None:
+    """Linux local-filesystem renameat2 publication, relative to a pinned parent.
+
+    File and staging-directory fsync must precede this call. A post-rename fsync
+    failure is reported as uncertain publication, never as successful durability.
+    This is an ordering contract, not a tested physical host power-loss claim.
+    """
+    staging_dir = Path(os.path.abspath(staging_dir))
+    destination_path = Path(os.path.abspath(destination_path))
+    if staging_dir == destination_path or (
+        parent_fd is None and staging_dir.parent != destination_path.parent
+    ):
+        raise RecoveryError("Staging and destination must be distinct siblings")
+    if os.name != "posix":
+        raise RecoveryError("Atomic no-overwrite renameat2 is unavailable")
+    parent_fd = (
+        _open_directory_nofollow(staging_dir.parent)
+        if parent_fd is None
+        else os.dup(parent_fd)
     )
+    try:
+        source_stat = os.stat(staging_dir.name, dir_fd=parent_fd, follow_symlinks=False)
+        if not stat.S_ISDIR(source_stat.st_mode):
+            raise RecoveryError("Staging must be a real directory")
+        libc = ctypes.CDLL(None, use_errno=True)
+        if not hasattr(libc, "renameat2"):
+            raise RecoveryError("Atomic no-overwrite renameat2 is unavailable")
+        libc.renameat2.argtypes = [
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_uint,
+        ]
+        libc.renameat2.restype = ctypes.c_int
+        result = libc.renameat2(
+            parent_fd,
+            os.fsencode(staging_dir.name),
+            parent_fd,
+            os.fsencode(destination_path.name),
+            RENAME_NOREPLACE,
+        )
+        if result:
+            error = ctypes.get_errno()
+            if error == errno.EEXIST:
+                raise BackupValidationError(
+                    "Destination already exists; no-overwrite publication"
+                )
+            raise RecoveryError(f"renameat2 failed: {os.strerror(error)}")
+        os.fsync(parent_fd)
+    finally:
+        os.close(parent_fd)
 
 
 def _check_json_depth(
@@ -798,6 +878,7 @@ class SQLiteRecoveryAdapter:
             dst_conn = sqlite3.connect(str(target_path))
             try:
                 src_conn.backup(dst_conn)
+                dst_conn.execute("PRAGMA journal_mode=DELETE")
             finally:
                 dst_conn.close()
         finally:
@@ -1622,239 +1703,273 @@ class SQLiteRecoveryAdapter:
         if not backup_path.exists():
             raise RestoreValidationError(f"Backup path {backup_path} does not exist")
 
-        manifest_file = backup_path / "manifest.json"
-        manifest_sha_file = backup_path / "manifest.json.sha256"
-
-        if not manifest_file.exists() or not manifest_sha_file.exists():
-            raise RestoreValidationError(
-                f"Backup manifest or sha256 missing at {backup_path}"
-            )
-
-        # Verify no unexpected files exist in backup root directory
-        actual_root_files = {p.name for p in backup_path.iterdir() if p.is_file()}
-        allowed_root_files = {"manifest.json", "manifest.json.sha256"}
-        if actual_root_files != allowed_root_files:
-            raise RestoreValidationError(
-                f"Unexpected files in backup root directory: {actual_root_files - allowed_root_files}"
-            )
-
-        # Verify manifest hash
-        expected_manifest_sha = manifest_sha_file.read_text(encoding="utf-8").split()[0]
-        actual_manifest_sha = _sha256_file(manifest_file)
-        if expected_manifest_sha != actual_manifest_sha:
-            raise RestoreValidationError(
-                f"Manifest SHA-256 tampering detected: expected {expected_manifest_sha}, got {actual_manifest_sha}"
-            )
-
-        try:
-            manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-        except Exception as e:
-            raise RestoreValidationError(f"Manifest JSON parsing failed: {e}") from e
-
-        if manifest_data.get("manifest_version") != 1:
-            raise RestoreValidationError(
-                f"Unsupported manifest version: {manifest_data.get('manifest_version')}"
-            )
-
-        scope_val = manifest_data.get("scope")
-        if scope_val not in (BackupScope.GIT_ONLY.value, BackupScope.PAIRED.value):
-            raise RestoreValidationError(f"Unsupported backup scope: {scope_val}")
-        scope = BackupScope(scope_val)
-
-        repo_uuid = manifest_data.get("repository_uuidv4")
-        if repo_uuid != expected_repository_uuidv4:
-            raise RestoreValidationError(
-                f"Repository UUID mismatch: expected {expected_repository_uuidv4}, got {repo_uuid}"
-            )
-
-        manifest_inst_uuid = manifest_data.get("catalog_instance_uuidv4")
-        if not manifest_inst_uuid or not uuid4(str(manifest_inst_uuid)):
-            raise RestoreValidationError(
-                f"Invalid or missing catalog_instance_uuidv4 in manifest: {manifest_inst_uuid}"
-            )
-
-        stores = manifest_data.get("stores", {})
-        expected_store_names = (
-            {"core"} if scope == BackupScope.GIT_ONLY else {"core", "context"}
-        )
-        if set(stores.keys()) != expected_store_names:
-            raise RestoreValidationError(
-                f"Declared stores {set(stores.keys())} do not match expected scope {scope_val} stores {expected_store_names}"
-            )
-
-        backup_resolved = backup_path.resolve()
-        for name, info in stores.items():
-            store_rel = info.get("path", "")
-            rel_p = Path(store_rel)
-            if rel_p.is_absolute() or ".." in rel_p.parts:
-                raise RestoreValidationError(
-                    f"Path traversal detected in manifest store path: {store_rel}"
-                )
-
-        # Verify no undeclared store files exist in stores/
-        stores_dir = backup_path / "stores"
-        if stores_dir.exists():
-            actual_store_files = {
-                p.relative_to(backup_path).as_posix()
-                for p in stores_dir.iterdir()
-                if p.is_file()
-                and not p.name.endswith("-wal")
-                and not p.name.endswith("-shm")
-            }
-            declared_store_files = {info["path"] for info in stores.values()}
-            if actual_store_files != declared_store_files:
-                raise RestoreValidationError(
-                    f"Unexpected or undeclared files in stores directory: {actual_store_files - declared_store_files}"
-                )
-
-        overall_hasher = hashlib.sha256()
-
-        for name in sorted(stores.keys()):
-            info = stores[name]
-            store_rel = info["path"]
-            rel_p = Path(store_rel)
-
-            store_file = backup_path / store_rel
-            if store_file.is_symlink():
-                raise RestoreValidationError(
-                    f"Symlink store forbidden in backup: {store_file}"
-                )
-
-            if not store_file.resolve().is_relative_to(backup_resolved):
-                raise RestoreValidationError(
-                    f"Path escape detected in store path: {store_rel}"
-                )
-
-            if not store_file.exists():
-                raise RestoreValidationError(
-                    f"Store file missing from backup: {store_file}"
-                )
-            if store_file.stat().st_nlink > 1:
-                raise RestoreValidationError(
-                    f"Hardlink forbidden for store file: {store_file}"
-                )
-            if store_file.stat().st_size != info["bytes"]:
-                raise RestoreValidationError(
-                    f"Store file size mismatch for {name}: expected {info['bytes']}, got {store_file.stat().st_size}"
-                )
-            actual_sha = _sha256_file(store_file)
-            if actual_sha != info["sha256"]:
-                raise RestoreValidationError(
-                    f"Store SHA-256 mismatch for {name}: expected {info['sha256']}, got {actual_sha}"
-                )
-            overall_hasher.update(actual_sha.encode("ascii"))
-
-            # Verify declared schema fingerprint against trusted compiled expectations
-            expected_fp = p1_schema_fingerprint(name)
-            if info.get("schema_fingerprint") != expected_fp:
-                raise RestoreValidationError(
-                    f"Declared schema fingerprint for {name} does not match expected P1 target schema: declared {info.get('schema_fingerprint')}, expected {expected_fp}"
-                )
-
-        # Verify overall checksum
-        recomputed_overall_sha = overall_hasher.hexdigest()
-        if recomputed_overall_sha != manifest_data.get("overall_sha256"):
-            raise RestoreValidationError(
-                f"Overall backup SHA-256 mismatch: recorded {manifest_data.get('overall_sha256')}, recomputed {recomputed_overall_sha}"
-            )
-
-        if destination_dir.exists() or destination_dir.is_symlink():
-            raise RestoreValidationError(
-                f"Destination directory {destination_dir} already exists; no-overwrite invariant requires fresh destination"
-            )
-
-        staging_dir = (
-            destination_dir.parent / f"{destination_dir.name}.tmp.{uuid.uuid4().hex}"
-        )
-        staging_dir.mkdir(parents=True, exist_ok=False)
-
-        revalidated_stores = []
-        try:
-            # Copy stores
-            dst_core = staging_dir / "core.sqlite3"
-            shutil.copy2(backup_path / stores["core"]["path"], dst_core)
-            _fsync_file(dst_core)
-            revalidated_stores.append("core")
-
-            dst_ctx = None
-            if "context" in stores:
-                dst_ctx = staging_dir / "context.sqlite3"
-                shutil.copy2(backup_path / stores["context"]["path"], dst_ctx)
-                _fsync_file(dst_ctx)
-                revalidated_stores.append("context")
-
-            # Deep domain revalidation on restored physical databases
+        # Keep source directory/file descriptors pinned until restore completes.
+        # A normal backup contains standalone SQLite snapshots, never WAL/SHM.
+        with ExitStack() as handles:
             try:
-                core_summary = self._validate_and_summarize_core(dst_core)
-                context_summary = (
-                    self._validate_and_summarize_context(dst_ctx)
-                    if dst_ctx
-                    else RetainedByteSummary()
-                )
-            except BackupValidationError as e:
-                raise RestoreValidationError(
-                    f"Restored database failed domain validation: {e}"
-                ) from e
-
-            # Verify paired store identity consistency
-            core_repo_uuid, core_inst_uuid = self._extract_identities(dst_core, "core")
-            if core_repo_uuid != expected_repository_uuidv4:
-                raise RestoreValidationError(
-                    f"Restored core repository UUID mismatch: expected {expected_repository_uuidv4}, got {core_repo_uuid}"
-                )
-            if core_inst_uuid != manifest_inst_uuid:
-                raise RestoreValidationError(
-                    f"Restored core catalog instance UUID mismatch: manifest {manifest_inst_uuid} vs actual {core_inst_uuid}"
-                )
-            if dst_ctx:
-                ctx_repo_uuid, ctx_inst_uuid = self._extract_identities(
-                    dst_ctx, "context"
-                )
-                if core_repo_uuid != ctx_repo_uuid or core_inst_uuid != ctx_inst_uuid:
+                backup_fd = _open_directory_nofollow(backup_path)
+                handles.callback(os.close, backup_fd)
+                if set(os.listdir(backup_fd)) != {
+                    "manifest.json",
+                    "manifest.json.sha256",
+                    "stores",
+                }:
                     raise RestoreValidationError(
-                        f"Paired store identity mismatch: Core ({core_repo_uuid}, {core_inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
+                        "Unexpected files in backup root directory"
                     )
+                manifest_fd = _open_regular_at(backup_fd, "manifest.json")
+                handles.callback(os.close, manifest_fd)
+                digest_fd = _open_regular_at(backup_fd, "manifest.json.sha256")
+                handles.callback(os.close, digest_fd)
+                manifest_bytes = _read_bounded_fd(manifest_fd, 64 * 1024)
+                digest_record = _read_bounded_fd(digest_fd, 128).decode("ascii")
+                expected_manifest_sha = digest_record.strip().split()
+                if (
+                    len(expected_manifest_sha) != 2
+                    or expected_manifest_sha[1] != "manifest.json"
+                ):
+                    raise RestoreValidationError("Invalid manifest SHA-256 record")
+                if (
+                    hashlib.sha256(manifest_bytes).hexdigest()
+                    != expected_manifest_sha[0]
+                ):
+                    raise RestoreValidationError("Manifest SHA-256 mismatch")
+                manifest_data = json.loads(manifest_bytes)
+                _check_json_depth(manifest_data, max_depth=8, max_elements=128)
+                if not isinstance(manifest_data, dict):
+                    raise RestoreValidationError("Manifest must be an object")
+            except (OSError, ValueError, UnicodeError, RecursionError) as error:
+                raise RestoreValidationError(
+                    f"Unsafe or unreadable manifest: {error}"
+                ) from error
 
-            total_retained = (
-                core_summary.total_retained_bytes + context_summary.total_retained_bytes
-            )
-
-            # Reconcile restored retained byte summary against manifest
-            manifest_summary = manifest_data.get("retained_byte_summary", {})
             if (
-                core_summary.commit_count != manifest_summary.get("commit_count")
-                or core_summary.tree_count != manifest_summary.get("tree_count")
-                or core_summary.tag_count != manifest_summary.get("tag_count")
-                or core_summary.notes_body_count
-                != manifest_summary.get("notes_body_count")
-                or total_retained != manifest_summary.get("total_retained_bytes")
+                type(manifest_data.get("manifest_version")) is not int
+                or manifest_data.get("manifest_version") != 1
             ):
                 raise RestoreValidationError(
-                    f"Retained byte summary mismatch: manifest {manifest_summary} vs restored "
-                    f"(commits={core_summary.commit_count}, trees={core_summary.tree_count}, "
-                    f"tags={core_summary.tag_count}, notes={core_summary.notes_body_count}, "
-                    f"total_bytes={total_retained})"
+                    f"Unsupported manifest version: {manifest_data.get('manifest_version')}"
                 )
 
-            _fsync_dir(staging_dir)
+            scope_val = manifest_data.get("scope")
+            if scope_val not in (BackupScope.GIT_ONLY.value, BackupScope.PAIRED.value):
+                raise RestoreValidationError(f"Unsupported backup scope: {scope_val}")
+            scope = BackupScope(scope_val)
 
-            # Atomic publication with no-overwrite primitive
-            try:
-                _atomic_publish_noreplace(staging_dir, destination_dir)
-            except BackupValidationError as e:
-                raise RestoreValidationError(str(e)) from e
+            repo_uuid = manifest_data.get("repository_uuidv4")
+            if repo_uuid != expected_repository_uuidv4:
+                raise RestoreValidationError(
+                    f"Repository UUID mismatch: expected {expected_repository_uuidv4}, got {repo_uuid}"
+                )
 
-            return RestoreReceipt(
-                backup_id=manifest_data["backup_id"],
-                destination_path=str(destination_dir),
-                scope=scope,
-                revalidated_stores=revalidated_stores,
-                revalidated_retained_bytes=total_retained,
-                revalidated_clean=True,
+            manifest_inst_uuid = manifest_data.get("catalog_instance_uuidv4")
+            if not manifest_inst_uuid or not uuid4(str(manifest_inst_uuid)):
+                raise RestoreValidationError(
+                    f"Invalid or missing catalog_instance_uuidv4 in manifest: {manifest_inst_uuid}"
+                )
+
+            stores = manifest_data.get("stores", {})
+            if not isinstance(stores, dict):
+                raise RestoreValidationError("Manifest stores must be an object")
+            if not uuid4(str(manifest_data.get("backup_id", ""))):
+                raise RestoreValidationError("Invalid backup identity")
+            if not isinstance(manifest_data.get("retained_byte_summary"), dict):
+                raise RestoreValidationError("Invalid retained byte summary")
+            expected_store_names = (
+                {"core"} if scope == BackupScope.GIT_ONLY else {"core", "context"}
             )
-        finally:
-            if staging_dir.exists():
-                shutil.rmtree(staging_dir, ignore_errors=True)
+            if set(stores.keys()) != expected_store_names:
+                raise RestoreValidationError(
+                    f"Declared stores {set(stores.keys())} do not match expected scope {scope_val} stores {expected_store_names}"
+                )
+
+            store_fds = {}
+            try:
+                stores_fd = os.open(
+                    "stores",
+                    os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                    dir_fd=backup_fd,
+                )
+                handles.callback(os.close, stores_fd)
+                if set(os.listdir(stores_fd)) != {f"{name}.sqlite3" for name in stores}:
+                    raise RestoreValidationError(
+                        "Unexpected or undeclared files or WAL sidecars in stores directory"
+                    )
+                overall_hasher = hashlib.sha256()
+                for name, info in sorted(stores.items()):
+                    if isinstance(info, dict) and isinstance(info.get("path"), str):
+                        relative = Path(info["path"])
+                        if relative.is_absolute() or ".." in relative.parts:
+                            raise RestoreValidationError(
+                                "Path traversal detected in manifest store path"
+                            )
+                    if (
+                        not isinstance(info, dict)
+                        or info.get("path") != f"stores/{name}.sqlite3"
+                    ):
+                        raise RestoreValidationError(
+                            "Invalid canonical store manifest path"
+                        )
+                    if type(info.get("bytes")) is not int or info["bytes"] < 0:
+                        raise RestoreValidationError("Invalid store byte count")
+                    for key in ("sha256", "schema_fingerprint"):
+                        value = info.get(key)
+                        if (
+                            not isinstance(value, str)
+                            or len(value) != 64
+                            or any(c not in "0123456789abcdef" for c in value)
+                        ):
+                            raise RestoreValidationError(f"Invalid store {key}")
+                    if info["schema_fingerprint"] != p1_schema_fingerprint(name):
+                        raise RestoreValidationError("Unexpected P1 schema fingerprint")
+                    fd = _open_regular_at(stores_fd, f"{name}.sqlite3")
+                    handles.callback(os.close, fd)
+                    store_fds[name] = fd
+                    overall_hasher.update(info["sha256"].encode("ascii"))
+            except OSError as error:
+                raise RestoreValidationError(f"Unsafe backup store: {error}") from error
+
+            # Verify overall checksum
+            recomputed_overall_sha = overall_hasher.hexdigest()
+            if recomputed_overall_sha != manifest_data.get("overall_sha256"):
+                raise RestoreValidationError(
+                    f"Overall backup SHA-256 mismatch: recorded {manifest_data.get('overall_sha256')}, recomputed {recomputed_overall_sha}"
+                )
+
+            if destination_dir.resolve().is_relative_to(backup_path.resolve()):
+                raise RestoreValidationError(
+                    "Restore destination aliases backup evidence"
+                )
+            if destination_dir.exists() or destination_dir.is_symlink():
+                raise RestoreValidationError(
+                    f"Destination directory {destination_dir} already exists; no-overwrite invariant requires fresh destination"
+                )
+
+            destination_fd = _open_directory_nofollow(
+                destination_dir.parent, create=True
+            )
+            handles.callback(os.close, destination_fd)
+            staging_name = f"{destination_dir.name}.tmp.{uuid.uuid4().hex}"
+            os.mkdir(staging_name, mode=0o700, dir_fd=destination_fd)
+            # All staged I/O remains rooted in the pinned Linux directory fd.
+            staging_dir = Path(f"/proc/self/fd/{destination_fd}") / staging_name
+
+            revalidated_stores = []
+            try:
+                # Copy stores
+                dst_core = staging_dir / "core.sqlite3"
+                _copy_verified_fd(
+                    store_fds["core"],
+                    dst_core,
+                    stores["core"]["bytes"],
+                    stores["core"]["sha256"],
+                )
+                revalidated_stores.append("core")
+
+                dst_ctx = None
+                if "context" in stores:
+                    dst_ctx = staging_dir / "context.sqlite3"
+                    _copy_verified_fd(
+                        store_fds["context"],
+                        dst_ctx,
+                        stores["context"]["bytes"],
+                        stores["context"]["sha256"],
+                    )
+                    revalidated_stores.append("context")
+
+                # Deep domain revalidation on restored physical databases
+                try:
+                    core_summary = self._validate_and_summarize_core(dst_core)
+                    context_summary = (
+                        self._validate_and_summarize_context(dst_ctx)
+                        if dst_ctx
+                        else RetainedByteSummary()
+                    )
+                except BackupValidationError as e:
+                    raise RestoreValidationError(
+                        f"Restored database failed domain validation: {e}"
+                    ) from e
+
+                # Verify paired store identity consistency
+                core_repo_uuid, core_inst_uuid = self._extract_identities(
+                    dst_core, "core"
+                )
+                if core_repo_uuid != expected_repository_uuidv4:
+                    raise RestoreValidationError(
+                        f"Restored core repository UUID mismatch: expected {expected_repository_uuidv4}, got {core_repo_uuid}"
+                    )
+                if core_inst_uuid != manifest_inst_uuid:
+                    raise RestoreValidationError(
+                        f"Restored core catalog instance UUID mismatch: manifest {manifest_inst_uuid} vs actual {core_inst_uuid}"
+                    )
+                if dst_ctx:
+                    ctx_repo_uuid, ctx_inst_uuid = self._extract_identities(
+                        dst_ctx, "context"
+                    )
+                    if (
+                        core_repo_uuid != ctx_repo_uuid
+                        or core_inst_uuid != ctx_inst_uuid
+                    ):
+                        raise RestoreValidationError(
+                            f"Paired store identity mismatch: Core ({core_repo_uuid}, {core_inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
+                        )
+
+                total_retained = (
+                    core_summary.total_retained_bytes
+                    + context_summary.total_retained_bytes
+                )
+
+                # Reconcile restored retained byte summary against manifest
+                manifest_summary = manifest_data.get("retained_byte_summary", {})
+                if (
+                    core_summary.commit_count != manifest_summary.get("commit_count")
+                    or core_summary.tree_count != manifest_summary.get("tree_count")
+                    or core_summary.tag_count != manifest_summary.get("tag_count")
+                    or core_summary.notes_body_count
+                    != manifest_summary.get("notes_body_count")
+                    or total_retained != manifest_summary.get("total_retained_bytes")
+                ):
+                    raise RestoreValidationError(
+                        f"Retained byte summary mismatch: manifest {manifest_summary} vs restored "
+                        f"(commits={core_summary.commit_count}, trees={core_summary.tree_count}, "
+                        f"tags={core_summary.tag_count}, notes={core_summary.notes_body_count}, "
+                        f"total_bytes={total_retained})"
+                    )
+
+                _fsync_dir(staging_dir)
+
+                # Atomic publication with no-overwrite primitive
+                try:
+                    _atomic_publish_noreplace(
+                        staging_dir, destination_dir, parent_fd=destination_fd
+                    )
+                    named_parent = _open_directory_nofollow(destination_dir.parent)
+                    try:
+                        pinned = os.fstat(destination_fd)
+                        named = os.fstat(named_parent)
+                        if (pinned.st_dev, pinned.st_ino) != (
+                            named.st_dev,
+                            named.st_ino,
+                        ):
+                            raise RestoreValidationError(
+                                "Destination parent changed; publication location uncertain"
+                            )
+                    finally:
+                        os.close(named_parent)
+                except BackupValidationError as e:
+                    raise RestoreValidationError(str(e)) from e
+
+                return RestoreReceipt(
+                    backup_id=manifest_data["backup_id"],
+                    destination_path=str(destination_dir),
+                    scope=scope,
+                    revalidated_stores=revalidated_stores,
+                    revalidated_retained_bytes=total_retained,
+                    revalidated_clean=True,
+                )
+            finally:
+                if staging_dir.exists():
+                    shutil.rmtree(staging_dir, ignore_errors=True)
 
     def merge_salvage(
         self,
@@ -2530,117 +2645,157 @@ class SQLiteRecoveryAdapter:
                 f"Fresh catalog directory {fresh_catalog_dir} does not exist"
             )
 
-        if fault_stage == "before_validation":
-            raise ActivationError("Injected failure before validation")
+        if fresh_catalog_dir.is_symlink():
+            raise ActivationError("Fresh catalog must not be a symlink")
+        fresh_catalog_dir = fresh_catalog_dir.absolute()
+        if target_locator_path.absolute() == fresh_catalog_dir:
+            raise ActivationError("Catalog and locator paths must be distinct")
+        directory_fd = _open_directory_nofollow(fresh_catalog_dir)
+        os.close(directory_fd)
+        assert_catalog_not_stopped(fresh_catalog_dir)
+        with catalog_gate(fresh_catalog_dir, exclusive=True):
+            if fault_stage == "before_validation":
+                raise ActivationError("Injected failure before validation")
 
-        core_db = fresh_catalog_dir / "core.sqlite3"
-        if not core_db.exists():
-            raise ActivationError("Fresh catalog is missing core.sqlite3")
+            core_db = fresh_catalog_dir / "core.sqlite3"
+            if not core_db.exists():
+                raise ActivationError("Fresh catalog is missing core.sqlite3")
 
-        # Validate core
-        self._validate_and_summarize_core(core_db)
-        repo_uuid, inst_uuid = self._extract_identities(core_db, "core")
+            for database in (core_db, fresh_catalog_dir / "context.sqlite3"):
+                if database.is_symlink() or (
+                    database.exists() and database.stat().st_nlink != 1
+                ):
+                    raise ActivationError(
+                        "Authoritative file symlink/hardlink forbidden"
+                    )
+            # Validate core
+            self._validate_and_summarize_core(core_db)
+            repo_uuid, inst_uuid = self._extract_identities(core_db, "core")
 
-        if fault_stage == "between_core_and_context":
-            raise ActivationError("Injected failure between core and context")
+            if fault_stage == "between_core_and_context":
+                raise ActivationError("Injected failure between core and context")
 
-        # Validate context if present
-        ctx_db = fresh_catalog_dir / "context.sqlite3"
-        if ctx_db.exists():
-            self._validate_and_summarize_context(ctx_db)
-            ctx_repo_uuid, ctx_inst_uuid = self._extract_identities(ctx_db, "context")
-            if repo_uuid != ctx_repo_uuid or inst_uuid != ctx_inst_uuid:
+            # Validate context if present
+            ctx_db = fresh_catalog_dir / "context.sqlite3"
+            if ctx_db.exists():
+                self._validate_and_summarize_context(ctx_db)
+                ctx_repo_uuid, ctx_inst_uuid = self._extract_identities(
+                    ctx_db, "context"
+                )
+                if repo_uuid != ctx_repo_uuid or inst_uuid != ctx_inst_uuid:
+                    raise ActivationError(
+                        f"Catalog activation identity mismatch: Core ({repo_uuid}, {inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
+                    )
+
+            # Initialize empty reconstructible stores. This does not rebuild the
+            # full Search projection; its receipt explicitly says initialized_empty.
+            # Reconstruct Operational and Search cleanly from compiled P1 DDL
+            op_db = fresh_catalog_dir / "operational.sqlite3"
+            for path in (op_db, Path(str(op_db) + "-wal"), Path(str(op_db) + "-shm")):
+                if path.exists() or path.is_symlink():
+                    path.unlink()
+            p1_init(op_db, "operational", repo_uuid, inst_uuid)
+            _fsync_file(op_db)
+
+            search_db = fresh_catalog_dir / "search.sqlite3"
+            for path in (
+                search_db,
+                Path(str(search_db) + "-wal"),
+                Path(str(search_db) + "-shm"),
+            ):
+                if path.exists() or path.is_symlink():
+                    path.unlink()
+            p1_init(search_db, "search", repo_uuid, inst_uuid)
+            _fsync_file(search_db)
+
+            _fsync_dir(fresh_catalog_dir)
+
+            if fault_stage == "after_operational_init":
                 raise ActivationError(
-                    f"Catalog activation identity mismatch: Core ({repo_uuid}, {inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
+                    "Injected failure after operational initialization"
                 )
 
-        # Reconstruct Operational and Search cleanly from scratch from compiled P1 DDL
-        op_db = fresh_catalog_dir / "operational.sqlite3"
-        if op_db.exists():
-            op_db.unlink()
-        p1_init(op_db, "operational", repo_uuid, inst_uuid)
-        _fsync_file(op_db)
-
-        search_db = fresh_catalog_dir / "search.sqlite3"
-        if search_db.exists():
-            search_db.unlink()
-        p1_init(search_db, "search", repo_uuid, inst_uuid)
-        _fsync_file(search_db)
-
-        _fsync_dir(fresh_catalog_dir)
-
-        if fault_stage == "after_operational_init":
-            raise ActivationError("Injected failure after operational initialization")
-
-        # Atomic locator update
-        target_locator_path.parent.mkdir(parents=True, exist_ok=True)
-        activated_catalog_path = str(fresh_catalog_dir)
-
-        if fault_stage == "during_locator_replacement":
-            raise ActivationError("Injected failure during locator replacement")
-
-        if target_locator_path.exists():
-            if target_locator_path.is_symlink():
-                tmp_link = target_locator_path.parent / f"active.tmp.{uuid.uuid4().hex}"
-                tmp_link.symlink_to(fresh_catalog_dir.resolve())
-                os.replace(tmp_link, target_locator_path)
-                _fsync_dir(target_locator_path.parent)
-                activated_catalog_path = str(target_locator_path)
-            elif target_locator_path.is_file():
-                locator_data = {
-                    "active_catalog_path": str(fresh_catalog_dir.resolve()),
-                    "activated_at_us": int(time.time() * 1_000_000),
-                    "repository_uuidv4": repo_uuid,
-                    "catalog_instance_uuidv4": inst_uuid,
-                }
-                tmp_loc = (
-                    target_locator_path.parent
-                    / f"{target_locator_path.name}.tmp.{uuid.uuid4().hex}"
-                )
-                tmp_loc.write_text(
-                    json.dumps(locator_data, indent=2) + "\n", encoding="utf-8"
-                )
-                _fsync_file(tmp_loc)
-                os.replace(tmp_loc, target_locator_path)
-                _fsync_dir(target_locator_path.parent)
-                activated_catalog_path = str(fresh_catalog_dir.resolve())
-            else:
-                # Target path already exists as regular directory; no-overwrite requires keeping suspect intact
-                locator_file = (
-                    target_locator_path.parent / "active_catalog_instance.json"
-                )
-                locator_data = {
-                    "active_catalog_path": str(fresh_catalog_dir.resolve()),
-                    "activated_at_us": int(time.time() * 1_000_000),
-                    "repository_uuidv4": repo_uuid,
-                    "catalog_instance_uuidv4": inst_uuid,
-                }
-                tmp_loc = (
-                    locator_file.parent
-                    / f"active_catalog_instance.tmp.{uuid.uuid4().hex}.json"
-                )
-                tmp_loc.write_text(
-                    json.dumps(locator_data, indent=2) + "\n", encoding="utf-8"
-                )
-                _fsync_file(tmp_loc)
-                os.replace(tmp_loc, locator_file)
-                _fsync_dir(locator_file.parent)
-                activated_catalog_path = str(fresh_catalog_dir.resolve())
-        else:
+            # Final publication is serialized against Recovery Stop. Pinned parent
+            # descriptor prevents a parent-directory substitution redirecting writes.
+            parent_fd = _open_directory_nofollow(
+                target_locator_path.parent, create=True
+            )
+            tmp_name = f"{target_locator_path.name}.tmp.{uuid.uuid4().hex}"
             try:
-                target_locator_path.symlink_to(fresh_catalog_dir.resolve())
-                _fsync_dir(target_locator_path.parent)
-                activated_catalog_path = str(target_locator_path)
-            except OSError:
-                _atomic_publish_noreplace(fresh_catalog_dir, target_locator_path)
-                _fsync_dir(target_locator_path.parent)
-                activated_catalog_path = str(target_locator_path)
+                with catalog_completion(fresh_catalog_dir):
+                    if fault_stage == "during_locator_replacement":
+                        raise ActivationError(
+                            "Injected failure during locator replacement"
+                        )
+                    try:
+                        locator_info = os.stat(
+                            target_locator_path.name,
+                            dir_fd=parent_fd,
+                            follow_symlinks=False,
+                        )
+                    except FileNotFoundError:
+                        locator_info = None
+                    if locator_info is None or stat.S_ISLNK(locator_info.st_mode):
+                        os.symlink(
+                            str(fresh_catalog_dir.resolve()), tmp_name, dir_fd=parent_fd
+                        )
+                        if locator_info is None:
+                            # linkat gives atomic creation without replacing a racing locator.
+                            os.link(
+                                tmp_name,
+                                target_locator_path.name,
+                                src_dir_fd=parent_fd,
+                                dst_dir_fd=parent_fd,
+                                follow_symlinks=False,
+                            )
+                            os.unlink(tmp_name, dir_fd=parent_fd)
+                        else:
+                            os.replace(
+                                tmp_name,
+                                target_locator_path.name,
+                                src_dir_fd=parent_fd,
+                                dst_dir_fd=parent_fd,
+                            )
+                        activated_catalog_path = str(target_locator_path)
+                    else:
+                        name = target_locator_path.name
+                        if stat.S_ISDIR(locator_info.st_mode):
+                            name = "active_catalog_instance.json"
+                        elif not stat.S_ISREG(locator_info.st_mode):
+                            raise ActivationError("Unsupported locator file type")
+                        locator_data = {
+                            "active_catalog_path": str(fresh_catalog_dir.resolve()),
+                            "activated_at_us": int(time.time() * 1_000_000),
+                            "repository_uuidv4": repo_uuid,
+                            "catalog_instance_uuidv4": inst_uuid,
+                        }
+                        fd = os.open(
+                            tmp_name,
+                            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                            0o600,
+                            dir_fd=parent_fd,
+                        )
+                        with os.fdopen(fd, "w") as output:
+                            output.write(json.dumps(locator_data, indent=2) + "\n")
+                            output.flush()
+                            os.fsync(output.fileno())
+                        os.replace(
+                            tmp_name, name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd
+                        )
+                        activated_catalog_path = str(fresh_catalog_dir.resolve())
+                    os.fsync(parent_fd)
+            finally:
+                try:
+                    os.unlink(tmp_name, dir_fd=parent_fd)
+                except FileNotFoundError:
+                    pass
+                os.close(parent_fd)
 
-        return ActivationReceipt(
-            activated_catalog_path=activated_catalog_path,
-            source_backup_id="restored",
-            reconstructed_stores=["operational", "search"],
-            timestamp_us=int(time.time() * 1_000_000),
-            clean_operational=True,
-            search_derivative_state="initialized_empty",
-        )
+            return ActivationReceipt(
+                activated_catalog_path=activated_catalog_path,
+                source_backup_id="restored",
+                reconstructed_stores=["operational", "search"],
+                timestamp_us=int(time.time() * 1_000_000),
+                clean_operational=True,
+                search_derivative_state="initialized_empty",
+            )

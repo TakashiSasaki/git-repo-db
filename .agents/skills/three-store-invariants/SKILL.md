@@ -624,3 +624,21 @@ Python allocation for BLOB/text, SQLite unreadable scope, streamed-copy growth,
 JSON limits and rejected-input work. They do not establish host power-loss
 semantics or authorize recovery on real catalogs; use disposable synthetic
 catalogs and retain independent process/filesystem evidence for those claims.
+## P7 standalone snapshot and descriptor lessons
+
+A SQLite backup can preserve WAL journal mode even though its data is fully in
+its main database. Subsequent read-only validation can then create zero-byte WAL
+and SHM sidecars. For a standalone P7 backup artifact, switch the **new snapshot**
+to DELETE journal mode before closing it; do not change the suspect source's
+mode or delete its journals. Reject undeclared backup sidecars during restore
+rather than accepting unmanifested bytes. Verify with
+`pytest tests/integration/p7/test_filesystem_hardening.py tests/integration/p7/test_consistent_backup.py`.
+
+For untrusted restore inputs, pin directory and regular-file descriptors with
+no-follow opens, bound manifest reads, and hash the bytes actually copied.
+A prior file hash followed by a pathname-based copy does not bind the copied
+bytes. Use directory-relative publication and fsync; distinguish a failure after
+rename from an unpublished result. The regression tests include symlink/parent
+substitution, separate-process no-overwrite publication and SIGKILL during
+copying. These verify Linux local-filesystem ordering and process interruption,
+not physical host power-loss durability or protection against privileged writers.
