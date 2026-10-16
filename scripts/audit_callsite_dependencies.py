@@ -66,6 +66,8 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/ports/recovery.py",
         "application/recovery.py",
         "adapters/sqlite/recovery.py",
+        "adapters/sqlite/recovery_budget.py",
+        "adapters/sqlite/recovery_validation.py",
     )
 )
 ISOLATED_TARGET_MODULES = ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES
