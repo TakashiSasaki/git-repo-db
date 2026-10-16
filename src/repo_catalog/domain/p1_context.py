@@ -20,7 +20,7 @@ from repo_catalog.domain.p1_coverage import (
 from repo_catalog.domain.p1_coverage import (
     CoverageState as CoverageState,
 )
-from repo_catalog.domain.time import validate_epoch_us
+from repo_catalog.domain.time import validate_observation_us
 
 OwnerKind = Literal[
     "repository", "source", "resource", "collection", "field", "source_inventory"
@@ -81,7 +81,7 @@ class FieldClock:
         if not self.domain:
             raise ValueError("Clock domain must identify the genuine source clock")
         if self.at_us is not None:
-            validate_epoch_us(self.at_us)
+            validate_observation_us(self.at_us)
 
     def encode(self) -> str:
         return canonical({"domain": self.domain, "at_us": self.at_us})
@@ -94,10 +94,10 @@ class FieldCandidate:
     value_json: str
     clock: FieldClock
     provenance_json: str
-    observed_at_us: int
+    observed_at_us: int | None
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         if canonical(json.loads(self.value_json)) != self.value_json:
             raise ValueError("Value must be canonical JSON")
         provenance = json.loads(self.provenance_json)

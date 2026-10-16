@@ -367,7 +367,7 @@ def test_real_ref_root_observations_retain_force_push_and_replay(core, repositor
             ("refs/heads/main",),
             {
                 "ref": "refs/heads/main",
-                "observed_at_us": number,
+                "observed_at_us": number + 1,
                 "target": incoming.oid.key,
             },
             provenance(str(number)),
@@ -866,3 +866,40 @@ def test_standalone_core_engine_failure_stops_before_transaction_cleanup(
     assert not original.in_transaction
     assert rollback_stop_states == ([] if failure_at == "BEGIN" else [True])
     assert original.execute("SELECT count(*) FROM git_objects").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("seconds", [-1, 0])
+def test_native_author_committer_tagger_signed_times_preserve_bytes(
+    core, repository, seconds
+):
+    store, _, _ = core
+    path, fmt = repository
+    tree = write(path, fmt, "tree", b"")
+    encoded = str(seconds).encode("ascii")
+    body = (
+        b"tree "
+        + tree.oid.full_oid.encode()
+        + b"\nauthor A <a@invalid> "
+        + encoded
+        + b" +0000\ncommitter C <c@invalid> "
+        + encoded
+        + b" +0000\n\nnative signed time\n"
+    )
+    commit = write(path, fmt, "commit", body, literal=True)
+    store.admit_metadata(commit, str(uuid4()), Budget())
+    assert store.read_metadata(commit.oid) == body
+    for field in ("author_time_us", "committer_time_us"):
+        assert store.scalar(commit.oid, field).canonical == [
+            "known",
+            seconds * 1_000_000,
+        ]
+    tag_body = (
+        b"object "
+        + commit.oid.full_oid.encode()
+        + b"\ntype commit\ntag signed-time\ntagger T <t@invalid> "
+        + encoded
+        + b" +0000\n\nnative tag\n"
+    )
+    tag = write(path, fmt, "tag", tag_body, literal=True)
+    store.admit_metadata(tag, str(uuid4()), Budget())
+    assert store.read_metadata(tag.oid) == tag_body
