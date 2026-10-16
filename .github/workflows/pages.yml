@@ -3,7 +3,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/**'
+      - 'docs/site/**'
+      - 'docs/schema/**'
+      - 'docs/adr/0001-validation-lifecycle-architecture.md'
+      - 'docs/adr/0002-three-store-boundary-architecture.md'
+      - 'overrides/**'
       - 'scripts/build_docs_site.py'
       - 'scripts/schema_viz.py'
       - 'scripts/audit_publication_free.py'
@@ -17,7 +21,11 @@ on:
       - '.github/workflows/pages.yml'
   pull_request:
     paths:
-      - 'docs/**'
+      - 'docs/site/**'
+      - 'docs/schema/**'
+      - 'docs/adr/0001-validation-lifecycle-architecture.md'
+      - 'docs/adr/0002-three-store-boundary-architecture.md'
+      - 'overrides/**'
       - 'scripts/build_docs_site.py'
       - 'scripts/schema_viz.py'
       - 'scripts/audit_publication_free.py'
