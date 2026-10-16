@@ -6136,7 +6136,7 @@
             {
               "excerpt": "kinds = (\"code\", \"pr\", \"issue\", \"commits\") if kind == \"all\" else (kind,)",
               "excerpt_truncated": false,
-              "line": 185,
+              "line": 190,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -10076,7 +10076,7 @@
             {
               "excerpt": "\"documents\": count,",
               "excerpt_truncated": false,
-              "line": 310,
+              "line": 319,
               "operation_hint": "registry_or_reference",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34705,7 +34705,7 @@
             {
               "excerpt": "\"SELECT coalesce(max(index_generation_id),0)+1 FROM index_generations\"",
               "excerpt_truncated": false,
-              "line": 205,
+              "line": 210,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34713,7 +34713,7 @@
             {
               "excerpt": "\"INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,core_revision_fence,created_at_us) VALUES(?,?,?,?,?,?,?)\",",
               "excerpt_truncated": false,
-              "line": 209,
+              "line": 214,
               "operation_hint": "insert",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34721,7 +34721,7 @@
             {
               "excerpt": "\"SELECT state FROM index_generations WHERE index_generation_id=?\",",
               "excerpt_truncated": false,
-              "line": 243,
+              "line": 255,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34729,7 +34729,7 @@
             {
               "excerpt": "\"UPDATE index_generations SET state='retired' WHERE kind=? AND state='ready'\",",
               "excerpt_truncated": false,
-              "line": 281,
+              "line": 289,
               "operation_hint": "update",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34737,7 +34737,7 @@
             {
               "excerpt": "\"UPDATE index_generations SET state='ready' WHERE index_generation_id=?\",",
               "excerpt_truncated": false,
-              "line": 285,
+              "line": 293,
               "operation_hint": "update",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34745,7 +34745,7 @@
             {
               "excerpt": "\"SELECT * FROM index_generations WHERE kind=? AND state='retired'\",",
               "excerpt_truncated": false,
-              "line": 290,
+              "line": 298,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34753,7 +34753,7 @@
             {
               "excerpt": "\"UPDATE index_generations SET state='removed' WHERE index_generation_id=?\",",
               "excerpt_truncated": false,
-              "line": 301,
+              "line": 309,
               "operation_hint": "update",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34936,15 +34936,15 @@
             {
               "excerpt": "\"SELECT 1 FROM index_membership WHERE search_document_id=?\",",
               "excerpt_truncated": false,
-              "line": 115,
+              "line": 121,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
-              "scope": "refresh_documents"
+              "scope": "_prune_obsolete_documents"
             },
             {
               "excerpt": "\"SELECT 1 FROM index_membership WHERE index_generation_id=? AND search_document_id=?\",",
               "excerpt_truncated": false,
-              "line": 254,
+              "line": 266,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34952,7 +34952,7 @@
             {
               "excerpt": "\"INSERT INTO index_membership(index_generation_id,search_document_id,input_version) VALUES(?,?,?)\",",
               "excerpt_truncated": false,
-              "line": 262,
+              "line": 274,
               "operation_hint": "insert",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -34960,7 +34960,7 @@
             {
               "excerpt": "\"DELETE FROM index_membership WHERE index_generation_id=?\",",
               "excerpt_truncated": false,
-              "line": 297,
+              "line": 305,
               "operation_hint": "delete",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -35151,23 +35151,23 @@
             {
               "excerpt": "\"SELECT search_document_id, source_key FROM search_documents WHERE kind=?\",",
               "excerpt_truncated": false,
-              "line": 105,
+              "line": 111,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
-              "scope": "refresh_documents"
+              "scope": "_prune_obsolete_documents"
             },
             {
               "excerpt": "\"DELETE FROM search_documents WHERE search_document_id=?\",",
               "excerpt_truncated": false,
-              "line": 119,
+              "line": 125,
               "operation_hint": "delete",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
-              "scope": "refresh_documents"
+              "scope": "_prune_obsolete_documents"
             },
             {
               "excerpt": "\"SELECT search_document_id,body FROM search_documents WHERE kind=? AND source_key=?\",",
               "excerpt_truncated": false,
-              "line": 129,
+              "line": 134,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "_save_documents"
@@ -35175,7 +35175,7 @@
             {
               "excerpt": "\"INSERT INTO search_documents(kind,source_key,body,metadata) VALUES(?,?,?,'{}')\",",
               "excerpt_truncated": false,
-              "line": 134,
+              "line": 139,
               "operation_hint": "insert",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "_save_documents"
@@ -35183,7 +35183,7 @@
             {
               "excerpt": "\"UPDATE search_documents SET body=? WHERE search_document_id=?\",",
               "excerpt_truncated": false,
-              "line": 139,
+              "line": 144,
               "operation_hint": "update",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "_save_documents"
@@ -35191,7 +35191,7 @@
             {
               "excerpt": "\"SELECT coalesce(max(search_document_id),0) FROM search_documents WHERE kind=?\",",
               "excerpt_truncated": false,
-              "line": 200,
+              "line": 205,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"
@@ -35199,15 +35199,7 @@
             {
               "excerpt": "\"SELECT * FROM search_documents WHERE kind=? AND search_document_id>? AND search_document_id<=? ORDER BY search_document_id LIMIT 200\",",
               "excerpt_truncated": false,
-              "line": 230,
-              "operation_hint": "read",
-              "path": "src/repo_catalog/adapters/sqlite/index.py",
-              "scope": "rebuild"
-            },
-            {
-              "excerpt": "\"SELECT count(*) FROM search_documents WHERE kind=? AND search_document_id<=?\",",
-              "excerpt_truncated": false,
-              "line": 273,
+              "line": 236,
               "operation_hint": "read",
               "path": "src/repo_catalog/adapters/sqlite/index.py",
               "scope": "rebuild"

@@ -169,17 +169,18 @@ def test_issue_family_keeps_each_comment_and_search_replaces_superseded_text(
         == edited["body"]
     )
     rebuild(catalog.store, "issue")
-    generation = catalog.store.one(
-        "SELECT index_generation_id FROM index_generations WHERE kind='issue' AND state='ready'"
-    )[0]
-    assert not catalog.store.one(
-        "SELECT 1 FROM index_membership m JOIN search_documents d USING(search_document_id) WHERE m.index_generation_id=? AND d.source_key=?",
-        (generation, hashlib.sha256(comment["body"].encode()).hexdigest()),
-    )
-    assert not catalog.store.one(
-        "SELECT 1 FROM search_documents WHERE kind='issue' AND source_key=?",
-        (hashlib.sha256(comment["body"].encode()).hexdigest(),),
-    )
+    with catalog.store.open_search(readonly=True) as search:
+        generation = search.one(
+            "SELECT index_generation_id FROM index_generations WHERE kind='issue' AND state='ready'"
+        )[0]
+        assert not search.one(
+            "SELECT 1 FROM index_membership m JOIN search_documents d USING(search_document_id) WHERE m.index_generation_id=? AND d.source_key=?",
+            (generation, hashlib.sha256(comment["body"].encode()).hexdigest()),
+        )
+        assert not search.one(
+            "SELECT 1 FROM search_documents WHERE kind='issue' AND source_key=?",
+            (hashlib.sha256(comment["body"].encode()).hexdigest(),),
+        )
 
 
 def test_current_review_reads_keep_dismissed_reviews_and_no_edit_history(
@@ -488,3 +489,128 @@ def test_current_issue_queries_reject_obsolete_parser_profile_selector(
     with pytest.raises(CatalogError) as failure:
         current_catalog.query(command, parser_profile=str(uuid.uuid4()))
     assert failure.value.code == "INVALID_ARGUMENT"
+
+
+def test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel(
+    current_catalog, monkeypatch
+):
+    from repo_catalog.adapters.sqlite.store import SearchStore
+
+    catalog = current_catalog
+    originals = [
+        catalog.candidate(
+            "issue", str(n), f"obsolete needle {n}", provider_issue_number=n
+        )
+        for n in range(1, 202)
+    ]
+    for candidate in originals:
+        assert catalog.admit(candidate).status == "accepted"
+    rebuild(catalog.store, "issue")
+    with catalog.store.open_search(readonly=True) as search:
+        old = dict(search.one("SELECT * FROM index_generations WHERE state='ready'"))
+        old_keys = {
+            row[0] for row in search.all("SELECT source_key FROM search_documents")
+        }
+    for candidate in originals:
+        assert (
+            catalog.admit(
+                {
+                    **candidate,
+                    "body": candidate["body"].replace("obsolete", "replacement"),
+                    "provider_updated_at_us": 3,
+                    "observed_at_us": 4,
+                }
+            ).status
+            == "accepted"
+        )
+
+    token = CancellationToken()
+    execute = SearchStore.execute
+
+    def cancel_after_new_generation(self, sql, *args, **kwargs):
+        result = execute(self, sql, *args, **kwargs)
+        if sql.startswith("CREATE VIRTUAL TABLE catalog_fts_"):
+            token.cancelled = True
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(SearchStore, "execute", cancel_after_new_generation)
+        with pytest.raises(CatalogError) as raised:
+            rebuild(catalog.store, "issue", token)
+        assert raised.value.code == "CANCELLED"
+    with catalog.store.open_search(readonly=True) as search:
+        assert (
+            dict(search.one("SELECT * FROM index_generations WHERE state='ready'"))
+            == old
+        )
+        assert (
+            search.one(
+                "SELECT count(*) FROM index_membership WHERE index_generation_id=?",
+                (old["index_generation_id"],),
+            )[0]
+            == 201
+        )
+        assert (
+            search.one(
+                f"SELECT count(*) FROM {old['table_name']} WHERE {old['table_name']} MATCH 'obsolete'"
+            )[0]
+            == 201
+        )
+
+    # More than one SQL batch of retained obsolete documents must not suppress
+    # later current inputs, or become members of the new ready generation.
+    for _ in range(2):
+        rebuilt = rebuild(catalog.store, "issue")
+        assert rebuilt[0]["documents"] == 201
+        with catalog.store.open_search(readonly=True) as search:
+            ready = search.one("SELECT * FROM index_generations WHERE state='ready'")
+            assert (
+                search.one(
+                    f"SELECT count(*) FROM {ready['table_name']} WHERE {ready['table_name']} MATCH 'replacement'"
+                )[0]
+                == 201
+            )
+            assert (
+                search.one(
+                    f"SELECT count(*) FROM {ready['table_name']} WHERE {ready['table_name']} MATCH 'obsolete'"
+                )[0]
+                == 0
+            )
+            current_keys = {
+                row[0] for row in search.all("SELECT source_key FROM search_documents")
+            }
+            assert len(current_keys) == 201
+            assert current_keys.isdisjoint(old_keys)
+    durable_texts = [
+        tuple(row)
+        for row in catalog.store.all("SELECT * FROM text_bodies ORDER BY sha256")
+    ]
+    for candidate in originals:
+        assert (
+            catalog.admit(
+                {
+                    **candidate,
+                    "body": candidate["body"].replace("obsolete", "replacement"),
+                    "deleted": True,
+                    "provider_updated_at_us": 5,
+                    "observed_at_us": 6,
+                }
+            ).status
+            == "accepted"
+        )
+    assert rebuild(catalog.store, "issue")[0]["documents"] == 0
+    with catalog.store.open_search(readonly=True) as search:
+        assert search.one("SELECT count(*) FROM search_documents")[0] == 0
+        ready = search.one("SELECT * FROM index_generations WHERE state='ready'")
+        assert (
+            search.one(
+                "SELECT count(*) FROM index_membership WHERE index_generation_id=?",
+                (ready["index_generation_id"],),
+            )[0]
+            == 0
+        )
+        assert search.one(f"SELECT count(*) FROM {ready['table_name']}")[0] == 0
+    assert [
+        tuple(row)
+        for row in catalog.store.all("SELECT * FROM text_bodies ORDER BY sha256")
+    ] == durable_texts

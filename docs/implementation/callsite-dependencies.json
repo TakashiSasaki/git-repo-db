@@ -1853,7 +1853,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "sha256": "500c7698bef49530d1e84ba7056d0ae63227e95df6954bc3f5c1abaaaab05733",
+      "sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
       "functions": [
         {
           "name": "fts_available",
@@ -1863,7 +1863,7 @@
         {
           "name": "refresh_documents",
           "line": 27,
-          "end_line": 122
+          "end_line": 104
         },
         {
           "name": "git_rows",
@@ -1871,29 +1871,34 @@
           "end_line": 56
         },
         {
+          "name": "_prune_obsolete_documents",
+          "line": 107,
+          "end_line": 127
+        },
+        {
           "name": "_save_documents",
-          "line": 125,
-          "end_line": 141
+          "line": 130,
+          "end_line": 146
         },
         {
           "name": "__init__",
-          "line": 147,
-          "end_line": 160
+          "line": 152,
+          "end_line": 165
         },
         {
           "name": "get",
-          "line": 162,
-          "end_line": 163
-        },
-        {
-          "name": "__getitem__",
-          "line": 165,
+          "line": 167,
           "end_line": 168
         },
         {
+          "name": "__getitem__",
+          "line": 170,
+          "end_line": 173
+        },
+        {
           "name": "rebuild",
-          "line": 171,
-          "end_line": 355
+          "line": 176,
+          "end_line": 364
         }
       ]
     },
@@ -11054,8 +11059,8 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 105,
-      "function": "refresh_documents",
+      "line": 111,
+      "function": "_prune_obsolete_documents",
       "subjects": [
         "search_documents"
       ],
@@ -11065,8 +11070,8 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 115,
-      "function": "refresh_documents",
+      "line": 121,
+      "function": "_prune_obsolete_documents",
       "subjects": [
         "index_membership"
       ],
@@ -11076,24 +11081,13 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 119,
-      "function": "refresh_documents",
+      "line": 125,
+      "function": "_prune_obsolete_documents",
       "subjects": [
         "search_documents"
       ],
       "sql_operations": [
         "DELETE"
-      ]
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 129,
-      "function": "_save_documents",
-      "subjects": [
-        "search_documents"
-      ],
-      "sql_operations": [
-        "SELECT"
       ]
     },
     {
@@ -11104,7 +11098,7 @@
         "search_documents"
       ],
       "sql_operations": [
-        "INSERT"
+        "SELECT"
       ]
     },
     {
@@ -11115,12 +11109,23 @@
         "search_documents"
       ],
       "sql_operations": [
+        "INSERT"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/index.py",
+      "line": 144,
+      "function": "_save_documents",
+      "subjects": [
+        "search_documents"
+      ],
+      "sql_operations": [
         "UPDATE"
       ]
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 185,
+      "line": 190,
       "function": "rebuild",
       "subjects": [
         "commits"
@@ -11129,20 +11134,20 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 200,
-      "function": "rebuild",
-      "subjects": [
-        "search_documents"
-      ],
-      "sql_operations": [
-        "SELECT"
-      ]
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/index.py",
       "line": 205,
       "function": "rebuild",
       "subjects": [
+        "search_documents"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/index.py",
+      "line": 210,
+      "function": "rebuild",
+      "subjects": [
         "index_generations"
       ],
       "sql_operations": [
@@ -11151,7 +11156,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 209,
+      "line": 214,
       "function": "rebuild",
       "subjects": [
         "index_generations"
@@ -11162,7 +11167,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 230,
+      "line": 236,
       "function": "rebuild",
       "subjects": [
         "search_documents"
@@ -11173,7 +11178,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 243,
+      "line": 255,
       "function": "rebuild",
       "subjects": [
         "index_generations"
@@ -11184,7 +11189,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 254,
+      "line": 266,
       "function": "rebuild",
       "subjects": [
         "index_membership"
@@ -11195,7 +11200,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 262,
+      "line": 274,
       "function": "rebuild",
       "subjects": [
         "index_membership"
@@ -11206,18 +11211,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 273,
-      "function": "rebuild",
-      "subjects": [
-        "search_documents"
-      ],
-      "sql_operations": [
-        "SELECT"
-      ]
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 281,
+      "line": 289,
       "function": "rebuild",
       "subjects": [
         "index_generations"
@@ -11228,7 +11222,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 285,
+      "line": 293,
       "function": "rebuild",
       "subjects": [
         "index_generations"
@@ -11239,7 +11233,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 290,
+      "line": 298,
       "function": "rebuild",
       "subjects": [
         "index_generations"
@@ -11250,7 +11244,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 297,
+      "line": 305,
       "function": "rebuild",
       "subjects": [
         "index_membership"
@@ -11261,7 +11255,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 301,
+      "line": 309,
       "function": "rebuild",
       "subjects": [
         "index_generations"
@@ -11272,7 +11266,7 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 310,
+      "line": 319,
       "function": "rebuild",
       "subjects": [
         "documents"
@@ -40711,19 +40705,19 @@
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 192,
+      "line": 197,
       "function": "rebuild",
       "source": "core_rev = store.revision()[\"local_revision\"]"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 209,
+      "line": 214,
       "function": "rebuild",
       "source": "\"INSERT INTO index_generations(index_generation_id,kind,state,table_name,target_max_search_document_id,core_revision_fence,created_at_us) VALUES(?,?,?,?,?,?,?)\","
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/index.py",
-      "line": 317,
+      "line": 326,
       "function": "rebuild",
       "source": "ended_at_us, core_revision_fence=last_projected_fence"
     },
