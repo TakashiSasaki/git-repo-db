@@ -1,0 +1,20 @@
+{
+  "run_id": 38860098880,
+  "url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38860098880",
+  "binding": {
+    "feature_sha": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c",
+    "head": "47e051f694b5428dae4f5af24fbb6af340ab84c8",
+    "run_attempt": "1",
+    "run_id": "38860098880",
+    "tree": "443c4b25478c1e406136c77d6689e87bd72231f9"
+  },
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "validation_mode": "development",
+  "hosted_runtime_nodes_executed": 0,
+  "acceptance_input_hash": "60c94caae7eed9d7045ccf98127481da31a1100f93ae54b2f588c65096d3535b",
+  "verified_zip_sha256": "ff55a9896b67edfc0ae1cbc1991859846759d9320e37e6437988a17208e96bee",
+  "verified_zip_bytes": 67098,
+  "indexed_files_checked": 21,
+  "raw_log_sha256": "148336428058bc467f1b52c3b131109fb5912fc548ea000206c2ca98e5f2e8da"
+}

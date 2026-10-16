@@ -1,0 +1,61 @@
+{
+  "reviewed_commit": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c",
+  "reviewed_tree": "443c4b25478c1e406136c77d6689e87bd72231f9",
+  "root_receipt_sha256": "6d75d7dbabb9b2215646a8c588e2e3a9691239d3db7b95faad3e1a486e34345b",
+  "root_selected_executed_junit_unique": 1091,
+  "root_passed_phases": 3273,
+  "root_failures": 0,
+  "root_skips": 0,
+  "root_artifact_hashes_valid": true,
+  "source_input_paths_hashed": 342,
+  "source_inputs_match_exact_git_tree": true,
+  "all_required_commands_exit_zero": true,
+  "separate_legacy_exit_code": 1,
+  "legacy_baseline_failures_unchanged": [
+    {
+      "classname": "tests.integration.test_catalog3_git_runtime",
+      "name": "test_interrupted_fixed_refs_resume_without_new_remote_observation",
+      "message": "sqlite3.OperationalError: no such table: cache_leases"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_model_cli",
+      "name": "test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+      "message": "sqlite3.OperationalError: no such table: jobs"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_portable_identity",
+      "name": "test_no_usable_source_rejects_before_job_and_observation[None]",
+      "message": "sqlite3.OperationalError: no such table: jobs"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_portable_identity",
+      "name": "test_no_usable_source_rejects_before_job_and_observation[first]",
+      "message": "sqlite3.OperationalError: no such table: jobs"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_queries",
+      "name": "test_backup_restore_requires_absent_destination_without_removing_empty_dir",
+      "message": "sqlite3.OperationalError: no such table: cache_locators"
+    }
+  ],
+  "selected_partition": {
+    "tests/integration/p1": 317,
+    "tests/integration/p2": 197,
+    "tests/integration/p3": 75,
+    "tests/integration/p4": 202,
+    "tests/integration/p5": 47,
+    "tests/integration/p6": 50,
+    "tests/integration/p2_p3_compatibility": 20,
+    "tests/integration/p5_p6_compatibility": 29,
+    "tests/integration/architecture_spikes": 128,
+    "tests/integration/test_snapshot_read_limits.py::test_supported_core_snapshot_expires_and_metadata_token_is_available": 1,
+    "tests/integration/test_snapshot_read_limits.py::test_finite_snapshot_refusal_is_not_corruption[limits0]": 1,
+    "tests/integration/test_snapshot_read_limits.py::test_finite_snapshot_refusal_is_not_corruption[limits1]": 1,
+    "tests/integration/test_snapshot_read_limits.py::test_finite_snapshot_refusal_is_not_corruption[limits2]": 1,
+    "tests/integration/test_snapshot_read_limits.py::test_snapshot_cannot_redirect_catalog_corruption_stop": 1,
+    "tests/integration/test_snapshot_read_limits.py::test_paired_snapshot_reports_validation_and_token_generation_separately": 1,
+    "tests/packaging": 20
+  },
+  "overlap_warning": "Reviewer49 final integration nodes are within these1091 root nodes; independent repeated execution is not49 additional unique committed tests.",
+  "scope": "Focused development/integration evidence; not Full Release Acceptance."
+}

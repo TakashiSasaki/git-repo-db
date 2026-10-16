@@ -1,0 +1,237 @@
+[
+  {
+    "argv": [
+      "uv",
+      "sync",
+      "--locked",
+      "--group",
+      "dev"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.016080980999959138,
+    "output": "sync.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.023012889000028736,
+    "output": "ruff.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.029506216000072527,
+    "output": "format.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.13111865900009434,
+    "output": "build-schema.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.13642376999996486,
+    "output": "audit-schema.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.9824793510001655,
+    "output": "audit-boundary.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.9986158490000889,
+    "output": "audit-callsites.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_publication_free.py"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 1.087952524000002,
+    "output": "audit-publication.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/integration/p1",
+      "tests/integration/p2",
+      "tests/integration/p3",
+      "tests/integration/p4",
+      "tests/integration/p5",
+      "tests/integration/p6",
+      "tests/integration/p2_p3_compatibility",
+      "tests/integration/p5_p6_compatibility",
+      "tests/integration/architecture_spikes",
+      "tests/integration/test_snapshot_read_limits.py",
+      "tests/packaging/test_p1_distribution.py",
+      "tests/packaging/test_p2_distribution.py",
+      "tests/packaging/test_p3_distribution.py",
+      "tests/packaging/test_p4_distribution.py",
+      "tests/packaging/test_p5_distribution.py",
+      "tests/packaging/test_p6_distribution.py",
+      "--collect-only",
+      "-q"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.8889309090000097,
+    "output": "collect.txt"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/integration/p1",
+      "tests/integration/p2",
+      "tests/integration/p3",
+      "tests/integration/p4",
+      "tests/integration/p5",
+      "tests/integration/p6",
+      "tests/integration/p2_p3_compatibility",
+      "tests/integration/p5_p6_compatibility",
+      "tests/integration/architecture_spikes",
+      "tests/integration/test_snapshot_read_limits.py",
+      "tests/packaging/test_p1_distribution.py",
+      "tests/packaging/test_p2_distribution.py",
+      "tests/packaging/test_p3_distribution.py",
+      "tests/packaging/test_p4_distribution.py",
+      "tests/packaging/test_p5_distribution.py",
+      "tests/packaging/test_p6_distribution.py",
+      "-q",
+      "--tb=short",
+      "--basetemp",
+      "/workspace/work/final-evidence/0cb51d46d87d/pytest-temp",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/work/final-evidence/0cb51d46d87d/junit.xml",
+      "--journal",
+      "/workspace/work/final-evidence/0cb51d46d87d/journal.jsonl"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 316.23579726,
+    "output": "pytest.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation",
+      "tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+      "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
+      "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]",
+      "tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir",
+      "-q",
+      "--tb=short",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/work/final-evidence/0cb51d46d87d/legacy-junit.xml",
+      "--journal",
+      "/workspace/work/final-evidence/0cb51d46d87d/legacy-journal.jsonl"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 1,
+    "elapsed_seconds": 6.498557916999971,
+    "output": "legacy.log"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "-c",
+      "import sys,sqlite3,repo_catalog,pytest; print(sys.version); print(sqlite3.sqlite_version); print(repo_catalog.__file__); print(pytest.__version__)"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.17506499799992525,
+    "output": "python-versions.txt"
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "--version"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "elapsed_seconds": 0.020615184999996927,
+    "output": "ruff-version.txt"
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "kind": "diagnostic_noncomparative_phase_telemetry",
+  "rows": [
+    {
+      "mode": "paired",
+      "backend": "verified_projection_scan",
+      "hits": 4,
+      "phase_costs_ns": {
+        "authority_validation": 1135238,
+        "snapshot_token_generation": 6794871,
+        "snapshot_total": 58010008,
+        "authority_search_validation:git_metadata": 35568810,
+        "projection_scan:git_metadata": 21347353,
+        "authority_search_validation:notes": 2863087,
+        "projection_scan:notes": 20732150,
+        "authority_search_validation:context_text": 1076907,
+        "projection_scan:context_text": 15431582
+      }
+    },
+    {
+      "mode": "core_only",
+      "backend": "verified_projection_scan",
+      "hits": 4,
+      "phase_costs_ns": {
+        "authority_identity_validation": 359620,
+        "snapshot_token_generation": 8664524,
+        "snapshot_total": 29683088,
+        "authority_search_validation:git_metadata": 26098041,
+        "projection_scan:git_metadata": 17766430,
+        "authority_search_validation:notes": 2390080,
+        "projection_scan:notes": 15864106
+      }
+    },
+    {
+      "mode": "context_only",
+      "backend": "verified_projection_scan",
+      "hits": 0,
+      "phase_costs_ns": {
+        "authority_identity_validation": 95781,
+        "snapshot_token_generation": 6771367,
+        "snapshot_total": 26270651,
+        "authority_search_validation:context_text": 857878,
+        "projection_scan:context_text": 20172620
+      }
+    }
+  ]
+}

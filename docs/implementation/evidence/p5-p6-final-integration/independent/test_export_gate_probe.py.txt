@@ -1,0 +1,39 @@
+"""Independent process probes the export gate at the actual between-store cut."""
+import subprocess
+import sys
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.application.exchange import ExchangeService
+
+PROBE = r'''
+import fcntl,sys
+with open(sys.argv[1], 'a+b') as lock:
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print('blocked')
+    else:
+        print('acquired')
+'''
+
+def test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt(tmp_path, monkeypatch):
+    repository, instance = str(uuid4()), str(uuid4())
+    for role in ('core','context','operational'):
+        initialize(tmp_path / f'{role}.sqlite3', role, repository, instance)
+    lock_path = tmp_path / 'p1-writer.lock'
+    def probe():
+        result = subprocess.run([sys.executable,'-c',PROBE,str(lock_path)],check=True,capture_output=True,text=True,timeout=10)
+        return result.stdout.strip()
+    assert probe() == 'acquired'  # Negative control: no export gate is held yet.
+    service = ExchangeService(tmp_path)
+    original = service._export_core
+    observed = []
+    def after_core_before_context(*args, **kwargs):
+        section = original(*args, **kwargs)
+        observed.append(probe())  # Actual LOCK_EX|LOCK_NB call completes here.
+        return section
+    monkeypatch.setattr(service, '_export_core', after_core_before_context)
+    package = service.export_package(exported_at_us=1)
+    assert observed == ['blocked']
+    assert package.core is not None and package.context is not None
+    assert probe() == 'acquired'  # Export release restores writer eligibility.

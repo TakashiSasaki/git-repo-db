@@ -1,0 +1,43 @@
+{
+  "baseline_commit": "5e778bf61ef660f65bf5fb22bdb08840503b8464",
+  "target_commit": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c",
+  "same_five_failures": true,
+  "cases": [
+    {
+      "classname": "tests.integration.test_catalog3_git_runtime",
+      "name": "test_interrupted_fixed_refs_resume_without_new_remote_observation",
+      "outcome": "failed",
+      "missing_table": "cache_leases"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_model_cli",
+      "name": "test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+      "outcome": "failed",
+      "missing_table": "jobs"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_portable_identity",
+      "name": "test_no_usable_source_rejects_before_job_and_observation[None]",
+      "outcome": "failed",
+      "missing_table": "jobs"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_portable_identity",
+      "name": "test_no_usable_source_rejects_before_job_and_observation[first]",
+      "outcome": "failed",
+      "missing_table": "jobs"
+    },
+    {
+      "classname": "tests.integration.test_catalog3_queries",
+      "name": "test_backup_restore_requires_absent_destination_without_removing_empty_dir",
+      "outcome": "failed",
+      "missing_table": "cache_locators"
+    }
+  ],
+  "counts": {
+    "cache_leases": 1,
+    "jobs": 3,
+    "cache_locators": 1
+  },
+  "not_skipped_or_xfailed": true
+}

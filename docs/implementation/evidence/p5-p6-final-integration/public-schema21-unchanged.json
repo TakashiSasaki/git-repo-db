@@ -1,0 +1,23 @@
+{
+  "main_commit": "5e778bf61ef660f65bf5fb22bdb08840503b8464",
+  "checked_paths": {
+    "src/repo_catalog/cli/main.py": "acc24904c4b9a4d41800dc888b16eb3ca1a857c118ed75a7301ffdfd8b671d4e",
+    "src/repo_catalog/adapters/sqlite/schema.py": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39",
+    "src/repo_catalog/resources/cas_integrity.sql": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1",
+    "src/repo_catalog/resources/catalog3.sql": "ddc8f3039f512246ca417d33145e3afeb58be9212f741925706c936922b6f681",
+    "src/repo_catalog/resources/current_api.sql": "da05f6af33dd9154c411d9f4267a9498b89d8622cc6a2df9fbaa203a4ed0bae0",
+    "src/repo_catalog/resources/current_collections.sql": "ac5ec2df8955bc856e0fcd19f6bc04d9caddbe902d6137bf1064b61e1cdf04bc",
+    "src/repo_catalog/resources/current_resources.sql": "0a7a5fdfe024578ee008cff8b3f409c48a2c9b1d0da242122fd7bb7d16dcbf5f",
+    "src/repo_catalog/resources/exchange.sql": "c6f815452f508e31ad8b17349f0937ed14c3de5ce80d1370db1655a3f42c4fcf",
+    "src/repo_catalog/resources/git_domain.sql": "31611b0dfd641694198dde519f58180f4a0b7a257400c57a77e79325cfd99f9c",
+    "src/repo_catalog/resources/git_facts.sql": "731be2cf76583d3f6ece84b48bbec58ef5d9480dbd5a7bf9de9d4a07f7a0c132",
+    "src/repo_catalog/resources/identity_relations.sql": "b596bb6b9a20552501ad411bf33053edee9565e6414e2e4fc9870f100e766461",
+    "src/repo_catalog/resources/json_contracts.sql": "fea5fd9f3a6ce6ccb9c9fff4d5a37fe3bf0be19e8cc1e198aef91064dce8149e",
+    "src/repo_catalog/resources/operational.sql": "dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def",
+    "src/repo_catalog/resources/pr_threads.graphql": "1bdf8a80df5221a44f3f5365d83dad8bfc5f7b203fbb11cba6c196c5816401e9",
+    "src/repo_catalog/resources/schemas/cli-v1.schema.json": "c6093eae50b54e27eb032238d0284cc6cca3f49a4e7875498a8241ee2775264e",
+    "src/repo_catalog/resources/search.sql": "1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7",
+    "src/repo_catalog/resources/thread_comments.graphql": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4"
+  },
+  "equal_to_tested_input": true
+}

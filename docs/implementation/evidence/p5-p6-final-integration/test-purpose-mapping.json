@@ -1,0 +1,32 @@
+{
+  "inherited_combined_five_to_both_formats": {
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search": [
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_end_to_end_acquisition_into_query_and_search[sha256]"
+    ],
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_multi_hop_exchange_into_query": [
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_multi_hop_exchange_into_query[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_multi_hop_exchange_into_query[sha256]"
+    ],
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries": [
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_deferred_core_dependency_reconciliation_into_paired_queries[sha256]"
+    ],
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_derivative_loss_resilience_and_transparent_fallback": [
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_derivative_loss_resilience_and_transparent_fallback[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_derivative_loss_resilience_and_transparent_fallback[sha256]"
+    ],
+    "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_authoritative_corruption_immediate_stop": [
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_authoritative_corruption_immediate_stop[sha1]",
+      "tests/integration/p5_p6_compatibility/test_end_to_end_p5_p6.py::test_authoritative_corruption_immediate_stop[sha256]"
+    ]
+  },
+  "packaging_fixture": {
+    "node_prefix": "tests/packaging/test_p5_distribution.py::test_p5_installed_acquisition_and_exchange",
+    "same_four_node_ids": true,
+    "initial_failure_commit": "0088a3d39cc25efca61c323c1f52ac9c4f71cd54",
+    "fix_commit": "2833e50b694ee330d6630d1fe631d9fa158a992f",
+    "purpose": "Installed acquisition/Exchange from wheel and sdist-wheel in both Git formats; explicit Operational ledger now supplied, without weakening fail-closed production behavior."
+  },
+  "fixture_iterations": "Synthetic pre-epoch commit requires git hash-object --literally; no git fsck success is claimed. Initial attempts and missing explicit-ledger failures retained separately."
+}
