@@ -64,9 +64,23 @@ def _setup_git_repo(git_dir: Path, fmt: str = "sha1") -> dict[str, str]:
     )
 
     def write_obj(kind: str, body: bytes) -> str:
+        # Git's producer rejects pre-epoch dates; deliberately construct that
+        # synthetic native-byte boundary with --literally, then acquire it via
+        # the real Git object reader. This does not claim git fsck acceptance.
+        literal = ["--literally"] if kind == "commit" and b"-1 +0000" in body else []
         return (
             subprocess.run(
-                ["git", "-C", str(git_dir), "hash-object", "-w", "-t", kind, "--stdin"],
+                [
+                    "git",
+                    "-C",
+                    str(git_dir),
+                    "hash-object",
+                    "-w",
+                    "-t",
+                    kind,
+                    "--stdin",
+                    *literal,
+                ],
                 input=body,
                 check=True,
                 capture_output=True,
