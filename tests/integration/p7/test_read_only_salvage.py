@@ -41,13 +41,5 @@ def test_salvage_preserves_independent_candidates_across_faults(
     assert salvage_file.exists()
 
 
-def test_salvage_does_not_mutate_suspect_database(synthetic_catalog, tmp_path):
-    service = RecoveryService()
-    core_path = synthetic_catalog / "core.sqlite3"
-    initial_bytes = core_path.read_bytes()
-
-    salvage_file = tmp_path / "salvage_read_only.jsonl"
-    service.extract_salvage(synthetic_catalog, salvage_file)
-
-    post_bytes = core_path.read_bytes()
-    assert initial_bytes == post_bytes
+# Note: test_salvage_does_not_mutate_suspect_database is comprehensively covered
+# with bit-for-bit WAL and DB preservation by test_adversarial_contract_cases.py (Case 10).

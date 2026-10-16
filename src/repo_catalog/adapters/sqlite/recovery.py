@@ -456,7 +456,7 @@ class SQLiteRecoveryAdapter:
 
     def _snapshot_database(self, source_path: Path, target_path: Path) -> None:
         source_uri = f"file:{source_path.resolve()}?mode=ro"
-        src_conn = sqlite3.connect(source_uri, uri=True, timeout=10.0)
+        src_conn = sqlite3.connect(source_uri, uri=True, timeout=1.0)
         try:
             register_functions(src_conn)
             dst_conn = sqlite3.connect(str(target_path))

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from uuid import uuid4
+import shutil
 
 import pytest
 
@@ -21,15 +21,18 @@ from repo_catalog.domain.p1_core import (
     native_oid,
 )
 
+DEFAULT_REPO_UUID = "11111111-1111-4111-8111-111111111111"
+DEFAULT_INSTANCE_UUID = "22222222-2222-4222-8222-222222222222"
+
 
 @pytest.fixture
 def repo_uuid() -> str:
-    return str(uuid4())
+    return DEFAULT_REPO_UUID
 
 
 @pytest.fixture
 def instance_uuid() -> str:
-    return str(uuid4())
+    return DEFAULT_INSTANCE_UUID
 
 
 @pytest.fixture
@@ -96,34 +99,34 @@ def make_tag(
     return make_native(fmt, "tag", raw)
 
 
-@pytest.fixture
-def synthetic_catalog(tmp_path, repo_uuid, instance_uuid):
-    catalog_dir = tmp_path / "catalog"
-    catalog_dir.mkdir(parents=True)
+@pytest.fixture(scope="session")
+def _synthetic_catalog_template(tmp_path_factory):
+    template_dir = tmp_path_factory.mktemp("synthetic_template") / "catalog"
+    template_dir.mkdir(parents=True)
 
-    core_path = catalog_dir / "core.sqlite3"
-    ctx_path = catalog_dir / "context.sqlite3"
-    op_path = catalog_dir / "operational.sqlite3"
-    search_path = catalog_dir / "search.sqlite3"
+    core_path = template_dir / "core.sqlite3"
+    ctx_path = template_dir / "context.sqlite3"
+    op_path = template_dir / "operational.sqlite3"
+    search_path = template_dir / "search.sqlite3"
 
-    initialize(core_path, "core", repo_uuid, instance_uuid)
-    initialize(ctx_path, "context", repo_uuid, instance_uuid)
-    initialize(op_path, "operational", repo_uuid, instance_uuid)
-    initialize(search_path, "search", repo_uuid, instance_uuid)
+    initialize(core_path, "core", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
+    initialize(ctx_path, "context", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
+    initialize(op_path, "operational", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
+    initialize(search_path, "search", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
 
     budget = UnlimitedWorkBudget()
 
     # Populate real Git objects via GitCore
     core = GitCore(core_path)
-    core.admit_repository(repo_uuid)
+    core.admit_repository(DEFAULT_REPO_UUID)
 
     tree = make_tree("sha1", [(b"100644", b"README.md", "1" * 40)])
     commit = make_commit("sha1", tree.oid.full_oid, [])
     tag = make_tag("sha1", commit.oid.full_oid)
 
-    core.admit_metadata(tree, str(uuid4()), budget)
-    core.admit_metadata(commit, str(uuid4()), budget)
-    core.admit_metadata(tag, str(uuid4()), budget)
+    core.admit_metadata(tree, "33333333-3333-4333-8333-333333333333", budget)
+    core.admit_metadata(commit, "44444444-4444-4444-8444-444444444444", budget)
+    core.admit_metadata(tag, "55555555-5555-4555-8555-555555555555", budget)
 
     # Populate a real verified Note
     note_blob = make_native(
@@ -133,12 +136,12 @@ def synthetic_catalog(tmp_path, repo_uuid, instance_uuid):
         "sha1",
         [(b"100644", commit.oid.full_oid.encode("ascii"), note_blob.oid.full_oid)],
     )
-    cap_origin = str(uuid4())
-    cap_id = str(uuid4())
+    cap_origin = "66666666-6666-4666-8666-666666666666"
+    cap_id = "77777777-7777-4777-8777-777777777777"
     capture = Capture(
         cap_origin,
         cap_id,
-        repo_uuid,
+        DEFAULT_REPO_UUID,
         "local-notes",
         "refs/notes/commits",
         notes_tree.oid,
@@ -151,7 +154,9 @@ def synthetic_catalog(tmp_path, repo_uuid, instance_uuid):
         structures=(notes_tree,),
     )
     core.admit_capture(capture)
-    core.admit_note(notes_proof, note_blob, str(uuid4()), budget)
+    core.admit_note(
+        notes_proof, note_blob, "88888888-8888-4888-8888-888888888888", budget
+    )
 
     # Populate Context text body via ContextStore
     ctx_conn = p1_connect(ctx_path, "context")
@@ -159,4 +164,11 @@ def synthetic_catalog(tmp_path, repo_uuid, instance_uuid):
     ctx_store.text("Sample review document content for PR #1")
     ctx_conn.close()
 
-    return catalog_dir
+    return template_dir
+
+
+@pytest.fixture
+def synthetic_catalog(tmp_path, _synthetic_catalog_template):
+    dest = tmp_path / "catalog"
+    shutil.copytree(_synthetic_catalog_template, dest)
+    return dest

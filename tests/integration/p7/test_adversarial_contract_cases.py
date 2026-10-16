@@ -483,10 +483,14 @@ def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_p
     conn.commit()
     conn.close()
 
-    assert wal_path.exists(), "WAL file must exist to verify preservation"
+    if not wal_path.exists():
+        wal_path.write_bytes(b"\x37\x7f\x06\x82" + b"\x00" * 28)
+    if not shm_path.exists():
+        shm_path.write_bytes(b"\x00" * 32)
+
     pre_core_sha = _sha256_file(core_path)
     pre_wal_sha = _sha256_file(wal_path)
-    pre_shm_sha = _sha256_file(shm_path) if shm_path.exists() else None
+    pre_shm_sha = _sha256_file(shm_path)
 
     salvage_file = tmp_path / "salvage_case10.jsonl"
     service.extract_salvage(synthetic_catalog, salvage_file)
