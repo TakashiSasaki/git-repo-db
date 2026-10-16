@@ -944,7 +944,21 @@ class SQLiteRecoveryAdapter:
             register_functions(src_conn)
             dst_conn = sqlite3.connect(str(target_path))
             try:
-                src_conn.backup(dst_conn)
+                deadline = time.monotonic() + 1.0
+
+                def bounded_progress(status, remaining, total):
+                    if (
+                        status in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED)
+                        and time.monotonic() >= deadline
+                    ):
+                        raise sqlite3.OperationalError(
+                            "SQLite backup lock wait exceeded finite deadline"
+                        )
+
+                # Connection timeout alone does not bound backup() BUSY retries.
+                src_conn.backup(
+                    dst_conn, pages=128, progress=bounded_progress, sleep=0.01
+                )
                 dst_conn.execute("PRAGMA journal_mode=DELETE")
             finally:
                 dst_conn.close()

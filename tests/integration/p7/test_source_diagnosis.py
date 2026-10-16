@@ -280,3 +280,34 @@ def test_staging_pair_mismatch_does_not_stop_healthy_source(
         )
     assert not is_catalog_stopped(synthetic_catalog)
     assert not destination.exists()
+
+
+def test_separate_sqlite_lock_has_finite_backup_wait(synthetic_catalog, tmp_path):
+    import subprocess
+    import sys
+    import time
+
+    locker = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA locking_mode=EXCLUSIVE'); c.execute('BEGIN EXCLUSIVE'); print('LOCKED',flush=True); sys.stdin.read()",
+            str(synthetic_catalog / "core.sqlite3"),
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert locker.stdout.readline().strip() == "LOCKED"
+        started = time.monotonic()
+        with pytest.raises(BackupValidationError, match="finite deadline"):
+            RecoveryService().create_consistent_backup(
+                synthetic_catalog, tmp_path / "backup"
+            )
+        assert time.monotonic() - started < 5
+        assert not is_catalog_stopped(synthetic_catalog)
+        assert not (tmp_path / "backup").exists()
+    finally:
+        locker.stdin.close()
+        locker.wait(timeout=10)
