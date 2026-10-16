@@ -1144,6 +1144,7 @@ class SQLiteRecoveryAdapter:
                 )
 
             validate_stored_text_encoding(conn, "core")
+            validate_stored_checks(conn, "core", retained_bytes=False)
 
             # PRAGMA integrity_check
             result = conn.execute("PRAGMA integrity_check").fetchall()
@@ -1311,7 +1312,7 @@ class SQLiteRecoveryAdapter:
                 notes += 1
                 total_bytes += len(body)
 
-            validate_stored_checks(conn, "core")
+            validate_stored_checks(conn, "core", retained_bytes=True)
             validate_stored_admission_guards(conn, "core")
 
             return RetainedByteSummary(
@@ -1343,6 +1344,7 @@ class SQLiteRecoveryAdapter:
                 )
 
             validate_stored_text_encoding(conn, "context")
+            validate_stored_checks(conn, "context", retained_bytes=False)
             validate_stored_admission_guards(conn, "context")
 
             result = conn.execute("PRAGMA integrity_check").fetchall()
@@ -1382,7 +1384,7 @@ class SQLiteRecoveryAdapter:
                     )
                 total_bytes += len(text_value.encode("utf-8"))
 
-            validate_stored_checks(conn, "context")
+            validate_stored_checks(conn, "context", retained_bytes=True)
 
             return RetainedByteSummary(total_retained_bytes=total_bytes)
         except sqlite3.Error as e:

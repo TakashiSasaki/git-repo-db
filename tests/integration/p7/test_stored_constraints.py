@@ -19,6 +19,7 @@ from repo_catalog.domain.recovery import CorruptionDetectedError
         ("captures", "ref", "'not-a-valid-ref'"),
         ("scalar_claims", "provenance", "CAST(x'ff' AS TEXT)"),
         ("scalar_claims", "value", "'false'"),
+        ("scalar_claims", "value", "'{'"),
     ],
 )
 def test_invalid_core_text_or_udf_check_stops_source(

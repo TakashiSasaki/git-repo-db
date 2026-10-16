@@ -128,12 +128,15 @@ def _packaged_checks(sql: str):
         yield sql[start : position - 1]
 
 
-def validate_stored_checks(connection: sqlite3.Connection, role: str) -> None:
+def validate_stored_checks(
+    connection: sqlite3.Connection, role: str, *, retained_bytes: bool
+) -> None:
     # SQLite readonly integrity_check can report 'ok' without surfacing failed
     # application-UDF CHECKs. Re-evaluate every trusted expression explicitly.
     # SQLite CHECK accepts NULL: WHERE NOT(expression) preserves that meaning.
+    body_tables = {"retained_metadata", "retained_notes", "text_bodies"}
     for kind, table, _, sql in expected_schema(role):
-        if kind != "table":
+        if kind != "table" or (table in body_tables) != retained_bytes:
             continue
         for expression in _packaged_checks(sql):
             if connection.execute(
