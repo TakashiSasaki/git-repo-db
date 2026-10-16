@@ -27,14 +27,15 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
     persist_catalog_stop,
 )
 from repo_catalog.adapters.sqlite.p1_schema import (
-    connect as p1_connect,
-)
-from repo_catalog.adapters.sqlite.p1_schema import (
+    SchemaError,
     expected_schema,
     oid,
     register_functions,
     schema_rows,
     uuid4,
+)
+from repo_catalog.adapters.sqlite.p1_schema import (
+    connect as p1_connect,
 )
 from repo_catalog.adapters.sqlite.p1_schema import (
     fingerprint as p1_schema_fingerprint,
@@ -75,6 +76,7 @@ from repo_catalog.domain.recovery import (
     RetainedByteSummary,
     SalvageError,
     SalvageReceipt,
+    SourceIntegrityIndeterminateError,
     StoreManifest,
 )
 
@@ -251,6 +253,42 @@ class RecoveryWorkBudget:
             raise ValueError("invalid charged work amount")
 
 
+def _confirmed_integrity_failure(error: Exception) -> str | None:
+    """Only positive integrity evidence can label a source corrupt.
+
+    Validation wrappers retain causes. A lock, IO/permission failure, resource
+    exhaustion or unexpected implementation failure anywhere in that chain is
+    indeterminate, even when wrapped as BackupValidationError.
+    """
+    chain: list[BaseException] = []
+    current: BaseException | None = error
+    while current is not None and current not in chain:
+        chain.append(current)
+        current = current.__cause__
+    for cause in chain:
+        if isinstance(cause, sqlite3.Error):
+            code = getattr(cause, "sqlite_errorcode", 0)
+            if code & 255 not in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
+                return None
+        elif isinstance(cause, (OSError, MemoryError, CoordinationError)):
+            return None
+        elif isinstance(cause, CoreFailure) and cause.code not in (
+            "NATIVE_SYNTAX",
+            "INVALID_IDENTITY",
+            "INVALID_OBJECT",
+        ):
+            return None
+        elif not isinstance(cause, (BackupValidationError, SchemaError, CoreFailure)):
+            return None
+    if any(isinstance(cause, SchemaError) for cause in chain):
+        return "physical_schema"
+    if isinstance(error, BackupValidationError) or any(
+        isinstance(cause, sqlite3.Error) for cause in chain
+    ):
+        return "authoritative_data"
+    return None
+
+
 def _sha256_file(path: Path) -> str:
     hasher = hashlib.sha256()
     with path.open("rb") as f:
@@ -360,12 +398,14 @@ class SQLiteRecoveryAdapter:
 
                     # Snapshot Core
                     staged_core = stores_dir / "core.sqlite3"
+                    snapshot_source, snapshot_role = core_db_path, "core"
                     self._snapshot_database(core_db_path, staged_core)
 
                     # Snapshot Context if paired
                     staged_context = None
                     if scope == BackupScope.PAIRED:
                         staged_context = stores_dir / "context.sqlite3"
+                        snapshot_source, snapshot_role = context_db_path, "context"
                         self._snapshot_database(context_db_path, staged_context)
 
                     # Execute cut callback while lock is actively held, if provided
@@ -373,7 +413,7 @@ class SQLiteRecoveryAdapter:
                         snapshot_cut_callback()
             except sqlite3.Error as e:
                 self._diagnose_and_stop_if_source_corrupt(
-                    catalog_dir, core_db_path, "core", e
+                    catalog_dir, snapshot_source, snapshot_role, e
                 )
                 raise BackupValidationError(str(e)) from e
 
@@ -543,30 +583,35 @@ class SQLiteRecoveryAdapter:
         corruption, immediately persist catalog recovery stop and fence ordinary operations.
         If source is sound (staging copy defect only), do not stop healthy authoritative catalog.
         """
-        is_source_corrupt = False
-        source_err: Exception | None = None
-        try:
-            with catalog_gate(catalog_dir, exclusive=True):
+        if store_role not in ("core", "context"):
+            raise ValueError("unknown authoritative store role")
+        with catalog_gate(catalog_dir, exclusive=True):
+            assert_catalog_not_stopped(catalog_dir)
+            try:
                 if store_role == "core":
                     self._validate_and_summarize_core(source_db_path)
-                elif store_role == "context":
+                else:
                     self._validate_and_summarize_context(source_db_path)
-        except Exception as e:
-            is_source_corrupt = True
-            source_err = e
-
-        if is_source_corrupt and source_err is not None:
-            reason = f"Confirmed authoritative {store_role} corruption: {source_err}"
-            stop_catalog(
-                catalog_dir,
-                reason,
-                details={
-                    "store": store_role,
-                    "staging_error": str(staging_error),
-                    "source_error": str(source_err),
-                },
-            )
-            raise CorruptionDetectedError(reason) from source_err
+            except Exception as source_error:
+                category = _confirmed_integrity_failure(source_error)
+                if category is None:
+                    raise SourceIntegrityIndeterminateError(
+                        f"Indeterminate {store_role} source integrity; validation unavailable: {source_error}"
+                    ) from source_error
+                # Persist the fence before releasing the protected writer cut.
+                # A diagnostic write to the suspect database is never required.
+                reason = f"Confirmed authoritative {store_role} corruption ({category}): {source_error}"
+                stop_catalog(
+                    catalog_dir,
+                    reason,
+                    details={
+                        "store": store_role,
+                        "classification": category,
+                        "staging_error": str(staging_error),
+                        "source_error": str(source_error),
+                    },
+                )
+                raise CorruptionDetectedError(reason) from source_error
 
     def _snapshot_database(self, source_path: Path, target_path: Path) -> None:
         source_uri = f"file:{source_path.resolve()}?mode=ro"

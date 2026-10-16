@@ -42,6 +42,10 @@ class BackupValidationError(RecoveryError):
     """Raised when backup data or manifest fails validation."""
 
 
+class SourceIntegrityIndeterminateError(BackupValidationError):
+    """Source integrity could not be established; corruption is not proven."""
+
+
 class RestoreValidationError(RecoveryError):
     """Raised when restore baseline fails validation."""
 
