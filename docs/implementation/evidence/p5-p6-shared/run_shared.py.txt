@@ -1,0 +1,16 @@
+import hashlib,json,os,platform,sqlite3,subprocess,sys,time
+from pathlib import Path
+root=Path.cwd();out=Path('/workspace/work/shared-evidence')/subprocess.check_output(['git','rev-parse','--short','HEAD'],text=True).strip();out.mkdir(parents=True,exist_ok=False);commands=[]
+def run(args,log):
+ start=time.time();p=subprocess.run(args,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True);(out/log).write_text(p.stdout);commands.append({'argv':args,'exit_code':p.returncode,'duration_seconds':time.time()-start,'log':log});return p.returncode
+selection=['tests/integration/p1','tests/integration/p2','tests/integration/p3','tests/integration/p4','tests/integration/p2_p3_compatibility','tests/integration/test_snapshot_read_limits.py','tests/packaging/test_p1_distribution.py','tests/packaging/test_p2_distribution.py','tests/packaging/test_p3_distribution.py','tests/packaging/test_p4_distribution.py']
+status_before=subprocess.check_output(['git','status','--short'],text=True)
+tracked=subprocess.check_output(['git','ls-files','src','tests','scripts','pyproject.toml','uv.lock'],text=True).splitlines();source={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in tracked};sha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+run(['uv','sync','--locked','--group','dev'],'sync.log')
+for name,args in [('ruff',['ruff','check','src','tests','scripts']),('format',['ruff','format','--check','src','tests','scripts']),('build-schema',['python','scripts/build_p1_schema.py','--check']),('audit-schema',['python','scripts/audit_p1_schema.py','--check']),('audit-boundary',['python','scripts/audit_implementation_boundary.py','--check']),('audit-callsites',['python','scripts/audit_callsite_dependencies.py','--check'])]:run(['uv','run','--no-sync',*args],name+'.log')
+run(['uv','run','--no-sync','pytest',*selection,'--collect-only','-q'],'selected.txt')
+run(['uv','run','--no-sync','pytest',*selection,'-q','--tb=short','-o','junit_family=xunit1','--junitxml',str(out/'junit.xml'),'--journal',str(out/'journal.jsonl')],'pytest.log')
+after={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in tracked}
+receipt={'commit':sha,'tree':tree,'status_before':status_before,'status_after':subprocess.check_output(['git','status','--short'],text=True),'source_unchanged':source==after,'source_sha256':source,'commands':commands,'selection':selection,'environment':{'python':sys.version,'platform':platform.platform(),'sqlite':sqlite3.sqlite_version,'git':subprocess.check_output(['git','--version'],text=True).strip(),'uv':subprocess.check_output(['uv','--version'],text=True).strip()},'artifacts':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in out.iterdir() if p.is_file()}}
+(out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print(json.dumps({'commands':commands,'commit':sha,'tree':tree,'source_unchanged':source==after},indent=2))
