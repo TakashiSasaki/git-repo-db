@@ -1,0 +1,25 @@
+import base64,concurrent.futures,hashlib,io,json,re,subprocess,zipfile
+from pathlib import Path
+p=Path('/workspace/integration-acceptance/reviews/d');repo='TakashiSasaki/git-repo-db';summary=json.loads((p/'hosted-summary.json').read_text())
+def one(item):
+ pr=item['pr'];run=next(r[0] for r in item['runs'] if r[1]=='tests' and r[2]=='success');raw=subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{run}/logs']);(p/f'pr-{pr}-development-logs.zip').write_bytes(raw)
+ with zipfile.ZipFile(io.BytesIO(raw)) as z:logs='\n'.join(z.read(n).decode('utf8') for n in z.namelist() if n.endswith('.txt'))
+ blocks=[]
+ for m in re.finditer(r'(?m)^.*?CI_RECEIPTS_BEGIN_V1 ([0-9a-f]{64}) (\d+)\s*$',logs):
+  begin=m.group(0)
+  if 'print(' in begin or 'echo ' in begin:continue
+  end=re.search(r'(?m)^.*?CI_RECEIPTS_END_V1 ([0-9a-f]{64})\s*$',logs[m.end():]);assert end
+  lines=logs[m.end():m.end()+end.start()];data=''.join(re.findall(r'(?m)^.*?CI_RECEIPTS_DATA_V1 ([A-Za-z0-9+/=]+)\s*$',lines));b=base64.b64decode(data,validate=True);assert len(b)==int(m[2]) and hashlib.sha256(b).hexdigest()==m[1] and end[1]==m[1];blocks.append(b)
+ # Run-log ZIP includes both concatenated job and step files. Exact duplicate blocks are acceptable; unequal blocks fail closed.
+ assert blocks and len(set(blocks))==1
+ b=blocks[0]
+ with zipfile.ZipFile(io.BytesIO(b)) as z:
+  files={n:z.read(n) for n in z.namelist()};index=json.loads(files['receipt-index.json']);binding=json.loads(files['receipt-binding.json']);manifest=json.loads(files['validation-manifest.json'])
+ (p/f'pr-{pr}-receipt-index.json').write_text(json.dumps(index,indent=2)+'\n')
+ (p/f'pr-{pr}-receipt-binding.json').write_text(json.dumps(binding,indent=2)+'\n')
+ (p/f'pr-{pr}-validation-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+ # Retain receipt bytes until independently checking index schema.
+ (p/f'pr-{pr}-receipt.zip').write_bytes(b)
+ return {'pr':pr,'head':item['head'],'run':run,'receipt_sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b),'binding':binding,'acceptance_status':manifest.get('acceptance_status'),'full_acceptance':manifest.get('full_acceptance'),'index_type':type(index).__name__}
+with concurrent.futures.ThreadPoolExecutor(max_workers=3) as e:out=list(e.map(one,summary))
+(p/'hosted-receipt-summary.json').write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out,indent=2))

@@ -1,0 +1,77 @@
+[
+  {
+    "label": "wheel",
+    "selected": 256,
+    "junit": 256,
+    "unique_starts": 256,
+    "phase_records": 768,
+    "results": {
+      "passed": 256
+    },
+    "finish": {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792181221.690526
+    },
+    "sha256": {
+      "wheel-collect.log": "f223298ef07928eb47e6ff87fb797e415664de8074165f75bea4bbcc95f55ade",
+      "wheel-junit.xml": "5cf02ee29a1d84f05612c183e4023156bd0f510441690e410131761e62487a60",
+      "wheel-journal.jsonl": "355a070cebac58d2a6af5393b6dcfa45943c23f519b2c2d6356f2bd5d6ffba70"
+    },
+    "nodes_equal_exactly_once": true,
+    "all_three_phases_once": true,
+    "p7_nodes": 255,
+    "search_nodes": 1,
+    "original_p7_equal": true
+  },
+  {
+    "label": "sdist-wheel",
+    "selected": 256,
+    "junit": 256,
+    "unique_starts": 256,
+    "phase_records": 768,
+    "results": {
+      "passed": 256
+    },
+    "finish": {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792181262.046914
+    },
+    "sha256": {
+      "sdist-wheel-collect.log": "155c027605470c52f8980474b39626359bf709f16ecc43a551a827820fc30801",
+      "sdist-wheel-junit.xml": "5e72b797565c871be83b98fba8788c05526dc54d5d9a1fe0b1995eb69d85cc42",
+      "sdist-wheel-journal.jsonl": "1a56054e4e8bededc43a84713dd9136e8caa3c105aa5a3eb70216ccd80c6e6bd"
+    },
+    "nodes_equal_exactly_once": true,
+    "all_three_phases_once": true,
+    "p7_nodes": 255,
+    "search_nodes": 1,
+    "original_p7_equal": true
+  },
+  {
+    "label": "public-cli",
+    "selected": 2,
+    "junit": 2,
+    "unique_starts": 2,
+    "phase_records": 6,
+    "results": {
+      "passed": 2
+    },
+    "finish": {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792181315.385264
+    },
+    "sha256": {
+      "public-cli-collect.log": "7cce846c2f6559a5ac015b22449115c8919641428af35adc8208825f19b483f9",
+      "cli-junit.xml": "4ba33b3dd05add08435360d1107ca63922a771835cb55fd86c23c8c5ed1ec165",
+      "cli-journal.jsonl": "72a6cf84dc36962fffe18b90e01833e75315c70088bb7f2ec6ab025bf2abff35"
+    },
+    "nodes_equal_exactly_once": true,
+    "all_three_phases_once": true
+  }
+]

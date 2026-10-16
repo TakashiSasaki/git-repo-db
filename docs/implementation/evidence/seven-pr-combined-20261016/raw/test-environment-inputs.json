@@ -1,0 +1,21 @@
+{
+  "inherited_test_environment": {
+    "PYTHONPATH": null,
+    "PYTHONHOME": null,
+    "PYTEST_ADDOPTS": null,
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": null,
+    "CI_EVENT_JOURNAL": null,
+    "REPO_CATALOG_WHEELHOUSE": null,
+    "REPO_CATALOG_TEST_BOOTSTRAP": null,
+    "UV_PROJECT_ENVIRONMENT": null,
+    "UV_OFFLINE": null,
+    "PUPPETEER_EXECUTABLE_PATH": null
+  },
+  "explicit_run_overrides": {
+    "TMPDIR": "/workspace/integration-acceptance/tmp",
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse"
+  },
+  "pytest_defaults": "--strict-markers -m not live and not benchmark",
+  "repository_guard": "tests/conftest.py autouse deny_nonlocal_network; child Python/Git bootstrap uses shipped network guard; no guard removed",
+  "source_status": ""
+}

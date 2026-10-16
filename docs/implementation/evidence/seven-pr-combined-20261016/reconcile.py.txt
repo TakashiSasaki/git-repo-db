@@ -1,0 +1,51 @@
+import collections, hashlib, json, sys, xml.etree.ElementTree as ET
+from pathlib import Path
+
+out=Path('/workspace/integration-acceptance')
+raw=out/'raw'
+def nodes(path):
+    return [l.strip() for l in path.read_text().splitlines() if l.startswith('tests/') and '::' in l]
+selected=nodes(raw/'collect-default.log'); all_nodes=nodes(raw/'collect-all.log')
+assert len(selected)==len(set(selected)) and len(all_nodes)==len(set(all_nodes))
+(out/'selected-nodes.txt').write_text('\n'.join(selected)+'\n')
+(out/'all-nodes.txt').write_text('\n'.join(all_nodes)+'\n')
+deselected=sorted(set(all_nodes)-set(selected))
+(out/'deselected-nodes.txt').write_text('\n'.join(deselected)+'\n')
+def junit_key(node):
+    prefix, bracket, parameter=node.partition('[')
+    parts=prefix.split('::')
+    name=parts[-1]+bracket+parameter
+    return ('.'.join([parts[0][:-3].replace('/','.'),*parts[1:-1]]),name)
+def reconcile(name,expected):
+    events=[json.loads(l) for l in (raw/f'{name}.jsonl').read_text().splitlines()]
+    starts=[x['nodeid'] for x in events if x['event']=='start']
+    phases=[x for x in events if x['event']=='phase']
+    finish=[x for x in events if x['event']=='finish']
+    junit=list(ET.parse(raw/f'{name}.xml').iter('testcase'))
+    execution=json.loads((raw/f'{name}.execution.json').read_text())
+    bynode=collections.defaultdict(list)
+    for x in phases: bynode[x['nodeid']].append(x)
+    jc=collections.Counter((x.attrib['classname'],x.attrib['name']) for x in junit)
+    ec=collections.Counter(junit_key(x) for x in expected)
+    counts={'selected':len(expected),'passed':sum(not any(x.find(y) is not None for y in ('failure','error','skipped')) for x in junit),'failed':sum(x.find('failure') is not None for x in junit),'errors':sum(x.find('error') is not None for x in junit),'skipped':sum(x.find('skipped') is not None for x in junit)}
+    checks={'unique_starts':len(starts)==len(set(starts)), 'selected_equals_starts':collections.Counter(expected)==collections.Counter(starts),'selected_equals_junit':ec==jc,'all_three_phases_once':all(collections.Counter(p['phase'] for p in bynode[n])==collections.Counter({'setup':1,'call':1,'teardown':1}) for n in expected),'phases_node_set_equal':set(bynode)==set(expected),'all_phases_passed':all(x['outcome']=='passed' for x in phases),'successful_finish':len(finish)==1 and finish[0]['exitstatus']==0,'process_exit_zero':execution['exit_code']==0}
+    result={'name':name,'source':execution['head'],'tree':execution['tree'],'counts':counts,'starts':len(starts),'phases':len(phases),'finish':finish,'junit_nodes':len(junit),'checks':checks,'all_checks_pass':all(checks.values()),'artifacts':{p.name:{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in [raw/f'{name}.{ext}' for ext in ['xml','jsonl','log','execution.json']]},'cohorts':{cohort:sum(n.startswith(cohort) for n in expected) for cohort in ['tests/integration/p1/','tests/integration/p2/','tests/integration/p3/','tests/integration/p4/','tests/integration/p5/','tests/integration/p6/','tests/integration/p7/','tests/integration/p2_p3_compatibility/','tests/integration/p5_p6_compatibility/','tests/packaging/','tests/unit/test_build_docs_site.py']}}
+    (out/f'{name}-reconciliation.json').write_text(json.dumps(result,indent=2)+'\n')
+    print(json.dumps(result,indent=2))
+    assert result['all_checks_pass'], result
+    return result
+print('Collection',len(all_nodes),'selected',len(selected),'deselected',deselected)
+if (raw/'full.execution.json').exists():
+    reconcile('full',selected)
+    baseline_path=Path('/workspace/combined-tree/docs/implementation/evidence/schema21-baseline-20261016/baseline-main/classification.json')
+    baseline=json.loads(baseline_path.read_text())
+    baseline_nodes=[x['replacement_nodeid'] for x in baseline]
+    assert len(baseline_nodes)==len(set(baseline_nodes))==228
+    assert set(baseline_nodes)<=set(selected)
+    (out/'schema21-baseline-reconciliation.json').write_text(json.dumps({'source':'388b824d1b3abe41c902759bf37a52c6ee5bcd2f','tree':'ea006924152d2fc508c7eb21697ad3c376e373f6','baseline_original_nodes':228,'replacement_nodes':baseline_nodes,'all_selected_and_passed_in_full':True,'proof':'Full run reconciles every selected node, all three successful phases, JUnit and process exit zero; this is a subset of that same completed run.'},indent=2)+'\n')
+if (raw/'p7.execution.json').exists():
+    p7=[n for n in selected if n.startswith('tests/integration/p7/')]
+    original=nodes(Path('/workspace/combined-tree/docs/implementation/evidence/p7-hardening-20261016/final/independent/c/p7-node-ids.txt'))
+    assert collections.Counter(original)==collections.Counter(p7) and len(p7)==255
+    reconcile('p7',p7)
+    (out/'p7-node-comparison.json').write_text(json.dumps({'original':255,'combined':len(p7),'added':sorted(set(p7)-set(original)),'omitted':sorted(set(original)-set(p7))},indent=2)+'\n')

@@ -1,0 +1,55 @@
+from pathlib import Path
+import json
+p=Path('/workspace/integration-acceptance/reviews/d');binding=json.loads((p/'binding.json').read_text());installed=json.loads((p/'installed-reconciliation.json').read_text());full=json.loads((p/'root-reconciliation.json').read_text())[0];p7=json.loads((p/'root-p7-reconciliation.json').read_text());commands=json.loads((p/'commands.json').read_text());assert all(c['exit_code']==0 for c in commands)
+assert len(installed)==3 and all(r['nodes_equal_exactly_once'] and r['all_three_phases_once'] for r in installed)
+text=f'''# Reviewer D — Evidence and installed distributions
+
+**APPROVED_FOR_OWNER_MERGE_REVIEW** within the engineering scope. No new blocker found. Explicit owner merge authorization remains pending.
+
+Exact independently reviewed source: `{binding['source']}`, tree `{binding['tree']}`. Reviewer D authored no production code in this task; the reviewed worktree stayed clean and unchanged. All stateful operations used disposable synthetic catalogs and backups.
+
+## Complete combined execution
+
+Independently reconciled the root's actual collection, JUnit, append-only journal and process receipt: **3755 passed / 0 failed / 0 errors / 0 skipped**, exit 0. All3755 selected identities equal3755 unique JUnit cases and3755 unique starts;11265 successful setup/call/teardown records contain each phase exactly once. Source/tree and full argv/cwd/environment overrides agree with the frozen candidate. See `root-reconciliation.json`.
+
+All3757 current nodes were collected. Only the configured live smoke and nested pagination stress nodes were deselected. No new skip/xfail was added. All3496 prior Schema21 selected identities remain selected;259 additions comprise255 P7 tests,2 P7 packaging variants and2 Pages trigger tests. The228 inherited Schema21 replacement nodes are all present and passed; all8 documentation unit nodes passed.
+
+The full run includes P1/P2/P3/P4/P5/P6:317/197/75/202/47/50 and compatibility20/29, totaling937. Separate root P7 execution independently reconciles255 selected/JUnit/starts and765 successful phases, process exit0, with exact equality to the original255-node P7 collection. No added/omitted P7 nodes. See `root-p7-reconciliation.json`, `collection-review.json` and `schema21-node-set-review.json`.
+
+## Clean archive and normal distribution installation
+
+Build inputs came from a clean `git archive` of the exact synthetic commit, extracted outside the reviewed checkout. Built a wheel and sdist, then independently built a wheel from the sdist using the established offline48-wheel pinned wheelhouse. No work/venv/cache scratch entries were found in the sdist.
+
+- Both wheel paths have SHA256 `{binding['distributions']['wheel']['sha256']}`.
+- sdist SHA256 `{binding['sdist_sha256']}`.
+- Frozen source archive SHA256 `{binding['archive_sha256']}`.
+
+Each wheel's124 package/runtime/resource files byte-match the frozen source. Each is normally installed into its own new isolated venv, with locked third-party dev/docs dependencies and no editable project install. Installed `direct_url.json` identifies the actual wheel; parent and isolated child interpreter origins are site-packages. Full installed-file SHA256 manifests and dependency freeze are retained. See `binding.json`, both `*-package-manifest.json`, `*-identity.log` and `*-freeze.log`.
+
+Tests and helper scripts are byte-identical copies of frozen inputs in an external harness containing no runtime `src/`. Pytest's source pythonpath is explicitly disabled; parent PYTHONPATH/PYTHONHOME/bootstrap are removed, installed bin leads PATH, and the repository's offline network guard remains active. The added external CLI wrapper imports the original CLI test function intact, overriding only the distribution fixture to provide the already-built immutable wheel artifacts and exported locked runtime requirements. See `harness-input-binding.json` and `distribution_driver.py.txt`.
+
+| Installed execution | Selected/passed | Fail/error/skip | Identity/phase reconciliation |
+| --- | ---: | --- | --- |
+| Wheel: complete P7 + Search regression | 256/256 | 0/0/0 | 256 starts/JUnit,768 successful phases, exact once |
+| Sdist-wheel: complete P7 + Search regression | 256/256 | 0/0/0 | 256 starts/JUnit,768 successful phases, exact once |
+| Original public CLI distribution acceptance, both variants | 2/2 | 0/0/0 | 2 starts/JUnit,6 successful phases, exact once |
+
+All three actual test processes exited0. Both P7 node sets exactly equal original255, with one additional comprehensive public Search regression per installed wheel. That test covers201 documents, stale-only200-row batching, cancellation preserving ready generation, repeated and empty rebuilds, and retained Core text. Public CLI acceptance covers real console invocations and disposable acquisition, Search, reparse, Exchange, integrity, backup/restore. Both wheels also passed isolated `python -I -m repo_catalog` help, initialization and full database check. P7 recovery entry points run through the complete installed255-node suite, including process/WAL, corruption stops, typed replay, accounting and activation fences. See `installed-reconciliation.json`, `commands.json` and raw JUnit/journals.
+
+Environment: Python3.12.14, SQLite3.53.1, Linux6.18.44 x86_64/glibc2.41, workspace overlay ~32GiB with ~29GiB available at preparation. TMPDIR and every pytest basetemp are explicit workspace paths, not the8.8GiB tmpfs. Installed dependency versions and all command environment overrides are retained. Runtime tests ran after root's full and separate P7 workloads, sequentially across distributions.
+
+## Historical evidence and hosted execution
+
+Independently hash-verified all443 P7 historical evidence artifacts and295 Schema21 artifacts, including decompressed byte counts and SHA256. Frozen P7 source178ddbaa→final feature e956cd50 and Schema21 source74f90ada→final feature94488cf4 have zero executable/test/script/configuration differences; evidence-only final commits do not imply tests were rerun. New combined execution is distinct from either previous source. Historical failed runs were not overwritten.
+
+For all seven current pinned OPEN PRs, fetched actual check/run metadata and actual successful exact-head Development in-log receipt bundles via supported GitHub run-log ZIP API. Verified bounded ZIP digest/length, every index member SHA256/size, feature/run binding and checkout-tree equality to its feature tree. All declare `development_checks_passed`, `full_acceptance=false`, zero runtime pytest. PR90's cancelled duplicates and successful later runs are both retained. These seven feature receipts do not establish hosted execution of the combined tree. See `hosted-receipt-verified.json` and per-PR metadata/binding/index/manifests.
+
+Re-fetched PR89 Pages run38918703718 logs independently: actual10 Mermaid render entries, MkDocs completion, zero publication-safety violations, zero broken links,8 documentation tests pass; deployment skipped. Checkout80cf3399/treeed806235 binds exact feature660178ff. All74 recorded publication inputs independently SHA256-match both the exact hosted feature and the combined tree. This is supplementary real rendering evidence; passing placeholder unit tests and local `--no-mermaid` build are not real Mermaid rendering. See `pages-exact-head-excerpts.log`, `pages-hosted-verification.json` and `publication-input-review.json`.
+
+## Limits and decision
+
+No production/data/real-backup mutation, merge, auto-merge, release/tag, deployment, real P7 activation or public runtime migration was performed. This is engineering integration readiness, not Actual Release Acceptance: no independent complete hosted release run or release receipt reconciliation was executed. Live/stress nodes remain unexecuted. Linux cooperating-process/local-filesystem evidence does not prove host power-loss durability, NFS/Windows behavior or privileged namespace attacks. Full Context typed salvage and P8 public runtime integration remain future scope; initialized-empty P7 Search is not a complete projection rebuild.
+
+Evidence and packaging scope finds no new last-mile blocker. Proceed to explicit owner merge authorization under the independently reviewed seven-PR plan; do not merge automatically.
+'''
+(p/'REPORT.md').write_text(text)

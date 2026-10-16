@@ -1,0 +1,1912 @@
+{
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "baseline_tables": {
+    "core": [
+      "acquisition_roots",
+      "blob_content_map",
+      "change_request_events",
+      "change_request_state",
+      "change_requests",
+      "code_acquisitions",
+      "code_assessments",
+      "code_commits",
+      "code_file_changes",
+      "code_listing_progress",
+      "code_listings",
+      "collection_memberships",
+      "commit_parents",
+      "commits",
+      "completion_markers",
+      "content_digests",
+      "contents",
+      "coverage_claim_markers",
+      "coverage_claims",
+      "coverage_scopes",
+      "current_collection_pages",
+      "database_identity",
+      "document_state",
+      "documents",
+      "exchange_admissions",
+      "exchange_blocked_coverage_claims",
+      "exchange_local_identities",
+      "exchange_staging",
+      "fetch_collections",
+      "git_acquisitions",
+      "git_commit_facts",
+      "git_name_facts",
+      "git_object_payloads",
+      "git_objects",
+      "git_text_facts",
+      "identity_relation_cancellations",
+      "identity_relation_staging",
+      "identity_relations",
+      "issue_resources",
+      "payload_admission_staging",
+      "payload_quarantine",
+      "payloads",
+      "preservation_obligations",
+      "ref_observations",
+      "repositories",
+      "repository_bindings",
+      "repository_endpoints",
+      "repository_names",
+      "repository_object_sources",
+      "resume_scopes",
+      "review_resources",
+      "review_thread_state",
+      "review_threads",
+      "root_manifest_entries",
+      "root_manifests",
+      "root_origins",
+      "service_instances",
+      "snapshots",
+      "source_inventory_assessments",
+      "source_repositories",
+      "sources",
+      "stored_bytes",
+      "tag_objects",
+      "text_bodies",
+      "thread_collection_continuations",
+      "thread_collection_requirements",
+      "thread_collection_targets",
+      "tree_entries",
+      "tree_objects",
+      "unresolved_payloads"
+    ],
+    "operational": [
+      "acquisition_progress",
+      "active_cache_entries",
+      "cache_leases",
+      "cache_locators",
+      "collection_progress",
+      "job_attempts",
+      "jobs",
+      "operational_identity",
+      "search_rebuild_metrics",
+      "space_reservations"
+    ],
+    "search": [
+      "index_generations",
+      "index_membership",
+      "search_documents",
+      "search_identity"
+    ]
+  },
+  "opt_in": {
+    "core": {
+      "fingerprint": "3f9f828ad0aff5fae1039f30a3baa29165dbabe6decc5a4f204e78e674b940fe",
+      "tables": [
+        "store_identity",
+        "repositories",
+        "git_objects",
+        "repository_claims",
+        "git_observations",
+        "scalar_claims",
+        "relation_groups",
+        "captures",
+        "notes_claims",
+        "notes_groups",
+        "retained_metadata",
+        "intrinsic_claims",
+        "intrinsic_groups",
+        "note_roles",
+        "retained_notes",
+        "coverage_scopes",
+        "core_coverage_proofs",
+        "coverage_claims"
+      ],
+      "views": [],
+      "foreign_keys": {
+        "store_identity": [],
+        "repositories": [],
+        "git_objects": [],
+        "repository_claims": [
+          [
+            0,
+            0,
+            "repositories",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "git_observations": [
+          [
+            0,
+            0,
+            "repositories",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "scalar_claims": [
+          [
+            0,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "git_objects",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "relation_groups": [
+          [
+            0,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "git_objects",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "captures": [
+          [
+            0,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "git_objects",
+            "root",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "repositories",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "notes_claims": [
+          [
+            0,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "git_objects",
+            "note",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "git_objects",
+            "target",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            0,
+            "captures",
+            "capture_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            1,
+            "captures",
+            "capture_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "notes_groups": [
+          [
+            0,
+            0,
+            "captures",
+            "capture_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "captures",
+            "capture_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "retained_metadata": [
+          [
+            0,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "git_objects",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "intrinsic_claims": [
+          [
+            0,
+            0,
+            "retained_metadata",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "retained_metadata",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "retained_metadata",
+            "physical_copy_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "scalar_claims",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "scalar_claims",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            2,
+            "scalar_claims",
+            "field",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            3,
+            "scalar_claims",
+            "value",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            4,
+            "scalar_claims",
+            "provenance",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "intrinsic_groups": [
+          [
+            0,
+            0,
+            "retained_metadata",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "retained_metadata",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "retained_metadata",
+            "physical_copy_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "relation_groups",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "relation_groups",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            2,
+            "relation_groups",
+            "relation",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            3,
+            "relation_groups",
+            "scope",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            4,
+            "relation_groups",
+            "status",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            5,
+            "relation_groups",
+            "membership",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            6,
+            "relation_groups",
+            "provenance",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "note_roles": [
+          [
+            0,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "git_objects",
+            "note",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "git_objects",
+            "target",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            0,
+            "captures",
+            "capture_origin_uuidv4",
+            "capture_origin_uuidv4",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            1,
+            "captures",
+            "capture_uuidv4",
+            "capture_uuidv4",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            2,
+            "captures",
+            "object_format",
+            "object_format",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            3,
+            "captures",
+            "root",
+            "root",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "retained_notes": [
+          [
+            0,
+            0,
+            "note_roles",
+            "capture_origin_uuidv4",
+            "capture_origin_uuidv4",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "note_roles",
+            "capture_uuidv4",
+            "capture_uuidv4",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "note_roles",
+            "object_format",
+            "object_format",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            3,
+            "note_roles",
+            "root",
+            "root",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            4,
+            "note_roles",
+            "target",
+            "target",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            5,
+            "note_roles",
+            "full_oid",
+            "note",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            6,
+            "note_roles",
+            "path",
+            "path",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            7,
+            "note_roles",
+            "proof_bundle",
+            "proof_bundle",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "coverage_scopes": [
+          [
+            0,
+            0,
+            "git_objects",
+            "object_format",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "git_objects",
+            "full_oid",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "repositories",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            0,
+            "captures",
+            "capture_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            1,
+            "captures",
+            "capture_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "core_coverage_proofs": [
+          [
+            0,
+            0,
+            "coverage_claims",
+            "owner_kind",
+            "owner_kind",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "coverage_claims",
+            "owner_coordinates_json",
+            "owner_coordinates_json",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "coverage_claims",
+            "observed_at_us",
+            "observed_at_us",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            3,
+            "coverage_claims",
+            "coverage_state",
+            "coverage_state",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "coverage_claims": [
+          [
+            0,
+            0,
+            "coverage_scopes",
+            "owner_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "coverage_scopes",
+            "owner_coordinates_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ]
+      },
+      "triggers": {
+        "store_identity": [
+          "p1_immutable_store_identity_update",
+          "p1_immutable_store_identity_delete"
+        ],
+        "repositories": [
+          "p1_immutable_repositories_update",
+          "p1_immutable_repositories_delete"
+        ],
+        "git_objects": [
+          "p1_immutable_git_objects_update",
+          "p1_immutable_git_objects_delete"
+        ],
+        "repository_claims": [
+          "p1_immutable_repository_claims_update",
+          "p1_immutable_repository_claims_delete"
+        ],
+        "git_observations": [
+          "p1_immutable_git_observations_update",
+          "p1_immutable_git_observations_delete"
+        ],
+        "scalar_claims": [
+          "p1_immutable_scalar_claims_update",
+          "p1_immutable_scalar_claims_delete"
+        ],
+        "relation_groups": [
+          "relation_targets",
+          "p1_immutable_relation_groups_update",
+          "p1_immutable_relation_groups_delete"
+        ],
+        "captures": [
+          "p1_immutable_captures_update",
+          "p1_immutable_captures_delete"
+        ],
+        "notes_claims": [
+          "notes_claim_format",
+          "p1_immutable_notes_claims_update",
+          "p1_immutable_notes_claims_delete"
+        ],
+        "notes_groups": [
+          "notes_group_targets",
+          "notes_inventory_guard",
+          "notes_group_format",
+          "p1_immutable_notes_groups_update",
+          "p1_immutable_notes_groups_delete"
+        ],
+        "retained_metadata": [
+          "metadata_same_representation",
+          "p1_immutable_retained_metadata_update",
+          "p1_immutable_retained_metadata_delete"
+        ],
+        "intrinsic_claims": [
+          "intrinsic_claim_guard",
+          "p1_immutable_intrinsic_claims_update",
+          "p1_immutable_intrinsic_claims_delete"
+        ],
+        "intrinsic_groups": [
+          "intrinsic_group_guard",
+          "p1_immutable_intrinsic_groups_update",
+          "p1_immutable_intrinsic_groups_delete"
+        ],
+        "note_roles": [
+          "p1_immutable_note_roles_update",
+          "p1_immutable_note_roles_delete"
+        ],
+        "retained_notes": [
+          "notes_same_representation",
+          "p1_immutable_retained_notes_update",
+          "p1_immutable_retained_notes_delete"
+        ],
+        "coverage_scopes": [
+          "p1_immutable_coverage_scopes_update",
+          "p1_immutable_coverage_scopes_delete"
+        ],
+        "core_coverage_proofs": [
+          "core_coverage_members",
+          "p1_immutable_core_coverage_proofs_update",
+          "p1_immutable_core_coverage_proofs_delete"
+        ],
+        "coverage_claims": [
+          "coverage_claim_no_update",
+          "coverage_claim_no_delete",
+          "coverage_claim_no_replace",
+          "p1_immutable_coverage_claims_update",
+          "p1_immutable_coverage_claims_delete"
+        ]
+      },
+      "attached_databases": [
+        [
+          0,
+          "main",
+          ""
+        ]
+      ]
+    },
+    "context": {
+      "fingerprint": "3a05d872988cb7b20c31d236ef6cb45184f5c289a1a37c4deff3d2a173f5a3f8",
+      "tables": [
+        "store_identity",
+        "providers",
+        "repository_context",
+        "sources",
+        "source_repositories",
+        "resources",
+        "text_bodies",
+        "field_candidates",
+        "resource_relations",
+        "collections",
+        "collection_terminals",
+        "core_references",
+        "coverage_scopes",
+        "coverage_proofs",
+        "source_inventory_evidence",
+        "source_coverage_proofs",
+        "coverage_claims"
+      ],
+      "views": [],
+      "foreign_keys": {
+        "store_identity": [],
+        "providers": [],
+        "repository_context": [],
+        "sources": [
+          [
+            0,
+            0,
+            "providers",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "source_repositories": [
+          [
+            0,
+            0,
+            "repository_context",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "sources",
+            "source_registration_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "resources": [
+          [
+            0,
+            0,
+            "resources",
+            "service_instance_uuidv4",
+            "service_instance_uuidv4",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "resources",
+            "parent_resource_kind",
+            "resource_kind",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "resources",
+            "parent_provider_resource_id",
+            "provider_resource_id",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "providers",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "text_bodies": [],
+        "field_candidates": [
+          [
+            0,
+            0,
+            "resources",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "resources",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "resources",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "text_bodies",
+            "text_body_sha256",
+            "sha256",
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            0,
+            "repository_context",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "resource_relations": [
+          [
+            0,
+            0,
+            "resources",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "resources",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "resources",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "collections": [
+          [
+            0,
+            0,
+            "resources",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "resources",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "resources",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "collection_terminals": [
+          [
+            0,
+            0,
+            "collections",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "collections",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "collections",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            3,
+            "collections",
+            "collection_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            4,
+            "collections",
+            "provenance_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "core_references": [
+          [
+            0,
+            0,
+            "resources",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "resources",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "resources",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "coverage_scopes": [
+          [
+            0,
+            0,
+            "collections",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "collections",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "collections",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            3,
+            "collections",
+            "collection_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            4,
+            "collections",
+            "collection_provenance_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "resources",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "resources",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            2,
+            "resources",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            0,
+            "source_repositories",
+            "source_registration_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            2,
+            1,
+            "source_repositories",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            3,
+            0,
+            "sources",
+            "source_registration_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            4,
+            0,
+            "repository_context",
+            "repository_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "coverage_proofs": [
+          [
+            0,
+            0,
+            "collection_terminals",
+            "service_instance_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "collection_terminals",
+            "resource_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "collection_terminals",
+            "provider_resource_id",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            3,
+            "collection_terminals",
+            "collection_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            4,
+            "collection_terminals",
+            "provenance_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            5,
+            "collection_terminals",
+            "terminal_observed_at_us",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            6,
+            "collection_terminals",
+            "terminal_state",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            7,
+            "collection_terminals",
+            "members_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "coverage_claims",
+            "owner_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "coverage_claims",
+            "owner_coordinates_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            2,
+            "coverage_claims",
+            "observed_at_us",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            3,
+            "coverage_claims",
+            "coverage_state",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "source_inventory_evidence": [
+          [
+            0,
+            0,
+            "sources",
+            "source_registration_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "source_coverage_proofs": [
+          [
+            0,
+            0,
+            "source_inventory_evidence",
+            "source_registration_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "source_inventory_evidence",
+            "scope_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "source_inventory_evidence",
+            "inventory_observed_at_us",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            3,
+            "source_inventory_evidence",
+            "inventory_state",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            4,
+            "source_inventory_evidence",
+            "terminal",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            5,
+            "source_inventory_evidence",
+            "members_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            6,
+            "source_inventory_evidence",
+            "provenance_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "coverage_claims",
+            "owner_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "coverage_claims",
+            "owner_coordinates_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            2,
+            "coverage_claims",
+            "observed_at_us",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            3,
+            "coverage_claims",
+            "coverage_state",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "coverage_claims": [
+          [
+            0,
+            0,
+            "coverage_scopes",
+            "owner_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "coverage_scopes",
+            "owner_coordinates_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ]
+      },
+      "triggers": {
+        "store_identity": [
+          "p1_immutable_store_identity_update",
+          "p1_immutable_store_identity_delete"
+        ],
+        "providers": [
+          "provider_identity"
+        ],
+        "repository_context": [
+          "repository_context_identity"
+        ],
+        "sources": [
+          "source_identity"
+        ],
+        "source_repositories": [
+          "source_positive_no_delete",
+          "source_positive_identity"
+        ],
+        "resources": [
+          "resources_no_update",
+          "resources_no_delete"
+        ],
+        "text_bodies": [
+          "text_bodies_no_update",
+          "text_bodies_no_delete"
+        ],
+        "field_candidates": [],
+        "resource_relations": [
+          "resource_relations_no_update",
+          "resource_relations_no_delete"
+        ],
+        "collections": [
+          "collections_no_update",
+          "collections_no_delete"
+        ],
+        "collection_terminals": [
+          "collection_terminals_no_update",
+          "collection_terminals_no_delete"
+        ],
+        "core_references": [
+          "core_references_no_update",
+          "core_references_no_delete"
+        ],
+        "coverage_scopes": [
+          "coverage_scopes_no_update",
+          "coverage_scopes_no_delete"
+        ],
+        "coverage_proofs": [
+          "coverage_proof_owner",
+          "coverage_proofs_no_update",
+          "coverage_proofs_no_delete",
+          "coverage_proof_current_terminal"
+        ],
+        "source_inventory_evidence": [
+          "source_inventory_evidence_no_update",
+          "source_inventory_evidence_no_delete"
+        ],
+        "source_coverage_proofs": [
+          "source_coverage_owner",
+          "source_coverage_no_update",
+          "source_coverage_no_delete",
+          "source_coverage_current_terminal"
+        ],
+        "coverage_claims": [
+          "coverage_claim_no_update",
+          "coverage_claim_no_delete",
+          "coverage_claim_no_replace"
+        ]
+      },
+      "attached_databases": [
+        [
+          0,
+          "main",
+          ""
+        ]
+      ]
+    },
+    "operational": {
+      "fingerprint": "980360b31d11c54b0d556b7fffd6aeeae74919e264b4d19bc34ecca70c7d73cb",
+      "tables": [
+        "store_identity",
+        "acquisition_requests",
+        "request_budgets",
+        "acquisition_attempts",
+        "work_accounting",
+        "request_continuations",
+        "retry_state",
+        "cache_locators"
+      ],
+      "views": [],
+      "foreign_keys": {
+        "store_identity": [],
+        "acquisition_requests": [],
+        "request_budgets": [
+          [
+            0,
+            0,
+            "acquisition_requests",
+            "request_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "acquisition_requests",
+            "request_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "acquisition_attempts": [
+          [
+            0,
+            0,
+            "acquisition_requests",
+            "request_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "acquisition_requests",
+            "request_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "work_accounting": [
+          [
+            0,
+            0,
+            "request_budgets",
+            "request_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "request_budgets",
+            "request_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            2,
+            "request_budgets",
+            "work_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            0,
+            "acquisition_attempts",
+            "request_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            1,
+            "acquisition_attempts",
+            "request_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            1,
+            2,
+            "acquisition_attempts",
+            "attempt_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "request_continuations": [
+          [
+            0,
+            0,
+            "acquisition_requests",
+            "request_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "acquisition_requests",
+            "request_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "retry_state": [
+          [
+            0,
+            0,
+            "acquisition_requests",
+            "request_origin_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "acquisition_requests",
+            "request_uuidv4",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ],
+        "cache_locators": []
+      },
+      "triggers": {
+        "store_identity": [
+          "p1_immutable_store_identity_update",
+          "p1_immutable_store_identity_delete"
+        ],
+        "acquisition_requests": [],
+        "request_budgets": [],
+        "acquisition_attempts": [],
+        "work_accounting": [
+          "finite_work",
+          "work_reserved",
+          "work_reservation_immutable",
+          "finite_settlement",
+          "work_settled",
+          "work_deleted"
+        ],
+        "request_continuations": [],
+        "retry_state": [],
+        "cache_locators": []
+      },
+      "attached_databases": [
+        [
+          0,
+          "main",
+          ""
+        ]
+      ]
+    },
+    "search": {
+      "fingerprint": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303",
+      "tables": [
+        "store_identity",
+        "search_projections",
+        "search_documents"
+      ],
+      "views": [],
+      "foreign_keys": {
+        "store_identity": [],
+        "search_projections": [],
+        "search_documents": [
+          [
+            0,
+            0,
+            "search_projections",
+            "projection_kind",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ],
+          [
+            0,
+            1,
+            "search_projections",
+            "snapshot_token_json",
+            null,
+            "NO ACTION",
+            "NO ACTION",
+            "NONE"
+          ]
+        ]
+      },
+      "triggers": {
+        "store_identity": [
+          "p1_immutable_store_identity_update",
+          "p1_immutable_store_identity_delete"
+        ],
+        "search_projections": [],
+        "search_documents": []
+      },
+      "attached_databases": [
+        [
+          0,
+          "main",
+          ""
+        ]
+      ]
+    }
+  },
+  "direct_baseline_to_optin_imports": [],
+  "result": "PASS"
+}

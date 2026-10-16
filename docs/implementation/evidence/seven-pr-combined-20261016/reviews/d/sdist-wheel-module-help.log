@@ -1,0 +1,15 @@
+usage: repo-catalog [-h] [--version] [--state-dir STATE_DIR]
+                    [--format {table,json}]
+                    [--timeout-seconds TIMEOUT_SECONDS]
+                    {target,init,doctor,sources,discover,sync,instances,endpoints,repos,snapshots,refs,tree,file,commits,jobs,pr,issue,search,content,coverage,status,cache,db,index,identity,exchange,parser}
+                    ...
+
+positional arguments:
+  {target,init,doctor,sources,discover,sync,instances,endpoints,repos,snapshots,refs,tree,file,commits,jobs,pr,issue,search,content,coverage,status,cache,db,index,identity,exchange,parser}
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --state-dir STATE_DIR
+  --format {table,json}
+  --timeout-seconds TIMEOUT_SECONDS

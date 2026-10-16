@@ -1,0 +1,107 @@
+[
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "-c",
+      "import repo_catalog,sys,sqlite3;print(sys.executable);print(repo_catalog.__file__);print(sqlite3.sqlite_version)"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 0,
+    "log": "check-0.log"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 0,
+    "log": "check-1.log"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 0,
+    "log": "check-2.log"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 0,
+    "log": "check-3.log"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 0,
+    "log": "check-4.log"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_publication_free.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 0,
+    "log": "check-5.log"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/schema_viz.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 0,
+    "log": "check-6.log"
+  },
+  {
+    "command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_phase2_dependencies.py",
+      "--output",
+      "/workspace/integration-acceptance/reviews/a/historical-helper-output.json"
+    ],
+    "cwd": "/workspace/review-a",
+    "exit": 1,
+    "log": "check-7.log"
+  }
+]

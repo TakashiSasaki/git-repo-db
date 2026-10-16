@@ -1,0 +1,13 @@
+{
+  "old_lines": 257,
+  "new_nodes": 255,
+  "old_non_nodes": [
+    "",
+    "255 tests collected in 0.43s"
+  ],
+  "new_minus_old": [],
+  "old_minus_new": [
+    "",
+    "255 tests collected in 0.43s"
+  ]
+}

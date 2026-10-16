@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/integration-acceptance/reviews/c/isolation_probe.py", line 99, in <module>
+    run()
+  File "/workspace/integration-acceptance/reviews/c/isolation_probe.py", line 89, in run
+    assert connection.execute("SELECT count(*) FROM sqlite_schema WHERE name='search_documents'").fetchone()[0] == 0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

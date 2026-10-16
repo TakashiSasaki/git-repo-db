@@ -1,0 +1,100 @@
+"""Independent combined-tree recovery/Search isolation probe; disposable data only."""
+from __future__ import annotations
+
+import dataclasses
+import hashlib
+import json
+import os
+import platform
+import sqlite3
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+from repo_catalog.adapters.sqlite import index
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
+from repo_catalog.application.recovery import RecoveryService
+from repo_catalog.domain.recovery import BackupScope, CatalogStoppedError
+
+
+def run():
+    repo = "11111111-1111-4111-8111-111111111111"
+    instance = "22222222-2222-4222-8222-222222222222"
+    result = {
+        "source_head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        "source_tree": subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip(),
+        "python": sys.version,
+        "sqlite": sqlite3.sqlite_version,
+        "platform": platform.platform(),
+        "recovery_origin": sys.modules[RecoveryService.__module__].__file__,
+        "index_origin": index.__file__,
+        "probes": {},
+    }
+
+    def poison(*args, **kwargs):
+        raise AssertionError("P7 recovery invoked public Schema 21 Search rebuilding")
+
+    # Any accidental integration coupling would now fail actual recovery operations.
+    for name in ("rebuild", "refresh_documents", "_prune_obsolete_documents"):
+        setattr(index, name, poison)
+
+    with tempfile.TemporaryDirectory(prefix="independent-c-", dir=os.environ["TMPDIR"]) as tmp:
+        root = Path(tmp)
+        source = root / "source"
+        source.mkdir()
+        for store in ("core", "context", "operational", "search"):
+            initialize(source / f"{store}.sqlite3", store, repo, instance)
+        core = GitCore(source / "core.sqlite3")
+        try:
+            core.admit_repository(repo)
+        finally:
+            core.close()
+        service = RecoveryService()
+        backup = service.create_consistent_backup(source, root / "backup", BackupScope.PAIRED)
+        assert backup.verified_clean
+        service.stop_suspect_catalog(source, "independent combined-tree synthetic stop")
+        before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in source.glob("*.sqlite3*")}
+        # Junk reconstructible state must not erase or reset persistent stop.
+        for store in ("operational", "search"):
+            (source / f"{store}.sqlite3").unlink()
+        assert service.is_stopped(source)
+        try:
+            service.create_consistent_backup(source, root / "forbidden-backup", BackupScope.PAIRED)
+        except CatalogStoppedError:
+            pass
+        else:
+            raise AssertionError("stopped source completed ordinary backup")
+        result["probes"]["stop_survives_both_derivative_losses_and_blocks_backup"] = True
+        salvage = service.extract_salvage(source, root / "salvage.jsonl")
+        after = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in source.glob("*.sqlite3*")}
+        assert all(after[name] == digest for name, digest in before.items() if name in after)
+        result["probes"]["stopped_authorities_unchanged_by_salvage"] = True
+        fresh = root / "fresh"
+        restored = service.restore_backup(root / "backup", fresh, repo)
+        assert restored.revalidated_clean
+        merged = service.merge_salvage(fresh, root / "salvage.jsonl", request_id="independent-c")
+        assert merged.input_complete and merged.rejected_units == 0
+        assert merged.admitted_units == 0
+        result["probes"]["typed_replay_without_new_authority"] = True
+        # Wrong public-runtime derivative artifacts are discarded, never trusted.
+        for store in ("operational", "search"):
+            (fresh / f"{store}.sqlite3").write_bytes(b"public-schema21-junk")
+        activated = service.activate_catalog(fresh, root / "active")
+        assert activated.search_derivative_state == "initialized_empty"
+        assert activated.clean_operational
+        with connect(fresh / "search.sqlite3", "search") as connection:
+            assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+            # connect() already enforces exact P1 DDL and store identity.
+            assert connection.execute("SELECT count(*) FROM search_documents").fetchone()[0] == 0
+        assert service.is_stopped(source)
+        result["probes"]["recovery_reconstructs_p1_derivatives_without_public_search_rebuild"] = True
+        result["salvage"] = dataclasses.asdict(salvage)
+        result["merge"] = dataclasses.asdict(merged)
+        result["activation"] = dataclasses.asdict(activated)
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    run()

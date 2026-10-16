@@ -1,0 +1,6 @@
+{
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "frozen_p7_to_combined_src": "M\tsrc/repo_catalog/adapters/sqlite/index.py\n",
+  "frozen_schema21_to_combined_src": "A\tsrc/repo_catalog/adapters/sqlite/recovery.py\nA\tsrc/repo_catalog/adapters/sqlite/recovery_budget.py\nA\tsrc/repo_catalog/adapters/sqlite/recovery_validation.py\nA\tsrc/repo_catalog/application/recovery.py\nM\tsrc/repo_catalog/domain/git_native.py\nA\tsrc/repo_catalog/domain/ports/recovery.py\nA\tsrc/repo_catalog/domain/recovery.py\n"
+}

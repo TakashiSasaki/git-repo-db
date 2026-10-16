@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/integration-acceptance/reviews/c/isolation_probe.py", line 99, in <module>
+    run()
+  File "/workspace/integration-acceptance/reviews/c/isolation_probe.py", line 88, in run
+    assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: unknown function: p1_uuid4()

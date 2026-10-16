@@ -1,0 +1,30 @@
+From https://github.com/TakashiSasaki/git-repo-db
+ * branch            main       -> FETCH_HEAD
+{
+  "pr": 89,
+  "current_main": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "reviewed_feature": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+  "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "expected_tree": "ed80623514a5e574d1e24e908b95504f60b815db",
+  "latest_checks": [
+    {
+      "name": "deploy-to-pages",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117033302324"
+    },
+    {
+      "name": "build-and-validate",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117032747783"
+    },
+    {
+      "name": "offline",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703695/job/117032747536"
+    }
+  ]
+}
+STOP: independently inspect current rulesets, branch protection, commit statuses and required checks. This read-only script does not waive policy or constitute owner authorization.

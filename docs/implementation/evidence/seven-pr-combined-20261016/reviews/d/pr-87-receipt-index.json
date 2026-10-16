@@ -1,0 +1,42 @@
+{
+  "plan.json": {
+    "bytes": 19117,
+    "sha256": "cb957db8e53a1661ce342e0c9526ba102f5ccce9c7ac45dd1f65c63a30d748f6"
+  },
+  "plan.md": {
+    "bytes": 622,
+    "sha256": "f7c695ae0e5beee285fc016a5ef930c1b464b40a0e6c5da834e96810c518b3db"
+  },
+  "planning.json": {
+    "bytes": 1005,
+    "sha256": "36b73459779766fbd4fefbc2faa5b55a9a476ed8932de37977bf8b08465bfa8c"
+  },
+  "planning.md": {
+    "bytes": 430,
+    "sha256": "ffa5022b43fe2acb0da28397d4d1fe0671b0c80e2078ce6cbce09cec51a54ad0"
+  },
+  "receipt-binding.json": {
+    "bytes": 209,
+    "sha256": "e22c6c9e7f4fc78648191a229c32664f5cdd36cc0d05ec73a7c9d76aee1b42ce"
+  },
+  "report-validation.json": {
+    "bytes": 1068,
+    "sha256": "05d1b1e9bbc80189f23f09c28c78a9a012c7b5dfe9e5102afb55a906b1c28cb9"
+  },
+  "report-validation.md": {
+    "bytes": 448,
+    "sha256": "da5e888f9986a342cc6a7002a4d19435a4628918ce09052d4ec71632bd27e578"
+  },
+  "reports.json": {
+    "bytes": 15528,
+    "sha256": "58e345abbd67b62af0d02a4f83b4899ac34a480b855590f278b3466aa67e3e20"
+  },
+  "validation-manifest.json": {
+    "bytes": 18618,
+    "sha256": "0986cbf78ddd8888eaa29d2699993a3bf221477fca4c30882e7e63c282b100b7"
+  },
+  "validation-summary.md": {
+    "bytes": 515,
+    "sha256": "ee8b52d8869eb9d662a45a4ed1a4a821aaf6013a37a50ff2d84eb7e80c796daa"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "measured_utc": "2026-10-16T20:06:15.893283+00:00",
+  "evidence_worktree_head": "9b3860e537be309b51d4dec5873e024b561c06bd",
+  "skill_path": "/workspace/combined-evidence/.agents/skills/ci-final-tree-verification/SKILL.md",
+  "skill_sha256": "b6cd4b0c47d2252f9ac87523dd865166ead5bbb6085aef88d178cbd180ec4997",
+  "skill_bytes": 10878,
+  "frontmatter_valid": true,
+  "unchanged_from_independently_reviewed_bytes": true,
+  "evidence_link_resolves": true,
+  "evidence_link_target": "/workspace/combined-evidence/docs/implementation/evidence/seven-pr-combined-20261016/README.md",
+  "target_current_sha256": "4e9cb9ed7fc279e3ea45d7e379ca5702d2e98dbdcc60e82805b880aaec1294e9",
+  "target_status": "Provisional honest execution checkpoint, may receive final results later; approval of skill text/link existence does not approve future unreviewed README contents.",
+  "future_pr90_merge": "Independent merge-tree verification against #90 and seven-PR combined source preserved new top lesson and existing bottom lessons without conflicts; see pending-link checkpoint receipt.",
+  "verdict": "APPROVED_FOR_OWNER_REVIEW",
+  "new_blockers": 0,
+  "production_source": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "production_tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "merge_authorization": false
+}

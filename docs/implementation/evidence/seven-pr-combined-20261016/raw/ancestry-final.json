@@ -1,0 +1,58 @@
+[
+  {
+    "pr": 89,
+    "feature": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+    "base_ref": "main",
+    "base_head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+    "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+    "base_is_ancestor": true
+  },
+  {
+    "pr": 87,
+    "feature": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+    "base_ref": "main",
+    "base_head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+    "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+    "base_is_ancestor": true
+  },
+  {
+    "pr": 88,
+    "feature": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "base_ref": "docs/p7-backup-recovery-technical-design",
+    "base_head": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+    "merge_base": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+    "base_is_ancestor": true
+  },
+  {
+    "pr": 93,
+    "feature": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+    "base_ref": "main",
+    "base_head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+    "merge_base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+    "base_is_ancestor": true
+  },
+  {
+    "pr": 91,
+    "feature": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "base_ref": "fix/schema21-collection-contract",
+    "base_head": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+    "merge_base": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+    "base_is_ancestor": true
+  },
+  {
+    "pr": 92,
+    "feature": "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+    "base_ref": "fix/schema21-job-search-runtime",
+    "base_head": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "merge_base": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "base_is_ancestor": true
+  },
+  {
+    "pr": 90,
+    "feature": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+    "base_ref": "feat/p7-production-recovery",
+    "base_head": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "merge_base": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "base_is_ancestor": true
+  }
+]

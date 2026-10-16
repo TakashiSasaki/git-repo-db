@@ -1,0 +1,33 @@
+import gzip,hashlib,json
+from pathlib import Path
+
+source=Path('/workspace/integration-acceptance')
+dest=Path('/workspace/combined-evidence/docs/implementation/evidence/seven-pr-combined-20261016')
+dest.mkdir(parents=True,exist_ok=True)
+root_names=['chain.json','synthesize.py','final-source.txt','run.py','reconcile.py','owner-preflight.py','owner-merge-plan.md','publication-binding.json','executable-inputs.json','frozen-source-bindings.json','full-reconciliation.json','p7-reconciliation.json','p7-node-comparison.json','schema21-baseline-reconciliation.json','selected-nodes.txt','all-nodes.txt','deselected-nodes.txt']
+files=[source/n for n in root_names if (source/n).exists()]
+files += [source/n for n in ['make_report.py','capture_remote.py','persist_evidence.py','update_pr_bodies.py']]
+files += [p for p in (source/'raw').iterdir() if p.is_file() and p.name!='accepted-adrs-read.txt']
+for scope in 'abcd':
+    directory=source/'reviews'/scope
+    if directory.exists():
+        files += [p for p in directory.iterdir() if p.is_file() and p.suffix in {'.json','.jsonl','.xml','.log','.md','.txt','.py','.stderr','.zip'} and p.name!='adr-read.txt']
+index=[]
+seen={}
+for path in sorted(files):
+    raw=path.read_bytes(); relative=path.relative_to(source); target=dest/relative
+    if path.suffix=='.py': target=target.with_name(target.name+'.txt')
+    transport=raw
+    if len(raw)>16000 and path.suffix in {'.log','.jsonl','.xml','.txt'}:
+        target=target.with_name(target.name+'.gz'); transport=gzip.compress(raw,mtime=0)
+    transport_path=str(target.relative_to(dest))
+    entry={'original_path':str(relative),'original_bytes':len(raw),'original_sha256':hashlib.sha256(raw).hexdigest(),'transport_path':transport_path,'transport_bytes':len(transport),'transport_sha256':hashlib.sha256(transport).hexdigest()}
+    if transport_path in seen:
+        previous=seen[transport_path]
+        assert all(previous[k]==entry[k] for k in ('original_bytes','original_sha256','transport_bytes','transport_sha256')), ('conflicting transport aliases',previous,entry)
+        previous.setdefault('identical_original_aliases',[]).append(str(relative))
+        continue
+    target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(transport)
+    index.append(entry);seen[transport_path]=entry
+(dest/'artifact-index.json').write_text(json.dumps({'contract':'Transport byte hashes and original byte hashes. gzip is lossless mtime=0; .py.txt are preserved drivers, not acceptance inputs. Disposable catalogs, backups, venvs, wheels, archive binaries and caches excluded.','artifacts':index},indent=2)+'\n')
+print('Preserved',len(index),'artifacts;',sum(x['transport_bytes'] for x in index),'transport bytes')

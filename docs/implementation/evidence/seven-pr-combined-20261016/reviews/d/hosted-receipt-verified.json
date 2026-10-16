@@ -1,0 +1,282 @@
+[
+  {
+    "pr": 89,
+    "head": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+    "run": 38918703695,
+    "receipt_sha256": "155e2ac15e73d236ab716cbc9d992ef2cb961442ab7e53935f16d22859e67226",
+    "bytes": 67659,
+    "binding": {
+      "feature_sha": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "head": "80cf3399ab2469e5cdf791890bf95d4e813581e9",
+      "run_attempt": "1",
+      "run_id": "38918703695",
+      "tree": "ed80623514a5e574d1e24e908b95504f60b815db"
+    },
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "index_type": "dict",
+    "verified_index_members": 21,
+    "manifest_keys": [
+      "version",
+      "outcome",
+      "context",
+      "runtime",
+      "tree_sha",
+      "validation_mode",
+      "full_acceptance",
+      "acceptance_status",
+      "evidence_status",
+      "acceptance_input_hash",
+      "coverage",
+      "test_ids",
+      "selection_wall_seconds",
+      "command_wall_seconds"
+    ],
+    "feature_tree": "ed80623514a5e574d1e24e908b95504f60b815db",
+    "checkout_tree_equals_feature": true,
+    "runtime_counts": {
+      "validation_mode": "development"
+    },
+    "runtime_pytest_executed": 0
+  },
+  {
+    "pr": 87,
+    "head": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+    "run": 38920182337,
+    "receipt_sha256": "84fb5f69674833f1fe58d0f0d419554f1a298b693cc0323c715d545a197a8ff2",
+    "bytes": 11636,
+    "binding": {
+      "feature_sha": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "head": "6692a05dcb8af8027189ad11e8cee29d09560d6a",
+      "run_attempt": "1",
+      "run_id": "38920182337",
+      "tree": "920bc7b61477d3e1d6f7ac2ecaaef74bb188d4dd"
+    },
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "index_type": "dict",
+    "verified_index_members": 10,
+    "manifest_keys": [
+      "version",
+      "outcome",
+      "context",
+      "runtime",
+      "tree_sha",
+      "validation_mode",
+      "full_acceptance",
+      "acceptance_status",
+      "evidence_status",
+      "acceptance_input_hash",
+      "coverage",
+      "test_ids",
+      "selection_wall_seconds",
+      "command_wall_seconds"
+    ],
+    "feature_tree": "920bc7b61477d3e1d6f7ac2ecaaef74bb188d4dd",
+    "checkout_tree_equals_feature": true,
+    "runtime_counts": {
+      "validation_mode": "development"
+    },
+    "runtime_pytest_executed": 0
+  },
+  {
+    "pr": 88,
+    "head": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "run": 38926458613,
+    "receipt_sha256": "c934ed37d70a2192eaa2d858fc7aaa36000164f27288831b57fe896b0c79405a",
+    "bytes": 76206,
+    "binding": {
+      "feature_sha": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "head": "80c3f278592e73efc2fd4049b96c17afb3d17257",
+      "run_attempt": "1",
+      "run_id": "38926458613",
+      "tree": "87cd5817c5e945b0f29b8501bfa3fda6d2674dc4"
+    },
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "index_type": "dict",
+    "verified_index_members": 21,
+    "manifest_keys": [
+      "version",
+      "outcome",
+      "context",
+      "runtime",
+      "tree_sha",
+      "validation_mode",
+      "full_acceptance",
+      "acceptance_status",
+      "evidence_status",
+      "acceptance_input_hash",
+      "coverage",
+      "test_ids",
+      "selection_wall_seconds",
+      "command_wall_seconds"
+    ],
+    "feature_tree": "87cd5817c5e945b0f29b8501bfa3fda6d2674dc4",
+    "checkout_tree_equals_feature": true,
+    "runtime_counts": {
+      "validation_mode": "development"
+    },
+    "runtime_pytest_executed": 0
+  },
+  {
+    "pr": 93,
+    "head": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+    "run": 38945379469,
+    "receipt_sha256": "e73d733b7166d36fe844ec240e93bc8e984b9bb3a649cf3df624c68727cde0f9",
+    "bytes": 67801,
+    "binding": {
+      "feature_sha": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+      "head": "29ab752dfdd2f1a517bf8d2248887ad1d283ea3a",
+      "run_attempt": "1",
+      "run_id": "38945379469",
+      "tree": "c5c85897826e4e2bc756c6ce811fef4d67a4b9e5"
+    },
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "index_type": "dict",
+    "verified_index_members": 21,
+    "manifest_keys": [
+      "version",
+      "outcome",
+      "context",
+      "runtime",
+      "tree_sha",
+      "validation_mode",
+      "full_acceptance",
+      "acceptance_status",
+      "evidence_status",
+      "acceptance_input_hash",
+      "coverage",
+      "test_ids",
+      "selection_wall_seconds",
+      "command_wall_seconds"
+    ],
+    "feature_tree": "c5c85897826e4e2bc756c6ce811fef4d67a4b9e5",
+    "checkout_tree_equals_feature": true,
+    "runtime_counts": {
+      "validation_mode": "development"
+    },
+    "runtime_pytest_executed": 0
+  },
+  {
+    "pr": 91,
+    "head": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "run": 38945864284,
+    "receipt_sha256": "e6d452bb3adaead25cbcb56227f5e08f77a55667665fc44b1e7cdaaf384b275d",
+    "bytes": 67807,
+    "binding": {
+      "feature_sha": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+      "head": "03b43fc87960b2d9144d6ef5803353e1dbcaf13b",
+      "run_attempt": "1",
+      "run_id": "38945864284",
+      "tree": "62208ed7243aaacd45c3a9706dd957cbb1ebb222"
+    },
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "index_type": "dict",
+    "verified_index_members": 21,
+    "manifest_keys": [
+      "version",
+      "outcome",
+      "context",
+      "runtime",
+      "tree_sha",
+      "validation_mode",
+      "full_acceptance",
+      "acceptance_status",
+      "evidence_status",
+      "acceptance_input_hash",
+      "coverage",
+      "test_ids",
+      "selection_wall_seconds",
+      "command_wall_seconds"
+    ],
+    "feature_tree": "62208ed7243aaacd45c3a9706dd957cbb1ebb222",
+    "checkout_tree_equals_feature": true,
+    "runtime_counts": {
+      "validation_mode": "development"
+    },
+    "runtime_pytest_executed": 0
+  },
+  {
+    "pr": 92,
+    "head": "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+    "run": 38949217234,
+    "receipt_sha256": "10ae3b1edc7e639e19be4e849c8b94d19009fef52a5908827adaabf573b346c7",
+    "bytes": 74094,
+    "binding": {
+      "feature_sha": "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+      "head": "10408198e8fc1c8f8e727bca58d014df2da995b0",
+      "run_attempt": "1",
+      "run_id": "38949217234",
+      "tree": "a63fd1ea38fd22f6b45843cc60129fd946c563c6"
+    },
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "index_type": "dict",
+    "verified_index_members": 21,
+    "manifest_keys": [
+      "version",
+      "outcome",
+      "context",
+      "runtime",
+      "tree_sha",
+      "validation_mode",
+      "full_acceptance",
+      "acceptance_status",
+      "evidence_status",
+      "acceptance_input_hash",
+      "coverage",
+      "test_ids",
+      "selection_wall_seconds",
+      "command_wall_seconds"
+    ],
+    "feature_tree": "a63fd1ea38fd22f6b45843cc60129fd946c563c6",
+    "checkout_tree_equals_feature": true,
+    "runtime_counts": {
+      "validation_mode": "development"
+    },
+    "runtime_pytest_executed": 0
+  },
+  {
+    "pr": 90,
+    "head": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+    "run": 38947443376,
+    "receipt_sha256": "3309d8e3ff457e6ea820013e2a048f5db41859bd6a03a4a877a37d90204028d2",
+    "bytes": 67667,
+    "binding": {
+      "feature_sha": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+      "head": "808382273fca2a4a8cad68017bf6c087c2ff6be8",
+      "run_attempt": "1",
+      "run_id": "38947443376",
+      "tree": "71a8187a42de547f9f4bf8063632bc908e8e48ba"
+    },
+    "acceptance_status": "development_checks_passed",
+    "full_acceptance": false,
+    "index_type": "dict",
+    "verified_index_members": 21,
+    "manifest_keys": [
+      "version",
+      "outcome",
+      "context",
+      "runtime",
+      "tree_sha",
+      "validation_mode",
+      "full_acceptance",
+      "acceptance_status",
+      "evidence_status",
+      "acceptance_input_hash",
+      "coverage",
+      "test_ids",
+      "selection_wall_seconds",
+      "command_wall_seconds"
+    ],
+    "feature_tree": "71a8187a42de547f9f4bf8063632bc908e8e48ba",
+    "checkout_tree_equals_feature": true,
+    "runtime_counts": {
+      "validation_mode": "development"
+    },
+    "runtime_pytest_executed": 0
+  }
+]

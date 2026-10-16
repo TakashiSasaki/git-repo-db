@@ -1,0 +1,42 @@
+"""Read-only per-PR preflight. This script never retargets or merges a PR."""
+import argparse
+import json
+import subprocess
+from pathlib import Path
+
+REPO = 'TakashiSasaki/git-repo-db'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('pr', type=int)
+parser.add_argument('--expected-current-main', required=True)
+parser.add_argument('--chain', type=Path, default=Path(__file__).with_name('chain.json'))
+args = parser.parse_args()
+def run(*cmd):
+    return subprocess.check_output(cmd, text=True).strip()
+rows = json.loads(args.chain.read_text())
+row = next(x for x in rows if x['pr'] == args.pr)
+run('git', 'fetch', 'origin', 'main', f'+refs/pull/{args.pr}/head:refs/validation/owner-pr-{args.pr}')
+main = run('git', 'rev-parse', 'origin/main')
+assert main == args.expected_current_main, ('main changed', main)
+pr = json.loads(run('gh', 'api', f'repos/{REPO}/pulls/{args.pr}'))
+assert pr['state'] == 'open' and pr['head']['sha'] == row['feature'], 'PR state/head changed'
+assert pr['base']['ref'] == 'main', 'Retarget this child to main only after its parent is merged, then rerun'
+index = rows.index(row)
+if index:
+    prior = rows[index-1]
+    run('git', 'merge-base', '--is-ancestor', prior['feature'], main)
+assert run('git', 'rev-parse', f'refs/validation/owner-pr-{args.pr}') == row['feature']
+tree = run('git', 'merge-tree', '--write-tree', main, row['feature']).splitlines()[0]
+assert tree == row['tree'], ('unexpected effective tree', tree, row['tree'])
+assert pr['mergeable'] is True, 'GitHub mergeability not affirmatively true; recheck after computation completes'
+checks = json.loads(run('gh', 'api', f'repos/{REPO}/commits/{row["feature"]}/check-runs'))
+latest = {}
+for check in checks['check_runs']:
+    key = (check['app']['slug'], check['name'])
+    if key not in latest or check['id'] > latest[key]['id']:
+        latest[key] = check
+assert len(checks['check_runs']) < 30, 'Paginate check-runs before proceeding'
+for check in latest.values():
+    assert check['status'] == 'completed', ('pending check', check['name'])
+    assert check['conclusion'] in ('success', 'skipped', 'neutral'), ('failed check', check['name'], check['conclusion'])
+print(json.dumps({'pr': args.pr, 'current_main': main, 'reviewed_feature': row['feature'], 'merge_base':run('git','merge-base',main,row['feature']), 'expected_tree':tree, 'latest_checks':[{k:c.get(k) for k in ('name','status','conclusion','html_url')} for c in latest.values()]},indent=2))
+print('STOP: independently inspect current rulesets, branch protection, commit statuses and required checks. This read-only script does not waive policy or constitute owner authorization.')

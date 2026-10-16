@@ -1,0 +1,703 @@
+[
+  {
+    "name": "archive",
+    "argv": [
+      "git",
+      "archive",
+      "--format=tar.gz",
+      "--output",
+      "/workspace/integration-acceptance/reviews/d/frozen-source.tar.gz",
+      "388b824d1b3abe41c902759bf37a52c6ee5bcd2f"
+    ],
+    "cwd": "/workspace/review-d",
+    "exit_code": 0,
+    "started_epoch": 1792180406.8170714,
+    "elapsed_seconds": 1.7969691753387451,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "build",
+    "argv": [
+      "uv",
+      "build",
+      "--offline",
+      "--no-index",
+      "--find-links",
+      "/workspace/integration-acceptance/wheelhouse",
+      "--out-dir",
+      "/workspace/integration-acceptance/reviews/d/dist"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/source",
+    "exit_code": 0,
+    "started_epoch": 1792180409.878812,
+    "elapsed_seconds": 5.5433149337768555,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-build",
+    "argv": [
+      "uv",
+      "build",
+      "--wheel",
+      "--offline",
+      "--no-index",
+      "--find-links",
+      "/workspace/integration-acceptance/wheelhouse",
+      "--out-dir",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/unpacked/repo_catalog-0.2.0",
+    "exit_code": 0,
+    "started_epoch": 1792180416.6325355,
+    "elapsed_seconds": 0.5701146125793457,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "export-runtime",
+    "argv": [
+      "uv",
+      "export",
+      "--locked",
+      "--no-dev",
+      "--no-emit-project",
+      "--format",
+      "requirements-txt",
+      "--output-file",
+      "/workspace/integration-acceptance/reviews/d/requirements.txt"
+    ],
+    "cwd": "/workspace/review-d",
+    "exit_code": 0,
+    "started_epoch": 1792180417.2030005,
+    "elapsed_seconds": 0.07166361808776855,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-venv",
+    "argv": [
+      "uv",
+      "venv",
+      "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "--python",
+      "/workspace/review-d/.venv/bin/python",
+      "--offline"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d",
+    "exit_code": 0,
+    "started_epoch": 1792180417.4221823,
+    "elapsed_seconds": 0.01401662826538086,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-test-deps",
+    "argv": [
+      "uv",
+      "sync",
+      "--locked",
+      "--offline",
+      "--group",
+      "dev",
+      "--group",
+      "docs",
+      "--no-install-project",
+      "--active"
+    ],
+    "cwd": "/workspace/review-d",
+    "exit_code": 0,
+    "started_epoch": 1792180417.4365625,
+    "elapsed_seconds": 0.3623924255371094,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-install",
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "--offline",
+      "--no-deps",
+      "/workspace/integration-acceptance/reviews/d/dist/repo_catalog-0.2.0-py3-none-any.whl"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d",
+    "exit_code": 0,
+    "started_epoch": 1792180417.7992992,
+    "elapsed_seconds": 0.055605411529541016,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-identity",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-I",
+      "-c",
+      "import json,subprocess,sys,importlib.metadata,hashlib;from pathlib import Path;import repo_catalog,repo_catalog.adapters.sqlite.recovery as r;d=importlib.metadata.distribution('repo-catalog');print(json.dumps({'python':sys.executable,'package':repo_catalog.__file__,'recovery':r.__file__,'files':[{'path':str(f),'sha256':hashlib.sha256(Path(d.locate_file(f)).read_bytes()).hexdigest()} for f in d.files if Path(d.locate_file(f)).is_file()]},indent=2)); assert 'site-packages' in r.__file__; child=subprocess.check_output([sys.executable,'-I','-c','import repo_catalog.adapters.sqlite.recovery as r;print(r.__file__)'],text=True);print(child);assert 'site-packages' in child"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792180417.8553376,
+    "elapsed_seconds": 0.4897599220275879,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-freeze",
+    "argv": [
+      "uv",
+      "pip",
+      "freeze",
+      "--python",
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d",
+    "exit_code": 0,
+    "started_epoch": 1792180418.3456182,
+    "elapsed_seconds": 0.02054286003112793,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-venv",
+    "argv": [
+      "uv",
+      "venv",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv",
+      "--python",
+      "/workspace/review-d/.venv/bin/python",
+      "--offline"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d",
+    "exit_code": 0,
+    "started_epoch": 1792180418.43327,
+    "elapsed_seconds": 0.022505521774291992,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-test-deps",
+    "argv": [
+      "uv",
+      "sync",
+      "--locked",
+      "--offline",
+      "--group",
+      "dev",
+      "--group",
+      "docs",
+      "--no-install-project",
+      "--active"
+    ],
+    "cwd": "/workspace/review-d",
+    "exit_code": 0,
+    "started_epoch": 1792180418.456668,
+    "elapsed_seconds": 0.3111283779144287,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv",
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-install",
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python",
+      "--offline",
+      "--no-deps",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d",
+    "exit_code": 0,
+    "started_epoch": 1792180418.768578,
+    "elapsed_seconds": 0.054213523864746094,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-identity",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python",
+      "-I",
+      "-c",
+      "import json,subprocess,sys,importlib.metadata,hashlib;from pathlib import Path;import repo_catalog,repo_catalog.adapters.sqlite.recovery as r;d=importlib.metadata.distribution('repo-catalog');print(json.dumps({'python':sys.executable,'package':repo_catalog.__file__,'recovery':r.__file__,'files':[{'path':str(f),'sha256':hashlib.sha256(Path(d.locate_file(f)).read_bytes()).hexdigest()} for f in d.files if Path(d.locate_file(f)).is_file()]},indent=2)); assert 'site-packages' in r.__file__; child=subprocess.check_output([sys.executable,'-I','-c','import repo_catalog.adapters.sqlite.recovery as r;print(r.__file__)'],text=True);print(child);assert 'site-packages' in child"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792180418.8237927,
+    "elapsed_seconds": 0.39545345306396484,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-freeze",
+    "argv": [
+      "uv",
+      "pip",
+      "freeze",
+      "--python",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d",
+    "exit_code": 0,
+    "started_epoch": 1792180419.220038,
+    "elapsed_seconds": 0.013419389724731445,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": null,
+      "PATH": "/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-module-help",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-I",
+      "-m",
+      "repo_catalog",
+      "--help"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181180.0051072,
+    "elapsed_seconds": 0.11930060386657715,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-module-init",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-I",
+      "-m",
+      "repo_catalog",
+      "--state-dir",
+      "/workspace/integration-acceptance/reviews/d/wheel-module-state",
+      "--format",
+      "json",
+      "init",
+      "--profile",
+      "catalog-text-v1",
+      "--cache-max-bytes",
+      "67108864",
+      "--min-free-bytes",
+      "0"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181180.1254947,
+    "elapsed_seconds": 0.4236893653869629,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-module-check",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-I",
+      "-m",
+      "repo_catalog",
+      "--state-dir",
+      "/workspace/integration-acceptance/reviews/d/wheel-module-state",
+      "--format",
+      "json",
+      "db",
+      "check",
+      "--full"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181180.5497282,
+    "elapsed_seconds": 0.3233053684234619,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-collect",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+      "--collect-only",
+      "-q",
+      "-o",
+      "pythonpath="
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181180.8735452,
+    "elapsed_seconds": 0.918487548828125,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "wheel-installed",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+      "-q",
+      "-o",
+      "pythonpath=",
+      "--basetemp",
+      "/workspace/integration-acceptance/reviews/d/wheel-pytest-temp",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/integration-acceptance/reviews/d/wheel-junit.xml",
+      "--journal",
+      "/workspace/integration-acceptance/reviews/d/wheel-journal.jsonl"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181181.7926068,
+    "elapsed_seconds": 40.048121213912964,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-module-help",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python",
+      "-I",
+      "-m",
+      "repo_catalog",
+      "--help"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181221.8426516,
+    "elapsed_seconds": 0.14637255668640137,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-module-init",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python",
+      "-I",
+      "-m",
+      "repo_catalog",
+      "--state-dir",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-module-state",
+      "--format",
+      "json",
+      "init",
+      "--profile",
+      "catalog-text-v1",
+      "--cache-max-bytes",
+      "67108864",
+      "--min-free-bytes",
+      "0"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181221.9898963,
+    "elapsed_seconds": 0.5975174903869629,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-module-check",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python",
+      "-I",
+      "-m",
+      "repo_catalog",
+      "--state-dir",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-module-state",
+      "--format",
+      "json",
+      "db",
+      "check",
+      "--full"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181222.5881026,
+    "elapsed_seconds": 0.27698707580566406,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-collect",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+      "--collect-only",
+      "-q",
+      "-o",
+      "pythonpath="
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181222.8660614,
+    "elapsed_seconds": 1.2332851886749268,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "sdist-wheel-installed",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+      "-q",
+      "-o",
+      "pythonpath=",
+      "--basetemp",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-pytest-temp",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-junit.xml",
+      "--journal",
+      "/workspace/integration-acceptance/reviews/d/sdist-wheel-journal.jsonl"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181224.100151,
+    "elapsed_seconds": 38.06527924537659,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/sdist-wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "public-cli-collect",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/test_external_cli.py",
+      "--collect-only",
+      "-q",
+      "-o",
+      "pythonpath="
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181262.1663043,
+    "elapsed_seconds": 0.334597110748291,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  },
+  {
+    "name": "public-cli",
+    "argv": [
+      "/workspace/integration-acceptance/reviews/d/wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/test_external_cli.py",
+      "-q",
+      "-o",
+      "pythonpath=",
+      "--basetemp",
+      "/workspace/integration-acceptance/reviews/d/cli-pytest-temp",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/integration-acceptance/reviews/d/cli-junit.xml",
+      "--journal",
+      "/workspace/integration-acceptance/reviews/d/cli-journal.jsonl"
+    ],
+    "cwd": "/workspace/integration-acceptance/reviews/d/harness",
+    "exit_code": 0,
+    "started_epoch": 1792181262.5017254,
+    "elapsed_seconds": 53.02210283279419,
+    "environment_overrides": {
+      "TMPDIR": "/workspace/integration-acceptance/reviews/d/tmp",
+      "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse",
+      "VIRTUAL_ENV": "/workspace/integration-acceptance/reviews/d/wheel-venv",
+      "PATH": "/workspace/integration-acceptance/reviews/d/wheel-venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback",
+      "PYTHONPATH": null,
+      "PYTHONHOME": null,
+      "REPO_CATALOG_TEST_BOOTSTRAP": null
+    }
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "python_version_file": {
+    "path": ".python-version",
+    "present": false,
+    "note": "Optional file is absent in the frozen tree; actual Python version is measured in environment.json. An exploratory attempt to add this optional path to the manifest raised FileNotFoundError before writing; no execution input changed."
+  },
+  "executable_manifest_count": 370,
+  "executable_manifest_sha256": "b909c5338f2b691393468d89d76ccf0e63dcccc738093c17140331fb03722d9f"
+}

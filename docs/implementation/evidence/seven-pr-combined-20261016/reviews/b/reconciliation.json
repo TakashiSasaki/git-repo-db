@@ -1,0 +1,29 @@
+{
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "selected_nodes": [
+    "tests/integration/test_schema21_runtime_contract.py::test_completed_collection_survives_operational_loss_without_shadow_state",
+    "tests/integration/test_schema21_runtime_contract.py::test_operational_complete_cannot_certify_rolled_back_core_collection",
+    "tests/integration/test_catalog3_job_plans.py::test_discovery_resume_uses_frozen_source_set_and_settings",
+    "tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts",
+    "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+    "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+    "tests/integration/p7/test_safe_activation.py::test_safe_activation_reconstructs_operational_and_search",
+    "tests/integration/p7/test_safe_activation.py::test_activation_fails_on_missing_core",
+    "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[before_validation-Injected failure before validation]",
+    "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[between_core_and_context-Injected failure between core and context]",
+    "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[after_operational_init-Injected failure after operational initialization]",
+    "tests/integration/p7/test_safe_activation.py::test_activation_fault_stages_prevent_publication[during_locator_replacement-Injected failure during locator replacement]",
+    "tests/integration/p7/test_safe_activation.py::test_activation_replaces_existing_symlink_atomically"
+  ],
+  "selected": 13,
+  "passed": 13,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "journal_starts": 13,
+  "journal_phases": 39,
+  "phase_multiplicity": "exactly once setup/call/teardown per node",
+  "exit_code": 0,
+  "three_way_identity": "exact duplicate-free collection/JUnit/journal set equality"
+}

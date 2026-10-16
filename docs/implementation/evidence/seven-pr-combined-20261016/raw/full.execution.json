@@ -1,0 +1,31 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "tests",
+    "-n",
+    "4",
+    "-q",
+    "--basetemp",
+    "/workspace/integration-acceptance/full-temp",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml",
+    "/workspace/integration-acceptance/raw/full.xml",
+    "--journal",
+    "/workspace/integration-acceptance/raw/full.jsonl"
+  ],
+  "cwd": "/workspace/combined-tree",
+  "environment_overrides": {
+    "TMPDIR": "/workspace/integration-acceptance/tmp",
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse"
+  },
+  "start": "2026-10-16T19:52:43.373075+00:00",
+  "end": "2026-10-16T20:05:22.322325+00:00",
+  "elapsed_seconds": 758.949410389,
+  "exit_code": 0,
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+}

@@ -1,0 +1,9 @@
+{"event":"start","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[wheel]","worker_id":"master","timestamp":1792181262.78593}
+{"event":"phase","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[wheel]","phase":"setup","outcome":"passed","duration":0.002298,"worker_id":"master","timestamp":1792181262.789295}
+{"event":"phase","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[wheel]","phase":"call","outcome":"passed","duration":26.36415,"worker_id":"master","timestamp":1792181289.157263}
+{"event":"phase","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[wheel]","phase":"teardown","outcome":"passed","duration":0.000254,"worker_id":"master","timestamp":1792181289.158844}
+{"event":"start","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[sdist-wheel]","worker_id":"master","timestamp":1792181289.159443}
+{"event":"phase","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[sdist-wheel]","phase":"setup","outcome":"passed","duration":0.001171,"worker_id":"master","timestamp":1792181289.161005}
+{"event":"phase","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[sdist-wheel]","phase":"call","outcome":"passed","duration":26.221074,"worker_id":"master","timestamp":1792181315.382687}
+{"event":"phase","nodeid":"tests/test_external_cli.py::test_wheel_sdist_cli[sdist-wheel]","phase":"teardown","outcome":"passed","duration":0.000245,"worker_id":"master","timestamp":1792181315.383715}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792181315.385264}

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "python",
+    "/workspace/integration-acceptance/reviews/b/runtime-probes.py"
+  ],
+  "cwd": "/workspace/review-b",
+  "environment_overrides": {
+    "TMPDIR": "/workspace/integration-acceptance/reviews/b/tmp",
+    "PATH": "/workspace/review-b/.venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback"
+  },
+  "start": "2026-10-16T19:53:37.148631+00:00",
+  "end": "2026-10-16T19:53:38.048374+00:00",
+  "elapsed_seconds": 0.899746155999992,
+  "exit_code": 1,
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+}

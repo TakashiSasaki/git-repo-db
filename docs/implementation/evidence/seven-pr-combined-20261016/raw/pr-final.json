@@ -1,0 +1,384 @@
+[
+  {
+    "baseRefName": "main",
+    "headRefName": "validation/seven-pr-combined-20261016",
+    "headRefOid": "643cfbcbb3627388d0154b21dc7df56bedfaa77c",
+    "isDraft": true,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 94,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T19:58:04Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38958653634/job/117167822700",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T19:57:05Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T19:57:22Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38958653585/job/117167822607",
+        "name": "offline",
+        "startedAt": "2026-10-16T19:57:05Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T19:58:05Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38958653634/job/117168245300",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T19:58:05Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "docs: combined seven-PR acceptance and owner merge gate",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/94"
+  },
+  {
+    "baseRefName": "main",
+    "headRefName": "fix/schema21-collection-contract",
+    "headRefOid": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+    "isDraft": false,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 93,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:12:48Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38945379346/job/117123060603",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T18:11:13Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:11:32Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38945379469/job/117123061280",
+        "name": "offline",
+        "startedAt": "2026-10-16T18:11:13Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:12:48Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38945379346/job/117123775190",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T18:12:49Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "Restore Schema 21 collection test store and restart contracts",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/93"
+  },
+  {
+    "baseRefName": "fix/schema21-job-search-runtime",
+    "headRefName": "fix/schema21-runtime-contract",
+    "headRefOid": "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+    "isDraft": false,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 92,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:42:40Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38949216659/job/117136044816",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T18:41:08Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:41:22Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38949217234/job/117136047550",
+        "name": "offline",
+        "startedAt": "2026-10-16T18:41:08Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:42:40Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38949216659/job/117136735251",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T18:42:41Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "test: restore remaining Schema 21 fixtures and bind integration verification",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/92"
+  },
+  {
+    "baseRefName": "fix/schema21-collection-contract",
+    "headRefName": "fix/schema21-job-search-runtime",
+    "headRefOid": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "isDraft": false,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 91,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:16:25Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38945864311/job/117124696323",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T18:15:00Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:15:15Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38945864284/job/117124695876",
+        "name": "offline",
+        "startedAt": "2026-10-16T18:15:00Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:16:25Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38945864311/job/117125303891",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T18:16:25Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "fix(schema21): restore operational job contracts and current Search reconstruction",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/91"
+  },
+  {
+    "baseRefName": "feat/p7-production-recovery",
+    "headRefName": "docs/integration-readiness-20261016",
+    "headRefOid": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+    "isDraft": false,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 90,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:27:10Z",
+        "conclusion": "CANCELLED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38947442888/job/117130033782",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T18:27:10Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:27:10Z",
+        "conclusion": "CANCELLED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38947442831/job/117130033372",
+        "name": "offline",
+        "startedAt": "2026-10-16T18:27:10Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:28:40Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38947443446/job/117130042440",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T18:27:14Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:27:28Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38947443376/job/117130041356",
+        "name": "offline",
+        "startedAt": "2026-10-16T18:27:13Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:27:10Z",
+        "conclusion": "CANCELLED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38947442888/job/117130041443",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T18:27:11Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T18:28:41Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38947443446/job/117130701238",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T18:28:41Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "docs: verify P7 integration readiness and exact owner merge plan",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/90"
+  },
+  {
+    "baseRefName": "main",
+    "headRefName": "feat/optimize-pages-trigger-paths",
+    "headRefOid": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+    "isDraft": false,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 89,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T14:49:17Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117032747783",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T14:48:08Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T14:48:21Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703695/job/117032747536",
+        "name": "offline",
+        "startedAt": "2026-10-16T14:48:08Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T14:49:17Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718/job/117033302324",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T14:49:18Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "ci(pages): narrow workflow trigger paths to actual documentation staging inputs",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/89"
+  },
+  {
+    "baseRefName": "docs/p7-backup-recovery-technical-design",
+    "headRefName": "feat/p7-production-recovery",
+    "headRefOid": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "isDraft": false,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 88,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T15:46:29Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38926458993/job/117059133547",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T15:45:09Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T15:45:27Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38926458613/job/117059132592",
+        "name": "offline",
+        "startedAt": "2026-10-16T15:45:09Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T15:46:29Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38926458993/job/117059772978",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T15:46:29Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "feat(p7): consistent backup, corruption stop, read-only salvage, and safe activation implementation",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/88"
+  },
+  {
+    "baseRefName": "main",
+    "headRefName": "docs/p7-backup-recovery-technical-design",
+    "headRefOid": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+    "isDraft": false,
+    "mergeStateStatus": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "number": 87,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T15:00:29Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38920182320/job/117037805849",
+        "name": "build-and-validate",
+        "startedAt": "2026-10-16T14:59:02Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T14:59:14Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38920182337/job/117037804882",
+        "name": "offline",
+        "startedAt": "2026-10-16T14:59:01Z",
+        "status": "COMPLETED",
+        "workflowName": "tests"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T15:00:30Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/TakashiSasaki/git-repo-db/actions/runs/38920182320/job/117038521383",
+        "name": "deploy-to-pages",
+        "startedAt": "2026-10-16T15:00:31Z",
+        "status": "COMPLETED",
+        "workflowName": "pages"
+      }
+    ],
+    "title": "docs(p7): consistent backup, persistent corruption stop, read-only salvage, and fresh restore design",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/87"
+  }
+]

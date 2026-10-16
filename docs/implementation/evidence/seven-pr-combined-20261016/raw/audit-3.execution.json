@@ -1,0 +1,21 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "python",
+    "scripts/audit_callsite_dependencies.py",
+    "--check"
+  ],
+  "cwd": "/workspace/combined-tree",
+  "environment_overrides": {
+    "TMPDIR": "/workspace/integration-acceptance/tmp",
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse"
+  },
+  "start": "2026-10-16T19:53:25.712298+00:00",
+  "end": "2026-10-16T19:53:27.058433+00:00",
+  "elapsed_seconds": 1.3461407380000026,
+  "exit_code": 0,
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+}
