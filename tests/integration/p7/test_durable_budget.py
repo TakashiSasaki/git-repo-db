@@ -375,3 +375,69 @@ def test_noncanonical_accounting_json_fails_closed(tmp_path, raw):
     target.write_text(raw)
     with pytest.raises(RecoveryError):
         _read(target)
+
+
+def _registry_initialization_worker(directory, salvage):
+    import repo_catalog.adapters.sqlite.recovery_budget as module
+
+    original = module._write
+
+    def write(path, data):
+        original(path, data)
+        if path.name == "p1-recovery-requests.json" and data == {
+            "version": 1,
+            "requests": {},
+        }:
+            os.kill(os.getpid(), signal.SIGKILL)
+
+    module._write = write
+    SQLiteRecoveryAdapter().merge_salvage(
+        directory, salvage, request_id="crash-request"
+    )
+
+
+def test_sigkill_during_pristine_registry_initialization_can_resume(catalog, tmp_path):
+    salvage, _ = _candidate(tmp_path)
+    process = multiprocessing.get_context("spawn").Process(
+        target=_registry_initialization_worker, args=(catalog, salvage)
+    )
+    process.start()
+    process.join(15)
+    assert process.exitcode == -signal.SIGKILL
+    assert not (catalog / "p1-recovery-requests.initialized").exists()
+    assert _count(catalog) == 0
+    receipt = SQLiteRecoveryAdapter().merge_salvage(
+        catalog, salvage, request_id="crash-request"
+    )
+    assert receipt.admitted_units == 1
+    assert _count(catalog) == 1
+
+
+@pytest.mark.parametrize(
+    "damage",
+    ["used_registry", "orphan_report", "orphan_checkpoint", "orphan_temporary"],
+)
+def test_missing_marker_never_recreates_used_or_conflicting_request(
+    catalog, tmp_path, damage
+):
+    salvage, _ = _candidate(tmp_path)
+    SQLiteRecoveryAdapter().merge_salvage(catalog, salvage, request_id="crash-request")
+    (catalog / "p1-recovery-requests.initialized").unlink()
+    if damage != "used_registry":
+        (catalog / "p1-recovery-requests.json").write_text(
+            json.dumps({"version": 1, "requests": {}})
+        )
+        report = catalog / "p1-recovery-request-crash-request.json"
+        checkpoint = catalog / "p1-recovery-request-crash-request.reserved.json"
+        if damage == "orphan_report":
+            checkpoint.unlink()
+        elif damage == "orphan_checkpoint":
+            report.unlink()
+        else:
+            report.rename(catalog / (report.name + ".tmp.interrupted"))
+            checkpoint.unlink()
+    with pytest.raises(RecoveryError):
+        SQLiteRecoveryAdapter().merge_salvage(
+            catalog, salvage, request_id="new-request"
+        )
+    assert _count(catalog) == 1

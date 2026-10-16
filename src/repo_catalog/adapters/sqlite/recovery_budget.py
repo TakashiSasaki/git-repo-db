@@ -184,13 +184,32 @@ def recovery_request(
                 if not _same_json(_read(marker), {"version": 1}):
                     raise RecoveryError("Invalid recovery registry marker")
                 registry = _read(registry_path)
-            elif registry_path.exists() or path.exists() or reservation_path.exists():
+            elif registry_path.exists() or registry_path.is_symlink():
+                # Initialization publishes this exact empty registry before its
+                # marker. No request/work may begin until both are durable.
+                # Reconcile only this pristine crash cut, never a used registry
+                # or any orphan state/checkpoint/temporary request artifact.
+                registry = _read(registry_path)
+                if not _same_json(registry, {"version": 1, "requests": {}}) or any(
+                    entry.name.startswith("p1-recovery-request-")
+                    and not entry.name.endswith(".lock")
+                    for entry in directory.iterdir()
+                ):
+                    raise RecoveryError(
+                        "Recovery accounting marker missing; cannot infer zero work"
+                    )
+                _write(marker, {"version": 1})
+            elif any(
+                entry.name.startswith("p1-recovery-request-")
+                and not entry.name.endswith(".lock")
+                for entry in directory.iterdir()
+            ):
                 raise RecoveryError(
-                    "Recovery accounting marker missing; cannot infer zero work"
+                    "Recovery accounting registry missing with request artifacts"
                 )
             else:
-                # Publish the empty registry first. A crash between these writes
-                # fails closed on resume; it never permits unaccounted work.
+                # A crash between these writes can only resume from a validated
+                # pristine registry; it never permits unaccounted work.
                 registry = {"version": 1, "requests": {}}
                 _write(registry_path, registry)
                 _write(marker, {"version": 1})
