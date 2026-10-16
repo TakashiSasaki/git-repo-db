@@ -113,7 +113,7 @@ assert paired_view.core_resolutions[0].object_view.retained_bytes.body_bytes == 
 counts = svc.rebuild_search()
 assert counts["git_metadata"] > 0 and counts["context_text"] > 0
 res_proj = svc.search(SearchQuery(query_text="needle"))
-assert res_proj.backend == "projection" and res_proj.total_count == 2
+assert res_proj.backend == "verified_projection_scan" and res_proj.total_count == 2
 
 (cat / "search.sqlite3").unlink()
 res_scan = svc.search(SearchQuery(query_text="needle"))

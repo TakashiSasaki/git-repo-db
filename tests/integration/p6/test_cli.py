@@ -190,7 +190,7 @@ def test_cli_all_subcommands_pagination_and_error_handling(
         capsys,
     )
     assert code == 0
-    assert search_data["backend"] == "projection"
+    assert search_data["backend"] == "verified_projection_scan"
     assert search_data["total_count"] >= 3
 
     # 11. Error exit code on SNAPSHOT_MISMATCH

@@ -365,6 +365,14 @@ class ReadSnapshot:
             raise CoordinationError("SNAPSHOT_EXPIRED", "read")
         self._running()
 
+    def identity(self, role: str):
+        self._available()
+        return _identity(self, role)
+
+    def fingerprint(self, *, metadata_only: bool = False):
+        self._available()
+        return _digest(self, metadata_only=metadata_only)
+
     @property
     def catalog_directory(self):
         """Actual coordinator owner; unrelated caller paths cannot route a stop."""

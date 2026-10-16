@@ -21,14 +21,50 @@ from contextlib import closing
 from pathlib import Path
 
 from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_coordination import (
+    SnapshotReadLimits,
+    apply_snapshot_read_limits,
+)
 from repo_catalog.adapters.sqlite.p1_schema import SchemaError, connect, initialize
-from repo_catalog.domain.p1_core import OID, Capture
+from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey
+from repo_catalog.domain.p1_coordination import CoordinationError
+from repo_catalog.domain.p1_core import OID, Capture, GitObservation, Provenance
 from repo_catalog.domain.production_query import (
     SEARCH_PROJECTION_KINDS,
     QueryError,
     SnapshotFenceToken,
     canonical_json,
 )
+
+
+class BoundedDocuments(dict):
+    """Finite derivative working set, checked before retaining each document."""
+
+    max_documents = 10000
+    max_document_bytes = 1024 * 1024
+    max_total_bytes = 16 * 1024 * 1024
+
+    def __init__(self):
+        super().__init__()
+        self.total_bytes = 0
+
+    def __setitem__(self, key, value):
+        size = len(key.encode("utf-8")) + len(value.encode("utf-8"))
+        old = self.get(key)
+        replaced = (
+            0 if old is None else len(key.encode("utf-8")) + len(old.encode("utf-8"))
+        )
+        total = self.total_bytes - replaced + size
+        if (
+            size > self.max_document_bytes
+            or total > self.max_total_bytes
+            or (key not in self and len(self) >= self.max_documents)
+        ):
+            raise QueryError(
+                "QUERY_BUDGET", "search", "derivative document working-set limit"
+            )
+        super().__setitem__(key, value)
+        self.total_bytes = total
 
 
 class ProductionSearchAdapter:
@@ -140,6 +176,16 @@ class ProductionSearchAdapter:
                 db.execute("PRAGMA query_only=ON")
                 db.execute("BEGIN")
                 try:
+                    apply_snapshot_read_limits(db, SnapshotReadLimits())
+                    # SQLite can report encoded BLOB length without decoding or
+                    # materializing malicious derivative TEXT into Python.
+                    oversize = db.execute(
+                        "SELECT 1 FROM search_documents WHERE "
+                        "length(CAST(document_key_json AS BLOB)) + length(CAST(searchable_text AS BLOB)) > ? LIMIT 1",
+                        (BoundedDocuments.max_document_bytes,),
+                    ).fetchone()
+                    if oversize is not None:
+                        return None
                     proj_rows = db.execute(
                         "SELECT snapshot_token_json FROM search_projections WHERE projection_kind=?",
                         (projection_kind,),
@@ -165,8 +211,8 @@ class ProductionSearchAdapter:
                         "WHERE projection_kind=? AND snapshot_token_json=? AND instr(searchable_text,?)>0 "
                         "ORDER BY document_key_json",
                         (projection_kind, snapshot_token, query_text),
-                    ).fetchall()
-                    result: dict[str, str] = {}
+                    )
+                    result: dict[str, str] = BoundedDocuments()
                     for key_json, text_val in rows:
                         parsed_key = json.loads(key_json)
                         if (
@@ -180,7 +226,14 @@ class ProductionSearchAdapter:
                 finally:
                     if db.in_transaction:
                         db.rollback()
-        except (sqlite3.DatabaseError, SchemaError, ValueError, TypeError, OSError):
+        except (
+            sqlite3.DatabaseError,
+            SchemaError,
+            ValueError,
+            TypeError,
+            OSError,
+            CoordinationError,
+        ):
             return None
 
     @staticmethod
@@ -193,7 +246,7 @@ class ProductionSearchAdapter:
         ref observations, and decoded tree entry names. Strictly excludes ordinary
         file blobs (`type == 'blob'`).
         """
-        documents: dict[str, str] = {}
+        documents: dict[str, str] = BoundedDocuments()
         summaries: dict[str, dict[str, object]] = {}
 
         # 1. Inspect git_objects and their scalar/relation claims
@@ -273,7 +326,7 @@ class ProductionSearchAdapter:
                     coord, target_fmt, target_oid = member
                     mode, name_hex = coord[0], coord[1]
                     decoded_name = bytes.fromhex(name_hex).decode(
-                        "utf-8", "surrogateescape"
+                        "utf-8", "backslashreplace"
                     )
                     doc_key = canonical_json(
                         [
@@ -303,7 +356,16 @@ class ProductionSearchAdapter:
             "ORDER BY capture_origin_uuidv4,capture_uuidv4,scope,provenance"
         )
         for row in obs_rows:
-            value = json.loads(row[5])
+            observation = GitObservation(
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                tuple(json.loads(row[4])),
+                json.loads(row[5]),
+                Provenance(*json.loads(row[6])),
+            )
+            value = observation.value
             ref_name = value.get("ref")
             if isinstance(ref_name, str) and ref_name:
                 doc_key = canonical_json(
@@ -342,7 +404,7 @@ class ProductionSearchAdapter:
         Indexes retained note text (verified via `core.read_note`) and note target/capture
         mappings.
         """
-        documents: dict[str, str] = {}
+        documents: dict[str, str] = BoundedDocuments()
         summaries: dict[str, dict[str, object]] = {}
 
         cap_rows = core.sql(
@@ -351,7 +413,7 @@ class ProductionSearchAdapter:
         )
         for crow in cap_rows:
             raw_ref = bytes.fromhex(json.loads(crow[4])[1]).decode(
-                "utf-8", "surrogateescape"
+                "utf-8", "backslashreplace"
             )
             capture = Capture(
                 crow[0],
@@ -409,7 +471,7 @@ class ProductionSearchAdapter:
                     )
                     if has_retained:
                         raw_bytes = core.read_note(capture, target_oid, note_oid)
-                        body_text = raw_bytes.decode("utf-8", "surrogateescape")
+                        body_text = raw_bytes.decode("utf-8", "backslashreplace")
                         retained = True
                     searchable = (
                         f"{capture.ref} {target_oid.full_oid} {note_oid.full_oid} {body_text}"
@@ -451,7 +513,7 @@ class ProductionSearchAdapter:
         callable, and indexes current string `field_candidates` while excluding explicit
         JSON `"null"`.
         """
-        documents: dict[str, str] = {}
+        documents: dict[str, str] = BoundedDocuments()
         summaries: dict[str, dict[str, object]] = {}
 
         rows = context_db.execute(
@@ -471,6 +533,18 @@ class ProductionSearchAdapter:
                 prov_json,
                 obs_at,
             ) = row
+            parsed_clock = json.loads(clock_json)
+            clock = FieldClock(parsed_clock["domain"], parsed_clock["at_us"])
+            if clock.encode() != clock_json:
+                raise ValueError("invalid stored canonical clock")
+            FieldCandidate(
+                ResourceKey(service_id, r_kind, r_id),
+                field_name,
+                value_json,
+                clock,
+                prov_json,
+                obs_at,
+            )
             decoded_val = json.loads(value_json)
             if decoded_val is None:
                 continue
