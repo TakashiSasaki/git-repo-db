@@ -417,3 +417,31 @@ def test_persisted_inventory_invalid_utf8_publishes_stop(case, reader):
     with pytest.raises(CoreFailure) as stopped:
         core.admit_object(oid("b", case[1]))
     assert stopped.value.code == "RECOVERY_STOP"
+
+
+@pytest.mark.parametrize("reader", ["inventory", "projection"])
+def test_persisted_inventory_deep_json_publishes_stop(case, reader):
+    root = write(case[0], case[1], "tree", b"")
+    cap = capture(case, root)
+    core, db_path = case[3], case[4]
+    core.admit_notes_inventory(
+        mapping_inventory(cap, GitNativeSource(case[0]).metadata, Budget()), Budget()
+    )
+    db = sqlite3.connect(db_path)
+    db.execute("DROP TRIGGER p1_immutable_notes_groups_update")
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute(
+        "UPDATE notes_groups SET provenance=?", ("[" * 10000 + "0" + "]" * 10000,)
+    )
+    db.commit()
+    db.close()
+    with pytest.raises(CoreFailure) as stopped:
+        if reader == "inventory":
+            core.notes_inventories(cap)
+        else:
+            core.notes_projection(cap, oid("a", case[1]))
+    assert stopped.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (db_path.parent / "p1-recovery-stop.json").is_file()
+    with pytest.raises(CoreFailure) as stopped:
+        core.admit_object(oid("b", case[1]))
+    assert stopped.value.code == "RECOVERY_STOP"

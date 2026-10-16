@@ -9637,10 +9637,10 @@
     },
     "operational.request_budgets": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
-      "domain": "Finite request-scoped cumulative work-kind allowance",
+      "domain": "Finite request-scoped cumulative allowance and cached actual-or-reserved expenditure. spent_or_reserved is maintained by work insert/settlement/delete triggers and independently reconciled with work rows and mandatory checkpoint; it is Operational coordination, not Core authority.",
       "durability": "reconstructible",
       "mutation": "Discardable mutable derivative/request state; never domain authority",
-      "retention": "Allowlisted body-free work state and locators; no hidden body staging.",
+      "retention": "Body-free finite allowance/cost state. Losing Operational leaves Core/Context valid but refuses the old acquisition request; old expenditure is never reconstructed as zero.",
       "semantic_key": "Direct full semantic tuple: request_origin_uuidv4, request_uuidv4, work_kind. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "operational.request_continuations": {
@@ -13456,7 +13456,7 @@
       }
     },
     "operational": {
-      "ddl_sha256": "b7d649ef02eb8024a0f23266faed6e2c97b7556a7b6a891bf5a38e12540881a9",
+      "ddl_sha256": "980360b31d11c54b0d556b7fffd6aeeae74919e264b4d19bc34ecca70c7d73cb",
       "tables": {
         "acquisition_attempts": {
           "columns": [
@@ -13643,6 +13643,12 @@
               "name": "finite_limit",
               "notnull": true,
               "type": "INTEGER"
+            },
+            {
+              "generated": 0,
+              "name": "spent_or_reserved",
+              "notnull": true,
+              "type": "INTEGER"
             }
           ],
           "foreign_keys": [
@@ -13672,7 +13678,7 @@
             "request_uuidv4",
             "work_kind"
           ],
-          "sql": "CREATE TABLE request_budgets (\n request_origin_uuidv4 TEXT NOT NULL,\n request_uuidv4 TEXT NOT NULL,\n work_kind TEXT NOT NULL CHECK(work_kind IN ('input_bytes','verification_bytes','metadata_units','proof_steps')),\n finite_limit INTEGER NOT NULL CHECK(finite_limit >= 0),\n PRIMARY KEY(request_origin_uuidv4,request_uuidv4,work_kind),\n FOREIGN KEY(request_origin_uuidv4,request_uuidv4) REFERENCES acquisition_requests\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE request_budgets (\n request_origin_uuidv4 TEXT NOT NULL,\n request_uuidv4 TEXT NOT NULL,\n work_kind TEXT NOT NULL CHECK(work_kind IN ('input_bytes','verification_bytes','metadata_units','proof_steps')),\n finite_limit INTEGER NOT NULL CHECK(finite_limit >= 0),\n spent_or_reserved INTEGER NOT NULL DEFAULT 0 CHECK(spent_or_reserved >= 0 AND spent_or_reserved <= finite_limit),\n PRIMARY KEY(request_origin_uuidv4,request_uuidv4,work_kind),\n FOREIGN KEY(request_origin_uuidv4,request_uuidv4) REFERENCES acquisition_requests\n) STRICT, WITHOUT ROWID",
           "triggers": {},
           "unique": [
             {
@@ -13984,7 +13990,12 @@
           ],
           "sql": "CREATE TABLE work_accounting (\n request_origin_uuidv4 TEXT NOT NULL,\n request_uuidv4 TEXT NOT NULL,\n attempt_uuidv4 TEXT NOT NULL,\n work_kind TEXT NOT NULL,\n work_coordinate TEXT NOT NULL CHECK(length(work_coordinate)>0),\n reserved INTEGER NOT NULL CHECK(reserved >= 0),\n actual INTEGER CHECK(actual >= 0 AND actual <= reserved),\n PRIMARY KEY(request_origin_uuidv4,request_uuidv4,attempt_uuidv4,work_kind,work_coordinate),\n FOREIGN KEY(request_origin_uuidv4,request_uuidv4,attempt_uuidv4) REFERENCES acquisition_attempts,\n FOREIGN KEY(request_origin_uuidv4,request_uuidv4,work_kind) REFERENCES request_budgets\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "finite_work": "CREATE TRIGGER finite_work BEFORE INSERT ON work_accounting BEGIN\n SELECT CASE WHEN NEW.reserved + coalesce((SELECT sum(coalesce(actual,reserved)) FROM work_accounting\n WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind),0)\n > (SELECT finite_limit FROM request_budgets WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind)\n THEN RAISE(ABORT,'finite cumulative request budget') END;\nEND"
+            "finite_settlement": "CREATE TRIGGER finite_settlement BEFORE UPDATE OF actual ON work_accounting BEGIN\n SELECT CASE WHEN coalesce(NEW.actual,NEW.reserved)-coalesce(OLD.actual,OLD.reserved) >\n (SELECT finite_limit-spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind)\n THEN RAISE(ABORT,'finite cumulative request budget') END;\nEND",
+            "finite_work": "CREATE TRIGGER finite_work BEFORE INSERT ON work_accounting BEGIN\n SELECT CASE WHEN NEW.reserved >\n (SELECT finite_limit-spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind)\n THEN RAISE(ABORT,'finite cumulative request budget') END;\nEND",
+            "work_deleted": "CREATE TRIGGER work_deleted AFTER DELETE ON work_accounting BEGIN\n UPDATE request_budgets SET spent_or_reserved=spent_or_reserved-coalesce(OLD.actual,OLD.reserved)\n WHERE request_origin_uuidv4=OLD.request_origin_uuidv4 AND request_uuidv4=OLD.request_uuidv4 AND work_kind=OLD.work_kind;\nEND",
+            "work_reservation_immutable": "CREATE TRIGGER work_reservation_immutable BEFORE UPDATE OF\n request_origin_uuidv4,request_uuidv4,attempt_uuidv4,work_kind,work_coordinate,reserved\n ON work_accounting BEGIN\n SELECT RAISE(ABORT,'immutable work reservation');\nEND",
+            "work_reserved": "CREATE TRIGGER work_reserved AFTER INSERT ON work_accounting BEGIN\n UPDATE request_budgets SET spent_or_reserved=spent_or_reserved+coalesce(NEW.actual,NEW.reserved)\n WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind;\nEND",
+            "work_settled": "CREATE TRIGGER work_settled AFTER UPDATE OF actual ON work_accounting BEGIN\n UPDATE request_budgets SET spent_or_reserved=spent_or_reserved-coalesce(OLD.actual,OLD.reserved)+coalesce(NEW.actual,NEW.reserved)\n WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind;\nEND"
           },
           "unique": [
             {
