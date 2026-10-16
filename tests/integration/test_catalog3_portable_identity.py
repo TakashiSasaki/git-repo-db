@@ -144,7 +144,7 @@ def test_no_usable_source_rejects_before_job_and_observation(store, selector):
     assert error.value.code == (
         "NO_USABLE_SOURCE" if selector is None else "SOURCE_UNCONFIGURED"
     )
-    assert store.one("SELECT count(*) FROM jobs")[0] == 0
+    assert store.operational.one("SELECT count(*) FROM jobs")[0] == 0
     assert_absent_tables(store.connection, "inventory_observations")
     assert store.one("SELECT count(*) FROM source_inventory_assessments")[0] == 0
     assert store.one("SELECT count(*) FROM source_repositories")[0] == 0
@@ -172,7 +172,7 @@ def test_batch_skip_retains_diagnostic_without_remote_observation(store):
     members = store.all("SELECT source_id,repository_uuidv4 FROM source_repositories")
     assert len(members) == 1 and members[0]["source_id"] == "configured"
     assert json.loads(assessment["members_json"]) == [members[0]["repository_uuidv4"]]
-    attempt = store.one(
+    attempt = store.operational.one(
         "SELECT state,checkpoint FROM job_attempts WHERE job_id=?",
         (result.data["job_id"],),
     )
@@ -207,11 +207,13 @@ def test_source_registration_survives_backup_restore(store, tmp_path):
 def test_job_result_and_terminal_state_commit_atomically(store):
     service = JobService(store)
     job = service.create("discover", {})
-    store.execute(
+    store.operational.execute(
         "CREATE TRIGGER reject_result BEFORE UPDATE OF checkpoint ON job_attempts BEGIN SELECT RAISE(ABORT,'synthetic write failure'); END"
     )
     with pytest.raises(sqlite3.IntegrityError, match="synthetic write failure"):
         service.update(job, "complete", result={"status": "partial"})
     assert tuple(
-        store.one("SELECT state,checkpoint FROM job_attempts WHERE job_id=?", (job,))
+        store.operational.one(
+            "SELECT state,checkpoint FROM job_attempts WHERE job_id=?", (job,)
+        )
     ) == ("running", "{}")

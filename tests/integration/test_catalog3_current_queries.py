@@ -169,17 +169,18 @@ def test_issue_family_keeps_each_comment_and_search_replaces_superseded_text(
         == edited["body"]
     )
     rebuild(catalog.store, "issue")
-    generation = catalog.store.one(
-        "SELECT index_generation_id FROM index_generations WHERE kind='issue' AND state='ready'"
-    )[0]
-    assert not catalog.store.one(
-        "SELECT 1 FROM index_membership m JOIN search_documents d USING(search_document_id) WHERE m.index_generation_id=? AND d.source_key=?",
-        (generation, hashlib.sha256(comment["body"].encode()).hexdigest()),
-    )
-    assert not catalog.store.one(
-        "SELECT 1 FROM search_documents WHERE kind='issue' AND source_key=?",
-        (hashlib.sha256(comment["body"].encode()).hexdigest(),),
-    )
+    with catalog.store.open_search(readonly=True) as search:
+        generation = search.one(
+            "SELECT index_generation_id FROM index_generations WHERE kind='issue' AND state='ready'"
+        )[0]
+        assert not search.one(
+            "SELECT 1 FROM index_membership m JOIN search_documents d USING(search_document_id) WHERE m.index_generation_id=? AND d.source_key=?",
+            (generation, hashlib.sha256(comment["body"].encode()).hexdigest()),
+        )
+        assert not search.one(
+            "SELECT 1 FROM search_documents WHERE kind='issue' AND source_key=?",
+            (hashlib.sha256(comment["body"].encode()).hexdigest(),),
+        )
 
 
 def test_current_review_reads_keep_dismissed_reviews_and_no_edit_history(

@@ -89,19 +89,11 @@ def test_backup_restore_requires_absent_destination_without_removing_empty_dir(
 ):
     state, fixture, repositories = catalog
     run(state, "sync", "git")
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
-        db.execute("PRAGMA foreign_keys=ON")
-        db.execute("PRAGMA recursive_triggers=ON")
-        content_id = db.execute(
-            "SELECT content_id FROM contents ORDER BY content_id LIMIT 1"
-        ).fetchone()[0]
-        db.execute(
-            "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('preserved-source',?,'/synthetic/sealed-cache','source_readonly','available')",
+    # A source locator is useful transient state, not part of a Core backup.
+    with Store(state) as source:
+        source.operational.execute(
+            "INSERT INTO cache_locators(cache_locator_id,repository_uuidv4,path,access,state) VALUES('source-locator',?,'/synthetic/sealed-cache','source_readonly','available')",
             (repositories["alpha"],),
-        )
-        db.execute(
-            "INSERT INTO content_locations(content_id,kind,locator,cache_locator_id,state) VALUES(?,'cache','source-observation','preserved-source','available')",
-            (content_id,),
         )
     output = tmp_path / "backup.sqlite3"
     original = run(state, "db", "backup", "--output", output)
@@ -130,32 +122,27 @@ def test_backup_restore_requires_absent_destination_without_removing_empty_dir(
                 after.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
                 == before.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
             )
-        assert after.execute("SELECT count(*) FROM cache_leases").fetchone()[0] == 0
-        assert (
-            after.execute(
-                "SELECT count(*) FROM active_cache_entries WHERE state!='evicted'"
-            ).fetchone()[0]
-            == 0
-        )
-        assert (
-            after.execute(
-                "SELECT * FROM cache_locators WHERE cache_locator_id='preserved-source'"
-            ).fetchone()
-            == before.execute(
-                "SELECT * FROM cache_locators WHERE cache_locator_id='preserved-source'"
-            ).fetchone()
-        )
-        assert (
-            after.execute(
-                "SELECT * FROM content_locations WHERE cache_locator_id='preserved-source'"
+        for db in (before, after):
+            assert not db.execute(
+                "SELECT name FROM sqlite_schema WHERE name IN ('cache_leases','active_cache_entries','cache_locators','content_locations')"
             ).fetchall()
-            == before.execute(
-                "SELECT * FROM content_locations WHERE cache_locator_id='preserved-source'"
-            ).fetchall()
+    # PF-P08/PF-P14: restored Core facts survive independently of disposable
+    # cache/index state. A needed Operational store starts empty with a new owner.
+    assert not (destination / "operational.sqlite3").exists()
+    assert not (destination / "search.sqlite3").exists()
+    with Store(destination) as copy, Store(state) as source:
+        for table in ("cache_leases", "active_cache_entries", "cache_locators", "jobs"):
+            assert copy.operational.one(f"SELECT count(*) FROM {table}")[0] == 0
+        assert source.operational.one(
+            "SELECT 1 FROM cache_locators WHERE cache_locator_id='source-locator'"
         )
-        assert not after.execute(
-            "SELECT 1 FROM cache_locators WHERE access='target_active' AND state!='missing'"
-        ).fetchone()
+        assert (
+            copy.operational.catalog_db_instance_id == copy.revision()["db_instance_id"]
+        )
+        assert (
+            copy.operational.catalog_db_instance_id
+            != source.operational.catalog_db_instance_id
+        )
     run(destination, "db", "check")
     assert (
         json.loads((destination / "restore-origin.json").read_text())["source_catalog"]

@@ -83,15 +83,19 @@ def test_snapshot_completion_fencing(catalog, tmp_path):
     process, hooks = start_hooked(
         state, "before_publish", tmp_path, "sync", "git", "--repo", repos["alpha"]
     )
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
-        db.execute("PRAGMA foreign_keys=ON")
-        db.execute(
-            "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) "
-            "SELECT job_id,99,'running','{}' FROM acquisition_progress "
-            "WHERE state!='complete'"
-        )
-        db.execute("UPDATE acquisition_progress SET attempt=99 WHERE state!='complete'")
-    (hooks / "before_publish.release").touch()
+    try:
+        with sqlite3.connect(state / "operational.sqlite3") as db:
+            db.execute("PRAGMA foreign_keys=ON")
+            db.execute(
+                "INSERT INTO job_attempts(job_id,attempt,state,checkpoint) "
+                "SELECT job_id,99,'running','{}' FROM acquisition_progress "
+                "WHERE state!='complete'"
+            )
+            db.execute(
+                "UPDATE acquisition_progress SET attempt=99 WHERE state!='complete'"
+            )
+    finally:
+        (hooks / "before_publish.release").touch()
     out, err = process.communicate(timeout=10)
     assert (
         process.returncode == 3
