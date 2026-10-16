@@ -5,6 +5,7 @@ SIGKILL proves process-interruption behavior, not host-power-loss durability.
 
 import contextlib
 import os
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -499,3 +500,109 @@ def test_explicit_new_request_remains_possible_after_old_accounting_loss(account
     with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
         ledger.validate_continuation(old_request)
     assert not (accounting[0].parent / "p1-recovery-stop.json").exists()
+
+
+def test_sql_budget_counters_track_reserve_settle_and_failed_commit(accounting):
+    _, db, ledger, request, attempt = accounting
+
+    def spent():
+        return db.execute(
+            "SELECT spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=? "
+            "AND request_uuidv4=? AND work_kind='input_bytes'",
+            request.values(),
+        ).fetchone()[0]
+
+    assert spent() == 0
+    permit = ledger.reserve(request, attempt, "input_bytes", "body", 8)
+    assert spent() == 8
+    db.execute(
+        "CREATE TEMP TRIGGER fail_settle BEFORE UPDATE OF actual ON work_accounting BEGIN SELECT RAISE(ABORT,'injected settlement failure'); END"
+    )
+    with pytest.raises(sqlite3.IntegrityError, match="injected settlement failure"):
+        ledger.finish(permit, 3)
+    assert spent() == 8
+    assert ledger.usage(request)["input_bytes"] == 8
+    db.execute("DROP TRIGGER temp.fail_settle")
+    ledger.finish(permit, 3)
+    assert spent() == 3
+    assert ledger.usage(request)["input_bytes"] == 3
+
+
+def test_tampered_sql_budget_counter_refuses_continuation(accounting):
+    _, db, ledger, request, attempt = accounting
+    ledger.reserve(request, attempt, "input_bytes", "body", 8)
+    db.execute(
+        "UPDATE request_budgets SET spent_or_reserved=0 WHERE work_kind='input_bytes'"
+    )
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.reserve(request, attempt, "input_bytes", "unsafe-retry", 8)
+
+
+def test_int64_budget_guard_and_settlement_never_overflow(accounting):
+    _, db, ledger, _, _ = accounting
+    request = RequestIdentity(str(uuid4()), str(uuid4()))
+    ceiling = 2**63 - 1
+    ledger.new_request(
+        request, "{}", {kind: ceiling for kind in NotesLimits.work_limits()}
+    )
+    attempt = str(uuid4())
+    ledger.attempt(request, attempt)
+    first = ledger.reserve(request, attempt, "input_bytes", "first", ceiling)
+    ledger.finish(first, ceiling - 1)
+    second = ledger.reserve(request, attempt, "input_bytes", "second", 1)
+    ledger.finish(second, 1)
+    assert ledger.usage(request)["input_bytes"] == ceiling
+    row = db.execute(
+        "SELECT spent_or_reserved,typeof(spent_or_reserved) FROM request_budgets WHERE request_origin_uuidv4=? AND request_uuidv4=? AND work_kind='input_bytes'",
+        request.values(),
+    ).fetchone()
+    assert tuple(row) == (ceiling, "integer")
+    with pytest.raises(sqlite3.IntegrityError, match="finite cumulative"):
+        ledger.reserve(request, attempt, "input_bytes", "overflow", 1)
+    with pytest.raises(sqlite3.IntegrityError, match="finite cumulative"):
+        db.execute(
+            "UPDATE work_accounting SET actual=NULL WHERE work_coordinate='first'"
+        )
+    assert ledger.usage(request)["input_bytes"] == ceiling
+
+
+def test_work_budget_guard_vm_steps_do_not_scan_prior_history(accounting):
+    _, db, ledger, request, attempt = accounting
+    ledger.increase_limit(request, "metadata_units", 5000)
+    samples = {}
+    for index in range(2001):
+        steps = [0]
+        if index in (0, 100, 500, 1000, 2000):
+
+            def count_step():
+                steps[0] += 1
+
+            db.set_progress_handler(count_step, 1)
+        try:
+            permit = ledger.reserve_processing_step(
+                request, attempt, "metadata_units", 1
+            )
+        finally:
+            db.set_progress_handler(None, 0)
+        if index in (0, 100, 500, 1000, 2000):
+            samples[index] = steps[0]
+        ledger.finish(permit, 1)
+    # This counts actual SQLite VM instructions, not wall-clock timing. The
+    # inherited SUM trigger grew by ~8 operations per prior row; indexed cached
+    # budget lookup remains constant apart from bounded SQLite branch choices.
+    assert max(samples.values()) - min(samples.values()) <= 32, samples
+    assert ledger.usage(request)["metadata_units"] == 2001
+
+
+def test_overdeep_persisted_operational_checkpoint_is_scoped_unavailable(accounting):
+    _, db, ledger, request, _ = accounting
+    deep = "[" * 5000 + "0" + "]" * 5000
+    # Bypass the input JSON CHECK only for storage-damage fault injection.
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute(
+        "UPDATE request_continuations SET cursor_json=? WHERE continuation_scope_json=?",
+        (deep, ledger._CHECKPOINT_SCOPE),
+    )
+    db.execute("PRAGMA ignore_check_constraints=OFF")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request)

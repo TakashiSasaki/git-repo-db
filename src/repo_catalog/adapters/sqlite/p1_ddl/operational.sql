@@ -12,6 +12,7 @@ CREATE TABLE request_budgets (
  request_uuidv4 TEXT NOT NULL,
  work_kind TEXT NOT NULL CHECK(work_kind IN ('input_bytes','verification_bytes','metadata_units','proof_steps')),
  finite_limit INTEGER NOT NULL CHECK(finite_limit >= 0),
+ spent_or_reserved INTEGER NOT NULL DEFAULT 0 CHECK(spent_or_reserved >= 0 AND spent_or_reserved <= finite_limit),
  PRIMARY KEY(request_origin_uuidv4,request_uuidv4,work_kind),
  FOREIGN KEY(request_origin_uuidv4,request_uuidv4) REFERENCES acquisition_requests
 ) STRICT, WITHOUT ROWID;
@@ -35,11 +36,35 @@ CREATE TABLE work_accounting (
  FOREIGN KEY(request_origin_uuidv4,request_uuidv4,attempt_uuidv4) REFERENCES acquisition_attempts,
  FOREIGN KEY(request_origin_uuidv4,request_uuidv4,work_kind) REFERENCES request_budgets
 ) STRICT, WITHOUT ROWID;
+-- Operational cached expenditure; the application independently checks these
+-- counters against actual accounting rows and its mandatory durable checkpoint
+-- on resume or unknown writes. No Core authority or success ledger is implied.
 CREATE TRIGGER finite_work BEFORE INSERT ON work_accounting BEGIN
- SELECT CASE WHEN NEW.reserved + coalesce((SELECT sum(coalesce(actual,reserved)) FROM work_accounting
- WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind),0)
- > (SELECT finite_limit FROM request_budgets WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind)
+ SELECT CASE WHEN NEW.reserved >
+ (SELECT finite_limit-spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind)
  THEN RAISE(ABORT,'finite cumulative request budget') END;
+END;
+CREATE TRIGGER work_reserved AFTER INSERT ON work_accounting BEGIN
+ UPDATE request_budgets SET spent_or_reserved=spent_or_reserved+coalesce(NEW.actual,NEW.reserved)
+ WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind;
+END;
+CREATE TRIGGER work_reservation_immutable BEFORE UPDATE OF
+ request_origin_uuidv4,request_uuidv4,attempt_uuidv4,work_kind,work_coordinate,reserved
+ ON work_accounting BEGIN
+ SELECT RAISE(ABORT,'immutable work reservation');
+END;
+CREATE TRIGGER finite_settlement BEFORE UPDATE OF actual ON work_accounting BEGIN
+ SELECT CASE WHEN coalesce(NEW.actual,NEW.reserved)-coalesce(OLD.actual,OLD.reserved) >
+ (SELECT finite_limit-spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind)
+ THEN RAISE(ABORT,'finite cumulative request budget') END;
+END;
+CREATE TRIGGER work_settled AFTER UPDATE OF actual ON work_accounting BEGIN
+ UPDATE request_budgets SET spent_or_reserved=spent_or_reserved-coalesce(OLD.actual,OLD.reserved)+coalesce(NEW.actual,NEW.reserved)
+ WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind;
+END;
+CREATE TRIGGER work_deleted AFTER DELETE ON work_accounting BEGIN
+ UPDATE request_budgets SET spent_or_reserved=spent_or_reserved-coalesce(OLD.actual,OLD.reserved)
+ WHERE request_origin_uuidv4=OLD.request_origin_uuidv4 AND request_uuidv4=OLD.request_uuidv4 AND work_kind=OLD.work_kind;
 END;
 CREATE TABLE request_continuations (
  request_origin_uuidv4 TEXT NOT NULL,

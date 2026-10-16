@@ -642,6 +642,11 @@ class WorkLedger:
     unknown same/other-connection write, verifies the actual accounting inventory
     before continuation. Normal steps update fixed-size counters/checksums in O(1)
     work; no Core ledger or authoritative success state is introduced.
+
+    Acquisition units meter actual source/native/admission work. Operational
+    durability bookkeeping is internal and does not recursively meter itself.
+    Fresh/unknown-writer validation is a finite O(recorded work, attempts and
+    progress) scan of accounting metadata only; it never reads source/body data.
     """
 
     _CHECKPOINT_SCOPE = '["work-ledger","checkpoint",1]'
@@ -742,13 +747,15 @@ class WorkLedger:
             raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
 
     def _check_inventory(self, request, scope, checkpoint):
-        budgets = dict(
+        budget_rows = list(
             self.db.execute(
-                "SELECT work_kind,finite_limit FROM request_budgets "
+                "SELECT work_kind,finite_limit,spent_or_reserved FROM request_budgets "
                 "WHERE request_origin_uuidv4=? AND request_uuidv4=?",
                 request.values(),
             )
         )
+        budgets = {row[0]: row[1] for row in budget_rows}
+        sql_usage = {row[0]: row[2] for row in budget_rows}
         actual = self._empty_checkpoint(scope, budgets)
         attempts = set()
         for row in self.db.execute(
@@ -782,6 +789,7 @@ class WorkLedger:
                 found_allocations.add(row[0])
         if (
             _json(actual) != _json(checkpoint)
+            or _json(sql_usage) != _json(actual["usage"])
             or set(budgets) != set(NotesLimits.work_limits())
             or found_allocations != allocation_scopes
         ):
@@ -807,7 +815,7 @@ class WorkLedger:
             if self._validated.get(request) != self._stamp():
                 self._check_store_identity()
                 self._check_inventory(request, row[1], checkpoint)
-        except (KeyError, ValueError, TypeError) as error:
+        except (KeyError, ValueError, TypeError, RecursionError) as error:
             raise CoordinationError("CONTINUATION_UNAVAILABLE", "request") from error
         if scope is not None and _json(json.loads(row[1])) != _json(json.loads(scope)):
             raise CoordinationError("REQUEST_SCOPE", "request")
@@ -869,7 +877,7 @@ class WorkLedger:
                 (*request.values(), scope),
             )
             self.db.executemany(
-                "INSERT INTO request_budgets VALUES(?,?,?,?)",
+                "INSERT INTO request_budgets(request_origin_uuidv4,request_uuidv4,work_kind,finite_limit) VALUES(?,?,?,?)",
                 [(*request.values(), kind, limit) for kind, limit in limits.items()],
             )
             self.db.execute(
