@@ -24,8 +24,9 @@ No real catalog, backup, main ref, migration or runtime activation was changed.
   bound to design commit 7d2e736.
 - `docs-only-input-identity.json`: actual equality of 307 source/test/script and
   project/lock file hashes with final executed f23dfda. The docs/skill/evidence
-  commit changes no executable acceptance input; the aggregate maps paths to
-  exact SHA-256 values, rather than assuming docs-only from commit wording.
+  commit changes none of those declared 307 code/test/build files; the aggregate
+  maps paths to exact SHA-256 values. This deliberately narrower scope does not
+  assert equality of the live CI planner acceptance-input hash.
 
 Each local revision includes collection IDs, exactly-once execution starts, three
 phases per node, reconciled JUnit identities, raw logs, exact command arguments,
@@ -38,3 +39,14 @@ Counts overlap across revisions and independent selections. They must not be
 summed to claim additional unique passing coverage. Unselected full-repository
 suites, hosted Development CI and Release Acceptance are not claimed; the five
 historical Schema 21 fixture cases are classified separately at final integration.
+
+The conservative live `scripts.ci_plan` acceptance hash includes evidence files
+under this directory, which the current policy does not classify as report-only.
+It is `3ad6043771fd28e09bee80fa53f23dcedbe26c0d40dc5d015302777ae7d5f919`
+at executed `f23dfda` and
+`9cc20503acece5edfb752ba6e2ae0c37f29a49acabc1ac25b0635c482bfdfe07`
+at documentation/evidence commit `f3cd1c9`. The 22 changed accepted Git inputs
+are all added evidence files; the exact paths and blob identities are retained in
+`independent-review/evidence-ci-inputhash-delta.json`. Later evidence/document
+additions can change that live hash again. No CI policy/whitelist was weakened,
+and no full-CI-hash equality is claimed from the scoped 307-file identity proof.
