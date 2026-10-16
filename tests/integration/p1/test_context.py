@@ -101,7 +101,7 @@ def test_generated_source_clock_is_real_sqlite_value(context):
                 "null",
                 '{"domain":"actual"}',
                 PROVENANCE,
-                0,
+                1,
             ),
         )
 
