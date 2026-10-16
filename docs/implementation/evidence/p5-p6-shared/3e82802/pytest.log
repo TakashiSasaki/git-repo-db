@@ -1,0 +1,32 @@
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+........................................................................ [ 34%]
+............................F........................................... [ 43%]
+........................................................................ [ 52%]
+........................................................................ [ 60%]
+........................................................................ [ 69%]
+........................................................................ [ 78%]
+........................................................................ [ 87%]
+........................................................................ [ 95%]
+...................................                                      [100%]
+=================================== FAILURES ===================================
+____________ test_cancelled_validation_does_not_diagnose_corruption ____________
+tests/integration/p1/test_validation_stop.py:107: in test_cancelled_validation_does_not_diagnose_corruption
+    with PairCoordinator(directory).snapshots():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/p1_coordination.py:570: in snapshots
+    with self._snapshots() as pair:
+         ^^^^^^^^^^^^^^^^^
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/p1_coordination.py:602: in _snapshots
+    token = validate_pair(
+E   TypeError: test_cancelled_validation_does_not_diagnose_corruption.<locals>.interrupted() got an unexpected keyword argument 'metadata_only'
+=========================== short test summary info ============================
+FAILED tests/integration/p1/test_validation_stop.py::test_cancelled_validation_does_not_diagnose_corruption
+1 failed, 826 passed in 110.09s (0:01:50)

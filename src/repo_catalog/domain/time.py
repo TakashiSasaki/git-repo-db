@@ -33,6 +33,29 @@ def validate_epoch_us(value: int) -> int:
     return value
 
 
+def validate_observation_us(value: int | None) -> int | None:
+    """Validate an observation/Provider instant without manufacturing the unknown.
+
+    Input is already Unix microseconds. Units cannot be inferred from magnitude:
+    the valid instant 1 is one microsecond, never silently converted to seconds.
+    Git-native author/committer/tagger times use ``validate_epoch_us`` instead.
+    """
+    if value is None:
+        return None
+    validate_epoch_us(value)
+    if value <= 0:
+        raise ValueError("An observation/Provider timestamp must be positive or None")
+    return value
+
+
+def validate_required_observation_us(value: int) -> int:
+    """Validate a required observation coordinate, including terminal evidence."""
+    if value is None:
+        raise TypeError("A required observation timestamp cannot be None")
+    validate_observation_us(value)
+    return value
+
+
 def now_us() -> int:
     return validate_epoch_us(time.time_ns() // 1_000)
 

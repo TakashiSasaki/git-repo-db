@@ -473,3 +473,23 @@ These tests prove process/SQLite fault behavior, not host-power-loss durability,
 P7 recovery or release acceptance. The [P4 report](../../../docs/implementation/p4-production-notes.md)
 and [review findings](../../../docs/implementation/p4-independent-review.md)
 bind procedures to executable source and independent revalidation.
+
+## Classified target time and typed snapshot owner checks
+
+Verified at shared executable `f17dd2154f22f965883d8a1943c140f9cc439ae8`;
+see [shared correction and raw evidence](../../../docs/implementation/p5-p6-shared-time-correction.md).
+Keep generic signed-int64 conversion distinct from nullable-positive observation/
+Provider validation and required-positive Coverage/terminal coordinates. Change
+old negative-observation fixtures without losing their provenance/overflow
+failure purpose; positive unrelated coordinates isolate those negative checks.
+SQL affinity enforces stored values, not the original bound Python type. JSON
+clock checks must reject bool/real/string/overflow before generated-column use.
+
+A typed read factory must bind the actual live coordinator snapshot owner, not
+an unrelated caller path. Independently reproduced catalog A snapshot/directory B
+misbinding routed a real retained-byte stop to B. The corrected factory rejects
+that binding, preserves the owner's error callback and expires with its snapshot.
+A caught typed corruption still fences ordinary helper completion and persistently
+stops A. Metadata-only tokens omit payload certification; typed byte reads retain
+their verification boundary. These lessons are tested shared behavior, not P7
+recovery, host-power-loss validation or P8 activation evidence.

@@ -74,14 +74,14 @@ class ContextPersistence(ContextAdmission, Protocol):
         text_value: str | None,
         clock: FieldClock,
         provenance_json: str,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str: ...
     def report_core_reference(
         self,
         reference: CoreReference,
         *,
         clock: FieldClock,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str: ...
     def core_dependencies(
         self,

@@ -12,7 +12,10 @@ from typing import Literal
 
 from repo_catalog.domain.p1_context import FieldCandidate, ResourceKey, canonical
 from repo_catalog.domain.p1_core import OID
-from repo_catalog.domain.time import validate_epoch_us
+from repo_catalog.domain.time import (
+    validate_observation_us,
+    validate_required_observation_us,
+)
 
 
 class ContextError(ValueError):
@@ -54,12 +57,12 @@ class ResourceRelation:
     members: tuple[ResourceKey, ...]
     provenance_json: str
     scope_json: str
-    observed_at_us: int
+    observed_at_us: int | None
 
     def __post_init__(self):
         if not self.relation_kind:
             raise ContextError("MISSING_KIND", "relation")
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
         json_value(self.scope_json)
         if len(set(self.members)) != len(self.members):
@@ -81,6 +84,7 @@ class CollectionObservation:
     members: tuple[ResourceKey, ...] = ()
 
     def __post_init__(self):
+        validate_required_observation_us(self.observed_at_us)
         ResourceRelation(
             self.resource,
             self.collection_kind,
@@ -119,7 +123,7 @@ class SourceInventory:
     provenance_json: str
 
     def __post_init__(self):
-        validate_epoch_us(self.observed_at_us)
+        validate_required_observation_us(self.observed_at_us)
         json_value(self.scope_json)
         json_value(self.provenance_json, provenance=True)
         if self.state not in {"complete", "partial", "unknown", "not_applicable"}:

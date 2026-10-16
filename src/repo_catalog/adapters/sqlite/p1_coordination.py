@@ -17,6 +17,7 @@ from collections.abc import Callable, Iterator
 from contextlib import ExitStack, closing, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from time import perf_counter_ns
 
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.p1_coordination import (
@@ -98,12 +99,55 @@ def catalog_completion(directory: Path) -> Iterator[None]:
         yield
 
 
-def _digest(db: sqlite3.Connection) -> str:
-    """Conservative full content fingerprint of this already pinned snapshot.
+@dataclass(frozen=True)
+class SnapshotReadLimits:
+    """Finite per-store SQLite read work; exhaustion is not corruption."""
 
-    A derivative freshness token may be a digest: it never substitutes for a
-    domain PK/FK. Includes whole schema and all values, independent of row order.
-    P6 can optimize only with equally conservative evidence, never Core counters.
+    max_store_bytes: int = 64 * 1024 * 1024
+    max_total_rows: int = 10000
+    max_sql_vm_steps: int = 5_000_000
+
+    def __post_init__(self):
+        for value in (self.max_store_bytes, self.max_total_rows, self.max_sql_vm_steps):
+            if type(value) is not int or value <= 0:
+                raise ValueError("positive finite integer read limits required")
+
+
+def apply_snapshot_read_limits(db, limits: SnapshotReadLimits | None):
+    """Reserve an explicit finite working set before validation/extraction."""
+    if limits is None:
+        return
+    remaining = limits.max_sql_vm_steps
+
+    def progress():
+        nonlocal remaining
+        remaining -= 100
+        return remaining < 0
+
+    db.set_progress_handler(progress, 100)
+    size = (
+        db.execute("PRAGMA page_size").fetchone()[0]
+        * db.execute("PRAGMA page_count").fetchone()[0]
+    )
+    if size > limits.max_store_bytes:
+        raise CoordinationError("QUERY_BUDGET", "snapshot", "store byte limit")
+    total = 0
+    for (name,) in db.execute(
+        "SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+    ).fetchall():
+        quoted = '"' + name.replace('"', '""') + '"'
+        total += db.execute(f"SELECT count(*) FROM {quoted}").fetchone()[0]
+        if total > limits.max_total_rows:
+            raise CoordinationError("QUERY_BUDGET", "snapshot", "stored row limit")
+
+
+def _digest(db: sqlite3.Connection, *, metadata_only: bool = False) -> str:
+    """Stream a versioned snapshot fingerprint without Python row materialization.
+
+    Metadata-only fences cover keys, claims, sizes and declared body digests;
+    they deliberately do not certify retained body/proof bytes. Typed byte reads
+    still verify those bytes, and conservative Search verifies authority on every
+    query. Backup certification retains the default complete fingerprint.
     """
     schema = [
         tuple(row)
@@ -112,25 +156,38 @@ def _digest(db: sqlite3.Connection) -> str:
             "WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name"
         )
     ]
-    rows = {}
+    digest = hashlib.sha256()
+
+    def put(value):
+        encoded = _json(value).encode()
+        digest.update(len(encoded).to_bytes(8, "big"))
+        digest.update(encoded)
+
+    put(["snapshot-v2", metadata_only, schema])
+    excluded = {"body", "proof_bundle", "text_value"} if metadata_only else set()
     for kind, name, _, _ in schema:
         if kind != "table":
             continue
-        quoted = '"' + name.replace('"', '""') + '"'
-        values = []
-        for row in db.execute(f"SELECT * FROM {quoted}"):
-            values.append(
-                _json(
-                    [
-                        {"bytes": base64.b64encode(v).decode("ascii")}
-                        if isinstance(v, bytes)
-                        else {"type": type(v).__name__, "value": v}
-                        for v in row
-                    ]
-                )
+        columns = [
+            row[1]
+            for row in db.execute(
+                "PRAGMA table_info(" + '"' + name.replace('"', '""') + '"' + ")"
             )
-        rows[name] = sorted(values)
-    return hashlib.sha256(_json([schema, rows]).encode()).hexdigest()
+            if row[1] not in excluded
+        ]
+        quoted = '"' + name.replace('"', '""') + '"'
+        fields = ",".join('"' + c.replace('"', '""') + '"' for c in columns)
+        put([name, columns])
+        for row in db.execute(f"SELECT {fields} FROM {quoted} ORDER BY {fields}"):
+            put(
+                [
+                    {"bytes": base64.b64encode(v).decode("ascii")}
+                    if isinstance(v, bytes)
+                    else {"type": type(v).__name__, "value": v}
+                    for v in row
+                ]
+            )
+    return digest.hexdigest()
 
 
 def _identity(db: sqlite3.Connection, role: str) -> tuple[str, str]:
@@ -155,7 +212,11 @@ def validate_dependencies(core: sqlite3.Connection, context: sqlite3.Connection)
 
 
 def validate_pair(
-    core: sqlite3.Connection, context: sqlite3.Connection
+    core: sqlite3.Connection,
+    context: sqlite3.Connection,
+    *,
+    metadata_only: bool = False,
+    phase_costs_ns: dict[str, int] | None = None,
 ) -> SnapshotToken:
     """Validate persisted authorities, including failures of semantic CHECK UDFs.
 
@@ -165,7 +226,9 @@ def validate_pair(
     capability is not evidence of storage corruption.
     """
     try:
-        return _validate_pair(core, context)
+        return _validate_pair(
+            core, context, metadata_only=metadata_only, phase_costs_ns=phase_costs_ns
+        )
     except sqlite3.DatabaseError as error:
         code = getattr(error, "sqlite_errorcode", 0) & 255
         detail = str(error)
@@ -211,13 +274,20 @@ def _notify_validation_corruption(core, context, error):
 
 
 def _validate_pair(
-    core: sqlite3.Connection, context: sqlite3.Connection
+    core: sqlite3.Connection,
+    context: sqlite3.Connection,
+    *,
+    metadata_only: bool = False,
+    phase_costs_ns: dict[str, int] | None = None,
 ) -> SnapshotToken:
+    started = perf_counter_ns()
     identity = _identity(core, "core")
     if identity != _identity(context, "context"):
         raise CoordinationError("PAIR_IDENTITY", "core+context")
     for db, role in ((core, "core"), (context, "context")):
-        if [tuple(row) for row in db.execute("PRAGMA integrity_check")] != [("ok",)]:
+        if not metadata_only and [
+            tuple(row) for row in db.execute("PRAGMA integrity_check")
+        ] != [("ok",)]:
             raise CoordinationError("CORRUPTION", role)
         if db.execute("PRAGMA foreign_key_check").fetchall():
             raise CoordinationError("FOREIGN_KEY", role)
@@ -226,7 +296,17 @@ def _validate_pair(
 
     validate_embedded_references(core)
     validate_dependencies(core, context)
-    return SnapshotToken(*identity, _digest(core), _digest(context))
+    validated = perf_counter_ns()
+    if phase_costs_ns is not None:
+        phase_costs_ns["authority_validation"] = validated - started
+    token = SnapshotToken(
+        *identity,
+        _digest(core, metadata_only=metadata_only),
+        _digest(context, metadata_only=metadata_only),
+    )
+    if phase_costs_ns is not None:
+        phase_costs_ns["snapshot_token_generation"] = perf_counter_ns() - validated
+    return token
 
 
 @dataclass
@@ -274,7 +354,8 @@ class _Cursor:
 class ReadSnapshot:
     """Pinned read capability; no public authorizer or transaction mutation."""
 
-    def __init__(self, db, running, on_error):
+    def __init__(self, db, running, on_error, *, directory=None):
+        self._directory = None if directory is None else Path(directory).resolve()
         self._db = db
         self._running, self._active = running, True
         self._on_error = on_error
@@ -283,6 +364,22 @@ class ReadSnapshot:
         if not self._active:
             raise CoordinationError("SNAPSHOT_EXPIRED", "read")
         self._running()
+
+    @property
+    def catalog_directory(self):
+        """Actual coordinator owner; unrelated caller paths cannot route a stop."""
+        self._available()
+        if self._directory is None:
+            raise CoordinationError("SNAPSHOT_OWNER", "read", "unbound catalog")
+        return self._directory
+
+    def identity(self, role: str):
+        self._available()
+        return _identity(self, role)
+
+    def fingerprint(self, *, metadata_only: bool = False):
+        self._available()
+        return _digest(self, metadata_only=metadata_only)
 
     @property
     def in_transaction(self):
@@ -352,8 +449,18 @@ class AdmissionTransaction:
 
 
 class PairCoordinator:
-    def __init__(self, directory: Path):
+    def __init__(
+        self,
+        directory: Path,
+        *,
+        read_limits: SnapshotReadLimits | None = None,
+        metadata_only: bool = False,
+    ):
         self.directory = Path(directory)
+        self.read_limits = read_limits
+        self.metadata_only = metadata_only
+        # Read-only instrumentation, never a freshness proof or domain fact.
+        self.last_read_costs_ns: dict[str, int] = {}
 
     def _check_running(self):
         if (self.directory / "p1-recovery-stop.json").exists():
@@ -379,10 +486,9 @@ class PairCoordinator:
 
     def _guard_read(self, db: sqlite3.Connection):
         def authorize(action, _first, _second, _database, _trigger):
-            if (
-                action == sqlite3.SQLITE_PRAGMA
-                and _first in ("integrity_check", "foreign_key_check")
-                and _second is None
+            if action == sqlite3.SQLITE_PRAGMA and (
+                (_first in ("integrity_check", "foreign_key_check") and _second is None)
+                or _first == "table_info"
             ):
                 return sqlite3.SQLITE_OK
             if action not in (
@@ -482,11 +588,19 @@ class PairCoordinator:
 
     @contextmanager
     def snapshots(self) -> Iterator[PairedSnapshot]:
+        self.last_read_costs_ns.clear()
         self._check_running()
         try:
             with self._snapshots() as pair:
                 yield pair
         except Exception as error:
+            if (
+                self.read_limits is not None
+                and getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT
+            ):
+                raise CoordinationError(
+                    "QUERY_BUDGET", "snapshot", "SQLite VM step limit"
+                ) from error
             if getattr(error, "code", None) in (
                 "CORRUPTION",
                 "FOREIGN_KEY",
@@ -507,15 +621,31 @@ class PairCoordinator:
                         db.execute("PRAGMA query_only=ON")
                         db.execute("BEGIN")
                         db.execute("SELECT * FROM store_identity").fetchall()
+                        apply_snapshot_read_limits(db, self.read_limits)
                         self._guard_read(db)
-                    token = validate_pair(core, context)
+                    token = validate_pair(
+                        core,
+                        context,
+                        metadata_only=self.metadata_only,
+                        phase_costs_ns=self.last_read_costs_ns,
+                    )
                 except Exception as error:
                     self._record_corruption(error)
                     raise
             try:
                 reads = (
-                    ReadSnapshot(core, self._check_running, self._record_corruption),
-                    ReadSnapshot(context, self._check_running, self._record_corruption),
+                    ReadSnapshot(
+                        core,
+                        self._check_running,
+                        self._record_corruption,
+                        directory=self.directory,
+                    ),
+                    ReadSnapshot(
+                        context,
+                        self._check_running,
+                        self._record_corruption,
+                        directory=self.directory,
+                    ),
                 )
                 yield PairedSnapshot(*reads, token)
             finally:
@@ -533,6 +663,13 @@ class PairCoordinator:
             with self._core_snapshot() as core:
                 yield core
         except Exception as error:
+            if (
+                self.read_limits is not None
+                and getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT
+            ):
+                raise CoordinationError(
+                    "QUERY_BUDGET", "snapshot", "SQLite VM step limit"
+                ) from error
             if _sqlite_corruption(error):
                 self._record_corruption(error)
             raise
@@ -550,9 +687,15 @@ class PairCoordinator:
                 except Exception as error:
                     self._record_corruption(error)
                     raise
+                apply_snapshot_read_limits(core, self.read_limits)
                 self._guard_read(core)
             try:
-                read = ReadSnapshot(core, self._check_running, self._record_corruption)
+                read = ReadSnapshot(
+                    core,
+                    self._check_running,
+                    self._record_corruption,
+                    directory=self.directory,
+                )
                 yield read
             finally:
                 read._active = False
@@ -569,6 +712,13 @@ class PairCoordinator:
         try:
             return self._backup_candidate(destination, cut=cut)
         except Exception as error:
+            if (
+                self.read_limits is not None
+                and getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT
+            ):
+                raise CoordinationError(
+                    "QUERY_BUDGET", "snapshot", "SQLite VM step limit"
+                ) from error
             if getattr(error, "code", None) in (
                 "CORRUPTION",
                 "FOREIGN_KEY",

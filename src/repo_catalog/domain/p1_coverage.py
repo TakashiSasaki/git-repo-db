@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from repo_catalog.domain.coverage import derive_coverage_state as derive_coverage_state
-from repo_catalog.domain.time import validate_epoch_us
+from repo_catalog.domain.time import validate_required_observation_us
 
 CoverageState = Literal["unknown", "partial", "complete", "not_applicable"]
 
@@ -31,7 +31,7 @@ class CoverageClaim:
     details_json: str | None = None
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_required_observation_us(self.observed_at_us)
         if self.state not in {"unknown", "partial", "complete", "not_applicable"}:
             raise ValueError("Invalid authoritative coverage state")
         if (

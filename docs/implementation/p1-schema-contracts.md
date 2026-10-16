@@ -218,3 +218,35 @@ and [independent review](p1-independent-review.md) distinguish executed evidence
 from future stage requirements. P1 implements accepted decisions; its reversible
 encoding/locking choices are engineering details, not a new product ADR or
 retirement of historical decisions.
+
+## ADR 0028 classified-time correction (unmerged opt-in implementation)
+
+The shared target now separates the signed-int64 conversion primitive
+`validate_epoch_us` from `validate_observation_us` (NULL or strict positive
+int64) and `validate_required_observation_us` (strict positive int64, no NULL).
+Git author/committer/tagger native times retain their signed meaning and exact
+original representations; storage in Core does not make observation times native.
+No caller-controlled classification flag can bypass these contracts.
+
+`FieldCandidate.observed_at_us`, `FieldClock.at_us`, `ResourceRelation` time,
+repository observation claims and nonterminal Git observation timestamps permit
+NULL without inventing temporal order. Missing fields remain absent candidates;
+an explicit Provider null remains a candidate whose JSON value is `null`.
+An exact replay cannot change the original observation time, including NULL.
+Coverage's five columns and composite PK/FK remain unchanged and nonnull;
+collection/source terminal and proof coordinates remain required positive int64.
+A terminal Git observation also requires its positive observation coordinate.
+
+Python constructors reject bool, float and numeric strings before SQL binding.
+JSON clock and Core observation checks validate their original decoded types.
+STRICT tables and positive CHECK constraints enforce stored values; SQLite column
+affinity can convert bound bool, integral floats or numeric strings before CHECK,
+so SQL alone does not prove rejection of those original input types. Seconds or
+ISO dates must pass explicit conversion boundaries before classified validation;
+valid microsecond values are never rescaled by guessing from their magnitude.
+
+This changes only fresh opt-in target schemas. The declared DDL/physical schema
+fingerprints and audited disposition were regenerated after inspecting the new
+constraints. No key, source-positive guarantee, authoritative boundary, public
+Schema 21 initializer, real catalog or migration changed. Earlier receipts above
+remain historical executions and are not claims for this new target tree.

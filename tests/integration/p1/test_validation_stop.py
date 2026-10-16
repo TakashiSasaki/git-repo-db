@@ -95,10 +95,10 @@ def test_cancelled_validation_does_not_diagnose_corruption(tmp_path, monkeypatch
     build(directory)
     original = p1_coordination.validate_pair
 
-    def interrupted(core, context):
+    def interrupted(core, context, **options):
         core.set_progress_handler(lambda: 1, 1)
         try:
-            return original(core, context)
+            return original(core, context, **options)
         finally:
             core.set_progress_handler(None, 0)
 

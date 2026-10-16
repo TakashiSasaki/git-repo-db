@@ -88,10 +88,10 @@ def test_exact_original_replay_does_not_rewrite_provenance(context):
 
 def test_generated_source_clock_is_real_sqlite_value(context):
     db, store, _ = context
-    store.admit_field(candidate("a", clock=-(1 << 63)))
+    store.admit_field(candidate("a", clock=(1 << 63) - 1))
     assert db.execute(
         "SELECT clock_domain,source_clock_us FROM field_candidates"
-    ).fetchone() == ("provider.updated_at", -(1 << 63))
+    ).fetchone() == ("provider.updated_at", (1 << 63) - 1)
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
             "INSERT INTO field_candidates(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,value_json,clock_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
@@ -101,7 +101,7 @@ def test_generated_source_clock_is_real_sqlite_value(context):
                 "null",
                 '{"domain":"actual"}',
                 PROVENANCE,
-                0,
+                1,
             ),
         )
 
@@ -231,7 +231,7 @@ def test_text_exact_utf8_content_addressing(context):
         db.execute("INSERT INTO text_bodies VALUES(?,?)", ("a" * 64, "different body"))
 
 
-@pytest.mark.parametrize("stamp", [-(1 << 63), (1 << 63) - 1])
+@pytest.mark.parametrize("stamp", [1, (1 << 63) - 1])
 def test_epoch_int64_boundaries(context, stamp):
     _, store, _ = context
     assert (
@@ -296,12 +296,12 @@ def test_missing_provenance_rejected_at_intended_source_evidence_boundary(contex
                 "null",
                 '{"at_us":1,"domain":"provider.updated_at"}',
                 "{}",
-                0,
+                1,
             ),
         )
     with pytest.raises(ValueError, match="provenance"):
         FieldCandidate(
-            KEY, "title", "null", FieldClock("provider.updated_at", 1), "{}", 0
+            KEY, "title", "null", FieldClock("provider.updated_at", 1), "{}", 1
         )
 
 
@@ -331,7 +331,7 @@ def test_raw_sql_source_clock_json_overflow_is_rejected_at_actual_type(context):
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(
                 "INSERT INTO field_candidates(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,value_json,clock_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
-                (*KEY.coordinates(), "title", "null", clock, PROVENANCE, 0),
+                (*KEY.coordinates(), "title", "null", clock, PROVENANCE, 1),
             )
 
 
