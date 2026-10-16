@@ -16,8 +16,8 @@ from repo_catalog.application.job_service import JobService
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CancellationToken, CatalogError
+from tests.support.github_runtime import collection_rows, sync
 from tests.support.github_runtime import github_runtime as github_runtime
-from tests.support.github_runtime import sync
 from tests.support.sqlite_contracts import assert_absent_tables
 
 
@@ -247,11 +247,9 @@ def test_nonterminal_current_page_cannot_inherit_complete_family_coverage(
                 endpoint,
                 current_parser.review_comment,
             )
-    collection = store.one(
-        "SELECT c.fetch_collection_id FROM fetch_collections c JOIN collection_progress p "
-        "USING(fetch_collection_id) WHERE c.kind='review-comment' AND p.job_id=?",
-        (job,),
-    )[0]
+    collection = next(
+        iter(collection_rows(store, "kind='review-comment'", (), job_id=job)), None
+    )["fetch_collection_id"]
     proof = CurrentCollectionProof(store.connection)
     assert len(proof.pages(collection)) == 1
     assert proof.evidence(collection) is None

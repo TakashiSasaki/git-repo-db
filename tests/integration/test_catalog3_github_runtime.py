@@ -11,8 +11,8 @@ from repo_catalog.application.job_service import JobService
 from repo_catalog.config import DEFAULTS
 from repo_catalog.domain.models import CancellationToken, CatalogError, Waiting
 from repo_catalog.domain.time import parse_iso8601_us
+from tests.support.github_runtime import collection_rows, sync
 from tests.support.github_runtime import github_runtime as github_runtime
-from tests.support.github_runtime import sync
 from tests.support.sqlite_contracts import assert_absent_tables
 
 PR = "00000000-0000-4000-8000-000000000301:41"
@@ -153,12 +153,7 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
     deadline_us = stamp_us + delay_us if delay_us is not None else None
     assert error.details.get("not_before_us") == deadline_us
     rejected_kind = "threads" if boundary == "root" else "thread-comments"
-    rejected = store.one(
-        "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
-        "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
-        "WHERE f.kind=?",
-        (rejected_kind,),
-    )
+    rejected = next(iter(collection_rows(store, "kind=?", (rejected_kind,))), None)
     assert (rejected["state"], rejected["cursor"], rejected["reason"]) == (
         "partial",
         None if boundary == "root" else "100",
@@ -203,7 +198,7 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
             "WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
         )
     jobs.update(job, "waiting", expected_code, not_before_us=deadline_us)
-    waiting = store.one(
+    waiting = store.operational.one(
         "SELECT a.state,a.not_before_us FROM jobs j "
         "JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt "
         "WHERE j.job_id=?",
@@ -227,9 +222,11 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
         current.threads(repo, pr, job)
     finally:
         current.http.close()
-    # A child retry reads its saved root and requests only the original child
-    # cursor. A rejected root restarts at the original root boundary.
-    assert requested[request_boundary:] == [boundary]
+    # An incomplete collection always starts from a fresh root. Its children
+    # use the cursor provided by that genuine newly observed root page.
+    assert requested[request_boundary:] == (
+        ["root", "child"] if boundary == "child" else ["root"]
+    )
     assert (
         store.one(
             "SELECT coverage_state FROM current_coverage "
@@ -238,7 +235,12 @@ def test_graphql_error_only_response_retains_backoff_and_resume_boundary(
         == "complete"
     )
     jobs.update(job, "complete")
-    assert store.one("SELECT current_attempt FROM jobs WHERE job_id=?", (job,))[0] == 2
+    assert (
+        store.operational.one(
+            "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
+        )[0]
+        == 2
+    )
     assert not store.all("PRAGMA foreign_key_check")
 
 
@@ -311,14 +313,27 @@ def test_terminal_page_resume_has_one_actual_coverage_observation(
             collector.collection(
                 repo, None, "terminal-fixture", job, endpoint, lambda *args: []
             )
-        assert len(api.requests) == before
-        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 1
+        # Without a terminal marker, the committed page is evidence rather
+        # than a resumable success receipt. Reacquire once, then reuse the
+        # newly completed collection without a third HTTP request.
+        assert len(api.requests) == before + 1
+        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 2
+        fresh = store.one(
+            "SELECT * FROM current_collection_pages WHERE fetch_collection_id<>?",
+            (page["fetch_collection_id"],),
+        )
+        assert fresh is not None
+        assert not store.one(
+            "SELECT 1 FROM completion_markers WHERE fetch_collection_id=?",
+            (page["fetch_collection_id"],),
+        )
+        assert store.one("SELECT count(*) FROM coverage_claims")[0] == 1
         claim = store.one(
             "SELECT coverage_state,observed_at_us,details_json FROM coverage_claims"
         )
-        assert tuple(claim)[:2] == ("complete", page["observed_at_us"])
+        assert tuple(claim)[:2] == ("complete", fresh["observed_at_us"])
         assert json.loads(claim["details_json"])["fetch_collection_ids"] == [
-            page["fetch_collection_id"]
+            fresh["fetch_collection_id"]
         ]
         proof = json.loads(store.one("SELECT evidence FROM completion_markers")[0])
         assert proof == {
@@ -903,10 +918,21 @@ def test_graphql_nested_pagination_and_partial_payload_preservation(github_runti
         )[0]
         == 202
     )
+    latest_root = store.one(
+        "SELECT fetch_collection_id FROM fetch_collections WHERE kind='threads' "
+        "AND change_request_id=? ORDER BY observed_at_us DESC LIMIT 1",
+        (PR,),
+    )[0]
     assert (
-        store.one(
-            "SELECT count(*) FROM collection_progress p JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id WHERE f.kind='thread-comments' AND p.state='complete' AND f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND json_extract(f.scope_json,'$.request_context.parent_fetch_collection_id')=(SELECT fetch_collection_id FROM fetch_collections WHERE kind='threads' AND change_request_id='00000000-0000-4000-8000-000000000301:41' ORDER BY observed_at_us DESC LIMIT 1)"
-        )[0]
+        len(
+            collection_rows(
+                store,
+                "kind='thread-comments' AND change_request_id=? AND "
+                "json_extract(scope_json,'$.request_context.parent_fetch_collection_id')=?",
+                (PR, latest_root),
+                state="complete",
+            )
+        )
         == 2
     )
     assert store.all("PRAGMA foreign_key_check") == []
@@ -1076,7 +1102,7 @@ def test_resumed_thread_coverage_includes_prior_children_only_for_its_root(
         with pytest.raises(CatalogError, match="After advancing root cursor"):
             collector.threads(repo, pr, job)
         root = store.one("SELECT * FROM fetch_collections WHERE kind='threads'")
-        progress = store.one(
+        progress = store.operational.one(
             "SELECT cursor FROM collection_progress WHERE fetch_collection_id=?",
             (root["fetch_collection_id"],),
         )[0]
@@ -1169,8 +1195,15 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     api.route = route
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
-    child = store.one(
-        "SELECT p.state,p.cursor,f.fetch_collection_id FROM collection_progress p JOIN fetch_collections f ON f.fetch_collection_id=p.fetch_collection_id WHERE f.kind='thread-comments' AND f.change_request_id='00000000-0000-4000-8000-000000000301:41'"
+    child = next(
+        iter(
+            collection_rows(
+                store,
+                "kind='thread-comments' AND change_request_id='00000000-0000-4000-8000-000000000301:41'",
+                (),
+            )
+        ),
+        None,
     )
     assert child["state"] == "partial" and child["cursor"] == "100"
     partial_claim = store.one(
@@ -1194,7 +1227,7 @@ def test_malformed_nested_cursor_retries_saved_boundary(github_runtime):
     )
     assert child_requests == ["100", "100"]
     assert (
-        store.one(
+        store.operational.one(
             "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
             (child["fetch_collection_id"],),
         )[0]
@@ -1228,8 +1261,15 @@ def test_malformed_current_rest_page_keeps_retry_boundary_without_required_archi
     api.route = route
     with pytest.raises(CatalogError) as partial:
         sync(store, repo)
-    row = store.one(
-        "SELECT f.fetch_collection_id,p.cursor,p.state,p.reason FROM fetch_collections f JOIN collection_progress p ON p.fetch_collection_id=f.fetch_collection_id WHERE f.change_request_id='00000000-0000-4000-8000-000000000301:41' AND f.kind='review'"
+    row = next(
+        iter(
+            collection_rows(
+                store,
+                "change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='review'",
+                (),
+            )
+        ),
+        None,
     )
     assert row["state"] == "partial"
     assert row["reason"] == "API_SCHEMA"
@@ -1256,7 +1296,7 @@ def test_malformed_current_rest_page_keeps_retry_boundary_without_required_archi
         == 1
     )
     assert (
-        store.one(
+        store.operational.one(
             "SELECT state FROM collection_progress WHERE fetch_collection_id=?",
             (row["fetch_collection_id"],),
         )[0]
@@ -1343,10 +1383,15 @@ def test_missing_graphql_database_id_retries_without_retaining_original_or_node_
         sync(store, repo)
     assert rejected_nodes
     if child_page:
-        failed_child = store.one(
-            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason FROM collection_progress p "
-            "JOIN fetch_collections f USING(fetch_collection_id) "
-            "WHERE f.kind='thread-comments' AND f.change_request_id='00000000-0000-4000-8000-000000000301:41'"
+        failed_child = next(
+            iter(
+                collection_rows(
+                    store,
+                    "kind='thread-comments' AND change_request_id='00000000-0000-4000-8000-000000000301:41'",
+                    (),
+                )
+            ),
+            None,
         )
         assert (
             failed_child["state"],
@@ -1362,10 +1407,15 @@ def test_missing_graphql_database_id_retries_without_retaining_original_or_node_
         )
         assert_absent_tables(store.connection, "fetch_occurrences")
     else:
-        failed_root = store.one(
-            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
-            "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
-            "WHERE f.kind='threads' AND f.change_request_id='00000000-0000-4000-8000-000000000301:41'"
+        failed_root = next(
+            iter(
+                collection_rows(
+                    store,
+                    "kind='threads' AND change_request_id='00000000-0000-4000-8000-000000000301:41'",
+                    (),
+                )
+            ),
+            None,
         )
         assert (failed_root["state"], failed_root["cursor"], failed_root["reason"]) == (
             "partial",
@@ -1489,9 +1539,8 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
         collector.http.close()
     assert malformed_response is not None
     if boundary == "nested-child":
-        failed_child = store.one(
-            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason FROM collection_progress p "
-            "JOIN fetch_collections f USING(fetch_collection_id) WHERE f.kind='thread-comments'"
+        failed_child = next(
+            iter(collection_rows(store, "kind='thread-comments'", ())), None
         )
         assert (
             failed_child["state"],
@@ -1513,11 +1562,7 @@ def test_malformed_graphql_connections_are_partial_and_retryable(
             == 100
         )
     else:
-        failed_root = store.one(
-            "SELECT p.fetch_collection_id,p.state,p.cursor,p.reason "
-            "FROM collection_progress p JOIN fetch_collections f USING(fetch_collection_id) "
-            "WHERE f.kind='threads'"
-        )
+        failed_root = next(iter(collection_rows(store, "kind='threads'", ())), None)
         assert (failed_root["state"], failed_root["reason"]) == (
             "partial",
             "API_SCHEMA",
@@ -1652,3 +1697,43 @@ def test_graphql_page_info_requires_boolean_has_next_page(github_runtime):
         "SELECT coverage_state FROM current_coverage WHERE change_request_id='00000000-0000-4000-8000-000000000301:41' AND kind='threads'"
     )
     assert thread_coverage["coverage_state"] == "partial"
+
+
+def test_collection_progress_is_operational_and_never_domain_completion(github_runtime):
+    import sqlite3
+
+    store, repo, _, api = github_runtime
+    job = JobService(store).create("sync", {"kind": "pr"})
+    collector = GitHubCollector(store, CancellationToken())
+    try:
+        with store.transaction():
+            first = collector.facts.begin(
+                repo, None, "pr-list", job, api.url + "/pulls"
+            )
+        assert_absent_tables(
+            store.connection, "jobs", "job_attempts", "collection_progress"
+        )
+        assert store.operational.one(
+            "SELECT 1 FROM collection_progress WHERE fetch_collection_id=?",
+            (first["fetch_collection_id"],),
+        )
+        with pytest.raises(
+            sqlite3.OperationalError, match="no such table: collection_progress"
+        ):
+            store.one("SELECT 1 FROM collection_progress")
+        # A disposable checkpoint cannot manufacture a terminal Core proof.
+        with store.operational.transaction():
+            store.operational.execute(
+                "UPDATE collection_progress SET state='complete' WHERE fetch_collection_id=?",
+                (first["fetch_collection_id"],),
+            )
+        with store.transaction():
+            second = collector.facts.begin(
+                repo, None, "pr-list", job, api.url + "/pulls"
+            )
+        assert second["fetch_collection_id"] != first["fetch_collection_id"]
+        assert not store.one("SELECT 1 FROM completion_markers")
+        assert store.one("SELECT count(*) FROM fetch_collections")[0] == 2
+        assert len(collection_rows(store, "kind='pr-list'", job_id=job)) == 2
+    finally:
+        collector.http.close()
