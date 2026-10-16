@@ -149,3 +149,9 @@ functions correctly run with the production fixture under a P2 collection module
 while JUnit `file` still identifies the original P1 function definition. Counting
 by that attribute would misclassify production verification. The paired receipts
 verify all selected IDs against journal starts, each phase and JUnit identities.
+For each installed distribution, also assert duplicate-free equality among the
+collected node set, normalized JUnit identities and journal starts, with exactly
+one setup/call/teardown result per executed node. Equal passing counts alone can
+accept substituted node sets. Independent review of the integration-readiness
+driver found that gap; explicit three-way identity checks passed on both stored
+installed P7 executions. Keep these checks even when their counts agree.
