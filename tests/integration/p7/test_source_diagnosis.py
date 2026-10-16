@@ -152,3 +152,25 @@ def test_separate_process_stop_before_publication(synthetic_catalog, tmp_path):
         if backup.is_alive():
             backup.kill()
             backup.join()
+
+
+def test_valid_empty_context_text_is_not_corruption(synthetic_catalog, tmp_path):
+    from repo_catalog.adapters.sqlite.p1_context import ContextStore
+    from repo_catalog.adapters.sqlite.p1_schema import connect
+    from tests.integration.p7.conftest import DEFAULT_REPO_UUID
+
+    connection = connect(synthetic_catalog / "context.sqlite3", "context")
+    digest = ContextStore(connection).text("")
+    connection.close()
+    service = RecoveryService()
+    backup = tmp_path / "backup"
+    assert service.create_consistent_backup(synthetic_catalog, backup).verified_clean
+    restored = tmp_path / "restored"
+    assert service.restore_backup(backup, restored, DEFAULT_REPO_UUID).revalidated_clean
+    assert service.activate_catalog(restored, tmp_path / "active").clean_operational
+    connection = sqlite3.connect(restored / "context.sqlite3")
+    assert connection.execute(
+        "SELECT text_value FROM text_bodies WHERE sha256=?", (digest,)
+    ).fetchone() == ("",)
+    connection.close()
+    assert not is_catalog_stopped(synthetic_catalog)

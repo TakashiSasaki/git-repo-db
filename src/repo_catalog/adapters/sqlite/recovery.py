@@ -904,9 +904,9 @@ class SQLiteRecoveryAdapter:
             cursor = conn.execute("SELECT sha256, text_value FROM text_bodies")
             while row := cursor.fetchone():
                 expected_sha, text_value = row
-                if not isinstance(text_value, str) or len(text_value) == 0:
+                if not isinstance(text_value, str):
                     raise BackupValidationError(
-                        "Context text body must be a non-empty string"
+                        "Context text body must be a string"
                     )
                 actual_sha = hashlib.sha256(text_value.encode("utf-8")).hexdigest()
                 if actual_sha != expected_sha:
