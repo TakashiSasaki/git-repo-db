@@ -182,16 +182,26 @@ def _notes_proof_from_bundle_json(
     try:
         raw_bundle = json.loads(bundle_json)
         fmt = cap.root.object_format
-        structures = tuple(
-            NativeObject(
-                OID(fmt, s[0]),
-                s[1],
-                bytes.fromhex(s[2]),
-                len(bytes.fromhex(s[2])),
-                hashlib.sha256(bytes.fromhex(s[2])).hexdigest(),
+        structures = []
+        for item in raw_bundle:
+            body_hex = item[2]
+            if (
+                type(body_hex) is not str
+                or len(body_hex) % 2
+                or any(char not in "0123456789abcdef" for char in body_hex)
+            ):
+                raise ValueError("lowercase contiguous proof body hex required")
+            body = bytes.fromhex(body_hex)
+            structures.append(
+                NativeObject(
+                    OID(fmt, item[0]),
+                    item[1],
+                    body,
+                    len(body),
+                    hashlib.sha256(body).hexdigest(),
+                )
             )
-            for s in raw_bundle
-        )
+        structures = tuple(structures)
     except (ValueError, TypeError, KeyError, IndexError) as exc:
         raise CoreFailure(
             "NOTES_PROOF", (cap.pair, target), f"invalid proof bundle: {exc}"
