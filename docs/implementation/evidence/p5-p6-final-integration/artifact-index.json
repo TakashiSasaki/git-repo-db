@@ -177,9 +177,17 @@
     "bytes": 3080,
     "sha256": "09689ca7c558459a60485196f4c4f13170524599dbe4d9e1e69a9716e981934b"
   },
+  "independent/audit_docs_followup.py.txt": {
+    "bytes": 3345,
+    "sha256": "3022eb2515ebe11f66ffe9c95329183249686cc787a6210cdaca5e0f257c8eec"
+  },
   "independent/check_distributions.py.txt": {
     "bytes": 2578,
     "sha256": "8941e22098f1c7111062943b0f3215ce9cc10c4276f6c45e58fdca62b8bc0a90"
+  },
+  "independent/check_hosted_receipt.py.txt": {
+    "bytes": 2946,
+    "sha256": "25e257038b27d51e35b8f3f4a49b184452d822d974aadc86e2e27b5cac89106d"
   },
   "independent/dag-and-tree-review.json": {
     "bytes": 931,
@@ -189,9 +197,21 @@
     "bytes": 20856,
     "sha256": "5dd22701901c0a5be0b3ffd453038aea7b9dc01accd3290cba626c83536246da"
   },
+  "independent/docs-followup-aff6b2476810/docs-followup-review.json": {
+    "bytes": 8665,
+    "sha256": "92cab3ee9141fe8ab6e7340eb25f30b9d3360641b9422baa4d8bbc49beeab230"
+  },
+  "independent/docs-followup-aff6b2476810/independent-docs-followup-review.md": {
+    "bytes": 2428,
+    "sha256": "3ae8710c2e69a889e5cc488fc0a501be0da6c2d6991b5c694128b688b2ad8ba6"
+  },
+  "independent/hosted-development-review.json": {
+    "bytes": 869,
+    "sha256": "112b0f54c7b80a711bbb37f5edba93f7e7346d862050ee9ebc370fb612d5aeb4"
+  },
   "independent/independent-final-integration-review.md": {
-    "bytes": 7921,
-    "sha256": "cb435aae7dd008ac3041d916eaefce23378c638f2c6646e7c9b07dc7029e087d"
+    "bytes": 8863,
+    "sha256": "3e96d027372832b5649c53d2026854d80b0d9377f266f05de04090a43e5fe228"
   },
   "independent/journal.jsonl.gz": {
     "bytes": 3432,
@@ -224,8 +244,8 @@
     "sha256": "51319e3f4d9197a777b4eaacb49383128592eebe70bcd845fb8f324aef314f0d"
   },
   "independent/reviewer-artifact-manifest.json": {
-    "bytes": 2658,
-    "sha256": "88b118ae4b8bfc3fc9d87be1723c82408b957cd85bb38a215c695e0d102c5df7"
+    "bytes": 2965,
+    "sha256": "5f9967868f96421520c9e58d05164022759a65ce87d45caced2db76ddc242826"
   },
   "independent/reviewer-reconciliation.json": {
     "bytes": 8658,

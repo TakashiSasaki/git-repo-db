@@ -123,7 +123,21 @@ recorded; editable imports resolve to the separate intended review worktree.
 No remaining material final integration/evidence finding. This review verifies
 focused local development/integration, independent reexecution and exact evidence;
 it does not turn Development CI green into complete runtime acceptance. Hosted
-Development CI, full repository/Release Acceptance, P7 recovery/activation and P8
-public activation are separate, unclaimed scopes. No main update, real-data or
+Development CI is separately verified below; full repository/Release Acceptance,
+P7 recovery/activation and P8 public activation remain unclaimed scopes. No main update, real-data or
 backup mutation, release/tag, authentication-based live acquisition or intentional
 Pages publication was performed by this reviewer.
+
+## Hosted Development CI receipt independently checked
+
+For run `38860098880`, independently decoded actual timestamped bounded-log
+records (excluding echoed script text), checked the ZIP byte length and SHA-256,
+and verified all **21** indexed member sizes/digests. The stored binding/index/
+manifest match decoded members. GitHub's Git-commit API independently confirms
+that hosted temporary merge `47e051f694b5428dae4f5af24fbb6af340ab84c8` has tree
+`443c4b25478c1e406136c77d6689e87bd72231f9`, exactly the executed feature tree.
+The checked receipt reports `development_checks_passed`, `full_acceptance=false`,
+**zero hosted runtime nodes**, and the exact tested CI input hash above. Thus
+the development check result is verified without implying hosted runtime or
+Release Acceptance execution. `hosted-development-review.json` and retained
+`check_hosted_receipt.py` document this independent read-only verification.

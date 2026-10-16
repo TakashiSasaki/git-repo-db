@@ -13,9 +13,13 @@
       "sha256": "5dd22701901c0a5be0b3ffd453038aea7b9dc01accd3290cba626c83536246da",
       "bytes": 20856
     },
+    "0cb51d46d87d/hosted-development-review.json": {
+      "sha256": "112b0f54c7b80a711bbb37f5edba93f7e7346d862050ee9ebc370fb612d5aeb4",
+      "bytes": 869
+    },
     "0cb51d46d87d/independent-final-integration-review.md": {
-      "sha256": "cb435aae7dd008ac3041d916eaefce23378c638f2c6646e7c9b07dc7029e087d",
-      "bytes": 7921
+      "sha256": "3e96d027372832b5649c53d2026854d80b0d9377f266f05de04090a43e5fe228",
+      "bytes": 8863
     },
     "0cb51d46d87d/journal.jsonl": {
       "sha256": "3e48a31a13367f6e1eb9c785f7d20e509907063f97b15a7b14f617b4a5e57327",
@@ -60,6 +64,10 @@
     "check_distributions.py": {
       "sha256": "8941e22098f1c7111062943b0f3215ce9cc10c4276f6c45e58fdca62b8bc0a90",
       "bytes": 2578
+    },
+    "check_hosted_receipt.py": {
+      "sha256": "25e257038b27d51e35b8f3f4a49b184452d822d974aadc86e2e27b5cac89106d",
+      "bytes": 2946
     },
     "reconcile_integration.py": {
       "sha256": "51319e3f4d9197a777b4eaacb49383128592eebe70bcd845fb8f324aef314f0d",

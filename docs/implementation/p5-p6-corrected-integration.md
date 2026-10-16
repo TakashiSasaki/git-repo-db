@@ -64,6 +64,12 @@ graph TD
 - Tests-only #85: branch `test/p5-p6-corrected-compatibility`, explicitly based on
   `validation/p5-p6-corrected-assembly` (#84), depending on **both** siblings.
 
+PR #84 remains a **draft review-only assembly**, not a proposal to merge both
+implementations into shared #83. After separately authorized sibling integration,
+retarget the reviewed tests-only PR to the actual integrated base; do not merge
+#84 into #83 and thereby contaminate the common dependency. PR #85 is the formal
+tests/evidence review. No integration to main is authorized in this task.
+
 Both siblings contain the same common commit and neither contains the other's
 initial or corrected implementation commits. The original #80/#81 were advanced
 with ordinary fast-forward pushes and retargeted together to #83. No force push,
