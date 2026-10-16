@@ -1,0 +1,63 @@
+{
+  "commit": "2833e50b694ee330d6630d1fe631d9fa158a992f",
+  "tree": "1d6187d28bce7ee1bbd309fbb2504a33688dba40",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "tests/packaging/test_p5_distribution.py",
+    "-q",
+    "--tb=short",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml",
+    "work/p5-evidence/distribution-exact/junit.xml",
+    "--journal",
+    "work/p5-evidence/distribution-exact/journal.jsonl"
+  ],
+  "cwd": "/workspace/work/p5",
+  "exit_code": 0,
+  "distributions": {
+    "/tmp/pytest-of-agent/pytest-current/p1-packages0/dist/repo_catalog-0.2.0-py3-none-any.whl": {
+      "size": 567568,
+      "sha256": "51d3e94335985c771b74507ee98eed3c2c50d68cb053a218e8a17aade9adfc81"
+    },
+    "/tmp/pytest-of-agent/pytest-current/p1-packages0/dist/repo_catalog-0.2.0.tar.gz": {
+      "size": 18874450,
+      "sha256": "82c382a96571ce60ec2f9ba63115fc9bd9ac6e5ee9d4584f5a9b528ec893bc32"
+    },
+    "/tmp/pytest-of-agent/pytest-current/p1-packages0/dist/.gitignore": {
+      "size": 1,
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    "/tmp/pytest-of-agent/pytest-current/p1-packages0/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl": {
+      "size": 567568,
+      "sha256": "51d3e94335985c771b74507ee98eed3c2c50d68cb053a218e8a17aade9adfc81"
+    },
+    "/tmp/pytest-of-agent/pytest-current/p1-packages0/sdist-wheel/.gitignore": {
+      "size": 1,
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    "/tmp/pytest-of-agent/pytest-77/p1-packages0/dist/repo_catalog-0.2.0-py3-none-any.whl": {
+      "size": 567568,
+      "sha256": "51d3e94335985c771b74507ee98eed3c2c50d68cb053a218e8a17aade9adfc81"
+    },
+    "/tmp/pytest-of-agent/pytest-77/p1-packages0/dist/repo_catalog-0.2.0.tar.gz": {
+      "size": 18874450,
+      "sha256": "82c382a96571ce60ec2f9ba63115fc9bd9ac6e5ee9d4584f5a9b528ec893bc32"
+    },
+    "/tmp/pytest-of-agent/pytest-77/p1-packages0/dist/.gitignore": {
+      "size": 1,
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    "/tmp/pytest-of-agent/pytest-77/p1-packages0/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl": {
+      "size": 567568,
+      "sha256": "51d3e94335985c771b74507ee98eed3c2c50d68cb053a218e8a17aade9adfc81"
+    },
+    "/tmp/pytest-of-agent/pytest-77/p1-packages0/sdist-wheel/.gitignore": {
+      "size": 1,
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    }
+  }
+}

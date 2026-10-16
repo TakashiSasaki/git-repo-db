@@ -526,3 +526,32 @@ Formal checks: `tests/integration/p6/test_corrections.py` and
 `tests/integration/test_snapshot_read_limits.py`. These use disposable catalogs,
 finite-work refusal, growing candidate sets and tracked live objects. They do not
 prove full release acceptance, power-loss durability or indexed acceleration.
+## Revalidate transport and request boundaries with independent counterexamples
+
+P5's [corrected-source review](../../../docs/implementation/evidence/p5-correction/independent/review.md)
+independently reproduced missing declared-digest comparison, free request restart,
+retry UUID changes, broad Coverage promotion, partial-outcome loss and paired
+export races. Its exact-node receipt distinguishes baseline failures from the
+corrected execution and Provider-order cases that already passed the baseline.
+
+- Recompute a valid SHA-256 after modifying domain data to reach independent
+  domain validation. A checksum mismatch test alone cannot verify receiver
+  Notes/native checks or cursor/content structure; rewriting content plus digest
+  is possible without a key and proves no authenticity.
+- Remove all SQLite accounting and reopen with the same identities, then try
+  continuation and repeated initial-creation flags. A missing budget/request
+  must refuse the old request, including after restart. Preserve accepted reads;
+  explicit new work gets a distinct request identity and may retain its Capture.
+- Count durable physical-copy rows and compare actual Capture pairs across
+  lost-ack retry. Counting objects alone misses new copy allocations. Reserve
+  before external reads and meter repeated verification/parser work even when
+  Core insertion is idempotent.
+- Place a separate writer contender during real source I/O and during export
+  extraction. Verify input preparation allows the writer lock, paired extraction
+  blocks conflicting writes, and a stop injected before final return prevents
+  completion. A snapshot opened and closed before extraction does not fence it.
+- Inspect built sdist members. The current backend includes untracked `work/`
+  scratch despite local Git excludes. Build distribution acceptance artifacts
+  from a clean committed archive with evidence stored outside that source tree;
+  install wheel and sdist-wheel into isolated environments outside checkout.
+  This is packaging input hygiene, not a source cleanup or deletion recipe.

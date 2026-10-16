@@ -89,3 +89,7 @@ now rejects reusing the lost request and creates a genuinely fresh RequestIdenti
 additional total/partial loss nodes cover the corrected distinction. No nodes
 were removed, skipped or xfailed. New execution receipts bind the corrected
 feature/tree separately from the preserved historical receipt.
+
+## Executed correction evidence
+
+See [the exact-node correction receipt](evidence/p5-correction/README.md): author160 focused nodes, independent64 (47 overlapping P5 +17 external), and4 clean-archive installed distribution nodes. Counts are separate and not summed across overlapping selections. Four required audits, Ruff and formatting passed. Final combined acceptance belongs to the integration receipt.
