@@ -35,18 +35,18 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
     assert unbuilt_resp.total_count >= 3
     baseline_hits = unbuilt_resp.hits
 
-    # Build projections -> backend == "projection" with identical hits
+    # Build projections -> backend == "verified_projection_scan" with identical hits
     counts = service.rebuild_search()
     assert counts["git_metadata"] > 0
     assert counts["notes"] > 0
     assert counts["context_text"] > 0
 
     proj_resp = service.search(SearchQuery(query_text="p6"))
-    assert proj_resp.backend == "projection"
+    assert proj_resp.backend == "verified_projection_scan"
     assert proj_resp.backends_by_kind == {
-        "context_text": "projection",
-        "git_metadata": "projection",
-        "notes": "projection",
+        "context_text": "verified_projection_scan",
+        "git_metadata": "verified_projection_scan",
+        "notes": "verified_projection_scan",
     }
     assert proj_resp.hits == baseline_hits
 
@@ -55,7 +55,7 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
     tree_resp = service.search(
         SearchQuery(query_text="README.md", projection_kinds=("git_metadata",))
     )
-    assert tree_resp.backend == "projection"
+    assert tree_resp.backend == "verified_projection_scan"
     assert tree_resp.total_count == 1
     assert tree_resp.hits[0].authoritative_summary["kind"] == "tree_entry"
 
@@ -63,7 +63,7 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
     note_resp = service.search(
         SearchQuery(query_text="Approved for P6!", projection_kinds=("notes",))
     )
-    assert note_resp.backend == "projection"
+    assert note_resp.backend == "verified_projection_scan"
     assert note_resp.total_count == 1
     assert note_resp.hits[0].authoritative_summary["note_retained"] is True
 
@@ -73,7 +73,7 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
             query_text="snapshot consistency", projection_kinds=("context_text",)
         )
     )
-    assert ctx_resp.backend == "projection"
+    assert ctx_resp.backend == "verified_projection_scan"
     assert ctx_resp.total_count == 1
 
     # Scenario 4a: Delete a row from search_documents (incomplete projection) -> authority_scan
@@ -85,8 +85,8 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
     del_resp = service.search(SearchQuery(query_text="p6"))
     assert del_resp.backend == "authority_scan"
     assert del_resp.backends_by_kind["git_metadata"] == "authority_scan"
-    assert del_resp.backends_by_kind["notes"] == "projection"
-    assert del_resp.backends_by_kind["context_text"] == "projection"
+    assert del_resp.backends_by_kind["notes"] == "verified_projection_scan"
+    assert del_resp.backends_by_kind["context_text"] == "verified_projection_scan"
     assert del_resp.hits == baseline_hits
     assert not (catalog_dir / "p1-recovery-stop.json").exists()
 
@@ -125,7 +125,7 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
     # Rebuild recovers cleanly from corrupt search.sqlite3
     service.rebuild_search()
     recovered_resp = service.search(SearchQuery(query_text="p6"))
-    assert recovered_resp.backend == "projection"
+    assert recovered_resp.backend == "verified_projection_scan"
     assert recovered_resp.hits == baseline_hits
 
     # Scenario 1: Unlink search.sqlite3 from disk -> authority_scan
@@ -140,7 +140,10 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
 
     # Scenario 3: Stale snapshot_token_json after a new Core write -> authority_scan
     service.rebuild_search()
-    assert service.search(SearchQuery(query_text="p6")).backend == "projection"
+    assert (
+        service.search(SearchQuery(query_text="p6")).backend
+        == "verified_projection_scan"
+    )
 
     width = 40 if fmt == "sha1" else 64
     new_oid = OID(fmt, "7" * width)
@@ -190,7 +193,7 @@ def test_ordinary_file_blobs_are_never_indexed_in_search(tmp_path: Path) -> None
             projection_kinds=("git_metadata",),
         )
     )
-    assert resp_proj.backend == "projection"
+    assert resp_proj.backend == "verified_projection_scan"
     assert resp_proj.total_count == 0
 
     # Also verify authority_scan excludes ordinary file blobs

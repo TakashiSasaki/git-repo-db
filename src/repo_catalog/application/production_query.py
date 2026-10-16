@@ -19,10 +19,14 @@ catalog.
 from __future__ import annotations
 
 import hashlib
+import heapq
 import json
-from collections.abc import Callable, Iterator, Sequence
+import sqlite3
+import time
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from functools import wraps
 from pathlib import Path
 from typing import Literal, TypeVar
 
@@ -30,13 +34,14 @@ from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     PairCoordinator,
     PairedSnapshot,
-    _digest,
-    _identity,
+    SnapshotReadLimits,
     catalog_completion,
+    persist_catalog_stop,
 )
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.production_search import ProductionSearchAdapter
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
+from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
     OID,
     Capture,
@@ -127,7 +132,7 @@ class PinnedCatalogSnapshot:
 
 
 def _paginate_items(
-    items: Sequence[T],
+    items: Iterable[T],
     *,
     key_fn: Callable[[T], tuple],
     page: PageRequest,
@@ -142,26 +147,29 @@ def _paginate_items(
             "expected_token does not match current pinned snapshot",
         )
     f_digest = filter_digest(endpoint_kind, filters)
-    ordered = sorted(items, key=key_fn)
-    total_count = len(ordered)
-
-    start_index = 0
+    last_key = None
     if page.cursor is not None:
-        decoded_cursor = PaginationCursor.decode(
+        last_key = PaginationCursor.decode(
             page.cursor,
             expected_endpoint=endpoint_kind,
             expected_filter_digest=f_digest,
             current_snapshot_token=snapshot_token,
-        )
-        last_key = decoded_cursor.last_key
-        start_index = total_count
-        for idx, item in enumerate(ordered):
-            if key_fn(item) > last_key:
-                start_index = idx
-                break
+        ).last_key
+    total_count = 0
+    remaining_count = 0
 
-    sliced = tuple(ordered[start_index : start_index + page.limit])
-    has_more = (start_index + len(sliced)) < total_count
+    def eligible():
+        nonlocal total_count, remaining_count
+        for item in items:
+            total_count += 1
+            if last_key is None or key_fn(item) > last_key:
+                remaining_count += 1
+                yield item
+
+    # Exact total_count still requires a bounded scan; keep only limit+1 views.
+    selected = heapq.nsmallest(page.limit + 1, eligible(), key=key_fn)
+    sliced = tuple(selected[: page.limit])
+    has_more = remaining_count > len(sliced)
     next_cursor = None
     if has_more and sliced:
         next_cursor = PaginationCursor(
@@ -180,6 +188,35 @@ def _paginate_items(
     )
 
 
+def _stored_view(method):
+    """Fence complete fixed stored-row reconstruction, including argument unpacking."""
+
+    @wraps(method)
+    def call(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except QueryError:
+            raise
+        except (ValueError, TypeError, AttributeError, KeyError, IndexError) as error:
+            if getattr(error, "code", None) in {
+                "CAPABILITY_EXPIRED",
+                "RECOVERY_STOP",
+                "RECOVERY_REQUIRED",
+                "RESOURCE_NOT_FOUND",
+                "OBJECT_NOT_FOUND",
+                "TEXT_UNAVAILABLE",
+            }:
+                raise
+            persist_catalog_stop(
+                self.directory, "invalid stored projection: " + str(error)
+            )
+            raise CoreFailure(
+                "AUTHORITATIVE_CORRUPTION", method.__name__, str(error)
+            ) from error
+
+    return call
+
+
 class ProductionQueryService:
     """Authoritative query, pagination, byte-verification, and Search service."""
 
@@ -188,8 +225,15 @@ class ProductionQueryService:
         directory: Path | str,
         *,
         mode: CatalogReadMode | Literal["auto"] = "auto",
+        read_limits: SnapshotReadLimits = SnapshotReadLimits(),
     ):
         self.directory = Path(directory)
+        if not isinstance(read_limits, SnapshotReadLimits):
+            raise QueryError(
+                "INVALID_LIMIT", "query", "finite SnapshotReadLimits required"
+            )
+        self.read_limits = read_limits
+        self.last_costs_ns: dict[str, int] = {}
         if mode not in ("auto", "core_only", "context_only", "paired"):
             raise QueryError("INVALID_MODE", "query", str(mode))
         self._requested_mode = mode
@@ -238,7 +282,38 @@ class ProductionQueryService:
         )
 
     @contextmanager
-    def open_snapshot(
+    def open_snapshot(self, *, required_store="any"):
+        started = time.perf_counter_ns()
+        self.last_costs_ns = {}
+        try:
+            with self._open_snapshot(required_store=required_store) as snapshot:
+                self.last_costs_ns["snapshot_total"] = time.perf_counter_ns() - started
+                yield snapshot
+        except (json.JSONDecodeError, UnicodeDecodeError, RecursionError) as error:
+            persist_catalog_stop(
+                self.directory, "stored typed data decoding: " + str(error)
+            )
+            raise CoreFailure(
+                "AUTHORITATIVE_CORRUPTION", "query", str(error)
+            ) from error
+        except sqlite3.OperationalError as error:
+            if str(error).startswith("Could not decode to UTF-8 column"):
+                persist_catalog_stop(self.directory, str(error))
+                raise CoreFailure(
+                    "AUTHORITATIVE_CORRUPTION", "query", str(error)
+                ) from error
+            if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
+                raise QueryError(
+                    "QUERY_BUDGET", "snapshot", "SQLite VM step limit"
+                ) from error
+            raise
+        except CoordinationError as error:
+            if error.code == "QUERY_BUDGET":
+                raise QueryError("QUERY_BUDGET", "snapshot", str(error)) from error
+            raise
+
+    @contextmanager
+    def _open_snapshot(
         self,
         *,
         required_store: Literal["core", "context", "paired", "any"] = "any",
@@ -266,11 +341,16 @@ class ProductionQueryService:
             )
 
         if mode == "paired":
-            coordinator = PairCoordinator(self.directory)
+            coordinator = PairCoordinator(
+                self.directory, read_limits=self.read_limits, metadata_only=True
+            )
             with coordinator.snapshots() as pair:
+                self.last_costs_ns.update(coordinator.last_read_costs_ns)
                 token = SnapshotFenceToken.from_pair_token(pair.token)
-                core = self._bind_core_snapshot(pair.core)
-                with Context.for_snapshot(pair.context, self.directory) as context:
+                with (
+                    GitCore.for_snapshot(pair.core, self.directory) as core,
+                    Context.for_snapshot(pair.context, self.directory) as context,
+                ):
                     yield PinnedCatalogSnapshot(
                         mode="paired",
                         token=token,
@@ -281,10 +361,20 @@ class ProductionQueryService:
                 with catalog_completion(self.directory):
                     self._check_stop()
         elif mode == "core_only":
-            coordinator = PairCoordinator(self.directory)
+            coordinator = PairCoordinator(
+                self.directory, read_limits=self.read_limits, metadata_only=True
+            )
             with coordinator.core_snapshot() as core_read:
-                repo_id, inst_id = _identity(core_read._db, "core")
-                core_hash = _digest(core_read._db)
+                identity_started = time.perf_counter_ns()
+                repo_id, inst_id = core_read.identity("core")
+                self.last_costs_ns["authority_identity_validation"] = (
+                    time.perf_counter_ns() - identity_started
+                )
+                token_started = time.perf_counter_ns()
+                core_hash = core_read.fingerprint(metadata_only=True)
+                self.last_costs_ns["snapshot_token_generation"] = (
+                    time.perf_counter_ns() - token_started
+                )
                 token = SnapshotFenceToken(
                     mode="core_only",
                     repository_uuidv4=repo_id,
@@ -292,19 +382,28 @@ class ProductionQueryService:
                     core_sha256=core_hash,
                     context_sha256=None,
                 )
-                core = self._bind_core_snapshot(core_read)
-                yield PinnedCatalogSnapshot(
-                    mode="core_only",
-                    token=token,
-                    core=core,
-                )
+                with GitCore.for_snapshot(core_read, self.directory) as core:
+                    yield PinnedCatalogSnapshot(
+                        mode="core_only",
+                        token=token,
+                        core=core,
+                    )
                 with catalog_completion(self.directory):
                     self._check_stop()
         else:
-            with Context.snapshot(self.directory) as context:
-                raw_db = context.db._connection
-                repo_id, inst_id = _identity(raw_db, "context")
-                ctx_hash = _digest(raw_db)
+            with Context.snapshot(
+                self.directory, read_limits=self.read_limits
+            ) as context:
+                identity_started = time.perf_counter_ns()
+                repo_id, inst_id = context.snapshot_identity()
+                self.last_costs_ns["authority_identity_validation"] = (
+                    time.perf_counter_ns() - identity_started
+                )
+                token_started = time.perf_counter_ns()
+                ctx_hash = context.snapshot_fingerprint()
+                self.last_costs_ns["snapshot_token_generation"] = (
+                    time.perf_counter_ns() - token_started
+                )
                 token = SnapshotFenceToken(
                     mode="context_only",
                     repository_uuidv4=repo_id,
@@ -320,19 +419,18 @@ class ProductionQueryService:
                 with catalog_completion(self.directory):
                     self._check_stop()
 
-    def _bind_core_snapshot(self, read_snapshot) -> GitCore:
-        """Bind a `GitCore` read-only capability to an already pinned `ReadSnapshot`."""
-        core = GitCore.__new__(GitCore)
-        core._directory = self.directory
-        core._db = read_snapshot._db
-        core._external = True
-        core._active = True
-        core._admitting = False
-        core._reading = False
-        core._stopped = False
-        core._on_corruption = None
-        core._db.set_authorizer(core._authorize)
-        return core
+    def _stored(self, constructor, *args, **kwargs):
+        """Domain reconstruction concerns persisted rows, never caller input."""
+        try:
+            return constructor(*args, **kwargs)
+        except (ValueError, TypeError, KeyError, IndexError, AttributeError) as error:
+            persist_catalog_stop(
+                self.directory,
+                "invalid stored " + constructor.__name__ + ": " + str(error),
+            )
+            raise CoreFailure(
+                "AUTHORITATIVE_CORRUPTION", constructor.__name__, str(error)
+            ) from error
 
     def snapshot_token(self) -> SnapshotFenceToken:
         with self.open_snapshot() as snap:
@@ -347,6 +445,7 @@ class ProductionQueryService:
             assert snap.core is not None
             return self._repository_view_in_snapshot(snap.core)
 
+    @_stored_view
     def _repository_view_in_snapshot(self, core: GitCore) -> GitRepositoryView:
         repo_id, inst_id = core.catalog_identity()
         rows = core.sql(
@@ -356,8 +455,10 @@ class ProductionQueryService:
         )
         claims_by_field: dict[str, list[RepositoryClaim]] = {}
         for row in rows:
-            prov = Provenance(*json.loads(row[3]))
-            claim = RepositoryClaim(row[0], row[1], json.loads(row[2]), prov)
+            prov = self._stored(Provenance, *json.loads(row[3]))
+            claim = self._stored(
+                RepositoryClaim, row[0], row[1], json.loads(row[2]), prov
+            )
             claims_by_field.setdefault(row[1], []).append(claim)
         return GitRepositoryView(
             repository_uuidv4=repo_id,
@@ -473,16 +574,17 @@ class ProductionQueryService:
                 "ORDER BY object_format,full_oid",
                 (object_format, object_format),
             )
-            views: list[GitObjectView] = []
-            for row in rows:
-                oid = OID(row[0], row[1])
-                view = self._git_object_in_snapshot(snap.core, oid)
-                if native_type is not None and view.native_type != native_type:
-                    continue
-                views.append(view)
+
+            def views():
+                for row in rows:
+                    oid = self._stored(OID, row[0], row[1])
+                    view = self._git_object_in_snapshot(snap.core, oid)
+                    if native_type is not None and view.native_type != native_type:
+                        continue
+                    yield view
 
             return _paginate_items(
-                views,
+                views(),
                 key_fn=lambda v: v.oid.key,
                 page=page,
                 endpoint_kind="git_objects",
@@ -510,28 +612,20 @@ class ProductionQueryService:
                 "ORDER BY kind,scope,capture_origin_uuidv4,capture_uuidv4,provenance",
                 (observation_kind, observation_kind),
             )
-            views: list[GitObservationView] = []
-            for row in rows:
-                val = json.loads(row[5])
-                if ref_prefix is not None:
-                    ref_val = val.get("ref")
-                    if not isinstance(ref_val, str) or not ref_val.startswith(
-                        ref_prefix
-                    ):
-                        continue
-                obs = GitObservation(
-                    row[0],
-                    row[1],
-                    row[2],
-                    row[3],
-                    tuple(json.loads(row[4])),
-                    val,
-                    Provenance(*json.loads(row[6])),
-                )
-                views.append(GitObservationView(obs))
+
+            def views():
+                for row in rows:
+                    view = self._observation_from_row(row)
+                    if ref_prefix is not None:
+                        ref_val = view.observation.value.get("ref")
+                        if not isinstance(ref_val, str) or not ref_val.startswith(
+                            ref_prefix
+                        ):
+                            continue
+                    yield view
 
             return _paginate_items(
-                views,
+                views(),
                 key_fn=lambda v: (
                     v.observation.kind,
                     encode(v.observation.scope),
@@ -548,6 +642,21 @@ class ProductionQueryService:
                 snapshot_token=token_str,
             )
 
+    @_stored_view
+    def _observation_from_row(self, row):
+        return GitObservationView(
+            GitObservation(
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                tuple(json.loads(row[4])),
+                json.loads(row[5]),
+                Provenance(*json.loads(row[6])),
+            )
+        )
+
+    @_stored_view
     def _all_captures_in_snapshot(self, core: GitCore) -> tuple[Capture, ...]:
         rows = core.sql(
             "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root "
@@ -559,13 +668,14 @@ class ProductionQueryService:
                 "utf-8", "surrogateescape"
             )
             captures.append(
-                Capture(
+                self._stored(
+                    Capture,
                     row[0],
                     row[1],
                     row[2],
                     row[3],
                     raw_ref,
-                    OID(row[5], row[6]),
+                    self._stored(OID, row[5], row[6]),
                 )
             )
         return tuple(captures)
@@ -580,40 +690,41 @@ class ProductionQueryService:
             assert snap.core is not None
             token_str = snap.token.encode()
             all_captures = self._all_captures_in_snapshot(snap.core)
-            views: list[NotesCaptureView] = []
-            for cap in all_captures:
-                if notes_ref is not None and cap.ref != notes_ref:
-                    continue
-                fmt = cap.root.object_format
-                target_hexes: set[str] = set()
-                for r in snap.core.sql(
-                    "SELECT DISTINCT target FROM notes_claims WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                    cap.pair,
-                ):
-                    target_hexes.add(r[0])
-                for r in snap.core.sql(
-                    "SELECT DISTINCT target FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                    cap.pair,
-                ):
-                    target_hexes.add(r[0])
-                for r in snap.core.sql(
-                    "SELECT membership FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                    cap.pair,
-                ):
-                    for m in json.loads(r[0]):
-                        target_hexes.add(m[0])
-                targets = tuple(OID(fmt, h) for h in sorted(target_hexes))
-                inventories = self._notes_inventories_in_snapshot(snap.core, cap)
-                views.append(
-                    NotesCaptureView(
+
+            def views():
+                for cap in all_captures:
+                    if notes_ref is not None and cap.ref != notes_ref:
+                        continue
+                    fmt = cap.root.object_format
+                    target_hexes: set[str] = set()
+                    for r in snap.core.sql(
+                        "SELECT DISTINCT target FROM notes_claims WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                        cap.pair,
+                    ):
+                        target_hexes.add(r[0])
+                    for r in snap.core.sql(
+                        "SELECT DISTINCT target FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                        cap.pair,
+                    ):
+                        target_hexes.add(r[0])
+                    for r in snap.core.sql(
+                        "SELECT membership FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                        cap.pair,
+                    ):
+                        for m in json.loads(r[0]):
+                            target_hexes.add(m[0])
+                    targets = tuple(
+                        self._stored(OID, fmt, h) for h in sorted(target_hexes)
+                    )
+                    inventories = self._notes_inventories_in_snapshot(snap.core, cap)
+                    yield NotesCaptureView(
                         capture=cap,
                         targets=targets,
                         inventories=inventories,
                     )
-                )
 
             return _paginate_items(
-                views,
+                views(),
                 key_fn=lambda v: v.semantic_key,
                 page=page,
                 endpoint_kind="notes_captures",
@@ -685,6 +796,7 @@ class ProductionQueryService:
             assert snap.core is not None
             return self._notes_inventories_in_snapshot(snap.core, capture)
 
+    @_stored_view
     def _notes_inventories_in_snapshot(
         self, core: GitCore, capture: Capture
     ) -> tuple[NotesInventoryView, ...]:
@@ -697,7 +809,8 @@ class ProductionQueryService:
                 if inv.failure is not None
                 else None
             )
-            prov = Provenance(
+            prov = self._stored(
+                Provenance,
                 "receiver-intrinsic",
                 encode(capture.key),
                 "inventory",
@@ -730,7 +843,7 @@ class ProductionQueryService:
             core._checked_byte_read = previous
 
         for row in rows:
-            prov = Provenance(*json.loads(row[3]))
+            prov = self._stored(Provenance, *json.loads(row[3]))
             if prov.qualification == "receiver_intrinsic":
                 continue
             members = tuple(tuple(m) for m in json.loads(row[2]))
@@ -902,6 +1015,7 @@ class ProductionQueryService:
                 validate_core=validate_core,
             )
 
+    @_stored_view
     def _context_resource_in_snapshot(
         self,
         context: Context,
@@ -922,7 +1036,9 @@ class ProductionQueryService:
                 f"Context resource {resource_key} not found",
             )
         parent = (
-            ResourceKey(resource_key.service_instance_uuidv4, row[0], row[1])
+            self._stored(
+                ResourceKey, resource_key.service_instance_uuidv4, row[0], row[1]
+            )
             if row[0] is not None and row[1] is not None
             else None
         )
@@ -986,14 +1102,15 @@ class ProductionQueryService:
             resource_key.coordinates(),
         ).fetchall()
         collections = tuple(
-            CollectionObservation(
+            self._stored(
+                CollectionObservation,
                 resource=resource_key,
                 collection_kind=cr[0],
                 provenance_json=cr[1],
                 scope_json=cr[2],
                 observed_at_us=cr[3],
                 state=cr[4],
-                members=tuple(ResourceKey(*m) for m in json.loads(cr[5])),
+                members=tuple(self._stored(ResourceKey, *m) for m in json.loads(cr[5])),
             )
             for cr in col_rows
         )
@@ -1040,32 +1157,36 @@ class ProductionQueryService:
 
                 validate_core = _check_core_list
             keys = snap.context.resources(kind=resource_kind)
-            views: list[ContextResourceView] = []
-            for key in keys:
-                if (
-                    service_instance_uuidv4 is not None
-                    and key.service_instance_uuidv4 != service_instance_uuidv4
-                ):
-                    continue
-                view = self._context_resource_in_snapshot(
-                    snap.context,
-                    key,
-                    include_text=True,
-                    validate_core=validate_core,
-                )
-                if parent is not None and view.parent != parent:
-                    continue
-                if repository_uuidv4 is not None:
-                    repo_matches = view.repository_uuidv4 == repository_uuidv4 or any(
-                        json.loads(c.value_json) == repository_uuidv4
-                        for c in view.repository_candidates
-                    )
-                    if not repo_matches:
-                        continue
-                views.append(view)
 
-            return _paginate_items(
-                views,
+            def views():
+                for key in keys:
+                    if (
+                        service_instance_uuidv4 is not None
+                        and key.service_instance_uuidv4 != service_instance_uuidv4
+                    ):
+                        continue
+                    view = self._context_resource_in_snapshot(
+                        snap.context,
+                        key,
+                        include_text=False,
+                        validate_core=validate_core,
+                    )
+                    if parent is not None and view.parent != parent:
+                        continue
+                    if repository_uuidv4 is not None:
+                        repo_matches = (
+                            view.repository_uuidv4 == repository_uuidv4
+                            or any(
+                                json.loads(c.value_json) == repository_uuidv4
+                                for c in view.repository_candidates
+                            )
+                        )
+                        if not repo_matches:
+                            continue
+                    yield view
+
+            selected = _paginate_items(
+                views(),
                 key_fn=lambda v: v.semantic_key,
                 page=page,
                 endpoint_kind="context_resources",
@@ -1076,6 +1197,19 @@ class ProductionQueryService:
                     "service_instance_uuidv4": service_instance_uuidv4,
                 },
                 snapshot_token=token_str,
+            )
+
+            return replace(
+                selected,
+                items=tuple(
+                    self._context_resource_in_snapshot(
+                        snap.context,
+                        view.resource,
+                        include_text=True,
+                        validate_core=validate_core,
+                    )
+                    for view in selected.items
+                ),
             )
 
     def read_context_text(self, text_sha256: str) -> ByteReadResult:
@@ -1197,26 +1331,31 @@ class ProductionQueryService:
             assert snap.core is not None and snap.context is not None
             token_str = snap.token.encode()
             keys = snap.context.resources(kind=resource_kind)
-            views: list[PairedResourceView] = []
-            for key in keys:
-                paired_view = self._paired_resource_in_snapshot(
-                    snap.core,
-                    snap.context,
-                    token_str,
-                    key,
-                )
-                if repository_uuidv4 is not None:
-                    ctx_v = paired_view.context_resource
-                    repo_matches = ctx_v.repository_uuidv4 == repository_uuidv4 or any(
-                        json.loads(c.value_json) == repository_uuidv4
-                        for c in ctx_v.repository_candidates
-                    )
-                    if not repo_matches:
-                        continue
-                views.append(paired_view)
 
-            return _paginate_items(
-                views,
+            def views():
+                for key in keys:
+                    paired_view = self._paired_resource_in_snapshot(
+                        snap.core,
+                        snap.context,
+                        token_str,
+                        key,
+                        include_text=False,
+                    )
+                    if repository_uuidv4 is not None:
+                        ctx_v = paired_view.context_resource
+                        repo_matches = (
+                            ctx_v.repository_uuidv4 == repository_uuidv4
+                            or any(
+                                json.loads(c.value_json) == repository_uuidv4
+                                for c in ctx_v.repository_candidates
+                            )
+                        )
+                        if not repo_matches:
+                            continue
+                    yield paired_view
+
+            selected = _paginate_items(
+                views(),
                 key_fn=lambda v: v.resource.coordinates(),
                 page=page,
                 endpoint_kind="paired_resources",
@@ -1227,9 +1366,29 @@ class ProductionQueryService:
                 snapshot_token=token_str,
             )
 
+            return replace(
+                selected,
+                items=tuple(
+                    self._paired_resource_in_snapshot(
+                        snap.core, snap.context, token_str, view.resource
+                    )
+                    for view in selected.items
+                ),
+            )
+
     # ------------------------------------------------------------------
     # Derivative Search Rebuild and Verification-Aware Querying
     # ------------------------------------------------------------------
+
+    @_stored_view
+    def _extract_documents(self, snapshot, kind):
+        if kind == "git_metadata":
+            return ProductionSearchAdapter.extract_git_metadata_documents(snapshot.core)
+        if kind == "notes":
+            return ProductionSearchAdapter.extract_notes_documents(snapshot.core)
+        return ProductionSearchAdapter.extract_context_documents(
+            snapshot.context.db, snapshot.context.read_text
+        )
 
     def rebuild_search(
         self,
@@ -1244,28 +1403,11 @@ class ProductionQueryService:
             token_str = snap.token.encode()
             counts: dict[str, int] = {}
             for kind in projection_kinds:
-                if kind in ("git_metadata", "notes"):
-                    if snap.core is None:
-                        continue
-                    if kind == "git_metadata":
-                        docs, _ = (
-                            ProductionSearchAdapter.extract_git_metadata_documents(
-                                snap.core
-                            )
-                        )
-                    else:
-                        docs, _ = ProductionSearchAdapter.extract_notes_documents(
-                            snap.core
-                        )
-                elif kind == "context_text":
-                    if snap.context is None:
-                        continue
-                    docs, _ = ProductionSearchAdapter.extract_context_documents(
-                        snap.context.db,
-                        snap.context.read_text,
-                    )
-                else:
+                if kind in ("git_metadata", "notes") and snap.core is None:
                     continue
+                if kind == "context_text" and snap.context is None:
+                    continue
+                docs, _ = self._extract_documents(snap, kind)
 
                 counts[kind] = self.search_adapter.replace_projection(
                     kind,
@@ -1296,26 +1438,8 @@ class ProductionQueryService:
                 if kind == "context_text" and snap.context is None:
                     continue
 
-                if kind == "git_metadata":
-                    assert snap.core is not None
-                    auth_docs, auth_summaries = (
-                        ProductionSearchAdapter.extract_git_metadata_documents(
-                            snap.core
-                        )
-                    )
-                elif kind == "notes":
-                    assert snap.core is not None
-                    auth_docs, auth_summaries = (
-                        ProductionSearchAdapter.extract_notes_documents(snap.core)
-                    )
-                else:
-                    assert snap.context is not None
-                    auth_docs, auth_summaries = (
-                        ProductionSearchAdapter.extract_context_documents(
-                            snap.context.db,
-                            snap.context.read_text,
-                        )
-                    )
+                authority_started = time.perf_counter_ns()
+                auth_docs, auth_summaries = self._extract_documents(snap, kind)
 
                 expected_matches = {
                     doc_key: text
@@ -1323,20 +1447,27 @@ class ProductionQueryService:
                     if query.query_text in text
                 }
 
+                self.last_costs_ns["authority_search_validation:" + kind] = (
+                    time.perf_counter_ns() - authority_started
+                )
+                projection_started = time.perf_counter_ns()
                 candidates = self.search_adapter.query_candidates(
                     kind,
                     token_str,
                     query.query_text,
                     expected_doc_count=len(auth_docs),
                 )
+                self.last_costs_ns["projection_scan:" + kind] = (
+                    time.perf_counter_ns() - projection_started
+                )
                 if candidates is not None and candidates == expected_matches:
-                    backends_by_kind[kind] = "projection"
+                    backends_by_kind[kind] = "verified_projection_scan"
                     verified_matches = candidates
                 else:
                     backends_by_kind[kind] = "authority_scan"
                     verified_matches = expected_matches
 
-                for doc_key_json, matched_text in sorted(verified_matches.items()):
+                for doc_key_json, matched_text in verified_matches.items():
                     all_hits.append(
                         SearchHit(
                             projection_kind=kind,
@@ -1348,9 +1479,11 @@ class ProductionQueryService:
                     )
 
             overall_backend = (
-                "projection"
+                "verified_projection_scan"
                 if backends_by_kind
-                and all(b == "projection" for b in backends_by_kind.values())
+                and all(
+                    b == "verified_projection_scan" for b in backends_by_kind.values()
+                )
                 else "authority_scan"
             )
 

@@ -66,6 +66,10 @@ class QueryError(ValueError):
         super().__init__(f"{scope}:{code}: {detail}" if detail else f"{scope}:{code}")
 
 
+def _reject_json_constant(value):
+    raise ValueError("nonfinite JSON number: " + value)
+
+
 def canonical_json(value: object) -> str:
     return json.dumps(
         value, ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False
@@ -176,10 +180,10 @@ class SnapshotFenceToken:
 
     @classmethod
     def parse(cls, raw: str) -> SnapshotFenceToken:
-        if not isinstance(raw, str) or not raw:
+        if not isinstance(raw, str) or not raw or len(raw) > 65536:
             raise QueryError("INVALID_TOKEN", "snapshot", "nonempty token required")
         try:
-            data = json.loads(raw)
+            data = json.loads(raw, parse_constant=_reject_json_constant)
         except Exception as error:
             raise QueryError(
                 "INVALID_TOKEN", "snapshot", "malformed token JSON"
@@ -245,7 +249,9 @@ class PageRequest:
                 "INVALID_LIMIT", "pagination", "limit must be int in 1..10000"
             )
         if self.cursor is not None and (
-            not isinstance(self.cursor, str) or not self.cursor
+            not isinstance(self.cursor, str)
+            or not self.cursor
+            or len(self.cursor) > 65536
         ):
             raise QueryError(
                 "INVALID_CURSOR", "pagination", "cursor must be a nonempty string"
@@ -271,10 +277,7 @@ class PaginationCursor:
                 "INVALID_CURSOR", "pagination", "valid filter_digest required"
             )
         SnapshotFenceToken.parse(self.snapshot_token)
-        if not isinstance(self.last_key, tuple) or not self.last_key:
-            raise QueryError(
-                "INVALID_CURSOR", "pagination", "nonempty last_key tuple required"
-            )
+        _validate_cursor_key(self.endpoint_kind, self.last_key)
 
     def encode(self) -> str:
         payload = {
@@ -285,8 +288,8 @@ class PaginationCursor:
             "v": 1,
         }
         payload_json = canonical_json(payload)
-        mac = _sha256_hex(f"p6-cursor-v1:{payload_json}")
-        envelope = canonical_json({"mac": mac, "payload": payload})
+        checksum = _sha256_hex(f"p6-cursor-v1:{payload_json}")
+        envelope = canonical_json({"checksum_sha256": checksum, "payload": payload})
         return base64.urlsafe_b64encode(envelope.encode("utf-8")).decode("ascii")
 
     @classmethod
@@ -298,7 +301,7 @@ class PaginationCursor:
         expected_filter_digest: str,
         current_snapshot_token: str,
     ) -> PaginationCursor:
-        if not isinstance(raw, str) or not raw:
+        if not isinstance(raw, str) or not raw or len(raw) > 65536:
             raise QueryError("INVALID_CURSOR", "pagination", "empty cursor")
         try:
             padded = raw + "=" * (-len(raw) % 4)
@@ -308,14 +311,14 @@ class PaginationCursor:
             ) != raw.rstrip("="):
                 raise ValueError("noncanonical base64")
             envelope_text = decoded_bytes.decode("utf-8")
-            envelope = json.loads(envelope_text)
+            envelope = json.loads(envelope_text, parse_constant=_reject_json_constant)
         except Exception as error:
             raise QueryError(
                 "INVALID_CURSOR", "pagination", "malformed cursor encoding"
             ) from error
         if (
             not isinstance(envelope, dict)
-            or set(envelope.keys()) != {"mac", "payload"}
+            or set(envelope.keys()) != {"checksum_sha256", "payload"}
             or canonical_json(envelope) != envelope_text
         ):
             raise QueryError(
@@ -326,16 +329,15 @@ class PaginationCursor:
             not isinstance(payload, dict)
             or set(payload.keys())
             != {"endpoint_kind", "filter_digest", "last_key", "snapshot_token", "v"}
+            or type(payload.get("v")) is not int
             or payload.get("v") != 1
             or not isinstance(payload.get("last_key"), list)
             or not payload["last_key"]
         ):
             raise QueryError("INVALID_CURSOR", "pagination", "malformed cursor payload")
-        expected_mac = _sha256_hex(f"p6-cursor-v1:{canonical_json(payload)}")
-        if envelope["mac"] != expected_mac:
-            raise QueryError(
-                "INVALID_CURSOR", "pagination", "cursor integrity check failed"
-            )
+        expected_checksum = _sha256_hex(f"p6-cursor-v1:{canonical_json(payload)}")
+        if envelope["checksum_sha256"] != expected_checksum:
+            raise QueryError("INVALID_CURSOR", "pagination", "cursor checksum mismatch")
         cursor_obj = cls(
             endpoint_kind=payload["endpoint_kind"],
             filter_digest=payload["filter_digest"],
@@ -361,6 +363,77 @@ class PaginationCursor:
                 "cursor snapshot token does not match current pinned snapshot",
             )
         return cursor_obj
+
+
+def _validate_cursor_key(endpoint: str, key: tuple[Any, ...]) -> None:
+    """Validate untrusted positions independently of the public checksum.
+
+    A checksum detects accidental changes only. Anyone can recompute it and
+    choose another valid position; cursors grant no authority or access rights.
+    """
+    widths = {
+        "git_objects": 2,
+        "git_observations": 5,
+        "notes_captures": 3,
+        "context_resources": 3,
+        "paired_resources": 3,
+        "search": 2,
+    }
+    try:
+        if (
+            endpoint not in widths
+            or not isinstance(key, tuple)
+            or len(key) != widths[endpoint]
+            or any(type(v) is not str or not v or len(v) > 32768 for v in key)
+        ):
+            raise ValueError("invalid key shape or type")
+        if endpoint == "git_objects":
+            OID(*key)
+        elif endpoint in ("context_resources", "paired_resources"):
+            uuid4_value(key[0])
+        elif endpoint == "notes_captures":
+            uuid4_value(key[1])
+            uuid4_value(key[2])
+        elif endpoint == "git_observations":
+            if key[0] not in (
+                "acquisition",
+                "ref",
+                "root",
+                "snapshot",
+                "membership",
+                "manifest",
+            ):
+                raise ValueError("invalid observation kind")
+            scope = json.loads(key[1])
+            if (
+                not isinstance(scope, list)
+                or not scope
+                or canonical_json(scope) != key[1]
+            ):
+                raise ValueError("invalid scope")
+            uuid4_value(key[2])
+            uuid4_value(key[3])
+            provenance = json.loads(key[4])
+            if (
+                not isinstance(provenance, list)
+                or Provenance(*provenance).encoded != key[4]
+            ):
+                raise ValueError("invalid provenance")
+        elif endpoint == "search":
+            if key[0] not in SEARCH_PROJECTION_KINDS:
+                raise ValueError("invalid projection")
+            document = json.loads(key[1])
+            if (
+                not isinstance(document, list)
+                or not document
+                or any(type(v) is not str for v in document)
+                or canonical_json(document) != key[1]
+            ):
+                raise ValueError("invalid document key")
+    except Exception as error:
+        raise QueryError(
+            "INVALID_CURSOR", "pagination", "invalid endpoint key"
+        ) from error
 
 
 def filter_digest(endpoint_kind: str, filters: dict[str, object]) -> str:
@@ -846,10 +919,22 @@ class SearchQuery:
     expected_token: str | None = None
 
     def __post_init__(self) -> None:
-        if not isinstance(self.query_text, str) or not self.query_text:
+        if (
+            not isinstance(self.query_text, str)
+            or not self.query_text
+            or len(self.query_text) > 4096
+        ):
             raise QueryError("INVALID_QUERY", "search", "nonempty query_text required")
-        if not self.projection_kinds or any(
-            k not in SEARCH_PROJECTION_KINDS for k in self.projection_kinds
+        try:
+            self.query_text.encode("utf-8")
+        except UnicodeEncodeError as error:
+            raise QueryError(
+                "INVALID_QUERY", "search", "valid Unicode required"
+            ) from error
+        if (
+            not self.projection_kinds
+            or len(set(self.projection_kinds)) != len(self.projection_kinds)
+            or any(k not in SEARCH_PROJECTION_KINDS for k in self.projection_kinds)
         ):
             raise QueryError(
                 "INVALID_PROJECTION_KIND",
@@ -887,7 +972,7 @@ class SearchHit:
 
 @dataclass(frozen=True)
 class SearchResponse:
-    """Paginated search response with per-kind backend provenance ('projection' or 'authority_scan')."""
+    """Paginated search response with per-kind backend provenance ('verified_projection_scan' or 'authority_scan')."""
 
     hits: tuple[SearchHit, ...]
     backend: str
