@@ -636,14 +636,15 @@ class PairCoordinator:
 
 
 class WorkLedger:
-    """Request-scoped conservative accounting on a dedicated Operational DB.
+    """Durable finite request accounting, with mandatory loss-detecting checkpoints.
 
-    Reserve a finite upper bound durably BEFORE actual work. Finish records the
-    measured cost; an interrupted/unsettled permit keeps its full reservation.
-    Thus rollback or process death cannot refund already performed work. A lost
-    Operational store cannot continue an old request. No authoritative success
-    or retained bytes are inferred from this discardable state.
+    Every mutation and its checkpoint commit together. A new connection, or any
+    unknown same/other-connection write, verifies the actual accounting inventory
+    before continuation. Normal steps update fixed-size counters/checksums in O(1)
+    work; no Core ledger or authoritative success state is introduced.
     """
+
+    _CHECKPOINT_SCOPE = '["work-ledger","checkpoint",1]'
 
     def __init__(
         self,
@@ -654,14 +655,22 @@ class WorkLedger:
     ):
         self.db = db
         self._issued_permits: dict[int, WorkPermit] = {}
+        self._validated = {}
         self._path = Path(db.execute("PRAGMA database_list").fetchone()[2])
         self._file_identity = self._stat_identity()
         self._ready()
-        repository, instance = _identity(db, "operational")
+        self.identity = _identity(db, "operational")
+        repository, instance = self.identity
         if (repository_uuidv4 is not None and repository != repository_uuidv4) or (
             catalog_instance_uuidv4 is not None and instance != catalog_instance_uuidv4
         ):
             raise CoordinationError("STORE_IDENTITY", "operational")
+
+    def store_identity(self):
+        self._ready()
+        if _identity(self.db, "operational") != self.identity:
+            raise CoordinationError("STORE_IDENTITY", "operational")
+        return self.identity
 
     def _stat_identity(self):
         try:
@@ -671,9 +680,6 @@ class WorkLedger:
         return stat.st_dev, stat.st_ino
 
     def _ready(self):
-        # Returning an uncommitted reservation would permit work before the
-        # accounting survives process loss. Reject unsupported connections and
-        # settings rather than silently changing caller transaction ownership.
         if self.db.in_transaction:
             raise CoordinationError("ACCOUNTING_TRANSACTION", "request")
         if (
@@ -686,66 +692,171 @@ class WorkLedger:
         if self._stat_identity() != self._file_identity:
             raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
 
-    def validate_continuation(
-        self, request: RequestIdentity, attempt_uuidv4=None, *, scope=None
-    ):
-        """Missing accounting never means a resumed request has spent zero."""
-        self._ready()
-        self._validate_continuation(request, attempt_uuidv4, scope=scope)
+    def _stamp(self):
+        return self.db.execute("PRAGMA data_version").fetchone()[
+            0
+        ], self.db.total_changes
 
-    def _validate_continuation(self, request, attempt_uuidv4=None, *, scope=None):
-        row = self.db.execute(
-            "SELECT state,request_scope_json FROM acquisition_requests WHERE request_origin_uuidv4=? "
-            "AND request_uuidv4=?",
-            request.values(),
-        ).fetchone()
-        kinds = {
-            row[0]
-            for row in self.db.execute(
-                "SELECT work_kind FROM request_budgets WHERE request_origin_uuidv4=? "
-                "AND request_uuidv4=?",
+    @staticmethod
+    def _digest_row(row):
+        # An Operational consistency checksum, never a domain PK or provenance.
+        return int.from_bytes(
+            hashlib.sha256(_json(tuple(row)).encode()).digest(), "big"
+        )
+
+    @classmethod
+    def _toggle(cls, checkpoint, field, *rows):
+        value = int(checkpoint[field], 16)
+        for row in rows:
+            value ^= cls._digest_row(row)
+        checkpoint[field] = f"{value:064x}"
+
+    @staticmethod
+    def _allocation_scope(attempt):
+        return _json(
+            {"attempt_uuidv4": attempt, "purpose": "processing-step-allocation"}
+        )
+
+    @staticmethod
+    def _empty_checkpoint(scope, budgets):
+        return {
+            "version": 1,
+            "scope_sha256": hashlib.sha256(scope.encode()).hexdigest(),
+            "budgets": budgets,
+            "attempt_count": 0,
+            "attempt_xor": "0" * 64,
+            "work_count": 0,
+            "work_xor": "0" * 64,
+            "usage": dict.fromkeys(NotesLimits.work_limits(), 0),
+            "continuation_count": 0,
+            "continuation_xor": "0" * 64,
+        }
+
+    def _save_checkpoint(self, request, checkpoint):
+        cursor = self.db.execute(
+            "UPDATE request_continuations SET cursor_json=? "
+            "WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
+            (_json(checkpoint), *request.values(), self._CHECKPOINT_SCOPE),
+        )
+        if cursor.rowcount != 1:
+            raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+
+    def _check_inventory(self, request, scope, checkpoint):
+        budgets = dict(
+            self.db.execute(
+                "SELECT work_kind,finite_limit FROM request_budgets "
+                "WHERE request_origin_uuidv4=? AND request_uuidv4=?",
                 request.values(),
             )
-        }
-        if row is None or row[0] != "open" or kinds != set(NotesLimits.work_limits()):
+        )
+        actual = self._empty_checkpoint(scope, budgets)
+        attempts = set()
+        for row in self.db.execute(
+            "SELECT attempt_uuidv4,continuation_json FROM acquisition_attempts "
+            "WHERE request_origin_uuidv4=? AND request_uuidv4=?",
+            request.values(),
+        ):
+            attempts.add(row[0])
+            actual["attempt_count"] += 1
+            self._toggle(actual, "attempt_xor", row)
+        for row in self.db.execute(
+            "SELECT attempt_uuidv4,work_kind,work_coordinate,reserved,actual "
+            "FROM work_accounting WHERE request_origin_uuidv4=? AND request_uuidv4=?",
+            request.values(),
+        ):
+            if row[0] not in attempts or row[1] not in actual["usage"]:
+                raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+            actual["work_count"] += 1
+            actual["usage"][row[1]] += row[3] if row[4] is None else row[4]
+            self._toggle(actual, "work_xor", row)
+        allocation_scopes = {self._allocation_scope(attempt) for attempt in attempts}
+        found_allocations = set()
+        for row in self.db.execute(
+            "SELECT continuation_scope_json,cursor_json FROM request_continuations "
+            "WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json<>?",
+            (*request.values(), self._CHECKPOINT_SCOPE),
+        ):
+            actual["continuation_count"] += 1
+            self._toggle(actual, "continuation_xor", row)
+            if row[0] in allocation_scopes:
+                found_allocations.add(row[0])
+        if (
+            _json(actual) != _json(checkpoint)
+            or set(budgets) != set(NotesLimits.work_limits())
+            or found_allocations != allocation_scopes
+        ):
+            raise CoordinationError(
+                "CONTINUATION_UNAVAILABLE",
+                "request",
+                "accounting inventory/checkpoint mismatch",
+            )
+
+    def _check(self, request, attempt=None, scope=None):
+        row = self.db.execute(
+            "SELECT state,request_scope_json FROM acquisition_requests WHERE request_origin_uuidv4=? AND request_uuidv4=?",
+            request.values(),
+        ).fetchone()
+        saved = self.db.execute(
+            "SELECT cursor_json FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
+            (*request.values(), self._CHECKPOINT_SCOPE),
+        ).fetchone()
+        if row is None or row[0] != "open" or saved is None:
             raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+        try:
+            checkpoint = json.loads(saved[0])
+            if self._validated.get(request) != self._stamp():
+                self._check_store_identity()
+                self._check_inventory(request, row[1], checkpoint)
+        except (KeyError, ValueError, TypeError) as error:
+            raise CoordinationError("CONTINUATION_UNAVAILABLE", "request") from error
         if scope is not None and _json(json.loads(row[1])) != _json(json.loads(scope)):
             raise CoordinationError("REQUEST_SCOPE", "request")
         if (
-            attempt_uuidv4 is not None
+            attempt is not None
             and not self.db.execute(
-                "SELECT 1 FROM acquisition_attempts WHERE request_origin_uuidv4=? "
-                "AND request_uuidv4=? AND attempt_uuidv4=?",
-                (*request.values(), attempt_uuidv4),
+                "SELECT 1 FROM acquisition_attempts WHERE request_origin_uuidv4=? AND request_uuidv4=? AND attempt_uuidv4=?",
+                (*request.values(), attempt),
             ).fetchone()
         ):
             raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+        return checkpoint
 
-    def usage(self, request: RequestIdentity) -> dict[str, int]:
-        """Conservative expenditure, including each unsettled full reservation."""
+    def _check_store_identity(self):
+        if _identity(self.db, "operational") != self.identity:
+            raise CoordinationError("STORE_IDENTITY", "operational")
+
+    @contextmanager
+    def _checked(self, request, attempt=None, *, scope=None, write=False):
         self._ready()
-        self.db.execute("BEGIN")
+        # Even read validation takes the short write fence: its cached stamp
+        # must describe the same snapshot and cannot race another writer commit.
+        self.db.execute("BEGIN IMMEDIATE")
         try:
-            self._validate_continuation(request)
-            result = dict.fromkeys(NotesLimits.work_limits(), 0)
-            for kind, reserved, actual in self.db.execute(
-                "SELECT work_kind,reserved,actual FROM work_accounting "
-                "WHERE request_origin_uuidv4=? AND request_uuidv4=?",
-                request.values(),
-            ):
-                result[kind] += reserved if actual is None else actual
-            return result
-        finally:
+            checkpoint = self._check(request, attempt, scope)
+            yield checkpoint
+            if write:
+                self._save_checkpoint(request, checkpoint)
+            stamp = self._stamp()  # Capture before releasing the write fence.
+            if write:
+                self.db.commit()
+            else:
+                self.db.rollback()
+            self._validated[request] = stamp
+        except BaseException:
+            self._validated.pop(request, None)
             self.db.rollback()
+            raise
 
-    def new_request(self, request: RequestIdentity, scope: str, limits: dict[str, int]):
-        required = {
-            "input_bytes",
-            "verification_bytes",
-            "metadata_units",
-            "proof_steps",
-        }
-        if set(limits) != required:
+    def validate_continuation(self, request, attempt_uuidv4=None, *, scope=None):
+        with self._checked(request, attempt_uuidv4, scope=scope):
+            pass
+
+    def usage(self, request):
+        with self._checked(request) as checkpoint:
+            return dict(checkpoint["usage"])
+
+    def new_request(self, request, scope, limits):
+        if set(limits) != set(NotesLimits.work_limits()):
             raise ValueError("all four finite work limits required")
         for limit in limits.values():
             if type(limit) is not int or not 0 <= limit <= 2**63 - 1:
@@ -761,56 +872,108 @@ class WorkLedger:
                 "INSERT INTO request_budgets VALUES(?,?,?,?)",
                 [(*request.values(), kind, limit) for kind, limit in limits.items()],
             )
+            self.db.execute(
+                "INSERT INTO request_continuations VALUES(?,?,?,?)",
+                (
+                    *request.values(),
+                    self._CHECKPOINT_SCOPE,
+                    _json(self._empty_checkpoint(scope, limits)),
+                ),
+            )
+            stamp = self._stamp()
             self.db.commit()
+            self._validated[request] = stamp
         except BaseException:
+            self._validated.pop(request, None)
             self.db.rollback()
             raise
 
-    def attempt(self, request: RequestIdentity, attempt_uuidv4: str, continuation="{}"):
-        self._ready()
-        self.db.execute("BEGIN IMMEDIATE")
-        try:
-            self._validate_continuation(request)
+    def _put_continuation(self, request, checkpoint, scope, value):
+        old = self.db.execute(
+            "SELECT cursor_json FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
+            (*request.values(), scope),
+        ).fetchone()
+        if old is None:
+            checkpoint["continuation_count"] += 1
+        else:
+            self._toggle(checkpoint, "continuation_xor", (scope, old[0]))
+        self.db.execute(
+            "INSERT INTO request_continuations VALUES(?,?,?,?) ON CONFLICT(request_origin_uuidv4,request_uuidv4,continuation_scope_json) DO UPDATE SET cursor_json=excluded.cursor_json",
+            (*request.values(), scope, value),
+        )
+        self._toggle(checkpoint, "continuation_xor", (scope, value))
+
+    def attempt(self, request, attempt_uuidv4, continuation="{}"):
+        with self._checked(request, write=True) as checkpoint:
             self.db.execute(
                 "INSERT INTO acquisition_attempts VALUES(?,?,?,?)",
                 (*request.values(), attempt_uuidv4, continuation),
             )
-            self.db.commit()
-        except BaseException:
-            self.db.rollback()
-            raise
+            checkpoint["attempt_count"] += 1
+            self._toggle(checkpoint, "attempt_xor", (attempt_uuidv4, continuation))
+            self._put_continuation(
+                request,
+                checkpoint,
+                self._allocation_scope(attempt_uuidv4),
+                _json({"last_processing_step": 0}),
+            )
 
-    def increase_limit(
-        self, request: RequestIdentity, work_kind: str, finite_limit: int
-    ):
-        """Explicit finite increase; existing accounting is never reset."""
+    def increase_limit(self, request, work_kind, finite_limit):
         if type(finite_limit) is not int or not 0 <= finite_limit <= 2**63 - 1:
             raise ValueError("finite nonnegative signed int64 limit required")
-        self._ready()
-        self._validate_continuation(request)
-        cursor = self.db.execute(
-            "UPDATE request_budgets SET finite_limit=? WHERE request_origin_uuidv4=? "
-            "AND request_uuidv4=? AND work_kind=? AND finite_limit<?",
-            (finite_limit, *request.values(), work_kind, finite_limit),
-        )
-        if cursor.rowcount != 1:
-            raise CoordinationError("FINITE_INCREASE_REQUIRED", "request")
+        with self._checked(request, write=True) as checkpoint:
+            cursor = self.db.execute(
+                "UPDATE request_budgets SET finite_limit=? WHERE request_origin_uuidv4=? AND request_uuidv4=? AND work_kind=? AND finite_limit<?",
+                (finite_limit, *request.values(), work_kind, finite_limit),
+            )
+            if cursor.rowcount != 1:
+                raise CoordinationError("FINITE_INCREASE_REQUIRED", "request")
+            checkpoint["budgets"][work_kind] = finite_limit
 
-    def reserve(
-        self,
-        request: RequestIdentity,
-        attempt_uuidv4: str,
-        work_kind: str,
-        work_coordinate: str,
-        upper_bound: int,
-    ) -> WorkPermit:
-        self._ready()
+    def _insert_reservation(
+        self, request, attempt, kind, coordinate, amount, checkpoint
+    ):
+        self.db.execute(
+            "INSERT INTO work_accounting VALUES(?,?,?,?,?,?,NULL)",
+            (*request.values(), attempt, kind, coordinate, amount),
+        )
+        checkpoint["work_count"] += 1
+        checkpoint["usage"][kind] += amount
+        self._toggle(checkpoint, "work_xor", (attempt, kind, coordinate, amount, None))
+
+    def reserve(self, request, attempt_uuidv4, work_kind, work_coordinate, upper_bound):
         if type(upper_bound) is not int or not 0 <= upper_bound <= 2**63 - 1:
             raise ValueError("finite nonnegative upper bound required")
-        self._validate_continuation(request, attempt_uuidv4)
-        self._insert_reservation(
-            request, attempt_uuidv4, work_kind, work_coordinate, upper_bound
-        )
+        with self._checked(request, attempt_uuidv4, write=True) as checkpoint:
+            self._insert_reservation(
+                request,
+                attempt_uuidv4,
+                work_kind,
+                work_coordinate,
+                upper_bound,
+                checkpoint,
+            )
+            if work_coordinate.startswith("processing-step:"):
+                suffix = work_coordinate.removeprefix("processing-step:")
+                if suffix.isascii() and suffix.isdigit():
+                    step = int(suffix)
+                    if not 0 < step <= 2**63 - 1:
+                        raise CoordinationError("ACCOUNTING_STATE", "request")
+                    allocation_scope = self._allocation_scope(attempt_uuidv4)
+                    row = self.db.execute(
+                        "SELECT cursor_json FROM request_continuations WHERE request_origin_uuidv4=? "
+                        "AND request_uuidv4=? AND continuation_scope_json=?",
+                        (*request.values(), allocation_scope),
+                    ).fetchone()
+                    if row is None:
+                        raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+                    last = json.loads(row[0])["last_processing_step"]
+                    self._put_continuation(
+                        request,
+                        checkpoint,
+                        allocation_scope,
+                        _json({"last_processing_step": max(last, step)}),
+                    )
         return self._issue(
             WorkPermit(request, attempt_uuidv4, work_kind, work_coordinate, upper_bound)
         )
@@ -819,104 +982,103 @@ class WorkLedger:
         self._issued_permits[id(permit)] = permit
         return permit
 
-    def abandon(self, permit: WorkPermit):
-        """Discard a live settlement capability without refunding its charge."""
+    def abandon(self, permit):
         self._check_permit(permit)
         del self._issued_permits[id(permit)]
 
     def _check_permit(self, permit):
-        # A reconstructed row value is not evidence of measured work. In
-        # particular, no new process may settle a formerly uncertain permit.
         if self._issued_permits.get(id(permit)) is not permit:
             raise CoordinationError("PERMIT_ALREADY_SETTLED_OR_LOST", "request")
 
-    def _insert_reservation(self, request, attempt, kind, coordinate, amount):
-        self.db.execute(
-            "INSERT INTO work_accounting VALUES(?,?,?,?,?,?,NULL)",
-            (*request.values(), attempt, kind, coordinate, amount),
-        )
-
-    def reserve_processing_step(self, request, attempt, kind, amount) -> WorkPermit:
-        """Allocate a real processing occurrence and reserve it in one commit.
-
-        Counting rows is insufficient after failed reservations or noncontiguous
-        prior coordinates. The write lock also serializes budget instances using
-        the same request/attempt; no process-local counter is authoritative.
-        """
-        self._ready()
+    def reserve_processing_step(self, request, attempt, kind, amount):
         if type(amount) is not int or not 0 <= amount <= 2**63 - 1:
             raise ValueError("finite nonnegative upper bound required")
-        self.db.execute("BEGIN IMMEDIATE")
-        try:
-            self._validate_continuation(request, attempt)
-            allocation_scope = _json(
-                {
-                    "attempt_uuidv4": attempt,
-                    "purpose": "processing-step-allocation",
-                }
-            )
-            cursor = self.db.execute(
-                "SELECT cursor_json FROM request_continuations "
-                "WHERE request_origin_uuidv4=? AND request_uuidv4=? "
-                "AND continuation_scope_json=?",
+        with self._checked(request, attempt, write=True) as checkpoint:
+            allocation_scope = self._allocation_scope(attempt)
+            row = self.db.execute(
+                "SELECT cursor_json FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
                 (*request.values(), allocation_scope),
             ).fetchone()
-            if cursor is None:
-                # Recover only the coordinate allocator from existing work,
-                # never expenditure from a missing accounting history. This
-                # scan happens once; the Operational cursor avoids O(n²) work.
-                last = self.db.execute(
-                    "SELECT coalesce(max(CAST(substr(work_coordinate,17) AS INTEGER)),0) "
-                    "FROM work_accounting WHERE request_origin_uuidv4=? "
-                    "AND request_uuidv4=? AND attempt_uuidv4=? "
-                    "AND work_coordinate GLOB 'processing-step:[0-9]*'",
-                    (*request.values(), attempt),
-                ).fetchone()[0]
-            else:
-                last = json.loads(cursor[0])["last_processing_step"]
+            if row is None:
+                raise CoordinationError("CONTINUATION_UNAVAILABLE", "request")
+            last = json.loads(row[0])["last_processing_step"]
             if type(last) is not int or not 0 <= last < 2**63 - 1:
                 raise CoordinationError("ACCOUNTING_STATE", "request")
-            step = last + 1
-            coordinate = f"processing-step:{step}"
-            self._insert_reservation(request, attempt, kind, coordinate, amount)
-            self.db.execute(
-                "INSERT INTO request_continuations VALUES(?,?,?,?) "
-                "ON CONFLICT(request_origin_uuidv4,request_uuidv4,continuation_scope_json) "
-                "DO UPDATE SET cursor_json=excluded.cursor_json",
-                (
-                    *request.values(),
-                    allocation_scope,
-                    _json({"last_processing_step": step}),
-                ),
+            coordinate = f"processing-step:{last + 1}"
+            self._insert_reservation(
+                request, attempt, kind, coordinate, amount, checkpoint
             )
-            self.db.commit()
-            return self._issue(WorkPermit(request, attempt, kind, coordinate, amount))
-        except BaseException:
-            self.db.rollback()
-            raise
+            self._put_continuation(
+                request,
+                checkpoint,
+                allocation_scope,
+                _json({"last_processing_step": last + 1}),
+            )
+        return self._issue(WorkPermit(request, attempt, kind, coordinate, amount))
 
-    def finish(self, permit: WorkPermit, actual: int):
+    def finish(self, permit, actual):
         self._check_permit(permit)
         if type(actual) is not int or not 0 <= actual <= permit.reserved:
             raise ValueError("actual work exceeds reserved bound")
-        self._ready()
-        self._validate_continuation(permit.request, permit.attempt_uuidv4)
-        cursor = self.db.execute(
-            "UPDATE work_accounting SET actual=? WHERE request_origin_uuidv4=? "
-            "AND request_uuidv4=? AND attempt_uuidv4=? AND work_kind=? "
-            "AND work_coordinate=? AND actual IS NULL AND reserved=?",
-            (
-                actual,
-                *permit.request.values(),
+        with self._checked(
+            permit.request, permit.attempt_uuidv4, write=True
+        ) as checkpoint:
+            cursor = self.db.execute(
+                "UPDATE work_accounting SET actual=? WHERE request_origin_uuidv4=? AND request_uuidv4=? AND attempt_uuidv4=? AND work_kind=? AND work_coordinate=? AND actual IS NULL AND reserved=?",
+                (
+                    actual,
+                    *permit.request.values(),
+                    permit.attempt_uuidv4,
+                    permit.work_kind,
+                    permit.work_coordinate,
+                    permit.reserved,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise CoordinationError("PERMIT_ALREADY_SETTLED_OR_LOST", "request")
+            checkpoint["usage"][permit.work_kind] += actual - permit.reserved
+            row = (
                 permit.attempt_uuidv4,
                 permit.work_kind,
                 permit.work_coordinate,
                 permit.reserved,
-            ),
-        )
-        if cursor.rowcount != 1:
-            raise CoordinationError("PERMIT_ALREADY_SETTLED_OR_LOST", "request")
+            )
+            self._toggle(checkpoint, "work_xor", (*row, None), (*row, actual))
         del self._issued_permits[id(permit)]
+
+    def _progress_scope(self, scope):
+        parsed = json.loads(scope)
+        normalized = _json(parsed)
+        if normalized == self._CHECKPOINT_SCOPE or (
+            isinstance(parsed, dict)
+            and parsed.get("purpose") == "processing-step-allocation"
+        ):
+            raise CoordinationError("PROGRESS_SCOPE", "request")
+        return normalized
+
+    def get_progress(self, request, scope):
+        """Return decoded original progress, or None only for a genuine new slot."""
+        scope = self._progress_scope(scope)
+        with self._checked(request):
+            row = self.db.execute(
+                "SELECT cursor_json FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
+                (*request.values(), scope),
+            ).fetchone()
+            return None if row is None else json.loads(row[0])
+
+    def set_progress_once(self, request, scope, value):
+        """Atomically preserve the first decoded JSON value for a semantic slot."""
+        scope = self._progress_scope(scope)
+        encoded = _json(value)
+        with self._checked(request, write=True) as checkpoint:
+            row = self.db.execute(
+                "SELECT cursor_json FROM request_continuations WHERE request_origin_uuidv4=? AND request_uuidv4=? AND continuation_scope_json=?",
+                (*request.values(), scope),
+            ).fetchone()
+            if row is not None:
+                return json.loads(row[0])
+            self._put_continuation(request, checkpoint, scope, encoded)
+            return value
 
 
 class NotesWorkBudget:

@@ -335,3 +335,167 @@ def test_settlement_of_same_issued_permit_is_one_time(accounting):
     with pytest.raises(CoordinationError, match="PERMIT_ALREADY_SETTLED_OR_LOST"):
         ledger.finish(permit, 0)
     assert ledger.usage(request)["input_bytes"] == 4
+
+
+@pytest.mark.parametrize("reopen", [False, True])
+def test_lost_work_rows_never_refund_the_old_request(accounting, reopen):
+    path, db, ledger, request, attempt = accounting
+    work = budget(accounting)
+    work.require("input_bytes", 10)
+    work.charge("input_bytes", 10)
+    db.execute("DELETE FROM work_accounting")
+    with contextlib.ExitStack() as stack:
+        if reopen:
+            ledger = WorkLedger(
+                stack.enter_context(contextlib.closing(connect(path, "operational")))
+            )
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            NotesWorkBudget(ledger, request, attempt, NotesLimits())
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.reserve(request, attempt, "input_bytes", "unsafe-retry", 10)
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.usage(request)
+
+
+@pytest.mark.parametrize("lost_scope", ["checkpoint", "allocator"])
+def test_missing_mandatory_checkpoint_or_allocator_never_reconstructs(
+    accounting, lost_scope
+):
+    _, db, ledger, request, attempt = accounting
+    scope = (
+        ledger._CHECKPOINT_SCOPE
+        if lost_scope == "checkpoint"
+        else ledger._allocation_scope(attempt)
+    )
+    db.execute(
+        "DELETE FROM request_continuations WHERE continuation_scope_json=?", (scope,)
+    )
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        budget(accounting)
+    assert (
+        db.execute(
+            "SELECT count(*) FROM request_continuations WHERE continuation_scope_json=?",
+            (scope,),
+        ).fetchone()[0]
+        == 0
+    )
+
+
+def test_changed_settled_cost_cannot_refund_work(accounting):
+    _, db, ledger, request, _ = accounting
+    work = budget(accounting)
+    work.require("input_bytes", 8)
+    work.charge("input_bytes", 8)
+    db.execute("UPDATE work_accounting SET actual=0")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.usage(request)
+
+
+def test_missing_independent_attempt_detected_even_if_current_attempt_exists(
+    accounting,
+):
+    _, db, ledger, request, attempt = accounting
+    separate = str(uuid4())
+    ledger.attempt(request, separate)
+    db.execute("DELETE FROM acquisition_attempts WHERE attempt_uuidv4=?", (separate,))
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request, attempt)
+
+
+@pytest.mark.parametrize("change", ["delete", "alter"])
+@pytest.mark.parametrize("fresh_ledger", [False, True])
+def test_lost_or_changed_progress_never_becomes_a_new_observation(
+    accounting, change, fresh_ledger
+):
+    path, db, ledger, request, _ = accounting
+    scope = '["p4-discovery","local-source"]'
+    assert ledger.get_progress(request, scope) is None
+    original = {"capture_uuidv4": str(uuid4())}
+    assert ledger.set_progress_once(request, scope, original) == original
+    assert ledger.set_progress_once(request, scope, {"replacement": True}) == original
+    if change == "delete":
+        db.execute(
+            "DELETE FROM request_continuations WHERE continuation_scope_json=?",
+            (scope,),
+        )
+    else:
+        db.execute(
+            "UPDATE request_continuations SET cursor_json='{}' WHERE continuation_scope_json=?",
+            (scope,),
+        )
+    with contextlib.ExitStack() as stack:
+        if fresh_ledger:
+            ledger = WorkLedger(
+                stack.enter_context(contextlib.closing(connect(path, "operational")))
+            )
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.get_progress(request, scope)
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.set_progress_once(request, scope, {"replacement": True})
+
+
+def test_external_connection_accounting_loss_invalidates_live_cache(accounting):
+    path, _, ledger, request, attempt = accounting
+    ledger.reserve(request, attempt, "input_bytes", "input", 10)
+    ledger.validate_continuation(request, attempt)
+    with contextlib.closing(connect(path, "operational")) as other:
+        other.execute("DELETE FROM work_accounting")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.reserve(request, attempt, "input_bytes", "unsafe-retry", 10)
+
+
+def test_normal_reservations_and_progress_do_not_rescan_work_history(accounting):
+    _, db, _, request, attempt = accounting
+
+    class CountInventoryChecks(WorkLedger):
+        checks = 0
+
+        def _check_inventory(self, *args):
+            self.checks += 1
+            return super()._check_inventory(*args)
+
+    ledger = CountInventoryChecks(db)
+    work = NotesWorkBudget(ledger, request, attempt, NotesLimits())
+    assert ledger.checks == 1  # Mandatory full check when resuming a connection.
+    for index in range(10):
+        work.require("input_bytes", 1)
+        work.charge("input_bytes", 1)
+        ledger.set_progress_once(request, f'["step",{index}]', {"index": index})
+        assert ledger.get_progress(request, f'["step",{index}]') == {"index": index}
+        assert ledger.usage(request)["input_bytes"] == index + 1
+    assert ledger.checks == 1
+    # An unknown same-connection write forces one fresh inventory validation.
+    db.execute("UPDATE acquisition_requests SET state=state")
+    ledger.validate_continuation(request)
+    assert ledger.checks == 2
+    ledger.validate_continuation(request)
+    assert ledger.checks == 2
+
+
+def test_lost_zero_cost_work_is_still_detected(accounting):
+    _, db, ledger, request, attempt = accounting
+    permit = ledger.reserve(request, attempt, "input_bytes", "empty-note-read", 0)
+    ledger.finish(permit, 0)
+    db.execute("DELETE FROM work_accounting")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request)
+
+
+def test_explicit_new_request_remains_possible_after_old_accounting_loss(accounting):
+    _, db, ledger, old_request, old_attempt = accounting
+    ledger.reserve(old_request, old_attempt, "input_bytes", "spent", 10)
+    db.execute("DELETE FROM work_accounting")
+    fresh = RequestIdentity(str(uuid4()), str(uuid4()))
+    ledger.new_request(
+        fresh,
+        '{"explicit":"new request"}',
+        {kind: 10 for kind in NotesLimits.work_limits()},
+    )
+    fresh_attempt = str(uuid4())
+    ledger.attempt(fresh, fresh_attempt)
+    permit = ledger.reserve(fresh, fresh_attempt, "input_bytes", "new-read", 10)
+    ledger.finish(permit, 10)
+    assert ledger.usage(fresh)["input_bytes"] == 10
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(old_request)
+    assert not (accounting[0].parent / "p1-recovery-stop.json").exists()
