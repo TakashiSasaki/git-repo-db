@@ -46,6 +46,7 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 from repo_catalog.adapters.sqlite.p1_schema import (
     validate as p1_schema_validate,
 )
+from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
 from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
@@ -205,6 +206,7 @@ class RecoveryWorkBudget:
         note_bytes: int = 16 * 1024 * 1024,
         work_limits: Mapping[str, int] | None = None,
         initial_usage: Mapping[str, int] | None = None,
+        reserve: Callable[[dict[str, int]], None] | None = None,
     ) -> None:
         self.limits = NotesLimits(note_bytes=note_bytes)
         self._max = dict(NotesLimits.work_limits())
@@ -216,6 +218,7 @@ class RecoveryWorkBudget:
                 if k in self.usage and type(v) is int and v >= 0:
                     self.usage[k] = v
         self._pending: dict[str, int] = {}
+        self._reserve = reserve
 
     def is_exhausted(self, unit: str | None = None) -> bool:
         if unit is not None:
@@ -237,7 +240,11 @@ class RecoveryWorkBudget:
             )
         if unit in self._pending:
             raise CoordinationError("UNSETTLED_WORK", "recovery", unit)
-        self.usage[unit] += amount
+        updated = dict(self.usage)
+        updated[unit] += amount
+        if self._reserve is not None:
+            self._reserve(updated)
+        self.usage = updated
         self._pending[unit] = amount
 
     def abandon(self, unit: str) -> None:
@@ -1626,24 +1633,35 @@ class SQLiteRecoveryAdapter:
         if not salvage_file.exists():
             raise RecoveryError(f"Salvage file {salvage_file} does not exist")
 
-        req_id = request_id or "default"
-        budget_file = fresh_destination_dir / f"p1-recovery-request-{req_id}.json"
-        initial_usage = {}
-        budget_already_exhausted = False
-        if budget_file.exists():
-            try:
-                state_data = json.loads(budget_file.read_text(encoding="utf-8"))
-                initial_usage = state_data.get("cumulative_usage", {})
-                budget_already_exhausted = state_data.get("budget_exhausted", False)
-            except Exception:
-                pass
-
         b = budget or RecoveryBudget()
+        limits = dict(NotesLimits.work_limits())
+        limits.update(b.max_work_units)
+        limits.update(
+            input_scan_bytes=b.max_input_bytes, input_records=b.max_input_records
+        )
+        with recovery_request(fresh_destination_dir, request_id, b, limits) as request:
+            return self._merge_salvage_request(
+                fresh_destination_dir,
+                salvage_file,
+                b,
+                request,
+                fault_stage=fault_stage,
+            )
+
+    def _merge_salvage_request(
+        self, fresh_destination_dir, salvage_file, b, request, *, fault_stage=None
+    ):
         work_budget = RecoveryWorkBudget(
             note_bytes=b.max_payload_bytes,
-            work_limits=b.max_work_units,
-            initial_usage=initial_usage,
+            work_limits={
+                **b.max_work_units,
+                "input_scan_bytes": b.max_input_bytes,
+                "input_records": b.max_input_records,
+            },
+            initial_usage=request.usage,
+            reserve=request.reserve,
         )
+        budget_already_exhausted = request.state["budget_exhausted"]
 
         processed = 0
         admitted = 0
@@ -1668,17 +1686,7 @@ class SQLiteRecoveryAdapter:
             ctx_store = ContextStore(ctx_conn)
 
         def _save_budget_state():
-            tmp = fresh_destination_dir / f"{budget_file.name}.tmp.{uuid.uuid4().hex}"
-            data = {
-                "request_id": req_id,
-                "cumulative_usage": dict(work_budget.usage),
-                "budget_exhausted": budget_exhausted,
-                "updated_at_us": int(time.time() * 1_000_000),
-            }
-            tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-            _fsync_file(tmp)
-            os.replace(tmp, budget_file)
-            _fsync_dir(fresh_destination_dir)
+            request.mark_exhausted(budget_exhausted)
 
         try:
             with salvage_file.open("r", encoding="utf-8") as f:

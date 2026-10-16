@@ -584,3 +584,20 @@ Use `uv run pytest tests/integration/p7/test_exact_replay.py -q` for the focused
 checks. This procedure does not grant authenticity to attributed reports, imply
 full typed recovery of unsupported Context resource candidates, or establish
 host-power-loss guarantees.
+### P7 recovery-request reservation boundary
+
+For disposable fresh-destination salvage merge, keep request accounting outside
+Operational/Search. Bind a canonical path-safe request ID to one immutable finite
+contract; serialize its complete attempts with a permanent process lock. Reserve
+before input or admission work, fsync the reservation checkpoint before updating
+its report, and retain the greater checkpoint expenditure after interrupted
+report publication. A missing/corrupt record refuses continuation; never interpret
+it as zero. Explicit new work must use a distinct ID. Do not infer that removing
+all external accounting evidence is detectable or that process-crash tests prove
+host power-loss durability.
+
+Reproduce with `uv run pytest tests/integration/p7/test_durable_budget.py -q`.
+The suite uses spawned processes and SIGKILL before work, after work and after
+actual authoritative admission, concurrent retries, lowered reports, missing
+records, invalid IDs and Operational/Search deletion. Keep these counterexamples
+at the real work boundary when changing the reader or admission code.
