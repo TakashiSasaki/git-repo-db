@@ -7,6 +7,9 @@ scalar admission; it intentionally exposes no public initializer or file archive
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from pathlib import Path
+
 from repo_catalog.adapters.sqlite.p1_core import Core, _completed_read, _decoded_read
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.notes import (
@@ -38,6 +41,47 @@ class GitCore(Core):
     corruption. Generic SQL is metadata inspection only: retained payload/proof
     byte columns are accessible only through the checked typed read methods.
     """
+
+    @classmethod
+    @contextmanager
+    def for_snapshot(cls, read_snapshot, directory):
+        """Checked, expiring typed reader over a coordinator-owned snapshot.
+
+        Only this trusted adapter binds the underlying connection. Application
+        callers never construct partially initialized capabilities or alter the
+        coordinator authorizer. The original snapshot remains the lifetime owner.
+        """
+        from repo_catalog.adapters.sqlite.p1_coordination import ReadSnapshot
+
+        if not isinstance(read_snapshot, ReadSnapshot):
+            raise CoreFailure("SNAPSHOT_REQUIRED", "core")
+        read_snapshot._available()
+        if not read_snapshot.in_transaction:
+            raise CoreFailure("TRANSACTION", "core")
+        read_snapshot.identity("core")
+        result = cls.__new__(cls)
+        result._directory = Path(directory)
+        result._db = read_snapshot._db
+        result._snapshot_owner = read_snapshot
+        result._external = result._active = True
+        result._admitting = result._reading = result._stopped = False
+        result._on_corruption = None
+        result._db.set_authorizer(result._authorize)
+        try:
+            yield result
+            result._complete_read(None)
+        finally:
+            result._active = False
+            # The coordinator owns connection teardown and its read guard.
+            from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+
+            PairCoordinator(directory)._guard_read(result._db)
+
+    def _available(self):
+        super()._available()
+        owner = getattr(self, "_snapshot_owner", None)
+        if owner is not None:
+            owner._available()
 
     def ensure_available(self) -> None:
         """Fence opt-in acquisition before any source I/O or request work."""
