@@ -341,3 +341,33 @@ def test_live_settlement_order_is_conservative_after_sigkill(catalog, during):
         )
         with pytest.raises(CoordinationError):
             work.charge("input_bytes", 0)
+
+
+@pytest.mark.parametrize("record", ["report", "checkpoint", "registry", "marker"])
+def test_boolean_version_cannot_alias_valid_accounting(catalog, tmp_path, record):
+    salvage, _ = _candidate(tmp_path)
+    adapter = SQLiteRecoveryAdapter()
+    adapter.merge_salvage(catalog, salvage, request_id="typed-record")
+    names = {
+        "report": "p1-recovery-request-typed-record.json",
+        "checkpoint": "p1-recovery-request-typed-record.reserved.json",
+        "registry": "p1-recovery-requests.json",
+        "marker": "p1-recovery-requests.initialized",
+    }
+    target = catalog / names[record]
+    data = json.loads(target.read_text())
+    data["version"] = True
+    target.write_text(json.dumps(data))
+    with pytest.raises(RecoveryError):
+        adapter.merge_salvage(catalog, salvage, request_id="typed-record")
+    assert _count(catalog) == 1
+
+
+@pytest.mark.parametrize("raw", ['{"version":1,"version":1}', '{"version":NaN}'])
+def test_noncanonical_accounting_json_fails_closed(tmp_path, raw):
+    from repo_catalog.adapters.sqlite.recovery_budget import _read
+
+    target = tmp_path / "budget.json"
+    target.write_text(raw)
+    with pytest.raises(RecoveryError):
+        _read(target)

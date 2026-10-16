@@ -41,6 +41,25 @@ def _sync_dir(directory: Path) -> None:
         os.close(fd)
 
 
+def _same_json(left, right) -> bool:
+    # JSON equality is typed: Python considers True == 1, but a persisted
+    # malformed version or contract must not alias a valid one.
+    return json.dumps(left, sort_keys=True) == json.dumps(right, sort_keys=True)
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate recovery accounting key")
+        result[key] = value
+    return result
+
+
+def _invalid_constant(value):
+    raise ValueError(f"Invalid recovery accounting number: {value}")
+
+
 def _read(path: Path) -> dict:
     try:
         # Nonblocking open lets a malformed FIFO/device fail validation instead
@@ -53,7 +72,9 @@ def _read(path: Path) -> dict:
             raw = handle.read(_MAX_STATE_BYTES + 1)
         if len(raw) > _MAX_STATE_BYTES:
             raise ValueError("oversized state")
-        result = json.loads(raw)
+        result = json.loads(
+            raw, object_pairs_hook=_unique_object, parse_constant=_invalid_constant
+        )
         if not isinstance(result, dict):
             raise ValueError("object state required")
         return result
@@ -160,7 +181,7 @@ def recovery_request(
     with _file_gate(directory / f"p1-recovery-request-{req_id}.lock", exclusive=True):
         with _file_gate(directory / "p1-recovery-requests.lock", exclusive=True):
             if marker.exists() or marker.is_symlink():
-                if _read(marker) != {"version": 1}:
+                if not _same_json(_read(marker), {"version": 1}):
                     raise RecoveryError("Invalid recovery registry marker")
                 registry = _read(registry_path)
             elif registry_path.exists() or path.exists() or reservation_path.exists():
@@ -175,6 +196,7 @@ def recovery_request(
                 _write(marker, {"version": 1})
             if (
                 set(registry) != {"version", "requests"}
+                or type(registry["version"]) is not int
                 or registry["version"] != 1
                 or not isinstance(registry["requests"], dict)
             ):
@@ -185,13 +207,16 @@ def recovery_request(
                     # An initial state published before registration can only
                     # be safely adopted if exactly pristine and matching.
                     orphan = _read(path)
-                    if orphan != {
-                        "version": 1,
-                        "request_id": req_id,
-                        "contract": contract,
-                        "cumulative_usage": dict.fromkeys(limits, 0),
-                        "budget_exhausted": False,
-                    }:
+                    if not _same_json(
+                        orphan,
+                        {
+                            "version": 1,
+                            "request_id": req_id,
+                            "contract": contract,
+                            "cumulative_usage": dict.fromkeys(limits, 0),
+                            "budget_exhausted": False,
+                        },
+                    ):
                         raise RecoveryError("Unregistered conflicting recovery state")
                 else:
                     _write(
@@ -206,7 +231,7 @@ def recovery_request(
                     )
                 initial = _read(path)
                 if reservation_path.exists() or reservation_path.is_symlink():
-                    if _read(reservation_path) != initial:
+                    if not _same_json(_read(reservation_path), initial):
                         raise RecoveryError(
                             "Unregistered conflicting reservation checkpoint"
                         )
@@ -214,7 +239,7 @@ def recovery_request(
                     _write(reservation_path, initial)
                 requests[req_id] = contract
                 _write(registry_path, registry)
-            elif requests[req_id] != contract:
+            elif not _same_json(requests[req_id], contract):
                 raise RecoveryError(
                     "Existing recovery request budget contract cannot change; use a distinct explicit request"
                 )
@@ -228,9 +253,10 @@ def recovery_request(
                     "cumulative_usage",
                     "budget_exhausted",
                 }
+                or type(state["version"]) is not int
                 or state["version"] != 1
                 or state["request_id"] != req_id
-                or state["contract"] != contract
+                or not _same_json(state["contract"], contract)
                 or type(state["budget_exhausted"]) is not bool
             ):
                 raise RecoveryError("Conflicting recovery accounting state")
@@ -254,7 +280,7 @@ def recovery_request(
                     type(v) is not int or not usage[k] <= v <= limits[k]
                     for k, v in reserved_usage.items()
                 )
-                or dict(reserved, cumulative_usage=usage) != expected
+                or not _same_json(dict(reserved, cumulative_usage=usage), expected)
             ):
                 raise RecoveryError("Conflicting recovery reservation checkpoint")
             if usage != reserved_usage:
