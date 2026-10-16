@@ -57,7 +57,7 @@ Coverage remains partial/conflicting. Classify both layers in per-node evidence.
 For repeated Search rebuilds, scanning public PR/Issue queries alone cannot prove
 projection correctness. Retain documents referenced by an old generation until
 replacement succeeds, but admit only the pinned Core snapshot's current keys to
-the new generation. Test more than one 200-row stale-only batch, real cancellation
+the new generation. Test a stale-only 200-row batch before current documents, real cancellation
 with the old ready index intact, repeated and empty rebuilds, and retained Core
 text. Unreferenced Search derivatives may be removed after promotion; this does
 not authorize deleting authoritative text or promise atomicity of all rebuild
