@@ -1,5 +1,69 @@
 # Schema 21 collection contract restoration
 
+PR: https://github.com/TakashiSasaki/git-repo-db/pull/93
+
+Final owned cohort: **244 passed, 0 failed, 0 errors, 0 skipped**. All 172 inherited
+failures in this owned cohort are resolved. The original cohort had 243 nodes;
+one explicit positive/negative physical-boundary regression was added. This is
+owned-cohort acceptance, not a claim that the whole repository passes.
+
+Frozen tested executable source: `76d3389ab4d450462c2be47e91f5228cdefae71a`; Git tree `ed9179b121412e5a68da4b69c0b3d7af8c87af58`.
+The final manifest reconciles 332 executable Python/SQL/resource/configuration
+inputs with that source. Follow-up changes only record evidence, documentation
+and test-node disposition metadata; the owned cohort does not consume that
+metadata. Production source and all schemas are unchanged.
+
+| Run | Passed | Failed | Meaning |
+|---|---:|---:|---|
+| Before | 71 | 172 | Original executable test modules imported from main at collection |
+| Initial routing diagnostic | 142 | 101 | Revealed layered obsolete continuation expectations |
+| Later diagnostic | 241 | 3 | Remaining cancellation/aggregate-clock expectations |
+| Final frozen source | 244 | 0 | Complete owned cohort after corrections |
+
+All four JUnit/journal node sets and outcomes reconcile exactly. Raw logs, JUnit
+and per-phase journals are gzip-compressed under `runs/`, including every failed
+experiment. `classification.json` / `.csv` records all 172 original failed node
+IDs, original messages, expected physical owner, layered cause, fix PR and final
+result. `node-renames.json` maps all five renamed functions with unchanged
+parameter suffixes. `artifact-sha256.json` binds stored artifacts.
+
+The before subprocess imported unchanged main modules before editing began;
+the worktree was subsequently edited while that diagnostic ran. Traceback source
+snippets can therefore reflect later lines. The parent coordinator's independent
+clean-worktree baseline is authoritative for exact original source locations.
+Intermediate working-tree runs are diagnostic counterexamples. Final executable
+inputs stayed frozen throughout its complete run.
+
+Independent A architecture and C fixture reviews reported no blocker for the
+frozen source; their narrow scopes and execution limits are in `reviews.json`.
+Independent integrated per-node execution, full Schema 21/P1–P6, packaging and
+remaining root-owned failure groups belong to parent integration evidence.
+Owner merge authorization remains pending; no merge or activation occurred.
+
+Final command (repository default marker policy preserved):
+
+```sh
+uv sync --locked --group dev
+uv run pytest -n 4 -q --tb=short \
+  tests/integration/test_catalog3_github_runtime.py \
+  tests/integration/test_catalog3_rest_boundaries.py \
+  tests/integration/test_phase1_retirement.py \
+  tests/integration/test_current_collection_rejection_clocks.py \
+  tests/integration/test_current_review_query_coverage.py \
+  tests/integration/test_catalog3_review_coverage.py \
+  tests/integration/test_publication_free_acquisition.py \
+  --junitxml=/external/evidence/final.xml --journal=/external/evidence/final.jsonl
+```
+
+Ruff check and format passed across all eight changed Python files. The active
+publication-free disposition audit accounts for all 1950 historical baseline
+nodes against the actual 3492 default collected nodes on this branch (collection
+proof only). A pre-existing cache test rename is recorded with its actual two
+same-store FK assertions, without claiming the retired cross-owner-cache test
+semantic was preserved. The historical baseline inventory is unchanged.
+
+## Checkpoint history and contract explanation
+
 Base: `b86c46761ec0c3f3843a19edd4f3e106ef5ef58c` (unchanged public main).
 
 The public three-store contract is ADR 0002 PF-P04/P06/P07/P12. Core owns
