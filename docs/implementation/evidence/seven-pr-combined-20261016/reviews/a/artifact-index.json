@@ -151,6 +151,14 @@
     "bytes": 3113,
     "sha256": "ed2727290f660d0ef96d572beaa77be2ebb529f419e899d9a97b030c880cef8a"
   },
+  "skill-supplement-final-approval.json": {
+    "bytes": 1300,
+    "sha256": "0febc6f011af7580642d8ae04fd649b5885d365dd4ac4471749af76b1b6e36dc"
+  },
+  "skill-supplement-review-pending-link.json": {
+    "bytes": 1793,
+    "sha256": "56074d6e121473316ac4e87fcfba6dfff8162c83000ecab14ff077c0667e0c65"
+  },
   "source-binding.json": {
     "bytes": 571,
     "sha256": "ba4b01e92d6a70bd6f9cfaf4af183e4fe46b4adaaf09d8086bd056fbd3ce3fdd"

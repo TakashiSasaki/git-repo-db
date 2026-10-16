@@ -1,0 +1,35 @@
+"""Preserve existing PR descriptions and append the completed combined acceptance binding."""
+import json,subprocess
+from pathlib import Path
+root=Path('/workspace/integration-acceptance')
+rows=json.loads((root/'chain.json').read_text())
+full=json.loads((root/'full-reconciliation.json').read_text()); p7=json.loads((root/'p7-reconciliation.json').read_text())
+assert full['all_checks_pass'] and p7['all_checks_pass']
+def api(*args,**kw):
+    return subprocess.check_output(['gh','api',*args],text=True,**kw)
+marker='\n\n<!-- seven-pr-combined-acceptance-20261016 -->\n'
+evidence='https://github.com/TakashiSasaki/git-repo-db/pull/94'
+tail='''## Final seven-PR combined acceptance
+
+The exact reviewed seven-PR combination passed: **3755 passed / 0 failed / 0 errors / 0 skipped**, default selection from 3757 collected (only existing live/stress 2 deselections). P7 separately passed 255 with the original 255-node set unchanged; P1–P6/cross-stage 937 and all former Schema 21 228 nodes passed within the full run. Clean installed wheel + sdist-wheel verification, official audits/Ruff and four independent reviews passed. No new integration blocker or production correction was required.
+
+Frozen synthetic source: `388b824d1b3abe41c902759bf37a52c6ee5bcd2f`; final combined tree: `ea006924152d2fc508c7eb21697ad3c376e373f6`. All seven reviewed feature HEADs are unchanged. This is local combined engineering acceptance; hosted Development receipts report runtime 0/full_acceptance=false and are not Full Release Acceptance.
+
+Raw hashed evidence, installed manifests, reviewer reports and exact owner-executable per-step merge gates: [supplementary evidence PR #94](https://github.com/TakashiSasaki/git-repo-db/pull/94). It does not add a runtime dependency or alter the order **#89 → #87 → #88 → #93 → #91 → #92 → #90**. Child retargets, current policies/checks and effective trees must be rechecked after each parent merge.
+
+**ENGINEERING_READY — AWAITING_EXPLICIT_OWNER_MERGE_AUTHORIZATION**. No merge, auto-merge, release, deployment, production activation or real migration has been performed or authorized.
+'''
+records=[]
+for row in rows:
+    n=row['pr']; endpoint=f'repos/TakashiSasaki/git-repo-db/pulls/{n}'
+    pr=json.loads(api(endpoint))
+    assert pr['state']=='open' and pr['head']['sha']==row['feature']
+    old=pr.get('body') or ''
+    (root/'raw'/f'pr-{n}-body-before.json').write_text(json.dumps({'head':pr['head']['sha'],'body':old},indent=2)+'\n')
+    body=old.split(marker)[0]+marker+tail
+    request=root/f'pr-{n}-update.json'; request.write_text(json.dumps({'body':body}))
+    result=json.loads(api('--method','PATCH',endpoint,'--input',str(request)))
+    assert result['head']['sha']==row['feature'] and result['state']=='open'
+    records.append({'pr':n,'head':result['head']['sha'],'url':result['html_url'],'evidence':evidence})
+(root/'raw/pr-body-updates.json').write_text(json.dumps(records,indent=2)+'\n')
+print('Updated descriptions for', [x['pr'] for x in records], '; all feature heads unchanged')

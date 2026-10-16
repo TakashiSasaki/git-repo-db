@@ -1,0 +1,28 @@
+import concurrent.futures,json,subprocess,sys
+from pathlib import Path
+out=Path('/workspace/integration-acceptance'); phase=sys.argv[1]; repo='TakashiSasaki/git-repo-db'; cwd='/workspace/git-repo-db'
+def run(args):return subprocess.check_output(args,cwd=cwd,text=True)
+run(['git','fetch','origin','+refs/heads/*:refs/remotes/origin/*'])
+prs=json.loads(run(['gh','pr','list','--repo',repo,'--state','open','--limit','100','--json','number,title,state,isDraft,headRefName,headRefOid,baseRefName,url,mergeable,mergeStateStatus,statusCheckRollup']))
+(out/'raw'/f'pr-{phase}.json').write_text(json.dumps(prs,indent=2)+'\n')
+rows=json.loads((out/'chain.json').read_text()); byn={p['number']:p for p in prs}; ancestry=[]
+assert run(['git','rev-parse','origin/main']).strip()==rows[0]['target']
+for r in rows:
+    p=byn[r['pr']]; assert p['state']=='OPEN' and p['headRefOid']==r['feature'] and not p['isDraft']
+    assert run(['git','rev-parse','origin/'+p['headRefName']]).strip()==r['feature']
+    subprocess.run(['git','merge-base','--is-ancestor','origin/'+p['baseRefName'],r['feature']],cwd=cwd,check=True)
+    ancestry.append({'pr':r['pr'],'feature':r['feature'],'base_ref':p['baseRefName'],'base_head':run(['git','rev-parse','origin/'+p['baseRefName']]).strip(),'merge_base':run(['git','merge-base','origin/'+p['baseRefName'],r['feature']]).strip(),'base_is_ancestor':True})
+(out/'raw'/f'ancestry-{phase}.json').write_text(json.dumps(ancestry,indent=2)+'\n')
+queries={'main':f'repos/{repo}/branches/main','rulesets':f'repos/{repo}/rulesets','effective-rules':f'repos/{repo}/rules/branches/main'}
+for r in rows:queries[f'pr-{r["pr"]}-commit-status']=f'repos/{repo}/commits/{r["feature"]}/status'
+def capture(item):
+    name,url=item; p=subprocess.run(['gh','api',url],cwd=cwd,capture_output=True,text=True)
+    (out/'raw'/f'{name}-{phase}.json').write_text(p.stdout)
+    if p.returncode:(out/'raw'/f'{name}-{phase}.error.txt').write_text(p.stderr)
+    return {'name':name,'endpoint':url,'exit_code':p.returncode}
+with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:results=list(pool.map(capture,queries.items()))
+policy=run(['gh','api','graphql','-f','query=query { repository(owner:"TakashiSasaki",name:"git-repo-db") { mergeCommitAllowed squashMergeAllowed rebaseMergeAllowed defaultBranchRef { name target { oid } branchProtectionRule { requiresStatusChecks requiresStrictStatusChecks requiredStatusCheckContexts requiresApprovingReviews requiredApprovingReviewCount } } } }'])
+(out/'raw'/f'policy-{phase}.json').write_text(policy)
+(out/'raw'/f'remote-capture-{phase}.json').write_text(json.dumps(results,indent=2)+'\n')
+assert all(r['exit_code']==0 for r in results)
+print(json.dumps({'phase':phase,'main':rows[0]['target'],'all_seven_heads_unchanged':True,'pr_states':[{'pr':p['number'],'mergeable':p['mergeable'],'merge_state':p['mergeStateStatus']} for p in prs if p['number'] in [r['pr'] for r in rows]],'policy':json.loads(policy)},indent=2))

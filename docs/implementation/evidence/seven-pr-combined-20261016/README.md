@@ -1,11 +1,173 @@
-# Seven-PR combined acceptance checkpoint
+# Seven-PR combined acceptance — 2026-10-16
 
-Frozen synthetic source `388b824d1b3abe41c902759bf37a52c6ee5bcd2f`, tree `ea006924152d2fc508c7eb21697ad3c376e373f6`.
+**ENGINEERING_READY — AWAITING_EXPLICIT_OWNER_MERGE_AUTHORIZATION**
 
-The actual complete default selected run finished: **3755 passed /0 failed /0 errors /0 skipped, exit0**. Collection3757, default live/stress deselections2. Root and reviewer D independently reconciled3755 unique JUnit identities,3755 starts and11265 successful setup/call/teardown phases. See full-reconciliation.json and raw artifacts.
+| 項目 | 結果 |
+| --- | --- |
+| Seven-PR combined tree | `ea006924152d2fc508c7eb21697ad3c376e373f6` |
+| Complete test suite | 3755 passed / 0 failed / 0 errors / 0 skipped、exit 0 |
+| P7 regression | 255 passed、旧255-node集合と完全一致 |
+| Schema 21 baseline | 元228 nodeすべて成功、文書unitのChrome依存失敗も結合treeで解消 |
+| Wheel and sdist | clean archiveからの両installed distribution検証成功、124 runtime/resource files一致 |
+| Audit checks | 正式6監査 + Ruff lint/format、すべてexit 0 |
+| New blockers | 0、production修正PR不要 |
+| PRs ready for merge | #89 → #87 → #88 → #93 → #91 → #92 → #90 |
+| Owner merge authorization | Pending |
 
-P7 standalone rerun is currently executing. Both clean installed distributions are prepared, but their full runtime executions are still pending. This checkpoint is not final engineering approval or Actual Release Acceptance.
+## Exact source and merge chain
 
-All7 feature HEADs and main were re-fetched unchanged; all7 remain OPEN/MERGEABLE/CLEAN. Official audits succeeded. A/B/C reviews report zero integration blockers. The linked owner plan and reproducible synthetic helper were independently reviewed.
+今回実行した固定ソースは synthetic commit `388b824d1b3abe41c902759bf37a52c6ee5bcd2f`。
+実際のmain `b86c46761ec0c3f3843a19edd4f3e106ef5ef58c`から実merge semanticsを適用した。
+全7 HEADはowner指定値と一致、全mergeは競合なし、全累積treeは既存期待値と一致した。
+[chain.json](chain.json)に元target、feature、merge base、両parent、tree、変更pathと実行入力を記録した。
+[synthesize.py.txt](synthesize.py.txt)は固定日時・同一親順序で再現可能。`--repo`と`--output`を指定し、
+出力先に[raw/pr-initial.json](raw/pr-initial.json)を配置してfetch済みcloneで実行する。
+Reviewer Aは別worktreeと出力先で全記録・合成commitを独立再現した。
+GitHubが将来作るmerge SHAは予測していない。
 
-No merge, production activation, release, migration or deployment is authorized or performed. Final conclusions and owner gate will replace this checkpoint after remaining executions and reviews complete.
+| PR | Current reviewed HEAD | Cumulative tree |
+| --- | --- | --- |
+| [#89](https://github.com/TakashiSasaki/git-repo-db/pull/89) | `660178ff1a881e4482b7a3cde02b51dc50cf2603` | `ed80623514a5e574d1e24e908b95504f60b815db` |
+| [#87](https://github.com/TakashiSasaki/git-repo-db/pull/87) | `c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75` | `6ebd07cf4d6846e7d964c1be571c8507c037b9be` |
+| [#88](https://github.com/TakashiSasaki/git-repo-db/pull/88) | `e956cd50b1f25bd95427301cced4741bb68e24f8` | `e250fe0ad801013fb9c59e929cfc7f875fabb5b8` |
+| [#93](https://github.com/TakashiSasaki/git-repo-db/pull/93) | `7dc31256907aff4412170bc3f3ce3069b2ad89f2` | `d4bf2253eed2ea7df26336c681c5a5241dd36bf6` |
+| [#91](https://github.com/TakashiSasaki/git-repo-db/pull/91) | `1700ed37e82a6028cfa40c86b35db7621dd50404` | `f749d63fb1162520b21512a0690bf2015441ba91` |
+| [#92](https://github.com/TakashiSasaki/git-repo-db/pull/92) | `94488cf4e7fa15f747ece7a4e3d57e0bc213966a` | `1e5b150613d1ccf15285c5724498744fb4d883fa` |
+| [#90](https://github.com/TakashiSasaki/git-repo-db/pull/90) | `7cbade2928467f3c3ab2350bdc84e275d7057622` | `ea006924152d2fc508c7eb21697ad3c376e373f6` |
+
+凍結P7実行ソース`178ddbaa…`→#88最終HEADと、Schema21実行ソース`74f90ada…`→#92最終HEADは、
+それぞれproduction/test/script/config入力差分0と再照合した。過去の文書コミットを再試験と扱っていない。
+今回の合成ソースは独立した新しい全体実行対象である。
+P7凍結ソースからのproduction差分はpublic Searchの`adapters/sqlite/index.py`のみ。
+[frozen-source-bindings.json](frozen-source-bindings.json)と[executable-inputs.json](executable-inputs.json)参照。
+
+## Full execution and environment
+
+Python 3.12.14、SQLite 3.53.1、Linux 6.18.44 x86_64 / glibc2.41、uv 0.12.19。
+locked dev/docs依存と48個のSHA-pinned offline wheelsを用意した。
+開始時workspace overlayは約32 GiB中30 GiB空き。8.8 GiB tmpfsの`/tmp`は試験一時領域に使わず、
+`TMPDIR=/workspace/integration-acceptance/tmp`と明示的`--basetemp`を使用した。
+依存全version、import origin、filesystem、追加環境変数、command/cwd/時刻/exitはrawに保存した。
+ネットワークguardを維持し、すべて使い捨て合成データで試験した。
+
+```sh
+uv sync --locked --group dev --group docs
+uv run --no-sync python scripts/prepare_wheelhouse.py --output /workspace/integration-acceptance/wheelhouse
+uv run --no-sync pytest tests -n 4 -q \
+  --basetemp /workspace/integration-acceptance/full-temp \
+  -o junit_family=xunit1 \
+  --junitxml /workspace/integration-acceptance/raw/full.xml \
+  --journal /workspace/integration-acceptance/raw/full.jsonl
+uv run --no-sync pytest tests/integration/p7 -q \
+  --basetemp /workspace/integration-acceptance/p7-temp \
+  -o junit_family=xunit1 \
+  --junitxml /workspace/integration-acceptance/raw/p7.xml \
+  --journal /workspace/integration-acceptance/raw/p7.jsonl
+```
+
+全3757 collected、既定選択3755、既定marker除外2。全体pytestは758.34秒、processは758.95秒、4 warnings。新たなskip/xfail/除外は追加していない。
+全3755 JUnit identity、3755 unique journal starts、11265 phaseが一致し、各setup/call/teardownは
+各1回で成功、finishと実process exitも0。P7別実行は255 starts /255 JUnit /765 successful phases、
+旧集合との追加・欠落0。[full-reconciliation.json](full-reconciliation.json)、
+[p7-reconciliation.json](p7-reconciliation.json)にraw SHA-256を記録した。
+Schema21元228 nodeのreplacement集合も同じ全体実行に包含され成功した。
+以前のSchema21全体実行3496 nodeの集合も全件保持され、欠落0。
+追加259はP7 255、P7配布物2、Pages trigger2である（Dのschema21-node-set-review.json）。
+
+P1–P6は317 /197 /75 /202 /47 /50、計888 node、P2/P3互換20とP5/P6互換29を合わせ937 nodeが
+全体実行で成功した。別実行したかのような件数の水増しはしていない。
+未実行は既定のlive smokeとnested pagination stressの2 nodeのみ。
+
+## Documentation verification
+
+結合treeの文書unit 8件はfull runで成功し、前回のChrome不足failureを再発しなかった。
+これはplaceholderを使うunit経路の成功であり、実Mermaid描画の証明ではない。
+今回の`build_docs_site.py --no-mermaid`はMkDocs build、publication safety（違反0）、
+内部link（broken 0）まで成功した。builder末尾の「10 SVGs rendered」はplaceholderを含む一般summaryであり、
+実描画成功とは解釈しない。
+
+実描画は[PR89 Pages run38918703718](https://github.com/TakashiSasaki/git-repo-db/actions/runs/38918703718)の
+実ログをDが再取得して確認した。checkout treeは`ed806235…`、実Mermaid 10図、MkDocs、安全性、link、
+8 unit tests成功、deploy skipped。結合treeの74 publication inputsはその実行の固定入力と全件SHA-256一致。
+[publication-binding.json](publication-binding.json)とDの実hosted log/receipt参照。
+今回ローカルで実Mermaidを再実行したとは主張せず、browser取得やpolicy回避も行っていない。
+
+## Installed distributions
+
+clean committed archiveからwheelとsdist、さらにsdistからwheelを構築した。
+checkout外の独立venvで通常installし、editable/PYTHONPATH流入を排除した。
+両配布物のpublic CLI（console / python -m）、Search回帰、P7回復入口と全255 P7 testsを実行した。
+各installed wheelでP7 255 +Search回帰1の計256 passed、元のpublic console CLIは両variant計2 passed。
+モジュールCLIのhelp/init/full db checkも両環境で実行した。
+124 package/runtime/resource files、installed manifests、親子processのsite-packages import origin、
+commands/exitとJUnit/journalをDが保存・照合した。
+
+- wheel / sdist-wheel SHA-256: `e7005d339af572f5873e2a45a08e94a36e7ef99f51ca58e6ceeac7295a6b593f`
+- sdist SHA-256: `fe550a55c02dc49900f3284cefc8fd74a8a079508618af3803195958e559be9f`
+- clean source archive SHA-256: `9d86626de7c47e6bb7f5cf19f00515cb32c9e99c6c35ac7d0f88d127fe4fa2ba`
+
+
+配布バイナリ、venv、合成catalog/backupはcheckout外の証跡領域に保持し、Gitには識別hashと実行証拠のみ収録する。
+[D REPORT](reviews/d/REPORT.md)、[binding.json](reviews/d/binding.json)と各manifest参照。
+
+## Architecture, audits and independent review
+
+実行した正式commandは`build_p1_schema.py --check`、`audit_p1_schema.py --check`、
+`audit_implementation_boundary.py --check`、`audit_callsite_dependencies.py --check`、
+`audit_publication_free.py --check`、`schema_viz.py --check`、`ruff check src tests scripts`、
+`ruff format --check src tests scripts`。すべてexit0。
+
+Schema21 Core/Operational/Searchとopt-in P1–P7 Core/Context/Operational/Searchを分離し、
+Publication、Core内の重複Operational table、compatibility view/alias、暗黙ATTACH、公開runtime移行を追加していない。
+permanent repository/Capture identityとappend-only Git Coreを保持した。
+旧`audit_phase2_dependencies.py`のfull entrypointはAが`exchange.EXCLUDED` failureを再現・保存した。
+このfull entrypointは現行CI/testing gateでは呼ばれず、旧Schema18/19限定手順のhistorical経路である。
+同scriptの利用可能なhelper関数は現行unit testsでも使われ、Aのfocused runで成功した。
+旧full entrypointを現行実装blockerに数えず、関連外修正PRも作らない。
+
+| Reviewer | Source and result |
+| --- | --- |
+| [A Architecture / DAG](reviews/a/REVIEW-A.md) | 全7 merge独立再現、store/immutable guards、49 tests /147 phases成功。owner helper/planも独立レビュー |
+| [B Runtime](reviews/b/REVIEW-B.md) | acquisition/restart/Search/activation 13 tests /39 phases成功、独自SQL faultと入口分離probe成功 |
+| [C Security / recovery](reviews/c/REPORT.md) | corruption/budget/typed replay/WAL/activation 84 tests /252 phasesと独自4 probes成功 |
+| [D Evidence / packaging](reviews/d/REPORT.md) | full/P7 node照合、両installed distributions、7 exact-head hosted receiptsとPages実描画を照合 |
+
+全reviewerは固定commit`388b824…`/tree`ea006924…`を対象とし、このタスクでproduction codeを執筆していない。
+全員の範囲内結論はowner review可能、新規blocker0。reviewer harnessの失敗・補正前試行も別名で保存した。
+過去のP7全体失敗、Schema21 Chrome失敗、容量不足実行を今回の成功で上書きしていない。
+
+## Current GitHub gate and remaining limits
+
+全7 PRはOPEN、feature HEADは表と同一、現在のtargetに対してmergeable。
+main、DAG、feature refs、checks、rulesets/branch policyは最終raw snapshotでも再確認した。
+現在はprotected=false、required enforcement off、contextsなし、branchProtectionRule null、rulesets/effective rules空。
+これは観測であり、将来policyの免除ではない。7 HEADの実Development receiptは各member hashとhead/treeを
+独立検証し、すべて`development_checks_passed`、`full_acceptance=false`、hosted runtime0。
+#90の旧cancelled duplicateと後続successを双方保存した。
+
+**Development CI成功と今回のlocal combined acceptanceはActual Release Acceptanceではない。**
+独立した完全hosted release実行・release receipt reconciliationは未実施。
+Linux local cooperating processes、flock、fsync、renameat2、descriptor pinの検証を、物理host電断、NFS/Windows、
+特権者の任意namespace置換やaccounting全証拠の悪意的一括削除の保証へ拡張しない。
+live/stress未実行、完全Context typed salvage未対応、P7 Searchは`initialized_empty`で完全projection rebuildを主張しない。
+P8 public runtime接続・実運用移行/activationは将来範囲。実catalog、実backup、production dataは操作していない。
+
+最終次動作は[owner-merge-plan.md](owner-merge-plan.md)に従う**明示的な所有者merge承認**。
+child retarget、unchanged feature、実mainからのmerge-tree、現在の必須checks、merge commit、実parent/treeの確認を
+各段階で実施する。`--match-head-commit`はbaseの同時更新を原子的には防がないためsingle-merger windowを確保する。
+#94は七本の検証証拠を保存する独立documentation PRで、七本のruntime依存や順序を増やさない。
+全7 feature branch、main、reviewed historyを変更せず、merge/auto-merge/release/tag/deployは実行していない。
+
+## Evidence retention and reusable procedure assessment
+
+[artifact-index.json](artifact-index.json)は各transportと展開後originalのbyte数/SHA-256を記録する。
+大きなlog/XML/JSONLはmtime0 gzip、driver/probeは`.py.txt`。実行中のcheckpointはそのcommit時点の途中snapshotであり、
+最終execution receiptのないprefixを完了として使っていない。凍結source worktreeは変更していない。
+最初のローカルpush guardはcheckpoint full SHAの転記違いでpush前に停止し、actual parent/remote再照合後に通常pushした。
+
+既存`ci-final-tree-verification`と`three-store-invariants`の適用手順を確認した。
+別worktree、workspace temp、installed-source binding、Development/Release区分を適用した。
+Aの非自明なgate指摘を再利用するため、別の証跡PR#94で既存ci-final-tree-verification Skillに、
+合成treeの固定・独立再現とfeature-only match-head fenceの限界、single-merger window、actual parent/tree検証を追記した。
+Aが追加を独立レビューした。これは既存7 featureへの変更やmergeの実行証拠ではない。
+再利用可能な合成chainとowner preflight手順も独立レビュー済みhelperとして残した。

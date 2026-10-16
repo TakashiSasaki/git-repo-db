@@ -1,0 +1,4 @@
+tests/test_external_cli.py::test_wheel_sdist_cli[wheel]
+tests/test_external_cli.py::test_wheel_sdist_cli[sdist-wheel]
+
+2 tests collected in 0.02s
