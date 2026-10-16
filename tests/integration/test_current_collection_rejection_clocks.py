@@ -286,7 +286,7 @@ def test_out_of_scope_incremental_current_parent_adds_no_observation(github_runt
         assert_no_original(store)
 
 
-def test_current_terminal_cancellation_finishes_locally_without_false_partial(
+def test_current_terminal_cancellation_reacquires_without_false_partial(
     github_runtime, monkeypatch
 ):
     store, repo, _, api = github_runtime
@@ -317,13 +317,14 @@ def test_current_terminal_cancellation_finishes_locally_without_false_partial(
         current.current_collection(
             repo, pr, "review", job, endpoint, current_parser.review
         )
-        assert len(requested) == 1
+        assert len(requested) == 2
         assert tuple(
             store.one(
                 "SELECT observed_at_us,coverage_state FROM current_coverage WHERE kind='review'"
             )
-        ) == (100, "complete")
-        assert store.one("SELECT observed_at_us FROM completion_markers")[0] == 100
+        ) == (300, "complete")
+        assert store.one("SELECT observed_at_us FROM completion_markers")[0] == 300
+        assert store.one("SELECT count(*) FROM current_collection_pages")[0] == 2
         assert_no_original(store)
 
 
