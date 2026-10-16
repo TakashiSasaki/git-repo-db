@@ -1270,11 +1270,12 @@ class SQLiteRecoveryAdapter:
         limit_bytes = min(limit_bytes, b.max_input_bytes)
 
         # Forensic preservation: create isolated working copy of suspect files
-        # under stop fence or exclusive writer lock so concurrent writers cannot cross the cut
+        # Drain writers that began before stop, then fence both writer and stop
+        # transitions throughout the cut. Acquiring writer first avoids lock
+        # inversion with a writer that must persist an immediate corruption stop.
         with (
-            _file_gate(catalog_dir / "p1-stop-fence.lock", exclusive=False)
-            if is_catalog_stopped(catalog_dir)
-            else catalog_gate(catalog_dir, exclusive=True)
+            catalog_gate(catalog_dir, exclusive=True),
+            _file_gate(catalog_dir / "p1-stop-fence.lock", exclusive=False),
         ):
             with tempfile.TemporaryDirectory() as forensic_tmp:
                 forensic_dir = Path(forensic_tmp)

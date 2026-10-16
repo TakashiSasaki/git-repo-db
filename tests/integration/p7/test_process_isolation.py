@@ -124,6 +124,7 @@ def test_actual_p1_wal_candidates_and_process_writer_cut(
 
     def at_forensic_read(self, *args, **kwargs):
         observed.append(_probe_writer(directory, lock_name))
+        assert _probe_writer(directory, "p1-writer.lock") == "blocked"
         return original(self, *args, **kwargs)
 
     monkeypatch.setattr(
