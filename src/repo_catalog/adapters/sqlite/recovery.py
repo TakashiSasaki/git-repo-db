@@ -734,6 +734,12 @@ class SQLiteRecoveryAdapter:
                     staged_context, "context"
                 )
                 if repo_uuid != ctx_repo_uuid or inst_uuid != ctx_inst_uuid:
+                    self._diagnose_and_stop_if_source_corrupt(
+                        catalog_dir,
+                        core_db_path,
+                        "pair",
+                        BackupValidationError("Staged paired store identity mismatch"),
+                    )
                     raise BackupValidationError(
                         f"Paired store identity mismatch: Core ({repo_uuid}, {inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
                     )
@@ -862,15 +868,38 @@ class SQLiteRecoveryAdapter:
         corruption, immediately persist catalog recovery stop and fence ordinary operations.
         If source is sound (staging copy defect only), do not stop healthy authoritative catalog.
         """
-        if store_role not in ("core", "context"):
+        if store_role not in ("core", "context", "pair"):
             raise ValueError("unknown authoritative store role")
         with catalog_gate(catalog_dir, exclusive=True):
             assert_catalog_not_stopped(catalog_dir)
             try:
-                if store_role == "core":
-                    self._validate_and_summarize_core(source_db_path)
-                else:
-                    self._validate_and_summarize_context(source_db_path)
+                # Opening even read-only SQLite on the suspect source can create
+                # WAL/SHM sidecars. Validate a bounded coherent forensic copy;
+                # the cooperating writer cut covers the complete evidence set.
+                with tempfile.TemporaryDirectory(prefix="p7-diagnosis-") as temporary:
+                    evidence = Path(temporary)
+                    _copy_forensic_files(
+                        catalog_dir, evidence, RecoveryBudget().max_input_bytes
+                    )
+                    if store_role == "core":
+                        self._validate_and_summarize_core(
+                            evidence / source_db_path.name
+                        )
+                    elif store_role == "context":
+                        self._validate_and_summarize_context(
+                            evidence / source_db_path.name
+                        )
+                    else:
+                        core_identity = self._extract_identities(
+                            evidence / "core.sqlite3", "core"
+                        )
+                        context_identity = self._extract_identities(
+                            evidence / "context.sqlite3", "context"
+                        )
+                        if core_identity != context_identity:
+                            raise BackupValidationError(
+                                f"Source paired store identity mismatch: {core_identity} vs {context_identity}"
+                            )
             except Exception as source_error:
                 category = _confirmed_integrity_failure(source_error)
                 if category is None:

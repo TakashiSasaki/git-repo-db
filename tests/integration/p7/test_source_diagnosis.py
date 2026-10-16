@@ -226,3 +226,57 @@ def test_invalid_persisted_utf8_is_confirmed_damage(synthetic_catalog, tmp_path)
             synthetic_catalog, tmp_path / "backup"
         )
     assert is_catalog_stopped(synthetic_catalog)
+
+
+def test_source_pair_mismatch_stops_after_reconfirmation(synthetic_catalog, tmp_path):
+    from repo_catalog.adapters.sqlite.p1_schema import register_functions
+
+    connection = sqlite3.connect(synthetic_catalog / "context.sqlite3")
+    register_functions(connection)
+    sql = connection.execute(
+        "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_store_identity_update'"
+    ).fetchone()[0]
+    connection.execute("DROP TRIGGER p1_immutable_store_identity_update")
+    connection.execute(
+        "UPDATE store_identity SET catalog_instance_uuidv4='99999999-9999-4999-8999-999999999999'"
+    )
+    connection.execute(sql)
+    connection.commit()
+    connection.close()
+    with pytest.raises(
+        CorruptionDetectedError, match="Source paired store identity mismatch"
+    ):
+        RecoveryService().create_consistent_backup(
+            synthetic_catalog, tmp_path / "backup"
+        )
+    assert is_catalog_stopped(synthetic_catalog)
+
+
+def test_staging_pair_mismatch_does_not_stop_healthy_source(
+    synthetic_catalog, tmp_path
+):
+    from repo_catalog.adapters.sqlite.p1_schema import register_functions
+
+    destination = tmp_path / "backup"
+
+    def damage_stage():
+        (stage,) = tmp_path.glob("backup.tmp.*/stores/context.sqlite3")
+        connection = sqlite3.connect(stage)
+        register_functions(connection)
+        sql = connection.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_store_identity_update'"
+        ).fetchone()[0]
+        connection.execute("DROP TRIGGER p1_immutable_store_identity_update")
+        connection.execute(
+            "UPDATE store_identity SET catalog_instance_uuidv4='99999999-9999-4999-8999-999999999999'"
+        )
+        connection.execute(sql)
+        connection.commit()
+        connection.close()
+
+    with pytest.raises(BackupValidationError, match="Paired store identity mismatch"):
+        RecoveryService().create_consistent_backup(
+            synthetic_catalog, destination, snapshot_cut_callback=damage_stage
+        )
+    assert not is_catalog_stopped(synthetic_catalog)
+    assert not destination.exists()
