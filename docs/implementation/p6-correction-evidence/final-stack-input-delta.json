@@ -1,0 +1,12 @@
+{
+  "independently_tested_feature": "df912d6c43c6c448f9122f2eaaf2728c38956dbf",
+  "final_common": "f3cd1c9fa81d78e4a77efb824f5eb4a6b4b95f0a",
+  "all_production_inputs_identical": true,
+  "differences": {
+    "tests/integration/p1/test_context.py": {
+      "independent_df912_sha256": "fda0a3ab85cb52bf43a6dc48b87e62bbf5e445d6edfd53bf9adb16138391291e",
+      "final_common_sha256": "5664cde8d196be32d603bb879193069c344addc7eb6ee415a43f952ef30af26c"
+    }
+  },
+  "reason": "Shared P1 regression fixture observed_at_us=0 ->1 isolates missing-clock validation under accepted positive observation time; final combined run validates changed fixture separately."
+}

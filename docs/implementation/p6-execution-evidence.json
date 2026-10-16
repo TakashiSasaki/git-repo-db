@@ -1,0 +1,47 @@
+{
+  "phase": "P6",
+  "title": "Production authoritative query APIs, derivative Search integration, consistent snapshots, pagination, and opt-in CLI",
+  "branch": "feat/p6-production-query-search",
+  "base": "docs/p5-p6-technical-contract",
+  "contract_commit": "2a5862b76ea3a4ca976dc3de5cd6962563560101",
+  "timestamp": "2026-10-16T03:48:00Z",
+  "test_counts": {
+    "p6_integration_tests": 14,
+    "p6_packaging_tests": 4,
+    "p1_p4_regression_tests": 762,
+    "total_passed": 780
+  },
+  "modules_owned": [
+    "src/repo_catalog/domain/production_query.py",
+    "src/repo_catalog/domain/ports/production_query.py",
+    "src/repo_catalog/adapters/sqlite/production_search.py",
+    "src/repo_catalog/application/production_query.py",
+    "src/repo_catalog/cli/production_query.py",
+    "tests/integration/p6/conftest.py",
+    "tests/integration/p6/test_queries.py",
+    "tests/integration/p6/test_pagination_snapshots.py",
+    "tests/integration/p6/test_search_fallback.py",
+    "tests/integration/p6/test_cli.py",
+    "tests/packaging/test_p6_distribution.py"
+  ],
+  "audits": {
+    "ruff_format": "passed",
+    "ruff_check": "passed",
+    "build_p1_schema": "passed",
+    "audit_p1_schema": "passed",
+    "audit_implementation_boundary": "passed",
+    "audit_callsite_dependencies": "passed"
+  },
+  "invariants_verified": [
+    "Strictly append-only Git Core",
+    "Independently durable Context without raw repository file body archival",
+    "Reconstructible Search without recovery-stop on derivative loss or corruption",
+    "Unified read APIs supporting single-store and paired catalogs",
+    "Consistent pinned snapshot fencing across readers and concurrent writers",
+    "Deterministic cursor-based pagination failing closed on snapshot mismatch",
+    "Transparent fallback from stale/corrupt Search projection to authoritative scan",
+    "Verification-aware byte reads halting immediately on detected authoritative corruption",
+    "Exclusion of ordinary file blobs from search indexing",
+    "Isolated opt-in CLI preserving Schema 21 default main CLI"
+  ]
+}

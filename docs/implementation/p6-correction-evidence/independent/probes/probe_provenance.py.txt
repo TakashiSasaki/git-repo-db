@@ -1,0 +1,34 @@
+import importlib.util, json, sqlite3, tempfile
+from pathlib import Path
+from uuid import uuid4
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.domain.p1_core import OID, Capture, NotesProof
+spec = importlib.util.spec_from_file_location('fixtures', 'tests/integration/p6/conftest.py')
+f=importlib.util.module_from_spec(spec); spec.loader.exec_module(f)
+base=Path(tempfile.mkdtemp(prefix='independent-',dir='/workspace/work/review-p6-scratch'))
+cat=base/'capability'; f.populate_rich_catalog(cat,include_context=False)
+service=ProductionQueryService(cat)
+with service.open_snapshot() as snap: escaped=snap.core
+print('capability_after_exit_active', escaped._active)
+try: escaped.sql('SELECT 1')
+except Exception as e: print('capability_after_exit',type(e).__name__, getattr(e,'code',None),str(e))
+cat=base/'json'; f.populate_rich_catalog(cat,include_context=False)
+with sqlite3.connect(cat/'core.sqlite3') as db:
+    trigger=db.execute("SELECT sql FROM sqlite_schema WHERE name='p1_immutable_repository_claims_update'").fetchone()[0]
+    db.execute('DROP TRIGGER p1_immutable_repository_claims_update')
+    db.execute('PRAGMA ignore_check_constraints=ON')
+    db.execute("UPDATE repository_claims SET provenance='123' WHERE field='name'")
+    db.execute(trigger)
+try: ProductionQueryService(cat).get_repository_view()
+except Exception as e: print('malformed_repository_json',type(e).__name__,getattr(e,'code',None),'persistent_stop',(cat/'p1-recovery-stop.json').exists())
+cat=base/'binary'; f.init_catalog(cat, ('core','search'))
+blob=f.make_native('sha1','blob',b'hello\xff\x00world')
+target=OID('sha1','1'*40); tree=f.make_tree('sha1',[(b'100644',target.full_oid.encode(),blob.oid.full_oid)])
+cap=Capture(f.ORIGIN, str(uuid4()),f.REPOSITORY,'source','refs/notes/binary',tree.oid)
+core=GitCore(cat/'core.sqlite3')
+core.admit_repository(f.REPOSITORY)
+core.admit_note(NotesProof(cap,target,blob.oid,target.full_oid,(tree,)),blob,str(uuid4()),f.UnlimitedTestBudget()); core.close()
+try: print('binary_rebuild',ProductionQueryService(cat).rebuild_search(('notes',)))
+except Exception as e: print('binary_rebuild',type(e).__name__,getattr(e,'code',None),str(e))
+print('scratch',base)
