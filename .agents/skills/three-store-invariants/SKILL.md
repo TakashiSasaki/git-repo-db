@@ -558,3 +558,29 @@ corrected execution and Provider-order cases that already passed the baseline.
   from a clean committed archive with evidence stored outside that source tree;
   install wheel and sdist-wheel into isolated environments outside checkout.
   This is packaging input hygiene, not a source cleanup or deletion recipe.
+
+## Recovery replay must pass authoritative admission checks
+
+A retained-byte digest match alone bypassed native type/size checks, Capture
+repository identity, role proofs and physical-copy distinctions in P7 salvage.
+The focused baseline counterexamples and corrected executions are retained in
+[the replay checkpoint](../../../docs/implementation/evidence/p7-replay/README.md).
+
+- Run the same typed production admission on replay as on new input, including
+  immutable-row equality, before counting replay. Work performed by revalidation
+  is still actual work. A new physical copy is not an exact replay; missing
+  original identity cannot be repaired by inventing a copy UUID.
+- Validate every original Capture binding coordinate, including repository,
+  source/ref/root and both UUIDs. Compare duplicate envelope/payload coordinates;
+  forensic extraction provenance is not original domain provenance.
+- Let the typed Notes unit install Capture, role and body atomically. Independently
+  admitting Capture before proof/body validation leaves authority after rejection.
+- For each mutation in the identity/role/body matrix, compare all authoritative
+  tables before and after rejection, then include successful exact replay and new
+  independent-copy controls. This avoids tests that pass solely by refusing all
+  candidates. Include zero-byte bodies/text as legitimate input controls.
+
+Use `uv run pytest tests/integration/p7/test_exact_replay.py -q` for the focused
+checks. This procedure does not grant authenticity to attributed reports, imply
+full typed recovery of unsupported Context resource candidates, or establish
+host-power-loss guarantees.

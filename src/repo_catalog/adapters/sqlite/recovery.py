@@ -1245,7 +1245,7 @@ class SQLiteRecoveryAdapter:
                             # Preserve original Capture source and nominated ref if present in captures table
                             try:
                                 cap_row = conn.execute(
-                                    "SELECT source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=?",
+                                    "SELECT repository_uuidv4, source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=?",
                                     (
                                         cap_origin,
                                         cap_id,
@@ -1254,8 +1254,9 @@ class SQLiteRecoveryAdapter:
                                     ),
                                 ).fetchone()
                                 if cap_row:
-                                    payload["source"] = cap_row[0]
-                                    payload["ref"] = _decode_native_ref(cap_row[1])
+                                    payload["repository_uuidv4"] = cap_row[0]
+                                    payload["source"] = cap_row[1]
+                                    payload["ref"] = _decode_native_ref(cap_row[2])
                             except Exception:
                                 pass
                         elif store_name == "core" and table == "captures":
@@ -1739,6 +1740,21 @@ class SQLiteRecoveryAdapter:
                         )
                         continue
 
+                    if any(
+                        record.get(key) is not None
+                        and payload.get(key) is not None
+                        and record[key] != payload[key]
+                        for key in ("capture_origin_uuidv4", "capture_uuidv4")
+                    ):
+                        rejected += 1
+                        rejections.append(
+                            {
+                                "candidate_id": cand_id,
+                                "reason": "Conflicting original Capture coordinates",
+                            }
+                        )
+                        continue
+
                     # 2. Check for required UUIDv4 format if present
                     if record.get("capture_uuidv4"):
                         try:
@@ -1785,7 +1801,7 @@ class SQLiteRecoveryAdapter:
                             continue
 
                         b64_body = payload.get("body_base64")
-                        if not b64_body:
+                        if not isinstance(b64_body, str):
                             rejected += 1
                             rejections.append(
                                 {
@@ -1824,34 +1840,22 @@ class SQLiteRecoveryAdapter:
                         full_oid = payload["full_oid"]
                         copy_uuid = payload.get("physical_copy_uuidv4")
 
-                        # Check if this exact unit is already admitted in core
-                        if copy_uuid:
-                            exists = core.sql(
-                                "SELECT digest_sha256 FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                                (obj_fmt, full_oid, copy_uuid),
+                        # A replay must pass the same native and immutable-row
+                        # checks as a new admission. A digest alone establishes
+                        # neither native type/size nor physical-copy identity.
+                        if not copy_uuid:
+                            observation += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": "Missing original physical copy UUID; withheld from authoritative admission",
+                                }
                             )
-                            if exists:
-                                ex_digest = exists[0][0]
-                                if ex_digest == actual_sha:
-                                    replayed += 1
-                                else:
-                                    rejected += 1
-                                    rejections.append(
-                                        {
-                                            "candidate_id": cand_id,
-                                            "reason": "Conflicting exact metadata representation for physical copy",
-                                        }
-                                    )
-                                continue
-                        else:
-                            exists = core.sql(
-                                "SELECT physical_copy_uuidv4, digest_sha256 FROM retained_metadata WHERE object_format=? AND full_oid=?",
-                                (obj_fmt, full_oid),
-                            )
-                            if exists and any(row[1] == actual_sha for row in exists):
-                                replayed += 1
-                                continue
-                            copy_uuid = str(uuid.uuid4())
+                            continue
+                        exists = core.sql(
+                            "SELECT 1 FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                            (obj_fmt, full_oid, copy_uuid),
+                        )
 
                         try:
                             native = NativeObject(
@@ -1862,7 +1866,10 @@ class SQLiteRecoveryAdapter:
                                 digest_sha256=actual_sha,
                             )
                             core.admit_metadata(native, copy_uuid, work_budget)
-                            admitted += 1
+                            if exists:
+                                replayed += 1
+                            else:
+                                admitted += 1
                         except CoreFailure as cf:
                             if cf.code == "BUDGET":
                                 budget_exhausted = True
@@ -1896,7 +1903,7 @@ class SQLiteRecoveryAdapter:
                     elif c_type in (CandidateType.NOTES_MAPPING.value, "retained_note"):
                         b64_body = payload.get("body_base64")
                         proof_bundle_str = payload.get("proof_bundle")
-                        if not b64_body or not proof_bundle_str:
+                        if not isinstance(b64_body, str) or not proof_bundle_str:
                             rejected += 1
                             rejections.append(
                                 {
@@ -1922,7 +1929,6 @@ class SQLiteRecoveryAdapter:
                                 )
                                 for s in bundle_data
                             )
-                            repo_uuid, _ = self._extract_identities(core_db, "core")
                             cap_orig_id = payload.get(
                                 "capture_origin_uuidv4"
                             ) or record.get("capture_origin_uuidv4")
@@ -1939,25 +1945,20 @@ class SQLiteRecoveryAdapter:
                                 )
                                 continue
 
-                            orig_source = payload.get("source")
-                            orig_ref = _decode_native_ref(payload.get("ref"))
-                            if not orig_source or not orig_ref:
-                                cap_query = core.sql(
-                                    "SELECT source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=?",
-                                    (
-                                        cap_orig_id,
-                                        cap_val_id,
-                                        obj_fmt,
-                                        payload["root"],
-                                    ),
-                                )
-                                if cap_query:
-                                    orig_source, orig_ref = (
-                                        cap_query[0][0],
-                                        _decode_native_ref(cap_query[0][1]),
-                                    )
-
-                            if not orig_source or not orig_ref:
+                            # Original domain provenance is independent of the
+                            # forensic extraction coordinates. Never substitute
+                            # this destination's repository for the issuer's.
+                            existing_cap = core.sql(
+                                "SELECT repository_uuidv4, source, ref, object_format, root FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                                (cap_orig_id, cap_val_id),
+                            )
+                            original = existing_cap[0] if existing_cap else (None,) * 5
+                            repo_uuid = payload.get("repository_uuidv4", original[0])
+                            orig_source = payload.get("source", original[1])
+                            orig_ref = _decode_native_ref(
+                                payload.get("ref", original[2])
+                            )
+                            if not repo_uuid or not orig_source or not orig_ref:
                                 observation += 1
                                 rejections.append(
                                     {
@@ -1966,45 +1967,6 @@ class SQLiteRecoveryAdapter:
                                     }
                                 )
                                 continue
-
-                            existing_cap = core.sql(
-                                "SELECT repository_uuidv4, source, ref, object_format, root FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                                (cap_orig_id, cap_val_id),
-                            )
-                            if existing_cap:
-                                ex_repo, ex_source, ex_ref, ex_fmt, ex_root = (
-                                    existing_cap[0]
-                                )
-                                if (
-                                    ex_source,
-                                    _decode_native_ref(ex_ref),
-                                    ex_fmt,
-                                    ex_root,
-                                ) != (
-                                    orig_source,
-                                    orig_ref,
-                                    obj_fmt,
-                                    payload["root"],
-                                ):
-                                    rejected += 1
-                                    rejections.append(
-                                        {
-                                            "candidate_id": cand_id,
-                                            "reason": f"Conflicting immutable Capture binding: existing ({ex_source}, {_decode_native_ref(ex_ref)}) vs candidate ({orig_source}, {orig_ref})",
-                                        }
-                                    )
-                                    continue
-                            else:
-                                cap = Capture(
-                                    cap_orig_id,
-                                    cap_val_id,
-                                    repo_uuid,
-                                    orig_source,
-                                    orig_ref,
-                                    OID(obj_fmt, payload["root"]),
-                                )
-                                core.admit_capture(cap)
-
                             cap = Capture(
                                 cap_orig_id,
                                 cap_val_id,
@@ -2013,6 +1975,22 @@ class SQLiteRecoveryAdapter:
                                 orig_ref,
                                 OID(obj_fmt, payload["root"]),
                             )
+                            if existing_cap and (
+                                original[0],
+                                original[1],
+                                _decode_native_ref(original[2]),
+                                original[3],
+                                original[4],
+                            ) != (
+                                repo_uuid,
+                                orig_source,
+                                orig_ref,
+                                obj_fmt,
+                                payload["root"],
+                            ):
+                                raise ValueError(
+                                    "Conflicting immutable Capture binding"
+                                )
                             proof = NotesProof(
                                 capture=cap,
                                 target=OID(obj_fmt, payload["target"]),
@@ -2022,37 +2000,9 @@ class SQLiteRecoveryAdapter:
                             )
                             copy_uuid = payload.get("physical_copy_uuidv4")
 
-                            # Check if already admitted
-                            if copy_uuid:
-                                exists = core.sql(
-                                    "SELECT digest_sha256 FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                                    (obj_fmt, payload["full_oid"], copy_uuid),
-                                )
-                                if exists:
-                                    ex_digest = exists[0][0]
-                                    actual_sha = hashlib.sha256(body_bytes).hexdigest()
-                                    if ex_digest == actual_sha:
-                                        replayed += 1
-                                    else:
-                                        rejected += 1
-                                        rejections.append(
-                                            {
-                                                "candidate_id": cand_id,
-                                                "reason": "Conflicting exact notes representation for physical copy",
-                                            }
-                                        )
-                                    continue
-                            else:
-                                exists = core.sql(
-                                    "SELECT digest_sha256 FROM retained_notes WHERE object_format=? AND full_oid=?",
-                                    (obj_fmt, payload["full_oid"]),
-                                )
-                                actual_sha = hashlib.sha256(body_bytes).hexdigest()
-                                if exists and any(
-                                    row[0] == actual_sha for row in exists
-                                ):
-                                    replayed += 1
-                                    continue
+                            # Missing physical identity cannot be repaired by
+                            # matching another copy's bytes or inventing a copy.
+                            if not copy_uuid:
                                 observation += 1
                                 rejections.append(
                                     {
@@ -2061,16 +2011,25 @@ class SQLiteRecoveryAdapter:
                                     }
                                 )
                                 continue
-
+                            exists = core.sql(
+                                "SELECT 1 FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                                (obj_fmt, payload["full_oid"], copy_uuid),
+                            )
                             native_note = NativeObject(
                                 oid=OID(obj_fmt, payload["full_oid"]),
-                                native_type="blob",
+                                native_type=payload.get("native_type", "blob"),
                                 body=body_bytes,
                                 declared_size=payload.get("size", len(body_bytes)),
-                                digest_sha256=hashlib.sha256(body_bytes).hexdigest(),
+                                digest_sha256=payload.get("digest_sha256")
+                                or hashlib.sha256(body_bytes).hexdigest(),
                             )
+                            # Production admission checks role + exact bytes,
+                            # then inserts Capture/role/body in one transaction.
                             core.admit_note(proof, native_note, copy_uuid, work_budget)
-                            admitted += 1
+                            if exists:
+                                replayed += 1
+                            else:
+                                admitted += 1
                         except CoreFailure as cf:
                             if cf.code == "BUDGET":
                                 budget_exhausted = True
@@ -2142,15 +2101,17 @@ class SQLiteRecoveryAdapter:
 
                         # Check if already admitted
                         exists = ctx_conn.execute(
-                            "SELECT 1 FROM text_bodies WHERE sha256=?", (actual_sha,)
+                            "SELECT text_value FROM text_bodies WHERE sha256=?",
+                            (actual_sha,),
                         ).fetchone()
-                        if exists:
-                            replayed += 1
-                            continue
-
                         try:
+                            # ContextStore checks exact UTF-8 text even on a
+                            # digest-key replay; do not bypass that check.
                             ctx_store.text(text_val)
-                            admitted += 1
+                            if exists:
+                                replayed += 1
+                            else:
+                                admitted += 1
                         except Exception as e:
                             rejected += 1
                             rejections.append(
@@ -2160,6 +2121,20 @@ class SQLiteRecoveryAdapter:
                                 }
                             )
                             continue
+
+                    elif c_type == CandidateType.CONTEXT_RESOURCE.value:
+                        # Recovery currently has no complete typed adapter for
+                        # every Context resource/provenance dependency. Preserve
+                        # this candidate as an explicitly non-authoritative
+                        # observation; never call it an exact replay or write
+                        # arbitrary extracted columns into Context.
+                        observation += 1
+                        rejections.append(
+                            {
+                                "candidate_id": cand_id,
+                                "reason": "Context resource requires typed dependency reconciliation; qualified non-authoritative observation only",
+                            }
+                        )
 
                     # 6. Admitting Git Metadata Objects (repositories, git_objects, captures)
                     elif c_type == CandidateType.GIT_METADATA.value:
@@ -2176,10 +2151,10 @@ class SQLiteRecoveryAdapter:
                                     "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
                                     (repo_id,),
                                 )
+                                core.admit_repository(repo_id)
                                 if exists:
                                     replayed += 1
                                 else:
-                                    core.admit_repository(repo_id)
                                     admitted += 1
                             elif prov_tbl == "git_objects" and "full_oid" in payload:
                                 obj_f = payload.get("object_format", "sha1")
@@ -2188,10 +2163,10 @@ class SQLiteRecoveryAdapter:
                                     "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
                                     (obj_f, f_oid),
                                 )
+                                core.admit_object(OID(obj_f, f_oid))
                                 if exists:
                                     replayed += 1
                                 else:
-                                    core.admit_object(OID(obj_f, f_oid))
                                     admitted += 1
                             elif prov_tbl == "captures":
                                 cap_orig = payload.get("capture_origin_uuidv4")
@@ -2218,45 +2193,17 @@ class SQLiteRecoveryAdapter:
                                         }
                                     )
                                     continue
+                                cap = Capture(
+                                    cap_orig, cap_id, repo_id, src, rf, OID(obj_f, rt)
+                                )
                                 existing_cap = core.sql(
-                                    "SELECT repository_uuidv4, source, ref, object_format, root FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                                    "SELECT 1 FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
                                     (cap_orig, cap_id),
                                 )
+                                core.admit_capture(cap)
                                 if existing_cap:
-                                    ex_repo, ex_source, ex_ref, ex_fmt, ex_root = (
-                                        existing_cap[0]
-                                    )
-                                    if (
-                                        ex_source,
-                                        _decode_native_ref(ex_ref),
-                                        ex_fmt,
-                                        ex_root,
-                                    ) == (
-                                        src,
-                                        rf,
-                                        obj_f,
-                                        rt,
-                                    ):
-                                        replayed += 1
-                                    else:
-                                        rejected += 1
-                                        rejections.append(
-                                            {
-                                                "candidate_id": cand_id,
-                                                "reason": "Conflicting immutable Capture binding",
-                                            }
-                                        )
+                                    replayed += 1
                                 else:
-                                    core.admit_capture(
-                                        Capture(
-                                            cap_orig,
-                                            cap_id,
-                                            repo_id,
-                                            src,
-                                            rf,
-                                            OID(obj_f, rt),
-                                        )
-                                    )
                                     admitted += 1
                             else:
                                 # Candidate is accepted as a qualified recovery observation without authoritative mutation
