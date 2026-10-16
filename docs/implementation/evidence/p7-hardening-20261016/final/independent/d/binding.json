@@ -1,0 +1,19 @@
+{
+  "head": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "distributions": {
+    "wheel": {
+      "wheel": "repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "dfab687567d3b3202c1ac4de0e2d1485835eb42f3a962242c05c762b5ac2e414",
+      "package_files_equal_to_committed_tree": 124
+    },
+    "sdist-wheel": {
+      "wheel": "repo_catalog-0.2.0-py3-none-any.whl",
+      "sha256": "dfab687567d3b3202c1ac4de0e2d1485835eb42f3a962242c05c762b5ac2e414",
+      "package_files_equal_to_committed_tree": 124
+    }
+  },
+  "sdist_sha256": "2138a46b1709231a381b24139b0a47b37ed6fea49327f8fcd3ccf1f5810f01ae",
+  "frozen_source_sha256": "16b08877459772c7e319c13b3a4e726b3ba95a7acf562dd8dbf12753559b7d50",
+  "executable_inputs_sha256": "d5fd3d6c9fa2a4fbc9da74d260a3a7b9819c7b9d5252c80aa790bb2459eab62c"
+}

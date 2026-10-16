@@ -1,0 +1,10 @@
+import os,subprocess,json,time,pathlib
+root=pathlib.Path('/workspace/p7-evidence-20261016/distribution-final');root.mkdir(exist_ok=True)
+env={**os.environ,'TMPDIR':'/workspace/p7-acceptance-temp','REPO_CATALOG_WHEELHOUSE':'/workspace/p7-offline-wheelhouse'}
+commands=[['uv','run','--no-sync','python','scripts/prepare_wheelhouse.py','--output',env['REPO_CATALOG_WHEELHOUSE']],['uv','run','--no-sync','pytest','tests/packaging/test_distribution.py','-q','--basetemp','/workspace/distribution-acceptance-178','-o','junit_family=xunit1','--junitxml',str(root/'junit.xml'),'--journal',str(root/'journal.jsonl')]]
+records=[]
+for i,cmd in enumerate(commands):
+ start=time.time()
+ with (root/f'{i}.log').open('w') as log:r=subprocess.run(cmd,cwd='/workspace/p7',env=env,stdout=log,stderr=subprocess.STDOUT)
+ records.append({'argv':cmd,'exit_code':r.returncode,'elapsed_seconds':time.time()-start});print(i,r.returncode,time.time()-start,flush=True)
+(root/'execution.json').write_text(json.dumps({'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd='/workspace/p7',text=True).strip(),'cwd':'/workspace/p7','env':{k:env[k] for k in ['TMPDIR','REPO_CATALOG_WHEELHOUSE']},'commands':records,'qualification':'Full run initial setup errors retained separately; this supplies the documented offline fixture prerequisite without source changes. The previous external base directory shared the checkout path string prefix and triggered an overbroad fixture startswith check; this directory has no shared prefix.'},indent=2))

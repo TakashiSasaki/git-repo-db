@@ -1,0 +1,6 @@
+ROWS [('FF',)]
+PRAGMA_ERROR /tmp/tmpnxcl7dns/catalog/core.sqlite3 OperationalError user-defined function raised exception
+PRAGMA file:/tmp/tmpnxcl7dns/catalog/core.sqlite3?mode=ro [('ok',)]
+MODULE /workspace/p7-review-constraints/src/repo_catalog/adapters/sqlite/recovery.py
+CorruptionDetectedError Confirmed authoritative core corruption (authoritative_data): Stored authoritative core TEXT captures.ref is invalid UTF-8 STOPPED True
+CAUSE BackupValidationError('Stored authoritative core TEXT captures.ref is invalid UTF-8')

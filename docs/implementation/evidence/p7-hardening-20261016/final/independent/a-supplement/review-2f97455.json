@@ -1,0 +1,83 @@
+{
+  "review_scope": "Independent A trusted packaged CHECK + UTF8 corrections only; not approval of own inputwork changes",
+  "commit": "2f974558ee9c7ab85e88f87a5a6bc1836df601f3",
+  "recorded_at_utc": "2026-10-16T15:07:03.755924+00:00",
+  "results": [
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_utf8.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    },
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_ref.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    },
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-a-independent/positive_history_binary.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    }
+  ],
+  "packaged_check_counts": {
+    "core": {
+      "captures": 5,
+      "core_coverage_proofs": 3,
+      "coverage_claims": 3,
+      "coverage_scopes": 4,
+      "git_objects": 1,
+      "git_observations": 8,
+      "intrinsic_claims": 0,
+      "intrinsic_groups": 0,
+      "note_roles": 1,
+      "notes_claims": 1,
+      "notes_groups": 3,
+      "relation_groups": 3,
+      "repositories": 1,
+      "repository_claims": 5,
+      "retained_metadata": 3,
+      "retained_notes": 2,
+      "scalar_claims": 2,
+      "store_identity": 3
+    },
+    "context": {
+      "collection_terminals": 3,
+      "collections": 3,
+      "core_references": 3,
+      "coverage_claims": 3,
+      "coverage_proofs": 4,
+      "coverage_scopes": 5,
+      "field_candidates": 7,
+      "providers": 3,
+      "repository_context": 2,
+      "resource_relations": 5,
+      "resources": 6,
+      "source_coverage_proofs": 6,
+      "source_inventory_evidence": 6,
+      "source_repositories": 1,
+      "sources": 2,
+      "store_identity": 3,
+      "text_bodies": 2
+    }
+  },
+  "source_sha256": {
+    "src/repo_catalog/adapters/sqlite/recovery_validation.py": "5e7bcc228245593615dbb0c04362f06ee432c1ac4cf59c02cee74380db257ef9",
+    "src/repo_catalog/adapters/sqlite/recovery.py": "e3331db873925dd74d8c005f731ff9e1d87a6960ab91fe6b27dbd295df95968a"
+  },
+  "pytest_prior_2f97455": {
+    "command": "/workspace/p7/.venv/bin/python -m pytest tests/integration/p7/test_stored_constraints.py -q --junitxml=/workspace/recovery-evidence-20261016/review-a-independent/constraints-2f97455.xml",
+    "exit_code": 0,
+    "passed": 7
+  },
+  "initial_fixture_failure": "Own positive probe initially used collection coverage_kind=members while terminal scope omitted required coverage_kind; real admission rejected this invalid fixture. Initial script/log/JSON retained. Corrected resource reviews scope uses accepted actual matching owner and preserves two terminals/old proof.",
+  "finding": "No remaining defect reproduced in trusted CHECK/UTF8 correction scope on pinned revision; binary Notes, empty/split Unicode Context, old Coverage proof and later terminal remain valid."
+}

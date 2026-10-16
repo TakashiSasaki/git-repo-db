@@ -1,0 +1,29 @@
+"""Confirmed existing Context corruption must stop a fresh authority target."""
+import json
+from pathlib import Path
+import sqlite3
+import tempfile
+from repo_catalog.adapters.sqlite.p1_schema import initialize, register_functions
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+
+with tempfile.TemporaryDirectory(prefix='reviewer-c-context-corruption-') as td:
+    root=Path(td);catalog=root/'catalog';catalog.mkdir()
+    for role in ('core','context'):
+        initialize(catalog/f'{role}.sqlite3',role,'01c72bce-39ee-4677-98d4-c5a642020e98','1275bbae-7ab3-4321-9a1e-e2dc272af785')
+    salvage=root/'text.jsonl';salvage.write_text('{"candidate_type":"context_document","payload":{"text_value":"original good context bytes"}}\n')
+    adapter=SQLiteRecoveryAdapter();adapter.merge_salvage(catalog,salvage,request_id='initial')
+    with sqlite3.connect(catalog/'context.sqlite3') as db:
+        register_functions(db)
+        triggers=db.execute("SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='text_bodies'").fetchall()
+        for name,_ in triggers:db.execute('DROP TRIGGER "'+name+'"')
+        db.execute('PRAGMA ignore_check_constraints=ON')
+        db.execute("UPDATE text_bodies SET text_value='synthetic persisted corruption'")
+        for _,sql in triggers:db.execute(sql)
+    try:
+        receipt=adapter.merge_salvage(catalog,salvage,request_id='fresh-confirmation')
+        result={'result':'returned','rejected_units':receipt.rejected_units,'rejections':receipt.rejections}
+    except Exception as error:
+        result={'result':'raised','code':getattr(error,'code',None),'error':str(error)}
+    result['persistent_stop']=(catalog/'p1-recovery-stop.json').exists()
+    result['pass']=result['persistent_stop']
+    print(json.dumps(result,indent=2))

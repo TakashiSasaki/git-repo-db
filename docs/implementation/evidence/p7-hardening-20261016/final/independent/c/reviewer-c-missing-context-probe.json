@@ -1,0 +1,8 @@
+{
+  "result": "raised",
+  "error_type": "CorruptionDetectedError",
+  "error": "Confirmed destination Context corruption: Existing required retained Context text is missing",
+  "remaining_text_rows": 0,
+  "persistent_stop": true,
+  "pass": true
+}

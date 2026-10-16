@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/recovery-evidence-20261016/review-a-independent/positive_history_binary.py", line 36, in <module>
+    assert ctx.execute("SELECT value_json,observed_at_us,source_clock_us FROM field_candidates WHERE field_name='title'").fetchone()==('null',None,None)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

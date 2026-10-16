@@ -1,0 +1,29 @@
+import hashlib,json,sqlite3,tempfile
+from pathlib import Path
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.p1_schema import initialize,register_functions,expected_schema,schema_rows
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+root=Path(tempfile.mkdtemp(prefix='reviewer-a-contextmerge-'))
+repo='11111111-1111-4111-8111-111111111111';instance='22222222-2222-4222-8222-222222222222'
+for role in ('core','context'):initialize(root/(role+'.sqlite3'),role,repo,instance)
+text='genuine incoming text';digest=hashlib.sha256(text.encode()).hexdigest()
+with sqlite3.connect(root/'context.sqlite3') as db:
+ register_functions(db)
+ db.execute('INSERT INTO text_bodies VALUES(?,?)',(digest,text))
+ trigger=db.execute("SELECT sql FROM sqlite_schema WHERE name='text_bodies_no_update'").fetchone()[0]
+ db.execute('DROP TRIGGER text_bodies_no_update')
+ db.execute('PRAGMA ignore_check_constraints=ON')
+ db.execute('UPDATE text_bodies SET text_value=?',('corrupted retained Context',))
+ db.execute(trigger)
+ db.commit()
+ assert schema_rows(db)==expected_schema('context')
+ assert db.execute('SELECT p1_text_sha256(text_value)=sha256 FROM text_bodies').fetchone()==(0,)
+candidate={'candidate_type':'context_document','extraction_status':'clean','payload':{'text_value':text,'sha256':digest}}
+source=root.parent/(root.name+'.jsonl');source.write_text(json.dumps(candidate)+'\n')
+try:
+ receipt=SQLiteRecoveryAdapter().merge_salvage(root,source,request_id=str(uuid4()))
+except Exception as error:
+ print('exception',type(error).__name__,str(error))
+else:
+ print('receipt',receipt)
+print('persistent stop', (root/'p1-recovery-stop.json').is_file())

@@ -1,0 +1,39 @@
+"""Probe the actual copy cut while a supported Context writer is still unwinding."""
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.application.recovery import RecoveryService
+
+CHILD=r'''
+from pathlib import Path
+import sys
+from repo_catalog.adapters.sqlite import recovery
+
+def reached(*args,**kwargs):
+    print('copy-cut-reached',flush=True)
+    raise SystemExit(0)
+recovery._copy_forensic_files=reached
+recovery.SQLiteRecoveryAdapter().extract_salvage(Path(sys.argv[1]),Path(sys.argv[2]))
+'''
+with tempfile.TemporaryDirectory(prefix='reviewer-c-stopped-writer-') as td:
+    root=Path(td);catalog=root/'catalog';catalog.mkdir()
+    for role in ('core','context'):
+        initialize(catalog/f'{role}.sqlite3',role,'01c72bce-39ee-4677-98d4-c5a642020e98','1275bbae-7ab3-4321-9a1e-e2dc272af785')
+    try:
+        with Context.transaction(catalog) as context:
+            context.text('supported writer has uncommitted authoritative work')
+            RecoveryService().stop_suspect_catalog(catalog,'synthetic stop during ongoing writer')
+            child=subprocess.Popen([sys.executable,'-c',CHILD,str(catalog),str(root/'salvage')],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            try:
+                out,err=child.communicate(timeout=2)
+                result={'probe':'stopped_extraction_drains_existing_context_writer','pass':False,'copy_cut_reached_while_writer_held':out.strip()=='copy-cut-reached','child_exit':child.returncode,'stderr':err}
+            except subprocess.TimeoutExpired:
+                child.kill();out,err=child.communicate()
+                result={'probe':'stopped_extraction_drains_existing_context_writer','pass':True,'copy_cut_reached_while_writer_held':False}
+    except Exception as error:
+        result['writer_unwind']=type(error).__name__+':'+str(error)
+    print(json.dumps(result,indent=2))

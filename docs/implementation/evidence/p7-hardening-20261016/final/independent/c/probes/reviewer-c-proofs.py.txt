@@ -1,0 +1,59 @@
+"""Independent Reviewer C counterexamples; outside implementation checkout."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import tempfile
+from uuid import uuid4
+
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.recovery import RecoveryBudget, RecoveryError
+
+REPO='01c72bce-39ee-4677-98d4-c5a642020e98'
+INSTANCE='1275bbae-7ab3-4321-9a1e-e2dc272af785'
+
+def catalog(root):
+    path=root/str(uuid4())
+    path.mkdir()
+    for role in ('core','context'):
+        initialize(path/f'{role}.sqlite3',role,REPO,INSTANCE)
+    return path
+
+def text_record(value):
+    return {'candidate_type':'context_document','extraction_status':'clean','payload':{'text_value':value}}
+
+def run_probes():
+    results=[]
+    with tempfile.TemporaryDirectory(prefix='reviewer-c-') as tmp:
+        root=Path(tmp)
+        adapter=SQLiteRecoveryAdapter()
+        path=catalog(root)
+        candidate=root/'oversize.jsonl'
+        candidate.write_text(json.dumps(text_record('x'*2000))+'\n')
+        receipt=adapter.merge_salvage(path,candidate,RecoveryBudget(max_payload_bytes=1024),'oversize')
+        results.append({'probe':'oversized_context_text','expected':'rejected_units=1 admitted_units=0','actual':vars(receipt),'pass':receipt.rejected_units==1 and receipt.admitted_units==0})
+        path=catalog(root)
+        candidate=root/'malformed.jsonl'
+        candidate.write_text('\n'.join(map(json.dumps,[text_record(17),text_record('independent valid unit')]))+'\n')
+        try:
+            receipt=adapter.merge_salvage(path,candidate,request_id='malformed')
+            actual=vars(receipt)
+            passed=receipt.rejected_units==1 and receipt.admitted_units==1
+        except Exception as error:
+            actual={'error_type':type(error).__name__,'message':str(error)}
+            passed=False
+        results.append({'probe':'malformed_context_does_not_hide_later_candidate','actual':actual,'pass':passed})
+        path=catalog(root)
+        candidate=root/'one.jsonl'
+        candidate.write_text(json.dumps(text_record('one byte-read witness'))+'\n')
+        receipt=adapter.merge_salvage(path,candidate,request_id='short')
+        state=json.loads((path/'p1-recovery-request-short.json').read_text())
+        results.append({'probe':'successful_short_read_actual_accounting','input_size':candidate.stat().st_size,'persisted_scan':state['cumulative_usage']['input_scan_bytes'],'pass':state['cumulative_usage']['input_scan_bytes']==candidate.stat().st_size})
+    return results
+
+if __name__=='__main__':
+    print(json.dumps(run_probes(),indent=2))

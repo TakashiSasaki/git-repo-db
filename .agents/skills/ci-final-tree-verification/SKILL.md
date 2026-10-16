@@ -138,3 +138,31 @@ functions correctly run with the production fixture under a P2 collection module
 while JUnit `file` still identifies the original P1 function definition. Counting
 by that attribute would misclassify production verification. The paired receipts
 verify all selected IDs against journal starts, each phase and JUnit identities.
+
+## Size acceptance storage and inspect fetch scope
+
+Before broad concurrent acceptance runs, inspect `df -h`/`df -i` for the actual
+pytest temporary filesystem and the workspace. Recovery tests retain many
+synthetic catalogs. A large workspace does not imply a large `/tmp`: P7's first
+parallel full-suite comparisons exhausted the separate 8.8 GiB tmpfs, producing
+real, preserved ENOSPC failures. Do not classify the whole failed run as product
+regressions or silently erase it. Record the failure and rerun on a sufficiently
+sized filesystem with both `TMPDIR` and a new explicit pytest `--basetemp`.
+Never reuse/delete an earlier run's directory to make the evidence disappear.
+Concurrent reruns need distinct directories and enough aggregate capacity.
+
+Keep installed-test directories outside the source checkout, with an unambiguous
+path. The current generic distribution fixture tests checkout exclusion using a
+string `startswith`: `/workspace/p7-distribution` incorrectly matches checkout
+`/workspace/p7`, even though it is a sibling. Preserve that fixture failure and
+rerun in a distinct nonmatching prefix; verify actual site-packages imports.
+Prepare the documented external locked wheelhouse first and record
+`REPO_CATALOG_WHEELHOUSE`. Initial missing-wheelhouse errors are not successes.
+
+Inspect `git config --get-all remote.origin.fetch` before relying on a refresh.
+This workspace initially fetched only main, so plain `git fetch origin` left
+feature tracking refs stale. Fetch the intended refs explicitly, compare direct
+`git ls-remote` heads before pushes, and preserve a concurrent remote commit
+before an ordinary non-force reconciliation. A rejected push is a synchronization
+boundary, not authorization to force-push. Evidence-only commits must retain the
+frozen executable input hashes; report tested source SHA and final PR SHA apart.

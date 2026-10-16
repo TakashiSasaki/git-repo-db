@@ -1,0 +1,49 @@
+import hashlib,json,sqlite3,tempfile
+from pathlib import Path
+from repo_catalog.adapters.sqlite.p1_schema import initialize,register_functions,expected_schema,schema_rows
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.p1_core import NativeObject,OID,native_oid
+root=Path(tempfile.mkdtemp(prefix='reviewer-a-intrinsic-'))
+repo='11111111-1111-4111-8111-111111111111'; instance='22222222-2222-4222-8222-222222222222'
+initialize(root/'core.sqlite3','core',repo,instance)
+body=b'tree '+b'1'*40+b'\nauthor A <a@b> 1 +0000\ncommitter A <a@b> 1 +0000\n\noriginal message\n'
+native=NativeObject(OID('sha1',native_oid('sha1','commit',body)),'commit',body,len(body),hashlib.sha256(body).hexdigest())
+core=GitCore(root/'core.sqlite3');core.admit_metadata(native,'33333333-3333-4333-8333-333333333333',UnlimitedWorkBudget());core._db.close()
+with sqlite3.connect(root/'core.sqlite3') as db:
+ register_functions(db)
+ print('fields',db.execute('SELECT field,value FROM intrinsic_claims').fetchall())
+ triggers=db.execute("SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND name IN ('p1_immutable_intrinsic_claims_update','p1_immutable_scalar_claims_update')").fetchall()
+ for name,sql in triggers: db.execute(f'DROP TRIGGER {name}')
+ db.execute("UPDATE intrinsic_claims SET value=? WHERE field='size'", ('["known",999]',))
+ db.execute("UPDATE scalar_claims SET value=? WHERE field='size'", ('["known",999]',))
+ for name,sql in triggers:db.execute(sql)
+ db.commit()
+ assert schema_rows(db)==expected_schema('core')
+ print('integrity',db.execute('PRAGMA integrity_check').fetchall()); print('fk',db.execute('PRAGMA foreign_key_check').fetchall())
+ print('intrinsic mismatch',db.execute('SELECT i.field,i.value,p1_intrinsic_claim(i.field,i.value,r.native_type,r.body) FROM intrinsic_claims i JOIN retained_metadata r USING(object_format,full_oid,physical_copy_uuidv4)').fetchall())
+before = hashlib.sha256((root/'core.sqlite3').read_bytes()).hexdigest()
+try:
+ summary = SQLiteRecoveryAdapter()._validate_and_summarize_core(root/'core.sqlite3')
+except Exception as error:
+ from repo_catalog.domain.recovery import BackupValidationError
+ assert isinstance(error,BackupValidationError), (type(error),str(error))
+ print('correct rejection',type(error).__name__,str(error))
+else:
+ raise AssertionError(('intrinsic corruption accepted',summary))
+after = hashlib.sha256((root/'core.sqlite3').read_bytes()).hexdigest()
+assert before == after
+print('source unchanged SHA256',after)
+
+
+from repo_catalog.domain.recovery import BackupScope,CorruptionDetectedError
+try:
+ SQLiteRecoveryAdapter().create_consistent_backup(root,root.parent/(root.name+'-backup'),scope=BackupScope.GIT_ONLY)
+except CorruptionDetectedError as error:
+ print('confirmed corruption persistent stop',str(error))
+else:
+ raise AssertionError('backup published authoritative intrinsic corruption')
+assert (root/'p1-recovery-stop.json').is_file()
+assert hashlib.sha256((root/'core.sqlite3').read_bytes()).hexdigest()==before
+print('backup rejected and persistent stop present without modifying Core bytes')

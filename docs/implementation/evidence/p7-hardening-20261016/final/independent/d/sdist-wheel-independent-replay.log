@@ -1,0 +1,16 @@
+{
+  "before": {
+    "captures": 1,
+    "note_roles": 1,
+    "retained_notes": 1
+  },
+  "after": {
+    "captures": 1,
+    "note_roles": 1,
+    "retained_notes": 1
+  },
+  "admitted": 0,
+  "replayed": 0,
+  "rejected": 1,
+  "receipt": "MergeReceipt(destination_path='/tmp/synthetic_templatea54vxcj3/catalog', candidates_processed=1, admitted_units=0, rejected_units=1, replayed_units=0, observation_units=0, deferred_units=0, unprocessed_units=0, input_complete=True, unprocessed_count_exact=True, rejections=[{'candidate_id': 'sha1:a845583b7ecd35a9920c9b33aaea5d9b3e8a7adf:88888888-8888-4888-8888-888888888888', 'reason': 'Notes admission error: inconsistent immutable evidence coordinate'}])"
+}

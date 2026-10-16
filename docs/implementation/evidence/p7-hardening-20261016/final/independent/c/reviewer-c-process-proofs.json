@@ -1,0 +1,156 @@
+[
+  {
+    "probe": "concurrent_same_request",
+    "pass": true,
+    "results": [
+      [
+        0,
+        {
+          "destination_path": "/tmp/reviewer-c-process-0b0y236y/2a452218-403c-4f56-aa4c-928aa2baa613",
+          "candidates_processed": 1,
+          "admitted_units": 1,
+          "rejected_units": 0,
+          "replayed_units": 0,
+          "observation_units": 0,
+          "deferred_units": 0,
+          "unprocessed_units": 0,
+          "input_complete": false,
+          "unprocessed_count_exact": false,
+          "rejections": []
+        },
+        ""
+      ],
+      [
+        0,
+        {
+          "destination_path": "/tmp/reviewer-c-process-0b0y236y/2a452218-403c-4f56-aa4c-928aa2baa613",
+          "candidates_processed": 0,
+          "admitted_units": 0,
+          "rejected_units": 0,
+          "replayed_units": 0,
+          "observation_units": 0,
+          "deferred_units": 0,
+          "unprocessed_units": 1,
+          "input_complete": false,
+          "unprocessed_count_exact": false,
+          "rejections": []
+        },
+        ""
+      ]
+    ],
+    "count": 1,
+    "usage": {
+      "input_bytes": 21,
+      "input_records": 1,
+      "input_scan_bytes": 121,
+      "metadata_units": 2,
+      "proof_steps": 0,
+      "verification_bytes": 63
+    }
+  },
+  {
+    "probe": "hard_kill_reservation",
+    "pass": true,
+    "exit": -9,
+    "count_before_retry": 0,
+    "final_count": 1,
+    "reserved": {
+      "input_bytes": 0,
+      "input_records": 0,
+      "input_scan_bytes": 65536,
+      "metadata_units": 0,
+      "proof_steps": 0,
+      "verification_bytes": 0
+    },
+    "final_usage": {
+      "input_bytes": 21,
+      "input_records": 1,
+      "input_scan_bytes": 65657,
+      "metadata_units": 2,
+      "proof_steps": 0,
+      "verification_bytes": 63
+    },
+    "retry_exits": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "probe": "hard_kill_admission",
+    "pass": true,
+    "exit": -9,
+    "count_before_retry": 1,
+    "final_count": 1,
+    "reserved": {
+      "input_bytes": 21,
+      "input_records": 1,
+      "input_scan_bytes": 121,
+      "metadata_units": 2,
+      "proof_steps": 0,
+      "verification_bytes": 63
+    },
+    "final_usage": {
+      "input_bytes": 21,
+      "input_records": 1,
+      "input_scan_bytes": 121,
+      "metadata_units": 2,
+      "proof_steps": 0,
+      "verification_bytes": 63
+    },
+    "retry_exits": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "probe": "report_delete",
+    "pass": true,
+    "exit": 1,
+    "error_tail": "repo_catalog.domain.recovery.RecoveryError: Recovery accounting unavailable: p1-recovery-request-independent.json: [Errno 2] No such file or directory: '/tmp/reviewer-c-process-0b0y236y/e1ce4a29-d499-4b9e-b395-7a0ee43d57bc/p1-recovery-request-independent.json'",
+    "count": 1
+  },
+  {
+    "probe": "report_truncate",
+    "pass": true,
+    "exit": 1,
+    "error_tail": "repo_catalog.domain.recovery.RecoveryError: Recovery accounting unavailable: p1-recovery-request-independent.json: Expecting value: line 1 column 12 (char 11)",
+    "count": 1
+  },
+  {
+    "probe": "report_bool_usage",
+    "pass": true,
+    "exit": 1,
+    "error_tail": "repo_catalog.domain.recovery.RecoveryError: Invalid recovery expenditure state",
+    "count": 1
+  },
+  {
+    "probe": "checkpoint_delete",
+    "pass": true,
+    "exit": 1,
+    "error_tail": "repo_catalog.domain.recovery.RecoveryError: Recovery accounting unavailable: p1-recovery-request-independent.reserved.json: [Errno 2] No such file or directory: '/tmp/reviewer-c-process-0b0y236y/3366210e-ed2e-4be6-afc0-3126dd38a123/p1-recovery-request-independent.reserved.json'",
+    "count": 1
+  },
+  {
+    "probe": "checkpoint_conflict",
+    "pass": true,
+    "exit": 1,
+    "error_tail": "repo_catalog.domain.recovery.RecoveryError: Conflicting recovery reservation checkpoint",
+    "count": 1
+  },
+  {
+    "probe": "registry_delete",
+    "pass": true,
+    "exit": 1,
+    "error_tail": "repo_catalog.domain.recovery.RecoveryError: Recovery accounting unavailable: p1-recovery-requests.json: [Errno 2] No such file or directory: '/tmp/reviewer-c-process-0b0y236y/f147632a-2eba-4762-9e41-624a44ef4e11/p1-recovery-requests.json'",
+    "count": 1
+  },
+  {
+    "probe": "marker_delete",
+    "pass": true,
+    "exit": 1,
+    "error_tail": "repo_catalog.domain.recovery.RecoveryError: Recovery accounting marker missing; cannot infer zero work",
+    "count": 1
+  }
+]

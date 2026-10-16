@@ -1,0 +1,230 @@
+{
+  "commit": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "cwd": "/workspace/p7-review-c",
+  "PYTHONPATH": "/workspace/p7-review-c/src",
+  "independent_probe_count": 38,
+  "commands": [
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-proofs.py"
+      ],
+      "started_utc": "2026-10-16T15:12:25.904264+00:00",
+      "finished_utc": "2026-10-16T15:12:27.116480+00:00",
+      "seconds": 1.2122147760001099,
+      "exit_code": 0,
+      "script_sha256": "2dce33523231a06ccaedaefbd0b60b88a54c0203773ae4c94bf427093a79c544",
+      "probe_count": 3,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-process-proofs.py"
+      ],
+      "started_utc": "2026-10-16T15:12:27.116568+00:00",
+      "finished_utc": "2026-10-16T15:12:37.144965+00:00",
+      "seconds": 10.02840906099982,
+      "exit_code": 0,
+      "script_sha256": "0e6216917b7a2d2bd4603b722bd0c380aa584e9e4daee00d00b8ad17c2a92cc2",
+      "probe_count": 10,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-identity-proofs.py"
+      ],
+      "started_utc": "2026-10-16T15:12:37.145053+00:00",
+      "finished_utc": "2026-10-16T15:12:39.010209+00:00",
+      "seconds": 1.8651649839998754,
+      "exit_code": 0,
+      "script_sha256": "6920500c77d957757f7d5846e2e085cb5950c256e960652e0f01a0ae7f99bb94",
+      "probe_count": 13,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-dimension-proofs.py"
+      ],
+      "started_utc": "2026-10-16T15:12:39.010275+00:00",
+      "finished_utc": "2026-10-16T15:12:40.112562+00:00",
+      "seconds": 1.1022995349999292,
+      "exit_code": 0,
+      "script_sha256": "f1cc9739edac6da4cc018b8d2d7beb1db979bd410c7b5f15784e8eae9dd950c7",
+      "probe_count": 4,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-allocation-proofs.py"
+      ],
+      "started_utc": "2026-10-16T15:12:40.112642+00:00",
+      "finished_utc": "2026-10-16T15:12:40.540059+00:00",
+      "seconds": 0.4274263889997201,
+      "exit_code": 0,
+      "script_sha256": "1a027cb68210ef5ba06da2e6468eebd0e1b0a86e130941b367dfdf86c521bd35",
+      "probe_count": 2,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-fifo-probe.py"
+      ],
+      "started_utc": "2026-10-16T15:12:40.540142+00:00",
+      "finished_utc": "2026-10-16T15:12:41.400063+00:00",
+      "seconds": 0.8599344310000561,
+      "exit_code": 0,
+      "script_sha256": "9c9f29504778548d585f430dc64483af9486362700804e9e247cb86deb614704",
+      "probe_count": 1,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-stored-context-probe.py"
+      ],
+      "started_utc": "2026-10-16T15:12:41.400151+00:00",
+      "finished_utc": "2026-10-16T15:12:41.958557+00:00",
+      "seconds": 0.5584170379997886,
+      "exit_code": 0,
+      "script_sha256": "ff75bcd3952fe9df72ad058f135ca43b491dd9276702a313ca1048657e78cb4f",
+      "probe_count": 1,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-missing-context-probe.py"
+      ],
+      "started_utc": "2026-10-16T15:12:41.958643+00:00",
+      "finished_utc": "2026-10-16T15:12:42.518094+00:00",
+      "seconds": 0.5594584059999761,
+      "exit_code": 0,
+      "script_sha256": "4c7b8a0eb8663896c49dcd2d3922c4783a2b53bb96419b08b16d0a0583533283",
+      "probe_count": 1,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-missing-native-probe.py"
+      ],
+      "started_utc": "2026-10-16T15:12:42.518173+00:00",
+      "finished_utc": "2026-10-16T15:12:43.104652+00:00",
+      "seconds": 0.586487353999928,
+      "exit_code": 0,
+      "script_sha256": "365d76a46749a429c519e11c34946d12d3120019fd892f843b4774bf47cd1141",
+      "probe_count": 1,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-stopped-writer-probe.py"
+      ],
+      "started_utc": "2026-10-16T15:12:43.104720+00:00",
+      "finished_utc": "2026-10-16T15:12:45.619391+00:00",
+      "seconds": 2.514679759000046,
+      "exit_code": 0,
+      "script_sha256": "4345c0c751c0cbb4a27414d08b8907a55de52e1a3765e55b8d2d700b41e8cd06",
+      "probe_count": 1,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "/workspace/recovery-evidence-20261016/reviewer-c-init-crash-probe.py"
+      ],
+      "started_utc": "2026-10-16T15:12:45.619459+00:00",
+      "finished_utc": "2026-10-16T15:12:46.845863+00:00",
+      "seconds": 1.2264159830001518,
+      "exit_code": 0,
+      "script_sha256": "58ee04f082e0806b5dc09dbe16dfeeaa27e7a7e16f01b0ad02cbcc0f61e8e62a",
+      "probe_count": 1,
+      "all_probes_pass": true
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "pytest",
+        "tests/integration/p7",
+        "-q",
+        "--junitxml=/workspace/recovery-evidence-20261016/reviewer-c-final-178ddbaa/p7.xml"
+      ],
+      "started_utc": "2026-10-16T15:12:46.845950+00:00",
+      "finished_utc": "2026-10-16T15:13:51.356441+00:00",
+      "seconds": 64.51050122200013,
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "pytest",
+        "tests/integration/p7",
+        "--collect-only",
+        "-q"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/audit_callsite_dependencies.py",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "self_author_exclusion": "Reviewer C authored original five WAL/process regression nodes only; their assertions are excluded from this independent test-quality opinion and belong to Reviewer D. No production P7 code was authored by Reviewer C.",
+  "limits": [
+    "Linux cooperative-process filesystem semantics, not actual host power-loss tests",
+    "Complete malicious deletion or consistent rewriting of all accounting evidence is outside supported local durability contract",
+    "Allocation numbers measure Python tracemalloc only, not native SQLite RSS",
+    "No installed-distribution acceptance claimed by this reviewer; Reviewer D/root cover it"
+  ]
+}

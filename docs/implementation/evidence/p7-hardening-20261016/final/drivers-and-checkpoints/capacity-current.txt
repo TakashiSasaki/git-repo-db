@@ -1,0 +1,4 @@
+2026-10-16T15:25:13.267675+00:00
+Filesystem       1B-blocks       Used   Available Use% Mounted on
+none            9441349632 9441345536        4096 100% /tmp
+overlay        33770192896 3281715200 28753715200  11% /

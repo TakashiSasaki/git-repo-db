@@ -1,0 +1,109 @@
+"""Independent process proofs using Context authority, not implementation test helpers."""
+import dataclasses
+import json
+import os
+from pathlib import Path
+import signal
+import sqlite3
+import subprocess
+import sys
+import tempfile
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.domain.recovery import RecoveryBudget
+
+REPO='01c72bce-39ee-4677-98d4-c5a642020e98'
+INSTANCE='1275bbae-7ab3-4321-9a1e-e2dc272af785'
+WORKER=r'''
+import dataclasses,json,os,pathlib,signal,sys
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite.p1_context import ContextStore
+from repo_catalog.adapters.sqlite import recovery_budget
+from repo_catalog.domain.recovery import RecoveryBudget
+catalog,salvage,cut=sys.argv[1:4]
+if cut=='reservation':
+    original=recovery_budget._write
+    def write(path,data):
+        original(path,data)
+        if path.name.endswith('.reserved.json') and sum(data['cumulative_usage'].values()):
+            os.kill(os.getpid(),signal.SIGKILL)
+    recovery_budget._write=write
+if cut=='admission':
+    # Context admission now owns an explicit transaction; kill after its actual
+    # COMMIT/completion fence, rather than after the uncommitted INSERT helper.
+    import contextlib
+    from repo_catalog.adapters.sqlite import recovery
+    original=recovery.catalog_completion
+    @contextlib.contextmanager
+    def after_commit(*args,**kwargs):
+        with original(*args,**kwargs):
+            yield
+        os.kill(os.getpid(),signal.SIGKILL)
+    recovery.catalog_completion=after_commit
+budget=RecoveryBudget(max_input_records=1)
+print(json.dumps(dataclasses.asdict(SQLiteRecoveryAdapter().merge_salvage(pathlib.Path(catalog),pathlib.Path(salvage),budget,'independent'))),flush=True)
+'''
+
+def worker(catalog,salvage,cut='normal'):
+    return subprocess.Popen([sys.executable,'-c',WORKER,str(catalog),str(salvage),cut],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+
+def initialize_catalog(root):
+    catalog=root/str(uuid4());catalog.mkdir()
+    for role in ('core','context','operational','search'):
+        initialize(catalog/f'{role}.sqlite3',role,REPO,INSTANCE)
+    return catalog
+
+def state(catalog):
+    return json.loads((catalog/'p1-recovery-request-independent.json').read_text())
+
+def count(catalog):
+    with sqlite3.connect(catalog/'context.sqlite3') as db:
+        return db.execute('SELECT count(*) FROM text_bodies').fetchone()[0]
+
+def collect(process):
+    out,err=process.communicate(timeout=20)
+    return process.returncode,json.loads(out) if out else {},err
+
+def main():
+    results=[]
+    with tempfile.TemporaryDirectory(prefix='reviewer-c-process-') as td:
+        root=Path(td)
+        paths=[]
+        for text in ('independent process A','independent process B'):
+            path=root/(str(uuid4())+'.jsonl')
+            path.write_text(json.dumps({'candidate_type':'context_document','extraction_status':'clean','payload':{'text_value':text}})+'\n')
+            paths.append(path)
+        cat=initialize_catalog(root)
+        procs=[worker(cat,path) for path in paths]
+        outcomes=[collect(p) for p in procs]
+        results.append({'probe':'concurrent_same_request','pass':all(r[0]==0 for r in outcomes) and count(cat)==1 and state(cat)['cumulative_usage']['input_records']==1,'results':outcomes,'count':count(cat),'usage':state(cat)['cumulative_usage']})
+        for cut in ('reservation','admission'):
+            cat=initialize_catalog(root)
+            result=collect(worker(cat,paths[0],cut))
+            reserved=json.loads((cat/'p1-recovery-request-independent.reserved.json').read_text())['cumulative_usage']
+            count_before=count(cat)
+            for role in ('operational','search'):
+                (cat/f'{role}.sqlite3').unlink()
+            retries=[collect(worker(cat,paths[0])) for _ in range(3)]
+            usage=state(cat)['cumulative_usage']
+            passed=result[0]==-signal.SIGKILL and sum(reserved.values())>0 and all(r[0]==0 for r in retries) and all(usage[k]>=v for k,v in reserved.items()) and count(cat)==1
+            results.append({'probe':'hard_kill_'+cut,'pass':passed,'exit':result[0],'count_before_retry':count_before,'final_count':count(cat),'reserved':reserved,'final_usage':usage,'retry_exits':[r[0] for r in retries]})
+        for damage in ('report_delete','report_truncate','report_bool_usage','checkpoint_delete','checkpoint_conflict','registry_delete','marker_delete'):
+            cat=initialize_catalog(root)
+            assert collect(worker(cat,paths[0]))[0]==0
+            report=cat/'p1-recovery-request-independent.json'
+            checkpoint=cat/'p1-recovery-request-independent.reserved.json'
+            if damage=='report_delete':report.unlink()
+            elif damage=='report_truncate':report.write_text('{"version":')
+            elif damage=='report_bool_usage':
+                val=state(cat);val['cumulative_usage']['input_records']=True;report.write_text(json.dumps(val))
+            elif damage=='checkpoint_delete':checkpoint.unlink()
+            elif damage=='checkpoint_conflict':
+                val=json.loads(checkpoint.read_text());val['request_id']='foreign';checkpoint.write_text(json.dumps(val))
+            elif damage=='registry_delete':(cat/'p1-recovery-requests.json').unlink()
+            else:(cat/'p1-recovery-requests.initialized').unlink()
+            result=collect(worker(cat,paths[1]))
+            results.append({'probe':damage,'pass':result[0]!=0 and 'RecoveryError' in result[2] and count(cat)==1,'exit':result[0],'error_tail':result[2].splitlines()[-1],'count':count(cat)})
+    print(json.dumps(results,indent=2))
+    assert all(row['pass'] for row in results)
+if __name__=='__main__':main()

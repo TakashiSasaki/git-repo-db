@@ -1,0 +1,53 @@
+[
+  {
+    "probe": "oversized_context_text",
+    "expected": "rejected_units=1 admitted_units=0",
+    "actual": {
+      "destination_path": "/tmp/reviewer-c-3yxc63og/28ded5a6-0e3f-46ba-9463-31d5f6313a7b",
+      "candidates_processed": 1,
+      "admitted_units": 0,
+      "rejected_units": 1,
+      "replayed_units": 0,
+      "observation_units": 0,
+      "deferred_units": 0,
+      "unprocessed_units": 0,
+      "input_complete": true,
+      "unprocessed_count_exact": true,
+      "rejections": [
+        {
+          "candidate_id": "1",
+          "reason": "Context admission error: Context text exceeds finite payload byte limit"
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "probe": "malformed_context_does_not_hide_later_candidate",
+    "actual": {
+      "destination_path": "/tmp/reviewer-c-3yxc63og/b9ac3afe-f1b6-4ab0-8634-cac95ba9eded",
+      "candidates_processed": 2,
+      "admitted_units": 1,
+      "rejected_units": 1,
+      "replayed_units": 0,
+      "observation_units": 0,
+      "deferred_units": 0,
+      "unprocessed_units": 0,
+      "input_complete": true,
+      "unprocessed_count_exact": true,
+      "rejections": [
+        {
+          "line": 1,
+          "reason": "JSON parse error or depth: payload.text_value must be a string when present"
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "probe": "successful_short_read_actual_accounting",
+    "input_size": 121,
+    "persisted_scan": 121,
+    "pass": true
+  }
+]

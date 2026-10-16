@@ -1,0 +1,46 @@
+import multiprocessing,sqlite3,tempfile
+from pathlib import Path
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.recovery import BackupValidationError,BackupScope
+
+def lock_database(path,ready,release):
+ with sqlite3.connect(path) as db:
+  db.execute('PRAGMA journal_mode=DELETE')
+  db.execute('BEGIN EXCLUSIVE')
+  ready.set()
+  assert release.wait(20)
+  db.rollback()
+
+if __name__=='__main__':
+ root=Path(tempfile.mkdtemp(prefix='reviewer-a-environment-'))
+ initialize(root/'core.sqlite3','core','11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222')
+ adapter=SQLiteRecoveryAdapter()
+ adapter._diagnose_and_stop_if_source_corrupt(root,root/'core.sqlite3','core',BackupValidationError('synthetic staging defect'))
+ assert not (root/'p1-recovery-stop.json').exists()
+ print('healthy authority staging-only defect does not stop')
+ ctx=multiprocessing.get_context('spawn'); ready=ctx.Event();release=ctx.Event()
+ child=ctx.Process(target=lock_database,args=(root/'core.sqlite3',ready,release)); child.start()
+ try:
+  assert ready.wait(10)
+  try:
+   adapter.create_consistent_backup(root,root.parent/(root.name+'-backup'),scope=BackupScope.GIT_ONLY)
+  except BackupValidationError as error:
+   assert 'lock' in str(error).lower() or 'busy' in str(error).lower(),str(error)
+   print('genuine independent-process SQLite lock safely refuses backup',str(error))
+  else:raise AssertionError('backup unexpectedly crossed genuine SQLite exclusive lock')
+  assert not (root/'p1-recovery-stop.json').exists()
+ finally:
+  release.set();child.join(10)
+  assert child.exitcode==0,child.exitcode
+ print('no false persistent corruption stop')
+ from repo_catalog.domain.recovery import SourceIntegrityIndeterminateError
+ import stat
+ original_mode=stat.S_IMODE((root/'core.sqlite3').stat().st_mode)
+ (root/'core.sqlite3').chmod(0)
+ try:
+  try:adapter._diagnose_and_stop_if_source_corrupt(root,root/'core.sqlite3','core',BackupValidationError('staged inaccessible'))
+  except SourceIntegrityIndeterminateError as error:print('genuine permission refusal classified indeterminate',type(error).__name__)
+  else:raise AssertionError('permission failure falsely diagnosed healthy/corrupt')
+  assert not (root/'p1-recovery-stop.json').exists()
+ finally:(root/'core.sqlite3').chmod(original_mode)

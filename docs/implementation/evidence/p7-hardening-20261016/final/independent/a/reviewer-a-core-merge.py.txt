@@ -1,0 +1,28 @@
+import base64,hashlib,json,sqlite3,tempfile
+from pathlib import Path
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.p1_schema import initialize,register_functions,expected_schema,schema_rows
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.p1_core import NativeObject,OID,native_oid
+root=Path(tempfile.mkdtemp(prefix='reviewer-a-coremerge-'))
+repo='11111111-1111-4111-8111-111111111111'; instance='22222222-2222-4222-8222-222222222222';copy='33333333-3333-4333-8333-333333333333'
+initialize(root/'core.sqlite3','core',repo,instance)
+body=b'100644 readme\0'+b'\x11'*20
+native=NativeObject(OID('sha1',native_oid('sha1','tree',body)),'tree',body,len(body),hashlib.sha256(body).hexdigest())
+core=GitCore(root/'core.sqlite3');core.admit_metadata(native,copy,UnlimitedWorkBudget());core._db.close()
+with sqlite3.connect(root/'core.sqlite3') as db:
+ register_functions(db)
+ trigger=db.execute("SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_metadata_update'").fetchone()[0]
+ db.execute('DROP TRIGGER p1_immutable_retained_metadata_update')
+ db.execute('PRAGMA ignore_check_constraints=ON')
+ db.execute('UPDATE retained_metadata SET size=999')
+ db.execute(trigger);db.commit()
+ assert schema_rows(db)==expected_schema('core')
+ assert db.execute('SELECT p1_native(object_format,full_oid,native_type,body,size,digest_sha256) FROM retained_metadata').fetchone()==(0,)
+candidate={'candidate_type':'retained_body','extraction_status':'clean','payload':{'object_format':'sha1','full_oid':native.oid.full_oid,'native_type':'tree','body_base64':base64.b64encode(body).decode(),'size':len(body),'digest_sha256':hashlib.sha256(body).hexdigest(),'physical_copy_uuidv4':copy}}
+source=root.parent/(root.name+'.jsonl');source.write_text(json.dumps(candidate)+'\n')
+try: print('receipt',SQLiteRecoveryAdapter().merge_salvage(root,source,request_id=str(uuid4())))
+except Exception as error: print('exception',type(error).__name__,str(error))
+print('persistent stop',(root/'p1-recovery-stop.json').is_file())

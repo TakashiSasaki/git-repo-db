@@ -1,0 +1,75 @@
+{
+  "results": {
+    "final": {
+      "head": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+      "tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+      "synthetic_state": "/tmp/pytest-of-agent/pytest-123/test_operational_failure_retai0/state",
+      "table_routes": {
+        "operational.sqlite3": [
+          "collection_progress",
+          "job_attempts",
+          "jobs"
+        ],
+        "catalog.sqlite3": []
+      },
+      "exit_code": 1,
+      "failed_nodes": [
+        "tests/integration/test_application_contract.py::test_operational_failure_retains_resumable_job",
+        "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-root]"
+      ],
+      "errors": [
+        "no such table: jobs",
+        "no such table: collection_progress"
+      ]
+    },
+    "main": {
+      "head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "tree": "1b16e6589b0e7931f0eb24322127684479771c79",
+      "synthetic_state": "/tmp/pytest-of-agent/pytest-124/test_operational_failure_retai0/state",
+      "table_routes": {
+        "operational.sqlite3": [
+          "collection_progress",
+          "job_attempts",
+          "jobs"
+        ],
+        "catalog.sqlite3": []
+      },
+      "exit_code": 1,
+      "failed_nodes": [
+        "tests/integration/test_application_contract.py::test_operational_failure_retains_resumable_job",
+        "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-root]"
+      ],
+      "errors": [
+        "no such table: jobs",
+        "no such table: collection_progress"
+      ]
+    }
+  },
+  "unchanged_relevant_files": [
+    {
+      "path": "tests/integration/test_application_contract.py",
+      "sha256": "b2df387e4a3f91ccf138bcecad5ef7f2475d33f8c63ceb6cb580bb76353f5205"
+    },
+    {
+      "path": "tests/integration/test_catalog3_github_runtime.py",
+      "sha256": "37932d22a1b57ea0ce292df86920b6234b0a17ede12f940410fe5a630ee1d44a"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/store.py",
+      "sha256": "5bc8a1d42cf3f785f30ec26fdfd456f07b45850e7520906791b70dd9bc64cd17"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/schema.py",
+      "sha256": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39"
+    },
+    {
+      "path": "tests/conftest.py",
+      "sha256": "9176569503be25cc7be1bff5909b2ececacdc838726b98846eeb4f83cb90c751"
+    },
+    {
+      "path": "tests/support/cli.py",
+      "sha256": "c23a94b21fe3f4dfde74654afdc3b6da861073b2f419e9710108a754e7e5eb82"
+    }
+  ],
+  "scope": "These two exact failures independently reproduced on both revisions; no extrapolation to every failure in full suites."
+}

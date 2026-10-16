@@ -1,0 +1,12 @@
+{
+  "main": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "design87": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+  "source88": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "source_tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "public_runtime_path_diff": [],
+  "default_schema_file_main": "df01d8fe104939a86e16982025d8fbc08ec317c7",
+  "default_schema_file_final": "df01d8fe104939a86e16982025d8fbc08ec317c7",
+  "design_is_ancestor": true,
+  "concurrent_remote_design_preserved": true,
+  "notes": "No source/runtime/default schema switch. Opt-in native header allocation changed; old public native decoder module is unchanged. No force push, PR merge, release/tag or deliberate Pages deployment."
+}

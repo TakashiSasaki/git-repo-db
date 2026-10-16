@@ -1,0 +1,16 @@
+import subprocess,pathlib,time,json,hashlib,sys,platform,sqlite3,os
+ROOT=pathlib.Path(os.environ.get('ACCEPTANCE_ROOT','/workspace/p7'));OUT=pathlib.Path(os.environ.get('ACCEPTANCE_OUTPUT','/workspace/p7-evidence-20261016/final-overlay-178ddba'));OUT.mkdir(exist_ok=True)
+manifest={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip(),'commands':[],'python':sys.version,'sqlite':sqlite3.sqlite_version,'platform':platform.platform(),'temporary_directory':os.environ.get('TMPDIR'),'timing_note':'Sequential full-suite run on overlayfs temporary storage after ENOSPC contaminated earlier concurrent tmpfs executions; not a performance benchmark.'}
+paths=subprocess.check_output(['git','ls-files','src','tests','scripts','pyproject.toml','uv.lock','.github'],cwd=ROOT,text=True).splitlines();manifest['executable_inputs']={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths};manifest['executable_input_sha256']=hashlib.sha256(json.dumps(manifest['executable_inputs'],sort_keys=True).encode()).hexdigest()
+def run(label,args):
+ start=time.time();command=['uv','run','--no-sync']+args
+ with (OUT/(label+'.log')).open('w') as log:p=subprocess.run(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
+ manifest['commands'].append({'label':label,'command':command,'cwd':str(ROOT),'exit_code':p.returncode,'elapsed_seconds':time.time()-start});(OUT/'execution.json').write_text(json.dumps(manifest,indent=2));print(label,p.returncode,round(time.time()-start,2),flush=True)
+run('collect',['pytest','tests','--collect-only','-q'])
+run('all-pytest',['pytest','tests','-n','4','-q','--basetemp','/workspace/p7-pytest-final-overlay-178ddba','-o','junit_family=xunit1','--junitxml',str(OUT/'junit.xml'),'--journal',str(OUT/'journal.jsonl')])
+for script in ['build_p1_schema','audit_p1_schema','audit_implementation_boundary','audit_callsite_dependencies','audit_publication_free']:
+ run(script,['python','scripts/'+script+'.py','--check'])
+run('ruff-check',['ruff','check','src','tests','scripts'])
+run('ruff-format',['ruff','format','--check','src','tests','scripts'])
+run('schema-viz',['python','scripts/schema_viz.py','--check'])
+print(json.dumps(manifest['commands'],indent=2),flush=True)

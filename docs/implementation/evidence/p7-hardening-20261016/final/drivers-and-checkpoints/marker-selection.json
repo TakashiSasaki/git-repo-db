@@ -1,0 +1,22 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "tests",
+    "--collect-only",
+    "-q",
+    "-m",
+    ""
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 3.227668523788452,
+  "all_nodes": 3750,
+  "default_selected_nodes": 3748,
+  "explicit_default_marker_deselections": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "note": "Only collected; no live or benchmark test executed. Default global pytest marker policy preserved."
+}

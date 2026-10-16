@@ -1,0 +1,14 @@
+from pathlib import Path
+import tempfile,sqlite3
+from repo_catalog.adapters.sqlite.p1_schema import initialize,connect
+from repo_catalog.adapters.sqlite.p1_context import ContextStore
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter,is_catalog_stopped
+R='11111111-1111-4111-8111-111111111111'; I='22222222-2222-4222-8222-222222222222'
+p=Path(tempfile.mkdtemp()); catalog=p/'catalog';catalog.mkdir()
+for role in ['core','context']: initialize(catalog/f'{role}.sqlite3',role,R,I)
+c=connect(catalog/'context.sqlite3','context');ContextStore(c).text('valid');c.close()
+c=sqlite3.connect(catalog/'context.sqlite3')
+sql=c.execute("SELECT sql FROM sqlite_schema WHERE name='text_bodies_no_update'").fetchone()[0]
+c.execute('DROP TRIGGER text_bodies_no_update');c.execute('PRAGMA ignore_check_constraints=ON');c.execute("UPDATE text_bodies SET text_value=CAST(x'ff' AS TEXT)");c.execute(sql);c.commit();c.close()
+try: SQLiteRecoveryAdapter().create_consistent_backup(catalog,p/'backup')
+except Exception as e: print(type(e).__name__,str(e), 'STOPPED',is_catalog_stopped(catalog));print('CAUSE',repr(e.__cause__))
