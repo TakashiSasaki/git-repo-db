@@ -1,0 +1,145 @@
+{
+  "verified_source_parent": "86f9ae87f509cf9541ba710f648c268ebdc7d0ea",
+  "tool_installation": {
+    "ast-grep": "0.51.0",
+    "npm_package": "@ast-grep/cli@0.51.0",
+    "prefix": "$HOME/.local/share/git-repo-db-agent-tools",
+    "installed_binary_sha256": "99b5aeab1f47536789482b4517595b759de910f7f1f1d1f80c752824e894e38e",
+    "package_lock_sha256": "4e04a34ab896714c1d2f5a7dbba31f4a989f9f64d0cce620f402b060a6070cc1",
+    "ripgrep": "ripgrep 15.2.0 (rev e89fff89ac)",
+    "jq": "jq-1.7"
+  },
+  "ast_query": {
+    "file": "src/repo_catalog/adapters/sqlite/index.py",
+    "file_sha256": "500c7698bef49530d1e84ba7056d0ae63227e95df6954bc3f5c1abaaaab05733",
+    "pattern": "$DB.execute($$$ARGS)",
+    "language": "python",
+    "actual_matches": 19,
+    "complete_match_json_bytes": 26839,
+    "bounded_summary_bytes": 1924
+  },
+  "evidence_helper": {
+    "helper_sha256": "67c4f9faca722f4a90887096f0e6b8c804926b65403e687a00e4e23ec8f4fc5a",
+    "existing_full_evidence": {
+      "consistent_success": true,
+      "selected": 3755,
+      "starts": 3755,
+      "junit": 3755,
+      "phases": 11265,
+      "junit_results": {
+        "passed": 3755
+      },
+      "checks": {
+        "nonempty_unique_selected": true,
+        "selected_equals_starts": true,
+        "selected_equals_junit": true,
+        "each_phase_exactly_once": true,
+        "all_phases_passed": true,
+        "junit_all_passed": true,
+        "successful_finish": true,
+        "process_exit_zero": true
+      },
+      "missing_start_examples": [],
+      "extra_start_examples": [],
+      "execution_source": {
+        "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+        "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+      },
+      "scope": "Evidence consistency only; not source binding, authenticity or Release Acceptance."
+    },
+    "gzip_summary_identical": true,
+    "historical_p7_list_with_footer": {
+      "consistent_success": true,
+      "selected": 255,
+      "starts": 255,
+      "junit": 255,
+      "phases": 765,
+      "junit_results": {
+        "passed": 255
+      },
+      "checks": {
+        "nonempty_unique_selected": true,
+        "selected_equals_starts": true,
+        "selected_equals_junit": true,
+        "each_phase_exactly_once": true,
+        "all_phases_passed": true,
+        "junit_all_passed": true,
+        "successful_finish": true,
+        "process_exit_zero": true
+      },
+      "missing_start_examples": [],
+      "extra_start_examples": [],
+      "execution_source": {
+        "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+        "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+      },
+      "scope": "Evidence consistency only; not source binding, authenticity or Release Acceptance."
+    },
+    "full_journal_input_bytes": 3823854,
+    "full_junit_input_bytes": 899602,
+    "full_summary_output_bytes": 738,
+    "controls": {
+      "valid": {
+        "exit_code": 0,
+        "checks": {
+          "nonempty_unique_selected": true,
+          "selected_equals_starts": true,
+          "selected_equals_junit": true,
+          "each_phase_exactly_once": true,
+          "all_phases_passed": true,
+          "junit_all_passed": true,
+          "successful_finish": true,
+          "process_exit_zero": true
+        }
+      },
+      "duplicate_start": {
+        "exit_code": 1,
+        "checks": {
+          "nonempty_unique_selected": true,
+          "selected_equals_starts": false,
+          "selected_equals_junit": true,
+          "each_phase_exactly_once": true,
+          "all_phases_passed": true,
+          "junit_all_passed": true,
+          "successful_finish": true,
+          "process_exit_zero": true
+        }
+      },
+      "missing_finish": {
+        "exit_code": 1,
+        "checks": {
+          "nonempty_unique_selected": true,
+          "selected_equals_starts": true,
+          "selected_equals_junit": true,
+          "each_phase_exactly_once": true,
+          "all_phases_passed": true,
+          "junit_all_passed": true,
+          "successful_finish": false,
+          "process_exit_zero": true
+        }
+      },
+      "duplicate_phase": {
+        "exit_code": 1,
+        "checks": {
+          "nonempty_unique_selected": true,
+          "selected_equals_starts": true,
+          "selected_equals_junit": true,
+          "each_phase_exactly_once": false,
+          "all_phases_passed": false,
+          "junit_all_passed": true,
+          "successful_finish": true,
+          "process_exit_zero": true
+        }
+      },
+      "malformed_json": {
+        "exit_code": 2
+      }
+    }
+  },
+  "limits": [
+    "Output bytes are not actual model token or cost measurements.",
+    "No acceptance test was rerun; saved evidence was reanalyzed.",
+    "Optional tool binaries live outside the repository and must be reinstalled in a new environment.",
+    "No production dependency, reviewed seven-PR head, main, release or merge policy is changed."
+  ]
+}

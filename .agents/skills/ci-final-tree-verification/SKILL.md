@@ -159,3 +159,26 @@ functions correctly run with the production fixture under a P2 collection module
 while JUnit `file` still identifies the original P1 function definition. Counting
 by that attribute would misclassify production verification. The paired receipts
 verify all selected IDs against journal starts, each phase and JUnit identities.
+
+## Normalize collection files and preserve unique evidence targets
+
+A historical file named `p7-node-ids.txt` also contained a blank line and pytest's
+collection-summary footer. Comparing all text lines falsely reported a node-set
+mismatch after a successful run. Parse actual `tests/...::...` records first,
+preserve duplicates with a Counter, then compare normalized IDs. Never remove
+unexpected actual nodes or convert a mismatch into success using counts alone.
+Preserve the failed parser result and raw input; distinguish a parser correction
+from a test rerun. See the seven-PR evidence's `p7-original-text-comparison.json`
+and `reconciliation-footer-failure.txt` under `raw/`.
+
+Evidence export also found `.py` and identical `.py.txt` aliases targeting the
+same transport file. Index each transport path once, retain the original aliases
+explicitly, and compare original/transport lengths and SHA-256 before deduping.
+Fail on unequal bytes instead of overwriting one alias. Verify gzip originals as
+well as compressed bytes. A review's index hash binds its recorded snapshot;
+adding that review naturally changes a later index, not the frozen test source.
+
+For bounded local inspection, use the
+[efficient repository investigation skill](../efficient-repository-investigation/SKILL.md).
+Its summary helper validates consistency without claiming source/hosted release
+qualification. Frozen historical reports and execution input hashes stay intact.
