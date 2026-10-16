@@ -705,7 +705,14 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
         assert_marker_absent(store)
         resume_job(store, job, raised.value.code)
         blocked[0] = False
-        assert collector.sync(repo, job)["state"] == "complete"
+        if retry_clock <= 200:
+            # Freshly completed pages cannot promote the whole job while the
+            # selected current coverage is newer-partial or equal-time conflict.
+            with pytest.raises(CatalogError) as retry:
+                collector.sync(repo, job)
+            assert retry.value.code == "PR_PARTIAL"
+        else:
+            assert collector.sync(repo, job)["state"] == "complete"
 
     assert requested == [
         ("root", None),
@@ -734,11 +741,13 @@ def test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code(
         }
         assert complete_clocks == (
             set()
-            if retry_clock < 200 or kind == "pr-code" and retry_clock == 200
+            if retry_clock < 200 or kind in ("pr-code", "pr") and retry_clock == 200
             else {retry_clock}
         ), kind
         assert current_claim(kind, parent) == (
-            (200, "partial") if kind == "pr-code" and retry_clock == 200 else expected
+            (200, "partial")
+            if kind in ("pr-code", "pr") and retry_clock == 200
+            else expected
         ), kind
     assert {
         row[0]

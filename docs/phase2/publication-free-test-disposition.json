@@ -1371,8 +1371,8 @@
         "replacement_nodes": [
           "tests/integration/test_catalog3_github_runtime.py::test_terminal_page_resume_has_one_actual_coverage_observation"
         ],
-        "surviving_assertion": "Resumed terminal prefix retains actual original capture clock and terminal proof; operation completion time never manufactures a capture.",
-        "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+        "surviving_assertion": "Retain interrupted terminal-page evidence without fabricating completion. Reacquire under a distinct collection, publish exactly one actual-response-bound completion and reuse it on the next call; old incomplete collection never receives a success marker.",
+        "reason": "ADR 0002 PF-P04/P07 supersedes mandatory fine-grained continuation: a terminal page without terminal Core completion evidence is not a success receipt."
       },
       {
         "retired_node": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_after_detail_keeps_only_justified_code_observations",
@@ -1546,6 +1546,38 @@
         ],
         "surviving_assertion": "Accepted independent typed values and earlier complete enumeration proof survive body edits without retained response replay; actual later partial scopes still supersede old completion.",
         "reason": "API original/result/profile/publication mechanism removed; preserved domain behavior has direct typed assertions."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_github_runtime.py::test_partial_listing_resumes_same_items_and_no_completed_pages",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_github_runtime.py::test_partial_listing_restarts_with_retained_items_and_fresh_pages"
+        ],
+        "surviving_assertion": "Retain the old committed one-item partial listing; fresh acquisition creates a distinct two-page listing with the same valid items and genuine complete coverage. An older job safely reuses a newer complete Core collection without refetching or lowering coverage.",
+        "reason": "ADR 0002 PF-P04/P07 permits safe fresh acquisition; obsolete mandatory same-collection continuation is not a binding behavioral guarantee."
+      },
+      {
+        "retired_node": "tests/integration/test_current_collection_rejection_clocks.py::test_current_incremental_watermark_stays_at_original_scan_start",
+        "replacement_nodes": [
+          "tests/integration/test_current_collection_rejection_clocks.py::test_current_incremental_watermark_uses_actual_fresh_scan_start"
+        ],
+        "surviving_assertion": "Incomplete incremental acquisition restarts from the first endpoint. The next request uses the completed fresh scan start as its overlap watermark, never a failed scan or terminal finish time; follow provider page-two links exactly.",
+        "reason": "ADR 0002 PF-P04/P07 permits safe fresh acquisition; obsolete mandatory same-collection continuation is not a binding behavioral guarantee."
+      },
+      {
+        "retired_node": "tests/integration/test_current_collection_rejection_clocks.py::test_current_terminal_cancellation_finishes_locally_without_false_partial",
+        "replacement_nodes": [
+          "tests/integration/test_current_collection_rejection_clocks.py::test_current_terminal_cancellation_reacquires_without_false_partial"
+        ],
+        "surviving_assertion": "An interrupted terminal page without Core completion evidence is retained but reacquired once under a fresh collection. Complete coverage and marker use the actual new response clock, with no false partial or borrowed original clock.",
+        "reason": "ADR 0002 PF-P04/P07 permits safe fresh acquisition; obsolete mandatory same-collection continuation is not a binding behavioral guarantee."
+      },
+      {
+        "retired_node": "tests/integration/test_publication_free_acquisition.py::test_thread_children_resume_from_normalized_committed_prefix",
+        "replacement_nodes": [
+          "tests/integration/test_publication_free_acquisition.py::test_thread_children_restart_with_retained_normalized_committed_prefix"
+        ],
+        "surviving_assertion": "Retain the admitted first comment, start a distinct fresh root and child collection, keep the old root without a complete marker, admit the second comment idempotently and report genuine complete coverage.",
+        "reason": "ADR 0002 PF-P04/P07 permits safe fresh acquisition; obsolete mandatory same-collection continuation is not a binding behavioral guarantee."
       }
     ],
     "unchanged_parameter_contracts": "Every still-named ordinary boundary node and original parameter dimension remains active, including 62 REST validation nodes and 69 runtime nodes. No skips/bootstrap/retired implementation shims.",
@@ -1908,10 +1940,10 @@
       {
         "retired_node": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request",
         "replacement_nodes": [
-          "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request"
+          "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_after_fresh_root_request"
         ],
-        "reason": "Explicit current typed-contract fixture correction or actual production regression; the baseline behavior remains required.",
-        "surviving_assertion": "Actual selected thread completeness failures; all assertions retained."
+        "reason": "ADR 0002 PF-P04/P07 explicitly permits safe fresh acquisition and forbids grafting unproven Operational cursors onto incomplete Core evidence.",
+        "surviving_assertion": "A fresh root request precedes the retried child; selected-thread coverage is partial with 100 retained root-prefix comments for error-only children, or 101 comments for data-bearing partial children. A newer genuinely observed incomplete root cannot borrow older terminal completeness."
       },
       {
         "retired_node": "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete",
@@ -2056,6 +2088,14 @@
         ],
         "reason": "Document selectors are backed by their corresponding provider listing: --commit requires pr-commits; --path and --path-b64 require pr-files. Keep the three original selector parameters and empty-result partial-status assertion; do not impose unrelated listing or physical Git requirements.",
         "surviving_assertion": "For every original commit/path/path-b64 parameter, a missing matching provider listing makes the requested metadata scope partial even when no documents match. The test retains exit 3, zero matching items and explicit incomplete coverage."
+      },
+      {
+        "retired_node": "tests/integration/test_catalog3_cache.py::test_acquisition_and_obligation_cannot_use_another_owner_cache",
+        "replacement_nodes": [
+          "tests/integration/test_catalog3_cache.py::test_acquisition_and_obligation_foreign_keys"
+        ],
+        "reason": "Historical inventory correction for a rename already present on unchanged Schema 21 main. ADR 0002 physically separates Operational job/cache state from Core obligations; the old monolithic cross-owner-cache FK assertion is not the current same-store FK contract. This is outside the inherited 228-failure remediation.",
+        "surviving_assertion": "Actual current node rejects Operational acquisition progress referencing a missing job and Core preservation obligations referencing a missing acquisition. This records only those two physical-store FK guarantees; it does not claim that the original cross-owner-cache semantic is exercised by this replacement."
       }
     ]
   },
@@ -2220,8 +2260,8 @@
       },
       {
         "original_function": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request",
-        "replacement_function": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request",
-        "surviving_assertion": "Actual selected thread completeness failures; all assertions retained."
+        "replacement_function": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_after_fresh_root_request",
+        "surviving_assertion": "A fresh root request precedes the retried child; selected-thread coverage is partial with 100 retained root-prefix comments for error-only children, or 101 comments for data-bearing partial children. A newer genuinely observed incomplete root cannot borrow older terminal completeness."
       },
       {
         "original_function": "tests/integration/test_catalog3_review_coverage.py::test_unrelated_child_failure_keeps_selected_terminal_thread_complete",

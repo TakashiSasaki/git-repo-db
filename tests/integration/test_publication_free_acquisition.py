@@ -958,11 +958,13 @@ def test_cancelled_rest_prefix_survives_loss_of_operational_cursor(github_runtim
     value, parent, task, data = prepared_detail(github_runtime)
     url = api.url + "/repos/fixture/alpha/pulls?state=all"
 
+    interrupt = True
+
     def route(method, path, params, body):
         assert not store.connection.in_transaction
         if not params.get("page"):
             return [data], {"Link": f'<{url}&page=2>; rel="next"'}
-        value.token.cancelled = True
+        value.token.cancelled = interrupt
         return [], {}
 
     api.route = route
@@ -982,14 +984,24 @@ def test_cancelled_rest_prefix_survives_loss_of_operational_cursor(github_runtim
         == 1
     )
     value.token.cancelled = False
+    before_restart = store.one(
+        "SELECT count(*) FROM fetch_collections WHERE kind='pr-list'"
+    )[0]
     store.operational.execute(
         "UPDATE collection_progress SET cursor=NULL WHERE state='partial'"
     )
-    with pytest.raises(CatalogError) as failed:
-        value.collection(
-            repo, None, "pr-list", task, url, normalize, context={"state": "all"}
-        )
-    assert failed.value.code == "RESUME_UNAVAILABLE"
+    interrupt = False
+    fresh, _ = value.collection(
+        repo, None, "pr-list", task, url, normalize, context={"state": "all"}
+    )
+    assert (
+        store.one("SELECT count(*) FROM fetch_collections WHERE kind='pr-list'")[0]
+        == before_restart + 1
+    )
+    assert store.one(
+        "SELECT 1 FROM completion_markers WHERE fetch_collection_id=? AND asserted_state='complete'",
+        (fresh,),
+    )
     assert (
         store.one("SELECT count(*) FROM eligible_document_state WHERE kind='pr-body'")[
             0
