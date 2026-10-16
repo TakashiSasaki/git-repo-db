@@ -1,0 +1,39 @@
+"""Read-only wheel/sdist source equality audit; never extracts archives."""
+import hashlib
+import json
+import pathlib
+import subprocess
+import sys
+import tarfile
+import zipfile
+
+out=pathlib.Path(sys.argv[1])
+report_path=pathlib.Path(sys.argv[2])
+receipt=json.loads((out/'receipt.json').read_text())
+commit=receipt['commit']
+root=pathlib.Path.cwd()
+source={}
+for p in subprocess.check_output(['git','ls-tree','-r','--name-only',commit,'--','src/repo_catalog'],text=True).splitlines():
+    source[p.removeprefix('src/')]=subprocess.check_output(['git','show',f'{commit}:{p}'])
+expected={p:hashlib.sha256(b).hexdigest() for p,b in source.items()}
+reports=[]
+for item in receipt['distribution_artifacts']:
+    p=out/item['path']
+    assert p.is_file() and p.stat().st_size==item['bytes']
+    assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256']
+    if p.name.endswith('.whl'):
+        with zipfile.ZipFile(p) as z:
+            actual={n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if n.startswith('repo_catalog/') and not n.endswith('/')}
+    else:
+        with tarfile.open(p) as t:
+            actual={}
+            for m in t:
+                if m.isfile() and '/src/repo_catalog/' in m.name:
+                    name='repo_catalog/'+m.name.split('/src/repo_catalog/',1)[1]
+                    actual[name]=hashlib.sha256(t.extractfile(m).read()).hexdigest()
+    assert actual==expected, {'archive':str(p),'missing':sorted(expected.keys()-actual.keys()),'extra':sorted(actual.keys()-expected.keys()),'changed':[n for n in expected.keys()&actual.keys() if expected[n]!=actual[n]]}
+    reports.append({'path':item['path'],'bytes':item['bytes'],'sha256':item['sha256'],'source_entries':len(actual),'source_matches_exact_commit':True,'source_manifest_sha256':hashlib.sha256(json.dumps(actual,sort_keys=True,separators=(',',':')).encode()).hexdigest()})
+assert reports
+report={'commit':commit,'tree':receipt['tree'],'archive_count':len(reports),'wheel_count':sum(p['path'].endswith('.whl') for p in reports),'sdist_count':sum(p['path'].endswith('.tar.gz') for p in reports),'source_entries':len(expected),'source_manifest':expected,'archives':reports,'limits':['This independently checks archive/source byte identity; installed behavior is determined by the separate executed packaging tests.','Archive timestamp/metadata byte differences do not imply source differences.']}
+report_path.write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:report[k] for k in ['commit','archive_count','wheel_count','sdist_count','source_entries']},indent=2))

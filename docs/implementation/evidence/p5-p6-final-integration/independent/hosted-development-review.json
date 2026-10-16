@@ -1,0 +1,16 @@
+{
+  "feature_sha": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c",
+  "hosted_head": "47e051f694b5428dae4f5af24fbb6af340ab84c8",
+  "hosted_head_tree_from_github_git_api": "443c4b25478c1e406136c77d6689e87bd72231f9",
+  "matches_executed_feature_tree": true,
+  "verified_indexed_receipts": 21,
+  "zip_sha256": "ff55a9896b67edfc0ae1cbc1991859846759d9320e37e6437988a17208e96bee",
+  "zip_bytes": 67098,
+  "raw_log_sha256": "148336428058bc467f1b52c3b131109fb5912fc548ea000206c2ca98e5f2e8da",
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "hosted_runtime_nodes_executed": 0,
+  "run_id": 38860098880,
+  "live_ci_acceptance_input_hash": "60c94caae7eed9d7045ccf98127481da31a1100f93ae54b2f588c65096d3535b",
+  "limits": "Hosted development checks and feature/merge-tree binding verified; no hosted runtime or Release Acceptance execution inferred."
+}

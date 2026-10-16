@@ -1,0 +1,49 @@
+"""Reconcile reviewer collection/journal/JUnit with exact clean input tree."""
+import collections
+import hashlib
+import json
+import pathlib
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+out=pathlib.Path(sys.argv[1])
+expected=int(sys.argv[2])
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+def check(stem,count):
+    selected_path=out/('selected.txt' if not stem else f'{stem}-selected.txt')
+    journal_path=out/('journal.jsonl' if not stem else f'{stem}-journal.jsonl')
+    xml_path=out/('junit.xml' if not stem else f'{stem}-junit.xml')
+    selected=[s.strip() for s in selected_path.read_text().splitlines() if '::' in s and not s.startswith(' ')]
+    events=[json.loads(s) for s in journal_path.read_text().splitlines()]
+    starts=[e['nodeid'] for e in events if e['event']=='start']
+    phases=[e for e in events if e['event']=='phase']
+    cases=ET.parse(xml_path).findall('.//testcase')
+    assert len(starts)==len(set(starts))==len(selected)==len(set(selected))==count
+    assert set(starts)==set(selected)
+    assert len(phases)==3*count
+    assert all(e['outcome']=='passed' for e in phases)
+    for n in starts:
+        assert collections.Counter(e['phase'] for e in phases if e['nodeid']==n)=={'setup':1,'call':1,'teardown':1}
+    def identity(n):
+        source,*parts=n.split('::')
+        return ('.'.join([source.removesuffix('.py').replace('/','.'),*parts[:-1]]),parts[-1])
+    assert collections.Counter(map(identity,starts))==collections.Counter((c.attrib['classname'],c.attrib['name']) for c in cases)
+    assert [e['exitstatus'] for e in events if e['event']=='finish']==[0]
+    return {'selected':count,'executed_unique':count,'passed':count,'failed':0,'skipped':0,'phases':len(phases),'reconciled':True,'nodeids':starts}
+
+commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+assert not subprocess.check_output(['git','status','--porcelain'],text=True)
+sys.path.insert(0,str(pathlib.Path.cwd()))
+from scripts.ci_plan import make_plan,context_from_environment
+result={'kind':'independent_combined_development_review_not_release','commit':commit,'tree':tree,'acceptance_input_hash':make_plan(context_from_environment())['acceptance_input_hash'],'clean_tree':True,'integration_and_compatibility':check('',expected),'artifacts':{p.name:{'sha256':sha(p),'bytes':p.stat().st_size} for p in out.iterdir() if p.is_file()},'limits':['Results apply to this exact committed tree; final source/test updates require revalidation or exact input identity.','No hosted Release Acceptance or actual recovery/activation was run.']}
+if (out/'gate-journal.jsonl').exists():
+    result['independent_export_gate']=check('gate',1)
+    result['gate_probe_sha256']=sha(out.parent/'test_export_gate_probe.py')
+(out/'reviewer-reconciliation.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps({k:v for k,v in result.items() if k in ('commit','tree','acceptance_input_hash','clean_tree')},indent=2))
+print('reconciled',expected,'committed nodes')

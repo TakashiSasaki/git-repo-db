@@ -1,0 +1,37 @@
+"""Read-only review of docs/skill/evidence follow-up identity and stored artifacts."""
+import gzip
+import hashlib
+import json
+import pathlib
+import subprocess
+import sys
+
+root=pathlib.Path.cwd();out=pathlib.Path(sys.argv[1]);out.mkdir(exist_ok=True)
+base=root/'docs/implementation/evidence/p5-p6-final-integration'
+commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+assert not subprocess.check_output(['git','status','--porcelain'],text=True)
+changed=subprocess.check_output(['git','diff','--name-only','0cb51d46d87d99c035f5162f4a7ed11970cf3b4c',commit],text=True).splitlines()
+assert all(p.startswith(('docs/','.agents/skills/')) for p in changed)
+assert not subprocess.check_output(['git','diff','--name-only','0cb51d46d87d99c035f5162f4a7ed11970cf3b4c',commit,'--','src','tests','scripts','.github','pyproject.toml','uv.lock'],text=True)
+identity=json.loads((base/'runtime-test-build-input-identity.json').read_text())
+receipt=json.loads((base/'final/receipt.json').read_text())
+assert identity['files']==342 and identity['per_file_sha256']==receipt['input_sha256']
+for path,expected in identity['per_file_sha256'].items():
+    assert hashlib.sha256((root/path).read_bytes()).hexdigest()==expected,path
+index=json.loads((base/'artifact-index.json').read_text())
+assert set(index)=={str(p.relative_to(base)) for p in base.rglob('*') if p.is_file() and p.name!='artifact-index.json'}
+for path,entry in index.items():
+    p=base/path;body=p.read_bytes()
+    assert len(body)==entry['bytes'] and hashlib.sha256(body).hexdigest()==entry['sha256'],path
+    if 'uncompressed_sha256' in entry:
+        raw=gzip.decompress(body)
+        assert len(raw)==entry['uncompressed_bytes'] and hashlib.sha256(raw).hexdigest()==entry['uncompressed_sha256'],path
+assert hashlib.sha256((base/'final/receipt.json').read_bytes()).hexdigest()=='6d75d7dbabb9b2215646a8c588e2e3a9691239d3db7b95faad3e1a486e34345b'
+sys.path.insert(0,str(root))
+from scripts.ci_plan import make_plan,context_from_environment
+current_ci=make_plan(context_from_environment())['acceptance_input_hash']
+assert current_ci!='60c94caae7eed9d7045ccf98127481da31a1100f93ae54b2f588c65096d3535b'
+result={'docs_followup_commit':commit,'docs_followup_tree':tree,'executed_commit':'0cb51d46d87d99c035f5162f4a7ed11970cf3b4c','executed_tree':'443c4b25478c1e406136c77d6689e87bd72231f9','changes_only_docs_skills_evidence':True,'changed_paths':changed,'runtime_test_build_input_count':342,'every_scoped_file_sha256_matches_executed_input':True,'stored_artifact_count':len(index),'stored_and_decompressed_artifact_hashes_verified':True,'retained_root_receipt_sha256_unchanged':True,'tested_ci_acceptance_input_hash':'60c94caae7eed9d7045ccf98127481da31a1100f93ae54b2f588c65096d3535b','docs_followup_ci_acceptance_input_hash':current_ci,'ci_hash_diff_reason':'Evidence files remain part of conservative unchanged CI hash;342 scoped runtime/test/build byte identities are a narrower guarantee.','no_runtime_rerun_claimed':True}
+(out/'docs-followup-review.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps({k:result[k] for k in ['docs_followup_commit','docs_followup_tree','runtime_test_build_input_count','stored_artifact_count','docs_followup_ci_acceptance_input_hash']},indent=2))

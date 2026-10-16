@@ -1,0 +1,19 @@
+"""Synthetic phase telemetry, not a controlled comparative performance benchmark."""
+import json
+import sys
+import tempfile
+from pathlib import Path
+sys.path.insert(0,str(Path.cwd()))
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.production_query import SearchQuery
+from tests.integration.p6.conftest import populate_rich_catalog
+root=Path(tempfile.mkdtemp(prefix='p5p6-costs-',dir='/workspace/work'))
+rows=[]
+for mode in ['paired','core_only','context_only']:
+ catalog=root/mode
+ populate_rich_catalog(catalog, include_core=mode != "context_only", include_context=mode != "core_only")
+ service=ProductionQueryService(catalog,mode=mode)
+ service.rebuild_search()
+ result=service.search(SearchQuery(query_text='p6'))
+ rows.append({'mode':mode,'backend':result.backend,'hits':result.total_count,'phase_costs_ns':service.last_costs_ns})
+print(json.dumps({'kind':'diagnostic_noncomparative_phase_telemetry','rows':rows},indent=2))

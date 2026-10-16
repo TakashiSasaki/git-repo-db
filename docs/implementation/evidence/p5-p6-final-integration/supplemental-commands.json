@@ -1,0 +1,29 @@
+[
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "/workspace/work/measure_p6_costs.py"
+    ],
+    "cwd": "/workspace/work/integration",
+    "exit_code": 0,
+    "source_commit": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c",
+    "output": "final/phase-costs.json",
+    "scope": "Synthetic phase telemetry; not pytest or comparative benchmark"
+  },
+  {
+    "argv": [
+      "gh",
+      "run",
+      "view",
+      "38860098880",
+      "--log"
+    ],
+    "cwd": "/workspace/git-repo-db",
+    "exit_code": 0,
+    "output": "hosted-development/job.log.gz",
+    "scope": "Log ZIP SHA/size and all21 indexed receipt bytes/hashes independently checked; no direct artifact-download claim"
+  }
+]

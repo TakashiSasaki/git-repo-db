@@ -1,0 +1,47 @@
+[
+  {
+    "baseRefName": "fix/p5-p6-time-contract",
+    "headRefName": "feat/p5-production-acquisition-exchange",
+    "headRefOid": "48b60231b1ef7075c55ff6f43aca0c68ad95e5a8",
+    "number": 80,
+    "state": "OPEN",
+    "title": "feat(p5): production acquisition orchestration, paired admission, and typed exchange",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/80"
+  },
+  {
+    "baseRefName": "fix/p5-p6-time-contract",
+    "headRefName": "feat/p6-production-query-search",
+    "headRefOid": "76489443687123ef99fb33510c77fd40ce739d28",
+    "number": 81,
+    "state": "OPEN",
+    "title": "feat(p6): production authoritative query APIs, derivative search, and opt-in CLI",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/81"
+  },
+  {
+    "baseRefName": "docs/p5-p6-technical-contract",
+    "headRefName": "docs/p5-p6-owner-decisions",
+    "headRefOid": "7d2e736f6fd4aa5e30417fb99fa72d27f93ea270",
+    "number": 82,
+    "state": "OPEN",
+    "title": "docs: freeze classified times and SHA-256-only Exchange decision",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/82"
+  },
+  {
+    "baseRefName": "docs/p5-p6-owner-decisions",
+    "headRefName": "fix/p5-p6-time-contract",
+    "headRefOid": "96db618285d5ce7b0d0c276d18f81bdbc50c34c1",
+    "number": 83,
+    "state": "OPEN",
+    "title": "fix: enforce classified times and safe bounded snapshot contracts",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/83"
+  },
+  {
+    "baseRefName": "fix/p5-p6-time-contract",
+    "headRefName": "validation/p5-p6-corrected-assembly",
+    "headRefOid": "f67e9298ff7915b4f7b1f0bef0c344f56d2cc064",
+    "number": 84,
+    "state": "OPEN",
+    "title": "validation: assemble corrected P5 and P6 sibling implementations",
+    "url": "https://github.com/TakashiSasaki/git-repo-db/pull/84"
+  }
+]

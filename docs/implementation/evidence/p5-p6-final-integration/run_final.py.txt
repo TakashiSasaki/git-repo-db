@@ -1,0 +1,60 @@
+"""Run selected development integration evidence on a clean committed input tree."""
+import collections
+import hashlib
+import json
+import platform
+import sqlite3
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+root=Path.cwd()
+sha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+status=subprocess.check_output(['git','status','--porcelain'],text=True)
+if status:
+    raise SystemExit('Refusing non-clean committed input: '+status)
+out=Path('/workspace/work/final-evidence')/sha[:12]
+out.mkdir(parents=True,exist_ok=False)
+commands=[]
+def inputs():
+    names=subprocess.check_output(['git','ls-files','src','tests','scripts','pyproject.toml','uv.lock','.github','ruff.toml'],text=True).splitlines()
+    return {n:hashlib.sha256((root/n).read_bytes()).hexdigest() for n in names}
+before=inputs()
+def run(args,name):
+    start=time.monotonic()
+    p=subprocess.run(args,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+    (out/name).write_text(p.stdout)
+    commands.append({'argv':args,'cwd':str(root),'exit_code':p.returncode,'elapsed_seconds':time.monotonic()-start,'output':name})
+    (out/'commands.json').write_text(json.dumps(commands,indent=2)+'\n')
+    print(name,p.returncode,flush=True)
+    return p
+selection=['tests/integration/p1','tests/integration/p2','tests/integration/p3','tests/integration/p4','tests/integration/p5','tests/integration/p6','tests/integration/p2_p3_compatibility','tests/integration/p5_p6_compatibility','tests/integration/architecture_spikes','tests/integration/test_snapshot_read_limits.py', *[f'tests/packaging/test_p{i}_distribution.py' for i in range(1,7)]]
+run(['uv','sync','--locked','--group','dev'],'sync.log')
+for name,args in [('ruff',['ruff','check','src','tests','scripts']),('format',['ruff','format','--check','src','tests','scripts']),('build-schema',['python','scripts/build_p1_schema.py','--check']),('audit-schema',['python','scripts/audit_p1_schema.py','--check']),('audit-boundary',['python','scripts/audit_implementation_boundary.py','--check']),('audit-callsites',['python','scripts/audit_callsite_dependencies.py','--check']),('audit-publication',['python','scripts/audit_publication_free.py'])]:
+    run(['uv','run','--no-sync',*args],name+'.log')
+collect=run(['uv','run','--no-sync','pytest',*selection,'--collect-only','-q'],'collect.txt')
+nodes=[line.strip() for line in collect.stdout.splitlines() if line.startswith('tests/') and '::' in line]
+(out/'selected-nodeids.json').write_text(json.dumps(nodes,indent=2)+'\n')
+result=run(['uv','run','--no-sync','pytest',*selection,'-q','--tb=short','--basetemp',str(out/'pytest-temp'),'-o','junit_family=xunit1','--junitxml',str(out/'junit.xml'),'--journal',str(out/'journal.jsonl')],'pytest.log')
+legacy=['tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation','tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation','tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]','tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]','tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir']
+run(['uv','run','--no-sync','pytest',*legacy,'-q','--tb=short','-o','junit_family=xunit1','--junitxml',str(out/'legacy-junit.xml'),'--journal',str(out/'legacy-journal.jsonl')],'legacy.log')
+events=[json.loads(line) for line in (out/'journal.jsonl').read_text().splitlines()]
+starts=[e['nodeid'] for e in events if e['event']=='start']
+phases=collections.defaultdict(list)
+for e in events:
+    if e['event']=='phase':phases[e['nodeid']].append((e['phase'],e['outcome']))
+cases=list(ET.parse(out/'junit.xml').getroot().iter('testcase'))
+identity=lambda n: (n.split('::')[0].removesuffix('.py').replace('/','.')+('.'+'.'.join(n.split('::')[1:-1]) if len(n.split('::'))>2 else ''),n.split('::')[-1])
+junit_ids=[(c.attrib['classname'],c.attrib['name']) for c in cases]
+reconciliation={'selection_unique':len(set(nodes))==len(nodes),'start_exactly_once':collections.Counter(nodes)==collections.Counter(starts) and len(starts)==len(set(starts)),'junit_exactly_once':collections.Counter(map(identity,nodes))==collections.Counter(junit_ids),'complete_three_phases':all([p for p,o in phases[n]]==['setup','call','teardown'] for n in nodes),'all_phases_passed':all(o=='passed' for n in nodes for p,o in phases[n])}
+passed=[n for n in nodes if phases[n] and all(o=='passed' for p,o in phases[n])]
+failed=[n for n in nodes if any(o in ('failed','error') for p,o in phases[n])]
+skipped=[n for n in nodes if any(o=='skipped' for p,o in phases[n])]
+run(['uv','run','--no-sync','python','-c','import sys,sqlite3,repo_catalog,pytest; print(sys.version); print(sqlite3.sqlite_version); print(repo_catalog.__file__); print(pytest.__version__)'],'python-versions.txt')
+run(['uv','run','--no-sync','ruff','--version'],'ruff-version.txt')
+receipt={'kind':'focused_combined_development_verification_not_release_acceptance','commit':sha,'tree':tree,'clean_before':not status,'clean_after':not subprocess.check_output(['git','status','--porcelain'],text=True),'input_sha256':before,'inputs_unchanged':before==inputs(),'selection':selection,'selected':len(nodes),'executed':len(starts),'unique_executed':len(set(starts)),'passed':len(passed),'failed':len(failed),'skipped':len(skipped),'failed_nodeids':failed,'skipped_nodeids':skipped,'nodeids':nodes,'reconciliation':reconciliation,'commands':commands,'versions':{'python':sys.version,'platform':platform.platform(),'sqlite':sqlite3.sqlite_version,'git':subprocess.check_output(['git','--version'],text=True).strip(),'uv':subprocess.check_output(['uv','--version'],text=True).strip()},'distribution_artifacts': [{'path':str(p.relative_to(out)),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in (out/'pytest-temp').rglob('*') if p.is_file() and (p.name.endswith('.whl') or p.name.endswith('.tar.gz'))], 'exclusions':['Unselected legacy Schema21 suites, live authenticated acquisition, benchmark-marked workloads, P7 recovery/activation, hosted Full Release Acceptance, P8 runtime switch'],'legacy_expectation':'five inherited fixture failures classified independently; never skipped/xfail','artifacts':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in out.iterdir() if p.is_file()}}
+(out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print(json.dumps({'directory':str(out),'selected':len(nodes),'passed':len(passed),'failed':failed,'reconciliation':reconciliation},indent=2),flush=True)

@@ -1,0 +1,96 @@
+{
+  "commit": "0cb51d46d87d99c035f5162f4a7ed11970cf3b4c",
+  "archives": [
+    {
+      "path": "pytest-temp/p1-packages5/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages5/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages5/dist/repo_catalog-0.2.0.tar.gz",
+      "member_count": 1289,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages4/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages4/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages4/dist/repo_catalog-0.2.0.tar.gz",
+      "member_count": 1289,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages1/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages1/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages1/dist/repo_catalog-0.2.0.tar.gz",
+      "member_count": 1289,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages2/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages2/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages2/dist/repo_catalog-0.2.0.tar.gz",
+      "member_count": 1289,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages0/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages0/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages0/dist/repo_catalog-0.2.0.tar.gz",
+      "member_count": 1289,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages3/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages3/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "member_count": 122,
+      "forbidden_scratch_db_members": []
+    },
+    {
+      "path": "pytest-temp/p1-packages3/dist/repo_catalog-0.2.0.tar.gz",
+      "member_count": 1289,
+      "forbidden_scratch_db_members": []
+    }
+  ],
+  "status": "no workspace/scratch/DB/WAL/SHM/cache members"
+}
