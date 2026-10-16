@@ -18,3 +18,21 @@ Executed with the locked worktree-local dev+docs environment:
 Result: **10 passed**, no skipped tests. Raw JUnit, journal and exact-revision
 bindings will be retained in the final integration evidence. This is a focused
 checkpoint, not complete repository acceptance. No production code or DDL changed.
+
+Additional fixture correction checkpoint: Operational job/attempt pairs and
+collection progress in `test_catalog3_pr_scope_coverage` use an explicit
+Operational transaction, leaving partial domain markers in Core. Git lease and
+capacity checks inspect Operational; fixed-ref recovery resolves Operational
+acquisition IDs before reading the real Core capture. Core-only CurrentApiState
+admission asserts Operational tables are absent instead of counting a nonexistent
+Core jobs table. No compatibility views, aliases or production routing changed.
+
+Focused verification of the four additional changed modules: **87 passed**
+(`test_catalog3_pr_scope_coverage`, `test_publication_free_current_api`,
+`test_catalog3_git_runtime`, `test_git_direct_objects`; actual JUnit/journal).
+The earlier untouched-main root cohort reproduced **8 failed, 62 passed**; the
+separate canonical full-main baseline supplies the complete original node mapping.
+
+The three-store Agent Skill now records the independently verified physical
+observation and safe fresh-acquisition procedure. Whole-stack independent review
+and exact committed-tree execution remain required before final acceptance.

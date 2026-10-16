@@ -19,6 +19,35 @@ durable Context; Git Core keeps permitted Git facts and representations. No
 baseline table, surrogate ID, mutable revision or quarantine mechanism is
 implicitly grandfathered by a recipe below.
 
+## Diagnose public-runtime test observations before changing storage
+
+For Schema 21 `no such table` failures, first identify the actual connection and
+the packaged DDL owner. `JobService(Store(...))` already writes to Operational;
+a test reading `jobs` through `Store.one()` is inspecting Core. Use
+`store.operational` for jobs, attempts, collection/acquisition progress, leases
+and locators, and an explicitly opened `store.open_search()` context for index
+generations and projections. Install failure-injection triggers on the same
+physical connection used by the production writer.
+
+Never repair these tests by adding Core tables/views, SQL-routing wrappers,
+implicit ATTACH or duplicate state. After the operation is quiescent, read
+Operational identifiers and inspect matching Core evidence with separate queries.
+Do not claim this test observation is a cross-store atomic snapshot. Use real
+JobService creation or an Operational transaction for the deferred job/attempt
+foreign-key pair. Assert schema absence for retired `incremental_scans` and
+`content_locations`; keep their original behavioral coverage through actual
+request watermarks, retained Core facts and excluded backup cache state.
+
+An incomplete Core collection cannot become complete merely because Operational
+has a cursor or success flag. On retry, check the new root request, distinct
+collection identity, retained admitted resources, and genuine new terminal
+evidence. Do not require reuse of an incomplete collection's cursor or observation
+time. A genuinely complete Core terminal can still support safe reuse after
+Operational loss. Preserve old-to-new node mapping if renaming obsolete mechanism
+tests. See the [Schema 21 checkpoint](../../../docs/implementation/evidence/schema21-baseline-20261016/ROOT-CHECKPOINT.md)
+for real loss and split-write counterexamples; this procedure does not apply the
+four-store target to the public runtime.
+
 ---
 
 ## Classified time and checksum policy for target work

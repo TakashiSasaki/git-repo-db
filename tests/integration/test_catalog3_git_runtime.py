@@ -220,8 +220,8 @@ def test_interrupted_fixed_refs_resume_without_new_remote_observation(
         )
         assert ref[0].hex() == fixture.commits["A"]
         assert store.one("SELECT count(*) FROM root_origins")[0] == 1
-        assert store.one("SELECT count(*) FROM cache_leases")[0] == 0
-        assert store.one("SELECT count(*) FROM space_reservations")[0] == 0
+        assert store.operational.one("SELECT count(*) FROM cache_leases")[0] == 0
+        assert store.operational.one("SELECT count(*) FROM space_reservations")[0] == 0
 
 
 def test_older_interrupted_snapshot_cannot_replace_a_new_completed_observation(

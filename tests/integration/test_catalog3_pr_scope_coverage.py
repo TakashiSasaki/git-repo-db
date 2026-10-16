@@ -149,12 +149,15 @@ def add_gap(store, kind, source, *, number=1, coverage_state="partial"):
             observed_at_us=1,
         )
         return
-    store.execute(
-        "INSERT INTO jobs(job_id,kind,request,current_attempt,created_at_us) VALUES('query-job','sync','{}',1,0)"
-    )
-    store.execute(
-        "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('query-job',1,'failed',0,'{}')"
-    )
+    # Execution bookkeeping belongs to Operational even when domain evidence is
+    # admitted by the caller's Core transaction (PF-P06/PF-P07).
+    with store.operational.transaction():
+        store.operational.execute(
+            "INSERT INTO jobs(job_id,kind,request,current_attempt,created_at_us) VALUES('query-job','sync','{}',1,0)"
+        )
+        store.operational.execute(
+            "INSERT INTO job_attempts(job_id,attempt,state,created_at_us,checkpoint) VALUES('query-job',1,'failed',0,'{}')"
+        )
     store.execute(
         "INSERT INTO resume_scopes(resume_scope_id,repository_uuidv4,request_context,parser_version,confidence) VALUES('query-resume','00000000-0000-4000-8000-000000000401','{}','test','proven')"
     )
@@ -172,7 +175,7 @@ def add_gap(store, kind, source, *, number=1, coverage_state="partial"):
             ),
         ),
     )
-    store.execute(
+    store.operational.execute(
         "INSERT INTO collection_progress(fetch_collection_id,job_id,attempt,state) VALUES('query-collection','query-job',1,'partial')"
     )
     store.execute(

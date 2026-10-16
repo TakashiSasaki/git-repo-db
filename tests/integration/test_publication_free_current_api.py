@@ -251,7 +251,13 @@ def test_valid_resource_and_empty_terminal_receipt_need_no_operational_rows(api)
     )
     assert proof.evidence("collection")["terminal"] is True
     assert adapter.c.execute("SELECT count(*) FROM resume_scopes").fetchone()[0] == 0
-    assert adapter.c.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
+    # A Core-only admission needs no Operational schema or execution record.
+    assert (
+        adapter.c.execute(
+            "SELECT name FROM sqlite_schema WHERE name IN ('jobs','job_attempts','collection_progress')"
+        ).fetchall()
+        == []
+    )
     assert "next_cursor" not in dict(
         adapter.c.execute("SELECT * FROM current_collection_pages").fetchone()
     )
