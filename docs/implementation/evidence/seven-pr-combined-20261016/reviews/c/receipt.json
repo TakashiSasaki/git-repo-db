@@ -1,0 +1,47 @@
+{
+  "reviewer": "independent C; no source authored or modified",
+  "source_head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "source_tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "collection_journal_junit_exact_set_equal": true,
+  "selected": 84,
+  "passed": 84,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "journal_phases": 252,
+  "pytest_exit_code": 0,
+  "probe_exit_code": 0,
+  "probe_attempts": [
+    {
+      "attempt": 1,
+      "exit": 1,
+      "cause": "reviewer incorrectly used GitCore as context manager"
+    },
+    {
+      "attempt": 2,
+      "exit": 1,
+      "cause": "reviewer used raw SQLite connection without required native UDF registration"
+    },
+    {
+      "attempt": 3,
+      "exit": 1,
+      "cause": "reviewer incorrectly assumed P1 has no search_documents table"
+    },
+    {
+      "attempt": 4,
+      "exit": 0,
+      "probes": 4
+    }
+  ],
+  "environment_overrides": {
+    "TMPDIR": "/workspace/tmp-review-c"
+  },
+  "commands": {
+    "sync": "uv sync --locked --group dev --group docs",
+    "collection": "TMPDIR=/workspace/tmp-review-c uv run --no-sync pytest tests/integration/p7/test_corruption_stop.py tests/integration/p7/test_exact_replay.py tests/integration/p7/test_durable_budget.py tests/integration/p7/test_process_isolation.py tests/integration/p7/test_safe_activation.py --collect-only -q",
+    "focused": "TMPDIR=/workspace/tmp-review-c uv run --no-sync pytest tests/integration/p7/test_corruption_stop.py tests/integration/p7/test_exact_replay.py tests/integration/p7/test_durable_budget.py tests/integration/p7/test_process_isolation.py tests/integration/p7/test_safe_activation.py -q --basetemp /workspace/tmp-review-c/focused -o junit_family=xunit1 --junitxml /workspace/integration-acceptance/reviews/c/focused.xml --journal /workspace/integration-acceptance/reviews/c/focused.jsonl",
+    "probe": "TMPDIR=/workspace/tmp-review-c uv run --no-sync python /workspace/integration-acceptance/reviews/c/isolation_probe.py"
+  },
+  "production_delta_from_frozen_p7": "M\tsrc/repo_catalog/adapters/sqlite/index.py",
+  "p7_test_delta_from_frozen_p7": ""
+}

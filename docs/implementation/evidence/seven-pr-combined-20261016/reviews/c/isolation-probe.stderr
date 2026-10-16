@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/integration-acceptance/reviews/c/isolation_probe.py", line 96, in <module>
+    run()
+  File "/workspace/integration-acceptance/reviews/c/isolation_probe.py", line 49, in run
+    with GitCore(source / "core.sqlite3") as core:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'GitCore' object does not support the context manager protocol

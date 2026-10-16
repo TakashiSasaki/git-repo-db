@@ -1,0 +1,54 @@
+{
+  "source_head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "source_tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "recovery_origin": "/workspace/review-c/src/repo_catalog/application/recovery.py",
+  "index_origin": "/workspace/review-c/src/repo_catalog/adapters/sqlite/index.py",
+  "probes": {
+    "stop_survives_both_derivative_losses_and_blocks_backup": true,
+    "stopped_authorities_unchanged_by_salvage": true,
+    "typed_replay_without_new_authority": true,
+    "recovery_reconstructs_p1_derivatives_without_public_search_rebuild": true
+  },
+  "salvage": {
+    "catalog_path": "/workspace/tmp-review-c/independent-c-qwjttaif/source",
+    "candidate_count": 3,
+    "clean_count": 3,
+    "partial_count": 0,
+    "corrupt_count": 0,
+    "unreadable_scope": [],
+    "output_file": "/workspace/tmp-review-c/independent-c-qwjttaif/salvage.jsonl",
+    "partial": false
+  },
+  "merge": {
+    "destination_path": "/workspace/tmp-review-c/independent-c-qwjttaif/fresh",
+    "candidates_processed": 3,
+    "admitted_units": 0,
+    "rejected_units": 0,
+    "replayed_units": 1,
+    "observation_units": 2,
+    "deferred_units": 0,
+    "unprocessed_units": 0,
+    "input_complete": true,
+    "unprocessed_count_exact": true,
+    "rejections": [
+      {
+        "candidate_id": "34d20e77-2dbd-4585-b5bb-60c72a52022c",
+        "reason": "Context resource requires typed dependency reconciliation; qualified non-authoritative observation only"
+      }
+    ]
+  },
+  "activation": {
+    "activated_catalog_path": "/workspace/tmp-review-c/independent-c-qwjttaif/active",
+    "source_backup_id": "restored",
+    "reconstructed_stores": [
+      "operational",
+      "search"
+    ],
+    "timestamp_us": 1792180432149773,
+    "clean_operational": true,
+    "search_derivative_state": "initialized_empty"
+  }
+}

@@ -1,0 +1,24 @@
+=================================================================
+ git-repo-db Developer Documentation Site Builder
+=================================================================
+Checking schema visualization freshness...
+✓ Schema visualization freshness confirmed.
+Staging documentation into /workspace/combined-tree/.build/docs-source...
+✓ Staging completed successfully.
+Executing MkDocs static build...
+✓ MkDocs build completed successfully.
+Validating publication safety for /workspace/combined-tree/site...
+✓ Publication safety check passed (0 sensitive files, all allowlisted).
+Scanning internal links in /workspace/combined-tree/site...
+✓ Internal link validation passed (0 broken links).
+=================================================================
+ Build Summary:
+  - Output Directory: /workspace/combined-tree/site
+  - Source Commit: 388b824d1b3abe41c902759bf37a52c6ee5bcd2f
+  - Git Tree: ea006924152d2fc508c7eb21697ad3c376e373f6
+  - Core Schema: 21 (70 tables)
+  - Operational Schema: 1 (10 tables)
+  - Search Schema: 1 (4 tables)
+  - Mermaid Diagrams Rendered: 10 SVGs
+ Status: BUILD & VALIDATION SUCCESSFUL
+=================================================================

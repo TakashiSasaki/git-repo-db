@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/integration-acceptance/reviews/b/runtime-probes.py", line 49, in <module>
+    assert [r[1] for r in op.all('PRAGMA database_list')]==['main']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

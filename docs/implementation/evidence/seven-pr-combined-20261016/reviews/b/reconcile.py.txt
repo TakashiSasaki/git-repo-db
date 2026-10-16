@@ -1,0 +1,19 @@
+import collections,hashlib,json,subprocess,xml.etree.ElementTree as ET
+from pathlib import Path
+out=Path('/workspace/integration-acceptance/reviews/b')
+selected=[s for s in (out/'collection.log').read_text().splitlines() if s.startswith('tests/') and '::' in s]
+events=[json.loads(x) for x in (out/'focused.jsonl').read_text().splitlines()]
+starts=[e['nodeid'] for e in events if e['event']=='start']
+phases=[e for e in events if e['event']=='phase']
+cases=ET.parse(out/'focused.xml').findall('.//testcase')
+junit=[c.attrib['classname'].replace('.','/')+'.py::'+c.attrib['name'] for c in cases]
+assert len(selected)==len(set(selected))==len(starts)==len(set(starts))==len(cases)==len(set(junit))==13
+assert set(selected)==set(starts)==set(junit)
+assert len(phases)==39
+assert collections.Counter((e['nodeid'],e['phase']) for e in phases)==collections.Counter((n,p) for n in selected for p in ['setup','call','teardown'])
+assert all(e['outcome']=='passed' for e in phases)
+assert not ET.parse(out/'focused.xml').findall('.//failure') and not ET.parse(out/'focused.xml').findall('.//error') and not ET.parse(out/'focused.xml').findall('.//skipped')
+assert events[-1]['event']=='finish' and events[-1]['exitstatus']==0
+assert json.loads((out/'focused.execution.json').read_text())['exit_code']==0
+r={'head':'388b824d1b3abe41c902759bf37a52c6ee5bcd2f','tree':'ea006924152d2fc508c7eb21697ad3c376e373f6','selected_nodes':selected,'selected':13,'passed':13,'failed':0,'errors':0,'skipped':0,'journal_starts':13,'journal_phases':39,'phase_multiplicity':'exactly once setup/call/teardown per node','exit_code':0,'three_way_identity':'exact duplicate-free collection/JUnit/journal set equality'}
+(out/'reconciliation.json').write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r,indent=2))

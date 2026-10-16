@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/workspace/review-a/scripts/audit_phase2_dependencies.py", line 542, in <module>
+    main()
+  File "/workspace/review-a/scripts/audit_phase2_dependencies.py", line 514, in main
+    report = build_report()
+             ^^^^^^^^^^^^^^
+  File "/workspace/review-a/scripts/audit_phase2_dependencies.py", line 492, in build_report
+    "excluded": sorted(exchange.EXCLUDED),
+                       ^^^^^^^^^^^^^^^^^
+AttributeError: module 'repo_catalog.adapters.sqlite.exchange' has no attribute 'EXCLUDED'

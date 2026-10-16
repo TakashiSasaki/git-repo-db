@@ -1,0 +1,34 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "tests/integration/test_schema21_runtime_contract.py",
+    "tests/integration/test_catalog3_job_plans.py::test_discovery_resume_uses_frozen_source_set_and_settings",
+    "tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts",
+    "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+    "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+    "tests/integration/p7/test_safe_activation.py",
+    "-q",
+    "--basetemp",
+    "/workspace/integration-acceptance/reviews/b/focused-temp",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml",
+    "/workspace/integration-acceptance/reviews/b/focused.xml",
+    "--journal",
+    "/workspace/integration-acceptance/reviews/b/focused.jsonl"
+  ],
+  "cwd": "/workspace/review-b",
+  "environment_overrides": {
+    "TMPDIR": "/workspace/integration-acceptance/reviews/b/tmp",
+    "PATH": "/workspace/review-b/.venv/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback"
+  },
+  "start": "2026-10-16T19:53:15.465978+00:00",
+  "end": "2026-10-16T19:53:35.185845+00:00",
+  "elapsed_seconds": 19.71986857899998,
+  "exit_code": 0,
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+}

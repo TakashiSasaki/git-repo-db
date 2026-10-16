@@ -1,0 +1,22 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "python",
+    "scripts/prepare_wheelhouse.py",
+    "--output",
+    "/workspace/integration-acceptance/wheelhouse"
+  ],
+  "cwd": "/workspace/combined-tree",
+  "environment_overrides": {
+    "TMPDIR": "/workspace/integration-acceptance/tmp",
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse"
+  },
+  "start": "2026-10-16T19:52:17.685060+00:00",
+  "end": "2026-10-16T19:52:28.343540+00:00",
+  "elapsed_seconds": 10.658486765999982,
+  "exit_code": 0,
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+}

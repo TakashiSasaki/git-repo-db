@@ -1,0 +1,12 @@
+{
+  "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "selected": 49,
+  "starts": 49,
+  "junit": 49,
+  "phases": 147,
+  "identity_equality": true,
+  "every_phase_once_and_passed": true,
+  "exit": 0,
+  "selected_sha256": "53dcdeeeb050dbbaad2ff246e0c8f96b563e8d9857382e26188dcf79727728c5"
+}

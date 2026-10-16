@@ -1,0 +1,67 @@
+"""Independent disposable runtime counterexamples; no source/feature writes."""
+import hashlib, json, platform, sqlite3, sys, uuid
+from pathlib import Path
+from repo_catalog.adapters.sqlite.store import Store
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.application.job_service import JobService
+from repo_catalog.application.maintenance_service import MaintenanceService
+from repo_catalog.application.recovery import RecoveryService
+from repo_catalog.domain.models import CatalogError
+from repo_catalog.domain.recovery import BackupScope, RecoveryError
+import repo_catalog
+out=Path('/workspace/integration-acceptance/reviews/b')
+base=out/'probe-data'; base.mkdir()
+state=base/'public'
+MaintenanceService(state).init('catalog-text-v1',67108864,0)
+results=[]
+with Store(state) as store:
+ rev=dict(store.revision()); op=store.operational
+ # SQL trigger failure is after the first jobs INSERT, before the attempt can exist.
+ op.execute("CREATE TEMP TRIGGER refuse_attempt BEFORE INSERT ON job_attempts BEGIN SELECT RAISE(ABORT,'injected attempt refusal'); END")
+ try: JobService(store).create('sync',{'kind':'pr'})
+ except sqlite3.IntegrityError as err: assert 'injected attempt refusal' in str(err)
+ else: raise AssertionError('create unexpectedly succeeded')
+ assert op.one('SELECT count(*) FROM jobs')[0]==0
+ assert op.one('SELECT count(*) FROM job_attempts')[0]==0
+ op.execute('DROP TRIGGER refuse_attempt')
+ results.append('create Job/Attempt atomic rollback: PASS')
+ job=JobService(store).create('sync',{'kind':'pr','repositories':['fixed']})
+ before=[tuple(r) for r in op.all('SELECT * FROM job_attempts ORDER BY attempt')]
+ op.execute("CREATE TEMP TRIGGER refuse_restart BEFORE INSERT ON job_attempts WHEN NEW.attempt=2 BEGIN SELECT RAISE(ABORT,'injected restart refusal'); END")
+ try: JobService(store).resume(job)
+ except sqlite3.IntegrityError as err: assert 'injected restart refusal' in str(err)
+ else: raise AssertionError('resume unexpectedly succeeded')
+ assert [tuple(r) for r in op.all('SELECT * FROM job_attempts ORDER BY attempt')]==before
+ assert op.one('SELECT current_attempt FROM jobs WHERE job_id=?',(job,))[0]==1
+ op.execute('DROP TRIGGER refuse_restart')
+ kind,request=JobService(store).resume(job)
+ assert kind=='sync' and request=={'kind':'pr','repositories':['fixed']}
+ assert [(r['attempt'],r['state'],r['reason']) for r in op.all('SELECT * FROM job_attempts ORDER BY attempt')]==[(1,'interrupted','process_restart'),(2,'running',None)]
+ JobService(store).update(job,'complete')
+ try: JobService(store).resume(job)
+ except CatalogError as err: assert err.code=='INVALID_ARGUMENT'
+ else: raise AssertionError('complete Job resumed')
+ assert op.one('SELECT count(*) FROM job_attempts')[0]==2
+ assert dict(store.revision())==rev
+ for table in ['jobs','job_attempts','collection_progress','index_generations']:
+  assert store.one("SELECT 1 FROM sqlite_schema WHERE name=?",(table,)) is None
+ assert [r[1] for r in store.all('PRAGMA database_list')]==['main']
+ assert [r[1] for r in op.all('PRAGMA database_list')]==['main']
+ results.append('restart rollback, immutable request, completed refusal, physical store ownership: PASS')
+# Closing all connections makes byte identity meaningful; P7 must not migrate public runtime.
+def files(path): return {str(p.relative_to(path)):hashlib.sha256(p.read_bytes()).hexdigest() for p in path.rglob('*') if p.is_file()}
+before=files(state)
+try: RecoveryService().create_consistent_backup(state,base/'invalid-public-backup',scope=BackupScope.GIT_ONLY)
+except RecoveryError as err: rejected={'type':type(err).__name__,'message':str(err)}
+else: raise AssertionError('P7 accepted public catalog')
+assert files(state)==before and not (base/'invalid-public-backup').exists()
+results.append('P7 rejects public Schema21 as opt-in target, public source bytes unchanged: PASS')
+p1=base/'target';p1.mkdir()
+initialize(p1/'core.sqlite3','core',str(uuid.uuid4()),str(uuid.uuid4()))
+before=files(p1)
+try: Store(p1)
+except CatalogError as err: assert err.code=='NOT_INITIALIZED'
+else: raise AssertionError('public Store accepted P1 target')
+assert files(p1)==before and not (p1/'catalog.sqlite3').exists()
+results.append('public Store refuses opt-in P1 target without implicit migration: PASS')
+print(json.dumps({'head':'388b824d1b3abe41c902759bf37a52c6ee5bcd2f','tree':'ea006924152d2fc508c7eb21697ad3c376e373f6','python':sys.version,'sqlite':sqlite3.sqlite_version,'platform':platform.platform(),'import_origin':repo_catalog.__file__,'results':results,'P7_public_refusal':rejected},indent=2))

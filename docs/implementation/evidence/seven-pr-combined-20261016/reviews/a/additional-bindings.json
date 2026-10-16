@@ -1,0 +1,62 @@
+{
+  "all_seven_feature_heads_ancestors_of_final": true,
+  "all_seven_remote_heads_match_pins": true,
+  "source_files_changed_from_main": [
+    {
+      "path": "src/repo_catalog/adapters/sqlite/index.py",
+      "base_blob": "defadc3f147ccf21145a2782194b81a9712e71f3",
+      "combined_blob": "fe8c0d2a98fa734bf3ea6a2b2bee7e26c3d53d14"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery.py",
+      "base_blob": null,
+      "combined_blob": "4146be81be292461d519912bd34ef9720b095501"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery_budget.py",
+      "base_blob": null,
+      "combined_blob": "b24bbdb7347c022cc0d57a5c099c1994c5ecc0c5"
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",
+      "base_blob": null,
+      "combined_blob": "c26f0be5900cd06fa8dcbac17028b68b433dd009"
+    },
+    {
+      "path": "src/repo_catalog/application/recovery.py",
+      "base_blob": null,
+      "combined_blob": "91e54e5acce1dd85bb8028c41ca15ce4665767d6"
+    },
+    {
+      "path": "src/repo_catalog/domain/git_native.py",
+      "base_blob": "2ea0d597dba639382c9eb9807348e10b897211fc",
+      "combined_blob": "1be34b6bc9197efef863859491e5c2344df17116"
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/recovery.py",
+      "base_blob": null,
+      "combined_blob": "f7fbe377368110111a7ea386aafbf4fc657a33a4"
+    },
+    {
+      "path": "src/repo_catalog/domain/recovery.py",
+      "base_blob": null,
+      "combined_blob": "9cd8d55e23733a7bd00e6807ddb1756b90e7b712"
+    }
+  ],
+  "public_ddl_unchanged": true,
+  "cli_unchanged": true,
+  "historical_helper_blobs": {
+    "scripts/audit_phase2_dependencies.py": {
+      "main": "2e945451dd45de45dba22ef5db5f380f49b1c8eb",
+      "combined": "2e945451dd45de45dba22ef5db5f380f49b1c8eb"
+    },
+    "scripts/audit_phase2_fields.py": {
+      "main": "f5566af75cf047619e6786e7d89ca091249124d8",
+      "combined": "f5566af75cf047619e6786e7d89ca091249124d8"
+    },
+    "src/repo_catalog/adapters/sqlite/exchange.py": {
+      "main": "21d215919943c0e216828233e8b6238ff6a340cd",
+      "combined": "21d215919943c0e216828233e8b6238ff6a340cd"
+    }
+  }
+}

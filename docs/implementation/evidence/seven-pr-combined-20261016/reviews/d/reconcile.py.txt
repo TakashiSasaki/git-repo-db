@@ -1,0 +1,30 @@
+import collections,hashlib,json,sys,xml.etree.ElementTree as ET
+from pathlib import Path
+root=Path('/workspace/integration-acceptance');out=root/'reviews/d'
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def nodes(p):return [x.strip() for x in p.read_text().splitlines() if x.startswith('tests/') and '::' in x]
+def reconcile(label,collect,xml,journal):
+ selected=nodes(collect);events=[json.loads(l) for l in journal.read_text().splitlines()];starts=[e['nodeid'] for e in events if e['event']=='start'];phases=[e for e in events if e['event']=='phase'];finish=[e for e in events if e['event']=='finish'];cases=ET.parse(xml).getroot().findall('.//testcase');jids=[e.attrib['classname'].replace('.','/')+'.py::'+e.attrib['name'] for e in cases]
+ assert len(selected)==len(set(selected)) and len(starts)==len(set(starts)) and len(jids)==len(set(jids))
+ assert set(selected)==set(starts)==set(jids),(label,set(selected)-set(jids),set(jids)-set(selected))
+ counted=collections.Counter((e['nodeid'],e['phase']) for e in phases)
+ assert counted==collections.Counter({(n,p):1 for n in selected for p in ['setup','call','teardown']})
+ assert len(finish)==1 and finish[0]['exitstatus']==0 and finish[0]['status']=='completed'
+ counts=collections.Counter('failed' if e.find('failure') is not None else 'errors' if e.find('error') is not None else 'skipped' if e.find('skipped') is not None else 'passed' for e in cases)
+ assert counts['passed']==len(selected) and all(e['outcome']=='passed' for e in phases)
+ result={'label':label,'selected':len(selected),'junit':len(jids),'unique_starts':len(starts),'phase_records':len(phases),'results':dict(counts),'finish':finish[0],'sha256':{p.name:sha(p) for p in [collect,xml,journal]},'nodes_equal_exactly_once':True,'all_three_phases_once':True}
+ return result,selected
+results=[]
+if sys.argv[1]=='root':
+ r,selected=reconcile('root-complete',root/'raw/collect-default.log',root/'raw/full.xml',root/'raw/full.jsonl');allnodes=nodes(root/'raw/collect-all.log');r['all_collected']=len(allnodes);r['deselected']=sorted(set(allnodes)-set(selected));r['cohorts']={}
+ for name in ['p1','p2','p3','p4','p5','p6','p7','p2_p3_compatibility','p5_p6_compatibility']:
+  r['cohorts'][name]=sum(n.startswith('tests/integration/'+name+'/') for n in selected)
+ r['documentation_unit']=sum(n.startswith('tests/unit/test_build_docs_site.py::') for n in selected)
+ results.append(r)
+else:
+ old=set((out/'original-p7-255-nodes.txt').read_text().splitlines())
+ for kind in ['wheel','sdist-wheel']:
+  r,selected=reconcile(kind,out/(kind+'-collect.log'),out/(kind+'-junit.xml'),out/(kind+'-journal.jsonl'));current={n for n in selected if n.startswith('tests/integration/p7/')};assert current==old
+  r['p7_nodes']=len(current);r['search_nodes']=len(selected)-len(current);r['original_p7_equal']=True;results.append(r)
+ r,selected=reconcile('public-cli',out/'public-cli-collect.log',out/'cli-junit.xml',out/'cli-journal.jsonl');results.append(r)
+(out/(sys.argv[1]+'-reconciliation.json')).write_text(json.dumps(results,indent=2)+'\n');print(json.dumps(results,indent=2))

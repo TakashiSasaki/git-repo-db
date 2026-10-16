@@ -1,0 +1,96 @@
+{
+  "measured_utc": "2026-10-16T19:53:49.703440+00:00",
+  "command": [
+    "gh",
+    "api",
+    "repos/TakashiSasaki/git-repo-db/pulls?state=open&per_page=100"
+  ],
+  "exit": 0,
+  "prs": [
+    {
+      "number": 93,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/93",
+      "state": "open",
+      "draft": false,
+      "head": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+      "head_ref": "fix/schema21-collection-contract",
+      "base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "base_ref": "main",
+      "mergeable": null,
+      "mergeable_state": null
+    },
+    {
+      "number": 92,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/92",
+      "state": "open",
+      "draft": false,
+      "head": "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+      "head_ref": "fix/schema21-runtime-contract",
+      "base": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+      "base_ref": "fix/schema21-job-search-runtime",
+      "mergeable": null,
+      "mergeable_state": null
+    },
+    {
+      "number": 91,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/91",
+      "state": "open",
+      "draft": false,
+      "head": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+      "head_ref": "fix/schema21-job-search-runtime",
+      "base": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+      "base_ref": "fix/schema21-collection-contract",
+      "mergeable": null,
+      "mergeable_state": null
+    },
+    {
+      "number": 90,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/90",
+      "state": "open",
+      "draft": false,
+      "head": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+      "head_ref": "docs/integration-readiness-20261016",
+      "base": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "base_ref": "feat/p7-production-recovery",
+      "mergeable": null,
+      "mergeable_state": null
+    },
+    {
+      "number": 89,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/89",
+      "state": "open",
+      "draft": false,
+      "head": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+      "head_ref": "feat/optimize-pages-trigger-paths",
+      "base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "base_ref": "main",
+      "mergeable": null,
+      "mergeable_state": null
+    },
+    {
+      "number": 88,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/88",
+      "state": "open",
+      "draft": false,
+      "head": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "head_ref": "feat/p7-production-recovery",
+      "base": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "base_ref": "docs/p7-backup-recovery-technical-design",
+      "mergeable": null,
+      "mergeable_state": null
+    },
+    {
+      "number": 87,
+      "url": "https://github.com/TakashiSasaki/git-repo-db/pull/87",
+      "state": "open",
+      "draft": false,
+      "head": "c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75",
+      "head_ref": "docs/p7-backup-recovery-technical-design",
+      "base": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "base_ref": "main",
+      "mergeable": null,
+      "mergeable_state": null
+    }
+  ],
+  "stderr": ""
+}

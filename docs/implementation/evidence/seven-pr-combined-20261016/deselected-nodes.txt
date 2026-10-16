@@ -1,0 +1,2 @@
+tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload
+tests/live/test_smoke.py::test_selected_repository
