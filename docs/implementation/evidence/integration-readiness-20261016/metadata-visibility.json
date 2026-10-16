@@ -1,0 +1,22 @@
+{
+  "observed_at_utc": "2026-10-16T17:59:33.727998+00:00",
+  "branch_protection": {
+    "endpoint": "repos/TakashiSasaki/git-repo-db/branches/main/protection",
+    "http_status": 403,
+    "message": "Resource not accessible by integration"
+  },
+  "rulesets": [],
+  "merge_settings": {
+    "allow_auto_merge": false,
+    "allow_merge_commit": true,
+    "allow_rebase_merge": true,
+    "allow_squash_merge": true,
+    "default_branch": "main",
+    "delete_branch_on_merge": false
+  },
+  "empty_gh_log_attempts": [
+    "gh run view 38926458613 --log: exit 0, 0 bytes",
+    "gh run view 38918703718 --log: exit 0, 0 bytes"
+  ],
+  "successful_log_retrieval": "gh api repos/TakashiSasaki/git-repo-db/actions/runs/RUN_ID/logs returned actual run-log ZIP for both runs"
+}
