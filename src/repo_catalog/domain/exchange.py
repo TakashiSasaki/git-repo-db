@@ -461,13 +461,16 @@ def validate_package_envelope(package: ExchangePackage) -> None:
 def encode_package(package: ExchangePackage) -> str:
     """Serialize an ExchangePackage into canonical deterministic JSON."""
     validate_package_envelope(package)
-    return json.dumps(
+    result = json.dumps(
         package.to_dict(),
         ensure_ascii=False,
         sort_keys=True,
         separators=(",", ":"),
         allow_nan=False,
     )
+    if len(result.encode("utf-8")) > MAX_PACKAGE_BYTES:
+        raise ExchangeError("INPUT_LIMIT", "package", "UTF-8 wire bytes")
+    return result
 
 
 def decode_package(
@@ -482,6 +485,8 @@ def decode_package(
             raise ExchangeError("INPUT_LIMIT", "package", "wire size")
         try:
             text = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+            if len(text.encode("utf-8")) > MAX_PACKAGE_BYTES:
+                raise ExchangeError("INPUT_LIMIT", "package", "UTF-8 wire bytes")
             data = _parse_json(text)
         except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
             raise ExchangeError("MALFORMED_JSON", "package", str(exc)) from exc
