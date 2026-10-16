@@ -21,6 +21,18 @@ implicitly grandfathered by a recipe below.
 
 ---
 
+## Classified time and checksum policy for target work
+
+Read [ADR 0028](../../../docs/adr/0028-classified-times-and-sha256-exchange.md)
+before applying older time fixtures: nullable observation/Provider values must
+be positive when known; Coverage/terminal coordinates stay required positive;
+native Git times stay signed. Preserve the purpose of a changed fixture and map
+its old node to replacement/additional coverage. Do not claim SQLite affinity
+checks validate original Python/JSON types. Exchange compares declared and local
+canonical SHA-256; cursor SHA-256 is a checksum, not sender authentication. Actual
+executed lessons require exact-revision evidence; this paragraph states accepted
+policy, not an executed implementation result.
+
 ## 1. Baseline cache protection under Operational loss
 
 ### Symptom

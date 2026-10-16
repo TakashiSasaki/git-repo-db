@@ -6,7 +6,7 @@ This document defines the shared technical contract for **P5** (Production acqui
 
 - **Upstream baseline**: Stacked directly on the reviewed P4 production implementation (`codex/p4-production-notes`, commit `b024ca5103e8658d4ea9717e2cbe534905552610`, executable tree `501f7ca965c0b361819e8ba2b3f5154c7d45c061`).
 - **Execution model**: P5 (`feat/p5-production-acquisition-exchange`) and P6 (`feat/p6-production-query-search`) branch as parallel, independent sibling workstreams from this contract HEAD. Neither sibling contains the other's implementation commits. Combined cross-workstream verification runs on a temporary integration branch (`validation/p5-p6-combined-integration`).
-- **Out of scope**: Default public runtime activation (reserved for P8) and authoritative recovery/salvage/restore/activation workflows (reserved for P7). No existing P1–P4 DDL fingerprint or accepted ADR (through ADR 0027) is reopened or modified.
+- **Out of scope**: Default public runtime activation (reserved for P8) and authoritative recovery/salvage/restore/activation workflows (reserved for P7). Owner-accepted [ADR 0028](../adr/0028-classified-times-and-sha256-exchange.md) supersedes the earlier freeze of P1–P4 shared time/DDL/fingerprints only as needed for its classified time contract. Public Schema 21 remains default.
 
 ---
 
@@ -40,13 +40,13 @@ Both P5 and P6 enforce the following six architectural distinctions across all d
 
 ---
 
-## 1. Unchanged Consumption of P1–P4 Ports and Adapters
+## 1. Consumption of P1–P4 Ports and Adapters
 
-P5 and P6 consume the P1–P4 domain models, ports, SQLite schemas, and production adapters **unchanged**:
+P5 and P6 consume the following P1–P4 contracts. Their shared time/types/opt-in DDL are corrected once under ADR 0028 and the identical shared commit is incorporated by both siblings:
 
 - **P1 Schema & Store Initialization (`repo_catalog.adapters.sqlite.p1_schema`)**:
   - `STORES = ("core", "context", "operational", "search")`, `compose`, `fingerprint`, `verify_declared`, `initialize`, `connect`.
-  - All four DDL files (`core.sql`, `context.sql`, `operational.sql`, `search.sql`) and `fingerprints.json` remain byte-identical.
+  - Classified time constraints and nullable observation types may change opt-in DDL. Regenerate and audit fingerprints and disposition; do not hide the change or alter public Schema 21.
 - **P1/P2 Git Core (`repo_catalog.domain.p1_core`, `repo_catalog.domain.ports.p1_core`, `repo_catalog.adapters.sqlite.git_core`, `repo_catalog.adapters.git.native`, `repo_catalog.domain.git_native`)**:
   - `GitCore` (`admit_repository`, `admit_repository_claim`, `admit_observation`, `admit_coverage_scope`, `admit_coverage`, `admit_coverage_proof`, `admit_object`, `admit_claim`, `admit_group`, `admit_capture`, `admit_notes_claim`, `admit_notes_group`, `admit_notes_role`, `admit_metadata`, `admit_note`, `admit_notes_inventory`, `scalar`, `relations`, `coverage`, `read_metadata`, `read_note`, `notes_projection`, `notes_inventories`, `catalog_identity`, `sql`, `for_transaction`).
   - `GitNativeSource` (`metadata`, `refs`, `object_format`, `metadata_bytes`).
@@ -88,12 +88,28 @@ P5 and P6 consume the P1–P4 domain models, ports, SQLite schemas, and producti
       - `issue_comment` documents under `issue` or `pull_request`
       - `timeline_event`, `pr_commit`, and `pr_file` context observations (recording path/status/additions/deletions/patch metadata as Context fields/text without retaining Git file blobs in Core).
   - **Field Clocks, Explicit Nulls, and Text**:
-    - Every field observation produces a `FieldCandidate` with a typed `FieldClock(domain, value)` (`int` microsecond timestamp for provider clocks such as `github:issue:updated_at`, `github:pr:updated_at`, `github:comment:updated_at`, or `None` for clockless observations ordered by `observed_at_us`).
+    - Every field observation produces a `FieldCandidate` with a typed `FieldClock(domain, value)` (`int` microsecond timestamp for provider clocks such as `github:issue:updated_at`, `github:pr:updated_at`, `github:comment:updated_at`, or `None` for unknown Provider time; compare observation times only when both are known and comparable, retaining incomparable alternatives).
     - Missing fields in partial REST/GraphQL payloads are omitted (never erasing prior candidates), whereas explicit provider `null` values are encoded as JSON `"null"` (`FieldCandidate(..., value_json="null", ...)`).
     - Text bodies (`body`, `title`, `diff_hunk`, `patch`) are stored once in `text_bodies` via `Context.admit_text` / `Context.text` (keyed by exact UTF-8 SHA-256) and linked via `text_body_sha256` or field-specific candidate attributes.
     - Detached issue-attachment transfer preserves `ResourceKey` identity, all existing `FieldCandidate` provenance, and adds the new `repository_uuidv4` candidate or association without rewriting prior history.
 
 ---
+
+## Classified times and integrity (binding owner correction)
+
+ADR 0028 governs all below examples and historical v1 descriptions. Observation,
+acquisition and Provider absolute times are NULL or positive int64; required
+Coverage/terminal coordinates remain positive nonnull. Git-native times remain
+signed int64 even through Exchange. FieldCandidate unknown observation is nullable.
+Never fabricate unknown coordinates or use receipt order for incomparable clocks.
+
+The corrected wire version declares canonical-data SHA-256 and import compares
+that declaration with receiver recomputation before domain admission. Exact
+normalization, binary encoding, finite limits and framing belong to the P5
+implementation contract. No HMAC/PKI/signature/authentication is implemented or
+required. P6's keyless cursor digest is a checksum with independent semantic
+validation. The earlier v1 shape below is an implementation starting point, not a
+compatibility requirement or a claim that digest comparison was already present.
 
 ## 3. Typed Exchange Vocabulary and Wire Contract (`git-repo-db/p5-exchange-v1`)
 
