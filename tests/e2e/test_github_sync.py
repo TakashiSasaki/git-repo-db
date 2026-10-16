@@ -537,7 +537,7 @@ def test_rate_etag(catalog):
         requests = len(api.requests)
         run(state, "jobs", "resume", job, env=env, expected=3)
         assert len(api.requests) == requests
-        with sqlite3.connect(state / "catalog.sqlite3") as db:
+        with sqlite3.connect(state / "operational.sqlite3") as db:
             db.execute("UPDATE job_attempts SET not_before_us=0 WHERE job_id=?", (job,))
         run(state, "jobs", "resume", job, env=env)
         before = pages(

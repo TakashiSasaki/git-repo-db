@@ -12,7 +12,7 @@ def test_fts_fallback(catalog):
     assert {
         q: pages(state, "search", "code", "--literal", q) for q in queries
     } == expected
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
+    with sqlite3.connect(state / "search.sqlite3") as db:
         name = db.execute(
             "SELECT table_name FROM index_generations WHERE kind='code' AND state='ready'"
         ).fetchone()[0]

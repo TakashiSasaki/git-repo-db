@@ -100,6 +100,12 @@ def refresh_documents(core_store, search_store_or_kind, kind_or_token, token=Non
     if batch:
         _save_documents(search_store, kind, batch)
 
+    _prune_obsolete_documents(search_store, kind, seen_keys)
+    return total_docs, total_bytes, seen_keys
+
+
+def _prune_obsolete_documents(search_store, kind, current_keys):
+    """Keep old generation inputs until its readers can use the replacement."""
     with search_store.transaction():
         all_docs = search_store.all(
             "SELECT search_document_id, source_key FROM search_documents WHERE kind=?",
@@ -108,7 +114,7 @@ def refresh_documents(core_store, search_store_or_kind, kind_or_token, token=Non
         obsolete_ids = [
             d["search_document_id"]
             for d in all_docs
-            if d["source_key"] not in seen_keys
+            if d["source_key"] not in current_keys
         ]
         for obs_id in obsolete_ids:
             if not search_store.one(
@@ -119,7 +125,6 @@ def refresh_documents(core_store, search_store_or_kind, kind_or_token, token=Non
                     "DELETE FROM search_documents WHERE search_document_id=?",
                     (obs_id,),
                 )
-    return total_docs, total_bytes
 
 
 def _save_documents(search_store, kind, batch):
@@ -191,7 +196,7 @@ def rebuild(store, kind="all", token=None):
                 with store.transaction(read=True):
                     core_rev = store.revision()["local_revision"]
                     last_projected_fence = core_rev
-                    k_docs, k_bytes = refresh_documents(
+                    k_docs, k_bytes, current_keys = refresh_documents(
                         store, search_store, current, token
                     )
                 total_docs += k_docs
@@ -226,16 +231,23 @@ def rebuild(store, kind="all", token=None):
                     token.check()
                     batch = []
                     batch_bytes = 0
+                    previous = last
                     for document in search_store.execute(
                         "SELECT * FROM search_documents WHERE kind=? AND search_document_id>? AND search_document_id<=? ORDER BY search_document_id LIMIT 200",
                         (current, last, maximum),
                     ):
+                        if document["source_key"] not in current_keys:
+                            last = document["search_document_id"]
+                            continue
                         document_bytes = len(document["body"].encode("utf8"))
                         if batch and batch_bytes + document_bytes > 8_388_608:
                             break
                         batch.append(document)
                         batch_bytes += document_bytes
+                        last = document["search_document_id"]
                     if not batch:
+                        if last > previous:
+                            continue
                         break
                     with search_store.transaction():
                         if (
@@ -267,12 +279,8 @@ def rebuild(store, kind="all", token=None):
                                     ),
                                 )
                         count += len(batch)
-                        last = batch[-1]["search_document_id"]
                 with search_store.transaction():
-                    expected = search_store.one(
-                        "SELECT count(*) FROM search_documents WHERE kind=? AND search_document_id<=?",
-                        (current, maximum),
-                    )[0]
+                    expected = len(current_keys)
                     if count != expected:
                         raise CatalogError(
                             "INDEX_INTEGRITY", "Fixed index target not fully built"
@@ -303,6 +311,7 @@ def rebuild(store, kind="all", token=None):
                             )
                     except sqlite3.OperationalError:
                         pass
+                _prune_obsolete_documents(search_store, current, current_keys)
                 results.append(
                     {
                         "kind": current,

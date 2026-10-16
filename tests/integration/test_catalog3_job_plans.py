@@ -56,10 +56,15 @@ def test_discovery_resume_uses_frozen_source_set_and_settings(state, monkeypatch
     )
     with Store(state) as store:
         assert (
-            store.one("SELECT current_attempt FROM jobs WHERE job_id=?", (job,))[0] == 2
+            store.operational.one(
+                "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
+            )[0]
+            == 2
         )
         with pytest.raises(sqlite3.IntegrityError):
-            store.execute("UPDATE jobs SET request='{}' WHERE job_id=?", (job,))
+            store.operational.execute(
+                "UPDATE jobs SET request='{}' WHERE job_id=?", (job,)
+            )
 
 
 def test_missing_explicit_credentials_creates_no_job_or_remote_evidence(state):
@@ -74,7 +79,7 @@ def test_missing_explicit_credentials_creates_no_job_or_remote_evidence(state):
         CollectionService(state).discover(source)
     assert error.value.code == "SOURCE_CREDENTIAL_UNAVAILABLE"
     with Store(state) as store:
-        assert store.one("SELECT count(*) FROM jobs")[0] == 0
+        assert store.operational.one("SELECT count(*) FROM jobs")[0] == 0
         assert_absent_tables(
             store.connection, "source_input_observations", "inventory_observations"
         )
@@ -97,7 +102,9 @@ def test_plan_saves_credential_reference_not_value(state, monkeypatch):
     monkeypatch.setattr(CollectionService, "_discover", pause)
     job = CollectionService(state).discover(source)
     with Store(state) as store:
-        request = store.one("SELECT request FROM jobs WHERE job_id=?", (job,))[0]
+        request = store.operational.one(
+            "SELECT request FROM jobs WHERE job_id=?", (job,)
+        )[0]
         assert "PLAN_TEST_TOKEN" in request
         assert "synthetic-secret-value" not in request
         assert (
@@ -146,7 +153,7 @@ def test_manual_inventory_has_source_owned_current_roster_and_assessment(state):
             "current_inventory_observations",
             "repository_name_observations",
         )
-        attempt = store.one(
+        attempt = store.operational.one(
             "SELECT a.state,a.checkpoint FROM job_attempts a WHERE job_id=?",
             (response.data["job_id"],),
         )
@@ -260,7 +267,7 @@ def test_bulk_zero_usable_sources_creates_no_job(state):
         CollectionService(state).discover()
     assert error.value.code == "NO_USABLE_SOURCE"
     with Store(state) as store:
-        assert store.one("SELECT count(*) FROM jobs")[0] == 0
+        assert store.operational.one("SELECT count(*) FROM jobs")[0] == 0
 
 
 @pytest.mark.parametrize(
@@ -292,7 +299,9 @@ def test_cancelled_discovery_attempt_is_interrupted(state):
         CollectionService(state, token).discover()
     assert error.value.code == "CANCELLED"
     with Store(state) as store:
-        assert store.one("SELECT state FROM job_attempts")[0] == "interrupted"
+        assert (
+            store.operational.one("SELECT state FROM job_attempts")[0] == "interrupted"
+        )
         assert_absent_tables(store.connection, "inventory_observations")
         assert store.one("SELECT count(*) FROM source_inventory_assessments")[0] == 0
 
@@ -305,7 +314,7 @@ def test_bulk_mixed_sources_persist_partial_result_with_complete_attempt(state):
     result = CollectionService(state).discover()
     assert result.status == "partial"
     with Store(state) as store:
-        row = store.one(
+        row = store.operational.one(
             "SELECT j.request,a.state,a.checkpoint FROM jobs j JOIN job_attempts a ON a.job_id=j.job_id AND a.attempt=j.current_attempt"
         )
         assert row["state"] == "complete"
@@ -337,7 +346,7 @@ def test_credentials_lost_after_job_creation_complete_partial_without_evidence(
     result = CollectionService(state).discover(source)
     assert result.status == "partial"
     with Store(state) as store:
-        assert store.one("SELECT state FROM job_attempts")[0] == "complete"
+        assert store.operational.one("SELECT state FROM job_attempts")[0] == "complete"
         assert_absent_tables(
             store.connection, "source_input_observations", "inventory_observations"
         )
@@ -373,5 +382,35 @@ def test_explicit_configuration_reuses_source_registration_and_does_not_rewrite_
         )
         assert (
             "file:///changed.git"
-            not in store.one("SELECT request FROM jobs WHERE job_id=?", (job,))[0]
+            not in store.operational.one(
+                "SELECT request FROM jobs WHERE job_id=?", (job,)
+            )[0]
         )
+
+
+def test_job_attempts_are_operational_and_loss_preserves_core_facts(state):
+    source = add_manual(state)
+    result = CollectionService(state).discover(source)
+    job = result.data["job_id"]
+    with Store(state) as store:
+        durable = tuple(store.one("SELECT * FROM source_repositories"))
+        assert (
+            store.operational.one(
+                "SELECT state FROM job_attempts WHERE job_id=?", (job,)
+            )[0]
+            == "complete"
+        )
+        assert_absent_tables(store.connection, "jobs", "job_attempts")
+        assert_absent_tables(store.operational.connection, "source_repositories")
+        with pytest.raises(sqlite3.OperationalError, match="no such table: jobs"):
+            store.one("SELECT * FROM jobs")
+        assert [row[1] for row in store.all("PRAGMA database_list")] == ["main"]
+    # PF-P04/PF-P08: loss of execution state does not erase admitted evidence or
+    # invent a continuation. A fresh Operational store has no previous Job.
+    (state / "operational.sqlite3").unlink()
+    with Store(state) as store:
+        assert tuple(store.one("SELECT * FROM source_repositories")) == durable
+        assert store.operational.one("SELECT count(*) FROM jobs")[0] == 0
+        with pytest.raises(CatalogError) as raised:
+            CollectionService(state).resume(job)
+        assert raised.value.code == "NOT_FOUND"

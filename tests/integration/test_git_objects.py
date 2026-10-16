@@ -187,7 +187,7 @@ def test_incomplete_closure(catalog):
     ]
     import sqlite3
 
-    with sqlite3.connect(state / "catalog.sqlite3") as db:
+    with sqlite3.connect(state / "operational.sqlite3") as db:
         path = db.execute(
             "SELECT l.path FROM active_cache_entries c JOIN cache_locators l ON l.cache_locator_id=c.cache_locator_id WHERE l.repository_uuidv4=? AND l.access='target_active' AND c.state='active'",
             (repos["alpha"],),

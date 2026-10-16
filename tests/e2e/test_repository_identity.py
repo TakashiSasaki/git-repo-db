@@ -440,8 +440,9 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
     )
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         assert db.execute("SELECT count(*) FROM git_acquisitions").fetchone()[0] == 0
+    with sqlite3.connect(state / "operational.sqlite3") as op:
         assert (
-            db.execute("SELECT count(*) FROM active_cache_entries").fetchone()[0] == 0
+            op.execute("SELECT count(*) FROM active_cache_entries").fetchone()[0] == 0
         )
     run(state, "sync", "git", "--endpoint", ep, expected=2)
     p, hooks = start_hooked(
@@ -469,14 +470,21 @@ def test_endpoint_scope_and_resume_keep_original_url(catalog, tmp_path):
         resumed["repository_endpoint_id"] == ep
         and resumed["endpoint_url"] == alt.as_uri()
     )
+    # Resolve the transient job link in Operational, then inspect its durable
+    # acquisition in Core; the stores deliberately have no implicit ATTACH.
+    with sqlite3.connect(state / "operational.sqlite3") as op:
+        acquisition = op.execute(
+            "SELECT git_acquisition_id FROM acquisition_progress WHERE job_id=?",
+            (job,),
+        ).fetchone()[0]
     with sqlite3.connect(state / "catalog.sqlite3") as db:
         assert db.execute(
-            "SELECT a.repository_endpoint_id,a.endpoint_url FROM git_acquisitions a JOIN acquisition_progress p ON p.git_acquisition_id=a.git_acquisition_id WHERE p.job_id=?",
-            (job,),
+            "SELECT repository_endpoint_id,endpoint_url FROM git_acquisitions WHERE git_acquisition_id=?",
+            (acquisition,),
         ).fetchone() == (ep, alt.as_uri())
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(
-                "UPDATE git_acquisitions SET repository_uuidv4=? WHERE git_acquisition_id IN (SELECT git_acquisition_id FROM acquisition_progress WHERE job_id=?)",
-                (repos["beta"], job),
+                "UPDATE git_acquisitions SET repository_uuidv4=? WHERE git_acquisition_id=?",
+                (repos["beta"], acquisition),
             )
     run(state, "db", "check", "--full")

@@ -69,7 +69,7 @@ def sync(store, repo, *, job=None):
         )
     else:
         JobService(store).resume(job)
-    store.expected_attempt = store.one(
+    store.expected_attempt = store.operational.one(
         "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
     )[0]
     try:
@@ -80,3 +80,36 @@ def sync(store, repo, *, job=None):
         JobService(store).update(job, "waiting", error.code)
         error.details["job_id"] = job
         raise
+
+
+def collection_rows(store, where="1", args=(), *, job_id=None, state=None):
+    """Observe Core identity/evidence and Operational progress separately.
+
+    Call only after collection work is quiescent. These are independent read
+    snapshots, not a cross-store transaction or a domain completion proof.
+    Missing Operational progress is omitted, as with the former inner joins.
+    """
+    with store.transaction(read=True):
+        collections = store.all(
+            "SELECT * FROM fetch_collections WHERE "
+            + where
+            + " ORDER BY observed_at_us DESC",
+            args,
+        )
+    with store.operational.transaction(read=True):
+        progress = {
+            row["fetch_collection_id"]: dict(row)
+            for row in store.operational.all("SELECT * FROM collection_progress")
+        }
+    rows = []
+    for collection in collections:
+        item = progress.get(collection["fetch_collection_id"])
+        if item is None:
+            continue
+        if job_id is not None and item["job_id"] != job_id:
+            continue
+        if state is not None and item["state"] != state:
+            continue
+        # Keep Core observation coordinates; progress.updated_at_us is advisory.
+        rows.append(dict(collection) | item)
+    return rows

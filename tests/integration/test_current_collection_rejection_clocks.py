@@ -13,7 +13,9 @@ from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.application.job_service import JobService
 from repo_catalog.domain.models import CancellationToken, CatalogError
 from repo_catalog.domain.time import format_iso8601_us
+from tests.support.github_runtime import collection_rows
 from tests.support.github_runtime import github_runtime as github_runtime
+from tests.support.sqlite_contracts import assert_absent_tables
 
 MARKER = "CURRENT_REJECTED_TRANSPORT_MARKER_20261010"
 
@@ -40,7 +42,7 @@ def resume_job(store, job):
     jobs = JobService(store)
     jobs.update(job, "waiting")
     jobs.resume(job)
-    store.expected_attempt = store.one(
+    store.expected_attempt = store.operational.one(
         "SELECT current_attempt FROM jobs WHERE job_id=?", (job,)
     )[0]
 
@@ -168,12 +170,22 @@ def test_known_current_resource_rejection_preserves_latest_candidate_set(
             )
             == expected
         )
-        completed = store.all(
-            "SELECT c.observed_at_us FROM completion_markers c JOIN collection_progress p "
-            "USING(fetch_collection_id) WHERE p.job_id=? AND c.asserted_state='complete'",
-            (interrupted,),
-        )
-        assert [row[0] for row in completed] == [retry_us]
+        job_collections = {
+            row["fetch_collection_id"]
+            for row in store.operational.all(
+                "SELECT fetch_collection_id FROM collection_progress WHERE job_id=?",
+                (interrupted,),
+            )
+        }
+        completed = [
+            row["observed_at_us"]
+            for row in store.all(
+                "SELECT fetch_collection_id,observed_at_us FROM completion_markers "
+                "WHERE asserted_state='complete'"
+            )
+            if row["fetch_collection_id"] in job_collections
+        ]
+        assert completed == [retry_us]
         complete_claims = store.all(
             "SELECT observed_at_us FROM coverage_claims c JOIN coverage_scopes s USING(coverage_scope_id) "
             "WHERE s.kind=? AND coverage_state='complete' AND observed_at_us>100",
@@ -269,7 +281,7 @@ def test_out_of_scope_incremental_current_parent_adds_no_observation(github_runt
         assert error.value.code == "SCOPE_MISMATCH"
         assert not store.one("SELECT 1 FROM coverage_claims")
         assert not store.one("SELECT 1 FROM completion_markers")
-        assert not store.one("SELECT 1 FROM incremental_scans")
+        assert_absent_tables(store.connection, "incremental_scans")
         assert_no_original(store)
 
 
@@ -474,7 +486,7 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
         job = new_job(store)
         with pytest.raises(CatalogError):
             current.current_incremental_reviews(repo, job, endpoint)
-        assert not store.one("SELECT 1 FROM incremental_scans")
+        assert_absent_tables(store.connection, "incremental_scans")
         assert tuple(
             store.one(
                 "SELECT observed_at_us,coverage_state FROM current_coverage WHERE kind='review-comment-incremental'"
@@ -484,11 +496,7 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
         blocked[0] = False
         current.current_incremental_reviews(repo, job, endpoint)
         assert requested == ["1", "2", "2"]
-        collection = store.one(
-            "SELECT f.observed_at_us,f.scope_json FROM fetch_collections f "
-            "JOIN collection_progress p USING(fetch_collection_id) WHERE p.job_id=?",
-            (job,),
-        )
+        collection = next(iter(collection_rows(store, "1", (), job_id=job)), None)
         assert collection["observed_at_us"] == 100
         scope = json.loads(collection["scope_json"])
         assert (
@@ -496,7 +504,7 @@ def test_current_incremental_watermark_stays_at_original_scan_start(
             == endpoint + "?per_page=100&sort=updated&direction=asc"
         )
         assert scope["repository_uuidv4"] == repo["repository_uuidv4"]
-        assert not store.one("SELECT 1 FROM incremental_scans")
+        assert_absent_tables(store.connection, "incremental_scans")
         assert (
             store.one(
                 "SELECT observed_at_us FROM completion_markers WHERE asserted_state='complete'"

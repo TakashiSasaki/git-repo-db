@@ -9,8 +9,8 @@ from repo_catalog.adapters.sqlite.current_api import CurrentApiState
 from repo_catalog.application.job_service import JobService
 from repo_catalog.application.query_service import QueryService
 from repo_catalog.domain.models import CancellationToken, CatalogError
+from tests.support.github_runtime import collection_rows, sync
 from tests.support.github_runtime import github_runtime as github_runtime
-from tests.support.github_runtime import sync
 
 
 def start_threads(store):
@@ -182,9 +182,10 @@ def test_unsaved_thread_comments_remain_partial_until_resume(github_runtime, bou
     assert completed.status == "complete", completed.coverage
     assert completed.coverage.missing == []
     assert len(completed.data["items"]) == 101
-    # Resuming child work consumes the saved root page without another request.
-    expected = ["root", "child"] if boundary == "root-partial" else ["child"]
-    assert [kind for kind, _ in requested[before:]] == expected
+    # PF-P04/P07: incomplete roots are reacquired, never grafted to saved
+    # Operational child cursors. Previously admitted comments remain usable.
+    assert [kind for kind, _ in requested[before:]] == ["root", "child"]
+    assert len(store.all("SELECT * FROM fetch_collections WHERE kind='threads'")) == 2
 
 
 @pytest.mark.parametrize("error_type", ["FORBIDDEN", "RATE_LIMITED", "no-response"])
@@ -231,14 +232,21 @@ def test_failed_root_after_head_change_keeps_thread_bound_to_captured_head(
     )
     assert current_thread_before is not None
 
-    root_a = store.one(
-        "SELECT f.fetch_collection_id FROM fetch_collections f JOIN collection_progress p USING(fetch_collection_id) WHERE f.kind='threads' AND json_extract(f.scope_json,'$.request_context.head_oid')=? AND json_extract(f.scope_json,'$.request_context.base_oid')=? AND p.state='complete'",
-        (head_a, base_a),
+    root_a = next(
+        iter(
+            collection_rows(
+                store,
+                "kind='threads' AND json_extract(scope_json,'$.request_context.head_oid')=? AND json_extract(scope_json,'$.request_context.base_oid')=?",
+                (head_a, base_a),
+                state="complete",
+            )
+        ),
+        None,
     )
     assert root_a is not None
     requirement_a = store.one(
         "SELECT child_fetch_collection_id,object_format,head_oid,base_oid FROM thread_collection_requirements WHERE fetch_collection_id=? AND provider_resource_id='THREAD41-0'",
-        (root_a[0],),
+        (root_a["fetch_collection_id"],),
     )
     assert requirement_a is not None
     assert requirement_a["object_format"] == "sha1"
@@ -323,7 +331,7 @@ def test_resumed_older_job_uses_new_observation_instead_of_later_started_job(
 
 
 @pytest.mark.parametrize("child_has_data", [False, True])
-def test_resumed_child_observation_governs_its_thread_without_new_root_request(
+def test_resumed_child_observation_governs_its_thread_after_fresh_root_request(
     github_runtime, child_has_data
 ):
     store, repo, _, api = github_runtime
@@ -357,12 +365,13 @@ def test_resumed_child_observation_governs_its_thread_without_new_root_request(
     before = len(requested)
     with pytest.raises(CatalogError):
         collect_threads(store, repo, earlier)
-    assert len(requested[before:]) == 1
+    assert len(requested[before:]) == 2
+    assert "thread" not in requested[before]
+    assert requested[before]["cursor"] is None
     assert requested[-1]["thread"] == "THREAD41-0"
-    if child_has_data:
-        assert_thread_partial(store, count=101)
-    else:
-        assert selected_thread(store).status == "complete"
+    # Even an error-only child follows a genuinely observed fresh root, whose
+    # unfinished child requirement supersedes the older terminal collection.
+    assert_thread_partial(store, count=101 if child_has_data else 100)
 
 
 @pytest.mark.parametrize("selected_needs_child", [False, True])
