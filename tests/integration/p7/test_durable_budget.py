@@ -126,7 +126,9 @@ def _count(catalog):
 @pytest.mark.parametrize("stage", ["checkpoint", "reserved", "worked", "admitted"])
 def test_sigkill_keeps_reserved_expenditure_and_restart(catalog, tmp_path, stage):
     path, body = _candidate(tmp_path)
-    budget = RecoveryBudget(max_work_units={"input_bytes": len(body)})
+    # One full candidate decodes the bytes and independently reprocesses them
+    # at the production Core boundary; both expenditures must be available.
+    budget = RecoveryBudget(max_work_units={"input_bytes": 2 * len(body)})
     process = multiprocessing.get_context("spawn").Process(
         target=_worker, args=(catalog, path, budget, stage)
     )
@@ -152,14 +154,16 @@ def test_sigkill_keeps_reserved_expenditure_and_restart(catalog, tmp_path, stage
         assert retry.exitcode == 0
     after = _state(catalog)["cumulative_usage"]
     assert all(after[key] >= value for key, value in before.items())
-    assert after["input_bytes"] <= len(body)
+    assert after["input_bytes"] <= 2 * len(body)
     assert _count(catalog) <= 1
 
 
 def test_two_processes_cannot_spend_same_allowance(catalog, tmp_path):
     path1, body = _candidate(tmp_path, "one")
     path2, _ = _candidate(tmp_path, "two")
-    budget = RecoveryBudget(max_work_units={"input_bytes": len(body)})
+    # One full candidate decodes the bytes and independently reprocesses them
+    # at the production Core boundary; both expenditures must be available.
+    budget = RecoveryBudget(max_work_units={"input_bytes": 2 * len(body)})
     context = multiprocessing.get_context("spawn")
     start, output = context.Event(), context.Queue()
     processes = [
@@ -177,7 +181,7 @@ def test_two_processes_cannot_spend_same_allowance(catalog, tmp_path):
     results = [output.get(timeout=5), output.get(timeout=5)]
     assert sum(result[0] for result in results) == 1
     assert _count(catalog) == 1
-    assert _state(catalog)["cumulative_usage"]["input_bytes"] == len(body)
+    assert _state(catalog)["cumulative_usage"]["input_bytes"] == 2 * len(body)
 
 
 @pytest.mark.parametrize(

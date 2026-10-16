@@ -355,7 +355,7 @@ def _bounded_json_loads(raw: str | bytes, budget: RecoveryBudget) -> Any:
     return obj
 
 
-def _bounded_utf8(value: Any, max_bytes: int) -> bytes:
+def _bounded_utf8(value: Any, max_bytes: int, work=None) -> bytes:
     if not isinstance(value, str):
         raise ValueError("Context text_value must be a string")
     if len(value) > max_bytes:
@@ -376,7 +376,12 @@ def _bounded_utf8(value: Any, max_bytes: int) -> bytes:
         )
         if size > max_bytes:
             raise ValueError("Context text exceeds finite UTF-8 payload byte limit")
-    return value.encode("utf-8")
+    if work is not None:
+        work.require("input_bytes", size)
+    result = value.encode("utf-8")
+    if work is not None:
+        work.charge("input_bytes", len(result))
+    return result
 
 
 def _hash_recovery_bytes(body: bytes, work) -> str:
@@ -430,10 +435,28 @@ def _check_candidate_shape(record: dict, budget: RecoveryBudget) -> None:
         raise ValueError("payload.size must be a nonnegative integer")
 
 
-def _decode_bounded_base64(value: Any, max_bytes: int) -> bytes:
+def _decode_bounded_base64(value: Any, max_bytes: int, work=None) -> bytes:
     if not isinstance(value, str) or len(value) > ((max_bytes + 2) // 3) * 4:
         raise ValueError("Base64 payload exceeds finite decoded-byte limit")
-    result = base64.b64decode(value, validate=True)
+    # Padding-aware bound permits an exact finite ceiling for valid input.
+    # Invalid input retains this conservative expenditure, including failures.
+    padding = 2 if value.endswith("==") else 1 if value.endswith("=") else 0
+    upper = (
+        len(value) // 4 * 3 - padding
+        if len(value) % 4 == 0
+        else ((len(value) + 3) // 4) * 3
+    )
+    upper = max(0, upper)
+    if work is not None:
+        work.require("input_bytes", upper)
+    try:
+        result = base64.b64decode(value, validate=True)
+    except Exception:
+        if work is not None:
+            work.charge("input_bytes", upper)
+        raise
+    if work is not None:
+        work.charge("input_bytes", len(result))
     if len(result) > max_bytes:
         raise ValueError("Decoded payload exceeds finite byte limit")
     return result
@@ -463,7 +486,17 @@ def _decode_proof_bundle(
         total_bytes += (len(entry[2]) + 1) // 2
         if total_bytes > budget.max_payload_bytes:
             raise _InputLimit("Notes proof native bytes exceed finite payload limit")
-        body = bytes.fromhex(entry[2])
+        upper = (len(entry[2]) + 1) // 2
+        if work is not None:
+            work.require("input_bytes", upper)
+        try:
+            body = bytes.fromhex(entry[2])
+        except Exception:
+            if work is not None:
+                work.charge("input_bytes", upper)
+            raise
+        if work is not None:
+            work.charge("input_bytes", len(body))
         structures.append(
             NativeObject(
                 oid=OID(object_format, entry[0]),
@@ -2577,8 +2610,18 @@ class SQLiteRecoveryAdapter:
 
                         try:
                             body_bytes = _decode_bounded_base64(
-                                b64_body, b.max_payload_bytes
+                                b64_body, b.max_payload_bytes, work_budget
                             )
+                        except CoreFailure as error:
+                            budget_exhausted = True
+                            unprocessed += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Work budget exhausted: {error}",
+                                }
+                            )
+                            continue
                         except Exception as e:
                             rejected += 1
                             rejections.append(
@@ -2701,7 +2744,7 @@ class SQLiteRecoveryAdapter:
 
                         try:
                             body_bytes = _decode_bounded_base64(
-                                b64_body, b.max_payload_bytes
+                                b64_body, b.max_payload_bytes, work_budget
                             )
                             obj_fmt = payload.get("object_format", "sha1")
                             structures = _decode_proof_bundle(
@@ -2863,7 +2906,9 @@ class SQLiteRecoveryAdapter:
 
                         text_val = payload.get("text_value")
                         try:
-                            text_bytes = _bounded_utf8(text_val, b.max_payload_bytes)
+                            text_bytes = _bounded_utf8(
+                                text_val, b.max_payload_bytes, work_budget
+                            )
                             expected_sha = payload.get("sha256")
                             actual_sha = _hash_recovery_bytes(text_bytes, work_budget)
                             if expected_sha and expected_sha != actual_sha:
@@ -2959,72 +3004,102 @@ class SQLiteRecoveryAdapter:
                             "table"
                         ) or (record.get("provenance") or {}).get("table")
                         try:
-                            if (
-                                prov_tbl == "repositories"
-                                and "repository_uuidv4" in payload
-                            ):
-                                repo_id = payload["repository_uuidv4"]
-                                exists = core.sql(
-                                    "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
-                                    (repo_id,),
-                                )
-                                core.admit_repository(repo_id)
-                                if exists:
-                                    replayed += 1
-                                else:
-                                    admitted += 1
-                            elif prov_tbl == "git_objects" and "full_oid" in payload:
-                                obj_f = payload.get("object_format", "sha1")
-                                f_oid = payload["full_oid"]
-                                exists = core.sql(
-                                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                                    (obj_f, f_oid),
-                                )
-                                core.admit_object(OID(obj_f, f_oid))
-                                if exists:
-                                    replayed += 1
-                                else:
-                                    admitted += 1
-                            elif prov_tbl == "captures":
-                                cap_orig = payload.get("capture_origin_uuidv4")
-                                cap_id = payload.get("capture_uuidv4")
-                                repo_id = payload.get("repository_uuidv4")
-                                src = payload.get("source")
-                                rf = payload.get("ref")
-                                rf = _decode_native_ref(payload.get("ref"))
-                                obj_f = payload.get("object_format", "sha1")
-                                rt = payload.get("root")
-                                if not (
-                                    cap_orig
-                                    and cap_id
-                                    and repo_id
-                                    and src
-                                    and rf
-                                    and rt
+                            work_budget.require("metadata_units", 1)
+                            try:
+                                if (
+                                    prov_tbl == "repositories"
+                                    and "repository_uuidv4" in payload
                                 ):
-                                    rejected += 1
-                                    rejections.append(
-                                        {
-                                            "candidate_id": cand_id,
-                                            "reason": "Missing required field in captures candidate",
-                                        }
+                                    repo_id = payload["repository_uuidv4"]
+                                    exists = core.sql(
+                                        "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
+                                        (repo_id,),
                                     )
-                                    continue
-                                cap = Capture(
-                                    cap_orig, cap_id, repo_id, src, rf, OID(obj_f, rt)
-                                )
-                                existing_cap = core.sql(
-                                    "SELECT 1 FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                                    (cap_orig, cap_id),
-                                )
-                                core.admit_capture(cap)
-                                if existing_cap:
-                                    replayed += 1
+                                    core.admit_repository(repo_id)
+                                    if exists:
+                                        replayed += 1
+                                    else:
+                                        admitted += 1
+                                elif (
+                                    prov_tbl == "git_objects" and "full_oid" in payload
+                                ):
+                                    obj_f = payload.get("object_format", "sha1")
+                                    f_oid = payload["full_oid"]
+                                    exists = core.sql(
+                                        "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                                        (obj_f, f_oid),
+                                    )
+                                    core.admit_object(OID(obj_f, f_oid))
+                                    if exists:
+                                        replayed += 1
+                                    else:
+                                        admitted += 1
+                                elif prov_tbl == "captures":
+                                    cap_orig = payload.get("capture_origin_uuidv4")
+                                    cap_id = payload.get("capture_uuidv4")
+                                    repo_id = payload.get("repository_uuidv4")
+                                    src = payload.get("source")
+                                    rf = payload.get("ref")
+                                    rf = _decode_native_ref(payload.get("ref"))
+                                    obj_f = payload.get("object_format", "sha1")
+                                    rt = payload.get("root")
+                                    if not (
+                                        cap_orig
+                                        and cap_id
+                                        and repo_id
+                                        and src
+                                        and rf
+                                        and rt
+                                    ):
+                                        rejected += 1
+                                        rejections.append(
+                                            {
+                                                "candidate_id": cand_id,
+                                                "reason": "Missing required field in captures candidate",
+                                            }
+                                        )
+                                        continue
+                                    cap = Capture(
+                                        cap_orig,
+                                        cap_id,
+                                        repo_id,
+                                        src,
+                                        rf,
+                                        OID(obj_f, rt),
+                                    )
+                                    existing_cap = core.sql(
+                                        "SELECT 1 FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                                        (cap_orig, cap_id),
+                                    )
+                                    core.admit_capture(cap)
+                                    if existing_cap:
+                                        replayed += 1
+                                    else:
+                                        admitted += 1
                                 else:
-                                    admitted += 1
+                                    # Candidate is accepted as a qualified recovery observation without authoritative mutation
+                                    observation += 1
+                            finally:
+                                work_budget.charge("metadata_units", 1)
+                        except CoreFailure as error:
+                            if error.code == "BUDGET":
+                                budget_exhausted = True
+                                unprocessed += 1
+                                rejections.append(
+                                    {
+                                        "candidate_id": cand_id,
+                                        "reason": f"Work budget exhausted: {error}",
+                                    }
+                                )
                             else:
-                                # Candidate is accepted as a qualified recovery observation without authoritative mutation
-                                observation += 1
+                                rejected += 1
+                                rejections.append(
+                                    {
+                                        "candidate_id": cand_id,
+                                        "reason": f"Metadata admission error: {error}",
+                                    }
+                                )
+                            continue
                         except Exception as e:
                             rejected += 1
                             rejections.append(

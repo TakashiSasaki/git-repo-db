@@ -1267,8 +1267,10 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
     salvage_file = tmp_path / "salvage_case29.jsonl"
     salvage_file.write_text(json.dumps(cand1) + "\n", encoding="utf-8")
 
-    # Set budget enough for one commit (~120 bytes) but not two (< 240 bytes)
-    budget = RecoveryBudget(max_work_units={"input_bytes": len(commit1.body) + 30})
+    # One commit spends its decoded input once in recovery and once again
+    # through production Core admission. Preserve allowance for exactly one
+    # such candidate, with insufficient remainder for a second decoding.
+    budget = RecoveryBudget(max_work_units={"input_bytes": 2 * len(commit1.body) + 30})
     receipt1 = service.merge_salvage(
         fresh_dest, salvage_file, budget=budget, request_id="req-persist-1"
     )

@@ -691,3 +691,12 @@ Those regressions retain exact schema, corrupt Capture refs and metadata TEXT,
 exercise a valid-UTF8 false UDF CHECK, and include binary Notes/empty/long Unicode
 positive controls. The procedure verifies stored authority; it grants no source
 attribution authenticity or host power-loss guarantee.
+Keep work dimensions distinct: a reserved JSONL read does not reserve decoded
+body input, and a record counter does not charge nominal domain lookup/admission
+work. Reserve decoded base64/hex/UTF-8 byte bounds before allocation and settle
+measured success; retain conservative failed-decode expenditure. Production
+Core processing repeats actual input work and keeps its own charges. Give test
+fixtures enough allowance for both real passes rather than exempting decoding.
+Verify nominal repository/object/Capture replays and rejected candidates against
+their own finite metadata/input ceilings, using
+`python -m pytest tests/integration/p7/test_work_dimensions.py`.
