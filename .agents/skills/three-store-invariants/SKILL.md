@@ -665,3 +665,12 @@ cut is still held. Reserve byte allocation and hashing/comparison work before
 fetching the stored BLOB; read its size and body in one transaction. A finite
 verification refusal or invalid incoming digest proves no stored corruption.
 The focused controls are `tests/integration/p7/test_context_corruption_stop.py`.
+
+The same existing-authority rule applies to a retained Git physical copy: before
+calling a matching key replayed, boundedly verify that stored native bytes/type/
+size/digest and retained Notes Capture/root/role still validate. An immutable
+coordinate conflict alone does not prove either side corrupt. Recheck only the
+selected copy under the writer cut; reserve allocation before fetching bodies
+and use the existing actual-verification meter. Finite proof-parser refusals must
+remain typed resource refusals, never confirmed stored corruption. Regression
+controls are `tests/integration/p7/test_stored_copy_corruption_stop.py`.

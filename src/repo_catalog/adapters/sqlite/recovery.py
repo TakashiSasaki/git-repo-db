@@ -62,6 +62,7 @@ from repo_catalog.domain.p1_core import (
     CoreFailure,
     NativeObject,
     NotesProof,
+    account_verification,
     native_oid,
     valid_note_role,
 )
@@ -282,7 +283,7 @@ def _check_json_depth(
     element_counter: list[int] | None = None,
 ) -> None:
     if current_depth > max_depth:
-        raise ValueError(
+        raise _InputLimit(
             f"JSON nesting depth exceeds maximum allowed limit of {max_depth}"
         )
     if element_counter is None:
@@ -290,7 +291,7 @@ def _check_json_depth(
     if isinstance(obj, dict):
         element_counter[0] += len(obj)
         if element_counter[0] > max_elements:
-            raise ValueError(
+            raise _InputLimit(
                 f"JSON element count exceeds maximum allowed limit of {max_elements}"
             )
         for v in obj.values():
@@ -300,7 +301,7 @@ def _check_json_depth(
     elif isinstance(obj, list):
         element_counter[0] += len(obj)
         if element_counter[0] > max_elements:
-            raise ValueError(
+            raise _InputLimit(
                 f"JSON element count exceeds maximum allowed limit of {max_elements}"
             )
         for v in obj:
@@ -341,13 +342,13 @@ def _bounded_json_loads(raw: str | bytes, budget: RecoveryBudget) -> Any:
             depth += 1
             elements += 1
             if depth > budget.max_json_depth:
-                raise ValueError("JSON nesting depth exceeds finite limit")
+                raise _InputLimit("JSON nesting depth exceeds finite limit")
         elif ch in "]}":
             depth -= 1
         elif ch == ",":
             elements += 1
         if elements > 20_000:
-            raise ValueError("JSON element count exceeds finite limit")
+            raise _InputLimit("JSON element count exceeds finite limit")
     obj = json.loads(raw)
     _check_json_depth(obj, max_depth=budget.max_json_depth)
     return obj
@@ -440,13 +441,15 @@ def _decode_bounded_base64(value: Any, max_bytes: int) -> bytes:
 def _decode_proof_bundle(
     value: Any, budget: RecoveryBudget, object_format: str, work=None
 ):
-    if not isinstance(value, str) or len(value) > budget.max_payload_bytes * 2:
-        raise ValueError("Notes proof exceeds finite payload limit")
+    if not isinstance(value, str):
+        raise ValueError("Notes proof must be text")
+    if len(value) > budget.max_payload_bytes * 2:
+        raise _InputLimit("Notes proof exceeds finite payload limit")
     bundle = _bounded_json_loads(value, budget)
     if not isinstance(bundle, list):
         raise ValueError("Notes proof must be a list")
     if len(bundle) > budget.max_work_units.get("proof_steps", 100_000):
-        raise ValueError("Notes proof exceeds finite proof-step limit")
+        raise _InputLimit("Notes proof exceeds finite proof-step limit")
     structures = []
     total_bytes = 0
     for entry in bundle:
@@ -458,7 +461,7 @@ def _decode_proof_bundle(
             raise ValueError("Malformed notes proof object")
         total_bytes += (len(entry[2]) + 1) // 2
         if total_bytes > budget.max_payload_bytes:
-            raise ValueError("Notes proof native bytes exceed finite payload limit")
+            raise _InputLimit("Notes proof native bytes exceed finite payload limit")
         body = bytes.fromhex(entry[2])
         structures.append(
             NativeObject(
@@ -2176,6 +2179,162 @@ class SQLiteRecoveryAdapter:
                 if staging_dir.exists():
                     shutil.rmtree(staging_dir, ignore_errors=True)
 
+    def _verify_existing_retained_copy(self, directory, table, key, budget, work):
+        """Boundedly check one existing physical copy, never a whole catalog.
+
+        Immutable Core rows cannot change under supported writers after this
+        writer cut. Only positive stored native/role failures publish a stop;
+        resource refusals and environmental read failures do not prove damage.
+        """
+        with catalog_gate(directory, exclusive=True):
+            assert_catalog_not_stopped(directory)
+            conn = p1_connect(directory / "core.sqlite3", "core")
+            try:
+                conn.execute("BEGIN")
+                work.require("metadata_units", 1)
+                if table == "retained_metadata":
+                    size_row = conn.execute(
+                        "SELECT length(body) FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                        key,
+                    ).fetchone()
+                else:
+                    size_row = conn.execute(
+                        "SELECT length(body),length(CAST(proof_bundle AS BLOB)),length(CAST(path AS BLOB)) FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                        key,
+                    ).fetchone()
+                work.charge("metadata_units", 1)
+                if size_row is None:
+                    return False
+                if any(
+                    size > budget.max_payload_bytes * (2 if index == 1 else 1)
+                    for index, size in enumerate(size_row)
+                ):
+                    raise CoreFailure(
+                        "BUDGET",
+                        key,
+                        "existing retained copy exceeds finite payload limit",
+                    )
+                work.require("input_bytes", sum(size_row))
+                if table == "retained_metadata":
+                    row = conn.execute(
+                        "SELECT CASE WHEN length(native_type)<=6 THEN native_type END,body,size,CASE WHEN length(digest_sha256)=64 THEN digest_sha256 END FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                        key,
+                    ).fetchone()
+                    native_type, body, size, digest = row
+                else:
+                    row = conn.execute(
+                        "SELECT body,size,CASE WHEN length(digest_sha256)=64 THEN digest_sha256 END,CASE WHEN length(capture_origin_uuidv4)=36 THEN capture_origin_uuidv4 END,CASE WHEN length(capture_uuidv4)=36 THEN capture_uuidv4 END,CASE WHEN length(root)<=64 THEN root END,CASE WHEN length(target)<=64 THEN target END,path,proof_bundle FROM retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                        key,
+                    ).fetchone()
+                    (
+                        body,
+                        size,
+                        digest,
+                        origin,
+                        capture_id,
+                        root,
+                        target,
+                        path,
+                        bundle,
+                    ) = row
+                    native_type = "blob"
+                work.charge("input_bytes", sum(size_row))
+                try:
+                    native = NativeObject(
+                        OID(key[0], key[1]), native_type, body, size, digest
+                    )
+                    with account_verification(work):
+                        native.validate()
+                        if table == "retained_metadata":
+                            parse_metadata(key[0], native_type, body)
+                        else:
+                            cap_sizes = conn.execute(
+                                "SELECT length(CAST(source AS BLOB)),length(CAST(ref AS BLOB)) FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                                (origin, capture_id),
+                            ).fetchone()
+                            if cap_sizes is None:
+                                raise ValueError("stored Notes Capture binding missing")
+                            if any(
+                                size > budget.max_payload_bytes for size in cap_sizes
+                            ):
+                                raise CoreFailure(
+                                    "BUDGET",
+                                    key,
+                                    "existing Capture binding exceeds finite payload limit",
+                                )
+                            work.require("input_bytes", sum(cap_sizes))
+                            cap_row = conn.execute(
+                                "SELECT CASE WHEN length(repository_uuidv4)=36 THEN repository_uuidv4 END,source,ref,CASE WHEN length(object_format)<=6 THEN object_format END,CASE WHEN length(root)<=64 THEN root END FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                                (origin, capture_id),
+                            ).fetchone()
+                            work.charge("input_bytes", sum(cap_sizes))
+                            cap = Capture(
+                                origin,
+                                capture_id,
+                                cap_row[0],
+                                cap_row[1],
+                                _decode_native_ref(cap_row[2]),
+                                OID(cap_row[3], cap_row[4]),
+                            )
+                            if cap.root != OID(key[0], root):
+                                raise ValueError("stored Notes Capture root mismatch")
+                            structures = _decode_proof_bundle(
+                                bundle, budget, key[0], work
+                            )
+                            NotesProof(
+                                cap, OID(key[0], target), native.oid, path, structures
+                            ).validate()
+                            work.require("metadata_units", 1)
+                            role = conn.execute(
+                                "SELECT 1 FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=? AND target=? AND note=? AND path=? AND proof_bundle=?",
+                                (
+                                    origin,
+                                    capture_id,
+                                    key[0],
+                                    root,
+                                    target,
+                                    key[1],
+                                    path,
+                                    bundle,
+                                ),
+                            ).fetchone()
+                            work.charge("metadata_units", 1)
+                            if role is None:
+                                raise ValueError(
+                                    "stored retained Notes role evidence missing"
+                                )
+                except _InputLimit as error:
+                    raise CoreFailure("BUDGET", key, str(error)) from error
+                except CoreFailure as error:
+                    if error.code == "BUDGET":
+                        raise
+                    reason = "Confirmed destination Core corruption: " + str(error)
+                    stop_catalog(
+                        directory,
+                        reason,
+                        details={
+                            "store": "core",
+                            "classification": "authoritative_data",
+                        },
+                    )
+                    raise CorruptionDetectedError(reason) from error
+                except (ValueError, TypeError, KeyError, IndexError) as error:
+                    reason = "Confirmed destination Core corruption: " + str(error)
+                    stop_catalog(
+                        directory,
+                        reason,
+                        details={
+                            "store": "core",
+                            "classification": "authoritative_data",
+                        },
+                    )
+                    raise CorruptionDetectedError(reason) from error
+                return True
+            finally:
+                if conn.in_transaction:
+                    conn.rollback()
+                conn.close()
+
     def merge_salvage(
         self,
         fresh_destination_dir: Path,
@@ -2475,11 +2634,20 @@ class SQLiteRecoveryAdapter:
                                 declared_size=payload.get("size", len(body_bytes)),
                                 digest_sha256=actual_sha,
                             )
+                            exists = self._verify_existing_retained_copy(
+                                fresh_destination_dir,
+                                "retained_metadata",
+                                (obj_fmt, full_oid, copy_uuid),
+                                b,
+                                work_budget,
+                            )
                             core.admit_metadata(native, copy_uuid, work_budget)
                             if exists:
                                 replayed += 1
                             else:
                                 admitted += 1
+                        except (CorruptionDetectedError, CatalogStoppedError):
+                            raise
                         except CoreFailure as cf:
                             if cf.code == "BUDGET":
                                 budget_exhausted = True
@@ -2627,11 +2795,20 @@ class SQLiteRecoveryAdapter:
                             )
                             # Production admission checks role + exact bytes,
                             # then inserts Capture/role/body in one transaction.
+                            exists = self._verify_existing_retained_copy(
+                                fresh_destination_dir,
+                                "retained_notes",
+                                (obj_fmt, payload["full_oid"], copy_uuid),
+                                b,
+                                work_budget,
+                            )
                             core.admit_note(proof, native_note, copy_uuid, work_budget)
                             if exists:
                                 replayed += 1
                             else:
                                 admitted += 1
+                        except (CorruptionDetectedError, CatalogStoppedError):
+                            raise
                         except CoreFailure as cf:
                             if cf.code == "BUDGET":
                                 budget_exhausted = True
