@@ -58,14 +58,17 @@ class GitCore(Core):
         read_snapshot._available()
         if not read_snapshot.in_transaction:
             raise CoreFailure("TRANSACTION", "core")
+        owner_directory = read_snapshot.catalog_directory
+        if Path(directory).resolve() != owner_directory:
+            raise CoreFailure("SNAPSHOT_OWNER", "core", "foreign catalog directory")
         read_snapshot.identity("core")
         result = cls.__new__(cls)
-        result._directory = Path(directory)
+        result._directory = owner_directory
         result._db = read_snapshot._db
         result._snapshot_owner = read_snapshot
         result._external = result._active = True
         result._admitting = result._reading = result._stopped = False
-        result._on_corruption = None
+        result._on_corruption = read_snapshot._on_error
         result._db.set_authorizer(result._authorize)
         try:
             yield result
@@ -75,7 +78,7 @@ class GitCore(Core):
             # The coordinator owns connection teardown and its read guard.
             from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 
-            PairCoordinator(directory)._guard_read(result._db)
+            PairCoordinator(owner_directory)._guard_read(result._db)
 
     def _available(self):
         super()._available()

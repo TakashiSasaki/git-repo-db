@@ -203,6 +203,13 @@ class Context(ContextStore):
     @classmethod
     @contextmanager
     def for_snapshot(cls, db, directory: Path) -> Iterator[Context]:
+        from repo_catalog.adapters.sqlite.p1_coordination import ReadSnapshot
+
+        if (
+            isinstance(db, ReadSnapshot)
+            and Path(directory).resolve() != db.catalog_directory
+        ):
+            raise ContextError("SNAPSHOT_OWNER", "context", "foreign catalog directory")
         capability = cls(db, directory)
         try:
             yield capability

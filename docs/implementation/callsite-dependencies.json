@@ -3580,7 +3580,7 @@
     },
     {
       "path": "src/repo_catalog/domain/time.py",
-      "sha256": "eb4dc47a917797cdc210daa500a9c7e2a792708554d5f8717fce8ff72075d647",
+      "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a",
       "functions": [
         {
           "name": "validate_epoch_us",
@@ -3588,29 +3588,39 @@
           "end_line": 33
         },
         {
-          "name": "now_us",
+          "name": "validate_observation_us",
           "line": 36,
-          "end_line": 37
+          "end_line": 48
+        },
+        {
+          "name": "validate_required_observation_us",
+          "line": 51,
+          "end_line": 56
+        },
+        {
+          "name": "now_us",
+          "line": 59,
+          "end_line": 60
         },
         {
           "name": "datetime_to_us",
-          "line": 40,
-          "end_line": 49
+          "line": 63,
+          "end_line": 72
         },
         {
           "name": "parse_iso8601_us",
-          "line": 52,
-          "end_line": 87
+          "line": 75,
+          "end_line": 110
         },
         {
           "name": "format_iso8601_us",
-          "line": 90,
-          "end_line": 101
+          "line": 113,
+          "end_line": 124
         },
         {
           "name": "unix_seconds_to_us",
-          "line": 104,
-          "end_line": 136
+          "line": 127,
+          "end_line": 159
         }
       ]
     },
