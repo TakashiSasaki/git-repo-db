@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/workspace/recovery-evidence-20261016/review-a-independent/positive_history_binary.py", line 31, in <module>
+    ctx.execute('INSERT INTO coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',(scope.owner_kind,scope.encoded,10,'complete',*terminal))
+sqlite3.IntegrityError: Coverage proof owner mismatch

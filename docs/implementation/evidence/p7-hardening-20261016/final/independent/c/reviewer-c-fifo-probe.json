@@ -1,0 +1,7 @@
+{
+  "probe": "nonregular_salvage_fifo",
+  "pass": true,
+  "exit": 0,
+  "stdout": "RecoveryError:Salvage input must be a regular file\n",
+  "stderr": ""
+}

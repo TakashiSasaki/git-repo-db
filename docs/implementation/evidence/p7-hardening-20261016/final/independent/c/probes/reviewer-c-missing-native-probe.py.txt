@@ -1,0 +1,38 @@
+"""Independent selected native-copy absence counterexample, without test fixtures."""
+import base64
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+import tempfile
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_schema import initialize,register_functions
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.p1_core import NativeObject,OID,native_oid
+
+with tempfile.TemporaryDirectory(prefix='reviewer-c-missing-native-') as td:
+    root=Path(td);cat=root/'catalog';cat.mkdir()
+    initialize(cat/'core.sqlite3','core','01c72bce-39ee-4677-98d4-c5a642020e98','1275bbae-7ab3-4321-9a1e-e2dc272af785')
+    body=b'';copy=str(uuid4());digest=hashlib.sha256(body).hexdigest();oid=native_oid('sha1','tree',body)
+    core=GitCore(cat/'core.sqlite3')
+    core.admit_metadata(NativeObject(OID('sha1',oid),'tree',body,len(body),digest),copy,UnlimitedWorkBudget())
+    core.close()
+    with sqlite3.connect(cat/'core.sqlite3') as db:
+        register_functions(db)
+        triggers=db.execute("SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='retained_metadata'").fetchall()
+        for name,_ in triggers:db.execute('DROP TRIGGER "'+name+'"')
+        db.execute('DELETE FROM retained_metadata')
+        for _,sql in triggers:db.execute(sql)
+        assert db.execute('PRAGMA foreign_key_check').fetchall(),'fixture must contain actual required native-copy references'
+    salvage=root/'one.jsonl'
+    salvage.write_text(json.dumps({'candidate_type':'retained_metadata','payload':{'object_format':'sha1','full_oid':oid,'native_type':'tree','size':0,'digest_sha256':digest,'physical_copy_uuidv4':copy,'body_base64':base64.b64encode(body).decode()}})+'\n')
+    try:
+        receipt=SQLiteRecoveryAdapter().merge_salvage(cat,salvage,request_id='must-not-reinsert')
+        result={'result':'returned','admitted_units':receipt.admitted_units,'rejected_units':receipt.rejected_units}
+    except Exception as error:result={'result':'raised','error_type':type(error).__name__,'error':str(error)}
+    with sqlite3.connect(cat/'core.sqlite3') as db:result['remaining_copies']=db.execute('SELECT count(*) FROM retained_metadata').fetchone()[0]
+    result['persistent_stop']=(cat/'p1-recovery-stop.json').exists()
+    result['pass']=result['persistent_stop'] and result['remaining_copies']==0
+    print(json.dumps(result,indent=2))

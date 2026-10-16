@@ -1,0 +1,2 @@
+# branch.oid e73e5778baa37b894fb48e11f32732932d634815
+# branch.head fix/p7-stored-text

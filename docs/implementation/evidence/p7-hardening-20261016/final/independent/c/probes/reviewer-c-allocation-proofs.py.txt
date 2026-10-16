@@ -1,0 +1,37 @@
+"""Independent pre-materialization refusal on untrusted SQLite/JSONL inputs."""
+import dataclasses
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+import tempfile
+import tracemalloc
+from repo_catalog.adapters.sqlite import recovery
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.domain.recovery import RecoveryBudget
+
+with tempfile.TemporaryDirectory(prefix='reviewer-c-allocation-') as td:
+    root=Path(td);suspect=root/'suspect';suspect.mkdir()
+    dbpath=suspect/'core.sqlite3'
+    with sqlite3.connect(dbpath) as db:
+        db.execute('CREATE TABLE candidate(body BLOB)')
+        db.execute('INSERT INTO candidate VALUES(zeroblob(4000000))')
+    digest=hashlib.sha256(dbpath.read_bytes()).hexdigest()
+    tracemalloc.start()
+    receipt=recovery.SQLiteRecoveryAdapter().extract_salvage(suspect,root/'large-sqlite.jsonl',budget=RecoveryBudget(max_payload_bytes=256))
+    current,peak=tracemalloc.get_traced_memory();tracemalloc.stop()
+    results=[{'probe':'sqlite_blob_pre_materialization','pass':peak<1000000 and receipt.partial and receipt.corrupt_count==0 and hashlib.sha256(dbpath.read_bytes()).hexdigest()==digest,'peak_python_bytes':peak,'receipt':dataclasses.asdict(receipt)}]
+    cat=root/'fresh';cat.mkdir()
+    initialize(cat/'core.sqlite3','core','01c72bce-39ee-4677-98d4-c5a642020e98','1275bbae-7ab3-4321-9a1e-e2dc272af785')
+    salvage=root/'huge.jsonl'
+    with salvage.open('wb') as out:
+        for _ in range(1000):out.write(b'x'*10000)
+    original=recovery._bounded_json_loads
+    def forbidden(*args,**kwargs):raise AssertionError('JSON allocation must not occur for oversized unterminated line')
+    recovery._bounded_json_loads=forbidden
+    try:receipt=recovery.SQLiteRecoveryAdapter().merge_salvage(cat,salvage,RecoveryBudget(max_payload_bytes=256),'large-line')
+    finally:recovery._bounded_json_loads=original
+    state=json.loads((cat/'p1-recovery-request-large-line.json').read_text())
+    results.append({'probe':'jsonl_pre_decode_without_suffix_scan','pass':not receipt.input_complete and state['cumulative_usage']['input_scan_bytes']==65536 and receipt.admitted_units==0,'receipt':dataclasses.asdict(receipt),'usage':state['cumulative_usage'],'total_file_bytes':salvage.stat().st_size})
+    print(json.dumps(results,indent=2))
+    assert all(result['pass'] for result in results)

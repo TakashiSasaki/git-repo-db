@@ -1,0 +1,5 @@
+{
+  "note": "Exact runner source retained; inherited PYTHONPATH/PYTHONHOME/bootstrap and GH credentials removed. Each installed test env explicitly sets VIRTUAL_ENV and prepends its bin directory to PATH. Pytest pythonpath ini overridden empty. Third-party test/runtime deps installed from committed uv.lock via --active --no-install-project, then wheel installed normally with --no-deps; no editable project installed.",
+  "head": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "concurrency": "Root acceptance ran concurrently; elapsed times are observations, not a comparative benchmark."
+}

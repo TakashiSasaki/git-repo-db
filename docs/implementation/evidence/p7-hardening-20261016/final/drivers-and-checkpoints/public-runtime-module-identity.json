@@ -1,0 +1,260 @@
+{
+  "source_sha": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "baseline_source_module_count": 63,
+  "different_baseline_modules": [],
+  "files": {
+    "src/repo_catalog/__init__.py": {
+      "main_blob": "2a035a7d8fe40ce664563b68af8a9acdbdd9c326",
+      "feature_blob": "2a035a7d8fe40ce664563b68af8a9acdbdd9c326"
+    },
+    "src/repo_catalog/__main__.py": {
+      "main_blob": "08a166142eeb9d5584f9b89e3c6827b7ba600f37",
+      "feature_blob": "08a166142eeb9d5584f9b89e3c6827b7ba600f37"
+    },
+    "src/repo_catalog/adapters/filesystem/atomic_publish.py": {
+      "main_blob": "7530f196e72d7f91ee26ceff11087f31612bcce7",
+      "feature_blob": "7530f196e72d7f91ee26ceff11087f31612bcce7"
+    },
+    "src/repo_catalog/adapters/filesystem/cache.py": {
+      "main_blob": "49a8fe32682076828f471b0f8b66c1a173bdf6e6",
+      "feature_blob": "49a8fe32682076828f471b0f8b66c1a173bdf6e6"
+    },
+    "src/repo_catalog/adapters/filesystem/capacity.py": {
+      "main_blob": "e958f864b411429e888692cc2c1d2d83de642912",
+      "feature_blob": "e958f864b411429e888692cc2c1d2d83de642912"
+    },
+    "src/repo_catalog/adapters/filesystem/locks.py": {
+      "main_blob": "11886c8c4a9755062c11e478e27aadd6cc35ef5f",
+      "feature_blob": "11886c8c4a9755062c11e478e27aadd6cc35ef5f"
+    },
+    "src/repo_catalog/adapters/git/importer.py": {
+      "main_blob": "d041f2d91e935b4ced4b56801cc0b6ad2165149e",
+      "feature_blob": "d041f2d91e935b4ced4b56801cc0b6ad2165149e"
+    },
+    "src/repo_catalog/adapters/git/parsing.py": {
+      "main_blob": "a7b99145dd0131cdb369534d22d6aafeb03252c7",
+      "feature_blob": "a7b99145dd0131cdb369534d22d6aafeb03252c7"
+    },
+    "src/repo_catalog/adapters/git/runner.py": {
+      "main_blob": "b1a1306a9e3712cc35c95f8ea873deb855ec5203",
+      "feature_blob": "b1a1306a9e3712cc35c95f8ea873deb855ec5203"
+    },
+    "src/repo_catalog/adapters/github/collector.py": {
+      "main_blob": "e49764b5247a080295d5a5efee6683fe917c36be",
+      "feature_blob": "e49764b5247a080295d5a5efee6683fe917c36be"
+    },
+    "src/repo_catalog/adapters/github/current_parser.py": {
+      "main_blob": "263520593557304fb503a1b28e2a8858d334445b",
+      "feature_blob": "263520593557304fb503a1b28e2a8858d334445b"
+    },
+    "src/repo_catalog/adapters/github/identity.py": {
+      "main_blob": "1e156f7fa809a08ace3dbff6083321bfaebf2c06",
+      "feature_blob": "1e156f7fa809a08ace3dbff6083321bfaebf2c06"
+    },
+    "src/repo_catalog/adapters/github/persistence.py": {
+      "main_blob": "9752e3e0c5c2825f7e90987961dc636ec1366380",
+      "feature_blob": "9752e3e0c5c2825f7e90987961dc636ec1366380"
+    },
+    "src/repo_catalog/adapters/github/transport.py": {
+      "main_blob": "40d55f8e60d9d3d0175c6146b354b2fefc8c493f",
+      "feature_blob": "40d55f8e60d9d3d0175c6146b354b2fefc8c493f"
+    },
+    "src/repo_catalog/adapters/recording.py": {
+      "main_blob": "22a16bb4416d13a3128cc07adcb090bdbd2f4ff3",
+      "feature_blob": "22a16bb4416d13a3128cc07adcb090bdbd2f4ff3"
+    },
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py": {
+      "main_blob": "f2aff9c7d328d8bd1dd530321b279d47c429cb5b",
+      "feature_blob": "f2aff9c7d328d8bd1dd530321b279d47c429cb5b"
+    },
+    "src/repo_catalog/adapters/sqlite/code_assessments.py": {
+      "main_blob": "b71d8fe9fff9901691dddeeb1af4d4cfd575b28d",
+      "feature_blob": "b71d8fe9fff9901691dddeeb1af4d4cfd575b28d"
+    },
+    "src/repo_catalog/adapters/sqlite/coverage.py": {
+      "main_blob": "cf709030c423ca37b1b5397481531be964cc5e59",
+      "feature_blob": "cf709030c423ca37b1b5397481531be964cc5e59"
+    },
+    "src/repo_catalog/adapters/sqlite/current_api.py": {
+      "main_blob": "5f4f76cfc593270227ed4a5042efa3bda972ae45",
+      "feature_blob": "5f4f76cfc593270227ed4a5042efa3bda972ae45"
+    },
+    "src/repo_catalog/adapters/sqlite/current_collections.py": {
+      "main_blob": "1d062a0a9f1c05403eb0cdea056cb4ca703dfd9f",
+      "feature_blob": "1d062a0a9f1c05403eb0cdea056cb4ca703dfd9f"
+    },
+    "src/repo_catalog/adapters/sqlite/current_resources.py": {
+      "main_blob": "b699808957e7b01cf35a9a588b56253a6efc461b",
+      "feature_blob": "b699808957e7b01cf35a9a588b56253a6efc461b"
+    },
+    "src/repo_catalog/adapters/sqlite/exchange.py": {
+      "main_blob": "21d215919943c0e216828233e8b6238ff6a340cd",
+      "feature_blob": "21d215919943c0e216828233e8b6238ff6a340cd"
+    },
+    "src/repo_catalog/adapters/sqlite/git_intrinsic.py": {
+      "main_blob": "bbd6373afd70ee16be12727c3b11f9143b02cfc1",
+      "feature_blob": "bbd6373afd70ee16be12727c3b11f9143b02cfc1"
+    },
+    "src/repo_catalog/adapters/sqlite/identity_relations.py": {
+      "main_blob": "8384d8d395899859aa24c148de29416b50b882a4",
+      "feature_blob": "8384d8d395899859aa24c148de29416b50b882a4"
+    },
+    "src/repo_catalog/adapters/sqlite/index.py": {
+      "main_blob": "defadc3f147ccf21145a2782194b81a9712e71f3",
+      "feature_blob": "defadc3f147ccf21145a2782194b81a9712e71f3"
+    },
+    "src/repo_catalog/adapters/sqlite/json_contracts.py": {
+      "main_blob": "9854c33c810631f03631d20b649a2ee5badee827",
+      "feature_blob": "9854c33c810631f03631d20b649a2ee5badee827"
+    },
+    "src/repo_catalog/adapters/sqlite/payloads.py": {
+      "main_blob": "5cb3c2e9397d9f040f451e7e9056a265490a0a2e",
+      "feature_blob": "5cb3c2e9397d9f040f451e7e9056a265490a0a2e"
+    },
+    "src/repo_catalog/adapters/sqlite/schema.py": {
+      "main_blob": "df01d8fe104939a86e16982025d8fbc08ec317c7",
+      "feature_blob": "df01d8fe104939a86e16982025d8fbc08ec317c7"
+    },
+    "src/repo_catalog/adapters/sqlite/store.py": {
+      "main_blob": "a9961e70ff6240344799d1f0adcf595bd8267932",
+      "feature_blob": "a9961e70ff6240344799d1f0adcf595bd8267932"
+    },
+    "src/repo_catalog/adapters/sqlite/target.py": {
+      "main_blob": "1e3c101258f3f6b5a1057b1d6f303cd27c8599b2",
+      "feature_blob": "1e3c101258f3f6b5a1057b1d6f303cd27c8599b2"
+    },
+    "src/repo_catalog/adapters/sqlite/text_bodies.py": {
+      "main_blob": "c1cdc67e4eccb4517bea1805f31aa9836d1ca20d",
+      "feature_blob": "c1cdc67e4eccb4517bea1805f31aa9836d1ca20d"
+    },
+    "src/repo_catalog/adapters/sqlite/transactions.py": {
+      "main_blob": "65505d0f9b3344e401248bc8dac8a9ebf2340b87",
+      "feature_blob": "65505d0f9b3344e401248bc8dac8a9ebf2340b87"
+    },
+    "src/repo_catalog/application/catalog_validation.py": {
+      "main_blob": "a4c68ac0b0550e343508a9a18ea9a6c5c736e4b6",
+      "feature_blob": "a4c68ac0b0550e343508a9a18ea9a6c5c736e4b6"
+    },
+    "src/repo_catalog/application/collection_service.py": {
+      "main_blob": "23cf45f41d090e6e3b4aabd28a17f5842db13a52",
+      "feature_blob": "23cf45f41d090e6e3b4aabd28a17f5842db13a52"
+    },
+    "src/repo_catalog/application/contracts.py": {
+      "main_blob": "1e0c1b54f62b752200427f22fe76afe528a6c55a",
+      "feature_blob": "1e0c1b54f62b752200427f22fe76afe528a6c55a"
+    },
+    "src/repo_catalog/application/exchange_service.py": {
+      "main_blob": "acee4434e3e7b90b53ac339010ceff190ae0f830",
+      "feature_blob": "acee4434e3e7b90b53ac339010ceff190ae0f830"
+    },
+    "src/repo_catalog/application/git_query_context.py": {
+      "main_blob": "8a55913fa5198efd6a759ff179f1e1fc8f612574",
+      "feature_blob": "8a55913fa5198efd6a759ff179f1e1fc8f612574"
+    },
+    "src/repo_catalog/application/identity_service.py": {
+      "main_blob": "560757f28e5d5e90d4808536b65a8c58bb60e096",
+      "feature_blob": "560757f28e5d5e90d4808536b65a8c58bb60e096"
+    },
+    "src/repo_catalog/application/issue_queries.py": {
+      "main_blob": "a76b244b70d3e7419b11ff00fb8d2421ef771617",
+      "feature_blob": "a76b244b70d3e7419b11ff00fb8d2421ef771617"
+    },
+    "src/repo_catalog/application/job_plans.py": {
+      "main_blob": "cd3a7fcc87ceb5149bbcc648c215c7cc10cdaabf",
+      "feature_blob": "cd3a7fcc87ceb5149bbcc648c215c7cc10cdaabf"
+    },
+    "src/repo_catalog/application/job_service.py": {
+      "main_blob": "96fe706fe2ae3ea1c372469184cf1e050d20c49b",
+      "feature_blob": "96fe706fe2ae3ea1c372469184cf1e050d20c49b"
+    },
+    "src/repo_catalog/application/maintenance_service.py": {
+      "main_blob": "921fa28453838c11b61420015b33b6ba85667ad3",
+      "feature_blob": "921fa28453838c11b61420015b33b6ba85667ad3"
+    },
+    "src/repo_catalog/application/parser_service.py": {
+      "main_blob": "3fab02089c14437ed5da5ee95f64d44861573e01",
+      "feature_blob": "3fab02089c14437ed5da5ee95f64d44861573e01"
+    },
+    "src/repo_catalog/application/parsing_service.py": {
+      "main_blob": "0c9b22860a79556156ed47e0ba73e61a9fca252f",
+      "feature_blob": "0c9b22860a79556156ed47e0ba73e61a9fca252f"
+    },
+    "src/repo_catalog/application/ports.py": {
+      "main_blob": "4358df2b910e3f88527493f4cdcfc708167ed3ee",
+      "feature_blob": "4358df2b910e3f88527493f4cdcfc708167ed3ee"
+    },
+    "src/repo_catalog/application/pr_queries.py": {
+      "main_blob": "54dfcb8aa1de136906d66408c444b4369c1dd18d",
+      "feature_blob": "54dfcb8aa1de136906d66408c444b4369c1dd18d"
+    },
+    "src/repo_catalog/application/query_service.py": {
+      "main_blob": "8e4032883c0545b57e02efb3a26cb330d6875b60",
+      "feature_blob": "8e4032883c0545b57e02efb3a26cb330d6875b60"
+    },
+    "src/repo_catalog/application/repository_identity.py": {
+      "main_blob": "172f6a264874a6375c36455319f8d96896dcc663",
+      "feature_blob": "172f6a264874a6375c36455319f8d96896dcc663"
+    },
+    "src/repo_catalog/application/source_service.py": {
+      "main_blob": "9f4653526e1118ed2d0fd314f3dc911e76170b63",
+      "feature_blob": "9f4653526e1118ed2d0fd314f3dc911e76170b63"
+    },
+    "src/repo_catalog/application/target_queries.py": {
+      "main_blob": "4d9f47b0abefbdad4cc41dce67f3d89791d625e0",
+      "feature_blob": "4d9f47b0abefbdad4cc41dce67f3d89791d625e0"
+    },
+    "src/repo_catalog/cli/main.py": {
+      "main_blob": "19a74bd815cbdab1fde231926f17f9ba9bd569b6",
+      "feature_blob": "19a74bd815cbdab1fde231926f17f9ba9bd569b6"
+    },
+    "src/repo_catalog/cli/presenters.py": {
+      "main_blob": "3f0e52bfb53d6fa7c749ba4154b20ef576002d7d",
+      "feature_blob": "3f0e52bfb53d6fa7c749ba4154b20ef576002d7d"
+    },
+    "src/repo_catalog/config.py": {
+      "main_blob": "36fc3713f8dbebbb5e715a439cf37a54d02512a4",
+      "feature_blob": "36fc3713f8dbebbb5e715a439cf37a54d02512a4"
+    },
+    "src/repo_catalog/domain/coverage.py": {
+      "main_blob": "1488b76a7ffc220698debd7b171d277b531117cb",
+      "feature_blob": "1488b76a7ffc220698debd7b171d277b531117cb"
+    },
+    "src/repo_catalog/domain/current_state.py": {
+      "main_blob": "047de8372aeef3b52f052ab032f91f93a19c6d06",
+      "feature_blob": "047de8372aeef3b52f052ab032f91f93a19c6d06"
+    },
+    "src/repo_catalog/domain/document.py": {
+      "main_blob": "a174e5a5e57a2ab6bf59545991ce44dd96fd03b7",
+      "feature_blob": "a174e5a5e57a2ab6bf59545991ce44dd96fd03b7"
+    },
+    "src/repo_catalog/domain/git_decoding.py": {
+      "main_blob": "cc8a5b1ef00541faf586fa01c2d30a06c49c8a37",
+      "feature_blob": "cc8a5b1ef00541faf586fa01c2d30a06c49c8a37"
+    },
+    "src/repo_catalog/domain/git_intrinsic.py": {
+      "main_blob": "f76eb1b6d18b5d551fb09c04321ed78474150de8",
+      "feature_blob": "f76eb1b6d18b5d551fb09c04321ed78474150de8"
+    },
+    "src/repo_catalog/domain/git_object.py": {
+      "main_blob": "8da25181b99bafdadbac18f3906bbba13528bd1e",
+      "feature_blob": "8da25181b99bafdadbac18f3906bbba13528bd1e"
+    },
+    "src/repo_catalog/domain/models.py": {
+      "main_blob": "e19160126abea07cb0d10c74807262f6f17acd3a",
+      "feature_blob": "e19160126abea07cb0d10c74807262f6f17acd3a"
+    },
+    "src/repo_catalog/domain/payload.py": {
+      "main_blob": "82e8a01f35f5946e3cbcc523cc75c7039fddd701",
+      "feature_blob": "82e8a01f35f5946e3cbcc523cc75c7039fddd701"
+    },
+    "src/repo_catalog/domain/pr_scope.py": {
+      "main_blob": "0d81d532a1d8786231f9a99addbf296c9a485461",
+      "feature_blob": "0d81d532a1d8786231f9a99addbf296c9a485461"
+    },
+    "src/repo_catalog/domain/time.py": {
+      "main_blob": "ff6c29fb4d8db59b11b331a9ae70bc971915bd4d",
+      "feature_blob": "ff6c29fb4d8db59b11b331a9ae70bc971915bd4d"
+    }
+  },
+  "limit": "Uses explicit target-module classification, supplemented by isolation-import audit and executable main/feature counterexamples. It is not proof of every dynamic import."
+}

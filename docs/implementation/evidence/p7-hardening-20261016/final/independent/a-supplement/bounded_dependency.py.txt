@@ -1,0 +1,24 @@
+"""Independent helper counterexamples: absence remains unknown at finite work."""
+import sqlite3,json
+from repo_catalog.adapters.sqlite.recovery import RecoveryWorkBudget
+from repo_catalog.adapters.sqlite.recovery_validation import bounded_domain_exists
+from repo_catalog.domain.p1_core import CoreFailure
+connection=sqlite3.connect(':memory:')
+connection.execute('CREATE TABLE probe(id INTEGER PRIMARY KEY,value TEXT NOT NULL)')
+connection.executemany('INSERT INTO probe VALUES(?,?)',((i,'known') for i in range(100_000)))
+for key,expected in ((1,True),(-1,False)):
+    work=RecoveryWorkBudget(work_limits={'metadata_units':1})
+    assert bounded_domain_exists(connection,'SELECT 1 FROM probe WHERE id=? LIMIT 1',(key,),work,'independent-A') is expected
+    assert work.usage['metadata_units']==1
+work=RecoveryWorkBudget(work_limits={'metadata_units':3})
+try:
+    bounded_domain_exists(connection,'SELECT 1 FROM probe WHERE value=? LIMIT 1',('absent',),work,'independent-A')
+except CoreFailure as error:
+    assert error.code=='BUDGET'
+else:
+    raise AssertionError('Unbounded absence inference')
+assert work.usage['metadata_units']==3
+assert not work._pending
+assert connection.execute('SELECT 1').fetchone()==(1,)
+assert connection.execute('SELECT count(*) FROM probe').fetchone()==(100_000,)
+print(json.dumps({'indexed_presence':True,'indexed_absence':True,'bounded_unknown':True,'metadata_usage':3,'handler_cleared':True,'authority_unchanged':True}))

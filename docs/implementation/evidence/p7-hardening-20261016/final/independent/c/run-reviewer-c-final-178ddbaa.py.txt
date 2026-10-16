@@ -1,0 +1,54 @@
+"""Execute exact-revision Reviewer C evidence; write per-command exit receipts."""
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import time
+
+root=Path('/workspace/p7-review-c');evidence=Path('/workspace/recovery-evidence-20261016');out=evidence/'reviewer-c-final-178ddbaa';out.mkdir(exist_ok=True)
+sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
+tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=root,text=True).strip()
+assert sha=='178ddbaa8fa06f52aff4993730205c5a38da91f4'
+assert tree=='9740ad1a91f367192bb31ce9777d039c2bb4729b'
+assert subprocess.check_output(['git','status','--porcelain'],cwd=root,text=True)==''
+env=dict(os.environ,PYTHONPATH=str(root/'src'))
+scripts=[
+ 'reviewer-c-proofs.py','reviewer-c-process-proofs.py','reviewer-c-identity-proofs.py',
+ 'reviewer-c-dimension-proofs.py','reviewer-c-allocation-proofs.py',
+ 'reviewer-c-fifo-probe.py','reviewer-c-stored-context-probe.py',
+ 'reviewer-c-missing-context-probe.py','reviewer-c-missing-native-probe.py',
+ 'reviewer-c-stopped-writer-probe.py','reviewer-c-init-crash-probe.py',
+]
+receipts=[]
+for name in scripts:
+    path=evidence/name;command=['uv','run','--no-sync','python',str(path)]
+    started=datetime.datetime.now(datetime.timezone.utc).isoformat();t0=time.monotonic()
+    result=subprocess.run(command,cwd=root,env=env,capture_output=True,text=True,timeout=90)
+    parsed=json.loads(result.stdout)
+    rows=parsed if isinstance(parsed,list) else [parsed]
+    allpass=all(row.get('pass') is True for row in rows)
+    (out/(path.stem+'.json')).write_text(result.stdout)
+    (out/(path.stem+'.stderr.log')).write_text(result.stderr)
+    receipts.append({'command':command,'started_utc':started,'finished_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'seconds':time.monotonic()-t0,'exit_code':result.returncode,'script_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'probe_count':len(rows),'all_probes_pass':allpass})
+    print(name,result.returncode,len(rows),allpass,flush=True)
+command=['uv','run','--no-sync','pytest','tests/integration/p7','-q','--junitxml='+str(out/'p7.xml')]
+started=datetime.datetime.now(datetime.timezone.utc).isoformat();t0=time.monotonic()
+result=subprocess.run(command,cwd=root,env=env,capture_output=True,text=True,timeout=240)
+(out/'p7.log').write_text(result.stdout+result.stderr)
+receipts.append({'command':command,'started_utc':started,'finished_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'seconds':time.monotonic()-t0,'exit_code':result.returncode})
+print(result.stdout,flush=True)
+command=['uv','run','--no-sync','pytest','tests/integration/p7','--collect-only','-q']
+result=subprocess.run(command,cwd=root,env=env,capture_output=True,text=True,timeout=90)
+(out/'p7-node-ids.txt').write_text(result.stdout+result.stderr)
+receipts.append({'command':command,'exit_code':result.returncode})
+command=['uv','run','--no-sync','python','scripts/audit_callsite_dependencies.py','--check']
+result=subprocess.run(command,cwd=root,env=env,capture_output=True,text=True,timeout=90)
+(out/'callsite-audit.log').write_text(result.stdout+result.stderr)
+receipts.append({'command':command,'exit_code':result.returncode})
+summary={'commit':sha,'tree':tree,'cwd':str(root),'PYTHONPATH':env['PYTHONPATH'],'independent_probe_count':sum(r.get('probe_count',0) for r in receipts),'commands':receipts,'self_author_exclusion':'Reviewer C authored original five WAL/process regression nodes only; their assertions are excluded from this independent test-quality opinion and belong to Reviewer D. No production P7 code was authored by Reviewer C.','limits':['Linux cooperative-process filesystem semantics, not actual host power-loss tests','Complete malicious deletion or consistent rewriting of all accounting evidence is outside supported local durability contract','Allocation numbers measure Python tracemalloc only, not native SQLite RSS','No installed-distribution acceptance claimed by this reviewer; Reviewer D/root cover it']}
+(out/'receipt.json').write_text(json.dumps(summary,indent=2)+'\n')
+assert all(r['exit_code']==0 for r in receipts)
+assert all(r.get('all_probes_pass',True) for r in receipts)
+print(json.dumps({'commit':sha,'tree':tree,'probe_count':summary['independent_probe_count'],'commands':len(receipts),'pass':True}),flush=True)

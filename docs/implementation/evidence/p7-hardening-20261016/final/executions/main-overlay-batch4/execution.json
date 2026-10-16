@@ -1,0 +1,29 @@
+{
+  "head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "-n",
+    "4",
+    "-q",
+    "--basetemp",
+    "/workspace/p7-main-overlay-batch4",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml",
+    "/workspace/p7-evidence-20261016/main-overlay-batch4/junit.xml",
+    "--journal",
+    "/workspace/p7-evidence-20261016/main-overlay-batch4/journal.jsonl",
+    "tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 1,
+  "elapsed_seconds": 27.937766790390015,
+  "TMPDIR": "/workspace/p7-acceptance-temp",
+  "selected_nodeids": [
+    "tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation"
+  ],
+  "scope": "Independent main reproduction of actual feature failures; not a full main acceptance run or an exclusion from the complete feature run."
+}

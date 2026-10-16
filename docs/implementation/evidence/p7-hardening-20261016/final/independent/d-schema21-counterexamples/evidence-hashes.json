@@ -1,0 +1,52 @@
+[
+  {
+    "path": "REPORT.md",
+    "bytes": 2300,
+    "sha256": "b309cafb41c296ad71491293808799aeea4077bee5b3d4773ab32d5a5938673f"
+  },
+  {
+    "path": "final-imports.log",
+    "bytes": 223,
+    "sha256": "cfdafaeb5ff4604d9755051152353e0f6fd14992bcb65fd69a116fa1d3f27fed"
+  },
+  {
+    "path": "final-journal.jsonl",
+    "bytes": 2089,
+    "sha256": "f2cbff9c34954326e36013cead4e0ec70ebea356b5a228b2f61c37da2677b22a"
+  },
+  {
+    "path": "final-junit.xml",
+    "bytes": 8279,
+    "sha256": "a3fe1d88196e95a680d8c1746c986142b7b5dee6a3aadbed28ee339070246399"
+  },
+  {
+    "path": "final-tests.log",
+    "bytes": 8067,
+    "sha256": "2023e0a2b3e6a96a225343182c31a6aed03d7ef4001adc5836cbaf4d02e191c7"
+  },
+  {
+    "path": "main-imports.log",
+    "bytes": 243,
+    "sha256": "cdfe8c3fb10f638fe2843900349501f9149557bd3ac52bdc3a8076ee5019e8e1"
+  },
+  {
+    "path": "main-journal.jsonl",
+    "bytes": 2090,
+    "sha256": "fa50d5f7c803542377269bc7d67731eac44f635644cbfc0dcd30587212cad713"
+  },
+  {
+    "path": "main-junit.xml",
+    "bytes": 8279,
+    "sha256": "65e68380218ebd1c6809570cfff624ba58f8e139b4038308fcb5f3f910090965"
+  },
+  {
+    "path": "main-tests.log",
+    "bytes": 8067,
+    "sha256": "6c4493083d9a3083ef8946e1dbaa191e97e85ff0a4b4d9a5ef7921eafadabf83"
+  },
+  {
+    "path": "reproduction-binding.json",
+    "bytes": 2801,
+    "sha256": "d2140ee949b6731556a43ed4c589ce87eaa1f8e39067d911432ad148f355b4b4"
+  }
+]

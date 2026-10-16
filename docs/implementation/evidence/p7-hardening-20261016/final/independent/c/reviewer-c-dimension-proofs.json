@@ -1,0 +1,101 @@
+[
+  {
+    "probe": "nominal_metadata_ceiling",
+    "pass": true,
+    "receipt": {
+      "destination_path": "/tmp/reviewer-c-dimensions-oug2z1pu/0",
+      "candidates_processed": 2,
+      "admitted_units": 1,
+      "rejected_units": 0,
+      "replayed_units": 0,
+      "observation_units": 0,
+      "deferred_units": 0,
+      "unprocessed_units": 1,
+      "input_complete": false,
+      "unprocessed_count_exact": false,
+      "rejections": [
+        {
+          "candidate_id": "2",
+          "reason": "Work budget exhausted: finite cumulative recovery work budget exhausted (metadata_units)"
+        }
+      ]
+    },
+    "usage": {
+      "input_bytes": 0,
+      "input_records": 2,
+      "input_scan_bytes": 360,
+      "metadata_units": 1,
+      "proof_steps": 0,
+      "verification_bytes": 0
+    }
+  },
+  {
+    "probe": "decode_reservation_precedes_work",
+    "pass": true,
+    "receipt": {
+      "destination_path": "/tmp/reviewer-c-dimensions-oug2z1pu/1",
+      "candidates_processed": 1,
+      "admitted_units": 0,
+      "rejected_units": 0,
+      "replayed_units": 0,
+      "observation_units": 0,
+      "deferred_units": 0,
+      "unprocessed_units": 1,
+      "input_complete": false,
+      "unprocessed_count_exact": false,
+      "rejections": [
+        {
+          "candidate_id": "1",
+          "reason": "Work budget exhausted: finite cumulative recovery work budget exhausted (input_bytes)"
+        }
+      ]
+    },
+    "usage": {
+      "input_bytes": 0,
+      "input_records": 1,
+      "input_scan_bytes": 1677,
+      "metadata_units": 0,
+      "proof_steps": 0,
+      "verification_bytes": 0
+    }
+  },
+  {
+    "probe": "one_refused_candidate_honest_count",
+    "pass": true,
+    "receipt": {
+      "destination_path": "/tmp/reviewer-c-dimensions-oug2z1pu/2",
+      "candidates_processed": 1,
+      "admitted_units": 0,
+      "rejected_units": 0,
+      "replayed_units": 0,
+      "observation_units": 0,
+      "deferred_units": 0,
+      "unprocessed_units": 1,
+      "input_complete": false,
+      "unprocessed_count_exact": false,
+      "rejections": [
+        {
+          "candidate_id": "1",
+          "reason": "Work budget exhausted: finite cumulative recovery work budget exhausted (verification_bytes)"
+        }
+      ]
+    }
+  },
+  {
+    "probe": "exact_record_cap_no_phantom_unprocessed",
+    "pass": true,
+    "receipt": {
+      "destination_path": "/tmp/reviewer-c-dimensions-oug2z1pu/3",
+      "candidates_processed": 1,
+      "admitted_units": 1,
+      "rejected_units": 0,
+      "replayed_units": 0,
+      "observation_units": 0,
+      "deferred_units": 0,
+      "unprocessed_units": 0,
+      "input_complete": false,
+      "unprocessed_count_exact": false,
+      "rejections": []
+    }
+  }
+]

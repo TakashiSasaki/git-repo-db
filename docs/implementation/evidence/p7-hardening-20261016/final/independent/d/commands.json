@@ -1,0 +1,277 @@
+[
+  {
+    "name": "archive",
+    "argv": [
+      "git",
+      "archive",
+      "--format=tar.gz",
+      "--output",
+      "/workspace/p7-review-d-evidence/final-178/frozen-source.tar.gz",
+      "178ddbaa8fa06f52aff4993730205c5a38da91f4"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163540.8828623,
+    "elapsed_seconds": 3.4430091381073
+  },
+  {
+    "name": "build",
+    "argv": [
+      "uv",
+      "build",
+      "--offline",
+      "--no-build-isolation",
+      "--python",
+      "/workspace/p7-review-d/.venv/bin/python",
+      "--out-dir",
+      "/workspace/p7-review-d-evidence/final-178/dist"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163544.3952813,
+    "elapsed_seconds": 7.039272308349609
+  },
+  {
+    "name": "sdist-build",
+    "argv": [
+      "uv",
+      "build",
+      "--wheel",
+      "--offline",
+      "--no-build-isolation",
+      "--python",
+      "/workspace/p7-review-d/.venv/bin/python",
+      "--out-dir",
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel",
+      "/workspace/p7-review-d-evidence/final-178/unpacked/repo_catalog-0.2.0"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163553.251192,
+    "elapsed_seconds": 0.7733659744262695
+  },
+  {
+    "name": "wheel-venv",
+    "argv": [
+      "uv",
+      "venv",
+      "/workspace/p7-review-d-evidence/final-178/wheel-venv",
+      "--python",
+      "/workspace/p7-review-d/.venv/bin/python",
+      "--offline"
+    ],
+    "cwd": "/workspace/p7-review-d-evidence/final-178",
+    "exit_code": 0,
+    "started_epoch": 1792163554.1091347,
+    "elapsed_seconds": 0.035393476486206055
+  },
+  {
+    "name": "wheel-test-deps",
+    "argv": [
+      "uv",
+      "sync",
+      "--locked",
+      "--offline",
+      "--group",
+      "dev",
+      "--no-install-project",
+      "--active"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163554.1448262,
+    "elapsed_seconds": 0.259610652923584
+  },
+  {
+    "name": "wheel-install",
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/p7-review-d-evidence/final-178/wheel-venv/bin/python",
+      "--offline",
+      "--no-deps",
+      "/workspace/p7-review-d-evidence/final-178/dist/repo_catalog-0.2.0-py3-none-any.whl"
+    ],
+    "cwd": "/workspace/p7-review-d-evidence/final-178",
+    "exit_code": 0,
+    "started_epoch": 1792163554.4046893,
+    "elapsed_seconds": 0.12784337997436523
+  },
+  {
+    "name": "wheel-identity",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/wheel-venv/bin/python",
+      "-I",
+      "-c",
+      "import json,subprocess,sys;import repo_catalog, repo_catalog.adapters.sqlite.recovery as r; print(json.dumps({'python':sys.executable,'package':repo_catalog.__file__,'recovery':r.__file__})); assert 'site-packages' in r.__file__; assert '/workspace/p7-review-d/src' not in r.__file__; child=subprocess.check_output([sys.executable,'-I','-c','import repo_catalog.adapters.sqlite.recovery as r;print(r.__file__)'],text=True);print(child); assert 'site-packages' in child"
+    ],
+    "cwd": "/workspace/p7-review-d-evidence/final-178",
+    "exit_code": 0,
+    "started_epoch": 1792163554.532844,
+    "elapsed_seconds": 0.6919214725494385
+  },
+  {
+    "name": "wheel-collect",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "--collect-only",
+      "-q",
+      "-o",
+      "pythonpath="
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163555.225069,
+    "elapsed_seconds": 3.302734851837158
+  },
+  {
+    "name": "wheel-p7",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "-q",
+      "-o",
+      "pythonpath=",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/p7-review-d-evidence/final-178/wheel-junit.xml",
+      "--journal",
+      "/workspace/p7-review-d-evidence/final-178/wheel-journal.jsonl"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163558.528128,
+    "elapsed_seconds": 62.70281648635864
+  },
+  {
+    "name": "wheel-independent-replay",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/wheel-venv/bin/python",
+      "/workspace/p7-review-d-evidence/probe_new_role_replay.py"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163621.2312236,
+    "elapsed_seconds": 1.1243648529052734
+  },
+  {
+    "name": "sdist-wheel-venv",
+    "argv": [
+      "uv",
+      "venv",
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-venv",
+      "--python",
+      "/workspace/p7-review-d/.venv/bin/python",
+      "--offline"
+    ],
+    "cwd": "/workspace/p7-review-d-evidence/final-178",
+    "exit_code": 0,
+    "started_epoch": 1792163622.4417663,
+    "elapsed_seconds": 0.06611013412475586
+  },
+  {
+    "name": "sdist-wheel-test-deps",
+    "argv": [
+      "uv",
+      "sync",
+      "--locked",
+      "--offline",
+      "--group",
+      "dev",
+      "--no-install-project",
+      "--active"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163622.5082526,
+    "elapsed_seconds": 0.1836528778076172
+  },
+  {
+    "name": "sdist-wheel-install",
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-venv/bin/python",
+      "--offline",
+      "--no-deps",
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl"
+    ],
+    "cwd": "/workspace/p7-review-d-evidence/final-178",
+    "exit_code": 0,
+    "started_epoch": 1792163622.6922293,
+    "elapsed_seconds": 0.12055826187133789
+  },
+  {
+    "name": "sdist-wheel-identity",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-venv/bin/python",
+      "-I",
+      "-c",
+      "import json,subprocess,sys;import repo_catalog, repo_catalog.adapters.sqlite.recovery as r; print(json.dumps({'python':sys.executable,'package':repo_catalog.__file__,'recovery':r.__file__})); assert 'site-packages' in r.__file__; assert '/workspace/p7-review-d/src' not in r.__file__; child=subprocess.check_output([sys.executable,'-I','-c','import repo_catalog.adapters.sqlite.recovery as r;print(r.__file__)'],text=True);print(child); assert 'site-packages' in child"
+    ],
+    "cwd": "/workspace/p7-review-d-evidence/final-178",
+    "exit_code": 0,
+    "started_epoch": 1792163622.813204,
+    "elapsed_seconds": 0.811884880065918
+  },
+  {
+    "name": "sdist-wheel-collect",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "--collect-only",
+      "-q",
+      "-o",
+      "pythonpath="
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163623.6254318,
+    "elapsed_seconds": 2.912565231323242
+  },
+  {
+    "name": "sdist-wheel-p7",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/integration/p7",
+      "-q",
+      "-o",
+      "pythonpath=",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-junit.xml",
+      "--journal",
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-journal.jsonl"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163626.5383403,
+    "elapsed_seconds": 54.309531927108765
+  },
+  {
+    "name": "sdist-wheel-independent-replay",
+    "argv": [
+      "/workspace/p7-review-d-evidence/final-178/sdist-wheel-venv/bin/python",
+      "/workspace/p7-review-d-evidence/probe_new_role_replay.py"
+    ],
+    "cwd": "/workspace/p7-review-d",
+    "exit_code": 0,
+    "started_epoch": 1792163680.848188,
+    "elapsed_seconds": 0.9556853771209717
+  }
+]

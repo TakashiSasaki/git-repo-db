@@ -1,0 +1,38 @@
+"""Independent configured work-dimension and honest-count counterexamples."""
+import base64
+import dataclasses
+import json
+from pathlib import Path
+import tempfile
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.recovery import RecoveryBudget
+
+REPO='01c72bce-39ee-4677-98d4-c5a642020e98';INSTANCE='1275bbae-7ab3-4321-9a1e-e2dc272af785'
+
+def setup(root,index):
+    cat=root/str(index);cat.mkdir()
+    for role in ('core','context'):initialize(cat/f'{role}.sqlite3',role,REPO,INSTANCE)
+    return cat
+
+with tempfile.TemporaryDirectory(prefix='reviewer-c-dimensions-') as td:
+    root=Path(td);results=[];adapter=SQLiteRecoveryAdapter()
+    cat=setup(root,0);salvage=root/'nominal.jsonl'
+    salvage.write_text('\n'.join(json.dumps({'candidate_type':'git_metadata','extraction_provenance':{'table':'git_objects'},'payload':{'object_format':'sha1','full_oid':ch*40}}) for ch in ['a','b'])+'\n')
+    receipt=adapter.merge_salvage(cat,salvage,RecoveryBudget(max_work_units={'metadata_units':1}),'nominal')
+    state=json.loads((cat/'p1-recovery-request-nominal.json').read_text())
+    results.append({'probe':'nominal_metadata_ceiling','pass':receipt.admitted_units<=1 and state['cumulative_usage']['metadata_units']<=1 and not receipt.input_complete,'receipt':dataclasses.asdict(receipt),'usage':state['cumulative_usage']})
+    cat=setup(root,1);salvage=root/'raw.jsonl';body=b'x'*1000
+    salvage.write_text(json.dumps({'candidate_type':'retained_metadata','payload':{'object_format':'sha1','full_oid':'a'*40,'native_type':'commit','size':1000,'physical_copy_uuidv4':str(uuid4()),'digest_sha256':'0'*64,'body_base64':base64.b64encode(body).decode()}})+'\n')
+    receipt=adapter.merge_salvage(cat,salvage,RecoveryBudget(max_work_units={'input_bytes':1}),'raw')
+    state=json.loads((cat/'p1-recovery-request-raw.json').read_text())
+    results.append({'probe':'decode_reservation_precedes_work','pass':receipt.admitted_units==0 and not receipt.input_complete and state['cumulative_usage']['verification_bytes']==0,'receipt':dataclasses.asdict(receipt),'usage':state['cumulative_usage']})
+    cat=setup(root,2);salvage=root/'verification.jsonl';salvage.write_text(json.dumps({'candidate_type':'context_document','payload':{'text_value':'x'*1000}})+'\n')
+    receipt=adapter.merge_salvage(cat,salvage,RecoveryBudget(max_work_units={'verification_bytes':1}),'verification')
+    results.append({'probe':'one_refused_candidate_honest_count','pass':receipt.admitted_units==0 and receipt.unprocessed_units==1 and not receipt.input_complete,'receipt':dataclasses.asdict(receipt)})
+    cat=setup(root,3);salvage=root/'exact_records.jsonl';salvage.write_text(json.dumps({'candidate_type':'context_document','payload':{'text_value':'one'}})+'\n')
+    receipt=adapter.merge_salvage(cat,salvage,RecoveryBudget(max_input_records=1),'exact-records')
+    results.append({'probe':'exact_record_cap_no_phantom_unprocessed','pass':receipt.admitted_units==1 and receipt.unprocessed_units==0,'receipt':dataclasses.asdict(receipt)})
+    print(json.dumps(results,indent=2))
+    assert all(result['pass'] for result in results)

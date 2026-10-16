@@ -1,0 +1,14 @@
+from pathlib import Path
+import tempfile,subprocess,sys,os
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+p=Path(tempfile.mkdtemp());source=p/'core.sqlite3';initialize(source,'core','11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222')
+locker=subprocess.Popen([sys.executable,'-c',"import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA locking_mode=EXCLUSIVE');c.execute('BEGIN EXCLUSIVE');print('LOCKED',flush=True);sys.stdin.read()",str(source)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
+assert locker.stdout.readline().strip()=='LOCKED'
+cmd=[sys.executable,'-c',"from pathlib import Path;from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter;import sys;SQLiteRecoveryAdapter()._snapshot_database(Path(sys.argv[1]),Path(sys.argv[2]));print('completed')",str(source),str(p/'copy.sqlite3')]
+try:
+ result=subprocess.run(cmd,capture_output=True,text=True,timeout=3)
+ print('RESULT',result.returncode,result.stdout,result.stderr)
+except subprocess.TimeoutExpired:
+ print('BACKUP_BLOCKED_BEYOND_3_SECONDS_DESPITE_TIMEOUT_1')
+finally:
+ locker.stdin.close();locker.wait(timeout=3)

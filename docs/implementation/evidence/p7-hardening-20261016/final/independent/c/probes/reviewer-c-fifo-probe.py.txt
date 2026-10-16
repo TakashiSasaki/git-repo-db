@@ -1,0 +1,33 @@
+"""Independent finite-input refusal probe; does not open a FIFO writer."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+
+CHILD=r'''
+from pathlib import Path
+import sys
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.recovery import RecoveryError
+try:
+    SQLiteRecoveryAdapter().merge_salvage(Path(sys.argv[1]),Path(sys.argv[2]),request_id='fifo')
+except RecoveryError as error:
+    print(type(error).__name__+':'+str(error),flush=True)
+    raise SystemExit(0)
+raise SystemExit('unexpected completion')
+'''
+with tempfile.TemporaryDirectory(prefix='reviewer-c-fifo-') as td:
+    root=Path(td);cat=root/'catalog';cat.mkdir()
+    initialize(cat/'core.sqlite3','core','01c72bce-39ee-4677-98d4-c5a642020e98','1275bbae-7ab3-4321-9a1e-e2dc272af785')
+    fifo=root/'untrusted.jsonl';os.mkfifo(fifo)
+    child=subprocess.Popen([sys.executable,'-c',CHILD,str(cat),str(fifo)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+    try:
+        out,err=child.communicate(timeout=2)
+        result={'probe':'nonregular_salvage_fifo','pass':child.returncode==0 and out.startswith('RecoveryError:'),'exit':child.returncode,'stdout':out,'stderr':err}
+    except subprocess.TimeoutExpired:
+        child.kill();out,err=child.communicate()
+        result={'probe':'nonregular_salvage_fifo','pass':False,'blocked':True,'terminated_exit':child.returncode}
+    print(json.dumps(result,indent=2))

@@ -1,0 +1,116 @@
+{
+  "review_scope": "Independent A supplement: trustedCHECK/UTF8 and boundedmissing-helper review inherited unchanged from a93d870, final exact probes+positive+11tests+auditregistration inspection on178ddbaa. Owninput implementation is excluded.",
+  "commit": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "recorded_at_utc": "2026-10-16T15:12:22.941432+00:00",
+  "results": [
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_utf8.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    },
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_ref.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    },
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-a-independent/positive_history_binary.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    }
+  ],
+  "packaged_check_counts": {
+    "core": {
+      "captures": 5,
+      "core_coverage_proofs": 3,
+      "coverage_claims": 3,
+      "coverage_scopes": 4,
+      "git_objects": 1,
+      "git_observations": 8,
+      "intrinsic_claims": 0,
+      "intrinsic_groups": 0,
+      "note_roles": 1,
+      "notes_claims": 1,
+      "notes_groups": 3,
+      "relation_groups": 3,
+      "repositories": 1,
+      "repository_claims": 5,
+      "retained_metadata": 3,
+      "retained_notes": 2,
+      "scalar_claims": 2,
+      "store_identity": 3
+    },
+    "context": {
+      "collection_terminals": 3,
+      "collections": 3,
+      "core_references": 3,
+      "coverage_claims": 3,
+      "coverage_proofs": 4,
+      "coverage_scopes": 5,
+      "field_candidates": 7,
+      "providers": 3,
+      "repository_context": 2,
+      "resource_relations": 5,
+      "resources": 6,
+      "source_coverage_proofs": 6,
+      "source_inventory_evidence": 6,
+      "source_repositories": 1,
+      "sources": 2,
+      "store_identity": 3,
+      "text_bodies": 2
+    }
+  },
+  "source_sha256": {
+    "src/repo_catalog/adapters/sqlite/recovery_validation.py": "29706710a0615b6e689322e01c2be173af0afd000ad3de6533ab9eb451cc5ca2",
+    "src/repo_catalog/adapters/sqlite/recovery.py": "5e46bf092ead592b102401c21fdf9f9262fd5499467092aadc0d27b30f086fa2"
+  },
+  "pytest_prior_2f97455": {
+    "command": "/workspace/p7/.venv/bin/python -m pytest tests/integration/p7/test_stored_constraints.py -q --junitxml=/workspace/recovery-evidence-20261016/review-a-independent/constraints-2f97455.xml",
+    "exit_code": 0,
+    "passed": 7
+  },
+  "initial_fixture_failure": "Own positive probe initially used collection coverage_kind=members while terminal scope omitted required coverage_kind; real admission rejected this invalid fixture. Initial script/log/JSON retained. Corrected resource reviews scope uses accepted actual matching owner and preserves two terminals/old proof.",
+  "finding": "No remaining defect reproduced in trusted CHECK/UTF8 correction scope on pinned revision; binary Notes, empty/split Unicode Context, old Coverage proof and later terminal remain valid.",
+  "tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "pytest_final": {
+    "command": "/workspace/p7/.venv/bin/python -m pytest tests/integration/p7/test_stored_constraints.py tests/integration/p7/test_missing_required_authority.py -q --junitxml=/workspace/recovery-evidence-20261016/review-a-independent/constraints-and-required-178ddbaa.xml",
+    "exit_code": 0,
+    "junit": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "11",
+      "time": "1.981",
+      "timestamp": "2026-10-16T15:12:23.827711+00:00",
+      "hostname": "72973deaa2d2"
+    }
+  },
+  "runtime_identity": {
+    "command": "git diff --exit-code a93d870 -- src tests",
+    "exit_code": 0,
+    "src_and_tests_unchanged": true
+  },
+  "audit_registration": {
+    "command": "/workspace/p7/.venv/bin/python scripts/audit_callsite_dependencies.py --check",
+    "exit_code": 0,
+    "stdout": "Call-site dependency source index matches",
+    "diff": "Explicitly lists recovery_budget.py and recovery_validation.py as isolated opt-in P7 modules. No prefix exclusion; direct baseline-import guard target set includes both.",
+    "sha256": "c7942e12402cb0949c32838c836750eabd18b482bfa1fd5a49ac4659e7085db6"
+  },
+  "limitations": [
+    "Disposable synthetic catalogs, SQLite/Linux only; no production recovery or actual host power-loss inference",
+    "A supplement does not independently approve own input/metering implementation; C/D provide that independent review",
+    "Executions overlapped root acceptance; timings are execution records rather than performance measurements"
+  ],
+  "final_worktree_clean": true
+}

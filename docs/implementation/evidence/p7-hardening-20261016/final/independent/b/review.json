@@ -1,0 +1,67 @@
+{
+  "reviewer": "Reviewer B: crash consistency / filesystem / stop classification",
+  "reviewed_commit": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "reviewed_tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "verdict": "PASS for independent B scope; no remaining B implementation or verification blockers within the tested process/local-filesystem contract.",
+  "independence_exclusions": [
+    "I authored RecoveryWorkBudget/durable registry+reservation+settlement implementation; budget semantic approval belongs to Reviewer C.",
+    "I authored generalized stored TEXT/CHECK audit after independently finding the defect; its semantic approval belongs to Reviewer A. Probe execution is recorded but is not independent self-approval."
+  ],
+  "test_result": "65 passed, exit 0; 9 independent standalone counterexamples all reached expected safe outcomes.",
+  "findings": [
+    {
+      "id": "B1",
+      "original": "Persisted invalid UTF8 Context text became indeterminate, source not stopped.",
+      "final": "Confirmed corruption and durable stop; closed."
+    },
+    {
+      "id": "B2",
+      "original": "Different Core/Context source instance identities rejected backup but did not stop source.",
+      "final": "Source pair revalidated from preserved forensic copy and durably stopped; staging-only mismatch keeps healthy source active; closed."
+    },
+    {
+      "id": "B3",
+      "original": "Catalog pathname substitution after domain validation activated unvalidated corrupt Core with successful receipt.",
+      "final": "Retained catalog inode pin, pre/post publication identity checks, and preceding locator rollback; both early and late independent probes refused success; closed."
+    },
+    {
+      "id": "B3b",
+      "original": "Locator parent replacement after publication caused success for advertised path pointing to unvalidated authority.",
+      "final": "Named locator parent identity check rejects substitution; closed."
+    },
+    {
+      "id": "B4",
+      "original": "Already-stopped forensic extraction omitted writer gate; separate process acquired writer lock during copy.",
+      "final": "Drains writer gate and holds writer+stop cut; LOCK_NB contender now blocked; closed. No actual corruption was claimed from this missing-cut reproduction."
+    },
+    {
+      "id": "B5",
+      "original": "SQLite backup retry ignored connection timeout and hung under genuine separate-process EXCLUSIVE SQLite lock.",
+      "final": "Finite busy deadline returns failure, no invented corruption; independent lock probe completes; closed."
+    },
+    {
+      "id": "B1b",
+      "original": "Readonly SQLite integrity_check returned ok for invalid Capture TEXT and false application-UDF CHECK; backup wrongly certified clean.",
+      "final": "Explicit trusted CHECK and bounded UTF8 audit corrects examples; semantic review delegated A because I implemented the fix."
+    }
+  ],
+  "platform": {
+    "kernel": "Linux 6.18.44 x86_64 GNU/Linux",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "workspace_filesystem": "overlayfs",
+    "pytest_catalog_filesystem": "tmpfs"
+  },
+  "limits": [
+    "Linux/POSIX cooperating process tests cover flock serialization, genuine WAL, renameat2 no-overwrite, bounded failure, hard termination and fsync ordering.",
+    "Default synthetic catalogs live on tmpfs; workspace is overlayfs. No physical disk persistence, actual host power interruption, ext4/XFS/NFS durability or post-return protection against arbitrary privileged namespace mutation was established.",
+    "Empty Search initialization is not full projection rebuild. No public runtime switch, real catalog recovery, deployment, release or merge was performed by this reviewer."
+  ],
+  "evidence": [
+    "commands.json",
+    "b-scope.xml",
+    "pytest.log",
+    "individual probe .log files; script hashes included in commands.json"
+  ],
+  "source_identity": "git diff --exit-code a93d8701438ae8b858c5522ebcc08f0be6f685d2 178ddbaa -- src tests returned 0; audit helper correction only. Prior a93d870 evidence retained."
+}

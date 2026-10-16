@@ -33,7 +33,7 @@ ISOLATED_P1_MODULES = frozenset(
     )
 )
 
-# These explicit optional paths belong to the opt-in P2/P3/P4/P5/P6 implementations.
+# These explicit optional paths belong to the opt-in P2/P3/P4/P5/P6/P7 implementations.
 # A sibling branch need not contain the other stage's modules. Their presence
 # does not change the historical Schema 21 call-site inventory or activate them.
 ISOLATED_NEXT_STAGE_MODULES = frozenset(
@@ -62,6 +62,12 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "application/production_query.py",
         "adapters/sqlite/production_search.py",
         "cli/production_query.py",
+        "domain/recovery.py",
+        "domain/ports/recovery.py",
+        "application/recovery.py",
+        "adapters/sqlite/recovery.py",
+        "adapters/sqlite/recovery_budget.py",
+        "adapters/sqlite/recovery_validation.py",
     )
 )
 ISOLATED_TARGET_MODULES = ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES

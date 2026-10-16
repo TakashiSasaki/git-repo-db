@@ -1,0 +1,24 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path.cwd()))
+import json, tempfile, sqlite3, uuid
+from pathlib import Path
+from tests.integration.p7.conftest import _synthetic_catalog_template
+from repo_catalog.application.recovery import RecoveryService
+class Factory:
+ def mktemp(self, name): return Path(tempfile.mkdtemp(prefix=name))
+catalog=_synthetic_catalog_template.__wrapped__(Factory())
+output=Path(tempfile.mkdtemp())/'salvage.jsonl'
+s=RecoveryService();s.extract_salvage(catalog,output)
+records=[json.loads(line) for line in output.read_text().splitlines()]
+note=next(r for r in records if r['candidate_type'] in ('notes_mapping','retained_note'))
+new_origin,new_capture=str(uuid.uuid4()),str(uuid.uuid4())
+for value in [note,note['payload']]:
+ value['capture_origin_uuidv4']=new_origin;value['capture_uuidv4']=new_capture
+output.write_text(json.dumps(note)+'\n')
+def counts():
+ with sqlite3.connect(catalog/'core.sqlite3') as c:
+  return {table:c.execute('SELECT count(*) FROM '+table).fetchone()[0] for table in ['captures','note_roles','retained_notes']}
+before=counts(); receipt=s.merge_salvage(catalog,output,request_id='independent-new-capture');after=counts()
+print(json.dumps({'before':before,'after':after,'admitted':receipt.admitted_units,'replayed':receipt.replayed_units,'rejected':receipt.rejected_units, 'receipt':str(receipt)},indent=2))
+assert receipt.rejected_units==1 and receipt.replayed_units==0 and before==after, 'Changed Capture bound to existing physical copy must be rejected without mutation'
