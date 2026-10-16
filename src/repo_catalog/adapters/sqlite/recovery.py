@@ -52,6 +52,7 @@ from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
 from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_context_text_encoding,
     validate_stored_admission_guards,
+    verify_existing_context_text,
 )
 from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_coordination import CoordinationError
@@ -2660,32 +2661,57 @@ class SQLiteRecoveryAdapter:
                             actual_sha = _hash_recovery_bytes(text_bytes, work_budget)
                             if expected_sha and expected_sha != actual_sha:
                                 raise ValueError("Text body SHA-256 mismatch")
-                            exists = ctx_conn.execute(
-                                "SELECT length(CAST(text_value AS BLOB)) FROM text_bodies WHERE sha256=?",
-                                (actual_sha,),
-                            ).fetchone()
-                            if exists and exists[0] > b.max_payload_bytes:
-                                raise ValueError(
-                                    "Existing Context text exceeds finite payload limit"
-                                )
-                            # ContextStore hashes once; a new row additionally
-                            # passes the actual SQL SHA-256 CHECK function.
-                            context_hash_bytes = len(text_bytes) * (1 if exists else 2)
-                            work_budget.require(
-                                "verification_bytes", context_hash_bytes
-                            )
-                            # ContextStore checks exact UTF-8 text even on a
-                            # digest-key replay; do not bypass that check.
-                            try:
-                                ctx_store.text(text_val)
-                            finally:
-                                work_budget.charge(
-                                    "verification_bytes", context_hash_bytes
-                                )
+                            with catalog_gate(fresh_destination_dir, exclusive=True):
+                                assert_catalog_not_stopped(fresh_destination_dir)
+                                ctx_conn.execute("BEGIN IMMEDIATE")
+                                try:
+                                    try:
+                                        exists = verify_existing_context_text(
+                                            ctx_conn,
+                                            actual_sha,
+                                            text_bytes,
+                                            b.max_payload_bytes,
+                                            work_budget,
+                                        )
+                                    except BackupValidationError as error:
+                                        # Publish the stop while holding the
+                                        # writer cut, before any other ordinary
+                                        # operation can pass the diagnosed row.
+                                        reason = (
+                                            "Confirmed destination Context corruption: "
+                                            + str(error)
+                                        )
+                                        stop_catalog(
+                                            fresh_destination_dir,
+                                            reason,
+                                            details={
+                                                "store": "context",
+                                                "classification": "authoritative_data",
+                                            },
+                                        )
+                                        raise CorruptionDetectedError(reason) from error
+                                    if not exists:
+                                        # ContextStore hashes once; SQLite's
+                                        # SHA-256 CHECK hashes the new row again.
+                                        cost = len(text_bytes) * 2
+                                        work_budget.require("verification_bytes", cost)
+                                        ctx_store.text(text_val)
+                                        work_budget.charge("verification_bytes", cost)
+                                    with catalog_completion(fresh_destination_dir):
+                                        assert_catalog_not_stopped(
+                                            fresh_destination_dir
+                                        )
+                                        ctx_conn.execute("COMMIT")
+                                except BaseException:
+                                    if ctx_conn.in_transaction:
+                                        ctx_conn.execute("ROLLBACK")
+                                    raise
                             if exists:
                                 replayed += 1
                             else:
                                 admitted += 1
+                        except (CorruptionDetectedError, CatalogStoppedError):
+                            raise
                         except CoreFailure as error:
                             budget_exhausted = True
                             unprocessed += 1

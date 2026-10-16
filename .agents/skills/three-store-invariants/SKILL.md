@@ -655,3 +655,11 @@ Exercise both publication sides and both absent/existing locators with
 These checks do not make directory names immutable against arbitrary
 noncooperating writers after activation; preserve the supported cooperating-process
 namespace contract.
+
+When an incoming Context text digest matches an existing key, verify the stored
+exact UTF-8 bytes as well. Rejecting a valid candidate after finding a damaged
+stored digest is insufficient: publish the recovery stop while the catalog writer
+cut is still held. Reserve byte allocation and hashing/comparison work before
+fetching the stored BLOB; read its size and body in one transaction. A finite
+verification refusal or invalid incoming digest proves no stored corruption.
+The focused controls are `tests/integration/p7/test_context_corruption_stop.py`.
