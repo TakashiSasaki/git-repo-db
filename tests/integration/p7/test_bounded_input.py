@@ -353,3 +353,23 @@ def test_input_chunk_settles_measured_bytes_including_empty_eof():
     assert records == [b"{}\n"]
     assert reservations == [65536, 65536]
     assert settlements == [3, 0]
+
+
+def test_native_header_limit_precedes_all_line_materialization():
+    from repo_catalog.domain.git_native import headers
+    from repo_catalog.domain.p1_core import account_verification
+
+    body = b"extension value\n" * 300_000 + b"\nmessage"
+    work = recovery.RecoveryWorkBudget(work_limits={"metadata_units": 1})
+    tracemalloc.start()
+    try:
+        with pytest.raises(recovery.CoreFailure, match="budget"):
+            with account_verification(work):
+                headers(body, "commit")
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    # The byte-bounded raw header slice is allowed; a full list of 300k lines
+    # would require substantially more memory before the second work check.
+    assert peak < len(body) * 2
+    assert work.usage["metadata_units"] == 1
