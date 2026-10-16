@@ -119,6 +119,11 @@ def test_isolated_target_exclusion_does_not_hide_production_runtime_imports():
         "from ..domain import git_native",
         "from .sqlite.production_context import Context",
         "from repo_catalog.domain.ports.production_context import ContextPersistence",
+        "from repo_catalog.application.notes import NotesAcquisition",
+        "from repo_catalog.application.acquisition import GitAcquisition",
+        "from repo_catalog.application.exchange import ExchangeService",
+        "from repo_catalog.application.production_query import ProductionQueryService",
+        "from repo_catalog.cli import production_query",
     ],
 )
 def test_public_runtime_guard_detects_every_isolated_stage(source):
