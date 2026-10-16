@@ -1,0 +1,49 @@
+{
+  "phase": "P5",
+  "title": "Production acquisition orchestration, cross-store admission, and portable typed Exchange",
+  "branch": "feat/p5-production-acquisition-exchange",
+  "base": "docs/p5-p6-technical-contract",
+  "contract_commit": "2a5862b76ea3a4ca976dc3de5cd6962563560101",
+  "timestamp": "2026-10-16T03:45:00Z",
+  "test_counts": {
+    "p5_integration_tests": 20,
+    "p5_packaging_tests": 4,
+    "p1_p4_regression_tests": 762,
+    "total_passed": 786
+  },
+  "modules_owned": [
+    "src/repo_catalog/domain/acquisition.py",
+    "src/repo_catalog/domain/exchange.py",
+    "src/repo_catalog/domain/ports/acquisition.py",
+    "src/repo_catalog/adapters/github/production_intake.py",
+    "src/repo_catalog/adapters/sqlite/acquisition.py",
+    "src/repo_catalog/application/acquisition.py",
+    "src/repo_catalog/application/exchange.py",
+    "tests/integration/p5/conftest.py",
+    "tests/integration/p5/test_git_acquisition.py",
+    "tests/integration/p5/test_provider_acquisition.py",
+    "tests/integration/p5/test_paired_admission.py",
+    "tests/integration/p5/test_exchange.py",
+    "tests/packaging/test_p5_distribution.py"
+  ],
+  "audits": {
+    "ruff_format": "passed",
+    "ruff_check": "passed",
+    "build_p1_schema": "passed",
+    "audit_p1_schema": "passed",
+    "audit_implementation_boundary": "passed",
+    "audit_callsite_dependencies": "passed"
+  },
+  "invariants_verified": [
+    "Strictly append-only Git Core",
+    "Independently durable Context without raw repository file body archival",
+    "Reconstructible Operational and Search",
+    "Genuine permanent repository UUIDv4",
+    "Core-first, Context-second coordinated admission ordering",
+    "Idempotent retry convergence under mid-cut failure",
+    "Receiver-checked native representation validation during Exchange import",
+    "Refusal of sender-claimed intrinsic authority without validated bytes",
+    "Exclusion of ordinary file blob bodies from retained_metadata",
+    "Operational retry and continuation tracking resilient to operational.sqlite3 recreation"
+  ]
+}
