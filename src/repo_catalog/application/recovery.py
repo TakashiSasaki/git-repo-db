@@ -59,10 +59,14 @@ class RecoveryService:
         catalog_dir: Path | str,
         output_file: Path | str,
         max_records: int | None = None,
+        max_bytes: int | None = None,
     ) -> SalvageReceipt:
         """Perform read-only, bounded, untrusted salvage extraction from a suspect catalog."""
         return self.adapter.extract_salvage(
-            Path(catalog_dir), Path(output_file), max_records=max_records
+            Path(catalog_dir),
+            Path(output_file),
+            max_records=max_records,
+            max_bytes=max_bytes,
         )
 
     def restore_backup(

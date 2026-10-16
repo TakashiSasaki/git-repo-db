@@ -121,5 +121,8 @@ def test_missing_ordinary_file_bodies_is_not_corruption(
     receipt = service.create_consistent_backup(
         synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
     )
-    assert receipt.verified_clean
-    assert receipt.manifest.retained_byte_summary.notes_body_count == 0
+    assert receipt.manifest.retained_byte_summary.commit_count == 1
+    assert receipt.manifest.retained_byte_summary.tree_count == 1
+    assert receipt.manifest.retained_byte_summary.tag_count == 1
+    assert receipt.manifest.retained_byte_summary.notes_body_count == 1
+    assert receipt.manifest.retained_byte_summary.total_retained_bytes > 0

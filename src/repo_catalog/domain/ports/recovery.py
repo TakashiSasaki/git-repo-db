@@ -40,6 +40,7 @@ class SalvagePort(Protocol):
         catalog_dir: Path,
         output_file: Path,
         max_records: int | None = None,
+        max_bytes: int | None = None,
     ) -> SalvageReceipt: ...
 
 
