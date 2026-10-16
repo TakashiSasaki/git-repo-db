@@ -95,6 +95,7 @@ def test_core_first_context_second_and_failure_retry_convergence(
 
     with pytest.raises(AdmissionFailure) as exc_info:
         coord.admit_paired(
+            new_request=True,
             git_source=git_source,
             git_request=git_req,
             provider_batch=provider_batch,
@@ -134,6 +135,7 @@ def test_core_first_context_second_and_failure_retry_convergence(
 
     # 2. Retry the admission without cut -> converges cleanly!
     res = coord.admit_paired(
+        new_request=True,
         git_source=git_source,
         git_request=git_req,
         provider_batch=provider_batch,
@@ -212,7 +214,7 @@ def test_late_core_dependency_reconciliation(tmp_path: Path) -> None:
         select_oids=(oids["commit1"], oids["commit2"], oids["tree"]),
         retain_bytes=True,
     )
-    git_acq.acquire_from_native(git_source, git_req)
+    git_acq.acquire_from_native(git_source, git_req, new_request=True)
 
     # 3. Run PairedAcquisitionCoordinator.reconcile_core_dependencies
     coord = PairedAcquisitionCoordinator(cat_dir)
@@ -254,7 +256,7 @@ def test_operational_retry_ledger_and_recreation_resilience(tmp_path: Path) -> N
 
     # Save a continuation under an ensured request
     req = RequestIdentity(str(uuid4()), str(uuid4()))
-    ledger.ensure_request(req, scope=scope_key)
+    ledger.ensure_request(req, scope=scope_key, new_request=True)
     ledger.save_continuation(req, scope_key, {"last_oid": "deadbeef", "page": 5})
     loaded_cont = ledger.load_continuation(req, scope_key)
     assert loaded_cont is not None
@@ -277,10 +279,13 @@ def test_operational_retry_ledger_and_recreation_resilience(tmp_path: Path) -> N
         new_ledger.load_continuation(req, scope_key)
     assert exc_info.value.code == "CONTINUATION_UNAVAILABLE"
 
-    # But new work succeeds
-    new_ledger.ensure_request(req, scope=scope_key)
-    new_ledger.save_continuation(req, scope_key, {"page": 1})
-    assert new_ledger.load_continuation(req, scope_key)["page"] == 1
+    # The old identity cannot silently become new work after loss.
+    with pytest.raises(CoordinationError):
+        new_ledger.ensure_request(req, scope=scope_key)
+    fresh = RequestIdentity(str(uuid4()), str(uuid4()))
+    new_ledger.ensure_request(fresh, scope=scope_key, new_request=True)
+    new_ledger.save_continuation(fresh, scope_key, {"page": 1})
+    assert new_ledger.load_continuation(fresh, scope_key)["page"] == 1
 
 
 def test_immediate_stop_propagation(tmp_path: Path) -> None:

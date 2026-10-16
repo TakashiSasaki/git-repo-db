@@ -10,7 +10,9 @@ Deleting and recreating `operational.sqlite3` invalidates old in-flight continua
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -19,12 +21,16 @@ from repo_catalog.adapters.sqlite.notes import NotesProgress
 from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.p1_coordination import (
+    CoordinationError,
     NotesLimits,
     RequestIdentity,
 )
 from repo_catalog.domain.p1_core import CoreFailure, encode, uuid4_value
 from repo_catalog.domain.ports.notes import request_scope
-from repo_catalog.domain.time import validate_epoch_us
+from repo_catalog.domain.time import (
+    validate_observation_us,
+    validate_required_observation_us,
+)
 
 
 class UnlimitedWorkBudget:
@@ -51,13 +57,23 @@ class UnlimitedWorkBudget:
             raise ValueError(f"unknown work unit: {unit}")
         if self.usage[unit] + amount > limit:
             raise CoreFailure("BUDGET", unit, "finite cumulative request budget")
+        if unit in self._pending:
+            raise CoordinationError("UNSETTLED_WORK", "request", unit)
+        self.usage[unit] += amount
         self._pending[unit] = amount
 
+    def abandon(self, unit: str) -> None:
+        if unit not in self._pending:
+            raise CoordinationError("UNRESERVED_WORK", "request", unit)
+        del self._pending[unit]
+
     def charge(self, unit: str, amount: int) -> None:
-        reserved = self._pending.pop(unit, amount)
+        if unit not in self._pending:
+            raise CoordinationError("UNRESERVED_WORK", "request", unit)
+        reserved = self._pending.pop(unit)
         if type(amount) is not int or amount < 0 or amount > reserved:
             raise ValueError("invalid charged work amount")
-        self.usage[unit] += amount
+        self.usage[unit] += amount - reserved
 
 
 class InMemoryNotesProgress:
@@ -155,6 +171,7 @@ class OperationalAcquisitionLedger:
             request.values(),
         ).fetchone()
         if row is None:
+            self._witness_new_request(request)
             self.work_ledger.new_request(
                 request,
                 encode(
@@ -168,12 +185,45 @@ class OperationalAcquisitionLedger:
             )
         return request
 
+    def _witness_new_request(self, request: RequestIdentity) -> None:
+        """Crash-conservative issuance witness outside disposable SQLite.
+
+        It stores only the explicit request coordinates, never source input or
+        authority. Losing SQLite cannot make an issued request unspent. An
+        incomplete witness is equally sufficient to refuse recreation.
+        """
+        directory = (
+            self.work_ledger._path.parent
+            / "p5-request-witnesses"
+            / request.request_origin_uuidv4
+        )
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / request.request_uuidv4
+        try:
+            descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError as error:
+            raise CoordinationError(
+                "CONTINUATION_UNAVAILABLE",
+                "request",
+                "issued request lost Operational accounting; initiate a genuinely new request",
+            ) from error
+        with os.fdopen(descriptor, "w") as handle:
+            handle.write(encode(list(request.values())))
+            handle.flush()
+            os.fsync(handle.fileno())
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
     def ensure_request(
         self,
         request: RequestIdentity | None = None,
         *,
         scope: object | None = None,
         limits: dict[str, int] | None = None,
+        new_request: bool = False,
     ) -> RequestIdentity:
         self.work_ledger._ready()
         if request is None:
@@ -183,11 +233,18 @@ class OperationalAcquisitionLedger:
             request.values(),
         ).fetchone()
         if row is None:
+            if not new_request:
+                raise CoordinationError(
+                    "CONTINUATION_UNAVAILABLE",
+                    "request",
+                    "explicit new request required",
+                )
             scope_json = (
                 _canonical_scope_json(scope)
                 if scope is not None
                 else encode(["p5-request", *request.values()])
             )
+            self._witness_new_request(request)
             self.work_ledger.new_request(
                 request,
                 scope_json,
@@ -208,6 +265,7 @@ class OperationalAcquisitionLedger:
         attempt_uuidv4: str | None = None,
         limits: NotesLimits | None = None,
         work_limits: dict[str, int] | None = None,
+        new_request: bool = False,
     ) -> tuple[RequestIdentity, str, NotesWorkBudget, NotesProgress]:
         """Register or resume a request and allocate a new attempt budget + progress tracker."""
         notes_limits = limits or NotesLimits()
@@ -216,7 +274,12 @@ class OperationalAcquisitionLedger:
             effective_limits.update(work_limits)
         req = request or RequestIdentity(self.repository_uuidv4, str(uuid4()))
         scope_json = scope if isinstance(scope, str) else _canonical_scope_json(scope)
-        self.ensure_request(req, scope=scope_json, limits=effective_limits)
+        self.ensure_request(
+            req,
+            scope=scope_json,
+            limits=effective_limits,
+            new_request=new_request or request is None,
+        )
         attempt = attempt_uuidv4 or str(uuid4())
         uuid4_value(attempt)
         existing = self.db.execute(
@@ -261,12 +324,8 @@ class OperationalAcquisitionLedger:
     ) -> dict[str, Any]:
         """Record or update retry/backoff state in `operational.sqlite3.retry_state`."""
         self.work_ledger._ready()
-        retry_us = (
-            not_before_us
-            if not_before_us is not None
-            else (next_retry_at_us if next_retry_at_us is not None else 0)
-        )
-        validate_epoch_us(retry_us)
+        retry_us = not_before_us if not_before_us is not None else next_retry_at_us
+        validate_required_observation_us(retry_us)
         req = self.ensure_request(request)
         scope_json = _canonical_scope_json(scope_key)
         prior = self.get_retry_state(scope_key, request=req)
@@ -397,7 +456,7 @@ class OperationalAcquisitionLedger:
         if not isinstance(locator, str) or not locator:
             raise ValueError("nonempty locator string required")
         if observed_at_us is not None:
-            validate_epoch_us(observed_at_us)
+            validate_observation_us(observed_at_us)
         coord_json = _canonical_scope_json(cache_key)
         self.db.execute("BEGIN IMMEDIATE")
         try:
@@ -449,15 +508,18 @@ class OperationalAcquisitionLedger:
         sender_catalog_instance_uuidv4: str,
         report: dict[str, Any],
         *,
-        observed_at_us: int = 0,
+        observed_at_us: int | None = None,
     ) -> None:
         """Record non-authoritative Exchange package receipt in Operational tables only."""
         uuid4_value(package_id)
         uuid4_value(sender_catalog_instance_uuidv4)
         scope = ["exchange-receipt", package_id, package_digest_sha256]
+        # This is a newly measured local receipt time, not a substitute for any
+        # original observation or package export timestamp.
+        received_at_us = time.time_ns() // 1_000
         self.record_retry_state(
             scope,
-            not_before_us=observed_at_us,
+            not_before_us=received_at_us,
             reason="exchange_imported",
             attempt_count=1,
             state={

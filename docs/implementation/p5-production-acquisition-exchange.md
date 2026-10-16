@@ -1,5 +1,7 @@
 # P5 production acquisition orchestration and typed Exchange
 
+**Current correction:** [ADR 0028 implementation and v2 contract](p5-owner-corrections.md) supersedes the v1/accounting/verification claims below. The remaining original report is historical; use the new exact-tree correction receipt for current executed results.
+
 P5 implements metadata-first Git acquisition, Provider (GitHub) intake normalization into Context, Core-first plus Context-second paired admission, operational retry tracking, and versioned portable typed Exchange (`git-repo-db/p5-exchange-v1`). It builds on the P5/P6 technical contract committed in PR #79 (`2a5862b76ea3a4ca976dc3de5cd6962563560101`) stacked on PR #78 (`b024ca5103e8658d4ea9717e2cbe534905552610`). The public runtime CLI remains Schema 21. No migration, real catalog mutation, activation, release, or tag is performed by P5.
 
 The technical contract is specified in [docs/implementation/p5-p6-technical-contract.md](p5-p6-technical-contract.md). Execution evidence and verification results are documented here and in [docs/implementation/p5-execution-evidence.json](p5-execution-evidence.json).
@@ -37,7 +39,7 @@ P5 owns and implements the following production modules and integration tests ex
 ## Verification summary
 
 All tests and audits executed and passed:
-- Total tests executed: 790 (20 P5 integration tests + 4 packaging tests + 762 P1–P4 regression tests).
+- Historical total reported: 786 (the earlier 790 prose was incorrect; this is not a new execution) (20 P5 integration tests + 4 packaging tests + 762 P1–P4 regression tests).
 - Ruff check & format: 0 errors, 100% compliant.
 - Schema build check (`scripts/build_p1_schema.py --check`): clean match across all four store schemas.
 - Schema audit (`scripts/audit_p1_schema.py --check`): exact table-set equality, zero unclassified tables.

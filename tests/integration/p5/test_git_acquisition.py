@@ -56,7 +56,7 @@ def test_git_acquisition_metadata_only_and_retained_modes(
         include_refs=True,
     )
     acq_meta = GitAcquisition(cat_meta, operational=cat_meta)
-    report_meta = acq_meta.acquire_from_native(source, req_meta)
+    report_meta = acq_meta.acquire_from_native(source, req_meta, new_request=True)
 
     assert report_meta.status == "complete"
     assert report_meta.object_format == git_format
@@ -113,7 +113,7 @@ def test_git_acquisition_metadata_only_and_retained_modes(
         notes=notes_spec,
     )
     acq_hybrid = GitAcquisition(cat_hybrid, operational=cat_hybrid)
-    report_hybrid = acq_hybrid.acquire_from_native(source, req_hybrid)
+    report_hybrid = acq_hybrid.acquire_from_native(source, req_hybrid, new_request=True)
 
     assert set(report_hybrid.retained_objects) == {oids["commit2"], oids["tag"]}
     assert oids["commit1"] in report_hybrid.metadata_only_objects
@@ -163,7 +163,7 @@ def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
         include_refs=False,
     )
     with pytest.raises(CoreFailure) as exc_info:
-        acq.acquire_from_native(source, bad_req)
+        acq.acquire_from_native(source, bad_req, new_request=True)
     assert exc_info.value.code == "RETENTION_PURPOSE"
 
     # Unavailable / shallow parent OID is recorded as nominal object with partial status
@@ -177,7 +177,7 @@ def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
         select_oids=(oids["commit1"], missing_oid),
         include_refs=False,
     )
-    report = acq.acquire_from_native(source, partial_req)
+    report = acq.acquire_from_native(source, partial_req, new_request=True)
     assert report.status == "partial"
     assert report.failure_code == "OBJECT_UNAVAILABLE"
     assert missing_oid in report.nominal_missing_objects
@@ -218,7 +218,7 @@ def test_git_metadata_input_competing_claims_and_operational_rebuild(
             ScalarClaim(subject, "message", "Message B\n", prov_b),
         ),
     )
-    report = acq.acquire_metadata_only(unit)
+    report = acq.acquire_metadata_only(unit, new_request=True)
     assert report.status == "complete"
     assert subject in report.admitted_objects
 
@@ -226,7 +226,9 @@ def test_git_metadata_input_competing_claims_and_operational_rebuild(
     op_path = cat_dir / "operational.sqlite3"
     req_id = RequestIdentity(str(uuid4()), str(uuid4()))
     with OperationalAcquisitionLedger(op_path) as ledger:
-        ledger.ensure_request(req_id, scope=["p5-test", *req_id.values()])
+        ledger.ensure_request(
+            req_id, scope=["p5-test", *req_id.values()], new_request=True
+        )
         ledger.save_continuation(req_id, ["cursor"], {"page": 2})
         assert ledger.load_continuation(req_id, ["cursor"]) == {"page": 2}
         retry = ledger.record_retry_state(

@@ -46,7 +46,10 @@ from repo_catalog.domain.production_context import (
     SourceInventory,
     json_value,
 )
-from repo_catalog.domain.time import validate_epoch_us
+from repo_catalog.domain.time import (
+    validate_observation_us,
+    validate_required_observation_us,
+)
 
 
 class AcquisitionError(ValueError):
@@ -82,7 +85,7 @@ class GitMetadataInput:
     capture_origin_uuidv4: str
     capture_uuidv4: str
     source_attribution: str
-    observed_at_us: int
+    observed_at_us: int | None
     object_format: Literal["sha1", "sha256"] = "sha1"
     repository_claims: tuple[RepositoryClaim, ...] = ()
     observations: tuple[GitObservation, ...] = ()
@@ -103,7 +106,7 @@ class GitMetadataInput:
             self.capture_uuidv4,
         ):
             uuid4_value(uid)
-        validate_epoch_us(self.observed_at_us)
+        validate_required_observation_us(self.observed_at_us)
         if not self.source_attribution:
             raise AcquisitionError(
                 "INVALID_SOURCE", self.repository_uuidv4, "source attribution required"
@@ -122,7 +125,7 @@ class GitNativeAcquisitionRequest:
     capture_origin_uuidv4: str
     capture_uuidv4: str
     source_attribution: str
-    observed_at_us: int
+    observed_at_us: int | None
     select_oids: tuple[OID, ...] = ()
     retain_bytes: bool = True
     retain_oids: frozenset[OID] | None = None
@@ -143,7 +146,7 @@ class GitNativeAcquisitionRequest:
             self.capture_uuidv4,
         ):
             uuid4_value(uid)
-        validate_epoch_us(self.observed_at_us)
+        validate_required_observation_us(self.observed_at_us)
         if not self.source_attribution:
             raise AcquisitionError(
                 "INVALID_SOURCE", self.repository_uuidv4, "source attribution required"
@@ -198,7 +201,7 @@ class RepositoryRegistration:
         uuid4_value(self.repository_uuidv4)
         json_value(self.configuration_json)
         if self.observed_at_us is not None:
-            validate_epoch_us(self.observed_at_us)
+            validate_observation_us(self.observed_at_us)
         if self.provenance_json is not None:
             json_value(self.provenance_json, provenance=True)
 
@@ -223,13 +226,13 @@ class SourceRegistration:
 @dataclass(frozen=True)
 class ProviderIssueIntake:
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
     repository_uuidv4: str | None = None
     graphql: bool = False
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
         if self.repository_uuidv4 is not None:
             uuid4_value(self.repository_uuidv4)
@@ -238,13 +241,13 @@ class ProviderIssueIntake:
 @dataclass(frozen=True)
 class ProviderPullRequestIntake:
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
     repository_uuidv4: str | None = None
     graphql: bool = False
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
         if self.repository_uuidv4 is not None:
             uuid4_value(self.repository_uuidv4)
@@ -254,12 +257,12 @@ class ProviderPullRequestIntake:
 class ProviderReviewIntake:
     pull_request_id: str | int
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
     graphql: bool = False
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -267,11 +270,11 @@ class ProviderReviewIntake:
 class ProviderReviewThreadIntake:
     pull_request_id: str | int
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -279,13 +282,13 @@ class ProviderReviewThreadIntake:
 class ProviderReviewCommentIntake:
     pull_request_id: str | int
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
     graphql: bool = False
     thread_id: str | None = None
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -294,14 +297,14 @@ class ProviderIssueCommentIntake:
     parent_kind: Literal["issue", "pull_request"]
     parent_id: str | int
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
     graphql: bool = False
 
     def __post_init__(self) -> None:
         if self.parent_kind not in ("issue", "pull_request"):
             raise AcquisitionError("PARENT_KIND", self.parent_kind)
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -311,13 +314,13 @@ class ProviderTimelineIntake:
     parent_id: str | int
     event_id: str | int
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
 
     def __post_init__(self) -> None:
         if self.parent_kind not in ("issue", "pull_request"):
             raise AcquisitionError("PARENT_KIND", self.parent_kind)
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -325,11 +328,11 @@ class ProviderTimelineIntake:
 class ProviderCommitContextIntake:
     pull_request_id: str | int
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -337,11 +340,11 @@ class ProviderCommitContextIntake:
 class ProviderFileContextIntake:
     pull_request_id: str | int
     payload: dict[str, object]
-    observed_at_us: int
+    observed_at_us: int | None
     provenance_json: str
 
     def __post_init__(self) -> None:
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -353,12 +356,12 @@ class DetachedResourceTransfer:
     target_repository_uuidv4: str | None
     clock: FieldClock
     provenance_json: str
-    observed_at_us: int
+    observed_at_us: int | None
 
     def __post_init__(self) -> None:
         if self.target_repository_uuidv4 is not None:
             uuid4_value(self.target_repository_uuidv4)
-        validate_epoch_us(self.observed_at_us)
+        validate_observation_us(self.observed_at_us)
         json_value(self.provenance_json, provenance=True)
 
 
@@ -391,7 +394,7 @@ class ProviderIntakeBatch:
         tuple[ContextCoverageClaim, CollectionObservation, str], ...
     ] = ()
     coverage_claims: tuple[ContextCoverageClaim, ...] = ()
-    core_references: tuple[tuple[CoreReference, FieldClock, int], ...] = ()
+    core_references: tuple[tuple[CoreReference, FieldClock, int | None], ...] = ()
 
     def __post_init__(self) -> None:
         uuid4_value(self.service_instance_uuidv4)

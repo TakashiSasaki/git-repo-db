@@ -120,7 +120,7 @@ git_req = GitNativeAcquisitionRequest(
     retain_bytes=True,
 )
 git_acq = GitAcquisition(cat_a)
-git_report = git_acq.acquire_from_native(git_source, git_req)
+git_report = git_acq.acquire_from_native(git_source, git_req, new_request=True)
 assert git_report.status == "complete"
 assert len(git_report.admitted_objects) >= 1
 
@@ -164,7 +164,7 @@ wire = encode_package(pkg)
 decoded = decode_package(wire)
 
 svc_b = ExchangeService(cat_b)
-rep_b = svc_b.import_package(decoded)
+rep_b = svc_b.import_package(decoded, new_request=True)
 assert rep_b.admitted_core_objects >= 1
 assert rep_b.admitted_context_resources >= 1
 

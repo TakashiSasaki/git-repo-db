@@ -40,6 +40,7 @@ from repo_catalog.domain.exchange import (
     encode_package,
 )
 from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 
@@ -97,6 +98,7 @@ def _setup_source_catalog(
 
     coord = PairedAcquisitionCoordinator(cat_dir)
     coord.admit_paired(
+        new_request=True,
         git_source=git_source,
         git_request=git_req,
         provider_batch=batch,
@@ -127,7 +129,11 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
         cat_b, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_b = ExchangeService(cat_b)
-    rep_b1 = svc_b.import_package(wire_bytes)
+    rep_b1 = svc_b.import_package(
+        wire_bytes,
+        request=RequestIdentity(pkg_a.sender_catalog_instance_uuidv4, pkg_a.package_id),
+        new_request=True,
+    )
     assert rep_b1.admitted_core_objects >= 3
     assert rep_b1.admitted_retained_metadata >= 3
     assert rep_b1.admitted_context_resources >= 1
@@ -140,12 +146,16 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
         core_b.close()
 
     # 3. Repeat import into B (idempotent, lost-ack handling)
-    rep_b2 = svc_b.import_package(wire_bytes)
+    rep_b2 = svc_b.import_package(
+        wire_bytes,
+        request=RequestIdentity(pkg_a.sender_catalog_instance_uuidv4, pkg_a.package_id),
+        new_request=True,
+    )
     assert rep_b2.package_id == pkg_a.package_id
 
     # 4. Reverse import (export from B, import back into A)
     pkg_b = svc_b.export_package(exported_at_us=1_700_000_300_000_000)
-    rep_a = svc_a.import_package(pkg_b)
+    rep_a = svc_a.import_package(pkg_b, new_request=True)
     assert rep_a.package_id == pkg_b.package_id
 
     # 5. Multi-hop (export from B, import into C)
@@ -153,7 +163,7 @@ def test_exchange_export_import_repeat_reverse_and_multi_hop(tmp_path: Path) -> 
         cat_c, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_c = ExchangeService(cat_c)
-    rep_c = svc_c.import_package(pkg_b)
+    rep_c = svc_c.import_package(pkg_b, new_request=True)
     assert rep_c.admitted_core_objects >= 3
 
     with Context.snapshot(cat_c) as ctx_c:
@@ -189,7 +199,7 @@ def test_exchange_selective_filters_and_partial_input(tmp_path: Path) -> None:
         cat_dst, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_dst = ExchangeService(cat_dst)
-    rep = svc_dst.import_package(pkg)
+    rep = svc_dst.import_package(pkg, new_request=True)
     assert rep.admitted_core_objects >= 1
     assert rep.admitted_retained_metadata == 0
 
@@ -212,12 +222,21 @@ def test_exchange_refuses_intrinsic_spoofing_without_validated_bytes(
     for claim in pkg_dict["core"].get("scalar_claims", []):
         claim["authority"] = "intrinsic"
 
+    # A rewritten digest is only a checksum; independently reject intrinsic spoofing.
+    import hashlib
+
+    content = {k: v for k, v in pkg_dict.items() if k != "digest_sha256"}
+    pkg_dict["digest_sha256"] = hashlib.sha256(
+        json.dumps(
+            content, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+    ).hexdigest()
     # Import into B
     init_catalog_stores(
         cat_b, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_b = ExchangeService(cat_b)
-    rep = svc_b.import_package(pkg_dict)
+    rep = svc_b.import_package(pkg_dict, new_request=True)
     assert rep.package_id == pkg.package_id
 
     # Receiver MUST ignore/refuse unverified intrinsic claims and not admit them as intrinsic!
@@ -251,14 +270,14 @@ def test_exchange_refuses_tampered_payloads_without_store_corruption(
         # Alter the hex bytes so hash no longer matches declared full_oid
         bad_dict["core"]["retained_metadata"][0]["body_hex"] = "00" * 30
         with pytest.raises((ExchangeError, CoreFailure)):
-            svc_b.import_package(bad_dict)
+            svc_b.import_package(bad_dict, new_request=True)
 
     # 2. Tamper text_bodies UTF-8 text (digest mismatch)
     bad_dict2 = json.loads(wire_bytes)
     if bad_dict2["context"].get("text_bodies"):
         bad_dict2["context"]["text_bodies"][0]["text_value"] = "tampered text value"
         with pytest.raises((ExchangeError, CoreFailure)):
-            svc_b.import_package(bad_dict2)
+            svc_b.import_package(bad_dict2, new_request=True)
 
     # 3. Smuggle ordinary blob into retained_metadata
     bad_dict3 = json.loads(wire_bytes)
@@ -273,7 +292,7 @@ def test_exchange_refuses_tampered_payloads_without_store_corruption(
         }
     )
     with pytest.raises((ExchangeError, CoreFailure)):
-        svc_b.import_package(bad_dict3)
+        svc_b.import_package(bad_dict3, new_request=True)
 
     # Verify that target catalog B was NEVER mutated or corrupted
     core_b = GitCore(cat_b / "core.sqlite3")
@@ -302,7 +321,7 @@ def test_exchange_evaluates_core_dependencies_against_receiver_core(
         cat_b, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
     )
     svc_b = ExchangeService(cat_b)
-    rep = svc_b.import_package(pkg)
+    rep = svc_b.import_package(pkg, new_request=True)
     assert rep.admitted_context_resources >= 1
 
     # In catalog B, the imported PR's core_dependencies must have required=False because Core lacks the OID!

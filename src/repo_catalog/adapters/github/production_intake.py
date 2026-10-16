@@ -28,7 +28,7 @@ from repo_catalog.domain.production_context import (
     ResourceRelation,
     json_value,
 )
-from repo_catalog.domain.time import parse_iso8601_us, validate_epoch_us
+from repo_catalog.domain.time import parse_iso8601_us, validate_observation_us
 
 _ACTOR_FIELDS = ("id", "login", "type", "html_url", "url")
 _LABEL_FIELDS = ("id", "name", "color", "description", "default")
@@ -90,9 +90,9 @@ def _parse_optional_time_us(
     if raw is None:
         return True, None
     if type(raw) is int:
-        return True, validate_epoch_us(raw)
+        return True, validate_observation_us(raw)
     try:
-        return True, parse_iso8601_us(raw)
+        return True, validate_observation_us(parse_iso8601_us(raw))
     except (ValueError, TypeError) as exc:
         raise AcquisitionError("INVALID_TIMESTAMP", key, str(exc)) from exc
 
@@ -138,7 +138,7 @@ def _candidate(
     value: object,
     clock: FieldClock,
     provenance_json: str,
-    observed_at_us: int,
+    observed_at_us: int | None,
 ) -> FieldCandidate:
     return FieldCandidate(
         resource=resource,
@@ -158,12 +158,14 @@ class NormalizedContextUnit:
     repository_uuidv4: str | None
     clock: FieldClock
     provenance_json: str
-    observed_at_us: int
+    observed_at_us: int | None
     observations: tuple[ResourceObservation, ...]
-    text_admissions: tuple[tuple[ResourceKey, str | None, FieldClock, str, int], ...]
+    text_admissions: tuple[
+        tuple[ResourceKey, str | None, FieldClock, str, int | None], ...
+    ]
     extra_texts: tuple[str, ...]
     relations: tuple[ResourceRelation, ...]
-    core_references: tuple[tuple[CoreReference, FieldClock, int], ...]
+    core_references: tuple[tuple[CoreReference, FieldClock, int | None], ...]
 
 
 def make_document_key(
@@ -191,7 +193,7 @@ def normalize_repository_fields(
     service_instance_uuidv4: str,
     repository_uuidv4: str,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
     *,
     clock_domain: str = "github:repository:updated_at",
@@ -199,13 +201,9 @@ def normalize_repository_fields(
     """Normalize repository-level GitHub metadata into a Context ResourceObservation."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "repository", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
-    repo_id = (
-        canonical_database_id(payload["id"])
-        if "id" in payload and payload["id"] is not None
-        else repository_uuidv4
-    )
+    repo_id = canonical_database_id(payload.get("id"))
     resource = ResourceKey(service_instance_uuidv4, "repository", repo_id)
     has_upd, upd_us = _parse_optional_time_us(
         payload, "updatedAt" if "updatedAt" in payload else "updated_at"
@@ -292,7 +290,7 @@ def normalize_repository_fields(
 def normalize_issue(
     service_instance_uuidv4: str,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
     *,
     repository_uuidv4: str | None = None,
@@ -303,7 +301,7 @@ def normalize_issue(
         raise AcquisitionError("MALFORMED_PAYLOAD", "issue", "dict required")
     if "pull_request" in payload:
         return None
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     id_field = (
         "fullDatabaseId"
@@ -463,7 +461,7 @@ def normalize_issue(
 def normalize_pull_request(
     service_instance_uuidv4: str,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
     *,
     repository_uuidv4: str | None = None,
@@ -472,7 +470,7 @@ def normalize_pull_request(
     """Normalize a GitHub Pull Request payload, including title/body documents and CoreReferences."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "pull_request", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     id_field = (
         "fullDatabaseId"
@@ -828,7 +826,7 @@ def normalize_review(
     service_instance_uuidv4: str,
     pull_request_id: str | int,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
     *,
     graphql: bool = False,
@@ -836,7 +834,7 @@ def normalize_review(
     """Normalize a GitHub PR Review summary without inventing a synthetic update clock."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "review", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
     pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
@@ -984,13 +982,13 @@ def normalize_review_thread(
     service_instance_uuidv4: str,
     pull_request_id: str | int,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
 ) -> NormalizedContextUnit:
     """Normalize a GraphQL PullRequestReviewThread into a Context thread resource."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "review_thread", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
     pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
@@ -1056,7 +1054,7 @@ def normalize_review_comment(
     service_instance_uuidv4: str,
     pull_request_id: str | int,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
     *,
     graphql: bool = False,
@@ -1065,7 +1063,7 @@ def normalize_review_comment(
     """Normalize a REST or GraphQL PR Review Comment with review, thread, and reply relations."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "review_comment", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
     pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
@@ -1370,7 +1368,7 @@ def normalize_issue_comment(
     parent_kind: Literal["issue", "pull_request"],
     parent_id: str | int,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
     *,
     graphql: bool = False,
@@ -1380,7 +1378,7 @@ def normalize_issue_comment(
         raise AcquisitionError("MALFORMED_PAYLOAD", "issue_comment", "dict required")
     if parent_kind not in ("issue", "pull_request"):
         raise AcquisitionError("PARENT_KIND", parent_kind)
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pid = canonical_database_id(parent_id, "parent_id")
     parent_key = ResourceKey(service_instance_uuidv4, parent_kind, pid)
@@ -1486,13 +1484,13 @@ def normalize_timeline_event(
     parent_id: str | int,
     event_id: str | int,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
 ) -> NormalizedContextUnit:
     """Normalize a GitHub Issue/PR Timeline event."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "timeline_event", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pid = canonical_database_id(parent_id, "parent_id")
     parent_key = ResourceKey(service_instance_uuidv4, parent_kind, pid)
@@ -1599,13 +1597,13 @@ def normalize_pr_commit(
     service_instance_uuidv4: str,
     pull_request_id: str | int,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
 ) -> NormalizedContextUnit:
     """Normalize a GitHub PR commit entry into a Context document and CoreReference."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "pr_commit", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
     pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
@@ -1719,13 +1717,13 @@ def normalize_pr_file(
     service_instance_uuidv4: str,
     pull_request_id: str | int,
     payload: dict[str, Any],
-    observed_at_us: int,
+    observed_at_us: int | None,
     provenance_json: str,
 ) -> NormalizedContextUnit:
     """Normalize a GitHub PR file entry into Context metadata and patch text without retaining Git blobs."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "pr_file", "dict required")
-    validate_epoch_us(observed_at_us)
+    validate_observation_us(observed_at_us)
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
     pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)

@@ -21,14 +21,13 @@ from pathlib import Path
 from typing import Any, Iterator
 from uuid import uuid4
 
-from repo_catalog.adapters.sqlite.acquisition import (
-    OperationalAcquisitionLedger,
-    UnlimitedWorkBudget,
-)
+from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     AdmissionTransaction,
     PairCoordinator,
+    catalog_completion,
+    catalog_gate,
 )
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
@@ -40,7 +39,6 @@ from repo_catalog.domain.exchange import (
     decode_package,
     empty_context_section,
     empty_core_section,
-    package_digest_sha256,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.notes import NotesInventory, verify_inventory
@@ -55,7 +53,11 @@ from repo_catalog.domain.p1_context import (
     FieldClock,
     ResourceKey,
 )
-from repo_catalog.domain.p1_coordination import AdmissionFailure, CoordinationError
+from repo_catalog.domain.p1_coordination import (
+    AdmissionFailure,
+    CoordinationError,
+    RequestIdentity,
+)
 from repo_catalog.domain.p1_core import (
     OID,
     Capture,
@@ -72,6 +74,7 @@ from repo_catalog.domain.p1_core import (
     RepositoryClaim,
     ScalarClaim,
     _notes_group,
+    account_verification,
     encode,
     intrinsic_members,
     valid_note_role,
@@ -276,36 +279,39 @@ class ExchangeService:
         *,
         selection: ExchangeSelectionScope | None = None,
         package_id: str | None = None,
-        exported_at_us: int = 0,
+        exported_at_us: int | None = None,
     ) -> ExchangePackage:
         """Export a verification-checked ExchangePackage from Core and/or Context."""
-        self._check_stop()
-        scope = selection or ExchangeSelectionScope()
-        pkg_id = package_id or str(uuid4())
-        repo_uuid, sender_instance = self._store_identity()
+        with catalog_gate(self.directory, exclusive=False):
+            self._check_stop()
+            scope = selection or ExchangeSelectionScope()
+            pkg_id = package_id or str(uuid4())
+            repo_uuid, sender_instance = self._store_identity()
 
-        if self._has_core() and self._has_context():
-            # Verify pair health before exporting from a paired catalog
-            with PairCoordinator(self.directory).snapshots():
-                pass
+            if self._has_core() and self._has_context():
+                # Verify pair health before exporting from a paired catalog
+                with PairCoordinator(self.directory).snapshots():
+                    pass
 
-        core_section: dict[str, list[dict[str, Any]]] | None = None
-        if scope.include_core and self._has_core():
-            core_section = self._export_core(scope, sender_instance)
+            core_section: dict[str, list[dict[str, Any]]] | None = None
+            if scope.include_core and self._has_core():
+                core_section = self._export_core(scope, sender_instance)
 
-        context_section: dict[str, list[dict[str, Any]]] | None = None
-        if scope.include_context and self._has_context():
-            context_section = self._export_context(scope)
+            context_section: dict[str, list[dict[str, Any]]] | None = None
+            if scope.include_context and self._has_context():
+                context_section = self._export_context(scope)
 
-        return ExchangePackage(
-            package_id=pkg_id,
-            exported_at_us=exported_at_us,
-            sender_catalog_instance_uuidv4=sender_instance,
-            repository_uuidv4=repo_uuid,
-            selection_scope=scope,
-            core=core_section,
-            context=context_section,
-        )
+            with catalog_completion(self.directory):
+                self._check_stop()
+                return ExchangePackage(
+                    package_id=pkg_id,
+                    exported_at_us=exported_at_us,
+                    sender_catalog_instance_uuidv4=sender_instance,
+                    repository_uuidv4=repo_uuid,
+                    selection_scope=scope,
+                    core=core_section,
+                    context=context_section,
+                )
 
     def _export_core(
         self,
@@ -402,7 +408,7 @@ class ExchangeService:
                 if is_checked and not scope.include_retained_bytes:
                     orig_prov = Provenance(*json.loads(row[4]))
                     downgraded_prov = Provenance(
-                        f"exchange-sender:{sender_instance}",
+                        orig_prov.source,
                         orig_prov.observation,
                         orig_prov.coordinate,
                         orig_prov.decoder,
@@ -450,7 +456,7 @@ class ExchangeService:
                 if is_checked and not scope.include_retained_bytes:
                     orig_prov = Provenance(*json.loads(row[6]))
                     downgraded_prov = Provenance(
-                        f"exchange-sender:{sender_instance}",
+                        orig_prov.source,
                         orig_prov.observation,
                         orig_prov.coordinate,
                         orig_prov.decoder,
@@ -587,7 +593,7 @@ class ExchangeService:
                         )
                     else:
                         downgraded_prov = Provenance(
-                            f"exchange-sender:{sender_instance}",
+                            cap.source,
                             encode(cap.key),
                             "notes-inventory",
                             "git-native-notes-inventory",
@@ -1182,11 +1188,107 @@ class ExchangeService:
         raw_package: ExchangePackage | str | bytes | dict[str, Any],
         *,
         work: WorkBudget | None = None,
+        request: RequestIdentity | None = None,
+        new_request: bool = False,
     ) -> ExchangeImportReport:
         """Validate and import an ExchangePackage into Core and/or Context."""
         self._check_stop()
-        package = decode_package(raw_package)
-        digest = package_digest_sha256(package)
+        repo_uuid, instance_uuid = self._store_identity()
+        if request is None:
+            if isinstance(raw_package, ExchangePackage):
+                origin, identifier = (
+                    raw_package.sender_catalog_instance_uuidv4,
+                    raw_package.package_id,
+                )
+            elif isinstance(raw_package, dict):
+                origin, identifier = (
+                    raw_package.get("sender_catalog_instance_uuidv4"),
+                    raw_package.get("package_id"),
+                )
+            else:
+                raise ExchangeError(
+                    "REQUEST_REQUIRED",
+                    "package",
+                    "wire JSON requires an explicit cumulative request identity",
+                )
+            request = RequestIdentity(origin, identifier)
+        with self._open_operational(repo_uuid, instance_uuid) as ledger:
+            if work is None:
+                if ledger is None:
+                    raise CoordinationError(
+                        "CONTINUATION_UNAVAILABLE",
+                        "exchange",
+                        "Operational accounting required",
+                    )
+                _, _, work, _ = ledger.create_budget(
+                    scope=["p5-exchange-import", *request.values()],
+                    request=request,
+                    new_request=new_request,
+                    work_limits={"metadata_units": 10_000_000},
+                )
+            # Reserve before JSON parsing, canonicalization, digest comparison or
+            # bytes expansion. Successful work settles actual measured input;
+            # failure/crash uncertainty retains the reserved upper bounds.
+            from repo_catalog.domain.exchange import (
+                _WIRE_WORK,
+                MAX_ELEMENTS,
+                MAX_PACKAGE_BYTES,
+                _bounded_json,
+            )
+
+            pending = {}
+            measurement = {"metadata_units": 0, "verification_bytes": 0}
+            token = _WIRE_WORK.set(measurement)
+            try:
+                for unit, amount in (
+                    ("input_bytes", MAX_PACKAGE_BYTES),
+                    ("verification_bytes", 2 * MAX_PACKAGE_BYTES),
+                    ("metadata_units", 5 * MAX_ELEMENTS),
+                ):
+                    work.require(unit, amount)
+                    pending[unit] = amount
+                package = decode_package(raw_package)
+                _bounded_json(package.to_dict())
+                if isinstance(raw_package, bytes):
+                    input_bytes = len(raw_package)
+                elif isinstance(raw_package, str):
+                    input_bytes = len(raw_package.encode("utf-8"))
+                else:
+                    from repo_catalog.domain.exchange import encode_package
+
+                    input_bytes = len(encode_package(package).encode("utf-8"))
+                actual = {
+                    "input_bytes": input_bytes,
+                    "verification_bytes": measurement["verification_bytes"],
+                    "metadata_units": measurement["metadata_units"],
+                }
+                for unit in tuple(pending):
+                    if actual[unit] > pending[unit]:
+                        raise ExchangeError(
+                            "INPUT_LIMIT", unit, "measured work exceeds input bound"
+                        )
+                    work.charge(unit, actual[unit])
+                    del pending[unit]
+            except BaseException:
+                for unit, amount in pending.items():
+                    if hasattr(work, "abandon"):
+                        work.abandon(unit)
+                    else:
+                        work.charge(unit, amount)
+                raise
+            finally:
+                _WIRE_WORK.reset(token)
+            return self._import_package(package, work=work)
+
+    def _import_package(
+        self,
+        raw_package,
+        *,
+        work: WorkBudget,
+    ) -> ExchangeImportReport:
+        self._check_stop()
+        package = raw_package
+        digest = package.digest_sha256
         repo_uuid, instance_uuid = self._store_identity()
 
         if package.repository_uuidv4 != repo_uuid:
@@ -1201,7 +1303,7 @@ class ExchangeService:
             if ledger is not None:
                 prior_receipt = ledger.get_exchange_receipt(package.package_id, digest)
 
-        active_work = work if work is not None else UnlimitedWorkBudget()
+        active_work = work
 
         want_core = (
             package.core is not None
@@ -1216,7 +1318,8 @@ class ExchangeService:
 
         # Pre-validate all untrusted Core and Context artifacts before opening store transactions
         if want_core and package.core is not None:
-            self._prevalidate_core_section(package.core, active_work)
+            with account_verification(active_work):
+                self._prevalidate_core_section(package.core, active_work)
         if want_context and package.context is not None:
             self._prevalidate_context_section(package.context)
 
@@ -1259,10 +1362,9 @@ class ExchangeService:
 
             try:
                 coordinator.admit(_core_unit, _context_unit)
-            except AdmissionFailure as err:
-                if not err.outcome.core_committed:
-                    raise err.cause from err
-                raise err.cause from err
+            except AdmissionFailure:
+                # The outcome includes actual independent commits. Preserve it for retry.
+                raise
         elif want_core and package.core is not None:
             core_cap = GitCore(self.directory / "core.sqlite3")
             try:
@@ -1324,7 +1426,6 @@ class ExchangeService:
                         "linked_core_references": report.linked_core_references,
                         "pending_core_references": report.pending_core_references,
                     },
-                    observed_at_us=package.exported_at_us,
                 )
 
         return report
@@ -1380,7 +1481,7 @@ class ExchangeService:
                 oid,
                 native_type,
                 body,
-                int(meta["size"]),
+                meta["size"],
                 str(meta["digest_sha256"]),
             )
             native.validate()
@@ -1401,7 +1502,7 @@ class ExchangeService:
                     OID(s["object_format"], s["full_oid"]),
                     s["native_type"],
                     bytes.fromhex(s["body_hex"]),
-                    int(s["declared_size"]),
+                    s["declared_size"],
                     str(s["digest_sha256"]),
                 )
                 for s in inv_item["structures"]
@@ -1457,7 +1558,7 @@ class ExchangeService:
                 note_oid,
                 "blob",
                 body,
-                int(rn["size"]),
+                rn["size"],
                 str(rn["digest_sha256"]),
             )
             native.validate()
@@ -1466,6 +1567,19 @@ class ExchangeService:
         self,
         ctx_data: dict[str, list[dict[str, Any]]],
     ) -> None:
+        from repo_catalog.domain.time import validate_observation_us
+
+        provider_time_fields = {
+            "created_at_us",
+            "updated_at_us",
+            "pushed_at_us",
+            "closed_at_us",
+            "merged_at_us",
+            "submitted_at_us",
+        }
+        for candidate in ctx_data["field_candidates"]:
+            if candidate["field_name"] in provider_time_fields:
+                validate_observation_us(json.loads(candidate["value_json"]))
         package_digests: set[str] = set()
         for tb in ctx_data["text_bodies"]:
             sha256_hex = tb.get("sha256")
@@ -1536,7 +1650,7 @@ class ExchangeService:
                 oid,
                 meta["native_type"],
                 body,
-                int(meta["size"]),
+                meta["size"],
                 str(meta["digest_sha256"]),
             )
             c_keys, g_keys = _recomputed_intrinsic_keys(native)
@@ -1644,7 +1758,7 @@ class ExchangeService:
                     OID(s["object_format"], s["full_oid"]),
                     s["native_type"],
                     bytes.fromhex(s["body_hex"]),
-                    int(s["declared_size"]),
+                    s["declared_size"],
                     str(s["digest_sha256"]),
                 )
                 for s in inv_item["structures"]
@@ -1702,7 +1816,7 @@ class ExchangeService:
                 note_oid,
                 "blob",
                 bytes.fromhex(rn["body_hex"]),
-                int(rn["size"]),
+                rn["size"],
                 str(rn["digest_sha256"]),
             )
             core_cap.admit_note(proof, native, rn["physical_copy_uuidv4"], work)
@@ -1950,7 +2064,7 @@ class ExchangeService:
             else:
                 clock_domain = cr.get("clock_domain", "exchange:core_reference")
                 clock_ts_us = cr.get("clock_ts_us")
-                obs_us = cr.get("observed_at_us", 0)
+                obs_us = cr.get("observed_at_us")
                 ctx.report_core_reference(
                     CoreReference(rk, role, oid, prov_json),
                     clock=FieldClock(clock_domain, clock_ts_us),
