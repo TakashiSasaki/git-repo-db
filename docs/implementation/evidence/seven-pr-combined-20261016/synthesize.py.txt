@@ -1,0 +1,26 @@
+import json, os, subprocess
+from pathlib import Path
+root=Path('/workspace/git-repo-db')
+out=Path('/workspace/integration-acceptance')
+def git(*args, **kw):
+    return subprocess.check_output(['git', '-C', str(root), *args], text=True, **kw).strip()
+order=[89,87,88,93,91,92,90]
+expected=['ed80623514a5e574d1e24e908b95504f60b815db','6ebd07cf4d6846e7d964c1be571c8507c037b9be','e250fe0ad801013fb9c59e929cfc7f875fabb5b8','d4bf2253eed2ea7df26336c681c5a5241dd36bf6','f749d63fb1162520b21512a0690bf2015441ba91','1e5b150613d1ccf15285c5724498744fb4d883fa','ea006924152d2fc508c7eb21697ad3c376e373f6']
+pinned=['660178ff1a881e4482b7a3cde02b51dc50cf2603','c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75','e956cd50b1f25bd95427301cced4741bb68e24f8','7dc31256907aff4412170bc3f3ce3069b2ad89f2','1700ed37e82a6028cfa40c86b35db7621dd50404','94488cf4e7fa15f747ece7a4e3d57e0bc213966a','7cbade2928467f3c3ab2350bdc84e275d7057622']
+prs={p['number']:p for p in json.loads((out/'raw/pr-initial.json').read_text())}
+target=git('rev-parse','origin/main'); rows=[]
+env=os.environ.copy(); env.update(GIT_AUTHOR_NAME='Integration Validation',GIT_AUTHOR_EMAIL='integration@example.invalid',GIT_COMMITTER_NAME='Integration Validation',GIT_COMMITTER_EMAIL='integration@example.invalid',GIT_AUTHOR_DATE='2026-10-16T20:00:00Z',GIT_COMMITTER_DATE='2026-10-16T20:00:00Z')
+for n,ref_tree,pin in zip(order,expected,pinned):
+    head=prs[n]['headRefOid']; assert git('rev-parse','origin/'+prs[n]['headRefName'])==head
+    result=subprocess.run(['git','-C',str(root),'merge-tree','--write-tree',target,head],capture_output=True,text=True)
+    (out/f'raw/merge-{n}.txt').write_text(result.stdout+result.stderr)
+    assert result.returncode==0, result.stdout
+    tree=result.stdout.splitlines()[0]
+    commit=git('commit-tree',tree,'-p',target,'-p',head,input=f'Synthetic acceptance merge PR #{n}\n',env=env)
+    git('update-ref',f'refs/validation/seven-pr-20261016/{n}',commit)
+    changes=git('diff','--name-status',target,commit)
+    rows.append(dict(pr=n,target=target,feature=head,pinned=pin,feature_unchanged=head==pin,merge_bases=git('merge-base','--all',target,head).splitlines(),parents=[target,head],synthetic_commit=commit,conflicts=False,tree=tree,expected_tree=ref_tree,expected_tree_match=tree==ref_tree,changed_paths=changes.splitlines(),executable_changes=[l for l in changes.splitlines() if l.split('\t')[-1].startswith(('src/','tests/','scripts/','.github/','pyproject.toml','uv.lock','mkdocs'))]))
+    target=commit
+(out/'chain.json').write_text(json.dumps(rows,indent=2)+'\n')
+(out/'final-source.txt').write_text(target+'\n'+rows[-1]['tree']+'\n')
+print(json.dumps([{k:v for k,v in r.items() if k not in ('changed_paths','executable_changes')} for r in rows],indent=2))
