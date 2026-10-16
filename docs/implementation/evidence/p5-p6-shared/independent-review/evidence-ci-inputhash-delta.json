@@ -1,0 +1,194 @@
+{
+  "revision": {
+    "executed": "f23dfdabff5a2f9a95104fa8703b81f62802b7cb",
+    "docs_only": "f3cd1c9fa81d78e4a77efb824f5eb4a6b4b95f0a"
+  },
+  "ci_acceptance_input_hash": {
+    "executed": "3ad6043771fd28e09bee80fa53f23dcedbe26c0d40dc5d015302777ae7d5f919",
+    "docs_only": "9cc20503acece5edfb752ba6e2ae0c37f29a49acabc1ac25b0635c482bfdfe07"
+  },
+  "equal": false,
+  "changed_inputs": {
+    "docs/implementation/evidence/p5-p6-shared/run_final_test_purpose.py.txt": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "d16317930f20f4b3327083d62cc4657b8cc25c0e"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/selected.txt": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "0e0a6c6f7cc583b3a2092c7ea8fe5355cccb098c"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/independent-review/purpose-f23-reconciliation.json": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "d223aa3b408b2ebec020306359c05cd3220076b5"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/receipt.json": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "59e75233d7d01fcc771d2f937d65f4064f638839"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/ruff.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "1f5f344d054fae10f39140fb7199c99321d9190a"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/journal.jsonl.gz": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "2ae690ab4cdea2ded0063dd9f266612b1285632c"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/build-schema.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "78e278e98e9b632f95a8f287af00023cad44cb6c"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/independent-review/purpose-f23.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "edfcb257c754570a6be38f25d9d917358d7e2b07"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/reconciliation.json": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "da8fcc7fbdbcaf17acfd3bfd6cb15af256bdfedb"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/pytest.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "2aee0b7280d6522d5146992de224fe3431f87ae7"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/independent-review/uv-sync-f23.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "b422a59ece1cf7f6efd312a4e39305b62033ed78"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/docs-only-input-identity-ae087d3.json": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "34dce22705401e720e4a7c719033d975e3bce144"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/junit.xml.gz": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "1fc3cd1909eea188b5c8a88fb32fc8361ba332dd"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/docs-only-input-identity.json": {
+      "before": [
+        "100644",
+        "blob",
+        "34dce22705401e720e4a7c719033d975e3bce144"
+      ],
+      "after": [
+        "100644",
+        "blob",
+        "b616a251f55beecd03867cc55739a0db70e17f46"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/sync.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "90a3bd408d411674da2dbd49e1faaa706c13faad"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/format.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "de2db9afaf6b2497a320b517514f00aceb82813c"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/audit-boundary.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "99fffd3a9463cbea78d8acf32f6d664a72e59907"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/audit-callsites.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "5c7f7bbfb60bdb2d2cd2109b15a19695692ecf26"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/independent-review/purpose-f23.xml.gz": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "e8422ce5a24586f3197a233b10ac03720f9939f1"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/f23dfda/audit-schema.log": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "bb69529092bc6d43b25815503a43c58ee579721e"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/independent-review/purpose-f23-journal.jsonl.gz": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "77fed199cdbe17cd788febe2b5e70fd96c7d9b36"
+      ]
+    },
+    "docs/implementation/evidence/p5-p6-shared/independent-review/purpose-f23-selected.txt": {
+      "before": null,
+      "after": [
+        "100644",
+        "blob",
+        "312a65eace6b4009fea7ba7ea2a9dac9a00780ee"
+      ]
+    }
+  },
+  "classification": "New evidence artifacts are conservatively included in CI input hash; unchanged scoped runtime/test hashes do not imply equal CI acceptance hash."
+}

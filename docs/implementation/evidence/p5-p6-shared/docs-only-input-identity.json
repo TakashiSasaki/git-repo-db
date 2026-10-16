@@ -320,5 +320,11 @@
     "uv.lock": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9"
   },
   "empty_diff_from_tested_commit": true,
-  "aggregate_path_hash_sha256": "737e623184ced99cb9f94cde31179c6dd48d3e6733f0c822ae99714f8ee840f3"
+  "aggregate_path_hash_sha256": "737e623184ced99cb9f94cde31179c6dd48d3e6733f0c822ae99714f8ee840f3",
+  "identity_scope_note": "Scoped source/test/script/project/lock content equality only; not the full live scripts.ci_plan acceptance input set, which includes evidence files under this directory.",
+  "is_full_ci_acceptance_input_hash": false,
+  "observed_live_ci_acceptance_hashes": {
+    "f23dfdabff5a2f9a95104fa8703b81f62802b7cb": "3ad6043771fd28e09bee80fa53f23dcedbe26c0d40dc5d015302777ae7d5f919",
+    "f3cd1c9fa81d78e4a77efb824f5eb4a6b4b95f0a": "9cc20503acece5edfb752ba6e2ae0c37f29a49acabc1ac25b0635c482bfdfe07"
+  }
 }
