@@ -643,3 +643,15 @@ rename from an unpublished result. The regression tests include symlink/parent
 substitution, separate-process no-overwrite publication and SIGKILL during
 copying. These verify Linux local-filesystem ordering and process interruption,
 not physical host power-loss durability or protection against privileged writers.
+
+An activation directory pin must remain open through validation, derivative
+initialization, both catalog gates and locator publication. Opening and closing a
+directory descriptor before validation does not pin later pathname operations.
+Perform catalog I/O through the retained descriptor and compare the advertised
+pathname's inode before and after publication. On a detected substitution, reject
+the receipt and restore the prior locator (or remove the newly created locator).
+Exercise both publication sides and both absent/existing locators with
+`pytest tests/integration/p7/test_filesystem_hardening.py -k catalog_path_swap`.
+These checks do not make directory names immutable against arbitrary
+noncooperating writers after activation; preserve the supported cooperating-process
+namespace contract.

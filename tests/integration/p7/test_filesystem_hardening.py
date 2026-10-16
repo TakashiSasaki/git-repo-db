@@ -350,3 +350,54 @@ def test_backup_directory_enumeration_is_bounded(
     )
     with pytest.raises(RestoreValidationError, match="Unexpected files"):
         RecoveryService().restore_backup(backup, tmp_path / "dest", repo_uuid)
+
+
+@pytest.mark.parametrize("previous", [False, True])
+@pytest.mark.parametrize("stage", ["before_publication", "after_publication"])
+def test_activation_catalog_path_swap_is_not_acknowledged(
+    synthetic_catalog, tmp_path, monkeypatch, previous, stage
+):
+    catalog = synthetic_catalog
+    locator = tmp_path / "active"
+    old = tmp_path / "old-active"
+    old.mkdir()
+    (old / "identity").write_text("previous")
+    if previous:
+        locator.symlink_to(old)
+    moved = tmp_path / "validated-original"
+    original_sync = module._fsync_dir
+    original_fsync = module.os.fsync
+
+    def swap():
+        if moved.exists():
+            return
+        catalog.rename(moved)
+        catalog.mkdir()
+        (catalog / "core.sqlite3").write_bytes(b"NOT A DATABASE")
+
+    def sync(path):
+        original_sync(path)
+        if stage == "before_publication" and Path(path).resolve() == catalog:
+            swap()
+
+    def fsync(fd):
+        original_fsync(fd)
+        if (
+            stage == "after_publication"
+            and locator.is_symlink()
+            and locator.resolve() == catalog
+        ):
+            swap()
+
+    monkeypatch.setattr(module, "_fsync_dir", sync)
+    monkeypatch.setattr(module.os, "fsync", fsync)
+    with pytest.raises(ActivationError, match="directory identity changed"):
+        RecoveryService().activate_catalog(catalog, locator)
+    assert moved.exists()
+    assert (catalog / "core.sqlite3").read_bytes() == b"NOT A DATABASE"
+    assert not (catalog / "operational.sqlite3").exists()
+    if previous:
+        assert locator.resolve() == old
+        assert (locator / "identity").read_text() == "previous"
+    else:
+        assert not locator.exists() and not locator.is_symlink()

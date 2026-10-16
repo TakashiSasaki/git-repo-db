@@ -134,6 +134,22 @@ def _open_directory_nofollow(path: Path, *, create: bool = False) -> int:
         raise
 
 
+def _assert_directory_identity(path: Path, expected_fd: int) -> None:
+    try:
+        named_fd = _open_directory_nofollow(path)
+        try:
+            named = os.fstat(named_fd)
+            pinned = os.fstat(expected_fd)
+            if (named.st_dev, named.st_ino) != (pinned.st_dev, pinned.st_ino):
+                raise ActivationError("Validated catalog directory identity changed")
+        finally:
+            os.close(named_fd)
+    except OSError as error:
+        raise ActivationError(
+            "Validated catalog directory identity unavailable"
+        ) from error
+
+
 def _open_regular_at(directory_fd: int, name: str) -> int:
     try:
         fd = os.open(
@@ -2708,10 +2724,15 @@ class SQLiteRecoveryAdapter:
         fresh_catalog_dir = fresh_catalog_dir.absolute()
         if target_locator_path.absolute() == fresh_catalog_dir:
             raise ActivationError("Catalog and locator paths must be distinct")
-        directory_fd = _open_directory_nofollow(fresh_catalog_dir)
-        os.close(directory_fd)
-        assert_catalog_not_stopped(fresh_catalog_dir)
-        with catalog_gate(fresh_catalog_dir, exclusive=True):
+        advertised_catalog_dir = fresh_catalog_dir
+        with ExitStack() as handles:
+            directory_fd = _open_directory_nofollow(advertised_catalog_dir)
+            handles.callback(os.close, directory_fd)
+            # Keep validation, derivative I/O and both permanent gate inodes on
+            # the directory actually opened, even across pathname substitution.
+            fresh_catalog_dir = Path(f"/proc/self/fd/{directory_fd}")
+            assert_catalog_not_stopped(fresh_catalog_dir)
+            handles.enter_context(catalog_gate(fresh_catalog_dir, exclusive=True))
             if fault_stage == "before_validation":
                 raise ActivationError("Injected failure before validation")
 
@@ -2767,6 +2788,7 @@ class SQLiteRecoveryAdapter:
             _fsync_file(search_db)
 
             _fsync_dir(fresh_catalog_dir)
+            _assert_directory_identity(advertised_catalog_dir, directory_fd)
 
             if fault_stage == "after_operational_init":
                 raise ActivationError(
@@ -2781,6 +2803,7 @@ class SQLiteRecoveryAdapter:
             tmp_name = f"{target_locator_path.name}.tmp.{uuid.uuid4().hex}"
             try:
                 with catalog_completion(fresh_catalog_dir):
+                    _assert_directory_identity(advertised_catalog_dir, directory_fd)
                     if fault_stage == "during_locator_replacement":
                         raise ActivationError(
                             "Injected failure during locator replacement"
@@ -2793,9 +2816,26 @@ class SQLiteRecoveryAdapter:
                         )
                     except FileNotFoundError:
                         locator_info = None
+                    publication_name = target_locator_path.name
+                    if locator_info is not None and stat.S_ISDIR(locator_info.st_mode):
+                        publication_name = "active_catalog_instance.json"
+                    backup_name = f"{tmp_name}.previous"
+                    had_previous = False
+                    try:
+                        os.link(
+                            publication_name,
+                            backup_name,
+                            src_dir_fd=parent_fd,
+                            dst_dir_fd=parent_fd,
+                            follow_symlinks=False,
+                        )
+                        had_previous = True
+                    except FileNotFoundError:
+                        pass
+                    published = False
                     if locator_info is None or stat.S_ISLNK(locator_info.st_mode):
                         os.symlink(
-                            str(fresh_catalog_dir.resolve()), tmp_name, dir_fd=parent_fd
+                            str(advertised_catalog_dir), tmp_name, dir_fd=parent_fd
                         )
                         if locator_info is None:
                             # linkat gives atomic creation without replacing a racing locator.
@@ -2822,7 +2862,7 @@ class SQLiteRecoveryAdapter:
                         elif not stat.S_ISREG(locator_info.st_mode):
                             raise ActivationError("Unsupported locator file type")
                         locator_data = {
-                            "active_catalog_path": str(fresh_catalog_dir.resolve()),
+                            "active_catalog_path": str(advertised_catalog_dir),
                             "activated_at_us": int(time.time() * 1_000_000),
                             "repository_uuidv4": repo_uuid,
                             "catalog_instance_uuidv4": inst_uuid,
@@ -2840,9 +2880,30 @@ class SQLiteRecoveryAdapter:
                         os.replace(
                             tmp_name, name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd
                         )
-                        activated_catalog_path = str(fresh_catalog_dir.resolve())
-                    os.fsync(parent_fd)
+                        activated_catalog_path = str(advertised_catalog_dir)
+                    published = True
+                    try:
+                        os.fsync(parent_fd)
+                        _assert_directory_identity(advertised_catalog_dir, directory_fd)
+                    except BaseException:
+                        # A stale pathname must not remain as the active locator.
+                        # Preserve the preceding locator on a detected swap.
+                        if had_previous:
+                            os.replace(
+                                backup_name,
+                                publication_name,
+                                src_dir_fd=parent_fd,
+                                dst_dir_fd=parent_fd,
+                            )
+                        elif published:
+                            os.unlink(publication_name, dir_fd=parent_fd)
+                        os.fsync(parent_fd)
+                        raise
             finally:
+                try:
+                    os.unlink(f"{tmp_name}.previous", dir_fd=parent_fd)
+                except FileNotFoundError:
+                    pass
                 try:
                     os.unlink(tmp_name, dir_fd=parent_fd)
                 except FileNotFoundError:
