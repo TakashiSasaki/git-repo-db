@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "tests/packaging/test_p5_distribution.py",
+    "-q",
+    "--tb=short",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml",
+    "/workspace/work/p5/work/p5-evidence/distribution-clean/junit.xml",
+    "--journal",
+    "/workspace/work/p5/work/p5-evidence/distribution-clean/journal.jsonl"
+  ],
+  "cwd": "/workspace/work/p5-distribution-clean",
+  "exit_code": 0
+}

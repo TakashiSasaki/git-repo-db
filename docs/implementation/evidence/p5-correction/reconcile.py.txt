@@ -1,0 +1,58 @@
+from pathlib import Path
+import json,gzip,hashlib,shutil,subprocess,collections,xml.etree.ElementTree as ET,tarfile
+root=Path.cwd();dest=root/'docs/implementation/evidence/p5-correction';dest.mkdir(parents=True,exist_ok=True)
+def h(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def copy_tree(src,dst):
+ dst.mkdir(parents=True,exist_ok=True)
+ for p in src.iterdir():
+  if p.is_file():
+   target=dst/p.name
+   if p.suffix in ('.xml','.jsonl'):
+    target=Path(str(target)+'.gz');target.write_bytes(gzip.compress(p.read_bytes(),mtime=0))
+   else:shutil.copyfile(p,target)
+def reconcile(src,collect=None):
+ entries=[json.loads(x) for x in (src/'journal.jsonl').read_text().splitlines()]
+ starts=[x['nodeid'] for x in entries if x['event']=='start'];assert len(starts)==len(set(starts))
+ phases=collections.Counter((x['nodeid'],x.get('phase'),x.get('outcome')) for x in entries if x['event']=='phase')
+ for node in starts:
+  for phase in ('setup','call','teardown'):assert phases[node,phase,'passed']==1,(node,phase)
+ if collect:
+  selected=[line for line in collect.read_text().splitlines() if '::' in line and not line.startswith(' ')];assert set(selected)==set(starts)
+ else:selected=starts
+ junit=ET.parse(src/'junit.xml');actual=collections.Counter((n.attrib['classname'],n.attrib['name']) for n in junit.iter('testcase'))
+ expected=collections.Counter((node.split('::')[0][:-3].replace('/','.'),node.split('::')[-1]) for node in starts);assert actual==expected
+ return {'selected_nodes':selected,'unique_selected':len(set(selected)),'unique_executed':len(starts),'phase_counts':dict(collections.Counter(x.get('phase') for x in entries if x['event']=='phase')),'passed':len(starts),'failed':0,'skipped':0}
+local=root/'work/p5-evidence/exact-c90-common-final';localrec=reconcile(local,local/'collected.txt');copy_tree(local,dest/'author-focused')
+package=root/'work/p5-evidence/distribution-clean';packrec=reconcile(package);copy_tree(package,dest/'distribution-clean')
+ind=Path('/workspace/work/review-p5-final/artifacts');copy_tree(ind,dest/'independent')
+source=Path('/workspace/work/review-p5-final/independent')
+for p in source.glob('*.py'):shutil.copyfile(p,dest/'independent'/(p.name+'.txt'))
+baseline=Path('/workspace/work/review-p5-scratch/artifacts/review-baseline');copy_tree(baseline,dest/'baseline-reproduction')
+shutil.copyfile('/workspace/work/review-p5-scratch/independent/test_owner_counterexamples.py',dest/'baseline-reproduction/test_owner_counterexamples.py.txt')
+# Preserve working-stage failures and mixed runner without labeling them acceptance.
+nonfinal=dest/'nonfinal';nonfinal.mkdir(exist_ok=True)
+for p in (root/'work/p5-evidence').iterdir():
+ if p.is_file() and p.suffix in ('.xml','.jsonl'):
+  (nonfinal/(p.name+'.gz')).write_bytes(gzip.compress(p.read_bytes(),mtime=0))
+copy_tree(root/'work/p5-evidence/final',nonfinal/'mixed-runner')
+copy_tree(root/'work/p5-evidence/distribution-exact',nonfinal/'untracked-scratch-build')
+# Reconcile later code/test changes against the independently executed inventory.
+ind_receipt=json.loads((ind/'receipt.json').read_text());old=json.loads((local/'input-binding.json').read_text())['inputs']
+changes={}
+for kind,inputs in [('independent-c90',ind_receipt['input_hashes']),('author-focused-3c',old)]:
+ changed={p:{'executed':digest,'final':h(root/p)} for p,digest in inputs.items() if (root/p).is_file() and h(root/p)!=digest}
+ changes[kind]=changed
+# Distribution archive created from exact committed283, outside scratch tree.
+dirs=[p for p in Path('/tmp/pytest-of-agent').glob('pytest-*/p1-packages0') if not p.parent.is_symlink()]
+latest=max(dirs,key=lambda p:p.stat().st_mtime)
+files=[*latest.glob('dist/*.whl'),*latest.glob('dist/*.tar.gz'),*latest.glob('sdist-wheel/*.whl')]
+artifacts={str(p):{'size':p.stat().st_size,'sha256':h(p)} for p in files}
+sdist=next(latest.glob('dist/*.tar.gz'))
+with tarfile.open(sdist) as t:members=t.getnames()
+assert not any('/work/' in p or p.endswith(('.sqlite3','.sqlite3-wal','.sqlite3-shm')) for p in members)
+(dest/'distribution-clean/distribution-manifest.json').write_text(json.dumps({'artifacts':artifacts,'sdist_members':members,'forbidden_scratch_or_database_members':[]},indent=2))
+record={'feature_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'feature_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),'local_author_focused':localrec,'installed_clean_distribution':packrec,'independent':ind_receipt['counts'],'input_changes_since_executed_revisions':changes,'overlap_policy':'47 P5 nodes occur in author160 and independent64 and are not summed as unique; packaging4 is separate.','scope':'Focused local development and distribution verification. Root owns final P1-P6 combined tree and P2/P3 compatibility evidence. No hosted CI/release acceptance claimed.'}
+(dest/'reconciliation.json').write_text(json.dumps(record,indent=2))
+shutil.copyfile(root/'work/run_p5_exact.py',dest/'run_author.py.txt');shutil.copyfile(Path(__file__),dest/'reconcile.py.txt')
+index={str(p.relative_to(dest)):h(p) for p in dest.rglob('*') if p.is_file()};(dest/'artifact-sha256.json').write_text(json.dumps(index,indent=2))
+print(json.dumps({'local':localrec['unique_selected'],'package':packrec['unique_selected'],'changes':changes,'artifacts':artifacts},indent=2))

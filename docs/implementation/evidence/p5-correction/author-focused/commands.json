@@ -1,0 +1,210 @@
+[
+  {
+    "argv": [
+      "uv",
+      "sync",
+      "--locked",
+      "--group",
+      "dev"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.03009033203125
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "-c",
+      "import repo_catalog,sys; print(sys.executable);print(repo_catalog.__file__)"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.07229113578796387
+  },
+  {
+    "argv": [
+      "uv",
+      "--version"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.009383440017700195
+  },
+  {
+    "argv": [
+      "git",
+      "--version"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.0033473968505859375
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "--version"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.017777442932128906
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.035284996032714844
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.030118942260742188
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/build_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.15549254417419434
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.22471976280212402
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 1.279557228088379
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 1.2651705741882324
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/integration/p5",
+      "tests/integration/p2/test_native.py",
+      "--collect-only",
+      "-q"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.7073445320129395
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/integration/p5",
+      "tests/integration/p2/test_native.py",
+      "-q",
+      "--tb=short",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/work/p5/work/p5-evidence/exact-c90-common-final/junit.xml",
+      "--journal",
+      "/workspace/work/p5/work/p5-evidence/exact-c90-common-final/journal.jsonl"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 37.03683376312256
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/packaging/test_p5_distribution.py",
+      "--collect-only",
+      "-q"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 0.7151896953582764
+  },
+  {
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "pytest",
+      "tests/packaging/test_p5_distribution.py",
+      "-q",
+      "--tb=short",
+      "-o",
+      "junit_family=xunit1",
+      "--junitxml",
+      "/workspace/work/p5/work/p5-evidence/exact-c90-common-final/packaging-junit.xml",
+      "--journal",
+      "/workspace/work/p5/work/p5-evidence/exact-c90-common-final/packaging-journal.jsonl"
+    ],
+    "cwd": "/workspace/work/p5",
+    "exit_code": 0,
+    "elapsed_seconds": 16.48744034767151
+  }
+]
