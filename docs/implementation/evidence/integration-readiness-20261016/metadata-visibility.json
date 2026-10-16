@@ -18,5 +18,29 @@
     "gh run view 38926458613 --log: exit 0, 0 bytes",
     "gh run view 38918703718 --log: exit 0, 0 bytes"
   ],
-  "successful_log_retrieval": "gh api repos/TakashiSasaki/git-repo-db/actions/runs/RUN_ID/logs returned actual run-log ZIP for both runs"
+  "successful_log_retrieval": "gh api repos/TakashiSasaki/git-repo-db/actions/runs/RUN_ID/logs returned actual run-log ZIP for both runs",
+  "additional_metadata_observed_at_utc": "2026-10-16T18:03:05.703854+00:00",
+  "ordinary_branch_metadata": {
+    "name": "main",
+    "protected": false,
+    "protection": {
+      "enabled": false,
+      "required_status_checks": {
+        "checks": [],
+        "contexts": [],
+        "enforcement_level": "off"
+      }
+    },
+    "protection_url": "https://api.github.com/repos/TakashiSasaki/git-repo-db/branches/main/protection"
+  },
+  "graphql_default_branch": {
+    "data": {
+      "repository": {
+        "defaultBranchRef": {
+          "name": "main",
+          "branchProtectionRule": null
+        }
+      }
+    }
+  }
 }

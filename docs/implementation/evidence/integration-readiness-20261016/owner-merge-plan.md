@@ -19,7 +19,7 @@ Start only while main is `b86c46761ec0c3f3843a19edd4f3e106ef5ef58c`. If another 
 
    Require the README's exact HEADs and expected bases (`main`, `main`, design branch). First two merge-bases must be original main, third exact PR 87 HEAD. Confirm all current checks are completed successfully for each feature HEAD; PR deployment skip is expected. The GitHub check payload's `head_sha` may be the temporary test merge, so compare its feature/run binding and effective tree. Confirm current repository settings still permit merge commits.
 
-2. Owner inspects main branch protection/rules in GitHub Settings or with credentials that can read protection. The assignment's token receives HTTP 403; visible rulesets alone are insufficient. Resolve any unconditional required Pages context that path filtering would omit. Do not remove/weaken required checks to obtain a merge. This is a policy visibility gate, not an assertion that a deadlock currently exists.
+2. Recheck main branch protection/rules immediately before owner merge. The administrative endpoint returns HTTP 403, but ordinary branch metadata currently reports `protected=false`, no required contexts and enforcement off; GraphQL has no branch-protection rule and rulesets are empty. No current deadlock is observed. If settings have changed to require a Pages context unconditionally, resolve that path-filter coverage before merging. Do not remove/weaken required checks to obtain a merge.
 
 3. After explicit owner authorization for PR 89, preflight:
 
