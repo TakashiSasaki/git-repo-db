@@ -663,7 +663,7 @@ class Context(ContextStore):
         text_value: str | None,
         clock: FieldClock,
         provenance_json: str,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str:
         with self._unit():
             digest = self.text(text_value) if text_value is not None else None
@@ -703,7 +703,7 @@ class Context(ContextStore):
         repository_uuidv4: str | None,
         clock: FieldClock,
         provenance_json: str,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str:
         self._check(write=True)
         return super().admit_repository(
@@ -748,7 +748,7 @@ class Context(ContextStore):
         reference: CoreReference,
         *,
         clock: FieldClock,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str:
         """Preserve an attributed portable reference without claiming Core exists.
 

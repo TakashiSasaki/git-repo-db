@@ -260,8 +260,8 @@ def test_native_body_and_intrinsic_scope_cannot_be_forged_in_sql(core):
         db.close()
 
 
-@pytest.mark.parametrize("value", [-(2**63), -1, 0, 2**63 - 1])
-def test_signed_epoch_microseconds_and_observations(core, value):
+@pytest.mark.parametrize("value", [None, 1, 2**63 - 1])
+def test_nullable_positive_epoch_microseconds_and_observations(core, value):
     c, _, repository = core
     observation = GitObservation(
         str(uuid4()),

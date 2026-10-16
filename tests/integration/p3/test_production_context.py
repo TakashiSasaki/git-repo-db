@@ -213,7 +213,7 @@ def test_outer_transaction_rolls_back_resource_fields_and_text(directory):
 
 def test_current_fields_scale_not_full_edit_history(context):
     db, store, _ = context
-    for stamp in range(1000):
+    for stamp in range(1, 1001):
         store.admit_field(
             field(
                 value=f"value-{stamp}",

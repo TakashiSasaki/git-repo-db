@@ -88,9 +88,9 @@ class NotesAcquisition:
             )
         for value in (repository_uuidv4, origin_uuidv4, observation_uuidv4):
             uuid4_value(value)
-        if type(observed_at_us) is not int or not -(2**63) <= observed_at_us < 2**63:
+        if type(observed_at_us) is not int or not 0 < observed_at_us < 2**63:
             raise CoreFailure(
-                "TIME", "notes-discovery", "signed int64 epoch microseconds required"
+                "TIME", "notes-discovery", "positive int64 epoch microseconds required"
             )
         scope = encode(["p4-discovery", origin_uuidv4, observation_uuidv4])
         binding = [
