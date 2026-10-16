@@ -50,6 +50,7 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 )
 from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
 from repo_catalog.adapters.sqlite.recovery_validation import (
+    bounded_domain_exists,
     validate_stored_admission_guards,
     validate_stored_checks,
     validate_stored_text_encoding,
@@ -2245,6 +2246,25 @@ class SQLiteRecoveryAdapter:
                     ).fetchone()
                 work.charge("metadata_units", 1)
                 if size_row is None:
+                    if table == "retained_metadata":
+                        for dependency in ("intrinsic_claims", "intrinsic_groups"):
+                            if bounded_domain_exists(
+                                conn,
+                                f"SELECT 1 FROM {dependency} WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=? LIMIT 1",
+                                key,
+                                work,
+                                "required_retained_metadata",
+                            ):
+                                reason = "Confirmed destination Core corruption: required retained metadata copy is missing"
+                                stop_catalog(
+                                    directory,
+                                    reason,
+                                    details={
+                                        "store": "core",
+                                        "classification": "authoritative_data",
+                                    },
+                                )
+                                raise CorruptionDetectedError(reason)
                     return False
                 if any(
                     size > budget.max_payload_bytes * (2 if index == 1 else 1)

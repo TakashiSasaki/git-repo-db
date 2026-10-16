@@ -700,3 +700,12 @@ fixtures enough allowance for both real passes rather than exempting decoding.
 Verify nominal repository/object/Capture replays and rejected candidates against
 their own finite metadata/input ceilings, using
 `python -m pytest tests/integration/p7/test_work_dimensions.py`.
+
+Treat missing required destination bytes as corruption before salvage can
+reinsert them: an existing text FK claim proves its Context body is required;
+existing intrinsic claims/groups prove their metadata physical copy is required.
+A Notes role alone does not prove a body was retained. When dependency columns
+lack a complete lookup index, reserve finite SQLite VM work before the lookup,
+settle only live measured work, and refuse at the cap without inferring absence.
+Use `tests/integration/p7/test_missing_required_authority.py` to distinguish
+missing required authority, genuinely new content and finite-query refusal.

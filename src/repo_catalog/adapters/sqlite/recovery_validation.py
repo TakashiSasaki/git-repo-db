@@ -2,6 +2,7 @@
 
 import codecs
 import hashlib
+import json
 import re
 import sqlite3
 
@@ -204,6 +205,16 @@ def verify_existing_context_text(connection, digest, expected_bytes, max_bytes, 
     ).fetchone()
     work.charge("metadata_units", 1)
     if row is None:
+        if bounded_domain_exists(
+            connection,
+            "SELECT 1 FROM field_candidates WHERE field_name='text_body_sha256' AND value_json=? LIMIT 1",
+            (json.dumps(digest),),
+            work,
+            "required_context_text",
+        ):
+            raise BackupValidationError(
+                "Existing required retained Context text is missing"
+            )
         return False
     size = row[0]
     if size > max_bytes:
@@ -226,3 +237,39 @@ def verify_existing_context_text(connection, digest, expected_bytes, max_bytes, 
     if not exact:
         raise ValueError("Exact UTF8 text digest collision")
     return True
+
+
+def bounded_domain_exists(connection, sql, parameters, work, scope):
+    """Bound a trusted read's VM work before inferring a dependency absent.
+
+    One metadata unit reserves at most 100 SQLite VM instructions. A crash
+    retains the full reservation; a live measurement settles completed quanta.
+    All callers use fixed trusted SQL, never text from recovery candidates.
+    """
+    cap = min(4096, work._max["metadata_units"] - work.usage["metadata_units"])
+    if cap <= 0:
+        raise CoreFailure(
+            "BUDGET", scope, "no metadata work remains for dependency check"
+        )
+    work.require("metadata_units", cap)
+    ticks = 0
+
+    def progress():
+        nonlocal ticks
+        ticks += 1
+        return int(ticks >= cap)
+
+    connection.set_progress_handler(progress, 100)
+    try:
+        try:
+            found = connection.execute(sql, parameters).fetchone() is not None
+        except sqlite3.OperationalError as error:
+            if getattr(error, "sqlite_errorcode", 0) & 255 == sqlite3.SQLITE_INTERRUPT:
+                raise CoreFailure(
+                    "BUDGET", scope, "finite dependency-query VM work exhausted"
+                ) from error
+            raise
+    finally:
+        connection.set_progress_handler(None, 0)
+        work.charge("metadata_units", min(cap, ticks + 1))
+    return found
