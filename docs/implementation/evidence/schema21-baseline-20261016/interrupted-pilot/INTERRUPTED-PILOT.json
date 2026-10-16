@@ -1,0 +1,7 @@
+{
+  "head": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+  "classification": "interrupted exploratory integration run, not full acceptance",
+  "reason": "Independent D inspection found remaining Core search_documents test reference; stop and correct before full final rerun",
+  "result": "1114 passed; KeyboardInterrupt; unexecuted selected nodes are not passes",
+  "excluded_from_final_acceptance": true
+}

@@ -1,0 +1,47 @@
+{
+  "runs": [
+    {
+      "variant": "wheel",
+      "cwd": "/workspace/reviewer-d-installed-harness",
+      "command": [
+        "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_wheel_0/venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+        "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+        "--basetemp=/workspace/reviewer-d-evidence/installed-wheel-tmp",
+        "--junitxml=/workspace/reviewer-d-evidence/installed-wheel-search.xml",
+        "--journal=/workspace/reviewer-d-evidence/installed-wheel-search.jsonl"
+      ],
+      "PATH_prefix": "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_wheel_0/venv/bin",
+      "test_input_head": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+      "dependency_preparation": "Offline pinned pytest9.1.1 and jsonschema4.26.0 from locked wheelhouse, after preserving initial missing-jsonschema conftest failures",
+      "expected_junit": "2 passed",
+      "module_origin_evidence": "distribution-artifacts.json"
+    },
+    {
+      "variant": "sdist-wheel",
+      "cwd": "/workspace/reviewer-d-installed-harness",
+      "command": [
+        "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_sdist_whe0/venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+        "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel",
+        "--basetemp=/workspace/reviewer-d-evidence/installed-sdist-wheel-tmp",
+        "--junitxml=/workspace/reviewer-d-evidence/installed-sdist-wheel-search.xml",
+        "--journal=/workspace/reviewer-d-evidence/installed-sdist-wheel-search.jsonl"
+      ],
+      "PATH_prefix": "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_sdist_whe0/venv/bin",
+      "test_input_head": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+      "dependency_preparation": "Offline pinned pytest9.1.1 and jsonschema4.26.0 from locked wheelhouse, after preserving initial missing-jsonschema conftest failures",
+      "expected_junit": "2 passed",
+      "module_origin_evidence": "distribution-artifacts.json"
+    }
+  ],
+  "production_binding": "distribution-final-binding.json",
+  "harness_manifest": "installed-harness-manifest.json",
+  "no_checkout_source_imports": true
+}

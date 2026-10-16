@@ -1,0 +1,27 @@
+{
+  "head": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+  "tree": "faf2190f4909e8ca61431b512dd2840fcc3ec4cc",
+  "modern_audits": {
+    "implementation_boundary": 0,
+    "callsite_dependencies": 0,
+    "p1_schema": 0,
+    "publication_free": 0
+  },
+  "additional_historical_probe": {
+    "script": "scripts/audit_phase2_dependencies.py",
+    "exit": 1,
+    "exception": "AttributeError: exchange.EXCLUDED",
+    "classification": "inherited dormant audit helper, not runtime test failure; unchanged script and exchange.py relative to main",
+    "log": "audit-phase2-dependencies.log",
+    "unchanged_blobs": {
+      "scripts/audit_phase2_dependencies.py": {
+        "main": "2e945451dd45de45dba22ef5db5f380f49b1c8eb",
+        "tested": "2e945451dd45de45dba22ef5db5f380f49b1c8eb"
+      },
+      "src/repo_catalog/adapters/sqlite/exchange.py": {
+        "main": "21d215919943c0e216828233e8b6238ff6a340cd",
+        "tested": "21d215919943c0e216828233e8b6238ff6a340cd"
+      }
+    }
+  }
+}

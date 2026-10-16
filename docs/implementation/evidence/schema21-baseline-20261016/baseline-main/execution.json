@@ -1,0 +1,26 @@
+{
+  "head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "tree": "1b16e6589b0e7931f0eb24322127684479771c79",
+  "cwd": "/workspace/baseline-main",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "-n",
+    "4",
+    "--junitxml=/workspace/baseline-evidence/full.xml",
+    "--journal=/workspace/baseline-evidence/full-journal.jsonl"
+  ],
+  "environment_overrides": {
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/baseline-evidence/wheelhouse"
+  },
+  "default_marker_policy": "not live and not benchmark",
+  "source_status_before": "",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "lock_sha256": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9",
+  "wheelhouse_preparation": "uv run --no-sync python scripts/prepare_wheelhouse.py --output /workspace/baseline-evidence/wheelhouse",
+  "browser": "No browser download or browser execution requested; environment limitation preserved if Mermaid test fails.",
+  "timing_scope": "Concurrent agent workloads; not sequential benchmark evidence."
+}

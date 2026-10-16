@@ -36,3 +36,10 @@ separate canonical full-main baseline supplies the complete original node mappin
 The three-store Agent Skill now records the independently verified physical
 observation and safe fresh-acquisition procedure. Whole-stack independent review
 and exact committed-tree execution remain required before final acceptance.
+
+Final qualification: the early root `before.*` run was diagnostic; edits began
+after collection while its original test functions were already loaded. It is
+not the authoritative exact-revision baseline. Use the independent unchanged-main
+full/retry artifacts and strict original-message bindings in `baseline-main/`.
+The final README/FULL-RUN supersede this checkpoint's pending validation status;
+the historical focused results and raw failed experiments remain unchanged.

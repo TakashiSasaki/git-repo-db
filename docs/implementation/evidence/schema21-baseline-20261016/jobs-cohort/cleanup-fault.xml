@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.741" timestamp="2026-10-16T18:06:36.732881+00:00" hostname="f0db5daff0a7"><testcase classname="" name="" time="0.000"><error message="collection failure">ImportError while importing test module '/tmp/test_schema21_cleanup_fault.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/test_schema21_cleanup_fault.py:3: in &lt;module&gt;
+    from tests.integration.test_catalog3_current_queries import current_catalog
+E   ModuleNotFoundError: No module named 'tests'</error></testcase></testsuite></testsuites>

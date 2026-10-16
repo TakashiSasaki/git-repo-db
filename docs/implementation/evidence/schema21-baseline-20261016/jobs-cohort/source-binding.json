@@ -1,0 +1,88 @@
+{
+  "baseline_main": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "test_contract_checkpoint": "b6e0ba5b67ab9b0a318d1c5bb557698cef244179",
+  "test_contract_tree": "5d82739e97e362e1fb9b75a29967440857684043",
+  "masked_search_defect_reproduction_source": "172342bc7490d3594aa71aa5c27c3d861ae52d3a",
+  "masked_search_defect": {
+    "production_index_equals_main": true,
+    "junit": "current-query.xml",
+    "journal": "current-query.jsonl",
+    "nodeid": "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+    "result": "failed: obsolete source key remains a member of new ready generation"
+  },
+  "corrected_source": "31b7bf3d734c92ad10d22cca233d4318932dfce3",
+  "corrected_tree": "e18c5e02ea6878f484b56229eb45453904093d47",
+  "pr": "https://github.com/TakashiSasaki/git-repo-db/pull/91",
+  "focused_search": {
+    "junit": "search-fix-3.xml",
+    "journal": "search-fix-3.jsonl",
+    "passed": 2
+  },
+  "exploratory_evidence_limits": {
+    "wrong-path": "direct-python invocation lacked virtualenv CLI PATH; terminated, not acceptance evidence",
+    "before": "redundant partial cohort interrupted before production edit; authoritative unchanged-main baseline is sibling full.xml/full-journal.jsonl",
+    "after-runtime": "partial prior test-contract cohort interrupted before production edit; superseded by frozen final-cohort",
+    "focused": "completed 48 passed and 1 masked Search production defect; snapshot before production correction",
+    "search-fix": "failed fixture experiment: provider ID 0 is invalid",
+    "search-fix-2": "failed fixture experiment: issue numbers incorrectly reused; corrected to true distinct provider issue numbers",
+    "final-cohort": "interrupted pilot, 88 passed; stopped during provisional cleanup review. Replaced by frozen-final-cohort at c5db955",
+    "cleanup-fault": "temporary standalone fixture import error; no runtime evidence",
+    "cleanup-fault-reproduced": "deterministic injected postready cleanup OperationalError on dynamically loaded exact31b module, ready generation remains; not a binding defect per Reviewer A; optional expansion discarded",
+    "search-final": "optional uncommitted cleanup-warning experiment, NOT accepted source; patch preserved in discarded-cleanup-warning.patch and reverted",
+    "frozen-final-cohort": "environmental /tmp disk exhaustion:87passed,3failed,14errors; raw completed failed run preserved, not acceptance; see disk-full-environment.json"
+  },
+  "scope": "Schema 21 only; no opt-in P1-P7 activation or owner merge authorization",
+  "collection_dependency_merge": {
+    "head": "c5db95520f2d54dac675c6d3aa3be8f955cad4e7",
+    "tree": "d9f8e7a7d9a6d59a2c99a724d15a27d4fa2d3339",
+    "collection": "a6d3fc797512e4fe232259f712aacbd7486f0e43",
+    "reviewed_production_and_final_cohort_python_inputs_unchanged": true,
+    "compared_paths": [
+      "src",
+      "tests/conftest.py",
+      "scripts/ci_journal.py",
+      "tests/support/__init__.py",
+      "tests/support/ci_fixture.py",
+      "tests/support/cli.py",
+      "tests/support/distributions.py",
+      "tests/support/domain_facts.py",
+      "tests/support/git_fixture.py",
+      "tests/support/git_payloads.py",
+      "tests/support/github_fixture.py",
+      "tests/support/github_runtime.py",
+      "tests/support/network_guard/sitecustomize.py",
+      "tests/support/process.py",
+      "tests/support/sqlite_contracts.py",
+      "tests/integration/test_catalog3_job_plans.py",
+      "tests/integration/test_catalog3_portable_identity.py",
+      "tests/integration/test_application_contract.py",
+      "tests/integration/test_catalog3_queries.py",
+      "tests/integration/test_cache.py",
+      "tests/integration/test_git_objects.py",
+      "tests/integration/test_catalog3_current_queries.py",
+      "tests/integration/test_search_index.py",
+      "tests/e2e/test_repository_identity.py",
+      "tests/e2e/test_github_sync.py",
+      "tests/e2e/test_cli_more.py",
+      "tests/e2e/test_search.py",
+      "tests/e2e/test_recovery.py"
+    ],
+    "non_executable_support_change": "publication_free_node_dispositions.json updates collection nodes not selected by this cohort"
+  },
+  "frozen_final_cohort": {
+    "source": "c5db95520f2d54dac675c6d3aa3be8f955cad4e7",
+    "tree": "d9f8e7a7d9a6d59a2c99a724d15a27d4fa2d3339",
+    "junit": "accepted-final-cohort.xml",
+    "journal": "accepted-final-cohort.jsonl",
+    "status": "passed",
+    "temporary_directory": "/workspace/jobs-test-temp",
+    "passed": 104,
+    "reconciliation": "accepted-final-reconciliation.json"
+  },
+  "final_evidence_only_dependency_merge": {
+    "head": "1700ed37e82a6028cfa40c86b35db7621dd50404",
+    "tree": "62208ed7243aaacd45c3a9706dd957cbb1ebb222",
+    "foundation_head": "7dc31256907aff4412170bc3f3ce3069b2ad89f2",
+    "all_src_tests_scripts_pyproject_uvlock_unchanged_from_tested_c5db955": true
+  }
+}

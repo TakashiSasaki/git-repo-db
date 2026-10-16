@@ -1,0 +1,175 @@
+{
+  "reviewer": "C",
+  "scope": "Independent fixture and regression quality review",
+  "baseline_sha": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "status": "PASSED_IN_DECLARED_C_SCOPE",
+  "reviewed_changes": {
+    "jobs": "b6e0ba5b67ab9b0a318d1c5bb557698cef244179",
+    "collection": "287551275d20dac59d856ef6d84213e27986d42f",
+    "root_checkpoint": "510484a36f3e099ce0c12dcc295ac1b051b751d1",
+    "root_fixture_skill": "695e7cc87d20c2bc72b1662334971e5e4af007d7",
+    "collection_final": "76d3389ab4d450462c2be47e91f5228cdefae71a",
+    "public_search_production": "31b7bf3d734c92ad10d22cca233d4318932dfce3",
+    "integrated_tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "independent_execution_head": "bfd96d5e5588516c88d0cc52271ece32afa59595",
+    "mapping_followup": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+    "decoder_correction": "0aab23e08eba6e8ed5b62a826f3b879203e14d64",
+    "final_root_binding": "74f90adae40ae60076dca33629fa2edbf5763474"
+  },
+  "production_authorship": false,
+  "findings": [
+    {
+      "severity": "informational",
+      "result": "resolved",
+      "description": "Obsolete mandatory continuation tests require genuine fresh-root acquisition under PF-P04/PF-P07 and explicit old-to-new node mapping. Collection commit maps renamed tests, requires fresh collection identity, retains domain assertions and rejects old terminal proof."
+    },
+    {
+      "severity": "informational",
+      "result": "verified",
+      "description": "collection_rows independently observes physical Core and Operational snapshots after quiescence. It does not ATTACH, alias, establish domain completion, or imply distributed atomicity."
+    },
+    {
+      "severity": "informational",
+      "result": "verified",
+      "description": "Job regression uses CollectionService.discover and resume against actual Operational deletion, verifies Core facts, no Operational domain table and no jobs in Core."
+    },
+    {
+      "severity": "informational",
+      "result": "verified",
+      "description": "Root regressions simulate Core transaction rollback after independent Operational complete bookkeeping, and actual Operational loss after valid durable terminal proof. Both discriminate safe fresh/reuse behavior."
+    },
+    {
+      "severity": "informational",
+      "result": "classification_feedback_sent",
+      "description": "Some original missing-table nodes contain secondary obsolete continuation assertions. Classification should reflect compound causes rather than sole SQL relocation."
+    },
+    {
+      "severity": "informational",
+      "result": "verified",
+      "description": "Search correction regression uses201 real admitted domain candidates, supersedes each body, cancels rebuild after actual FTS table creation, verifies prior ready-generation unchanged, repeats reconstruction across obsolete-only SQL batch, tombstones every resource, verifies empty current generation and byte-for-byte historical Core text rows. Original superseded-text assertions retained."
+    },
+    {
+      "severity": "informational",
+      "result": "verified",
+      "description": "three-store skill updated scoped public baseline procedure is consistent with accepted ADR0002; frontmatter and checkpoint evidence link independently checked."
+    },
+    {
+      "severity": "informational",
+      "result": "transparent_historical_limit",
+      "description": "Disposition mapping followup truthfully states historical cache-owner replacement covers current missing-job/acquisition FK only, not the original cross-owner-cache semantic. This renamed node already differed on unchanged main and is outside228 inherited failures; it must not be counted as newly restored assurance."
+    }
+  ],
+  "independent_execution": [
+    {
+      "name": "seven original inherited assertion nodes",
+      "sha": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+      "selected": 7,
+      "passed": 0,
+      "failed": 7,
+      "junit": "seven-before.xml",
+      "journal": "seven-before.jsonl"
+    },
+    {
+      "name": "mapped seven plus new positive/negative physical-boundary regressions",
+      "sha": "50d0a6f",
+      "passed": 11,
+      "failed": 0,
+      "junit": "contract-after.xml",
+      "journal": "contract-after.jsonl"
+    },
+    {
+      "name": "initial integrated233 cohort",
+      "sha": "bfd96d5e5588516c88d0cc52271ece32afa59595",
+      "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+      "selected": 233,
+      "passed": 211,
+      "failed": 2,
+      "errors": 20,
+      "junit": "final-cohort-exact.xml",
+      "journal": "final-cohort-exact.jsonl",
+      "classification": "1 stale Search observation;21 temporary-filesystem-full outcomes; corrected-revision residual verification pending"
+    },
+    {
+      "name": "all22 unsuccessful exact nodes rerun with capacity after decoder correction",
+      "sha": "9a1e96fdb2ff69979f58a3ee2a7496689e0cacc6",
+      "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+      "passed": 22,
+      "failed": 0,
+      "errors": 0,
+      "junit": "final-residual.xml",
+      "journal": "final-residual.jsonl"
+    }
+  ],
+  "failed_experiments": [
+    {
+      "command": "default python -m pytest",
+      "result": "No module named pytest; reran with existing locked /workspace/baseline-main/.venv/bin/python; no product defect"
+    },
+    {
+      "command": "jobs five-module cohort at jobs b6e0ba5",
+      "result": "Interrupted after missing venv bin PATH caused CLI fixture setup errors; also exposed genuine superseded Search document bug fixed separately. Not acceptance evidence. Raw jobs-after.log/jsonl preserved."
+    },
+    {
+      "command": "independent editable install --no-build-isolation",
+      "result": "Dynamic build dependency editables unavailable offline; switched to normal wheel installation without downloading extra dependencies."
+    },
+    {
+      "command": "shell expanded final node list",
+      "result": "Spaced parameter IDs split by shell; no tests executed, logs retained. Replaced with Python subprocess argv and successful exact233-node collection."
+    },
+    {
+      "command": "first exact-argv collector",
+      "result": "One missing fifth rename mapping produced collection error; gate prevented execution. Added declared incremental-watermark mapping and recollected233 successfully."
+    },
+    {
+      "command": "final233 exact tree1f55d1cc initial cohort",
+      "result": "211 passed,2 failed,20 errors. 21 unsuccessful nodes were real /tmp ENOSPC environmental failures (8.8GiB temporary filesystem full); one original node still queried Search documents through Core. D independently found and root corrected two observation locations. Raw JUnit/journal preserved; rerun22 unsuccessful under workspace temp at corrected revision required."
+    }
+  ],
+  "blockers": [],
+  "environment": {
+    "locked_dependencies": "locked-dependencies.txt",
+    "installation": "normal wheel installed from exact independent worktree with no network/no deps; all118 packaged input files match source",
+    "installed_manifest": "installed-package-manifest.json",
+    "selection": "228 inherited nodes through5 explicit rename mappings +5 newly added regression nodes =233; default not-live/not-benchmark marker policy preserved"
+  },
+  "final_summary": {
+    "reviewer": "C",
+    "initial_cohort": {
+      "junit_tests": 233,
+      "journal_nodes": 233,
+      "passed": 211,
+      "failed": 2,
+      "errors": 20,
+      "runtime_correction_needed": 1,
+      "ENOSPC_outcomes": 21
+    },
+    "residual": {
+      "junit_tests": 22,
+      "journal_nodes": 22,
+      "passed": 22,
+      "failed": 0,
+      "errors": 0,
+      "workspace_temp": true
+    },
+    "independently_verified_original_inherited_nodes": 228,
+    "original_nodes_remaining_unverified": 0,
+    "added_regressions_verified": 5,
+    "claim_limit": "No single green233-node run claimed.211 unchanged passed inputs plus22 successful clean exact-node reruns cover233 unique nodes after correction; broader full repository acceptance is separate.",
+    "sha256": {
+      "seven-before.xml": "a32cc41c6ad07bf29804b730c42a682d030fbb26cd23feda48fc32d4d2f018cb",
+      "seven-before.jsonl": "bc91a25b74b51df097bd6d50318bec3e1f9d25d9b16397247716880ef8172f15",
+      "contract-after.xml": "070f4b5ab070e019715ce46798888d8212b864b27b115a43d36c86c79e0281d6",
+      "contract-after.jsonl": "611a74ca0f6f4711d8d329aa8904e58ebd336230a50d6067c651b5c3bbe7f803",
+      "final-cohort-exact.xml": "13497972b4d1c444e03da4e9100b094d87e734195b491a631453f8f70aa9b608",
+      "final-cohort-exact.jsonl": "3881003ba97e7f0cd2ce9e7ed234d33c6a41b2ebbd929ccb970b739d5e6e0f92",
+      "final-cohort-exact.log": "535388a645c92be00bd15e282ebb2b5379face79a535019b5fdddbede67d2c49",
+      "final-residual.xml": "8fe5aa8e25a315623a61fe0f5a7befbb9f26aa1716a728d0a7bb1ef6e30e8f15",
+      "final-residual.jsonl": "178bb5f08e974cdb2b4c3c0a05aac86db9d82be912c391fdfa34fa3e8ddab7fe",
+      "final-residual.log": "595ea3ab702eef344b16fe4cd2ede060f26c6185f7e73de9e7b7d8c951ea67cf",
+      "node-verification.json": "233ae5401a43073083170b34bfcce686bfe8670519cc2a38935e81814f7c48ab",
+      "final-input-manifest.json": "f4fe1cc1a2852fec23ed6be9fd983c8d346faf86d2900ccfd1f0a9bbaa8e0216",
+      "installed-package-manifest.json": "df805648bb571fead31f41ec7debd061f4afe047225dd7374c1aa31a9254ec23"
+    }
+  }
+}

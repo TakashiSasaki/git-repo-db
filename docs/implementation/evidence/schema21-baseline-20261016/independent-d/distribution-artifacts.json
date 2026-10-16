@@ -1,0 +1,37 @@
+{
+  "source_head": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+  "source_tree": "faf2190f4909e8ca61431b512dd2840fcc3ec4cc",
+  "products": [
+    {
+      "path": "/workspace/reviewer-d-evidence/distribution-tmp/package-distributions/build/dist/repo_catalog-0.2.0-py3-none-any.whl",
+      "bytes": 595483,
+      "sha256": "acae0607661bff850b7c2d58d561edfcf12319f06a01e09ea3f604114468a235"
+    },
+    {
+      "path": "/workspace/reviewer-d-evidence/distribution-tmp/package-distributions/build/dist/repo_catalog-0.2.0.tar.gz",
+      "bytes": 19775786,
+      "sha256": "6a354305131cd6d0050bc672f5be8e7547d272cb9752663f959bf3063d425a14"
+    },
+    {
+      "path": "/workspace/reviewer-d-evidence/distribution-tmp/package-distributions/build/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+      "bytes": 595483,
+      "sha256": "acae0607661bff850b7c2d58d561edfcf12319f06a01e09ea3f604114468a235"
+    }
+  ],
+  "installed_imports": [
+    {
+      "module": "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_wheel_0/venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/index.py",
+      "module_sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
+      "variant": "wheel",
+      "venv": "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_wheel_0/venv"
+    },
+    {
+      "module": "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_sdist_whe0/venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/index.py",
+      "module_sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
+      "variant": "sdist-wheel",
+      "venv": "/workspace/reviewer-d-evidence/distribution-tmp/test_wheel_sdist_cli_sdist_whe0/venv"
+    }
+  ],
+  "sdist_unwanted_paths": [],
+  "harness": "/workspace/reviewer-d-installed-harness"
+}

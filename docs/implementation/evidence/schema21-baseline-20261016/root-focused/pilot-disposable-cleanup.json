@@ -1,0 +1,8 @@
+{
+  "path": "/tmp/pytest-of-agent/pytest-32",
+  "purpose": "completed interrupted root83d3c1 pilot disposable catalogs only",
+  "before": "Filesystem      Size  Used Avail Use% Mounted on\nnone            8.8G  7.8G  1.1G  89% /tmp\n",
+  "active_process_references": [],
+  "removed": true,
+  "after": "Filesystem      Size  Used Avail Use% Mounted on\nnone            8.8G  6.8G  2.1G  77% /tmp\n"
+}

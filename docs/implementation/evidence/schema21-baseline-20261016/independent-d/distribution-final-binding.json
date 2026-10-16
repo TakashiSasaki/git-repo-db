@@ -1,0 +1,610 @@
+{
+  "packaging_source": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+  "final_source": "74f90adae40ae60076dca33629fa2edbf5763474",
+  "final_tree": "b11075b53eb0bda4febc710c46c059dc6edf4054",
+  "scope": "All packaged src files plus project/build metadata and locked dependencies; test/source archive final tree differs only outside this package executable input set. Distribution artifact hashes bind packaging source83d explicitly, not final74f full tree.",
+  "input_count": 120,
+  "unchanged": true,
+  "inputs": [
+    {
+      "path": "pyproject.toml",
+      "sha256": "13146bd784022dc375f1d425236c2c2d0d9ec3a735c7f3eeae1e65dc41d450ce",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/__init__.py",
+      "sha256": "ed7f78e4604437506c62e6c61f3c269bb51901665e1d1484e13cf04757e05ca0",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/__main__.py",
+      "sha256": "ee690428669109bc4afce171576c4c3417da09edd37690815793b693fbb54aef",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/filesystem/atomic_publish.py",
+      "sha256": "b1e4b79e93989d8c4dd5e41f0f5fbbeab41ec72cf6c40ad289f2cb95b656cacd",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/filesystem/cache.py",
+      "sha256": "43b0c13b4cb1a6f4b8299822fd55cc5394f652c9c90344f698697577b282cd18",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/filesystem/capacity.py",
+      "sha256": "a33441ecf9160ab5fe281c724f789e68921eb21b4c3a8e222bce4cc0ba41caa4",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/filesystem/locks.py",
+      "sha256": "02b3422aa231df94cb5ca5172dae67d907aeec77804502409235e491e525c6da",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/importer.py",
+      "sha256": "6d7466c64e6134dfc445c72baf741956b584fc2236dfb9a33870ad981382e268",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/native.py",
+      "sha256": "654ac3f3aaad9b51bad72c1692e692c46cdd18cb6f20b2db73e40066af2d4acc",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/notes.py",
+      "sha256": "732601fe59ba104fabf0dab1b6863ce44304512b8ca35c71aec8a01f08988d1a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/parsing.py",
+      "sha256": "f27e9a07e2572ab961b7494dad3f0d6d3e8a3bf625a972065b58781cd05288fb",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/git/runner.py",
+      "sha256": "e93b756131a65e55162465c82556d72897a7dc5ba5f626fd16dfa3bc7fb40ba6",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/collector.py",
+      "sha256": "1517f6076abb571ed1b85affb2b849388f73b2ce3d2975b5b66f53fbcf7e3c28",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/current_parser.py",
+      "sha256": "ac544df570f07499f3088d198a51bc708145c7e54a147a74d058eab17ff614c6",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/identity.py",
+      "sha256": "8e096e14864917e24b4d67d64e3442287331eca7367795b3002e3cff491b6cd6",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/persistence.py",
+      "sha256": "b45a94cb819992523ea8de1bb41c03d8be0d81a30e8bc02deeecee3a98e8ba4d",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/production_intake.py",
+      "sha256": "1046df3519d274f4ee7b58927aee95b6dee8052d39b31dd6f170a118604af15f",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/github/transport.py",
+      "sha256": "eb07d6577f458dbc05e9c8d1c47d1581daf9555250aac123327f1191fa78fc4c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/recording.py",
+      "sha256": "0719568ffd72a2954cc617706a9dc7b4cc4bde47d9496a7782dcce9c5d48c48c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/acquisition.py",
+      "sha256": "b525602fa095027d576c6bb1f4c47b916bd875e2a08d7588a03ef9fcf6530222",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/cas_integrity.py",
+      "sha256": "b2c1cfd13c907493380df2d113617ad95e7fcfae2525d51c38e28e0514e4232c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/code_assessments.py",
+      "sha256": "208992994bb05944c51fc0dbfa577c4d90c1a4162ed7b2540b5e41eb46305cbc",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/coverage.py",
+      "sha256": "af0434c7f9934b4284ed2c6880dcf763d5bf7b3e8ebf81297bc0bbd76ae3fbc2",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_api.py",
+      "sha256": "37f47903b1881ba5d9e6942b74ac5dc5ebb5b847f50e33b7498fac7c4984cb7c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_collections.py",
+      "sha256": "1835c8e68f6ba05c7684498abdb1a79782b5f38e979dc3b5033ac891e8bb39ed",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/current_resources.py",
+      "sha256": "335af0485fa6eef2fd3d50af48e5b7e42db4c981beda7d9b7aabe7e12b2d602c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/exchange.py",
+      "sha256": "336f22bb74502477154be6e147c9843bdb48bc9bd8a50bcb24332572d49c10aa",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/git_core.py",
+      "sha256": "9b4b433963ee050a925ede7ad2fac299f05f35a758734863dab9a90b62cfcb04",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/git_intrinsic.py",
+      "sha256": "89d3e6a80619157062eafeefdc2b79734329a3defda5bde6ede87aba2111585a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/identity_relations.py",
+      "sha256": "a23044e5049ffc4b55f91871d756643c7b427f3a108ea11304b44ec57efe7f80",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/index.py",
+      "sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/json_contracts.py",
+      "sha256": "d7bd8653ef251804ed120570e769b430b08c24a41f09153e5bd8a519892983c7",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/notes.py",
+      "sha256": "c40fe7ba81b2357a5c72ed9004596ebe14e134843c9c460c8eaec96531cb592c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
+      "sha256": "cdabaa8707d9cff014de5bdb67dac29d7af191df4706f351cd3aad7500e0d19b",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_coordination.py",
+      "sha256": "71f23010463b10e368bfe547520b0471e5323030c239cf58050973b6829c9f8a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_core.py",
+      "sha256": "87dae329fa71b8001e2f39c3e5678a94260454b02f9a9ff3fd3ae8dd41d303a6",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql",
+      "sha256": "987cdb5c07ba433a258e97b34a488af62986b44a8fd02285e82f2e102510a7d5",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/core.sql",
+      "sha256": "0b96849f36fbbf314e69b675eedd11c8e751173563870c004d912dab6d3d7323",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql",
+      "sha256": "1c830f402ac20ace36928d03b49db2f7aeab9962f14d6ee7aeb086b63081a9ed",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json",
+      "sha256": "1117f14778a9d919cf56355f54d0a140781316bbed45a2f4e5eb33534dc2df39",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql",
+      "sha256": "b395baad09e7048514a4463eeac06f34746351429b2583420f59d8cc7d649584",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/search.sql",
+      "sha256": "4224950692cf754d787c69a10cfca9b6e6a0f53b770ea947f0a8ef670f415d8d",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/p1_schema.py",
+      "sha256": "ecdf23d58879f39271234b4914560235ce92d3b22e0828b464205feb86d83ba8",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/payloads.py",
+      "sha256": "15e0fff2e2b0c0f10aab6c6bc4c90322c8e06e0afb0a19fe832299b7faf92050",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
+      "sha256": "d73e1b359907c316a32c1887c6daff902b96b405fc4fc6a1bb4ac61350c79bf1",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/production_search.py",
+      "sha256": "a792bb4028cbaec6f7d493243f84af4e97af85607719c13746d35bbaeca5b41c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/schema.py",
+      "sha256": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/store.py",
+      "sha256": "5bc8a1d42cf3f785f30ec26fdfd456f07b45850e7520906791b70dd9bc64cd17",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/target.py",
+      "sha256": "6d7cbb10afe505950ebed1fdea7a037920be23e3fe10770047d086f1cb7c9cbc",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/text_bodies.py",
+      "sha256": "e4fe64962aca309f9b675b60dd4eac25c729873971a748a69b0305dc579682cb",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/transactions.py",
+      "sha256": "0fe7bcef262470347c721e64c34ea218a2cfa375725559a11e1ddf6c84959d10",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/acquisition.py",
+      "sha256": "bad8395a0155713f20ef10de4c096214ecc11b408f1a77bf7e5dd9d17e7ab9c2",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/catalog_validation.py",
+      "sha256": "32c29508f3e079fa62512bef0d8d369355cb9438de4fd0fab33dd77697de029f",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/collection_service.py",
+      "sha256": "87cbdc8b7708f0fc271ad32526f293ad90b5701fb3c40ddfdc2c8980f4a0b384",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/contracts.py",
+      "sha256": "c977b61d03abd239d9049a0c668eedcbf2bd684047c43df2b0710379c2ea5d4b",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/exchange.py",
+      "sha256": "46ef9cba5e7f0baee284118c02df9e87f3195f48137a5ff66384c42b41ffa317",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/exchange_service.py",
+      "sha256": "978ba1d010a371365400f15090707f6570f01e2580ed5545c4ad7e0b39a22231",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/git_query_context.py",
+      "sha256": "3a79e64a83feb0103b9a3d39e4c57a0770b22f2fdf5305bb340ed3cc10fff8e1",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/identity_service.py",
+      "sha256": "07e138bddf9485bc8756b6caa0643a388c2d9e6781113fd8c95b84f71a5efd97",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/issue_queries.py",
+      "sha256": "474e375ee88fad1050433be37e665d6802b6b6817ec951cfb016394917f7d295",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/job_plans.py",
+      "sha256": "0a1ff18900cc505ed41972701bd530729817eb2a928f60108d81f9f258cd6e6a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/job_service.py",
+      "sha256": "9e4770860c4d93ee99e150ee184766fe7a837d0601b32c1ec8e3434c2b80e054",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/maintenance_service.py",
+      "sha256": "a9ccb5e2b9abd8dc63936289810a0585aafd218408e386eeea258e4e58251884",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/notes.py",
+      "sha256": "5a4b8a674a81ca766dc0fcdef2400305faa6733b9519a7b4e2c3805b05504fda",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/parser_service.py",
+      "sha256": "7b8ae7e23d9b8f1add4a520fcad22c6e0d0745d561af2d46aecc5bd1d623518a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/parsing_service.py",
+      "sha256": "11cfc45eae63094e6deff0b46a070320fb120376eb5fc5baa76a38105bee8d45",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/ports.py",
+      "sha256": "ff7589d9a2b5ef75cea2b305f3854af67a1c995f42688417b3c392f38e90ff14",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/pr_queries.py",
+      "sha256": "f56a437aa7ca30019e5c486f5edacd22c15a1a573d89e560bdefed41932f7c45",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/production_query.py",
+      "sha256": "30ba1acce594a6d981b28d3fa8b513c17ea0ee91f0e24785d0aec387bba64282",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/query_service.py",
+      "sha256": "80a257854b9146fd5e5f78d3885d71ff2770111e49149f70e21d5c500331a92d",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/repository_identity.py",
+      "sha256": "9225b46edba2f0be92929905c64ad9afb4bfef1f8b6d5721a4840cb3ac036e94",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/source_service.py",
+      "sha256": "5a9c21c7e598b41ab1a5dc7704dfcbbaeaf51fdb36acc08c938a463f3766307e",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/application/target_queries.py",
+      "sha256": "ce5e725ea0e05748337defa4fe7759b47d2baa04988d5f612d1e1d0d4bf0c1e0",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/cli/main.py",
+      "sha256": "acc24904c4b9a4d41800dc888b16eb3ca1a857c118ed75a7301ffdfd8b671d4e",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/cli/presenters.py",
+      "sha256": "dda3165cfc22e6bb7a6f3ec893645ad100637c05ab0631099c1718518aa8f2be",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/cli/production_query.py",
+      "sha256": "80f72ca1615bdff999feb044d267842dc111345e2b66984c785f302c5a797981",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/config.py",
+      "sha256": "da88a41ab63497f3e018ff790c7247ec4bc53d44240eff387e65bdeaa9b11785",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/acquisition.py",
+      "sha256": "2dfa009fc68f1df78cb222503e9e3777635c04bda9d9fa14fa470b72b11c7d1b",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/coverage.py",
+      "sha256": "96eb3bad172f66af5afe335131087bd5c6a7cf6eb6dbb77617c01e851c8f9c81",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/current_state.py",
+      "sha256": "52a69c094eabaa206598d2c5e0a669c7740eaca4a9572bd272263774dce30449",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/document.py",
+      "sha256": "9faa75482007e80ff24da38818cf4089d696944743923ad21881110d25a9d548",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/exchange.py",
+      "sha256": "f415d63cb90e0a24b82108d595b94932eaf97aac6a736b339ffb20a43c6e1973",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/git_decoding.py",
+      "sha256": "f3f6966b47111757f64dbc31281664a71cbf8ee6d0bed3f37183632e28b76623",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/git_intrinsic.py",
+      "sha256": "6406b5c28dd87ef2382416996d5455bdae34dc8b48dbe113f42a898d03625690",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/git_native.py",
+      "sha256": "4796b88f41ec7b3dc22d64df80d65c0cd4b6208f69d9935032bec53ce0664c87",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/git_object.py",
+      "sha256": "e1427aa9a02fea745b5967b60c7ec23f419809b084d979a4d5edfc0d15638cd7",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/models.py",
+      "sha256": "0c89c49ff141119a0cf6d4342b774fe159647d9cc35c95122d9a225c4bd5c50b",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/notes.py",
+      "sha256": "92ab0f33eda718ffb730c8831104328577d2531ff4e7c6bfe921bc47371cd0aa",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_context.py",
+      "sha256": "68596461e8d30a3ccec850e9bd71aeff373ad82081e7f5119c5481297b92c80f",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_coordination.py",
+      "sha256": "c15eba1b6c9e91d38a8adfdf4077007d85bd5318418336b2ff17695fa88e939b",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_core.py",
+      "sha256": "f8f5945d61a65134b53e9615764e423e6ad99d737ba8f23c2ef3467dcdc46c17",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/p1_coverage.py",
+      "sha256": "b5e51a6dcf43162f20fb4a081fd12c68f40f4abc6a9aef0ff6bb41b1172f8531",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/payload.py",
+      "sha256": "e8b830b9ddcebdd61e2739f646e1565cdea34facb9b3513b9756cb06ae6d6208",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/acquisition.py",
+      "sha256": "a9bbed035efed1b14577240d6783cdbb6b2c52e334174151410608040bc182c5",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/notes.py",
+      "sha256": "bb4ddac4d6afc7e706ce26d84b7b57b8d88cf041cf08f057d3df4c5743336b47",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/p1_context.py",
+      "sha256": "34094a657ba1892f645da9eab4385f95a01460469203773f93e7ed11008dd4dd",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/p1_coordination.py",
+      "sha256": "48798344f1291ae70cea73a95da3eddf83867fa2d592f4f1e3952081e8d9486e",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/p1_core.py",
+      "sha256": "b421552e9188b825993523b4a7a6a44c8b497f29f2fb39b69d40acc9c0684fed",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/production_context.py",
+      "sha256": "ff2b9c98fe1a52a69d04311e7ef69c609285449af26250b1d996e9832d2d421f",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/ports/production_query.py",
+      "sha256": "5757053da80e7193ee8f3fb86d5c44535cec0b2475dfea49c5d37ba042363109",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/pr_scope.py",
+      "sha256": "fbd4444e5724ef521286a118046615d1d6b498e22bc04f0587328a6b438ac64a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/production_context.py",
+      "sha256": "1bf0108d155d41d2e3cc46159165e544e51681ea99720268b93e265fe4be4131",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/production_query.py",
+      "sha256": "c1a050235d76d94527abeed073c18431fe030bfd5923921232d907c3e70e80ca",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/domain/time.py",
+      "sha256": "f8ee3df9e402a820527d89b5d88c4c85afc4a2d013cd457763cc37746984990a",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/cas_integrity.sql",
+      "sha256": "58fa718c08e7558387602fa7e7266d33e74fbd7bda723b8c88ede4b8a1c97fd1",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/catalog3.sql",
+      "sha256": "ddc8f3039f512246ca417d33145e3afeb58be9212f741925706c936922b6f681",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/current_api.sql",
+      "sha256": "da05f6af33dd9154c411d9f4267a9498b89d8622cc6a2df9fbaa203a4ed0bae0",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/current_collections.sql",
+      "sha256": "ac5ec2df8955bc856e0fcd19f6bc04d9caddbe902d6137bf1064b61e1cdf04bc",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/current_resources.sql",
+      "sha256": "0a7a5fdfe024578ee008cff8b3f409c48a2c9b1d0da242122fd7bb7d16dcbf5f",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/exchange.sql",
+      "sha256": "c6f815452f508e31ad8b17349f0937ed14c3de5ce80d1370db1655a3f42c4fcf",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/git_domain.sql",
+      "sha256": "31611b0dfd641694198dde519f58180f4a0b7a257400c57a77e79325cfd99f9c",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/git_facts.sql",
+      "sha256": "731be2cf76583d3f6ece84b48bbec58ef5d9480dbd5a7bf9de9d4a07f7a0c132",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/identity_relations.sql",
+      "sha256": "b596bb6b9a20552501ad411bf33053edee9565e6414e2e4fc9870f100e766461",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/json_contracts.sql",
+      "sha256": "fea5fd9f3a6ce6ccb9c9fff4d5a37fe3bf0be19e8cc1e198aef91064dce8149e",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/operational.sql",
+      "sha256": "dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/pr_threads.graphql",
+      "sha256": "1bdf8a80df5221a44f3f5365d83dad8bfc5f7b203fbb11cba6c196c5816401e9",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/schemas/cli-v1.schema.json",
+      "sha256": "c6093eae50b54e27eb032238d0284cc6cca3f49a4e7875498a8241ee2775264e",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/search.sql",
+      "sha256": "1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7",
+      "unchanged": true
+    },
+    {
+      "path": "src/repo_catalog/resources/thread_comments.graphql",
+      "sha256": "41347a5f1370d4973ddadfcca1a42d74d40e1596ca4e72952b87b27459c4a8f4",
+      "unchanged": true
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9",
+      "unchanged": true
+    }
+  ]
+}

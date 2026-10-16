@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="4.718" timestamp="2026-10-16T18:01:54.695126+00:00" hostname="f0db5daff0a7"><testcase classname="tests.integration.test_catalog3_current_queries" name="test_issue_family_keeps_each_comment_and_search_replaces_superseded_text" time="2.821" /><testcase classname="tests.integration.test_catalog3_current_queries" name="test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel" time="1.367"><failure message="repo_catalog.domain.models.CatalogError: Canonical positive provider ID required">tests/integration/test_catalog3_current_queries.py:504: in test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel
+    assert catalog.admit(candidate).status == "accepted"
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_catalog3_current_queries.py:76: in admit
+    admitted = CurrentResources(self.store).admit(candidate, source="import")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repo_catalog/adapters/sqlite/current_resources.py:881: in admit
+    self._validate(incoming)
+src/repo_catalog/adapters/sqlite/current_resources.py:532: in _validate
+    raise CatalogError(
+E   repo_catalog.domain.models.CatalogError: Canonical positive provider ID required</failure></testcase></testsuite></testsuites>

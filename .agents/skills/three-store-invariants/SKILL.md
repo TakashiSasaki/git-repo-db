@@ -68,6 +68,9 @@ suites when `/tmp` has a smaller capacity. Record disk exhaustion separately fro
 product errors; preserve JUnit/journals and rerun the affected exact nodes with
 sufficient capacity. Remove only confirmed completed disposable test directories,
 never another active worktree's fixtures or real catalogs.
+Run pytest through the intended worktree's `uv run --no-sync`, or prepend that
+venv's `bin` to `PATH` when invoking its Python directly: CLI helpers spawn
+`repo-catalog` by name. A correct parent import alone does not bind child commands.
 
 ---
 

@@ -1,0 +1,9 @@
+{"event":"start","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","worker_id":"master","timestamp":1792173451.462913}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","phase":"setup","outcome":"passed","duration":2.260747,"worker_id":"master","timestamp":1792173453.727277}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","phase":"call","outcome":"passed","duration":3.487151,"worker_id":"master","timestamp":1792173457.257082}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts","phase":"teardown","outcome":"passed","duration":0.000295,"worker_id":"master","timestamp":1792173457.278039}
+{"event":"start","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","worker_id":"master","timestamp":1792173457.306072}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","phase":"setup","outcome":"passed","duration":2.624843,"worker_id":"master","timestamp":1792173459.934867}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","phase":"call","outcome":"passed","duration":0.011684,"worker_id":"master","timestamp":1792173459.949939}
+{"event":"phase","nodeid":"tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically","phase":"teardown","outcome":"passed","duration":0.173454,"worker_id":"master","timestamp":1792173460.124293}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792173460.134126}

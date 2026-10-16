@@ -1,0 +1,21 @@
+{
+  "source_commit": "7a520297f9a12db8c7386baa8e5d0cda55d4dfb4",
+  "source_tree": "5795e1ed9d0224d74600c7e9988229ebb39a20ba",
+  "selected_collected": 8,
+  "junit_nodes": 8,
+  "journal_starts": 8,
+  "passed_phases": 24,
+  "exit_status": 0,
+  "exactly_once": true,
+  "passed_node_ids": [
+    "tests/unit/test_build_docs_site.py::test_schema_freshness",
+    "tests/unit/test_build_docs_site.py::test_git_metadata",
+    "tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation",
+    "tests/unit/test_build_docs_site.py::test_publication_safety_validator",
+    "tests/unit/test_build_docs_site.py::test_internal_links_validator",
+    "tests/unit/test_build_docs_site.py::test_critical_endpoints_validator",
+    "tests/unit/test_build_docs_site.py::test_pages_trigger_paths_decision_matrix",
+    "tests/unit/test_build_docs_site.py::test_pages_trigger_covers_executed_schema_dependencies"
+  ],
+  "scope": "Targeted docs8 only; publication74inputhashes equal originalPR89; schema freshness and real transitive-trigger regression ran. No actual browser or fullcombinedsuite rerun."
+}

@@ -1,0 +1,54 @@
+"""Independent JobService transaction and physical ownership counterexample."""
+import json
+import sqlite3
+from pathlib import Path
+from repo_catalog.application.maintenance_service import MaintenanceService
+from repo_catalog.adapters.sqlite.store import Store
+from repo_catalog.application.job_service import JobService
+from repo_catalog.domain.models import CatalogError
+
+state = Path('/workspace/reviewer-b-evidence/p7-comparison-98c818a/probe-catalog')
+MaintenanceService(state).init('catalog-text-v1', 64 * 1024 * 1024, 0)
+with Store(state) as core:
+    op = core.operational
+    before = tuple(core.one('SELECT * FROM database_identity'))
+    real = op.execute
+    def fail_attempt(sql, args=()):
+        if sql.startswith('INSERT INTO job_attempts'):
+            raise RuntimeError('independent failure between job and attempt inserts')
+        return real(sql, args)
+    op.execute = fail_attempt
+    try:
+        JobService(core, clock_us=lambda: 10).create('sync', {'kind': 'git'})
+    except RuntimeError as error:
+        assert str(error) == 'independent failure between job and attempt inserts'
+    else:
+        raise AssertionError('injected operational failure was swallowed')
+    finally:
+        op.execute = real
+    assert op.one('SELECT count(*) FROM jobs')[0] == 0
+    assert op.one('SELECT count(*) FROM job_attempts')[0] == 0
+    service = JobService(core, clock_us=lambda: 20)
+    job = service.create('sync', {'kind': 'git'})
+    assert service.resume(job) == ('sync', {'kind': 'git'})
+    rows = [tuple(row) for row in op.all('SELECT attempt,state,reason FROM job_attempts ORDER BY attempt')]
+    assert rows == [(1, 'interrupted', 'process_restart'), (2, 'running', None)]
+    service.update(job, 'complete')
+    try:
+        service.resume(job)
+    except CatalogError as error:
+        assert error.code == 'INVALID_ARGUMENT'
+    else:
+        raise AssertionError('completed job resumed')
+    assert op.one('SELECT current_attempt FROM jobs')[0] == 2
+    assert tuple(core.one('SELECT * FROM database_identity')) == before
+    assert [row[1] for row in core.all('PRAGMA database_list')] == ['main']
+    for table in ('jobs', 'job_attempts', 'collection_progress'):
+        assert core.one('SELECT 1 FROM sqlite_schema WHERE name=?', (table,)) is None
+        try:
+            core.one('SELECT * FROM ' + table)
+        except sqlite3.OperationalError as error:
+            assert 'no such table' in str(error)
+        else:
+            raise AssertionError('operational table leaked into Core')
+print(json.dumps({'verdict':'PASS','job_insert_failure_rollback':True,'running_restart_retains_prior_attempt':True,'complete_is_not_resumable':True,'core_identity_revision_unchanged':True,'no_core_operational_tables_or_attach':True}))

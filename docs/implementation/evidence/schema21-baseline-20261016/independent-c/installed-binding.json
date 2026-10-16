@@ -1,0 +1,6 @@
+{
+  "import_path": "/workspace/review-c/.venv/lib/python3.12/site-packages/repo_catalog/adapters/sqlite/index.py",
+  "source_sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
+  "installed_sha256": "79352d4937580322b861819fb023b02375f3b2be927d67faa40620e853c91e2a",
+  "cli": "/workspace/review-c/.venv/bin/repo-catalog"
+}

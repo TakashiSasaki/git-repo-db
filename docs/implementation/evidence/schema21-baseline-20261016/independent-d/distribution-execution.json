@@ -1,0 +1,10 @@
+{
+  "head": "83d3c1401891b62eb98724262dd8709f6b3c44eb",
+  "tree": "faf2190f4909e8ca61431b512dd2840fcc3ec4cc",
+  "method": "git archive exact commit into clean external source; no .git or preexisting workspace artifacts",
+  "cwd": "/workspace/reviewer-d-dist-source",
+  "file_count": 1381,
+  "file_manifest_sha256": "0789f4ba96aad1cf95291d7967d2371d5daf40bda3bc094338805b7235ba874c",
+  "wheelhouse": "/workspace/baseline-evidence/wheelhouse",
+  "command": "PATH=/workspace/baseline-main/.venv/bin:$PATH REPO_CATALOG_WHEELHOUSE=/workspace/baseline-evidence/wheelhouse /workspace/baseline-main/.venv/bin/python -m pytest -q tests/packaging/test_distribution.py --basetemp=/workspace/reviewer-d-evidence/distribution-tmp --junitxml=/workspace/reviewer-d-evidence/distribution.xml --journal=/workspace/reviewer-d-evidence/distribution.jsonl"
+}

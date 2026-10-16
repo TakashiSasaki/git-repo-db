@@ -1,0 +1,6 @@
+{
+  "reason": "Main-only stale Core SQL in failed test_snapshot_completion_fencing skipped hook release; test already recorded failed before cleanup",
+  "action": "Released disposable before_publish hook to allow child CLI to exit",
+  "hook": "/tmp/pytest-of-agent/pytest-0/popen-gw0/test_snapshot_completion_fenci0/hooks/before_publish.release",
+  "timestamp": 1792173429.363026
+}

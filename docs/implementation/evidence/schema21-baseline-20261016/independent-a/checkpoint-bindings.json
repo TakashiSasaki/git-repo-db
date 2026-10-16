@@ -1,0 +1,20 @@
+[
+  {
+    "commit": "510484a36f3e099ce0c12dcc295ac1b051b751d1",
+    "tree": "227abf50ca1d3bb0256673da072006a5aa28b4cd",
+    "source_diff_against_main": [],
+    "artifacts": [
+      "root-checkpoint.xml",
+      "root-checkpoint.jsonl"
+    ]
+  },
+  {
+    "commit": "b6e0ba5b67ab9b0a318d1c5bb557698cef244179",
+    "tree": "5d82739e97e362e1fb9b75a29967440857684043",
+    "source_diff_against_main": [],
+    "artifacts": [
+      "jobs-checkpoint.xml",
+      "jobs-checkpoint.jsonl"
+    ]
+  }
+]

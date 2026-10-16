@@ -1,0 +1,25 @@
+import sqlite3
+import pytest
+from tests.integration.test_catalog3_current_queries import current_catalog
+import importlib.util
+spec = importlib.util.spec_from_file_location('index_before_cleanup', '/tmp/schema21_index_before_cleanup.py')
+index = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(index)
+
+
+def test_cleanup_fault_after_ready(current_catalog, monkeypatch):
+    catalog = current_catalog
+    assert catalog.admit(catalog.candidate('issue', '1', 'current needle')).status == 'accepted'
+    original = index._prune_obsolete_documents
+    calls = 0
+    def injected(*args):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise sqlite3.OperationalError('database is locked')
+        return original(*args)
+    monkeypatch.setattr(index, '_prune_obsolete_documents', injected)
+    with pytest.raises(sqlite3.OperationalError, match='locked'):
+        index.rebuild(catalog.store, 'issue')
+    with catalog.store.open_search(readonly=True) as search:
+        assert search.one("SELECT count(*) FROM index_generations WHERE state='ready'")[0] == 1

@@ -1,0 +1,9 @@
+{"event":"start","nodeid":"tests/e2e/test_recovery.py::test_kill_before_publish","worker_id":"master","timestamp":1792174147.672378}
+{"event":"phase","nodeid":"tests/e2e/test_recovery.py::test_kill_before_publish","phase":"setup","outcome":"passed","duration":11.938822,"worker_id":"master","timestamp":1792174159.644581}
+{"event":"phase","nodeid":"tests/e2e/test_recovery.py::test_kill_before_publish","phase":"call","outcome":"passed","duration":14.359074,"worker_id":"master","timestamp":1792174174.028338}
+{"event":"phase","nodeid":"tests/e2e/test_recovery.py::test_kill_before_publish","phase":"teardown","outcome":"passed","duration":0.000352,"worker_id":"master","timestamp":1792174174.046118}
+{"event":"start","nodeid":"tests/e2e/test_jobs.py::test_cancel_resume","worker_id":"master","timestamp":1792174174.058077}
+{"event":"phase","nodeid":"tests/e2e/test_jobs.py::test_cancel_resume","phase":"setup","outcome":"passed","duration":13.471809,"worker_id":"master","timestamp":1792174187.541545}
+{"event":"phase","nodeid":"tests/e2e/test_jobs.py::test_cancel_resume","phase":"call","outcome":"passed","duration":6.475269,"worker_id":"master","timestamp":1792174194.029106}
+{"event":"phase","nodeid":"tests/e2e/test_jobs.py::test_cancel_resume","phase":"teardown","outcome":"passed","duration":0.000334,"worker_id":"master","timestamp":1792174194.042082}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792174194.046605}

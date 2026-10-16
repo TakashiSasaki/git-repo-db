@@ -1,0 +1,86 @@
+{
+  "ARCHITECTURE-REVIEW.md": {
+    "bytes": 7337,
+    "sha256": "25c9302666c793fd4bdd1926d9c44410eb8b425f4b1a06043b9cbb2757efb839"
+  },
+  "INITIAL-REVIEW.md": {
+    "bytes": 3784,
+    "sha256": "46a1df0a4fb7e05ac75178b4812a245c70fb36f1dee1739843dfc2b3694be728"
+  },
+  "baseline-p7-merge-preflight.txt": {
+    "bytes": 41,
+    "sha256": "cab696e55ae4112ac33f793d422a758c25d4f48ae3b8c455188279d3ed860df7"
+  },
+  "checkpoint-bindings.json": {
+    "bytes": 489,
+    "sha256": "ffca28201c83e4f3d6f5999a85cd23ff67ca3868ff5ca2fd309ca7e37bb722b4"
+  },
+  "ci-plan.jsonl": {
+    "bytes": 85369,
+    "sha256": "3ef195aee20c4e21f21f7938a38e540b35eeb9ac6ab10bebd60e4588fd9521fc"
+  },
+  "ci-plan.xml": {
+    "bytes": 14216,
+    "sha256": "d395a2b263ae00b84bd06a63e8a77f756e866c1bd7087298ec2a8cbd766ee621"
+  },
+  "ci-source-selection.json": {
+    "bytes": 4125,
+    "sha256": "011b47324f96c775ab4307181a9108b7a65a887d3a75ab1b91c237da9b43c2ec"
+  },
+  "independent-execution-reconciliation.json": {
+    "bytes": 20238,
+    "sha256": "c31b0e3de734f5cb76647498c4d21623b128599b12bd751b9da6dcebde6b2e33"
+  },
+  "jobs-checkpoint.jsonl": {
+    "bytes": 3554,
+    "sha256": "184569a96ac8b9a62b38d6904a386f13979f5a1efeaf262b08264db0db67c34f"
+  },
+  "jobs-checkpoint.xml": {
+    "bytes": 791,
+    "sha256": "a4f2a631239be82ada19ddd4a27288bd06f2a643935a28e8c18af18006038243"
+  },
+  "physical-boundary-probe.json": {
+    "bytes": 855,
+    "sha256": "e0ef4ce42d00a62f3da7c47f879c549ff168978b478b47ca2f73da5eb09e47cf"
+  },
+  "postready-counterexample.jsonl": {
+    "bytes": 851,
+    "sha256": "b08ff5090fcdbab8b70a9defd7c986678b59a2f672b9f08ef54b92ac79806166"
+  },
+  "postready-counterexample.xml": {
+    "bytes": 361,
+    "sha256": "af55c17418050facabfc81a80b1fa70c3e80500d89d19a61169ff10444802970"
+  },
+  "root-checkpoint-missing-temp-parent.jsonl": {
+    "bytes": 2252,
+    "sha256": "639730e09bd882ffab239051ac4ae7468e74e4cbd794c40840b27c19801c3a15"
+  },
+  "root-checkpoint-missing-temp-parent.xml": {
+    "bytes": 2713,
+    "sha256": "d3f7a2889c1ab8c4a11ccf33c44d143437ddc03e5d7eeea1fe373c44b983dfcb"
+  },
+  "root-checkpoint.jsonl": {
+    "bytes": 3027,
+    "sha256": "27937c37fd9d58372c78ee8a260f3067f1ae9d572d4ccbd42103b481e15eaccf"
+  },
+  "root-checkpoint.xml": {
+    "bytes": 740,
+    "sha256": "c7979229304bafd494365520bc132b8991939e962cb6d03a1e8e7851ac517d34"
+  },
+  "schema-and-source-boundary.json": {
+    "bytes": 2678,
+    "sha256": "0cbe880ead3d962fea97c3b1ca980ac3ed4e66c6740b63b87f93fd12afb6ec6e"
+  },
+  "search31b7.jsonl": {
+    "bytes": 38641,
+    "sha256": "88cd38f644018ff1ccb53ddbd76d3b22c484fc20d91ddf664702a0bc744f494e"
+  },
+  "search31b7.xml": {
+    "bytes": 6473,
+    "sha256": "c10c42938638744422cd1999ebf245ea976b82c5ef3fa7e2331a9ce977bfad4c"
+  },
+  "test_postready_cleanup_counterexample.py": {
+    "bytes": 1873,
+    "sha256": "3be9c345831482958b4138eff4160bdb67325e0adfbec9f4492487d13d174caf"
+  }
+}

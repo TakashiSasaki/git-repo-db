@@ -1,0 +1,5 @@
+{"event":"start","nodeid":"tests/integration/test_git_decoder_byte_validation.py::test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder_candidates","worker_id":"master","timestamp":1792174356.531019}
+{"event":"phase","nodeid":"tests/integration/test_git_decoder_byte_validation.py::test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder_candidates","phase":"setup","outcome":"passed","duration":0.003081,"worker_id":"master","timestamp":1792174356.535147}
+{"event":"phase","nodeid":"tests/integration/test_git_decoder_byte_validation.py::test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder_candidates","phase":"call","outcome":"passed","duration":1.020819,"worker_id":"master","timestamp":1792174357.560054}
+{"event":"phase","nodeid":"tests/integration/test_git_decoder_byte_validation.py::test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder_candidates","phase":"teardown","outcome":"passed","duration":0.000221,"worker_id":"master","timestamp":1792174357.560881}
+{"event":"finish","status":"completed","exitstatus":0,"timestamp":1792174357.561725}

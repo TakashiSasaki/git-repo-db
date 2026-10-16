@@ -1,0 +1,51 @@
+{
+  "role": "Independent Reviewer D (no production/test modifications)",
+  "scope": "Reproducible Search projection correction; whole-remediation integration evidence still pending",
+  "reviewed_head": "31b7bf3d734c92ad10d22cca233d4318932dfce3",
+  "reviewed_tree": "e18c5e02ea6878f484b56229eb45453904093d47",
+  "before_head": "172342bc7490d3594aa71aa5c27c3d861ae52d3a",
+  "root_cause": "Obsolete Search documents retained for prior generations were included in every new generation because rebuild selected all retained documents instead of current source keys.",
+  "review_findings": [],
+  "conclusions": [
+    "Production fix has independently reproduced cause and passing original behavioral guarantee.",
+    "Old ready generation survives cancelled replacement; current rebuild excludes superseded bytes across more than one SQL batch; empty/tombstoned projection is rebuilt; Core historical text remains.",
+    "No Core/Operational/Search alias, duplicate table, ATTACH, or new persistent Core state introduced."
+  ],
+  "results": {
+    "search-before": {
+      "nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text"
+      ],
+      "junit_counts": {
+        "failed": 1
+      },
+      "journal_matches": true,
+      "exactly_once": true
+    },
+    "search": {
+      "nodes": [
+        "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+        "tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel"
+      ],
+      "junit_counts": {
+        "passed": 2
+      },
+      "journal_matches": true,
+      "exactly_once": true
+    }
+  },
+  "limits": [
+    "This focused review is not full-suite or distribution acceptance.",
+    "Concurrent workloads; wall times are not benchmark comparisons."
+  ],
+  "artifacts": {
+    "search.jsonl": "41effa2459e3f6d4454575f2946f5c2d2d852ceb49393d674f41e0e8c5f47126",
+    "search-before-execution.json": "3ee38da6d86019d05e068da1afa03ca0dec422ecdecfbe6691aefb094c83a703",
+    "search-before.xml": "e6354755138d7223d63bf663af9239151aca2e10818f509070a94d4052660ab2",
+    "search.log": "5c4acd843e4b1f471ef0bd9ae2ac616a2c418d3d556a1a04f419b4d15d543003",
+    "search-before.log": "4e8141712ba479db4c96eced1aec154f96b8381cff9a5e69fa6fdb45cc8dbda6",
+    "search-execution.json": "ee3d3ae9303dde353cbc6215a34f3f723319f1e97ca81ff64a571f7e18a98205",
+    "search.xml": "363cea1471c53af60c4eb6bd9ff8edf7e9eaad0d34ec240a2213dfca7aa768c7",
+    "search-before.jsonl": "fbfb5a7c777acb58361399d1bdfed75a4a5c2a90c91f11b51db4f73ad6d521aa"
+  }
+}

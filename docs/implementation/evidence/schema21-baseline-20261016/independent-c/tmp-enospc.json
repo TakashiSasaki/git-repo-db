@@ -1,0 +1,8 @@
+{
+  "tmp_capacity": "8.8GiB",
+  "tmp_used_at_failure": "100%",
+  "workspace_free": "28GiB",
+  "completed_own_pytest_temp": "/tmp/pytest-of-agent/pytest-33",
+  "preserved_counterexample_dirs": [],
+  "action": "Removed only completed own disposable pytest-33 after preserving all logs/JUnit/journal; exact-node source and traceback preserve the missed Search observation counterexample. No raw fixture archive retained."
+}

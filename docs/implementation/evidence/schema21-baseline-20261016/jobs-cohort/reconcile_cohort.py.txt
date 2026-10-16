@@ -1,0 +1,54 @@
+"""Run from the source root after the frozen cohort finishes."""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path.cwd()))
+from scripts.ci_journal import aggregate_journal
+from scripts.ci_profile import junit
+
+root = Path(__file__).resolve().parent
+xml = root / 'accepted-final-cohort.xml'
+journal = root / 'accepted-final-cohort.jsonl'
+j = junit(xml)
+e = aggregate_journal(journal)
+assert not e['interrupted'] and e['partial'] == 0
+jmap = {r['nodeid']:r['status'] for r in j['tests']}
+emap = {r['nodeid']:r['status'] for r in e['tests']}
+assert len(jmap) == len(j['tests']) == e['count'] == e['completed']
+assert jmap == emap
+assert set(jmap.values()) == {'passed'}
+classification_path = root/'owned-inherited-classification.json'
+c = json.loads(classification_path.read_text())
+for row in c['rows']:
+    assert jmap[row['nodeid']] == 'passed'
+    row['verification'] = 'passed in accepted-final-cohort; exact JUnit/journal node reconciliation'
+    row['remaining_status'] = 'corrected'
+extra = c['additional_current_main_failure']
+assert jmap[extra['nodeid']] == 'passed'
+extra['verification'] = 'passed in accepted-final-cohort'
+classification_path.write_text(json.dumps(c, indent=2)+'\n')
+result = {
+    'head': 'c5db95520f2d54dac675c6d3aa3be8f955cad4e7',
+    'tree': 'd9f8e7a7d9a6d59a2c99a724d15a27d4fa2d3339',
+    'frozen_production': '31b7bf3d734c92ad10d22cca233d4318932dfce3',
+    'node_count': len(jmap), 'passed': len(jmap), 'failed': 0, 'errors':0,
+    'skipped': 0, 'default_marker_policy': "not live and not benchmark",
+    'unexecuted_selected_cohort_marker_node': 'tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload',
+    'prior228_corrected_owned_nodes': len(c['rows']),
+    'additional_current_main_failure_corrected': 1,
+    'new_regressions': [
+        'tests/integration/test_catalog3_job_plans.py::test_job_attempts_are_operational_and_loss_preserves_core_facts',
+        'tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel',
+    ],
+    'junit_journal_exact_node_status_equality': True,
+    'journal_completed_passing': e['completed_passing'],
+    'passed_nodeids': sorted(jmap),
+    'artifact_sha256': {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [xml,journal,root/'accepted-final-cohort.log']},
+}
+(root/'accepted-final-reconciliation.json').write_text(json.dumps(result,indent=2)+'\n')
+binding_path = root/'source-binding.json'
+b = json.loads(binding_path.read_text()); b['frozen_final_cohort'].update(status='passed', passed=len(jmap), reconciliation='accepted-final-reconciliation.json')
+binding_path.write_text(json.dumps(b,indent=2)+'\n')
+print(json.dumps({k:v for k,v in result.items() if k not in ['passed_nodeids','artifact_sha256']}, indent=2))

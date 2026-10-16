@@ -1,0 +1,79 @@
+[
+  {
+    "name": "implementation-boundary",
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_implementation_boundary.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-b-p7",
+    "started_at_utc": "2026-10-16T18:08:44.258534+00:00",
+    "elapsed_seconds": 5.253279238999994,
+    "exit_code": 0
+  },
+  {
+    "name": "callsite-dependencies",
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_callsite_dependencies.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-b-p7",
+    "started_at_utc": "2026-10-16T18:08:49.512042+00:00",
+    "elapsed_seconds": 4.786449034999919,
+    "exit_code": 0
+  },
+  {
+    "name": "p1-schema",
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_p1_schema.py",
+      "--check"
+    ],
+    "cwd": "/workspace/review-b-p7",
+    "started_at_utc": "2026-10-16T18:08:54.298681+00:00",
+    "elapsed_seconds": 0.9157683340000631,
+    "exit_code": 0
+  },
+  {
+    "name": "publication-free",
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_publication_free.py"
+    ],
+    "cwd": "/workspace/review-b-p7",
+    "started_at_utc": "2026-10-16T18:08:55.214634+00:00",
+    "elapsed_seconds": 6.426465975999918,
+    "exit_code": 0
+  },
+  {
+    "name": "phase2-source",
+    "argv": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/audit_phase2_dependencies.py",
+      "--output",
+      "/workspace/reviewer-b-evidence/p7-comparison-98c818a/phase2-report.json",
+      "--source-output",
+      "/workspace/reviewer-b-evidence/p7-comparison-98c818a/phase2-source.json.gz"
+    ],
+    "cwd": "/workspace/review-b-p7",
+    "started_at_utc": "2026-10-16T18:09:01.641364+00:00",
+    "elapsed_seconds": 36.203497707,
+    "exit_code": 1
+  }
+]

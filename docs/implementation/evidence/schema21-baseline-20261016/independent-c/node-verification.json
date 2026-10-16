@@ -1,0 +1,2966 @@
+[
+  {
+    "original_nodeid": "tests/integration/test_application_contract.py::test_operational_failure_retains_resumable_job",
+    "verified_nodeid": "tests/integration/test_application_contract.py::test_operational_failure_retains_resumable_job",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_current_collection.py::test_unresolved_terminal_receipt_does_not_become_complete_on_resume",
+    "verified_nodeid": "tests/integration/test_catalog3_current_collection.py::test_unresolved_terminal_receipt_does_not_become_complete_on_resume",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+    "verified_nodeid": "tests/integration/test_catalog3_current_queries.py::test_issue_family_keeps_each_comment_and_search_replaces_superseded_text",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+    "verified_nodeid": "tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_normal_acquisition_retains_typed_producers_and_exact_code_dependencies",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_normal_acquisition_retains_typed_producers_and_exact_code_dependencies",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-detail]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-detail]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-list]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-list]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-threads]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-threads]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-timeline]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-timeline]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-commits]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-commits]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-files]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-pr-files]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-issue-comment]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[False-issue-comment]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-detail]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-detail]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-list]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-list]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-threads]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-threads]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-timeline]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-timeline]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-commits]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-commits]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-files]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-pr-files]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-issue-comment]",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_core_http_reparse_is_retired_without_reading_original_or_mutating_catalog[True-issue-comment]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_github_sync.py::test_rate_etag",
+    "verified_nodeid": "tests/e2e/test_github_sync.py::test_rate_etag",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid2]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid2]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid3]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid3]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_parser_labels_cannot_replace_latest_document_clock",
+    "verified_nodeid": "tests/integration/test_catalog3_parsing_runtime.py::test_parser_labels_cannot_replace_latest_document_clock",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid4]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid4]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid5]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid5]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid6]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid6]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid7]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid7]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid8]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid8]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid9]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid9]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_github_sync.py::test_page_crash",
+    "verified_nodeid": "tests/e2e/test_github_sync.py::test_page_crash",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid10]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid10]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid11]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid11]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid12]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid12]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_invalid_json_detail_discards_bytes_and_reacquires[pr-detail]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_invalid_json_detail_discards_bytes_and_reacquires[pr-detail]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_invalid_json_detail_discards_bytes_and_reacquires[pr-code-check]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_invalid_json_detail_discards_bytes_and_reacquires[pr-code-check]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_incremental_parent_number_is_checked_before_sqlite_lookup",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_incremental_parent_number_is_checked_before_sqlite_lookup",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation",
+    "verified_nodeid": "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_single_pr_response_cannot_publish_a_different_pr[pr-detail]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_single_pr_response_cannot_publish_a_different_pr[pr-detail]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_single_pr_response_cannot_publish_a_different_pr[pr-code-check]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_single_pr_response_cannot_publish_a_different_pr[pr-code-check]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_unsaved_thread_comments_remain_partial_until_resume[child-error]",
+    "verified_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_unsaved_thread_comments_remain_partial_until_resume[child-error]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
+    "verified_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_jobs.py::test_cancel_resume",
+    "verified_nodeid": "tests/e2e/test_jobs.py::test_cancel_resume",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]",
+    "verified_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-empty-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-empty-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_unsaved_thread_comments_remain_partial_until_resume[child-partial]",
+    "verified_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_unsaved_thread_comments_remain_partial_until_resume[child-partial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-empty-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-empty-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation",
+    "verified_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_batch_skip_retains_diagnostic_without_remote_observation",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-resource-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-resource-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-resource-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[RATE_LIMITED-RATE_LIMIT-60000000-null-resource-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically",
+    "verified_nodeid": "tests/integration/test_catalog3_portable_identity.py::test_job_result_and_terminal_state_commit_atomically",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-empty-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-empty-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-empty-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-empty-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_failed_root_after_head_change_keeps_thread_bound_to_captured_head",
+    "verified_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_failed_root_after_head_change_keeps_thread_bound_to_captured_head",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-resource-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-resource-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-resource-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_error_only_response_retains_backoff_and_resume_boundary[FORBIDDEN-GRAPHQL_PARTIAL-None-null-resource-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_latest_documents_and_exact_listing_reuse",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_latest_documents_and_exact_listing_reuse",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_terminal_page_resume_has_one_actual_coverage_observation",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_terminal_page_resume_has_one_actual_coverage_observation",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_sync_failure_before_any_response_preserves_saved_coverage",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_sync_failure_before_any_response_preserves_saved_coverage",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_git_ref_mismatch_cannot_publish_complete_code[False]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_git_ref_mismatch_cannot_publish_complete_code[False]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[False]",
+    "verified_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_after_fresh_root_request[False]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_git_ref_mismatch_cannot_publish_complete_code[True]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_git_ref_mismatch_cannot_publish_complete_code[True]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_git_refresh_reuses_preserved_exact_roles_without_new_claim",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_git_refresh_reuses_preserved_exact_roles_without_new_claim",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_without_new_root_request[True]",
+    "verified_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_resumed_child_observation_governs_its_thread_after_fresh_root_request[True]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_error_only_rate_during_sync_preserves_saved_code_and_claims",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_error_only_rate_during_sync_preserves_saved_code_and_claims",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_keeps_only_justified_target_assessments[same-current]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_keeps_only_justified_target_assessments[same-current]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-pr-commits]",
+    "verified_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-pr-commits]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_keeps_only_justified_target_assessments[new-current]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_keeps_only_justified_target_assessments[new-current]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-pr-files]",
+    "verified_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-pr-files]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_keeps_only_justified_target_assessments[observed-race]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_failed_code_check_keeps_only_justified_target_assessments[observed-race]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-commits]",
+    "verified_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-commits]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_saved_partial_graphql_retains_merge_target_and_partial_code",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_saved_partial_graphql_retains_merge_target_and_partial_code",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-files]",
+    "verified_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_ignore_code_listing_gaps[collection-files]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_unobserved_thread_retry_does_not_promote_stale_partial_code",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_unobserved_thread_retry_does_not_promote_stale_partial_code",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_interrupted_new_pr_head_has_no_complete_assessment",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_interrupted_new_pr_head_has_no_complete_assessment",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_partial_listing_resumes_same_items_and_no_completed_pages[False]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_partial_listing_restarts_with_retained_items_and_fresh_pages[False]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_partial_listing_resumes_same_items_and_no_completed_pages[True]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_partial_listing_restarts_with_retained_items_and_fresh_pages[True]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_watermarks_failed_child_and_resume_keep_successful_boundary",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_watermarks_failed_child_and_resume_keep_successful_boundary",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_nested_pagination_and_partial_payload_preservation",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_nested_pagination_and_partial_payload_preservation",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-issue-comment]",
+    "verified_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-issue-comment]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_fresh_target_race_never_borrows_another_head_assessment",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_fresh_target_race_never_borrows_another_head_assessment",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-threads]",
+    "verified_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-threads]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_review_target_failure_is_retried_on_resume",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_review_target_failure_is_retried_on_resume",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_timeline_failure_is_outside_document_scope",
+    "verified_nodeid": "tests/integration/test_catalog3_review_coverage.py::test_timeline_failure_is_outside_document_scope",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-pr-documents]",
+    "verified_nodeid": "tests/integration/test_catalog3_pr_scope_coverage.py::test_document_queries_retain_document_gaps[collection-pr-documents]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_resumed_thread_coverage_includes_prior_children_only_for_its_root",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_resumed_thread_coverage_includes_prior_children_only_for_its_root",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_nested_cursor_retries_saved_boundary",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_nested_cursor_retries_saved_boundary",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_current_rest_page_keeps_retry_boundary_without_required_archive",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_current_rest_page_keeps_retry_boundary_without_required_archive",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_changed_observed_permission_scope_refreshes_complete_listings",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_changed_observed_permission_scope_refreshes_complete_listings",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[root-page]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_missing_graphql_database_id_retries_without_retaining_original_or_node_alias[child-page]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-nodes-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-nodes-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-nodes-nested-initial]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-nodes-nested-initial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-nodes-nested-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-nodes-nested-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-initial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-nodes-nested-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[mapping-nodes-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[mapping-nodes-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[mapping-nodes-nested-initial]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[mapping-nodes-nested-initial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[mapping-nodes-nested-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[mapping-nodes-nested-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[empty-page-info-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[empty-page-info-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[empty-page-info-nested-initial]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[empty-page-info-nested-initial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[empty-page-info-nested-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[empty-page-info-nested-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-has-next-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-has-next-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-has-next-nested-initial]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-has-next-nested-initial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-has-next-nested-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[null-has-next-nested-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[integer-has-next-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[integer-has-next-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[integer-has-next-nested-initial]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[integer-has-next-nested-initial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[integer-has-next-nested-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[integer-has-next-nested-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-next-cursor-root]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-next-cursor-root]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-next-cursor-nested-initial]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-next-cursor-nested-initial]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-next-cursor-nested-child]",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_malformed_graphql_connections_are_partial_and_retryable[missing-next-cursor-nested-child]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_git_ref_race_records_partial_code_and_repository_coverage",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_git_ref_race_records_partial_code_and_repository_coverage",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_page_info_requires_boolean_has_next_page",
+    "verified_nodeid": "tests/integration/test_catalog3_github_runtime.py::test_graphql_page_info_requires_boolean_has_next_page",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_discovery_resume_uses_frozen_source_set_and_settings",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_discovery_resume_uses_frozen_source_set_and_settings",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_missing_explicit_credentials_creates_no_job_or_remote_evidence",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_missing_explicit_credentials_creates_no_job_or_remote_evidence",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_plan_saves_credential_reference_not_value",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_plan_saves_credential_reference_not_value",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_manual_inventory_has_source_owned_current_roster_and_assessment",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_manual_inventory_has_source_owned_current_roster_and_assessment",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_bulk_zero_usable_sources_creates_no_job",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_bulk_zero_usable_sources_creates_no_job",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_cancelled_discovery_attempt_is_interrupted",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_cancelled_discovery_attempt_is_interrupted",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_bulk_mixed_sources_persist_partial_result_with_complete_attempt",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_bulk_mixed_sources_persist_partial_result_with_complete_attempt",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_credentials_lost_after_job_creation_complete_partial_without_evidence",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_credentials_lost_after_job_creation_complete_partial_without_evidence",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_job_plans.py::test_explicit_configuration_reuses_source_registration_and_does_not_rewrite_job",
+    "verified_nodeid": "tests/integration/test_catalog3_job_plans.py::test_explicit_configuration_reuses_source_registration_and_does_not_rewrite_job",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir",
+    "verified_nodeid": "tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_recovery.py::test_kill_before_publish",
+    "verified_nodeid": "tests/e2e/test_recovery.py::test_kill_before_publish",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_recovery.py::test_kill_mid_blob",
+    "verified_nodeid": "tests/e2e/test_recovery.py::test_kill_mid_blob",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_recovery.py::test_old_run_retains_divergent_capture_without_time_winner",
+    "verified_nodeid": "tests/e2e/test_recovery.py::test_old_run_retains_divergent_capture_without_time_winner",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[None]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[None]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[unexpected scalar]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[unexpected scalar]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[42]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[42]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item3]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item3]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item4]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item4]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item5]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item5]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item6]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item6]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item7]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item7]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item8]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item8]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item9]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item9]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item10]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item10]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item11]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item11]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item12]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item12]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item13]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item13]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item14]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item14]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item15]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_current_rest_item_rejection_preserves_domain_prefix_and_safe_resume[bad_item15]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-None]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-None]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid1]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid1]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid2]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid2]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid3]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid3]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid4]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid4]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid5]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid5]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid6]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid6]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid7]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid7]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid8]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid8]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid9]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid9]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_repository_identity.py::test_endpoint_scope_and_resume_keep_original_url",
+    "verified_nodeid": "tests/e2e/test_repository_identity.py::test_endpoint_scope_and_resume_keep_original_url",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid10]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid10]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid11]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid11]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid12]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-list-invalid12]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-None]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-None]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid1]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid1]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/e2e/test_search.py::test_fts_fallback",
+    "verified_nodeid": "tests/e2e/test_search.py::test_fts_fallback",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid2]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid2]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid3]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid3]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid4]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid4]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid5]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid5]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid6]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid6]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid7]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid7]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid8]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid8]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid9]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid9]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid10]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid10]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid11]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid11]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid12]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-detail-invalid12]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-None]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-None]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid1]",
+    "verified_nodeid": "tests/integration/test_catalog3_rest_boundaries.py::test_malformed_pr_shapes_discard_originals_and_retry[pr-code-check-invalid1]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[review-175]",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[review-175]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[review-200]",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[review-200]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[review-300]",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[review-300]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[issue-175]",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[issue-175]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[issue-200]",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[issue-200]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[issue-300]",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_known_current_resource_rejection_preserves_latest_candidate_set[issue-300]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_out_of_scope_incremental_current_parent_adds_no_observation",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_out_of_scope_incremental_current_parent_adds_no_observation",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_current_terminal_cancellation_finishes_locally_without_false_partial",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_current_terminal_cancellation_reacquires_without_false_partial",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_current_incremental_watermark_stays_at_original_scan_start",
+    "verified_nodeid": "tests/integration/test_current_collection_rejection_clocks.py::test_current_incremental_watermark_uses_actual_fresh_scan_start",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review]",
+    "verified_nodeid": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review-comment]",
+    "verified_nodeid": "tests/integration/test_current_review_query_coverage.py::test_imported_current_family_uses_direct_fields_without_parser_trust[review-comment]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_review_query_coverage.py::test_current_family_preserves_body_and_conflict_coverage[missing-body]",
+    "verified_nodeid": "tests/integration/test_current_review_query_coverage.py::test_current_family_preserves_body_and_conflict_coverage[missing-body]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_review_query_coverage.py::test_current_family_preserves_body_and_conflict_coverage[conflict]",
+    "verified_nodeid": "tests/integration/test_current_review_query_coverage.py::test_current_family_preserves_body_and_conflict_coverage[conflict]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_review_query_coverage.py::test_nonterminal_current_page_cannot_inherit_complete_family_coverage",
+    "verified_nodeid": "tests/integration/test_current_review_query_coverage.py::test_nonterminal_current_page_cannot_inherit_complete_family_coverage",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_review_query_coverage.py::test_current_family_keeps_repository_parent_set_completeness",
+    "verified_nodeid": "tests/integration/test_current_review_query_coverage.py::test_current_family_keeps_repository_parent_set_completeness",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_current_review_query_coverage.py::test_unknown_document_scope_stays_conservatively_incomplete",
+    "verified_nodeid": "tests/integration/test_current_review_query_coverage.py::test_unknown_document_scope_stays_conservatively_incomplete",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-issue-comment]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-issue-comment]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-pr-list]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-pr-list]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-pr-detail]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-pr-detail]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-pr-code-check]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-pr-code-check]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-issue-comment]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[json-issue-comment]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_observed_rest_rejection_preserves_latest_coverage_candidate_set[100]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_observed_rest_rejection_preserves_latest_coverage_candidate_set[100]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_git_decoder_byte_validation.py::test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder_candidates",
+    "verified_nodeid": "tests/integration/test_git_decoder_byte_validation.py::test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder_candidates",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_observed_rest_rejection_preserves_latest_coverage_candidate_set[200]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_observed_rest_rejection_preserves_latest_coverage_candidate_set[200]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_unknown_incremental_parent_needs_fresh_response_before_watermark",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_unknown_incremental_parent_needs_fresh_response_before_watermark",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[shape]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[shape]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[json]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[json]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[error-only]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[error-only]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[rate-limit]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_root_has_no_saved_original_or_fake_completion[rate-limit]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[150-shape]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[150-shape]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[150-json]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[150-json]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[200-shape]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[200-shape]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[200-json]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[200-json]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[300-shape]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[300-shape]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[300-json]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_graphql_child_retries_its_safe_cursor_without_original[300-json]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code[150]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code[150]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_git_direct_objects.py::test_ref_predecessors_keep_sequential_capture_and_divergent_resume_honest",
+    "verified_nodeid": "tests/integration/test_git_direct_objects.py::test_ref_predecessors_keep_sequential_capture_and_divergent_resume_honest",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code[200]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code[200]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
+    "verified_nodeid": "tests/integration/test_independent_stack_review.py::test_current_review_comment_is_not_complete_when_review_parent_is_conflicted",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code[300]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_sync_retry_cannot_use_rejected_clock_for_complete_summary_or_code[300]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_git_objects.py::test_incomplete_closure",
+    "verified_nodeid": "tests/integration/test_git_objects.py::test_incomplete_closure",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_publication_free_acquisition.py::test_thread_children_resume_from_normalized_committed_prefix",
+    "verified_nodeid": "tests/integration/test_publication_free_acquisition.py::test_thread_children_restart_with_retained_normalized_committed_prefix",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_publication_free_acquisition.py::test_full_pr_sync_direct_resources_and_comparison_anchors",
+    "verified_nodeid": "tests/integration/test_publication_free_acquisition.py::test_full_pr_sync_direct_resources_and_comparison_anchors",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_publication_free_acquisition.py::test_timeline_ambiguity_does_not_downgrade_independent_code",
+    "verified_nodeid": "tests/integration/test_publication_free_acquisition.py::test_timeline_ambiguity_does_not_downgrade_independent_code",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_publication_free_acquisition.py::test_unobserved_same_target_check_failure_preserves_accepted_code",
+    "verified_nodeid": "tests/integration/test_publication_free_acquisition.py::test_unobserved_same_target_check_failure_preserves_accepted_code",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_publication_free_acquisition.py::test_source_discovery_midpage_callback_failure_rolls_back_members",
+    "verified_nodeid": "tests/integration/test_publication_free_acquisition.py::test_source_discovery_midpage_callback_failure_rolls_back_members",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_publication_free_acquisition.py::test_cancelled_rest_prefix_survives_loss_of_operational_cursor",
+    "verified_nodeid": "tests/integration/test_publication_free_acquisition.py::test_cancelled_rest_prefix_survives_loss_of_operational_cursor",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_reviewer_d_probes.py::test_reviewer_d_integrated_multistage_transition_probe",
+    "verified_nodeid": "tests/integration/test_reviewer_d_probes.py::test_reviewer_d_integrated_multistage_transition_probe",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_publication_free_current_api.py::test_valid_resource_and_empty_terminal_receipt_need_no_operational_rows",
+    "verified_nodeid": "tests/integration/test_publication_free_current_api.py::test_valid_resource_and_empty_terminal_receipt_need_no_operational_rows",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-cohort-exact",
+    "tree": "1f55d1ccb5e2d3c66a4bc8dce6359030dc223c58",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-list]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-list]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-detail]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-detail]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  },
+  {
+    "original_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-code-check]",
+    "verified_nodeid": "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-code-check]",
+    "result": "passed",
+    "phases": {
+      "setup": "passed",
+      "call": "passed",
+      "teardown": "passed"
+    },
+    "receipt": "final-residual",
+    "tree": "689c3f867e7e586dc81fa6fc0104e3d63551295a",
+    "current_binding": "Root74f90ad source/test execution inputs match reviewed final except disposition audit data consumed separately; decoder is the only source test changed after first233 run and was in residual22."
+  }
+]

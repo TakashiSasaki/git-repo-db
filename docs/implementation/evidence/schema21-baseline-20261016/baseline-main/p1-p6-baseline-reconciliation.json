@@ -1,0 +1,10 @@
+{
+  "head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "nodes": 937,
+  "status": {
+    "passed": 937
+  },
+  "all_three_phases_once_passed": true,
+  "node_manifest": "p1-p6-and-compatibility-nodes.txt",
+  "note": "Subset passed within failed fullrun; unrelated later temp exhaustion does not convert entirerun into success."
+}
