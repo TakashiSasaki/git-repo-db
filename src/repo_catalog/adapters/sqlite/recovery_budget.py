@@ -43,7 +43,9 @@ def _sync_dir(directory: Path) -> None:
 
 def _read(path: Path) -> dict:
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        # Nonblocking open lets a malformed FIFO/device fail validation instead
+        # of hanging before the regular-file check.
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         with os.fdopen(fd, "rb") as handle:
             info = os.fstat(handle.fileno())
             if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
