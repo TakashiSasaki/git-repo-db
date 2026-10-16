@@ -1,0 +1,38 @@
+{
+  "READINESS-REVIEW.md": {
+    "bytes": 4899,
+    "sha256": "b0c50734a7b1d71d75ca35f745a49abbfa6a2af6283d9da64879390f98b3e40b"
+  },
+  "independent-installed-identities.json": {
+    "bytes": 74444,
+    "sha256": "c8fb4a9795d4d089a44fef0d281783ace0e7566a83030372552b2b43d03ce0e0"
+  },
+  "independent-merge-trees.json": {
+    "bytes": 1258,
+    "sha256": "d103c6d77da8548c5ad2fadd928b63f74b74b5b28a44734c56b5cce9c39ad0d6"
+  },
+  "readiness-driver/run.log": {
+    "bytes": 504,
+    "sha256": "e98864377c52b13ce9f3dae156850f62c0a0f71b72c5bab4732d1e56cccb26d8"
+  },
+  "readiness-driver/verification.json": {
+    "bytes": 50076,
+    "sha256": "62f6be0eb7fe5cc61371f58524ab98300565d71f2b677d42eed3bf85fc6b85aa"
+  },
+  "readiness-driver/merge-simulation.json": {
+    "bytes": 3581,
+    "sha256": "22345def3a729816203699b46b92c019409fce93197ac90c44693995e6906740"
+  },
+  "main-protection-public-metadata.json": {
+    "bytes": 243,
+    "sha256": "c300cb2473042791135c5f77e3d658b033c174365c7918b56799a39acfd908a1"
+  },
+  "main-protection-graphql.json": {
+    "bytes": 88,
+    "sha256": "38074039963d7dc2e1d03b98d3e7e988cd8ebcfeb57cb9b6e96e289db0fb8bda"
+  },
+  "main-rulesets.json": {
+    "bytes": 2,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  }
+}
