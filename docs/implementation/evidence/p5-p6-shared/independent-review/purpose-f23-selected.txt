@@ -1,0 +1,4 @@
+tests/integration/p1/test_context.py::test_generated_source_clock_is_real_sqlite_value
+tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_generated_source_clock_is_real_sqlite_value]
+
+2 tests collected in 0.11s
