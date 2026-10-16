@@ -141,5 +141,18 @@
     "No acceptance test was rerun; saved evidence was reanalyzed.",
     "Optional tool binaries live outside the repository and must be reinstalled in a new environment.",
     "No production dependency, reviewed seven-PR head, main, release or merge policy is changed."
-  ]
+  ],
+  "documentation_merge_lesson": {
+    "failed_followup_commit": "54e7d63bb3a01a67882850ee17c9fbfd4f74419b",
+    "before_exit_code": 1,
+    "conflict_path": ".agents/skills/ci-final-tree-verification/SKILL.md",
+    "cause": "Independent new sections appended at the same EOF as pending PR90 lessons.",
+    "correction": "Relocated new normalization section before development loop; kept existing reviewed branch unchanged.",
+    "disposable_corrected_candidate": "4a17999dc3de8074e7dee9d595df4fa2b2c2e5e1",
+    "after_exit_code": 0,
+    "merged_tree": "662b3904a45f9f5cee5fbd049de14c4fb107b191",
+    "all_new_and_pending_skill_lessons_retained": true,
+    "raw_preflight_before": "de0a97e4e5377b8cc92b7bdcd26028027d44f600\n100644 70232052ed13520e0a5586c30c3c86713ef9389c 1\t.agents/skills/ci-final-tree-verification/SKILL.md\n100644 2f4c80bbfa831d1b41305fe2adba933775887830 2\t.agents/skills/ci-final-tree-verification/SKILL.md\n100644 140a76b5a8186d66e6d0a0018d266b123aaff6bb 3\t.agents/skills/ci-final-tree-verification/SKILL.md\n\nAuto-merging .agents/skills/ci-final-tree-verification/SKILL.md\nCONFLICT (content): Merge conflict in .agents/skills/ci-final-tree-verification/SKILL.md\n",
+    "note": "No branch was merged; this is a disposable local documentation preflight, not additional runtime acceptance."
+  }
 }
