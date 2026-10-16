@@ -128,3 +128,23 @@ Writing `site/` without a leading slash in `.gitignore` causes Git to ignore any
 4. **Service Worker (`sw.js`)**:
    - Register at root scope `/` via `pwa.js`.
    - Provide network-first navigation caching with offline fallback and stale-while-revalidate for static assets.
+
+
+## 9. Path Filters Include Executed Transitive Inputs
+
+Narrowing `docs/**` to the publication staging allowlist is safe only after
+checking the build's executable dependencies. `schema_viz.py --check` imports
+SQLite predicate registration and domain helpers before schema introspection;
+changes to those helpers can fail the Pages build even though their Python files
+are never published. Guard the actual imported repository modules in both push
+and pull-request path filters. The regression
+`test_pages_trigger_covers_executed_schema_dependencies` runs the real checker
+in a separate process, observes its imported module paths and checks both filters.
+The previous handwritten decision matrix passed while ten executed dependencies
+were missing; keep the runtime probe alongside the direct-publication matrix.
+
+A module used only on an unexecuted branch is outside that probe's guarantee.
+Re-audit the build command and conditional imports when changing it. Repository
+links in published Markdown do not copy their targets into the site. The homepage
+commit/tree metadata identifies the built revision; skipping an internal-only
+commit intentionally leaves the previous site's revision displayed.

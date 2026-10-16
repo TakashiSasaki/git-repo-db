@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import re
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
+
+import yaml
 
 from scripts.build_docs_site import (
     DOCS_SCHEMA_DIR,
@@ -187,3 +193,160 @@ def test_critical_endpoints_validator():
         assert any("schema/viewer/index.html" in m for m in missing)
         assert any("manifest.webmanifest" in m for m in missing)
         assert any("sw.js" in m for m in missing)
+
+
+def _github_actions_glob_to_regex(pattern: str) -> re.Pattern:
+    """Convert GitHub Actions path filter pattern to an equivalent compiled regex."""
+    res = []
+    i = 0
+    n = len(pattern)
+    while i < n:
+        if pattern[i : i + 3] == "/**":
+            res.append("(?:/.*)?")
+            i += 3
+        elif pattern[i : i + 2] == "**":
+            res.append(".*")
+            i += 2
+        elif pattern[i] == "*":
+            res.append("[^/]*")
+            i += 1
+        elif pattern[i] == "?":
+            res.append("[^/]")
+            i += 1
+        elif pattern[i] in r"\.[]{}()+-^$|#":
+            res.append("\\" + pattern[i])
+            i += 1
+        else:
+            res.append(pattern[i])
+            i += 1
+    return re.compile("^" + "".join(res) + "$")
+
+
+def _eval_github_workflow_trigger(
+    patterns: list[str], changed_files: list[str]
+) -> bool:
+    """Evaluate whether changed files trigger a GitHub Actions workflow with path filtering."""
+    compiled = [_github_actions_glob_to_regex(p) for p in patterns]
+    for cf in changed_files:
+        for c in compiled:
+            if c.match(cf):
+                return True
+    return False
+
+
+def test_pages_trigger_paths_decision_matrix():
+    """Verify GitHub Pages workflow trigger path filter decision matrix against actual pages.yml."""
+    pages_yml_path = (
+        Path(__file__).resolve().parents[2] / ".github" / "workflows" / "pages.yml"
+    )
+    assert pages_yml_path.is_file()
+    cfg = yaml.safe_load(pages_yml_path.read_text(encoding="utf-8"))
+    on_triggers = cfg.get("on") or cfg.get(True)
+    assert on_triggers, "Missing 'on' section in pages.yml"
+
+    push_paths = on_triggers["push"]["paths"]
+    pr_paths = on_triggers["pull_request"]["paths"]
+    assert push_paths == pr_paths, "push and pull_request paths should match"
+
+    matrix_cases = [
+        # (changed_files, expected_pages_build, description)
+        (["docs/site/index.md"], True, "Published site homepage"),
+        (["docs/schema/mermaid/overview.md"], True, "Published schema Mermaid diagram"),
+        (
+            ["docs/adr/0001-validation-lifecycle-architecture.md"],
+            True,
+            "Published ADR 0001",
+        ),
+        (
+            ["docs/adr/0002-three-store-boundary-architecture.md"],
+            True,
+            "Published ADR 0002",
+        ),
+        (["overrides/main.html"], True, "MkDocs theme override"),
+        (["mkdocs.yml"], True, "MkDocs config"),
+        (["scripts/build_docs_site.py"], True, "Docs build script"),
+        (
+            ["src/repo_catalog/resources/catalog3.sql"],
+            True,
+            "Relevant schema-generation input (Schema 21 DDL affecting site)",
+        ),
+        (
+            ["docs/implementation/evidence/example.json"],
+            False,
+            "Internal implementation evidence",
+        ),
+        (
+            ["docs/adr/0028-classified-times-and-sha256-exchange.md"],
+            False,
+            "Internal ADR 0028 not in published site allowlist",
+        ),
+        (
+            ["artifacts/ci-profile/journal.jsonl"],
+            False,
+            "Internal execution log only",
+        ),
+        (
+            [
+                "docs/site/index.md",
+                "docs/implementation/evidence/example.json",
+            ],
+            True,
+            "Mixed site and internal-documentation changes",
+        ),
+        (
+            ["src/repo_catalog/adapters/sqlite/p1_ddl/core.sql"],
+            False,
+            "Opt-in P1-P7 target schema DDL not yet visualized on site",
+        ),
+        (
+            ["src/repo_catalog/adapters/sqlite/p1_schema.py"],
+            False,
+            "Opt-in P1-P7 target schema code not yet visualized on site",
+        ),
+    ]
+
+    for changed_files, expected, desc in matrix_cases:
+        actual = _eval_github_workflow_trigger(push_paths, changed_files)
+        assert actual == expected, (
+            f"Decision matrix mismatch for '{desc}': files={changed_files}, expected={expected}, actual={actual}"
+        )
+
+
+def test_pages_trigger_covers_executed_schema_dependencies():
+    """A schema-check dependency change must trigger the complete Pages build."""
+    root = Path(__file__).resolve().parents[2]
+    probe = """
+import json, runpy, sys
+from pathlib import Path
+root = Path.cwd()
+sys.argv = ['scripts/schema_viz.py', '--check']
+try:
+    runpy.run_path('scripts/schema_viz.py', run_name='__main__')
+except SystemExit as error:
+    assert error.code in (None, 0)
+loaded = sorted({
+    Path(module.__file__).relative_to(root).as_posix()
+    for module in tuple(sys.modules.values())
+    if getattr(module, '__file__', None)
+    and str(root / 'src/repo_catalog') in module.__file__
+})
+print('DEPENDENCIES=' + json.dumps(loaded))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    loaded = json.loads(result.stdout.split("DEPENDENCIES=", 1)[1])
+    assert "src/repo_catalog/adapters/sqlite/git_intrinsic.py" in loaded
+    cfg = yaml.safe_load((root / ".github/workflows/pages.yml").read_text())
+    triggers = cfg.get("on") or cfg[True]
+    for event in ("push", "pull_request"):
+        missing = [
+            path
+            for path in loaded
+            if not _eval_github_workflow_trigger(triggers[event]["paths"], [path])
+        ]
+        assert not missing, f"{event} misses executed schema dependencies: {missing}"
