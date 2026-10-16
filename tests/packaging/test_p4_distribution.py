@@ -41,7 +41,8 @@ from repo_catalog.adapters.sqlite.notes import NotesProgress
 from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger, NotesWorkBudget
 from repo_catalog.adapters.sqlite.p1_schema import initialize, connect, verify_declared
 from repo_catalog.application.notes import NotesAcquisition
-from repo_catalog.domain.p1_core import OID, Capture, encode
+from repo_catalog.domain.p1_core import OID, Capture
+from repo_catalog.domain.ports.notes import request_scope
 from repo_catalog.domain.p1_coordination import RequestIdentity, NotesLimits
 assert "site-packages" in str(Path(__import__("repo_catalog.application.notes",fromlist=["x"]).__file__))
 verify_declared()
@@ -60,11 +61,12 @@ core=GitCore(Path("core.sqlite3"))
 db=connect(Path("operational.sqlite3"),"operational")
 ledger=WorkLedger(db)
 request=RequestIdentity(origin,str(uuid4()))
-ledger.new_request(request,encode([repo,instance,"installed"]),NotesLimits().work_limits())
+source=GitNotesSource(GitNativeSource(Path("git")))
+ledger.new_request(request,request_scope(repo,instance,"installed-local",source.scope),NotesLimits().work_limits())
 attempt=str(uuid4())
 ledger.attempt(request,attempt)
 work=NotesWorkBudget(ledger,request,attempt,NotesLimits())
-app=NotesAcquisition(core,GitNotesSource(GitNativeSource(Path("git"))),work,NotesProgress(work))
+app=NotesAcquisition(core,source,work,NotesProgress(work),source_attribution="installed-local")
 found=app.discover(repo,"installed-local",origin,str(uuid4()),123)
 assert found.observation.value["enumeration_state"]=="complete"
 capture=found.captures[0]

@@ -21,6 +21,7 @@ from repo_catalog.domain.p1_core import (
     NativeObject,
     NotesProof,
     account_verification,
+    encode,
 )
 from repo_catalog.domain.ports.p1_core import WorkBudget
 
@@ -61,6 +62,12 @@ class GitNotesSource:
         self.discovery_bytes = discovery_bytes
         self.discovery_refs = discovery_refs
         self.timeout_seconds = timeout_seconds
+
+    @property
+    def scope(self):
+        return encode(
+            ["local-git", os.fsencode(self.source.path).hex(), self.object_format]
+        )
 
     def _output(self, args, cap, work, consume=None, data=None):
         """Reserve before every read; exceptions retain unsettled upper bounds.
@@ -186,14 +193,17 @@ class GitNotesSource:
 
     def _scan(self, nominated, work, observed):
         pending = bytearray()
+        records = 0
 
         def consume(chunk):
+            nonlocal records
             pending.extend(chunk)
-            while b"\n" in pending:
-                line, _, rest = pending.partition(b"\n")
-                pending[:] = rest
+            lines = pending.split(b"\n")
+            pending[:] = lines.pop()
+            for line in lines:
                 _prepay(work, "metadata_units")
-                if len(observed) >= self.discovery_refs:
+                records += 1
+                if records > self.discovery_refs:
                     raise CoreFailure(
                         "BUDGET", "notes-discovery", "finite ref record limit"
                     )
@@ -227,13 +237,33 @@ class GitNotesSource:
     def discover(
         self, work: WorkBudget, nominated: tuple[str, ...] = ()
     ) -> RefInventory:
+        if not isinstance(nominated, tuple) or len(nominated) > self.discovery_refs:
+            raise CoreFailure(
+                "BUDGET", "notes-discovery", "finite nominated tuple required"
+            )
+        _prepay(work, "metadata_units", len(nominated))
         names = tuple(sorted(set(os.fsencode(n) for n in nominated)))
+        if sum(len(n) for n in names) > self.discovery_bytes:
+            raise CoreFailure(
+                "BUDGET", "notes-discovery", "finite nominated ref byte limit"
+            )
         for name in names:
-            if not name.startswith(b"refs/") or any(
-                c in name for c in (b"\n", b"\r", b"\0", b"*", b"?", b"[")
+            components = name.split(b"/")
+            if (
+                not name.startswith(b"refs/")
+                or name.endswith((b"/", b"."))
+                or any(c < 32 or c == 127 or c in b" ~^:?*[\\" for c in name)
+                or b".." in name
+                or b"@{" in name
+                or any(
+                    not component
+                    or component.startswith(b".")
+                    or component.endswith(b".lock")
+                    for component in components
+                )
             ):
                 raise CoreFailure(
-                    "NOTES_SCOPE", name, "exact full nominated ref required"
+                    "NOTES_SCOPE", name, "exact valid full nominated ref required"
                 )
         first, second = {}, {}
         try:

@@ -13,7 +13,8 @@ from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLe
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.application.notes import NotesAcquisition
 from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
-from repo_catalog.domain.p1_core import OID, Capture, encode
+from repo_catalog.domain.p1_core import OID, Capture
+from repo_catalog.domain.ports.notes import request_scope
 
 
 def git(path, *args, data=None, env=None):
@@ -53,14 +54,18 @@ def acquisition(tmp_path, request):
     db = connect(op_path, "operational")
     ledger = WorkLedger(db)
     req = RequestIdentity(origin, str(uuid4()))
+    source = GitNotesSource(GitNativeSource(path))
     ledger.new_request(
-        req, encode([repository, instance, "local-test"]), NotesLimits().work_limits()
+        req,
+        request_scope(repository, instance, "local-test", source.scope),
+        NotesLimits().work_limits(),
     )
     attempt = str(uuid4())
     ledger.attempt(req, attempt)
     work = NotesWorkBudget(ledger, req, attempt, NotesLimits())
-    source = GitNotesSource(GitNativeSource(path))
-    app = NotesAcquisition(core, source, work, NotesProgress(work))
+    app = NotesAcquisition(
+        core, source, work, NotesProgress(work), source_attribution="local-test"
+    )
     yield app, path, fmt, repository, origin, core_path, op_path
     core.close()
     db.close()

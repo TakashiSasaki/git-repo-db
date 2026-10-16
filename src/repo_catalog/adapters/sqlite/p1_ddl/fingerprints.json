@@ -25,8 +25,8 @@
       ]
     },
     "core": {
-      "ddl_sha256": "039af0855aa9ed4610e29502c6285e45eae1d8a501f11aef1401d00f23e677ab",
-      "sqlite_schema_sha256": "fdec01316fab0de02bf2e1bd02b212f04a64e08925b7b4a8c892e55f071b1cb8",
+      "ddl_sha256": "cc63074a34f7bc17484b308cec96cb7e0e125b4eba8dcf5c8b440e640e451b37",
+      "sqlite_schema_sha256": "6a3461f3442466ed86647266fc97edd27daafa477a564010a34007ec0c17b2e1",
       "tables": [
         "captures",
         "core_coverage_proofs",

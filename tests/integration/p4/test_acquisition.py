@@ -71,7 +71,7 @@ def test_discovery_full_scope_original_pair_and_historical_refs(acquisition):
     assert returned.captures[0].pair != found.captures[-1].pair
     assert returned.captures[0].root == capture.root
     assert app.acquire_note(found.captures[-1], target).body_retained
-    with pytest.raises(CoreFailure, match="rebound"):
+    with pytest.raises(CoreFailure, match="request source/repository mismatch"):
         app.discover(
             repository,
             "other-source",
@@ -80,6 +80,17 @@ def test_discovery_full_scope_original_pair_and_historical_refs(acquisition):
             1_000_000,
             nominated=("refs/custom/annotation", "refs/custom/absent"),
         )
+
+    with pytest.raises(CoreFailure) as incompatible:
+        app.discover(
+            repository,
+            "local-test",
+            origin,
+            observation,
+            1_000_001,
+            nominated=("refs/custom/annotation", "refs/custom/absent"),
+        )
+    assert incompatible.value.code == "INCOMPATIBLE_REPLAY"
 
 
 def test_ref_movement_new_observation_does_not_modify_old_capture(acquisition):
@@ -273,3 +284,164 @@ def test_source_incoming_loose_object_corruption_is_refusal_without_stop(acquisi
     assert not result.body_retained and result.failure_code == "NATIVE_INTEGRITY"
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert app.core.notes_projection(capture, target).canonical == note
+
+
+def test_lost_progress_cannot_mint_new_capture_on_retry(acquisition):
+    app, _, _, repository, origin, *_ = acquisition
+    fixture_note(acquisition)
+    observation = str(uuid4())
+    args = (repository, "local-test", origin, observation, 100)
+    first = app.discover(*args)
+    from repo_catalog.domain.p1_coordination import CoordinationError
+    from repo_catalog.domain.p1_core import encode
+
+    app.work.ledger.db.execute(
+        "DELETE FROM request_continuations WHERE continuation_scope_json=?",
+        (encode(["p4-discovery", origin, observation]),),
+    )
+    with pytest.raises(CoordinationError):
+        app.discover(*args)
+    assert len(app.core.sql("SELECT * FROM captures")) == len(first.captures)
+
+
+def test_request_must_bind_actual_catalog_and_source(acquisition, tmp_path):
+    app, _, _, _, _, *_ = acquisition
+    from repo_catalog.adapters.sqlite.notes import NotesProgress
+    from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.application.notes import NotesAcquisition
+    from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
+    from repo_catalog.domain.ports.notes import request_scope
+
+    other_path = tmp_path / "other.sqlite3"
+    other_repo, other_instance = str(uuid4()), str(uuid4())
+    initialize(other_path, "operational", other_repo, other_instance)
+    db = connect(other_path, "operational")
+    try:
+        ledger = WorkLedger(db)
+        req = RequestIdentity(str(uuid4()), str(uuid4()))
+        ledger.new_request(
+            req,
+            request_scope(other_repo, other_instance, "other", app.source.scope),
+            NotesLimits.work_limits(),
+        )
+        attempt = str(uuid4())
+        ledger.attempt(req, attempt)
+        work = NotesWorkBudget(ledger, req, attempt, NotesLimits())
+        with pytest.raises(CoordinationError) as rejected:
+            NotesAcquisition(
+                app.core,
+                app.source,
+                work,
+                NotesProgress(work),
+                source_attribution="other",
+            )
+        assert rejected.value.code == "STORE_IDENTITY"
+        # Matching physical identity still cannot substitute another source intent.
+        with pytest.raises(CoordinationError) as rejected:
+            NotesAcquisition(
+                app.core, app.source, app.work, app.progress, source_attribution="other"
+            )
+        assert rejected.value.code == "REQUEST_SCOPE"
+        assert not app.core.sql("SELECT * FROM captures")
+    finally:
+        db.close()
+
+
+def test_local_reader_preserves_external_capture_attribution(acquisition):
+    app, *_ = acquisition
+    capture, target, note = fixture_note(acquisition)
+    external = replace(capture, source="unsigned-original-external-source")
+    assert app.acquire_note(external, target).body_retained
+    assert app.core.read_note(external, target, note) == b"\0\xffbinary\r\n"
+
+
+def test_real_sqlite_core_commit_denial_rolls_back_body_unit(acquisition, monkeypatch):
+    app, *_ = acquisition
+    capture, target, note = fixture_note(acquisition)
+    deny_commit = False
+    insert = app.core._insert
+    authorize = app.core._authorize
+
+    def inserted(table, values):
+        nonlocal deny_commit
+        insert(table, values)
+        if table == "retained_notes":
+            deny_commit = True
+
+    def authorizer(action, first, *args):
+        if deny_commit and action == sqlite3.SQLITE_TRANSACTION and first == "COMMIT":
+            return sqlite3.SQLITE_DENY
+        return authorize(action, first, *args)
+
+    monkeypatch.setattr(app.core, "_insert", inserted)
+    app.core._db.set_authorizer(authorizer)
+    try:
+        with pytest.raises(sqlite3.DatabaseError):
+            app.acquire_note(capture, target)
+    finally:
+        app.core._db.set_authorizer(authorize)
+        monkeypatch.setattr(app.core, "_insert", insert)
+    assert not app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")
+    assert app.core.notes_projection(capture, target).canonical == note
+    assert app.acquire_note(capture, target).body_retained
+
+
+def test_sigkill_after_body_insert_preserves_atomicity_and_original_copy(acquisition):
+    import json
+    import signal
+    import subprocess
+    import sys
+
+    app, path, _, _, _, core_path, op_path = acquisition
+    capture, target, note = fixture_note(acquisition)
+    payload = [
+        str(core_path),
+        str(op_path),
+        str(path),
+        list(capture.key),
+        list(target.key),
+        list(app.work.request.values()),
+        app.work.attempt_uuidv4,
+    ]
+    script = r"""
+import json,os,signal,sys
+from pathlib import Path
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_schema import connect
+from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger,NotesWorkBudget
+from repo_catalog.adapters.sqlite.notes import NotesProgress
+from repo_catalog.adapters.git.native import GitNativeSource
+from repo_catalog.adapters.git.notes import GitNotesSource
+from repo_catalog.application.notes import NotesAcquisition
+from repo_catalog.domain.p1_core import Capture,OID
+from repo_catalog.domain.p1_coordination import RequestIdentity,NotesLimits
+core_path,op_path,path,key,target,request,attempt=json.loads(sys.argv[1])
+ref=bytes.fromhex(json.loads(key[4])[1]).decode("utf-8","surrogateescape")
+capture=Capture(*key[:4],ref,OID(*key[5:]))
+core=GitCore(Path(core_path));db=connect(Path(op_path),"operational")
+work=NotesWorkBudget(WorkLedger(db),RequestIdentity(*request),attempt,NotesLimits())
+app=NotesAcquisition(core,GitNotesSource(GitNativeSource(Path(path))),work,NotesProgress(work),source_attribution="local-test")
+insert=core._insert
+def kill_after_insert(table,values):
+    insert(table,values)
+    if table=="retained_notes":os.kill(os.getpid(),signal.SIGKILL)
+core._insert=kill_after_insert
+app.acquire_note(capture,OID(*target))
+"""
+    child = subprocess.run(
+        [sys.executable, "-c", script, json.dumps(payload)],
+        capture_output=True,
+        timeout=30,
+    )
+    assert child.returncode == -signal.SIGKILL, child.stderr.decode("utf-8", "replace")
+    assert not app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")
+    assert app.core.notes_projection(capture, target).canonical == note
+    before = app.work.ledger.usage(app.work.request)
+    result = app.acquire_note(capture, target)
+    assert result.body_retained
+    assert (
+        app.work.ledger.usage(app.work.request)["input_bytes"] > before["input_bytes"]
+    )
+    assert app.core.read_note(capture, target, note) == b"\0\xffbinary\r\n"
+    assert not (path.parent / "p1-recovery-stop.json").exists()

@@ -7,13 +7,12 @@ scalar admission; it intentionally exposes no public initializer or file archive
 
 from __future__ import annotations
 
-import json
-
-from repo_catalog.adapters.sqlite.p1_core import Core, _completed_read
+from repo_catalog.adapters.sqlite.p1_core import Core, _completed_read, _decoded_read
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.notes import (
     GRAMMAR,
     NotesInventory,
+    decode_inventory_group,
     mapping_proof,
     verify_inventory,
 )
@@ -43,6 +42,22 @@ class GitCore(Core):
     def ensure_available(self) -> None:
         """Fence opt-in acquisition before any source I/O or request work."""
         self._available()
+
+    @_completed_read
+    @_decoded_read
+    def catalog_identity(self):
+        """Checked physical binding for opt-in acquisition request composition."""
+        with self._snapshot():
+            rows = self.sql(
+                "SELECT repository_uuidv4,catalog_instance_uuidv4 FROM store_identity"
+            )
+            if len(rows) != 1:
+                self._integrity_stop("missing Core identity")
+            from repo_catalog.domain.p1_core import uuid4_value
+
+            return tuple(
+                self._stored("Core identity", uuid4_value, value) for value in rows[0]
+            )
 
     def _authorize(self, action, table, column, database, trigger):
         import sqlite3
@@ -196,6 +211,7 @@ class GitCore(Core):
                     self._insert("note_roles", proof.key)
 
     @_completed_read
+    @_decoded_read
     def notes_inventories(self, capture) -> tuple[NotesInventory, ...]:
         """Emit distinct rechecked receiver inventories, never merged reports.
 
@@ -229,67 +245,16 @@ class GitCore(Core):
                     if provenance.qualification != "receiver_intrinsic":
                         continue
                     try:
-                        if (
-                            provenance.source != "receiver-intrinsic"
-                            or provenance.observation != encode(capture.key)
-                            or provenance.decoder != "git-native-notes-inventory"
-                            or provenance.decoder_version != "1"
-                            or row[0] != "all-notes-mappings"
-                        ):
-                            raise ValueError("invalid receiver inventory provenance")
-                        coordinate = json.loads(provenance.coordinate)
-                        kind, grammar, evidence, diagnostic = coordinate
-                        if (
-                            kind != "inventory"
-                            or grammar != GRAMMAR
-                            or encode(coordinate) != provenance.coordinate
-                        ):
-                            raise ValueError(
-                                "unsupported or noncanonical inventory evidence"
-                            )
-                        structures = tuple(
-                            NativeObject(
-                                OID(fmt, oid),
-                                native_type,
-                                bytes.fromhex(body),
-                                size,
-                                digest,
-                            )
-                            for fmt, oid, native_type, body, size, digest in evidence
+                        inventory = decode_inventory_group(
+                            encode(capture.key), row[0], row[1], row[2], row[3]
                         )
-                        if any(
-                            native.body.hex() != entry[3]
-                            for native, entry in zip(structures, evidence, strict=True)
-                        ):
-                            raise ValueError("noncanonical structural byte encoding")
-                        if diagnostic is not None and (
-                            not isinstance(diagnostic, list)
-                            or len(diagnostic) != 2
-                            or any(
-                                not isinstance(value, str) or not value
-                                for value in diagnostic
-                            )
-                        ):
-                            raise ValueError("invalid inventory diagnostic")
-                        failure = (
-                            None
-                            if diagnostic is None
-                            else CoreFailure(diagnostic[0], capture.pair, diagnostic[1])
-                        )
-                        inventory = NotesInventory(
-                            capture,
-                            row[1],
-                            tuple(tuple(m) for m in json.loads(row[2])),
-                            structures,
-                            failure,
-                        )
-                        verify_inventory(inventory, _InventoryReadWork())
                     except (
                         ValueError,
                         TypeError,
                         KeyError,
                         IndexError,
                         AttributeError,
+                        RecursionError,
                     ) as error:
                         self._integrity_stop(
                             (capture.pair, "notes-inventory", str(error))
@@ -298,13 +263,3 @@ class GitCore(Core):
                 return tuple(result)
         finally:
             self._checked_byte_read = previous
-
-
-class _InventoryReadWork:
-    """Read-time checking has no acquisition request or mutable success ledger."""
-
-    def require(self, unit, amount=1):
-        pass
-
-    def charge(self, unit, amount):
-        pass

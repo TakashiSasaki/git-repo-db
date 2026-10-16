@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from repo_catalog.domain.notes import mapping_inventory, mapping_proof
-
 from repo_catalog.domain.p1_core import (
     OID,
     Capture,
@@ -46,12 +45,29 @@ class NoteAcquisition:
 
 
 class NotesAcquisition:
-    def __init__(self, core, source: NotesSource, work, progress: NotesProgress):
+    def __init__(
+        self,
+        core,
+        source: NotesSource,
+        work,
+        progress: NotesProgress,
+        *,
+        source_attribution: str,
+    ):
         self.core, self.source, self.work, self.progress = core, source, work, progress
+        self.source_attribution = source_attribution
+        self._ready()
 
     def _ready(self):
         # Metadata read crosses the supported catalog stop gate before input I/O.
         self.core.ensure_available()
+        self.work.require("metadata_units", 1)
+        self.work.charge("metadata_units", 1)
+        repository, instance = self.core.catalog_identity()
+        self.progress.bind(
+            repository, instance, self.source_attribution, self.source.scope, self.work
+        )
+        return repository
 
     def discover(
         self,
@@ -62,7 +78,14 @@ class NotesAcquisition:
         observed_at_us: int,
         nominated: tuple[str, ...] = (),
     ) -> Discovery:
-        self._ready()
+        actual_repository = self._ready()
+        if (
+            repository_uuidv4 != actual_repository
+            or source_attribution != self.source_attribution
+        ):
+            raise CoreFailure(
+                "NOTES_SCOPE", "discovery", "request source/repository mismatch"
+            )
         for value in (repository_uuidv4, origin_uuidv4, observation_uuidv4):
             uuid4_value(value)
         if type(observed_at_us) is not int or not -(2**63) <= observed_at_us < 2**63:
@@ -140,7 +163,11 @@ class NotesAcquisition:
         return Discovery(observation, captures, saved["failure_code"], saved["detail"])
 
     def inventory(self, capture):
-        self._ready()
+        actual_repository = self._ready()
+        if capture.repository_uuidv4 != actual_repository:
+            raise CoreFailure(
+                "NOTES_SCOPE", capture.pair, "request source/repository mismatch"
+            )
         self.core.admit_capture(capture)
         result = mapping_inventory(
             capture, lambda oid: self.source.metadata(oid, self.work), self.work
@@ -151,7 +178,11 @@ class NotesAcquisition:
     def acquire_note(
         self, capture, target, *, retain_body=True, physical_copy_uuidv4=None
     ):
-        self._ready()
+        actual_repository = self._ready()
+        if capture.repository_uuidv4 != actual_repository:
+            raise CoreFailure(
+                "NOTES_SCOPE", capture.pair, "request source/repository mismatch"
+            )
         self.core.admit_capture(capture)
         try:
             proof = mapping_proof(

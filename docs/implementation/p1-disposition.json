@@ -11525,7 +11525,7 @@
       }
     },
     "core": {
-      "ddl_sha256": "039af0855aa9ed4610e29502c6285e45eae1d8a501f11aef1401d00f23e677ab",
+      "ddl_sha256": "cc63074a34f7bc17484b308cec96cb7e0e125b4eba8dcf5c8b440e640e451b37",
       "tables": {
         "captures": {
           "columns": [
@@ -12812,6 +12812,7 @@
           "triggers": {
             "notes_group_format": "CREATE TRIGGER notes_group_format BEFORE INSERT ON notes_groups\nWHEN NOT EXISTS(SELECT 1 FROM captures WHERE capture_origin_uuidv4=NEW.capture_origin_uuidv4 AND capture_uuidv4=NEW.capture_uuidv4 AND object_format=NEW.object_format)\nBEGIN SELECT RAISE(ABORT,'Capture object-format mismatch'); END",
             "notes_group_targets": "CREATE TRIGGER notes_group_targets BEFORE INSERT ON notes_groups\nWHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[0]'))\n OR NOT EXISTS(SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[1]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal notes group target'); END",
+            "notes_inventory_guard": "CREATE TRIGGER notes_inventory_guard BEFORE INSERT ON notes_groups\nWHEN json_extract(NEW.provenance,'$[5]')='receiver_intrinsic' AND NOT EXISTS(\n SELECT 1 FROM captures c WHERE c.capture_origin_uuidv4=NEW.capture_origin_uuidv4\n AND c.capture_uuidv4=NEW.capture_uuidv4 AND c.object_format=NEW.object_format\n AND p4_notes_inventory(p1_array(c.capture_origin_uuidv4,c.capture_uuidv4,\n c.repository_uuidv4,c.source,c.ref,c.object_format,c.root),\n NEW.scope,NEW.status,NEW.membership,NEW.provenance))\nBEGIN SELECT RAISE(ABORT,'receiver Notes inventory requires checked structural evidence'); END",
             "p1_immutable_notes_groups_delete": "CREATE TRIGGER p1_immutable_notes_groups_delete BEFORE DELETE ON notes_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_notes_groups_update": "CREATE TRIGGER p1_immutable_notes_groups_update BEFORE UPDATE ON notes_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
