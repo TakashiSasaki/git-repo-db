@@ -1,6 +1,6 @@
 # P7 Production Consistent Backup, Corruption Stop, Read-Only Salvage, and Fresh Restore Technical Design
 
-Status: Proposed engineering specification under accepted ADR 0026 and supporting decisions ADR 0001, ADR 0003, ADR 0014–0025, ADR 0027, and ADR 0028.
+Status: Engineering specification, reconciled during crash hardening; execution results remain separately revision-bound, under accepted ADR 0026 and supporting decisions ADR 0001, ADR 0003, ADR 0014–0025, ADR 0027, and ADR 0028.
 Owner architectural blockers: Zero.
 Scope: Implements production backup, corruption stop, read-only forensic preservation, untrusted typed salvage, verified fresh restore, and safe activation for `git-repo-db`.
 
@@ -26,17 +26,17 @@ Key Architectural Invariants:
 
 The backup subsystem supports exactly two explicit scopes:
 - `git_only`: Captures the authoritative Git Core store (`core.sqlite3`), permanent repository identity (`repository_uuidv4`), catalog instance identity, schema fingerprints, and retained metadata/notes byte representations. Context is omitted and explicitly declared absent.
-- `paired`: Captures a mutually consistent snapshot of both authoritative stores: Git Core (`core.sqlite3`) and Context (`context.sqlite3`), along with paired consistency evidence (`paired_cut_evidence.json`).
+- `paired`: Captures a mutually consistent snapshot of both authoritative stores: Git Core (`core.sqlite3`) and Context (`context.sqlite3`). The shared protected writer cut and matching repository/instance identities establish the paired artifact; no separate pairing-evidence file is implemented.
 
-Reconstructible stores (`operational.sqlite3`, `search.sqlite3`) are never included in normal backups. They are reconstructed afresh during activation.
+Reconstructible stores (`operational.sqlite3`, `search.sqlite3`) are never included in normal backups. Activation initializes empty compiled derivative stores. A separate P6 rebuild is required to populate Search projections; initialization alone is not a rebuild.
 
 ### 2.2 Consistent Core+Context Snapshot Protocol
 
-To achieve a consistent snapshot across independent SQLite databases without holding long-lived write locks:
+To achieve a consistent snapshot across independent SQLite databases, the shared writer gate spans the complete protected copy cut:
 1. **Writer Fencing:** Acquire the common catalog coordinator writer lock (`catalog_gate` via `p1-writer.lock`).
-2. **Transactional Snapshot Cut:** Open read-only snapshot transactions on both `core.sqlite3` and `context.sqlite3` using SQLite WAL read transactions.
-3. **Paired Integrity Anchor:** Record the maximum commit sequence / transaction state and compute cross-store referential bounds: verify that any Context reference to a Git Core commit or object format references an entity present within the Core snapshot.
-4. **Online VACUUM INTO / Backup API:** Stream the snapshot pages into temporary backup files (`core.sqlite3.bak`, `context.sqlite3.bak`) via SQLite online backup API (`sqlite3_backup_*`) or `VACUUM INTO`, ensuring page-level consistency without dirty partial reads.
+2. **Protected Snapshot Cut:** Hold the writer gate while the SQLite Backup API copies both authoritative stores, including genuine committed WAL state. Cooperating writers cannot change either store during this cut.
+3. **Paired Integrity Anchor:** Require matching permanent repository and catalog-instance identities. Preserve legitimate unresolved attributed Context/Core references; they are not proofs of available Core data and do not require fabricated referents. No mutable Core transaction-sequence authority is introduced.
+4. **SQLite Backup API:** Write standalone snapshot files through `sqlite3_backup_*`, then use DELETE journal mode on those copies to remove sidecar dependencies. Bound BUSY/LOCKED backup retries; a transient lock is not proof of authoritative corruption.
 5. **Release Writer Lock:** Release `catalog_gate`. All subsequent validation, hashing, and archive packaging proceed out of band.
 
 ### 2.3 Backup Artifact Structure and Manifest Schema
@@ -49,10 +49,6 @@ backup-<backup_id>/
 ├── stores/
 │   ├── core.sqlite3
 │   └── context.sqlite3 (if paired)
-└── evidence/
-    ├── core-fingerprints.json
-    ├── context-fingerprints.json
-    └── paired_cut_evidence.json
 ```
 
 #### Manifest Schema (`manifest.json`):
@@ -106,7 +102,7 @@ backup-<backup_id>/
 ### 2.6 Actual Retained-Byte and Semantic-Domain Validation
 
 A matching file hash certifies transport integrity, not semantic validity. Normal backup completion and restore activation require deep validation against authoritative target P1 schema tables:
-1. **SQLite PRAGMA integrity_check:** Run on restored database copies.
+1. **SQLite Structural and Stored-Domain Checks:** Run PRAGMA integrity_check on restored copies, then explicitly evaluate all trusted packaged CHECK predicates. Read-only SQLite PRAGMA checks alone can miss UDF/CHECK violations. Verify every authoritative TEXT value as UTF-8 before UDF evaluation; binary Notes bodies remain BLOBs.
 2. **SQLite PRAGMA foreign_key_check:** Verify that all foreign key constraints are strictly satisfied.
 3. **Schema and DDL Fingerprint Check:** Check exact table definitions against authoritative compiled DDL fingerprints (`p1_schema.fingerprint(store)`).
 4. **Retained Git Metadata Verification (`retained_metadata`):**
@@ -124,7 +120,8 @@ A matching file hash certifies transport integrity, not semantic validity. Norma
 6. **Context Text Body Verification (`text_bodies`):**
    - Query: `SELECT sha256, text_value FROM text_bodies`.
    - Recompute SHA-256 of `text_value.encode("utf-8")`: assert matches `sha256`.
-   - Verify non-empty valid UTF-8 string.
+   - Verify exact valid UTF-8, including the legitimate empty string.
+7. **Stored Admission Invariants:** Recheck enduring packaged relational guards, including intrinsic claims/groups versus retained representations, Notes inventory/format and Coverage ownership. PRAGMA checks do not rerun INSERT triggers. Exclude insertion-time replay/current-terminal predicates: later evidence does not invalidate legitimate historical proofs.
 
 If any retained byte fails hash or domain verification, backup/restore is immediately rejected.
 
@@ -133,7 +130,7 @@ If any retained byte fails hash or domain verification, backup/restore is immedi
 - Active databases operate in WAL mode (`PRAGMA journal_mode=WAL;`).
 - When creating backups, safe snapshots are copied via the SQLite Backup API (`sqlite3_backup_*`), capturing the complete committed state without dangling `-wal` / `-shm` dependencies in the backup.
 - Suspect catalog preservation captures the exact triad: `database.sqlite3`, `database.sqlite3-wal`, and `database.sqlite3-shm` (or rollback journal if rollback mode).
-- Diagnostic reads against suspect stores must never use shared memory or WAL checkpointing that mutates the suspect files. Diagnostic reads are performed on isolated read-only file copies or with read-only connection URIs (`file:...mode=ro`).
+- Diagnostic reads against suspect stores must never use shared memory or WAL checkpointing that mutates the suspect files. Diagnostic reads and source revalidation run only on isolated working copies of the protected evidence set. A `mode=ro` SQLite connection alone does not guarantee unchanged source WAL/SHM files.
 
 ### 2.8 Filesystem Durability, Temporary Paths, Fsync, and Atomic Publication
 
@@ -144,22 +141,23 @@ If any retained byte fails hash or domain verification, backup/restore is immedi
    - Flush and `os.fsync()` each file descriptor.
    - Write `manifest.json` and `os.fsync()`.
    - Flush and `os.fsync()` the directory file descriptor.
-4. **Atomic Rename with No-Overwrite (`renameat2`):** Atomically publish the temporary directory to the final destination path via `renameat2(AT_FDCWD, src, AT_FDCWD, dst, RENAME_NOREPLACE)` on Linux (with atomic fallback to exclusive directory links). This eliminates check-then-replace race conditions and guarantees that concurrent destination publication attempts fail closed without overwriting existing data.
+4. **Atomic Rename with No-Overwrite (`renameat2`):** Atomically publish the temporary directory to the final destination path via `renameat2(parent_fd, src, parent_fd, dst, RENAME_NOREPLACE)` on Linux using a pinned common-parent descriptor. There is no unsupported-platform fallback; unavailable primitives fail closed. This eliminates check-then-replace race conditions and guarantees that concurrent destination publication attempts fail closed without overwriting existing data.
 
 ### 2.9 External Persistent Catalog-Stop Marker and Operation Fencing
 
 When authoritative corruption is detected:
 1. **Marker Publication:** Create the authoritative persistent marker file `p1-recovery-stop.json` (as standardized across P2–P6 in `p1_coordination.py`) via `persist_catalog_stop(catalog_dir, reason)`. Maintain `recovery.stop` compatibly alongside it.
-   - The marker contains JSON: timestamp (`_us`), reason, scope (`"catalog"`), and suspect catalog instance ID.
+   - The P1 marker contains reason and scope (`"catalog"`). The supplemental `recovery.stop` records the positive `_us` stop time and available diagnostic details; no missing catalog identity is fabricated.
    - The marker is written directly to the filesystem and `fsync`'d under `p1-stop-fence.lock`. It does NOT depend on a successful `INSERT` into the damaged database.
-2. **Operation Fencing:** Every public entry point across P2–P6 and P7 (query, search, acquisition, exchange, backup, worker) checks for `p1-recovery-stop.json` (or `recovery.stop`) before execution. If present, it raises `CatalogStoppedError` / `CoreFailure("RECOVERY_STOP")` immediately.
-3. **Survives Restart:** Process restart, cache clearing, or deletion of `operational.sqlite3` / `search.sqlite3` does not clear `p1-recovery-stop.json`. Only verified activation of a fresh restore updates the active catalog locator.
+2. **Operation Fencing:** Every public entry point across P2–P6 and P7 (query, search, acquisition, exchange, backup, worker) checks for `p1-recovery-stop.json` (or `recovery.stop`) before execution. If present, P7 raises `CatalogStoppedError`, P5/P6 application gates raise `CoreFailure("RECOVERY_STOP")`, and lower coordinator fences raise `CoordinationError("RECOVERY_REQUIRED")`.
+3. **Classification:** Reconfirm staged defects against a bounded protected forensic source copy. Confirmed data/schema/pair damage persists Stop before releasing the writer cut. Staging-only damage rejects the backup while leaving healthy authority unstopped. Environmental/resource/unsupported failures return indeterminate integrity, never a false healthy or confirmed-corrupt verdict.
+4. **Survives Restart:** Process restart, cache clearing, or deletion of `operational.sqlite3` / `search.sqlite3` does not clear `p1-recovery-stop.json`. Only verified activation of a fresh restore updates the active catalog locator.
 
 ### 2.10 Read-Only Suspect Evidence Preservation
 
 - Upon entering recovery mode, suspect databases and WAL files are preserved strictly read-only.
 - Preserved suspect databases are never cleaned, vacuumed, repaired in place, or deleted.
-- Diagnostic extraction copies the suspect database, WAL, and SHM files into an isolated temporary workspace before opening them, guaranteeing that SQLite shared-memory initialization or WAL rollback cannot alter the suspect evidence files bit-for-bit.
+- Even after Stop, extraction first drains in-flight writers through the exclusive writer gate, then takes the shared completion fence. Diagnostic extraction copies the suspect database, WAL, and SHM files into an isolated temporary workspace before opening them, guaranteeing that SQLite shared-memory initialization or WAL rollback cannot alter the suspect evidence files bit-for-bit.
 
 ### 2.11 Bounded Untrusted Typed Salvage Serialization
 
@@ -171,14 +169,14 @@ When authoritative corruption is detected:
   - `max_json_depth`: default 16 levels.
 - Untrusted candidate records are serialized into typed JSONL records (`salvage_candidates.jsonl`):
   - `candidate_id`: Composite domain identity (e.g. `f"{object_format}:{full_oid}:{physical_copy_uuidv4}"` or `sha256`)
-  - `candidate_type`: `"retained_metadata" | "retained_note" | "context_text" | "context_field" | "git_metadata"`
+  - `candidate_type`: `"retained_body" | "notes_mapping" | "context_document" | "context_resource" | "git_metadata"`; supported legacy semantic aliases are not required compatibility.
   - `capture_origin_uuidv4`: UUIDv4 (if present)
   - `capture_uuidv4`: UUIDv4 (if present)
   - `extraction_provenance`: Forensic source coordinates (`{"store": ..., "table": ...}`)
   - `provenance`: Preserved original domain provenance
   - `payload`: Typed data including exact payload bytes (encoded as base64 so exact representations are not lost)
   - `extraction_status`: `"clean" | "partial" | "corrupt_boundary"`
-- Resource bounds enforce finite execution. If a table or page is unreadable, it is recorded in `salvage_report.json` as `unreadable_scope`, without aborting salvage of independent readable units.
+- Resource bounds enforce finite execution. If a table or page is unreadable, it is recorded in the returned `SalvageReceipt.unreadable_scope`, without aborting salvage of independent readable units.
 
 ### 2.12 Receiver-Checked Merge into a Fresh Destination
 
@@ -187,7 +185,7 @@ When authoritative corruption is detected:
   - Git metadata and commits/trees/tags via `Core.admit_metadata`.
   - Evidenced Notes via `Core.admit_note`.
   - Context text bodies via `ContextStore.text`.
-  - Context fields via `ContextStore.admit_field`.
+  - Other Context resources/fields and unsupported metadata remain qualified non-authoritative observations. This P7 implementation does not claim complete typed reconstruction of every Context table.
 - Every candidate produces exactly one accurately reported disposition:
   - `admitted`: Genuinely new authoritative domain unit written to destination.
   - `replayed`: Exact replay of an already admitted domain unit.
@@ -197,7 +195,7 @@ When authoritative corruption is detected:
   - `unprocessed`: Not processed due to budget or resource exhaustion.
 - Fallthrough non-mutating candidates are counted as `observation_units` and never falsely reported as `admitted_units`.
 - Every candidate is re-checked against ADR 0022 notes-role proof, ADR 0028 classified times, ADR 0018 UUIDv4 capture rules, and ADR 0020/0021 conflict preservation.
-- Candidates that fail validation or domain constraints are rejected and logged in `merge_audit.json`; valid independent units are committed into destination tables, demonstrably persisting newly admitted domain rows. Rejected candidates cause no mutation.
+- Candidates that fail validation or domain constraints are rejected and included in the structured merge receipt; valid independent units are committed into destination tables, demonstrably persisting newly admitted domain rows. Rejected candidates cause no mutation.
 
 ### 2.13 Validation and No-Overwrite Activation
 
@@ -212,7 +210,7 @@ When authoritative corruption is detected:
 ### 2.14 Operational and Search Reconstruction After Restoration
 
 - Operational store (`operational.sqlite3`) and Search store (`search.sqlite3`) are never restored from backup or salvage.
-- They are initialized clean using compiled DDL and populated by rebuilding projections from the newly activated authoritative Core and Context stores.
+- Activation initializes both stores cleanly from compiled DDL. Search remains `initialized_empty`; actual projection population requires the separate P6 rebuild. This receipt does not assert that full Search reconstruction occurred.
 
 ### 2.15 Precise Resource, Interruption, and Fault Reporting
 
@@ -221,7 +219,7 @@ When authoritative corruption is detected:
 
 ### 2.16 Adversarial Acceptance and Fault Injection
 
-Dedicated integration test suite `tests/integration/p7/` exercises all 18 required adversarial cases:
+The following cases describe required behavior, not a self-certifying test count. Exact committed execution evidence and independent reports identify which nodes were actually run:
 1. A real retained commit survives backup/restore exactly.
 2. A retained byte modified without updating its recorded digest is detected.
 3. A forged backup with recalculated manifest SHA-256 but invalid domain bytes is rejected.
@@ -240,3 +238,55 @@ Dedicated integration test suite `tests/integration/p7/` exercises all 18 requir
 16. Existing P5/P6 readers and writers actually reject the stopped catalog.
 17. Both SHA-1 and SHA-256 Git formats are exercised.
 18. Wheel and sdist-derived wheel installations can execute meaningful P7 recovery operations.
+
+
+### 2.17 Durable cumulative recovery requests
+
+A request is scoped to one fresh destination and a canonical 1–64 character ASCII
+ID matching `[A-Za-z0-9][A-Za-z0-9_-]{0,63}`. Omission means the stable `default`
+request. Retry retains that ID; explicitly independent work uses a distinct ID.
+The complete finite RecoveryBudget contract is immutable for that request,
+including input records/bytes, payload/depth and work ceilings. A retry cannot
+increase ceilings or reset accounting through Operational/Search loss.
+
+Permanent request/registry locks serialize cooperating processes. Files beside
+the fresh destination authority (outside Operational/Search) anchor registry,
+contract, reservation checkpoint and expenditure report. Reserve before input,
+decoding/verification and admission work: fsync a temporary checkpoint, atomically
+replace it, fsync its directory, then publish the report the same way. Lost
+acknowledgement retains the greater reservation. Normal measured completion can
+settle a live permit by writing the smaller report first, then the checkpoint;
+a crash between those writes restores the greater expenditure. Restart cannot
+refund a lost permit. Missing, unreadable, truncated, type-invalid, duplicate-key
+or conflicting records fail closed. Deliberate removal/rewrite of every external
+anchor is outside this cooperating-process contract.
+
+### 2.18 Bounds, receipts and tested platform contract
+
+Stream and cumulatively bound actual forensic DB/WAL/SHM/journal bytes, detect
+file growth/substitution, and refuse nonregular input before blocking reads.
+Limit SQLite cells/rows/VM work before Python materialization; bound binary JSONL
+chunks before reading, JSON lexical depth/elements before parsing, and base64/hex
+proof expansion before decoding. Reserve repeated native parsing/hashing work,
+including rejected candidates, before execution. Budget limits are resource
+outcomes, not evidence of corruption. A partial candidate makes extraction
+partial; unreadable/missing scope never implies complete enumeration.
+
+At a limit do not scan an arbitrary suffix merely to count omissions. Receipts
+separate `input_complete`, `unprocessed_count_exact` and known unprocessed lower
+bounds. Exact replay requires all immutable identity/copy/Capture/role/native
+attributes through the same typed admission checks. Notes Capture/role/body
+admission is one atomic unit; forensic provenance never replaces original
+attribution. Valid independent partial units may remain, with omissions explicit.
+Final activation validates the authority, not a claim of complete salvage.
+
+The supported implementation uses Linux local filesystems, `/proc/self/fd`,
+POSIX flock, SQLite WAL locking, fsync and renameat2, with cooperating writers.
+Pin manifest/store/catalog/parent descriptors, verify copied bytes, and check
+named-directory identities around publication. Preserve/restore the prior
+locator when a tested activation substitution is detected. Unsupported primitives
+and uncertain sync failures fail closed; a rename followed by failed directory
+fsync has an explicitly uncertain durability outcome. Tests include genuine
+separate processes and SIGKILL. They do not establish actual host power-loss,
+network-filesystem or privileged/hostile namespace-mutation guarantees. The public
+Schema 21 initializer/runtime is not switched by P7.
