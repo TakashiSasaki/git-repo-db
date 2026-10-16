@@ -119,7 +119,7 @@ original missing-clock purpose under a valid unrelated observation coordinate.
 Exact clean `f23dfda` passed **79** focused nodes (the preceding 77 plus these two
 P1/P3 controls), all requested checks, zero failures/skips. Selection, exactly-once
 starts, 237 passing phases and JUnit identities reconcile in the added evidence
-folder. The final docs-only input-identity proof now binds all 307 inputs to
+folder. The final docs-only input-identity proof now binds all 307 scoped source/test/script/project/lock files to
 `f23dfda`; the earlier ae087d3 proof is retained with its original name. These
 focused runs overlap, so their passing counts are not additive unique coverage.
 
@@ -129,3 +129,15 @@ failures/skips, fresh reconciled three-phase/JUnit evidence. It independently
 confirms no production `src` delta from `f17dd21`; the prior full/focused review
 receipts retain their original revision scope. The two nodes overlap earlier
 coverage and are not added into a unique count.
+
+
+## Evidence identity scope clarification
+
+Independent review measured a distinct live CI-planner acceptance-input hash at
+`f23dfda` versus `f3cd1c9`: 22 added evidence files are included by the unchanged
+conservative CI policy. The scoped 307-file SHA-256 map proves unchanged declared
+code/test/build inputs; it does not prove full CI acceptance-hash equality. Exact
+CI hash values, changed paths and Git blob entries are saved in the independent
+`evidence-ci-inputhash-delta.json` artifact and the evidence README. Subsequent
+evidence additions may change that live CI hash again. This wording correction
+changes no source, tests, scripts or CI policy and makes no new execution claim.
