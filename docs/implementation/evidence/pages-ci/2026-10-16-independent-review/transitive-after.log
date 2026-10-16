@@ -1,0 +1,21 @@
+Introspecting Three-Store schemas in memory...
+Introspection successful: Core (70 tables, 121 FKs), Operational (10 tables, 9 FKs), Search (4 tables, 2 FKs).
+Checking 16 artifacts against /workspace/pages-ci/docs/schema...
+PASS: All schema visualization artifacts are up-to-date and consistent.
+{
+  "loaded": [
+    "src/repo_catalog/__init__.py",
+    "src/repo_catalog/adapters/sqlite/cas_integrity.py",
+    "src/repo_catalog/adapters/sqlite/git_intrinsic.py",
+    "src/repo_catalog/adapters/sqlite/json_contracts.py",
+    "src/repo_catalog/adapters/sqlite/schema.py",
+    "src/repo_catalog/adapters/sqlite/transactions.py",
+    "src/repo_catalog/domain/git_decoding.py",
+    "src/repo_catalog/domain/git_intrinsic.py",
+    "src/repo_catalog/domain/models.py",
+    "src/repo_catalog/domain/payload.py",
+    "src/repo_catalog/domain/time.py"
+  ],
+  "missing": []
+}
+exit=0

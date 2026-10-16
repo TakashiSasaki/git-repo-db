@@ -1,0 +1,26 @@
+{
+  "head": "fbf3c37f6de3522e800a8cc282a332b3fbd1a0fd",
+  "tree": "21d24e4f3460b1ddbbbaf6cfa8cbd23af7020982",
+  "junit_nodes": [
+    "tests/unit/test_build_docs_site.py::test_schema_freshness",
+    "tests/unit/test_build_docs_site.py::test_git_metadata",
+    "tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation",
+    "tests/unit/test_build_docs_site.py::test_publication_safety_validator",
+    "tests/unit/test_build_docs_site.py::test_internal_links_validator",
+    "tests/unit/test_build_docs_site.py::test_critical_endpoints_validator",
+    "tests/unit/test_build_docs_site.py::test_pages_trigger_paths_decision_matrix",
+    "tests/unit/test_build_docs_site.py::test_pages_trigger_covers_executed_schema_dependencies"
+  ],
+  "journal_starts": [
+    "tests/unit/test_build_docs_site.py::test_schema_freshness",
+    "tests/unit/test_build_docs_site.py::test_git_metadata",
+    "tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation",
+    "tests/unit/test_build_docs_site.py::test_publication_safety_validator",
+    "tests/unit/test_build_docs_site.py::test_internal_links_validator",
+    "tests/unit/test_build_docs_site.py::test_critical_endpoints_validator",
+    "tests/unit/test_build_docs_site.py::test_pages_trigger_paths_decision_matrix",
+    "tests/unit/test_build_docs_site.py::test_pages_trigger_covers_executed_schema_dependencies"
+  ],
+  "phases_passed": 24,
+  "exactly_once": true
+}
