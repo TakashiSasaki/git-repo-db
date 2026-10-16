@@ -1,0 +1,171 @@
+"""Read-only review counterexamples; only disposable catalogs are mutated."""
+import base64
+import hashlib
+import importlib.util
+import json
+import sqlite3
+from pathlib import Path
+from uuid import uuid4
+
+import pytest
+
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.p1_core import OID, Capture, NotesProof
+from repo_catalog.domain.production_query import PageRequest, QueryError, SearchQuery, canonical_json
+
+spec = importlib.util.spec_from_file_location('review_fixtures', Path.cwd() / 'tests/integration/p6/conftest.py')
+f = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(f)
+
+
+def test_escaped_core_capability_fails_with_typed_expiry(tmp_path):
+    cat = tmp_path / 'catalog'
+    f.populate_rich_catalog(cat, include_context=False)
+    with ProductionQueryService(cat).open_snapshot() as snap:
+        escaped = snap.core
+        assert escaped.sql('SELECT 1')
+    with pytest.raises(Exception) as caught:
+        escaped.sql('SELECT 1')
+    assert getattr(caught.value, 'code', None) in ('CAPABILITY_EXPIRED', 'SNAPSHOT_EXPIRED')
+
+
+@pytest.mark.parametrize('column,stored_value', [('value','{'), ('value','123'), ('provenance','123')])
+def test_malformed_stored_repository_json_persists_stop(tmp_path, column, stored_value):
+    cat = tmp_path / 'catalog'
+    f.populate_rich_catalog(cat, include_context=False)
+    with sqlite3.connect(cat/'core.sqlite3') as db:
+        trigger = db.execute("SELECT sql FROM sqlite_schema WHERE name='p1_immutable_repository_claims_update'").fetchone()[0]
+        db.execute('DROP TRIGGER p1_immutable_repository_claims_update')
+        db.execute('PRAGMA ignore_check_constraints=ON')
+        db.execute(f"UPDATE repository_claims SET {column}=? WHERE field='name'", (stored_value,))
+        db.execute(trigger)
+    with pytest.raises(Exception):
+        ProductionQueryService(cat).get_repository_view()
+    assert (cat/'p1-recovery-stop.json').exists()
+    with pytest.raises(Exception) as stopped:
+        ProductionQueryService(cat).snapshot_token()
+    assert getattr(stopped.value, 'code', None) in ('RECOVERY_STOP', 'RECOVERY_REQUIRED')
+
+
+def test_binary_notes_search_rebuild_and_fallback_are_equal(tmp_path):
+    cat = tmp_path / 'catalog'
+    f.init_catalog(cat, ('core','search'))
+    blob = f.make_native('sha1','blob',b'hello\xff\x00world')
+    target = OID('sha1','1'*40)
+    tree = f.make_tree('sha1',[(b'100644',target.full_oid.encode(),blob.oid.full_oid)])
+    cap = Capture(f.ORIGIN, str(uuid4()),f.REPOSITORY,'source','refs/notes/binary',tree.oid)
+    core = GitCore(cat/'core.sqlite3')
+    core.admit_repository(f.REPOSITORY)
+    core.admit_note(NotesProof(cap,target,blob.oid,target.full_oid,(tree,)),blob,str(uuid4()),f.UnlimitedTestBudget())
+    core.close()
+    service = ProductionQueryService(cat)
+    before = service.search(SearchQuery(query_text='hello',projection_kinds=('notes',)))
+    service.rebuild_search(('notes',))
+    after = service.search(SearchQuery(query_text='hello',projection_kinds=('notes',)))
+    assert before.hits == after.hits
+    assert not (cat/'p1-recovery-stop.json').exists()
+
+
+@pytest.mark.parametrize('key', [[], ['sha1'], ['sha1','a'*39], [True,'a'*40], ['sha1', 1], [['sha1'],'a'*40]])
+def test_recomputed_public_checksum_does_not_bypass_key_validation(tmp_path, key):
+    cat = tmp_path / 'catalog'
+    f.populate_rich_catalog(cat, include_context=False)
+    service = ProductionQueryService(cat)
+    first = service.list_git_objects(PageRequest(limit=1))
+    raw = json.loads(base64.urlsafe_b64decode(first.next_cursor))
+    raw['payload']['last_key'] = key
+    checksum_field = 'checksum_sha256' if 'checksum_sha256' in raw else 'mac'
+    raw[checksum_field] = hashlib.sha256(('p6-cursor-v1:'+canonical_json(raw['payload'])).encode()).hexdigest()
+    encoded = base64.urlsafe_b64encode(canonical_json(raw).encode()).decode()
+    with pytest.raises(QueryError) as invalid:
+        service.list_git_objects(PageRequest(limit=1,cursor=encoded))
+    assert invalid.value.code == 'INVALID_CURSOR'
+    assert not (cat/'p1-recovery-stop.json').exists()
+
+
+@pytest.mark.parametrize('query', ['', 'P6', 'p6', 'a', '日本語', '😀', '*', '"', '\\', '\x00'])
+def test_literal_search_projection_scan_equivalence(tmp_path,query):
+    cat = tmp_path / 'catalog'
+    f.populate_rich_catalog(cat)
+    service = ProductionQueryService(cat)
+    if not query:
+        with pytest.raises(QueryError) as caught:
+            SearchQuery(query_text=query)
+        assert caught.value.code == 'INVALID_QUERY'
+        return
+    expected = service.search(SearchQuery(query_text=query))
+    service.rebuild_search()
+    observed = service.search(SearchQuery(query_text=query))
+    assert observed.hits == expected.hits
+    assert observed.total_count == expected.total_count
+
+
+def test_oversized_search_row_rejected_before_python_document_construction(tmp_path, monkeypatch):
+    from repo_catalog.adapters.sqlite.production_search import BoundedDocuments
+    cat = tmp_path / 'catalog'
+    f.populate_rich_catalog(cat)
+    service = ProductionQueryService(cat)
+    service.rebuild_search()
+    expected = service.search(SearchQuery(query_text='P6'))
+    with sqlite3.connect(cat/'search.sqlite3') as db:
+        db.execute("UPDATE search_documents SET searchable_text=? WHERE document_key_json=(SELECT document_key_json FROM search_documents WHERE projection_kind='context_text' LIMIT 1)", ('P6' + 'x'*(2*1024*1024),))
+    original = BoundedDocuments.__setitem__
+    def guarded_set(self,key,value):
+        if len(key.encode()) + len(value.encode()) > self.max_document_bytes:
+            raise AssertionError('oversized derivative already materialized into Python')
+        return original(self,key,value)
+    monkeypatch.setattr(BoundedDocuments,'__setitem__',guarded_set)
+    observed = service.search(SearchQuery(query_text='P6'))
+    assert observed.hits == expected.hits
+    assert observed.backends_by_kind['context_text'] == 'authority_scan'
+    assert not (cat/'p1-recovery-stop.json').exists()
+
+
+def test_context_pagination_keeps_a_bounded_number_of_live_views(tmp_path, monkeypatch):
+    import weakref
+    from repo_catalog.adapters.sqlite.production_context import Context
+    from repo_catalog.domain.p1_context import ResourceKey
+    cat = tmp_path / 'catalog'
+    f.init_catalog(cat, ('context',))
+    with Context.transaction(cat) as context:
+        context.provider(f.SERVICE, 'synthetic')
+        for number in range(256):
+            context.resource(ResourceKey(f.SERVICE, 'issue', str(number)))
+    service = ProductionQueryService(cat)
+    original = service._context_resource_in_snapshot
+    references = []
+    peak_live = 0
+    def tracked(*args, **kwargs):
+        nonlocal peak_live
+        view = original(*args, **kwargs)
+        references[:] = [ref for ref in references if ref() is not None]
+        references.append(weakref.ref(view))
+        peak_live = max(peak_live, len(references))
+        return view
+    monkeypatch.setattr(service, '_context_resource_in_snapshot', tracked)
+    first = service.list_context_resources(PageRequest(limit=3))
+    second = service.list_context_resources(PageRequest(limit=3,cursor=first.next_cursor))
+    assert first.total_count == second.total_count == 256
+    assert {v.resource for v in first.items}.isdisjoint(v.resource for v in second.items)
+    assert peak_live < 20
+
+
+@pytest.mark.parametrize('operation', ['search', 'rebuild'])
+def test_typed_authority_shape_corruption_in_search_extraction_stops(tmp_path, operation):
+    cat = tmp_path / 'catalog'
+    f.populate_rich_catalog(cat,include_context=False)
+    with sqlite3.connect(cat/'core.sqlite3') as db:
+        trigger = db.execute("SELECT sql FROM sqlite_schema WHERE name='p1_immutable_git_observations_update'").fetchone()[0]
+        db.execute('DROP TRIGGER p1_immutable_git_observations_update')
+        db.execute('PRAGMA ignore_check_constraints=ON')
+        db.execute("UPDATE git_observations SET value='[]'")
+        db.execute(trigger)
+    service = ProductionQueryService(cat)
+    with pytest.raises(Exception) as caught:
+        if operation == 'search':
+            service.search(SearchQuery(query_text='x',projection_kinds=('git_metadata',)))
+        else:
+            service.rebuild_search(('git_metadata',))
+    assert getattr(caught.value,'code',None) == 'AUTHORITATIVE_CORRUPTION'
+    assert (cat/'p1-recovery-stop.json').exists()

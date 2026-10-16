@@ -1,0 +1,35 @@
+import hashlib, json, os, platform, subprocess, sys, time
+from pathlib import Path
+ROOT=Path('/workspace/work/p6')
+OUT=Path('/workspace/work/review-p6-scratch/final'); OUT.mkdir(exist_ok=True)
+feature=sys.argv[1]
+commands=[]
+def run(name,args):
+    started=time.time()
+    with (OUT/(name+'.log')).open('w') as log:
+        result=subprocess.run(args,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
+    commands.append({'name':name,'command':args,'cwd':str(ROOT),'exit_code':result.returncode,'started_epoch':started,'finished_epoch':time.time()})
+    return result.returncode
+
+def git(*args): return subprocess.check_output(['git',*args],cwd=ROOT,text=True).strip()
+files=git('ls-files','src','tests','scripts','pyproject.toml','uv.lock').splitlines()
+def inputs(): return {p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in files}
+before=inputs()
+matched={p:hashlib.sha256(subprocess.check_output(['git','show',feature+':'+p],cwd=ROOT)).hexdigest()==value for p,value in before.items()}
+if not all(matched.values()): raise SystemExit('feature input mismatch '+str([p for p,ok in matched.items() if not ok]))
+(OUT/'input-hashes-before.json').write_text(json.dumps(before,indent=2)+'\n')
+run('locked-sync',['uv','sync','--locked','--group','dev'])
+run('versions',['uv','run','--no-sync','python','-c','import platform,sqlite3,subprocess,repo_catalog;print(platform.platform());print(platform.python_version());print(sqlite3.sqlite_version);print(repo_catalog.__file__);print(subprocess.check_output(["uv","--version"],text=True));print(subprocess.check_output(["git","--version"],text=True))'])
+targets=['tests/integration/p6','tests/integration/test_snapshot_read_limits.py','/workspace/work/review-p6-scratch/test_independent_p6.py']
+run('collected',['uv','run','--no-sync','pytest',*targets,'--collect-only','-q'])
+run('pytest',['uv','run','--no-sync','pytest',*targets,'-vv','--junitxml='+str(OUT/'junit.xml'),'--journal',str(OUT/'journal.jsonl')])
+after=inputs()
+(OUT/'input-hashes-after.json').write_text(json.dumps(after,indent=2)+'\n')
+collected=[s.strip() for s in (OUT/'collected.log').read_text().splitlines() if '::test_' in s and not s.startswith(' ') ]
+events=[json.loads(s) for s in (OUT/'journal.jsonl').read_text().splitlines()]
+starts=[e['nodeid'] for e in events if e['event']=='start']
+phases=[e for e in events if e['event']=='phase']
+receipt={'feature_sha':feature,'feature_tree':git('rev-parse',feature+'^{tree}'),'observed_head_after':git('rev-parse','HEAD'),'commands':commands,'scope':'Independent read-only P6 development review; no packaging/hosted CI/Release Acceptance claim','production_changes_authored_by_reviewer':False,'input_matches_feature':all(matched.values()),'input_unchanged_during_run':before==after,'collected_nodes':collected,'executed_nodes':starts,'unique_collected_count':len(set(collected)),'unique_executed_count':len(set(starts)),'collection_execution_equal':set(collected)==set(starts),'phase_count':len(phases),'phase_outcomes':{o:sum(1 for p in phases if p['outcome']==o) for o in sorted({p['outcome'] for p in phases})},'scratch_test_sha256':hashlib.sha256(Path(targets[-1]).read_bytes()).hexdigest(),'artifacts':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in OUT.iterdir() if p.is_file()}}
+(OUT/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print(json.dumps({k:receipt[k] for k in ('feature_sha','feature_tree','input_matches_feature','input_unchanged_during_run','unique_collected_count','unique_executed_count','collection_execution_equal','phase_outcomes')},indent=2))
+print('command results',[(c['name'],c['exit_code']) for c in commands])
