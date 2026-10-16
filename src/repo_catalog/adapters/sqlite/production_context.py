@@ -239,7 +239,7 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def snapshot(cls, directory: Path) -> Iterator[Context]:
+    def snapshot(cls, directory: Path, *, read_limits=None) -> Iterator[Context]:
         """Pin Context alone; no claimed Core pairing or derivative dependency."""
         directory = Path(directory)
         with ExitStack() as stack:
@@ -253,6 +253,11 @@ class Context(ContextStore):
                     db.execute("PRAGMA query_only=ON")
                     db.execute("BEGIN")
                     db.execute("SELECT * FROM store_identity").fetchall()
+                    from repo_catalog.adapters.sqlite.p1_coordination import (
+                        apply_snapshot_read_limits,
+                    )
+
+                    apply_snapshot_read_limits(db, read_limits)
                 except BaseException as error:
                     cls._record_corruption(directory, error)
                     raise
@@ -261,6 +266,20 @@ class Context(ContextStore):
                     yield capability
             finally:
                 db.rollback()
+
+    def snapshot_identity(self):
+        """Return the checked identity of this live Context capability."""
+        self._check()
+        from repo_catalog.adapters.sqlite.p1_coordination import _identity
+
+        return _identity(self.db, "context")
+
+    def snapshot_fingerprint(self):
+        """Metadata fence; retained text bytes remain typed-read verified."""
+        self._check()
+        from repo_catalog.adapters.sqlite.p1_coordination import _digest
+
+        return _digest(self.db, metadata_only=True)
 
     @contextmanager
     def _unit(self):
