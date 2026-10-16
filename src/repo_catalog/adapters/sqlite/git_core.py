@@ -7,15 +7,24 @@ scalar admission; it intentionally exposes no public initializer or file archive
 
 from __future__ import annotations
 
-from repo_catalog.adapters.sqlite.p1_core import Core, _completed_read
+from repo_catalog.adapters.sqlite.p1_core import Core, _completed_read, _decoded_read
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
+from repo_catalog.domain.notes import (
+    GRAMMAR,
+    NotesInventory,
+    decode_inventory_group,
+    mapping_proof,
+    verify_inventory,
+)
 from repo_catalog.domain.p1_core import (
     OID,
     CoreFailure,
     NativeObject,
+    NotesGroup,
     NotesProof,
     Provenance,
     ScalarClaim,
+    account_verification,
     encode,
 )
 
@@ -30,12 +39,35 @@ class GitCore(Core):
     byte columns are accessible only through the checked typed read methods.
     """
 
+    def ensure_available(self) -> None:
+        """Fence opt-in acquisition before any source I/O or request work."""
+        self._available()
+
+    @_completed_read
+    @_decoded_read
+    def catalog_identity(self):
+        """Checked physical binding for opt-in acquisition request composition."""
+        with self._snapshot():
+            rows = self.sql(
+                "SELECT repository_uuidv4,catalog_instance_uuidv4 FROM store_identity"
+            )
+            if len(rows) != 1:
+                self._integrity_stop("missing Core identity")
+            from repo_catalog.domain.p1_core import uuid4_value
+
+            return tuple(
+                self._stored("Core identity", uuid4_value, value) for value in rows[0]
+            )
+
     def _authorize(self, action, table, column, database, trigger):
         import sqlite3
 
         protected = (
             column == "body" and table in ("retained_metadata", "retained_notes")
         ) or (column == "proof_bundle" and table in ("note_roles", "retained_notes"))
+        # P4 receiver inventory provenance contains exact structural evidence.
+        # It must follow the same checked output boundary as proof_bundle.
+        protected = protected or (table == "notes_groups" and column == "provenance")
         if (
             action == sqlite3.SQLITE_READ
             and protected
@@ -105,7 +137,9 @@ class GitCore(Core):
     def notes_projection(self, capture, target: OID):
         self._checked_byte_read = True
         try:
-            return super().notes_projection(capture, target)
+            with self._snapshot():
+                self.notes_inventories(capture)
+                return super().notes_projection(capture, target)
         finally:
             self._checked_byte_read = False
 
@@ -113,3 +147,119 @@ class GitCore(Core):
         # P1 valid_note_role delegates full production grammar before trusting
         # the relevant mapping, including every supplied commit/tree structure.
         return super().admit_notes_role(proof, work)
+
+    def admit_notes_inventory(self, inventory: NotesInventory, work) -> None:
+        """Admit one receiver-recomputed whole group without body dependencies.
+
+        Exact structural evidence forms part of the group's semantic provenance;
+        no generic sender group can claim this receiver-intrinsic qualification.
+        The group and its positive object identities commit as one Core unit.
+        """
+        self._available()
+        with account_verification(work):
+            for native in inventory.structures:
+                self._charge(work, "input_bytes", len(native.body))
+            verify_inventory(inventory, work)
+            supplied = {native.oid: native for native in inventory.structures}
+            proofs = tuple(
+                mapping_proof(
+                    inventory.capture,
+                    OID(inventory.capture.root.object_format, target),
+                    supplied.__getitem__,
+                    work,
+                )
+                for target, _note, _path in inventory.members
+            )
+            evidence = [
+                [
+                    *native.oid.key,
+                    native.native_type,
+                    native.body.hex(),
+                    native.declared_size,
+                    native.digest_sha256,
+                ]
+                for native in inventory.structures
+            ]
+            diagnostic = (
+                None
+                if inventory.failure is None
+                else [inventory.failure.code, str(inventory.failure)]
+            )
+            provenance = Provenance(
+                "receiver-intrinsic",
+                encode(inventory.capture.key),
+                encode(["inventory", GRAMMAR, evidence, diagnostic]),
+                "git-native-notes-inventory",
+                "1",
+                "receiver_intrinsic",
+            )
+            group = NotesGroup(
+                inventory.capture,
+                "all-notes-mappings",
+                inventory.status,
+                inventory.members,
+                provenance,
+            )
+            self._charge(work, "metadata_units", 1 + 3 * len(group.members))
+            with self._transaction():
+                self._capture(group.capture)
+                for target, note, _path in group.members:
+                    self._object(OID(group.capture.root.object_format, target))
+                    self._object(OID(group.capture.root.object_format, note))
+                self._insert("notes_groups", group.key)
+                for proof in proofs:
+                    self._insert("note_roles", proof.key)
+
+    @_completed_read
+    @_decoded_read
+    def notes_inventories(self, capture) -> tuple[NotesInventory, ...]:
+        """Emit distinct rechecked receiver inventories, never merged reports.
+
+        Original reported alternatives remain available through notes_projection.
+        No earlier group supplies terminal evidence to this group's capture.
+        Persisted intrinsic structural damage stops the catalog before output.
+        """
+        previous = getattr(self, "_checked_byte_read", False)
+        self._checked_byte_read = True
+        try:
+            with self._snapshot():
+                bindings = self.sql(
+                    "SELECT * FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
+                    capture.pair,
+                )
+                if bindings and tuple(bindings[0]) != capture.key:
+                    raise CoreFailure(
+                        "INCOMPATIBLE_REPLAY",
+                        capture.pair,
+                        "immutable Capture binding conflict",
+                    )
+                rows = self.sql(
+                    "SELECT scope,status,membership,provenance FROM notes_groups "
+                    "WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? "
+                    "ORDER BY scope,status,membership,provenance",
+                    (*capture.pair, capture.root.object_format),
+                )
+                result = []
+                for row in rows:
+                    provenance = self._provenance_value(capture.pair, row[3])
+                    if provenance.qualification != "receiver_intrinsic":
+                        continue
+                    try:
+                        inventory = decode_inventory_group(
+                            encode(capture.key), row[0], row[1], row[2], row[3]
+                        )
+                    except (
+                        ValueError,
+                        TypeError,
+                        KeyError,
+                        IndexError,
+                        AttributeError,
+                        RecursionError,
+                    ) as error:
+                        self._integrity_stop(
+                            (capture.pair, "notes-inventory", str(error))
+                        )
+                    result.append(inventory)
+                return tuple(result)
+        finally:
+            self._checked_byte_read = previous

@@ -90,6 +90,17 @@ WHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(
  SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[0]'))
  OR NOT EXISTS(SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[1]')))
 BEGIN SELECT RAISE(ABORT,'missing nominal notes group target'); END;
+-- Qualified receiver evidence must carry checked native structure even through
+-- the supported coordinator callback SQL boundary. This grants no source/ref
+-- authenticity: the function proves only this exact Capture/root inventory.
+CREATE TRIGGER notes_inventory_guard BEFORE INSERT ON notes_groups
+WHEN json_extract(NEW.provenance,'$[5]')='receiver_intrinsic' AND NOT EXISTS(
+ SELECT 1 FROM captures c WHERE c.capture_origin_uuidv4=NEW.capture_origin_uuidv4
+ AND c.capture_uuidv4=NEW.capture_uuidv4 AND c.object_format=NEW.object_format
+ AND p4_notes_inventory(p1_array(c.capture_origin_uuidv4,c.capture_uuidv4,
+ c.repository_uuidv4,c.source,c.ref,c.object_format,c.root),
+ NEW.scope,NEW.status,NEW.membership,NEW.provenance))
+BEGIN SELECT RAISE(ABORT,'receiver Notes inventory requires checked structural evidence'); END;
 CREATE TABLE retained_metadata (
  object_format TEXT NOT NULL, full_oid TEXT NOT NULL,
  physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),

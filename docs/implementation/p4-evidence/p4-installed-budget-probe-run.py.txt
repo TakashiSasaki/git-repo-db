@@ -1,0 +1,42 @@
+from pathlib import Path
+import os,sys,subprocess,json,hashlib
+p=Path('/workspace/p4-installed-budget-probe');env=dict(os.environ)
+for key in ('PYTHONPATH','PYTHONHOME','GH_TOKEN','GITHUB_TOKEN'):env.pop(key,None)
+script=r'''
+from pathlib import Path
+from uuid import uuid4
+import sqlite3
+from repo_catalog.adapters.sqlite.p1_schema import initialize,connect,verify_declared
+from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger
+from repo_catalog.domain.p1_coordination import RequestIdentity,NotesLimits
+assert 'site-packages' in __import__('repo_catalog.adapters.sqlite.p1_coordination',fromlist=['']).__file__
+verify_declared()
+initialize(Path('operational.sqlite3'),'operational',str(uuid4()),str(uuid4()))
+db=connect(Path('operational.sqlite3'),'operational')
+assert 'spent_or_reserved' in {r[1] for r in db.execute('PRAGMA table_info(request_budgets)')}
+ledger=WorkLedger(db);request=RequestIdentity(str(uuid4()),str(uuid4()));ledger.new_request(request,'{}',{k:10 for k in NotesLimits.work_limits()});attempt=str(uuid4());ledger.attempt(request,attempt)
+def spent():return db.execute("SELECT spent_or_reserved FROM request_budgets WHERE work_kind='input_bytes'").fetchone()[0]
+permit=ledger.reserve(request,attempt,'input_bytes','first',8)
+assert spent()==ledger.usage(request)['input_bytes']==8
+try:ledger.reserve(request,attempt,'input_bytes','overbudget',3)
+except sqlite3.IntegrityError as error:assert str(error)=='finite cumulative request budget'
+else:raise AssertionError('limit overshoot')
+ledger.finish(permit,3);assert spent()==ledger.usage(request)['input_bytes']==3
+second=ledger.reserve(request,attempt,'input_bytes','second',7);ledger.finish(second,7)
+assert spent()==ledger.usage(request)['input_bytes']==10
+assert db.execute("SELECT typeof(spent_or_reserved) FROM request_budgets WHERE work_kind='input_bytes'").fetchone()[0]=='integer'
+db.close();db=connect(Path('operational.sqlite3'),'operational');ledger=WorkLedger(db)
+assert ledger.usage(request)['input_bytes']==10
+new_attempt=str(uuid4());ledger.attempt(request,new_attempt)
+try:ledger.reserve(request,new_attempt,'input_bytes','retry',1)
+except sqlite3.IntegrityError as error:assert str(error)=='finite cumulative request budget'
+else:raise AssertionError('reopen reset budget')
+db.close();print('installed SQL counter reserve8/settle3/final10 and reopen retry refusal passed')
+'''
+results={}
+for variant,directory in [('wheel','dist'),('sdist-wheel','sdist-wheel')]:
+ wheel=next((p/directory).glob('*.whl'));outside=p/(variant+'-outside');outside.mkdir();venv=p/(variant+'-venv')
+ for cmd in [['uv','venv',str(venv),'--python',sys.executable,'--offline'],['uv','pip','install','--python',str(venv/'bin/python'),'--offline','--no-deps',str(wheel)],[str(venv/'bin/python'),'-c',script]]:
+  r=subprocess.run(cmd,cwd=outside,env=env,text=True,capture_output=True);assert r.returncode==0,(cmd,r.stdout,r.stderr)
+ print(variant,r.stdout.strip());results[variant]={'wheel_sha256':hashlib.sha256(wheel.read_bytes()).hexdigest(),'stdout':r.stdout.strip()}
+(p/'receipt.json').write_text(json.dumps(results,indent=2)+'\n')

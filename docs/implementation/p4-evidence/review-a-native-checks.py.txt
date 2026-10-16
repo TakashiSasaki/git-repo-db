@@ -1,0 +1,64 @@
+import hashlib, pathlib, tempfile, subprocess, os
+from dataclasses import replace
+from uuid import uuid4
+from repo_catalog.adapters.git.native import GitNativeSource
+from repo_catalog.adapters.git.notes import GitNotesSource
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.domain.p1_core import OID,Capture,NotesProof,NativeObject,CoreFailure
+from repo_catalog.domain.notes import mapping_proof,mapping_inventory
+from tests.integration.p1.test_core import Budget
+
+def run(p,*a,data=None):
+ return subprocess.run(['git','-C',str(p),*a],input=data,capture_output=True,check=True).stdout
+
+def write(p,fmt,kind,body):
+ return OID(fmt,run(p,'hash-object','-w','--literally','-t',kind,'--stdin',data=body).strip().decode())
+def ent(mode,name,oid): return mode+b' '+name+b'\0'+bytes.fromhex(oid.full_oid)
+def refuse(f,code=None):
+ try: f()
+ except CoreFailure as e:
+  assert code is None or e.code==code,(e.code,code)
+ else: raise AssertionError('accepted bad input')
+count=0
+for fmt in ('sha1','sha256'):
+ for bare in (False,True):
+  d=pathlib.Path(tempfile.mkdtemp(prefix='p4-review-a-')); p=d/'git'; p.mkdir()
+  run(p,'init',*(['--bare'] if bare else []),'--object-format='+fmt)
+  width=40 if fmt=='sha1' else 64
+  target=OID(fmt,'a'*width); body=b'\0\xff\xfe\r\n\x80'; note=write(p,fmt,'blob',body)
+  leaf=write(p,fmt,'tree',ent(b'100644',target.full_oid[width-2:].encode(),note))
+  root=leaf
+  for i in range(width//2-2,-1,-1): root=write(p,fmt,'tree',ent(b'40000',target.full_oid[i*2:i*2+2].encode(),root))
+  repo=str(uuid4()); cap=Capture(str(uuid4()),str(uuid4()),repo,'review-a','refs/notes/max-depth',root)
+  source=GitNotesSource(GitNativeSource(p)); reader=lambda oid:source.metadata(oid,Budget())
+  proof=mapping_proof(cap,target,reader,Budget()); assert len(proof.structures)==width//2
+  assert source.note_body(proof,Budget()).body==body
+  inv=mapping_inventory(cap,reader,Budget()); assert inv.status=='complete'
+  db=d/'core.sqlite3'; initialize(db,'core',repo,str(uuid4())); core=GitCore(db)
+  core.admit_note(proof,source.note_body(proof,Budget()),str(uuid4()),Budget()); assert core.read_note(cap,target,note)==body; count+=1
+  # Every leaf role deviation and wrong association fails before body input.
+  for mode,name in ((b'100755',target.full_oid.encode()),(b'120000',target.full_oid.encode()),(b'160000',target.full_oid.encode()),(b'100644',target.full_oid.upper().encode()),(b'100644',b'ordinary.txt')):
+   badroot=write(p,fmt,'tree',ent(mode,name,note)); badcap=replace(cap,capture_uuidv4=str(uuid4()),root=badroot)
+   refuse(lambda:mapping_proof(badcap,target,reader,Budget())); count+=1
+  for path in ('../'+proof.path,proof.path+'/',proof.path.upper()):
+   refuse(lambda:source.note_body(replace(proof,path=path),Budget()),'NOTES_ROLE'); count+=1
+  refuse(lambda:source.note_body(replace(proof,target=OID(fmt,'b'*width)),Budget()),'NOTES_ROLE');count+=1
+  refuse(lambda:source.note_body(replace(proof,note=target),Budget()),'NOTES_ROLE');count+=1
+  # Incorrect callback type, declared size, digest, and intrinsic OID rejected.
+  native=reader(root)
+  for obj in (replace(native,native_type='blob'),replace(native,declared_size=native.declared_size+1),replace(native,digest_sha256='0'*64),replace(native,oid=target)):
+   refuse(lambda:mapping_proof(cap,target,lambda oid:obj,Budget()));count+=1
+  # Correctly hashed malformed trees cannot authorize retention.
+  for treebody in (ent(b'100644',b'..',note),ent(b'100644',target.full_oid.encode(),note)*2,ent(b'100644',target.full_oid.encode(),OID(fmt,'0'*width)),b'100644 missing-nul'):
+   badroot=write(p,fmt,'tree',treebody); badcap=replace(cap,capture_uuidv4=str(uuid4()),root=badroot)
+   refuse(lambda:mapping_proof(badcap,target,reader,Budget()),'NATIVE_SYNTAX'); count+=1
+  # Nominated ref prefix descendants must not leak into exact nominated scope.
+  run(p,'update-ref','refs/custom/annotation/sub',root.full_oid)
+  discovered=source.discover(Budget(),('refs/custom/annotation',)); assert discovered.status=='known_empty' and not discovered.refs;count+=1
+  # Non-UTF8 exact ref names survive source discovery.
+  raw=b'refs/notes/raw-\xff'; run(p,'update-ref',os.fsdecode(raw),root.full_oid)
+  discovered=source.discover(Budget()); assert discovered.terminal and discovered.refs==((raw,root),);count+=1
+  assert not core.sql('SELECT full_oid FROM retained_notes WHERE full_oid=?',(target.full_oid,));count+=1
+  core.close()
+print('Review A independent real-Git assertions passed:',count)

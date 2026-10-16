@@ -1,0 +1,67 @@
+from pathlib import Path
+from uuid import uuid4
+from dataclasses import replace
+import sqlite3
+import pytest
+from repo_catalog.adapters.git.native import GitNativeSource
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.domain.notes import mapping_inventory,mapping_proof
+from repo_catalog.domain.p1_core import Capture,OID,NotesGroup,NotesClaim,CoreFailure
+from tests.integration.p1.test_core import Budget,provenance
+from tests.integration.p2.test_native import git,write,entry
+
+@pytest.fixture(params=['sha1','sha256'])
+def actual(tmp_path,request):
+ p=tmp_path/'git';p.mkdir();git(p,'init','--bare','--object-format='+request.param)
+ repo=str(uuid4());db=tmp_path/'core.sqlite3';initialize(db,'core',repo,str(uuid4()));c=GitCore(db);c.admit_repository(repo)
+ note=write(p,request.param,'blob',b'\x00\xff\r\n');target=OID(request.param,'a'*(40 if request.param=='sha1' else 64));root=write(p,request.param,'tree',entry(b'100644',target.full_oid.encode(),note.oid))
+ cap=Capture(str(uuid4()),str(uuid4()),repo,'external-unsigned-source','refs/notes/a/b',root.oid)
+ yield c,db,cap,target,note,GitNativeSource(p)
+ c.close()
+
+def deny_commit(c):
+ original=c._authorize
+ def authorizer(action,a,b,d,t):
+  if action==sqlite3.SQLITE_TRANSACTION and a=='COMMIT':return sqlite3.SQLITE_DENY
+  return original(action,a,b,d,t)
+ c._db.set_authorizer(authorizer)
+ return original
+
+def test_real_commit_denial_atomic_group_and_body(actual):
+ c,db,cap,target,note,source=actual
+ inv=mapping_inventory(cap,source.metadata,Budget());original=deny_commit(c);work=Budget()
+ with pytest.raises(sqlite3.DatabaseError):c.admit_notes_inventory(inv,work)
+ c._db.set_authorizer(original)
+ for table in ['notes_groups','note_roles','captures']:
+  assert c.sql('SELECT count(*) FROM '+table)[0][0]==0
+ assert work.counts['verification_bytes']>0
+ assert not (db.parent/'p1-recovery-stop.json').exists()
+ c.admit_notes_inventory(inv,Budget())
+ proof=mapping_proof(cap,target,source.metadata,Budget());original=deny_commit(c)
+ with pytest.raises(sqlite3.DatabaseError):c.admit_note(proof,note,str(uuid4()),Budget())
+ c._db.set_authorizer(original)
+ assert c.sql('SELECT count(*) FROM retained_notes')[0][0]==0
+ assert len(c.notes_inventories(cap))==1
+ assert c.notes_projection(cap,target).canonical==note.oid
+ assert not (db.parent/'p1-recovery-stop.json').exists()
+
+def test_replay_copies_original_report_and_capture_binding(actual):
+ c,db,cap,target,note,source=actual
+ other=OID(target.object_format,'b'*len(target.full_oid))
+ report=NotesGroup(cap,'all-notes-mappings','complete',((target.full_oid,other.full_oid,None),),provenance('independent-source'))
+ c.admit_notes_group(report); c.admit_notes_group(report)
+ proof=mapping_proof(cap,target,source.metadata,Budget());copy=str(uuid4());work=Budget()
+ c.admit_note(proof,note,copy,work);before=work.counts['verification_bytes'];c.admit_note(proof,note,copy,work)
+ assert work.counts['verification_bytes']>before
+ assert c.sql('SELECT count(*) FROM retained_notes')[0][0]==1
+ c.admit_note(proof,note,str(uuid4()),Budget());assert c.sql('SELECT count(*) FROM retained_notes')[0][0]==2
+ project=c.notes_projection(cap,target);assert project.reported_conflict and project.canonical==note.oid
+ assert any(x.provenance==report.provenance for x in project.alternatives)
+ assert c.read_note(cap,target,note.oid)==b'\x00\xff\r\n'
+ for bad in [replace(cap,source='other'),replace(cap,ref='refs/notes/other'),replace(cap,root=other)]:
+  with pytest.raises((CoreFailure,sqlite3.IntegrityError)):c.admit_capture(bad)
+ assert c.sql('SELECT count(*) FROM captures')[0][0]==1
+ assert c.read_note(cap,target,note.oid)==note.body
+ for statement in ['UPDATE captures SET source=source','DELETE FROM notes_groups','INSERT OR REPLACE INTO notes_groups SELECT * FROM notes_groups']:
+  with pytest.raises(sqlite3.DatabaseError):c.sql(statement)

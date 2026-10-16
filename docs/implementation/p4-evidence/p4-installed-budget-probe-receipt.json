@@ -1,0 +1,10 @@
+{
+  "wheel": {
+    "wheel_sha256": "cf0f8c4379b1bb7e649077e708d0f420e6553b85fd7dd7b7090636e72c69ee90",
+    "stdout": "installed SQL counter reserve8/settle3/final10 and reopen retry refusal passed"
+  },
+  "sdist-wheel": {
+    "wheel_sha256": "cf0f8c4379b1bb7e649077e708d0f420e6553b85fd7dd7b7090636e72c69ee90",
+    "stdout": "installed SQL counter reserve8/settle3/final10 and reopen retry refusal passed"
+  }
+}

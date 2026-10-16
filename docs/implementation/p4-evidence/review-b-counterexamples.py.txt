@@ -1,0 +1,59 @@
+import sqlite3
+from pathlib import Path
+from uuid import uuid4
+from dataclasses import replace
+import pytest
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+from repo_catalog.domain.p1_coordination import AdmissionFailure,PairAdmission
+from repo_catalog.domain.p1_core import Provenance,NotesGroup,encode,CoreFailure,OID
+from repo_catalog.domain.notes import mapping_inventory
+from test_review_b import actual
+from tests.integration.p1.test_core import Budget
+
+@pytest.mark.parametrize('reader',['inventory','projection'])
+def test_b1_corrupt_utf8_stops(actual,reader):
+ c,p,cap,target,note,source=actual
+ c.admit_notes_inventory(mapping_inventory(cap,source.metadata,Budget()),Budget())
+ db=sqlite3.connect(p)
+ for name, in db.execute("SELECT name FROM sqlite_master WHERE type='trigger'").fetchall():db.execute('DROP TRIGGER "'+name+'"')
+ db.execute('PRAGMA ignore_check_constraints=ON');db.execute("UPDATE notes_groups SET status=CAST(x'ff' AS TEXT)");db.commit();db.close()
+ with pytest.raises(CoreFailure) as e:
+  c.notes_inventories(cap) if reader=='inventory' else c.notes_projection(cap,target)
+ assert e.value.code=='AUTHORITATIVE_CORRUPTION'
+ assert (p.parent/'p1-recovery-stop.json').exists()
+ with pytest.raises(CoreFailure) as e:c.admit_object(OID(target.object_format,'b'*len(target.full_oid)))
+ assert e.value.code=='RECOVERY_STOP'
+
+def test_b2_forged_callback_reject_no_stop(actual):
+ c,p,cap,target,note,source=actual
+ c.admit_capture(cap)
+ identity=c.catalog_identity();initialize(p.parent/'context.sqlite3','context',*identity)
+ prov=Provenance('receiver-intrinsic',encode(cap.key),encode(['inventory','p4-notes/1',[],None]),'git-native-notes-inventory','1','receiver_intrinsic')
+ g=NotesGroup(cap,'all-notes-mappings','known_empty',(),prov)
+ with pytest.raises(AdmissionFailure) as e:PairCoordinator(p.parent).admit(lambda tx:tx.execute('INSERT INTO notes_groups VALUES(?,?,?,?,?,?,?)',g.key),lambda tx:None)
+ assert e.value.outcome==PairAdmission(False,False)
+ assert isinstance(e.value.cause,sqlite3.IntegrityError)
+ assert c.sql('SELECT count(*) FROM notes_groups')[0][0]==0
+ assert not (p.parent/'p1-recovery-stop.json').exists()
+ c.admit_object(target)
+ # A legitimate unauthenticated original complete-empty report remains admissible.
+ reported=replace(g,provenance=Provenance('external','claim','all','report','1'))
+ c.admit_notes_group(reported)
+ assert c.notes_inventories(cap)==()
+ assert c.notes_projection(cap,target).alternatives[0].provenance==reported.provenance
+
+@pytest.mark.parametrize('reader',['inventory','projection'])
+def test_b3_deep_stored_provenance_stops(actual,reader):
+ c,p,cap,target,note,source=actual
+ c.admit_notes_inventory(mapping_inventory(cap,source.metadata,Budget()),Budget())
+ db=sqlite3.connect(p)
+ for name, in db.execute("SELECT name FROM sqlite_master WHERE type='trigger'").fetchall():db.execute('DROP TRIGGER "'+name+'"')
+ db.execute('PRAGMA ignore_check_constraints=ON');db.execute('UPDATE notes_groups SET provenance=?',('['*10000+'0'+']'*10000,));db.commit();db.close()
+ with pytest.raises(CoreFailure) as e:
+  c.notes_inventories(cap) if reader=='inventory' else c.notes_projection(cap,target)
+ assert e.value.code=='AUTHORITATIVE_CORRUPTION'
+ assert (p.parent/'p1-recovery-stop.json').exists()
+ with pytest.raises(CoreFailure) as e:c.admit_object(OID(target.object_format,'b'*len(target.full_oid)))
+ assert e.value.code=='RECOVERY_STOP'

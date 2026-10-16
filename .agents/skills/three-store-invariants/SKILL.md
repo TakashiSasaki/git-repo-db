@@ -397,3 +397,67 @@ Use the committed production suites under `tests/integration/p2/` and
 combined test tree identified by the compatibility report. Independent reviewers
 must revalidate corrected material findings against exact commits; a green earlier
 suite does not cover a newly demonstrated counterexample.
+
+
+### P4 verified extensions to section 9
+
+Apply to opt-in P4 Notes and future intrinsic group/read extensions; these do
+not activate the public runtime or change accepted policy.
+
+- Exercise every new typed reader directly and through its public callers.
+  Decorators on an overridden base method do not transfer automatically, and a
+  protected caller does not protect the method it calls. Persisted invalid UTF-8
+  and bounded but excessively nested JSON must publish the persistent catalog
+  stop before returning. Catch decoder failures only in trusted stored-value
+  scopes; invalid user SQL or incoming input is not storage corruption. Verified
+  regressions: `test_persisted_inventory_invalid_utf8_publishes_stop` and
+  `test_persisted_inventory_deep_json_publishes_stop` in the P4 inventory suite.
+- Add receiving SQL guards for every new receiver-intrinsic group meaning, not
+  just a Python convenience method. A supported coordinator callback previously
+  committed a forged known-empty inventory and poisoned the next read. The
+  corrected trigger joins the actual full Capture FK and rechecks native
+  structure, exact membership/path and terminal scope. Test valid controls,
+  forged closure and original reported alternatives through real callback SQL;
+  input refusal must leave the catalog sound. See `test_inventory_callback.py`.
+
+## 10. Verify conservative request accounting beyond clean retries
+
+Use the production P4 accounting suite and actual disposable SQLite/process
+faults; Prototype C's post-read charge is not production crash-gap evidence.
+
+1. Reserve durably before actual work on a dedicated autocommit Operational
+   connection with WAL, foreign keys and synchronous FULL/EXTRA. Test process
+   SIGKILL and a failure after an actual read but before its acknowledgement.
+   An unsettled permit remains charged; a reconstructed/restarted permit cannot
+   settle it to zero. Use one-shot live settlement capabilities.
+2. Allocate processing coordinates atomically in the existing domain request
+   and attempt. `count(*)` is not a safe next occurrence after failed allocations
+   or concurrent handles. Never mint a Capture solely to retry work.
+3. Test partial loss as well as missing files: remove a settled/unsettled work
+   row, budget, allocator, attempt, discovery or physical-copy allocation. A
+   mandatory checkpoint must refuse old continuation, not report known zero or
+   regenerate identity. Reconcile cached totals against actual rows on reopen
+   and unknown writes under a SQLite fence; cache only recognized own transitions.
+   Core/Context reads remain valid without Operational. Checkpoints detect
+   consistency/loss, not an attacker rewriting all matching database evidence.
+4. Inspect SQL triggers as well as Python for growing-history scans. Actual VM
+   steps via `set_progress_handler` reproduced a per-reservation increase from
+   310 to 16,308 instructions over 0→2,000 rows despite cached Python validation.
+   Corrected cached Operational cost plus trigger checks stayed at 326 steps.
+   Regression compares VM work, not noisy wall-clock timing. Use subtraction
+   limit checks and `spent - old_cost + new_cost` to avoid intermediate int64
+   overflow; revalidate cached cost against ledger/checkpoint on resume.
+5. Bind application acquisition to actual Core/Operational catalog identities,
+   selected local source path/format and explicit request intent. Optional caller
+   conventions permitted charging a foreign catalog's request. Preserve external
+   Capture attribution separately; local mirror checking does not authenticate
+   or rename the original capture issuer/source.
+
+Verification: `uv run --no-sync pytest tests/integration/p4 -q`, P1/P2/P3 and
+cross-domain regressions, installed wheel/sdist-wheel tests and the four required
+audits. In a shared virtualenv, explicitly set `PYTHONPATH` for standalone scripts
+in each worktree: editable imports otherwise inspect another branch's schema.
+These tests prove process/SQLite fault behavior, not host-power-loss durability,
+P7 recovery or release acceptance. The [P4 report](../../../docs/implementation/p4-production-notes.md)
+and [review findings](../../../docs/implementation/p4-independent-review.md)
+bind procedures to executable source and independent revalidation.

@@ -323,7 +323,7 @@ class Core:
         """Validate only values fetched from authority, never caller arguments."""
         try:
             return decoder(*values)
-        except (ValueError, TypeError, KeyError, IndexError) as error:
+        except (ValueError, TypeError, KeyError, IndexError, RecursionError) as error:
             self._integrity_stop((scope, "invalid-stored-value", str(error)))
 
     def _provenance_value(self, scope, encoded):

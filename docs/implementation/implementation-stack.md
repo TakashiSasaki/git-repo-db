@@ -1,5 +1,12 @@
 # Dependency-ordered implementation stack
 
+Current status (2026-10-16): P1/P2/P3 are integrated on main `5e778bf`.
+[P4 production Notes](p4-production-notes.md) is an opt-in implementation proposed
+on a branch stacked over [design PR #77](https://github.com/TakashiSasaki/git-repo-db/pull/77).
+P5/P6/P7/P8 remain separate, and the public initializer still uses Schema 21.
+Historical planning and exact earlier execution reports retain their original scope.
+
+
 This is the engineering handoff from the implementation-boundary spikes, not a
 new policy ADR or authorization to perform production migration. The graph in
 [implementation-stack.json](implementation-stack.json) is the machine-readable

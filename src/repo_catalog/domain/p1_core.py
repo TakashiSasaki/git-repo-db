@@ -632,6 +632,35 @@ def register_functions(connection: sqlite3.Connection) -> None:
     connection.create_function("p1_native", 6, retained_native, deterministic=True)
     connection.create_function("p1_note_role", 6, valid_note_role, deterministic=True)
     connection.create_function("p1_notes_group", 3, _notes_group, deterministic=True)
+
+    def notes_inventory(capture_key, scope, status, membership, provenance):
+        from repo_catalog.domain.notes import decode_inventory_group
+
+        state = _work_scope.get()
+        try:
+            decode_inventory_group(
+                capture_key,
+                scope,
+                status,
+                membership,
+                provenance,
+                None if state is None else state["work"],
+            )
+            return True
+        except CoreFailure as error:
+            # The nested grammar's accounting scope may have caught a budget
+            # refusal to return honest partial inventory. Preserve that actual
+            # refusal at the outer Core transaction rather than laundering it
+            # into a generic SQLite constraint error.
+            if error.code == "BUDGET" and state is not None:
+                state["error"] = error
+            return False
+        except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+            return False
+
+    connection.create_function(
+        "p4_notes_inventory", 5, notes_inventory, deterministic=True
+    )
     connection.create_function(
         "p1_intrinsic_claim", 4, _intrinsic_claim, deterministic=True
     )

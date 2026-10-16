@@ -1,0 +1,18 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.p1_schema import initialize,connect
+from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger
+from repo_catalog.domain.p1_coordination import RequestIdentity,NotesLimits
+with TemporaryDirectory() as d:
+ p=Path(d)/'op.sqlite3';initialize(p,'operational',str(uuid4()),str(uuid4()));db=connect(p,'operational');l=WorkLedger(db);r=RequestIdentity(str(uuid4()),str(uuid4()));a=str(uuid4());l.new_request(r,'{}',NotesLimits.work_limits());l.attempt(r,a)
+ for index in range(2001):
+  if index in (0,100,500,1000,2000):
+   count=[0]
+   def progress():count[0]+=1
+   db.set_progress_handler(progress,1)
+   permit=l.reserve_processing_step(r,a,'metadata_units',1)
+   db.set_progress_handler(None,0)
+   print('prior work rows',index,'SQLite VM operations for 1 reservation',count[0],flush=True)
+  else:permit=l.reserve_processing_step(r,a,'metadata_units',1)
+  l.finish(permit,1)

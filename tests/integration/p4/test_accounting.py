@@ -1,0 +1,608 @@
+"""Production Operational accounting with real SQLite and killed worker input.
+
+SIGKILL proves process-interruption behavior, not host-power-loss durability.
+"""
+
+import contextlib
+import os
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
+from uuid import uuid4
+
+import pytest
+
+from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
+from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
+from repo_catalog.domain.p1_coordination import (
+    CoordinationError,
+    NotesLimits,
+    RequestIdentity,
+)
+from repo_catalog.domain.p1_core import CoreFailure
+
+
+@pytest.fixture
+def accounting(tmp_path):
+    path = tmp_path / "operational.sqlite3"
+    repository, instance = str(uuid4()), str(uuid4())
+    initialize(path, "operational", repository, instance)
+    with contextlib.closing(connect(path, "operational")) as db:
+        ledger = WorkLedger(
+            db, repository_uuidv4=repository, catalog_instance_uuidv4=instance
+        )
+        request = RequestIdentity(str(uuid4()), str(uuid4()))
+        ledger.new_request(
+            request,
+            '{"intent":"notes"}',
+            {unit: 10 for unit in NotesLimits.work_limits()},
+        )
+        attempt = str(uuid4())
+        ledger.attempt(request, attempt)
+        yield path, db, ledger, request, attempt
+
+
+def budget(accounting):
+    _, _, ledger, request, attempt = accounting
+    return NotesWorkBudget(ledger, request, attempt, NotesLimits())
+
+
+def test_production_defaults_are_finite_and_independent():
+    assert NotesLimits().note_bytes == 16 * 1024 * 1024
+    limits = NotesLimits.work_limits()
+    assert limits == {
+        "input_bytes": 256 * 1024 * 1024,
+        "verification_bytes": 2 * 1024 * 1024 * 1024,
+        "metadata_units": 1_000_000,
+        "proof_steps": 100_000,
+    }
+    limits["input_bytes"] = 0
+    assert NotesLimits.work_limits()["input_bytes"] > 0
+
+
+def test_failed_reservation_does_not_collide_on_resumed_attempt(accounting):
+    _, db, ledger, request, _ = accounting
+    work = budget(accounting)
+    work.require("input_bytes", 8)
+    work.charge("input_bytes", 8)
+    with pytest.raises(CoreFailure, match="finite cumulative"):
+        work.require("input_bytes", 3)
+    ledger.increase_limit(request, "input_bytes", 20)
+    work.require("input_bytes", 3)
+    work.charge("input_bytes", 3)
+    resumed = budget(accounting)
+    resumed.require("input_bytes", 2)
+    resumed.charge("input_bytes", 2)
+    assert ledger.usage(request)["input_bytes"] == 13
+    assert db.execute("SELECT count(*) FROM work_accounting").fetchone()[0] == 3
+
+
+def test_two_budget_handles_same_attempt_allocate_independent_steps(accounting):
+    first, second = budget(accounting), budget(accounting)
+    first.require("metadata_units")
+    second.require("metadata_units")
+    first.charge("metadata_units", 1)
+    second.charge("metadata_units", 1)
+    assert accounting[2].usage(accounting[3])["metadata_units"] == 2
+
+
+def test_noncontiguous_existing_processing_coordinates_do_not_collide(accounting):
+    _, db, ledger, request, attempt = accounting
+    ledger.reserve(request, attempt, "input_bytes", "processing-step:2", 1)
+    work = budget(accounting)
+    work.require("input_bytes", 1)
+    assert {
+        r[0] for r in db.execute("SELECT work_coordinate FROM work_accounting")
+    } == {"processing-step:2", "processing-step:3"}
+
+
+def test_measured_success_settles_actual_input_not_hypothetical_full_body(accounting):
+    path, _, ledger, request, _ = accounting
+    source = path.parent / "input"
+    source.write_bytes(b"abc")
+    work = budget(accounting)
+    with work.measured("input_bytes", 10) as meter:
+        data = source.read_bytes()
+        meter.actual = len(data)
+    assert data == b"abc"
+    assert ledger.usage(request)["input_bytes"] == 3
+    with work.measured("input_bytes", 7) as meter:
+        meter.actual = len(source.read_bytes())
+    assert ledger.usage(request)["input_bytes"] == 6  # Actual reread costs again.
+
+
+@pytest.mark.parametrize("exception", [OSError, KeyboardInterrupt])
+def test_failed_work_keeps_full_reservation_and_can_continue(accounting, exception):
+    _, db, ledger, request, _ = accounting
+    work = budget(accounting)
+    with pytest.raises(exception):
+        with work.measured("proof_steps", 8) as meter:
+            meter.actual = 1  # Failure leaves uncertainty conservatively charged.
+            raise exception("interrupted")
+    assert ledger.usage(request)["proof_steps"] == 8
+    assert db.execute("SELECT actual FROM work_accounting").fetchone()[0] is None
+    with work.measured("proof_steps", 2) as meter:
+        meter.actual = 2
+    assert ledger.usage(request)["proof_steps"] == 10
+    with pytest.raises(CoreFailure, match="finite cumulative"):
+        with work.measured("proof_steps", 1):
+            pytest.fail("work ran before reservation succeeded")
+
+
+def test_unmeasured_success_keeps_conservative_reservation(accounting):
+    work = budget(accounting)
+    with work.measured("metadata_units", 8):
+        pass
+    assert accounting[2].usage(accounting[3])["metadata_units"] == 8
+    work.require("metadata_units", 2)
+    work.charge("metadata_units", 2)
+
+
+def test_invalid_measurement_cannot_refund(accounting):
+    work = budget(accounting)
+    with pytest.raises(ValueError, match="exceeds reserved"):
+        with work.measured("input_bytes", 5) as meter:
+            meter.actual = 6
+    assert accounting[2].usage(accounting[3])["input_bytes"] == 5
+
+
+def test_request_scope_and_store_identity_fail_closed(accounting):
+    _, db, ledger, request, attempt = accounting
+    ledger.validate_continuation(request, attempt, scope='{"intent": "notes"}')
+    with pytest.raises(CoordinationError, match="REQUEST_SCOPE"):
+        ledger.validate_continuation(request, attempt, scope='{"intent":"other"}')
+    for coordinate in ("repository_uuidv4", "catalog_instance_uuidv4"):
+        with pytest.raises(CoordinationError, match="STORE_IDENTITY"):
+            WorkLedger(db, **{coordinate: str(uuid4())})
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request, str(uuid4()))
+
+
+@pytest.mark.parametrize("setting", ["synchronous=OFF", "foreign_keys=OFF"])
+def test_durability_settings_changed_after_open_refuse_performed_work(
+    accounting, setting
+):
+    _, db, ledger, request, attempt = accounting
+    db.execute(f"PRAGMA {setting}")
+    with pytest.raises(CoordinationError, match="ACCOUNTING_DURABILITY"):
+        ledger.reserve(request, attempt, "input_bytes", "never-started", 1)
+    assert db.execute("SELECT count(*) FROM work_accounting").fetchone()[0] == 0
+
+
+def test_non_autocommit_connection_cannot_return_uncommitted_permit(accounting):
+    _, db, _, _, _ = accounting
+    db.isolation_level = ""
+    with pytest.raises(CoordinationError, match="ACCOUNTING_DURABILITY"):
+        WorkLedger(db)
+
+
+def test_operational_unlinked_with_live_connection_refuses_continuation(accounting):
+    path, _, ledger, request, attempt = accounting
+    path.unlink()
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.reserve(request, attempt, "input_bytes", "never-started", 1)
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request, attempt)
+
+
+def test_missing_request_budget_cannot_be_interpreted_as_known_zero(accounting):
+    _, db, ledger, request, attempt = accounting
+    db.execute("DELETE FROM request_budgets WHERE work_kind='proof_steps'")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.usage(request)
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        NotesWorkBudget(ledger, request, attempt, NotesLimits())
+
+
+def test_actual_work_reservation_survives_killed_process_and_retry(accounting):
+    path, _, ledger, request, _ = accounting
+    source = path.parent / "input"
+    source.write_bytes(b"body")
+    attempt = str(uuid4())
+    ledger.attempt(request, attempt)
+    code = """
+import sys
+from pathlib import Path
+from repo_catalog.adapters.sqlite.p1_schema import connect
+from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger, NotesWorkBudget
+from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
+path=Path(sys.argv[1])
+db=connect(path, 'operational')
+work=NotesWorkBudget(WorkLedger(db),RequestIdentity(*sys.argv[2:4]),sys.argv[4],NotesLimits())
+with work.measured('input_bytes', 8) as meter:
+    data=(path.parent/'input').read_bytes()
+    print(len(data),flush=True)
+    sys.stdin.read()
+    meter.actual=len(data)
+"""
+    env = dict(os.environ, PYTHONPATH=str(Path(__file__).parents[3] / "src"))
+    process = subprocess.Popen(
+        [sys.executable, "-c", code, str(path), *request.values(), attempt],
+        env=env,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert process.stdout.readline().strip() == "4"
+        process.kill()
+        process.communicate(timeout=15)
+        assert process.returncode < 0
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.communicate(timeout=15)
+    # A fresh connection proves accounting was committed before input was read.
+    with contextlib.closing(connect(path, "operational")) as reopened:
+        resumed = WorkLedger(reopened)
+        assert resumed.usage(request)["input_bytes"] == 8
+        retry = str(uuid4())
+        resumed.attempt(request, retry)
+        work = NotesWorkBudget(resumed, request, retry, NotesLimits())
+        with pytest.raises(CoreFailure, match="finite cumulative"):
+            work.require("input_bytes", 4)
+        resumed.increase_limit(request, "input_bytes", 12)
+        with work.measured("input_bytes", 4) as meter:
+            meter.actual = len(source.read_bytes())
+        assert resumed.usage(request)["input_bytes"] == 12
+
+
+def test_concurrent_connections_share_one_finite_attempt_budget(accounting):
+    import concurrent.futures
+    import threading
+
+    path, _, _, request, attempt = accounting
+    barrier = threading.Barrier(2)
+
+    def worker():
+        with contextlib.closing(connect(path, "operational")) as db:
+            work = NotesWorkBudget(WorkLedger(db), request, attempt, NotesLimits())
+            barrier.wait(timeout=10)
+            for _ in range(5):
+                with work.measured("metadata_units", 1) as meter:
+                    meter.actual = 1
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(worker) for _ in range(2)]
+        for future in futures:
+            future.result(timeout=15)
+    assert accounting[2].usage(request)["metadata_units"] == 10
+    with pytest.raises(CoreFailure) as error:
+        budget(accounting).require("metadata_units", 1)
+    assert error.value.code == "BUDGET"
+    assert error.value.scope == (request, "metadata_units")
+
+
+@pytest.mark.parametrize("committed_before_failure", [False, True])
+def test_failed_reservation_commit_never_enters_work_and_lost_ack_stays_charged(
+    accounting, committed_before_failure
+):
+    _, db, _, request, attempt = accounting
+
+    class FailingCommit:
+        """Fault at the commit boundary of an otherwise real SQLite connection."""
+
+        def __getattr__(self, name):
+            return getattr(db, name)
+
+        def commit(self):
+            if committed_before_failure:
+                db.commit()
+            raise OSError("injected commit/lost-ack failure")
+
+    ledger = WorkLedger(FailingCommit())
+    work = NotesWorkBudget(ledger, request, attempt, NotesLimits())
+    with pytest.raises(OSError, match="injected commit"):
+        with work.measured("proof_steps", 8):
+            pytest.fail("work executed before successful reservation acknowledgement")
+    assert not db.in_transaction
+    assert accounting[2].usage(request)["proof_steps"] == (
+        8 if committed_before_failure else 0
+    )
+    # An explicitly fresh handle resumes the actual durable state. A lost ack
+    # cannot reuse its former coordinate or erase a potentially performed unit.
+    resumed = budget(accounting)
+    with resumed.measured("proof_steps", 2) as meter:
+        meter.actual = 2
+    assert accounting[2].usage(request)["proof_steps"] == (
+        10 if committed_before_failure else 2
+    )
+
+
+def test_reconstructed_or_restarted_permits_cannot_refund_uncertain_work(accounting):
+    from dataclasses import replace
+
+    _, db, ledger, request, attempt = accounting
+    permit = ledger.reserve(request, attempt, "proof_steps", "actual-read", 8)
+    for owner, candidate in (
+        (ledger, replace(permit)),
+        (WorkLedger(db), permit),
+    ):
+        with pytest.raises(CoordinationError, match="PERMIT_ALREADY_SETTLED_OR_LOST"):
+            owner.finish(candidate, 0)
+    assert ledger.usage(request)["proof_steps"] == 8
+    ledger.abandon(permit)
+    with pytest.raises(CoordinationError, match="PERMIT_ALREADY_SETTLED_OR_LOST"):
+        ledger.finish(permit, 0)
+    assert ledger.usage(request)["proof_steps"] == 8
+
+
+def test_settlement_of_same_issued_permit_is_one_time(accounting):
+    _, _, ledger, request, attempt = accounting
+    permit = ledger.reserve(request, attempt, "input_bytes", "read", 8)
+    ledger.finish(permit, 4)
+    with pytest.raises(CoordinationError, match="PERMIT_ALREADY_SETTLED_OR_LOST"):
+        ledger.finish(permit, 0)
+    assert ledger.usage(request)["input_bytes"] == 4
+
+
+@pytest.mark.parametrize("reopen", [False, True])
+def test_lost_work_rows_never_refund_the_old_request(accounting, reopen):
+    path, db, ledger, request, attempt = accounting
+    work = budget(accounting)
+    work.require("input_bytes", 10)
+    work.charge("input_bytes", 10)
+    db.execute("DELETE FROM work_accounting")
+    with contextlib.ExitStack() as stack:
+        if reopen:
+            ledger = WorkLedger(
+                stack.enter_context(contextlib.closing(connect(path, "operational")))
+            )
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            NotesWorkBudget(ledger, request, attempt, NotesLimits())
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.reserve(request, attempt, "input_bytes", "unsafe-retry", 10)
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.usage(request)
+
+
+@pytest.mark.parametrize("lost_scope", ["checkpoint", "allocator"])
+def test_missing_mandatory_checkpoint_or_allocator_never_reconstructs(
+    accounting, lost_scope
+):
+    _, db, ledger, request, attempt = accounting
+    scope = (
+        ledger._CHECKPOINT_SCOPE
+        if lost_scope == "checkpoint"
+        else ledger._allocation_scope(attempt)
+    )
+    db.execute(
+        "DELETE FROM request_continuations WHERE continuation_scope_json=?", (scope,)
+    )
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        budget(accounting)
+    assert (
+        db.execute(
+            "SELECT count(*) FROM request_continuations WHERE continuation_scope_json=?",
+            (scope,),
+        ).fetchone()[0]
+        == 0
+    )
+
+
+def test_changed_settled_cost_cannot_refund_work(accounting):
+    _, db, ledger, request, _ = accounting
+    work = budget(accounting)
+    work.require("input_bytes", 8)
+    work.charge("input_bytes", 8)
+    db.execute("UPDATE work_accounting SET actual=0")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.usage(request)
+
+
+def test_missing_independent_attempt_detected_even_if_current_attempt_exists(
+    accounting,
+):
+    _, db, ledger, request, attempt = accounting
+    separate = str(uuid4())
+    ledger.attempt(request, separate)
+    db.execute("DELETE FROM acquisition_attempts WHERE attempt_uuidv4=?", (separate,))
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request, attempt)
+
+
+@pytest.mark.parametrize("change", ["delete", "alter"])
+@pytest.mark.parametrize("fresh_ledger", [False, True])
+def test_lost_or_changed_progress_never_becomes_a_new_observation(
+    accounting, change, fresh_ledger
+):
+    path, db, ledger, request, _ = accounting
+    scope = '["p4-discovery","local-source"]'
+    assert ledger.get_progress(request, scope) is None
+    original = {"capture_uuidv4": str(uuid4())}
+    assert ledger.set_progress_once(request, scope, original) == original
+    assert ledger.set_progress_once(request, scope, {"replacement": True}) == original
+    if change == "delete":
+        db.execute(
+            "DELETE FROM request_continuations WHERE continuation_scope_json=?",
+            (scope,),
+        )
+    else:
+        db.execute(
+            "UPDATE request_continuations SET cursor_json='{}' WHERE continuation_scope_json=?",
+            (scope,),
+        )
+    with contextlib.ExitStack() as stack:
+        if fresh_ledger:
+            ledger = WorkLedger(
+                stack.enter_context(contextlib.closing(connect(path, "operational")))
+            )
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.get_progress(request, scope)
+        with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+            ledger.set_progress_once(request, scope, {"replacement": True})
+
+
+def test_external_connection_accounting_loss_invalidates_live_cache(accounting):
+    path, _, ledger, request, attempt = accounting
+    ledger.reserve(request, attempt, "input_bytes", "input", 10)
+    ledger.validate_continuation(request, attempt)
+    with contextlib.closing(connect(path, "operational")) as other:
+        other.execute("DELETE FROM work_accounting")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.reserve(request, attempt, "input_bytes", "unsafe-retry", 10)
+
+
+def test_normal_reservations_and_progress_do_not_rescan_work_history(accounting):
+    _, db, _, request, attempt = accounting
+
+    class CountInventoryChecks(WorkLedger):
+        checks = 0
+
+        def _check_inventory(self, *args):
+            self.checks += 1
+            return super()._check_inventory(*args)
+
+    ledger = CountInventoryChecks(db)
+    work = NotesWorkBudget(ledger, request, attempt, NotesLimits())
+    assert ledger.checks == 1  # Mandatory full check when resuming a connection.
+    for index in range(10):
+        work.require("input_bytes", 1)
+        work.charge("input_bytes", 1)
+        ledger.set_progress_once(request, f'["step",{index}]', {"index": index})
+        assert ledger.get_progress(request, f'["step",{index}]') == {"index": index}
+        assert ledger.usage(request)["input_bytes"] == index + 1
+    assert ledger.checks == 1
+    # An unknown same-connection write forces one fresh inventory validation.
+    db.execute("UPDATE acquisition_requests SET state=state")
+    ledger.validate_continuation(request)
+    assert ledger.checks == 2
+    ledger.validate_continuation(request)
+    assert ledger.checks == 2
+
+
+def test_lost_zero_cost_work_is_still_detected(accounting):
+    _, db, ledger, request, attempt = accounting
+    permit = ledger.reserve(request, attempt, "input_bytes", "empty-note-read", 0)
+    ledger.finish(permit, 0)
+    db.execute("DELETE FROM work_accounting")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request)
+
+
+def test_explicit_new_request_remains_possible_after_old_accounting_loss(accounting):
+    _, db, ledger, old_request, old_attempt = accounting
+    ledger.reserve(old_request, old_attempt, "input_bytes", "spent", 10)
+    db.execute("DELETE FROM work_accounting")
+    fresh = RequestIdentity(str(uuid4()), str(uuid4()))
+    ledger.new_request(
+        fresh,
+        '{"explicit":"new request"}',
+        {kind: 10 for kind in NotesLimits.work_limits()},
+    )
+    fresh_attempt = str(uuid4())
+    ledger.attempt(fresh, fresh_attempt)
+    permit = ledger.reserve(fresh, fresh_attempt, "input_bytes", "new-read", 10)
+    ledger.finish(permit, 10)
+    assert ledger.usage(fresh)["input_bytes"] == 10
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(old_request)
+    assert not (accounting[0].parent / "p1-recovery-stop.json").exists()
+
+
+def test_sql_budget_counters_track_reserve_settle_and_failed_commit(accounting):
+    _, db, ledger, request, attempt = accounting
+
+    def spent():
+        return db.execute(
+            "SELECT spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=? "
+            "AND request_uuidv4=? AND work_kind='input_bytes'",
+            request.values(),
+        ).fetchone()[0]
+
+    assert spent() == 0
+    permit = ledger.reserve(request, attempt, "input_bytes", "body", 8)
+    assert spent() == 8
+    db.execute(
+        "CREATE TEMP TRIGGER fail_settle BEFORE UPDATE OF actual ON work_accounting BEGIN SELECT RAISE(ABORT,'injected settlement failure'); END"
+    )
+    with pytest.raises(sqlite3.IntegrityError, match="injected settlement failure"):
+        ledger.finish(permit, 3)
+    assert spent() == 8
+    assert ledger.usage(request)["input_bytes"] == 8
+    db.execute("DROP TRIGGER temp.fail_settle")
+    ledger.finish(permit, 3)
+    assert spent() == 3
+    assert ledger.usage(request)["input_bytes"] == 3
+
+
+def test_tampered_sql_budget_counter_refuses_continuation(accounting):
+    _, db, ledger, request, attempt = accounting
+    ledger.reserve(request, attempt, "input_bytes", "body", 8)
+    db.execute(
+        "UPDATE request_budgets SET spent_or_reserved=0 WHERE work_kind='input_bytes'"
+    )
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.reserve(request, attempt, "input_bytes", "unsafe-retry", 8)
+
+
+def test_int64_budget_guard_and_settlement_never_overflow(accounting):
+    _, db, ledger, _, _ = accounting
+    request = RequestIdentity(str(uuid4()), str(uuid4()))
+    ceiling = 2**63 - 1
+    ledger.new_request(
+        request, "{}", {kind: ceiling for kind in NotesLimits.work_limits()}
+    )
+    attempt = str(uuid4())
+    ledger.attempt(request, attempt)
+    first = ledger.reserve(request, attempt, "input_bytes", "first", ceiling)
+    ledger.finish(first, ceiling - 1)
+    second = ledger.reserve(request, attempt, "input_bytes", "second", 1)
+    ledger.finish(second, 1)
+    assert ledger.usage(request)["input_bytes"] == ceiling
+    row = db.execute(
+        "SELECT spent_or_reserved,typeof(spent_or_reserved) FROM request_budgets WHERE request_origin_uuidv4=? AND request_uuidv4=? AND work_kind='input_bytes'",
+        request.values(),
+    ).fetchone()
+    assert tuple(row) == (ceiling, "integer")
+    with pytest.raises(sqlite3.IntegrityError, match="finite cumulative"):
+        ledger.reserve(request, attempt, "input_bytes", "overflow", 1)
+    with pytest.raises(sqlite3.IntegrityError, match="finite cumulative"):
+        db.execute(
+            "UPDATE work_accounting SET actual=NULL WHERE work_coordinate='first'"
+        )
+    assert ledger.usage(request)["input_bytes"] == ceiling
+
+
+def test_work_budget_guard_vm_steps_do_not_scan_prior_history(accounting):
+    _, db, ledger, request, attempt = accounting
+    ledger.increase_limit(request, "metadata_units", 5000)
+    samples = {}
+    for index in range(2001):
+        steps = [0]
+        if index in (0, 100, 500, 1000, 2000):
+
+            def count_step():
+                steps[0] += 1
+
+            db.set_progress_handler(count_step, 1)
+        try:
+            permit = ledger.reserve_processing_step(
+                request, attempt, "metadata_units", 1
+            )
+        finally:
+            db.set_progress_handler(None, 0)
+        if index in (0, 100, 500, 1000, 2000):
+            samples[index] = steps[0]
+        ledger.finish(permit, 1)
+    # This counts actual SQLite VM instructions, not wall-clock timing. The
+    # inherited SUM trigger grew by ~8 operations per prior row; indexed cached
+    # budget lookup remains constant apart from bounded SQLite branch choices.
+    assert max(samples.values()) - min(samples.values()) <= 32, samples
+    assert ledger.usage(request)["metadata_units"] == 2001
+
+
+def test_overdeep_persisted_operational_checkpoint_is_scoped_unavailable(accounting):
+    _, db, ledger, request, _ = accounting
+    deep = "[" * 5000 + "0" + "]" * 5000
+    # Bypass the input JSON CHECK only for storage-damage fault injection.
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    db.execute(
+        "UPDATE request_continuations SET cursor_json=? WHERE continuation_scope_json=?",
+        (deep, ledger._CHECKPOINT_SCOPE),
+    )
+    db.execute("PRAGMA ignore_check_constraints=OFF")
+    with pytest.raises(CoordinationError, match="CONTINUATION_UNAVAILABLE"):
+        ledger.validate_continuation(request)

@@ -1,0 +1,58 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from uuid import uuid4
+import subprocess
+from repo_catalog.adapters.git.native import GitNativeSource
+from repo_catalog.adapters.git.notes import GitNotesSource
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.notes import NotesProgress
+from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger, NotesWorkBudget
+from repo_catalog.adapters.sqlite.p1_schema import initialize, connect
+from repo_catalog.application.notes import NotesAcquisition
+from repo_catalog.domain.p1_core import OID, Capture, encode
+from repo_catalog.domain.p1_coordination import RequestIdentity, NotesLimits
+from repo_catalog.domain.ports.notes import request_scope
+from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.domain.p1_context import ResourceKey, FieldClock, canonical
+for fmt in ('sha1','sha256'):
+ with TemporaryDirectory() as temp:
+  p=Path(temp); gitpath=p/'git'; gitpath.mkdir()
+  def git(*args,data=None):
+   return subprocess.run(['git','-C',str(gitpath),*args],input=data,check=True,capture_output=True).stdout
+  git('init','--bare','--object-format='+fmt)
+  def write(kind,data): return OID(fmt,git('hash-object','-w','-t',kind,'--stdin',data=data).strip().decode())
+  note=write('blob',b'\0\xffnote\r\n'); target=OID(fmt,'a'*(40 if fmt=='sha1' else 64))
+  tree=write('tree',b'100644 '+target.full_oid.encode()+b'\0'+bytes.fromhex(note.full_oid))
+  actual_repo,actual_instance,wrong_repo,wrong_instance,origin=(str(uuid4()) for _ in range(5))
+  cpath=p/'catalog-a'/'core.sqlite3';cpath.parent.mkdir(); initialize(cpath,'core',actual_repo,actual_instance)
+  opath=cpath.parent/'operational.sqlite3';initialize(opath,'operational',actual_repo,actual_instance)
+  core=GitCore(cpath);db=connect(opath,'operational');ledger=WorkLedger(db)
+  source=GitNotesSource(GitNativeSource(gitpath))
+  req=RequestIdentity(origin,str(uuid4()));ledger.new_request(req,request_scope(actual_repo,actual_instance,'actual-source',source.scope),NotesLimits.work_limits()); attempt=str(uuid4());ledger.attempt(req,attempt);work=NotesWorkBudget(ledger,req,attempt,NotesLimits())
+  app=NotesAcquisition(core,source,work,NotesProgress(work),source_attribution='actual-source')
+  cap=Capture(origin,str(uuid4()),actual_repo,'actual-source','refs/notes/a',tree)
+  result=app.acquire_note(cap,target)
+  print(fmt, 'acquired exact P4 binary body with separate Operational budget')
+  assert result.body_retained
+  assert core.read_note(cap,target,note)==b'\0\xffnote\r\n'
+  assert app.inventory(cap).status=='complete'
+  initialize(cpath.parent/'context.sqlite3','context',actual_repo,actual_instance)
+  service=str(uuid4()); key=ResourceKey(service,'issue','original-provider-id'); prov=canonical({'source':'provider','evidence':'event-1'})
+  with Context.transaction(cpath.parent) as context:
+   context.provider(service,'github');context.resource(key)
+   context.admit_text(key,'retained Context text\0é',FieldClock('provider',1),prov,1)
+   context.link_core(key,'notes-target',*target.key,prov,lambda fmt,oid:bool(core.sql('SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?',(fmt,oid))))
+  with PairCoordinator(cpath.parent).snapshots() as pair:
+   assert pair.core.execute('SELECT count(*) FROM notes_groups').fetchone()[0]==1
+   with Context.for_snapshot(pair.context,cpath.parent) as context:
+    assert context.candidates(key,'text_body_sha256')
+  db.close(); opath.unlink()
+  assert core.read_note(cap,target,note)==b'\0\xffnote\r\n'
+  assert core.notes_inventories(cap)[0].status=='complete'
+  with PairCoordinator(cpath.parent).snapshots() as pair:
+   with Context.for_snapshot(pair.context,cpath.parent) as context:
+    assert context.candidates(key,'text_body_sha256')
+  assert not (cpath.parent/'p1-recovery-stop.json').exists()
+  print(fmt,'P4 inventory/body + Context linkage + paired snapshot survive Operational loss')
+  core.close()

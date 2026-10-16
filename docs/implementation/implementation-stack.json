@@ -4,13 +4,176 @@
   "implemented_by_this_pr": false,
   "owner_architectural_blockers": 0,
   "nodes": [
-    {"id": "P1", "title": "Four-store schema and admission/read interface contracts", "depends_on": [], "deliverables": ["Fresh isolated four-store DDL, semantic PK/FK and column ownership", "Typed source evidence, Coverage scope natural keys and five claim columns", "Supported connection guards and bounded atomic-unit APIs", "Catalog instance/writer gate, dependency and snapshot interfaces; no mutable Core revision", "Explicit schema fingerprints and installed-DDL validation"], "acceptance": ["No Core-to-Context mandatory FK", "No storage-only PK or replaced permanent repository UUID", "Context absent Git-only initialization", "No production switch until coherent stack integration"]},
-    {"id": "P2", "title": "Append-only metadata Core and allowed representations", "depends_on": ["P1"], "deliverables": ["Nominal full typed OIDs, scalar claims, immutable complete group values and matching FKs", "Git captures/provenance, missing targets and verification-aware alternatives", "Exact commit/tree/tag representation and intrinsic atomic admission", "Bounded physical-instance evidence; actual output checks"], "acceptance": ["Metadata-only no-fetch path", "INSERT-only supported SQL API incl REPLACE denial", "Replay/conflict and injected rollback tests", "Ordinary blob bodies rejected at every generic admission boundary"]},
-    {"id": "P3", "title": "Independently durable Context", "depends_on": ["P1"], "deliverables": ["Provider/Source/PR/Issue/review/doc/text natural identities and composite FKs", "Existing current-field provenance and equal/incomparable clock conflicts", "Five Coverage claim columns and latest observation candidate semantics", "Known-positive Source associations and Context-to-Core typed dependency validation"], "acceptance": ["Partial Source scan never deletes known membership", "Latest partial/unknown cannot borrow older complete", "Context lost/absent is unavailable, never silently rebuilt", "No full provider edit-history ledger or Core dependency on Context"]},
-    {"id": "P4", "title": "Notes capture, structural proof, exact bodies and budgets", "depends_on": ["P2"], "deliverables": ["Observable refs/notes/* plus nominated refs; immutable two-UUIDv4 capture binding", "Direct semantic competing mapping/group identities", "Narrow receiver-local captured-root/tree/target/note proof and exact native checks", "Finite configurable cumulative request work accounting and truthful stops"], "acceptance": ["All prototype C counterexamples on real objects", "Direct-tree roots and absent targets", "Replay/unsigned origins cannot become verification", "No file restoration service or hidden staging; no reset of retry work"]},
-    {"id": "P5", "title": "Acquisition and typed repeat/reverse Exchange", "depends_on": ["P2", "P3", "P4"], "deliverables": ["Metadata-first acquisition without full repository closure or hidden file archive", "Core-first/atomic Context unit admission under shared writer protocol", "Portable semantic keys and independently admissible typed Exchange resources", "Domain-scoped idempotency and partial dependency handling; Operational reconstruction"], "acceptance": ["Repeat/reverse/late/onward transfer and lost-ack tests", "Failure at every store commit boundary", "Source checks and sender flags never import receiver verification", "All intake/cache/staging paths reject excluded file bytes"]},
-    {"id": "P6", "title": "CLI/search ownership and consistent read paths", "depends_on": ["P2", "P3", "P4"], "deliverables": ["Git-only, Context-only and paired query APIs", "Pinned pair snapshot consumers and truthful missing/conflict diagnostics", "Derivative metadata/notes/Context FTS, no ordinary file text", "Safe paging/index freshness with conservative scan fallback; no Core counter"], "acceptance": ["Missing/corrupt Search or Operational cannot invalidate authorities", "PR/Issue fallback reads Context", "No false coherent old-Core/new-Context result", "No implicit body acquisition or checkout promise"]},
-    {"id": "P7", "title": "Consistent backup and stop/salvage/fresh restore/merge", "depends_on": ["P5"], "deliverables": ["Scope-labeled Git-only or consistent Core+Context snapshots", "Identity/schema/hash/domain/retained-byte/pair validation and durable no-overwrite activation", "Immediate catalog stop and read-only journal-preserving suspect evidence", "Untrusted typed salvage and revalidated merge to fresh destination; reconstruct derivatives"], "acceptance": ["Backup interrupted at each file/manifest/fsync/activation cut", "No mismatched pair certificate or Context loss masked as full restore", "No per-object quarantine state/count or same-suspect-DB failover", "Corruption stop survives restart/Operational loss without requiring damaged-Core write"]},
-    {"id": "P8", "title": "Independent integration review and coherent runtime switch", "depends_on": ["P5", "P6", "P7"], "deliverables": ["Switch initializer/public CLI/packaged schema together only after dependent APIs are coherent", "Retire obsolete unfinished mechanisms without compatibility scaffolding", "Independent source and executed-counterexample review, installed-package schema and focused integration checks", "Exact feature/effective-tree and development CI evidence"], "acceptance": ["Audit matrix and legacy operation inventory fully reconciled", "Metadata-only and full Context workflows tested end to end", "All material independent findings fixed and rechecked", "Release qualification remains separately authorized"]}
-  ]
+    {
+      "id": "P1",
+      "title": "Four-store schema and admission/read interface contracts",
+      "depends_on": [],
+      "deliverables": [
+        "Fresh isolated four-store DDL, semantic PK/FK and column ownership",
+        "Typed source evidence, Coverage scope natural keys and five claim columns",
+        "Supported connection guards and bounded atomic-unit APIs",
+        "Catalog instance/writer gate, dependency and snapshot interfaces; no mutable Core revision",
+        "Explicit schema fingerprints and installed-DDL validation"
+      ],
+      "acceptance": [
+        "No Core-to-Context mandatory FK",
+        "No storage-only PK or replaced permanent repository UUID",
+        "Context absent Git-only initialization",
+        "No production switch until coherent stack integration"
+      ]
+    },
+    {
+      "id": "P2",
+      "title": "Append-only metadata Core and allowed representations",
+      "depends_on": [
+        "P1"
+      ],
+      "deliverables": [
+        "Nominal full typed OIDs, scalar claims, immutable complete group values and matching FKs",
+        "Git captures/provenance, missing targets and verification-aware alternatives",
+        "Exact commit/tree/tag representation and intrinsic atomic admission",
+        "Bounded physical-instance evidence; actual output checks"
+      ],
+      "acceptance": [
+        "Metadata-only no-fetch path",
+        "INSERT-only supported SQL API incl REPLACE denial",
+        "Replay/conflict and injected rollback tests",
+        "Ordinary blob bodies rejected at every generic admission boundary"
+      ]
+    },
+    {
+      "id": "P3",
+      "title": "Independently durable Context",
+      "depends_on": [
+        "P1"
+      ],
+      "deliverables": [
+        "Provider/Source/PR/Issue/review/doc/text natural identities and composite FKs",
+        "Existing current-field provenance and equal/incomparable clock conflicts",
+        "Five Coverage claim columns and latest observation candidate semantics",
+        "Known-positive Source associations and Context-to-Core typed dependency validation"
+      ],
+      "acceptance": [
+        "Partial Source scan never deletes known membership",
+        "Latest partial/unknown cannot borrow older complete",
+        "Context lost/absent is unavailable, never silently rebuilt",
+        "No full provider edit-history ledger or Core dependency on Context"
+      ]
+    },
+    {
+      "id": "P4",
+      "title": "Notes capture, structural proof, exact bodies and budgets",
+      "depends_on": [
+        "P2"
+      ],
+      "deliverables": [
+        "Observable refs/notes/* plus nominated refs; immutable two-UUIDv4 capture binding",
+        "Direct semantic competing mapping/group identities",
+        "Narrow receiver-local captured-root/tree/target/note proof and exact native checks",
+        "Finite configurable cumulative request work accounting and truthful stops"
+      ],
+      "acceptance": [
+        "All prototype C counterexamples on real objects",
+        "Direct-tree roots and absent targets",
+        "Replay/unsigned origins cannot become verification",
+        "No file restoration service or hidden staging; no reset of retry work"
+      ]
+    },
+    {
+      "id": "P5",
+      "title": "Acquisition and typed repeat/reverse Exchange",
+      "depends_on": [
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "deliverables": [
+        "Metadata-first acquisition without full repository closure or hidden file archive",
+        "Core-first/atomic Context unit admission under shared writer protocol",
+        "Portable semantic keys and independently admissible typed Exchange resources",
+        "Domain-scoped idempotency and partial dependency handling; Operational reconstruction"
+      ],
+      "acceptance": [
+        "Repeat/reverse/late/onward transfer and lost-ack tests",
+        "Failure at every store commit boundary",
+        "Source checks and sender flags never import receiver verification",
+        "All intake/cache/staging paths reject excluded file bytes"
+      ]
+    },
+    {
+      "id": "P6",
+      "title": "CLI/search ownership and consistent read paths",
+      "depends_on": [
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "deliverables": [
+        "Git-only, Context-only and paired query APIs",
+        "Pinned pair snapshot consumers and truthful missing/conflict diagnostics",
+        "Derivative metadata/notes/Context FTS, no ordinary file text",
+        "Safe paging/index freshness with conservative scan fallback; no Core counter"
+      ],
+      "acceptance": [
+        "Missing/corrupt Search or Operational cannot invalidate authorities",
+        "PR/Issue fallback reads Context",
+        "No false coherent old-Core/new-Context result",
+        "No implicit body acquisition or checkout promise"
+      ]
+    },
+    {
+      "id": "P7",
+      "title": "Consistent backup and stop/salvage/fresh restore/merge",
+      "depends_on": [
+        "P5"
+      ],
+      "deliverables": [
+        "Scope-labeled Git-only or consistent Core+Context snapshots",
+        "Identity/schema/hash/domain/retained-byte/pair validation and durable no-overwrite activation",
+        "Immediate catalog stop and read-only journal-preserving suspect evidence",
+        "Untrusted typed salvage and revalidated merge to fresh destination; reconstruct derivatives"
+      ],
+      "acceptance": [
+        "Backup interrupted at each file/manifest/fsync/activation cut",
+        "No mismatched pair certificate or Context loss masked as full restore",
+        "No per-object quarantine state/count or same-suspect-DB failover",
+        "Corruption stop survives restart/Operational loss without requiring damaged-Core write"
+      ]
+    },
+    {
+      "id": "P8",
+      "title": "Independent integration review and coherent runtime switch",
+      "depends_on": [
+        "P5",
+        "P6",
+        "P7"
+      ],
+      "deliverables": [
+        "Switch initializer/public CLI/packaged schema together only after dependent APIs are coherent",
+        "Retire obsolete unfinished mechanisms without compatibility scaffolding",
+        "Independent source and executed-counterexample review, installed-package schema and focused integration checks",
+        "Exact feature/effective-tree and development CI evidence"
+      ],
+      "acceptance": [
+        "Audit matrix and legacy operation inventory fully reconciled",
+        "Metadata-only and full Context workflows tested end to end",
+        "All material independent findings fixed and rechecked",
+        "Release qualification remains separately authorized"
+      ]
+    }
+  ],
+  "current_status_2026_10_16": {
+    "integrated_main": "5e778bf61ef660f65bf5fb22bdb08840503b8464",
+    "integrated_main_tree": "2c6eca80e6432a1b4f89a2111e7ded69c6b9a507",
+    "P1": "integrated_opt_in",
+    "P2": "integrated_opt_in",
+    "P3": "integrated_opt_in",
+    "P4": "implemented_opt_in_proposal_pending_owner_review",
+    "P4_design_pr": 77,
+    "public_runtime": "Schema 21 until P8",
+    "P5_P6": "separate_stages_dependent_on_P4",
+    "P7_P8": "not_implemented_by_P4",
+    "report": "p4-production-notes.md",
+    "P4_implementation_pr": 78
+  }
 }
