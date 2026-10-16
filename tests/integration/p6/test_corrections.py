@@ -308,3 +308,21 @@ def test_persisted_search_observation_shape_stops(tmp_path, operation):
             service.rebuild_search(("git_metadata",))
     assert invalid.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (tmp_path / "p1-recovery-stop.json").exists()
+
+
+def test_derivative_deep_json_falls_back_without_catalog_stop(tmp_path):
+    populate_rich_catalog(tmp_path)
+    service = ProductionQueryService(tmp_path)
+    expected = service.search(SearchQuery(query_text="P6"))
+    service.rebuild_search()
+    with sqlite3.connect(tmp_path / "search.sqlite3") as db:
+        key = "[" * 10000 + "0" + "]" * 10000
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute(
+            "UPDATE search_documents SET document_key_json=?, searchable_text='P6' WHERE projection_kind='git_metadata' AND document_key_json=(SELECT min(document_key_json) FROM search_documents WHERE projection_kind='git_metadata')",
+            (key,),
+        )
+    result = service.search(SearchQuery(query_text="P6"))
+    assert result.hits == expected.hits
+    assert result.backends_by_kind["git_metadata"] == "authority_scan"
+    assert not (tmp_path / "p1-recovery-stop.json").exists()

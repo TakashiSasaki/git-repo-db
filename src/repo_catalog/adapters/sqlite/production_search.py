@@ -233,6 +233,7 @@ class ProductionSearchAdapter:
             TypeError,
             OSError,
             CoordinationError,
+            RecursionError,
         ):
             return None
 
