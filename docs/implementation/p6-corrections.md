@@ -156,3 +156,13 @@ The [artifact index](p6-correction-evidence/independent/artifact-index.json)
 checks compressed/raw evidence hashes. The independent reviewer authored no
 production change and reported no remaining known blocker within this reviewed
 P6 scope. This is not a GitHub approval or Full Release Acceptance.
+
+Final common ancestor is `f3cd1c9fa81d78e4a77efb824f5eb4a6b4b95f0a`. Its
+late shared change updates one P1 missing-clock fixture observation from 0 to 1
+so it still isolates its original missing-clock rejection. Production code and
+all P6/shared-snapshot selected test inputs remain identical to the independently
+reviewed `df912d6`; the [exact final stack delta](p6-correction-evidence/final-stack-input-delta.json)
+records the changed P1 file rather than claiming all tests were unchanged. The
+final combined execution separately validates that shared fixture change. The
+[reviewer-authored report](p6-correction-evidence/independent/final/independent-review.md)
+records the independent finding closure and review limits.
