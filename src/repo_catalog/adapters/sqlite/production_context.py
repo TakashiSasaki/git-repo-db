@@ -203,6 +203,13 @@ class Context(ContextStore):
     @classmethod
     @contextmanager
     def for_snapshot(cls, db, directory: Path) -> Iterator[Context]:
+        from repo_catalog.adapters.sqlite.p1_coordination import ReadSnapshot
+
+        if (
+            isinstance(db, ReadSnapshot)
+            and Path(directory).resolve() != db.catalog_directory
+        ):
+            raise ContextError("SNAPSHOT_OWNER", "context", "foreign catalog directory")
         capability = cls(db, directory)
         try:
             yield capability
@@ -239,7 +246,7 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def snapshot(cls, directory: Path) -> Iterator[Context]:
+    def snapshot(cls, directory: Path, *, read_limits=None) -> Iterator[Context]:
         """Pin Context alone; no claimed Core pairing or derivative dependency."""
         directory = Path(directory)
         with ExitStack() as stack:
@@ -253,6 +260,11 @@ class Context(ContextStore):
                     db.execute("PRAGMA query_only=ON")
                     db.execute("BEGIN")
                     db.execute("SELECT * FROM store_identity").fetchall()
+                    from repo_catalog.adapters.sqlite.p1_coordination import (
+                        apply_snapshot_read_limits,
+                    )
+
+                    apply_snapshot_read_limits(db, read_limits)
                 except BaseException as error:
                     cls._record_corruption(directory, error)
                     raise
@@ -261,6 +273,20 @@ class Context(ContextStore):
                     yield capability
             finally:
                 db.rollback()
+
+    def snapshot_identity(self):
+        """Return the checked identity of this live Context capability."""
+        self._check()
+        from repo_catalog.adapters.sqlite.p1_coordination import _identity
+
+        return _identity(self.db, "context")
+
+    def snapshot_fingerprint(self):
+        """Metadata fence; retained text bytes remain typed-read verified."""
+        self._check()
+        from repo_catalog.adapters.sqlite.p1_coordination import _digest
+
+        return _digest(self.db, metadata_only=True)
 
     @contextmanager
     def _unit(self):
@@ -663,7 +689,7 @@ class Context(ContextStore):
         text_value: str | None,
         clock: FieldClock,
         provenance_json: str,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str:
         with self._unit():
             digest = self.text(text_value) if text_value is not None else None
@@ -703,7 +729,7 @@ class Context(ContextStore):
         repository_uuidv4: str | None,
         clock: FieldClock,
         provenance_json: str,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str:
         self._check(write=True)
         return super().admit_repository(
@@ -748,7 +774,7 @@ class Context(ContextStore):
         reference: CoreReference,
         *,
         clock: FieldClock,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str:
         """Preserve an attributed portable reference without claiming Core exists.
 

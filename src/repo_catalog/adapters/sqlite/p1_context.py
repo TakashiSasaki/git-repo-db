@@ -72,7 +72,7 @@ class ContextStore:
         repository_uuidv4: str | None,
         clock: FieldClock,
         provenance_json: str,
-        observed_at_us: int,
+        observed_at_us: int | None,
     ) -> str:
         from repo_catalog.domain.p1_context import canonical
 
