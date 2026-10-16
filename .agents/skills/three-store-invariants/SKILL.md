@@ -48,6 +48,27 @@ tests. See the [Schema 21 checkpoint](../../../docs/implementation/evidence/sche
 for real loss and split-write counterexamples; this procedure does not apply the
 four-store target to the public runtime.
 
+Run the entire affected lifecycle cohort after correcting a connection: a missing
+table can mask a second stale continuation assertion. Check old partial versus
+fresh collection IDs, preserved admitted prefixes and actual fresh scan times.
+Do not report aggregate sync as complete while newer or equal-clock selected
+Coverage remains partial/conflicting. Classify both layers in per-node evidence.
+
+For repeated Search rebuilds, scanning public PR/Issue queries alone cannot prove
+projection correctness. Retain documents referenced by an old generation until
+replacement succeeds, but admit only the pinned Core snapshot's current keys to
+the new generation. Test more than one 200-row stale-only batch, real cancellation
+with the old ready index intact, repeated and empty rebuilds, and retained Core
+text. Unreferenced Search derivatives may be removed after promotion; this does
+not authorize deleting authoritative text or promise atomicity of all rebuild
+and cleanup phases.
+
+Use a dedicated workspace `TMPDIR` and `--basetemp` for sustained/parallel full
+suites when `/tmp` has a smaller capacity. Record disk exhaustion separately from
+product errors; preserve JUnit/journals and rerun the affected exact nodes with
+sufficient capacity. Remove only confirmed completed disposable test directories,
+never another active worktree's fixtures or real catalogs.
+
 ---
 
 ## Classified time and checksum policy for target work

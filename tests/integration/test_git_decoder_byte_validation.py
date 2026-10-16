@@ -315,7 +315,8 @@ def test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder
             for issue in check_catalog(store, full=True)
         )
         rebuild(store, "code")
-        docs = store.all("SELECT body FROM search_documents WHERE kind='code'")
+        with store.open_search(readonly=True) as search:
+            docs = search.all("SELECT body FROM search_documents WHERE kind='code'")
         assert [row[0] for row in docs] == ["genuine canonical content"]
         # Equivalent decoded metadata may have a different valid JSON spelling.
         # This cannot manufacture a conflict or suppress a real commit index.
@@ -329,10 +330,13 @@ def test_normal_acquisition_search_and_index_do_not_use_damaged_retained_decoder
         agreed["decoder_key"] = key({field: agreed[field] for field in DECODER_FIELDS})
         insert(store, "commit", agreed)
         rebuild(store, "commits")
-        assert (
-            len(store.all("SELECT body FROM search_documents WHERE kind='commits'"))
-            == 1
-        )
+        with store.open_search(readonly=True) as search:
+            assert (
+                len(
+                    search.all("SELECT body FROM search_documents WHERE kind='commits'")
+                )
+                == 1
+            )
         query = QueryService(store.path)
         options = {
             "repo": repo["repository_uuidv4"],
