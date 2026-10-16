@@ -74,6 +74,7 @@ from repo_catalog.domain.p1_core import (
     RepositoryClaim,
     ScalarClaim,
     _notes_group,
+    _performed,
     account_verification,
     encode,
     intrinsic_members,
@@ -192,6 +193,7 @@ def _notes_proof_from_bundle_json(
             ):
                 raise ValueError("lowercase contiguous proof body hex required")
             body = bytes.fromhex(body_hex)
+            _performed("verification_bytes", len(body))
             structures.append(
                 NativeObject(
                     OID(fmt, item[0]),
@@ -1331,7 +1333,8 @@ class ExchangeService:
             with account_verification(active_work):
                 self._prevalidate_core_section(package.core, active_work)
         if want_context and package.context is not None:
-            self._prevalidate_context_section(package.context)
+            with account_verification(active_work):
+                self._prevalidate_context_section(package.context)
 
         core_stats: dict[str, Any] = {
             "admitted_core_objects": 0,
@@ -1600,6 +1603,7 @@ class ExchangeService:
                     sha256_hex,
                     "sha256 and text_value strings required",
                 )
+            _performed("verification_bytes", len(text_val.encode("utf-8")))
             actual = hashlib.sha256(text_val.encode("utf-8")).hexdigest()
             if actual != sha256_hex:
                 raise ExchangeError(
@@ -1619,7 +1623,11 @@ class ExchangeService:
                         "field_candidate references text_body_sha256 absent from text_bodies",
                     )
 
-    def _import_core_into(
+    def _import_core_into(self, core_cap, core_data, work):
+        with account_verification(work):
+            return self._import_core_units(core_cap, core_data, work)
+
+    def _import_core_units(
         self,
         core_cap: GitCore,
         core_data: dict[str, list[dict[str, Any]]],

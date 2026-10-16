@@ -251,7 +251,6 @@ class GitAcquisition:
     ) -> tuple[OID, ...]:
         """Parse a validated commit/tree/tag and admit its claims and relations without retaining raw bytes."""
         with account_verification(work):
-            _charge(work, "input_bytes", len(native.body))
             native.validate()
             parsed = parse_metadata(
                 native.oid.object_format, native.native_type, native.body
@@ -624,9 +623,10 @@ class GitAcquisition:
                     if oid not in retained_order:
                         retained_order.append(oid)
                     if request.traverse_structural_targets:
-                        parsed = parse_metadata(
-                            oid.object_format, native.native_type, native.body
-                        )
+                        with account_verification(active_work):
+                            parsed = parse_metadata(
+                                oid.object_format, native.native_type, native.body
+                            )
                         for raw_members in parsed.relations.values():
                             for m in raw_members:
                                 target_oid = OID(m[1], m[2])
@@ -871,9 +871,10 @@ class GitAcquisition:
                 _record_admitted(native.oid)
                 if native.oid not in retained_order:
                     retained_order.append(native.oid)
-                parsed = parse_metadata(
-                    native.oid.object_format, native.native_type, native.body
-                )
+                with account_verification(active_work):
+                    parsed = parse_metadata(
+                        native.oid.object_format, native.native_type, native.body
+                    )
                 for raw_members in parsed.relations.values():
                     for m in raw_members:
                         target_oid = OID(m[1], m[2])
