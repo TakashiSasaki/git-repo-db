@@ -1,7 +1,11 @@
-import json, os, subprocess
+import argparse, json, os, subprocess
 from pathlib import Path
-root=Path('/workspace/git-repo-db')
-out=Path('/workspace/integration-acceptance')
+parser=argparse.ArgumentParser(description='Reproduce the frozen seven-PR merge chain without modifying branches. Supply raw/pr-initial.json in the output directory; fetch all reviewed objects first.')
+parser.add_argument('--repo',type=Path,default=Path('/workspace/git-repo-db'))
+parser.add_argument('--output',type=Path,default=Path('/workspace/integration-acceptance'))
+args=parser.parse_args()
+root=args.repo.resolve()
+out=args.output.resolve()
 def git(*args, **kw):
     return subprocess.check_output(['git', '-C', str(root), *args], text=True, **kw).strip()
 order=[89,87,88,93,91,92,90]

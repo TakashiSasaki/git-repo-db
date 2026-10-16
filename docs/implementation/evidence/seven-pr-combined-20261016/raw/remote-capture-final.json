@@ -1,0 +1,52 @@
+[
+  {
+    "name": "main",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/branches/main",
+    "exit_code": 0
+  },
+  {
+    "name": "rulesets",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/rulesets",
+    "exit_code": 0
+  },
+  {
+    "name": "effective-rules",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/rules/branches/main",
+    "exit_code": 0
+  },
+  {
+    "name": "pr-89-commit-status",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/commits/660178ff1a881e4482b7a3cde02b51dc50cf2603/status",
+    "exit_code": 0
+  },
+  {
+    "name": "pr-87-commit-status",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/commits/c058af3a1be9ba3e9a1b0ba649c789f5bdcd1d75/status",
+    "exit_code": 0
+  },
+  {
+    "name": "pr-88-commit-status",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/commits/e956cd50b1f25bd95427301cced4741bb68e24f8/status",
+    "exit_code": 0
+  },
+  {
+    "name": "pr-93-commit-status",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/commits/7dc31256907aff4412170bc3f3ce3069b2ad89f2/status",
+    "exit_code": 0
+  },
+  {
+    "name": "pr-91-commit-status",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/commits/1700ed37e82a6028cfa40c86b35db7621dd50404/status",
+    "exit_code": 0
+  },
+  {
+    "name": "pr-92-commit-status",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/commits/94488cf4e7fa15f747ece7a4e3d57e0bc213966a/status",
+    "exit_code": 0
+  },
+  {
+    "name": "pr-90-commit-status",
+    "endpoint": "repos/TakashiSasaki/git-repo-db/commits/7cbade2928467f3c3ab2350bdc84e275d7057622/status",
+    "exit_code": 0
+  }
+]

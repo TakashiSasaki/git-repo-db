@@ -1,0 +1,5 @@
+{
+  "verified_remote_previous_head": "b986a8cf60395d59858fc7190e9c9c93925fbf29",
+  "pushed_head": "643cfbcbb3627388d0154b21dc7df56bedfaa77c",
+  "note": "An initial local guard used a mistyped expected full checkpoint SHA and stopped before push; rerun compared actual HEAD parent with remote and succeeded."
+}

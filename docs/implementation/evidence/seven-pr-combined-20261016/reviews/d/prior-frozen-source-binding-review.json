@@ -1,0 +1,44 @@
+[
+  {
+    "scope": "p7",
+    "tested_source": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+    "final_evidence_feature_head": "e956cd50b1f25bd95427301cced4741bb68e24f8",
+    "executable_diff": [],
+    "command": [
+      "git",
+      "diff",
+      "--name-status",
+      "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+      "e956cd50b1f25bd95427301cced4741bb68e24f8",
+      "--",
+      "src",
+      "tests",
+      "scripts",
+      "pyproject.toml",
+      "uv.lock",
+      ".github/workflows"
+    ],
+    "note": "Evidence-only final head does not establish a rerun; prior execution only binds unchanged inputs."
+  },
+  {
+    "scope": "schema21",
+    "tested_source": "74f90adae40ae60076dca33629fa2edbf5763474",
+    "final_evidence_feature_head": "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+    "executable_diff": [],
+    "command": [
+      "git",
+      "diff",
+      "--name-status",
+      "74f90adae40ae60076dca33629fa2edbf5763474",
+      "94488cf4e7fa15f747ece7a4e3d57e0bc213966a",
+      "--",
+      "src",
+      "tests",
+      "scripts",
+      "pyproject.toml",
+      "uv.lock",
+      ".github/workflows"
+    ],
+    "note": "Evidence-only final head does not establish a rerun; prior execution only binds unchanged inputs."
+  }
+]

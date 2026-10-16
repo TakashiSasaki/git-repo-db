@@ -1,0 +1,9 @@
+{
+  "source": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "exact_hosted_feature": "660178ff1a881e4482b7a3cde02b51dc50cf2603",
+  "exact_hosted_tree": "ed80623514a5e574d1e24e908b95504f60b815db",
+  "files_independently_sha256_checked": 74,
+  "all_equal_to_recorded_reference_and_hosted_head": true,
+  "scope": "Recorded74 publication build inputs; excludes changing Git metadata. Executed import closure is not exhaustive conditional-import proof."
+}

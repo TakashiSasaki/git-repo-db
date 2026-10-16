@@ -79,6 +79,10 @@
     "bytes": 66509,
     "sha256": "c6ee62f097d01f441f6b127dd5b7f6aa3dee09944b07921466263372ecb874f7"
   },
+  "owner-plan-final-approval.json": {
+    "bytes": 617,
+    "sha256": "61334d860a9492873c10d90e1f3961877da2612a44c390456e93952e9fd14fce"
+  },
   "owner-preflight-89-exit.json": {
     "bytes": 12,
     "sha256": "5bc232b82de377a5655a39a2af9d7ae0fc868de5b9df957e18905cb914606c88"
@@ -90,6 +94,54 @@
   "owner-tooling-input-hashes.json": {
     "bytes": 256,
     "sha256": "f9c478f3dd596655fe838c93cb27186a0b40958fe7846e5683589dd6e30217a8"
+  },
+  "portable-reproduction/chain.json": {
+    "bytes": 104156,
+    "sha256": "963d6823fcd2af65be00ed1678e150648bbbf00ff205a2725f1b1a8cec03c7f0"
+  },
+  "portable-reproduction/final-source.txt": {
+    "bytes": 82,
+    "sha256": "ab526cf0eec70aad081208ec949ee8d1ce2a62ea4dab2fe025cbdc5acc7ef444"
+  },
+  "portable-reproduction/raw/merge-87.txt": {
+    "bytes": 41,
+    "sha256": "379344917608ca018e61064c0fd07be76803dbdd4cb0d87a7a4385b016f4713f"
+  },
+  "portable-reproduction/raw/merge-88.txt": {
+    "bytes": 41,
+    "sha256": "bcd649449b7a1fd225e7d389751e5674dd51f3a0226f40b8ccd060a0c5b0d03b"
+  },
+  "portable-reproduction/raw/merge-89.txt": {
+    "bytes": 41,
+    "sha256": "9e89c94df71f77249f9e050e968f64a2227006df85837ad564270df4a60dc3f4"
+  },
+  "portable-reproduction/raw/merge-90.txt": {
+    "bytes": 41,
+    "sha256": "d2b92d1ab3ba19c67137c05d92397b8c7c20e265c349a0b88e89b7e99623092c"
+  },
+  "portable-reproduction/raw/merge-91.txt": {
+    "bytes": 41,
+    "sha256": "172aad931c3f0db74f9457ac1f867c306206c9f474eb536278412e4e960c4687"
+  },
+  "portable-reproduction/raw/merge-92.txt": {
+    "bytes": 41,
+    "sha256": "68a493435fea105dc1eef1bfb376c62096b1fd0d39980a556bc86996000bff3e"
+  },
+  "portable-reproduction/raw/merge-93.txt": {
+    "bytes": 41,
+    "sha256": "3c2461c19e22b0f71c8c2fab6a58f689b065b0ba05218a5f3eae01cc34a3bbfb"
+  },
+  "portable-reproduction/raw/pr-initial.json": {
+    "bytes": 9754,
+    "sha256": "f344384ef1cb5a2dd905b359fd667d81b1e8e1d315ae792988a07fddc7a48bb5"
+  },
+  "portable-reproduction/stdout.json": {
+    "bytes": 4721,
+    "sha256": "7194f197336d4dc7db23aee232f33d2f75e566f35345626244ca14d2f83f1e56"
+  },
+  "portable-synthesis-approval.json": {
+    "bytes": 960,
+    "sha256": "9898e427b987547ae028b9276be78d3e8240b01a8ea89eba118bc9bcdc856352"
   },
   "pr-state-gh-field-failure.json": {
     "bytes": 5182,

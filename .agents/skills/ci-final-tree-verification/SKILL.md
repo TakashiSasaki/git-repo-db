@@ -7,6 +7,27 @@ description: Verify git-repo-db CI status and test execution against the exact f
 
 Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.json` as the live contracts. Distinguish ordinary development validation from explicit release acceptance.
 
+## Stacked integration trees and merge authorization fences
+
+Separate feature-tree acceptance does not prove their combined executable tree.
+Fetch all reviewed heads, record their exact SHAs and the actual main, then use
+`git merge-tree --write-tree TARGET FEATURE` and a two-parent `git commit-tree`
+chain in the intended order. Preserve every merge base, parent, conflict result,
+effective tree and changed input set. Test the frozen combined source; later
+evidence-only commits require explicit unchanged-input binding, not a rerun claim.
+The [seven-PR acceptance evidence](../../../docs/implementation/evidence/seven-pr-combined-20261016/README.md)
+includes an independently reproduced deterministic helper and owner preflight.
+
+`gh pr merge --match-head-commit` checks the feature HEAD, not the base. It does
+not atomically prevent another merger from changing main after local preflight.
+Within separately authorized merges, coordinate a single-merger window, reread
+main immediately before each command and verify the actual merge's two parents
+and tree afterward. Stop on a changed HEAD, target, policy, checks or tree; do not
+continue automatically. Retarget stacked children only after their parent merges,
+without rewriting feature history. Expected trees are not predicted GitHub commit
+SHAs. The verified read-only helper and plan do not grant merge authorization or
+claim atomic base fencing; no production merge was executed to establish them.
+
 ## Development validation loop (ordinary PRs and stacked iterations)
 
 1. Run focused tests locally while editing. Validate both lint **and format** for source/test changes:

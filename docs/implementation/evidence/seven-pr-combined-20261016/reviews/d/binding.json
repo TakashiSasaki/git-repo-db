@@ -5,12 +5,22 @@
     "wheel": {
       "wheel": "/workspace/integration-acceptance/reviews/d/dist/repo_catalog-0.2.0-py3-none-any.whl",
       "sha256": "e7005d339af572f5873e2a45a08e94a36e7ef99f51ca58e6ceeac7295a6b593f",
-      "package_files": 124
+      "package_files": 124,
+      "installed_direct_url": {
+        "url": "file:///workspace/integration-acceptance/reviews/d/dist/repo_catalog-0.2.0-py3-none-any.whl",
+        "archive_info": {}
+      },
+      "editable": false
     },
     "sdist-wheel": {
       "wheel": "/workspace/integration-acceptance/reviews/d/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
       "sha256": "e7005d339af572f5873e2a45a08e94a36e7ef99f51ca58e6ceeac7295a6b593f",
-      "package_files": 124
+      "package_files": 124,
+      "installed_direct_url": {
+        "url": "file:///workspace/integration-acceptance/reviews/d/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl",
+        "archive_info": {}
+      },
+      "editable": false
     }
   },
   "sdist_sha256": "fe550a55c02dc49900f3284cefc8fd74a8a079508618af3803195958e559be9f",

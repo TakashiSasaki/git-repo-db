@@ -34,10 +34,9 @@ if sys.argv[1]=='prepare':
  for p in ['pyproject.toml','uv.lock']:shutil.copy2(source/p,harness/p)
  shutil.copy2(source/'tests/conftest.py',harness/'conftest.py')
  # Imported original test function retains every production assertion and parameter.
- (harness/'test_external_cli.py').write_text('''from pathlib import Path\nimport os,pytest\nfrom tests.packaging.test_distribution import test_wheel_sdist_cli\n@pytest.fixture(scope="module")\ndef distributions():\n    base=Path('/workspace/integration-acceptance/reviews/d')\n    return base,dict(os.environ),[next((base/'dist').glob('*.whl')),next((base/'sdist-wheel').glob('*.whl'))]\n''')
- # For tests under tests/, use repository conftest once; root conftest handles external CLI.
+ (harness/'tests/test_external_cli.py').write_text('''from pathlib import Path\nimport os,pytest\nfrom tests.packaging.test_distribution import test_wheel_sdist_cli\n@pytest.fixture(scope="module")\ndef distributions():\n    base=Path('/workspace/integration-acceptance/reviews/d')\n    return base,dict(os.environ),[next((base/'dist').glob('*.whl')),next((base/'sdist-wheel').glob('*.whl'))]\n''')
+ # Repository tests/conftest owns journal registration and offline guard exactly once.
  (harness/'conftest.py').unlink()
- (harness/'test_external_cli.py').write_text((harness/'test_external_cli.py').read_text()+'''\nfrom scripts import ci_journal\ndef pytest_addoption(parser): ci_journal.pytest_addoption(parser)\n''')
  identities={}
  for kind,folder in [('wheel','dist'),('sdist-wheel','sdist-wheel')]:
   wheel=next((evidence/folder).glob('*.whl'));venv=evidence/(kind+'-venv');python=venv/'bin/python'
@@ -60,6 +59,9 @@ else:
  targets=['tests/integration/p7','tests/integration/test_catalog3_current_queries.py::test_rebuild_replaces_large_projection_and_keeps_ready_generation_on_cancel']
  for kind in ['wheel','sdist-wheel']:
   venv=evidence/(kind+'-venv');python=venv/'bin/python'; extra={'VIRTUAL_ENV':str(venv),'PATH':str(venv/'bin')+os.pathsep+env.get('PATH','')}
+  run(kind+'-module-help',[python,'-I','-m','repo_catalog','--help'],cwd=harness,extra=extra)
+  run(kind+'-module-init',[python,'-I','-m','repo_catalog','--state-dir',evidence/(kind+'-module-state'),'--format','json','init','--profile','catalog-text-v1','--cache-max-bytes','67108864','--min-free-bytes','0'],cwd=harness,extra=extra)
+  run(kind+'-module-check',[python,'-I','-m','repo_catalog','--state-dir',evidence/(kind+'-module-state'),'--format','json','db','check','--full'],cwd=harness,extra=extra)
   run(kind+'-collect',[python,'-m','pytest',*targets,'--collect-only','-q','-o','pythonpath='],cwd=harness,extra=extra)
   run(kind+'-installed',[python,'-m','pytest',*targets,'-q','-o','pythonpath=','--basetemp',evidence/(kind+'-pytest-temp'),'-o','junit_family=xunit1','--junitxml',evidence/(kind+'-junit.xml'),'--journal',evidence/(kind+'-journal.jsonl')],cwd=harness,extra=extra)
  # Original generic public CLI acceptance with supplied immutable build products.

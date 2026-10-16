@@ -1,0 +1,20 @@
+{
+  "measured_utc": "2026-10-16T19:58:07.798636+00:00",
+  "script": "/workspace/integration-acceptance/synthesize.py",
+  "script_sha256": "300bc68c46af2af7d8d47ae0df068b49e7decf3172039d99be8f1fa30f1cfc4c",
+  "command": [
+    "python",
+    "/workspace/integration-acceptance/synthesize.py",
+    "--repo",
+    "/workspace/review-a",
+    "--output",
+    "/workspace/integration-acceptance/reviews/a/portable-reproduction"
+  ],
+  "exit": 0,
+  "all_seven_full_records_equal": true,
+  "final_commit": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+  "final_tree": "ea006924152d2fc508c7eb21697ad3c376e373f6",
+  "portable_arguments_exercised": true,
+  "verdict": "APPROVED_FOR_OWNER_REVIEW",
+  "scope": "Parser/path-resolution change only; deterministic author/committer/date/message/order, two-parent commit-tree and real merge-tree semantics unchanged. Separate worktree and output paths reproduced exact full chain. No production changes, branch updates or merges."
+}

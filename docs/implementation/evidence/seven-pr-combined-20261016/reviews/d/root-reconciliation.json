@@ -1,0 +1,77 @@
+[
+  {
+    "label": "root-complete",
+    "selected": 3755,
+    "junit": 3755,
+    "unique_starts": 3755,
+    "phase_records": 11265,
+    "results": {
+      "passed": 3755
+    },
+    "finish": {
+      "event": "finish",
+      "status": "completed",
+      "exitstatus": 0,
+      "timestamp": 1792181122.059797
+    },
+    "sha256": {
+      "collect-default.log": "ef50a9d808fe1a7a79c05d273b7b6a71f178a487f985a5d68029d9e480ce74f9",
+      "full.xml": "701318338be6bc48d9a4cdd2a7561cf889210c284fdbbb98a22a9bd859863f0d",
+      "full.jsonl": "58d46aa2679352945306c8cd00c8c1679fc7c02aea79b84bf8589b922f3f5a3d"
+    },
+    "nodes_equal_exactly_once": true,
+    "all_three_phases_once": true,
+    "all_collected": 3757,
+    "deselected": [
+      "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+      "tests/live/test_smoke.py::test_selected_repository"
+    ],
+    "cohorts": {
+      "p1": 317,
+      "p2": 197,
+      "p3": 75,
+      "p4": 202,
+      "p5": 47,
+      "p6": 50,
+      "p7": 255,
+      "p2_p3_compatibility": 20,
+      "p5_p6_compatibility": 29
+    },
+    "documentation_unit": 8,
+    "process_execution": {
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "pytest",
+        "tests",
+        "-n",
+        "4",
+        "-q",
+        "--basetemp",
+        "/workspace/integration-acceptance/full-temp",
+        "-o",
+        "junit_family=xunit1",
+        "--junitxml",
+        "/workspace/integration-acceptance/raw/full.xml",
+        "--journal",
+        "/workspace/integration-acceptance/raw/full.jsonl"
+      ],
+      "cwd": "/workspace/combined-tree",
+      "environment_overrides": {
+        "TMPDIR": "/workspace/integration-acceptance/tmp",
+        "REPO_CATALOG_WHEELHOUSE": "/workspace/integration-acceptance/wheelhouse"
+      },
+      "start": "2026-10-16T19:52:43.373075+00:00",
+      "end": "2026-10-16T20:05:22.322325+00:00",
+      "elapsed_seconds": 758.949410389,
+      "exit_code": 0,
+      "head": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+      "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+    },
+    "schema21_inherited228_selected": true,
+    "schema21_inherited228_passed": 228,
+    "source": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+    "tree": "ea006924152d2fc508c7eb21697ad3c376e373f6"
+  }
+]

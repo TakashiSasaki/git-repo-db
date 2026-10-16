@@ -1,0 +1,31 @@
+{
+  "measured_utc": "2026-10-16T20:03:47.923031+00:00",
+  "evidence_base": "643cfbcbb3627388d0154b21dc7df56bedfaa77c",
+  "skill": "/workspace/combined-evidence/.agents/skills/ci-final-tree-verification/SKILL.md",
+  "skill_bytes": 10878,
+  "skill_sha256": "b6cd4b0c47d2252f9ac87523dd865166ead5bbb6085aef88d178cbd180ec4997",
+  "skill_git_blob": "4eb0b48f57a615005063cdb127fb6e31c7c403aa",
+  "frontmatter_valid": true,
+  "evidence_link_path": "/workspace/combined-evidence/docs/implementation/evidence/seven-pr-combined-20261016/README.md",
+  "evidence_link_exists": false,
+  "content_review": "Content/frontmatter and conflict-freedom APPROVED; evidence README link target pending existence verification. Generalizable verified combined-tree and owner-preflight lessons; no architecture/permission change, no claim of atomic base fencing, no production merge execution.",
+  "temporary_review_commit": "35318b644a6f0097d004838b76bfd1222346b47e",
+  "temporary_review_tree": "0f847d2573c5023e75119de03e7ce31bddcbccb8",
+  "merge_results": [
+    {
+      "target": "7cbade2928467f3c3ab2350bdc84e275d7057622",
+      "merge_tree_exit": 0,
+      "effective_tree": "5f696488aed8b12fe0f53e0da45ed6523563e63b",
+      "new_top_and_existing_bottom_retained": true,
+      "merged_skill_sha256": "16b7bd6a7b1ae1ae2aac60d6489d12900b94be2ecc06c21ba3a0d19d7d9fdd97"
+    },
+    {
+      "target": "388b824d1b3abe41c902759bf37a52c6ee5bcd2f",
+      "merge_tree_exit": 0,
+      "effective_tree": "0f87622f1290f00d562fe062e4e5dfa697745c9d",
+      "new_top_and_existing_bottom_retained": true,
+      "merged_skill_sha256": "16b7bd6a7b1ae1ae2aac60d6489d12900b94be2ecc06c21ba3a0d19d7d9fdd97"
+    }
+  ],
+  "scope": "Temporary Git objects only; no branch/HEAD/index/worktree mutation; reviewed skill bytes frozen by hash."
+}
