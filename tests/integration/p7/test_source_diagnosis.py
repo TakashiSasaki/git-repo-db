@@ -174,3 +174,55 @@ def test_valid_empty_context_text_is_not_corruption(synthetic_catalog, tmp_path)
     ).fetchone() == ("",)
     connection.close()
     assert not is_catalog_stopped(synthetic_catalog)
+
+
+def test_intrinsic_projection_damage_is_not_certified(synthetic_catalog, tmp_path):
+    from repo_catalog.adapters.sqlite.p1_schema import (
+        expected_schema,
+        register_functions,
+        schema_rows,
+    )
+
+    connection = sqlite3.connect(synthetic_catalog / "core.sqlite3")
+    register_functions(connection)
+    triggers = connection.execute(
+        "SELECT name, sql FROM sqlite_schema WHERE name IN ('p1_immutable_scalar_claims_update','p1_immutable_intrinsic_claims_update')"
+    ).fetchall()
+    for name, _ in triggers:
+        connection.execute(f'DROP TRIGGER "{name}"')
+    connection.execute(
+        "UPDATE scalar_claims SET value='[\"known\",999]' WHERE field='size'"
+    )
+    connection.execute(
+        "UPDATE intrinsic_claims SET value='[\"known\",999]' WHERE field='size'"
+    )
+    for _, sql in triggers:
+        connection.execute(sql)
+    connection.commit()
+    assert schema_rows(connection) == expected_schema("core")
+    assert connection.execute("PRAGMA integrity_check").fetchall() == [("ok",)]
+    assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+    connection.close()
+    with pytest.raises(CorruptionDetectedError, match="intrinsic_claim_guard"):
+        RecoveryService().create_consistent_backup(
+            synthetic_catalog, tmp_path / "backup"
+        )
+    assert is_catalog_stopped(synthetic_catalog)
+
+
+def test_invalid_persisted_utf8_is_confirmed_damage(synthetic_catalog, tmp_path):
+    connection = sqlite3.connect(synthetic_catalog / "context.sqlite3")
+    sql = connection.execute(
+        "SELECT sql FROM sqlite_schema WHERE name='text_bodies_no_update'"
+    ).fetchone()[0]
+    connection.execute("DROP TRIGGER text_bodies_no_update")
+    connection.execute("PRAGMA ignore_check_constraints=ON")
+    connection.execute("UPDATE text_bodies SET text_value=CAST(x'ff' AS TEXT)")
+    connection.execute(sql)
+    connection.commit()
+    connection.close()
+    with pytest.raises(CorruptionDetectedError, match="invalid UTF-8"):
+        RecoveryService().create_consistent_backup(
+            synthetic_catalog, tmp_path / "backup"
+        )
+    assert is_catalog_stopped(synthetic_catalog)

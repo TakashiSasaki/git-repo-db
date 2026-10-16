@@ -49,6 +49,10 @@ from repo_catalog.adapters.sqlite.p1_schema import (
     validate as p1_schema_validate,
 )
 from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
+from repo_catalog.adapters.sqlite.recovery_validation import (
+    validate_context_text_encoding,
+    validate_stored_admission_guards,
+)
 from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
@@ -1106,6 +1110,8 @@ class SQLiteRecoveryAdapter:
                 notes += 1
                 total_bytes += len(body)
 
+            validate_stored_admission_guards(conn, "core")
+
             return RetainedByteSummary(
                 commit_count=commits,
                 tree_count=trees,
@@ -1122,17 +1128,6 @@ class SQLiteRecoveryAdapter:
         conn = sqlite3.connect(f"file:{context_db.resolve()}?mode=ro", uri=True)
         try:
             register_functions(conn)
-            result = conn.execute("PRAGMA integrity_check").fetchall()
-            if not result or result[0][0] != "ok":
-                raise BackupValidationError(
-                    f"Context database integrity check failed: {result}"
-                )
-            fk_result = conn.execute("PRAGMA foreign_key_check").fetchall()
-            if fk_result:
-                raise BackupValidationError(
-                    f"Context foreign key check failed: {fk_result}"
-                )
-
             # Strict P1 schema validation
             try:
                 p1_schema_validate(conn, "context")
@@ -1143,6 +1138,20 @@ class SQLiteRecoveryAdapter:
             if schema_rows(conn) != expected_schema("context"):
                 raise BackupValidationError(
                     "Context physical schema rows differ from packaged expectation"
+                )
+
+            validate_context_text_encoding(conn)
+            validate_stored_admission_guards(conn, "context")
+
+            result = conn.execute("PRAGMA integrity_check").fetchall()
+            if not result or result[0][0] != "ok":
+                raise BackupValidationError(
+                    f"Context database integrity check failed: {result}"
+                )
+            fk_result = conn.execute("PRAGMA foreign_key_check").fetchall()
+            if fk_result:
+                raise BackupValidationError(
+                    f"Context foreign key check failed: {fk_result}"
                 )
 
             identity_row = conn.execute(
@@ -1163,9 +1172,7 @@ class SQLiteRecoveryAdapter:
             while row := cursor.fetchone():
                 expected_sha, text_value = row
                 if not isinstance(text_value, str):
-                    raise BackupValidationError(
-                        "Context text body must be a string"
-                    )
+                    raise BackupValidationError("Context text body must be a string")
                 actual_sha = hashlib.sha256(text_value.encode("utf-8")).hexdigest()
                 if actual_sha != expected_sha:
                     raise BackupValidationError(

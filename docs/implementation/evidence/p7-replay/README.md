@@ -15,7 +15,7 @@ replay (wrong metadata type/size, wrong Notes role/Capture/body attributes),
 repository rebinding, missing-copy misclassification, partial Capture admission,
 ignored duplicate Capture coordinates, original repository replacement and empty
 metadata refusal. Raw failures and node IDs remain in `baseline.log`/`.xml`.
-Five additional focused nodes were added after that baseline run; it must not be
+Three additional focused nodes were added after that baseline run; it must not be
 reported as a baseline execution of all final nodes.
 
 The corrected implementation always invokes typed production admission before
