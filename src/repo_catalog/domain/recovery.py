@@ -186,6 +186,8 @@ class MergeReceipt:
     observation_units: int = 0
     deferred_units: int = 0
     unprocessed_units: int = 0
+    input_complete: bool = True
+    unprocessed_count_exact: bool = True
     rejections: list[Mapping[str, Any]] = field(default_factory=list)
 
 

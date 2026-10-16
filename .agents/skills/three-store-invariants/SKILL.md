@@ -601,3 +601,26 @@ The suite uses spawned processes and SIGKILL before work, after work and after
 actual authoritative admission, concurrent retries, lowered reports, missing
 records, invalid IDs and Operational/Search deletion. Keep these counterexamples
 at the real work boundary when changing the reader or admission code.
+## Target recovery: bound materialization and preserve unknown scope
+
+When extending P7 salvage, keep input limits ahead of allocation. A `SELECT *`
+followed by a Python `len()` check has already materialized an untrusted SQLite
+row. Apply finite SQLite length/column/SQL/VM limits and bounded projections.
+SQLite can reject a very large source row before a CASE projection runs; report
+that table as unreadable/incomplete rather than inventing a recovered candidate
+or diagnosing confirmed corruption from `SQLITE_TOOBIG`.
+
+Reserve bounded binary JSONL chunks before reads. Check lexical JSON nesting and
+element counts before `json.loads`, then validate the parsed shape. Bound base64
+and proof hex representations before decoding. Charge malformed/rejected input
+as actual request work. At a limit, stop reading; do not scan an arbitrary suffix
+just to count omissions. Mark omitted counts as lower bounds and enumeration as
+incomplete. An oversized partial candidate must also make the extraction receipt
+partial. Keep serialization/output budgets separate from proof of completeness.
+
+Reproduce these boundaries with `python -m pytest
+ tests/integration/p7/test_bounded_input.py` (one shell line). The tests cover
+Python allocation for BLOB/text, SQLite unreadable scope, streamed-copy growth,
+JSON limits and rejected-input work. They do not establish host power-loss
+semantics or authorize recovery on real catalogs; use disposable synthetic
+catalogs and retain independent process/filesystem evidence for those claims.

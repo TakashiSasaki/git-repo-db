@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 import sqlite3
+import stat
 import tempfile
 import time
 import uuid
@@ -195,6 +196,175 @@ def _check_json_depth(
             _check_json_depth(
                 v, current_depth + 1, max_depth, max_elements, element_counter
             )
+
+
+class _InputLimit(ValueError):
+    """Finite input work ended; the unread suffix has deliberately not been scanned."""
+
+
+def _bounded_json_loads(raw: str | bytes, budget: RecoveryBudget) -> Any:
+    """Check lexical depth/elements before json.loads allocates an object tree.
+
+    JSON syntax is still checked by the standard parser. The lexical element
+    count deliberately overestimates malformed inputs and object keys.
+    """
+    if len(raw) > budget.max_payload_bytes * 8 + 8192:
+        raise _InputLimit("JSON representation exceeds finite payload envelope")
+    depth = 0
+    elements = 0
+    in_string = False
+    escaped = False
+    for ch in raw:
+        ch = chr(ch) if isinstance(ch, int) else ch
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+        elif ch == '"':
+            in_string = True
+            elements += 1
+        elif ch in "[{":
+            depth += 1
+            elements += 1
+            if depth > budget.max_json_depth:
+                raise ValueError("JSON nesting depth exceeds finite limit")
+        elif ch in "]}":
+            depth -= 1
+        elif ch == ",":
+            elements += 1
+        if elements > 20_000:
+            raise ValueError("JSON element count exceeds finite limit")
+    obj = json.loads(raw)
+    _check_json_depth(obj, max_depth=budget.max_json_depth)
+    return obj
+
+
+def _decode_bounded_base64(value: Any, max_bytes: int) -> bytes:
+    if not isinstance(value, str) or len(value) > ((max_bytes + 2) // 3) * 4:
+        raise ValueError("Base64 payload exceeds finite decoded-byte limit")
+    result = base64.b64decode(value, validate=True)
+    if len(result) > max_bytes:
+        raise ValueError("Decoded payload exceeds finite byte limit")
+    return result
+
+
+def _decode_proof_bundle(value: Any, budget: RecoveryBudget, object_format: str):
+    if not isinstance(value, str) or len(value) > budget.max_payload_bytes * 2:
+        raise ValueError("Notes proof exceeds finite payload limit")
+    bundle = _bounded_json_loads(value, budget)
+    if not isinstance(bundle, list):
+        raise ValueError("Notes proof must be a list")
+    if len(bundle) > budget.max_work_units.get("proof_steps", 100_000):
+        raise ValueError("Notes proof exceeds finite proof-step limit")
+    structures = []
+    total_bytes = 0
+    for entry in bundle:
+        if (
+            not isinstance(entry, list)
+            or len(entry) != 3
+            or not all(isinstance(v, str) for v in entry)
+        ):
+            raise ValueError("Malformed notes proof object")
+        total_bytes += (len(entry[2]) + 1) // 2
+        if total_bytes > budget.max_payload_bytes:
+            raise ValueError("Notes proof native bytes exceed finite payload limit")
+        body = bytes.fromhex(entry[2])
+        structures.append(
+            NativeObject(
+                oid=OID(object_format, entry[0]),
+                native_type=entry[1],
+                body=body,
+                declared_size=len(body),
+                digest_sha256=hashlib.sha256(body).hexdigest(),
+            )
+        )
+    return tuple(structures)
+
+
+def _bounded_jsonl_records(
+    stream, *, max_line_bytes: int, max_bytes: int, reserve, settle=None
+):
+    """Read finite chunks, reserving their upper bound before the actual read.
+
+    No suffix scan is performed to compute a fictitiously precise omitted count.
+    A caller receiving _InputLimit knows at least one input unit remains unknown.
+    """
+    buffered = bytearray()
+    scanned = 0
+    while True:
+        if scanned >= max_bytes:
+            raise _InputLimit("Input scan byte limit reached; unread suffix unknown")
+        amount = min(65536, max_bytes - scanned)
+        reserve("input_scan_bytes", amount)
+        block = stream.read(amount)
+        if settle is not None:
+            settle("input_scan_bytes", amount)
+        scanned += amount
+        if not block:
+            if buffered:
+                yield bytes(buffered)
+            return
+        offset = 0
+        while offset < len(block):
+            newline = block.find(b"\n", offset)
+            end = len(block) if newline < 0 else newline + 1
+            if len(buffered) + end - offset > max_line_bytes:
+                raise _InputLimit(
+                    "JSONL line exceeds finite envelope; unread suffix unknown"
+                )
+            buffered.extend(block[offset:end])
+            offset = end
+            if newline >= 0:
+                yield bytes(buffered)
+                buffered.clear()
+
+
+def _copy_forensic_files(catalog_dir: Path, forensic_dir: Path, max_bytes: int) -> None:
+    """Bound actual streamed bytes, not only a racy preflight stat estimate."""
+    copied = 0
+    for name in ("core.sqlite3", "context.sqlite3"):
+        for suffix in ("", "-wal", "-shm", "-journal"):
+            source = catalog_dir / (name + suffix)
+            if not source.exists():
+                continue
+            if source.is_symlink():
+                raise SalvageError(f"Refusing symlink source evidence: {source.name}")
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+            with os.fdopen(os.open(source, flags), "rb") as src:
+                before = os.fstat(src.fileno())
+                if not stat.S_ISREG(before.st_mode):
+                    raise SalvageError("Source evidence must be a regular file")
+                if before.st_size > max_bytes - copied:
+                    raise SalvageError("Suspect catalog exceeds recovery copy budget")
+                with (forensic_dir / source.name).open("xb") as dest:
+                    remaining_file = before.st_size
+                    while remaining_file:
+                        block = src.read(min(65536, remaining_file, max_bytes - copied))
+                        if not block:
+                            raise SalvageError(
+                                "Source evidence shrank during forensic copy"
+                            )
+                        dest.write(block)
+                        copied += len(block)
+                        remaining_file -= len(block)
+                    # One bounded probe detects growth without copying the suffix.
+                    if src.read(1):
+                        raise SalvageError("Source evidence grew during forensic copy")
+                after = os.fstat(src.fileno())
+                current = source.stat(follow_symlinks=False)
+                if (
+                    before.st_dev,
+                    before.st_ino,
+                    before.st_size,
+                    before.st_mtime_ns,
+                ) != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) or (
+                    current.st_dev,
+                    current.st_ino,
+                ) != (after.st_dev, after.st_ino):
+                    raise SalvageError("Source evidence changed during forensic copy")
 
 
 class RecoveryWorkBudget:
@@ -938,6 +1108,10 @@ class SQLiteRecoveryAdapter:
     ) -> SalvageReceipt:
         catalog_dir = Path(catalog_dir)
         output_file = Path(output_file)
+        if output_file.resolve().is_relative_to(catalog_dir.resolve()):
+            raise SalvageError(
+                "Salvage output must be outside preserved source catalog"
+            )
 
         b = budget or RecoveryBudget()
         limit_records = max_records if max_records is not None else b.max_input_records
@@ -953,14 +1127,12 @@ class SQLiteRecoveryAdapter:
         total_bytes = 0
         is_partial = False
 
-        # Finite resource bound: total forensic copy size must not exceed limit_bytes
-        total_copy_bytes = sum(
-            f.stat().st_size for f in catalog_dir.glob("*.sqlite3*") if f.is_file()
-        )
-        if total_copy_bytes > limit_bytes:
-            raise SalvageError(
-                f"Suspect catalog total size {total_copy_bytes} exceeds recovery budget max_input_bytes {limit_bytes}"
-            )
+        if type(limit_records) is not int or limit_records <= 0:
+            raise ValueError("max_records must be a positive integer")
+        if type(limit_bytes) is not int or limit_bytes <= 0:
+            raise ValueError("max_bytes must be a positive integer")
+        limit_records = min(limit_records, b.max_input_records)
+        limit_bytes = min(limit_bytes, b.max_input_bytes)
 
         # Forensic preservation: create isolated working copy of suspect files
         # under stop fence or exclusive writer lock so concurrent writers cannot cross the cut
@@ -971,9 +1143,7 @@ class SQLiteRecoveryAdapter:
         ):
             with tempfile.TemporaryDirectory() as forensic_tmp:
                 forensic_dir = Path(forensic_tmp)
-                for f in catalog_dir.glob("*.sqlite3*"):
-                    if f.is_file():
-                        shutil.copy2(f, forensic_dir / f.name)
+                _copy_forensic_files(catalog_dir, forensic_dir, limit_bytes)
 
                 temp_out = (
                     output_file.parent / f"{output_file.name}.tmp.{uuid.uuid4().hex}"
@@ -1007,6 +1177,12 @@ class SQLiteRecoveryAdapter:
                         corrupt += c_cr
                         if c_stopped:
                             is_partial = True
+
+                    else:
+                        unreadable.append(
+                            "core:missing source database; enumeration unknown"
+                        )
+                        is_partial = True
 
                     ctx_db = forensic_dir / "context.sqlite3"
                     if ctx_db.exists() and not is_partial:
@@ -1044,7 +1220,7 @@ class SQLiteRecoveryAdapter:
                 os.replace(temp_out, output_file)
                 _fsync_dir(output_file.parent)
 
-        if corrupt > 0 or len(unreadable) > 0:
+        if partial > 0 or corrupt > 0 or len(unreadable) > 0:
             is_partial = True
 
         return SalvageReceipt(
@@ -1082,16 +1258,39 @@ class SQLiteRecoveryAdapter:
             try:
                 conn = sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)
                 register_functions(conn)
+                conn.setlimit(
+                    sqlite3.SQLITE_LIMIT_LENGTH, max(65536, max_payload_bytes * 4)
+                )
+                conn.setlimit(sqlite3.SQLITE_LIMIT_COLUMN, 512)
+                conn.setlimit(sqlite3.SQLITE_LIMIT_SQL_LENGTH, 256 * 1024)
+                vm_work = [0]
+
+                def progress():
+                    vm_work[0] += 1000
+                    return int(vm_work[0] > max(10000, max_bytes * 4))
+
+                conn.set_progress_handler(progress, 1000)
                 tables = [
                     r[0]
                     for r in conn.execute(
-                        "SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                        "SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT ?",
+                        (max_records + 1,),
                     ).fetchall()
                 ]
             except Exception as e:
-                unreadable.append(f"{store_name}:sqlite_schema ({e})")
-                return 0, 0, unreadable, 0, 0, 1, False
+                unreadable.append(
+                    f"{store_name}:sqlite_schema (enumeration incomplete: {e})"
+                )
+                confirmed = int(
+                    isinstance(e, sqlite3.DatabaseError)
+                    and getattr(e, "sqlite_errorcode", None)
+                    in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB)
+                )
+                return 0, 0, unreadable, 0, 0, confirmed, False
 
+            if len(tables) > max_records:
+                tables = tables[:max_records]
+                stopped_due_to_limits = True
             for table in tables:
                 if (records_offset + written_records) >= max_records:
                     stopped_due_to_limits = True
@@ -1101,21 +1300,29 @@ class SQLiteRecoveryAdapter:
                     break
 
                 try:
-                    if store_name == "core" and table == "retained_metadata":
-                        cursor = conn.execute(
-                            "SELECT object_format, full_oid, physical_copy_uuidv4, native_type, size, digest_sha256, "
-                            "(CASE WHEN length(body) > ? THEN NULL ELSE body END) AS body FROM retained_metadata",
-                            (max_payload_bytes,),
-                        )
-                    elif store_name == "core" and table == "retained_notes":
-                        cursor = conn.execute(
-                            "SELECT object_format, full_oid, physical_copy_uuidv4, size, digest_sha256, "
-                            "capture_origin_uuidv4, capture_uuidv4, root, target, path, proof_bundle, "
-                            "(CASE WHEN length(body) > ? THEN NULL ELSE body END) AS body FROM retained_notes",
-                            (max_payload_bytes,),
-                        )
-                    else:
-                        cursor = conn.execute(f'SELECT * FROM "{table}"')
+                    quoted_table = '"' + table.replace('"', '""') + '"'
+                    columns = [
+                        r[1]
+                        for r in conn.execute(
+                            f"PRAGMA table_info({quoted_table})"
+                        ).fetchall()
+                    ]
+                    if not columns or len(columns) > 512:
+                        raise ValueError("Unsupported or excessive source column count")
+                    quoted_columns = ['"' + c.replace('"', '""') + '"' for c in columns]
+                    # The predicate executes inside SQLite, before Python receives
+                    # any cell. A huge row becomes one explicit partial candidate.
+                    row_size = " + ".join(
+                        f"coalesce(length(CAST({c} AS BLOB)), 0)"
+                        for c in quoted_columns
+                    )
+                    projection = ", ".join(
+                        f"CASE WHEN ({row_size}) > {max_payload_bytes} THEN NULL ELSE {c} END AS {c}"
+                        for c in quoted_columns
+                    )
+                    cursor = conn.execute(
+                        f"SELECT {projection}, ({row_size}) AS __recovery_row_bytes FROM {quoted_table}"
+                    )
                     columns = [d[0] for d in cursor.description]
 
                     while row := cursor.fetchone():
@@ -1127,6 +1334,32 @@ class SQLiteRecoveryAdapter:
                             break
 
                         row_dict = dict(zip(columns, row))
+                        row_bytes = row_dict.pop("__recovery_row_bytes")
+                        if row_bytes > max_payload_bytes:
+                            cand_record = {
+                                "candidate_id": f"{store_name}:{table}:{written_records}",
+                                "candidate_type": CandidateType.CONTEXT_RESOURCE.value
+                                if store_name == "context"
+                                else CandidateType.GIT_METADATA.value,
+                                "extraction_provenance": {
+                                    "store": store_name,
+                                    "table": table,
+                                },
+                                "payload": {},
+                                "provenance": None,
+                                "extraction_status": ExtractionStatus.PARTIAL.value,
+                                "error": f"Source row size {row_bytes} exceeds finite payload limit {max_payload_bytes}",
+                            }
+                            line = json.dumps(cand_record) + "\n"
+                            line_bytes = len(line.encode("utf-8"))
+                            if bytes_offset + written_bytes + line_bytes > max_bytes:
+                                stopped_due_to_limits = True
+                                break
+                            out_f.write(line)
+                            written_records += 1
+                            written_bytes += line_bytes
+                            partial += 1
+                            continue
 
                         # Classify candidate and format payload preserving exact bytes
                         c_type = CandidateType.GIT_METADATA
@@ -1252,12 +1485,13 @@ class SQLiteRecoveryAdapter:
                             # Preserve original Capture source and nominated ref if present in captures table
                             try:
                                 cap_row = conn.execute(
-                                    "SELECT repository_uuidv4, source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=?",
+                                    "SELECT repository_uuidv4, source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND root=? AND length(CAST(repository_uuidv4 AS BLOB)) + length(CAST(source AS BLOB)) + length(CAST(ref AS BLOB)) <= ?",
                                     (
                                         cap_origin,
                                         cap_id,
                                         row_dict.get("object_format"),
                                         row_dict.get("root"),
+                                        max_payload_bytes,
                                     ),
                                 ).fetchone()
                                 if cap_row:
@@ -1308,8 +1542,11 @@ class SQLiteRecoveryAdapter:
                                 "provenance_json"
                             ):
                                 try:
-                                    orig_provenance = json.loads(
-                                        str(row_dict["provenance_json"])
+                                    orig_provenance = _bounded_json_loads(
+                                        str(row_dict["provenance_json"]),
+                                        RecoveryBudget(
+                                            max_payload_bytes=max_payload_bytes
+                                        ),
                                     )
                                 except Exception:
                                     orig_provenance = {
@@ -1352,8 +1589,13 @@ class SQLiteRecoveryAdapter:
                         written_bytes += line_bytes
                         clean += 1
                 except Exception as e:
-                    unreadable.append(f"{store_name}:{table} ({e})")
-                    corrupt += 1
+                    unreadable.append(
+                        f"{store_name}:{table} (enumeration incomplete: {e})"
+                    )
+                    if isinstance(e, sqlite3.DatabaseError) and getattr(
+                        e, "sqlite_errorcode", None
+                    ) in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
+                        corrupt += 1
         finally:
             if conn:
                 conn.close()
@@ -1689,30 +1931,52 @@ class SQLiteRecoveryAdapter:
             request.mark_exhausted(budget_exhausted)
 
         try:
-            with salvage_file.open("r", encoding="utf-8") as f:
-                for line in f:
-                    if not line.strip():
-                        continue
-                    processed += 1
 
-                    if budget_exhausted:
-                        unprocessed += 1
-                        continue
+            def reserve_input(unit, amount):
+                work_budget.require(unit, amount)
 
-                    line_bytes = len(line.encode("utf-8"))
-                    if line_bytes > b.max_payload_bytes:
-                        rejected += 1
-                        rejections.append(
-                            {
-                                "line": processed,
-                                "reason": f"Line size {line_bytes} exceeds payload limit {b.max_payload_bytes}",
-                            }
+            def settle_input(unit, amount):
+                work_budget.charge(unit, amount)
+
+            with salvage_file.open("rb") as f:
+                records = _bounded_jsonl_records(
+                    f,
+                    max_line_bytes=b.max_payload_bytes * 8 + 8192,
+                    max_bytes=b.max_input_bytes,
+                    reserve=reserve_input,
+                    settle=settle_input,
+                )
+                while True:
+                    if budget_exhausted or processed >= b.max_input_records:
+                        unprocessed += (
+                            1  # lower bound; unread suffix deliberately unknown
                         )
-                        continue
-
+                        break
                     try:
-                        record = json.loads(line)
-                        _check_json_depth(record, max_depth=b.max_json_depth)
+                        line = next(records)
+                    except StopIteration:
+                        break
+                    except (_InputLimit, CoreFailure) as e:
+                        budget_exhausted = True
+                        unprocessed += 1
+                        rejections.append({"reason": f"Input incomplete: {e}"})
+                        break
+                    try:
+                        reserve_input("input_records", 1)
+                    except CoreFailure as e:
+                        budget_exhausted = True
+                        unprocessed += 1
+                        rejections.append({"reason": f"Input incomplete: {e}"})
+                        break
+                    processed += 1
+                    try:
+                        record = _bounded_json_loads(line, b)
+                        if not isinstance(record, dict) or not isinstance(
+                            record.get("payload", {}), dict
+                        ):
+                            raise ValueError(
+                                "Candidate record and payload must be objects"
+                            )
                     except Exception as e:
                         rejected += 1
                         rejections.append(
@@ -1722,6 +1986,8 @@ class SQLiteRecoveryAdapter:
                             }
                         )
                         continue
+                    finally:
+                        settle_input("input_records", 1)
 
                     c_type = record.get("candidate_type")
                     payload = record.get("payload", {})
@@ -1820,7 +2086,9 @@ class SQLiteRecoveryAdapter:
                             continue
 
                         try:
-                            body_bytes = base64.b64decode(b64_body)
+                            body_bytes = _decode_bounded_base64(
+                                b64_body, b.max_payload_bytes
+                            )
                         except Exception as e:
                             rejected += 1
                             rejections.append(
@@ -1922,20 +2190,12 @@ class SQLiteRecoveryAdapter:
                             continue
 
                         try:
-                            body_bytes = base64.b64decode(b64_body)
-                            bundle_data = json.loads(proof_bundle_str)
+                            body_bytes = _decode_bounded_base64(
+                                b64_body, b.max_payload_bytes
+                            )
                             obj_fmt = payload.get("object_format", "sha1")
-                            structures = tuple(
-                                NativeObject(
-                                    oid=OID(obj_fmt, s[0]),
-                                    native_type=s[1],
-                                    body=bytes.fromhex(s[2]),
-                                    declared_size=len(bytes.fromhex(s[2])),
-                                    digest_sha256=hashlib.sha256(
-                                        bytes.fromhex(s[2])
-                                    ).hexdigest(),
-                                )
-                                for s in bundle_data
+                            structures = _decode_proof_bundle(
+                                proof_bundle_str, b, obj_fmt
                             )
                             cap_orig_id = payload.get(
                                 "capture_origin_uuidv4"
@@ -2249,6 +2509,9 @@ class SQLiteRecoveryAdapter:
             observation_units=observation,
             deferred_units=deferred,
             unprocessed_units=unprocessed,
+            input_complete=not budget_exhausted and processed < b.max_input_records,
+            unprocessed_count_exact=not budget_exhausted
+            and processed < b.max_input_records,
             rejections=rejections,
         )
 
