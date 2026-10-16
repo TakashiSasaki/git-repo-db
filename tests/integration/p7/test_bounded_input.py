@@ -198,3 +198,158 @@ def test_salvage_output_cannot_replace_source_evidence(synthetic_catalog):
             synthetic_catalog, synthetic_catalog / "core.sqlite3"
         )
     assert (synthetic_catalog / "core.sqlite3").read_bytes() == before
+
+
+@pytest.mark.parametrize("text", ["x" * 2000, "あ" * 512, 17, [], {}, "\ud800"])
+def test_context_invalid_or_large_text_does_not_block_later_unit(
+    synthetic_catalog, tmp_path, text
+):
+    salvage = tmp_path / "context-bounds.jsonl"
+    rows = [
+        {"candidate_type": "context_document", "payload": {"text_value": text}},
+        {
+            "candidate_type": "context_document",
+            "payload": {"text_value": "independent accepted text"},
+        },
+    ]
+    salvage.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    receipt = RecoveryService().merge_salvage(
+        synthetic_catalog, salvage, budget=RecoveryBudget(max_payload_bytes=1024)
+    )
+    assert receipt.rejected_units == receipt.admitted_units == 1
+    assert receipt.candidates_processed == 2
+    assert receipt.input_complete
+    with sqlite3.connect(synthetic_catalog / "context.sqlite3") as conn:
+        assert conn.execute(
+            "SELECT 1 FROM text_bodies WHERE text_value=?",
+            ("independent accepted text",),
+        ).fetchone()
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"extraction_provenance": 17},
+        {"provenance": []},
+        {"payload": {"full_oid": [], "native_type": "tree"}},
+        {"payload": {"full_oid": "0" * 40, "object_format": {}, "native_type": "tree"}},
+        {"payload": {"size": True}},
+    ],
+)
+def test_malformed_primitive_shape_is_one_rejection_not_merge_abort(
+    synthetic_catalog, tmp_path, bad
+):
+    row = {"candidate_type": "git_metadata", "payload": {}}
+    row.update(bad)
+    salvage = tmp_path / "types.jsonl"
+    salvage.write_text(
+        json.dumps(row)
+        + "\n"
+        + json.dumps(
+            {
+                "candidate_type": "context_document",
+                "payload": {"text_value": "later accepted"},
+            }
+        )
+        + "\n"
+    )
+    receipt = RecoveryService().merge_salvage(synthetic_catalog, salvage)
+    assert receipt.rejected_units == receipt.admitted_units == 1
+    assert receipt.input_complete
+
+
+def test_none_provenance_remains_a_qualified_observation(synthetic_catalog, tmp_path):
+    salvage = tmp_path / "null-provenance.jsonl"
+    salvage.write_text(
+        json.dumps(
+            {
+                "candidate_type": "git_metadata",
+                "payload": {},
+                "provenance": None,
+                "extraction_provenance": None,
+            }
+        )
+        + "\n"
+    )
+    receipt = RecoveryService().merge_salvage(synthetic_catalog, salvage)
+    assert receipt.observation_units == 1
+    assert receipt.input_complete
+
+
+def test_hash_verification_reserves_before_expenditure(monkeypatch):
+    work = recovery.RecoveryWorkBudget(work_limits={"verification_bytes": 1})
+
+    def forbidden_hash(*args, **kwargs):
+        pytest.fail("hash was computed after budget was exhausted")
+
+    monkeypatch.setattr(recovery.hashlib, "sha256", forbidden_hash)
+    with pytest.raises(recovery.CoreFailure, match="budget"):
+        recovery._hash_recovery_bytes(b"too much", work)
+
+
+@pytest.mark.parametrize("operation", ["merge", "copy"])
+def test_fifo_input_fails_in_separate_process_without_hanging(
+    synthetic_catalog, tmp_path, operation
+):
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    fifo = tmp_path / "input.fifo"
+    os.mkfifo(fifo)
+    destination = tmp_path / "forensic"
+    destination.mkdir()
+    source = tmp_path / "fifo-source"
+    source.mkdir()
+    os.mkfifo(source / "core.sqlite3")
+    script = """
+import sys
+from pathlib import Path
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter, _copy_forensic_files
+from repo_catalog.domain.recovery import RecoveryError
+try:
+    if sys.argv[1] == 'merge':
+        SQLiteRecoveryAdapter().merge_salvage(Path(sys.argv[2]), Path(sys.argv[3]))
+    else:
+        _copy_forensic_files(Path(sys.argv[4]), Path(sys.argv[5]), 1000)
+except RecoveryError as error:
+    assert 'regular file' in str(error), error
+    print('rejected without blocking')
+else:
+    raise AssertionError('FIFO accepted')
+"""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            script,
+            operation,
+            str(synthetic_catalog),
+            str(fifo),
+            str(source),
+            str(destination),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=3,
+        env={**os.environ, "PYTHONPATH": str(Path(recovery.__file__).parents[3])},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "rejected without blocking" in result.stdout
+
+
+def test_input_chunk_settles_measured_bytes_including_empty_eof():
+    reservations, settlements = [], []
+    records = list(
+        recovery._bounded_jsonl_records(
+            io.BytesIO(b"{}\n"),
+            max_line_bytes=1024,
+            max_bytes=1_000_000,
+            reserve=lambda unit, amount: reservations.append(amount),
+            settle=lambda unit, amount: settlements.append(amount),
+        )
+    )
+    assert records == [b"{}\n"]
+    assert reservations == [65536, 65536]
+    assert settlements == [3, 0]

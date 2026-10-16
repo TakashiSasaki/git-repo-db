@@ -352,6 +352,81 @@ def _bounded_json_loads(raw: str | bytes, budget: RecoveryBudget) -> Any:
     return obj
 
 
+def _bounded_utf8(value: Any, max_bytes: int) -> bytes:
+    if not isinstance(value, str):
+        raise ValueError("Context text_value must be a string")
+    if len(value) > max_bytes:
+        raise ValueError("Context text exceeds finite payload byte limit")
+    size = 0
+    for char in value:
+        scalar = ord(char)
+        if 0xD800 <= scalar <= 0xDFFF:
+            raise ValueError("Context text is not exact UTF-8")
+        size += (
+            1
+            if scalar < 0x80
+            else 2
+            if scalar < 0x800
+            else 3
+            if scalar < 0x10000
+            else 4
+        )
+        if size > max_bytes:
+            raise ValueError("Context text exceeds finite UTF-8 payload byte limit")
+    return value.encode("utf-8")
+
+
+def _hash_recovery_bytes(body: bytes, work) -> str:
+    work.require("verification_bytes", len(body))
+    digest = hashlib.sha256(body).hexdigest()
+    work.charge("verification_bytes", len(body))
+    return digest
+
+
+def _check_candidate_shape(record: dict, budget: RecoveryBudget) -> None:
+    payload = record.get("payload", {})
+    for key in ("extraction_provenance", "provenance"):
+        if record.get(key) is not None and not isinstance(record[key], dict):
+            raise ValueError(f"{key} must be an object when present")
+    string_fields = (
+        "object_format",
+        "full_oid",
+        "native_type",
+        "physical_copy_uuidv4",
+        "repository_uuidv4",
+        "capture_origin_uuidv4",
+        "capture_uuidv4",
+        "source",
+        "ref",
+        "root",
+        "target",
+        "path",
+        "digest_sha256",
+        "sha256",
+        "body_base64",
+        "proof_bundle",
+        "text_value",
+    )
+    for key in string_fields:
+        if (
+            key in payload
+            and payload[key] is not None
+            and not isinstance(payload[key], str)
+        ):
+            raise ValueError(f"payload.{key} must be a string when present")
+        if (
+            isinstance(payload.get(key), str)
+            and key not in ("body_base64", "proof_bundle", "text_value")
+            and len(payload[key]) > budget.max_payload_bytes
+        ):
+            raise ValueError(f"payload.{key} exceeds finite payload limit")
+    for key in ("capture_origin_uuidv4", "capture_uuidv4"):
+        if record.get(key) is not None and not isinstance(record[key], str):
+            raise ValueError(f"{key} must be a string when present")
+    if "size" in payload and (type(payload["size"]) is not int or payload["size"] < 0):
+        raise ValueError("payload.size must be a nonnegative integer")
+
+
 def _decode_bounded_base64(value: Any, max_bytes: int) -> bytes:
     if not isinstance(value, str) or len(value) > ((max_bytes + 2) // 3) * 4:
         raise ValueError("Base64 payload exceeds finite decoded-byte limit")
@@ -361,7 +436,9 @@ def _decode_bounded_base64(value: Any, max_bytes: int) -> bytes:
     return result
 
 
-def _decode_proof_bundle(value: Any, budget: RecoveryBudget, object_format: str):
+def _decode_proof_bundle(
+    value: Any, budget: RecoveryBudget, object_format: str, work=None
+):
     if not isinstance(value, str) or len(value) > budget.max_payload_bytes * 2:
         raise ValueError("Notes proof exceeds finite payload limit")
     bundle = _bounded_json_loads(value, budget)
@@ -388,7 +465,9 @@ def _decode_proof_bundle(value: Any, budget: RecoveryBudget, object_format: str)
                 native_type=entry[1],
                 body=body,
                 declared_size=len(body),
-                digest_sha256=hashlib.sha256(body).hexdigest(),
+                digest_sha256=_hash_recovery_bytes(body, work)
+                if work is not None
+                else hashlib.sha256(body).hexdigest(),
             )
         )
     return tuple(structures)
@@ -411,8 +490,8 @@ def _bounded_jsonl_records(
         reserve("input_scan_bytes", amount)
         block = stream.read(amount)
         if settle is not None:
-            settle("input_scan_bytes", amount)
-        scanned += amount
+            settle("input_scan_bytes", len(block))
+        scanned += len(block)
         if not block:
             if buffered:
                 yield bytes(buffered)
@@ -432,6 +511,18 @@ def _bounded_jsonl_records(
                 buffered.clear()
 
 
+def _open_salvage_input(path: Path):
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    fd = os.open(path, flags)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise RecoveryError("Salvage input must be a regular file")
+        return os.fdopen(fd, "rb")
+    except BaseException:
+        os.close(fd)
+        raise
+
+
 def _copy_forensic_files(catalog_dir: Path, forensic_dir: Path, max_bytes: int) -> None:
     """Bound actual streamed bytes, not only a racy preflight stat estimate."""
     copied = 0
@@ -442,7 +533,11 @@ def _copy_forensic_files(catalog_dir: Path, forensic_dir: Path, max_bytes: int) 
                 continue
             if source.is_symlink():
                 raise SalvageError(f"Refusing symlink source evidence: {source.name}")
-            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+            flags = (
+                os.O_RDONLY
+                | getattr(os, "O_NOFOLLOW", 0)
+                | getattr(os, "O_NONBLOCK", 0)
+            )
             with os.fdopen(os.open(source, flags), "rb") as src:
                 before = os.fstat(src.fileno())
                 if not stat.S_ISREG(before.st_mode):
@@ -2141,11 +2236,12 @@ class SQLiteRecoveryAdapter:
             def settle_input(unit, amount):
                 work_budget.charge(unit, amount)
 
-            with salvage_file.open("rb") as f:
+            with _open_salvage_input(salvage_file) as f:
                 records = _bounded_jsonl_records(
                     f,
                     max_line_bytes=b.max_payload_bytes * 8 + 8192,
-                    max_bytes=b.max_input_bytes,
+                    max_bytes=b.max_input_bytes
+                    - work_budget.usage.get("input_scan_bytes", 0),
                     reserve=reserve_input,
                     settle=settle_input,
                 )
@@ -2180,6 +2276,7 @@ class SQLiteRecoveryAdapter:
                             raise ValueError(
                                 "Candidate record and payload must be objects"
                             )
+                        _check_candidate_shape(record, b)
                     except Exception as e:
                         rejected += 1
                         rejections.append(
@@ -2303,7 +2400,18 @@ class SQLiteRecoveryAdapter:
                             continue
 
                         digest_sha = payload.get("digest_sha256")
-                        actual_sha = hashlib.sha256(body_bytes).hexdigest()
+                        try:
+                            actual_sha = _hash_recovery_bytes(body_bytes, work_budget)
+                        except CoreFailure as error:
+                            budget_exhausted = True
+                            unprocessed += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Work budget exhausted: {error}",
+                                }
+                            )
+                            continue
                         if digest_sha and digest_sha != actual_sha:
                             rejected += 1
                             rejections.append(
@@ -2398,7 +2506,7 @@ class SQLiteRecoveryAdapter:
                             )
                             obj_fmt = payload.get("object_format", "sha1")
                             structures = _decode_proof_bundle(
-                                proof_bundle_str, b, obj_fmt
+                                proof_bundle_str, b, obj_fmt, work_budget
                             )
                             cap_orig_id = payload.get(
                                 "capture_origin_uuidv4"
@@ -2492,7 +2600,7 @@ class SQLiteRecoveryAdapter:
                                 body=body_bytes,
                                 declared_size=payload.get("size", len(body_bytes)),
                                 digest_sha256=payload.get("digest_sha256")
-                                or hashlib.sha256(body_bytes).hexdigest(),
+                                or _hash_recovery_bytes(body_bytes, work_budget),
                             )
                             # Production admission checks role + exact bytes,
                             # then inserts Capture/role/body in one transaction.
@@ -2546,43 +2654,48 @@ class SQLiteRecoveryAdapter:
                             continue
 
                         text_val = payload.get("text_value")
-                        if text_val is None:
-                            rejected += 1
-                            rejections.append(
-                                {
-                                    "candidate_id": cand_id,
-                                    "reason": "Missing text_value in context candidate",
-                                }
-                            )
-                            continue
-
-                        expected_sha = payload.get("sha256")
-                        actual_sha = hashlib.sha256(
-                            text_val.encode("utf-8")
-                        ).hexdigest()
-                        if expected_sha and expected_sha != actual_sha:
-                            rejected += 1
-                            rejections.append(
-                                {
-                                    "candidate_id": cand_id,
-                                    "reason": "Text body SHA-256 mismatch",
-                                }
-                            )
-                            continue
-
-                        # Check if already admitted
-                        exists = ctx_conn.execute(
-                            "SELECT text_value FROM text_bodies WHERE sha256=?",
-                            (actual_sha,),
-                        ).fetchone()
                         try:
+                            text_bytes = _bounded_utf8(text_val, b.max_payload_bytes)
+                            expected_sha = payload.get("sha256")
+                            actual_sha = _hash_recovery_bytes(text_bytes, work_budget)
+                            if expected_sha and expected_sha != actual_sha:
+                                raise ValueError("Text body SHA-256 mismatch")
+                            exists = ctx_conn.execute(
+                                "SELECT length(CAST(text_value AS BLOB)) FROM text_bodies WHERE sha256=?",
+                                (actual_sha,),
+                            ).fetchone()
+                            if exists and exists[0] > b.max_payload_bytes:
+                                raise ValueError(
+                                    "Existing Context text exceeds finite payload limit"
+                                )
+                            # ContextStore hashes once; a new row additionally
+                            # passes the actual SQL SHA-256 CHECK function.
+                            context_hash_bytes = len(text_bytes) * (1 if exists else 2)
+                            work_budget.require(
+                                "verification_bytes", context_hash_bytes
+                            )
                             # ContextStore checks exact UTF-8 text even on a
                             # digest-key replay; do not bypass that check.
-                            ctx_store.text(text_val)
+                            try:
+                                ctx_store.text(text_val)
+                            finally:
+                                work_budget.charge(
+                                    "verification_bytes", context_hash_bytes
+                                )
                             if exists:
                                 replayed += 1
                             else:
                                 admitted += 1
+                        except CoreFailure as error:
+                            budget_exhausted = True
+                            unprocessed += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Work budget exhausted: {error}",
+                                }
+                            )
+                            continue
                         except Exception as e:
                             rejected += 1
                             rejections.append(
@@ -2609,9 +2722,9 @@ class SQLiteRecoveryAdapter:
 
                     # 6. Admitting Git Metadata Objects (repositories, git_objects, captures)
                     elif c_type == CandidateType.GIT_METADATA.value:
-                        prov_tbl = record.get("extraction_provenance", {}).get(
+                        prov_tbl = (record.get("extraction_provenance") or {}).get(
                             "table"
-                        ) or record.get("provenance", {}).get("table")
+                        ) or (record.get("provenance") or {}).get("table")
                         try:
                             if (
                                 prov_tbl == "repositories"
