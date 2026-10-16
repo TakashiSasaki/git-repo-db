@@ -150,6 +150,16 @@ def _open_regular_at(directory_fd: int, name: str) -> int:
     return fd
 
 
+def _bounded_directory_entries(fd: int, maximum: int) -> set[str]:
+    entries = set()
+    with os.scandir(fd) as iterator:
+        for entry in iterator:
+            entries.add(entry.name)
+            if len(entries) > maximum:
+                break
+    return entries
+
+
 def _read_bounded_fd(fd: int, limit: int) -> bytes:
     if os.fstat(fd).st_size > limit:
         raise RestoreValidationError("Manifest input exceeds finite byte limit")
@@ -1716,7 +1726,7 @@ class SQLiteRecoveryAdapter:
             try:
                 backup_fd = _open_directory_nofollow(backup_path)
                 handles.callback(os.close, backup_fd)
-                if set(os.listdir(backup_fd)) != {
+                if _bounded_directory_entries(backup_fd, 3) != {
                     "manifest.json",
                     "manifest.json.sha256",
                     "stores",
@@ -1798,7 +1808,9 @@ class SQLiteRecoveryAdapter:
                     dir_fd=backup_fd,
                 )
                 handles.callback(os.close, stores_fd)
-                if set(os.listdir(stores_fd)) != {f"{name}.sqlite3" for name in stores}:
+                if _bounded_directory_entries(stores_fd, len(stores)) != {
+                    f"{name}.sqlite3" for name in stores
+                }:
                     raise RestoreValidationError(
                         "Unexpected or undeclared files or WAL sidecars in stores directory"
                     )

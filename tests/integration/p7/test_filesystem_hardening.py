@@ -329,3 +329,24 @@ def test_activation_discards_derivative_sidecars(backup, tmp_path, repo_uuid):
     receipt = service.activate_catalog(fresh, tmp_path / "active")
     assert receipt.search_derivative_state == "initialized_empty"
     assert receipt.clean_operational
+
+
+def test_backup_directory_enumeration_is_bounded(
+    backup, tmp_path, repo_uuid, monkeypatch
+):
+    original = module.os.scandir
+
+    class Excessive:
+        def __enter__(self):
+            return iter(type("Entry", (), {"name": str(index)}) for index in range(5))
+
+        def __exit__(self, *args):
+            pass
+
+    monkeypatch.setattr(
+        module.os,
+        "scandir",
+        lambda fd: Excessive() if isinstance(fd, int) else original(fd),
+    )
+    with pytest.raises(RestoreValidationError, match="Unexpected files"):
+        RecoveryService().restore_backup(backup, tmp_path / "dest", repo_uuid)
