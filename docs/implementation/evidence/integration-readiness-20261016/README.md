@@ -63,3 +63,5 @@ python docs/implementation/evidence/integration-readiness-20261016/verify.py
 ```
 
 The driver writes `verification.json` and `merge-simulation.json`; it does not execute reviewed production code, contact GitHub, or merge/push refs. It creates unreferenced local synthetic Git objects to model reviewed history. Refresh remote refs separately and compare the frozen SHAs before relying on this report. Ruff lint/format of the driver and staged whitespace checks passed. Independent review is recorded separately after the frozen documentation checkpoint.
+
+Independent review found that the first evidence-driver revision compared installed-distribution counts without explicitly comparing all JUnit identities. The follow-up now enforces duplicate-free collection/XML/journal node-set equality and exactly one passed setup/call/teardown phase per installed node. The original immutable P7 evidence already contained independent per-node reconciliation; this correction strengthens this new review driver and does not change P7 acceptance scope.

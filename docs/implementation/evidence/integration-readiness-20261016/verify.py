@@ -39,6 +39,14 @@ def write(name, obj):
     (OUT / name).write_text(json.dumps(obj, indent=2) + "\n")
 
 
+def junit_key(node):
+    parts = node.split("::")
+    classname = parts[0][:-3].replace("/", ".")
+    if len(parts) > 2:
+        classname += "." + ".".join(parts[1:-1])
+    return classname, parts[-1]
+
+
 def run():
     inputs = j(P88, EVIDENCE + "independent/d/executable-inputs.json")
     for item in inputs:
@@ -174,9 +182,26 @@ def run():
             ).splitlines()
         ]
         starts = [r["nodeid"] for r in records if r["event"] == "start"]
+        collected = [
+            line.strip()
+            for line in gzip.decompress(blob(P88, prefix + "-collect.log.gz"))
+            .decode()
+            .splitlines()
+            if line.startswith("tests/") and "::" in line
+        ]
+        assert len(collected) == len(set(collected)) == 255
+        assert set(starts) == set(collected)
+        xml_keys = [(c.attrib["classname"], c.attrib["name"]) for c in cases]
+        assert len(xml_keys) == len(set(xml_keys)) == 255
+        assert set(xml_keys) == {junit_key(node) for node in collected}
         phases = [r for r in records if r["event"] == "phase"]
         assert len(starts) == len(set(starts)) == 255
         assert len(phases) == 765 and all(r["outcome"] == "passed" for r in phases)
+        assert collections.Counter((r["nodeid"], r["phase"]) for r in phases) == {
+            (node, phase): 1
+            for node in collected
+            for phase in ("setup", "call", "teardown")
+        }
         finish = [r for r in records if r["event"] == "finish"]
         assert len(finish) == 1 and finish[0]["exitstatus"] == 0
         installed[variant] = {
@@ -184,6 +209,7 @@ def run():
             "journal_unique_starts": len(set(starts)),
             "passed_phases": len(phases),
             "exitstatus": 0,
+            "identities_match_collection": True,
         }
     root_prefix = EVIDENCE + "executions/final-overlay-178ddba/"
     root_xml = ET.fromstring(gzip.decompress(blob(P88, root_prefix + "junit.xml.gz")))
@@ -210,13 +236,6 @@ def run():
         == 3748
     )
     assert set(collection) == set(root_starts)
-
-    def junit_key(node):
-        parts = node.split("::")
-        classname = parts[0][:-3].replace("/", ".")
-        if len(parts) > 2:
-            classname += "." + ".".join(parts[1:-1])
-        return classname, parts[-1]
 
     assert {(c.attrib["classname"], c.attrib["name"]) for c in root_cases} == {
         junit_key(node) for node in collection

@@ -493,13 +493,15 @@
       "junit_cases": 255,
       "journal_unique_starts": 255,
       "passed_phases": 765,
-      "exitstatus": 0
+      "exitstatus": 0,
+      "identities_match_collection": true
     },
     "sdist-wheel": {
       "junit_cases": 255,
       "journal_unique_starts": 255,
       "passed_phases": 765,
-      "exitstatus": 0
+      "exitstatus": 0,
+      "identities_match_collection": true
     }
   },
   "root_full_run": {
