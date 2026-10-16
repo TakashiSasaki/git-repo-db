@@ -144,7 +144,7 @@ If any retained byte fails hash or domain verification, backup/restore is immedi
    - Flush and `os.fsync()` each file descriptor.
    - Write `manifest.json` and `os.fsync()`.
    - Flush and `os.fsync()` the directory file descriptor.
-4. **Atomic Rename with No-Overwrite:** Atomically publish the temporary directory to the final destination path via `os.replace()` while verifying destination existence under directory locking, ensuring that concurrent destination creation is never overwritten.
+4. **Atomic Rename with No-Overwrite (`renameat2`):** Atomically publish the temporary directory to the final destination path via `renameat2(AT_FDCWD, src, AT_FDCWD, dst, RENAME_NOREPLACE)` on Linux (with atomic fallback to exclusive directory links). This eliminates check-then-replace race conditions and guarantees that concurrent destination publication attempts fail closed without overwriting existing data.
 
 ### 2.9 External Persistent Catalog-Stop Marker and Operation Fencing
 
@@ -159,19 +159,26 @@ When authoritative corruption is detected:
 
 - Upon entering recovery mode, suspect databases and WAL files are preserved strictly read-only.
 - Preserved suspect databases are never cleaned, vacuumed, repaired in place, or deleted.
+- Diagnostic extraction copies the suspect database, WAL, and SHM files into an isolated temporary workspace before opening them, guaranteeing that SQLite shared-memory initialization or WAL rollback cannot alter the suspect evidence files bit-for-bit.
 
 ### 2.11 Bounded Untrusted Typed Salvage Serialization
 
 - Explicit diagnostic salvage scans the suspect database table by table in streaming mode without buffering all rows in memory (`cursor.fetchall()` prohibited).
+- Execution is strictly bounded by a configurable `RecoveryBudget` with finite, non-infinite defaults:
+  - `max_input_records`: default 100,000 rows.
+  - `max_input_bytes`: default 512 MiB.
+  - `max_payload_bytes`: default 16 MiB per candidate.
+  - `max_json_depth`: default 16 levels.
 - Untrusted candidate records are serialized into typed JSONL records (`salvage_candidates.jsonl`):
   - `candidate_id`: Composite domain identity (e.g. `f"{object_format}:{full_oid}:{physical_copy_uuidv4}"` or `sha256`)
   - `candidate_type`: `"retained_metadata" | "retained_note" | "context_text" | "context_field" | "git_metadata"`
   - `capture_origin_uuidv4`: UUIDv4 (if present)
   - `capture_uuidv4`: UUIDv4 (if present)
-  - `provenance`: Preserved original provenance
+  - `extraction_provenance`: Forensic source coordinates (`{"store": ..., "table": ...}`)
+  - `provenance`: Preserved original domain provenance
   - `payload`: Typed data including exact payload bytes (encoded as base64 so exact representations are not lost)
   - `extraction_status`: `"clean" | "partial" | "corrupt_boundary"`
-- Resource bounds (`max_records`, `max_bytes`) enforce bounded execution. If a table or page is unreadable, it is recorded in `salvage_report.json` as `unreadable_scope`, without aborting salvage of independent readable units.
+- Resource bounds enforce finite execution. If a table or page is unreadable, it is recorded in `salvage_report.json` as `unreadable_scope`, without aborting salvage of independent readable units.
 
 ### 2.12 Receiver-Checked Merge into a Fresh Destination
 
@@ -181,6 +188,14 @@ When authoritative corruption is detected:
   - Evidenced Notes via `Core.admit_note`.
   - Context text bodies via `ContextStore.text`.
   - Context fields via `ContextStore.admit_field`.
+- Every candidate produces exactly one accurately reported disposition:
+  - `admitted`: Genuinely new authoritative domain unit written to destination.
+  - `replayed`: Exact replay of an already admitted domain unit.
+  - `observation`: Accepted as a qualified non-authoritative recovery observation without domain mutation.
+  - `rejected`: Refused due to validation or domain constraint failure.
+  - `deferred`: Deferred due to unresolved prerequisite dependencies.
+  - `unprocessed`: Not processed due to budget or resource exhaustion.
+- Fallthrough non-mutating candidates are counted as `observation_units` and never falsely reported as `admitted_units`.
 - Every candidate is re-checked against ADR 0022 notes-role proof, ADR 0028 classified times, ADR 0018 UUIDv4 capture rules, and ADR 0020/0021 conflict preservation.
 - Candidates that fail validation or domain constraints are rejected and logged in `merge_audit.json`; valid independent units are committed into destination tables, demonstrably persisting newly admitted domain rows. Rejected candidates cause no mutation.
 
