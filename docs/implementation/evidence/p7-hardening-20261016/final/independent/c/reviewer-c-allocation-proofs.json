@@ -1,0 +1,49 @@
+[
+  {
+    "probe": "sqlite_blob_pre_materialization",
+    "pass": true,
+    "peak_python_bytes": 162816,
+    "receipt": {
+      "catalog_path": "/tmp/reviewer-c-allocation-q60yjms2/suspect",
+      "candidate_count": 0,
+      "clean_count": 0,
+      "partial_count": 0,
+      "corrupt_count": 0,
+      "unreadable_scope": [
+        "core:candidate (enumeration incomplete: string or blob too big)"
+      ],
+      "output_file": "/tmp/reviewer-c-allocation-q60yjms2/large-sqlite.jsonl",
+      "partial": true
+    }
+  },
+  {
+    "probe": "jsonl_pre_decode_without_suffix_scan",
+    "pass": true,
+    "receipt": {
+      "destination_path": "/tmp/reviewer-c-allocation-q60yjms2/fresh",
+      "candidates_processed": 0,
+      "admitted_units": 0,
+      "rejected_units": 0,
+      "replayed_units": 0,
+      "observation_units": 0,
+      "deferred_units": 0,
+      "unprocessed_units": 1,
+      "input_complete": false,
+      "unprocessed_count_exact": false,
+      "rejections": [
+        {
+          "reason": "Input incomplete: JSONL line exceeds finite envelope; unread suffix unknown"
+        }
+      ]
+    },
+    "usage": {
+      "input_bytes": 0,
+      "input_records": 0,
+      "input_scan_bytes": 65536,
+      "metadata_units": 0,
+      "proof_steps": 0,
+      "verification_bytes": 0
+    },
+    "total_file_bytes": 10000000
+  }
+]

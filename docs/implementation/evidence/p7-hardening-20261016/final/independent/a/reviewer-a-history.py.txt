@@ -1,0 +1,24 @@
+import sqlite3,tempfile
+from pathlib import Path
+from repo_catalog.adapters.sqlite.p1_schema import initialize,connect
+from repo_catalog.adapters.sqlite.p1_context import ContextStore
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.p1_context import ResourceKey,CoverageScope,CoverageClaim,canonical
+root=Path(tempfile.mkdtemp(prefix='reviewer-a-history-'))
+repo='11111111-1111-4111-8111-111111111111';instance='22222222-2222-4222-8222-222222222222';service='33333333-3333-4333-8333-333333333333'
+initialize(root/'context.sqlite3','context',repo,instance)
+db=connect(root/'context.sqlite3','context')
+db.execute('INSERT INTO providers VALUES(?,?,?)',(service,'github','{}'))
+key=ResourceKey(service,'issue','42'); provenance=canonical({'source':'independent-provider','evidence':'terminal42'})
+store=ContextStore(db);store.resource(key,None)
+scope=CoverageScope.resource(key,'reviews');store.scope(scope)
+claim=CoverageClaim(scope,20,'complete');store.admit_coverage(claim)
+db.execute('INSERT INTO collections VALUES(?,?,?,?,?,?)',(*key.coordinates(),'reviews',provenance,'{}'))
+for stamp in (10,19):
+ terminal=(*key.coordinates(),'reviews',provenance,stamp,'complete','[]')
+ db.execute('INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)',terminal)
+ db.execute('INSERT INTO coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',(scope.owner_kind,scope.encoded,20,'complete',*terminal))
+assert db.execute('SELECT count(*) FROM coverage_proofs').fetchone()[0]==2
+store.text('')
+db.close()
+print('historical terminal and exact empty UTF8 accepted',SQLiteRecoveryAdapter()._validate_and_summarize_context(root/'context.sqlite3'))

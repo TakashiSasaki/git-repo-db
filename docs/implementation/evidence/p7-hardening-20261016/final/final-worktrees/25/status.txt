@@ -1,0 +1,2 @@
+# branch.oid 7e1883c8bcf00d584dc369b7b9c8acc94098bf3d
+# branch.head fix/p7-stored-copy-stop

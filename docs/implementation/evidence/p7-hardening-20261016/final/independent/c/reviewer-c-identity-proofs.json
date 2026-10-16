@@ -1,0 +1,65 @@
+[
+  {
+    "probe": "invalid_identity",
+    "identity": "../escape",
+    "pass": true
+  },
+  {
+    "probe": "invalid_identity",
+    "identity": "x/y",
+    "pass": true
+  },
+  {
+    "probe": "invalid_identity",
+    "identity": "x\\y",
+    "pass": true
+  },
+  {
+    "probe": "invalid_identity",
+    "identity": "%2e%2e",
+    "pass": true
+  },
+  {
+    "probe": "invalid_identity",
+    "identity": "a\u0000b",
+    "pass": true
+  },
+  {
+    "probe": "invalid_identity",
+    "identity": "\u00e9",
+    "pass": true
+  },
+  {
+    "probe": "invalid_identity",
+    "identity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "pass": true
+  },
+  {
+    "probe": "invalid_identity",
+    "identity": 1,
+    "pass": true
+  },
+  {
+    "probe": "budget_escalation",
+    "pass": true
+  },
+  {
+    "probe": "explicit_independent_request",
+    "pass": true
+  },
+  {
+    "probe": "strict_version",
+    "target": "p1-recovery-request-fixed.json",
+    "pass": true
+  },
+  {
+    "probe": "strict_version",
+    "target": "p1-recovery-requests.json",
+    "pass": true
+  },
+  {
+    "probe": "strict_version",
+    "target": "p1-recovery-requests.initialized",
+    "pass": true
+  }
+]

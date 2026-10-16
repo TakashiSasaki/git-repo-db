@@ -1,0 +1,30 @@
+{
+  "commit": "2f974558ee9c7ab85e88f87a5a6bc1836df601f3",
+  "recorded_at_utc": "2026-10-16T15:05:59.193051+00:00",
+  "results": [
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_utf8.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    },
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_ref.py"
+      ],
+      "exit_code": 0,
+      "assertions_passed": true
+    },
+    {
+      "command": [
+        "/workspace/p7/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-a-independent/positive_history_binary.py"
+      ],
+      "exit_code": 1,
+      "assertions_passed": false
+    }
+  ]
+}

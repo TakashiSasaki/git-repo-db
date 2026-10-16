@@ -1,0 +1,32 @@
+"""Hard crash at pristine registry creation should be safely resumable."""
+import json
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import tempfile
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+
+CHILD=r'''
+from pathlib import Path
+import json,os,signal,sys
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite import recovery_budget
+original=recovery_budget._write
+if sys.argv[3]=='crash':
+    def write(path,data):
+        original(path,data)
+        if path.name=='p1-recovery-requests.json' and data=={'version':1,'requests':{}}:
+            os.kill(os.getpid(),signal.SIGKILL)
+    recovery_budget._write=write
+receipt=SQLiteRecoveryAdapter().merge_salvage(Path(sys.argv[1]),Path(sys.argv[2]),request_id='init-crash')
+print(json.dumps({'admitted':receipt.admitted_units,'replayed':receipt.replayed_units}),flush=True)
+'''
+with tempfile.TemporaryDirectory(prefix='reviewer-c-init-crash-') as td:
+    root=Path(td);cat=root/'catalog';cat.mkdir()
+    for role in ('core','context'):initialize(cat/f'{role}.sqlite3',role,'01c72bce-39ee-4677-98d4-c5a642020e98','1275bbae-7ab3-4321-9a1e-e2dc272af785')
+    salvage=root/'one.jsonl';salvage.write_text('{"candidate_type":"context_document","payload":{"text_value":"init crash witness"}}\n')
+    crashed=subprocess.run([sys.executable,'-c',CHILD,str(cat),str(salvage),'crash'],capture_output=True,text=True,timeout=10)
+    resumed=subprocess.run([sys.executable,'-c',CHILD,str(cat),str(salvage),'retry'],capture_output=True,text=True,timeout=10)
+    result={'probe':'pristine_registry_creation_sigkill_resume','pass':crashed.returncode==-signal.SIGKILL and resumed.returncode==0,'crash_exit':crashed.returncode,'retry_exit':resumed.returncode,'retry_stdout':resumed.stdout,'retry_stderr':resumed.stderr}
+    print(json.dumps(result,indent=2))

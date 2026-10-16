@@ -1,0 +1,6 @@
+{
+  "probe": "stopped_extraction_drains_existing_context_writer",
+  "pass": true,
+  "copy_cut_reached_while_writer_held": false,
+  "writer_unwind": "CoordinationError:catalog:RECOVERY_REQUIRED: "
+}

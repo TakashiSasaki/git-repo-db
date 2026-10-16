@@ -1,0 +1,5 @@
+Using Python 3.12.14 environment at: wheel-venv
+Resolved 1 package in 7ms
+Prepared 1 package in 67ms
+Installed 1 package in 3ms
+ + repo-catalog==0.2.0 (from file:///workspace/p7-review-d-evidence/final-178/dist/repo_catalog-0.2.0-py3-none-any.whl)

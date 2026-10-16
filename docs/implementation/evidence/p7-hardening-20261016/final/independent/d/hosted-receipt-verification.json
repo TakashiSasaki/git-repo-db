@@ -1,0 +1,17 @@
+{
+  "run_id": "38922059845",
+  "receipt_zip_sha256": "5a85672b47be48e544abe1b58c9618e77277f9a60050f7264ddd6fc123e2bd27",
+  "receipt_zip_bytes": 67599,
+  "verified_index_members": 21,
+  "binding": {
+    "feature_sha": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+    "head": "d9fc2feb8ea6fed433a78646a51cb89cf32106a2",
+    "run_attempt": "1",
+    "run_id": "38922059845",
+    "tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b"
+  },
+  "acceptance_status": "development_checks_passed",
+  "full_acceptance": false,
+  "actual_runtime_tests_executed": 0,
+  "tree_equals_frozen_feature": true
+}

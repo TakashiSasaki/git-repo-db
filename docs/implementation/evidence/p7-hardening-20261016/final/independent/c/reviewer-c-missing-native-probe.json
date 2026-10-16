@@ -1,0 +1,8 @@
+{
+  "result": "raised",
+  "error_type": "CorruptionDetectedError",
+  "error": "Confirmed destination Core corruption: required retained metadata copy is missing",
+  "remaining_copies": 0,
+  "persistent_stop": true,
+  "pass": true
+}

@@ -1,0 +1,7 @@
+{
+  "result": "raised",
+  "code": null,
+  "error": "Confirmed destination Context corruption: Existing retained Context text SHA-256 mismatch",
+  "persistent_stop": true,
+  "pass": true
+}

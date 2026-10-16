@@ -1,0 +1,133 @@
+{
+  "head": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "root_full_run": {
+    "selected_nodes": 3748,
+    "junit_nodes": 3748,
+    "journal_starts": 3748,
+    "phase_records": 11242,
+    "status_counts": {
+      "passed": 3517,
+      "failure": 229,
+      "error": 2
+    },
+    "journal_finish": {
+      "event": "finish",
+      "status": "failed",
+      "exitstatus": 1,
+      "timestamp": 1792164828.953273
+    },
+    "exactly_once": true
+  },
+  "scope_counts": {
+    "P1-P6 and compatibility integration": {
+      "passed": 937
+    },
+    "Other selected project tests": {
+      "passed": 2298,
+      "failure": 228
+    },
+    "P7 integration": {
+      "passed": 255
+    },
+    "Other packaging": {
+      "error": 2,
+      "passed": 20
+    },
+    "P7 installed distribution cases": {
+      "passed": 2
+    },
+    "Documentation site unit": {
+      "passed": 5,
+      "failure": 1
+    }
+  },
+  "verified_executable_input_count": 368,
+  "executable_input_sha256": "ba42b5de4320296b557d8427757e50a9c822854804281d05b579175562ad01cb",
+  "comparison_summary": {
+    "same_normalized_message": 231,
+    "same_source_location": 231,
+    "total": 231
+  },
+  "classification_counts": {
+    "preexisting_public_runtime_failure": 228,
+    "environment_missing_offline_wheelhouse": 2,
+    "environment_missing_headless_chrome": 1
+  },
+  "preexisting_runtime_details": {
+    "original_known_five": 5,
+    "additional_reproduced_runtime_failures": 223,
+    "missing_table_failures": 221,
+    "same_assertion_failures": 7,
+    "all_same_message_and_source_location": true
+  },
+  "original_known_five": [
+    "tests/integration/test_catalog3_git_runtime.py::test_interrupted_fixed_refs_resume_without_new_remote_observation",
+    "tests/integration/test_catalog3_model_cli.py::test_cli_retires_http_reparse_without_mutation_or_remote_observation",
+    "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[None]",
+    "tests/integration/test_catalog3_portable_identity.py::test_no_usable_source_rejects_before_job_and_observation[first]",
+    "tests/integration/test_catalog3_queries.py::test_backup_restore_requires_absent_destination_without_removing_empty_dir"
+  ],
+  "p7_node_set_matches_independent_installed_wheel_and_sdist_runs": true,
+  "limits": [
+    "Main batches reproduce all failed/error nodes, not every passing main node and not a successful complete main suite.",
+    "Original final full run remains exit1 with229failures and2errors; later packaging passes do not rewrite that result.",
+    "Same message/callsite establishes reproduced symptom equivalence; broad diagnosis of all public-runtime root causes and repairs is outside this P7 task.",
+    "Overlay rerun supersedes resource-contaminated tmpfs runs for final outcome; earlier failed/ENOSPC runs remain evidence.",
+    "Default live/benchmark marker exclusions remain explicit; not a full release qualification or actual host-power-loss proof."
+  ],
+  "default_marker_deselections": [
+    "tests/e2e/test_github_sync.py::test_nested_pagination_stress_workload",
+    "tests/live/test_smoke.py::test_selected_repository"
+  ],
+  "main_failed_node_reproduction": {
+    "unique_nodes": 231,
+    "batches": [
+      {
+        "directory": "/workspace/p7-evidence-20261016/main-overlay-batch1",
+        "selected_nodes": 149,
+        "outcomes": {
+          "failure": 149
+        }
+      },
+      {
+        "directory": "/workspace/p7-evidence-20261016/main-overlay-batch2",
+        "selected_nodes": 75,
+        "outcomes": {
+          "failure": 75
+        }
+      },
+      {
+        "directory": "/workspace/p7-evidence-20261016/main-overlay-batch3",
+        "selected_nodes": 6,
+        "outcomes": {
+          "failure": 4,
+          "error": 2
+        }
+      },
+      {
+        "directory": "/workspace/p7-evidence-20261016/main-overlay-batch4",
+        "selected_nodes": 1,
+        "outcomes": {
+          "failure": 1
+        }
+      }
+    ]
+  },
+  "supplemental_generic_distribution": [
+    {
+      "directory": "/workspace/p7-evidence-20261016/distribution-corrected",
+      "outcomes": {
+        "failure": 2
+      },
+      "exit_code": 1
+    },
+    {
+      "directory": "/workspace/p7-evidence-20261016/distribution-final",
+      "outcomes": {
+        "passed": 2
+      },
+      "exit_code": 0
+    }
+  ]
+}

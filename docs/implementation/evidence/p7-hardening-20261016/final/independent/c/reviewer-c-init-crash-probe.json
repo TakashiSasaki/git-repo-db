@@ -1,0 +1,8 @@
+{
+  "probe": "pristine_registry_creation_sigkill_resume",
+  "pass": true,
+  "crash_exit": -9,
+  "retry_exit": 0,
+  "retry_stdout": "{\"admitted\": 1, \"replayed\": 0}\n",
+  "retry_stderr": ""
+}

@@ -558,3 +558,154 @@ corrected execution and Provider-order cases that already passed the baseline.
   from a clean committed archive with evidence stored outside that source tree;
   install wheel and sdist-wheel into isolated environments outside checkout.
   This is packaging input hygiene, not a source cleanup or deletion recipe.
+
+## Recovery replay must pass authoritative admission checks
+
+A retained-byte digest match alone bypassed native type/size checks, Capture
+repository identity, role proofs and physical-copy distinctions in P7 salvage.
+The focused baseline counterexamples and corrected executions are retained in
+[the replay checkpoint](../../../docs/implementation/evidence/p7-replay/README.md).
+
+- Run the same typed production admission on replay as on new input, including
+  immutable-row equality, before counting replay. Work performed by revalidation
+  is still actual work. A new physical copy is not an exact replay; missing
+  original identity cannot be repaired by inventing a copy UUID.
+- Validate every original Capture binding coordinate, including repository,
+  source/ref/root and both UUIDs. Compare duplicate envelope/payload coordinates;
+  forensic extraction provenance is not original domain provenance.
+- Let the typed Notes unit install Capture, role and body atomically. Independently
+  admitting Capture before proof/body validation leaves authority after rejection.
+- For each mutation in the identity/role/body matrix, compare all authoritative
+  tables before and after rejection, then include successful exact replay and new
+  independent-copy controls. This avoids tests that pass solely by refusing all
+  candidates. Include zero-byte bodies/text as legitimate input controls.
+
+Use `uv run pytest tests/integration/p7/test_exact_replay.py -q` for the focused
+checks. This procedure does not grant authenticity to attributed reports, imply
+full typed recovery of unsupported Context resource candidates, or establish
+host-power-loss guarantees.
+### P7 recovery-request reservation boundary
+
+For disposable fresh-destination salvage merge, keep request accounting outside
+Operational/Search. Bind a canonical path-safe request ID to one immutable finite
+contract; serialize its complete attempts with a permanent process lock. Reserve
+before input or admission work, fsync the reservation checkpoint before updating
+its report, and retain the greater checkpoint expenditure after interrupted
+report publication. Settle a successful live measurement with the reverse order
+(report first, checkpoint second), so interruption cannot refund uncertain work. A missing/corrupt record refuses continuation; never interpret
+it as zero. Explicit new work must use a distinct ID. Do not infer that removing
+all external accounting evidence is detectable or that process-crash tests prove
+host power-loss durability.
+
+Reproduce with `uv run pytest tests/integration/p7/test_durable_budget.py -q`.
+The suite uses spawned processes and SIGKILL before work, after work and after
+actual authoritative admission, concurrent retries, lowered reports, missing
+records, invalid IDs and Operational/Search deletion. Keep these counterexamples
+at the real work boundary when changing the reader or admission code.
+## Target recovery: bound materialization and preserve unknown scope
+
+When extending P7 salvage, keep input limits ahead of allocation. A `SELECT *`
+followed by a Python `len()` check has already materialized an untrusted SQLite
+row. Apply finite SQLite length/column/SQL/VM limits and bounded projections.
+SQLite can reject a very large source row before a CASE projection runs; report
+that table as unreadable/incomplete rather than inventing a recovered candidate
+or diagnosing confirmed corruption from `SQLITE_TOOBIG`.
+
+Reserve bounded binary JSONL chunks before reads. Check lexical JSON nesting and
+element counts before `json.loads`, then validate the parsed shape. Bound base64
+and proof hex representations before decoding. Charge malformed/rejected input
+as actual request work. At a limit, stop reading; do not scan an arbitrary suffix
+just to count omissions. Mark omitted counts as lower bounds and enumeration as
+incomplete. Count an unread suffix only when prefetched/buffered bytes or the
+regular file's size and current offset establish that it exists; uncertainty
+alone cannot justify inventing another omitted candidate. An oversized partial candidate must also make the extraction receipt
+partial. Keep serialization/output budgets separate from proof of completeness.
+
+Reproduce these boundaries with `python -m pytest
+ tests/integration/p7/test_bounded_input.py` (one shell line). The tests cover
+Python allocation for BLOB/text, SQLite unreadable scope, streamed-copy growth,
+JSON limits and rejected-input work. They do not establish host power-loss
+semantics or authorize recovery on real catalogs; use disposable synthetic
+catalogs and retain independent process/filesystem evidence for those claims.
+## P7 standalone snapshot and descriptor lessons
+
+A SQLite backup can preserve WAL journal mode even though its data is fully in
+its main database. Subsequent read-only validation can then create zero-byte WAL
+and SHM sidecars. For a standalone P7 backup artifact, switch the **new snapshot**
+to DELETE journal mode before closing it; do not change the suspect source's
+mode or delete its journals. Reject undeclared backup sidecars during restore
+rather than accepting unmanifested bytes. Verify with
+`pytest tests/integration/p7/test_filesystem_hardening.py tests/integration/p7/test_consistent_backup.py`.
+
+For untrusted restore inputs, pin directory and regular-file descriptors with
+no-follow opens, bound manifest reads, and hash the bytes actually copied.
+A prior file hash followed by a pathname-based copy does not bind the copied
+bytes. Use directory-relative publication and fsync; distinguish a failure after
+rename from an unpublished result. The regression tests include symlink/parent
+substitution, separate-process no-overwrite publication and SIGKILL during
+copying. These verify Linux local-filesystem ordering and process interruption,
+not physical host power-loss durability or protection against privileged writers.
+
+An activation directory pin must remain open through validation, derivative
+initialization, both catalog gates and locator publication. Opening and closing a
+directory descriptor before validation does not pin later pathname operations.
+Perform catalog I/O through the retained descriptor and compare the advertised
+pathname's inode before and after publication. On a detected substitution, reject
+the receipt and restore the prior locator (or remove the newly created locator).
+Exercise both publication sides and both absent/existing locators with
+`pytest tests/integration/p7/test_filesystem_hardening.py -k catalog_path_swap`.
+These checks do not make directory names immutable against arbitrary
+noncooperating writers after activation; preserve the supported cooperating-process
+namespace contract.
+
+When an incoming Context text digest matches an existing key, verify the stored
+exact UTF-8 bytes as well. Rejecting a valid candidate after finding a damaged
+stored digest is insufficient: publish the recovery stop while the catalog writer
+cut is still held. Reserve byte allocation and hashing/comparison work before
+fetching the stored BLOB; read its size and body in one transaction. A finite
+verification refusal or invalid incoming digest proves no stored corruption.
+The focused controls are `tests/integration/p7/test_context_corruption_stop.py`.
+
+The same existing-authority rule applies to a retained Git physical copy: before
+calling a matching key replayed, boundedly verify that stored native bytes/type/
+size/digest and retained Notes Capture/root/role still validate. An immutable
+coordinate conflict alone does not prove either side corrupt. Recheck only the
+selected copy under the writer cut; reserve allocation before fetching bodies
+and use the existing actual-verification meter. Finite proof-parser refusals must
+remain typed resource refusals, never confirmed stored corruption. Regression
+controls are `tests/integration/p7/test_stored_copy_corruption_stop.py`.
+### P7 trusted CHECK and TEXT revalidation
+
+Do not equate read-only `PRAGMA integrity_check` with application-domain CHECK
+validation. A disposable Core with exact schema but invalid `captures.ref`
+returned `ok` through a read-only connection while a writable connection exposed
+its failed UDF CHECK. Decode bounded chunks of actual stored TEXT bytes before
+SQLite/Python UDF decoding, then explicitly evaluate every CHECK expression from
+the trusted packaged CREATE TABLE SQL. Parse balanced parentheses and SQL quoting
+and comments; never execute recovered SQL. Use `WHERE NOT(expression)` so NULL
+retains SQLite's CHECK meaning. Keep binary Notes/native BLOBs outside UTF-8
+validation and preserve empty text and split multibyte sequences.
+
+Reproduce with `uv run pytest tests/integration/p7/test_stored_constraints.py -q`.
+Those regressions retain exact schema, corrupt Capture refs and metadata TEXT,
+exercise a valid-UTF8 false UDF CHECK, and include binary Notes/empty/long Unicode
+positive controls. The procedure verifies stored authority; it grants no source
+attribution authenticity or host power-loss guarantee.
+Keep work dimensions distinct: a reserved JSONL read does not reserve decoded
+body input, and a record counter does not charge nominal domain lookup/admission
+work. Reserve decoded base64/hex/UTF-8 byte bounds before allocation and settle
+measured success; retain conservative failed-decode expenditure. Production
+Core processing repeats actual input work and keeps its own charges. Give test
+fixtures enough allowance for both real passes rather than exempting decoding.
+Verify nominal repository/object/Capture replays and rejected candidates against
+their own finite metadata/input ceilings, using
+`python -m pytest tests/integration/p7/test_work_dimensions.py`.
+
+Treat missing required destination bytes as corruption before salvage can
+reinsert them: an existing text FK claim proves its Context body is required;
+existing intrinsic claims/groups prove their metadata physical copy is required.
+A Notes role alone does not prove a body was retained. When dependency columns
+lack a complete lookup index, reserve finite SQLite VM work before the lookup,
+settle only live measured work, and refuse at the cap without inferring absence.
+Use `tests/integration/p7/test_missing_required_authority.py` to distinguish
+missing required authority, genuinely new content and finite-query refusal.

@@ -1,0 +1,6 @@
+healthy authority staging-only defect does not stop
+Traceback (most recent call last):
+  File "/workspace/recovery-evidence-20261016/reviewer-a-environment.py", line 30, in <module>
+    else:raise AssertionError('locked authority falsely diagnosed healthy/corrupt')
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: locked authority falsely diagnosed healthy/corrupt

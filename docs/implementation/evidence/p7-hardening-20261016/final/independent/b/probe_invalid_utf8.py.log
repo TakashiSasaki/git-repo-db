@@ -1,0 +1,2 @@
+CorruptionDetectedError Confirmed authoritative context corruption (authoritative_data): Stored authoritative context TEXT text_bodies.text_value is invalid UTF-8 STOPPED True
+CAUSE BackupValidationError('Stored authoritative context TEXT text_bodies.text_value is invalid UTF-8')

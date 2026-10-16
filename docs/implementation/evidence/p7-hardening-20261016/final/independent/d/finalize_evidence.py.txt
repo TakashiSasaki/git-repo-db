@@ -1,0 +1,17 @@
+import json,hashlib,shutil,xml.etree.ElementTree as ET
+from pathlib import Path
+p=Path('/workspace/p7-review-d-evidence/final-178');results={}
+for kind in ['wheel','sdist-wheel']:
+ collected=[line.strip() for line in (p/(kind+'-collect.log')).read_text().splitlines() if line.startswith('tests/integration/p7/') and '::' in line]
+ tree=ET.parse(p/(kind+'-junit.xml'));junit=[e.attrib['classname'].replace('.','/')+'.py::'+e.attrib['name'] for e in tree.iter('testcase')]
+ journal=[json.loads(line) for line in (p/(kind+'-journal.jsonl')).read_text().splitlines()];starts=[e['nodeid'] for e in journal if e['event']=='start'];phases=[e for e in journal if e['event']=='phase']
+ assert len(collected)==len(set(collected))==len(junit)==len(set(junit))==len(starts)==len(set(starts))==255
+ assert sorted(collected)==sorted(junit)==sorted(starts)
+ assert len(phases)==765 and all(e['outcome']=='passed' for e in phases)
+ assert len([e for e in journal if e['event']=='finish'])==1 and journal[-1]['exitstatus']==0
+ assert not list(tree.iter('failure')) and not list(tree.iter('error')) and not list(tree.iter('skipped'))
+ results[kind]={'collected':255,'junit_cases':255,'journal_starts':255,'passed_phases':765,'failures':0,'errors':0,'skips':0,'exactly_once':True,'node_ids':collected}
+(p/'node-reconciliation.json').write_text(json.dumps(results,indent=2)+'\n')
+for name in ['run_installed_acceptance.py','probe_new_role_replay.py','finalize_evidence.py']:
+ shutil.copy2(p.parent/name,p/name)
+(p/'test-environment-overrides.json').write_text(json.dumps({'note':'Exact runner source retained; inherited PYTHONPATH/PYTHONHOME/bootstrap and GH credentials removed. Each installed test env explicitly sets VIRTUAL_ENV and prepends its bin directory to PATH. Pytest pythonpath ini overridden empty. Third-party test/runtime deps installed from committed uv.lock via --active --no-install-project, then wheel installed normally with --no-deps; no editable project installed.','head':'178ddbaa8fa06f52aff4993730205c5a38da91f4','concurrency':'Root acceptance ran concurrently; elapsed times are observations, not a comparative benchmark.'},indent=2)+'\n')

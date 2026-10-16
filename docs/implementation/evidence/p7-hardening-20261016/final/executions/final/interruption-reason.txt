@@ -1,0 +1,1 @@
+Interrupted nonfinal full run after independent boundary audit reproduced missing registrations for two isolated P7 modules. Preserve all output; complete suite will be rerun after c91321c audit correction. No passing full-suite result is claimed for this run.

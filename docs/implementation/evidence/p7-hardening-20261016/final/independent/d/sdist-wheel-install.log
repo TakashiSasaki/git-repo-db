@@ -1,0 +1,5 @@
+Using Python 3.12.14 environment at: sdist-wheel-venv
+Resolved 1 package in 11ms
+Prepared 1 package in 63ms
+Installed 1 package in 3ms
+ + repo-catalog==0.2.0 (from file:///workspace/p7-review-d-evidence/final-178/sdist-wheel/repo_catalog-0.2.0-py3-none-any.whl)

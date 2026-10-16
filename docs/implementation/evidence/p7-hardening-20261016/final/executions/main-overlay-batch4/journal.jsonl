@@ -1,0 +1,5 @@
+{"event":"start","nodeid":"tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation","worker_id":"master","timestamp":1792165023.866042}
+{"event":"phase","nodeid":"tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation","phase":"setup","outcome":"passed","duration":0.002484,"worker_id":"gw0","timestamp":1792165023.868895}
+{"event":"phase","nodeid":"tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation","phase":"call","outcome":"failed","duration":27.018288,"worker_id":"gw0","timestamp":1792165050.915634}
+{"event":"phase","nodeid":"tests/unit/test_build_docs_site.py::test_staging_allowlist_and_transformation","phase":"teardown","outcome":"passed","duration":0.000268,"worker_id":"gw0","timestamp":1792165050.916602}
+{"event":"finish","status":"failed","exitstatus":1,"timestamp":1792165051.02393}

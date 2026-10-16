@@ -1,0 +1,39 @@
+{
+  "head": "b86c46761ec0c3f3843a19edd4f3e106ef5ef58c",
+  "command": [
+    "uv",
+    "run",
+    "--no-sync",
+    "pytest",
+    "-n",
+    "4",
+    "-q",
+    "--basetemp",
+    "/workspace/p7-main-overlay-batch3",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml",
+    "/workspace/p7-evidence-20261016/main-overlay-batch3/junit.xml",
+    "--journal",
+    "/workspace/p7-evidence-20261016/main-overlay-batch3/journal.jsonl",
+    "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-code-check]",
+    "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-detail]",
+    "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-list]",
+    "tests/integration/test_publication_free_current_api.py::test_valid_resource_and_empty_terminal_receipt_need_no_operational_rows",
+    "tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]",
+    "tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]"
+  ],
+  "cwd": "/workspace/git-repo-db",
+  "exit_code": 1,
+  "elapsed_seconds": 1.5660996437072754,
+  "TMPDIR": "/workspace/p7-acceptance-temp",
+  "selected_nodeids": [
+    "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-code-check]",
+    "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-detail]",
+    "tests/integration/test_phase1_retirement.py::test_rejected_rest_original_is_absent_and_retry_makes_a_new_request[schema-pr-list]",
+    "tests/integration/test_publication_free_current_api.py::test_valid_resource_and_empty_terminal_receipt_need_no_operational_rows",
+    "tests/packaging/test_distribution.py::test_wheel_sdist_cli[sdist-wheel]",
+    "tests/packaging/test_distribution.py::test_wheel_sdist_cli[wheel]"
+  ],
+  "scope": "Independent main reproduction of actual feature failures; not a full main acceptance run or an exclusion from the complete feature run."
+}

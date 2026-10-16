@@ -1,0 +1,6 @@
+{
+  "observed_full": true,
+  "df_h": "/tmp 8.8G used 8.8G available4K; /workspace overlay32G available28G",
+  "classification": "Resource-contaminated execution; failures/errors retained, not final acceptance. Root will rerun complete immutable source with explicit fresh overlayfs basetemp/TMPDIR. Baseline failures will be independently rerun with adequate storage.",
+  "observed_tmpfs_capacity_human": "8.8G (df -h output, not an exact byte count)"
+}

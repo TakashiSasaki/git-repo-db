@@ -1,0 +1,37 @@
+"""Independent canonical identity, fixed-contract and record-shape probes."""
+import dataclasses
+import json
+from pathlib import Path
+import tempfile
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.recovery import RecoveryBudget,RecoveryError
+
+REPO='01c72bce-39ee-4677-98d4-c5a642020e98';INSTANCE='1275bbae-7ab3-4321-9a1e-e2dc272af785'
+
+def setup(root,index):
+    cat=root/str(index);cat.mkdir()
+    for role in ('core','context'):initialize(cat/f'{role}.sqlite3',role,REPO,INSTANCE)
+    return cat
+
+with tempfile.TemporaryDirectory(prefix='reviewer-c-identity-') as td:
+    root=Path(td);salvage=root/'one.jsonl';salvage.write_text('{"candidate_type":"context_document","payload":{"text_value":"one"}}\n')
+    adapter=SQLiteRecoveryAdapter();results=[]
+    for request_id in ('../escape','x/y','x\\y','%2e%2e','a\x00b','é','a'*65,1):
+        cat=setup(root,len(results))
+        try:adapter.merge_salvage(cat,salvage,request_id=request_id);passed=False
+        except RecoveryError:passed=not list(cat.glob('p1-recovery-request*'))
+        results.append({'probe':'invalid_identity','identity':request_id,'pass':passed})
+    cat=setup(root,len(results));budget=RecoveryBudget();adapter.merge_salvage(cat,salvage,budget,'fixed')
+    try:adapter.merge_salvage(cat,salvage,dataclasses.replace(budget,max_input_bytes=budget.max_input_bytes+1),'fixed');passed=False
+    except RecoveryError:passed=True
+    results.append({'probe':'budget_escalation','pass':passed})
+    receipt=adapter.merge_salvage(cat,salvage,budget,'explicit-independent')
+    results.append({'probe':'explicit_independent_request','pass':receipt.replayed_units==1})
+    for name in ('p1-recovery-request-fixed.json','p1-recovery-requests.json','p1-recovery-requests.initialized'):
+        cat=setup(root,len(results));adapter.merge_salvage(cat,salvage,budget,'fixed');path=cat/name;record=json.loads(path.read_text());record['version']=True;path.write_text(json.dumps(record))
+        try:adapter.merge_salvage(cat,salvage,budget,'fixed');passed=False
+        except RecoveryError:passed=True
+        results.append({'probe':'strict_version','target':name,'pass':passed})
+    print(json.dumps(results,indent=2))
+    assert all(result['pass'] for result in results)

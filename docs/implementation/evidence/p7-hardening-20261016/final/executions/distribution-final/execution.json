@@ -1,0 +1,44 @@
+{
+  "head": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "cwd": "/workspace/p7",
+  "env": {
+    "TMPDIR": "/workspace/p7-acceptance-temp",
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/p7-offline-wheelhouse"
+  },
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/prepare_wheelhouse.py",
+        "--output",
+        "/workspace/p7-offline-wheelhouse"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.2080397605895996
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--no-sync",
+        "pytest",
+        "tests/packaging/test_distribution.py",
+        "-q",
+        "--basetemp",
+        "/workspace/distribution-acceptance-178",
+        "-o",
+        "junit_family=xunit1",
+        "--junitxml",
+        "/workspace/p7-evidence-20261016/distribution-final/junit.xml",
+        "--journal",
+        "/workspace/p7-evidence-20261016/distribution-final/journal.jsonl"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 54.61016821861267
+    }
+  ],
+  "qualification": "Full run initial setup errors retained separately; this supplies the documented offline fixture prerequisite without source changes. The previous external base directory shared the checkout path string prefix and triggered an overbroad fixture startswith check; this directory has no shared prefix."
+}

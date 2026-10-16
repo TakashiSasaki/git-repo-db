@@ -1,0 +1,20 @@
+import subprocess,pathlib,json,os,hashlib,datetime
+from repo_catalog.adapters.sqlite.p1_schema import expected_schema
+from repo_catalog.adapters.sqlite.recovery_validation import _packaged_checks
+root=pathlib.Path.cwd();evidence=pathlib.Path('/workspace/recovery-evidence-20261016/review-a-independent');results=[]
+sha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(); short=sha[:7]
+for name in ('probe_capture_invalid_utf8','probe_capture_invalid_ref'):
+ command=['/workspace/p7/.venv/bin/python',f'/workspace/recovery-evidence-20261016/review-b/{name}.py']
+ out=subprocess.run(command,cwd=root,env={**os.environ,'PYTHONPATH':str(root/'src')},stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+ (evidence/f'{name}.{short}.log').write_text(out.stdout)
+ okay=out.returncode==0 and 'CorruptionDetectedError' in out.stdout and 'STOPPED True' in out.stdout and 'UNEXPECTED' not in out.stdout
+ results.append({'command':command,'exit_code':out.returncode,'assertions_passed':okay})
+command=['/workspace/p7/.venv/bin/python',str(evidence/'positive_history_binary.py')]
+out=subprocess.run(command,cwd=root,env={**os.environ,'PYTHONPATH':str(root/'src')},stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+(evidence/f'positive_history_binary.{short}.log').write_text(out.stdout); print(out.stdout)
+results.append({'command':command,'exit_code':out.returncode,'assertions_passed':out.returncode==0})
+checks={role:{table:len(list(_packaged_checks(sql))) for kind,table,_,sql in expected_schema(role) if kind=='table'} for role in ('core','context')}
+report={'review_scope':'Independent A trusted packaged CHECK + UTF8 corrections only; not approval of own inputwork changes','commit':sha,'recorded_at_utc':datetime.datetime.now(datetime.UTC).isoformat(),'results':results,'packaged_check_counts':checks,'source_sha256':{f:hashlib.sha256((root/f).read_bytes()).hexdigest() for f in ('src/repo_catalog/adapters/sqlite/recovery_validation.py','src/repo_catalog/adapters/sqlite/recovery.py')},'pytest_prior_2f97455':{'command':'/workspace/p7/.venv/bin/python -m pytest tests/integration/p7/test_stored_constraints.py -q --junitxml=/workspace/recovery-evidence-20261016/review-a-independent/constraints-2f97455.xml','exit_code':0,'passed':7},'initial_fixture_failure':'Own positive probe initially used collection coverage_kind=members while terminal scope omitted required coverage_kind; real admission rejected this invalid fixture. Initial script/log/JSON retained. Corrected resource reviews scope uses accepted actual matching owner and preserves two terminals/old proof.','finding':'No remaining defect reproduced in trusted CHECK/UTF8 correction scope on pinned revision; binary Notes, empty/split Unicode Context, old Coverage proof and later terminal remain valid.'}
+(evidence/f'review-{short}.json').write_text(json.dumps(report,indent=2)+'\n')
+print({role:sum(cs.values()) for role,cs in checks.items()})
+assert all(r['assertions_passed'] for r in results)

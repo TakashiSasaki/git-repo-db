@@ -1,0 +1,45 @@
+"""Reviewer A independent immutable evidence/history positive control."""
+import hashlib,json,tempfile,uuid
+from pathlib import Path
+from repo_catalog.adapters.sqlite.p1_schema import initialize,connect
+from repo_catalog.adapters.sqlite.p1_context import ContextStore
+from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter,is_catalog_stopped
+from repo_catalog.domain.p1_core import OID,Capture,NativeObject,NotesProof,native_oid
+from repo_catalog.domain.p1_context import CoverageScope,CoverageClaim,ResourceKey
+from repo_catalog.domain.recovery import BackupScope
+R='11111111-1111-4111-8111-111111111111';I='22222222-2222-4222-8222-222222222222';P='33333333-3333-4333-8333-333333333333'
+root=Path(tempfile.mkdtemp(prefix='independent-A-'));catalog=root/'catalog';catalog.mkdir()
+for role in ('core','context'):initialize(catalog/f'{role}.sqlite3',role,R,I)
+def native(kind,body):return NativeObject(OID('sha1',native_oid('sha1',kind,body)),kind,body,len(body),hashlib.sha256(body).hexdigest())
+core=GitCore(catalog/'core.sqlite3');core.admit_repository(R)
+note=native('blob',b'\x00\xff\xfe');target=OID('sha1','a'*40)
+tree=native('tree',b'100644 '+target.full_oid.encode()+b'\0'+bytes.fromhex(note.oid.full_oid))
+capture=Capture(str(uuid.uuid4()),str(uuid.uuid4()),R,'independent-A','refs/notes/independent',tree.oid)
+core.admit_note(NotesProof(capture,target,note.oid,target.full_oid,(tree,)),note,str(uuid.uuid4()),UnlimitedWorkBudget())
+ctx=connect(catalog/'context.sqlite3','context');store=ContextStore(ctx)
+ctx.execute('INSERT INTO providers VALUES(?,?,?)',(P,'independent','{}'))
+ctx.execute('INSERT INTO repository_context VALUES(?,?)',(R,'{}'))
+key=ResourceKey(P,'pull_request','independent-pr');store.resource(key,R)
+provenance='{"evidence":"independent-original","source":"provider"}'
+ctx.execute('INSERT INTO collections VALUES(?,?,?,?,?,?)',(*key.coordinates(),'reviews',provenance,'{}'))
+terminal=(*key.coordinates(),'reviews',provenance,10,'complete','[]')
+ctx.execute('INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)',terminal)
+scope=CoverageScope.collection(key,'reviews',provenance,'members');store.scope(scope)
+claim=CoverageClaim(scope,10,'complete');store.admit_coverage(claim)
+ctx.execute('INSERT INTO coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',(scope.owner_kind,scope.encoded,10,'complete',*terminal))
+ctx.execute('INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)',(*key.coordinates(),'reviews',provenance,11,'partial','[]'))
+store.admit_coverage(CoverageClaim(scope,11,'partial'))
+store.text('');store.text('a'*65535+'📝'*4)
+assert ctx.execute('SELECT count(*) FROM collection_terminals').fetchone()[0]==2
+assert ctx.execute('SELECT count(*) FROM coverage_proofs').fetchone()[0]==1
+assert not ctx.execute('PRAGMA foreign_key_check').fetchall()
+ctx.close()
+source_hashes={role:hashlib.sha256((catalog/f'{role}.sqlite3').read_bytes()).hexdigest() for role in ('core','context')}
+service=SQLiteRecoveryAdapter();backup=service.create_consistent_backup(catalog,root/'backup',BackupScope.PAIRED)
+assert backup.verified_clean and backup.manifest.retained_byte_summary.notes_body_count==1
+restore=service.restore_backup(root/'backup',root/'fresh',R)
+assert restore.revalidated_clean and not is_catalog_stopped(catalog)
+assert source_hashes=={role:hashlib.sha256((catalog/f'{role}.sqlite3').read_bytes()).hexdigest() for role in ('core','context')}
+print(json.dumps({'backup_verified':True,'restore_verified':True,'source_unchanged':True,'binary_note_hex':note.body.hex(),'historical_terminals':2,'historical_proofs':1,'nullable_context_json':True,'empty_unicode_text_valid':True}))

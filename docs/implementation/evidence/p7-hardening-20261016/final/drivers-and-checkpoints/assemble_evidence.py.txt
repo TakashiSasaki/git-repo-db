@@ -1,0 +1,36 @@
+import pathlib,json,gzip,hashlib
+base=pathlib.Path('/workspace/p7-evidence-20261016');out=base/'publication-v2';out.mkdir(exist_ok=True);sources={}
+def add(src,dest):
+ src=pathlib.Path(src)
+ if src.is_file():sources[dest]=src
+def tree(src,prefix):
+ for p in pathlib.Path(src).rglob('*'):
+  if p.is_file():add(p,str(pathlib.Path(prefix)/p.relative_to(src)))
+for entry in json.loads((base/'publication/partial-artifact-index.json').read_text()):
+ dest=entry['stored_path'];dest=dest[:-3] if entry['gzip'] else dest
+ add(entry['source_path'],dest)
+for name in ['final','final-178ddba','main-full','final-overlay-178ddba','main-overlay-batch1','main-overlay-batch2','main-overlay-batch3','main-overlay-batch4','distribution-corrected','distribution-final']:
+ tree(base/name,'executions/'+name)
+for p in base.glob('*'):
+ if p.is_file() and (p.suffix in {'.py','.xml','.jsonl'} or p.name in {'marker-selection.json','capacity-current.txt','all-markers-collection.log','public-runtime-module-identity.json','hosted-178ddbaa.json'}):
+  if not p.name.startswith('pr'):add(p,'drivers-and-checkpoints/'+p.name)
+rec=pathlib.Path('/workspace/recovery-evidence-20261016')
+for p in rec.glob('reviewer-c-*.py'):add(p,'independent/c/probes/'+p.name)
+for p in (rec/'review-b').glob('*.py'):add(p,'independent/b/probes/'+p.name)
+add(rec/'run-reviewer-c-final-178ddbaa.py','independent/c/run-reviewer-c-final-178ddbaa.py')
+add(rec/'progress.md','checkpoint-progress.md')
+tree(rec/'final-worktrees','final-worktrees')
+add('/workspace/p7-offline-wheelhouse/manifest.json','executions/distribution-final/wheelhouse-manifest.json')
+tree('/workspace/p7-review-d-evidence/root-final-reconciliation','independent/d-root-reconciliation')
+add(rec/'input-followup-leftover-disposition.json','input-followup-leftover-disposition.json')
+# Evidence scripts use a text suffix so archived probes are not treated as project source.
+index=[]
+for dest,src in sorted(sources.items()):
+ data=src.read_bytes();dest=dest+'.txt' if dest.endswith('.py') else dest
+ zipped=(src.suffix in {'.xml','.log','.jsonl'} and len(data)>1024)
+ stored=gzip.compress(data,mtime=0) if zipped else data
+ if zipped:dest+='.gz'
+ target=out/dest;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(stored)
+ index.append({'stored_path':dest,'stored_sha256':hashlib.sha256(stored).hexdigest(),'original_sha256':hashlib.sha256(data).hexdigest(),'original_bytes':len(data),'source_path':str(src),'gzip':zipped})
+(out/'artifact-index.json').write_text(json.dumps(index,indent=2)+'\n')
+print(len(index),'files',sum(p.stat().st_size for p in out.rglob('*') if p.is_file()),'bytes')

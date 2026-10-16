@@ -1,0 +1,37 @@
+"""A required missing Context body must not be silently repaired during merge."""
+import dataclasses
+import json
+from pathlib import Path
+import sqlite3
+import tempfile
+from uuid import uuid4
+from repo_catalog.adapters.sqlite.p1_schema import initialize,register_functions
+from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.p1_context import FieldClock,ResourceKey,canonical
+
+with tempfile.TemporaryDirectory(prefix='reviewer-c-missing-context-') as td:
+    root=Path(td);cat=root/'catalog';cat.mkdir()
+    for role in ('core','context'):initialize(cat/f'{role}.sqlite3',role,'01c72bce-39ee-4677-98d4-c5a642020e98','1275bbae-7ab3-4321-9a1e-e2dc272af785')
+    service=str(uuid4());key=ResourceKey(service,'issue','original-event');text='required original Context body'
+    with Context.transaction(cat) as context:
+        context.provider(service,'github');context.resource(key)
+        context.admit_text(key,text,FieldClock('provider.updated_at',1),canonical({'source':'independent','evidence':'original-event'}),1)
+    with sqlite3.connect(cat/'context.sqlite3') as db:
+        register_functions(db)
+        triggers=db.execute("SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='text_bodies'").fetchall()
+        for name,_ in triggers:db.execute('DROP TRIGGER "'+name+'"')
+        db.execute('DELETE FROM text_bodies')
+        for _,sql in triggers:db.execute(sql)
+        broken=db.execute('PRAGMA foreign_key_check').fetchall()
+        assert broken,'fixture must contain a genuinely required dangling Context text FK'
+    salvage=root/'one.jsonl';salvage.write_text(json.dumps({'candidate_type':'context_document','payload':{'text_value':text}})+'\n')
+    try:
+        receipt=SQLiteRecoveryAdapter().merge_salvage(cat,salvage,request_id='must-not-repair')
+        result={'result':'returned','receipt':dataclasses.asdict(receipt)}
+    except Exception as error:result={'result':'raised','error_type':type(error).__name__,'error':str(error)}
+    with sqlite3.connect(cat/'context.sqlite3') as db:
+        result['remaining_text_rows']=db.execute('SELECT count(*) FROM text_bodies').fetchone()[0]
+    result['persistent_stop']=(cat/'p1-recovery-stop.json').exists()
+    result['pass']=result['persistent_stop'] and result['remaining_text_rows']==0
+    print(json.dumps(result,indent=2))

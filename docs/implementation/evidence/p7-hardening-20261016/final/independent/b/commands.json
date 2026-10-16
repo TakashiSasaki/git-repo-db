@@ -1,0 +1,124 @@
+{
+  "commit": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "PYTHONPATH": "/workspace/p7-review-b/src",
+  "records": [
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_invalid_utf8.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.21051359176635742,
+      "expected_output": "STOPPED True",
+      "expected_observed": true,
+      "script_sha256": "4d1d5fc0a141fde1b907b254b8aa65fb427bc8ca046bb1dd93cf5eb4775b6e3d"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_pair_identity.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.20838284492492676,
+      "expected_output": "STOPPED True",
+      "expected_observed": true,
+      "script_sha256": "a3dbb2f9f2838650bc710a6461f2e3bfe9f9a5b5a872b4d935bacf1670ff3bcf"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_activation_swap_pinned.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2602345943450928,
+      "expected_output": "ActivationError",
+      "expected_observed": true,
+      "script_sha256": "95d0ef4e4e36c128ee9f0599a069ac7149ff46faa2772eba6491a5bed967637b"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_activation_late_rollback.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2667975425720215,
+      "expected_output": "PREVIOUS_LOCATOR_RESTORED True",
+      "expected_observed": true,
+      "script_sha256": "89525f4335e49ae880d7024527e38eb3f9dee9a5f8ec250125105dc68fe4b12d"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_activation_locator_parent.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.26436710357666016,
+      "expected_output": "Locator parent directory identity changed",
+      "expected_observed": true,
+      "script_sha256": "3be3be708d3bab6283d7eee4e98597d942ac65e7c53fbbfa25253eefa106c29d"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_stopped_cut.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2291576862335205,
+      "expected_output": "CONTENDER 1",
+      "expected_observed": true,
+      "script_sha256": "8307e0cf0437afbcbdc3bb3bce74312660d250c89249794ed17c7a6d15c8785c"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_backup_lock.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.5463814735412598,
+      "expected_output": "finite deadline",
+      "expected_observed": true,
+      "script_sha256": "0d622efea8f2a1bb81805cbe1c3601f7f7d859965e954377ae5e7603d1f936e7"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_utf8.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2832653522491455,
+      "expected_output": "CorruptionDetectedError",
+      "expected_observed": true,
+      "script_sha256": "dbcacab45a6f7dd9df28befb9ce1f7e667fcc767ae6e1f6efce21dd633de9a51"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "/workspace/recovery-evidence-20261016/review-b/probe_capture_invalid_ref.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.30026721954345703,
+      "expected_output": "CorruptionDetectedError",
+      "expected_observed": true,
+      "script_sha256": "c8b381dec0c463beff810480030afc1ce44ad188504c516ccc383e11b0c498ee"
+    },
+    {
+      "command": [
+        "/workspace/p7-budget/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/integration/p7/test_filesystem_hardening.py",
+        "tests/integration/p7/test_source_diagnosis.py",
+        "tests/integration/p7/test_process_isolation.py",
+        "tests/integration/p7/test_consistent_backup.py",
+        "tests/integration/p7/test_corruption_stop.py",
+        "tests/integration/p7/test_read_only_salvage.py",
+        "tests/integration/p7/test_safe_activation.py",
+        "-q",
+        "--junitxml=/workspace/recovery-evidence-20261016/review-b/final-178ddbaa/b-scope.xml"
+      ],
+      "exit_code": 0,
+      "seconds": 16.12239670753479
+    }
+  ]
+}

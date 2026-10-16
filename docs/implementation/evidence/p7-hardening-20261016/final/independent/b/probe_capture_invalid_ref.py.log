@@ -1,0 +1,6 @@
+ROWS [('6E6F742D612D76616C69642D726566',)]
+PRAGMA /tmp/tmpnnxdak8u/catalog/core.sqlite3 [('CHECK constraint failed in captures',)]
+PRAGMA file:/tmp/tmpnnxdak8u/catalog/core.sqlite3?mode=ro [('ok',)]
+MODULE /workspace/p7-review-b/src/repo_catalog/adapters/sqlite/recovery.py
+CorruptionDetectedError Confirmed authoritative core corruption (authoritative_data): Stored core CHECK constraint failed: captures STOPPED True
+CAUSE BackupValidationError('Stored core CHECK constraint failed: captures')

@@ -1,0 +1,52 @@
+import hashlib,json,os,platform,sqlite3,subprocess,sys,tarfile,time,zipfile
+from pathlib import Path
+root=Path('/workspace/p7-review-d'); evidence=Path(sys.argv[2]) if len(sys.argv)>2 else Path('/workspace/p7-review-d-evidence/final');evidence.mkdir(parents=True,exist_ok=True)
+expected=sys.argv[1]
+def git(*args):return subprocess.check_output(['git',*args],cwd=root,text=True).strip()
+assert git('rev-parse','HEAD')==expected
+assert not git('status','--porcelain')
+records=[]
+(evidence/'environment.json').write_text(json.dumps({'python':sys.version,'platform':platform.platform(),'sqlite':sqlite3.sqlite_version,'filesystem_type':subprocess.check_output(['findmnt','-T',str(evidence),'-n','-o','FSTYPE'],text=True).strip()},indent=2)+'\n')
+env=dict(os.environ)
+for key in ['PYTHONPATH','PYTHONHOME','REPO_CATALOG_TEST_BOOTSTRAP','GH_TOKEN','GITHUB_TOKEN']:
+ env.pop(key,None)
+def run(name,args,cwd=root,extra=None):
+ start=time.time();e=dict(env);e.update(extra or {})
+ p=subprocess.run([str(a) for a in args],cwd=cwd,env=e,capture_output=True,text=True)
+ (evidence/(name+'.log')).write_text(p.stdout+p.stderr)
+ records.append({'name':name,'argv':[str(a) for a in args],'cwd':str(cwd),'exit_code':p.returncode,'started_epoch':start,'elapsed_seconds':time.time()-start})
+ (evidence/'commands.json').write_text(json.dumps(records,indent=2)+'\n')
+ print(name,p.returncode,round(records[-1]['elapsed_seconds'],3),flush=True)
+ assert p.returncode==0,(name,p.stdout[-2000:],p.stderr[-2000:])
+ return p.stdout
+run('archive',['git','archive','--format=tar.gz','--output',evidence/'frozen-source.tar.gz',expected])
+tracked=git('ls-files').splitlines()
+inputs=[{'path':name,'sha256':hashlib.sha256((root/name).read_bytes()).hexdigest()} for name in tracked if name.startswith(('src/','tests/','scripts/','.github/workflows/')) or name in ('pyproject.toml','uv.lock')]
+(evidence/'executable-inputs.json').write_text(json.dumps(inputs,indent=2)+'\n')
+buildpython=root/'.venv/bin/python'
+run('build',['uv','build','--offline','--no-build-isolation','--python',buildpython,'--out-dir',evidence/'dist'])
+sdist=next((evidence/'dist').glob('*.tar.gz'))
+with tarfile.open(sdist) as a:a.extractall(evidence/'unpacked',filter='data')
+source=next((evidence/'unpacked').iterdir())
+run('sdist-build',['uv','build','--wheel','--offline','--no-build-isolation','--python',buildpython,'--out-dir',evidence/'sdist-wheel',source])
+wheels=[next((evidence/'dist').glob('*.whl')),next((evidence/'sdist-wheel').glob('*.whl'))]
+identity={}
+for kind,wheel in zip(['wheel','sdist-wheel'],wheels):
+ with zipfile.ZipFile(wheel) as z:
+  files=[p for p in (root/'src/repo_catalog').rglob('*') if p.is_file() and '__pycache__' not in p.parts]
+  for path in files:
+   name=path.relative_to(root/'src').as_posix();assert z.read(name)==path.read_bytes(),name
+ identity[kind]={'wheel':wheel.name,'sha256':hashlib.sha256(wheel.read_bytes()).hexdigest(),'package_files_equal_to_committed_tree':len(files)}
+ venv=evidence/(kind+'-venv');python=venv/'bin/python'
+ run(kind+'-venv',['uv','venv',venv,'--python',buildpython,'--offline'],cwd=evidence)
+ run(kind+'-test-deps',['uv','sync','--locked','--offline','--group','dev','--no-install-project','--active'],extra={'VIRTUAL_ENV':str(venv)})
+ run(kind+'-install',['uv','pip','install','--python',python,'--offline','--no-deps',wheel],cwd=evidence)
+ probe="import json,subprocess,sys;import repo_catalog, repo_catalog.adapters.sqlite.recovery as r; print(json.dumps({'python':sys.executable,'package':repo_catalog.__file__,'recovery':r.__file__})); assert 'site-packages' in r.__file__; assert '/workspace/p7-review-d/src' not in r.__file__; child=subprocess.check_output([sys.executable,'-I','-c','import repo_catalog.adapters.sqlite.recovery as r;print(r.__file__)'],text=True);print(child); assert 'site-packages' in child"
+ run(kind+'-identity',[python,'-I','-c',probe],cwd=evidence)
+ run(kind+'-collect',[python,'-m','pytest','tests/integration/p7','--collect-only','-q','-o','pythonpath='],extra={'VIRTUAL_ENV':str(venv),'PATH':str(venv/'bin')+os.pathsep+env.get('PATH','')})
+ run(kind+'-p7',[python,'-m','pytest','tests/integration/p7','-q','-o','pythonpath=','-o','junit_family=xunit1','--junitxml',evidence/(kind+'-junit.xml'),'--journal',evidence/(kind+'-journal.jsonl')],extra={'VIRTUAL_ENV':str(venv),'PATH':str(venv/'bin')+os.pathsep+env.get('PATH','')})
+ # Independent changed-Capture/retained-copy replay counterexample. Tests are
+ # imported only for synthetic fixture creation; runtime must remain installed.
+ run(kind+'-independent-replay',[python,evidence.parent/'probe_new_role_replay.py'],extra={'VIRTUAL_ENV':str(venv),'PATH':str(venv/'bin')+os.pathsep+env.get('PATH','')})
+assert git('rev-parse','HEAD')==expected and not git('status','--porcelain')
+(evidence/'binding.json').write_text(json.dumps({'head':expected,'tree':git('rev-parse','HEAD^{tree}'),'distributions':identity,'sdist_sha256':hashlib.sha256(sdist.read_bytes()).hexdigest(),'frozen_source_sha256':hashlib.sha256((evidence/'frozen-source.tar.gz').read_bytes()).hexdigest(),'executable_inputs_sha256':hashlib.sha256((evidence/'executable-inputs.json').read_bytes()).hexdigest()},indent=2)+'\n')

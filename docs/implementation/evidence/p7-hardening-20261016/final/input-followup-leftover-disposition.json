@@ -1,0 +1,77 @@
+{
+  "worktree": "/workspace/p7-input-followup",
+  "branch": "fix/p7-input-guards",
+  "head": "191804b2aae095465c470335bbaaf96ec0878f41",
+  "status_porcelain_v2": "# branch.oid 191804b2aae095465c470335bbaaf96ec0878f41\n# branch.head fix/p7-input-guards\n1 .M N... 100644 100644 100644 fffebbf84aaa62706bb28e2501ac441600711d8d fffebbf84aaa62706bb28e2501ac441600711d8d src/repo_catalog/adapters/sqlite/recovery.py\n1 .M N... 100644 100644 100644 8012247241dc7102e8830a6e95afe1fa82334beb 8012247241dc7102e8830a6e95afe1fa82334beb tests/integration/p7/test_bounded_input.py\n",
+  "patch_bytes": 20020,
+  "patch_sha256": "06ac035f7b423dcaf0cc86bbbb15a0f5519863dcaffea9578388a879ff6f59f2",
+  "archive_path": "/workspace/recovery-evidence-20261016/final-worktrees/12/diff.txt",
+  "archived_patch_sha256": "06ac035f7b423dcaf0cc86bbbb15a0f5519863dcaffea9578388a879ff6f59f2",
+  "archive_byte_equal": true,
+  "final_ref": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "files": {
+    "src/repo_catalog/adapters/sqlite/recovery.py": {
+      "draft_sha256": "3db46b8dfe61476ae3d5627de32a965e1199501ab8f2aeb083ffe710c2c52d54",
+      "final_sha256": "5e46bf092ead592b102401c21fdf9f9262fd5499467092aadc0d27b30f086fa2"
+    },
+    "tests/integration/p7/test_bounded_input.py": {
+      "draft_sha256": "dc4a9cb10c2fab5ae42f0251a6bb9766791340b654426218958833f2d15d1adc",
+      "final_sha256": "2a23ce4e939b20c57fcf8c243be693eaf1f0646c3de7920742ea44144c34e5cd"
+    }
+  },
+  "added_tests": {
+    "test_context_invalid_or_large_text_does_not_block_later_unit": {
+      "present_final": true,
+      "ast_identical": true
+    },
+    "test_fifo_input_fails_in_separate_process_without_hanging": {
+      "present_final": true,
+      "ast_identical": false
+    },
+    "test_hash_verification_reserves_before_expenditure": {
+      "present_final": true,
+      "ast_identical": true
+    },
+    "test_input_chunk_settles_measured_bytes_including_empty_eof": {
+      "present_final": true,
+      "ast_identical": true
+    },
+    "test_malformed_primitive_shape_is_one_rejection_not_merge_abort": {
+      "present_final": true,
+      "ast_identical": true
+    },
+    "test_none_provenance_remains_a_qualified_observation": {
+      "present_final": true,
+      "ast_identical": true
+    }
+  },
+  "unchanged_helper_AST": {
+    "_hash_recovery_bytes": true,
+    "_open_salvage_input": true
+  },
+  "disposition": "Superseded intermediate draft; no unique unfinished source or tests. It was copied via preserved input-followup.patch into p7-input-final, reconciled against641158b and committed f7d584d, then integrated as1182738, which is an ancestor of final178ddbaa. Later corrections strengthen the same behavior. Original worktree and parent archive remain unchanged.",
+  "reconciliation": [
+    {
+      "draft": "bounded UTF8 / candidate shape / hash reservation / FIFO regular-file guards / measured chunk settlement",
+      "final": "1182738 contains implementation; final additionally meters decoded input and tracks prefetched state accurately."
+    },
+    {
+      "draft": "Context existing length check + ContextStore hash admission",
+      "final": "Superseded by gated transactional verify_existing_context_text with exact stored-byte verification, persistent corruption stop, required-reference checks, and decoded input metering."
+    },
+    {
+      "draft": "provenance None-safe metadata lookup and proof hash helper",
+      "final": "Retained; nominal domain work and proof decode input also metered."
+    },
+    {
+      "draft": "one-line formatting of prior Context validation error",
+      "final": "Formatting-only hunk rejected during replay into641158b; validation logic was independently replaced by stronger stored TEXT/CHECK validation. No source behavior lost."
+    },
+    {
+      "draft": "6 additional test functions (16 parametrized cases)",
+      "final": "All6 present; five have identical AST. FIFO test differs only sorted local import order, confirmed by normalized AST equality."
+    }
+  ],
+  "integrated_commit_1182738_is_final_ancestor": true,
+  "fifo_difference_only_local_import_order": true
+}

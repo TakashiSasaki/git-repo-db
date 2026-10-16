@@ -1,0 +1,44 @@
+{
+  "head": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "cwd": "/workspace/p7",
+  "env": {
+    "TMPDIR": "/workspace/p7-acceptance-temp",
+    "REPO_CATALOG_WHEELHOUSE": "/workspace/p7-offline-wheelhouse"
+  },
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/prepare_wheelhouse.py",
+        "--output",
+        "/workspace/p7-offline-wheelhouse"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.14204955101013184
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--no-sync",
+        "pytest",
+        "tests/packaging/test_distribution.py",
+        "-q",
+        "--basetemp",
+        "/workspace/p7-distribution-corrected",
+        "-o",
+        "junit_family=xunit1",
+        "--junitxml",
+        "/workspace/p7-evidence-20261016/distribution-corrected/junit.xml",
+        "--journal",
+        "/workspace/p7-evidence-20261016/distribution-corrected/journal.jsonl"
+      ],
+      "exit_code": 1,
+      "elapsed_seconds": 4.044102668762207
+    }
+  ],
+  "qualification": "Full run initial setup errors retained separately; this supplies the documented offline fixture prerequisite without source changes."
+}

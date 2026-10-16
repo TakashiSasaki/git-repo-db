@@ -1,0 +1,11 @@
+{
+  "tested_source_sha": "178ddbaa8fa06f52aff4993730205c5a38da91f4",
+  "tested_source_tree": "9740ad1a91f367192bb31ce9777d039c2bb4729b",
+  "executable_input_count": 368,
+  "executable_input_sha256": "ba42b5de4320296b557d8427757e50a9c822854804281d05b579175562ad01cb",
+  "all_hashes_unchanged": true,
+  "no_src_tests_scripts_workflows_or_project_changes": true,
+  "staged_changes_are_evidence_and_skill_only": true,
+  "transport_artifacts_verified": 443,
+  "notes": "Evidence-only final commit preserves frozen executable inputs. Actual final PR SHA is recorded externally and in the PR body after commit, avoiding a self-referential commit hash."
+}

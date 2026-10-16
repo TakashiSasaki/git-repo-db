@@ -1,0 +1,21 @@
+from pathlib import Path
+import tempfile
+from repo_catalog.adapters.sqlite.p1_schema import initialize
+import repo_catalog.adapters.sqlite.recovery as module
+R='11111111-1111-4111-8111-111111111111'; I='22222222-2222-4222-8222-222222222222'
+p=Path(tempfile.mkdtemp()); catalog=p/'catalog';catalog.mkdir()
+for role in ['core','context']:initialize(catalog/f'{role}.sqlite3',role,R,I)
+original=module._fsync_dir
+swapped=False
+def swap(path):
+ global swapped
+ original(path)
+ if path==catalog and not swapped:
+  swapped=True
+  catalog.rename(p/'validated-original'); catalog.mkdir()
+  (catalog/'core.sqlite3').write_bytes(b'NOT A DATABASE')
+module._fsync_dir=swap
+try:
+ receipt=module.SQLiteRecoveryAdapter().activate(catalog,p/'active')
+ print('SUCCESS',receipt.clean_operational,'ACTIVE_CORE_BYTES',(p/'active'/'core.sqlite3').read_bytes())
+except Exception as e:print(type(e).__name__,str(e))

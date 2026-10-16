@@ -32,8 +32,17 @@ def headers(body: bytes, kind: str) -> tuple[list[tuple[bytes, bytes]], bytes, b
     if not separator or b"\0" in body:
         _fail(kind, "native metadata requires a blank separator and no NUL")
     fields: list[tuple[bytes, list[bytes]]] = []
-    for line in raw.split(b"\n"):
+    # Do not split all lines before accounting. An untrusted header containing
+    # millions of tiny lines must stop at its finite metadata allowance before
+    # allocating the corresponding list and byte strings.
+    offset = 0
+    while offset <= len(raw):
         _performed("metadata_units", 1)
+        end = raw.find(b"\n", offset)
+        if end < 0:
+            end = len(raw)
+        line = raw[offset:end]
+        offset = end + 1
         if line.startswith(b" "):
             if not fields:
                 _fail(kind, "orphan native header continuation")
