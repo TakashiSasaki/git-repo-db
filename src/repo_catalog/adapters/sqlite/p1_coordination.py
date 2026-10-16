@@ -17,6 +17,7 @@ from collections.abc import Callable, Iterator
 from contextlib import ExitStack, closing, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from time import perf_counter_ns
 
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.p1_coordination import (
@@ -215,6 +216,7 @@ def validate_pair(
     context: sqlite3.Connection,
     *,
     metadata_only: bool = False,
+    phase_costs_ns: dict[str, int] | None = None,
 ) -> SnapshotToken:
     """Validate persisted authorities, including failures of semantic CHECK UDFs.
 
@@ -224,7 +226,9 @@ def validate_pair(
     capability is not evidence of storage corruption.
     """
     try:
-        return _validate_pair(core, context, metadata_only=metadata_only)
+        return _validate_pair(
+            core, context, metadata_only=metadata_only, phase_costs_ns=phase_costs_ns
+        )
     except sqlite3.DatabaseError as error:
         code = getattr(error, "sqlite_errorcode", 0) & 255
         detail = str(error)
@@ -274,7 +278,9 @@ def _validate_pair(
     context: sqlite3.Connection,
     *,
     metadata_only: bool = False,
+    phase_costs_ns: dict[str, int] | None = None,
 ) -> SnapshotToken:
+    started = perf_counter_ns()
     identity = _identity(core, "core")
     if identity != _identity(context, "context"):
         raise CoordinationError("PAIR_IDENTITY", "core+context")
@@ -290,11 +296,17 @@ def _validate_pair(
 
     validate_embedded_references(core)
     validate_dependencies(core, context)
-    return SnapshotToken(
+    validated = perf_counter_ns()
+    if phase_costs_ns is not None:
+        phase_costs_ns["authority_validation"] = validated - started
+    token = SnapshotToken(
         *identity,
         _digest(core, metadata_only=metadata_only),
         _digest(context, metadata_only=metadata_only),
     )
+    if phase_costs_ns is not None:
+        phase_costs_ns["snapshot_token_generation"] = perf_counter_ns() - validated
+    return token
 
 
 @dataclass
@@ -455,6 +467,8 @@ class PairCoordinator:
         self.directory = Path(directory)
         self.read_limits = read_limits
         self.metadata_only = metadata_only
+        # Read-only instrumentation, never a freshness proof or domain fact.
+        self.last_read_costs_ns: dict[str, int] = {}
 
     def _check_running(self):
         if (self.directory / "p1-recovery-stop.json").exists():
@@ -582,6 +596,7 @@ class PairCoordinator:
 
     @contextmanager
     def snapshots(self) -> Iterator[PairedSnapshot]:
+        self.last_read_costs_ns.clear()
         self._check_running()
         try:
             with self._snapshots() as pair:
@@ -617,7 +632,10 @@ class PairCoordinator:
                         apply_snapshot_read_limits(db, self.read_limits)
                         self._guard_read(db)
                     token = validate_pair(
-                        core, context, metadata_only=self.metadata_only
+                        core,
+                        context,
+                        metadata_only=self.metadata_only,
+                        phase_costs_ns=self.last_read_costs_ns,
                     )
                 except Exception as error:
                     self._record_corruption(error)

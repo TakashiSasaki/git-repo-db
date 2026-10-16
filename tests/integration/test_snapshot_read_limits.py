@@ -78,3 +78,19 @@ def test_snapshot_cannot_redirect_catalog_corruption_stop(tmp_path):
             pytest.fail("ordinary completion must be fenced after caught corruption")
     assert (source / "p1-recovery-stop.json").exists()
     assert not (other / "p1-recovery-stop.json").exists()
+
+
+def test_paired_snapshot_reports_validation_and_token_generation_separately(tmp_path):
+    _catalog(tmp_path)
+    coordinator = PairCoordinator(tmp_path, metadata_only=True)
+    assert coordinator.last_read_costs_ns == {}
+    with coordinator.snapshots() as pair:
+        assert pair.core.identity("core") == pair.context.identity("context")
+        assert set(coordinator.last_read_costs_ns) == {
+            "authority_validation",
+            "snapshot_token_generation",
+        }
+        assert all(
+            type(value) is int and value >= 0
+            for value in coordinator.last_read_costs_ns.values()
+        )
