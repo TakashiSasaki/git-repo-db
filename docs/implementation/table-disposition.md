@@ -1486,7 +1486,7 @@ Physical derivative FTS build and per-kind source fence. Baseline authority: der
 - Baseline mutable columns: kind, state, table_name, target_max_search_document_id, created_at_us, core_revision_fence. Subject to full existing guards; this is not a permission to mutate target Core.
 - Target: **replace** → Search; identity: kind + actual build/source snapshot contract + genuine physical index identity.
 - Retention/extraction concern: Index maxima/row IDs remain internal and never authoritative; Core/Context domain fences separate. No real-data extraction is authorized.
-- Literal writer evidence: insert `src/repo_catalog/adapters/sqlite/index.py:209` (rebuild); update `src/repo_catalog/adapters/sqlite/index.py:281` (rebuild); update `src/repo_catalog/adapters/sqlite/index.py:285` (rebuild); update `src/repo_catalog/adapters/sqlite/index.py:301` (rebuild).
+- Literal writer evidence: insert `src/repo_catalog/adapters/sqlite/index.py:214` (rebuild); update `src/repo_catalog/adapters/sqlite/index.py:289` (rebuild); update `src/repo_catalog/adapters/sqlite/index.py:293` (rebuild); update `src/repo_catalog/adapters/sqlite/index.py:309` (rebuild).
 - Reader/writer/registry modules (11 exact references in JSON): `src/repo_catalog/adapters/sqlite/index.py`, `src/repo_catalog/application/maintenance_service.py`, `src/repo_catalog/application/query_service.py`.
 - Views: none; triggers (2): index_generations_immutable, index_generations_no_replace. Full guard SQL in JSON.
 - ADRs: 0003, 0017; dependent implementation: **P6**.
@@ -1503,7 +1503,7 @@ Derivative document membership/input version in build. Baseline authority: deriv
 - Baseline mutable columns: input_version. Subject to full existing guards; this is not a permission to mutate target Core.
 - Target: **replace** → Search; identity: semantic build coordinate + kind/source semantic key + input version.
 - Retention/extraction concern: Rebuild exclusively metadata/notes/Context; no ordinary-file text or authority leak. No real-data extraction is authorized.
-- Literal writer evidence: insert `src/repo_catalog/adapters/sqlite/index.py:262` (rebuild); delete `src/repo_catalog/adapters/sqlite/index.py:297` (rebuild).
+- Literal writer evidence: insert `src/repo_catalog/adapters/sqlite/index.py:274` (rebuild); delete `src/repo_catalog/adapters/sqlite/index.py:305` (rebuild).
 - Reader/writer/registry modules (4 exact references in JSON): `src/repo_catalog/adapters/sqlite/index.py`.
 - Views: none; triggers (2): index_membership_immutable, index_membership_no_replace. Full guard SQL in JSON.
 - ADRs: 0003, 0017; dependent implementation: **P6**.
@@ -1520,8 +1520,8 @@ Rebuildable search projection body and metadata. Baseline authority: derivative 
 - Baseline mutable columns: kind, source_key, body, metadata. Subject to full existing guards; this is not a permission to mutate target Core.
 - Target: **replace** → Search; identity: kind + true source domain semantic key.
 - Retention/extraction concern: Ephemeral FTS rowid allowed internally; not domain/Exchange/backup identity; role-filtered bodies only. No real-data extraction is authorized.
-- Literal writer evidence: delete `src/repo_catalog/adapters/sqlite/index.py:119` (refresh_documents); insert `src/repo_catalog/adapters/sqlite/index.py:134` (_save_documents); update `src/repo_catalog/adapters/sqlite/index.py:139` (_save_documents).
-- Reader/writer/registry modules (9 exact references in JSON): `src/repo_catalog/adapters/sqlite/index.py`, `src/repo_catalog/application/query_service.py`.
+- Literal writer evidence: delete `src/repo_catalog/adapters/sqlite/index.py:125` (_prune_obsolete_documents); insert `src/repo_catalog/adapters/sqlite/index.py:139` (_save_documents); update `src/repo_catalog/adapters/sqlite/index.py:144` (_save_documents).
+- Reader/writer/registry modules (8 exact references in JSON): `src/repo_catalog/adapters/sqlite/index.py`, `src/repo_catalog/application/query_service.py`.
 - Views: none; triggers (2): search_documents_immutable, search_documents_no_replace. Full guard SQL in JSON.
 - ADRs: 0003, 0017; dependent implementation: **P6**.
 - Required regressions: Exact semantic replay and conflicting alternatives preserve original attribution; Matching composite FK ownership; no storage-only key leaks through Exchange; Store loss does not invalidate either authority; reconstruction uses proper owner.
