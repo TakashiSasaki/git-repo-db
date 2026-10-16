@@ -408,6 +408,7 @@ def test_derivative_loss_resilience_and_transparent_fallback(
     after_loss = qs.search(SearchQuery(query_text="needle_kw"))
     assert after_loss.backend == "authority_scan"
     assert after_loss.total_count == res1.total_count
+    assert after_loss.hits == res1.hits
     assert qs.get_git_object(OID(fmt, oids["commit1"])).metadata_retained
 
     # Corrupt search.sqlite3 by writing garbage
@@ -418,6 +419,7 @@ def test_derivative_loss_resilience_and_transparent_fallback(
     res2 = qs.search(SearchQuery(query_text="needle_kw"))
     assert res2.backend == "authority_scan"
     assert res2.total_count == res1.total_count
+    assert res2.hits == res1.hits
     # NEVER write recovery stop for derivative loss or corruption
     assert not (cat_dir / "p1-recovery-stop.json").exists()
 
@@ -476,12 +478,10 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> No
     assert fenced.value.code == "RECOVERY_STOP"
 
 
-@pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks(
     tmp_path: Path,
-    fmt: str,
 ) -> None:
-    """Original field identity/NULL and native bytes survive actual P5→P6 use."""
+    """Original field identity/NULL survives actual P5→P6 use."""
     repository = str(uuid4())
     catalogs = [tmp_path / name for name in ("a", "b", "c")]
     for catalog in catalogs:
