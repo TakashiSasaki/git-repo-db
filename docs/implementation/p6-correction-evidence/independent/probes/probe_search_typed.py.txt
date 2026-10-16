@@ -1,0 +1,12 @@
+import importlib.util, sqlite3, tempfile
+from pathlib import Path
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.production_query import SearchQuery
+spec=importlib.util.spec_from_file_location('f','tests/integration/p6/conftest.py'); f=importlib.util.module_from_spec(spec); spec.loader.exec_module(f)
+cat=Path(tempfile.mkdtemp(dir='/workspace/work/review-p6-scratch',prefix='typed-search-')); f.populate_rich_catalog(cat,include_context=False)
+with sqlite3.connect(cat/'core.sqlite3') as db:
+    trigger=db.execute("SELECT sql FROM sqlite_schema WHERE name='p1_immutable_git_observations_update'").fetchone()[0]
+    db.execute('DROP TRIGGER p1_immutable_git_observations_update'); db.execute('PRAGMA ignore_check_constraints=ON')
+    db.execute("UPDATE git_observations SET value='[]'"); db.execute(trigger)
+try: ProductionQueryService(cat).search(SearchQuery(query_text='x',projection_kinds=('git_metadata',)))
+except Exception as e: print(type(e).__name__, getattr(e,'code',None), 'stop', (cat/'p1-recovery-stop.json').exists())

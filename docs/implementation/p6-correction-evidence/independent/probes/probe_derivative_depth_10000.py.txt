@@ -1,0 +1,13 @@
+import importlib.util, sqlite3, tempfile
+from pathlib import Path
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.production_query import SearchQuery
+spec=importlib.util.spec_from_file_location('f','tests/integration/p6/conftest.py'); f=importlib.util.module_from_spec(spec); spec.loader.exec_module(f)
+cat=Path(tempfile.mkdtemp(dir='/workspace/work/review-p6-scratch',prefix='depth-search-')); f.populate_rich_catalog(cat)
+s=ProductionQueryService(cat); s.rebuild_search()
+with sqlite3.connect(cat/'search.sqlite3') as db:
+    db.execute('PRAGMA ignore_check_constraints=ON')
+    db.execute("UPDATE search_documents SET document_key_json=?,searchable_text='P6' WHERE document_key_json=(SELECT document_key_json FROM search_documents WHERE projection_kind='context_text' LIMIT 1)", ('['*10000+'0'+']'*10000,))
+try:
+    result=s.search(SearchQuery(query_text='P6')); print('result',result.backend)
+except Exception as e: print(type(e).__name__,getattr(e,'code',None),'stop',(cat/'p1-recovery-stop.json').exists())

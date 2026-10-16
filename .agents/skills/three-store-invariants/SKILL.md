@@ -494,6 +494,38 @@ stops A. Metadata-only tokens omit payload certification; typed byte reads retai
 their verification boundary. These lessons are tested shared behavior, not P7
 recovery, host-power-loss validation or P8 activation evidence.
 
+### P6 verified read and derivative review procedures
+
+- Test escaped typed read capabilities after the snapshot context closes, and try
+  binding a live snapshot to an unrelated catalog directory. Typed expiry and
+  owner routing must survive both cases; private `__new__` assembly in an
+  application bypassed the supported binding checks. Use `GitCore.for_snapshot`
+  and the original snapshot's catalog owner, not an unverified caller path.
+- Recompute public cursor checksums in adversarial tests. Corrupt key arity,
+  element types and OID ranges independently; unchanged-digest tampering alone
+  never verifies content validation. Accepting a different valid position cannot
+  be described as origin authentication.
+- Guard the entire stored-row construction, including JSON indexing and `*args`
+  unpacking before a typed constructor. A constructor-only wrapper missed valid
+  JSON scalar provenance. Search's raw projection extractors need the same typed
+  reconstruction and stop boundary as ordinary views. Preserve invalid external
+  cursor and finite query-limit failures as non-corruption outcomes.
+- Put disposable Search byte/row/VM and encoded-document size checks before
+  substring evaluation or `fetchall()`. A post-allocation dictionary check
+  accepted allocation of a malicious multi-MiB derivative row. Verify fallback
+  before Python document construction. Catch parser-depth exhaustion inside
+  derivative lookup so it cannot enter an authoritative corruption boundary.
+  Exercise binary Notes with invalid
+  UTF-8 bytes in rebuild/scan equivalence tests.
+- Report actual `instr()` plus full authority verification as a verified scan.
+  A fresh projection token and matching candidates do not establish an FTS
+  accelerator. Measure metadata token generation, authority validation and
+  derivative lookup separately; keep metadata queries out of retained-body reads.
+
+Formal checks: `tests/integration/p6/test_corrections.py` and
+`tests/integration/test_snapshot_read_limits.py`. These use disposable catalogs,
+finite-work refusal, growing candidate sets and tracked live objects. They do not
+prove full release acceptance, power-loss durability or indexed acceleration.
 ## Revalidate transport and request boundaries with independent counterexamples
 
 P5's [corrected-source review](../../../docs/implementation/evidence/p5-correction/independent/review.md)
