@@ -1,0 +1,21 @@
+{
+  "commit": "f23dfdabff5a2f9a95104fa8703b81f62802b7cb",
+  "tree": "e087eb66e243bf4fb2d671820370d74923a805b1",
+  "acceptance_input_hash": "3ad6043771fd28e09bee80fa53f23dcedbe26c0d40dc5d015302777ae7d5f919",
+  "reconciled": true,
+  "node_ids": [
+    "tests/integration/p1/test_context.py::test_generated_source_clock_is_real_sqlite_value",
+    "tests/integration/p3/test_production_context.py::test_p1_contract_on_actual_production_adapter[test_generated_source_clock_is_real_sqlite_value]"
+  ],
+  "phases": 6,
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "production_source_diff_from_f17dd21": false,
+  "artifacts": {
+    "purpose-f23-selected.txt": "eaf401bc4f9e15b939bd8910ded9972b1030c342ec57e9c1d6798eb3b40b6710",
+    "purpose-f23.log": "1b69ecbb245749d5bb66cf7dace2b87f71d7a2b122b0823e25f5dcc67983132f",
+    "purpose-f23.xml": "ec9b5f9eddde69d033bd417b669fa331db6a9991f4d02535ea6708fbf13f4450",
+    "purpose-f23-journal.jsonl": "b2cbf4edea70c05624af5cf7504b5fe994aa34811da0d858899a0f5d1191df04"
+  }
+}

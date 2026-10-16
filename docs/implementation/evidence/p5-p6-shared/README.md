@@ -14,13 +14,16 @@ No real catalog, backup, main ref, migration or runtime activation was changed.
   Includes classified time/schema/validation-stop/snapshot and native signed-byte
   regressions. All requested local checks passed. Full final combined sibling
   validation is a separate root-owned receipt, not inferred here.
+- `f23dfda/`: final test-purpose-only update, 79 passed, no skip/failure;
+  same production source as f17dd21, plus both correctly isolated P1/P3
+  missing-clock negative controls. All requested checks passed.
 - `independent-review/`: independent exact-source findings and revalidation,
   reviewer-owned counterexample source and raw logs/selection/JUnit/journals;
   `shared-review.md` and `shared-review-reconciliation.json` explain per-run
   identities, overlap and the earlier rerun journal. Design review is separately
   bound to design commit 7d2e736.
 - `docs-only-input-identity.json`: actual equality of 307 source/test/script and
-  project/lock file hashes with final executed f17dd21. The docs/skill/evidence
+  project/lock file hashes with final executed f23dfda. The docs/skill/evidence
   commit changes no executable acceptance input; the aggregate maps paths to
   exact SHA-256 values, rather than assuming docs-only from commit wording.
 
