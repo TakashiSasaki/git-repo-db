@@ -104,3 +104,40 @@ purposes explicitly. The existing cancellation test now forwards optional
 validation arguments and continues asserting actual SQLITE_INTERRUPT without a
 corruption stop. No inherited Schema 21 failure is hidden or counted as passing;
 the final combined evidence owns their exact-revision reclassification.
+
+## Final test-purpose follow-up
+
+A final legacy-negative check found one more unrelated zero observation input in
+`test_generated_source_clock_is_real_sqlite_value`: its missing-clock SQL could
+fail the observation CHECK before reaching the intended clock guard. The
+one-line test-only correction at `f23dfdabff5a2f9a95104fa8703b81f62802b7cb`,
+tree `e087eb66e243bf4fb2d671820370d74923a805b1`, changes that input to observed=1.
+No production source, DDL or executable script changes from independently
+reviewed `f17dd21`. The same node and imported P3 scenario now exercise their
+original missing-clock purpose under a valid unrelated observation coordinate.
+
+Exact clean `f23dfda` passed **79** focused nodes (the preceding 77 plus these two
+P1/P3 controls), all requested checks, zero failures/skips. Selection, exactly-once
+starts, 237 passing phases and JUnit identities reconcile in the added evidence
+folder. The final docs-only input-identity proof now binds all 307 scoped source/test/script/project/lock files to
+`f23dfda`; the earlier ae087d3 proof is retained with its original name. These
+focused runs overlap, so their passing counts are not additive unique coverage.
+
+The independent [f23 addendum](evidence/p5-p6-shared/independent-review/shared-review-f23-addendum.md)
+executes both changed-purpose controls on exact `f23dfda`: **2 passed**, zero
+failures/skips, fresh reconciled three-phase/JUnit evidence. It independently
+confirms no production `src` delta from `f17dd21`; the prior full/focused review
+receipts retain their original revision scope. The two nodes overlap earlier
+coverage and are not added into a unique count.
+
+
+## Evidence identity scope clarification
+
+Independent review measured a distinct live CI-planner acceptance-input hash at
+`f23dfda` versus `f3cd1c9`: 22 added evidence files are included by the unchanged
+conservative CI policy. The scoped 307-file SHA-256 map proves unchanged declared
+code/test/build inputs; it does not prove full CI acceptance-hash equality. Exact
+CI hash values, changed paths and Git blob entries are saved in the independent
+`evidence-ci-inputhash-delta.json` artifact and the evidence README. Subsequent
+evidence additions may change that live CI hash again. This wording correction
+changes no source, tests, scripts or CI policy and makes no new execution claim.

@@ -1,0 +1,34 @@
+# Independent P6 correction review
+
+The reviewer authored no production or repository test changes. All probes used disposable synthetic catalogs under the review scratch directory or pytest temporary directories. The reviewed implementation and formal regression tests were authored by the P6 implementer. This is local development review evidence, not GitHub approval, packaging verification, hosted CI, or Release Acceptance.
+
+## Final independently executed input
+
+- Executable feature: `df912d6c43c6c448f9122f2eaaf2728c38956dbf`.
+- Feature tree: `adcc1f0ddba4e15fed00f945ec58108361f6b941`.
+- Selection: `tests/integration/p6`, `tests/integration/test_snapshot_read_limits.py`, and the reviewer-owned `test_independent_p6.py`.
+- Result: **82 unique collected and executed nodes, 82 passed; 246 passed setup/call/teardown phases; zero failures/skips**. Breakdown: 50 formal P6 nodes, 6 shared snapshot helper nodes, 26 reviewer-owned counterexamples. These overlap other reviewers' formal selections and must not be added to their unique combined-tree totals.
+- Locked sync, environment capture, collection, and pytest commands all exited 0. The receipt retains the complete commands and actual node IDs; JUnit and append-only journal retain execution phases.
+- SHA-256 maps of every tracked `src`, `tests`, `scripts`, `pyproject.toml`, and `uv.lock` input matched the frozen feature and were unchanged before/after execution. Later documentation-only changes do not become new executable verification.
+- The reviewer-owned source SHA-256 is recorded in `final/receipt.json`; the same source is copied alongside this report.
+
+`final/receipt.json`, `final/collected.log`, `final/pytest.log`, `final/junit.xml`, `final/journal.jsonl`, `final/versions.log`, and the two input hash maps are the evidence, rather than historical counts or tests merely read by the reviewer.
+
+## Findings, fixes, and independent closure
+
+| Finding | Independent reproduction or source determination | Corrected behavior and final execution |
+| --- | --- | --- |
+| Capability lifetime bypass | On baseline `475682e`, the application-built Core retained `_active=True` after snapshot exit and leaked `sqlite3.ProgrammingError` on reuse. | Supported typed snapshot binding now expires and fences its owner; `test_escaped_core_capability_fails_with_typed_expiry` and formal Core/Context lifetime tests passed. |
+| Stored JSON/domain failures did not stop | Malformed repository JSON leaked `JSONDecodeError`; canonical number used as a repository name leaked `REPOSITORY_CLAIM`; provenance `123` leaked `TypeError` during argument unpacking before constructor-only protection. All left stop absent. Raw Search observation `[]` leaked `AttributeError`. | Complete stored-row/extractor decoding scopes now persist `AUTHORITATIVE_CORRUPTION`; independently exercised value, provenance, JSON and both Search/rebuild shape failures, plus formal UTF-8 cases. All passed. |
+| Binary Notes rebuild | A proven note `b'hello\xff\x00world'` caused `UnicodeEncodeError` when surrogateescape output reached SQLite. | Search presentation uses documented backslash escapes while typed bytes remain exact. Independent binary rebuild/scan equivalence and formal positive binary-match tests passed. |
+| Recomputed public cursor checksum | On baseline, recomputed keys with wrong arity/short OID were accepted, while bool/int/nested-array components leaked `TypeError`. | Endpoint keys are checked independently of the public checksum; six reviewer malformed-key nodes, seven formal variants, valid arbitrary-position behavior and endpoint/filter/snapshot tests passed. No sender authenticity is claimed. |
+| Page materialization | Baseline source built and sorted every view per page. | Heap selection retains `limit+1` candidate views; exact totals still require an explicitly bounded scan. An independently generated 256-resource Context catalog kept fewer than 20 simultaneous views across two limit-3 pages. Formal 100/10000 candidate growth tests also passed. |
+| Derivative preallocation | A same-count corrupted Search row of 2 MiB reached Python document construction before its 1 MiB limit. | Encoded length and SQLite work/store/row limits precede candidate text construction; cursor iteration replaces fetchall. An independent guard rejecting already-materialized oversized documents passed with correct authority fallback and no catalog stop. |
+| Deep derivative JSON falsely stopped authority | On `07a6131`, a same-count 20 KiB Search key with depth 10000 raised uncaught `RecursionError`; the outer authoritative wrapper persisted a false catalog corruption stop. | `df912d6` catches derivative parser recursion at its own boundary and falls back. Both the reviewer probe and formal `test_derivative_deep_json_falls_back_without_catalog_stop` passed on the final feature. |
+| Full-body fingerprint on metadata reads | Baseline snapshot source fingerprinted every stored body. | Metadata fences omit retained body/proof/text values, and explicit typed byte reads remain verifying. Independently executed formal `test_metadata_queries_do_not_hydrate_or_rehash_all_retained_bodies` passed: metadata reads remain possible before byte verification detects the synthetic damage and persistently stops the catalog. |
+| Unlimited configuration | Passing `read_limits=None` bypassed the P6 finite read contract. | Runtime validation refuses this configuration. Independently executed formal finite-limit and refusal tests passed in Core-only, Context-only and paired modes. |
+| Search acceleration/authenticity overstatement | Source uses ordinary tables and `instr()` plus a full authoritative extraction; it has no FTS5 acceleration or key-based cursor signature. | Backend is accurately `verified_projection_scan`, documentation states its double-scan cost and conservative freshness strategy, and literal substring equivalence was executed for Japanese, emoji, short/special/NUL/case-sensitive inputs. Empty queries remain explicitly rejected. |
+
+The final evidence includes existing pinned-snapshot/write conflict tests, topology tests, corruption stop propagation, CLI behavior, missing/stale/incomplete/corrupt Search fallbacks and ordinary-blob exclusions. Query snapshot/token, authority extraction and derivative scan costs are separately described; concurrent test timings are not sequential benchmark claims.
+
+No remaining blocking P6 defect is known within this reviewed scope. The bounded conservative scans are an explicit scaling limitation, not completed FTS acceleration. The final combined P5/P6 tree, packaging, P1-P4/compatibility selection and hosted Development CI must be verified and reported separately by integration responsibility. No real catalog, backup, main branch, release, tag, runtime switch or live authenticated acquisition was altered by this reviewer.

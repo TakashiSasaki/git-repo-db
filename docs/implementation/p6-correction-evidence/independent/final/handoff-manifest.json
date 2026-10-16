@@ -1,0 +1,54 @@
+{
+  "locked-sync.log": {
+    "bytes": 58,
+    "sha256": "d4859db693636a5153db125e3a8989fd5272a8bb4e0310b45ff1fca232f6a747"
+  },
+  "collected.log": {
+    "bytes": 7553,
+    "sha256": "72b88d869868d5df1f720119855b81da5b0c816cb93e9f6abf36d46b0d212b2a"
+  },
+  "journal.jsonl": {
+    "bytes": 70128,
+    "sha256": "ea0d95ee9ce00fc82a870f5b828704758742d0763cb089a3da0260cdb54b9523"
+  },
+  "run_final.py": {
+    "bytes": 3637,
+    "sha256": "21b14d1544a6e3775cc091cc42820d3882200ee16260e70d73b5b9fe5eb282dd"
+  },
+  "receipt.json": {
+    "bytes": 19714,
+    "sha256": "23301162839343fd6b64c44557f2ec18bcb1a03b8e2c44f034fbf22ad6d94dad"
+  },
+  "selected-and-executed-nodes.txt": {
+    "bytes": 7524,
+    "sha256": "d6239f0e76af0244a8714c291523e34686679a3c188b3d3abc458cf74395f928"
+  },
+  "test_independent_p6.py": {
+    "bytes": 9346,
+    "sha256": "0ebdfce826af076fa8d1b749374a2a4fc2c331f3ef24ce7877036cc832178a33"
+  },
+  "pytest.log": {
+    "bytes": 10387,
+    "sha256": "82545394dbfae554764930ab1b209047d47185596c4a9fc68bdc1506f3e0b00f"
+  },
+  "input-hashes-after.json": {
+    "bytes": 36874,
+    "sha256": "defb3c59715a4f9444908449f91eea94b79f89836ef59232ffd5074978449350"
+  },
+  "independent-review.md": {
+    "bytes": 6855,
+    "sha256": "683fc9981ef039e3fbb7239c09d10070c51888999525f6ec6f6ca11a4d175925"
+  },
+  "junit.xml": {
+    "bytes": 11142,
+    "sha256": "aeb30b54f8f8dc6845d017907ad79124d99e2ddc12bc114e6ab8f951808ff8fd"
+  },
+  "versions.log": {
+    "bytes": 158,
+    "sha256": "e525f118e996cb5c36315865d97745a8afa1ebf0ab7ac6c27789bddeb3153bd0"
+  },
+  "input-hashes-before.json": {
+    "bytes": 36874,
+    "sha256": "defb3c59715a4f9444908449f91eea94b79f89836ef59232ffd5074978449350"
+  }
+}

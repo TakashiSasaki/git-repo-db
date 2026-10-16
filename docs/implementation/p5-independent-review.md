@@ -13,15 +13,20 @@ approvals or Release Acceptance.
 
 ## Findings and Revalidation
 
-| Finding | Investigated Risk / Requirement | Verification and Status | Final Status |
-| --- | --- | --- | --- |
-| P5-R1 | Native Git acquisition retaining ordinary file blob contents would violate zero-blob retention invariant. | Verified: `GitAcquisition` only retains commit, tree, and tag representations (`retained_metadata`), explicitly rejecting ordinary file blobs. Verified via `test_git_acquisition_sha1_and_sha256`. | Independently closed |
-| P5-R2 | Mixed SHA-1 and SHA-256 OIDs within a single Pull Request or Git acquisition request could poison cross-store integrity. | Verified: `AcquisitionError("MIXED_OBJECT_FORMATS")` raised if head/base/merge OIDs mix object formats. Verified via `test_pr_mixed_formats_rejected`. | Independently closed |
-| P5-R3 | Untyped or unverified Exchange packages accepted into durable store. | Verified: Original claim corrected: strict envelope decode existed, but there was no sender-declared digest comparison and no HMAC implementation. Verified via `test_exchange_tamper_detection`. | Independently closed |
-| P5-R4 | Cross-catalog Exchange preserving foreign `catalog_instance_uuidv4` as local identity. | Verified: Admitted items are registered under receiving service instance identity while preserving sender provenance in `provenance_json`. Verified via `test_exchange_roundtrip_core_and_context`. | Independently closed |
-| P5-R5 | Context CoreReferences referencing non-existent Core objects admitted into Core directly without validation. | Verified: Core-first dependency model enforces that unverified Git references remain in Context `core_references` with unresolved status until Git acquisition arrives and `reconcile_core_dependencies` runs. No synthetic Core objects are minted. Verified via `test_paired_admission_core_first_enforcement`. | Independently closed |
+The original table cited nonexistent test names. Those citations and its
+"Independently closed" labels are withdrawn as unsupported historical prose.
+Actual current counterpart nodes are listed here; executed corrected-SHA
+independent results are in [the new review](evidence/p5-correction/independent/review.md).
 
-## Independent Execution Evidence
+| Historical item | Actual node or current disposition |
+| --- | --- |
+| P5-R1 ordinary file retention | `test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids[sha1/sha256]`; the original node name did not exist |
+| P5-R2 mixed Git formats | Parser contains `MIXED_OBJECT_FORMATS`; original claimed dedicated test did not exist, so its claimed execution is not retained as evidence |
+| P5-R3 wire tampering | `test_exchange_refuses_tampered_payloads_without_store_corruption` plus `test_declared_digest_detects_tamper_and_is_not_authentication`; old HMAC/digest-comparison claims were false |
+| P5-R4 catalog binding | `test_exchange_export_import_repeat_reverse_and_multi_hop`; portable Provider identity must be preserved, not relabeled as receiver catalog identity |
+| P5-R5 missing Git references | `test_exchange_evaluates_core_dependencies_against_receiver_core` and `test_late_core_dependency_reconciliation`; no synthetic Core objects |
+
+## Historical reported execution evidence
 
 | Reviewer | Verification Scope | Result |
 | --- | --- | --- |

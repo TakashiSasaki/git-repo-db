@@ -1,0 +1,2 @@
+/workspace/work/p5/.venv/bin/python
+/workspace/work/p5/src/repo_catalog/__init__.py

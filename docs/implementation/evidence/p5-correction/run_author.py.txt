@@ -1,0 +1,31 @@
+import subprocess, pathlib, hashlib, json, sys, platform, sqlite3, time
+root=pathlib.Path.cwd(); out=root/'work/p5-evidence/exact-c90-common-final';out.mkdir(parents=True,exist_ok=True)
+def command(args,name):
+ start=time.time();r=subprocess.run(args,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+ (out/(name+'.txt')).write_text(r.stdout)
+ record={'argv':args,'cwd':str(root),'exit_code':r.returncode,'elapsed_seconds':time.time()-start}
+ commands.append(record);(out/'commands.json').write_text(json.dumps(commands,indent=2))
+ print(name,r.returncode,flush=True)
+ return r
+commands=[]
+revision=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+tracked=subprocess.check_output(['git','ls-files','src','tests','scripts','pyproject.toml','uv.lock','.python-version'],text=True).splitlines()
+inputs={p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in tracked if (root/p).is_file()}
+(out/'input-binding.json').write_text(json.dumps({'commit':revision,'tree':tree,'python':sys.version,'platform':platform.platform(),'sqlite':sqlite3.sqlite_version,'inputs':inputs},indent=2))
+command(['uv','sync','--locked','--group','dev'],'sync')
+command(['uv','run','--no-sync','python','-c','import repo_catalog,sys; print(sys.executable);print(repo_catalog.__file__)'],'source-identity')
+command(['uv','--version'],'uv-version')
+command(['git','--version'],'git-version')
+command(['uv','run','--no-sync','ruff','--version'],'ruff-version')
+command(['uv','run','--no-sync','ruff','check','src','tests','scripts'],'ruff-check')
+command(['uv','run','--no-sync','ruff','format','--check','src','tests','scripts'],'ruff-format')
+for script in ['build_p1_schema','audit_p1_schema','audit_implementation_boundary','audit_callsite_dependencies']:
+ command(['uv','run','--no-sync','python','scripts/'+script+'.py','--check'],script)
+targets=['tests/integration/p5','tests/integration/p2/test_native.py']
+command(['uv','run','--no-sync','pytest',*targets,'--collect-only','-q'],'collected')
+command(['uv','run','--no-sync','pytest',*targets,'-q','--tb=short','-o','junit_family=xunit1','--junitxml',str(out/'junit.xml'),'--journal',str(out/'journal.jsonl')],'pytest')
+command(['uv','run','--no-sync','pytest','tests/packaging/test_p5_distribution.py','--collect-only','-q'],'packaging-collected')
+command(['uv','run','--no-sync','pytest','tests/packaging/test_p5_distribution.py','-q','--tb=short','-o','junit_family=xunit1','--junitxml',str(out/'packaging-junit.xml'),'--journal',str(out/'packaging-journal.jsonl')],'packaging')
+artifacts={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in out.iterdir() if p.is_file()}
+(out/'artifact-sha256.json').write_text(json.dumps(artifacts,indent=2))
+print(json.dumps({'commit':revision,'tree':tree,'failed':[c for c in commands if c['exit_code']]}),flush=True)

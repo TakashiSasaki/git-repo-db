@@ -1,6 +1,6 @@
 {
-  "tested_commit": "f17dd2154f22f965883d8a1943c140f9cc439ae8",
-  "tested_tree": "952c18132b11f393715e67baad33b730e3404e12",
+  "tested_commit": "f23dfdabff5a2f9a95104fa8703b81f62802b7cb",
+  "tested_tree": "e087eb66e243bf4fb2d671820370d74923a805b1",
   "scope": [
     "src",
     "tests",
@@ -171,7 +171,7 @@
     "tests/integration/architecture_spikes/test_core.py": "23fb758b387dec15904d8c0acf6007efa0ff45d771c3dcf0f74e3e0aaac91055",
     "tests/integration/architecture_spikes/test_notes.py": "53ed9b5ed0ab73d2781b69bdd53ea2e8dba640b00dacdf508fe482475967734d",
     "tests/integration/p1/__init__.py": "65afbab9cf5f004b7e6c759654b1f690a9b6a7dfa1f98d84f3c3b1c3b8f2c635",
-    "tests/integration/p1/test_context.py": "fda0a3ab85cb52bf43a6dc48b87e62bbf5e445d6edfd53bf9adb16138391291e",
+    "tests/integration/p1/test_context.py": "5664cde8d196be32d603bb879193069c344addc7eb6ee415a43f952ef30af26c",
     "tests/integration/p1/test_coordination.py": "7203be008d40a341f29d5140e480dd483e4d557001d91fbc67ab2855efb0a8a4",
     "tests/integration/p1/test_core.py": "1138494e23de9b8cef833f29116bbe2058cf0fe58cb83d9544657caf53428b9b",
     "tests/integration/p1/test_coverage.py": "5edab5f7a53550f1e9c1bbcd82ed094bdca987174a9e5547d03232f45e535ef6",
@@ -320,5 +320,11 @@
     "uv.lock": "38086f956741ff31865ed75f5a1d48997ab518fbc2a2dac8e0e5277cd6a413c9"
   },
   "empty_diff_from_tested_commit": true,
-  "aggregate_path_hash_sha256": "cc8199e96f737cd17b438c66cfd3aaec94e76ba40a811b9f36b26cca1b08dbc7"
+  "aggregate_path_hash_sha256": "737e623184ced99cb9f94cde31179c6dd48d3e6733f0c822ae99714f8ee840f3",
+  "identity_scope_note": "Scoped source/test/script/project/lock content equality only; not the full live scripts.ci_plan acceptance input set, which includes evidence files under this directory.",
+  "is_full_ci_acceptance_input_hash": false,
+  "observed_live_ci_acceptance_hashes": {
+    "f23dfdabff5a2f9a95104fa8703b81f62802b7cb": "3ad6043771fd28e09bee80fa53f23dcedbe26c0d40dc5d015302777ae7d5f919",
+    "f3cd1c9fa81d78e4a77efb824f5eb4a6b4b95f0a": "9cc20503acece5edfb752ba6e2ae0c37f29a49acabc1ac25b0635c482bfdfe07"
+  }
 }

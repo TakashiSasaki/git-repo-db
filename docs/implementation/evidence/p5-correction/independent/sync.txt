@@ -1,0 +1,7 @@
+Resolved 49 packages in 2ms
+   Building repo-catalog @ file:///workspace/work/review-p5-final
+      Built repo-catalog @ file:///workspace/work/review-p5-final
+Prepared 1 package in 529ms
+Uninstalled 1 package in 1ms
+Installed 1 package in 3ms
+ ~ repo-catalog==0.2.0 (from file:///workspace/work/review-p5-final)
