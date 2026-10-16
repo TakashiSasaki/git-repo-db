@@ -190,7 +190,7 @@ WHEN NOT EXISTS(SELECT 1 FROM captures WHERE capture_origin_uuidv4=NEW.capture_o
 BEGIN SELECT RAISE(ABORT,'Capture object-format mismatch'); END;
 CREATE TABLE core_coverage_proofs (
  owner_kind TEXT NOT NULL, owner_coordinates_json TEXT NOT NULL,
- observed_at_us INTEGER NOT NULL, coverage_state TEXT NOT NULL,
+ observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0), coverage_state TEXT NOT NULL,
  members_json TEXT NOT NULL CHECK(p1_coverage_members(members_json)),
  provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),
  PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,members_json,provenance),

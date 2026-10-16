@@ -838,9 +838,13 @@ class RepositoryClaim:
                 "REPOSITORY_CLAIM", self.field, "typed repository claim required"
             )
         if self.field == "observation_us":
-            if type(self.value) is not int or not -(2**63) <= self.value < 2**63:
+            if self.value is not None and (
+                type(self.value) is not int or not 0 < self.value < 2**63
+            ):
                 raise CoreFailure(
-                    "TIME", self.field, "signed int64 Unix microseconds required"
+                    "TIME",
+                    self.field,
+                    "positive int64 Unix microseconds or null required",
                 )
         elif not isinstance(self.value, str):
             raise CoreFailure(
@@ -1015,12 +1019,16 @@ class GitObservation:
             raise CoreFailure(
                 "OBSERVATION", self.scope, "endpoint string or genuine absence required"
             )
-        if "ref_observed_at_us" in self.value and (
-            type(self.value["ref_observed_at_us"]) is not int
-            or not -(2**63) <= self.value["ref_observed_at_us"] < 2**63
+        if (
+            "ref_observed_at_us" in self.value
+            and self.value["ref_observed_at_us"] is not None
+            and (
+                type(self.value["ref_observed_at_us"]) is not int
+                or not 0 < self.value["ref_observed_at_us"] < 2**63
+            )
         ):
             raise CoreFailure(
-                "TIME", self.scope, "signed int64 Unix microseconds required"
+                "TIME", self.scope, "positive int64 Unix microseconds or null required"
             )
         if "ref_kind" in self.value and self.value["ref_kind"] not in (
             "head",
@@ -1102,9 +1110,15 @@ class GitObservation:
                 "OBSERVATION", self.scope, "nonnegative actual manifest counts required"
             )
         observed = self.value["observed_at_us"]
-        if type(observed) is not int or not -(2**63) <= observed < 2**63:
+        if observed is not None and (
+            type(observed) is not int or not 0 < observed < 2**63
+        ):
             raise CoreFailure(
-                "TIME", self.scope, "signed int64 Unix microseconds required"
+                "TIME", self.scope, "positive int64 Unix microseconds or null required"
+            )
+        if self.value.get("terminal_observation") is True and observed is None:
+            raise CoreFailure(
+                "TIME", self.scope, "terminal observation requires a positive timestamp"
             )
         if any(
             name in self.value

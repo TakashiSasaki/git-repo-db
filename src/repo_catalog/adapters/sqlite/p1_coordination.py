@@ -342,7 +342,8 @@ class _Cursor:
 class ReadSnapshot:
     """Pinned read capability; no public authorizer or transaction mutation."""
 
-    def __init__(self, db, running, on_error):
+    def __init__(self, db, running, on_error, *, directory=None):
+        self._directory = None if directory is None else Path(directory).resolve()
         self._db = db
         self._running, self._active = running, True
         self._on_error = on_error
@@ -351,6 +352,22 @@ class ReadSnapshot:
         if not self._active:
             raise CoordinationError("SNAPSHOT_EXPIRED", "read")
         self._running()
+
+    def identity(self, role: str):
+        self._available()
+        return _identity(self, role)
+
+    def fingerprint(self, *, metadata_only: bool = False):
+        self._available()
+        return _digest(self, metadata_only=metadata_only)
+
+    @property
+    def catalog_directory(self):
+        """Actual coordinator owner; unrelated caller paths cannot route a stop."""
+        self._available()
+        if self._directory is None:
+            raise CoordinationError("SNAPSHOT_OWNER", "read", "unbound catalog")
+        return self._directory
 
     def identity(self, role: str):
         self._available()
@@ -607,8 +624,18 @@ class PairCoordinator:
                     raise
             try:
                 reads = (
-                    ReadSnapshot(core, self._check_running, self._record_corruption),
-                    ReadSnapshot(context, self._check_running, self._record_corruption),
+                    ReadSnapshot(
+                        core,
+                        self._check_running,
+                        self._record_corruption,
+                        directory=self.directory,
+                    ),
+                    ReadSnapshot(
+                        context,
+                        self._check_running,
+                        self._record_corruption,
+                        directory=self.directory,
+                    ),
                 )
                 yield PairedSnapshot(*reads, token)
             finally:
@@ -653,7 +680,12 @@ class PairCoordinator:
                 apply_snapshot_read_limits(core, self.read_limits)
                 self._guard_read(core)
             try:
-                read = ReadSnapshot(core, self._check_running, self._record_corruption)
+                read = ReadSnapshot(
+                    core,
+                    self._check_running,
+                    self._record_corruption,
+                    directory=self.directory,
+                )
                 yield read
             finally:
                 read._active = False

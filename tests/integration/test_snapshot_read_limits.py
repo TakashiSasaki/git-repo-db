@@ -49,3 +49,32 @@ def test_finite_snapshot_refusal_is_not_corruption(tmp_path, limits):
     assert not (tmp_path / "p1-recovery-stop.json").exists()
     with PairCoordinator(tmp_path).snapshots():
         pass
+
+
+def test_snapshot_cannot_redirect_catalog_corruption_stop(tmp_path):
+    from repo_catalog.adapters.sqlite.production_context import Context
+    from repo_catalog.domain.production_context import ContextError
+
+    source, other = tmp_path / "source", tmp_path / "other"
+    source.mkdir()
+    other.mkdir()
+    _catalog(source)
+    _catalog(other)
+    with pytest.raises((CoordinationError, CoreFailure)):
+        with PairCoordinator(source, metadata_only=True).snapshots() as pair:
+            for factory, read, failure in (
+                (GitCore.for_snapshot, pair.core, CoreFailure),
+                (Context.for_snapshot, pair.context, ContextError),
+            ):
+                with pytest.raises(failure) as rejected:
+                    with factory(read, other):
+                        pytest.fail("foreign catalog capability returned")
+                assert rejected.value.code == "SNAPSHOT_OWNER"
+            with GitCore.for_snapshot(pair.core, source) as core:
+                # Exercise the same persistent typed-corruption publication boundary
+                # before deliberately swallowing its error inside the live snapshot.
+                with pytest.raises(CoreFailure):
+                    core._integrity_stop("injected typed failure")
+            pytest.fail("ordinary completion must be fenced after caught corruption")
+    assert (source / "p1-recovery-stop.json").exists()
+    assert not (other / "p1-recovery-stop.json").exists()
