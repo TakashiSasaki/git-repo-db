@@ -164,7 +164,7 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
             target_oids=(OID(fmt, oids["commit1"]),),
         ),
     )
-    git_acq = GitAcquisition(cat_dir)
+    git_acq = GitAcquisition(cat_dir, operational=cat_dir)
     git_rep = git_acq.acquire_from_native(git_src, git_req, new_request=True)
     assert git_rep.status == "complete"
     assert len(git_rep.note_acquisitions) == 1
@@ -264,7 +264,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
     oids = _setup_git_repo(git_dir, fmt)
 
     # Acquire into A
-    git_acq = GitAcquisition(cat_a)
+    git_acq = GitAcquisition(cat_a, operational=cat_a)
     git_acq.acquire_from_native(
         GitNativeSource(git_dir),
         GitNativeAcquisitionRequest(
@@ -355,7 +355,7 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
     assert all(r.object_view is None for r in paired_before.core_resolutions)
 
     # 2. Later, acquire commit1 into Core
-    git_acq = GitAcquisition(cat_dir)
+    git_acq = GitAcquisition(cat_dir, operational=cat_dir)
     git_acq.acquire_from_native(
         GitNativeSource(git_dir),
         GitNativeAcquisitionRequest(
@@ -396,7 +396,7 @@ def test_derivative_loss_resilience_and_transparent_fallback(
     git_dir = tmp_path / "git_repo"
     oids = _setup_git_repo(git_dir, fmt)
 
-    git_acq = GitAcquisition(cat_dir)
+    git_acq = GitAcquisition(cat_dir, operational=cat_dir)
     git_acq.acquire_from_native(
         GitNativeSource(git_dir),
         GitNativeAcquisitionRequest(
@@ -448,7 +448,7 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> No
     git_dir = tmp_path / "git_repo"
     oids = _setup_git_repo(git_dir, fmt)
 
-    git_acq = GitAcquisition(cat_dir)
+    git_acq = GitAcquisition(cat_dir, operational=cat_dir)
     git_acq.acquire_from_native(
         GitNativeSource(git_dir),
         GitNativeAcquisitionRequest(
