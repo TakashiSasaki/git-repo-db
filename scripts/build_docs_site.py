@@ -387,9 +387,15 @@ def stage_documentation(staging_dir: Path, skip_mermaid_render: bool = False) ->
                 raise ValueError(f"No mermaid code block found in {src_md}")
             mermaid_code = m.group(1).strip()
 
-            if not skip_mermaid_render or not svg_path.is_file():
-                print(f"  Rendering Mermaid SVG: {svg_filename}...")
-                render_mermaid_to_svg(mermaid_code, svg_path, p_cfg)
+            if not svg_path.is_file():
+                if skip_mermaid_render:
+                    svg_path.write_text(
+                        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50">{slug}</text></svg>',
+                        encoding="utf-8",
+                    )
+                else:
+                    print(f"  Rendering Mermaid SVG: {svg_filename}...")
+                    render_mermaid_to_svg(mermaid_code, svg_path, p_cfg)
 
             # Copy to slug directory so both schema/mermaid/<slug>.svg and
             # schema/mermaid/<slug>/<slug>.svg resolve cleanly from directory URLs
