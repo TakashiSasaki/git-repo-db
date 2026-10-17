@@ -7,7 +7,7 @@ on:
       - 'src/repo_catalog/**/access*.py'
       - 'src/repo_catalog/adapters/sqlite/access_ddl/**'
       - 'tests/integration/access/**'
-      - 'tests/unit/test_access_registry_values.py'
+      - 'tests/unit/test_access*_values.py'
       - 'scripts/verify_access_distribution.py'
       - 'scripts/audit_callsite_dependencies.py'
       - 'pyproject.toml'
@@ -70,7 +70,7 @@ jobs:
           print("Python:", platform.python_version(), "SQLite:", sqlite3.sqlite_version, "source:", source)
           db.close()
           PY
-          uv run --no-sync pytest -q tests/unit/test_access_registry_values.py tests/integration/access \
+          uv run --no-sync pytest -q tests/unit/test_access*_values.py tests/integration/access \
             --junitxml=artifacts/access-registry/tests.xml
       - name: Verify wheel and sdist-derived wheel outside checkout
         run: uv run --no-sync python scripts/verify_access_distribution.py
@@ -83,7 +83,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          targets=(src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access_registry_values.py tests/integration/access scripts/verify_access_distribution.py)
+          targets=(src/repo_catalog/domain/access_connections.py src/repo_catalog/domain/ports/access_connections.py src/repo_catalog/adapters/sqlite/access_connections.py src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
           lint=0
           formatting=0
           uv run --no-sync ruff check "${targets[@]}" || lint=$?

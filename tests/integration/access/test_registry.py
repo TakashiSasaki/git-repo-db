@@ -55,7 +55,7 @@ def test_schema_identity_and_direct_key(path):
     try:
         assert schema.schema_rows(db) == schema.expected_schema()
         assert db.execute("SELECT * FROM access_identity").fetchall() == [
-            ("access", schema.FORMAT, 1, schema.fingerprint())
+            ("access", schema.FORMAT, schema.SCHEMA_VERSION, schema.fingerprint())
         ]
         tables = [
             r

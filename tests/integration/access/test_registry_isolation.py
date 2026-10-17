@@ -12,6 +12,9 @@ from scripts.audit_callsite_dependencies import (
 ROOT = Path(__file__).resolve().parents[3]
 OWNED = {
     "src/repo_catalog/domain/access_registry.py",
+    "src/repo_catalog/domain/access_connections.py",
+    "src/repo_catalog/domain/ports/access_connections.py",
+    "src/repo_catalog/adapters/sqlite/access_connections.py",
     "src/repo_catalog/domain/ports/access_registry.py",
     "src/repo_catalog/adapters/sqlite/access_schema.py",
     "src/repo_catalog/adapters/sqlite/access_registry.py",
