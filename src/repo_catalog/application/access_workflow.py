@@ -246,6 +246,23 @@ class AccessWorkflow:
         boundary, NOT a bool read from Access. It may reject; it cannot authorize
         a stale Access grant. No implicit retry or plan retargeting is performed.
         """
+        return self.dispatch_reviewed_once(
+            token, lambda descriptor, _plan, _check: operation(descriptor), guard=guard
+        )
+
+    def dispatch_reviewed_once(
+        self,
+        token: object,
+        operation: Callable[[int, AccessReviewPlan, Callable[[], None]], T],
+        *,
+        guard: Callable[[], None],
+    ) -> T:
+        """Pass the actually reviewed plan with its pinned directory to local work.
+
+        The plan comes from this session's activation, never from a later lookup
+        or an untrusted callback argument. Same one-use/expiry/guard checks as the
+        descriptor-only API; no durable token, adapter or execution permission.
+        """
         value = self._take(token, "execution")
         assert value.executor is not None and value.grant is not None
         try:
@@ -262,6 +279,16 @@ class AccessWorkflow:
             # adapter uses pinned descriptors; subsequent revocation is in-flight.
             self._ready()
             self._age(value)
-            return value.executor.invoke(operation)
+
+            def check_binding():
+                self._ready()
+                if value.executor.evidence() != value.evidence:
+                    raise AccessRegistryError(
+                        "EXECUTOR_CHANGED", "activated environment changed"
+                    )
+
+            return value.executor.invoke(
+                lambda fd: operation(fd, value.plan, check_binding)
+            )
         finally:
             value.executor.close()

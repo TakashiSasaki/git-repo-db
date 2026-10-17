@@ -11,6 +11,10 @@ from scripts.audit_callsite_dependencies import (
 
 ROOT = Path(__file__).resolve().parents[3]
 OWNED = {
+    "src/repo_catalog/domain/native_acquisition.py",
+    "src/repo_catalog/adapters/git/access_native.py",
+    "src/repo_catalog/application/access_acquisition.py",
+    "src/repo_catalog/cli/access_acquisition.py",
     "src/repo_catalog/domain/access_registry.py",
     "src/repo_catalog/domain/access_connections.py",
     "src/repo_catalog/domain/access_workflow.py",
