@@ -121,6 +121,36 @@ with tempfile.TemporaryDirectory() as directory:
         assert core.catalog_identity() == (seed, instance)
         assert core.read_metadata(OID("sha1", commit)) == body
     subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.access_acquisition", "--help"], check=True, capture_output=True)
+    # Installed A5 preserves all Scope history and removes transferable consent.
+    from repo_catalog.adapters.sqlite.access_backup import AccessBackup
+    from repo_catalog.application.access_maintenance import AccessMaintenance
+    service = AccessBackup()
+    bundle = Path(directory) / "access-backup"
+    restored = Path(directory) / "access-restored"
+    manifest = service.backup(path, bundle)
+    assert manifest["row_counts"]["scope_locators"] == 4
+    assert manifest["row_counts"]["local_access_grants"] == 0
+    assert service.inspect(bundle) == manifest
+    service.restore(bundle, restored)
+    with AccessConnections(restored / "access.sqlite3", writable=True) as copy:
+        assert copy.first_choices(s) == (newest,)
+        assert len(copy.history(s).registrations) == 4
+        assert not copy.locator_enabled(newest)
+        copy.set_locator_enabled(newest, True)
+        try:
+            copy.current_grant(repo, s, assignment=local_key)
+        except AccessRegistryError as error:
+            assert error.code == "APPROVAL_REQUIRED"
+        else:
+            raise AssertionError("restored approval survived")
+    fork = AccessMaintenance(service, clock_us=lambda: 100).fork_scope(restored / "access.sqlite3", s, "file:///new-scope")
+    with AccessConnections(restored / "access.sqlite3") as copy:
+        assert len(copy.history(s).registrations) == 4
+        new_scope = fork["target_scope_uuidv4"]
+        assert new_scope != s
+        assert copy.history(new_scope).registrations == (ScopeLocatorRegistration(new_scope, 100, "file:///new-scope"),)
+        assert not copy.scope_context(new_scope).enabled
+    subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.access_maintenance", "inspect", "--bundle", str(bundle)], check=True, capture_output=True)
 # Installed A3 policy, SQLite constraints and typed Exchange round-trip.
 from contextlib import closing
 from repo_catalog.domain.context_registration import registration_json, RegistrationError
@@ -170,7 +200,7 @@ with tempfile.TemporaryDirectory() as directory:
     with Context.snapshot(receiver) as ctx:
         assert ctx.db.execute("SELECT configuration_json FROM providers").fetchone()[0] == '{"name":"Original provider"}'
     assert not (receiver / "access.sqlite3").exists()
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "installed_smoke": "passed"}))
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_smoke": "passed"}))
 """
 
 
