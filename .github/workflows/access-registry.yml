@@ -83,7 +83,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          targets=(src/repo_catalog/domain/access_connections.py src/repo_catalog/domain/ports/access_connections.py src/repo_catalog/adapters/sqlite/access_connections.py src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
+          targets=(src/repo_catalog/domain/access_workflow.py src/repo_catalog/domain/ports/access_workflow.py src/repo_catalog/application/access_workflow.py src/repo_catalog/adapters/filesystem/access_executor.py src/repo_catalog/cli/access_workflow.py src/repo_catalog/domain/access_connections.py src/repo_catalog/domain/ports/access_connections.py src/repo_catalog/adapters/sqlite/access_connections.py src/repo_catalog/domain/access_registry.py src/repo_catalog/domain/ports/access_registry.py src/repo_catalog/adapters/sqlite/access_registry.py src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
           lint=0
           formatting=0
           uv run --no-sync ruff check "${targets[@]}" || lint=$?

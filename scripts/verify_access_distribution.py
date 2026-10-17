@@ -71,6 +71,29 @@ with tempfile.TemporaryDirectory() as directory:
             assert error.code == "APPROVAL_REQUIRED"
         else:
             raise AssertionError("ABA grant resurrection")
+    from repo_catalog.application.access_workflow import AccessWorkflow
+    from repo_catalog.domain.access_workflow import AccessSelection
+    from repo_catalog.adapters.filesystem.access_executor import LocalDirectoryExecutor
+    import os, subprocess, sys
+    root = Path(directory) / "executor"
+    root.mkdir(mode=0o700)
+    repository = root / "repo.git"
+    repository.mkdir(mode=0o700)
+    newest = ScopeLocatorRegistration(s, 30, root.as_uri())
+    local_key = AssignmentKey(s, str(repository), "local")
+    with AccessConnections(path, writable=True) as store:
+        store.register_locator(newest)
+        store.set_locator_enabled(newest, True)
+        store.bind_repository(RepositoryBinding(s, str(repository), repo, True))
+        store.assign_connection(LocatorConnection(local_key, True))
+        selected = AccessSelection(repo, s, local_key)
+        with AccessWorkflow(store) as workflow:
+            workflow.approve(workflow.begin_review(selected), lambda shown: True)
+            token = workflow.activate(selected, LocalDirectoryExecutor(), lambda shown: True)
+            assert workflow.dispatch_once(token, lambda fd: os.fstat(fd).st_ino, guard=lambda: None) == repository.stat().st_ino
+    # Installed read-only CLI needs no TTY. Mutating CLI paths are PTY-tested separately.
+    output = subprocess.check_output([sys.executable, "-I", "-m", "repo_catalog.cli.access_workflow", "review", "--access-db", str(path), "--repository", repo, "--scope", s, "--locator", str(repository), "--profile", "local"], text=True)
+    assert json.loads(output)["status"] == "review-only"
     assert not (Path(directory) / "core.sqlite3").exists()
 print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "installed_smoke": "passed"}))
 """
