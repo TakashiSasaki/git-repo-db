@@ -1,8 +1,8 @@
 -- Opt-in Access registry foundation, not a replacement for any P1 store.
 CREATE TABLE access_identity (
  store_role TEXT PRIMARY KEY CHECK(store_role='access'),
- format_id TEXT NOT NULL CHECK(format_id='repo-catalog/access-registry-1'),
- schema_version INTEGER NOT NULL CHECK(schema_version=1),
+ format_id TEXT NOT NULL CHECK(format_id='repo-catalog/access-2'),
+ schema_version INTEGER NOT NULL CHECK(schema_version=2),
  ddl_sha256 TEXT NOT NULL CHECK(length(ddl_sha256)=64 AND ddl_sha256 NOT GLOB '*[^0-9a-f]*')
 ) STRICT, WITHOUT ROWID;
 CREATE TABLE access_scopes (

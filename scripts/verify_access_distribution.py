@@ -41,6 +41,36 @@ with tempfile.TemporaryDirectory() as directory:
         assert store.first_choices(s) == (again,)
         assert store.history(s).registrations == (again, b, a)
         assert not store.locator_enabled(again)
+    from repo_catalog.adapters.sqlite.access_connections import AccessConnections
+    from repo_catalog.domain.access_connections import (
+        ScopeExecutionContext, RepositoryBinding, ConnectionConfiguration,
+        AssignmentKey, LocatorConnection, canonical,
+    )
+    from repo_catalog.domain.access_registry import AccessRegistryError
+    from dataclasses import replace
+    repo = str(uuid4())
+    context = canonical({"version": 1, "executor_kind": "local", "executor_ref": "installed", "identity_view": "owner", "path_dialect": "posix"})
+    options = canonical({"version": 1, "transport": "file", "path_dialect": "posix"})
+    key = AssignmentKey(s, "/repos/app.git", "local")
+    with AccessConnections(path, writable=True) as store:
+        store.set_locator_enabled(again, True)
+        store.configure_scope(ScopeExecutionContext(s, context, True))
+        store.bind_repository(RepositoryBinding(s, key.locator_text, repo, True))
+        profile = ConnectionConfiguration(s, "local", options, True)
+        store.configure_connection(profile)
+        store.assign_connection(LocatorConnection(key, True))
+        plan = store.review_plan(repo, s)
+        grant = store.record_local_approval(plan, 10)
+        assert store.current_grant(repo, s) == grant
+        disabled = replace(profile, enabled=False)
+        store.configure_connection(disabled, expected=profile)
+        store.configure_connection(profile, expected=disabled)
+        try:
+            store.current_grant(repo, s)
+        except AccessRegistryError as error:
+            assert error.code == "APPROVAL_REQUIRED"
+        else:
+            raise AssertionError("ABA grant resurrection")
     assert not (Path(directory) / "core.sqlite3").exists()
 print(json.dumps({"sqlite": sqlite3.sqlite_version, "ddl_sha256": fingerprint(), "installed_smoke": "passed"}))
 """

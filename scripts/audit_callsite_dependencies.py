@@ -70,6 +70,9 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "adapters/sqlite/recovery_validation.py",
         # A1a Access registry is explicit opt-in, not a default/P1 activation.
         "domain/access_registry.py",
+        "domain/access_connections.py",
+        "domain/ports/access_connections.py",
+        "adapters/sqlite/access_connections.py",
         "domain/ports/access_registry.py",
         "adapters/sqlite/access_schema.py",
         "adapters/sqlite/access_registry.py",
