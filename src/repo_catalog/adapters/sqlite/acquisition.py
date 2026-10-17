@@ -89,7 +89,11 @@ class InMemoryNotesProgress:
         source_attribution: str,
         source_scope: str,
         work: Any,
+        *,
+        catalog_repository_uuidv4: str | None = None,
     ) -> None:
+        if catalog_repository_uuidv4 is not None:
+            uuid4_value(catalog_repository_uuidv4)
         request_scope(repository, instance, source_attribution, source_scope)
 
     def load(self, scope: str) -> dict[str, Any] | None:

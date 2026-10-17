@@ -21,7 +21,14 @@ class NotesProgress(Protocol):
     """Request-local metadata only. Loss refuses old continuation, never zeroes it."""
 
     def bind(
-        self, repository, instance, source_attribution, source_scope, work
+        self,
+        repository,
+        instance,
+        source_attribution,
+        source_scope,
+        work,
+        *,
+        catalog_repository_uuidv4: str | None = None,
     ) -> None: ...
 
     def load(self, scope: str) -> dict | None: ...

@@ -53,6 +53,7 @@ from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
+from repo_catalog.domain.native_acquisition import native_request_intent
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import FieldClock, ResourceKey
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
@@ -203,6 +204,7 @@ class GitAcquisition:
         progress: Any | None,
         *,
         custom_scope: Any | None = None,
+        repository_uuidv4: str | None = None,
         new_request: bool = False,
         request_identity: RequestIdentity | None = None,
     ) -> Iterator[tuple[WorkBudget, Any]]:
@@ -220,7 +222,12 @@ class GitAcquisition:
                 target_scope = (
                     custom_scope
                     if custom_scope is not None
-                    else [scope_tag, origin_uuidv4, unit_uuidv4]
+                    else [
+                        scope_tag,
+                        repository_uuidv4 or repo_uuid,
+                        origin_uuidv4,
+                        unit_uuidv4,
+                    ]
                 )
                 _, _, op_work, op_progress = ledger.create_budget(
                     scope=target_scope,
@@ -357,6 +364,7 @@ class GitAcquisition:
                 work,
                 progress,
                 source_attribution=source_attribution,
+                repository_uuidv4=repository_uuidv4,
             )
             if spec.discover_notes:
                 disc_obs_id = spec.discovery_observation_uuidv4
@@ -422,17 +430,16 @@ class GitAcquisition:
         new_request: bool = False,
         request_identity: RequestIdentity | None = None,
     ) -> GitAcquisitionReport:
-        """Execute selective metadata-first acquisition against a local GitNativeSource."""
+        """Acquire one explicitly selected repository; the catalog seed is not it.
+
+        Validate all repository-owned claims/captures before any admission. Physical
+        Core/Operational identity pairing remains anchored to store_identity.
+        """
+        semantic_intent = native_request_intent(request)
         with ExitStack() as stack:
             core_cap = stack.enter_context(_open_core(self.core))
             core_cap.ensure_available()
-            actual_repo, actual_inst = core_cap.catalog_identity()
-            if request.repository_uuidv4 != actual_repo:
-                raise CoreFailure(
-                    "REPOSITORY_SCOPE",
-                    request.repository_uuidv4,
-                    "request repository_uuidv4 does not match Core store_identity",
-                )
+            _catalog_seed, actual_inst = core_cap.catalog_identity()
             notes_scope = None
             if request.notes is not None:
                 notes_src = GitNotesSource(source)
@@ -451,6 +458,7 @@ class GitAcquisition:
                     work,
                     progress,
                     custom_scope=notes_scope,
+                    repository_uuidv4=request.repository_uuidv4,
                     new_request=new_request,
                     request_identity=request_identity,
                 )
@@ -465,6 +473,7 @@ class GitAcquisition:
                 ]
             )
             intent = {
+                "request": semantic_intent,
                 "source": [
                     str(source.path),
                     source.object_format,
@@ -1717,6 +1726,7 @@ class PairedAcquisitionCoordinator:
                         None,
                         None,
                         custom_scope=custom_scope,
+                        repository_uuidv4=unit.repository_uuidv4,
                         new_request=new_request,
                         request_identity=request_identity,
                     )

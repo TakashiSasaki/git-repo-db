@@ -15,12 +15,22 @@ class NotesProgress:
         self.work.require("metadata_units", 1)
         self.work.charge("metadata_units", 1)
 
-    def bind(self, repository, instance, source_attribution, source_scope, work):
+    def bind(
+        self,
+        repository,
+        instance,
+        source_attribution,
+        source_scope,
+        work,
+        *,
+        catalog_repository_uuidv4=None,
+    ):
         if work is not self.work:
             raise CoordinationError(
                 "REQUEST_SCOPE", "notes-progress", "budget and progress differ"
             )
-        if self.work.ledger.store_identity() != (repository, instance):
+        catalog_seed = catalog_repository_uuidv4 or repository
+        if self.work.ledger.store_identity() != (catalog_seed, instance):
             raise CoordinationError("STORE_IDENTITY", "notes-progress")
         self.work.ledger.validate_continuation(
             self.work.request,

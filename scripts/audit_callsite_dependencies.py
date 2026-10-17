@@ -72,6 +72,10 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         # A1a Access registry is explicit opt-in, not a default/P1 activation.
         "domain/access_registry.py",
         "domain/access_connections.py",
+        "domain/native_acquisition.py",
+        "application/access_acquisition.py",
+        "cli/access_acquisition.py",
+        "adapters/git/access_native.py",
         "domain/access_workflow.py",
         "domain/ports/access_workflow.py",
         "application/access_workflow.py",
