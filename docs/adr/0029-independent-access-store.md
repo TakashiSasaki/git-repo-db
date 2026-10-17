@@ -11,13 +11,34 @@ refines:
 
 ## Decision
 
-**Review proposal, not implementation or merge authorization.** The owner has
-already chosen the architectural direction: permanent repository UUIDv4 stays in
-Core; transport-specific access settings stay outside Core; one repository may
-have multiple Git-compatible URL-like locators; Locator and Connection
-Configuration are different entities; Access is independent of Context. The
-current task authorizes documenting this direction after the earlier deferral.
-The detailed rules below are proposals for review, not additional owner approvals.
+**Owner-confirmed decisions recorded; complete replacement remains under review.**
+On 2026-10-17 the owner selected Q-S1 A (Scope UUIDv4), Q-S2 A (continuing logical
+resolution environment), Q-S3 A (continuity inherits identity; independent fork
+gets a new identity), and Q-S4 A (local reapproval per repository locator,
+configuration and purpose). The owner subsequently explicitly approved separate
+Scope identity and Scope location, UUID-only identity/reference, timestamped
+Scope Locator registrations retained in one table, and the newest registration
+as first-choice candidate. The instruction to plan and begin work authorizes
+this documentation update. These choices must not be reopened as pending options.
+
+`status: proposed` and `date: null` describe the **complete ADR 0003 replacement**,
+not uncertainty about those owner decisions. Unselected physical-key/adapter
+contracts and lifecycle/index/link closure remain review work. No implementation,
+merge, deployment, real-catalog extraction or P8 switch is performed by this PR.
+
+| Owner decision | Binding direction in this review branch |
+| --- | --- |
+| Existing Access boundary | Independent durable Access; Repository UUIDv4 stays in Core; separate repository locators and connection configurations |
+| Q-S1 A | Canonical UUIDv4 is the Scope identity; names and URI/URN forms do not replace the UUID in PK/FK or external Scope references |
+| Q-S2 A | Scope is a continuing logical locator-resolution environment, not a physical host/container instance |
+| Q-S3 A | Confirmed continuity may retain Scope UUID through migration/reconstruction/restore; independently operated copies receive new Scope UUIDs |
+| Q-S4 A | Reapprove each repository-locator/configuration/purpose assignment locally; identity continuity is not authorization continuity |
+| Locator history decision | Append registrations in `scope_locators`; keep old registrations there, not in a separate history or current-value authority |
+| First-choice decision | Maximum original registration time within the Scope determines the default first-choice set; ties remain explicit and ranking is not permission |
+
+No unrelated six-table sketch, globally unique scope-name rule or URI-as-Scope-PK
+proposal becomes accepted by implication. Original questions about Access-store
+sharing and detailed adapter vocabulary are not silently answered by this ledger.
 
 Propose five stores with different responsibilities:
 
@@ -25,7 +46,7 @@ Propose five stores with different responsibilities:
 | --- | --- | --- |
 | Git Core | Permanent repository identities, attributed Git facts, captures, checked structure, allowed retained metadata/notes and Core Coverage | Application-level INSERT-only domain authority |
 | Context | Provider/Source identities, known-positive memberships, current PR/Issue/review/text and contextual evidence | Independently durable domain authority; permitted current-state mutation |
-| **Access** | Current repository-locator bindings, execution scopes, named connection configurations and explicit selection preferences | Durable, mutable local configuration; not a disposable cache |
+| **Access** | Scope UUID identities, same-table Scope Locator registration history, current repository-locator bindings, connection configurations and local approvals | Durable configuration with immutable registration facts and separately mutable control state; not a cache |
 | Operational | Attempts, finite cumulative work accounting, continuation/retry state and cache locations | Reconstructible execution state |
 | Search | Derivatives of the requested Core/Context domain | Rebuildable, not authority |
 
@@ -36,46 +57,111 @@ An explicitly supplied one-shot local source remains possible without persisting
 Access. A standalone Access configuration can refer to an as-yet-unregistered
 repository UUID; successful acquisition still uses ordinary typed Core admission.
 
-### ACC-01: Identity, location and connection are separate
+### ACC-01: Two identities, two location layers and connection configuration
 
-`repository_uuidv4` remains the permanent repository identity. A **Locator** is a
-human-readable Git URL-like string, not a repository ID, credential, connection
-profile, or captured observation. A **Connection Configuration** supplies the
-local authentication references and connection behavior needed to use a locator.
-A profile may serve multiple locators, and a locator may have multiple profiles.
+`repository_uuidv4` permanently identifies a repository. `scope_uuidv4` permanently
+identifies a logical locator-resolution environment. Scope display names may change
+or coincide; hostnames, container names, URI equality and successful authentication
+are not Scope identity. Use the UUID for all durable Scope references, including
+references from another database; SQLite cross-file FK enforcement is not assumed.
+This does not require a Core row to depend on Access to remain readable.
 
-A repository has zero or more locators (one-to-many when locations are known).
-URL equality, redirect targets, common commits, DNS aliases, matching content or
-successful authentication never merge repository identities or authenticate an
-external repository-identity report. Explicit rebinding changes future access
-configuration only; it cannot rewrite old Core captures or UUIDs.
+A **Scope Locator** is a URI locating/discovering the execution environment of a
+Scope. A **Repository Locator** is the human-readable Git URL-like address to a
+repository interpreted in that Scope. Neither is the other's identifier. They are
+not automatically concatenated. A URI for documentation or a UUID's `urn:uuid:`
+serialization is not automatically an executable Scope Locator. UUID URN output
+can be derived from the UUID; do not maintain it as a second editable identity.
 
-### ACC-02: A URL is a lookup coordinate, not a global configuration key
+A **Connection Configuration** supplies typed local connection behavior and external
+credential references. Profiles may serve several repository locators, and a
+repository locator may have several profiles. Zero saved Scope Locators is valid
+for offline identity and explicitly supplied local execution; it does not promise
+saved remote-environment resolution. Storing a URI does not implement its adapter.
 
-Propose the direct locator key `(access_scope, locator_text)`, not a new
-`locator_uuid` or a hash. A scope is an explicitly named local resolution context
-covering the execution environment and identity view. SSH aliases, filesystem
-namespaces and credential-dependent views can differ between scopes even when
-the string is identical. Scope names are meaningful operator-selected addresses,
-not generated storage IDs, and are not portable domain authority.
+Each repository has zero or more scoped repository locators. URL equality,
+redirects, common commits, DNS aliases and matching content never merge repository
+or Scope identities. Rebinding future access cannot rewrite past Core evidence.
 
-Within one scope, one locator has at most one current repository binding. Registering
-the same scoped locator for another UUID is a conflict, not an upsert or a merge.
-Different scopes may bind the same text to different UUIDs. Changing a binding
-requires an explicit configuration operation with the expected prior binding;
-ordinary discovery/import cannot do it. The inverse one-to-many relation from
-repository to scoped locators is preserved.
+### ACC-02: UUID Scope keys and two distinct locator relations
 
-Connection configurations have direct `(access_scope, configuration_name)` keys.
-Names designate operator-managed profiles; optional labels do not replace keys.
-Locator/profile assignments and preferences use matching composite FKs. No
-storage-only surrogate IDs are added; ADR 0017 also applies to Access. The
-[logical design](../architecture/access-store-design.md) specifies candidate tables
-and constraints; these are not packaged DDL or an implemented table count.
+The repository-locator key becomes `(scope_uuidv4, locator_text)`. Within one Scope,
+the same repository-locator text has at most one current `repository_uuidv4`
+binding. Conflicting registration fails rather than upserting another UUID.
+Different Scopes may interpret identical strings differently. Explicit rebinding
+must check the expected prior binding and invalidate affected local approvals.
 
-### ACC-03: Conservative Git-compatible locator representation
+`access_scopes` is keyed by canonical `scope_uuidv4`; its display name is not a key.
+Connection configurations retain the proposed direct key
+`(scope_uuidv4, configuration_name)`; assignments and repository preferences use
+matching composite FKs. No second Scope row ID, locator UUID or digest alias is
+introduced. Scope UUID is an explicitly owner-approved issued entity identity,
+not claimed to be a natural key and not a shortened encoding of a URI. This extends
+ADR 0017's genuine-identity reasoning to Access without allowing storage surrogates.
 
-Preserve the validated locator text exactly for equality and display. Parse and
+`scope_locators` holds **registration facts**, including `scope_uuidv4`,
+`scope_locator_uri` and `registered_at_us`. Preserve old registrations in that same
+table. A change or genuine re-registration appends; A at T1, B at T2, A at T3 must
+remain three facts. Normal mutation cannot update/delete those coordinates, replace
+a previous row, or cascade away the history. Disablement and approval are separate
+controls, not reasons to erase registration facts. This does not require full
+history for every other Access or Provider setting.
+
+Do not add `scope_locator_history`, a current-URI authority column, or a mutable
+latest-registration pointer merely to implement this rule. An index/read view is
+allowed. The [companion design](../architecture/access-store-design.md) proposes a
+direct registration key and its exact-replay semantics for A1 review; timestamp
+alone is not assumed unique. Scope Locator URI alone is not a globally unique
+Scope key. Repository-locator uniqueness does not impose that different rule.
+
+### ACC-02A: Latest registration is first choice, not an execution grant
+
+For one Scope, first-choice registrations are all locally held valid registration
+facts whose **original `registered_at_us` is maximal**. Preserve equal-time
+alternatives; no URI lexical ordering, rowid, UUID order or insertion order picks
+a semantic winner. This explicitly selected rule applies only to Scope Locator
+ranking, not Git/Context freshness or repository/profile preference selection.
+
+Registration time records the actual registration, not when an external container
+moved, last contact time, current reachability, a receipt clock or restore time.
+Use int64 Unix epoch microseconds with `_us`. Newly performed registration needs a
+real measured time. The proposed required positive-time contract and handling of
+undated legacy input are reviewed in A1 under ADR 0028. Preserve the original
+coordinates on replay/restore/forwarding. A clock rollback may produce a non-first
+new row; diagnose it instead of fabricating a monotonic timestamp. A future-looking
+imported time is not permission to execute or evidence of clock accuracy.
+
+Rank first, then check local adoption, disablement, supported route and approval.
+The newest registration remains first choice even when not executable: report the
+actual failure, do not silently select an older approved locator. An explicit,
+locally approved selection of an older registration is a distinct operation and
+must not pretend it was the default. Imported facts may affect the displayed
+candidate set but never cause network work or automatic authorization. Retaining
+an old URI neither certifies it usable nor means it has expired.
+
+### ACC-02B: Scope continuity, fork and restoration
+
+Confirmed logical continuity may preserve `scope_uuidv4` through host migration,
+container recreation, rename or restoration. Moving the Scope can append a new
+Scope Locator without changing Repository UUIDs or external Scope references.
+Ensure the former environment is not independently operated as the same Scope;
+no distributed single-writer/fencing guarantee is claimed by a UUID or this PR.
+
+An independently operated clone receives a new Scope UUID. Copying current settings
+into that new Scope is a new registration act with its actual time. Do not rewrite
+old S1 history rows into S2 at their old timestamps. Source history remains evidence
+about S1, preserved there or in the untouched source/backup; any origin link is
+non-executable provenance, not identity equivalence. Repository UUIDs remain the
+same when the repositories are the same. An offline backup/copy preserves original
+UUIDs/times and is not an active clone merely because its bytes exist.
+
+Both continuity restoration and independent fork require destination-local
+reapproval. Display-name changes alone need not revoke approval, but execution
+namespace, route, binding or credential-reference changes must be checked.
+
+### ACC-03: Conservative Git-compatible repository-locator representation
+
+For repository locators, preserve the validated text exactly for equality and display. Parse and
 classify it without silently changing its addressing semantics. URI-style HTTPS,
 SSH and file locators, Git's scp-like SSH syntax, and explicitly scoped absolute
 local paths are representable. Representation support is not permission to execute
@@ -137,18 +223,28 @@ local SSH/credential integration can be supported without banning those external
 tools globally. Import parses data only; activation requires local scope mapping
 and explicit approval. A profile label is not proof that its external config is safe.
 
-Resolution selects one approved locator/profile for the requested UUID, scope and
-purpose. Honor an explicit selection or one valid saved preference; otherwise
-require exactly one eligible candidate. Ambiguity fails closed, without arbitrary
-lexical/UUID/arrival-time tie-breaking. Do not fall back to a historical Core URL,
-Provider-supplied URL, another account, or an imported profile to make a request
-succeed. Route rewrites cannot silently change the selected identity view.
+Repository-locator/profile selection honors an explicit choice or valid saved
+preference; otherwise it requires exactly one eligible assignment. Scope Locator
+ranking separately follows ACC-02A. A tie or unavailable/unauthorized first choice
+must not be hidden by filtering down to another route. No historical Core URL,
+Provider URL, other account or imported profile is an implicit fallback.
+
+Q-S4 A grants local approval per
+`(scope_uuidv4, locator_text, configuration_name, purpose)` assignment. Approval
+validity must also bind the selected Scope Locator registration, actual repository
+binding, reviewed profile content and local execution context. Matching names or
+URI text alone do not revive a stale grant: A(T3) is not approval for A(T1).
+Scope Locator changes can affect every repository assignment in that Scope;
+recheck each affected grant. Exact physical approval keys/state are A1/A2 work,
+not an authorization granted by this prose. Transport authentication never proves
+Scope or Repository UUID equivalence or Exchange-sender authenticity.
 
 ### ACC-07: Durability, backup and failure boundaries
 
 Access is not reconstructible from Core/Context: restoring historical observations
 cannot recover the user's current connection intent. Back it up explicitly with
-its own format validation and coherent SQLite snapshot. Do not copy only a live
+its own format validation and coherent SQLite snapshot, including all Scope Locator
+registrations, not only the newest. Do not copy only a live
 main database file while ignoring its WAL, or include secret-store contents.
 
 Preserve the existing **Git-only** and **paired Core+Context domain-catalog** backup
@@ -179,6 +275,10 @@ settings into an immutable request plan; then release that transaction before
 network work. Operational may hold a request-scoped plan and credential references
 for retries, not the only copy of current configuration. Re-resolve secrets at use.
 Check local approval/disablement before each new externally initiated operation.
+An existing request cannot silently switch to the latest Scope Locator on retry;
+keep its frozen source intent and original Capture/request budget identity. If the
+old plan is no longer locally permitted, stop that continuation instead of
+resetting cost or substituting a new route.
 An in-flight operation's cancellation semantics must be documented rather than
 claiming instantaneous credential revocation. Never relabel completed evidence
 with newer settings. Core-first/Context-second admission, finite cumulative work,
@@ -188,6 +288,8 @@ original Capture identity and replay rules remain unchanged.
 
 - No Core UPDATE/DELETE/REPLACE, locator/profile FK dependency, new mutable Core
   revision, or destructive rewriting of observation provenance.
+- No name/URI-derived Scope identity, Scope-URI external join or rewriting forked
+  history with a new Scope UUID. No timestamp-only winner among equal candidates.
 - No URL-derived repository identity, silent same-URL repository merge, fabricated
   Source, or generic publication/eligibility ledger.
 - No secrets in any new Access/Context/Core/Operational representation, query
@@ -218,7 +320,10 @@ persistence and risk transferring local settings with domain facts. Keeping it i
 Operational would make loss of a supposedly disposable store erase nonreconstructible
 intent. Merging Locator and Configuration would make credential rotation and shared
 profiles unnecessarily change location identity. A raw global URL PK cannot model
-machine/identity-view-dependent interpretation. Separate Access accepts additional
+machine/identity-view-dependent interpretation. A mutable single Scope URI loses
+A-to-B-to-A history; separating history/current tables is unnecessary for the
+selected first-choice rule. UUID identity plus same-table dated registrations
+keeps location changes out of external joins. Separate Access accepts additional
 schema, backup and administration costs in exchange for explicit boundaries.
 
 ### Complete carry-forward and acceptance-time retirement of ADR 0003
@@ -263,7 +368,8 @@ not missing Git history; domain Exchange no longer carries executable settings.
 
 Costs: another durable file and administrative surface; long composite keys;
 explicit scope/profile selection; configuration backup and activation policy;
-column-level separation of existing JSON and source-aware migration diagnostics.
+column-level separation of existing JSON and source-aware migration diagnostics;
+registration history growth, clock-quality diagnostics and same-time candidates.
 No claim is made that all URL equivalence can be computed or that Git authenticates
 the catalog's repository UUID. The operator's binding remains a local assertion.
 
@@ -274,8 +380,11 @@ coding. The settled architectural direction is not reopened by those details.
 
 ## References
 
-- Owner instructions in this conversation: separate Locator/Connection
-  Configuration; independent Access; preserve UUIDv4; now update the storage design.
+- Owner instructions in the Access Scope conversation, 2026-10-17: explicit
+  Q-S1/Q-S2/Q-S3/Q-S4 Option A choices; subsequent approval of Scope UUID-only
+  reference, separate Scope Locator, same-table registration history and latest
+  registration first choice; then "plan and begin work". Earlier URI-as-PK and
+  separate-history-table alternatives are not selected.
 - [Storage model, source audit and implementation plan](../architecture/access-store-design.md).
 - [ADR governance](policy.md), [key policy](0017-domain-keys-without-storage-surrogates.md),
   [recovery](0026-stop-salvage-restore-merge-after-corruption.md),
@@ -284,3 +393,6 @@ coding. The settled architectural direction is not reopened by those details.
 - [Git URL syntax](https://git-scm.com/docs/git-clone#_git_urls),
   [Git configuration](https://git-scm.com/docs/git-config),
   [OpenSSH configuration](https://man.openbsd.org/ssh_config).
+- [UUID/URN format and security](https://www.rfc-editor.org/rfc/rfc9562.html),
+  [SQLite SELECT ordering](https://www.sqlite.org/lang_select.html),
+  [SQLite foreign-key limits](https://www.sqlite.org/foreignkeys.html).

@@ -28,7 +28,7 @@ Read the current scope before implementation. This index describes accepted targ
 
 | ADR | Scope and proposal | Review boundary |
 | --- | --- | --- |
-| [0029](0029-independent-access-store.md) | Independent Access; separate scoped Git locators, connection configurations and permanent repository UUIDv4 | Owner chose the direction; detailed schema, scope/selection/transfer rules remain proposed. Do not infer implementation/merge permission or silently supersede ADR 0003. |
+| [0029](0029-independent-access-store.md) | Independent Access; UUIDv4 Scope identity, separate Scope/Repository Locators and same-table dated Scope Locator history | Q-S1-Q-S4 A and latest-registration first choice confirmed by owner on 2026-10-17. Complete replacement and physical contract remain under review; no merge/P8 permission. |
 
 [Access storage design and source audit](../architecture/access-store-design.md)
 uses the initially reviewed `5e778bf61ef6` codebase and integration parent
@@ -37,6 +37,15 @@ boundary, with a complete carry-forward map. Before integration, acceptance must
 retire the replaced file and update current inbound links/index coherently under
 policy section 6. Until then ADR 0003 remains accepted; no migration exception is
 extended. Existing runtime, DDL and verification receipts are unchanged.
+
+**Scope decision checkpoint (2026-10-17):** names/URIs do not replace Scope UUID in
+PK/FK or external references. Preserve past registrations in `scope_locators`;
+maximum original registration time supplies the first-choice set, not an execution
+grant. Ties remain explicit. Continuity may retain UUID; independent fork gets a
+new UUID without relabeling origin history. Local per-assignment reapproval covers
+the chosen registration/route/profile/binding. The [implementation sequence and
+remaining gates](../architecture/access-store-design.md#8-design-first-dependency-plan)
+distinguish confirmed choices, engineering proposals and executed verification.
 
 ## Accepted Records
 
@@ -63,7 +72,7 @@ extended. Existing runtime, DDL and verification receipts are unchanged.
 | [0019](0019-monotonic-notes-capture-fact-admission.md) | B01-R04: monotonic typed immutable facts/groups under one capture and idempotent exact replay | 2026-10-15 | Accepted Option A; competing reports refined by ADR 0020 |
 | [0020](0020-immutable-competing-notes-member-claims.md) | B01-R05: preserve conflicting notes member reports as immutable attributed alternatives | 2026-10-15 | Accepted Option A; claim/group keys fixed by ADR 0021; body role-evidence strength fixed by ADR 0022; finite configurable budgets fixed by ADR 0023; exact proof grammar and B03 completeness still open |
 | [0021](0021-direct-semantic-notes-claim-group-keys.md) | B01-R06: direct semantic composite notes claim/group PK/FK and replay equality | 2026-10-15 | Accepted Option A; body role-evidence strength fixed by ADR 0022; finite configurable budget policy fixed by ADR 0023; actual-work accounting fixed by ADR 0024; B02-R04 cumulative request scope fixed by ADR 0025; budget details are engineering work; B03 remains unfinished; GCTX-M10 recovery fixed by ADR 0026 |
-| [0022](0022-receiver-verified-notes-role-admission.md) | B02-R01: receiver-verified structural notes-role evidence before body retention | 2026-10-15 | Accepted Option A; finite configurable budget policy fixed by ADR 0023; actual-work accounting fixed by ADR 0024; B02-R04 cumulative request scope fixed by ADR 0025; budget details are engineering work; exact proof grammar/B03 unfinished; GCTX-M10 recovery fixed by ADR 0026 |
+| [0022](0022-receiver-verified-notes-role-admission.md) | B02-R01: receiver-verified structural notes-role evidence before body retention | 2026-10-15 | Accepted Option A; finite configurable budget policy fixed by ADR 0023; actual-work accounting is fixed by ADR 0024; B02-R04 cumulative request scope fixed by ADR 0025; budget details are engineering work; exact proof grammar/B03 unfinished; GCTX-M10 recovery fixed by ADR 0026 |
 | [0023](0023-configurable-finite-notes-resource-budgets.md) | B02-R02: configurable finite notes body/aggregate-work/proof-traversal limits | 2026-10-15 | Accepted Option A; actual-work accounting fixed by ADR 0024; cumulative request scope fixed by ADR 0025; budget details are engineering work; notes grammar/B03 separately scoped; GCTX-M10 recovery fixed by ADR 0026 |
 | [0024](0024-actual-notes-resource-work-accounting.md) | B02-R03: actual-work resource accounting and shared/replay charging | 2026-10-15 | Accepted Option A; cumulative request scope fixed by ADR 0025; budget details are engineering work; proof grammar/B03 separately scoped; GCTX-M10 recovery fixed by ADR 0026 |
 | [0025](0025-cumulative-request-budgets-and-scoped-blockers.md) | B02-R04: cumulative request budget; resource implementation detail is not an owner blocker | 2026-10-15 | Accepted Option A and owner correction; GCTX-M10 subsequently resolved by ADR 0026 recovery workflow; former A/B/C comparison historical |
